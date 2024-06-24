@@ -5,7 +5,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 interface HomeProps {}
 
 const Home: React.FC<HomeProps> = () => {
-  const [url, setUrl] = useState<string>("");
+  const [url, setUrl] = useState<string>("https://markwarrior.dev");
   const [crawlResult, setCrawlResult] = useState<string[]>([]);
   const [visibleLinks, setVisibleLinks] = useState<string[]>([]);
 

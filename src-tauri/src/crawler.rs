@@ -6,8 +6,13 @@ use serde::Serialize;
 use tokio;
 
 #[derive(Serialize)]
-pub struct CrawlResult {
+pub struct LinkResult {
     links: Vec<String>,
+}
+
+#[derive(Serialize)]
+pub struct HeadingsResult {
+    headings: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -16,7 +21,7 @@ pub struct Sitemap {
     schema: String,
 }
 
-pub async fn crawl(url: String) -> Result<CrawlResult, String> {
+pub async fn crawl(url: String) -> Result<LinkResult, String> {
     let client = Client::new();
     let response = client
         .get(&url)
@@ -42,37 +47,41 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
         return Err(format!("Failed to fetch the URL: {}", response.status()));
     }
 
-    Ok(CrawlResult { links })
+    Ok(LinkResult { links })
 }
 
-pub async fn generate_sitemap(url: String) -> Result<CrawlResult, String> {
-    // Await the result of the crawl function
-    let crawl_result = crawl(url).await?;
-    // You can add more processing here if needed
-    Ok(crawl_result)
-}
+// Get the headings
 
-// Helper function to generate sitemap XML from links
-fn generate_sitemap_xml(links: &[String]) -> String {
-    let mut sitemap_xml = String::new();
-    sitemap_xml.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-    sitemap_xml.push_str("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n");
+pub async fn crawl_headings(url: String) -> Result<HeadingsResult, String> {
+    let client = Client::new();
+    let response = client
+        .get(&url)
+        .send()
+        .await
+        .map_err(|e| format!("Request error: {}", e))?;
 
-    for link in links {
-        sitemap_xml.push_str(&format!("  <url>\n    <loc>{}</loc>\n  </url>\n", link));
+    let mut headings = Vec::new();
+    if response.status().is_success() {
+        let body = response
+            .text()
+            .await
+            .map_err(|e| format!("Response error: {}", e))?;
+        let document = Html::parse_document(&body);
+
+        // Adjust selector to target headings (h1, h2, h3, etc.)
+        for level in 1..=6 {
+            let selector = Selector::parse(&format!("h{}", level))
+                .map_err(|e| format!("Selector error: {}", e))?;
+
+            for element in document.select(&selector) {
+                let text = element.text().collect::<String>();
+                headings.push(text);
+            }
+        }
+    } else {
+        return Err(format!("Failed to fetch the URL: {}", response.status()));
     }
+    println!("Headings: {:?}", headings);
 
-    sitemap_xml.push_str("</urlset>\n");
-    sitemap_xml
-}
-
-// Helper function to save sitemap XML to a file
-fn save_sitemap_to_file(sitemap_xml: &str) -> Result<(), String> {
-    let mut file =
-        File::create("sitemap.xml").map_err(|e| format!("Failed to create sitemap file: {}", e))?;
-
-    file.write_all(sitemap_xml.as_bytes())
-        .map_err(|e| format!("Failed to write sitemap content: {}", e))?;
-
-    Ok(())
+    Ok(HeadingsResult { headings })
 }
