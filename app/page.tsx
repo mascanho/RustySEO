@@ -34,6 +34,9 @@ const Home: React.FC<HomeProps> = () => {
     });
   };
 
+  console.log("DATA");
+  console.log(crawlResult);
+
   return (
     <>
       {/* Fixed Input and Crawl Button */}
