@@ -18,7 +18,7 @@ const Home: React.FC<HomeProps> = () => {
     setCrawlResult([]);
     setVisibleLinks([]);
 
-    invoke<{ links: string[] }>("crawl", { url })
+    invoke<{ links: [] }>("crawl", { url })
       .then((result) => {
         setCrawlResult(result.links);
         showLinksSequentially(result.links); // Show links one by one
@@ -36,6 +36,7 @@ const Home: React.FC<HomeProps> = () => {
 
   console.log("DATA");
   console.log(crawlResult);
+  console.log(visibleLinks);
 
   return (
     <>
