@@ -1,13 +1,13 @@
 "use client";
+import React from "react";
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
-
-interface HomeProps {}
-
-const Home: React.FC<HomeProps> = () => {
-  const [url, setUrl] = useState<string>("");
+import SitemapDisplay from "./_components/SyntaxHighlight";
+const Sitemap = () => {
+  const [url, setUrl] = useState<string>("https://markwarrior.dev");
   const [crawlResult, setCrawlResult] = useState<string[]>([]);
   const [visibleLinks, setVisibleLinks] = useState<string[]>([]);
+  const [sitemap, setSitemap] = useState<string[]>([]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(event.target.value);
@@ -18,25 +18,36 @@ const Home: React.FC<HomeProps> = () => {
     setCrawlResult([]);
     setVisibleLinks([]);
 
-    invoke<{ links: string[] }>("crawl", { url })
+    invoke<{ links: string[]; sitemap_xml: any }>("sitemap_crawl", { url })
       .then((result) => {
         setCrawlResult(result.links);
         showLinksSequentially(result.links); // Show links one by one
+        setSitemap(result.sitemap_xml);
+        console.log(result);
       })
       .catch(console.error);
+  };
+
+  console.log(sitemap);
+
+  // split the sitemap into an array of links
+  const splitSitemap = (sitemap: string) => {
+    const links = sitemap.split("\n");
+    return links;
   };
 
   const showLinksSequentially = (links: string[]) => {
     links.forEach((link, index) => {
       setTimeout(() => {
         setVisibleLinks((prevVisibleLinks) => [...prevVisibleLinks, link]);
-      }, index * 500); // Adjust timing for each link appearance
+      }, index * 300); // Adjust timing for each link appearance
     });
   };
 
+  console.log(crawlResult, visibleLinks);
+
   return (
     <>
-      {/* Fixed Input and Crawl Button */}
       <div className="fixed top-1 left-0 right-0 flex justify-center items-center  py-4 z-10">
         <div className="relative">
           <input
@@ -102,27 +113,32 @@ const Home: React.FC<HomeProps> = () => {
         </div>
       </div>
 
-      <>
-        <main className="h-[800px] w-[600px] mx-auto overflow-auto flex flex-col my-10 items-center bg-apple-white rounded-lg text-black p-6">
-          {crawlResult.length > 0 && (
-            <section className="w-full h-[200px] mx-auto">
-              {visibleLinks.map((link) => (
-                <div className="w-full h-fit crawl-item" key={link}>
-                  <a className="block py-[2px]" href={link}>
-                    {link}
-                  </a>
-                </div>
-              ))}
-            </section>
-          )}
-        </main>
-        <div className="mx-auto text-center">
-          <span>Pages Crawled:</span>{" "}
-          <span className="text-apple-blue">{visibleLinks.length}</span>
+      <section className="min-h-fit h-fit mt-96  grid place-items-center">
+        <div className="grid grid-cols-2 gap-20 w-10/12 -mt-80">
+          <div className="h-[600px] border  bg-white rounded-md shadow-inner">
+            {crawlResult?.length > 0 && (
+              <section className="w-full  mx-auto p-4 overflow-auto h-full">
+                {visibleLinks.map((link) => (
+                  <div className="w-full h-fit crawl-item" key={link}>
+                    <a className="block py-[2px]" href={link}>
+                      {link}
+                    </a>
+                  </div>
+                ))}
+              </section>
+            )}
+          </div>
+          <div className="h-[600px] border  bg-white rounded-md">
+            {crawlResult?.length > 0 && (
+              <section className="w-full  mx-auto p-4 overflow-auto h-full">
+                <SitemapDisplay sitemapContent={sitemap} />
+              </section>
+            )}
+          </div>
         </div>
-      </>
+      </section>
     </>
   );
 };
 
-export default Home;
+export default Sitemap;

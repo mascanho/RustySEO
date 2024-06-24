@@ -31,3 +31,27 @@ body {
     text-wrap: balance;
   }
 }
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.crawl-item {
+  opacity: 0;
+  animation:
+    fadeIn 0.01s ease-in forwards,
+    fadeIn 0.1s ease-in forwards;
+}
+
+/* Remove blue focus ring */
+input:focus {
+  outline: none;
+  box-shadow: none; /* Removes any box-shadow if present */
+}

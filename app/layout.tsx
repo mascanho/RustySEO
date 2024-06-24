@@ -1,7 +1,10 @@
+import "@mantine/core/styles.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-
+import { ColorSchemeScript, MantineProvider } from "@mantine/core";
+import VerticalNavBar from "./components/ui/VerticalNavBar";
+import MenuDrawer from "./components/ui/MenuDrawer";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -15,8 +18,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>{children}</body>
+    <html lang="en" className="">
+      <body className="inter.className relative rounded-md">
+        <MantineProvider>
+          {/* Fixed MenuDrawer */}
+          <div className="fixed top-5 left-5 z-20">
+            <MenuDrawer />
+          </div>
+
+          {/* Main Content Area */}
+          <main className="mt-20 p-6">{children}</main>
+        </MantineProvider>
+      </body>
     </html>
   );
 }
