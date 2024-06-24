@@ -108,9 +108,7 @@ const Home: React.FC<HomeProps> = () => {
             <section className="w-full h-[200px] mx-auto">
               {visibleLinks.map((link) => (
                 <div className="w-full h-fit crawl-item" key={link}>
-                  <a className="block py-[2px]" href={link}>
-                    {link}
-                  </a>
+                  <a className="block py-[2px]">{link}</a>
                 </div>
               ))}
             </section>

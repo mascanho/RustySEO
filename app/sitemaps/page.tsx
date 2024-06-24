@@ -28,14 +28,6 @@ const Sitemap = () => {
       .catch(console.error);
   };
 
-  console.log(sitemap);
-
-  // split the sitemap into an array of links
-  const splitSitemap = (sitemap: string) => {
-    const links = sitemap.split("\n");
-    return links;
-  };
-
   const showLinksSequentially = (links: string[]) => {
     links.forEach((link, index) => {
       setTimeout(() => {
@@ -44,6 +36,7 @@ const Sitemap = () => {
     });
   };
 
+  console.log("DATA");
   console.log(crawlResult, visibleLinks);
 
   return (
@@ -118,7 +111,7 @@ const Sitemap = () => {
           <div className="h-[600px] border  bg-white rounded-md shadow-inner">
             {crawlResult?.length > 0 && (
               <section className="w-full  mx-auto p-4 overflow-auto h-full">
-                {visibleLinks.map((link) => (
+                {visibleLinks?.map((link) => (
                   <div className="w-full h-fit crawl-item" key={link}>
                     <a className="block py-[2px]" href={link}>
                       {link}
@@ -130,9 +123,7 @@ const Sitemap = () => {
           </div>
           <div className="h-[600px] border  bg-white rounded-md">
             {crawlResult?.length > 0 && (
-              <section className="w-full  mx-auto p-4 overflow-auto h-full">
-                <SitemapDisplay sitemapContent={sitemap} />
-              </section>
+              <section className="w-full  mx-auto p-4 overflow-auto h-full"></section>
             )}
           </div>
         </div>
