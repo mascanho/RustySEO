@@ -5,46 +5,23 @@
 
 use std::{fs::File, io::Write};
 
+use crawler::CrawlResult;
 use reqwest::Client;
 use scraper::{Html, Selector};
 use serde::Serialize;
 use tokio; // Ensure tokio is imported
 
+mod crawler;
 mod sitemaps;
-
-#[derive(Serialize)]
-struct CrawlResult {
-    links: Vec<String>,
-}
 
 #[tauri::command]
 async fn crawl(url: String) -> Result<CrawlResult, String> {
-    let client = Client::new();
-    let response = client
-        .get(&url)
-        .send()
-        .await
-        .map_err(|e| format!("Request error: {}", e))?;
+    let result = crawler::crawl(url).await;
 
-    let mut links = Vec::new();
-    if response.status().is_success() {
-        let body = response
-            .text()
-            .await
-            .map_err(|e| format!("Response error: {}", e))?;
-        let document = Html::parse_document(&body);
-        let selector = Selector::parse("a").map_err(|e| format!("Selector error: {}", e))?;
-
-        for element in document.select(&selector) {
-            if let Some(link) = element.value().attr("href") {
-                links.push(link.to_string());
-            }
-        }
-    } else {
-        return Err(format!("Failed to fetch the URL: {}", response.status()));
+    match result {
+        Ok(result) => Ok(result),
+        Err(err) => Err(err),
     }
-
-    Ok(CrawlResult { links })
 }
 
 // Generate sitemap
