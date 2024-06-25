@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
+import PerformanceEl from "./components/Performance";
 
 interface HomeProps {}
 
@@ -8,6 +9,8 @@ const Home: React.FC<HomeProps> = () => {
   const [url, setUrl] = useState<string>("https://markwarrior.dev");
   const [crawlResult, setCrawlResult] = useState<string[]>([]);
   const [visibleLinks, setVisibleLinks] = useState<string[]>([]);
+  const [links, setLinks] = useState<string[]>([]);
+  const [headings, setHeadings] = useState<string[]>([]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(event.target.value);
@@ -18,10 +21,10 @@ const Home: React.FC<HomeProps> = () => {
     setCrawlResult([]);
     setVisibleLinks([]);
 
-    invoke<{ links: [] }>("crawl", { url })
+    invoke<{ links: []; headings: [] }>("crawl", { url })
       .then((result) => {
-        setCrawlResult(result.links);
         showLinksSequentially(result.links); // Show links one by one
+        showHeadingsSequentially(result.headings);
       })
       .catch(console.error);
   };
@@ -34,15 +37,24 @@ const Home: React.FC<HomeProps> = () => {
     });
   };
 
+  const showHeadingsSequentially = (headings: string[]) => {
+    headings.forEach((heading, index) => {
+      setTimeout(() => {
+        setHeadings((prevHeadings) => [...prevHeadings, heading]);
+      }, index * 500); // Adjust timing for each link appearance
+    });
+  };
+
   console.log("DATA");
   console.log(crawlResult);
   console.log(visibleLinks);
+  console.log(headings);
 
   return (
     <>
       {/* Fixed Input and Crawl Button */}
       <div className="fixed top-1 left-0 right-0 flex justify-center items-center  py-4 z-10">
-        <div className="relative">
+        <div className="relative backdrop-blur-lg">
           <input
             className="border border-gray-300 rounded-lg h-10 w-80 pl-3 pt-1 pr-10 placeholder:text-gray-500"
             type="text"
@@ -107,21 +119,57 @@ const Home: React.FC<HomeProps> = () => {
       </div>
 
       <>
-        <main className="h-[800px] w-[600px] mx-auto overflow-auto flex flex-col my-10 items-center bg-apple-white rounded-lg text-black p-6">
-          {crawlResult.length > 0 && (
-            <section className="w-full h-[200px] mx-auto">
+        <PerformanceEl stat={1} />
+        <main className="mx-auto w-full flex flex-col my-10 items-center rounded-lg text-black overflow-auto grid grid-cols-3 gap-6">
+          <div>
+            <h2 className="mb-4">Links</h2>
+            <section className="mx-auto h-96 w-full rounded-md overflow-auto bg-white relative">
               {visibleLinks.map((link) => (
-                <div className="w-full h-fit crawl-item" key={link}>
-                  <a className="block py-[2px]">{link}</a>
+                <div className="crawl-item" key={link}>
+                  <a className="block py-1 px-2 bg-white border-b w-full">
+                    {link}
+                  </a>
                 </div>
               ))}
             </section>
-          )}
+            <div className="mx-auto text-center mt-4">
+              <span>Pages Crawled:</span>{" "}
+              <span className="text-apple-blue">{visibleLinks.length}</span>
+            </div>
+          </div>
+          <div>
+            <h2 className="mb-4">Links</h2>
+            <section className="mx-auto h-96 w-full rounded-md overflow-auto bg-white relative">
+              {visibleLinks.map((link) => (
+                <div className="crawl-item" key={link}>
+                  <a className="block py-1 px-2 bg-white border-b w-full">
+                    {link}
+                  </a>
+                </div>
+              ))}
+            </section>
+            <div className="mx-auto text-center mt-4">
+              <span>Pages Crawled:</span>{" "}
+              <span className="text-apple-blue">{visibleLinks.length}</span>
+            </div>
+          </div>
+          <div>
+            <h2 className="mb-4">Links</h2>
+            <section className="mx-auto h-96 w-full rounded-md overflow-auto bg-white relative">
+              {headings.map((link) => (
+                <div className="crawl-item" key={link}>
+                  <a className="block py-1 px-2 bg-white border-b w-full">
+                    {link}
+                  </a>
+                </div>
+              ))}
+            </section>
+            <div className="mx-auto text-center mt-4">
+              <span>Pages Crawled:</span>{" "}
+              <span className="text-apple-blue">{headings.length}</span>
+            </div>
+          </div>
         </main>
-        <div className="mx-auto text-center">
-          <span>Pages Crawled:</span>{" "}
-          <span className="text-apple-blue">{visibleLinks.length}</span>
-        </div>
       </>
     </>
   );

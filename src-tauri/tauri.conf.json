@@ -55,16 +55,11 @@
     },
     "windows": [
       {
-        "label": "local",
-        "title": "Tauri App",
-        "url": "crawler"
-      },
-      {
-        "fullscreen": true,
+        "fullscreen": false,
         "resizable": true,
-        "title": "Next JS - Version",
-        "minWidth": 900,
-        "minHeight": 800,
+        "title": "RustyFrog - v0.1",
+        "minWidth": 1200,
+        "minHeight": 1000,
         "width": 900,
         "height": 800
       }
