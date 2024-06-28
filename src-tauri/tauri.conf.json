@@ -7,7 +7,7 @@
     "distDir": "../out"
   },
   "package": {
-    "productName": "nextjs-tauri",
+    "productName": "RustySEO",
     "version": "0.1.0"
   },
   "tauri": {
@@ -57,7 +57,7 @@
       {
         "fullscreen": false,
         "resizable": true,
-        "title": "RustyFrog - v0.1",
+        "title": "RustySEO - v0.1",
         "minWidth": 1400,
         "minHeight": 1000,
         "width": 900,
