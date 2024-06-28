@@ -15,12 +15,13 @@ const Home: React.FC<HomeProps> = () => {
   const [visibleLinks, setVisibleLinks] = useState<string[]>([]);
   const [headings, setHeadings] = useState<string[]>([]);
   const [altTexts, setAltTexts] = useState<string[]>([]);
-  const [indexation, setIndexation] = useState<string[]>([]);
   const [pageTitle, setPageTitle] = useState<string[]>([]);
   const [pageDescription, setPageDescription] = useState<string[]>([]);
   const [canonical, setCanonical] = useState<string[]>([]);
   const [hreflangs, setHreflangs] = useState<string[]>([]);
-  const [responseCode, setResponseCode] = useState<number>();
+  const [responseCode, setResponseCode] = useState<number | undefined>();
+  const [indexType, setIndexType] = useState<string[]>([]);
+  const [imageLinks, setImageLinks] = useState<string[]>([]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(event.target.value);
@@ -37,23 +38,25 @@ const Home: React.FC<HomeProps> = () => {
       links: [];
       headings: [];
       alt_texts: [];
-      indexation: [];
       page_title: [];
       page_description: [];
       canonical_url: [];
       hreflangs: [];
       response_code: number;
+      index_type: [];
+      image_links: [];
     }>("crawl", { url })
       .then((result) => {
         showLinksSequentially(result.links); // Show links one by one
         showHeadingsSequentially(result.headings);
         showAltTextsSequentially(result.alt_texts);
-        setIndexation(result.indexation);
         setPageTitle(result.page_title);
         setPageDescription(result.page_description);
         setCanonical(result.canonical_url);
         setHreflangs(result.hreflangs);
         setResponseCode(result.response_code);
+        setIndexType(result.index_type);
+        setImageLinks(result.image_links);
       })
       .catch(console.error);
   };
@@ -86,17 +89,18 @@ const Home: React.FC<HomeProps> = () => {
   console.log(crawlResult);
   console.log(visibleLinks);
   console.log(headings);
-  console.log(indexation);
   console.log(pageTitle);
   console.log(pageDescription);
   console.log(canonical);
   console.log(hreflangs);
   console.log(responseCode);
+  console.log(indexType);
+  console.log(imageLinks);
 
   return (
     <>
       {/* Fixed Input and Crawl Button */}
-      <div class="fixed top-0 left-1/2 transform -translate-x-1/2 flex justify-center items-center py-5 z-30 ">
+      <div className="fixed top-0 left-1/2 transform -translate-x-1/2 flex justify-center items-center py-5 z-30 ">
         <div className="relative backdrop-blur-lg">
           <input
             className="border border-gray-300 rounded-lg h-10 min-w-80 w-96 pl-3 pt-1 pr-2 placeholder:text-gray-500"
@@ -213,7 +217,7 @@ const Home: React.FC<HomeProps> = () => {
         <ResponseCodeEl res={responseCode} />
         <PerformanceEl stat={1} />
         <PerformanceEl stat={1} />
-        <Indexation index={indexation} />
+        <Indexation index={indexType} />
       </section>
       <main className="mx-auto w-full flex flex-col my-10 items-center rounded-lg text-black overflow-auto grid grid-cols-3 gap-x-6 gap-y-12">
         <div>
@@ -244,8 +248,8 @@ const Home: React.FC<HomeProps> = () => {
             ))}
           </section>
           <div className="mx-auto text-center mt-4">
-            <span>Pages Crawled:</span>{" "}
-            <span className="text-apple-blue">{visibleLinks.length}</span>
+            <span>Images Found:</span>{" "}
+            <span className="text-apple-blue">{altTexts.length}</span>
           </div>
         </div>
         <div>
@@ -292,6 +296,25 @@ const Home: React.FC<HomeProps> = () => {
             <span className="text-apple-blue">{headings.length}</span>
           </div>
         </div>
+
+        {imageLinks.map((image) => {
+          return (
+            <div className="crawl-item" key={image}>
+              <a
+                onClick={() => {
+                  window.open(image.link, "_blank");
+                }}
+                className="block py-1 px-2 bg-white border-b w-full"
+              >
+                <span className="font-bold text-apple-blue tex-base">
+                  <img className="w-14" src={image.link} />
+                </span>
+                <span> {image.link}</span>
+                <span className="text-red-500">{image.alt_text}</span>
+              </a>
+            </div>
+          );
+        })}
       </main>
     </>
   );

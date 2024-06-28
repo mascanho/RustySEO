@@ -1,4 +1,4 @@
-use std::{i32, time::Instant};
+use std::time::Instant;
 
 use reqwest::Client;
 use scraper::{Html, Selector};
@@ -16,11 +16,19 @@ pub struct CrawlResult {
     pub canonical_url: Vec<String>,
     pub hreflangs: Vec<String>,
     pub response_code: u16,
+    pub index_type: Vec<String>,
+    pub image_links: Vec<ImageInfo>,
 }
 
 #[derive(Serialize)]
 pub struct LinkResult {
     pub links: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ImageInfo {
+    link: String,
+    alt_text: String,
 }
 
 pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
@@ -30,11 +38,17 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     }
 
     let client = Client::new();
-    let response = client
+    let mut response = client
         .get(&url)
         .send()
         .await
         .map_err(|e| format!("Request error: {}", e))?;
+
+    let response_headers = response
+        .headers()
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.to_str().unwrap().to_string()))
+        .collect::<Vec<_>>();
 
     let status = response.status();
 
@@ -47,6 +61,11 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut canonical_url: Vec<String> = Vec::new();
     let mut hreflangs: Vec<String> = Vec::new();
     let response_code: u16;
+    // Initialize flags
+    let mut noindex = false;
+    let mut nofollow = false;
+    let mut index_type = Vec::new();
+    let mut image_links = Vec::new();
 
     if response.status().is_success() {
         let body = response
@@ -83,7 +102,17 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             }
         }
 
-        // Fetch headings
+        // Fetch all the images in the url and their respective alt texts, display them
+        for img in document.select(&img_selector) {
+            if let Some(link) = img.value().attr("src") {
+                let alt_text = img.value().attr("alt").unwrap_or("").to_string();
+                let image_info = ImageInfo {
+                    link: link.to_string(),
+                    alt_text,
+                };
+                image_links.push(image_info);
+            }
+        } // Fetch headings
         for level in 1..=6 {
             let heading_selector = Selector::parse(&format!("h{}", level))
                 .map_err(|e| format!("Selector error: {}", e))?;
@@ -133,6 +162,18 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         if hreflangs.is_empty() {
             hreflangs.push(String::from("No hreflang found"));
         }
+
+        // Fetch Indexation
+        let noindex_selector = Selector::parse("meta[name=robots]").unwrap();
+        for noindex in document.select(&noindex_selector) {
+            if let Some(noindex) = noindex.value().attr("content") {
+                if !noindex.contains("noindex") {
+                    index_type.push(String::from("Indexed"));
+                }
+            } else {
+                index_type.push(String::from("Not Available"));
+            }
+        }
     } else {
         return Err(format!("Failed to fetch the URL: {}", response.status()));
     }
@@ -141,12 +182,12 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     println!("Headings: {:?}", headings);
     println!("Alt texts: {:?}", alt_texts);
     println!("Page title: {:?}", page_title);
-    println!("Indexation: {:?}", indexation);
     println!("Page description: {:?}", page_description);
     println!("Canonical URL: {:?}", canonical_url);
     println!("Hreflang: {:?}", hreflangs);
-
     println!("Response code: {:?}", response_code);
+    println!("Index Type: {:?}", index_type);
+    println!("Image Links: {:?}", image_links);
 
     // Measure elapsed time
     let start_time = Instant::now();
@@ -170,5 +211,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         canonical_url,
         hreflangs,
         response_code,
+        index_type,
+        image_links,
     })
 }
