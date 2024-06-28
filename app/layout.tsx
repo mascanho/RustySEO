@@ -22,12 +22,11 @@ export default function RootLayout({
       <body className="relative rounded-md bg-apple-silver">
         <MantineProvider>
           {/* Fixed MenuDrawer */}
-          <div className="fixed top-5 left-5 z-20">
+          <div className="fixed top-0 pl-7 z-20 bg-apple-silver h-20   border-b shadow w-full   ">
             <MenuDrawer />
           </div>
-
           {/* Main Content Area */}
-          <main className="mt-20 p-6 rounded-md m-2  bg-apple-silver">
+          <main className="mt-20 p-6 rounded-md  bg-apple-silver">
             {children}
           </main>
         </MantineProvider>

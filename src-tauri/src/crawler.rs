@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::{i32, time::Instant};
 
 use reqwest::Client;
 use scraper::{Html, Selector};
@@ -11,6 +11,11 @@ pub struct CrawlResult {
     pub alt_texts: Vec<String>,
     pub elapsed_time: u128,
     pub indexation: Vec<String>,
+    pub page_title: Vec<String>,
+    pub page_description: Vec<String>,
+    pub canonical_url: Vec<String>,
+    pub hreflangs: Vec<String>,
+    pub response_code: u16,
 }
 
 #[derive(Serialize)]
@@ -18,7 +23,12 @@ pub struct LinkResult {
     pub links: Vec<String>,
 }
 
-pub async fn crawl(url: String) -> Result<CrawlResult, String> {
+pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
+    // remove the "/" at the end of the url
+    if url.ends_with("/") {
+        url.pop();
+    }
+
     let client = Client::new();
     let response = client
         .get(&url)
@@ -26,11 +36,17 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
         .await
         .map_err(|e| format!("Request error: {}", e))?;
 
+    let status = response.status();
+
     let mut links = Vec::new();
     let mut headings = Vec::new();
     let mut alt_texts = Vec::new();
     let mut page_title: Vec<String> = Vec::new();
     let mut indexation: Vec<String> = Vec::new();
+    let mut page_description: Vec<String> = Vec::new();
+    let mut canonical_url: Vec<String> = Vec::new();
+    let mut hreflangs: Vec<String> = Vec::new();
+    let response_code: u16;
 
     if response.status().is_success() {
         let body = response
@@ -38,6 +54,16 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
             .await
             .map_err(|e| format!("Response error: {}", e))?;
         let document = Html::parse_document(&body);
+
+        // Fetch response code
+        //format the response code, remove the "OK"
+        let status_string = status.to_string();
+        let status_code = status_string.replace("OK", "");
+        // remove the whitespace
+        let status_code = status_code.trim();
+        status_code.parse::<u16>().unwrap();
+
+        response_code = status_code.parse::<u16>().unwrap();
 
         // Fetch links
         let link_selector = Selector::parse("a").map_err(|e| format!("Selector error: {}", e))?;
@@ -76,30 +102,36 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
             page_title.push(title)
         }
 
-        // Check meta tags for robots directives
-        let meta_selector = Selector::parse("meta[name=robots]").unwrap();
-        let mut noindex = false;
-        let mut nofollow = false;
-
+        // Fetch Meta description
+        let meta_selector = Selector::parse("meta[name=description]").unwrap();
         for meta in document.select(&meta_selector) {
-            if let Some(content) = meta.value().attr("content") {
-                if content.contains("noindex") {
-                    noindex = true;
-                }
-                if content.contains("nofollow") {
-                    nofollow = true;
-                }
+            if let Some(description) = meta.value().attr("content") {
+                page_description.push(description.to_string());
             }
+        }
 
-            if noindex {
-                indexation.push("NoIndex".to_string());
-            } else {
-                indexation.push("Indexed".to_string());
+        // Fetch canonical_url
+        let canonical_selector = Selector::parse("link[rel=canonical]").unwrap();
+        for canonical in document.select(&canonical_selector) {
+            if let Some(canonical) = canonical.value().attr("href") {
+                canonical_url.push(canonical.to_string());
             }
+        }
 
-            if nofollow {
-                indexation.push("NoFollow".to_string());
+        if canonical_url.is_empty() {
+            canonical_url.push(String::from("No canonical URL found"));
+        }
+
+        // Fetch HrefLangs
+        let hreflang_selector = Selector::parse("link[rel=alternate]").unwrap();
+        for hreflang in document.select(&hreflang_selector) {
+            if let Some(lang) = hreflang.value().attr("hreflang") {
+                hreflangs.push(lang.to_string());
             }
+        }
+
+        if hreflangs.is_empty() {
+            hreflangs.push(String::from("No hreflang found"));
         }
     } else {
         return Err(format!("Failed to fetch the URL: {}", response.status()));
@@ -110,6 +142,11 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
     println!("Alt texts: {:?}", alt_texts);
     println!("Page title: {:?}", page_title);
     println!("Indexation: {:?}", indexation);
+    println!("Page description: {:?}", page_description);
+    println!("Canonical URL: {:?}", canonical_url);
+    println!("Hreflang: {:?}", hreflangs);
+
+    println!("Response code: {:?}", response_code);
 
     // Measure elapsed time
     let start_time = Instant::now();
@@ -128,5 +165,10 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
         alt_texts,
         elapsed_time,
         indexation,
+        page_title,
+        page_description,
+        canonical_url,
+        hreflangs,
+        response_code,
     })
 }

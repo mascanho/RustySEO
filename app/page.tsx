@@ -16,6 +16,11 @@ const Home: React.FC<HomeProps> = () => {
   const [headings, setHeadings] = useState<string[]>([]);
   const [altTexts, setAltTexts] = useState<string[]>([]);
   const [indexation, setIndexation] = useState<string[]>([]);
+  const [pageTitle, setPageTitle] = useState<string[]>([]);
+  const [pageDescription, setPageDescription] = useState<string[]>([]);
+  const [canonical, setCanonical] = useState<string[]>([]);
+  const [hreflangs, setHreflangs] = useState<string[]>([]);
+  const [responseCode, setResponseCode] = useState<number>();
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(event.target.value);
@@ -28,15 +33,27 @@ const Home: React.FC<HomeProps> = () => {
     setHeadings([]);
     setAltTexts([]);
 
-    invoke<{ links: []; headings: []; alt_texts: []; indexation: [] }>(
-      "crawl",
-      { url },
-    )
+    invoke<{
+      links: [];
+      headings: [];
+      alt_texts: [];
+      indexation: [];
+      page_title: [];
+      page_description: [];
+      canonical_url: [];
+      hreflangs: [];
+      response_code: number;
+    }>("crawl", { url })
       .then((result) => {
         showLinksSequentially(result.links); // Show links one by one
         showHeadingsSequentially(result.headings);
         showAltTextsSequentially(result.alt_texts);
         setIndexation(result.indexation);
+        setPageTitle(result.page_title);
+        setPageDescription(result.page_description);
+        setCanonical(result.canonical_url);
+        setHreflangs(result.hreflangs);
+        setResponseCode(result.response_code);
       })
       .catch(console.error);
   };
@@ -70,14 +87,19 @@ const Home: React.FC<HomeProps> = () => {
   console.log(visibleLinks);
   console.log(headings);
   console.log(indexation);
+  console.log(pageTitle);
+  console.log(pageDescription);
+  console.log(canonical);
+  console.log(hreflangs);
+  console.log(responseCode);
 
   return (
     <>
       {/* Fixed Input and Crawl Button */}
-      <div className="fixed top-0 flex justify-center items-center  py-4 z-10 bg-apple-silver backdrop-blur-xl backdrop-blur w-full">
+      <div class="fixed top-0 left-1/2 transform -translate-x-1/2 flex justify-center items-center py-5 z-30 ">
         <div className="relative backdrop-blur-lg">
           <input
-            className="border border-gray-300 rounded-lg h-10 w-80 pl-3 pt-1 pr-10 placeholder:text-gray-500"
+            className="border border-gray-300 rounded-lg h-10 min-w-80 w-96 pl-3 pt-1 pr-2 placeholder:text-gray-500"
             type="text"
             placeholder="https://yourwebsite.com"
             value={url}
@@ -138,9 +160,57 @@ const Home: React.FC<HomeProps> = () => {
           </button>
         </div>
       </div>
+
+      <section className="mb-10 flex-wrap w-full space-y-2">
+        <div className="flex">
+          <span className="flex">Page Title:</span>
+          <span className="flex ml-2">{pageTitle[0]}</span>
+          {pageTitle.length > 0 ? (
+            <span
+              className={`flex ml-4 ${pageTitle[0].length > 60 ? "text-red-500" : "text-green-500"}`}
+            >
+              {pageTitle[0].length} / 60
+            </span>
+          ) : (
+            ""
+          )}
+        </div>
+        <div className="flex">
+          <span className="mr-2">Meta Description:</span>
+          {pageDescription[0]}
+          {pageDescription[0]?.length > 0 ? (
+            <span
+              className={`flex ml-4 ${pageDescription.length > 160 ? "text-red-500" : "text-green-500"}`}
+            >
+              {pageDescription[0].length} / 160
+            </span>
+          ) : (
+            <span className="ml-2">-</span>
+          )}
+        </div>
+        <div className="flex items-center">
+          <span>Canonical URL:</span>
+          {<span className="ml-2">{canonical}</span>}
+        </div>
+        <div className="flex items-center">
+          <span className="mr-1">Hreflangs:</span>
+          <div className="flex">
+            {hreflangs[0] === "No hreflang found"
+              ? "No hreflang found"
+              : hreflangs.map((hreflang) => (
+                  <span
+                    className="flex ml-2 border p-1 rounded-md"
+                    key={hreflang}
+                  >
+                    {hreflang}
+                  </span>
+                ))}
+          </div>
+        </div>
+      </section>
       <section className="grid grid-cols-5">
         <PerformanceEl stat={1} />
-        <ResponseCodeEl res={200} />
+        <ResponseCodeEl res={responseCode} />
         <PerformanceEl stat={1} />
         <PerformanceEl stat={1} />
         <Indexation index={indexation} />
