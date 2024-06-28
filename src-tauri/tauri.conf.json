@@ -58,7 +58,7 @@
         "fullscreen": false,
         "resizable": true,
         "title": "RustyFrog - v0.1",
-        "minWidth": 1200,
+        "minWidth": 1400,
         "minHeight": 1000,
         "width": 900,
         "height": 800

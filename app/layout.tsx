@@ -18,8 +18,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="relative rounded-md">
+    <html lang="en" className="bg-apple-silver">
+      <body className="relative rounded-md bg-apple-silver">
         <MantineProvider>
           {/* Fixed MenuDrawer */}
           <div className="fixed top-5 left-5 z-20">
@@ -27,7 +27,7 @@ export default function RootLayout({
           </div>
 
           {/* Main Content Area */}
-          <main className="mt-20 p-6 border rounded-md m-4 border-gray-300">
+          <main className="mt-20 p-6 rounded-md m-2  bg-apple-silver">
             {children}
           </main>
         </MantineProvider>

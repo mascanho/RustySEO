@@ -29,6 +29,7 @@ function MenuDrawer() {
         radius="md"
         opened={opened}
         onClose={() => setOpened(false)}
+        title="Authentication"
         size={mobile ? "xs" : "13em"}
         className="overflow-hidden"
         overlayProps={{
@@ -36,7 +37,7 @@ function MenuDrawer() {
           blur: 3,
         }}
       >
-        <div className="flex flex-col space-y-3">
+        <div className="flex flex-col">
           {MENUS.map((menu) => {
             return (
               <a
@@ -52,7 +53,7 @@ function MenuDrawer() {
         </div>
       </Drawer>
 
-      <Group className="flex items-center justify-center pt-2">
+      <Group className="flex items-center justify-center mt-2  w-full">
         <button onClick={() => setOpened(true)}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -76,7 +77,7 @@ function MenuDrawer() {
             />
           </svg>
         </button>
-        <span className="">{path}</span>
+        <span>{path}</span>
       </Group>
     </>
   );

@@ -22,13 +22,13 @@
   }
 }
 
-body {
-  background: linear-gradient(
-    to bottom,
-    rgb(var(--background-start-rgb)) 0%,
-    rgb(var(--background-end-rgb)) 100%
-  );
-}
+/* body { */
+/*   background: linear-gradient( */
+/*     to bottom, */
+/*     rgb(var(--background-start-rgb)) 0%, */
+/*     rgb(var(--background-end-rgb)) 100% */
+/*   ); */
+/* } */
 
 @keyframes fadeIn {
   from {
