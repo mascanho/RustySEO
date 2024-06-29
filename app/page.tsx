@@ -6,8 +6,11 @@ import ResponseCodeEl from "./components/ResponseCode";
 import Indexation from "./components/Indexation";
 import openBrowserWindow from "./Hooks/OpenBrowserWindow";
 import replaceDoubleSlash from "./Hooks/DecodeURL";
-import SchemaParser from "./Hooks/JsonLd";
 import SchemaTextEncoder from "./Hooks/SchemaTest";
+import { CgWebsite } from "react-icons/cg";
+import MenuEl from "./components/ui/Menu";
+
+import { Tooltip, Button } from "@mantine/core";
 
 interface HomeProps {}
 
@@ -36,6 +39,7 @@ const Home: React.FC<HomeProps> = () => {
     setVisibleLinks([]);
     setHeadings([]);
     setAltTexts([]);
+    setImageLinks([]);
 
     invoke<{
       links: [];
@@ -103,6 +107,19 @@ const Home: React.FC<HomeProps> = () => {
   const linkedInInspect = replaceDoubleSlash(originalURL);
   const googleSchemaTestUrl = SchemaTextEncoder(originalURL);
 
+  // Extract the domain without protocol or subdomain
+  const domain = url
+    .replace("https://", "")
+    .replace("http://", "")
+    .replace("www.", "")
+    .split(/[/?#]/)[0];
+
+  // Find the last dot in the domain
+  const lastDotIndex = domain.lastIndexOf(".");
+
+  // Remove everything after the last dot
+  const domainWithoutLastPart = domain.substring(0, lastDotIndex);
+
   console.log("DATA");
   console.log(crawlResult);
   console.log(visibleLinks);
@@ -144,6 +161,7 @@ const Home: React.FC<HomeProps> = () => {
               width={24}
               height={24}
               color={"#000000"}
+              className="hover:text-blue-500 ease-in-out duration-300"
               fill={"none"}
             >
               <path
@@ -171,6 +189,7 @@ const Home: React.FC<HomeProps> = () => {
               height={24}
               color={"#000000"}
               fill={"none"}
+              className="hover:text-red-400"
             >
               <path
                 d="M15.7494 15L9.75 9M9.75064 15L15.75 9"
@@ -188,7 +207,44 @@ const Home: React.FC<HomeProps> = () => {
           </button>
         </div>
       </div>
-      <section className="grid sm:grid-cols-5 my-10 gap-y-5 pb-10">
+      <section className="w-full flex items-center space-x-2 justify-between">
+        <div className="flex items-center space-x-2">
+          <div className="uppercase overflow-x-hidden py-1 font-semibold flex items-center space-x-2 border border-apple-spaceGray border-2 text-sm shadow px-3 rounded-full">
+            <CgWebsite />
+            <span>{domainWithoutLastPart || "RustySEO"}</span>
+          </div>
+          <span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              width={16}
+              height={16}
+              color={"#000000"}
+              fill={"none"}
+            >
+              <path
+                d="M20 12L4 12"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M15 17C15 17 20 13.3176 20 12C20 10.6824 15 7 15 7"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </span>
+          <span>{url}</span>
+        </div>
+        <div>
+          <MenuEl />
+        </div>
+      </section>
+      <section className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-7 my-10 gap-y-5 pb-10">
         <PerformanceEl stat={1} />
         <ResponseCodeEl res={responseCode} />
         <PerformanceEl stat={1} />
@@ -197,7 +253,9 @@ const Home: React.FC<HomeProps> = () => {
         <Indexation index={indexType} />
         <Indexation index={indexType} />
       </section>
-      <section className="mb-10 flex-wrap w-full space-y-2 bg-white/40 p-4 rounded-b-md relative">
+      <section
+        className={`mb-10 flex-wrap w-full space-y-2 ${pageTitle[0]?.length > 0 ? "bg-white" : "bg-white/40"} p-4 rounded-b-md relative`}
+      >
         <div className="w-full bg-[#808080] left-0 -top-5 rounded-t-md h-8 absolute flex items-center justify-center">
           <h2 className="text-center font-semibold text-white">Head</h2>
         </div>
@@ -311,47 +369,51 @@ const Home: React.FC<HomeProps> = () => {
           <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full pb-2 text-center -mb-1">
             Image Analysis
           </h2>
-          <section className="overflow-auto h-96 bg-white/40 rounded-md">
-            <table className="w-full text-sm overflow-auto">
-              <thead>
-                <tr>
-                  <th className="text-xs w-1/5 border-r px-2 items-center align-middle">
-                    Image
-                  </th>
-                  <th className="text-xs w-2/5 px-2 border-r align-middle">
-                    Alt Text
-                  </th>
-                  <th className="text-xs w-2/5 px-2  align-middle">Link</th>
-                </tr>
-              </thead>
-              <tbody>
-                {imageLinks.map((image: any, index) => (
-                  <tr className="crawl-item" key={index}>
-                    <td className="px-2 py-1  justify-center items-center h-full">
-                      <a
-                        href={image.link}
-                        className="w-full h-full cursor-pointer"
-                      >
-                        <img
-                          src={image.link}
-                          alt=""
-                          className="m-auto w-12 object-contain"
-                        />
-                      </a>
-                    </td>
-                    <td className="px-2 py-1 text-xs">{image.alt_text}</td>
-                    <td
-                      onClick={(url) => {
-                        openBrowserWindow(image.link);
-                      }}
-                      className="px-2 py-1 cursor-pointer text-sm"
-                    >
-                      {image.link}
-                    </td>
+
+          <section className="overflow-auto h-96 bg-white bg-opacity-40 rounded-md">
+            {imageLinks.length > 0 || url === "" ? (
+              <table className="w-full text-sm overflow-auto">
+                <thead>
+                  <tr>
+                    <th className="text-xs w-1/5 border-r px-2 items-center align-middle">
+                      Image
+                    </th>
+                    <th className="text-xs w-2/5 px-2 border-r align-middle">
+                      Alt Text
+                    </th>
+                    <th className="text-xs w-2/5 px-2 align-middle">Link</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {imageLinks.map((image, index) => (
+                    <tr className="crawl-item" key={index}>
+                      <td className="px-2 py-1 text-center">
+                        <a href={image.link} className="block w-full h-full">
+                          <img
+                            src={image.link}
+                            alt={image.alt_text}
+                            className="m-auto w-12 h-12 object-contain"
+                          />
+                        </a>
+                      </td>
+                      <td className="px-2 py-1 text-xs">{image.alt_text}</td>
+                      <td
+                        onClick={() => {
+                          openBrowserWindow(image.link);
+                        }}
+                        className="px-2 py-1 cursor-pointer text-sm"
+                      >
+                        {image.link}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="h-96 flex items-center justify-center">
+                <p className="text-center">No images found</p>
+              </div>
+            )}
           </section>
           <div className="mx-auto text-center mt-4">
             <span>Images Found:</span>{" "}
@@ -401,12 +463,19 @@ const Home: React.FC<HomeProps> = () => {
             onClick={() => {
               openBrowserWindow(googleSchemaTestUrl);
             }}
-            className="mb-4"
+            className=" bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full text-center"
           >
-            Links
+            Page Schema
           </h2>
+
           <section className="mx-auto h-96 w-full rounded-md overflow-auto bg-white/40 relative">
-            <pre className="bg-white">{pageSchema}</pre>
+            {pageSchema.length === 0 ? (
+              <div className="h-full w-full flex items-center justify-center">
+                <p className="text-center m-auto">No Schema Found</p>
+              </div>
+            ) : (
+              <pre>{JSON.stringify(pageSchema, null, 2)}</pre>
+            )}
           </section>
           <div className="mx-auto text-center mt-4">
             <span>Headings Found:</span>{" "}
