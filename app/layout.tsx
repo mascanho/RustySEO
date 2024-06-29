@@ -19,10 +19,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="bg-apple-silver">
-      <body className="relative rounded-md bg-apple-silver">
+      <body className="relative rounded-md bg-apple-silver overflow-x-hidden">
         <MantineProvider>
           {/* Fixed MenuDrawer */}
-          <div className="fixed top-0 pl-7 z-20 bg-apple-silver h-20   border-b shadow w-full   ">
+          <div className="fixed top-0 pl-7 z-20 bg-apple-silver h-20   border-b shadow w-full overflow-x-hidden  ">
             <MenuDrawer />
           </div>
           {/* Main Content Area */}

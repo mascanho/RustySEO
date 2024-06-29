@@ -53,3 +53,70 @@ input:focus {
   outline: none;
   box-shadow: none; /* Removes any box-shadow if present */
 }
+
+/* Tables Styles */
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  background-color: white;
+  border-radius: 10px;
+}
+
+thead {
+  @apply bg-gray-400;
+}
+
+th {
+  padding: 5px 0;
+  text-align: center;
+  position: sticky;
+  top: 0;
+  background-color: gray;
+  z-index: 1;
+  color: white;
+}
+
+tr {
+  padding: 20px 0;
+  vertical-align: center;
+}
+
+td {
+  padding: 2px 0;
+  border: 1px solid #ddd;
+  vertical-align: center;
+}
+
+/* WebKit (Chrome, Safari) */
+/* Adjust scrollbar width, track color, and thumb color */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-apple-spaceGray/20 rounded-md;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #e5b862; /* Golden color for the thumb */
+  border-radius: 5px;
+}
+
+/* Firefox */
+/* Adjust scrollbar width and thumb color */
+/* Note: Firefox does not currently support styling the track separately */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #e5b862 rgba(255, 223, 186, 0.5); /* Golden thumb with light golden track */
+  overflow-x: hidden;
+}
+
+/* General scrollbar styles */
+/* Adjust scrollbar width and thumb color for any overflow container */
+.overflow-auto {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #e5b862 rgba(255, 223, 186, 0.5); /* Golden thumb with light golden track */
+}

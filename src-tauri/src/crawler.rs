@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CrawlResult {
-    pub links: Vec<String>,
+    pub links: Vec<(String, String)>,
     pub headings: Vec<String>,
     pub alt_texts: Vec<String>,
     pub elapsed_time: u128,
@@ -38,7 +38,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     }
 
     let client = Client::new();
-    let mut response = client
+    let response = client
         .get(&url)
         .send()
         .await
@@ -66,6 +66,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut nofollow = false;
     let mut index_type = Vec::new();
     let mut image_links = Vec::new();
+    let mut alt_text_count = Vec::new();
 
     if response.status().is_success() {
         let body = response
@@ -84,11 +85,12 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
 
         response_code = status_code.parse::<u16>().unwrap();
 
-        // Fetch links
+        // Fetch Links and each respective anchor text
         let link_selector = Selector::parse("a").map_err(|e| format!("Selector error: {}", e))?;
-        for element in document.select(&link_selector) {
-            if let Some(link) = element.value().attr("href") {
-                links.push(link.to_string());
+        for link in document.select(&link_selector) {
+            if let Some(href) = link.value().attr("href") {
+                let text = link.text().collect::<Vec<_>>().join(" ").trim().to_string();
+                links.push((href.to_string(), text));
             }
         }
 
@@ -105,14 +107,24 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         // Fetch all the images in the url and their respective alt texts, display them
         for img in document.select(&img_selector) {
             if let Some(link) = img.value().attr("src") {
-                let alt_text = img.value().attr("alt").unwrap_or("").to_string();
+                let mut alt_text = img.value().attr("alt").unwrap_or("").to_string();
+
+                if alt_text.is_empty() {
+                    let no_alt_text;
+                    no_alt_text = link.to_string();
+                    alt_text_count.push(no_alt_text)
+                }
+
                 let image_info = ImageInfo {
                     link: link.to_string(),
                     alt_text,
                 };
+
                 image_links.push(image_info);
             }
-        } // Fetch headings
+        }
+
+        // Fetch headings
         for level in 1..=6 {
             let heading_selector = Selector::parse(&format!("h{}", level))
                 .map_err(|e| format!("Selector error: {}", e))?;
@@ -188,6 +200,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     println!("Response code: {:?}", response_code);
     println!("Index Type: {:?}", index_type);
     println!("Image Links: {:?}", image_links);
+    println!("Alt text count: {:?}", alt_text_count.len());
 
     // Measure elapsed time
     let start_time = Instant::now();

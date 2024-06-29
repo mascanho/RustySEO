@@ -2,10 +2,9 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import PerformanceEl from "./components/Performance";
-
-import { CiImageOn } from "react-icons/ci";
 import ResponseCodeEl from "./components/ResponseCode";
 import Indexation from "./components/Indexation";
+import openBrowserWindow from "./Hooks/OpenBrowserWindow";
 
 interface HomeProps {}
 
@@ -56,7 +55,7 @@ const Home: React.FC<HomeProps> = () => {
         setHreflangs(result.hreflangs);
         setResponseCode(result.response_code);
         setIndexType(result.index_type);
-        setImageLinks(result.image_links);
+        showImageLinksSequentially(result.image_links);
       })
       .catch(console.error);
   };
@@ -65,7 +64,7 @@ const Home: React.FC<HomeProps> = () => {
     links.forEach((link, index) => {
       setTimeout(() => {
         setVisibleLinks((prevVisibleLinks) => [...prevVisibleLinks, link]);
-      }, index * 500); // Adjust timing for each link appearance
+      }, index * 50); // Adjust timing for each link appearance
     });
   };
 
@@ -73,7 +72,7 @@ const Home: React.FC<HomeProps> = () => {
     headings.forEach((heading, index) => {
       setTimeout(() => {
         setHeadings((prevHeadings) => [...prevHeadings, heading]);
-      }, index * 500); // Adjust timing for each link appearance
+      }, index * 50); // Adjust timing for each link appearance
     });
   };
 
@@ -81,7 +80,15 @@ const Home: React.FC<HomeProps> = () => {
     alt_texts.forEach((alt_text, index) => {
       setTimeout(() => {
         setAltTexts((prevAltTexts) => [...prevAltTexts, alt_text]);
-      }, index * 500); // Adjust timing for each link appearance
+      }, index * 50); // Adjust timing for each link appearance
+    });
+  };
+
+  const showImageLinksSequentially = (image_links: string[]) => {
+    image_links.forEach((image_link, index) => {
+      setTimeout(() => {
+        setImageLinks((prevImageLinks) => [...prevImageLinks, image_link]);
+      }, index * 50); // Adjust timing for each link appearance
     });
   };
 
@@ -100,7 +107,7 @@ const Home: React.FC<HomeProps> = () => {
   return (
     <>
       {/* Fixed Input and Crawl Button */}
-      <div className="fixed top-0 left-1/2 transform -translate-x-1/2 flex justify-center items-center py-5 z-30 ">
+      <div className="fixed top-0 left-1/2 transform -translate-x-1/2 flex justify-center items-center py-5 z-40 ">
         <div className="relative backdrop-blur-lg">
           <input
             className="border border-gray-300 rounded-lg h-10 min-w-80 w-96 pl-3 pt-1 pr-2 placeholder:text-gray-500"
@@ -109,6 +116,11 @@ const Home: React.FC<HomeProps> = () => {
             value={url}
             onChange={handleChange}
             style={{ outline: "none", boxShadow: "none" }}
+            onKeyPress={(event) => {
+              if (event.key === "Enter") {
+                handleClick(url);
+              }
+            }}
           />
           <button
             onClick={() => handleClick(url)}
@@ -164,11 +176,24 @@ const Home: React.FC<HomeProps> = () => {
           </button>
         </div>
       </div>
-
-      <section className="mb-10 flex-wrap w-full space-y-2">
-        <div className="flex">
-          <span className="flex">Page Title:</span>
-          <span className="flex ml-2">{pageTitle[0]}</span>
+      <section className="grid sm:grid-cols-5 my-10 gap-y-5 pb-10">
+        <PerformanceEl stat={1} />
+        <ResponseCodeEl res={responseCode} />
+        <PerformanceEl stat={1} />
+        <PerformanceEl stat={1} />
+        <Indexation index={indexType} />
+        <Indexation index={indexType} />
+        <Indexation index={indexType} />
+      </section>
+      <section className="mb-10 flex-wrap w-full space-y-2 bg-white/40 p-4 rounded-b-md relative">
+        <div className="w-full bg-[#808080] left-0 -top-5 rounded-t-md h-8 absolute flex items-center justify-center">
+          <h2 className="text-center font-semibold text-white">Head</h2>
+        </div>
+        <div className="flex items-center">
+          <span className="flex font-semibold bg-apple-spaceGray text-white p-1 px-2 rounded-md">
+            Page Title
+          </span>
+          <span className="flex ml-2 text-black/80">{pageTitle[0]}</span>
           {pageTitle.length > 0 ? (
             <span
               className={`flex ml-4 ${pageTitle[0].length > 60 ? "text-red-500" : "text-green-500"}`}
@@ -179,9 +204,11 @@ const Home: React.FC<HomeProps> = () => {
             ""
           )}
         </div>
-        <div className="flex">
-          <span className="mr-2">Meta Description:</span>
-          {pageDescription[0]}
+        <div className="flex items-center">
+          <span className="mr-2 font-semibold bg-apple-spaceGray text-white p-1 px-2 rounded-md">
+            Meta Description
+          </span>
+          <span className="text-black/80"> {pageDescription[0]}</span>
           {pageDescription[0]?.length > 0 ? (
             <span
               className={`flex ml-4 ${pageDescription.length > 160 ? "text-red-500" : "text-green-500"}`}
@@ -189,21 +216,25 @@ const Home: React.FC<HomeProps> = () => {
               {pageDescription[0].length} / 160
             </span>
           ) : (
-            <span className="ml-2">-</span>
+            <span className="ml-2"></span>
           )}
         </div>
         <div className="flex items-center">
-          <span>Canonical URL:</span>
+          <span className="font-semibold  bg-apple-spaceGray text-white p-1 px-2 rounded-md">
+            Canonical URL
+          </span>
           {<span className="ml-2">{canonical}</span>}
         </div>
         <div className="flex items-center">
-          <span className="mr-1">Hreflangs:</span>
+          <span className="mr-1 font-semibold bg-apple-spaceGray text-white p-1 px-2 rounded-md">
+            Hreflangs
+          </span>
           <div className="flex">
             {hreflangs[0] === "No hreflang found"
               ? "No hreflang found"
               : hreflangs.map((hreflang) => (
                   <span
-                    className="flex ml-2 border p-1 rounded-md"
+                    className="flex ml-2  bg-apple-gold text-white p-1 px-2 rounded-md"
                     key={hreflang}
                   >
                     {hreflang}
@@ -212,40 +243,95 @@ const Home: React.FC<HomeProps> = () => {
           </div>
         </div>
       </section>
-      <section className="grid grid-cols-5">
-        <PerformanceEl stat={1} />
-        <ResponseCodeEl res={responseCode} />
-        <PerformanceEl stat={1} />
-        <PerformanceEl stat={1} />
-        <Indexation index={indexType} />
-      </section>
-      <main className="mx-auto w-full flex flex-col my-10 items-center rounded-lg text-black overflow-auto grid grid-cols-3 gap-x-6 gap-y-12">
+
+      {/* TABLES START HERE */}
+
+      <main className="mx-auto w-full flex flex-col my-20 items-center rounded-lg text-black relative overflow-auto mt-10 grid grid-cols-3 gap-x-6 gap-y-12">
         <div>
-          <h2 className="mb-4">Links</h2>
-          <section className="mx-auto h-96 w-full rounded-md overflow-auto bg-white/40 relative">
-            {visibleLinks.map((link) => (
-              <div className="crawl-item" key={link}>
-                <a className="block py-1 px-2 bg-white border-b w-full">
-                  {link}
-                </a>
-              </div>
-            ))}
+          <h2 className="mb-4 font-semibold">Page Links</h2>
+
+          <section className="mx-auto h-96 w-full rounded-md overflow-auto relative bg-white/40">
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <th className="text-xs w-1/5 border-r align-middle">
+                    Anchor Text
+                  </th>
+                  <th className="text-xs px-2 py-1 w-2/3 align-middle">URL</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleLinks.map((link, index) => (
+                  <tr key={index} className="align-middle">
+                    <td className="crawl-item border-r border-b h-full">
+                      <a
+                        href={link[0]}
+                        className="block py-1 px-2 text-sm flex items-center w-[180px]"
+                      >
+                        {link[1] || "-"}
+                      </a>
+                    </td>
+                    <td className="h-full w-1/3 border-b">
+                      <a
+                        href={link[0]}
+                        className="py-1 px-2 bg-white  text-sm flex items-center"
+                      >
+                        {link[0]}
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </section>
           <div className="mx-auto text-center mt-4">
-            <span>Pages Crawled:</span>{" "}
+            <span>Links Found:</span>{" "}
             <span className="text-apple-blue">{visibleLinks.length}</span>
           </div>
         </div>
         <div>
           <h2 className="mb-4">Alt Text</h2>
-          <section className="mx-auto h-96 w-full rounded-md overflow-auto bg-white/40 relative">
-            {altTexts.map((link) => (
-              <div className="crawl-item" key={link}>
-                <a className="block py-1 px-2 bg-white border-b w-full flex items-center">
-                  <CiImageOn className="mr-1" /> {link}
-                </a>
-              </div>
-            ))}
+          <section className="overflow-auto h-96 bg-white/40 rounded-md">
+            <table className="w-full text-sm overflow-auto">
+              <thead>
+                <tr>
+                  <th className="text-xs w-1/5 border-r px-2 items-center align-middle">
+                    Image
+                  </th>
+                  <th className="text-xs w-2/5 px-2 border-r align-middle">
+                    Alt Text
+                  </th>
+                  <th className="text-xs w-2/5 px-2  align-middle">Link</th>
+                </tr>
+              </thead>
+              <tbody>
+                {imageLinks.map((image: any, index) => (
+                  <tr className="crawl-item" key={index}>
+                    <td className="px-2 py-1  justify-center items-center h-full">
+                      <a
+                        href={image.link}
+                        className="w-full h-full cursor-pointer"
+                      >
+                        <img
+                          src={image.link}
+                          alt=""
+                          className="m-auto w-12 object-contain"
+                        />
+                      </a>
+                    </td>
+                    <td className="px-2 py-1">{image.alt_text}</td>
+                    <td
+                      onClick={(url) => {
+                        openBrowserWindow(image.link);
+                      }}
+                      className="px-2 py-1 cursor-pointer"
+                    >
+                      {image.link}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </section>
           <div className="mx-auto text-center mt-4">
             <span>Images Found:</span>{" "}
@@ -255,19 +341,33 @@ const Home: React.FC<HomeProps> = () => {
         <div>
           <h2 className="mb-4">Links</h2>
           <section className="mx-auto h-96 w-full rounded-md overflow-auto bg-white/40 relative">
-            {headings.map((link) => {
-              const [headingType, headingText] = link.split(": ", 2);
-              return (
-                <div className="crawl-item" key={link}>
-                  <a className="block py-1 px-2 bg-white border-b w-full">
-                    <span className="font-bold text-apple-blue tex-base">
-                      {headingType}:{" "}
-                    </span>
-                    <span className="heading-text">{headingText}</span>
-                  </a>
-                </div>
-              );
-            })}
+            <table className="crawl-item">
+              <thead>
+                <tr>
+                  <th className="text-xs w-1/5 border-r align-middle">
+                    Heading Type
+                  </th>
+                  <th className="text-xs px-2 py-1 w-2/3 align-middle">
+                    Heading Text
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {headings.map((link, index) => {
+                  const [headingType, headingText] = link.split(": ", 2);
+                  return (
+                    <tr key={index} className="align-middle">
+                      <td className="crawl-item border-r border-b w-1/5 text-center h-full">
+                        {headingType}{" "}
+                      </td>
+                      <td className="h-full w-full border-b crawl-item pl-3">
+                        {headingText}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </section>
           <div className="mx-auto text-center mt-4">
             <span>Headings Found:</span>{" "}
@@ -296,25 +396,6 @@ const Home: React.FC<HomeProps> = () => {
             <span className="text-apple-blue">{headings.length}</span>
           </div>
         </div>
-
-        {imageLinks.map((image) => {
-          return (
-            <div className="crawl-item" key={image}>
-              <a
-                onClick={() => {
-                  window.open(image.link, "_blank");
-                }}
-                className="block py-1 px-2 bg-white border-b w-full"
-              >
-                <span className="font-bold text-apple-blue tex-base">
-                  <img className="w-14" src={image.link} />
-                </span>
-                <span> {image.link}</span>
-                <span className="text-red-500">{image.alt_text}</span>
-              </a>
-            </div>
-          );
-        })}
       </main>
     </>
   );
