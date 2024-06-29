@@ -12,6 +12,7 @@ import MenuEl from "./components/ui/Menu";
 
 import { Tooltip, Button } from "@mantine/core";
 import WordCountEl from "./components/WordCount";
+import ReadingTimeEl from "./components/ReadingTime";
 
 interface HomeProps {}
 
@@ -30,6 +31,7 @@ const Home: React.FC<HomeProps> = () => {
   const [imageLinks, setImageLinks] = useState<string[]>([]);
   const [pageSchema, setPageSchema] = useState<string[]>([]);
   const [wordCount, setWordCount] = useState<string[] | undefined>();
+  const [readingTime, setReadingTime] = useState<number | undefined>();
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(event.target.value);
@@ -57,6 +59,7 @@ const Home: React.FC<HomeProps> = () => {
       image_links: [];
       page_schema: [];
       words: [];
+      reading_time: number;
     }>("crawl", { url })
       .then((result) => {
         showLinksSequentially(result.links); // Show links one by one
@@ -71,6 +74,7 @@ const Home: React.FC<HomeProps> = () => {
         showImageLinksSequentially(result.image_links);
         setPageSchema(result.page_schema);
         setWordCount(result.words);
+        setReadingTime(result.reading_time);
       })
       .catch(console.error);
   };
@@ -138,6 +142,7 @@ const Home: React.FC<HomeProps> = () => {
   console.log(imageLinks);
   console.log(pageSchema, "Page Schema");
   console.log(wordCount, "---- The words");
+  console.log(readingTime, "Reading Time");
 
   return (
     <>
@@ -257,7 +262,7 @@ const Home: React.FC<HomeProps> = () => {
         <PerformanceEl stat={1} />
         <Indexation index={indexType} />
         <WordCountEl words={wordCount} />
-        <Indexation index={indexType} />
+        <ReadingTimeEl readingTime={readingTime} />
       </section>
       <section
         className={`mb-10 flex-wrap w-full space-y-2 ${pageTitle[0]?.length > 0 ? "bg-white" : "bg-white/40"} p-4 rounded-b-md relative`}

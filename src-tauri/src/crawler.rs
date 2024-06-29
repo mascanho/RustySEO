@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::{time::Instant, usize};
 
 use reqwest::{blocking::get, Client};
 use scraper::{Html, Selector};
@@ -20,6 +20,7 @@ pub struct CrawlResult {
     pub image_links: Vec<ImageInfo>,
     pub page_schema: Vec<String>,
     pub words: Vec<String>,
+    pub reading_time: usize,
 }
 
 #[derive(Serialize)]
@@ -199,20 +200,23 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             }
         }
 
-        // Fetch the word count on the url
-        let word_count_selector = Selector::parse("p").unwrap();
+        // Fetch the word count
+        let word_count_selector =
+            Selector::parse("body, h1, h2, h3, h4, h5, h6, p, span, li, div, a").unwrap();
+        let mut word_count = 0;
+
         for element in document.select(&word_count_selector) {
-            let word_count = element
-                .text()
-                .collect::<Vec<_>>()
-                .join(" ")
-                .trim()
-                .to_string();
-            words.push(word_count);
+            let text = element.text().collect::<Vec<_>>().join(" ");
+            word_count += text.split_whitespace().filter(|s| !s.is_empty()).count();
+
+            words.push(text);
         }
     } else {
         return Err(format!("Failed to fetch the URL: {}", response.status()));
     }
+
+    // calculate reading time
+    let reading_time = calculate_reading_time(words.len(), 150);
 
     println!("Links: {:?}", links);
     println!("Headings: {:?}", headings);
@@ -226,7 +230,8 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     println!("Image Links: {:?}", image_links);
     println!("Alt text count: {:?}", alt_text_count.len());
     println!("Page Schema: {:?}", page_schema);
-    println!("Word Count: {:?}", words.len());
+    println!("Word Count: {:?}", words);
+    println!("Reading Time: {:?}", reading_time);
 
     // Measure elapsed time
     let start_time = Instant::now();
@@ -254,5 +259,10 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         image_links,
         page_schema,
         words,
+        reading_time,
     })
+}
+
+pub fn calculate_reading_time(word_count: usize, words_per_minute: usize) -> usize {
+    (word_count as f64 / words_per_minute as f64).ceil() as usize
 }
