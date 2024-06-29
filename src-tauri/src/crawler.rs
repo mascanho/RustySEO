@@ -19,6 +19,7 @@ pub struct CrawlResult {
     pub index_type: Vec<String>,
     pub image_links: Vec<ImageInfo>,
     pub page_schema: Vec<String>,
+    pub words: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -63,12 +64,11 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut hreflangs: Vec<String> = Vec::new();
     let response_code: u16;
     // Initialize flags
-    let mut noindex = false;
-    let mut nofollow = false;
     let mut index_type = Vec::new();
     let mut image_links = Vec::new();
     let mut alt_text_count = Vec::new();
     let mut page_schema: Vec<String> = Vec::new();
+    let mut words = Vec::new();
 
     if response.status().is_success() {
         let body = response
@@ -198,6 +198,18 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
                 page_schema.push(schema.trim().to_string());
             }
         }
+
+        // Fetch the word count on the url
+        let word_count_selector = Selector::parse("p").unwrap();
+        for element in document.select(&word_count_selector) {
+            let word_count = element
+                .text()
+                .collect::<Vec<_>>()
+                .join(" ")
+                .trim()
+                .to_string();
+            words.push(word_count);
+        }
     } else {
         return Err(format!("Failed to fetch the URL: {}", response.status()));
     }
@@ -214,6 +226,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     println!("Image Links: {:?}", image_links);
     println!("Alt text count: {:?}", alt_text_count.len());
     println!("Page Schema: {:?}", page_schema);
+    println!("Word Count: {:?}", words.len());
 
     // Measure elapsed time
     let start_time = Instant::now();
@@ -240,5 +253,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         index_type,
         image_links,
         page_schema,
+        words,
     })
 }

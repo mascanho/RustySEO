@@ -11,6 +11,7 @@ import { CgWebsite } from "react-icons/cg";
 import MenuEl from "./components/ui/Menu";
 
 import { Tooltip, Button } from "@mantine/core";
+import WordCountEl from "./components/WordCount";
 
 interface HomeProps {}
 
@@ -28,6 +29,7 @@ const Home: React.FC<HomeProps> = () => {
   const [indexType, setIndexType] = useState<string[]>([]);
   const [imageLinks, setImageLinks] = useState<string[]>([]);
   const [pageSchema, setPageSchema] = useState<string[]>([]);
+  const [wordCount, setWordCount] = useState<string[] | undefined>();
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(event.target.value);
@@ -40,6 +42,7 @@ const Home: React.FC<HomeProps> = () => {
     setHeadings([]);
     setAltTexts([]);
     setImageLinks([]);
+    setWordCount([]);
 
     invoke<{
       links: [];
@@ -53,6 +56,7 @@ const Home: React.FC<HomeProps> = () => {
       index_type: [];
       image_links: [];
       page_schema: [];
+      words: [];
     }>("crawl", { url })
       .then((result) => {
         showLinksSequentially(result.links); // Show links one by one
@@ -66,6 +70,7 @@ const Home: React.FC<HomeProps> = () => {
         setIndexType(result.index_type);
         showImageLinksSequentially(result.image_links);
         setPageSchema(result.page_schema);
+        setWordCount(result.words);
       })
       .catch(console.error);
   };
@@ -132,6 +137,7 @@ const Home: React.FC<HomeProps> = () => {
   console.log(indexType);
   console.log(imageLinks);
   console.log(pageSchema, "Page Schema");
+  console.log(wordCount, "---- The words");
 
   return (
     <>
@@ -250,7 +256,7 @@ const Home: React.FC<HomeProps> = () => {
         <PerformanceEl stat={1} />
         <PerformanceEl stat={1} />
         <Indexation index={indexType} />
-        <Indexation index={indexType} />
+        <WordCountEl words={wordCount} />
         <Indexation index={indexType} />
       </section>
       <section
