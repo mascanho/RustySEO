@@ -18,6 +18,7 @@ pub struct CrawlResult {
     pub response_code: u16,
     pub index_type: Vec<String>,
     pub image_links: Vec<ImageInfo>,
+    pub page_schema: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -67,6 +68,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut index_type = Vec::new();
     let mut image_links = Vec::new();
     let mut alt_text_count = Vec::new();
+    let mut page_schema: Vec<String> = Vec::new();
 
     if response.status().is_success() {
         let body = response
@@ -187,6 +189,15 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
                 index_type.push(String::from("Not Available"));
             }
         }
+
+        // Fetch The page Schema
+        let schema_selector = Selector::parse("script[type='application/ld+json']").unwrap();
+
+        for element in document.select(&schema_selector) {
+            if let Some(schema) = element.text().next() {
+                page_schema.push(schema.trim().to_string());
+            }
+        }
     } else {
         return Err(format!("Failed to fetch the URL: {}", response.status()));
     }
@@ -202,6 +213,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     println!("Index Type: {:?}", index_type);
     println!("Image Links: {:?}", image_links);
     println!("Alt text count: {:?}", alt_text_count.len());
+    println!("Page Schema: {:?}", page_schema);
 
     // Measure elapsed time
     let start_time = Instant::now();
@@ -227,5 +239,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         response_code,
         index_type,
         image_links,
+        page_schema,
     })
 }

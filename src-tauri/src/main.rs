@@ -3,12 +3,12 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::sync::Mutex;
-
 use crawler::{CrawlResult, LinkResult};
 use tokio; // Ensure tokio is imported
 
 mod crawler;
+mod redirects;
+mod schema;
 mod sitemaps;
 
 #[tauri::command]
@@ -19,6 +19,11 @@ async fn crawl(url: String) -> Result<CrawlResult, String> {
         Ok(result) => Ok(result),
         Err(err) => Err(err),
     }
+}
+
+#[tauri::command]
+async fn get_schema() {
+    schema::schema();
 }
 
 #[tokio::main]
