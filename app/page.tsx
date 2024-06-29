@@ -5,6 +5,7 @@ import PerformanceEl from "./components/Performance";
 import ResponseCodeEl from "./components/ResponseCode";
 import Indexation from "./components/Indexation";
 import openBrowserWindow from "./Hooks/OpenBrowserWindow";
+import replaceDoubleSlash from "./Hooks/DecodeURL";
 
 interface HomeProps {}
 
@@ -91,6 +92,10 @@ const Home: React.FC<HomeProps> = () => {
       }, index * 50); // Adjust timing for each link appearance
     });
   };
+
+  // Generates a codified URL to use LinkedIn's social post tool
+  const originalURL = url;
+  const linkedInInspect = replaceDoubleSlash(originalURL);
 
   console.log("DATA");
   console.log(crawlResult);
@@ -190,7 +195,9 @@ const Home: React.FC<HomeProps> = () => {
           <h2 className="text-center font-semibold text-white">Head</h2>
         </div>
         <div className="flex items-center">
-          <span className="flex font-semibold bg-apple-spaceGray text-white p-1 px-2 rounded-md">
+          <span
+            className={`flex font-semibold ${pageTitle[0]?.length > 60 && "bg-red-500"} ${pageTitle[0]?.length < 60 && "bg-green-500"}   bg-apple-spaceGray text-white p-1 px-2 rounded-md`}
+          >
             Page Title
           </span>
           <span className="flex ml-2 text-black/80">{pageTitle[0]}</span>
@@ -205,7 +212,9 @@ const Home: React.FC<HomeProps> = () => {
           )}
         </div>
         <div className="flex items-center">
-          <span className="mr-2 font-semibold bg-apple-spaceGray text-white p-1 px-2 rounded-md">
+          <span
+            className={`flex mr-2 font-semibold ${pageTitle[0]?.length > 160 && "bg-red-500"} ${pageTitle[0]?.length < 160 && "bg-green-500"}   bg-apple-spaceGray text-white p-1 px-2 rounded-md`}
+          >
             Meta Description
           </span>
           <span className="text-black/80"> {pageDescription[0]}</span>
@@ -401,7 +410,14 @@ const Home: React.FC<HomeProps> = () => {
             <span>Headings Found:</span>{" "}
             <span className="text-apple-blue">{headings.length}</span>
           </div>
-        </div>
+        </div>{" "}
+        <a
+          onClick={() => {
+            openBrowserWindow(linkedInInspect);
+          }}
+        >
+          View preview
+        </a>
       </main>
     </>
   );
