@@ -6,6 +6,8 @@ import ResponseCodeEl from "./components/ResponseCode";
 import Indexation from "./components/Indexation";
 import openBrowserWindow from "./Hooks/OpenBrowserWindow";
 import replaceDoubleSlash from "./Hooks/DecodeURL";
+import SchemaParser from "./Hooks/JsonLd";
+import SchemaTextEncoder from "./Hooks/SchemaTest";
 
 interface HomeProps {}
 
@@ -22,6 +24,7 @@ const Home: React.FC<HomeProps> = () => {
   const [responseCode, setResponseCode] = useState<number | undefined>();
   const [indexType, setIndexType] = useState<string[]>([]);
   const [imageLinks, setImageLinks] = useState<string[]>([]);
+  const [pageSchema, setPageSchema] = useState<string[]>([]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(event.target.value);
@@ -45,6 +48,7 @@ const Home: React.FC<HomeProps> = () => {
       response_code: number;
       index_type: [];
       image_links: [];
+      page_schema: [];
     }>("crawl", { url })
       .then((result) => {
         showLinksSequentially(result.links); // Show links one by one
@@ -57,6 +61,7 @@ const Home: React.FC<HomeProps> = () => {
         setResponseCode(result.response_code);
         setIndexType(result.index_type);
         showImageLinksSequentially(result.image_links);
+        setPageSchema(result.page_schema);
       })
       .catch(console.error);
   };
@@ -96,6 +101,7 @@ const Home: React.FC<HomeProps> = () => {
   // Generates a codified URL to use LinkedIn's social post tool
   const originalURL = url;
   const linkedInInspect = replaceDoubleSlash(originalURL);
+  const googleSchemaTestUrl = SchemaTextEncoder(originalURL);
 
   console.log("DATA");
   console.log(crawlResult);
@@ -108,6 +114,7 @@ const Home: React.FC<HomeProps> = () => {
   console.log(responseCode);
   console.log(indexType);
   console.log(imageLinks);
+  console.log(pageSchema, "Page Schema");
 
   return (
     <>
@@ -390,21 +397,16 @@ const Home: React.FC<HomeProps> = () => {
           </div>
         </div>
         <div>
-          <h2 className="mb-4">Links</h2>
+          <h2
+            onClick={() => {
+              openBrowserWindow(googleSchemaTestUrl);
+            }}
+            className="mb-4"
+          >
+            Links
+          </h2>
           <section className="mx-auto h-96 w-full rounded-md overflow-auto bg-white/40 relative">
-            {headings.map((link) => {
-              const [headingType, headingText] = link.split(": ", 2);
-              return (
-                <div className="crawl-item" key={link}>
-                  <a className="block py-1 px-2 bg-white border-b w-full">
-                    <span className="font-bold text-apple-blue tex-base">
-                      {headingType}:{" "}
-                    </span>
-                    <span className="heading-text">{headingText}</span>
-                  </a>
-                </div>
-              );
-            })}
+            <pre className="bg-white">{pageSchema}</pre>
           </section>
           <div className="mx-auto text-center mt-4">
             <span>Headings Found:</span>{" "}
