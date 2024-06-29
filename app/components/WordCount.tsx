@@ -87,7 +87,7 @@ const WordCountEl = ({ words }: { words: string[] }) => {
       </Popover>
       <div className="flex flex-col space-y-2">
         <h2 className="font-bold">Word Count</h2>
-        <span className="text-xl">{words?.length} words</span>
+        <span className="text-xl">{words} words</span>
         <h2 className="text-xs underline cursor-pointer">
           View PageSpeed Insights
         </h2>

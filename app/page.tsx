@@ -30,7 +30,7 @@ const Home: React.FC<HomeProps> = () => {
   const [indexType, setIndexType] = useState<string[]>([]);
   const [imageLinks, setImageLinks] = useState<string[]>([]);
   const [pageSchema, setPageSchema] = useState<string[]>([]);
-  const [wordCount, setWordCount] = useState<string[] | undefined>();
+  const [wordCount, setWordCount] = useState<number | undefined>();
   const [readingTime, setReadingTime] = useState<number | undefined>();
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,7 +44,7 @@ const Home: React.FC<HomeProps> = () => {
     setHeadings([]);
     setAltTexts([]);
     setImageLinks([]);
-    setWordCount([]);
+    setWordCount(0);
 
     invoke<{
       links: [];
@@ -58,7 +58,7 @@ const Home: React.FC<HomeProps> = () => {
       index_type: [];
       image_links: [];
       page_schema: [];
-      words: [];
+      words_adjusted: number;
       reading_time: number;
     }>("crawl", { url })
       .then((result) => {
@@ -73,7 +73,7 @@ const Home: React.FC<HomeProps> = () => {
         setIndexType(result.index_type);
         showImageLinksSequentially(result.image_links);
         setPageSchema(result.page_schema);
-        setWordCount(result.words);
+        setWordCount(result.words_adjusted);
         setReadingTime(result.reading_time);
       })
       .catch(console.error);

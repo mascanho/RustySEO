@@ -21,6 +21,7 @@ pub struct CrawlResult {
     pub page_schema: Vec<String>,
     pub words: Vec<String>,
     pub reading_time: usize,
+    pub words_adjusted: usize,
 }
 
 #[derive(Serialize)]
@@ -202,7 +203,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
 
         // Fetch the word count
         let word_count_selector =
-            Selector::parse("body, h1, h2, h3, h4, h5, h6, p, span, li, div, a").unwrap();
+            Selector::parse("body, h1, h2, h3, h4, h5, h6, p, span, li, div, a, html").unwrap();
         let mut word_count = 0;
 
         for element in document.select(&word_count_selector) {
@@ -215,8 +216,12 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         return Err(format!("Failed to fetch the URL: {}", response.status()));
     }
 
+    // Fine tuning the word count given the GPT variance
+    let words_amount = words.len();
+    let words_adjusted = (words_amount as f64 * 1.8).round() as usize;
+
     // calculate reading time
-    let reading_time = calculate_reading_time(words.len(), 150);
+    let reading_time = calculate_reading_time(words_adjusted, 150);
 
     println!("Links: {:?}", links);
     println!("Headings: {:?}", headings);
@@ -232,6 +237,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     println!("Page Schema: {:?}", page_schema);
     println!("Word Count: {:?}", words);
     println!("Reading Time: {:?}", reading_time);
+    println!("Words Adjusted: {:?}", words_adjusted);
 
     // Measure elapsed time
     let start_time = Instant::now();
@@ -259,6 +265,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         image_links,
         page_schema,
         words,
+        words_adjusted,
         reading_time,
     })
 }
