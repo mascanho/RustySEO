@@ -95,6 +95,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         }
 
         // Fetch alt texts for images
+
         let img_selector = Selector::parse("img").map_err(|e| format!("Selector error: {}", e))?;
         for img in document.select(&img_selector) {
             if let Some(alt) = img.value().attr("alt") {
