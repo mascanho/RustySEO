@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use reqwest::Client;
+use reqwest::{blocking::get, Client};
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 

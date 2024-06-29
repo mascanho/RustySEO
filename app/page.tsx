@@ -110,7 +110,7 @@ const Home: React.FC<HomeProps> = () => {
       <div className="fixed top-0 left-1/2 transform -translate-x-1/2 flex justify-center items-center py-5 z-40 ">
         <div className="relative backdrop-blur-lg">
           <input
-            className="border border-gray-300 rounded-lg h-10 min-w-80 w-96 pl-3 pt-1 pr-2 placeholder:text-gray-500"
+            className="border border-gray-300 rounded-lg h-10 min-w-80 w-96 pl-3  pr-2 placeholder:text-gray-500"
             type="text"
             placeholder="https://yourwebsite.com"
             value={url}
@@ -246,7 +246,10 @@ const Home: React.FC<HomeProps> = () => {
 
       {/* TABLES START HERE */}
 
-      <main className="mx-auto w-full flex flex-col my-20 items-center rounded-lg text-black relative overflow-auto  grid grid-cols-3 gap-x-6 gap-y-12">
+      <main
+        id="tables"
+        className="mx-auto w-full flex-col my-20 items-center tables rounded-lg text-black relative overflow-auto grid grid-cols-2 gap-8 sm:grid-cols-2 2xl:grid-cols-3 "
+      >
         <div>
           <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full pb-2 text-center -mb-1">
             Link Analysis
@@ -320,12 +323,12 @@ const Home: React.FC<HomeProps> = () => {
                         />
                       </a>
                     </td>
-                    <td className="px-2 py-1">{image.alt_text}</td>
+                    <td className="px-2 py-1 text-xs">{image.alt_text}</td>
                     <td
                       onClick={(url) => {
                         openBrowserWindow(image.link);
                       }}
-                      className="px-2 py-1 cursor-pointer"
+                      className="px-2 py-1 cursor-pointer text-sm"
                     >
                       {image.link}
                     </td>
