@@ -105,7 +105,8 @@ const ReadingTimeEl = ({ readingTime }: { readingTime: number }) => {
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
           <Text size="sm">
-            This popover is shown when user hovers the target element
+            This metric shows the time it takes to read the article by an
+            average reader. Reading 200 words per minute.
           </Text>
         </Popover.Dropdown>
       </Popover>

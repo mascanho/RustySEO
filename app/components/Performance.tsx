@@ -82,7 +82,8 @@ const PerformanceEl = ({ stat }: { stat: number }) => {
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
           <Text size="sm">
-            This popover is shown when user hovers the target element
+            This metric shows the performance of the page/URL, synced from Page
+            Speed Insights.
           </Text>
         </Popover.Dropdown>
       </Popover>

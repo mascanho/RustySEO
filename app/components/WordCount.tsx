@@ -81,7 +81,8 @@ const WordCountEl = ({ words }: { words: string[] }) => {
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
           <Text size="sm">
-            This popover is shown when user hovers the target element
+            This metric shows the number of words found in text elements of the
+            page
           </Text>
         </Popover.Dropdown>
       </Popover>
