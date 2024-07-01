@@ -13,6 +13,7 @@ import MenuEl from "./components/ui/Menu";
 import { Tooltip, Button } from "@mantine/core";
 import WordCountEl from "./components/WordCount";
 import ReadingTimeEl from "./components/ReadingTime";
+import OpenGraphCard from "./components/ui/OpenGraphCard";
 
 interface HomeProps {}
 
@@ -32,6 +33,7 @@ const Home: React.FC<HomeProps> = () => {
   const [pageSchema, setPageSchema] = useState<string[]>([]);
   const [wordCount, setWordCount] = useState<number | undefined>();
   const [readingTime, setReadingTime] = useState<number | undefined>();
+  const [openGraphDetails, setOpenGraphDetails] = useState<any[]>([]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const userinput = event.target.value;
@@ -55,6 +57,7 @@ const Home: React.FC<HomeProps> = () => {
     setAltTexts([]);
     setImageLinks([]);
     setWordCount(0);
+    setOpenGraphDetails([]);
 
     invoke<{
       links: [];
@@ -70,6 +73,7 @@ const Home: React.FC<HomeProps> = () => {
       page_schema: [];
       words_adjusted: number;
       reading_time: number;
+      og_details: any[];
     }>("crawl", { url })
       .then((result) => {
         showLinksSequentially(result.links); // Show links one by one
@@ -85,6 +89,7 @@ const Home: React.FC<HomeProps> = () => {
         setPageSchema(result.page_schema);
         setWordCount(result.words_adjusted);
         setReadingTime(result.reading_time);
+        setOpenGraphDetails(result.og_details);
       })
       .catch(console.error);
   };
@@ -139,7 +144,7 @@ const Home: React.FC<HomeProps> = () => {
   // Remove everything after the last dot
   const domainWithoutLastPart = domain.substring(0, lastDotIndex);
 
-  console.log("DATA");
+  /*   console.log("DATA");
   console.log(crawlResult);
   console.log(visibleLinks);
   console.log(headings);
@@ -152,7 +157,8 @@ const Home: React.FC<HomeProps> = () => {
   console.log(imageLinks);
   console.log(pageSchema, "Page Schema");
   console.log(wordCount, "---- The words");
-  console.log(readingTime, "Reading Time");
+  console.log(readingTime, "Reading Time"); */
+  console.log(openGraphDetails);
 
   return (
     <>
@@ -303,7 +309,7 @@ const Home: React.FC<HomeProps> = () => {
         </div>
         <div className="flex items-center">
           <span
-            className={`flex mr-2 font-semibold ${pageTitle[0]?.length > 160 && "bg-red-500"} ${pageTitle[0]?.length < 160 && "bg-green-500"}   bg-apple-spaceGray text-white p-1 px-2 rounded-md`}
+            className={`flex mr-2 font-semibold ${pageTitle[0]?.length > 160 && "bg-red-500"} ${pageTitle[0]?.length < 160 && "bg-green-500"}  } ${pageDescription.length === 0 && "bg-apple-spaceGray"}   bg-apple-spaceGray text-white p-1 px-2 rounded-md`}
           >
             Meta Description
           </span>
@@ -534,6 +540,7 @@ const Home: React.FC<HomeProps> = () => {
           View preview
         </a>
       </main>
+      <OpenGraphCard openGraphDetails={openGraphDetails} />
     </>
   );
 };

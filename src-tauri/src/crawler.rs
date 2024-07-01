@@ -1,10 +1,20 @@
-use std::{env, time::Instant, usize};
+use std::{collections::HashMap, env, time::Instant, usize};
 
 use reqwest::{blocking::get, Client};
-use scraper::{Html, Selector};
+use scraper::{selectable::Selectable, Html, Selector};
 use serde::{Deserialize, Serialize};
 
 mod libs;
+
+#[derive(Debug, Serialize, Deserialize)]
+struct OgDetails {
+    title: Option<String>,
+    og_type: Option<String>, // `type` is a reserved keyword in Rust, so we use `og_type`
+    url: Option<String>,
+    image: Option<String>,
+    site_name: Option<String>,
+    description: Option<String>,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CrawlResult {
@@ -26,6 +36,7 @@ pub struct CrawlResult {
     pub words_adjusted: usize,
     pub finished_crawl: bool,
     // pub page_speed_results: Result<(), String>,
+    pub og_details: HashMap<String, Option<String>>,
 }
 
 #[derive(Serialize)]
@@ -75,6 +86,18 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut alt_text_count = Vec::new();
     let mut page_schema: Vec<String> = Vec::new();
     let mut words = Vec::new();
+    let mut og_details: HashMap<String, Option<String>> = [
+        ("title".to_string(), None),
+        ("description".to_string(), None),
+        ("url".to_string(), None),
+        ("image".to_string(), None),
+        ("type".to_string(), None),
+        ("site_name".to_string(), None),
+        ("description".to_string(), None),
+    ]
+    .iter()
+    .cloned()
+    .collect();
 
     if response.status().is_success() {
         let body = response
@@ -205,7 +228,26 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             }
         }
 
+        // Fetch the opengraph details
+        let og_selector = Selector::parse("meta[property^='og:']").unwrap();
+
+        for og in document.select(&og_selector) {
+            if let (Some(property), Some(content)) =
+                (og.value().attr("property"), og.value().attr("content"))
+            {
+                let key = property.trim_start_matches("og:").to_string();
+                if og_details.contains_key(&key) {
+                    og_details.insert(key, Some(content.to_string()));
+                }
+            }
+        }
+
+        // Output the details
+        for (key, value) in &og_details {
+            println!("{}: {:?}", key, value);
+        }
         // Fetch the word count
+
         let word_count_selector =
             Selector::parse("body, h1, h2, h3, h4, h5, h6, p, span, li, div, a, html").unwrap();
         let mut word_count = 0;
@@ -242,6 +284,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     // println!("Word Count: {:?}", words);
     // println!("Reading Time: {:?}", reading_time);
     // println!("Words Adjusted: {:?}", words_adjusted);
+    println!("Open Graph Details: {:?}", og_details);
 
     // Measure elapsed time
     let start_time = Instant::now();
@@ -303,6 +346,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         reading_time,
         finished_crawl,
         // page_speed_results,
+        og_details,
     })
 }
 
