@@ -4,6 +4,8 @@ use reqwest::{blocking::get, Client};
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 
+mod libs;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CrawlResult {
     pub links: Vec<(String, String)>,
@@ -225,21 +227,21 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     // calculate reading time
     let reading_time = calculate_reading_time(words_adjusted, 150);
 
-    println!("Links: {:?}", links);
-    println!("Headings: {:?}", headings);
-    println!("Alt texts: {:?}", alt_texts);
-    println!("Page title: {:?}", page_title);
-    println!("Page description: {:?}", page_description);
-    println!("Canonical URL: {:?}", canonical_url);
-    println!("Hreflang: {:?}", hreflangs);
-    println!("Response code: {:?}", response_code);
-    println!("Index Type: {:?}", index_type);
+    // println!("Links: {:?}", links);
+    // println!("Headings: {:?}", headings);
+    // println!("Alt texts: {:?}", alt_texts);
+    // println!("Page title: {:?}", page_title);
+    // println!("Page description: {:?}", page_description);
+    // println!("Canonical URL: {:?}", canonical_url);
+    // println!("Hreflang: {:?}", hreflangs);
+    // println!("Response code: {:?}", response_code);
+    // println!("Index Type: {:?}", index_type);
     // println!("Image Links: {:?}", image_links);
-    println!("Alt text count: {:?}", alt_text_count.len());
-    println!("Page Schema: {:?}", page_schema);
+    // println!("Alt text count: {:?}", alt_text_count.len());
+    // println!("Page Schema: {:?}", page_schema);
     // println!("Word Count: {:?}", words);
-    println!("Reading Time: {:?}", reading_time);
-    println!("Words Adjusted: {:?}", words_adjusted);
+    // println!("Reading Time: {:?}", reading_time);
+    // println!("Words Adjusted: {:?}", words_adjusted);
 
     // Measure elapsed time
     let start_time = Instant::now();
@@ -250,27 +252,33 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     }
 
     // Google Page Speed Check
-    // println!("Page Speed Results: {:?}", page_speed_results);
-
     // Schedule the asynchronous function to run in the background
-    let handle = tokio::spawn(get_page_speed_insights());
-
-    tokio::spawn(async {
-        match handle.await {
-            Ok(speed_results) => {
-                println!("Page Speed Results: {:#?}", speed_results);
-            }
-            Err(e) => {
-                println!("Error: {:?}", e);
-            }
-        }
-    });
+    // let handle = tokio::spawn(get_page_speed_insights());
+    //
+    // tokio::spawn(async {
+    //     match handle.await {
+    //         Ok(speed_results) => {
+    //             println!("Page Speed Results: {:#?}", speed_results);
+    //             let page_speed_results = speed_results;
+    //             page_speed_results
+    //         }
+    //         Err(e) => {
+    //             println!("Error: {:?}", e);
+    //             Err(format!("Error: {:?}", e))
+    //         }
+    //     }
+    // });
 
     let end_time = Instant::now();
     let elapsed_time = end_time.duration_since(start_time).as_millis();
     let finished_crawl = true;
     println!("Elapsed time: {} ms", elapsed_time);
     println!("Finished Crawl: {:?}", finished_crawl);
+
+    // SITEMAP FETCHING
+
+    let sitemap_from_url = libs::get_sitemap();
+    println!("Sitemap: {:?}", sitemap_from_url.await);
 
     Ok(CrawlResult {
         links,
@@ -342,7 +350,7 @@ pub async fn get_page_speed_insights() -> Result<PageSpeedResponse, String> {
 
             match serde_json::from_str::<PageSpeedResponse>(&response_text) {
                 Ok(page_speed_response) => {
-                    println!("{:#?}", page_speed_response);
+                    // println!("{:#?}", page_speed_response);
                     Ok(page_speed_response)
                 }
                 Err(e) => {

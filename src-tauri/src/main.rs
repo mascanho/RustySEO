@@ -9,7 +9,6 @@ use tokio; // Ensure tokio is imported
 mod crawler;
 mod redirects;
 mod schema;
-mod sitemaps;
 
 #[tauri::command]
 async fn crawl(url: String) -> Result<CrawlResult, String> {
@@ -19,11 +18,6 @@ async fn crawl(url: String) -> Result<CrawlResult, String> {
         Ok(result) => Ok(result),
         Err(err) => Err(err),
     }
-}
-
-#[tauri::command]
-async fn get_schema() {
-    schema::schema();
 }
 
 #[tokio::main]
