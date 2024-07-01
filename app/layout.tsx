@@ -18,7 +18,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="bg-apple-silver">
+    <html lang="en" className="bg-apple-silver min-w-[600px] overflow-x-auto">
       <body className="relative rounded-md bg-apple-silver overflow-x-hidden">
         <MantineProvider>
           {/* Fixed MenuDrawer */}

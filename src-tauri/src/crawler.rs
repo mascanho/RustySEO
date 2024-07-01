@@ -1,4 +1,4 @@
-use std::{time::Instant, usize};
+use std::{env, time::Instant, usize};
 
 use reqwest::{blocking::get, Client};
 use scraper::{Html, Selector};
@@ -22,6 +22,8 @@ pub struct CrawlResult {
     pub words: Vec<String>,
     pub reading_time: usize,
     pub words_adjusted: usize,
+    pub finished_crawl: bool,
+    // pub page_speed_results: Result<(), String>,
 }
 
 #[derive(Serialize)]
@@ -60,7 +62,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut headings = Vec::new();
     let mut alt_texts = Vec::new();
     let mut page_title: Vec<String> = Vec::new();
-    let mut indexation: Vec<String> = Vec::new();
+    let indexation: Vec<String> = Vec::new();
     let mut page_description: Vec<String> = Vec::new();
     let mut canonical_url: Vec<String> = Vec::new();
     let mut hreflangs: Vec<String> = Vec::new();
@@ -232,10 +234,10 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     println!("Hreflang: {:?}", hreflangs);
     println!("Response code: {:?}", response_code);
     println!("Index Type: {:?}", index_type);
-    println!("Image Links: {:?}", image_links);
+    // println!("Image Links: {:?}", image_links);
     println!("Alt text count: {:?}", alt_text_count.len());
     println!("Page Schema: {:?}", page_schema);
-    println!("Word Count: {:?}", words);
+    // println!("Word Count: {:?}", words);
     println!("Reading Time: {:?}", reading_time);
     println!("Words Adjusted: {:?}", words_adjusted);
 
@@ -247,8 +249,28 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         // Simulating some computational work
     }
 
+    // Google Page Speed Check
+    // println!("Page Speed Results: {:?}", page_speed_results);
+
+    // Schedule the asynchronous function to run in the background
+    let handle = tokio::spawn(get_page_speed_insights());
+
+    tokio::spawn(async {
+        match handle.await {
+            Ok(speed_results) => {
+                println!("Page Speed Results: {:#?}", speed_results);
+            }
+            Err(e) => {
+                println!("Error: {:?}", e);
+            }
+        }
+    });
+
     let end_time = Instant::now();
     let elapsed_time = end_time.duration_since(start_time).as_millis();
+    let finished_crawl = true;
+    println!("Elapsed time: {} ms", elapsed_time);
+    println!("Finished Crawl: {:?}", finished_crawl);
 
     Ok(CrawlResult {
         links,
@@ -267,9 +289,71 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         words,
         words_adjusted,
         reading_time,
+        finished_crawl,
+        // page_speed_results,
     })
 }
 
 pub fn calculate_reading_time(word_count: usize, words_per_minute: usize) -> usize {
     (word_count as f64 / words_per_minute as f64).ceil() as usize
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PageSpeedResponse {
+    id: String,
+    lighthouse_result: Option<LighthouseResult>,
+    // Add other fields based on the JSON response structure
+}
+
+#[derive(Debug, Deserialize)]
+struct LighthouseResult {
+    final_url: String,
+    categories: Categories,
+}
+
+#[derive(Debug, Deserialize)]
+struct Categories {
+    performance: Performance,
+}
+
+#[derive(Debug, Deserialize)]
+struct Performance {
+    score: Option<f64>,
+}
+
+pub async fn get_page_speed_insights() -> Result<PageSpeedResponse, String> {
+    dotenv::dotenv().ok();
+
+    let api_key = env::var("GOOGLE_API_KEY")
+        .map_err(|_| "GOOGLE_API_KEY not set in .env file".to_string())?;
+    let page_speed_url = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
+    let test_url = "https://blueyonder.com";
+
+    let client = Client::new();
+    let request_url = format!("{}?url={}&key={}", page_speed_url, test_url, api_key);
+
+    match client.get(&request_url).send().await {
+        Ok(response) => {
+            let response_text = response
+                .text()
+                .await
+                .map_err(|e| format!("Failed to read response text: {}", e))?;
+            println!("Raw JSON response: {}", response_text); // Debugging: print raw JSON response
+
+            match serde_json::from_str::<PageSpeedResponse>(&response_text) {
+                Ok(page_speed_response) => {
+                    println!("{:#?}", page_speed_response);
+                    Ok(page_speed_response)
+                }
+                Err(e) => {
+                    eprintln!("Failed to parse response: {}", e);
+                    Err(format!("Failed to parse response: {}", e))
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("Failed to make request: {}", e);
+            Err(format!("Failed to make request: {}", e))
+        }
+    }
 }

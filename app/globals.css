@@ -8,27 +8,11 @@
   --background-end-rgb: 255, 255, 255;
 }
 
-/* @media (prefers-color-scheme: dark) { */
-/*   :root { */
-/*     --foreground-rgb: 255, 255, 255; */
-/*     --background-start-rgb: 0, 0, 0; */
-/*     --background-end-rgb: 0, 0, 0; */
-/*   } */
-/* } */
-
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
 }
-
-/* body { */
-/*   background: linear-gradient( */
-/*     to bottom, */
-/*     rgb(var(--background-start-rgb)) 0%, */
-/*     rgb(var(--background-end-rgb)) 100% */
-/*   ); */
-/* } */
 
 @keyframes fadeIn {
   from {
@@ -48,7 +32,6 @@
     fadeIn 0.1s ease-in forwards;
 }
 
-/* Remove blue focus ring */
 input:focus {
   outline: none;
   box-shadow: none; /* Removes any box-shadow if present */
@@ -57,10 +40,9 @@ input:focus {
 /* Tables Styles */
 
 table {
-  border-collapse: collapse;
+  /* border-collapse: collapse; */
   width: 100%;
   background-color: white;
-  border-radius: 10px;
 }
 
 thead {
@@ -87,47 +69,3 @@ td {
   border: 1px solid #ddd;
   vertical-align: center;
 }
-
-/* WebKit (Chrome, Safari) */
-/* Adjust scrollbar width, track color, and thumb color */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-  z-index: 0;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-apple-spaceGray/20 rounded-md;
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: #e5b862; /* Golden color for the thumb */
-  border-radius: 5px;
-}
-
-/* Firefox */
-/* Adjust scrollbar width and thumb color */
-/* Note: Firefox does not currently support styling the track separately */
-html {
-  scrollbar-width: thin;
-  scrollbar-color: #e5b862 rgba(255, 223, 186, 0.5); /* Golden thumb with light golden track */
-  overflow-x: hidden;
-}
-
-/* General scrollbar styles */
-/* Adjust scrollbar width and thumb color for any overflow container */
-.overflow-auto {
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #e5b862 rgba(255, 223, 186, 0.5); /* Golden thumb with light golden track */
-}
-
-/* make tables responsive */
-/* @media screen and (min-width: 1500px) { */
-/*   #tables { */
-/*     overflow-x: auto; */
-/*     white-space: nowrap; */
-/*     grid-template-columns: repeat(auto-fit, minmax(300px, 2fr)); */
-/*     grid-gap: 4rem; */
-/*   } */
-/* } */

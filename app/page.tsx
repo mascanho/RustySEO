@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import PerformanceEl from "./components/Performance";
 import ResponseCodeEl from "./components/ResponseCode";
@@ -34,7 +34,17 @@ const Home: React.FC<HomeProps> = () => {
   const [readingTime, setReadingTime] = useState<number | undefined>();
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setUrl(event.target.value);
+    const userinput = event.target.value;
+    const lowercaseURL = userinput.toLowerCase();
+
+    if (
+      !lowercaseURL.includes("https://") &&
+      !lowercaseURL.includes("http://")
+    ) {
+      setUrl("https://" + userinput);
+    } else {
+      setUrl(lowercaseURL);
+    }
   };
 
   const handleClick = (url: string) => {
@@ -153,7 +163,7 @@ const Home: React.FC<HomeProps> = () => {
             className="border border-gray-300 rounded-lg h-10 min-w-80 w-96 pl-3  pr-2 placeholder:text-gray-500"
             type="text"
             placeholder="https://yourwebsite.com"
-            value={url}
+            // value={url}
             onChange={handleChange}
             style={{ outline: "none", boxShadow: "none" }}
             onKeyPress={(event) => {
@@ -216,6 +226,7 @@ const Home: React.FC<HomeProps> = () => {
               />
             </svg>{" "}
           </button>
+          {visibleLinks.length}
         </div>
       </div>
       <section className="w-full flex items-center space-x-2 justify-between">
@@ -255,7 +266,7 @@ const Home: React.FC<HomeProps> = () => {
           <MenuEl />
         </div>
       </section>
-      <section className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 2xl:grid-cols-7 my-10 gap-y-5 pb-10">
+      <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 my-10 gap-y-5 pb-10">
         <PerformanceEl stat={1} />
         <ResponseCodeEl res={responseCode} />
         <PerformanceEl stat={1} />
@@ -264,6 +275,9 @@ const Home: React.FC<HomeProps> = () => {
         <WordCountEl words={wordCount} />
         <ReadingTimeEl readingTime={readingTime} />
       </section>
+
+      {/* Head starts here */}
+
       <section
         className={`mb-10 flex-wrap w-full space-y-2 ${pageTitle[0]?.length > 0 ? "bg-white" : "bg-white/40"} p-4 rounded-b-md relative`}
       >
@@ -327,13 +341,30 @@ const Home: React.FC<HomeProps> = () => {
                 ))}
           </div>
         </div>
+        <div className="flex items-center">
+          <span
+            className={`flex mr-2 font-semibold ${pageTitle[0]?.length > 160 && "bg-red-500"} ${pageTitle[0]?.length < 160 && "bg-green-500"}   bg-apple-spaceGray text-white p-1 px-2 rounded-md`}
+          >
+            OpenGraph
+          </span>
+          <span className="text-black/80"> {pageDescription[0]}</span>
+          {pageDescription[0]?.length > 0 ? (
+            <span
+              className={`flex ml-4 ${pageDescription.length > 160 ? "text-red-500" : "text-green-500"}`}
+            >
+              {pageDescription[0].length} / 160
+            </span>
+          ) : (
+            <span className="ml-2"></span>
+          )}
+        </div>
       </section>
 
       {/* TABLES START HERE */}
 
       <main
         id="tables"
-        className="mx-auto w-full flex-col my-20 items-center tables rounded-lg text-black relative overflow-auto grid grid-cols-2 gap-8 sm:grid-cols-2 2xl:grid-cols-3 "
+        className="mx-auto w-full flex-col my-20 items-center tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-8 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 "
       >
         <div>
           <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full pb-2 text-center -mb-1">
@@ -396,14 +427,14 @@ const Home: React.FC<HomeProps> = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {imageLinks.map((image, index) => (
+                  {imageLinks.map((image: any, index) => (
                     <tr className="crawl-item" key={index}>
-                      <td className="px-2 py-1 text-center">
+                      <td className="px-2 py-1 text-center min-w-16">
                         <a href={image.link} className="block w-full h-full">
                           <img
                             src={image.link}
                             alt={image.alt_text}
-                            className="m-auto w-12 h-12 object-contain"
+                            className="m-auto w-16 h-12 object-contain"
                           />
                         </a>
                       </td>
