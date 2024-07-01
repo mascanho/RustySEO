@@ -276,9 +276,13 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     println!("Finished Crawl: {:?}", finished_crawl);
 
     // SITEMAP FETCHING
-
-    let sitemap_from_url = libs::get_sitemap();
+    let sitemap_from_url = libs::get_sitemap(&url);
     println!("Sitemap: {:?}", sitemap_from_url.await);
+
+    // Robots FETCHING
+    let url_clone = &url.clone();
+    let robots_from_url = libs::get_robots(&url);
+    println!("Robots: {:#?}", robots_from_url.await);
 
     Ok(CrawlResult {
         links,

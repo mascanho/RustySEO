@@ -1,16 +1,22 @@
 use reqwest::Client;
 use std::error::Error;
-use xml::reader::{EventReader, XmlEvent};
+use url::{ParseError, Url};
 
-pub async fn get_sitemap() -> Result<(), Box<dyn Error>> {
-    // URL of the website's sitemap.xml
-    let url = "https://relexsolutions.com/sitemap.xml";
+pub async fn get_sitemap(url: &String) -> Result<(), Box<dyn Error>> {
+    // Parse the input URL
+    let url = Url::parse(&url)?;
+
+    // Extract the domain
+    let domain = url.domain().ok_or(ParseError::EmptyHost)?;
+
+    // Construct the new URL with sitemap.xml appended
+    let sitemap_url = format!("https://{}/sitemap.xml", domain);
 
     // Create a reqwest Client
     let client = Client::new();
 
     // Send GET request to fetch the sitemap.xml asynchronously
-    let response = client.get(url).send().await?;
+    let response = client.get(&sitemap_url).send().await?;
 
     // Check if the request was successful
     if !response.status().is_success() {
@@ -53,4 +59,41 @@ pub async fn get_sitemap() -> Result<(), Box<dyn Error>> {
     println!("Sitemap parsing completed");
 
     Ok(())
+}
+
+pub async fn get_robots(domain_url: &String) -> Result<String, Box<dyn Error>> {
+    // Parse the input URL
+    let url = Url::parse(domain_url)?;
+    println!("URL: {:?}", url);
+
+    // Extract the scheme and domain and construct the robots.txt URL
+    let scheme = url.scheme();
+    println!("Scheme: {:?}", scheme);
+    let domain = url.domain().ok_or("Invalid URL: No domain found")?;
+    println!("Domain: {:?}", domain);
+    let robots_txt_url = format!("{}://{}/robots.txt", scheme, domain);
+    println!("Robots.txt URL: {:?}", robots_txt_url);
+
+    let robots_fixed = robots_txt_url.replace("https://www.", "https://");
+
+    // Create a reqwest Client
+
+    let client = Client::new();
+
+    // Fetch the robots.txt file asynchronously
+    let response = client.get(&robots_fixed).send().await?;
+
+    // Check if the request was successful
+    if !response.status().is_success() {
+        return Err(format!(
+            "Error: Request was not successful. Status code: {}",
+            response.status()
+        )
+        .into());
+    }
+
+    // Read the response body as text
+    let body = response.text().await?;
+
+    Ok(body)
 }
