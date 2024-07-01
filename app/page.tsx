@@ -516,7 +516,9 @@ const Home: React.FC<HomeProps> = () => {
                 <p className="text-center m-auto">No Schema Found</p>
               </div>
             ) : (
-              <pre>{JSON.stringify(pageSchema, null, 2)}</pre>
+              <pre className="bg-white w-full overflow-scroll ">
+                {pageSchema}
+              </pre>
             )}
           </section>
           <div className="mx-auto text-center mt-4">
