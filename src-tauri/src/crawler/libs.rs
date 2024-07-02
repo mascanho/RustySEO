@@ -1,6 +1,50 @@
 use reqwest::Client;
-use std::error::Error;
+use serde::{Deserialize, Serialize};
+use std::{error::Error, process::Command};
 use url::{ParseError, Url};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CoreWebVitals {
+    pub lcp: Lcp,
+    pub fid: String,
+    pub cls: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Lcp {
+    renderTime: f64,
+    size: usize,
+    element: String,
+    id: String,
+    url: String,
+    loadTime: f64,
+    startTime: f64,
+    duration: f64,
+}
+
+// ANALYSE CORE WEB VITALS WITH PUPETEER
+
+pub fn get_core_web_vitals(url: &String) -> Result<CoreWebVitals, String> {
+    let output = Command::new("node")
+        .arg("measure_core_web_vitals.js")
+        .arg(url)
+        .output()
+        .map_err(|e| e.to_string())?;
+
+    if output.status.success() {
+        let output_str = String::from_utf8_lossy(&output.stdout);
+        let core_web_vitals: CoreWebVitals =
+            serde_json::from_str(&output_str).map_err(|e| e.to_string())?;
+        println!("Core Web Vitals: {:#?}", core_web_vitals);
+        Ok(core_web_vitals)
+    } else {
+        let error_str = String::from_utf8_lossy(&output.stderr);
+        println!("Error on CWV: {}", error_str);
+        Err(error_str.to_string())
+    }
+}
+
+// GET THE SITEMAP
 
 pub async fn get_sitemap(url: &String) -> Result<(), Box<dyn Error>> {
     // Parse the input URL

@@ -1,7 +1,10 @@
-use std::{collections::HashMap, env, time::Instant, usize};
+use std::{
+    collections::HashMap, env, error::Error, fs::File, io::Write, process::Output, time::Instant,
+    usize,
+};
 
-use reqwest::{blocking::get, Client};
-use scraper::{selectable::Selectable, Html, Selector};
+use reqwest::Client;
+use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 
 mod libs;
@@ -14,6 +17,14 @@ struct OgDetails {
     image: Option<String>,
     site_name: Option<String>,
     description: Option<String>,
+    author: Option<String>,
+    locale: Option<String>,
+    publisher: Option<String>,
+    modified_time: Option<String>,
+    published_time: Option<String>,
+    alternate_links: Option<Vec<String>>,
+    keywords: Option<Vec<String>>,
+    // Add other fields based on the JSON response structure
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -27,7 +38,6 @@ pub struct CrawlResult {
     pub page_description: Vec<String>,
     pub canonical_url: Vec<String>,
     pub hreflangs: Vec<String>,
-    pub response_code: u16,
     pub index_type: Vec<String>,
     pub image_links: Vec<ImageInfo>,
     pub page_schema: Vec<String>,
@@ -35,11 +45,11 @@ pub struct CrawlResult {
     pub reading_time: usize,
     pub words_adjusted: usize,
     pub finished_crawl: bool,
-    // pub page_speed_results: Result<(), String>,
+    pub page_speed_results: Vec<Result<(), String>>,
     pub og_details: HashMap<String, Option<String>>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct LinkResult {
     pub links: Vec<String>,
 }
@@ -63,14 +73,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         .await
         .map_err(|e| format!("Request error: {}", e))?;
 
-    let response_headers = response
-        .headers()
-        .iter()
-        .map(|(k, v)| (k.to_string(), v.to_str().unwrap().to_string()))
-        .collect::<Vec<_>>();
-
-    let status = response.status();
-
+    let page_speed_results = Vec::new();
     let mut links = Vec::new();
     let mut headings = Vec::new();
     let mut alt_texts = Vec::new();
@@ -79,7 +82,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut page_description: Vec<String> = Vec::new();
     let mut canonical_url: Vec<String> = Vec::new();
     let mut hreflangs: Vec<String> = Vec::new();
-    let response_code: u16;
     // Initialize flags
     let mut index_type = Vec::new();
     let mut image_links = Vec::new();
@@ -105,16 +107,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             .await
             .map_err(|e| format!("Response error: {}", e))?;
         let document = Html::parse_document(&body);
-
-        // Fetch response code
-        //format the response code, remove the "OK"
-        let status_string = status.to_string();
-        let status_code = status_string.replace("OK", "");
-        // remove the whitespace
-        let status_code = status_code.trim();
-        status_code.parse::<u16>().unwrap();
-
-        response_code = status_code.parse::<u16>().unwrap();
 
         // Fetch Links and each respective anchor text
         let link_selector = Selector::parse("a").map_err(|e| format!("Selector error: {}", e))?;
@@ -284,7 +276,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     // println!("Word Count: {:?}", words);
     // println!("Reading Time: {:?}", reading_time);
     // println!("Words Adjusted: {:?}", words_adjusted);
-    println!("Open Graph Details: {:?}", og_details);
+    // println!("Open Graph Details: {:?}", og_details);
 
     // Measure elapsed time
     let start_time = Instant::now();
@@ -295,22 +287,21 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     }
 
     // Google Page Speed Check
-    // Schedule the asynchronous function to run in the background
-    // let handle = tokio::spawn(get_page_speed_insights());
-    //
-    // tokio::spawn(async {
-    //     match handle.await {
-    //         Ok(speed_results) => {
-    //             println!("Page Speed Results: {:#?}", speed_results);
-    //             let page_speed_results = speed_results;
-    //             page_speed_results
-    //         }
-    //         Err(e) => {
-    //             println!("Error: {:?}", e);
-    //             Err(format!("Error: {:?}", e))
-    //         }
-    //     }
-    // });
+    let handle = tokio::spawn(get_page_speed_insights());
+
+    tokio::spawn(async {
+        match handle.await {
+            Ok(speed_results) => {
+                println!("Page Speed Results: {:#?}", speed_results);
+
+                Ok(())
+            }
+            Err(e) => {
+                println!("Error: {:?}", e);
+                Err(format!("Error: {:?}", e))
+            }
+        }
+    });
 
     let end_time = Instant::now();
     let elapsed_time = end_time.duration_since(start_time).as_millis();
@@ -323,7 +314,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     println!("Sitemap: {:?}", sitemap_from_url.await);
 
     // Robots FETCHING
-    let url_clone = &url.clone();
     let robots_from_url = libs::get_robots(&url);
     println!("Robots: {:#?}", robots_from_url.await);
 
@@ -337,7 +327,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         page_description,
         canonical_url,
         hreflangs,
-        response_code,
         index_type,
         image_links,
         page_schema,
@@ -345,7 +334,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         words_adjusted,
         reading_time,
         finished_crawl,
-        // page_speed_results,
+        page_speed_results,
         og_details,
     })
 }
@@ -354,25 +343,31 @@ pub fn calculate_reading_time(word_count: usize, words_per_minute: usize) -> usi
     (word_count as f64 / words_per_minute as f64).ceil() as usize
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct PageSpeedResponse {
     id: String,
+    captcha_result: Option<String>,
     lighthouse_result: Option<LighthouseResult>,
     // Add other fields based on the JSON response structure
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct LighthouseResult {
     final_url: String,
     categories: Categories,
+    lighthouse_version: String,
+    user_agent: String,
+    run_warnings: Vec<String>,
+    fetch_time: String,
+    // Add other fields based on the JSON response structure
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct Categories {
     performance: Performance,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 struct Performance {
     score: Option<f64>,
 }
@@ -394,13 +389,18 @@ pub async fn get_page_speed_insights() -> Result<PageSpeedResponse, String> {
                 .text()
                 .await
                 .map_err(|e| format!("Failed to read response text: {}", e))?;
-            println!("Raw JSON response: {}", response_text); // Debugging: print raw JSON response
 
+            // Save the raw JSON response into a file
+            let mut file = File::create("page_speed_results.json")
+                .map_err(|e| format!("Failed to create file: {}", e))?;
+            file.write_all(&response_text.as_bytes())
+                .map_err(|e| format!("Failed to write to file: {}", e))?;
+
+            // println!("Raw JSON response: {}", response_text);
+
+            // Parse the response text into PageSpeedResponse struct
             match serde_json::from_str::<PageSpeedResponse>(&response_text) {
-                Ok(page_speed_response) => {
-                    // println!("{:#?}", page_speed_response);
-                    Ok(page_speed_response)
-                }
+                Ok(page_speed_response) => Ok(page_speed_response),
                 Err(e) => {
                     eprintln!("Failed to parse response: {}", e);
                     Err(format!("Failed to parse response: {}", e))

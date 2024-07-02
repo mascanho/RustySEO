@@ -128,7 +128,7 @@ const Home: React.FC<HomeProps> = () => {
 
   // Generates a codified URL to use LinkedIn's social post tool
   const originalURL = url;
-  const linkedInInspect = replaceDoubleSlash(originalURL);
+  const linkedInInspect: any = replaceDoubleSlash(originalURL);
   const googleSchemaTestUrl = SchemaTextEncoder(originalURL);
 
   // Extract the domain without protocol or subdomain
@@ -540,7 +540,10 @@ const Home: React.FC<HomeProps> = () => {
           View preview
         </a>
       </main>
-      <OpenGraphCard openGraphDetails={openGraphDetails} />
+      <OpenGraphCard
+        linkedInInspect={linkedInInspect}
+        openGraphDetails={openGraphDetails}
+      />
     </>
   );
 };
