@@ -348,12 +348,20 @@ pub struct PageSpeedResponse {
 struct LighthouseResult {
     categories: Categories,
     lighthouseVersion: String,
+    diagnostics: Option<serde_json::Value>,
+    audits: Option<serde_json::Value>,
     // Add other fields based on the JSON response structure
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 struct Categories {
     performance: Performance,
+    // Add other fields based on the JSON response structure
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct audits {
+    score: Option<f64>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -367,10 +375,10 @@ pub async fn get_page_speed_insights(url: String) -> Result<PageSpeedResponse, S
     let api_key = env::var("GOOGLE_API_KEY")
         .map_err(|_| "GOOGLE_API_KEY not set in .env file".to_string())?;
     let page_speed_url = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
-    let test_url = "https://blueyonder.com";
+    // let test_url = "https://blueyonder.com";
 
     let client = Client::new();
-    let request_url = format!("{}?url={}&key={}", page_speed_url, test_url, api_key);
+    let request_url = format!("{}?url={}&key={}", page_speed_url, url, api_key);
 
     match client.get(&request_url).send().await {
         Ok(response) => {
