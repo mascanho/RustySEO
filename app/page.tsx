@@ -34,6 +34,7 @@ const Home: React.FC<HomeProps> = () => {
   const [wordCount, setWordCount] = useState<number | undefined>();
   const [readingTime, setReadingTime] = useState<number | undefined>();
   const [openGraphDetails, setOpenGraphDetails] = useState<any[]>([]);
+  const [pageSpeed, setPageSpeed] = useState<any[]>([]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const userinput = event.target.value;
@@ -58,6 +59,7 @@ const Home: React.FC<HomeProps> = () => {
     setImageLinks([]);
     setWordCount(0);
     setOpenGraphDetails([]);
+    setPageSpeed([]);
 
     invoke<{
       links: [];
@@ -93,6 +95,12 @@ const Home: React.FC<HomeProps> = () => {
       })
       .catch(console.error);
   };
+
+  function handleSpeed() {
+    invoke<{}>("fetch_page_speed", { url: "slimstock.com" })
+      .then((result) => console.log(result))
+      .catch(console.error);
+  }
 
   const showLinksSequentially = (links: string[]) => {
     links.forEach((link, index) => {
@@ -157,8 +165,9 @@ const Home: React.FC<HomeProps> = () => {
   console.log(imageLinks);
   console.log(pageSchema, "Page Schema");
   console.log(wordCount, "---- The words");
-  console.log(readingTime, "Reading Time"); */
-  console.log(openGraphDetails);
+  console.log(readingTime, "Reading Time"); 
+  console.log(openGraphDetails); */
+  console.log(pageSpeed);
 
   return (
     <>
@@ -236,6 +245,9 @@ const Home: React.FC<HomeProps> = () => {
         </div>
       </div>
       <section className="w-full flex items-center space-x-2 justify-between">
+        <button onClick={() => handleSpeed()} type="button">
+          pagespeed
+        </button>
         <div className="flex items-center space-x-2">
           <div className="uppercase overflow-x-hidden py-1 font-semibold flex items-center space-x-2 border border-apple-spaceGray border-2 text-sm shadow px-3 rounded-full">
             <CgWebsite />

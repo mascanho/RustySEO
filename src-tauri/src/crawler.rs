@@ -1,11 +1,15 @@
 use std::{
-    collections::HashMap, env, error::Error, fs::File, io::Write, process::Output, time::Instant,
+    collections::HashMap,
+    env,
+    fs::{self, File},
+    io::{Read, Write},
     usize,
 };
 
 use reqwest::Client;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 mod libs;
 
@@ -32,7 +36,6 @@ pub struct CrawlResult {
     pub links: Vec<(String, String)>,
     pub headings: Vec<String>,
     pub alt_texts: Vec<String>,
-    pub elapsed_time: u128,
     pub indexation: Vec<String>,
     pub page_title: Vec<String>,
     pub page_description: Vec<String>,
@@ -44,8 +47,7 @@ pub struct CrawlResult {
     pub words: Vec<String>,
     pub reading_time: usize,
     pub words_adjusted: usize,
-    pub finished_crawl: bool,
-    pub page_speed_results: Vec<Result<(), String>>,
+    pub page_speed_results: Vec<Result<Value, String>>,
     pub og_details: HashMap<String, Option<String>>,
 }
 
@@ -73,7 +75,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         .await
         .map_err(|e| format!("Request error: {}", e))?;
 
-    let page_speed_results = Vec::new();
+    let mut page_speed_results = Vec::new();
     let mut links = Vec::new();
     let mut headings = Vec::new();
     let mut alt_texts = Vec::new();
@@ -278,36 +280,22 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     // println!("Words Adjusted: {:?}", words_adjusted);
     // println!("Open Graph Details: {:?}", og_details);
 
-    // Measure elapsed time
-    let start_time = Instant::now();
-
-    // Simulate some computational work (replace with actual logic)
-    for _ in 0..1_000_000 {
-        // Simulating some computational work
-    }
-
     // Google Page Speed Check
-    let handle = tokio::spawn(get_page_speed_insights());
-
-    tokio::spawn(async {
-        match handle.await {
-            Ok(speed_results) => {
-                println!("Page Speed Results: {:#?}", speed_results);
-
-                Ok(())
-            }
-            Err(e) => {
-                println!("Error: {:?}", e);
-                Err(format!("Error: {:?}", e))
-            }
-        }
-    });
-
-    let end_time = Instant::now();
-    let elapsed_time = end_time.duration_since(start_time).as_millis();
-    let finished_crawl = true;
-    println!("Elapsed time: {} ms", elapsed_time);
-    println!("Finished Crawl: {:?}", finished_crawl);
+    // let handle = tokio::spawn(get_page_speed_insights(url.clone()));
+    //
+    // tokio::spawn(async {
+    //     match handle.await {
+    //         Ok(speed_results) => {
+    //             println!("Page Speed Results: {:#?}", speed_results);
+    //
+    //             Ok(())
+    //         }
+    //         Err(e) => {
+    //             println!("Error: {:?}", e);
+    //             Err(format!("Error: {:?}", e))
+    //         }
+    //     }
+    // });
 
     // SITEMAP FETCHING
     let sitemap_from_url = libs::get_sitemap(&url);
@@ -317,11 +305,17 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let robots_from_url = libs::get_robots(&url);
     println!("Robots: {:#?}", robots_from_url.await);
 
+    // CORE WEB VITALS
+    // let cwv = helper().await.and_then(|cwv| Ok(cwv));
+    // println!("Core Web Vitals: {:#?}", cwv);
+    // page_speed_results.push(cwv);
+    // println!("Page Speed Results: {:#?}", page_speed_results);
+    // println!("####### CORE WEB VITALS HAS FINISHED #############");
+
     Ok(CrawlResult {
         links,
         headings,
         alt_texts,
-        elapsed_time,
         indexation,
         page_title,
         page_description,
@@ -333,7 +327,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         words,
         words_adjusted,
         reading_time,
-        finished_crawl,
         page_speed_results,
         og_details,
     })
@@ -347,18 +340,14 @@ pub fn calculate_reading_time(word_count: usize, words_per_minute: usize) -> usi
 pub struct PageSpeedResponse {
     id: String,
     captcha_result: Option<String>,
-    lighthouse_result: Option<LighthouseResult>,
+    lighthouseResult: Option<LighthouseResult>,
     // Add other fields based on the JSON response structure
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 struct LighthouseResult {
-    final_url: String,
     categories: Categories,
-    lighthouse_version: String,
-    user_agent: String,
-    run_warnings: Vec<String>,
-    fetch_time: String,
+    lighthouseVersion: String,
     // Add other fields based on the JSON response structure
 }
 
@@ -372,7 +361,7 @@ struct Performance {
     score: Option<f64>,
 }
 
-pub async fn get_page_speed_insights() -> Result<PageSpeedResponse, String> {
+pub async fn get_page_speed_insights(url: String) -> Result<PageSpeedResponse, String> {
     dotenv::dotenv().ok();
 
     let api_key = env::var("GOOGLE_API_KEY")
@@ -391,12 +380,12 @@ pub async fn get_page_speed_insights() -> Result<PageSpeedResponse, String> {
                 .map_err(|e| format!("Failed to read response text: {}", e))?;
 
             // Save the raw JSON response into a file
-            let mut file = File::create("page_speed_results.json")
-                .map_err(|e| format!("Failed to create file: {}", e))?;
-            file.write_all(&response_text.as_bytes())
-                .map_err(|e| format!("Failed to write to file: {}", e))?;
+            // let mut file = File::create("page_speed_results.json")
+            //     .map_err(|e| format!("Failed to create file: {}", e))?;
+            // file.write_all(&response_text.as_bytes())
+            //     .map_err(|e| format!("Failed to write to file: {}", e))?;
 
-            // println!("Raw JSON response: {}", response_text);
+            println!("Raw JSON response: {}", response_text);
 
             // Parse the response text into PageSpeedResponse struct
             match serde_json::from_str::<PageSpeedResponse>(&response_text) {
@@ -412,4 +401,27 @@ pub async fn get_page_speed_insights() -> Result<PageSpeedResponse, String> {
             Err(format!("Failed to make request: {}", e))
         }
     }
+}
+
+pub async fn helper() -> Result<Value, String> {
+    // Attempt to open the file
+    let file_path = "page_speed_results.json";
+    let mut file = File::open(file_path).map_err(|e| format!("Failed to open file: {}", e))?;
+
+    // Initialize an empty string to hold the file contents
+    let mut response_text = String::new();
+
+    // Read the file contents into the string
+    file.read_to_string(&mut response_text)
+        .map_err(|e| format!("Failed to read file: {}", e))?;
+
+    // Print the contents of the file
+    println!("Page Speed Results: {}", response_text);
+
+    // Attempt to parse the file contents as JSON
+    let json: Value =
+        serde_json::from_str(&response_text).map_err(|e| format!("Failed to parse JSON: {}", e))?;
+
+    // Return the parsed JSON
+    Ok(json)
 }
