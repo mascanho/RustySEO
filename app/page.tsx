@@ -4,7 +4,6 @@ import { invoke } from "@tauri-apps/api/tauri";
 import PerformanceEl from "./components/Performance";
 import ResponseCodeEl from "./components/ResponseCode";
 import Indexation from "./components/Indexation";
-// import openBrowserWindow from "./Hooks/OpenBrowserWindow";
 import replaceDoubleSlash from "./Hooks/DecodeURL";
 import SchemaTextEncoder from "./Hooks/SchemaTest";
 import { CgWebsite } from "react-icons/cg";
@@ -18,6 +17,8 @@ import GooglePreview from "./components/GooglePreview";
 import FcpEl from "./components/Fcp";
 import DomElements from "./components/DomElements";
 import SpeedIndex from "./components/SpeedIndex";
+import { open } from "@tauri-apps/api/shell";
+import openBrowserWindow from "./Hooks/OpenBrowserWindow";
 
 interface HomeProps {}
 
@@ -161,7 +162,7 @@ const Home: React.FC<HomeProps> = () => {
   // Generates a codified URL to use LinkedIn's social post tool
   const originalURL = url;
   const linkedInInspect: any = replaceDoubleSlash(originalURL);
-  const googleSchemaTestUrl = SchemaTextEncoder(originalURL);
+  const googleSchemaTestUrl: any = SchemaTextEncoder(originalURL);
 
   // Extract the domain without protocol or subdomain
   const domain = url
@@ -504,7 +505,7 @@ const Home: React.FC<HomeProps> = () => {
                       <td className="px-2 py-1 text-xs">{image.alt_text}</td>
                       <td
                         onClick={() => {
-                          // openBrowserWindow(image.link);
+                          openBrowserWindow(image.link);
                         }}
                         className="px-2 py-1 cursor-pointer text-sm"
                       >
@@ -566,7 +567,7 @@ const Home: React.FC<HomeProps> = () => {
         <div>
           <h2
             onClick={() => {
-              // openBrowserWindow(googleSchemaTestUrl);
+              openBrowserWindow(googleSchemaTestUrl);
             }}
             className=" bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full text-center"
           >
@@ -591,7 +592,9 @@ const Home: React.FC<HomeProps> = () => {
         </div>{" "}
         <a
           onClick={() => {
-            // openBrowserWindow(linkedInInspect);
+            openBrowserWindow(
+              "https://www.google.com/search?q=site:linkedin.com/in/",
+            );
           }}
         >
           View preview

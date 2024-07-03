@@ -1,9 +1,9 @@
 "use client";
-import { shell } from "@tauri-apps/api";
+import { open } from "@tauri-apps/api/shell";
 
 const openBrowserWindow = async (url: any): Promise<void> => {
   try {
-    await shell.open(url); // Use an object with uri property
+    await open(url);
     console.log("Browser window opened successfully");
   } catch (error) {
     console.error(error);

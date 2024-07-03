@@ -4,7 +4,8 @@
     "beforeBuildCommand": "npm run build",
     "beforeDevCommand": "npm run dev",
     "devPath": "http://localhost:3000",
-    "distDir": "../out"
+    "distDir": "../out",
+    "withGlobalTauri": true
   },
   "package": {
     "productName": "RustySEO",
@@ -12,6 +13,13 @@
   },
   "tauri": {
     "allowlist": {
+      "shell": {
+        "all": false,
+        "execute": false,
+        "open": false,
+        "scope": [],
+        "sidecar": false
+      },
       "all": true
     },
     "bundle": {
