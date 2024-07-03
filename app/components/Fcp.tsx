@@ -3,8 +3,17 @@ import React from "react";
 
 import { useDisclosure } from "@mantine/hooks";
 import { Popover, Text, Button } from "@mantine/core";
+import openBrowserWindow from "../Hooks/OpenBrowserWindow";
 
-const WordCountEl = ({ words }: { words: number | undefined }) => {
+const FcpEl = ({
+  stat,
+  loading,
+  url,
+}: {
+  stat: any;
+  loading: boolean;
+  url: string;
+}) => {
   const [opened, { close, open }] = useDisclosure(false);
   return (
     <section className="border p-4 border-apple-spaceGray shadow bg-white w-60 rounded-md space-y-2 relative">
@@ -18,21 +27,15 @@ const WordCountEl = ({ words }: { words: number | undefined }) => {
           fill={"none"}
         >
           <path
-            d="M13.2852 19.3647L5.82243 20.7506C4.39103 21.0164 3.67534 21.1493 3.26303 20.737C2.85072 20.3246 2.98362 19.6089 3.24943 18.1774L4.63523 10.7143C4.85745 9.51762 4.96856 8.91925 5.36302 8.5577C5.75749 8.19616 6.47889 8.1256 7.9217 7.98448C9.31227 7.84847 10.6283 7.37177 12 6L18 12.0005C16.6283 13.3723 16.1513 14.6874 16.0151 16.0781C15.8738 17.5211 15.8031 18.2426 15.4416 18.637C15.0801 19.0314 14.4818 19.1425 13.2852 19.3647Z"
+            d="M10 4C10 2.89543 10.8954 2 12 2H13C14.1046 2 15 2.89543 15 4V6.55337C15 7.86603 15.8534 9.02626 17.1065 9.41722L17.8935 9.66278C19.1466 10.0537 20 11.214 20 12.5266V14C20 14.5523 19.5523 15 19 15H6C5.44772 15 5 14.5523 5 14V12.5266C5 11.214 5.85339 10.0537 7.10648 9.66278L7.89352 9.41722C9.14661 9.02626 10 7.86603 10 6.55337V4Z"
             stroke="currentColor"
             strokeWidth="1.5"
-            strokeLinejoin="round"
           />
           <path
-            d="M11 15.2105C10.4405 15.1197 9.92895 14.8763 9.52632 14.4737M9.52632 14.4737C9.12368 14.0711 8.8803 13.5595 8.78947 13M9.52632 14.4737L4 20"
+            d="M6.00217 15C6.15797 16.3082 5.4957 19.5132 4 21.8679C4 21.8679 14.2924 23.0594 15.6851 17.9434V19.8712C15.6851 20.8125 15.6851 21.2831 15.9783 21.5755C16.5421 22.1377 19.1891 22.1531 19.7538 21.5521C20.0504 21.2363 20.0207 20.7819 19.9611 19.8731C19.8629 18.3746 19.5932 16.4558 18.8523 15"
             stroke="currentColor"
             strokeWidth="1.5"
             strokeLinecap="round"
-          />
-          <path
-            d="M12 6C12.7123 4.9491 13.6771 3.1812 15.1065 3.01098C16.0822 2.89479 16.8906 3.70312 18.5072 5.31978L18.6802 5.49277C20.2969 7.10944 21.1052 7.91777 20.989 8.8935C20.8188 10.3229 19.0509 11.2877 18 12"
-            stroke="currentColor"
-            strokeWidth="1.5"
             strokeLinejoin="round"
           />
         </svg>{" "}
@@ -82,15 +85,53 @@ const WordCountEl = ({ words }: { words: number | undefined }) => {
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
           <Text size="sm">
-            This metric shows the number of words found in text elements of the
-            page
+            This metric shows the performance of the page/URL on Desktop, synced
+            from Page Speed Insights.
           </Text>
         </Popover.Dropdown>
       </Popover>
-      <div className="flex flex-col space-y-2">
-        <h2 className="font-bold">Word Count</h2>
-        <span className="text-xl">{words} words</span>
-        <h2 className="text-xs underline cursor-pointer">
+      <div className="flex flex-col space-y-2 h-fit">
+        <h2 className="font-bold">First Contentful Paint</h2>
+        <div className="text-xl h-8">
+          {loading ? (
+            <div className="-mt-1">
+              <svg
+                className="animate-spin h-9 w-9 mb-1"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            </div>
+          ) : (
+            <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
+              {stat?.lighthouseResult?.audits?.["first-contentful-paint"]
+                .displayValue || "..."}
+            </span>
+          )}{" "}
+        </div>
+        <h2
+          onClick={() =>
+            openBrowserWindow(
+              "https://pagespeed.web.dev/report?url=" + url ||
+                "No URL provided",
+            )
+          }
+          className="text-xs underline cursor-pointer"
+        >
           View PageSpeed Insights
         </h2>
       </div>
@@ -98,4 +139,4 @@ const WordCountEl = ({ words }: { words: number | undefined }) => {
   );
 };
 
-export default WordCountEl;
+export default FcpEl;

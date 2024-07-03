@@ -49,6 +49,7 @@ pub struct CrawlResult {
     pub words_adjusted: usize,
     pub page_speed_results: Vec<Result<Value, String>>,
     pub og_details: HashMap<String, Option<String>>,
+    pub favicon_url: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -102,6 +103,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     .iter()
     .cloned()
     .collect();
+    let mut favicon_url = Vec::new();
 
     if response.status().is_success() {
         let body = response
@@ -210,6 +212,14 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
                 }
             } else {
                 index_type.push(String::from("Not Available"));
+            }
+        }
+
+        // Fetch the favicon
+        let favicon_selector = Selector::parse("link[rel=icon]").unwrap();
+        for favicon in document.select(&favicon_selector) {
+            if let Some(favicon) = favicon.value().attr("href") {
+                favicon_url.push(favicon.to_string());
             }
         }
 
@@ -329,6 +339,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         reading_time,
         page_speed_results,
         og_details,
+        favicon_url,
     })
 }
 

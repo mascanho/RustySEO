@@ -9,23 +9,20 @@ export const OpenGraphCard = ({
   linkedInInspect: string | undefined;
 }) => {
   return (
-    <div className="border p-5 flex flex-col rounded-md items-center justify-center bg-white">
-      <div className="flex justify-between w-full items-center pb-3 h-10">
-        <h2 className="w-full ">
-          When this link is shared content will look like this:
-        </h2>
-        <span
-          className="px-3 hover:border-black transition-all duration-300 active:border-2 hover:bg-apple-spaceGray/40 py-1 text-sm w-fit flex flex-nowrap bg-apple-silver rounded-md text-right cursor-pointer font-semibold"
-          onClick={() => openBrowserWindow(linkedInInspect)}
-        >
-          Inspect
-        </span>
-      </div>
+    <div
+      className={`border p-4  flex flex-col rounded-md items-center justify-center ${openGraphDetails.length === 0 ? "bg-white/40 h-full" : "bg-white h-full"}`}
+    >
+      <span
+        className="absolute right-3 px-3 hover:border-black transition-all duration-300 active:border-2 hover:bg-apple-spaceGray py-1 text-xs w-fit flex flex-nowrap bg-apple-silver rounded-md text-right cursor-pointer"
+        onClick={() => openBrowserWindow(linkedInInspect)}
+      >
+        Inspect
+      </span>
       <div>
         <img
           src={openGraphDetails?.image}
           alt="OpenGraph Image"
-          className="rounded-md"
+          className="rounded-md w-2/4 h-auto ml-0"
         />
       </div>
       <div
@@ -38,25 +35,6 @@ export const OpenGraphCard = ({
           {openGraphDetails.url}
         </span>
       </div>
-
-      <table className="mt-4">
-        <thead>
-          <tr>
-            <th>Property</th>
-            <th>Value</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Object.entries(openGraphDetails).map(
-            ([key, value]: [string, any]) => (
-              <tr key={key}>
-                <td>{key}</td>
-                <td>{value}</td>
-              </tr>
-            ),
-          )}
-        </tbody>
-      </table>
     </div>
   );
 };

@@ -4,20 +4,27 @@ import { invoke } from "@tauri-apps/api/tauri";
 import PerformanceEl from "./components/Performance";
 import ResponseCodeEl from "./components/ResponseCode";
 import Indexation from "./components/Indexation";
-import openBrowserWindow from "./Hooks/OpenBrowserWindow";
+// import openBrowserWindow from "./Hooks/OpenBrowserWindow";
 import replaceDoubleSlash from "./Hooks/DecodeURL";
 import SchemaTextEncoder from "./Hooks/SchemaTest";
 import { CgWebsite } from "react-icons/cg";
 import MenuEl from "./components/ui/Menu";
+import { useDisclosure } from "@mantine/hooks";
 
-import { Tooltip, Button } from "@mantine/core";
 import WordCountEl from "./components/WordCount";
 import ReadingTimeEl from "./components/ReadingTime";
 import OpenGraphCard from "./components/ui/OpenGraphCard";
+import GooglePreview from "./components/GooglePreview";
+import FcpEl from "./components/Fcp";
+import DomElements from "./components/DomElements";
+import SpeedIndex from "./components/SpeedIndex";
 
 interface HomeProps {}
 
 const Home: React.FC<HomeProps> = () => {
+  // Mantine Collapse
+  const [opened, { toggle }] = useDisclosure(false);
+
   const [url, setUrl] = useState<string>("https://markwarrior.dev");
   const [crawlResult, setCrawlResult] = useState<string[]>([]);
   const [visibleLinks, setVisibleLinks] = useState<string[]>([]);
@@ -35,6 +42,8 @@ const Home: React.FC<HomeProps> = () => {
   const [readingTime, setReadingTime] = useState<number | undefined>();
   const [openGraphDetails, setOpenGraphDetails] = useState<any[]>([]);
   const [pageSpeed, setPageSpeed] = useState<any[]>([]);
+  const [favicon_url, setFavicon_url] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const userinput = event.target.value;
@@ -53,6 +62,7 @@ const Home: React.FC<HomeProps> = () => {
   const handleClick = (url: string) => {
     // Clear previous results before starting the new crawl
 
+    setLoading(!loading);
     handleSpeed(url);
     setCrawlResult([]);
     setVisibleLinks([]);
@@ -62,6 +72,15 @@ const Home: React.FC<HomeProps> = () => {
     setWordCount(0);
     setOpenGraphDetails([]);
     setPageSpeed([]);
+    setFavicon_url([]);
+    setPageTitle([]);
+    setPageDescription([]);
+    setCanonical([]);
+    setHreflangs([]);
+    setResponseCode(undefined);
+    setIndexType([]);
+    setPageSchema([]);
+    setReadingTime(undefined);
 
     invoke<{
       links: [];
@@ -78,6 +97,7 @@ const Home: React.FC<HomeProps> = () => {
       words_adjusted: number;
       reading_time: number;
       og_details: any[];
+      favicon_url: [];
     }>("crawl", { url })
       .then((result) => {
         showLinksSequentially(result.links); // Show links one by one
@@ -94,13 +114,15 @@ const Home: React.FC<HomeProps> = () => {
         setWordCount(result.words_adjusted);
         setReadingTime(result.reading_time);
         setOpenGraphDetails(result.og_details);
+        setFavicon_url(result.favicon_url);
       })
       .catch(console.error);
   };
 
   function handleSpeed(url: string) {
     invoke<{}>("fetch_page_speed", { url: url })
-      .then((result) => setPageSpeed(result))
+      .then((result: any) => setPageSpeed(result))
+      .then(() => setLoading(false))
       .catch(console.error);
   }
 
@@ -217,7 +239,7 @@ const Home: React.FC<HomeProps> = () => {
             </svg>{" "}
           </button>
           <button
-            onClick={() => window.location.reload()}
+            // onClick={() => window.location.reload()}
             className="absolute -right-20  top-[8px] rounded-lg px-1 flex items-center"
           >
             <svg
@@ -283,11 +305,13 @@ const Home: React.FC<HomeProps> = () => {
           <MenuEl />
         </div>
       </section>
-      <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 my-10 gap-y-5 pb-10">
-        <PerformanceEl stat={1} />
+      <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 my-10 gap-y-5 pb-5">
+        <PerformanceEl stat={pageSpeed} loading={loading} url={url} />
+        <FcpEl stat={pageSpeed} loading={loading} url={url} />
+        <DomElements stat={pageSpeed} loading={loading} url={url} />
+
+        <SpeedIndex stat={pageSpeed} loading={loading} url={url} />
         <ResponseCodeEl res={responseCode} />
-        <PerformanceEl stat={1} />
-        <PerformanceEl stat={1} />
         <Indexation index={indexType} />
         <WordCountEl words={wordCount} />
         <ReadingTimeEl readingTime={readingTime} />
@@ -298,8 +322,11 @@ const Home: React.FC<HomeProps> = () => {
       <section
         className={`mb-10 flex-wrap w-full space-y-2 ${pageTitle[0]?.length > 0 ? "bg-white" : "bg-white/40"} p-4 rounded-b-md relative`}
       >
-        <div className="w-full bg-[#808080] left-0 -top-5 rounded-t-md h-8 absolute flex items-center justify-center">
+        <div className="w-full bg-apple-spaceGray left-0 -top-5 rounded-t-md  h-8 absolute flex items-center justify-center">
           <h2 className="text-center font-semibold text-white">Head</h2>
+          <span className="pt-1 absolute right-2 bg-blue-400 rounded-md flex items-center text-xs px-2 text-white">
+            Preview
+          </span>
         </div>
         <div className="flex items-center">
           <span
@@ -381,18 +408,37 @@ const Home: React.FC<HomeProps> = () => {
 
       <main
         id="tables"
-        className="mx-auto w-full flex-col my-20 items-center tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-8 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 "
+        className="mx-auto w-full flex-col my-20 items-center tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-8 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-2 "
       >
+        <GooglePreview
+          favicon_url={favicon_url}
+          openGraphDetails={openGraphDetails}
+          url={url}
+        />
+        <div>
+          <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 relative px-2 rounded-t-md w-full  text-center pt-2">
+            Social Media Preview
+          </h2>
+
+          <section className="mx-auto h-96 w-full rounded-md overflow-auto relative bg-white/40">
+            {Object.keys(openGraphDetails).length > 0 && (
+              <OpenGraphCard
+                linkedInInspect={linkedInInspect}
+                openGraphDetails={openGraphDetails}
+              />
+            )}
+          </section>
+        </div>
         <div>
           <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full pb-2 text-center -mb-1">
             Link Analysis
           </h2>
 
-          <section className="mx-auto h-96 w-full rounded-md overflow-auto relative bg-white/40">
+          <section className="mx-auto h-96 w-full rounded-t-md overflow-auto relative bg-white/40">
             <table className="w-full">
               <thead>
                 <tr>
-                  <th className="text-xs w-1/5 text-apple-bl; border-r align-middle">
+                  <th className="text-xs w-1/5  border-r align-middle">
                     Anchor Text
                   </th>
                   <th className="text-xs px-2 py-1 w-2/3 align-middle">Href</th>
@@ -419,7 +465,7 @@ const Home: React.FC<HomeProps> = () => {
               </tbody>
             </table>
           </section>
-          <div className="mx-auto text-center mt-4">
+          <div className="mx-auto text-center  bg-white/40 py-1 rounded-b-md ">
             <span>Links Found:</span>{" "}
             <span className="text-apple-blue">{visibleLinks.length}</span>
           </div>
@@ -458,7 +504,7 @@ const Home: React.FC<HomeProps> = () => {
                       <td className="px-2 py-1 text-xs">{image.alt_text}</td>
                       <td
                         onClick={() => {
-                          openBrowserWindow(image.link);
+                          // openBrowserWindow(image.link);
                         }}
                         className="px-2 py-1 cursor-pointer text-sm"
                       >
@@ -520,7 +566,7 @@ const Home: React.FC<HomeProps> = () => {
         <div>
           <h2
             onClick={() => {
-              openBrowserWindow(googleSchemaTestUrl);
+              // openBrowserWindow(googleSchemaTestUrl);
             }}
             className=" bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full text-center"
           >
@@ -545,16 +591,12 @@ const Home: React.FC<HomeProps> = () => {
         </div>{" "}
         <a
           onClick={() => {
-            openBrowserWindow(linkedInInspect);
+            // openBrowserWindow(linkedInInspect);
           }}
         >
           View preview
         </a>
       </main>
-      <OpenGraphCard
-        linkedInInspect={linkedInInspect}
-        openGraphDetails={openGraphDetails}
-      />
     </>
   );
 };

@@ -1,9 +1,14 @@
+"use client";
 import React from "react";
 
 import { useDisclosure } from "@mantine/hooks";
 import { Popover, Text, Button } from "@mantine/core";
 
-const ReadingTimeEl = ({ readingTime }: { readingTime: number }) => {
+const ReadingTimeEl = ({
+  readingTime,
+}: {
+  readingTime: number | undefined;
+}) => {
   const [opened, { close, open }] = useDisclosure(false);
   return (
     <section className="border p-4 border-apple-spaceGray shadow bg-white w-60 rounded-md space-y-2 relative">

@@ -1,3 +1,4 @@
+"use client";
 function replaceDoubleSlash(originalURL: any) {
   try {
     // Step 1: Encode the original URL

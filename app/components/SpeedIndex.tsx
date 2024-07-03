@@ -5,7 +5,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { Popover, Text, Button } from "@mantine/core";
 import openBrowserWindow from "../Hooks/OpenBrowserWindow";
 
-const PerformanceEl = ({
+const SpeedIndex = ({
   stat,
   loading,
   url,
@@ -26,26 +26,13 @@ const PerformanceEl = ({
           color={"#a6a5a2"}
           fill={"none"}
         >
-          <circle
-            cx="12"
-            cy="18"
-            r="3"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          />
           <path
-            d="M12 15V10"
+            d="M18.001 20C16.3295 21.2558 14.2516 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 12.8634 21.8906 13.7011 21.6849 14.5003C21.4617 15.3673 20.5145 15.77 19.6699 15.4728C18.9519 15.2201 18.6221 14.3997 18.802 13.66C18.9314 13.1279 19 12.572 19 12C19 8.13401 15.866 5 12 5C8.13401 5 5 8.13401 5 12C5 15.866 8.13401 19 12 19C13.3197 19 14.554 18.6348 15.6076 18"
             stroke="currentColor"
             strokeWidth="1.5"
             strokeLinecap="round"
           />
-          <path
-            d="M22 13C22 7.47715 17.5228 3 12 3C6.47715 3 2 7.47715 2 13"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
+        </svg>{" "}
       </span>
       <Popover
         width={200}
@@ -98,7 +85,7 @@ const PerformanceEl = ({
         </Popover.Dropdown>
       </Popover>
       <div className="flex flex-col space-y-2 h-fit">
-        <h2 className="font-bold">Performance</h2>
+        <h2 className="font-bold">Speed Index</h2>
         <div className="text-xl h-8">
           {loading ? (
             <div className="-mt-1">
@@ -125,7 +112,7 @@ const PerformanceEl = ({
             </div>
           ) : (
             <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
-              {stat?.lighthouseResult?.categories?.performance?.score * 100 ||
+              {stat?.lighthouseResult?.audits?.["speed-index"].score * 100 ||
                 "..."}
             </span>
           )}{" "}
@@ -137,13 +124,15 @@ const PerformanceEl = ({
                 "No URL provided",
             )
           }
-          className="text-xs underline cursor-pointer"
+          className="text-xs  cursor-pointer"
         >
-          View PageSpeed Insights
+          Loading Time:{" "}
+          {stat?.lighthouseResult?.audits?.["speed-index"].displayValue ||
+            " ..."}
         </h2>
       </div>
     </section>
   );
 };
 
-export default PerformanceEl;
+export default SpeedIndex;
