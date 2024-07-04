@@ -20,6 +20,8 @@ import SpeedIndex from "./components/SpeedIndex";
 import { open } from "@tauri-apps/api/shell";
 import openBrowserWindow from "./Hooks/OpenBrowserWindow";
 import ContentSummary from "./components/ui/ContentSummary";
+import LinkAnalysis from "./components/ui/LinkAnalysis";
+import ImageAnalysis from "./components/ui/ImageAnalysis";
 
 interface HomeProps {}
 
@@ -329,85 +331,85 @@ const Home: React.FC<HomeProps> = () => {
       </section>
 
       {/* Head starts here */}
+
       <div className="flex w-full gap-x-7">
         <section
-          className={`mb-10 flex-wrap w-full shadow space-y-2 ${pageTitle[0]?.length > 0 ? "bg-white" : "bg-white/40"} p-4 rounded-b-md relative`}
+          className={`mb-10 flex-wrap w-full shadow bg-white ${pageTitle[0]?.length > 0 ? "" : "bg-opacity-40"} p-4 rounded-b-md relative`}
         >
-          <div className="w-full bg-apple-spaceGray left-0 -top-5 rounded-t-md  h-8 absolute flex items-center justify-center">
+          <div className="w-full bg-apple-spaceGray left-0 -top-5 rounded-t-md h-8 absolute flex items-center justify-center">
             <h2 className="text-center font-semibold text-white">Head</h2>
           </div>
-          <div className="flex items-center">
+
+          <div className="flex items-center mt-4">
             <span
-              className={`flex font-semibold ${pageTitle[0]?.length > 60 && "bg-red-500"} ${pageTitle[0]?.length < 60 && "bg-green-500"}   bg-apple-spaceGray text-white p-1 px-2 rounded-md`}
+              className={`flex font-semibold bg-apple-spaceGray text-white p-1 px-2 rounded-md ${pageTitle[0]?.length > 60 ? "bg-red-500" : "bg-green-500"}`}
             >
               Page Title
             </span>
             <span className="flex ml-2 text-black/80">{pageTitle[0]}</span>
-            {pageTitle.length > 0 ? (
+            {pageTitle.length > 0 && (
               <span
                 className={`flex ml-4 ${pageTitle[0].length > 60 ? "text-red-500" : "text-green-500"}`}
               >
                 {pageTitle[0].length} / 60
               </span>
-            ) : (
-              ""
             )}
           </div>
-          <div className="flex items-center">
+
+          <div className="flex items-center mt-2">
             <span
-              className={`flex mr-2 font-semibold ${pageTitle[0]?.length > 160 && "bg-red-500"} ${pageTitle[0]?.length < 160 && "bg-green-500"}  } ${pageDescription.length === 0 && "bg-apple-spaceGray"}   bg-apple-spaceGray text-white p-1 px-2 rounded-md`}
+              className={`flex font-semibold bg-apple-spaceGray text-white p-1 px-2 rounded-md ${pageDescription[0]?.length > 160 ? "bg-red-500" : "bg-green-500"}`}
             >
               Description
             </span>
-            <span className="text-black/80"> {pageDescription[0]}</span>
-            {pageDescription[0]?.length > 0 ? (
+            <span className="text-black/80 ml-2">{pageDescription[0]}</span>
+            {pageDescription[0]?.length > 0 && (
               <span
-                className={`flex ml-4 ${pageDescription.length > 160 ? "text-red-500" : "text-green-500"}`}
+                className={`flex ml-4 ${pageDescription[0].length > 160 ? "text-red-500" : "text-green-500"}`}
               >
                 {pageDescription[0].length} / 160
               </span>
-            ) : (
-              <span className="ml-2"></span>
             )}
           </div>
-          <div className="flex items-center">
-            <span className="font-semibold  bg-apple-spaceGray text-white p-1 px-2 rounded-md">
+
+          <div className="flex items-center mt-2">
+            <span className="font-semibold bg-apple-spaceGray text-white p-1 px-2 rounded-md">
               Canonical URL
             </span>
-            {<span className="ml-2">{canonical}</span>}
+            <span className="ml-2">{canonical}</span>
           </div>
-          <div className="flex items-center">
-            <span className="mr-1 font-semibold bg-apple-spaceGray text-white p-1 px-2 rounded-md">
+
+          <div className="flex items-center mt-2">
+            <span className="font-semibold bg-apple-spaceGray text-white p-1 px-2 rounded-md">
               Hreflangs
             </span>
-            <div className="flex">
+            <div className="flex ml-2">
               {hreflangs[0] === "No hreflang found"
                 ? "No hreflang found"
-                : hreflangs.map((hreflang) => (
+                : hreflangs.map((hreflang, index) => (
                     <span
-                      className="flex ml-2  bg-apple-gold text-white p-1 px-2 rounded-md"
-                      key={hreflang}
+                      className="flex ml-2 bg-apple-gold text-white p-1 px-2 rounded-md"
+                      key={index}
                     >
                       {hreflang}
                     </span>
                   ))}
             </div>
           </div>
-          <div className="flex items-center">
+
+          <div className="flex items-center mt-2">
             <span
-              className={`flex mr-2 font-semibold ${pageTitle[0]?.length > 160 && "bg-red-500"} ${pageTitle[0]?.length < 160 && "bg-green-500"}   bg-apple-spaceGray text-white p-1 px-2 rounded-md`}
+              className={`flex font-semibold bg-apple-spaceGray text-white p-1 px-2 rounded-md ${pageDescription[0]?.length > 160 ? "bg-red-500" : "bg-green-500"}`}
             >
               OpenGraph
             </span>
-            <span className="text-black/80"> {pageDescription[0]}</span>
-            {pageDescription[0]?.length > 0 ? (
+            <span className="text-black/80 ml-2">{pageDescription[0]}</span>
+            {pageDescription[0]?.length > 0 && (
               <span
-                className={`flex ml-4 ${pageDescription.length > 160 ? "text-red-500" : "text-green-500"}`}
+                className={`flex ml-4 ${pageDescription[0].length > 160 ? "text-red-500" : "text-green-500"}`}
               >
                 {pageDescription[0].length} / 160
               </span>
-            ) : (
-              <span className="ml-2"></span>
             )}
           </div>
         </section>
@@ -434,104 +436,8 @@ const Home: React.FC<HomeProps> = () => {
           linkedInInspect={linkedInInspect}
           openGraphDetails={openGraphDetails}
         />
-        <div>
-          <h2 className="bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full pb-2 text-center -mb-1">
-            Link Analysis
-          </h2>
-
-          <section className="mx-auto flex flex-col h-[30em] overflow-scroll shadow w-full rounded-t-md  relative bg-white">
-            {/* Adjusted height and added padding to bottom */}
-            <div>
-              <table>
-                <thead>
-                  <tr>
-                    <th className="text-xs w-1/5 border-r align-middle">
-                      Anchor Text
-                    </th>
-                    <th className="text-xs px-2 py-1 w-2/3 align-middle">
-                      Href
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="overflow-hidden">
-                  {visibleLinks.map((link, index) => (
-                    <tr key={index} className="align-middle">
-                      <td className="crawl-item border-r border-b h-full">
-                        <span className="block py-1 text-apple-blue px-2 text-sm flex items-center w-[180px]">
-                          {link[1] || "-"}
-                        </span>
-                      </td>
-                      <td className="h-full w-1/3 border-b">
-                        <a
-                          href={link[0]}
-                          className="py-1 px-2 bg-white text-sm flex items-center"
-                        >
-                          {link[0]}
-                        </a>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <span>hello</span>
-          </section>
-        </div>
-        <div>
-          <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full pb-2 text-center -mb-1">
-            Image Analysis
-          </h2>
-
-          <section className="overflow-auto h-96 bg-white bg-opacity-40 rounded-md">
-            {imageLinks.length > 0 || url === "" ? (
-              <table className="w-full text-sm overflow-auto">
-                <thead>
-                  <tr>
-                    <th className="text-xs w-1/5 border-r px-2 items-center align-middle">
-                      Image
-                    </th>
-                    <th className="text-xs w-2/5 px-2 border-r align-middle">
-                      Alt Text
-                    </th>
-                    <th className="text-xs w-2/5 px-2 align-middle">Link</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {imageLinks.map((image: any, index) => (
-                    <tr className="crawl-item" key={index}>
-                      <td className="px-2 py-1 text-center min-w-16">
-                        <a href={image.link} className="block w-full h-full">
-                          <img
-                            src={image.link}
-                            alt={image.alt_text}
-                            className="m-auto w-16 h-12 object-contain"
-                          />
-                        </a>
-                      </td>
-                      <td className="px-2 py-1 text-xs">{image.alt_text}</td>
-                      <td
-                        onClick={() => {
-                          openBrowserWindow(image.link);
-                        }}
-                        className="px-2 py-1 cursor-pointer text-sm"
-                      >
-                        {image.link}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <div className="h-96 flex items-center justify-center">
-                <p className="text-center">No images found</p>
-              </div>
-            )}
-          </section>
-          <div className="mx-auto text-center mt-4">
-            <span>Images Found:</span>{" "}
-            <span className="text-apple-blue">{altTexts.length}</span>
-          </div>
-        </div>
+        <LinkAnalysis visibleLinks={visibleLinks} />
+        <ImageAnalysis imageLinks={imageLinks} url={url} altTexts={altTexts} />
         <div>
           <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full pb-2 text-center -mb-1">
             Headings

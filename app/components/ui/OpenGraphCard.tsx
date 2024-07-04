@@ -9,27 +9,29 @@ export const OpenGraphCard = ({
   linkedInInspect: string | undefined;
 }) => {
   return (
-    <div className="shadow">
+    <div className="shadow overflow-hidden rounded-md">
       <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 relative px-2 rounded-t-md w-full  text-center pt-2">
         Social Media Preview
       </h2>
       <section className="mx-auto h-96 w-full rounded-md overflow-auto relative bg-white/40">
         <div
-          className={`border p-4  flex flex-col rounded-md items-center justify-center ${openGraphDetails.length === 0 ? "bg-white/40 h-full" : "bg-white h-full"}`}
+          className={`border p-4  flex flex-col rounded-md items-center justify-center ${openGraphDetails.length === 0 ? "bg-white/40 h-96" : "bg-white h-96"}`}
         >
           <span
-            className="absolute right-3 px-3 hover:border-black transition-all duration-300 active:border-2 hover:bg-apple-spaceGray py-1 text-xs w-fit flex flex-nowrap bg-apple-silver rounded-md text-right cursor-pointer"
+            className="absolute right-4 px-3 hover:border-black transition-all duration-300 active:border-2 hover:bg-apple-spaceGray py-1 text-xs w-fit flex flex-nowrap bg-apple-silver rounded-md text-right cursor-pointer top-4"
             onClick={() => openBrowserWindow(linkedInInspect)}
           >
             Inspect
           </span>
-          <div>
-            <img
-              src={openGraphDetails?.image}
-              alt="OpenGraph Image"
-              className="rounded-md w-2/4 h-auto ml-0"
-            />
-          </div>
+          {openGraphDetails.length !== 0 && (
+            <div>
+              <img
+                src={openGraphDetails?.image}
+                alt="OpenGraph Image"
+                className="rounded-md w-2/4 h-auto ml-0"
+              />
+            </div>
+          )}
           <div
             onClick={() => openBrowserWindow(openGraphDetails.url)}
             className="flex flex-col flex-wrap cursor-pointer py-2"

@@ -46,17 +46,18 @@ table {
 }
 
 thead {
-  @apply bg-gray-400;
+  @apply bg-gray-200 py-2 z-10;
 }
 
 th {
-  padding: 5px 0;
+  padding: 8px 0;
   text-align: center;
   position: sticky;
   top: 0;
-  background-color: gray;
+  background-color: slategray;
   z-index: 1;
   color: white;
+  border-radius: 0 !important;
 }
 
 tr {
