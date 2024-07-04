@@ -11,6 +11,7 @@ use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+mod content;
 mod libs;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -27,7 +28,6 @@ struct OgDetails {
     modified_time: Option<String>,
     published_time: Option<String>,
     alternate_links: Option<Vec<String>>,
-    keywords: Option<Vec<String>>,
     // Add other fields based on the JSON response structure
 }
 
@@ -50,6 +50,7 @@ pub struct CrawlResult {
     pub page_speed_results: Vec<Result<Value, String>>,
     pub og_details: HashMap<String, Option<String>>,
     pub favicon_url: Vec<String>,
+    pub keywords: Vec<Vec<(String, usize)>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -104,6 +105,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     .cloned()
     .collect();
     let mut favicon_url = Vec::new();
+    let mut keywords = Vec::new();
 
     if response.status().is_success() {
         let body = response
@@ -120,6 +122,14 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
                 links.push((href.to_string(), text));
             }
         }
+
+        // Get the text content from the URL
+        let text_content = content::extract_text(&document);
+
+        // Get the top keywords from the content
+        let top_keywords = content::get_top_keywords(&text_content, 10);
+        println!("Top Keywords: {:?}", top_keywords);
+        keywords.push(top_keywords);
 
         // Fetch alt texts for images
 
@@ -340,6 +350,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         page_speed_results,
         og_details,
         favicon_url,
+        keywords,
     })
 }
 

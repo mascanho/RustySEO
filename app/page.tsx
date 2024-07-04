@@ -19,6 +19,7 @@ import DomElements from "./components/DomElements";
 import SpeedIndex from "./components/SpeedIndex";
 import { open } from "@tauri-apps/api/shell";
 import openBrowserWindow from "./Hooks/OpenBrowserWindow";
+import ContentSummary from "./components/ui/ContentSummary";
 
 interface HomeProps {}
 
@@ -45,6 +46,7 @@ const Home: React.FC<HomeProps> = () => {
   const [pageSpeed, setPageSpeed] = useState<any[]>([]);
   const [favicon_url, setFavicon_url] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [keywords, setKeywords] = useState<string[]>([]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const userinput = event.target.value;
@@ -82,6 +84,7 @@ const Home: React.FC<HomeProps> = () => {
     setIndexType([]);
     setPageSchema([]);
     setReadingTime(undefined);
+    setKeywords([]);
 
     invoke<{
       links: [];
@@ -99,6 +102,7 @@ const Home: React.FC<HomeProps> = () => {
       reading_time: number;
       og_details: any[];
       favicon_url: [];
+      keywords: [];
     }>("crawl", { url })
       .then((result) => {
         showLinksSequentially(result.links); // Show links one by one
@@ -116,6 +120,7 @@ const Home: React.FC<HomeProps> = () => {
         setReadingTime(result.reading_time);
         setOpenGraphDetails(result.og_details);
         setFavicon_url(result.favicon_url);
+        setKeywords(result.keywords);
       })
       .catch(console.error);
   };
@@ -193,6 +198,7 @@ const Home: React.FC<HomeProps> = () => {
   console.log(readingTime, "Reading Time"); 
   console.log(openGraphDetails); */
   console.log(pageSpeed);
+  console.log(keywords, "--- Keywords");
 
   return (
     <>
@@ -240,7 +246,7 @@ const Home: React.FC<HomeProps> = () => {
             </svg>{" "}
           </button>
           <button
-            // onClick={() => window.location.reload()}
+            onClick={() => window.location.reload()}
             className="absolute -right-20  top-[8px] rounded-lg px-1 flex items-center"
           >
             <svg
@@ -319,97 +325,97 @@ const Home: React.FC<HomeProps> = () => {
       </section>
 
       {/* Head starts here */}
-
-      <section
-        className={`mb-10 flex-wrap w-full space-y-2 ${pageTitle[0]?.length > 0 ? "bg-white" : "bg-white/40"} p-4 rounded-b-md relative`}
-      >
-        <div className="w-full bg-apple-spaceGray left-0 -top-5 rounded-t-md  h-8 absolute flex items-center justify-center">
-          <h2 className="text-center font-semibold text-white">Head</h2>
-          <span className="pt-1 absolute right-2 bg-blue-400 rounded-md flex items-center text-xs px-2 text-white">
-            Preview
-          </span>
-        </div>
-        <div className="flex items-center">
-          <span
-            className={`flex font-semibold ${pageTitle[0]?.length > 60 && "bg-red-500"} ${pageTitle[0]?.length < 60 && "bg-green-500"}   bg-apple-spaceGray text-white p-1 px-2 rounded-md`}
-          >
-            Page Title
-          </span>
-          <span className="flex ml-2 text-black/80">{pageTitle[0]}</span>
-          {pageTitle.length > 0 ? (
-            <span
-              className={`flex ml-4 ${pageTitle[0].length > 60 ? "text-red-500" : "text-green-500"}`}
-            >
-              {pageTitle[0].length} / 60
-            </span>
-          ) : (
-            ""
-          )}
-        </div>
-        <div className="flex items-center">
-          <span
-            className={`flex mr-2 font-semibold ${pageTitle[0]?.length > 160 && "bg-red-500"} ${pageTitle[0]?.length < 160 && "bg-green-500"}  } ${pageDescription.length === 0 && "bg-apple-spaceGray"}   bg-apple-spaceGray text-white p-1 px-2 rounded-md`}
-          >
-            Meta Description
-          </span>
-          <span className="text-black/80"> {pageDescription[0]}</span>
-          {pageDescription[0]?.length > 0 ? (
-            <span
-              className={`flex ml-4 ${pageDescription.length > 160 ? "text-red-500" : "text-green-500"}`}
-            >
-              {pageDescription[0].length} / 160
-            </span>
-          ) : (
-            <span className="ml-2"></span>
-          )}
-        </div>
-        <div className="flex items-center">
-          <span className="font-semibold  bg-apple-spaceGray text-white p-1 px-2 rounded-md">
-            Canonical URL
-          </span>
-          {<span className="ml-2">{canonical}</span>}
-        </div>
-        <div className="flex items-center">
-          <span className="mr-1 font-semibold bg-apple-spaceGray text-white p-1 px-2 rounded-md">
-            Hreflangs
-          </span>
-          <div className="flex">
-            {hreflangs[0] === "No hreflang found"
-              ? "No hreflang found"
-              : hreflangs.map((hreflang) => (
-                  <span
-                    className="flex ml-2  bg-apple-gold text-white p-1 px-2 rounded-md"
-                    key={hreflang}
-                  >
-                    {hreflang}
-                  </span>
-                ))}
+      <div className="grid grid-cols-2 gap-x-8">
+        <section
+          className={`mb-10 flex-wrap w-full space-y-2 ${pageTitle[0]?.length > 0 ? "bg-white" : "bg-white/40"} p-4 rounded-b-md relative`}
+        >
+          <div className="w-full bg-apple-spaceGray left-0 -top-5 rounded-t-md  h-8 absolute flex items-center justify-center">
+            <h2 className="text-center font-semibold text-white">Head</h2>
           </div>
-        </div>
-        <div className="flex items-center">
-          <span
-            className={`flex mr-2 font-semibold ${pageTitle[0]?.length > 160 && "bg-red-500"} ${pageTitle[0]?.length < 160 && "bg-green-500"}   bg-apple-spaceGray text-white p-1 px-2 rounded-md`}
-          >
-            OpenGraph
-          </span>
-          <span className="text-black/80"> {pageDescription[0]}</span>
-          {pageDescription[0]?.length > 0 ? (
+          <div className="flex items-center">
             <span
-              className={`flex ml-4 ${pageDescription.length > 160 ? "text-red-500" : "text-green-500"}`}
+              className={`flex font-semibold ${pageTitle[0]?.length > 60 && "bg-red-500"} ${pageTitle[0]?.length < 60 && "bg-green-500"}   bg-apple-spaceGray text-white p-1 px-2 rounded-md`}
             >
-              {pageDescription[0].length} / 160
+              Page Title
             </span>
-          ) : (
-            <span className="ml-2"></span>
-          )}
-        </div>
-      </section>
+            <span className="flex ml-2 text-black/80">{pageTitle[0]}</span>
+            {pageTitle.length > 0 ? (
+              <span
+                className={`flex ml-4 ${pageTitle[0].length > 60 ? "text-red-500" : "text-green-500"}`}
+              >
+                {pageTitle[0].length} / 60
+              </span>
+            ) : (
+              ""
+            )}
+          </div>
+          <div className="flex items-center">
+            <span
+              className={`flex mr-2 font-semibold ${pageTitle[0]?.length > 160 && "bg-red-500"} ${pageTitle[0]?.length < 160 && "bg-green-500"}  } ${pageDescription.length === 0 && "bg-apple-spaceGray"}   bg-apple-spaceGray text-white p-1 px-2 rounded-md`}
+            >
+              Description
+            </span>
+            <span className="text-black/80"> {pageDescription[0]}</span>
+            {pageDescription[0]?.length > 0 ? (
+              <span
+                className={`flex ml-4 ${pageDescription.length > 160 ? "text-red-500" : "text-green-500"}`}
+              >
+                {pageDescription[0].length} / 160
+              </span>
+            ) : (
+              <span className="ml-2"></span>
+            )}
+          </div>
+          <div className="flex items-center">
+            <span className="font-semibold  bg-apple-spaceGray text-white p-1 px-2 rounded-md">
+              Canonical URL
+            </span>
+            {<span className="ml-2">{canonical}</span>}
+          </div>
+          <div className="flex items-center">
+            <span className="mr-1 font-semibold bg-apple-spaceGray text-white p-1 px-2 rounded-md">
+              Hreflangs
+            </span>
+            <div className="flex">
+              {hreflangs[0] === "No hreflang found"
+                ? "No hreflang found"
+                : hreflangs.map((hreflang) => (
+                    <span
+                      className="flex ml-2  bg-apple-gold text-white p-1 px-2 rounded-md"
+                      key={hreflang}
+                    >
+                      {hreflang}
+                    </span>
+                  ))}
+            </div>
+          </div>
+          <div className="flex items-center">
+            <span
+              className={`flex mr-2 font-semibold ${pageTitle[0]?.length > 160 && "bg-red-500"} ${pageTitle[0]?.length < 160 && "bg-green-500"}   bg-apple-spaceGray text-white p-1 px-2 rounded-md`}
+            >
+              OpenGraph
+            </span>
+            <span className="text-black/80"> {pageDescription[0]}</span>
+            {pageDescription[0]?.length > 0 ? (
+              <span
+                className={`flex ml-4 ${pageDescription.length > 160 ? "text-red-500" : "text-green-500"}`}
+              >
+                {pageDescription[0].length} / 160
+              </span>
+            ) : (
+              <span className="ml-2"></span>
+            )}
+          </div>
+        </section>
 
+        {/* Keywords */}
+        <ContentSummary keywords={keywords} wordCount={wordCount} />
+      </div>
       {/* TABLES START HERE */}
 
       <main
         id="tables"
-        className="mx-auto w-full flex-col my-20 items-center tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-8 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-2 "
+        className="mx-auto w-full flex-col my-20 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-8 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-2 items-stretch"
       >
         <GooglePreview
           favicon_url={favicon_url}
@@ -435,7 +441,7 @@ const Home: React.FC<HomeProps> = () => {
             Link Analysis
           </h2>
 
-          <section className="mx-auto h-96 w-full rounded-t-md overflow-auto relative bg-white/40">
+          <section className="mx-auto h-[22.2rem] w-full rounded-t-md overflow-auto relative bg-white/40">
             <table className="w-full">
               <thead>
                 <tr>

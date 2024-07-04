@@ -26,6 +26,7 @@ xml-rs = "*"
 url = "2.2"
 select = "0.6.0"
 dotenv = "0.15.0"
+regex = "1.7.0"
 
 
 [features]
