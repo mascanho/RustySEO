@@ -47,6 +47,7 @@ const Home: React.FC<HomeProps> = () => {
   const [favicon_url, setFavicon_url] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [keywords, setKeywords] = useState<string[]>([]);
+  const [readingLevelResults, setReadingLevelResults] = useState<any[]>([]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const userinput = event.target.value;
@@ -85,6 +86,7 @@ const Home: React.FC<HomeProps> = () => {
     setPageSchema([]);
     setReadingTime(undefined);
     setKeywords([]);
+    setReadingLevelResults([]);
 
     invoke<{
       links: [];
@@ -103,6 +105,7 @@ const Home: React.FC<HomeProps> = () => {
       og_details: any[];
       favicon_url: [];
       keywords: [];
+      readings: any[];
     }>("crawl", { url })
       .then((result) => {
         showLinksSequentially(result.links); // Show links one by one
@@ -121,6 +124,7 @@ const Home: React.FC<HomeProps> = () => {
         setOpenGraphDetails(result.og_details);
         setFavicon_url(result.favicon_url);
         setKeywords(result.keywords);
+        setReadingLevelResults(result.readings);
       })
       .catch(console.error);
   };
@@ -199,6 +203,7 @@ const Home: React.FC<HomeProps> = () => {
   console.log(openGraphDetails); */
   console.log(pageSpeed);
   console.log(keywords, "--- Keywords");
+  console.log(readingLevelResults, "--- Reading Level Results");
 
   return (
     <>
@@ -409,7 +414,12 @@ const Home: React.FC<HomeProps> = () => {
         </section>
 
         {/* Keywords */}
-        <ContentSummary keywords={keywords} wordCount={wordCount} />
+        <ContentSummary
+          keywords={keywords}
+          wordCount={wordCount}
+          readingTime={readingTime}
+          readingLevelResults={readingLevelResults}
+        />
       </div>
       {/* TABLES START HERE */}
 

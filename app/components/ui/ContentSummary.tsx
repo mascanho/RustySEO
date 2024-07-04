@@ -4,9 +4,13 @@ import React from "react";
 const ContentSummary = ({
   keywords,
   wordCount,
+  readingTime,
+  readingLevelResults,
 }: {
   keywords: any;
   wordCount: number | undefined;
+  readingTime: number | undefined;
+  readingLevelResults: [];
 }) => {
   return (
     <section
@@ -20,29 +24,34 @@ const ContentSummary = ({
       <div className="p-6 grid gap-6">
         <div className="grid gap-4">
           <div className="flex items-center justify-between">
-            <span className="font-medium">Reading Time</span>
-            <span>5 min</span>
+            <span className="font-semibold">Reading Time</span>
+            <span>
+              {readingTime === undefined ? "" : readingTime + " min(s)"}
+            </span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="font-medium">Word Count</span>
-            <span>{wordCount}</span>
+            <span className="font-semibold">Word Count</span>
+            <span>{wordCount === undefined ? "" : wordCount + " words"}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="font-medium">Keywords</span>
+            <span className="font-semibold">Top Keywords</span>
             <div className="flex flex-wrap gap-2 justify-end  w-3/4">
               {keywords[0]?.map((keyword: string, index: number) => (
                 <span
                   key={index}
                   className=" text-black py-1  border border-apple-spaceGray rounded-full px-2 text-xs"
                 >
-                  {keyword[0]} ({keyword[1]})
+                  {keyword[0]}
                 </span>
               ))}
             </div>
           </div>
+
           <div className="flex items-center justify-between">
-            <span className="font-medium">Reading Level</span>
-            <span>Intermediate</span>
+            <span className="font-semibold">Reading Level</span>
+            <span>
+              {readingLevelResults[0] ? readingLevelResults[0][1] : ""}
+            </span>
           </div>
         </div>
         <div className="grid gap-2">

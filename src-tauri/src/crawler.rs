@@ -51,6 +51,7 @@ pub struct CrawlResult {
     pub og_details: HashMap<String, Option<String>>,
     pub favicon_url: Vec<String>,
     pub keywords: Vec<Vec<(String, usize)>>,
+    pub readings: Vec<(f64, String)>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -106,6 +107,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     .collect();
     let mut favicon_url = Vec::new();
     let mut keywords = Vec::new();
+    let mut readings = Vec::new();
 
     if response.status().is_success() {
         let body = response
@@ -125,6 +127,15 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
 
         // Get the text content from the URL
         let text_content = content::extract_text(&document);
+
+        // Calculate the reading level
+        // // Function to convert Html to string (Placeholder, adjust based on actual Html type)
+        fn html_to_string(html: &str) -> String {
+            html.to_string()
+        }
+        let reading_level = content::calculate_reading_level(&html_to_string(&text_content));
+        println!("Reading Level: {:?}", reading_level);
+        readings.push(reading_level);
 
         // Get the top keywords from the content
         let top_keywords = content::get_top_keywords(&text_content, 10);
@@ -351,6 +362,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         og_details,
         favicon_url,
         keywords,
+        readings,
     })
 }
 
@@ -415,7 +427,8 @@ pub async fn get_page_speed_insights(url: String) -> Result<PageSpeedResponse, S
             // file.write_all(&response_text.as_bytes())
             //     .map_err(|e| format!("Failed to write to file: {}", e))?;
 
-            println!("Raw JSON response: {}", response_text);
+            // println!("Raw JSON response: {}", response_text);
+            println!("Page Speed Results: OK ");
 
             // Parse the response text into PageSpeedResponse struct
             match serde_json::from_str::<PageSpeedResponse>(&response_text) {
