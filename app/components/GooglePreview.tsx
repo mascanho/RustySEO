@@ -14,7 +14,7 @@ const GooglePreview = ({
   console.log(favicon_url);
 
   return (
-    <div>
+    <div className="shadow">
       <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full pt-2  text-center ">
         SERP Preview
       </h2>

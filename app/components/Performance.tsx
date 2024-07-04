@@ -16,7 +16,7 @@ const PerformanceEl = ({
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
   return (
-    <section className="border p-4 border-apple-spaceGray shadow bg-white w-60 rounded-md space-y-2 relative">
+    <section className="border px-4 py-3 border-apple-spaceGray shadow bg-white w-60 rounded-md space-y-2 relative">
       <span className="absolute right-5">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -97,7 +97,7 @@ const PerformanceEl = ({
           </Text>
         </Popover.Dropdown>
       </Popover>
-      <div className="flex flex-col space-y-2 h-fit">
+      <div className="flex flex-col space-y-1.5 h-fit">
         <h2 className="font-bold">Performance</h2>
         <div className="text-xl h-8">
           {loading ? (

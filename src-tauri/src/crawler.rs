@@ -406,10 +406,8 @@ struct Performance {
 pub async fn get_page_speed_insights(url: String) -> Result<PageSpeedResponse, String> {
     dotenv::dotenv().ok();
 
-    let api_key = env::var("GOOGLE_API_KEY")
-        .map_err(|_| "GOOGLE_API_KEY not set in .env file".to_string())?;
+    let api_key = "AIzaSyCCZu9Qxvkv8H0sCR9YPP7aP6CCQTZHFt8";
     let page_speed_url = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
-    // let test_url = "https://blueyonder.com";
 
     let client = Client::new();
     let request_url = format!("{}?url={}&key={}", page_speed_url, url, api_key);
@@ -444,27 +442,4 @@ pub async fn get_page_speed_insights(url: String) -> Result<PageSpeedResponse, S
             Err(format!("Failed to make request: {}", e))
         }
     }
-}
-
-pub async fn helper() -> Result<Value, String> {
-    // Attempt to open the file
-    let file_path = "page_speed_results.json";
-    let mut file = File::open(file_path).map_err(|e| format!("Failed to open file: {}", e))?;
-
-    // Initialize an empty string to hold the file contents
-    let mut response_text = String::new();
-
-    // Read the file contents into the string
-    file.read_to_string(&mut response_text)
-        .map_err(|e| format!("Failed to read file: {}", e))?;
-
-    // Print the contents of the file
-    println!("Page Speed Results: {}", response_text);
-
-    // Attempt to parse the file contents as JSON
-    let json: Value =
-        serde_json::from_str(&response_text).map_err(|e| format!("Failed to parse JSON: {}", e))?;
-
-    // Return the parsed JSON
-    Ok(json)
 }

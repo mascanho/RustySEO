@@ -18,15 +18,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="bg-apple-silver min-w-[600px] overflow-x-auto">
-      <body className="relative rounded-md bg-apple-silver overflow-x-hidden">
+    <html
+      lang="en"
+      className="bg-brand-background min-w-[600px] overflow-x-auto"
+    >
+      <body className="relative rounded-md overflow-x-hidden bg-brand-background">
         <MantineProvider>
           {/* Fixed MenuDrawer */}
           <div className="fixed top-0 pl-7 z-20 bg-apple-silver h-20   border-b shadow w-full overflow-x-hidden  ">
             <MenuDrawer />
           </div>
           {/* Main Content Area */}
-          <main className="mt-20 p-6 rounded-md  bg-apple-silver">
+          <main className="mt-20 p-6 rounded-md  bg-brand-gradient">
             {children}
           </main>
         </MantineProvider>

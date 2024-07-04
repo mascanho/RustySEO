@@ -21,6 +21,12 @@ const config: Config = {
         "custom-light-gray": "#f7f7f7",
         "custom-border-gray": "#eeeeee",
         "custom-footer-bg": "#1d2124",
+        brand: {
+          normal: "#F5F5F5",
+          highlight: "#D7B590",
+          background: "#ecf8f8",
+          gradient: "linear-gradient(180deg, #D7B590 40%, #C4E1FF 100%)",
+        },
         apple: {
           blue: "#0070CD", // Apple's traditional blue color
           silver: "#D3D3D3", // Silver used in Apple devices

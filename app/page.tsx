@@ -324,15 +324,14 @@ const Home: React.FC<HomeProps> = () => {
 
         <SpeedIndex stat={pageSpeed} loading={loading} url={url} />
         <ResponseCodeEl res={responseCode} />
-        <Indexation index={indexType} />
         <WordCountEl words={wordCount} />
         <ReadingTimeEl readingTime={readingTime} />
       </section>
 
       {/* Head starts here */}
-      <div className="grid grid-cols-2 gap-x-8">
+      <div className="flex w-full gap-x-7">
         <section
-          className={`mb-10 flex-wrap w-full space-y-2 ${pageTitle[0]?.length > 0 ? "bg-white" : "bg-white/40"} p-4 rounded-b-md relative`}
+          className={`mb-10 flex-wrap w-full shadow space-y-2 ${pageTitle[0]?.length > 0 ? "bg-white" : "bg-white/40"} p-4 rounded-b-md relative`}
         >
           <div className="w-full bg-apple-spaceGray left-0 -top-5 rounded-t-md  h-8 absolute flex items-center justify-center">
             <h2 className="text-center font-semibold text-white">Head</h2>
@@ -412,14 +411,6 @@ const Home: React.FC<HomeProps> = () => {
             )}
           </div>
         </section>
-
-        {/* Keywords */}
-        <ContentSummary
-          keywords={keywords}
-          wordCount={wordCount}
-          readingTime={readingTime}
-          readingLevelResults={readingLevelResults}
-        />
       </div>
       {/* TABLES START HERE */}
 
@@ -427,65 +418,64 @@ const Home: React.FC<HomeProps> = () => {
         id="tables"
         className="mx-auto w-full flex-col my-20 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-8 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-2 items-stretch"
       >
+        {/* Keywords */}
+        <ContentSummary
+          keywords={keywords}
+          wordCount={wordCount}
+          readingTime={readingTime}
+          readingLevelResults={readingLevelResults}
+        />
         <GooglePreview
           favicon_url={favicon_url}
           openGraphDetails={openGraphDetails}
           url={url}
         />
+        <OpenGraphCard
+          linkedInInspect={linkedInInspect}
+          openGraphDetails={openGraphDetails}
+        />
         <div>
-          <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 relative px-2 rounded-t-md w-full  text-center pt-2">
-            Social Media Preview
-          </h2>
-
-          <section className="mx-auto h-96 w-full rounded-md overflow-auto relative bg-white/40">
-            {Object.keys(openGraphDetails).length > 0 && (
-              <OpenGraphCard
-                linkedInInspect={linkedInInspect}
-                openGraphDetails={openGraphDetails}
-              />
-            )}
-          </section>
-        </div>
-        <div>
-          <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full pb-2 text-center -mb-1">
+          <h2 className="bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full pb-2 text-center -mb-1">
             Link Analysis
           </h2>
 
-          <section className="mx-auto h-[22.2rem] w-full rounded-t-md overflow-auto relative bg-white/40">
-            <table className="w-full">
-              <thead>
-                <tr>
-                  <th className="text-xs w-1/5  border-r align-middle">
-                    Anchor Text
-                  </th>
-                  <th className="text-xs px-2 py-1 w-2/3 align-middle">Href</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibleLinks.map((link, index) => (
-                  <tr key={index} className="align-middle">
-                    <td className="crawl-item border-r border-b h-full">
-                      <span className="block py-1 text-apple-blue px-2 text-sm flex items-center w-[180px]">
-                        {link[1] || "-"}
-                      </span>
-                    </td>
-                    <td className="h-full w-1/3 border-b">
-                      <a
-                        href={link[0]}
-                        className="py-1 px-2 bg-white  text-sm flex items-center"
-                      >
-                        {link[0]}
-                      </a>
-                    </td>
+          <section className="mx-auto flex flex-col h-[30em] overflow-scroll shadow w-full rounded-t-md  relative bg-white">
+            {/* Adjusted height and added padding to bottom */}
+            <div>
+              <table>
+                <thead>
+                  <tr>
+                    <th className="text-xs w-1/5 border-r align-middle">
+                      Anchor Text
+                    </th>
+                    <th className="text-xs px-2 py-1 w-2/3 align-middle">
+                      Href
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="overflow-hidden">
+                  {visibleLinks.map((link, index) => (
+                    <tr key={index} className="align-middle">
+                      <td className="crawl-item border-r border-b h-full">
+                        <span className="block py-1 text-apple-blue px-2 text-sm flex items-center w-[180px]">
+                          {link[1] || "-"}
+                        </span>
+                      </td>
+                      <td className="h-full w-1/3 border-b">
+                        <a
+                          href={link[0]}
+                          className="py-1 px-2 bg-white text-sm flex items-center"
+                        >
+                          {link[0]}
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <span>hello</span>
           </section>
-          <div className="mx-auto text-center  bg-white/40 py-1 rounded-b-md ">
-            <span>Links Found:</span>{" "}
-            <span className="text-apple-blue">{visibleLinks.length}</span>
-          </div>
         </div>
         <div>
           <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full pb-2 text-center -mb-1">

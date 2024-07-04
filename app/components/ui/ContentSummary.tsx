@@ -10,18 +10,18 @@ const ContentSummary = ({
   keywords: any;
   wordCount: number | undefined;
   readingTime: number | undefined;
-  readingLevelResults: [];
+  readingLevelResults: any[];
 }) => {
   return (
     <section
-      className={`mb-10 flex-wrap w-full space-y-2 ${keywords.length === 0 ? "bg-white/40" : "bg-white"} p-2 rounded-b-md relative`}
+      className={`flex-wrap w-full space-y-2 ${keywords.length === 0 ? "bg-white/40" : "bg-white"} p-2 rounded-md relative h-fit overflow-auto shadow`}
     >
-      <div className="w-full bg-apple-spaceGray left-0 -top-5 rounded-t-md  h-8 absolute flex items-center justify-center">
-        <h2 className="text-center font-semibold text-white">
+      <div className="w-full bg-apple-spaceGray left-0 top-0  rounded-t-md  h-8 absolute flex items-center justify-center">
+        <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 relative px-2 rounded-t-md w-full  text-center pt-2">
           Content Summary
         </h2>
       </div>
-      <div className="p-6 grid gap-6">
+      <div className="p-3 pt-10 grid gap-6">
         <div className="grid gap-4">
           <div className="flex items-center justify-between">
             <span className="font-semibold">Reading Time</span>
