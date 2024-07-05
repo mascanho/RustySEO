@@ -41,7 +41,7 @@ pub struct CrawlResult {
     pub page_title: Vec<String>,
     pub page_description: Vec<String>,
     pub canonical_url: Vec<String>,
-    pub hreflangs: Vec<String>,
+    pub hreflangs: Vec<Hreflang>,
     pub index_type: Vec<String>,
     pub image_links: Vec<ImageInfo>,
     pub page_schema: Vec<String>,
@@ -55,6 +55,12 @@ pub struct CrawlResult {
     pub readings: Vec<(f64, String)>,
     pub google_tag_manager: Vec<String>,
     pub tag_container: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Hreflang {
+    pub lang: String,
+    pub href: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -89,7 +95,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let indexation: Vec<String> = Vec::new();
     let mut page_description: Vec<String> = Vec::new();
     let mut canonical_url: Vec<String> = Vec::new();
-    let mut hreflangs: Vec<String> = Vec::new();
+    let mut hreflangs: Vec<Hreflang> = Vec::new();
     // Initialize flags
     let mut index_type = Vec::new();
     let mut image_links = Vec::new();
@@ -260,13 +266,22 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         // Fetch HrefLangs
         let hreflang_selector = Selector::parse("link[rel=alternate]").unwrap();
         for hreflang in document.select(&hreflang_selector) {
-            if let Some(lang) = hreflang.value().attr("hreflang") {
-                hreflangs.push(lang.to_string());
+            if let (Some(lang), Some(href)) = (
+                hreflang.value().attr("hreflang"),
+                hreflang.value().attr("href"),
+            ) {
+                hreflangs.push(Hreflang {
+                    lang: lang.to_string(),
+                    href: href.to_string(),
+                });
             }
         }
 
         if hreflangs.is_empty() {
-            hreflangs.push(String::from("No hreflang found"));
+            hreflangs.push(Hreflang {
+                lang: String::from("No hreflangs found"),
+                href: String::from("No hreflangs found"),
+            });
         }
 
         // Fetch Indexation
@@ -362,7 +377,9 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
 
     // Robots FETCHING
     let robots_from_url = libs::get_robots(&url);
-    println!("Robots: {:#?}", robots_from_url.await);
+    // println!("Robots: {:#?}", robots_from_url.await);
+
+    println!("Hreflangs: {:?}", hreflangs);
 
     println!("Google Tag Manager: {:?}", tag_container);
 

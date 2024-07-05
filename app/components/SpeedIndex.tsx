@@ -112,8 +112,9 @@ const SpeedIndex = ({
             </div>
           ) : (
             <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
-              {stat?.lighthouseResult?.audits?.["speed-index"].score * 100 ||
-                "..."}
+              {Math.floor(
+                stat?.lighthouseResult?.audits?.["speed-index"].score * 100,
+              ) || "..."}
             </span>
           )}{" "}
         </div>

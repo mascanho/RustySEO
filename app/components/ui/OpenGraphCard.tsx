@@ -15,7 +15,7 @@ export const OpenGraphCard = ({
       </h2>
       <section className="mx-auto h-full w-full rounded-md overflow-auto relative bg-white/40">
         <div
-          className={`border p-10  flex flex-col rounded-md items-center justify-center ${openGraphDetails.length === 0 ? "bg-white/40 h-[25em]" : "bg-white h-[25em]"}`}
+          className={`border p-10  flex flex-col rounded-md items-center justify-center ${openGraphDetails.length === 0 ? "bg-white/40 h-full" : "bg-white h-[25em]"}`}
         >
           <span
             className="absolute right-4 px-3 hover:border-black hover:text-white transition-all duration-300 active:border-2 hover:bg-apple-spaceGray py-1 text-xs w-fit flex flex-nowrap bg-apple-silver rounded-md text-right cursor-pointer top-3"
