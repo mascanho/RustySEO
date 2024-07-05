@@ -62,7 +62,7 @@ export const HeadAnalysis = ({
           <div className="flex items-center mt-4">
             <div
               className={`flex justify-center items-center w-10 h-10 rounded-full ${favicon_url.length > 0 ? "bg-green-500 text-white" : "bg-gray-200"} 
-              ${favicon_url[0] ? "bg-red-500 text-white" : ""}
+              ${favicon_url.length <= 0 && pageTitle?.length > 0 ? "bg-red-500 text-white" : ""}
 `}
             >
               <TagIcon />
@@ -163,7 +163,7 @@ export const HeadAnalysis = ({
                   </div>
                 ))
               )}
-              {hreflangs.length > 0 && hreflangs.lenth === 1 && (
+              {hreflangs.length > 1 && (
                 <Group justify="center" mb={5}>
                   <div className="bg-brand-highlight flex ml-2 rounded-md px-3 py-1 text-xs items-center">
                     <span>{hreflangs.length}</span>
