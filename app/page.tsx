@@ -49,6 +49,7 @@ const Home: React.FC<HomeProps> = () => {
   const [loading, setLoading] = useState(false);
   const [keywords, setKeywords] = useState<string[]>([]);
   const [readingLevelResults, setReadingLevelResults] = useState<any[]>([]);
+  const [tagManager, setTagManager] = useState<any[]>([]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const userinput = event.target.value;
@@ -88,6 +89,7 @@ const Home: React.FC<HomeProps> = () => {
     setReadingTime(undefined);
     setKeywords([]);
     setReadingLevelResults([]);
+    setTagManager([]);
 
     invoke<{
       links: [];
@@ -107,6 +109,7 @@ const Home: React.FC<HomeProps> = () => {
       favicon_url: [];
       keywords: [];
       readings: any[];
+      tag_container: any[];
     }>("crawl", { url })
       .then((result) => {
         showLinksSequentially(result.links); // Show links one by one
@@ -126,6 +129,7 @@ const Home: React.FC<HomeProps> = () => {
         setFavicon_url(result.favicon_url);
         setKeywords(result.keywords);
         setReadingLevelResults(result.readings);
+        setTagManager(result.tag_container);
       })
       .catch(console.error);
   };
@@ -494,25 +498,25 @@ const Home: React.FC<HomeProps> = () => {
           </div>
           <div className="flex items-center mt-2">
             <div
-              className={`flex rounded-full items-center justify-center h-10 w-10 ${pageSchema.length > 0 && "bg-green-500 text-white"} ${!url && pageSchema.length === 0 && "bg-gray-200"}
-                        ${pageTitle.length > 0 && pageSchema.length === 0 && "bg-red-500 text-white"} ${pageTitle?.length === 0 && "bg-gray-200"}
+              className={`flex rounded-full items-center justify-center h-10 w-10 ${tagManager.length > 0 && "bg-green-500 text-white"} ${!url && pageSchema.length === 0 && "bg-gray-200"}
+                        ${pageTitle.length > 0 && tagManager.length === 0 && "bg-red-500 text-white"} ${pageTitle?.length === 0 && "bg-gray-200"}
 `}
             >
               <TagIcon />
             </div>{" "}
             <span className={`font-semibold ml-2 text-black/60`}>
-              Tag Manager
+              Tag Container:
             </span>
             <span className="text-black/80 ml-2">
-              {pageSchema.length > 0 && pageTitle?.length > 0 && (
+              {tagManager.length > 0 && pageTitle?.length > 0 && (
                 <a href="#sd">
-                  <span className="text-green-500">
-                    This page has structured data
+                  <span className="text-black text-lg font-black">
+                    {tagManager}
                   </span>
                 </a>
               )}
-              {!pageSchema[0] && pageTitle?.length > 0 && (
-                <span className="text-red-500">Not Found</span>
+              {tagManager.length === 0 && pageTitle?.length > 0 && (
+                <span className="text-red-500">No container Found</span>
               )}
             </span>
           </div>

@@ -24,8 +24,6 @@ async fn crawl(url: String) -> Result<CrawlResult, String> {
 async fn fetch_page_speed(url: &str) -> Result<PageSpeedResponse, String> {
     let result = crawler::get_page_speed_insights(url.to_string()).await;
 
-    println!("This is the Page Speed function{:#?}", result);
-
     match result {
         Ok(result) => Ok(result),
         Err(err) => Err(err),

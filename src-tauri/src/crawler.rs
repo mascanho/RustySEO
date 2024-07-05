@@ -6,6 +6,7 @@ use std::{
     usize,
 };
 
+use regex::Regex;
 use reqwest::Client;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
@@ -52,6 +53,8 @@ pub struct CrawlResult {
     pub favicon_url: Vec<String>,
     pub keywords: Vec<Vec<(String, usize)>>,
     pub readings: Vec<(f64, String)>,
+    pub google_tag_manager: Vec<String>,
+    pub tag_container: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -108,6 +111,8 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut favicon_url = Vec::new();
     let mut keywords = Vec::new();
     let mut readings = Vec::new();
+    let mut google_tag_manager: Vec<String> = Vec::new();
+    let mut tag_container = Vec::new();
 
     if response.status().is_success() {
         let body = response
@@ -126,13 +131,43 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         }
 
         // check for Google Tag Manager and Its content
-        let gtm_selector = Selector::parse("script")
-            .map_err(|e| format!("Selector error: {}", e))?
-            .and(Attr("data-gtm", "true"));
-        for gtm in document.select(&gtm_selector) {
-            if let Some(gtm_content) = gtm.value().attr("data-gtm") {
-                page_speed_results.push(gtm_content.to_string());
+        let gtm_selector = Selector::parse("script").unwrap();
+        // Iterate over script tags and check for GTM
+        for script in document.select(&gtm_selector) {
+            if let Some(script_text) = script.text().next() {
+                if script_text.contains("googletagmanager.com") {
+                    println!("Found Google Tag Manager script:\n{}", script_text);
+                    google_tag_manager.push(script_text.to_string());
+                }
             }
+        }
+        // Print all found GTM scripts
+        if !google_tag_manager.is_empty() {
+            println!("\nAll Google Tag Manager scripts found:");
+            for (index, script) in google_tag_manager.iter().enumerate() {
+                // grab the GTM container part of the script
+                let gtm_container = script
+                    .split("googletagmanager.com")
+                    .collect::<Vec<&str>>()
+                    .join("googletagmanager.com")
+                    .to_string();
+
+                println!("GTM Container: {}", gtm_container);
+
+                let re = Regex::new(r"GTM-[A-Z0-9]+").unwrap();
+                let gtm_id = re
+                    .captures_iter(&gtm_container)
+                    .next()
+                    .unwrap()
+                    .get(0)
+                    .unwrap()
+                    .as_str()
+                    .to_string();
+
+                tag_container.push(gtm_id);
+            }
+        } else {
+            println!("No Google Tag Manager scripts found.");
         }
 
         // Get the text content from the URL
@@ -321,37 +356,15 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     // println!("Words Adjusted: {:?}", words_adjusted);
     // println!("Open Graph Details: {:?}", og_details);
 
-    // Google Page Speed Check
-    // let handle = tokio::spawn(get_page_speed_insights(url.clone()));
-    //
-    // tokio::spawn(async {
-    //     match handle.await {
-    //         Ok(speed_results) => {
-    //             println!("Page Speed Results: {:#?}", speed_results);
-    //
-    //             Ok(())
-    //         }
-    //         Err(e) => {
-    //             println!("Error: {:?}", e);
-    //             Err(format!("Error: {:?}", e))
-    //         }
-    //     }
-    // });
-
     // SITEMAP FETCHING
     let sitemap_from_url = libs::get_sitemap(&url);
-    println!("Sitemap: {:?}", sitemap_from_url.await);
+    // println!("Sitemap: {:?}", sitemap_from_url.await);
 
     // Robots FETCHING
     let robots_from_url = libs::get_robots(&url);
     println!("Robots: {:#?}", robots_from_url.await);
 
-    // CORE WEB VITALS
-    // let cwv = helper().await.and_then(|cwv| Ok(cwv));
-    // println!("Core Web Vitals: {:#?}", cwv);
-    // page_speed_results.push(cwv);
-    // println!("Page Speed Results: {:#?}", page_speed_results);
-    // println!("####### CORE WEB VITALS HAS FINISHED #############");
+    println!("Google Tag Manager: {:?}", tag_container);
 
     Ok(CrawlResult {
         links,
@@ -373,6 +386,8 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         favicon_url,
         keywords,
         readings,
+        google_tag_manager,
+        tag_container,
     })
 }
 
