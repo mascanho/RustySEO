@@ -1,15 +1,13 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import PerformanceEl from "./components/Performance";
 import ResponseCodeEl from "./components/ResponseCode";
-import Indexation from "./components/Indexation";
 import replaceDoubleSlash from "./Hooks/DecodeURL";
 import SchemaTextEncoder from "./Hooks/SchemaTest";
 import { CgWebsite } from "react-icons/cg";
 import MenuEl from "./components/ui/Menu";
 import { useDisclosure } from "@mantine/hooks";
-
 import WordCountEl from "./components/WordCount";
 import ReadingTimeEl from "./components/ReadingTime";
 import OpenGraphCard from "./components/ui/OpenGraphCard";
@@ -17,12 +15,13 @@ import GooglePreview from "./components/GooglePreview";
 import FcpEl from "./components/Fcp";
 import DomElements from "./components/DomElements";
 import SpeedIndex from "./components/SpeedIndex";
-import { open } from "@tauri-apps/api/shell";
 import openBrowserWindow from "./Hooks/OpenBrowserWindow";
 import ContentSummary from "./components/ui/ContentSummary";
 import LinkAnalysis from "./components/ui/LinkAnalysis";
 import ImageAnalysis from "./components/ui/ImageAnalysis";
-
+import { TagIcon } from "lucide-react";
+import { Button, Group, Text, Collapse, Box } from "@mantine/core";
+import { IconChevronDown } from "@tabler/icons-react";
 interface HomeProps {}
 
 const Home: React.FC<HomeProps> = () => {
@@ -202,10 +201,11 @@ const Home: React.FC<HomeProps> = () => {
   console.log(pageSchema, "Page Schema");
   console.log(wordCount, "---- The words");
   console.log(readingTime, "Reading Time"); 
-  console.log(openGraphDetails); */
+  // console.log(openGraphDetails); */
   console.log(pageSpeed);
   console.log(keywords, "--- Keywords");
   console.log(readingLevelResults, "--- Reading Level Results");
+  console.log(openGraphDetails, "--- Open Graph Details");
 
   return (
     <>
@@ -334,22 +334,27 @@ const Home: React.FC<HomeProps> = () => {
 
       <div className="flex w-full gap-x-7">
         <section
-          className={`mb-10 flex-wrap w-full shadow bg-white ${pageTitle[0]?.length > 0 ? "" : "bg-opacity-40"} p-4 rounded-b-md relative`}
+          className={`mb-10 flex-wrap  w-full h-full shadow bg-white ${pageTitle[0]?.length > 0 ? "" : "bg-opacity-40"} p-4 rounded-b-md relative`}
         >
           <div className="w-full bg-apple-spaceGray left-0 -top-5 rounded-t-md h-8 absolute flex items-center justify-center">
             <h2 className="text-center font-semibold text-white">Head</h2>
           </div>
 
           <div className="flex items-center mt-4">
-            <span
-              className={`flex font-semibold bg-apple-spaceGray text-white p-1 px-2 rounded-md ${pageTitle[0]?.length > 60 ? "bg-red-500" : "bg-green-500"}`}
+            <div
+              className={`flex justify-center items-center  ${pageTitle[0]?.length > 60 ? "bg-red-500 text-white" : pageTitle[0]?.length < 60 && pageTitle[0]?.length !== 0 ? "bg-green-500 text-white" : "bg-gray-200"} w-10 h-10 rounded-full`}
             >
-              Page Title
+              <TagIcon />
+            </div>
+            <span className={`flex font-semibold  text-black/60 ml-2 `}>
+              Page Title:
             </span>
-            <span className="flex ml-2 text-black/80">{pageTitle[0]}</span>
+            <span className="flex ml-2 text-black text-lg font-black">
+              {pageTitle[0]}
+            </span>
             {pageTitle.length > 0 && (
               <span
-                className={`flex ml-4 ${pageTitle[0].length > 60 ? "text-red-500" : "text-green-500"}`}
+                className={`bg-gray-100 text-xs px-2 py-1 rounded-md items-center flex ml-4 ${pageTitle[0].length > 60 ? "text-red-500" : "text-green-600"}`}
               >
                 {pageTitle[0].length} / 60
               </span>
@@ -357,15 +362,22 @@ const Home: React.FC<HomeProps> = () => {
           </div>
 
           <div className="flex items-center mt-2">
-            <span
-              className={`flex font-semibold bg-apple-spaceGray text-white p-1 px-2 rounded-md ${pageDescription[0]?.length > 160 ? "bg-red-500" : "bg-green-500"}`}
+            <div
+              className={`flex justify-center items-center  ${pageDescription[0]?.length > 160 ? "bg-red-500 text-white" : pageDescription[0]?.length < 160 && pageDescription[0]?.length !== 0 ? "bg-green-500 text-white" : "bg-gray-200"} w-10 h-10 rounded-full`}
             >
-              Description
+              <TagIcon />
+            </div>
+            <span
+              className={`flex items-center font-semibold ml-2 text-black/60`}
+            >
+              Description:
             </span>
-            <span className="text-black/80 ml-2">{pageDescription[0]}</span>
+            <span className="text-black text-lg font-black ml-2">
+              {pageDescription[0]}
+            </span>
             {pageDescription[0]?.length > 0 && (
               <span
-                className={`flex ml-4 ${pageDescription[0].length > 160 ? "text-red-500" : "text-green-500"}`}
+                className={`bg-gray-100 text-xs px-2 py-1 rounded-md items-center flex ml-4 ${pageDescription[0].length > 160 ? "text-red-500" : "text-green-500"}`}
               >
                 {pageDescription[0].length} / 160
               </span>
@@ -373,44 +385,158 @@ const Home: React.FC<HomeProps> = () => {
           </div>
 
           <div className="flex items-center mt-2">
-            <span className="font-semibold bg-apple-spaceGray text-white p-1 px-2 rounded-md">
-              Canonical URL
+            <div
+              className={`flex justify-center items-center text-black  ${!canonical || canonical[0] === "No canonical URL found" ? "bg-red-500 text-white" : canonical[0]?.length > 1 ? "bg-green-500 text-white" : "bg-gray-200"} w-10 h-10 rounded-full`}
+            >
+              <TagIcon />
+            </div>
+            <span className="flex items-start ml-2 font-semibold text-black/60">
+              Canonical URL:
             </span>
-            <span className="ml-2">{canonical}</span>
+            <span className="ml-2 text-blue-600">{canonical || ""}</span>
           </div>
 
           <div className="flex items-center mt-2">
-            <span className="font-semibold bg-apple-spaceGray text-white p-1 px-2 rounded-md">
-              Hreflangs
+            <div
+              className={`flex justify-center items-center  ${hreflangs[0] === "No hreflang found" ? "bg-red-500 text-white" : pageDescription[0]?.length < 160 && pageDescription[0]?.length !== 0 ? "bg-green-500 text-white" : "bg-gray-200"} w-10 h-10 rounded-full`}
+            >
+              <TagIcon />
+            </div>{" "}
+            <span className="font-semibold  ml-2 rounded-md text-black/60">
+              Hreflangs:
             </span>
-            <div className="flex ml-2">
-              {hreflangs[0] === "No hreflang found"
-                ? "No hreflang found"
-                : hreflangs.map((hreflang, index) => (
+            <div className="flex">
+              {hreflangs[0] === "No hreflang found" ? (
+                <span className="ml-2">No hreflang found</span>
+              ) : (
+                hreflangs.map((hreflang, index) => (
+                  <div key={index}>
                     <span
-                      className="flex ml-2 bg-apple-gold text-white p-1 px-2 rounded-md"
+                      className="flex ml-2  text-black p-1 border px-2 bg-gray-100 rounded-md"
                       key={index}
                     >
                       {hreflang}
                     </span>
-                  ))}
+                  </div>
+                ))
+              )}
+              {hreflangs.length > 0 && hreflangs[0] !== "No hreflang found" && (
+                <Group justify="center" mb={5}>
+                  <div className="bg-brand-highlight flex ml-2 rounded-md px-3 py-1 text-xs items-center">
+                    <span>{hreflangs.length}</span>
+                    <IconChevronDown
+                      onClick={toggle}
+                      className={`text-[6px] transition-all animate duration-100 ease-in ${opened && "rotate-180"}`}
+                    />
+                  </div>
+                </Group>
+              )}
             </div>
           </div>
-
+          <Box className="mt-2" maw={800} mx="0">
+            <Collapse in={opened}>
+              <span className="text-left m-2 pt-3">This is the content</span>
+            </Collapse>
+          </Box>
           <div className="flex items-center mt-2">
-            <span
-              className={`flex font-semibold bg-apple-spaceGray text-white p-1 px-2 rounded-md ${pageDescription[0]?.length > 160 ? "bg-red-500" : "bg-green-500"}`}
+            <div
+              className={`flex items-center justify-center rounded-full w-10 h-10 ${
+                openGraphDetails?.title?.length > 0 &&
+                openGraphDetails?.image !== null &&
+                "bg-green-500 text-white"
+              } ${
+                openGraphDetails?.title?.length > 0 &&
+                openGraphDetails?.image === null &&
+                "bg-red-500 text-white"
+              }
+              ${openGraphDetails && "bg-gray-200"}
+`}
             >
-              OpenGraph
+              <TagIcon />
+            </div>
+            <span
+              className={`flex text-black/60 ml-2 items-center font-semibold`}
+            >
+              OpenGraph:
             </span>
-            <span className="text-black/80 ml-2">{pageDescription[0]}</span>
-            {pageDescription[0]?.length > 0 && (
-              <span
-                className={`flex ml-4 ${pageDescription[0].length > 160 ? "text-red-500" : "text-green-500"}`}
-              >
-                {pageDescription[0].length} / 160
-              </span>
-            )}
+            <span className="text-black ml-2">
+              {openGraphDetails.image === null && (
+                <span className="text-red-500">Not Found</span>
+              )}
+              {openGraphDetails.image !== null && pageTitle?.length > 0 && (
+                <span className="text-green-500">OG Found in your markup</span>
+              )}
+            </span>
+          </div>
+          <div className="flex items-center mt-2">
+            <div
+              className={`flex rounded-full items-center justify-center h-10 w-10 ${pageSchema.length > 0 && "bg-green-500 text-white"} ${!url && pageSchema.length === 0 && "bg-gray-200"}
+                        ${pageTitle.length > 0 && pageSchema.length === 0 && "bg-red-500 text-white"} ${pageTitle?.length === 0 && "bg-gray-200"}
+`}
+            >
+              <TagIcon />
+            </div>{" "}
+            <span className={`font-semibold ml-2 text-black/60`}>
+              Structured Data:
+            </span>
+            <span className="text-black/80 ml-2">
+              {pageSchema.length > 0 && pageTitle?.length > 0 && (
+                <a href="#sd">
+                  <span className="text-green-500">
+                    This page has structured data
+                  </span>
+                </a>
+              )}
+              {!pageSchema[0] && pageTitle?.length > 0 && (
+                <span className="text-red-500">Not Found</span>
+              )}
+            </span>
+          </div>
+          <div className="flex items-center mt-2">
+            <div
+              className={`flex rounded-full items-center justify-center h-10 w-10 ${pageSchema.length > 0 && "bg-green-500 text-white"} ${!url && pageSchema.length === 0 && "bg-gray-200"}
+                        ${pageTitle.length > 0 && pageSchema.length === 0 && "bg-red-500 text-white"} ${pageTitle?.length === 0 && "bg-gray-200"}
+`}
+            >
+              <TagIcon />
+            </div>{" "}
+            <span className={`font-semibold ml-2 text-black/60`}>
+              Tag Manager
+            </span>
+            <span className="text-black/80 ml-2">
+              {pageSchema.length > 0 && pageTitle?.length > 0 && (
+                <a href="#sd">
+                  <span className="text-green-500">
+                    This page has structured data
+                  </span>
+                </a>
+              )}
+              {!pageSchema[0] && pageTitle?.length > 0 && (
+                <span className="text-red-500">Not Found</span>
+              )}
+            </span>
+          </div>
+          <div className="flex items-center mt-2">
+            <div
+              className={`flex rounded-full items-center justify-center h-10 w-10 ${pageSchema.length > 0 && "bg-green-500 text-white"} ${!url && pageSchema.length === 0 && "bg-gray-200"}
+                        ${pageTitle.length > 0 && pageSchema.length === 0 && "bg-red-500 text-white"} ${pageTitle?.length === 0 && "bg-gray-200"}
+`}
+            >
+              <TagIcon />
+            </div>{" "}
+            <span className={`font-semibold ml-2 text-black/60`}>Scripts</span>
+            <span className="text-black/80 ml-2">
+              {pageSchema.length > 0 && pageTitle?.length > 0 && (
+                <a href="#sd">
+                  <span className="text-green-500">
+                    This page has structured data
+                  </span>
+                </a>
+              )}
+              {!pageSchema[0] && pageTitle?.length > 0 && (
+                <span className="text-red-500">Not Found</span>
+              )}
+            </span>
           </div>
         </section>
       </div>

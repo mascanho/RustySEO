@@ -125,6 +125,16 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             }
         }
 
+        // check for Google Tag Manager and Its content
+        let gtm_selector = Selector::parse("script")
+            .map_err(|e| format!("Selector error: {}", e))?
+            .and(Attr("data-gtm", "true"));
+        for gtm in document.select(&gtm_selector) {
+            if let Some(gtm_content) = gtm.value().attr("data-gtm") {
+                page_speed_results.push(gtm_content.to_string());
+            }
+        }
+
         // Get the text content from the URL
         let text_content = content::extract_text(&document);
 
