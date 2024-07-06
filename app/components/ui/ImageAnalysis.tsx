@@ -1,3 +1,4 @@
+import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import React from "react";
 
 const ImageAnalysis = ({
@@ -7,7 +8,7 @@ const ImageAnalysis = ({
 }: {
   imageLinks: any[];
   url: string;
-  altTexts: string;
+  altTexts: string[];
 }) => {
   return (
     <div className="relative shadow rounded-md ">

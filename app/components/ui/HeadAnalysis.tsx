@@ -176,7 +176,7 @@ export const HeadAnalysis = ({
               )}
             </div>
           </div>
-          <Box className="mt-1" maxw={800} mx="0">
+          <Box className="mt-1" mx="0">
             <Collapse in={opened}>
               <span className="text-left m-2 pt-3">
                 <div className="bg-gray-200 rounded-md">
