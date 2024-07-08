@@ -21,7 +21,9 @@ const ImageAnalysis = ({ images }: { images: string[] }) => {
                 <th className="text-xs w-2/5 px-2 border-r align-middle">
                   Alt Text
                 </th>
-                <th>Size</th>
+                <th className="text-xs w-1/5 px-2 border-r align-middle">
+                  Size
+                </th>
                 <th className="text-xs w-2/5 px-2 align-middle">Link</th>
               </tr>
             </thead>
@@ -38,7 +40,9 @@ const ImageAnalysis = ({ images }: { images: string[] }) => {
                     </a>
                   </td>
                   <td className="px-2 py-1 text-xs">{image.alt_text}</td>
-                  <td>{image.size_mb}</td>
+                  <td className="px-2 py-1 text-xs text-center">
+                    {image.size_mb}
+                  </td>
                   <td
                     onClick={() => {
                       openBrowserWindow(image.link);

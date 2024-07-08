@@ -1,9 +1,11 @@
 use regex::Regex;
+use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT};
 use reqwest::Client;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::error::Error as StdError;
+use std::time::Instant;
 use std::{
     collections::HashMap,
     env,
@@ -11,6 +13,7 @@ use std::{
     io::{Read, Write},
     usize,
 };
+use url::Url;
 
 mod content;
 mod libs;
@@ -455,9 +458,16 @@ pub async fn get_page_speed_insights(url: String) -> Result<PageSpeedResponse, S
 }
 
 async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError + Send + Sync>> {
-    let client = Client::new();
+    let mut headers = HeaderMap::new();
+    headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"));
+
+    let client = Client::builder().default_headers(headers).build()?;
+
+    println!("Fetching page: {}", url);
     let body = client.get(url).send().await?.text().await?;
-    let base_url = url::Url::parse(url)?;
+    println!("Page fetched successfully");
+
+    let base_url = Url::parse(url)?;
     let mut image_data = Vec::new();
 
     for cap in regex::Regex::new(r#"<img[^>]*>"#)?.captures_iter(&body) {
@@ -466,10 +476,22 @@ async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError 
         let src = extract_attribute(img_tag, "src").unwrap_or_default();
 
         if let Ok(image_url) = base_url.join(&src) {
+            println!("Fetching image: {}", image_url);
+            let start = Instant::now();
+
             match client.get(image_url.as_str()).send().await {
                 Ok(response) => {
+                    println!("Response status: {}", response.status());
+                    for (name, value) in response.headers() {
+                        println!("{}: {:?}", name, value);
+                    }
+
                     let bytes = response.bytes().await?;
+                    let duration = start.elapsed();
                     let size_mb = bytes.len() as f64 / 1024.0;
+
+                    println!("Image size: {:.2} KB", size_mb);
+                    println!("Fetch time: {:?}", duration);
 
                     image_data.push(ImageInfo {
                         alt_text,
