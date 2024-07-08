@@ -1,3 +1,9 @@
+use regex::Regex;
+use reqwest::Client;
+use scraper::{Html, Selector};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use std::error::Error as StdError;
 use std::{
     collections::HashMap,
     env,
@@ -5,12 +11,6 @@ use std::{
     io::{Read, Write},
     usize,
 };
-
-use regex::Regex;
-use reqwest::Client;
-use scraper::{Html, Selector};
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 mod content;
 mod libs;
@@ -36,14 +36,12 @@ struct OgDetails {
 pub struct CrawlResult {
     pub links: Vec<(String, String)>,
     pub headings: Vec<String>,
-    pub alt_texts: Vec<String>,
     pub indexation: Vec<String>,
     pub page_title: Vec<String>,
     pub page_description: Vec<String>,
     pub canonical_url: Vec<String>,
     pub hreflangs: Vec<Hreflang>,
     pub index_type: Vec<String>,
-    pub image_links: Vec<ImageInfo>,
     pub page_schema: Vec<String>,
     pub words: Vec<String>,
     pub reading_time: usize,
@@ -55,6 +53,7 @@ pub struct CrawlResult {
     pub readings: Vec<(f64, String)>,
     pub google_tag_manager: Vec<String>,
     pub tag_container: Vec<String>,
+    pub images: Vec<ImageInfo>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -68,10 +67,11 @@ pub struct LinkResult {
     pub links: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ImageInfo {
-    link: String,
     alt_text: String,
+    link: String,
+    size_mb: f64,
 }
 
 pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
@@ -90,7 +90,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut page_speed_results = Vec::new();
     let mut links = Vec::new();
     let mut headings = Vec::new();
-    let mut alt_texts = Vec::new();
     let mut page_title: Vec<String> = Vec::new();
     let indexation: Vec<String> = Vec::new();
     let mut page_description: Vec<String> = Vec::new();
@@ -98,8 +97,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut hreflangs: Vec<Hreflang> = Vec::new();
     // Initialize flags
     let mut index_type = Vec::new();
-    let mut image_links = Vec::new();
-    let mut alt_text_count = Vec::new();
     let mut page_schema: Vec<String> = Vec::new();
     let mut words = Vec::new();
     let mut og_details: HashMap<String, Option<String>> = [
@@ -192,37 +189,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         let top_keywords = content::get_top_keywords(&text_content, 10);
         println!("Top Keywords: {:?}", top_keywords);
         keywords.push(top_keywords);
-
-        // Fetch alt texts for images
-
-        let img_selector = Selector::parse("img").map_err(|e| format!("Selector error: {}", e))?;
-        for img in document.select(&img_selector) {
-            if let Some(alt) = img.value().attr("alt") {
-                alt_texts.push(alt.to_string());
-            } else {
-                alt_texts.push("NO ALT".to_string()); // Handle cases where alt attribute is missing
-            }
-        }
-
-        // Fetch all the images in the url and their respective alt texts, display them
-        for img in document.select(&img_selector) {
-            if let Some(link) = img.value().attr("src") {
-                let mut alt_text = img.value().attr("alt").unwrap_or("").to_string();
-
-                if alt_text.is_empty() {
-                    let no_alt_text;
-                    no_alt_text = link.to_string();
-                    alt_text_count.push(no_alt_text)
-                }
-
-                let image_info = ImageInfo {
-                    link: link.to_string(),
-                    alt_text,
-                };
-
-                image_links.push(image_info);
-            }
-        }
 
         // Fetch headings
         for level in 1..=6 {
@@ -383,17 +349,18 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
 
     println!("Google Tag Manager: {:?}", tag_container);
 
+    let images = fetch_image_info(&url).await.unwrap();
+    println!("Images: {:?}", images);
+
     Ok(CrawlResult {
         links,
         headings,
-        alt_texts,
         indexation,
         page_title,
         page_description,
         canonical_url,
         hreflangs,
         index_type,
-        image_links,
         page_schema,
         words,
         words_adjusted,
@@ -405,6 +372,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         readings,
         google_tag_manager,
         tag_container,
+        images,
     })
 }
 
@@ -484,4 +452,45 @@ pub async fn get_page_speed_insights(url: String) -> Result<PageSpeedResponse, S
             Err(format!("Failed to make request: {}", e))
         }
     }
+}
+
+async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError + Send + Sync>> {
+    let client = Client::new();
+    let body = client.get(url).send().await?.text().await?;
+    let base_url = url::Url::parse(url)?;
+    let mut image_data = Vec::new();
+
+    for cap in regex::Regex::new(r#"<img[^>]*>"#)?.captures_iter(&body) {
+        let img_tag = cap.get(0).unwrap().as_str();
+        let alt_text = extract_attribute(img_tag, "alt").unwrap_or_default();
+        let src = extract_attribute(img_tag, "src").unwrap_or_default();
+
+        if let Ok(image_url) = base_url.join(&src) {
+            match client.get(image_url.as_str()).send().await {
+                Ok(response) => {
+                    let bytes = response.bytes().await?;
+                    let size_mb = bytes.len() as f64 / 1024.0;
+
+                    image_data.push(ImageInfo {
+                        alt_text,
+                        link: image_url.to_string(),
+                        size_mb,
+                    });
+                }
+                Err(e) => {
+                    println!("Failed to fetch image {}: {}", image_url, e);
+                }
+            }
+        }
+    }
+
+    Ok(image_data)
+}
+
+fn extract_attribute(tag: &str, attr: &str) -> Option<String> {
+    regex::Regex::new(&format!(r#"{}="([^"]*)"#, attr))
+        .ok()?
+        .captures(tag)?
+        .get(1)
+        .map(|m| m.as_str().to_string())
 }

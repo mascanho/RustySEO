@@ -36,14 +36,12 @@ const Home: React.FC<HomeProps> = () => {
   const [crawlResult, setCrawlResult] = useState<string[]>([]);
   const [visibleLinks, setVisibleLinks] = useState<string[]>([]);
   const [headings, setHeadings] = useState<string[]>([]);
-  const [altTexts, setAltTexts] = useState<string[]>([]);
   const [pageTitle, setPageTitle] = useState<string[]>([]);
   const [pageDescription, setPageDescription] = useState<string[]>([]);
   const [canonical, setCanonical] = useState<string[]>([]);
   const [hreflangs, setHreflangs] = useState<string[]>([]);
   const [responseCode, setResponseCode] = useState<number | undefined>();
   const [indexType, setIndexType] = useState<string[]>([]);
-  const [imageLinks, setImageLinks] = useState<string[]>([]);
   const [pageSchema, setPageSchema] = useState<string[]>([]);
   const [wordCount, setWordCount] = useState<number | undefined>();
   const [readingTime, setReadingTime] = useState<number | undefined>();
@@ -54,6 +52,7 @@ const Home: React.FC<HomeProps> = () => {
   const [keywords, setKeywords] = useState<string[]>([]);
   const [readingLevelResults, setReadingLevelResults] = useState<any[]>([]);
   const [tagManager, setTagManager] = useState<any[]>([]);
+  const [images, setImages] = useState<any[]>([]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const userinput = event.target.value;
@@ -78,8 +77,6 @@ const Home: React.FC<HomeProps> = () => {
     setCrawlResult([]);
     setVisibleLinks([]);
     setHeadings([]);
-    setAltTexts([]);
-    setImageLinks([]);
     setWordCount(0);
     setOpenGraphDetails([]);
     setPageSpeed([]);
@@ -95,18 +92,17 @@ const Home: React.FC<HomeProps> = () => {
     setKeywords([]);
     setReadingLevelResults([]);
     setTagManager([]);
+    setImages([]);
 
     invoke<{
       links: [];
       headings: [];
-      alt_texts: [];
       page_title: [];
       page_description: [];
       canonical_url: [];
       hreflangs: [];
       response_code: number;
       index_type: [];
-      image_links: [];
       page_schema: [];
       words_adjusted: number;
       reading_time: number;
@@ -115,18 +111,17 @@ const Home: React.FC<HomeProps> = () => {
       keywords: [];
       readings: any[];
       tag_container: any[];
+      images: any[];
     }>("crawl", { url })
       .then((result) => {
         showLinksSequentially(result.links); // Show links one by one
         showHeadingsSequentially(result.headings);
-        showAltTextsSequentially(result.alt_texts);
         setPageTitle(result.page_title);
         setPageDescription(result.page_description);
         setCanonical(result.canonical_url);
         setHreflangs(result.hreflangs);
         setResponseCode(result.response_code);
         setIndexType(result.index_type);
-        showImageLinksSequentially(result.image_links);
         setPageSchema(result.page_schema);
         setWordCount(result.words_adjusted);
         setReadingTime(result.reading_time);
@@ -135,6 +130,7 @@ const Home: React.FC<HomeProps> = () => {
         setKeywords(result.keywords);
         setReadingLevelResults(result.readings);
         setTagManager(result.tag_container);
+        setImages(result.images);
       })
       .catch(console.error);
   };
@@ -158,22 +154,6 @@ const Home: React.FC<HomeProps> = () => {
     headings.forEach((heading, index) => {
       setTimeout(() => {
         setHeadings((prevHeadings) => [...prevHeadings, heading]);
-      }, index * 50); // Adjust timing for each link appearance
-    });
-  };
-
-  const showAltTextsSequentially = (alt_texts: string[]) => {
-    alt_texts.forEach((alt_text, index) => {
-      setTimeout(() => {
-        setAltTexts((prevAltTexts) => [...prevAltTexts, alt_text]);
-      }, index * 50); // Adjust timing for each link appearance
-    });
-  };
-
-  const showImageLinksSequentially = (image_links: string[]) => {
-    image_links.forEach((image_link, index) => {
-      setTimeout(() => {
-        setImageLinks((prevImageLinks) => [...prevImageLinks, image_link]);
       }, index * 50); // Adjust timing for each link appearance
     });
   };
@@ -211,12 +191,13 @@ const Home: React.FC<HomeProps> = () => {
   console.log(wordCount, "---- The words");
   console.log(readingTime, "Reading Time"); 
   // console.log(openGraphDetails); */
-  console.log(pageSpeed);
+  // console.log(pageSpeed);
   // console.log(keywords, "--- Keywords");
   // console.log(readingLevelResults, "--- Reading Level Results");
-  console.log(hreflangs);
-  console.log(favicon_url, "--- Favicon");
+  // console.log(hreflangs);
+  // console.log(favicon_url, "--- Favicon");
   console.log(openGraphDetails, "---- Open Graph Details");
+  console.log(images, "---- Images");
 
   return (
     <>
@@ -381,7 +362,7 @@ const Home: React.FC<HomeProps> = () => {
           openGraphDetails={openGraphDetails}
         />
         <LinkAnalysis visibleLinks={visibleLinks} />
-        <ImageAnalysis imageLinks={imageLinks} url={url} altTexts={altTexts} />
+        <ImageAnalysis images={images} />
         <div>
           <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full pb-2 text-center -mb-1">
             Headings
