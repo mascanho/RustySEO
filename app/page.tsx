@@ -23,6 +23,13 @@ import { TagIcon } from "lucide-react";
 import { IconChevronDown } from "@tabler/icons-react";
 import HeadAnalysis from "./components/ui/HeadAnalysis";
 interface HomeProps {}
+import { HiMagnifyingGlass } from "react-icons/hi2";
+import ClsEl from "./components/Cls";
+import TbtEl from "./components/Tbt";
+import Redirects from "./components/Redirects";
+import ServerResponseTime from "./components/ServeResponseTime";
+import LongTasks from "./components/LongTasks";
+import TtiEl from "./components/TTI";
 
 const Home: React.FC<HomeProps> = () => {
   const [url, setUrl] = useState<string>("");
@@ -214,10 +221,10 @@ const Home: React.FC<HomeProps> = () => {
   return (
     <>
       {/* Fixed Input and Crawl Button */}
-      <div className="fixed top-0 left-1/2 transform -translate-x-1/2 flex justify-center items-center py-5 z-40 ">
+      <div className="fixed top-0 left-1/2 transform -translate-x-1/2 flex justify-center items-center py-2 z-40 ">
         <div className="relative backdrop-blur-lg">
           <input
-            className="border border-gray-300 rounded-lg h-10 min-w-80 w-96 pl-3  pr-2 placeholder:text-gray-500"
+            className="border border-gray-800 rounded-full h-9 min-w-80 w-[29em] pl-7 pt-1  pr-2 placeholder:text-gray-500 relative "
             type="text"
             placeholder="https://yourwebsite.com"
             // value={url}
@@ -229,6 +236,7 @@ const Home: React.FC<HomeProps> = () => {
               }
             }}
           />
+          <HiMagnifyingGlass className="absolute top-[10px] left-2" />
           <button
             onClick={() => handleClick(url)}
             className="absolute -right-[3.2em] top-[8px] rounded-lg px-1 flex items-center"
@@ -283,7 +291,6 @@ const Home: React.FC<HomeProps> = () => {
               />
             </svg>{" "}
           </button>
-          {visibleLinks.length}
         </div>
       </div>
       <section className="w-full flex items-center space-x-2 justify-between">
@@ -328,12 +335,15 @@ const Home: React.FC<HomeProps> = () => {
       <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 my-10 gap-y-5 pb-5">
         <PerformanceEl stat={pageSpeed} loading={loading} url={url} />
         <FcpEl stat={pageSpeed} loading={loading} url={url} />
+        <TtiEl stat={pageSpeed} loading={loading} url={url} />
+        <TbtEl stat={pageSpeed} loading={loading} url={url} />
+        <ClsEl stat={pageSpeed} loading={loading} url={url} />
         <DomElements stat={pageSpeed} loading={loading} url={url} />
 
         <SpeedIndex stat={pageSpeed} loading={loading} url={url} />
-        <ResponseCodeEl res={responseCode} />
-        <WordCountEl words={wordCount} />
-        <ReadingTimeEl readingTime={readingTime} />
+        <Redirects stat={pageSpeed} loading={loading} url={url} />
+        <ServerResponseTime stat={pageSpeed} loading={loading} url={url} />
+        <LongTasks stat={pageSpeed} loading={loading} url={url} />
       </section>
 
       {/* Head starts here */}

@@ -25,11 +25,11 @@ export default function RootLayout({
       <body className="relative rounded-md overflow-x-hidden bg-brand-background">
         <MantineProvider>
           {/* Fixed MenuDrawer */}
-          <div className="fixed top-0 pl-7 z-20 bg-apple-silver h-20   border-b shadow w-full overflow-x-hidden  ">
+          <div className="fixed top-0 pl-7 z-20 bg-apple-silver h-14   border-b shadow w-full overflow-x-hidden  ">
             <MenuDrawer />
           </div>
           {/* Main Content Area */}
-          <main className="mt-20 p-6 rounded-md  bg-brand-gradient">
+          <main className="mt-16 p-6 rounded-md  bg-brand-gradient">
             {children}
           </main>
         </MantineProvider>

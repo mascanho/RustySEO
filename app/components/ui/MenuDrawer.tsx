@@ -53,7 +53,7 @@ function MenuDrawer() {
         </div>
       </Drawer>
 
-      <Group className="flex items-center justify-center mt-8  w-full">
+      <Group className="flex items-center justify-center mt-5  w-full">
         <button onClick={() => setOpened(true)}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
