@@ -489,7 +489,9 @@ async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError 
 
                     let bytes = response.bytes().await?;
                     let duration = start.elapsed();
+                    // make it just two decimal places
                     let size_mb = bytes.len() as f64 / 1024.0;
+                    let rounded_size_mb = (size_mb * 100.0).round() / 100.0;
 
                     println!("Image size: {:.2} KB", size_mb);
                     println!("Fetch time: {:?}", duration);
@@ -497,7 +499,7 @@ async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError 
                     image_data.push(ImageInfo {
                         alt_text,
                         link: image_url.to_string(),
-                        size_mb,
+                        size_mb: rounded_size_mb,
                     });
                 }
                 Err(e) => {

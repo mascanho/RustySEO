@@ -3,6 +3,7 @@ import { CgWebsite } from "react-icons/cg";
 import MenuEl from "./Menu";
 import { useDisclosure } from "@mantine/hooks";
 import { Drawer, Button } from "@mantine/core";
+import Todo from "./Todo";
 
 const SubBar = ({
   domainWithoutLastPart,
@@ -11,7 +12,7 @@ const SubBar = ({
   domainWithoutLastPart: string;
   url: string;
 }) => {
-  const [opened, { open, close }] = useDisclosure(false);
+  const [opened, { open, close }] = useDisclosure(true);
   return (
     <>
       <Drawer
@@ -32,16 +33,14 @@ const SubBar = ({
           timingFunction: "ease",
         }}
         position="left"
-        closeOnEscape
-        trapFocus
         withCloseButton
-        zIndex={1000}
         closeOnClickOutside
         closeButtonProps={{
           icon: <CgWebsite />,
         }}
       >
         {/* Drawer content */}
+        <Todo url={url} />
       </Drawer>
 
       <section className="w-full flex items-center space-x-2 justify-between -mt-2">

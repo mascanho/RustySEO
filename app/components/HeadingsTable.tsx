@@ -38,7 +38,9 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
             </tbody>
           </table>
         </div>
-        <footer className="bg-white border-t py-2 text-sm flex justify-center items-center">
+        <footer
+          className={`${headings.length === 0 ? "bg-white/40" : "bg-white"} border-t py-2 text-sm flex justify-center items-center`}
+        >
           <span>Headings Found: </span>{" "}
           <span className="text-apple-blue">{headings.length}</span>
         </footer>
