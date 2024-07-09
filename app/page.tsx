@@ -30,6 +30,11 @@ import Redirects from "./components/Redirects";
 import ServerResponseTime from "./components/ServeResponseTime";
 import LongTasks from "./components/LongTasks";
 import TtiEl from "./components/TTI";
+import Footer from "./components/ui/Footer";
+import HeadingsTable from "./components/HeadingsTable";
+import SubBar from "./components/ui/SubBar";
+import RenderBlocking from "./components/RenderBlocking";
+import PageSchemaTable from "./components/ui/PageSchemaTable";
 
 const Home: React.FC<HomeProps> = () => {
   const [url, setUrl] = useState<string>("");
@@ -135,6 +140,15 @@ const Home: React.FC<HomeProps> = () => {
       .catch(console.error);
   };
 
+  function checkGSC() {
+    invoke<{}>("fetch_google_search_console")
+      .then((result) => {
+        console.log("Starting gsc........");
+        console.log(result);
+      })
+      .catch(console.error);
+  }
+
   function handleSpeed(url: string) {
     invoke<{}>("fetch_page_speed", { url: url })
       .then((result: any) => setPageSpeed(result))
@@ -191,13 +205,13 @@ const Home: React.FC<HomeProps> = () => {
   console.log(wordCount, "---- The words");
   console.log(readingTime, "Reading Time"); 
   // console.log(openGraphDetails); */
-  // console.log(pageSpeed);
   // console.log(keywords, "--- Keywords");
   // console.log(readingLevelResults, "--- Reading Level Results");
   // console.log(hreflangs);
   // console.log(favicon_url, "--- Favicon");
   console.log(openGraphDetails, "---- Open Graph Details");
   console.log(images, "---- Images");
+  console.log(pageSpeed);
 
   return (
     <>
@@ -218,6 +232,13 @@ const Home: React.FC<HomeProps> = () => {
             }}
           />
           <HiMagnifyingGlass className="absolute top-[10px] left-2" />
+          {loading && (
+            <div
+              className="animate-spin inline-block size-5 border-[3px] border-current border-t-transparent text-blue-600 rounded-full absolute top-2 right-3"
+              role="status"
+              aria-label="loading"
+            ></div>
+          )}
           <button
             onClick={() => handleClick(url)}
             className="absolute -right-[3.2em] top-[8px] rounded-lg px-1 flex items-center"
@@ -274,45 +295,12 @@ const Home: React.FC<HomeProps> = () => {
           </button>
         </div>
       </div>
-      <section className="w-full flex items-center space-x-2 justify-between">
-        <div className="flex items-center space-x-2">
-          <div className="uppercase overflow-x-hidden py-1 font-semibold flex items-center space-x-2 border border-apple-spaceGray border-2 text-sm shadow px-3 rounded-full">
-            <CgWebsite />
-            <span>{domainWithoutLastPart || "RustySEO"}</span>
-          </div>
-          <span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              width={16}
-              height={16}
-              color={"#000000"}
-              fill={"none"}
-            >
-              <path
-                d="M20 12L4 12"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M15 17C15 17 20 13.3176 20 12C20 10.6824 15 7 15 7"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </span>
-          <div className="flex items-center space-x-1">
-            <span className="mt-1">{url}</span>
-          </div>
-        </div>
-        <div>
-          <MenuEl />
-        </div>
-      </section>
+      <SubBar domainWithoutLastPart={domainWithoutLastPart} url={url} />
+
+      <button onClick={() => checkGSC()} className="bg-blue-400" type="button">
+        Check gsc
+      </button>
+
       <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 my-10 gap-y-5 pb-5">
         <PerformanceEl stat={pageSpeed} loading={loading} url={url} />
         <FcpEl stat={pageSpeed} loading={loading} url={url} />
@@ -325,6 +313,7 @@ const Home: React.FC<HomeProps> = () => {
         <Redirects stat={pageSpeed} loading={loading} url={url} />
         <ServerResponseTime stat={pageSpeed} loading={loading} url={url} />
         <LongTasks stat={pageSpeed} loading={loading} url={url} />
+        <RenderBlocking stat={pageSpeed} loading={loading} url={url} />
       </section>
 
       {/* Head starts here */}
@@ -363,80 +352,10 @@ const Home: React.FC<HomeProps> = () => {
         />
         <LinkAnalysis visibleLinks={visibleLinks} />
         <ImageAnalysis images={images} />
-        <div>
-          <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full pb-2 text-center -mb-1">
-            Headings
-          </h2>
-          <section className="mx-auto h-96 w-full rounded-md overflow-auto bg-white/40 relative">
-            <table className="crawl-item">
-              <thead>
-                <tr>
-                  <th className="text-xs w-1/5 border-r align-middle">
-                    Heading Type
-                  </th>
-                  <th className="text-xs px-2 py-1 w-2/3 align-middle">
-                    Heading Text
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {headings.map((link, index) => {
-                  const [headingType, headingText] = link.split(": ", 2);
-                  return (
-                    <tr key={index} className="align-middle">
-                      <td className="crawl-item border-r font-semibold text-apple-blue border-b w-1/5 text-center h-full">
-                        {headingType}{" "}
-                      </td>
-                      <td className="h-full w-full border-b crawl-item pl-3">
-                        {headingText}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </section>
-          <div className="mx-auto text-center mt-4">
-            <span>Headings Found:</span>{" "}
-            <span className="text-apple-blue">{headings.length}</span>
-          </div>
-        </div>
-        <div>
-          <h2
-            onClick={() => {
-              openBrowserWindow(googleSchemaTestUrl);
-            }}
-            className=" bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full text-center"
-          >
-            Page Schema
-          </h2>
-
-          <section className="mx-auto h-96 w-full rounded-md overflow-auto bg-white/40 relative">
-            {pageSchema.length === 0 ? (
-              <div className="h-full w-full flex items-center justify-center">
-                <p className="text-center m-auto">No Schema Found</p>
-              </div>
-            ) : (
-              <pre className="bg-white w-full overflow-scroll ">
-                {pageSchema}
-              </pre>
-            )}
-          </section>
-          <div className="mx-auto text-center mt-4">
-            <span>Headings Found:</span>{" "}
-            <span className="text-apple-blue">{headings.length}</span>
-          </div>
-        </div>{" "}
-        <a
-          onClick={() => {
-            openBrowserWindow(
-              "https://www.google.com/search?q=site:linkedin.com/in/",
-            );
-          }}
-        >
-          View preview
-        </a>
+        <HeadingsTable headings={headings} />
+        <PageSchemaTable pageSchema={pageSchema} googleSchemaTestUrl={url} />
       </main>
+      <Footer url={url} loading={loading} />
     </>
   );
 };

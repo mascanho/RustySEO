@@ -106,7 +106,7 @@ export const HeadAnalysis = ({
 
           <div className="flex items-center mt-2">
             <div
-              className={`flex justify-center items-center  ${pageDescription[0]?.length > 160 ? "bg-red-500 text-white" : pageDescription[0]?.length < 160 && pageDescription[0]?.length !== 0 ? "bg-green-500 text-white" : "bg-gray-200"} w-10 h-10 rounded-full`}
+              className={`flex justify-center items-center min-w-10  ${pageDescription[0]?.length > 160 ? "bg-red-500 text-white" : pageDescription[0]?.length < 160 && pageDescription[0]?.length !== 0 ? "bg-green-500 text-white" : "bg-gray-200"} w-10 h-10 rounded-full`}
             >
               <TagIcon />
             </div>

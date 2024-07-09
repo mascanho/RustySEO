@@ -5,6 +5,7 @@ import "./globals.css";
 import { ColorSchemeScript, MantineProvider } from "@mantine/core";
 import VerticalNavBar from "./components/ui/VerticalNavBar";
 import MenuDrawer from "./components/ui/MenuDrawer";
+import Footer from "./components/ui/Footer";
 const inter = Inter({ subsets: ["latin"] });
 
 // export const metadata: Metadata = {

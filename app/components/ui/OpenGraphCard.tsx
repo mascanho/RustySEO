@@ -10,7 +10,7 @@ export const OpenGraphCard = ({
 }) => {
   return (
     <div className="shadow overflow-hidden rounded-md h-full">
-      <h2 className=" bg-apple-spaceGray font-semibold text-white p-2 relative px-2 rounded-t-md w-full  text-center ">
+      <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full pt-2  text-center ">
         Social Media Preview
       </h2>
       <section className="mx-auto h-full w-full rounded-md overflow-auto relative bg-white/40">

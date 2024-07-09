@@ -1,4 +1,5 @@
 use reqwest::Client;
+use rusqlite::{Connection, Result};
 use serde::{Deserialize, Serialize};
 use std::{error::Error, process::Command};
 use url::{ParseError, Url};

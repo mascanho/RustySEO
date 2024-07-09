@@ -16,6 +16,7 @@ use std::{
 use url::Url;
 
 mod content;
+mod db;
 mod libs;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -90,7 +91,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         .await
         .map_err(|e| format!("Request error: {}", e))?;
 
-    let mut page_speed_results = Vec::new();
+    let page_speed_results = Vec::new();
     let mut links = Vec::new();
     let mut headings = Vec::new();
     let mut page_title: Vec<String> = Vec::new();
@@ -348,12 +349,12 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let robots_from_url = libs::get_robots(&url);
     // println!("Robots: {:#?}", robots_from_url.await);
 
-    println!("Hreflangs: {:?}", hreflangs);
+    // println!("Hreflangs: {:?}", hreflangs);
 
     println!("Google Tag Manager: {:?}", tag_container);
 
     let images = fetch_image_info(&url).await.unwrap();
-    println!("Images: {:?}", images);
+    // println!("Images: {:?}", images);
 
     Ok(CrawlResult {
         links,

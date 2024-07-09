@@ -41,11 +41,14 @@ const LinkAnalysis = ({ visibleLinks }: { visibleLinks: any[] }) => {
             </tbody>
           </table>
         </div>
-        <span
-          className={`bg-transparent text-center p-2 ${visibleLinks.length === 0 ? "bg-white/40" : "bg-white"}`}
-        >
-          Links Found: {visibleLinks.length}
-        </span>
+        <div className="flex items-center justify-center border-t">
+          <span
+            className={`bg-transparent border-t flex justify-center items-center text-sm  text-center w-full p-2 ${visibleLinks.length === 0 ? "bg-white/40" : "bg-white"}`}
+          >
+            Links Found:{" "}
+            <span className="text-blue-500">{visibleLinks.length}</span>
+          </span>
+        </div>
       </section>
     </div>
   );

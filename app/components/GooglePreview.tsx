@@ -14,15 +14,15 @@ const GooglePreview = ({
   console.log(favicon_url);
 
   return (
-    <div className="shadow overflow-hidden rounded-md">
+    <div
+      className={`shadow overflow-hidden rounded-md ${openGraphDetails.length === 0 ? "bg-white/40" : "bg-white"}`}
+    >
       <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full pt-2  text-center ">
         SERP Preview
       </h2>
 
-      <section
-        className={` mx-auto h-96 p-8 flex items-center w-full rounded-md overflow-auto relative ${openGraphDetails.length === 0 ? "bg-white/40" : "bg-white h-full"}`}
-      >
-        <div style={{ marginBottom: "20px" }}>
+      <section className={`px-8 h-full pt-28 w-full rounded-md overflow-auto`}>
+        <div>
           <a
             style={{
               textDecoration: "none",

@@ -28,6 +28,8 @@ select = "0.6.0"
 dotenv = "0.15.0"
 regex = "1.7.0"
 html2text = "0.4.0"
+rusqlite = { version = "0.28.0", features = ["bundled"] }
+oauth2 = "4.3.0"
 
 
 [features]
