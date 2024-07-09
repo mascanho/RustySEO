@@ -21,7 +21,9 @@ const GooglePreview = ({
         SERP Preview
       </h2>
 
-      <section className={`px-8 h-full pt-28 w-full rounded-md overflow-auto`}>
+      <section
+        className={`px-8 h-full  pb-10 min-h-28 flex items-center  w-full rounded-md overflow-auto`}
+      >
         <div>
           <a
             style={{
