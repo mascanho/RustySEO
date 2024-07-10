@@ -29,10 +29,13 @@
     "prismjs": "^1.29.0",
     "puppeteer": "^22.12.1",
     "react": "^18",
+    "react-code-blocks": "^0.1.6",
     "react-dom": "^18",
     "react-icons": "^5.2.1",
+    "react-lazy-load": "^4.0.1",
     "react-remark": "^2.1.0",
     "react-syntax-highlighter": "^15.5.0",
+    "react-virtualized": "^9.22.5",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7"
   },
