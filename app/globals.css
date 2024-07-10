@@ -46,7 +46,7 @@ table {
 }
 
 thead {
-  @apply bg-gray-200 py-2 z-10;
+  @apply bg-gray-200 py-2 z-10 overflow-clip;
 }
 
 th {
@@ -69,4 +69,12 @@ td {
   padding: 2px 0;
   border: 1px solid #ddd;
   vertical-align: center;
+}
+
+pre {
+  display: overflow-scroll;
+  height: 28rem !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.1),
+    0 4px 11px rgba(0, 0, 0, 0.1);
 }

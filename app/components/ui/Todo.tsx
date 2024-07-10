@@ -7,15 +7,17 @@ import {
   Button,
   Box,
   Title,
-  Chip,
-  Group,
+  Drawer,
 } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import TodoItems from "./TodoItems";
 
 type Task = {
   title: string;
   type: string[];
   priority: string;
   url: string;
+  date: string;
 };
 
 const taskTypes = [
@@ -32,148 +34,136 @@ const priorities = ["Low", "Medium", "High"];
 
 interface TodoProps {
   url: string;
+  close: () => void;
 }
 
-const Todo: React.FC<TodoProps> = ({ url }) => {
+const Todo: React.FC<TodoProps> = ({ url, close: closeModal }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasksInitialized, setTasksInitialized] = useState(false); // New flag for initialization
+  const [opened, { toggle }] = useDisclosure(false);
   const [newTask, setNewTask] = useState<Task>({
     title: "",
     type: [],
     priority: "",
     url: url,
+    date: new Date().toISOString(),
   });
 
   // Load tasks from localStorage when the component mounts
   useEffect(() => {
-    const storedTasks = JSON.parse(
-      localStorage.getItem("tasks") || "[]",
-    ) as Task[];
-    if (storedTasks && storedTasks.length > 0) {
-      setTasks(storedTasks);
+    const storedTasks = localStorage.getItem("tasks");
+    if (storedTasks) {
+      console.log("Loading tasks from localStorage", JSON.parse(storedTasks));
+      setTasks(JSON.parse(storedTasks));
     }
+    setTasksInitialized(true); // Set the initialization flag to true
   }, []);
 
   // Save tasks to localStorage whenever they are updated
   useEffect(() => {
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-  }, [tasks]);
+    if (tasksInitialized) {
+      console.log("Saving tasks to localStorage", tasks);
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+    }
+  }, [tasks, tasksInitialized]);
 
   const handleAddTask = () => {
     if (newTask.title && newTask.type.length > 0 && newTask.priority) {
-      setTasks([...tasks, newTask]);
-      setNewTask({ title: "", type: [], priority: "", url: url });
+      const updatedTasks = [...tasks, newTask];
+      setTasks(updatedTasks);
+      setNewTask({
+        title: "",
+        type: [],
+        priority: "",
+        url: url,
+        date: new Date().toISOString(),
+      });
+      console.log("Task added", updatedTasks);
+      closeModal;
     }
   };
 
-  const handleRemoveTask = (index: number) => {
-    const newTasks = tasks.filter((_, taskIndex) => taskIndex !== index);
-    setTasks(newTasks);
-  };
-
   return (
-    <Container size="sm">
-      <Box mt={40}>
-        <Title order={2} mb="lg">
-          Task Manager
-        </Title>
-        <Box mb="lg">
-          <TextInput
-            label="Task Title"
-            placeholder="Enter task title"
-            value={newTask.title}
-            onChange={(event) =>
-              setNewTask({ ...newTask, title: event.currentTarget.value })
-            }
-            mb="md"
-          />
-          <MultiSelect
-            label="Type"
-            placeholder="Select task type"
-            data={taskTypes.map((type) => ({ value: type, label: type }))}
-            value={newTask.type}
-            onChange={(value) => setNewTask({ ...newTask, type: value })}
-            mb="md"
-            maxDropdownHeight={200}
-            comboboxProps={{
-              transitionProps: { transition: "pop", duration: 200 },
-              shadow: "md",
-            }}
-          />
-          <Select
-            label="Priority"
-            placeholder="Select priority"
-            data={priorities.map((priority) => ({
-              value: priority,
-              label: priority,
-            }))}
-            value={newTask.priority}
-            onChange={(value) =>
-              setNewTask({ ...newTask, priority: value || "" })
-            }
-            mb="md"
-            comboboxProps={{
-              transitionProps: { transition: "pop", duration: 200 },
-              shadow: "md",
-            }}
-          />
-          <TextInput
-            label="Page Url"
-            placeholder="Custom layout"
-            value={url}
-            readOnly
-          />
-          <Button className="mt-4 w-full" fullWidth onClick={handleAddTask}>
-            Add Task
-          </Button>
-        </Box>
+    <>
+      <Drawer
+        offset={8}
+        radius="md"
+        opened={opened}
+        onClose={close}
+        title="Todo"
+        size="sm"
+        className="overflow-hidden"
+        overlayProps={{
+          backgroundOpacity: 0.55,
+          blur: 3,
+        }}
+        transitionProps={{
+          transition: "scale-x",
+          duration: 200,
+          timingFunction: "ease",
+        }}
+        position="left"
+        withCloseButton
+        closeOnClickOutside
+      >
+        <TodoItems url={url} />
+      </Drawer>
+
+      <Container size="sm">
         <Box>
-          {tasks.map((task, index) => (
-            <Box
-              key={index}
-              p="md"
+          <Box mb="lg">
+            <TextInput
+              label="Task Title"
+              placeholder="Enter task title"
+              value={newTask.title}
+              onChange={(event) =>
+                setNewTask({ ...newTask, title: event.currentTarget.value })
+              }
               mb="md"
-              style={{
-                border: "1px solid #ccc",
-                borderRadius: 5,
-                display: "flex",
-                flexDirection: "column",
+            />
+            <MultiSelect
+              label="Type"
+              placeholder="Select task type"
+              data={taskTypes.map((type) => ({ value: type, label: type }))}
+              value={newTask.type}
+              onChange={(value) => setNewTask({ ...newTask, type: value })}
+              mb="md"
+              maxDropdownHeight={200}
+              comboboxProps={{
+                transitionProps: { transition: "pop", duration: 200 },
+                shadow: "md",
               }}
-            >
-              <div className="flex justify-between items-center">
-                <Title order={4}>{task.title}</Title>
-                <span
-                  className={`rounded-full px-2 py-1 text-xs ${
-                    task.priority === "High"
-                      ? "bg-red-500 text-white"
-                      : task.priority === "Medium"
-                        ? "bg-yellow-500"
-                        : "bg-green-500"
-                  }`}
-                >
-                  {task.priority}
-                </span>
-              </div>
-              <span className="text-sm text-gray-500 mt-1">{task.url}</span>
-              <Group mt="xs">
-                {task.type.map((type, i) => (
-                  <Chip key={i} variant="filled" size="xs">
-                    {type}
-                  </Chip>
-                ))}
-              </Group>
-              <Button
-                color="red"
-                size="xs"
-                mt="sm"
-                onClick={() => handleRemoveTask(index)}
-              >
-                Remove Task
-              </Button>
-            </Box>
-          ))}
+            />
+            <Select
+              label="Priority"
+              placeholder="Select priority"
+              data={priorities.map((priority) => ({
+                value: priority,
+                label: priority,
+              }))}
+              value={newTask.priority}
+              onChange={(value) =>
+                setNewTask({ ...newTask, priority: value || "" })
+              }
+              mb="md"
+              comboboxProps={{
+                transitionProps: { transition: "pop", duration: 200 },
+                shadow: "md",
+              }}
+            />
+            <TextInput
+              label="Page Url"
+              placeholder="Custom layout"
+              value={url}
+              readOnly
+            />
+            <Button className="mt-4 w-full" fullWidth onClick={handleAddTask}>
+              Add Task
+            </Button>
+          </Box>
         </Box>
-      </Box>
-    </Container>
+      </Container>
+    </>
   );
 };
 

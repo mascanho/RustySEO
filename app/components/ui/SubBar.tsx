@@ -4,6 +4,7 @@ import MenuEl from "./Menu";
 import { useDisclosure } from "@mantine/hooks";
 import { Drawer, Button } from "@mantine/core";
 import Todo from "./Todo";
+import TodoMenu from "./TodoMenu";
 
 const SubBar = ({
   domainWithoutLastPart,
@@ -15,34 +16,6 @@ const SubBar = ({
   const [opened, { open, close }] = useDisclosure(true);
   return (
     <>
-      <Drawer
-        offset={8}
-        radius="md"
-        opened={opened}
-        onClose={close}
-        title="Todo"
-        size="sm"
-        className="overflow-hidden"
-        overlayProps={{
-          backgroundOpacity: 0.55,
-          blur: 3,
-        }}
-        transitionProps={{
-          transition: "scale-x",
-          duration: 200,
-          timingFunction: "ease",
-        }}
-        position="left"
-        withCloseButton
-        closeOnClickOutside
-        closeButtonProps={{
-          icon: <CgWebsite />,
-        }}
-      >
-        {/* Drawer content */}
-        <Todo url={url} />
-      </Drawer>
-
       <section className="w-full flex items-center space-x-2 justify-between -mt-2">
         <div className="flex items-center space-x-2">
           <div className="uppercase overflow-x-hidden py-1 font-semibold flex items-center space-x-2 border border-apple-spaceGray border-2 text-sm shadow px-3 rounded-full">
@@ -79,12 +52,7 @@ const SubBar = ({
           </div>
         </div>
         <div className="flex items-center space-x-4">
-          <span
-            className="font-semibold pt-[3px] cursor-pointer"
-            onClick={open}
-          >
-            + Create task
-          </span>
+          <TodoMenu url={url} />
           <MenuEl />
         </div>
       </section>

@@ -18,17 +18,38 @@ const RenderBlocking = ({
   return (
     <section className="border p-4 border-apple-spaceGray shadow bg-white w-60 rounded-md space-y-2 relative">
       <span className="absolute right-5">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" 
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
           width={38}
           height={38}
           color={"#a6a5a2"}
-
-          fill={"none"}>
-    <path d="M15 2L21 8M21 2L15 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    <circle cx="6" cy="19" r="3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M12 5H8.5C6.567 5 5 6.567 5 8.5C5 10.433 6.567 12 8.5 12H15.5C17.433 12 19 13.567 19 15.5C19 17.433 17.433 19 15.5 19H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-</svg>
-
+          fill={"none"}
+        >
+          <path
+            d="M15 2L21 8M21 2L15 8"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <circle
+            cx="6"
+            cy="19"
+            r="3"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M12 5H8.5C6.567 5 5 6.567 5 8.5C5 10.433 6.567 12 8.5 12H15.5C17.433 12 19 13.567 19 15.5C19 17.433 17.433 19 15.5 19H12"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
       </span>
       <Popover
         width={200}
@@ -107,12 +128,11 @@ const RenderBlocking = ({
               </svg>
             </div>
           )}
-          {!loading &&
-            !url && (
-              <span className="h-10 font-bold text-xl text-apple-spaceGray/50">
-                ...
-              </span>,
-            )}
+          {!loading && !url && (
+            <span className="h-10 font-bold text-xl text-apple-spaceGray/50">
+              ...
+            </span>
+          )}
           {stat?.lighthouseResult?.audits?.["render-blocking-resources"]
             .displayValue && (
             <span className="h-10 font-bold text-xl text-apple-spaceGray/50">

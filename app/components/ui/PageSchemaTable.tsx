@@ -1,7 +1,7 @@
 import React from "react";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 
-const PageSchemaTable = ({ pageSchema, googleSchemaTestUrl }) => {
+const PageSchemaTable = ({ pageSchema, googleSchemaTestUrl }: any) => {
   return (
     <div>
       <h2

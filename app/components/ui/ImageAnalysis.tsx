@@ -57,7 +57,7 @@ const ImageAnalysis = ({ images }: { images: string[] }) => {
           </table>
         </div>
         <div
-          className={`sticky bottom-0 text-sm  text-center p-2 border-t rounded-b-md ${images?.length === 0 ? "bg-white/40" : "bg-white"}`}
+          className={`sticky bottom-0 text-xs  text-center p-2 border-t rounded-b-md ${images?.length === 0 ? "bg-white/40" : "bg-white"}`}
         >
           <span>Images Found:</span>{" "}
           <span className="text-apple-blue">{images?.length}</span>

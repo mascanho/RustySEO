@@ -4,6 +4,8 @@ import { useDisclosure } from "@mantine/hooks";
 import { IconChevronDown } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { BsArrowsCollapse } from "react-icons/bs";
+import HeadCode from "./HeadCode";
+import { GrHtml5 } from "react-icons/gr";
 
 export const HeadAnalysis = ({
   pageTitle,
@@ -15,9 +17,11 @@ export const HeadAnalysis = ({
   url,
   tagManager,
   favicon_url,
+  code,
 }: any) => {
   // Mantine Collapse
   const [opened, { toggle }] = useDisclosure(false);
+  const [openedCode, { toggle: toggleCode }] = useDisclosure(false);
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
@@ -30,7 +34,7 @@ export const HeadAnalysis = ({
   }, []);
 
   return (
-    <div className="flex w-full gap-x-7 transition-all overflow-x-clip">
+    <div className="flex flex-col w-full gap-x-7 transition-all overflow-x-clip">
       <section
         className={`mb-10 flex-wrap  w-full h-full shadow bg-white ${pageTitle[0]?.length > 0 ? "" : "bg-opacity-40"} p-4 rounded-b-md relative`}
       >

@@ -39,10 +39,10 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
           </table>
         </div>
         <footer
-          className={`${headings.length === 0 ? "bg-white/40" : "bg-white"} border-t py-2 text-sm flex justify-center items-center`}
+          className={`${headings.length === 0 ? "bg-white/40" : "bg-white"} border-t py-2 text-xs flex justify-center items-center`}
         >
           <span>Headings Found: </span>{" "}
-          <span className="text-apple-blue">{headings.length}</span>
+          <span className="text-apple-blue ml-1">{headings.length}</span>
         </footer>
       </section>
     </div>

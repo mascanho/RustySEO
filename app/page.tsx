@@ -2,25 +2,16 @@
 import { useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import PerformanceEl from "./components/Performance";
-import ResponseCodeEl from "./components/ResponseCode";
 import replaceDoubleSlash from "./Hooks/DecodeURL";
 import SchemaTextEncoder from "./Hooks/SchemaTest";
-import { CgWebsite } from "react-icons/cg";
-import MenuEl from "./components/ui/Menu";
-import { useDisclosure } from "@mantine/hooks";
-import WordCountEl from "./components/WordCount";
-import ReadingTimeEl from "./components/ReadingTime";
 import OpenGraphCard from "./components/ui/OpenGraphCard";
 import GooglePreview from "./components/GooglePreview";
 import FcpEl from "./components/Fcp";
 import DomElements from "./components/DomElements";
 import SpeedIndex from "./components/SpeedIndex";
-import openBrowserWindow from "./Hooks/OpenBrowserWindow";
 import ContentSummary from "./components/ui/ContentSummary";
 import LinkAnalysis from "./components/ui/LinkAnalysis";
 import ImageAnalysis from "./components/ui/ImageAnalysis";
-import { TagIcon } from "lucide-react";
-import { IconChevronDown } from "@tabler/icons-react";
 import HeadAnalysis from "./components/ui/HeadAnalysis";
 interface HomeProps {}
 import { HiMagnifyingGlass } from "react-icons/hi2";
@@ -35,6 +26,10 @@ import HeadingsTable from "./components/HeadingsTable";
 import SubBar from "./components/ui/SubBar";
 import RenderBlocking from "./components/RenderBlocking";
 import PageSchemaTable from "./components/ui/PageSchemaTable";
+import HeadCode from "./components/ui/Code";
+import Code from "./components/ui/Code";
+import { Collapse } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 
 const Home: React.FC<HomeProps> = () => {
   const [url, setUrl] = useState<string>("");
@@ -58,6 +53,10 @@ const Home: React.FC<HomeProps> = () => {
   const [readingLevelResults, setReadingLevelResults] = useState<any[]>([]);
   const [tagManager, setTagManager] = useState<any[]>([]);
   const [images, setImages] = useState<any[]>([]);
+  const [headElements, setHeadElements] = useState<any[]>([]);
+  const [bodyElements, setBodyElements] = useState<any[]>([]);
+
+  const [open, { toggle }] = useDisclosure(false);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const userinput = event.target.value;
@@ -98,6 +97,8 @@ const Home: React.FC<HomeProps> = () => {
     setReadingLevelResults([]);
     setTagManager([]);
     setImages([]);
+    setHeadElements([]);
+    setBodyElements([]);
 
     invoke<{
       links: [];
@@ -117,6 +118,8 @@ const Home: React.FC<HomeProps> = () => {
       readings: any[];
       tag_container: any[];
       images: any[];
+      head_elements: any[];
+      body_elements: any[];
     }>("crawl", { url })
       .then((result) => {
         showLinksSequentially(result.links); // Show links one by one
@@ -136,6 +139,8 @@ const Home: React.FC<HomeProps> = () => {
         setReadingLevelResults(result.readings);
         setTagManager(result.tag_container);
         setImages(result.images);
+        setHeadElements(result.head_elements);
+        setBodyElements(result.body_elements);
       })
       .catch(console.error);
   };
@@ -212,6 +217,8 @@ const Home: React.FC<HomeProps> = () => {
   console.log(openGraphDetails, "---- Open Graph Details");
   console.log(images, "---- Images");
   console.log(pageSpeed);
+  console.log(headElements, "---- Head Elements");
+  console.log(bodyElements, "---- Body Elements");
 
   return (
     <>
@@ -327,14 +334,32 @@ const Home: React.FC<HomeProps> = () => {
         url={url}
         tagManager={tagManager}
         favicon_url={favicon_url}
+        code={headElements}
       />
+
+      {/* Raw html code */}
+
+      <section className="relative grid grid-cols-1 md:grid-cols-2 gap-y-4  sm:gap-4">
+        <div>
+          <h2 className="bg-apple-spaceGray flex justify-center font-semibold pb-2  items-center rounded-t-md -mb-3 text-white shadow h-10">
+            Raw - Head
+          </h2>
+          <HeadCode code={headElements} language="html" />
+        </div>
+        <div>
+          <h2 className="bg-apple-spaceGray h-10 flex justify-center items-center font-semibold pb-2 rounded-t-md -mb-3 text-white shadow">
+            Raw - Body
+          </h2>
+          <HeadCode code={bodyElements} language="html" />
+        </div>
+      </section>
+
       {/* TABLES START HERE */}
 
       <main
         id="tables"
-        className="mx-auto w-full flex-col my-20 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-8 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-2 items-stretch"
+        className="mx-auto w-full flex-col my-20 pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-2 items-stretch"
       >
-        {/* Keywords */}
         <ContentSummary
           keywords={keywords}
           wordCount={wordCount}

@@ -1,7 +1,11 @@
+use html5ever::driver::parse_document;
+use html5ever::serialize::{serialize, SerializeOpts, TraversalScope};
+use html5ever::tendril::{ByteTendril, TendrilSink};
+use markup5ever_rcdom::{Handle, RcDom, SerializableHandle};
 use regex::Regex;
 use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT};
 use reqwest::Client;
-use scraper::{Html, Selector};
+use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::error::Error as StdError;
@@ -18,6 +22,14 @@ use url::Url;
 mod content;
 mod db;
 mod libs;
+
+#[derive(Serialize)]
+struct Element {
+    tag_name: String,
+    attributes: Vec<(String, String)>,
+    children: Vec<Element>,
+    text: Option<String>,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 struct OgDetails {
@@ -58,6 +70,8 @@ pub struct CrawlResult {
     pub google_tag_manager: Vec<String>,
     pub tag_container: Vec<String>,
     pub images: Vec<ImageInfo>,
+    pub head_elements: Vec<String>,
+    pub body_elements: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -76,6 +90,39 @@ pub struct ImageInfo {
     alt_text: String,
     link: String,
     size_mb: f64,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct PageSpeedResponse {
+    id: String,
+    captcha_result: Option<String>,
+    lighthouseResult: Option<LighthouseResult>,
+    // Add other fields based on the JSON response structure
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct LighthouseResult {
+    categories: Categories,
+    lighthouseVersion: String,
+    diagnostics: Option<serde_json::Value>,
+    audits: Option<serde_json::Value>,
+    // Add other fields based on the JSON response structure
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct Categories {
+    performance: Performance,
+    // Add other fields based on the JSON response structure
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct audits {
+    score: Option<f64>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+struct Performance {
+    score: Option<f64>,
 }
 
 pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
@@ -120,6 +167,8 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut readings = Vec::new();
     let mut google_tag_manager: Vec<String> = Vec::new();
     let mut tag_container = Vec::new();
+    let mut head_elements = Vec::new();
+    let mut body_elements = Vec::new();
 
     if response.status().is_success() {
         let body = response
@@ -135,6 +184,32 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
                 let text = link.text().collect::<Vec<_>>().join(" ").trim().to_string();
                 links.push((href.to_string(), text));
             }
+        }
+
+        // Get all the elements that exist inside <head>
+        let head_selector = Selector::parse("head").unwrap();
+
+        if let Some(head) = document.select(&head_selector).next() {
+            println!("Found head element: {:?}", head.html());
+            head_elements.push(head.html());
+
+            // Serialize the head element and output in JSON format
+            let head_contents = serialize_element(&head);
+            let json_head_contents = serde_json::to_string_pretty(&head_contents).unwrap();
+            // println!("Head contents: {}", json_head_contents);
+        }
+
+        // Get all the elements that exist inside <body>
+        let body_selector = Selector::parse("body").unwrap();
+
+        if let Some(body) = document.select(&body_selector).next() {
+            println!("Found head element: {:?}", body.html());
+            body_elements.push(body.html());
+
+            // Serialize the head element and output in JSON format
+            let body_contents = serialize_element(&body);
+            let json_head_contents = serde_json::to_string_pretty(&body_contents).unwrap();
+            // println!("Head contents: {}", json_head_contents);
         }
 
         // check for Google Tag Manager and Its content
@@ -377,44 +452,13 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         google_tag_manager,
         tag_container,
         images,
+        head_elements,
+        body_elements,
     })
 }
 
 pub fn calculate_reading_time(word_count: usize, words_per_minute: usize) -> usize {
     (word_count as f64 / words_per_minute as f64).ceil() as usize
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-pub struct PageSpeedResponse {
-    id: String,
-    captcha_result: Option<String>,
-    lighthouseResult: Option<LighthouseResult>,
-    // Add other fields based on the JSON response structure
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-struct LighthouseResult {
-    categories: Categories,
-    lighthouseVersion: String,
-    diagnostics: Option<serde_json::Value>,
-    audits: Option<serde_json::Value>,
-    // Add other fields based on the JSON response structure
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-struct Categories {
-    performance: Performance,
-    // Add other fields based on the JSON response structure
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-struct audits {
-    score: Option<f64>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-struct Performance {
-    score: Option<f64>,
 }
 
 pub async fn get_page_speed_insights(url: String) -> Result<PageSpeedResponse, String> {
@@ -482,9 +526,9 @@ async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError 
 
             match client.get(image_url.as_str()).send().await {
                 Ok(response) => {
-                    println!("Response status: {}", response.status());
+                    // println!("Response status: {}", response.status());
                     for (name, value) in response.headers() {
-                        println!("{}: {:?}", name, value);
+                        // println!("{}: {:?}", name, value);
                     }
 
                     let bytes = response.bytes().await?;
@@ -493,8 +537,8 @@ async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError 
                     let size_mb = bytes.len() as f64 / 1024.0;
                     let rounded_size_mb = (size_mb * 100.0).round() / 100.0;
 
-                    println!("Image size: {:.2} KB", size_mb);
-                    println!("Fetch time: {:?}", duration);
+                    // println!("Image size: {:.2} KB", size_mb);
+                    // println!("Fetch time: {:?}", duration);
 
                     image_data.push(ImageInfo {
                         alt_text,
@@ -518,4 +562,34 @@ fn extract_attribute(tag: &str, attr: &str) -> Option<String> {
         .captures(tag)?
         .get(1)
         .map(|m| m.as_str().to_string())
+}
+
+// Function to format HTML contents in a pretty way
+fn serialize_element(element: &ElementRef) -> Element {
+    let tag_name = element.value().name().to_string();
+    let attributes = element
+        .value()
+        .attrs()
+        .map(|(name, value)| (name.to_string(), value.to_string()))
+        .collect();
+
+    let children = element
+        .children()
+        .filter_map(|child| {
+            if let Some(child_element) = ElementRef::wrap(child) {
+                Some(serialize_element(&child_element))
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    let text = element.text().next().map(|s| s.to_string());
+
+    Element {
+        tag_name,
+        attributes,
+        children,
+        text,
+    }
 }

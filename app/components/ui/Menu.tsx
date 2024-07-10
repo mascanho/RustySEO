@@ -8,6 +8,7 @@ import {
   IconTrash,
   IconArrowsLeftRight,
 } from "@tabler/icons-react";
+import { IoCreateOutline } from "react-icons/io5";
 
 import { HiOutlineDocumentReport } from "react-icons/hi";
 
@@ -15,7 +16,7 @@ import { Tooltip } from "@mantine/core";
 
 function MenuEl() {
   return (
-    <Menu shadow="md" width={200}>
+    <Menu shadow="md" width={200} zIndex={0}>
       <Tooltip
         label="Generate External Reports"
         position="left-start"
@@ -23,7 +24,7 @@ function MenuEl() {
       >
         <Menu.Target>
           <button
-            className="px-3 items-center flex space-x-1 py-1 rounded-md border border-apple-silver bg-apple-blue text-white"
+            className="px-3 active:scale-95 items-center flex space-x-1 py-1 rounded-md border border-apple-silver bg-apple-blue text-white"
             type="button"
           >
             <HiOutlineDocumentReport className="text-xl mr-1" />
@@ -32,11 +33,12 @@ function MenuEl() {
         </Menu.Target>
       </Tooltip>
 
-      <Menu.Dropdown>
+      <Menu.Dropdown className="relative">
+        <div className="w-3 h-3 border-l border-t rotate-45 absolute left-24 -top-2 bg-white -z-10" />
         <Menu.Label>Application</Menu.Label>
         <Menu.Item
           leftSection={
-            <IconSettings style={{ width: rem(14), height: rem(14) }} />
+            <IoCreateOutline style={{ width: rem(14), height: rem(14) }} />
           }
         >
           Settings
