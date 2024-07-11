@@ -27,6 +27,7 @@ import SubBar from "./components/ui/SubBar";
 import RenderBlocking from "./components/RenderBlocking";
 import PageSchemaTable from "./components/ui/PageSchemaTable";
 import { useDisclosure } from "@mantine/hooks";
+import RedirectsTable from "./components/ui/RedirectsTable";
 
 const Home: React.FC<HomeProps> = () => {
   const [url, setUrl] = useState<string>("");
@@ -220,10 +221,10 @@ const Home: React.FC<HomeProps> = () => {
   return (
     <>
       {/* Fixed Input and Crawl Button */}
-      <div className="fixed top-0 left-1/2 transform -translate-x-1/2 flex justify-center items-center py-2 z-40 ">
+      <div className="fixed top-1 left-1/2 transform -translate-x-1/2 flex justify-center items-center py-2 z-40 ">
         <div className="relative backdrop-blur-lg">
           <input
-            className="border border-gray-800 rounded-full h-9 min-w-80 w-[29em] pl-7 pt-1  pr-2 placeholder:text-gray-500 relative "
+            className="border border-gray-800 rounded-full h-6 text-xs min-w-80 w-[29em] pl-7 pt-[2px]   pr-2 placeholder:text-gray-500 relative "
             type="text"
             placeholder="https://yourwebsite.com"
             // value={url}
@@ -235,23 +236,23 @@ const Home: React.FC<HomeProps> = () => {
               }
             }}
           />
-          <HiMagnifyingGlass className="absolute top-[10px] left-2" />
+          <HiMagnifyingGlass className="absolute top-[5px] text-sm left-2" />
           {loading && (
             <div
-              className="animate-spin inline-block size-5 border-[3px] border-current border-t-transparent text-blue-600 rounded-full absolute top-2 right-3"
+              className="animate-spin inline-block size-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full absolute top-1 right-2"
               role="status"
               aria-label="loading"
             ></div>
           )}
           <button
             onClick={() => handleClick(url)}
-            className="absolute -right-[3.2em] top-[8px] rounded-lg px-1 flex items-center"
+            className="absolute -right-[2.2em] top-[1px] rounded-lg px-1 flex items-center"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
-              width={24}
-              height={24}
+              width={20}
+              height={20}
               color={"#000000"}
               className="hover:text-blue-500 ease-in-out duration-300"
               fill={"none"}
@@ -272,13 +273,13 @@ const Home: React.FC<HomeProps> = () => {
           </button>
           <button
             onClick={() => window.location.reload()}
-            className="absolute -right-20  top-[8px] rounded-lg px-1 flex items-center"
+            className="absolute -right-14  top-[1px] rounded-lg px-1 flex items-center"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
-              width={24}
-              height={24}
+              width={20}
+              height={20}
               color={"#000000"}
               fill={"none"}
               className="hover:text-red-400"
@@ -301,11 +302,7 @@ const Home: React.FC<HomeProps> = () => {
       </div>
       <SubBar domainWithoutLastPart={domainWithoutLastPart} url={url} />
 
-      <button onClick={() => checkGSC()} className="bg-blue-400" type="button">
-        Check gsc
-      </button>
-
-      <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 my-10 gap-y-5 pb-5">
+      <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 my-10 gap-y-5 pb-5 mt-6">
         <PerformanceEl stat={pageSpeed} loading={loading} url={url} />
         <FcpEl stat={pageSpeed} loading={loading} url={url} />
         <TtiEl stat={pageSpeed} loading={loading} url={url} />
@@ -334,33 +331,13 @@ const Home: React.FC<HomeProps> = () => {
         code={headElements}
       />
 
-      {/* Raw html code */}
-
-      <section className="relative grid grid-cols-1 md:grid-cols-2 gap-y-4  sm:gap-8">
-        <div>
-          <h2 className="bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full text-center">
-            Raw HTML
-          </h2>
-          <pre className="overflow-auto bg-white p-3 rounded-md shadow">
-            {headElements}
-          </pre>
-        </div>
-        <div>
-          <h2 className="bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full text-center">
-            Raw HTML
-          </h2>
-          <pre className="overflow-auto bg-white p-3 rounded-md shadow">
-            {bodyElements}
-          </pre>
-        </div>
-      </section>
-
       {/* TABLES START HERE */}
 
       <main
         id="tables"
-        className="mx-auto w-full flex-col my-20 pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-2 items-stretch"
+        className="mx-auto w-full flex-col my-20 pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-16 items-stretch"
       >
+        <RedirectsTable pageSpeed={pageSpeed} />
         <ContentSummary
           keywords={keywords}
           wordCount={wordCount}

@@ -16,7 +16,7 @@ const SubBar = ({
   const [opened, { open, close }] = useDisclosure(true);
   return (
     <>
-      <section className="w-full flex items-center space-x-2 justify-between -mt-2">
+      <section className="w-full flex items-center space-x-2 justify-between -mt-4">
         <div className="flex items-center space-x-2">
           <div className="uppercase overflow-x-hidden py-1 font-semibold flex items-center space-x-2 border border-apple-spaceGray border-2 text-sm shadow px-3 rounded-full">
             <CgWebsite />

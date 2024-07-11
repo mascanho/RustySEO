@@ -18,6 +18,7 @@ type Task = {
   priority: string;
   url: string;
   date: string;
+  completed?: boolean;
 };
 
 const taskTypes = [
@@ -47,6 +48,7 @@ const Todo: React.FC<TodoProps> = ({ url, close: closeModal }) => {
     priority: "",
     url: url,
     date: new Date().toISOString(),
+    completed: false,
   });
 
   // Load tasks from localStorage when the component mounts
@@ -77,6 +79,7 @@ const Todo: React.FC<TodoProps> = ({ url, close: closeModal }) => {
         priority: "",
         url: url,
         date: new Date().toISOString(),
+        completed: false,
       });
       console.log("Task added", updatedTasks);
       closeModal;

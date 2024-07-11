@@ -156,7 +156,7 @@ export const HeadAnalysis = ({
                 hreflangs.map((hreflang: any, index: any) => (
                   <div key={index}>
                     <span
-                      className="flex ml-2  text-black p-1 border px-2 bg-gray-100 rounded-md"
+                      className="flex ml-2  text-black p-0.2 border px-2 bg-gray-100 rounded-md"
                       key={index}
                     >
                       {hreflang?.lang}
@@ -166,7 +166,7 @@ export const HeadAnalysis = ({
               )}
               {hreflangs.length > 1 && (
                 <Group justify="center" mb={5}>
-                  <div className="bg-brand-highlight flex ml-2 rounded-md px-3 py-1 text-xs items-center">
+                  <div className="bg-brand-highlight flex ml-2 rounded-md px-3 py-0.5 text-xs items-center">
                     <span>{hreflangs.length}</span>
                     <IconChevronDown
                       onClick={toggle}

@@ -8,6 +8,18 @@ type Task = {
   priority: string;
   url: string;
   date: string;
+  completed?: boolean;
+};
+
+const taskColors: any = {
+  CWV: "blue",
+  Head: "green",
+  Content: "red",
+  Links: "yellow",
+  Images: "purple",
+  Headings: "pink",
+  Keywords: "orange",
+  Schema: "teal",
 };
 
 const TodoItems = ({ url }: { url: string }) => {
@@ -19,6 +31,7 @@ const TodoItems = ({ url }: { url: string }) => {
     priority: "",
     url: url,
     date: "",
+    completed: false,
   });
 
   // Load tasks from localStorage when the component mounts
@@ -69,32 +82,44 @@ const TodoItems = ({ url }: { url: string }) => {
                         <div className="flex justify-between items-center">
                           <Title
                             order={6}
-                            className="text-sm font-semibold text-gray-800"
+                            className="text-xs font-semibold text-gray-800"
                           >
                             {task.title}
                           </Title>
                           <span
-                            className={` w-2 h-full absolute right-0 bottom-0 text-xs font-semibold ${
+                            className={` w-12 h-fit rounded-bl-lg absolute right-0 flex justify-center items-center top-0 text-[10px] pt-1 font-semibold ${
                               task.priority === "High"
                                 ? "bg-red-500 text-white"
                                 : task.priority === "Medium"
                                   ? "bg-yellow-500 text-white"
                                   : "bg-green-500 text-white"
                             }`}
-                          ></span>
+                          >
+                            {task.priority}
+                          </span>
                         </div>
                         <span className="text-sm text-gray-500 ">
                           {task.url}
                         </span>
                         <Group className="flex flex-wrap">
-                          {task.type.map((type, i) => (
+                          {/* make the types to have all different colours */}
+                          {task.type.map((type, index) => (
                             <span
-                              key={i}
-                              className="flex items-center pt-1 px-2  -mr-3 bg-gray-500 text-[11px] rounded-full text-white"
+                              key={index}
+                              className="text-[10px] text-white pt-1 px-1 -mr-3 rounded-sm"
+                              style={{
+                                backgroundColor: taskColors[type],
+                              }}
                             >
                               {type}
                             </span>
-                          ))}
+                          ))}{" "}
+                          <div className="w-full h-[1px] -mt-2 bg-gray-100" />
+                          <div className="flex justify-between items-center p-0 -mb-2 -mt-3">
+                            <span className="text-[10px] text-gray-500 ">
+                              {task.date.substring(0, 10)}
+                            </span>
+                          </div>
                         </Group>
                       </Box>
                     ))}

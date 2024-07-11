@@ -23,7 +23,9 @@ function TodoMenu({ url }: { url: string }) {
     <>
       <Modal
         opened={openedModal}
-        overlayProps={{ display: "none" }}
+        overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+        closeOnEscape
+        closeOnClickOutside
         onClose={closeModal}
         title=""
         centered
@@ -40,9 +42,9 @@ function TodoMenu({ url }: { url: string }) {
         size="sm"
         position="left"
         shadow="xl"
-        overlayProps={{ display: "none" }}
         closeOnEscape
-        closeOnClickOutside={true}
+        closeOnClickOutside
+        overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
       >
         <TodoItems url={url} />
       </Drawer>
