@@ -21,7 +21,13 @@ function TodoMenu({ url }: { url: string }) {
 
   return (
     <>
-      <Modal opened={openedModal} onClose={closeModal} title="" centered>
+      <Modal
+        opened={openedModal}
+        overlayProps={{ display: "none" }}
+        onClose={closeModal}
+        title=""
+        centered
+      >
         <Todo url={url} close={close} />
       </Modal>
 
@@ -32,19 +38,11 @@ function TodoMenu({ url }: { url: string }) {
         onClose={close}
         title=""
         size="sm"
-        className="overflow-hidden"
-        overlayProps={{
-          backgroundOpacity: 0.55,
-          blur: 3,
-        }}
-        transitionProps={{
-          transition: "scale-x",
-          duration: 200,
-          timingFunction: "ease",
-        }}
         position="left"
-        withCloseButton
-        closeOnClickOutside
+        shadow="xl"
+        overlayProps={{ display: "none" }}
+        closeOnEscape
+        closeOnClickOutside={true}
       >
         <TodoItems url={url} />
       </Drawer>

@@ -4,8 +4,6 @@ import { useDisclosure } from "@mantine/hooks";
 import { IconChevronDown } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { BsArrowsCollapse } from "react-icons/bs";
-import HeadCode from "./HeadCode";
-import { GrHtml5 } from "react-icons/gr";
 
 export const HeadAnalysis = ({
   pageTitle,
@@ -17,7 +15,6 @@ export const HeadAnalysis = ({
   url,
   tagManager,
   favicon_url,
-  code,
 }: any) => {
   // Mantine Collapse
   const [opened, { toggle }] = useDisclosure(false);

@@ -26,9 +26,6 @@ import HeadingsTable from "./components/HeadingsTable";
 import SubBar from "./components/ui/SubBar";
 import RenderBlocking from "./components/RenderBlocking";
 import PageSchemaTable from "./components/ui/PageSchemaTable";
-import HeadCode from "./components/ui/Code";
-import Code from "./components/ui/Code";
-import { Collapse } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 
 const Home: React.FC<HomeProps> = () => {
@@ -339,18 +336,22 @@ const Home: React.FC<HomeProps> = () => {
 
       {/* Raw html code */}
 
-      <section className="relative grid grid-cols-1 md:grid-cols-2 gap-y-4  sm:gap-4">
+      <section className="relative grid grid-cols-1 md:grid-cols-2 gap-y-4  sm:gap-8">
         <div>
-          <h2 className="bg-apple-spaceGray flex justify-center font-semibold pb-2  items-center rounded-t-md -mb-3 text-white shadow h-10">
-            Raw - Head
+          <h2 className="bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full text-center">
+            Raw HTML
           </h2>
-          <HeadCode code={headElements} language="html" />
+          <pre className="overflow-auto bg-white p-3 rounded-md shadow">
+            {headElements}
+          </pre>
         </div>
         <div>
-          <h2 className="bg-apple-spaceGray h-10 flex justify-center items-center font-semibold pb-2 rounded-t-md -mb-3 text-white shadow">
-            Raw - Body
+          <h2 className="bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full text-center">
+            Raw HTML
           </h2>
-          <HeadCode code={bodyElements} language="html" />
+          <pre className="overflow-auto bg-white p-3 rounded-md shadow">
+            {bodyElements}
+          </pre>
         </div>
       </section>
 
