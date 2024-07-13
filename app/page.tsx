@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import PerformanceEl from "./components/Performance";
 import replaceDoubleSlash from "./Hooks/DecodeURL";
@@ -28,6 +28,7 @@ import RenderBlocking from "./components/RenderBlocking";
 import PageSchemaTable from "./components/ui/PageSchemaTable";
 import { useDisclosure } from "@mantine/hooks";
 import RedirectsTable from "./components/ui/RedirectsTable";
+import ThirdPartyScripts from "./components/ui/ThirdPartyScripts";
 
 const Home: React.FC<HomeProps> = () => {
   const [url, setUrl] = useState<string>("");
@@ -75,6 +76,10 @@ const Home: React.FC<HomeProps> = () => {
     // Clear previous results before starting the new crawl
 
     setLoading(!loading);
+
+    // set the url being searched in the session storage
+    sessionStorage.setItem("url", url);
+
     handleSpeed(url);
     setCrawlResult([]);
     setVisibleLinks([]);
@@ -142,6 +147,11 @@ const Home: React.FC<HomeProps> = () => {
       })
       .catch(console.error);
   };
+
+  // clear session storage on page reload
+  useEffect(() => {
+    sessionStorage?.clear();
+  }, []);
 
   function checkGSC() {
     invoke<{}>("fetch_google_search_console")
@@ -221,7 +231,7 @@ const Home: React.FC<HomeProps> = () => {
   return (
     <>
       {/* Fixed Input and Crawl Button */}
-      <div className="fixed top-1 left-1/2 transform -translate-x-1/2 flex justify-center items-center py-2 z-40 ">
+      <div className="fixed top-[34px] z-[1000] left-1/2 transform -translate-x-1/2 flex justify-center items-center py-2 ">
         <div className="relative backdrop-blur-lg">
           <input
             className="border border-gray-800 rounded-full h-6 text-xs min-w-80 w-[29em] pl-7 pt-[2px]   pr-2 placeholder:text-gray-500 relative "
@@ -335,9 +345,8 @@ const Home: React.FC<HomeProps> = () => {
 
       <main
         id="tables"
-        className="mx-auto w-full flex-col my-20 pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-16 items-stretch"
+        className="mx-auto w-full flex-col my-10 py-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-16 items-stretch"
       >
-        <RedirectsTable pageSpeed={pageSpeed} />
         <ContentSummary
           keywords={keywords}
           wordCount={wordCount}
@@ -357,6 +366,9 @@ const Home: React.FC<HomeProps> = () => {
         <ImageAnalysis images={images} />
         <HeadingsTable headings={headings} />
         <PageSchemaTable pageSchema={pageSchema} googleSchemaTestUrl={url} />
+        <RedirectsTable pageSpeed={pageSpeed} />
+
+        <ThirdPartyScripts pageSpeed={pageSpeed} />
       </main>
       <Footer url={url} loading={loading} />
     </>

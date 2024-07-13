@@ -16,8 +16,8 @@ const ContentSummary = ({
     <section
       className={`flex-wrap w-full h-full space-y-2 ${keywords.length === 0 ? "bg-white/40" : "bg-white"} p-2 rounded-md relative h-fit overflow-auto shadow`}
     >
-      <div className="w-full bg-apple-spaceGray left-0 top-0  rounded-t-md  h-8 absolute flex items-center justify-center">
-        <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 relative px-2 rounded-t-md w-full  text-center pt-2">
+      <div className="w-full bg-apple-spaceGray left-0 top-0  rounded-t-md  h-7 absolute flex items-center justify-center">
+        <h2 className=" bg-apple-spaceGray font-semibold text-white relative  rounded-t-md w-full  text-center">
           Content Summary
         </h2>
       </div>

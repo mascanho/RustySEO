@@ -16,7 +16,7 @@ type Task = {
   title: string;
   type: string[];
   priority: string;
-  url: string;
+  url: string | null;
   date: string;
   completed?: boolean;
 };

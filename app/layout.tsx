@@ -6,6 +6,7 @@ import { ColorSchemeScript, MantineProvider } from "@mantine/core";
 import VerticalNavBar from "./components/ui/VerticalNavBar";
 import MenuDrawer from "./components/ui/MenuDrawer";
 import Footer from "./components/ui/Footer";
+import TopMenuBar from "./components/ui/TopMenuBar";
 const inter = Inter({ subsets: ["latin"] });
 
 // export const metadata: Metadata = {
@@ -26,7 +27,8 @@ export default function RootLayout({
       <body className="relative rounded-md overflow-x-hidden bg-brand-background">
         <MantineProvider>
           {/* Fixed MenuDrawer */}
-          <div className="fixed top-0 pl-7 z-20 bg-apple-silver h-12   border-b shadow w-full overflow-x-hidden  ">
+          <TopMenuBar />
+          <div className="fixed top-7 pl-7  bg-apple-silver h-12   border-b shadow w-full overflow-x-hidden z-[1000]  ">
             <MenuDrawer />
           </div>
           {/* Main Content Area */}

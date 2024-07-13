@@ -1,21 +1,23 @@
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import React from "react";
 
-const ImageAnalysis = ({ images }: { images: string[] }) => {
+const ImageAnalysis = ({ images }: { images: any[] }) => {
   return (
-    <div className="relative shadow rounded-md overflow-hidden ">
-      <h2 className="bg-apple-spaceGray font-semibold text-white p-1   rounded-t-md w-full pb-2 text-center -mb-1 overflow-clip">
+    <div className="relative shadow rounded-md overflow-hidden">
+      <h2 className="bg-apple-spaceGray font-semibold text-white rounded-t-md w-full pt-1 text-center overflow-clip">
         Image Analysis
       </h2>
 
       <section
-        className={`flex flex-col h-[30em] ${images.length !== 0 ? "bg-white overflow-hidden" : "bg-white/40 overflow-hidden"}  overflow-hidden `}
+        className={`flex flex-col h-[30em] ${
+          images.length !== 0 ? "bg-white" : "bg-white/40"
+        } overflow-hidden`}
       >
         <div className="flex-1 overflow-y-auto">
-          <table className="w-full text-sm overflow-x-hidden">
-            <thead className="sticky top-0 bg-white bg-opacity-100">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-white bg-opacity-100 ">
               <tr className="border-b">
-                <th className="text-xs w-1/5 border-r px-2 items-center align-middle">
+                <th className="text-xs w-1/5 border-r px-2 align-middle">
                   Image
                 </th>
                 <th className="text-xs w-2/5 px-2 border-r align-middle">
@@ -28,9 +30,9 @@ const ImageAnalysis = ({ images }: { images: string[] }) => {
               </tr>
             </thead>
             <tbody>
-              {images?.map((image: any, index: any) => (
-                <tr className="crawl-item overflow-x-hidden" key={index}>
-                  <td className="px-2 py-1 text-center min-w-16">
+              {images.map((image: any, index: number) => (
+                <tr className="border-b" key={index}>
+                  <td className="px-2 py-1 text-center">
                     <a href={image?.link} className="block w-full h-full">
                       <img
                         src={image?.link}
@@ -41,13 +43,11 @@ const ImageAnalysis = ({ images }: { images: string[] }) => {
                   </td>
                   <td className="px-2 py-1 text-xs">{image.alt_text}</td>
                   <td className="px-2 py-1 text-xs text-center">
-                    {image.size_mb}
+                    {image.size_mb} KB
                   </td>
                   <td
-                    onClick={() => {
-                      openBrowserWindow(image.link);
-                    }}
-                    className="px-2 py-1 cursor-pointer text-sm"
+                    onClick={() => openBrowserWindow(image.link)}
+                    className="px-2 py-1 cursor-pointer text-sm text-blue-500 underline"
                   >
                     {image.link}
                   </td>
@@ -57,10 +57,12 @@ const ImageAnalysis = ({ images }: { images: string[] }) => {
           </table>
         </div>
         <div
-          className={`sticky bottom-0 text-xs  text-center p-2 border-t rounded-b-md ${images?.length === 0 ? "bg-white/40" : "bg-white"}`}
+          className={`sticky bottom-0 text-xs text-center p-2 border-t rounded-b-md ${
+            images.length === 0 ? "bg-white/40" : "bg-white"
+          }`}
         >
           <span>Images Found:</span>{" "}
-          <span className="text-apple-blue">{images?.length}</span>
+          <span className="text-apple-blue">{images.length}</span>
         </div>
       </section>
     </div>

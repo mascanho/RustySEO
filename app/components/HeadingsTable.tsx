@@ -5,7 +5,7 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
     <div
       className={`flex flex-col h-[32rem] ${headings.length === 0 ? "bg-white/40" : "bg-white"} shadow rounded-md overflow-hidden`}
     >
-      <h2 className="bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full pb-2 text-center">
+      <h2 className="bg-apple-spaceGray font-semibold text-white rounded-t-md w-full pt-1 text-center">
         Headings
       </h2>
       <section className="flex flex-col flex-grow overflow-hidden">

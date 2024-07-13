@@ -9,13 +9,13 @@ export const OpenGraphCard = ({
   linkedInInspect: string | undefined;
 }) => {
   return (
-    <div className="shadow overflow-hidden rounded-md h-full">
-      <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full pt-2  text-center ">
+    <div className="shadow overflow-hidden rounded-md h-ful bg-whitel">
+      <h2 className=" bg-apple-spaceGray font-semibold text-white rounded-t-md w-full pt-1   text-center ">
         Social Media Preview
       </h2>
       <section className="mx-auto h-full w-full rounded-md overflow-auto relative bg-white/40">
         <div
-          className={`border p-10  flex flex-col rounded-md items-center justify-center ${openGraphDetails.length === 0 ? "bg-white/40 h-full" : "bg-white h-[25em]"}`}
+          className={`border p-10  flex flex-col rounded-md items-center justify-center ${openGraphDetails.length === 0 ? "bg-white/40 h-full" : "bg-white h-full"}`}
         >
           <span
             className="absolute right-4 px-3 hover:border-black hover:text-white transition-all duration-300 active:border-2 hover:bg-apple-spaceGray py-1 text-xs w-fit flex flex-nowrap bg-apple-silver rounded-md text-right cursor-pointer top-3"

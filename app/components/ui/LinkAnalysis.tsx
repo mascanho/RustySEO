@@ -2,36 +2,35 @@ import React from "react";
 
 const LinkAnalysis = ({ visibleLinks }: { visibleLinks: any[] }) => {
   return (
-    <div className="shadow overflow-hidden rounded-md">
-      <h2 className="bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full pb-2 text-center -mb-1">
+    <div className="shadow overflow-auto rounded-md h-full">
+      <h2 className="bg-apple-spaceGray font-semibold text-white rounded-t-md w-full h-7 pt-1 text-center">
         Link Analysis
       </h2>
 
       <section
-        className={`mx-auto flex flex-col h-[30em] shadow w-full rounded-t-md relative ${visibleLinks.length === 0 ? "bg-white" : "bg-white/40"} bg-white/40`}
+        className={`mx-auto flex flex-col shadow w-full  relative h-full ${visibleLinks.length === 0 ? "bg-white/40" : "bg-white"}`}
+        style={{ minHeight: "20rem", maxHeight: "30.2rem", overflowY: "auto" }}
       >
         <div className="flex-1 overflow-y-auto">
           <table className="w-full">
-            <thead>
+            <thead className="sticky top-0 bg-white shadow">
               <tr>
-                <th className="text-xs w-1/5 border-r align-middle">
-                  Anchor Text
-                </th>
-                <th className="text-xs px-2 py-1 w-2/3 align-middle">Href</th>
+                <th className="text-xs w-1/5 border-r px-2">Anchor Text</th>
+                <th className="text-xs px-2  w-2/3">Href</th>
               </tr>
             </thead>
             <tbody>
               {visibleLinks.map((link, index) => (
                 <tr key={index} className="align-middle">
-                  <td className="crawl-item border-r border-b h-full">
-                    <span className="block py-1 text-apple-blue px-2 text-sm flex items-center w-[180px]">
+                  <td className="crawl-item border-r border-b">
+                    <span className="block py-1 px-2 text-sm flex items-center w-[180px]">
                       {link[1] || "-"}
                     </span>
                   </td>
-                  <td className="h-full w-1/3 border-b">
+                  <td className="border-b">
                     <a
                       href={link[0]}
-                      className="py-1 px-2 bg-white text-sm flex items-center"
+                      className="block py-1 px-2 text-sm flex items-center"
                     >
                       {link[0]}
                     </a>
@@ -41,11 +40,13 @@ const LinkAnalysis = ({ visibleLinks }: { visibleLinks: any[] }) => {
             </tbody>
           </table>
         </div>
-        <div className="flex items-center justify-center border-t">
+        <div className="flex items-center justify-center border-t bg-white">
           <span
-            className={`bg-transparent border-t flex justify-center items-center text-xs text-center w-full p-2 ${visibleLinks.length === 0 ? "bg-white/40" : "bg-white"}`}
+            className={`bg-transparent border-t flex justify-center items-center text-xs text-center w-full p-2 ${
+              visibleLinks.length === 0 ? "bg-white/40" : "bg-white"
+            }`}
           >
-            <span className="mr-1">Links Found:</span>
+            Links Found:{" "}
             <span className="text-blue-500">{visibleLinks.length}</span>
           </span>
         </div>
