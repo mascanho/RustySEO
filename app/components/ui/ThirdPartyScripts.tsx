@@ -1,6 +1,6 @@
 import React from "react";
 
-const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any[] }) => {
+const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
   const scripts =
     pageSpeed?.lighthouseResult?.audits?.["third-party-summary"]?.details
       ?.items || [];

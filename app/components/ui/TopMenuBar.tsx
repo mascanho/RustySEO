@@ -12,27 +12,47 @@ import { Drawer, Modal } from "@mantine/core";
 import Todo from "./Todo";
 import { useDisclosure } from "@mantine/hooks";
 import TodoItems from "./TodoItems";
+import { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/tauri";
+import PageSpeedInsigthsApi from "../PageSpeedInsigthsApi";
 
 const TopMenuBar = () => {
+  const [openedPageSpeed, { open: openPageSpeed, close: closePageSpeed }] =
+    useDisclosure(false);
   const [opened, { open, close }] = useDisclosure(false);
   const [openedModal, { open: openModal, close: closeModal }] =
     useDisclosure(false);
+  const [url, setUrl] = useState<string>("");
 
   // Get the url currently being searched from the session storage
-  const url: string | null = sessionStorage.getItem("url");
+  useEffect(() => {
+    const fetchUrlFromSessionStorage = () => {
+      const urlSession: any = window.sessionStorage.getItem("url");
+      setUrl(urlSession);
+    };
+
+    fetchUrlFromSessionStorage(); // Call function initially
+
+    // Clean-up function (optional)
+    return () => {
+      // This function runs when the component unmounts or useEffect runs again
+      // It's optional and can be omitted if not needed
+    };
+  }, [openModal, openedModal]);
 
   return (
     <>
       <Modal
-        opened={openedModal}
+        opened={openedModal || openedPageSpeed}
         overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
         closeOnEscape
         closeOnClickOutside
-        onClose={closeModal}
-        title=""
+        onClose={openedModal ? closeModal : closePageSpeed}
+        title={openedModal ? "" : "Page Speed Insights API key"}
         centered
       >
-        <Todo url={url} close={close} />
+        {openedModal && <Todo url={url} close={closeModal} />}
+        {openedPageSpeed && <PageSpeedInsigthsApi />}
       </Modal>
 
       <Drawer
@@ -62,7 +82,7 @@ const TopMenuBar = () => {
             <MenubarSeparator />
             <MenubarItem>Share</MenubarItem>
             <MenubarSeparator />
-            <MenubarItem>Print</MenubarItem>
+            <MenubarItem>Exit</MenubarItem>
           </MenubarContent>
         </MenubarMenu>
         <MenubarMenu>
@@ -77,7 +97,7 @@ const TopMenuBar = () => {
           </MenubarContent>
         </MenubarMenu>
         <MenubarMenu>
-          <MenubarTrigger className="ml-3">File</MenubarTrigger>
+          <MenubarTrigger className="ml-3">Reports</MenubarTrigger>
           <MenubarContent>
             <MenubarItem>
               New Tab <MenubarShortcut>⌘T</MenubarShortcut>
@@ -90,11 +110,9 @@ const TopMenuBar = () => {
           </MenubarContent>
         </MenubarMenu>
         <MenubarMenu>
-          <MenubarTrigger className="ml-3">File</MenubarTrigger>
+          <MenubarTrigger className="ml-3">Connectors</MenubarTrigger>
           <MenubarContent>
-            <MenubarItem>
-              New Tab <MenubarShortcut>⌘T</MenubarShortcut>
-            </MenubarItem>
+            <MenubarItem onClick={openPageSpeed}>PageSpeed Key</MenubarItem>
             <MenubarItem>New Window</MenubarItem>
             <MenubarSeparator />
             <MenubarItem>Share</MenubarItem>

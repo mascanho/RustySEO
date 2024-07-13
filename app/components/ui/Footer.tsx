@@ -1,4 +1,3 @@
-"use client";
 import React, { useEffect, useState } from "react";
 import { LiaTasksSolid } from "react-icons/lia";
 
@@ -15,18 +14,29 @@ type Task = {
 };
 
 const Footer = ({ url, loading }: { url: string; loading: boolean }) => {
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
-  // get the todo list from local storage
   useEffect(() => {
-    const task: any = JSON.parse(
-      localStorage.getItem("tasks") || "[]",
-    ) as Task[];
-    setTasks(task);
-  }, [tasks]);
+    const updateTasks = () => {
+      const storedTasks = JSON.parse(
+        localStorage.getItem("tasks") || "[]",
+      ) as Task[];
+      setTasks(storedTasks);
+    };
+
+    updateTasks();
+
+    window.addEventListener("tasksUpdated", updateTasks);
+
+    return () => {
+      window.removeEventListener("tasksUpdated", updateTasks);
+    };
+  }, []);
+
+  console.log("Current tasks in state:", tasks);
 
   return (
-    <footer className="w-full text-sm justify-between bg-apple-silver shadow fixed ml-0 left-0 bottom-0 z-[1000] border-t-2 flex items-center py-1 rounded-b-md overflow-hidden">
+    <footer className="w-full text-xs justify-between bg-apple-silver shadow fixed ml-0 left-0 bottom-0 z-[1000] border-t-2 flex items-center py-1 rounded-b-md overflow-hidden">
       <section>
         <div className="flex items-center ml-2 space-x-1 w-96 border">
           {!loading && url && (
@@ -42,7 +52,7 @@ const Footer = ({ url, loading }: { url: string; loading: boolean }) => {
           <LiaTasksSolid className="text-xl" />
           <div className="flex items-center mt-1 mr-1">
             <span>Tasks:</span>
-            <span className="text-red-500 ml-1">{tasks?.length}</span>
+            <span className="text-red-500 ml-1">{tasks.length}</span>
           </div>
         </div>
         <span className="pt-1">{`© ${year} - RustySEO`}</span>

@@ -32,6 +32,8 @@ rusqlite = { version = "0.28.0", features = ["bundled"] }
 oauth2 = "4.3.0"
 html5ever = "0.25"
 markup5ever_rcdom = "0.1"
+directories = "5.0"
+toml = "0.7"
 
 
 [features]

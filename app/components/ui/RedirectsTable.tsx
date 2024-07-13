@@ -1,7 +1,7 @@
 import React from "react";
 import { FaLongArrowAltDown } from "react-icons/fa";
 
-const RedirectsTable = ({ pageSpeed }: { pageSpeed: any[] }) => {
+const RedirectsTable = ({ pageSpeed }: { pageSpeed: any }) => {
   const redirects =
     pageSpeed?.lighthouseResult?.audits?.redirects?.details?.items || [];
 
@@ -18,7 +18,7 @@ const RedirectsTable = ({ pageSpeed }: { pageSpeed: any[] }) => {
         {redirects.length === 0 ? (
           <p className="text-center text-gray-500 pt-2">No redirects found.</p>
         ) : (
-          redirects.map((item, index) => (
+          redirects.map((item: any, index: any) => (
             <div key={item.url || index} className="flex flex-col">
               <div className="flex items-center mb-2 relative pl-4">
                 <div

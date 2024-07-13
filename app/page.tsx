@@ -29,8 +29,12 @@ import PageSchemaTable from "./components/ui/PageSchemaTable";
 import { useDisclosure } from "@mantine/hooks";
 import RedirectsTable from "./components/ui/RedirectsTable";
 import ThirdPartyScripts from "./components/ui/ThirdPartyScripts";
+import { Modal } from "@mantine/core";
 
 const Home: React.FC<HomeProps> = () => {
+  const [openedModal, { open: openModal, close: closeModal }] =
+    useDisclosure(false);
+
   const [url, setUrl] = useState<string>("");
   const [crawlResult, setCrawlResult] = useState<string[]>([]);
   const [visibleLinks, setVisibleLinks] = useState<string[]>([]);
@@ -149,8 +153,20 @@ const Home: React.FC<HomeProps> = () => {
   };
 
   // clear session storage on page reload
+  // Check for the system settings
   useEffect(() => {
     sessionStorage?.clear();
+    const checkSystem = async () => {
+      try {
+        const result = await invoke<{}>("check_system");
+        console.log(result);
+        if (result === null) {
+        }
+      } catch (error) {
+        console.error("Error checking system", error);
+      }
+    };
+    checkSystem();
   }, []);
 
   function checkGSC() {
@@ -230,6 +246,10 @@ const Home: React.FC<HomeProps> = () => {
 
   return (
     <>
+      <Modal opened={openedModal} onClose={closeModal} title="" centered>
+        <span>hello</span>
+      </Modal>
+
       {/* Fixed Input and Crawl Button */}
       <div className="fixed top-[34px] z-[1000] left-1/2 transform -translate-x-1/2 flex justify-center items-center py-2 ">
         <div className="relative backdrop-blur-lg">
