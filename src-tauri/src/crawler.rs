@@ -394,7 +394,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
 
     // Fine tuning the word count given the GPT variance
     let words_amount = words.len();
-    let words_adjusted = (words_amount as f64 * 1.9).round() as usize;
+    let words_adjusted = (words_amount as f64 * 2.9).round() as usize;
 
     // calculate reading time
     let reading_time = calculate_reading_time(words_adjusted, 150);
