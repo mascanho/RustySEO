@@ -12,11 +12,15 @@ import { Drawer, Modal } from "@mantine/core";
 import Todo from "./Todo";
 import { useDisclosure } from "@mantine/hooks";
 import TodoItems from "./TodoItems";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import PageSpeedInsigthsApi from "../PageSpeedInsigthsApi";
 
 const TopMenuBar = () => {
+  const onClose = useCallback(async () => {
+    const { appWindow } = await import("@tauri-apps/api/window");
+    appWindow.close();
+  }, []);
   const [openedPageSpeed, { open: openPageSpeed, close: closePageSpeed }] =
     useDisclosure(false);
   const [opened, { open, close }] = useDisclosure(false);
@@ -82,7 +86,7 @@ const TopMenuBar = () => {
             <MenubarSeparator />
             <MenubarItem>Share</MenubarItem>
             <MenubarSeparator />
-            <MenubarItem>Exit</MenubarItem>
+            <MenubarItem onClick={onClose}>Exit</MenubarItem>
           </MenubarContent>
         </MenubarMenu>
         <MenubarMenu>
