@@ -251,8 +251,8 @@ const Home: React.FC<HomeProps> = () => {
       </Modal>
 
       {/* Fixed Input and Crawl Button */}
-      <div className="fixed top-[34px] z-[1000] left-1/2 transform -translate-x-1/2 flex justify-center items-center py-2 ">
-        <div className="relative backdrop-blur-lg">
+      <div className="fixed top-[28px] z-[1000] left-1/2 transform -translate-x-1/2 flex justify-center items-center py-2 ">
+        <div className="relative">
           <input
             className="border border-gray-800 rounded-full h-6 text-xs min-w-80 w-[29em] pl-7 pt-[2px]   pr-2 placeholder:text-gray-500 relative "
             type="text"
@@ -276,7 +276,7 @@ const Home: React.FC<HomeProps> = () => {
           )}
           <button
             onClick={() => handleClick(url)}
-            className="absolute -right-[2.2em] top-[1px] rounded-lg px-1 flex items-center"
+            className="absolute -right-[2.2em] top-[2px] rounded-lg px-1 flex items-center"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -303,7 +303,7 @@ const Home: React.FC<HomeProps> = () => {
           </button>
           <button
             onClick={() => window.location.reload()}
-            className="absolute -right-14  top-[1px] rounded-lg px-1 flex items-center"
+            className="absolute -right-14  top-[2px] rounded-lg px-1 flex items-center"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

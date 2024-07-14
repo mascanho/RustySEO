@@ -28,7 +28,7 @@ export default function RootLayout({
         <MantineProvider>
           {/* Fixed MenuDrawer */}
           <TopMenuBar />
-          <div className="fixed top-7 pl-7  bg-apple-silver h-12   border-b shadow w-full overflow-x-hidden z-[1000]  ">
+          <div className="fixed top-7 pl-7  bg-apple-silver h-10   border-b shadow w-full overflow-x-hidden z-[1000]  ">
             <MenuDrawer />
           </div>
           {/* Main Content Area */}
