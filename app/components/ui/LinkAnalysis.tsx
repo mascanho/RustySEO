@@ -3,7 +3,7 @@ import React from "react";
 const LinkAnalysis = ({ visibleLinks }: { visibleLinks: any[] }) => {
   return (
     <section>
-      <h2 className="bg-apple-spaceGray font-semibold text-white rounded-t-md w-full pt-1">
+      <h2 className="bg-apple-spaceGray font-semibold text-white rounded-t-md w-full text-center pt-1">
         Links
       </h2>
       <div className="shadow rounded-b-md h-[30rem] overflow-hidden sticky top-0">
@@ -12,14 +12,14 @@ const LinkAnalysis = ({ visibleLinks }: { visibleLinks: any[] }) => {
         >
           <div className="relative">
             <table className="w-full">
-              <thead className="bg-gray-200 text-center">
+              <thead className="bg-gray-200 text-center text-xs">
                 <tr>
                   <th className="w-1/3">Anchor</th>
                   <th className="w-2/3">Link</th>
                 </tr>
               </thead>
             </table>
-            <div className="overflow-auto h-[26rem]  max-h-[26rem]">
+            <div className="overflow-auto h-[26.5rem]  max-h-[26.5rem]">
               <table className="w-full">
                 <tbody>
                   {visibleLinks.map((link, index) => (
