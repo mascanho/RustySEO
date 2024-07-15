@@ -8,10 +8,10 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
       <h2 className="bg-apple-spaceGray font-semibold text-white rounded-t-md w-full pt-1 text-center">
         Headings
       </h2>
-      <section className="flex flex-col flex-grow overflow-hidden">
-        <div className="overflow-auto flex-grow">
-          <table className="crawl-item w-full">
-            <thead>
+      <section className="flex flex-col flex-grow">
+        <div className="flex-grow overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-gray-200 text-center">
               <tr>
                 <th className="text-xs w-1/5 border-r align-middle">
                   Heading Type
@@ -21,27 +21,31 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
                 </th>
               </tr>
             </thead>
-            <tbody>
-              {headings.map((link, index) => {
-                const [headingType, headingText] = link.split(": ", 2);
-                return (
-                  <tr key={index} className="align-middle">
-                    <td className="crawl-item border-r font-semibold text-apple-blue border-b w-1/5 text-center h-full">
-                      {headingType}{" "}
-                    </td>
-                    <td className="h-full w-full border-b crawl-item pl-3">
-                      {headingText}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
           </table>
+          <div className="overflow-auto h-full">
+            <table className="w-full">
+              <tbody>
+                {headings.map((link, index) => {
+                  const [headingType, headingText] = link.split(": ", 2);
+                  return (
+                    <tr key={index} className="align-middle">
+                      <td className="crawl-item border-r font-semibold text-apple-blue border-b w-1/5 text-center h-full">
+                        {headingType}
+                      </td>
+                      <td className="h-full w-full border-b crawl-item pl-3">
+                        {headingText}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
         <footer
           className={`${headings.length === 0 ? "bg-white/40" : "bg-white"} border-t py-2 text-xs flex justify-center items-center`}
         >
-          <span>Headings Found: </span>{" "}
+          <span>Headings Found: </span>
           <span className="text-apple-blue ml-1">{headings.length}</span>
         </footer>
       </section>

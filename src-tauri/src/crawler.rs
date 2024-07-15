@@ -178,11 +178,41 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         let document = Html::parse_document(&body);
 
         // Fetch Links and each respective anchor text
+
+        // Function to clean and sanitize text
+        fn clean_text(text: &str) -> String {
+            // Remove extra whitespace
+            let cleaned = text.split_whitespace().collect::<Vec<_>>().join(" ");
+
+            // Remove any HTML tags that might have slipped through
+            let re = Regex::new(r"<[^>]*>").unwrap();
+            let cleaned = re.replace_all(&cleaned, "");
+
+            // Trim and limit the length
+            cleaned.trim().chars().take(100).collect()
+        }
+
         let link_selector = Selector::parse("a").map_err(|e| format!("Selector error: {}", e))?;
         for link in document.select(&link_selector) {
             if let Some(href) = link.value().attr("href") {
-                let text = link.text().collect::<Vec<_>>().join(" ").trim().to_string();
-                links.push((href.to_string(), text));
+                let mut text = link.text().collect::<Vec<_>>().join(" ");
+
+                // If text is empty, try to get the alt text from an img child
+                if text.is_empty() {
+                    if let Some(img) = link.select(&Selector::parse("img").unwrap()).next() {
+                        if let Some(alt) = img.value().attr("alt") {
+                            text = alt.to_string();
+                        }
+                    }
+                }
+
+                // Clean and sanitize the text
+                let cleaned_text = clean_text(&text);
+
+                // Only add non-empty texts
+                if !cleaned_text.is_empty() {
+                    links.push((href.to_string(), cleaned_text));
+                }
             }
         }
 

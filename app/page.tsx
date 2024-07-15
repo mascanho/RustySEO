@@ -84,7 +84,6 @@ const Home: React.FC<HomeProps> = () => {
     // set the url being searched in the session storage
     sessionStorage.setItem("url", url);
 
-    handleSpeed(url);
     setCrawlResult([]);
     setVisibleLinks([]);
     setHeadings([]);
@@ -106,6 +105,7 @@ const Home: React.FC<HomeProps> = () => {
     setImages([]);
     setHeadElements([]);
     setBodyElements([]);
+    handleSpeed(url);
 
     invoke<{
       links: [];
@@ -241,8 +241,7 @@ const Home: React.FC<HomeProps> = () => {
   console.log(openGraphDetails, "---- Open Graph Details");
   console.log(images, "---- Images");
   console.log(pageSpeed);
-  console.log(headElements, "---- Head Elements");
-  console.log(bodyElements, "---- Body Elements");
+  console.log(visibleLinks);
 
   return (
     <>
