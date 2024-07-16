@@ -59,6 +59,7 @@ const Home: React.FC<HomeProps> = () => {
   const [headElements, setHeadElements] = useState<any[]>([]);
   const [bodyElements, setBodyElements] = useState<any[]>([]);
 
+  const [AiContentAnalysis, setAiContentAnalysis] = useState<any>("");
   const [open, { toggle }] = useDisclosure(false);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,6 +106,7 @@ const Home: React.FC<HomeProps> = () => {
     setImages([]);
     setHeadElements([]);
     setBodyElements([]);
+    setAiContentAnalysis("");
     handleSpeed(url);
 
     invoke<{
@@ -151,6 +153,22 @@ const Home: React.FC<HomeProps> = () => {
       })
       .catch(console.error);
   };
+
+  // Get the AI stuff
+  useEffect(() => {
+    if (keywords.length > 0) {
+      invoke<string>("get_genai", { query: pageTitle[0] })
+        .then((result) => {
+          console.log(result);
+          setAiContentAnalysis(result);
+          return result;
+        })
+        .catch((error) => {
+          console.error("Error from get_genai:", error);
+          // Handle the error appropriately
+        });
+    }
+  }, [keywords]);
 
   // clear session storage on page reload
   // Check for the system settings
@@ -238,10 +256,7 @@ const Home: React.FC<HomeProps> = () => {
   // console.log(readingLevelResults, "--- Reading Level Results");
   // console.log(hreflangs);
   // console.log(favicon_url, "--- Favicon");
-  console.log(openGraphDetails, "---- Open Graph Details");
-  console.log(images, "---- Images");
   console.log(pageSpeed);
-  console.log(visibleLinks);
 
   return (
     <>
@@ -371,6 +386,8 @@ const Home: React.FC<HomeProps> = () => {
           wordCount={wordCount}
           readingTime={readingTime}
           readingLevelResults={readingLevelResults}
+          pageTitle={pageTitle}
+          AiContentAnalysis={AiContentAnalysis}
         />
         <GooglePreview
           favicon_url={favicon_url}

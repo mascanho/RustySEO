@@ -2,19 +2,22 @@
 
 use crawler::{CrawlResult, LinkResult, PageSpeedResponse};
 use directories::ProjectDirs;
+use genai::genai;
 use serde::Serialize;
 use std::io::Write;
 use tokio;
 use toml;
 
 mod crawler;
+mod genai;
 mod gsc;
 mod redirects;
 mod schema;
 
 #[derive(Serialize)]
 struct Config {
-    api_key: String,
+    page_speed_key: String,
+    openai_key: String,
 }
 
 #[tauri::command]
@@ -44,8 +47,17 @@ async fn fetch_google_search_console() -> Result<(), String> {
     Ok(result)
 }
 
+#[tauri::command]
+async fn get_genai(query: String) -> Result<String, String> {
+    match genai(query).await {
+        Ok(response) => Ok(response.content.unwrap_or_default()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
 #[tokio::main]
 async fn main() {
+    // Tauri setup
     tauri::Builder::default()
         .manage(LinkResult { links: vec![] })
         .invoke_handler(tauri::generate_handler![
@@ -53,11 +65,13 @@ async fn main() {
             crawl,
             fetch_page_speed,
             fetch_google_search_console,
-            add_api_key
+            add_api_key,
+            get_genai
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-    println!("Running from Tauri")
+    println!("Running from Tauri");
+    println!("Running from Main");
 }
 
 // Configurations & system checks
@@ -99,7 +113,7 @@ async fn check_system(key: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn add_api_key(key: String) -> Result<String, String> {
+fn add_api_key(key: String, api_type: String) -> Result<String, String> {
     // Create config directory
     let project_dirs = ProjectDirs::from("", "", "rustyseo")
         .ok_or_else(|| "Failed to get project directories".to_string())?;
@@ -107,18 +121,38 @@ fn add_api_key(key: String) -> Result<String, String> {
     std::fs::create_dir_all(config_dir)
         .map_err(|e| format!("Failed to create config directory: {}", e))?;
 
-    // Create config file
-    let config = Config {
-        api_key: key.clone(),
-    };
-    let config_file = config_dir.join("page_speed_api_key.toml");
-    let toml_string =
-        toml::to_string(&config).map_err(|e| format!("Failed to serialize config: {}", e))?;
+    if api_type == "page_speed" {
+        // Create config file
+        let config = Config {
+            page_speed_key: key.clone(),
+            openai_key: "".to_string(),
+        };
+        let config_file = config_dir.join("api_keys.toml");
+        let toml_string =
+            toml::to_string(&config).map_err(|e| format!("Failed to serialize config: {}", e))?;
 
-    std::fs::write(&config_file, toml_string)
-        .map_err(|e| format!("Failed to write config file: {}", e))?;
+        std::fs::write(&config_file, toml_string)
+            .map_err(|e| format!("Failed to write config file: {}", e))?;
+        println!("Config file created at: {}", config_file.display());
+        return Ok(key);
+    }
 
-    println!("Config file created at: {}", config_file.display());
+    if api_type == "openai" {
+        // Create config file
+        let config = Config {
+            page_speed_key: "".to_string(),
+            openai_key: key.clone(),
+        };
+        let config_file = config_dir.join("api_keys.toml");
+        let toml_string =
+            toml::to_string(&config).map_err(|e| format!("Failed to serialize config: {}", e))?;
+
+        std::fs::write(&config_file, toml_string)
+            .map_err(|e| format!("Failed to write config file: {}", e))?;
+        println!("Config file created at: {}", config_file.display());
+        return Ok(key);
+    }
+
     println!("API key: {}", key);
     Ok(key)
 }

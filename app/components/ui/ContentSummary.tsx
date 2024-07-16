@@ -1,16 +1,20 @@
+import { invoke } from "@tauri-apps/api/tauri";
 import { Badge } from "lucide-react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 const ContentSummary = ({
   keywords,
   wordCount,
   readingTime,
   readingLevelResults,
+  AiContentAnalysis,
 }: {
   keywords: any;
   wordCount: number | undefined;
   readingTime: number | undefined;
   readingLevelResults: any[];
+  pageTitle: string[];
+  AiContentAnalysis: any;
 }) => {
   return (
     <section
@@ -207,14 +211,9 @@ const ContentSummary = ({
             ))}
           </div>
         </div>
-        <div className="grid gap-2">
+        <div className="grid gap-2 min-h-[12rem]">
           <h3 className="text-lg font-semibold">Summary</h3>
-          <p className="text-muted-foreground">
-            This article provides an overview of the latest advancements in AI
-            and machine learning, and how they are transforming various
-            industries through automation. It covers the key trends, challenges,
-            and opportunities in this rapidly evolving field.
-          </p>
+          <p className="text-muted-foreground">{AiContentAnalysis} </p>
         </div>
       </div>{" "}
     </section>

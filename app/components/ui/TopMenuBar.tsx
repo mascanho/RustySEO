@@ -15,6 +15,7 @@ import TodoItems from "./TodoItems";
 import { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import PageSpeedInsigthsApi from "../PageSpeedInsigthsApi";
+import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 
 const TopMenuBar = () => {
   const onClose = useCallback(async () => {
@@ -75,7 +76,7 @@ const TopMenuBar = () => {
       >
         <TodoItems url={url} />
       </Drawer>
-      <Menubar className="fixed w-full top-0 z-[1001] p-0 text-black/50 shadow">
+      <Menubar className="fixed w-full top-0 z-[1001] p-0  bg-gray-400 ">
         <MenubarMenu>
           <MenubarTrigger className="ml-4">File</MenubarTrigger>
           <MenubarContent>
@@ -117,7 +118,13 @@ const TopMenuBar = () => {
           <MenubarTrigger className="ml-3">Connectors</MenubarTrigger>
           <MenubarContent>
             <MenubarItem onClick={openPageSpeed}>PageSpeed Key</MenubarItem>
-            <MenubarItem>New Window</MenubarItem>
+            <MenubarItem
+              onClick={() => {
+                openBrowserWindow("https://www.ollama.com/");
+              }}
+            >
+              Ollama
+            </MenubarItem>
             <MenubarSeparator />
             <MenubarItem>Share</MenubarItem>
             <MenubarSeparator />

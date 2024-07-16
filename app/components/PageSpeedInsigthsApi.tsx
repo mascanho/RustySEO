@@ -8,7 +8,10 @@ const PageSpeedInsigthsApi = () => {
 
   const handleAddApiKey: any = async (key: string) => {
     try {
-      const result = await invoke<{ success: boolean }>("add_api_key", { key });
+      const result = await invoke<{ success: boolean }>("add_api_key", {
+        key,
+        apiType: "page_speed",
+      });
       console.log(result);
       if (result.success) {
         console.log("API key added successfully");
