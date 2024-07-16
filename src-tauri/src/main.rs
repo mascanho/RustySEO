@@ -3,8 +3,9 @@
 use crawler::{CrawlResult, LinkResult, PageSpeedResponse};
 use directories::ProjectDirs;
 use genai::genai;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::io::Write;
+use tauri::api::path::config_dir;
 use tokio;
 use toml;
 
@@ -14,7 +15,7 @@ mod gsc;
 mod redirects;
 mod schema;
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug, Deserialize)]
 struct Config {
     page_speed_key: String,
     openai_key: String,
@@ -76,7 +77,7 @@ async fn main() {
 
 // Configurations & system checks
 #[tauri::command]
-async fn check_system(key: String) -> Result<(), String> {
+async fn check_system() -> Result<String, String> {
     let project_dirs = ProjectDirs::from("", "", "rustyseo").unwrap();
     let data_dir = project_dirs.data_dir();
     let cache_dir = project_dirs.cache_dir();
@@ -102,14 +103,13 @@ async fn check_system(key: String) -> Result<(), String> {
         std::fs::create_dir_all(temp_dir).unwrap();
     }
 
-    println!("Data dir: {}", data_dir.display());
-    println!("Cache dir: {}", cache_dir.display());
-    println!("Config dir: {}", config_dir.display());
-    println!("Log dir: {}", log_dir.display());
-    println!("Temp dir: {}", temp_dir.display());
-    println!("Log file: {}", log_file.display());
+    // Check the config file and see it it has any keys inside
+    let config_file = config_dir.join("api_keys.toml");
+    if !config_file.exists() {
+        return Err("No API keys found".to_string());
+    }
 
-    Ok(())
+    Ok("System check completed".to_string())
 }
 
 #[tauri::command]

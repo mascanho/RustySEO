@@ -13,7 +13,6 @@ import ContentSummary from "./components/ui/ContentSummary";
 import LinkAnalysis from "./components/ui/LinkAnalysis";
 import ImageAnalysis from "./components/ui/ImageAnalysis";
 import HeadAnalysis from "./components/ui/HeadAnalysis";
-interface HomeProps {}
 import { HiMagnifyingGlass } from "react-icons/hi2";
 import ClsEl from "./components/Cls";
 import TbtEl from "./components/Tbt";
@@ -30,6 +29,8 @@ import { useDisclosure } from "@mantine/hooks";
 import RedirectsTable from "./components/ui/RedirectsTable";
 import ThirdPartyScripts from "./components/ui/ThirdPartyScripts";
 import { Modal } from "@mantine/core";
+
+interface HomeProps {}
 
 const Home: React.FC<HomeProps> = () => {
   const [openedModal, { open: openModal, close: closeModal }] =

@@ -220,7 +220,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         let head_selector = Selector::parse("head").unwrap();
 
         if let Some(head) = document.select(&head_selector).next() {
-            println!("Found head element: {:?}", head.html());
+            // println!("Found head element: {:?}", head.html());
             head_elements.push(head.html());
 
             // Serialize the head element and output in JSON format
@@ -233,7 +233,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         let body_selector = Selector::parse("body").unwrap();
 
         if let Some(body) = document.select(&body_selector).next() {
-            println!("Found head element: {:?}", body.html());
+            // println!("Found head element: {:?}", body.html());
             body_elements.push(body.html());
 
             // Serialize the head element and output in JSON format
@@ -404,7 +404,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
 
         // Output the details
         for (key, value) in &og_details {
-            println!("{}: {:?}", key, value);
+            // println!("{}: {:?}", key, value);
         }
         // Fetch the word count
 
@@ -538,9 +538,7 @@ async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError 
 
     let client = Client::builder().default_headers(headers).build()?;
 
-    println!("Fetching page: {}", url);
     let body = client.get(url).send().await?.text().await?;
-    println!("Page fetched successfully");
 
     let base_url = Url::parse(url)?;
     let mut image_data = Vec::new();
@@ -577,7 +575,7 @@ async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError 
                     });
                 }
                 Err(e) => {
-                    println!("Failed to fetch image {}: {}", image_url, e);
+                    // println!("Failed to fetch image {}: {}", image_url, e);
                 }
             }
         }
