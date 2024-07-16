@@ -211,7 +211,7 @@ const ContentSummary = ({
             ))}
           </div>
         </div>
-        <div className="grid gap-2 min-h-[12rem]">
+        <div className="grid gap-1 min-h-[8rem]">
           <h3 className="text-lg font-semibold">Summary</h3>
           <p className="text-muted-foreground">{AiContentAnalysis} </p>
         </div>

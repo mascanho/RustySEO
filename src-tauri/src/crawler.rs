@@ -409,7 +409,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         // Fetch the word count
 
         let word_count_selector =
-            Selector::parse("body, h1, h2, h3, h4, h5, h6, p, span, li, div, a, html").unwrap();
+            Selector::parse("body, h1, h2, h3, h4, h5, h6, p, span, li, div, a").unwrap();
         let mut word_count = 0;
 
         for element in document.select(&word_count_selector) {
