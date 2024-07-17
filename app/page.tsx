@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import PerformanceEl from "./components/Performance";
 import replaceDoubleSlash from "./Hooks/DecodeURL";
@@ -13,7 +13,6 @@ import ContentSummary from "./components/ui/ContentSummary";
 import LinkAnalysis from "./components/ui/LinkAnalysis";
 import ImageAnalysis from "./components/ui/ImageAnalysis";
 import HeadAnalysis from "./components/ui/HeadAnalysis";
-interface HomeProps {}
 import { HiMagnifyingGlass } from "react-icons/hi2";
 import ClsEl from "./components/Cls";
 import TbtEl from "./components/Tbt";
@@ -28,8 +27,15 @@ import RenderBlocking from "./components/RenderBlocking";
 import PageSchemaTable from "./components/ui/PageSchemaTable";
 import { useDisclosure } from "@mantine/hooks";
 import RedirectsTable from "./components/ui/RedirectsTable";
+import ThirdPartyScripts from "./components/ui/ThirdPartyScripts";
+import { Modal } from "@mantine/core";
+
+interface HomeProps {}
 
 const Home: React.FC<HomeProps> = () => {
+  const [openedModal, { open: openModal, close: closeModal }] =
+    useDisclosure(false);
+
   const [url, setUrl] = useState<string>("");
   const [crawlResult, setCrawlResult] = useState<string[]>([]);
   const [visibleLinks, setVisibleLinks] = useState<string[]>([]);
@@ -54,6 +60,7 @@ const Home: React.FC<HomeProps> = () => {
   const [headElements, setHeadElements] = useState<any[]>([]);
   const [bodyElements, setBodyElements] = useState<any[]>([]);
 
+  const [AiContentAnalysis, setAiContentAnalysis] = useState<any>("");
   const [open, { toggle }] = useDisclosure(false);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,7 +82,10 @@ const Home: React.FC<HomeProps> = () => {
     // Clear previous results before starting the new crawl
 
     setLoading(!loading);
-    handleSpeed(url);
+
+    // set the url being searched in the session storage
+    sessionStorage.setItem("url", url);
+
     setCrawlResult([]);
     setVisibleLinks([]);
     setHeadings([]);
@@ -97,6 +107,8 @@ const Home: React.FC<HomeProps> = () => {
     setImages([]);
     setHeadElements([]);
     setBodyElements([]);
+    setAiContentAnalysis("");
+    handleSpeed(url);
 
     invoke<{
       links: [];
@@ -142,6 +154,39 @@ const Home: React.FC<HomeProps> = () => {
       })
       .catch(console.error);
   };
+
+  // Get the AI stuff
+  useEffect(() => {
+    if (keywords.length > 0) {
+      invoke<string>("get_genai", { query: pageTitle[0] })
+        .then((result) => {
+          console.log(result);
+          setAiContentAnalysis(result);
+          return result;
+        })
+        .catch((error) => {
+          console.error("Error from get_genai:", error);
+          // Handle the error appropriately
+        });
+    }
+  }, [keywords]);
+
+  // clear session storage on page reload
+  // Check for the system settings
+  useEffect(() => {
+    sessionStorage?.clear();
+    const checkSystem = async () => {
+      try {
+        const result = await invoke<{}>("check_system");
+        console.log(result);
+        if (result === null) {
+        }
+      } catch (error) {
+        console.error("Error checking system", error);
+      }
+    };
+    checkSystem();
+  }, []);
 
   function checkGSC() {
     invoke<{}>("fetch_google_search_console")
@@ -212,17 +257,17 @@ const Home: React.FC<HomeProps> = () => {
   // console.log(readingLevelResults, "--- Reading Level Results");
   // console.log(hreflangs);
   // console.log(favicon_url, "--- Favicon");
-  console.log(openGraphDetails, "---- Open Graph Details");
-  console.log(images, "---- Images");
   console.log(pageSpeed);
-  console.log(headElements, "---- Head Elements");
-  console.log(bodyElements, "---- Body Elements");
 
   return (
     <>
+      <Modal opened={openedModal} onClose={closeModal} title="" centered>
+        <span>hello</span>
+      </Modal>
+
       {/* Fixed Input and Crawl Button */}
-      <div className="fixed top-1 left-1/2 transform -translate-x-1/2 flex justify-center items-center py-2 z-40 ">
-        <div className="relative backdrop-blur-lg">
+      <div className="fixed top-[28px] z-[1000] left-1/2 transform -translate-x-1/2 flex justify-center items-center py-2 ">
+        <div className="relative">
           <input
             className="border border-gray-800 rounded-full h-6 text-xs min-w-80 w-[29em] pl-7 pt-[2px]   pr-2 placeholder:text-gray-500 relative "
             type="text"
@@ -246,7 +291,7 @@ const Home: React.FC<HomeProps> = () => {
           )}
           <button
             onClick={() => handleClick(url)}
-            className="absolute -right-[2.2em] top-[1px] rounded-lg px-1 flex items-center"
+            className="absolute -right-[2.2em] top-[2px] rounded-lg px-1 flex items-center"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -273,7 +318,7 @@ const Home: React.FC<HomeProps> = () => {
           </button>
           <button
             onClick={() => window.location.reload()}
-            className="absolute -right-14  top-[1px] rounded-lg px-1 flex items-center"
+            className="absolute -right-14  top-[2px] rounded-lg px-1 flex items-center"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -335,14 +380,15 @@ const Home: React.FC<HomeProps> = () => {
 
       <main
         id="tables"
-        className="mx-auto w-full flex-col my-20 pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-16 items-stretch"
+        className="mx-auto w-full flex-col my-10 py-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-16 items-stretch"
       >
-        <RedirectsTable pageSpeed={pageSpeed} />
         <ContentSummary
           keywords={keywords}
           wordCount={wordCount}
           readingTime={readingTime}
           readingLevelResults={readingLevelResults}
+          pageTitle={pageTitle}
+          AiContentAnalysis={AiContentAnalysis}
         />
         <GooglePreview
           favicon_url={favicon_url}
@@ -357,6 +403,9 @@ const Home: React.FC<HomeProps> = () => {
         <ImageAnalysis images={images} />
         <HeadingsTable headings={headings} />
         <PageSchemaTable pageSchema={pageSchema} googleSchemaTestUrl={url} />
+        <RedirectsTable pageSpeed={pageSpeed} />
+
+        <ThirdPartyScripts pageSpeed={pageSpeed} />
       </main>
       <Footer url={url} loading={loading} />
     </>

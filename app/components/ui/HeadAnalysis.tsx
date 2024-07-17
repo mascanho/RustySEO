@@ -282,28 +282,6 @@ ${openGraphDetails && "bg-gray-200"}
               )}
             </span>
           </div>
-          <div className="flex items-center mt-2">
-            <div
-              className={`flex rounded-full items-center justify-center h-10 w-10 ${pageSchema.length > 0 && "bg-green-500 text-white"} ${!url && pageSchema.length === 0 && "bg-gray-200"}
-                        ${pageTitle.length > 0 && pageSchema.length === 0 && "bg-red-500 text-white"} ${pageTitle?.length === 0 && "bg-gray-200"}
-`}
-            >
-              <TagIcon />
-            </div>{" "}
-            <span className={`font-semibold ml-2 text-black/60`}>Scripts</span>
-            <span className="text-black/80 ml-2">
-              {pageSchema.length > 0 && pageTitle?.length > 0 && (
-                <a href="#sd">
-                  <span className="text-green-500">
-                    This page has structured data
-                  </span>
-                </a>
-              )}
-              {!pageSchema[0] && pageTitle?.length > 0 && (
-                <span className="text-red-500">Not Found</span>
-              )}
-            </span>
-          </div>
         </section>
       </section>
     </div>

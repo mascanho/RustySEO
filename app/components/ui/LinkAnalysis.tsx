@@ -2,55 +2,59 @@ import React from "react";
 
 const LinkAnalysis = ({ visibleLinks }: { visibleLinks: any[] }) => {
   return (
-    <div className="shadow overflow-hidden rounded-md">
-      <h2 className="bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full pb-2 text-center -mb-1">
-        Link Analysis
+    <section>
+      <h2 className="bg-apple-spaceGray font-semibold text-white rounded-t-md w-full text-center pt-1">
+        Links
       </h2>
-
-      <section
-        className={`mx-auto flex flex-col h-[30em] shadow w-full rounded-t-md relative ${visibleLinks.length === 0 ? "bg-white" : "bg-white/40"} bg-white/40`}
-      >
-        <div className="flex-1 overflow-y-auto">
-          <table className="w-full">
-            <thead>
-              <tr>
-                <th className="text-xs w-1/5 border-r align-middle">
-                  Anchor Text
-                </th>
-                <th className="text-xs px-2 py-1 w-2/3 align-middle">Href</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visibleLinks.map((link, index) => (
-                <tr key={index} className="align-middle">
-                  <td className="crawl-item border-r border-b h-full">
-                    <span className="block py-1 text-apple-blue px-2 text-sm flex items-center w-[180px]">
-                      {link[1] || "-"}
-                    </span>
-                  </td>
-                  <td className="h-full w-1/3 border-b">
-                    <a
-                      href={link[0]}
-                      className="py-1 px-2 bg-white text-sm flex items-center"
-                    >
-                      {link[0]}
-                    </a>
-                  </td>
+      <div className="shadow rounded-b-md h-[30rem] overflow-hidden sticky top-0">
+        <section
+          className={`mx-auto flex flex-col shadow w-full ${visibleLinks.length === 0 ? "bg-white/40" : "bg-white"}`}
+        >
+          <div className="relative">
+            <table className="w-full">
+              <thead className="bg-gray-200 text-center text-xs">
+                <tr>
+                  <th className="w-1/3">Anchor</th>
+                  <th className="w-2/3">Link</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="flex items-center justify-center border-t">
-          <span
-            className={`bg-transparent border-t flex justify-center items-center text-xs text-center w-full p-2 ${visibleLinks.length === 0 ? "bg-white/40" : "bg-white"}`}
-          >
-            <span className="mr-1">Links Found:</span>
-            <span className="text-blue-500">{visibleLinks.length}</span>
-          </span>
-        </div>
-      </section>
-    </div>
+              </thead>
+            </table>
+            <div className="overflow-auto h-[26.5rem]  max-h-[26.5rem]">
+              <table className="w-full">
+                <tbody>
+                  {visibleLinks.map((link, index) => (
+                    <tr key={index} className="align-middle">
+                      <td className="border-r border-b">
+                        <span className="block py-2 px-3 text-sm w-[180px]">
+                          {link[1] || "-"}
+                        </span>
+                      </td>
+                      <td className="border-b">
+                        <a
+                          href={link[0]}
+                          className="block py-2 px-3 text-sm text-blue-500"
+                          aria-label={`Link to ${link[0]}`}
+                        >
+                          {link[0]}
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div className="flex items-center justify-center border-t bg-white">
+            <span
+              className={`flex justify-center items-center text-xs w-full p-2 ${visibleLinks.length === 0 ? "bg-white/40" : "bg-white"}`}
+            >
+              Links Found:{" "}
+              <span className="text-blue-500 ml-1">{visibleLinks.length}</span>
+            </span>
+          </div>
+        </section>
+      </div>
+    </section>
   );
 };
 

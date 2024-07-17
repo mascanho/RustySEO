@@ -53,13 +53,13 @@ function MenuDrawer() {
         </div>
       </Drawer>
 
-      <Group className="flex items-center justify-center mt-3  w-full">
+      <Group className="flex items-center justify-center mt-2 w-full">
         <button onClick={() => setOpened(true)}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
-            width={24}
-            height={24}
+            width={18}
+            height={18}
             color={"#000000"}
             fill={"none"}
           >
@@ -77,14 +77,14 @@ function MenuDrawer() {
             />
           </svg>
         </button>
-        <div className="flex items-center space-x-2">
-          <span>{path}</span>
+        <div className="flex items-center">
+          <span className="text-sm mt-1 -ml-1">{path}</span>
           <span>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
-              width={24}
-              height={24}
+              width={20}
+              height={20}
               color={"#000000"}
               fill={"none"}
             >
@@ -97,7 +97,7 @@ function MenuDrawer() {
               />
             </svg>
           </span>
-          <span className="text-xs bg-apple-spaceGray px-3 py-1 rounded-full text-white">
+          <span className="text-xs bg-apple-spaceGray px-3 pt-[1px]  rounded-full text-white">
             Page crawler
           </span>
         </div>

@@ -1,16 +1,16 @@
 import React from "react";
 import { FaLongArrowAltDown } from "react-icons/fa";
 
-const RedirectsTable = ({ pageSpeed }: { pageSpeed: any[] }) => {
+const RedirectsTable = ({ pageSpeed }: { pageSpeed: any }) => {
   const redirects =
     pageSpeed?.lighthouseResult?.audits?.redirects?.details?.items || [];
 
   return (
     <section
-      className={`flex-wrap w-full h-full space-y-2 ${pageSpeed?.length === 0 ? "bg-white/40" : "bg-white"} p-2 rounded-md relative h-fit overflow-auto shadow`}
+      className={`flex-wrap w-full h-[29rem] space-y-2 p-2 rounded-md relative bg-white shadow`}
     >
-      <div className="w-full bg-apple-spaceGray left-0 top-0 rounded-t-md h-8 absolute flex items-center justify-center">
-        <h2 className="bg-apple-spaceGray font-semibold text-white p-1 relative px-2 rounded-t-md w-full text-center pt-2">
+      <div className="w-full bg-apple-spaceGray left-0 top-0 rounded-t-md h-7 absolute flex items-center justify-center">
+        <h2 className="bg-apple-spaceGray font-semibold text-white relative rounded-t-md w-full text-center pt-1">
           Redirects
         </h2>
       </div>
@@ -18,7 +18,7 @@ const RedirectsTable = ({ pageSpeed }: { pageSpeed: any[] }) => {
         {redirects.length === 0 ? (
           <p className="text-center text-gray-500 pt-2">No redirects found.</p>
         ) : (
-          redirects.map((item, index) => (
+          redirects.map((item: any, index: any) => (
             <div key={item.url || index} className="flex flex-col">
               <div className="flex items-center mb-2 relative pl-4">
                 <div

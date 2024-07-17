@@ -55,20 +55,22 @@ const TodoItems = ({ url }: { url: string }) => {
   };
 
   return (
-    <section>
+    <section className="relative h-full">
       <Tabs color="teal" defaultValue="first">
-        <Tabs.List>
-          <Tabs.Tab value="first">Pending</Tabs.Tab>
-          <Tabs.Tab value="second" color="blue">
+        <Tabs.List className="tabs-list z-[5000] sticky -top-6 bg-white w-[88%] mx-auto shadow-2">
+          <Tabs.Tab className=" py-2" value="first">
+            Pending
+          </Tabs.Tab>
+          <Tabs.Tab className=" py-2" value="second" color="blue">
             Completed
           </Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value="first" pt="xs">
-          <section className="py-4">
+          <section className="py-4 overflow-auto h-full -mt-8 ">
             <Tabs color="teal" defaultValue="first">
               <Tabs.Panel value="first" pt="xs">
-                <section>
+                <section className="todoItems custom-scrollbar mx-4 ">
                   {tasks
                     .sort(
                       (a, b) =>
@@ -77,7 +79,7 @@ const TodoItems = ({ url }: { url: string }) => {
                     .map((task, index) => (
                       <Box
                         key={index}
-                        className="mb-3 bg-white shadow-sm border relative overflow-hidden rounded-lg p-3"
+                        className="mb-3 bg-white shadow-sm border relative overflow-hidden w-full rounded-lg p-3"
                       >
                         <div className="flex justify-between items-center">
                           <Title
@@ -87,7 +89,7 @@ const TodoItems = ({ url }: { url: string }) => {
                             {task.title}
                           </Title>
                           <span
-                            className={` w-12 h-fit rounded-bl-lg absolute right-0 flex justify-center items-center top-0 text-[10px] pt-1 font-semibold ${
+                            className={`w-12 h-fit rounded-bl-lg absolute right-0 flex justify-center items-center top-0 text-[10px] pt-1 font-semibold ${
                               task.priority === "High"
                                 ? "bg-red-500 text-white"
                                 : task.priority === "Medium"
@@ -98,7 +100,7 @@ const TodoItems = ({ url }: { url: string }) => {
                             {task.priority}
                           </span>
                         </div>
-                        <span className="text-sm text-gray-500 ">
+                        <span className="text-sm text-gray-500">
                           {task.url}
                         </span>
                         <Group className="flex flex-wrap">

@@ -178,11 +178,41 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         let document = Html::parse_document(&body);
 
         // Fetch Links and each respective anchor text
+
+        // Function to clean and sanitize text
+        fn clean_text(text: &str) -> String {
+            // Remove extra whitespace
+            let cleaned = text.split_whitespace().collect::<Vec<_>>().join(" ");
+
+            // Remove any HTML tags that might have slipped through
+            let re = Regex::new(r"<[^>]*>").unwrap();
+            let cleaned = re.replace_all(&cleaned, "");
+
+            // Trim and limit the length
+            cleaned.trim().chars().take(100).collect()
+        }
+
         let link_selector = Selector::parse("a").map_err(|e| format!("Selector error: {}", e))?;
         for link in document.select(&link_selector) {
             if let Some(href) = link.value().attr("href") {
-                let text = link.text().collect::<Vec<_>>().join(" ").trim().to_string();
-                links.push((href.to_string(), text));
+                let mut text = link.text().collect::<Vec<_>>().join(" ");
+
+                // If text is empty, try to get the alt text from an img child
+                if text.is_empty() {
+                    if let Some(img) = link.select(&Selector::parse("img").unwrap()).next() {
+                        if let Some(alt) = img.value().attr("alt") {
+                            text = alt.to_string();
+                        }
+                    }
+                }
+
+                // Clean and sanitize the text
+                let cleaned_text = clean_text(&text);
+
+                // Only add non-empty texts
+                if !cleaned_text.is_empty() {
+                    links.push((href.to_string(), cleaned_text));
+                }
             }
         }
 
@@ -190,7 +220,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         let head_selector = Selector::parse("head").unwrap();
 
         if let Some(head) = document.select(&head_selector).next() {
-            println!("Found head element: {:?}", head.html());
+            // println!("Found head element: {:?}", head.html());
             head_elements.push(head.html());
 
             // Serialize the head element and output in JSON format
@@ -203,7 +233,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         let body_selector = Selector::parse("body").unwrap();
 
         if let Some(body) = document.select(&body_selector).next() {
-            println!("Found head element: {:?}", body.html());
+            // println!("Found head element: {:?}", body.html());
             body_elements.push(body.html());
 
             // Serialize the head element and output in JSON format
@@ -374,12 +404,12 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
 
         // Output the details
         for (key, value) in &og_details {
-            println!("{}: {:?}", key, value);
+            // println!("{}: {:?}", key, value);
         }
         // Fetch the word count
 
         let word_count_selector =
-            Selector::parse("body, h1, h2, h3, h4, h5, h6, p, span, li, div, a, html").unwrap();
+            Selector::parse("body, h1, h2, h3, h4, h5, h6, p, span, li, div, a").unwrap();
         let mut word_count = 0;
 
         for element in document.select(&word_count_selector) {
@@ -394,7 +424,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
 
     // Fine tuning the word count given the GPT variance
     let words_amount = words.len();
-    let words_adjusted = (words_amount as f64 * 1.9).round() as usize;
+    let words_adjusted = (words_amount as f64 * 2.9).round() as usize;
 
     // calculate reading time
     let reading_time = calculate_reading_time(words_adjusted, 150);
@@ -508,9 +538,7 @@ async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError 
 
     let client = Client::builder().default_headers(headers).build()?;
 
-    println!("Fetching page: {}", url);
     let body = client.get(url).send().await?.text().await?;
-    println!("Page fetched successfully");
 
     let base_url = Url::parse(url)?;
     let mut image_data = Vec::new();
@@ -547,7 +575,7 @@ async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError 
                     });
                 }
                 Err(e) => {
-                    println!("Failed to fetch image {}: {}", image_url, e);
+                    // println!("Failed to fetch image {}: {}", image_url, e);
                 }
             }
         }

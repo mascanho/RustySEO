@@ -11,12 +11,13 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import TodoItems from "./TodoItems";
+import { updateTasks } from "@/app/Hooks/taskUtils";
 
 type Task = {
   title: string;
   type: string[];
   priority: string;
-  url: string;
+  url: string | null;
   date: string;
   completed?: boolean;
 };
@@ -82,6 +83,7 @@ const Todo: React.FC<TodoProps> = ({ url, close: closeModal }) => {
         completed: false,
       });
       console.log("Task added", updatedTasks);
+      updateTasks(updatedTasks);
       closeModal;
     }
   };

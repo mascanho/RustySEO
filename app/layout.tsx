@@ -1,12 +1,15 @@
 import "@mantine/core/styles.css";
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Roboto } from "next/font/google";
 import "./globals.css";
-import { ColorSchemeScript, MantineProvider } from "@mantine/core";
-import VerticalNavBar from "./components/ui/VerticalNavBar";
+import { MantineProvider } from "@mantine/core";
 import MenuDrawer from "./components/ui/MenuDrawer";
-import Footer from "./components/ui/Footer";
-const inter = Inter({ subsets: ["latin"] });
+import TopMenuBar from "./components/ui/TopMenuBar";
+
+const roboto = Roboto({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-roboto",
+});
 
 // export const metadata: Metadata = {
 //   title: "Create Next App",
@@ -23,10 +26,13 @@ export default function RootLayout({
       lang="en"
       className="bg-brand-background min-w-[600px] overflow-x-auto"
     >
-      <body className="relative rounded-md overflow-x-hidden bg-brand-background">
+      <body
+        className={`relative rounded-md overflow-x-hidden bg-brand-background ${roboto.className}`}
+      >
         <MantineProvider>
           {/* Fixed MenuDrawer */}
-          <div className="fixed top-0 pl-7 z-20 bg-apple-silver h-12   border-b shadow w-full overflow-x-hidden  ">
+          <TopMenuBar />
+          <div className="fixed top-7 pl-7  bg-apple-silver h-10   border-b shadow w-full overflow-x-hidden z-[1000]  ">
             <MenuDrawer />
           </div>
           {/* Main Content Area */}

@@ -1,23 +1,27 @@
+import { invoke } from "@tauri-apps/api/tauri";
 import { Badge } from "lucide-react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 const ContentSummary = ({
   keywords,
   wordCount,
   readingTime,
   readingLevelResults,
+  AiContentAnalysis,
 }: {
   keywords: any;
   wordCount: number | undefined;
   readingTime: number | undefined;
   readingLevelResults: any[];
+  pageTitle: string[];
+  AiContentAnalysis: any;
 }) => {
   return (
     <section
       className={`flex-wrap w-full h-full space-y-2 ${keywords.length === 0 ? "bg-white/40" : "bg-white"} p-2 rounded-md relative h-fit overflow-auto shadow`}
     >
-      <div className="w-full bg-apple-spaceGray left-0 top-0  rounded-t-md  h-8 absolute flex items-center justify-center">
-        <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 relative px-2 rounded-t-md w-full  text-center pt-2">
+      <div className="w-full bg-apple-spaceGray left-0 top-0  rounded-t-md  h-7 absolute flex items-center justify-center">
+        <h2 className=" bg-apple-spaceGray font-semibold text-white relative  rounded-t-md w-full  text-center">
           Content Summary
         </h2>
       </div>
@@ -207,14 +211,9 @@ const ContentSummary = ({
             ))}
           </div>
         </div>
-        <div className="grid gap-2">
+        <div className="grid gap-1 min-h-[8rem]">
           <h3 className="text-lg font-semibold">Summary</h3>
-          <p className="text-muted-foreground">
-            This article provides an overview of the latest advancements in AI
-            and machine learning, and how they are transforming various
-            industries through automation. It covers the key trends, challenges,
-            and opportunities in this rapidly evolving field.
-          </p>
+          <p className="text-muted-foreground">{AiContentAnalysis} </p>
         </div>
       </div>{" "}
     </section>

@@ -17,7 +17,7 @@ const GooglePreview = ({
     <div
       className={`shadow overflow-hidden rounded-md ${openGraphDetails.length === 0 ? "bg-white/40" : "bg-white"}`}
     >
-      <h2 className=" bg-apple-spaceGray font-semibold text-white p-1 px-2 rounded-t-md w-full pt-2  text-center ">
+      <h2 className=" bg-apple-spaceGray font-semibold text-white   rounded-t-md w-full pt-1  text-center ">
         SERP Preview
       </h2>
 
