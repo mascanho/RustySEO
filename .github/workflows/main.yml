@@ -60,3 +60,4 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+- uses: tauri-apps/tauri-action@v0
