@@ -84,7 +84,7 @@ const ClsEl = ({
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
           <Text size="sm">
             This metric shows the performance of the page/URL on Desktop, synced
-            from Page Speed Insights API.
+            from Page Speed Insights.
           </Text>
         </Popover.Dropdown>
       </Popover>
