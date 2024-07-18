@@ -13,6 +13,7 @@ pub async fn genai(query: String) -> Result<ChatResponse, Box<dyn Error>> {
     let model = "llama3";
     println!("Using model: {}", model);
     let chat_res = client.exec_chat(model, chat_req.clone(), None).await?;
+    println!("Chat request: {:#?}", chat_res);
     println!("{}", chat_res.content.as_deref().unwrap_or("NO ANSWER"));
     Ok(chat_res)
 }
