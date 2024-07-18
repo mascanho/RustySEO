@@ -12,8 +12,7 @@ pub async fn fetch_url(url: &str) -> Result<String, Box<dyn Error>> {
 
 pub fn extract_text(html: &Html) -> String {
     let document = html;
-    let selector =
-        Selector::parse("h1, h2, h3, h4, h5, h6, p, span, li, div, a, section, main").unwrap();
+    let selector = Selector::parse("h1, h2, h3, h4, h5, h6, p").unwrap();
     let mut text = String::new();
 
     for element in document.select(&selector) {
@@ -24,24 +23,22 @@ pub fn extract_text(html: &Html) -> String {
 }
 
 pub fn get_top_keywords(text: &str, top_n: usize) -> Vec<(String, usize)> {
-    // Define common words to ignore
+    // Define a more comprehensive set of stop words
     let stop_words: HashSet<&str> = vec![
-        "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by",
-        "from", "up", "about", "into", "over", "after", "we", "us", "you", "they", "them", "our",
-        "more", "your", "find", "here", "there", "when", "where", "why", "how", "all", "any",
-        "that", "as", "is", "was", "were", "can", "could", "did", "do", "does", "did", "does",
-        "have", "has", "had", "how", "why", "where", "when", "what", "which", "who", "whom",
+        "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for", "with", "by", "from",
+        "up", "about", "into", "over", "after", "we", "us", "you", "they", "them", "our", "more",
+        "your", "find", "here", "there", "when", "where", "why", "how", "all", "any", "that", "as",
+        "is", "was", "were", "can", "could", "did", "do", "does", "have", "has", "had", "how",
+        "why", "where", "when", "what", "which", "who", "whom", "has", "having", "having", "this",
+        "each", "there", "their", "theirs", "the", "these", "those",
     ]
     .into_iter()
     .collect();
 
     let mut occurrences = HashMap::new();
 
-    // Use a more strict word definition
-    let word_regex = Regex::new(r"\b[a-zA-Z]+\b").unwrap();
-
-    println!("Original text length: {} characters", text.len());
-    println!("Original word count: {}", text.split_whitespace().count());
+    // Use a regex that captures words with internal punctuation but ignores other symbols
+    let word_regex = Regex::new(r"\b[a-zA-Z'-]+\b").unwrap();
 
     for word_match in word_regex.find_iter(text) {
         let word = word_match.as_str().to_lowercase();
@@ -50,34 +47,18 @@ pub fn get_top_keywords(text: &str, top_n: usize) -> Vec<(String, usize)> {
         }
     }
 
-    println!(
-        "Total unique words (excluding stop words and single-letter words): {}",
-        occurrences.len()
-    );
-
-    // Convert to vec and sort
+    // Convert to vec and sort by frequency and alphabetically
     let mut keywords: Vec<(String, usize)> = occurrences.into_iter().collect();
     keywords.sort_unstable_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
-
-    println!("Top 20 words before truncation:");
-    for (word, count) in keywords.iter().take(20) {
-        println!("  {} - {}", word, count);
-    }
 
     // Truncate to top_n
     keywords.truncate(top_n);
 
-    println!("Final top {} keywords:", top_n);
-    for (word, count) in &keywords {
-        println!("  {} - {}", word, count);
-    }
-
     keywords
 }
 
-pub fn calculate_reading_time(text: &str) -> f64 {
-    let words_count = text.split_whitespace().count();
-    words_count as f64 / 200.0
+pub fn calculate_reading_time(word_count: usize, words_per_minute: usize) -> usize {
+    (word_count as f64 / words_per_minute as f64).ceil() as usize
 }
 
 // Function to calculate the reading level and classify it

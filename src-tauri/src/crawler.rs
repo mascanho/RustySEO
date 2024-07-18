@@ -427,7 +427,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let words_adjusted = (words_amount as f64 * 2.9).round() as usize;
 
     // calculate reading time
-    let reading_time = calculate_reading_time(words_adjusted, 150);
+    let reading_time = content::calculate_reading_time(words_adjusted, 150);
 
     // println!("Links: {:?}", links);
     // println!("Headings: {:?}", headings);
@@ -485,10 +485,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         head_elements,
         body_elements,
     })
-}
-
-pub fn calculate_reading_time(word_count: usize, words_per_minute: usize) -> usize {
-    (word_count as f64 / words_per_minute as f64).ceil() as usize
 }
 
 pub async fn get_page_speed_insights(url: String) -> Result<PageSpeedResponse, String> {
@@ -549,7 +545,7 @@ async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError 
         let src = extract_attribute(img_tag, "src").unwrap_or_default();
 
         if let Ok(image_url) = base_url.join(&src) {
-            println!("Fetching image: {}", image_url);
+            // println!("Fetching image: {}", image_url);
             let start = Instant::now();
 
             match client.get(image_url.as_str()).send().await {

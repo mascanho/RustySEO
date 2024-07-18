@@ -71,6 +71,10 @@ td {
   vertical-align: center;
 }
 
+:is(tbody, table) > tr:nth-child(odd) {
+  background: #0001; /* or #fff1 for dark themes */
+}
+
 pre {
   display: overflow-scroll;
   height: 28rem !important;
