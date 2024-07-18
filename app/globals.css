@@ -96,7 +96,3 @@ pre {
   overflow: unset;
   padding-right: 10px;
 }
-
-:is(tbody, table) > tr:nth-child(odd) {
-  background: #0001; /* or #fff1 for dark themes */
-}
