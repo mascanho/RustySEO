@@ -36,6 +36,9 @@ directories = "5.0"
 toml = "0.7"
 genai = "=0.1.2"
 anyhow = "1.0.70"
+rust-stemmers = "1.2"
+stop-words = "0.7"
+
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.
