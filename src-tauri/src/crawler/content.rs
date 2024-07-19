@@ -107,7 +107,9 @@ pub fn get_top_keywords(text: &str, top_n: usize) -> Vec<(String, usize)> {
         "your", "find", "here", "there", "when", "where", "why", "how", "all", "any", "that", "as",
         "is", "was", "were", "can", "could", "did", "do", "does", "have", "has", "had", "how",
         "why", "where", "when", "what", "which", "who", "whom", "has", "having", "having", "this",
-        "each", "there", "their", "theirs", "the", "these", "those",
+        "each", "there", "their", "theirs", "the", "these", "those", "and", "but", "or", "yet",
+        "it", "of", "be", "are", "am", "is", "was", "were", "been", "will", "shall", "could", "if",
+        "will", "need",
     ]
     .into_iter()
     .collect();
