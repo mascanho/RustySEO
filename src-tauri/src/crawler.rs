@@ -59,9 +59,8 @@ pub struct CrawlResult {
     pub hreflangs: Vec<Hreflang>,
     pub index_type: Vec<String>,
     pub page_schema: Vec<String>,
-    pub words: Vec<String>,
-    pub reading_time: usize,
-    pub words_adjusted: usize,
+    pub words_arr: Vec<(usize, Vec<String>, usize)>,
+    // pub reading_time: usize,
     pub page_speed_results: Vec<Result<Value, String>>,
     pub og_details: HashMap<String, Option<String>>,
     pub favicon_url: Vec<String>,
@@ -149,7 +148,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     // Initialize flags
     let mut index_type = Vec::new();
     let mut page_schema: Vec<String> = Vec::new();
-    let mut words = Vec::new();
+    let mut words_arr: Vec<(usize, Vec<String>, usize)> = Vec::new();
     let mut og_details: HashMap<String, Option<String>> = [
         ("title".to_string(), None),
         ("description".to_string(), None),
@@ -407,26 +406,21 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             // println!("{}: {:?}", key, value);
         }
         // Fetch the word count
+        let (word_count, words) = content::count_words_accurately(&document);
+        println!(
+            "This is the word count: {:#?} and the words are {:#?}",
+            word_count, words
+        );
 
-        let word_count_selector = Selector::parse("h1, h2, h3, h4, h5, h6, p, span, li").unwrap();
-        let mut word_count = 0;
-
-        for element in document.select(&word_count_selector) {
-            let text = element.text().collect::<Vec<_>>().join(" ");
-            word_count += text.split_whitespace().filter(|s| !s.is_empty()).count();
-
-            words.push(text);
-        }
+        let reading_time = content::calculate_reading_time(word_count, 250);
+        words_arr.push((word_count, words, reading_time));
+        println!("From the array: {:#?}", words_arr);
     } else {
         return Err(format!("Failed to fetch the URL: {}", response.status()));
     }
 
     // Fine tuning the word count given the GPT variance
-    let words_amount = words.len();
-    let words_adjusted = (words_amount as f64 * 2.9).round() as usize;
-
-    // calculate reading time
-    let reading_time = content::calculate_reading_time(words_adjusted, 150);
+    // let words_adjusted = (words_amount as f64 * 2.9).round() as usize;
 
     // println!("Links: {:?}", links);
     // println!("Headings: {:?}", headings);
@@ -470,9 +464,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         hreflangs,
         index_type,
         page_schema,
-        words,
-        words_adjusted,
-        reading_time,
+        words_arr,
         page_speed_results,
         og_details,
         favicon_url,

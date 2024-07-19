@@ -29,6 +29,9 @@ import { useDisclosure } from "@mantine/hooks";
 import RedirectsTable from "./components/ui/RedirectsTable";
 import ThirdPartyScripts from "./components/ui/ThirdPartyScripts";
 import { Modal } from "@mantine/core";
+import { log } from "console";
+import NetworkPayload from "./components/NetworkPayloads";
+import TotalByteWeight from "./components/ui/TotalByteWeightTable";
 
 interface HomeProps {}
 
@@ -47,7 +50,7 @@ const Home: React.FC<HomeProps> = () => {
   const [responseCode, setResponseCode] = useState<number | undefined>();
   const [indexType, setIndexType] = useState<string[]>([]);
   const [pageSchema, setPageSchema] = useState<string[]>([]);
-  const [wordCount, setWordCount] = useState<number | undefined>();
+  const [wordCount, setWordCount] = useState<any>([]);
   const [readingTime, setReadingTime] = useState<number | undefined>();
   const [openGraphDetails, setOpenGraphDetails] = useState<any[]>([]);
   const [pageSpeed, setPageSpeed] = useState<any[]>([]);
@@ -89,7 +92,7 @@ const Home: React.FC<HomeProps> = () => {
     setCrawlResult([]);
     setVisibleLinks([]);
     setHeadings([]);
-    setWordCount(0);
+    setWordCount([]);
     setOpenGraphDetails([]);
     setPageSpeed([]);
     setFavicon_url([]);
@@ -120,7 +123,7 @@ const Home: React.FC<HomeProps> = () => {
       response_code: number;
       index_type: [];
       page_schema: [];
-      words_adjusted: number;
+      words_arr: number;
       reading_time: number;
       og_details: any[];
       favicon_url: [];
@@ -141,7 +144,7 @@ const Home: React.FC<HomeProps> = () => {
         setResponseCode(result.response_code);
         setIndexType(result.index_type);
         setPageSchema(result.page_schema);
-        setWordCount(result.words_adjusted);
+        setWordCount(result.words_arr);
         setReadingTime(result.reading_time);
         setOpenGraphDetails(result.og_details);
         setFavicon_url(result.favicon_url);
@@ -250,14 +253,15 @@ const Home: React.FC<HomeProps> = () => {
   console.log(indexType);
   console.log(imageLinks);
   console.log(pageSchema, "Page Schema");
-  console.log(wordCount, "---- The words");
-  console.log(readingTime, "Reading Time"); 
+  // console.log(wordCount, "---- The words");
+  console.log(readingTime, "Reading Time");
   // console.log(openGraphDetails); */
   // console.log(keywords, "--- Keywords");
   // console.log(readingLevelResults, "--- Reading Level Results");
   // console.log(hreflangs);
   // console.log(favicon_url, "--- Favicon");
-  console.log(pageSpeed);
+  console.log(wordCount);
+  console.log(pageSpeed, "---- Page Speed");
 
   return (
     <>
@@ -360,6 +364,7 @@ const Home: React.FC<HomeProps> = () => {
         <ServerResponseTime stat={pageSpeed} loading={loading} url={url} />
         <LongTasks stat={pageSpeed} loading={loading} url={url} />
         <RenderBlocking stat={pageSpeed} loading={loading} url={url} />
+        <NetworkPayload stat={pageSpeed} loading={loading} url={url} />
       </section>
 
       {/* Head starts here */}
@@ -384,7 +389,7 @@ const Home: React.FC<HomeProps> = () => {
       >
         <ContentSummary
           keywords={keywords}
-          wordCount={wordCount}
+          wordCount={wordCount ? wordCount[0] : ""}
           readingTime={readingTime}
           readingLevelResults={readingLevelResults}
           pageTitle={pageTitle}
@@ -406,6 +411,7 @@ const Home: React.FC<HomeProps> = () => {
         <RedirectsTable pageSpeed={pageSpeed} />
 
         <ThirdPartyScripts pageSpeed={pageSpeed} />
+        <TotalByteWeight pageSpeed={pageSpeed} />
       </main>
       <Footer url={url} loading={loading} />
     </>

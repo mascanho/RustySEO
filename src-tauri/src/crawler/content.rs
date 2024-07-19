@@ -1,7 +1,7 @@
 use html2text::from_read;
 use regex::Regex;
 use reqwest;
-use scraper::{Html, Selector};
+use scraper::{ElementRef, Html, Selector};
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 
@@ -10,36 +10,81 @@ pub async fn fetch_url(url: &str) -> Result<String, Box<dyn Error>> {
     Ok(response)
 }
 
-// Word Count
-fn count_words_accurately(document: &Html) -> (usize, Vec<String>) {
-    // Selector for all visible text elements
-    let text_selector = Selector::parse("body, h1, h2, h3, h4, h5, h6, p, span, li, a, div, td, th, caption, label, button, textarea").unwrap();
-
-    // Regex to match words more accurately
+// word count
+pub fn count_words_accurately(document: &Html) -> (usize, Vec<String>) {
+    let text_selector = Selector::parse("h1, h2, h3, h4, h5, h6, p").unwrap();
     let word_regex = Regex::new(r"\p{L}+(?:[-']\p{L}+)*").unwrap();
 
     let mut word_count = 0;
     let mut words = Vec::new();
 
     for element in document.select(&text_selector) {
-        let text = element.text().collect::<String>();
-
-        // Skip if the text is empty or only whitespace
-        if text.trim().is_empty() {
+        if should_skip_element(&element) {
             continue;
         }
 
-        // Count words using regex
+        let text = get_visible_text(&element);
+        let cleaned_text = clean_text(&text);
+
+        if cleaned_text.trim().is_empty() {
+            continue;
+        }
+
         let element_words: Vec<String> = word_regex
-            .find_iter(&text)
-            .map(|m| m.as_str().to_string())
+            .find_iter(&cleaned_text)
+            .map(|m| m.as_str().to_lowercase())
             .collect();
 
         word_count += element_words.len();
-        words.push(text);
+
+        if !cleaned_text.trim().is_empty() {
+            words.push(cleaned_text.trim().to_string());
+        }
     }
 
+    // Remove duplicate entries and very short entries
+    words.retain(|w| w.split_whitespace().count() > 3);
+    words.sort();
+    words.dedup();
+
     (word_count, words)
+}
+
+fn should_skip_element(element: &ElementRef) -> bool {
+    let tag_name = element.value().name();
+    let skip_tags = [
+        "script", "style", "noscript", "iframe", "img", "svg", "path", "meta", "link", "footer",
+        "form", "ul", "li", "nav", "header",
+    ];
+
+    if skip_tags.contains(&tag_name) {
+        return true;
+    }
+
+    element
+        .value()
+        .attr("aria-hidden")
+        .map_or(false, |value| value == "true")
+}
+
+fn get_visible_text(element: &ElementRef) -> String {
+    element.text().collect::<Vec<_>>().join(" ")
+}
+
+fn clean_text(text: &str) -> String {
+    text.replace('\n', " ")
+        .replace('\r', " ")
+        .replace('\t', " ")
+        .replace("&nbsp;", " ")
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&apos;", "'")
+        .replace("   ", " ")
+        .replace("  ", " ")
+        .trim()
+        .to_string()
 }
 
 pub fn extract_text(html: &Html) -> String {
