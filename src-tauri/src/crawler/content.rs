@@ -10,6 +10,38 @@ pub async fn fetch_url(url: &str) -> Result<String, Box<dyn Error>> {
     Ok(response)
 }
 
+// Word Count
+fn count_words_accurately(document: &Html) -> (usize, Vec<String>) {
+    // Selector for all visible text elements
+    let text_selector = Selector::parse("body, h1, h2, h3, h4, h5, h6, p, span, li, a, div, td, th, caption, label, button, textarea").unwrap();
+
+    // Regex to match words more accurately
+    let word_regex = Regex::new(r"\p{L}+(?:[-']\p{L}+)*").unwrap();
+
+    let mut word_count = 0;
+    let mut words = Vec::new();
+
+    for element in document.select(&text_selector) {
+        let text = element.text().collect::<String>();
+
+        // Skip if the text is empty or only whitespace
+        if text.trim().is_empty() {
+            continue;
+        }
+
+        // Count words using regex
+        let element_words: Vec<String> = word_regex
+            .find_iter(&text)
+            .map(|m| m.as_str().to_string())
+            .collect();
+
+        word_count += element_words.len();
+        words.push(text);
+    }
+
+    (word_count, words)
+}
+
 pub fn extract_text(html: &Html) -> String {
     let document = html;
     let selector = Selector::parse("h1, h2, h3, h4, h5, h6, p").unwrap();
