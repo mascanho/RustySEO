@@ -32,6 +32,9 @@ import { Modal } from "@mantine/core";
 import { log } from "console";
 import NetworkPayload from "./components/NetworkPayloads";
 import TotalByteWeight from "./components/ui/TotalByteWeightTable";
+import LCPEl from "./components/LCP";
+import NetworkRequests from "./components/NetworkRequests";
+import RobotsTable from "./components/ui/RobotsTable";
 
 interface HomeProps {}
 
@@ -65,6 +68,7 @@ const Home: React.FC<HomeProps> = () => {
   const [strategy, setStrategy] = useState<any>({
     strategy: "DESKTOP",
   });
+  const [robots, setRobots] = useState<string>("");
 
   const [AiContentAnalysis, setAiContentAnalysis] = useState<any>("");
   const [open, { toggle }] = useDisclosure(false);
@@ -114,6 +118,7 @@ const Home: React.FC<HomeProps> = () => {
     setHeadElements([]);
     setBodyElements([]);
     setAiContentAnalysis("");
+    setRobots("");
     handleSpeed(url);
 
     invoke<{
@@ -136,6 +141,7 @@ const Home: React.FC<HomeProps> = () => {
       images: any[];
       head_elements: any[];
       body_elements: any[];
+      robots: string;
     }>("crawl", { url })
       .then((result) => {
         showLinksSequentially(result.links); // Show links one by one
@@ -157,6 +163,7 @@ const Home: React.FC<HomeProps> = () => {
         setImages(result.images);
         setHeadElements(result.head_elements);
         setBodyElements(result.body_elements);
+        setRobots(result.robots);
       })
       .catch(console.error);
   };
@@ -263,25 +270,25 @@ const Home: React.FC<HomeProps> = () => {
   // console.log(readingLevelResults, "--- Reading Level Results");
   // console.log(hreflangs);
   // console.log(favicon_url, "--- Favicon");
-  console.log(pageSpeed, "--- Page Speed");
-  console.log(indexation, "--- Indexation");
+
+  function handleStrategychange(event: any) {
+    console.log(event.target.value);
+    setStrategy((prev: any) => ({
+      ...prev,
+      strategy: event.target.value,
+    }));
+    window?.sessionStorage.setItem("strategy", event.target.value);
+  }
+
+  console.log(robots, "--- Robots");
 
   return (
     <>
-      <Modal opened={openedModal} onClose={closeModal} title="" centered>
-        <span>hello</span>
-      </Modal>
       {/* Fixed Input and Crawl Button */}
       <div className="fixed top-[28px] z-[1000] left-1/2 transform -translate-x-1/2 flex justify-center items-center py-2 ">
         <div className="flex items-center bg-white rounded-xl border overflow-hidden custom-select">
           <select
-            onChange={(event) => {
-              console.log(event.target.value);
-              setStrategy((prev) => ({
-                ...prev,
-                strategy: event.target.value,
-              }));
-            }}
+            onChange={(event) => handleStrategychange(event)}
             className=" bg-white border-0 outline-none text-sm h-2"
           >
             <option value="desktop">Desktop</option>
@@ -368,11 +375,16 @@ const Home: React.FC<HomeProps> = () => {
           )}
         </div>
       </div>
-      <SubBar domainWithoutLastPart={domainWithoutLastPart} url={url} />
+      <SubBar
+        domainWithoutLastPart={domainWithoutLastPart}
+        url={url}
+        strategy={strategy}
+      />
       {/* WIDGET SECTION */}
       <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 my-10 gap-y-5 pb-5 mt-6">
         <PerformanceEl stat={pageSpeed} loading={loading} url={url} />
         <FcpEl stat={pageSpeed} loading={loading} url={url} />
+        <LCPEl stat={pageSpeed} loading={loading} url={url} />
         <TtiEl stat={pageSpeed} loading={loading} url={url} />
         <TbtEl stat={pageSpeed} loading={loading} url={url} />
         <ClsEl stat={pageSpeed} loading={loading} url={url} />
@@ -384,6 +396,7 @@ const Home: React.FC<HomeProps> = () => {
         <LongTasks stat={pageSpeed} loading={loading} url={url} />
         <RenderBlocking stat={pageSpeed} loading={loading} url={url} />
         <NetworkPayload stat={pageSpeed} loading={loading} url={url} />
+        <NetworkRequests stat={pageSpeed} loading={loading} url={url} />
       </section>
       {/* END OF WIDGET SECTION */}
 
@@ -432,6 +445,7 @@ const Home: React.FC<HomeProps> = () => {
         <TotalByteWeight pageSpeed={pageSpeed} />
         <RedirectsTable pageSpeed={pageSpeed} />
         <PageSchemaTable pageSchema={pageSchema} googleSchemaTestUrl={url} />
+        <RobotsTable robots={robots} />
       </main>
       <Footer url={url} loading={loading} />
     </>

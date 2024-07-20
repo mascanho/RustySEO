@@ -4,7 +4,6 @@ import { useDisclosure } from "@mantine/hooks";
 import { IconChevronDown } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { BsArrowsCollapse } from "react-icons/bs";
-import Stamp from "./Stamp";
 import StampEl from "./Stamp/Stamp";
 
 export const HeadAnalysis = ({

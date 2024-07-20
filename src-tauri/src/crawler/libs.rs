@@ -1,7 +1,8 @@
+use core::fmt;
 use reqwest::Client;
 use rusqlite::{Connection, Result};
 use serde::{Deserialize, Serialize};
-use std::{error::Error, io, process::Command};
+use std::error::Error;
 use url::{ParseError, Url};
 
 use scraper::{Html, Selector};
@@ -23,6 +24,41 @@ pub struct Lcp {
     loadTime: f64,
     startTime: f64,
     duration: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum MyError {
+    Message(String),
+    Other(String),
+}
+
+impl std::fmt::Display for MyError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MyError::Message(msg) => write!(f, "{}", msg),
+            MyError::Other(msg) => write!(f, "{}", msg),
+        }
+    }
+}
+
+impl Error for MyError {}
+
+impl From<Box<dyn Error>> for MyError {
+    fn from(error: Box<dyn Error>) -> Self {
+        MyError::Other(error.to_string())
+    }
+}
+
+impl From<reqwest::Error> for MyError {
+    fn from(error: reqwest::Error) -> Self {
+        MyError::Other(error.to_string())
+    }
+}
+
+impl From<url::ParseError> for MyError {
+    fn from(error: url::ParseError) -> Self {
+        MyError::Other(error.to_string())
+    }
 }
 
 // GET THE SITEMAP
@@ -86,15 +122,18 @@ pub async fn get_sitemap(url: &String) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub async fn get_robots(domain_url: &String) -> Result<String, Box<dyn Error>> {
+// GET ROBOTS.TXT
+pub async fn get_robots(domain_url: &String) -> Result<String, MyError> {
     // Parse the input URL
-    let url = Url::parse(domain_url)?;
+    let url = Url::parse(domain_url).map_err(MyError::from)?;
     println!("URL: {:?}", url);
 
     // Extract the scheme and domain and construct the robots.txt URL
     let scheme = url.scheme();
     println!("Scheme: {:?}", scheme);
-    let domain = url.domain().ok_or("Invalid URL: No domain found")?;
+    let domain = url
+        .domain()
+        .ok_or(MyError::Message("Invalid URL: No domain found".into()))?;
     println!("Domain: {:?}", domain);
     let robots_txt_url = format!("{}://{}/robots.txt", scheme, domain);
     println!("Robots.txt URL: {:?}", robots_txt_url);
@@ -102,23 +141,25 @@ pub async fn get_robots(domain_url: &String) -> Result<String, Box<dyn Error>> {
     let robots_fixed = robots_txt_url.replace("https://www.", "https://");
 
     // Create a reqwest Client
-
     let client = Client::new();
 
     // Fetch the robots.txt file asynchronously
-    let response = client.get(&robots_fixed).send().await?;
+    let response = client
+        .get(&robots_fixed)
+        .send()
+        .await
+        .map_err(MyError::from)?;
 
     // Check if the request was successful
     if !response.status().is_success() {
-        return Err(format!(
+        return Err(MyError::Message(format!(
             "Error: Request was not successful. Status code: {}",
             response.status()
-        )
-        .into());
+        )));
     }
 
     // Read the response body as text
-    let body = response.text().await?;
+    let body = response.text().await.map_err(MyError::from)?;
 
     Ok(body)
 }

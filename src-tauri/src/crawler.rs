@@ -73,6 +73,7 @@ pub struct CrawlResult {
     pub images: Vec<ImageInfo>,
     pub head_elements: Vec<String>,
     pub body_elements: Vec<String>,
+    pub robots: Result<String, libs::MyError>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -439,8 +440,8 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     println!("Sitemap: {:?}", sitemap_from_url.await);
 
     // Robots FETCHING
-    let robots_from_url = libs::get_robots(&url);
-    // println!("Robots: {:#?}", robots_from_url.await);
+    let robots = libs::get_robots(&url).await;
+    println!("Robots: {:#?}", robots);
 
     // println!("Hreflangs: {:?}", hreflangs);
 
@@ -470,6 +471,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         images,
         head_elements,
         body_elements,
+        robots,
     })
 }
 

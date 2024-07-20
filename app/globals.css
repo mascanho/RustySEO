@@ -40,7 +40,7 @@ input:focus {
 /* Tables Styles */
 
 .table_container {
-  @apply border bg-white shadow rounded-md h-[38rem] overflow-hidden;
+  @apply border bg-white shadow rounded-md h-[38rem] overflow-hidden dark:hover:border-white hover:border-blue-500;
 
   h2 {
     margin-left: 0.5em;
@@ -98,7 +98,7 @@ pre {
 .mantine-Drawer-root,
 .mantine-Drawer-inner,
 .mantine-Drawer-content {
-  margin: 75px 0 35px 0;
+  margin: 70px 0 35px 0;
   overflow: hidden !important ;
   padding: 0 !important;
 }
@@ -108,7 +108,15 @@ pre {
 }
 
 .todoItems {
-  height: calc(85vh - 100px);
+  height: calc(85vh - 70px);
   overflow: unset;
   padding-right: 10px;
+}
+
+.naked_table {
+  @apply border bg-white shadow rounded-md h-[38rem] overflow-hidden;
+
+  h2 {
+    @apply p-4 font-semibold text-lg;
+  }
 }

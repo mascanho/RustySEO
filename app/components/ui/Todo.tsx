@@ -6,12 +6,12 @@ import {
   Select,
   Button,
   Box,
-  Title,
   Drawer,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import TodoItems from "./TodoItems";
 import { updateTasks } from "@/app/Hooks/taskUtils";
+import { toast } from "sonner";
 
 type Task = {
   title: string;
@@ -20,6 +20,7 @@ type Task = {
   url: string | null;
   date: string;
   completed?: boolean;
+  strategy: string;
 };
 
 const taskTypes = [
@@ -37,12 +38,14 @@ const priorities = ["Low", "Medium", "High"];
 interface TodoProps {
   url: string;
   close: () => void;
+  strategy: string;
 }
 
-const Todo: React.FC<TodoProps> = ({ url, close: closeModal }) => {
+const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [tasksInitialized, setTasksInitialized] = useState(false); // New flag for initialization
   const [opened, { toggle }] = useDisclosure(false);
+
   const [newTask, setNewTask] = useState<Task>({
     title: "",
     type: [],
@@ -50,6 +53,7 @@ const Todo: React.FC<TodoProps> = ({ url, close: closeModal }) => {
     url: url,
     date: new Date().toISOString(),
     completed: false,
+    strategy,
   });
 
   // Load tasks from localStorage when the component mounts
@@ -81,10 +85,14 @@ const Todo: React.FC<TodoProps> = ({ url, close: closeModal }) => {
         url: url,
         date: new Date().toISOString(),
         completed: false,
+        strategy,
       });
       console.log("Task added", updatedTasks);
       updateTasks(updatedTasks);
-      closeModal;
+      closeModal(); // Ensure this is a function call
+      toast("Task added");
+    } else {
+      toast.error("Please fill in all required fields");
     }
   };
 
@@ -94,7 +102,7 @@ const Todo: React.FC<TodoProps> = ({ url, close: closeModal }) => {
         offset={8}
         radius="md"
         opened={opened}
-        onClose={close}
+        onClose={closeModal} // Use closeModal function
         title="Todo"
         size="sm"
         className="overflow-hidden"
@@ -111,7 +119,7 @@ const Todo: React.FC<TodoProps> = ({ url, close: closeModal }) => {
         withCloseButton
         closeOnClickOutside
       >
-        <TodoItems url={url} />
+        <TodoItems url={url} strategy={strategy} />
       </Drawer>
 
       <Container size="sm">
