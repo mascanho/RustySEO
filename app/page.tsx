@@ -35,6 +35,7 @@ import TotalByteWeight from "./components/ui/TotalByteWeightTable";
 import LCPEl from "./components/LCP";
 import NetworkRequests from "./components/NetworkRequests";
 import RobotsTable from "./components/ui/RobotsTable";
+import ImagesChart from "./components/ui/ShadCharts/ImagesChart";
 
 interface HomeProps {}
 
@@ -251,25 +252,7 @@ const Home: React.FC<HomeProps> = () => {
   // Remove everything after the last dot
   const domainWithoutLastPart = domain.substring(0, lastDotIndex);
 
-  /*   console.log("DATA");
-  console.log(crawlResult);
-  console.log(visibleLinks);
-  console.log(headings);
-  console.log(pageTitle);
-  console.log(pageDescription);
-  console.log(canonical);
-  console.log(hreflangs);
-  console.log(responseCode);
-  console.log(indexType);
-  console.log(imageLinks);
-  console.log(pageSchema, "Page Schema");
-  // console.log(wordCount, "---- The words");
-  console.log(readingTime, "Reading Time");
-  // console.log(openGraphDetails); */
-  // console.log(keywords, "--- Keywords");
-  // console.log(readingLevelResults, "--- Reading Level Results");
-  // console.log(hreflangs);
-  // console.log(favicon_url, "--- Favicon");
+  console.log(images, "--- Images");
 
   function handleStrategychange(event: any) {
     console.log(event.target.value);
@@ -399,6 +382,10 @@ const Home: React.FC<HomeProps> = () => {
         <NetworkRequests stat={pageSpeed} loading={loading} url={url} />
       </section>
       {/* END OF WIDGET SECTION */}
+
+      <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-2 2xl:grid-cols-3 my-10 gap-y-5">
+        <ImagesChart images={images} />
+      </section>
 
       {/* Head starts here */}
       <HeadAnalysis
