@@ -2,54 +2,49 @@ import React from "react";
 
 const HeadingsTable = ({ headings }: { headings: string[] }) => {
   return (
-    <div
-      className={`flex flex-col h-[32rem] ${headings.length === 0 ? "bg-white/40" : "bg-white"} shadow rounded-md overflow-hidden`}
-    >
-      <h2 className="bg-apple-spaceGray font-semibold text-white rounded-t-md w-full pt-1 text-center">
-        Headings
+    <section className="table_container">
+      <h2 className="text-base text-left pl-1 pt-3 font-bold w-full text-black/60">
+        Link Analysis
       </h2>
+
       <section className="flex flex-col flex-grow">
-        <div className="flex-grow overflow-hidden">
+        <table className="w-full">
+          <thead className="text-xs text-left">
+            <tr className="w-full">
+              <th className="w-1/6">Anchor</th>
+              <th className="w-5/6">Link</th>
+            </tr>
+          </thead>
+        </table>
+        <div className="flex-grow overflow-auto h-[30.8rem]">
           <table className="w-full">
-            <thead className="bg-gray-200 text-center">
-              <tr>
-                <th className="text-xs w-1/5 border-r align-middle">
-                  Heading Type
-                </th>
-                <th className="text-xs px-2 py-1 w-2/3 align-middle">
-                  Heading Text
-                </th>
-              </tr>
-            </thead>
+            <tbody>
+              {headings.map((link, index) => {
+                const [headingType, headingText] = link.split(": ", 2);
+                return (
+                  <tr key={index} className="">
+                    <td className="crawl-item border-r py-1 font-semibold text-apple-blue border-b w-2 pl-5 pr-6 h-full">
+                      {headingType}
+                    </td>
+                    <td className="h-full w-full border-b crawl-item pl-8">
+                      {headingText}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
           </table>
-          <div className="overflow-auto h-full">
-            <table className="w-full">
-              <tbody>
-                {headings.map((link, index) => {
-                  const [headingType, headingText] = link.split(": ", 2);
-                  return (
-                    <tr key={index} className="align-middle">
-                      <td className="crawl-item border-r font-semibold text-apple-blue border-b w-1/5 text-center h-full">
-                        {headingType}
-                      </td>
-                      <td className="h-full w-full border-b crawl-item pl-3">
-                        {headingText}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
         </div>
-        <footer
-          className={`${headings.length === 0 ? "bg-white/40" : "bg-white"} border-t py-2 text-xs flex justify-center items-center`}
-        >
-          <span>Headings Found: </span>
-          <span className="text-apple-blue ml-1">{headings.length}</span>
-        </footer>
+        <div className="pb-1 m-2 rounded-md text-xs flex justify-end text-black/50 space-x-4">
+          <p className="text-xs">
+            Links Found:{" "}
+            <span className="px-1 py-0.5 bg-gray-400 text-white rounded-md">
+              {headings?.length}
+            </span>
+          </p>
+        </div>
       </section>
-    </div>
+    </section>
   );
 };
 
