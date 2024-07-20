@@ -1,7 +1,7 @@
 use html2text::from_read;
 use regex::Regex;
 use reqwest;
-use scraper::{Html, Selector};
+use scraper::{ElementRef, Html, Selector};
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 
@@ -10,10 +10,86 @@ pub async fn fetch_url(url: &str) -> Result<String, Box<dyn Error>> {
     Ok(response)
 }
 
+// word count
+pub fn count_words_accurately(document: &Html) -> (usize, Vec<String>) {
+    let text_selector = Selector::parse("h1, h2, h3, h4, h5, h6, p").unwrap();
+    let word_regex = Regex::new(r"\p{L}+(?:[-']\p{L}+)*").unwrap();
+
+    let mut word_count = 0;
+    let mut words = Vec::new();
+
+    for element in document.select(&text_selector) {
+        if should_skip_element(&element) {
+            continue;
+        }
+
+        let text = get_visible_text(&element);
+        let cleaned_text = clean_text(&text);
+
+        if cleaned_text.trim().is_empty() {
+            continue;
+        }
+
+        let element_words: Vec<String> = word_regex
+            .find_iter(&cleaned_text)
+            .map(|m| m.as_str().to_lowercase())
+            .collect();
+
+        word_count += element_words.len();
+
+        if !cleaned_text.trim().is_empty() {
+            words.push(cleaned_text.trim().to_string());
+        }
+    }
+
+    // Remove duplicate entries and very short entries
+    words.retain(|w| w.split_whitespace().count() > 3);
+    words.sort();
+    words.dedup();
+
+    (word_count, words)
+}
+
+fn should_skip_element(element: &ElementRef) -> bool {
+    let tag_name = element.value().name();
+    let skip_tags = [
+        "script", "style", "noscript", "iframe", "img", "svg", "path", "meta", "link", "footer",
+        "form", "ul", "li", "nav", "header",
+    ];
+
+    if skip_tags.contains(&tag_name) {
+        return true;
+    }
+
+    element
+        .value()
+        .attr("aria-hidden")
+        .map_or(false, |value| value == "true")
+}
+
+fn get_visible_text(element: &ElementRef) -> String {
+    element.text().collect::<Vec<_>>().join(" ")
+}
+
+fn clean_text(text: &str) -> String {
+    text.replace('\n', " ")
+        .replace('\r', " ")
+        .replace('\t', " ")
+        .replace("&nbsp;", " ")
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&apos;", "'")
+        .replace("   ", " ")
+        .replace("  ", " ")
+        .trim()
+        .to_string()
+}
+
 pub fn extract_text(html: &Html) -> String {
     let document = html;
-    let selector =
-        Selector::parse("h1, h2, h3, h4, h5, h6, p, span, li, div, a, section, main").unwrap();
+    let selector = Selector::parse("h1, h2, h3, h4, h5, h6, p").unwrap();
     let mut text = String::new();
 
     for element in document.select(&selector) {
@@ -24,24 +100,24 @@ pub fn extract_text(html: &Html) -> String {
 }
 
 pub fn get_top_keywords(text: &str, top_n: usize) -> Vec<(String, usize)> {
-    // Define common words to ignore
+    // Define a more comprehensive set of stop words
     let stop_words: HashSet<&str> = vec![
-        "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by",
-        "from", "up", "about", "into", "over", "after", "we", "us", "you", "they", "them", "our",
-        "more", "your", "find", "here", "there", "when", "where", "why", "how", "all", "any",
-        "that", "as", "is", "was", "were", "can", "could", "did", "do", "does", "did", "does",
-        "have", "has", "had", "how", "why", "where", "when", "what", "which", "who", "whom",
+        "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for", "with", "by", "from",
+        "up", "about", "into", "over", "after", "we", "us", "you", "they", "them", "our", "more",
+        "your", "find", "here", "there", "when", "where", "why", "how", "all", "any", "that", "as",
+        "is", "was", "were", "can", "could", "did", "do", "does", "have", "has", "had", "how",
+        "why", "where", "when", "what", "which", "who", "whom", "has", "having", "having", "this",
+        "each", "there", "their", "theirs", "the", "these", "those", "and", "but", "or", "yet",
+        "it", "of", "be", "are", "am", "is", "was", "were", "been", "will", "shall", "could", "if",
+        "will", "need",
     ]
     .into_iter()
     .collect();
 
     let mut occurrences = HashMap::new();
 
-    // Use a more strict word definition
-    let word_regex = Regex::new(r"\b[a-zA-Z]+\b").unwrap();
-
-    println!("Original text length: {} characters", text.len());
-    println!("Original word count: {}", text.split_whitespace().count());
+    // Use a regex that captures words with internal punctuation but ignores other symbols
+    let word_regex = Regex::new(r"\b[a-zA-Z'-]+\b").unwrap();
 
     for word_match in word_regex.find_iter(text) {
         let word = word_match.as_str().to_lowercase();
@@ -50,34 +126,18 @@ pub fn get_top_keywords(text: &str, top_n: usize) -> Vec<(String, usize)> {
         }
     }
 
-    println!(
-        "Total unique words (excluding stop words and single-letter words): {}",
-        occurrences.len()
-    );
-
-    // Convert to vec and sort
+    // Convert to vec and sort by frequency and alphabetically
     let mut keywords: Vec<(String, usize)> = occurrences.into_iter().collect();
     keywords.sort_unstable_by(|a, b| b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0)));
-
-    println!("Top 20 words before truncation:");
-    for (word, count) in keywords.iter().take(20) {
-        println!("  {} - {}", word, count);
-    }
 
     // Truncate to top_n
     keywords.truncate(top_n);
 
-    println!("Final top {} keywords:", top_n);
-    for (word, count) in &keywords {
-        println!("  {} - {}", word, count);
-    }
-
     keywords
 }
 
-pub fn calculate_reading_time(text: &str) -> f64 {
-    let words_count = text.split_whitespace().count();
-    words_count as f64 / 200.0
+pub fn calculate_reading_time(word_count: usize, words_per_minute: usize) -> usize {
+    (word_count as f64 / words_per_minute as f64).ceil() as usize
 }
 
 // Function to calculate the reading level and classify it

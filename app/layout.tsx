@@ -5,6 +5,8 @@ import { MantineProvider } from "@mantine/core";
 import MenuDrawer from "./components/ui/MenuDrawer";
 import TopMenuBar from "./components/ui/TopMenuBar";
 
+import { Toaster } from "@/components/ui/sonner";
+
 const roboto = Roboto({
   subsets: ["latin"],
   weight: ["400", "700"],
@@ -24,20 +26,22 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className="bg-brand-background min-w-[600px] overflow-x-auto"
+      className="bg-brand-background min-w-[600px] overflowi-hidden"
     >
       <body
-        className={`relative rounded-md overflow-x-hidden bg-brand-background ${roboto.className}`}
+        className={`relative overflow-x-hidden rounded-md bg-brand-background ${roboto.className}`}
       >
         <MantineProvider>
           {/* Fixed MenuDrawer */}
+
           <TopMenuBar />
-          <div className="fixed top-7 pl-7  bg-apple-silver h-10   border-b shadow w-full overflow-x-hidden z-[1000]  ">
+          <div className="fixed top-7 pl-6  bg-apple-silver h-10 overflow-hidden   border-b shadow w-full overflow-x-hidden z-[1000]  ">
             <MenuDrawer />
           </div>
           {/* Main Content Area */}
-          <main className="mt-16 p-6 rounded-md  bg-brand-gradient">
+          <main className="mt-16 p-6 rounded-md  bg-brand-gradient ">
             {children}
+            <Toaster />
           </main>
         </MantineProvider>
       </body>

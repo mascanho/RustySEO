@@ -5,7 +5,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { Popover, Text, Button } from "@mantine/core";
 import openBrowserWindow from "../Hooks/OpenBrowserWindow";
 
-const PerformanceEl = ({
+const NetworkRequests = ({
   stat,
   loading,
   url,
@@ -16,7 +16,7 @@ const PerformanceEl = ({
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
   return (
-    <section className="border px-4 py-3 border-apple-spaceGray shadow bg-white w-60 rounded-md space-y-2 relative">
+    <section className="border px-4 py-3 border-apple-spaceGray shadow bg-white w-60 rounded-md space-y-2 relative overflow-hidden">
       <span className="absolute right-5">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -28,24 +28,27 @@ const PerformanceEl = ({
         >
           <circle
             cx="12"
-            cy="18"
-            r="3"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          />
+          <ellipse
+            cx="12"
+            cy="12"
+            rx="4"
+            ry="10"
             stroke="currentColor"
             strokeWidth="1.5"
           />
           <path
-            d="M12 15V10"
+            d="M2 12H22"
             stroke="currentColor"
             strokeWidth="1.5"
             strokeLinecap="round"
+            strokeLinejoin="round"
           />
-          <path
-            d="M22 13C22 7.47715 17.5228 3 12 3C6.47715 3 2 7.47715 2 13"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
+        </svg>{" "}
       </span>
       <Popover
         width={200}
@@ -98,7 +101,7 @@ const PerformanceEl = ({
         </Popover.Dropdown>
       </Popover>
       <div className="flex flex-col space-y-1.5 h-fit">
-        <h2 className="font-bold">Performance</h2>
+        <h2 className="font-bold">Network Requests</h2>
         <div className="text-xl h-8">
           {loading ? (
             <div className="-mt-1">
@@ -124,25 +127,20 @@ const PerformanceEl = ({
               </svg>
             </div>
           ) : (
-            <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
-              <span
-                className={
-                  stat?.lighthouseResult?.categories?.performance?.score * 100 <
-                  50
-                    ? "text-red-500"
-                    : "text-green-500"
-                }
-              >
-                {stat?.lighthouseResult?.categories?.performance?.score ? (
-                  Math.floor(
-                    stat?.lighthouseResult?.categories?.performance?.score *
-                      100,
-                  ) + "%" || "..."
-                ) : (
-                  <span className="text-gray-400">...</span>
-                )}
-              </span>
-            </span>
+            <>
+              {stat.length === 0 ? (
+                <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
+                  ...
+                </span>
+              ) : (
+                <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
+                  {
+                    stat?.lighthouseResult?.audits?.["network-requests"]
+                      ?.details?.items?.length
+                  }
+                </span>
+              )}
+            </>
           )}{" "}
         </div>
         <h2
@@ -161,4 +159,4 @@ const PerformanceEl = ({
   );
 };
 
-export default PerformanceEl;
+export default NetworkRequests;

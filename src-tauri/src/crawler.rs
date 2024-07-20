@@ -6,9 +6,11 @@ use regex::Regex;
 use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT};
 use reqwest::Client;
 use scraper::{ElementRef, Html, Selector};
+use serde::de::Error;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::error::Error as StdError;
+use std::io;
 use std::time::Instant;
 use std::{
     collections::HashMap,
@@ -59,9 +61,8 @@ pub struct CrawlResult {
     pub hreflangs: Vec<Hreflang>,
     pub index_type: Vec<String>,
     pub page_schema: Vec<String>,
-    pub words: Vec<String>,
-    pub reading_time: usize,
-    pub words_adjusted: usize,
+    pub words_arr: Vec<(usize, Vec<String>, usize)>,
+    // pub reading_time: usize,
     pub page_speed_results: Vec<Result<Value, String>>,
     pub og_details: HashMap<String, Option<String>>,
     pub favicon_url: Vec<String>,
@@ -72,6 +73,7 @@ pub struct CrawlResult {
     pub images: Vec<ImageInfo>,
     pub head_elements: Vec<String>,
     pub body_elements: Vec<String>,
+    pub robots: Result<String, libs::MyError>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -142,14 +144,13 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut links = Vec::new();
     let mut headings = Vec::new();
     let mut page_title: Vec<String> = Vec::new();
-    let indexation: Vec<String> = Vec::new();
+    let mut indexation = Vec::new();
     let mut page_description: Vec<String> = Vec::new();
     let mut canonical_url: Vec<String> = Vec::new();
     let mut hreflangs: Vec<Hreflang> = Vec::new();
-    // Initialize flags
     let mut index_type = Vec::new();
     let mut page_schema: Vec<String> = Vec::new();
-    let mut words = Vec::new();
+    let mut words_arr: Vec<(usize, Vec<String>, usize)> = Vec::new();
     let mut og_details: HashMap<String, Option<String>> = [
         ("title".to_string(), None),
         ("description".to_string(), None),
@@ -360,16 +361,10 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         }
 
         // Fetch Indexation
-        let noindex_selector = Selector::parse("meta[name=robots]").unwrap();
-        for noindex in document.select(&noindex_selector) {
-            if let Some(noindex) = noindex.value().attr("content") {
-                if !noindex.contains("noindex") {
-                    index_type.push(String::from("Indexed"));
-                }
-            } else {
-                index_type.push(String::from("Not Available"));
-            }
-        }
+        let indexation_type = libs::get_indexation_status(&document);
+        println!("Indexation: {:?}", indexation_type);
+
+        indexation.push(indexation_type);
 
         // Fetch the favicon
         let favicon_selector = Selector::parse("link[rel=icon]").unwrap();
@@ -407,27 +402,21 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             // println!("{}: {:?}", key, value);
         }
         // Fetch the word count
+        let (word_count, words) = content::count_words_accurately(&document);
+        println!(
+            "This is the word count: {:#?} and the words are {:#?}",
+            word_count, words
+        );
 
-        let word_count_selector =
-            Selector::parse("body, h1, h2, h3, h4, h5, h6, p, span, li, div, a").unwrap();
-        let mut word_count = 0;
-
-        for element in document.select(&word_count_selector) {
-            let text = element.text().collect::<Vec<_>>().join(" ");
-            word_count += text.split_whitespace().filter(|s| !s.is_empty()).count();
-
-            words.push(text);
-        }
+        let reading_time = content::calculate_reading_time(word_count, 250);
+        words_arr.push((word_count, words, reading_time));
+        println!("From the array: {:#?}", words_arr);
     } else {
         return Err(format!("Failed to fetch the URL: {}", response.status()));
     }
 
     // Fine tuning the word count given the GPT variance
-    let words_amount = words.len();
-    let words_adjusted = (words_amount as f64 * 2.9).round() as usize;
-
-    // calculate reading time
-    let reading_time = calculate_reading_time(words_adjusted, 150);
+    // let words_adjusted = (words_amount as f64 * 2.9).round() as usize;
 
     // println!("Links: {:?}", links);
     // println!("Headings: {:?}", headings);
@@ -448,11 +437,11 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
 
     // SITEMAP FETCHING
     let sitemap_from_url = libs::get_sitemap(&url);
-    // println!("Sitemap: {:?}", sitemap_from_url.await);
+    println!("Sitemap: {:?}", sitemap_from_url.await);
 
     // Robots FETCHING
-    let robots_from_url = libs::get_robots(&url);
-    // println!("Robots: {:#?}", robots_from_url.await);
+    let robots = libs::get_robots(&url).await;
+    println!("Robots: {:#?}", robots);
 
     // println!("Hreflangs: {:?}", hreflangs);
 
@@ -471,9 +460,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         hreflangs,
         index_type,
         page_schema,
-        words,
-        words_adjusted,
-        reading_time,
+        words_arr,
         page_speed_results,
         og_details,
         favicon_url,
@@ -484,21 +471,24 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         images,
         head_elements,
         body_elements,
+        robots,
     })
 }
 
-pub fn calculate_reading_time(word_count: usize, words_per_minute: usize) -> usize {
-    (word_count as f64 / words_per_minute as f64).ceil() as usize
-}
-
-pub async fn get_page_speed_insights(url: String) -> Result<PageSpeedResponse, String> {
+pub async fn get_page_speed_insights(
+    url: String,
+    strategy: String,
+) -> Result<PageSpeedResponse, String> {
     dotenv::dotenv().ok();
 
     let api_key = "AIzaSyCCZu9Qxvkv8H0sCR9YPP7aP6CCQTZHFt8";
     let page_speed_url = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
 
     let client = Client::new();
-    let request_url = format!("{}?url={}&key={}", page_speed_url, url, api_key);
+    let request_url = format!(
+        "{}?url={}&strategy={}&key={}",
+        page_speed_url, url, strategy, api_key
+    );
 
     match client.get(&request_url).send().await {
         Ok(response) => {
@@ -549,7 +539,7 @@ async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError 
         let src = extract_attribute(img_tag, "src").unwrap_or_default();
 
         if let Ok(image_url) = base_url.join(&src) {
-            println!("Fetching image: {}", image_url);
+            // println!("Fetching image: {}", image_url);
             let start = Instant::now();
 
             match client.get(image_url.as_str()).send().await {

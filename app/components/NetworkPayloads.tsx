@@ -5,7 +5,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { Popover, Text, Button } from "@mantine/core";
 import openBrowserWindow from "../Hooks/OpenBrowserWindow";
 
-const PerformanceEl = ({
+const NetworkPayload = ({
   stat,
   loading,
   url,
@@ -26,24 +26,30 @@ const PerformanceEl = ({
           color={"#a6a5a2"}
           fill={"none"}
         >
-          <circle
-            cx="12"
-            cy="18"
-            r="3"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          />
           <path
-            d="M12 15V10"
+            d="M12 11L12 20"
             stroke="currentColor"
             strokeWidth="1.5"
             strokeLinecap="round"
           />
           <path
-            d="M22 13C22 7.47715 17.5228 3 12 3C6.47715 3 2 7.47715 2 13"
+            d="M14 9C14 10.1046 13.1046 11 12 11C10.8954 11 10 10.1046 10 9C10 7.89543 10.8954 7 12 7C13.1046 7 14 7.89543 14 9Z"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          />
+          <path
+            d="M16.9588 6C17.6186 6.86961 18 7.89801 18 9C18 10.102 17.6186 11.1304 16.9588 12M7.04117 6C6.38143 6.86961 6 7.89801 6 9C6 10.102 6.38143 11.1304 7.04117 12"
             stroke="currentColor"
             strokeWidth="1.5"
             strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M20.3159 4C21.3796 5.43008 22 7.14984 22 9C22 10.8502 21.3796 12.5699 20.3159 14M3.68409 4C2.62036 5.43008 2 7.14984 2 9C2 10.8502 2.62036 12.5699 3.68409 14"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
         </svg>
       </span>
@@ -98,7 +104,7 @@ const PerformanceEl = ({
         </Popover.Dropdown>
       </Popover>
       <div className="flex flex-col space-y-1.5 h-fit">
-        <h2 className="font-bold">Performance</h2>
+        <h2 className="font-bold">Large Net. Payloads</h2>
         <div className="text-xl h-8">
           {loading ? (
             <div className="-mt-1">
@@ -125,23 +131,8 @@ const PerformanceEl = ({
             </div>
           ) : (
             <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
-              <span
-                className={
-                  stat?.lighthouseResult?.categories?.performance?.score * 100 <
-                  50
-                    ? "text-red-500"
-                    : "text-green-500"
-                }
-              >
-                {stat?.lighthouseResult?.categories?.performance?.score ? (
-                  Math.floor(
-                    stat?.lighthouseResult?.categories?.performance?.score *
-                      100,
-                  ) + "%" || "..."
-                ) : (
-                  <span className="text-gray-400">...</span>
-                )}
-              </span>
+              {stat?.lighthouseResult?.audits?.["total-byte-weight"]?.details
+                ?.items.length || "..."}
             </span>
           )}{" "}
         </div>
@@ -161,4 +152,4 @@ const PerformanceEl = ({
   );
 };
 
-export default PerformanceEl;
+export default NetworkPayload;

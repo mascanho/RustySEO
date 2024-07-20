@@ -39,6 +39,16 @@ input:focus {
 
 /* Tables Styles */
 
+.table_container {
+  @apply border bg-white shadow rounded-md h-[38rem] overflow-hidden dark:hover:border-white hover:border-blue-500;
+
+  h2 {
+    margin-left: 0.5em;
+    margin-bottom: 0.6em;
+    text-align: left;
+  }
+}
+
 table {
   border-collapse: collapse;
   width: 100%;
@@ -46,29 +56,35 @@ table {
 }
 
 thead {
-  @apply bg-gray-200 py-1 z-10 overflow-clip;
+  @apply z-20 overflow-clip bg-white border-b-2;
 }
 
 th {
-  padding: 4px 0;
-  text-align: center;
+  padding: 4px 0 1em 1em;
   position: sticky;
   top: 0;
-  background-color: slategray;
+  /* background-color: slategray; */
   z-index: 1;
-  color: white;
-  border-radius: 0 !important;
+  color: black;
+  background-color: white;
 }
 
 tr {
   padding: 20px 0;
   vertical-align: center;
+  z-index: 0;
 }
 
 td {
   padding: 2px 0;
   border: 1px solid #ddd;
   vertical-align: center;
+  @apply text-sm;
+  z-index: 0;
+}
+
+:is(tbody, table) > tr:nth-child(odd) {
+  background: #0001;
 }
 
 pre {
@@ -82,7 +98,7 @@ pre {
 .mantine-Drawer-root,
 .mantine-Drawer-inner,
 .mantine-Drawer-content {
-  margin: 75px 0 35px 0;
+  margin: 70px 0 35px 0;
   overflow: hidden !important ;
   padding: 0 !important;
 }
@@ -92,7 +108,15 @@ pre {
 }
 
 .todoItems {
-  height: calc(85vh - 100px);
+  height: calc(85vh - 70px);
   overflow: unset;
   padding-right: 10px;
+}
+
+.naked_table {
+  @apply border bg-white shadow rounded-md h-[38rem] overflow-hidden;
+
+  h2 {
+    @apply p-4 font-semibold text-lg;
+  }
 }

@@ -10,7 +10,7 @@ const ContentSummary = ({
   AiContentAnalysis,
 }: {
   keywords: any;
-  wordCount: number | undefined;
+  wordCount: any;
   readingTime: number | undefined;
   readingLevelResults: any[];
   pageTitle: string[];
@@ -83,7 +83,7 @@ const ContentSummary = ({
               <span className="font-semibold pt-1">Reading Time</span>
             </div>
             <span>
-              {readingTime === undefined ? "" : readingTime + " min(s)"}
+              {wordCount === undefined ? "" : wordCount[2] + " min(s)"}
             </span>
           </div>
           <div className="flex items-center justify-between">
@@ -113,7 +113,7 @@ const ContentSummary = ({
               </svg>{" "}
               <span className="font-semibold mt-2">Word Count</span>
             </div>
-            <span>{wordCount === undefined ? "" : wordCount + " words"}</span>
+            <span>{wordCount ? wordCount[0] : ""}</span>
           </div>
 
           <div className="flex items-center justify-between">

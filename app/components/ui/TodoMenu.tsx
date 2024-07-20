@@ -14,7 +14,7 @@ import TodoItems from "./TodoItems";
 import { IoCreateOutline } from "react-icons/io5";
 import { RiTodoLine } from "react-icons/ri";
 
-function TodoMenu({ url }: { url: string }) {
+function TodoMenu({ url, strategy }: { url: string; strategy: string }) {
   const [opened, { open, close }] = useDisclosure(false);
   const [openedModal, { open: openModal, close: closeModal }] =
     useDisclosure(false);
@@ -30,7 +30,7 @@ function TodoMenu({ url }: { url: string }) {
         title=""
         centered
       >
-        <Todo url={url} close={close} />
+        <Todo url={url} close={close} strategy={strategy} />
       </Modal>
 
       <Drawer
@@ -47,7 +47,7 @@ function TodoMenu({ url }: { url: string }) {
         closeOnClickOutside
         overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
       >
-        <TodoItems url={url} />
+        <TodoItems url={url} strategy={strategy} />
       </Drawer>
 
       <Menu shadow="md" width={180} zIndex={0}>
