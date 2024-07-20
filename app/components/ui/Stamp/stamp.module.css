@@ -1,0 +1,22 @@
+.stamp {
+  color: #555;
+  font-size: 2rem;
+  font-weight: 700;
+  display: inline-block;
+  font-family: "Courier";
+  -webkit-mask-image: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/8399/grunge.png");
+  -webkit-mask-size: 944px 604px;
+  mix-blend-mode: multiply;
+  position: absolute;
+  top: 20px;
+  right: 2%;
+  z-index: 1;
+  transition: all 0.3s ease-in-out;
+}
+
+.is-approved {
+  color: #0a9928;
+  -webkit-mask-position: 13rem 6rem;
+  transform: rotate(-14deg);
+  border-radius: 0;
+}

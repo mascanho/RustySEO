@@ -4,6 +4,8 @@ import { useDisclosure } from "@mantine/hooks";
 import { IconChevronDown } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { BsArrowsCollapse } from "react-icons/bs";
+import Stamp from "./Stamp";
+import StampEl from "./Stamp/Stamp";
 
 export const HeadAnalysis = ({
   pageTitle,
@@ -15,6 +17,7 @@ export const HeadAnalysis = ({
   url,
   tagManager,
   favicon_url,
+  indexation,
 }: any) => {
   // Mantine Collapse
   const [opened, { toggle }] = useDisclosure(false);
@@ -35,6 +38,7 @@ export const HeadAnalysis = ({
       <section
         className={`mb-10 flex-wrap  w-full h-full shadow bg-white ${pageTitle[0]?.length > 0 ? "" : "bg-opacity-40"} p-4 rounded-b-md relative`}
       >
+        <StampEl indexation={indexation} />
         <div
           onDoubleClick={() => {
             setHidden(!hidden);

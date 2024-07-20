@@ -32,8 +32,8 @@ async fn crawl(url: String) -> Result<CrawlResult, String> {
 }
 
 #[tauri::command]
-async fn fetch_page_speed(url: &str) -> Result<PageSpeedResponse, String> {
-    let result = crawler::get_page_speed_insights(url.to_string()).await;
+async fn fetch_page_speed(url: &str, strategy: &str) -> Result<PageSpeedResponse, String> {
+    let result = crawler::get_page_speed_insights(url.to_string(), strategy.to_string()).await;
 
     match result {
         Ok(result) => Ok(result),

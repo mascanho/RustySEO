@@ -1,6 +1,23 @@
 import React from "react";
 
 const HeadingsTable = ({ headings }: { headings: string[] }) => {
+  const findDuplicates = (array) => {
+    const count = {};
+    const duplicates = [];
+
+    array.forEach((element) => {
+      count[element] = (count[element] || 0) + 1;
+    });
+
+    for (const element in count) {
+      if (count[element] > 1) {
+        duplicates.push(element);
+      }
+    }
+
+    return duplicates;
+  };
+
   return (
     <section className="table_container">
       <h2 className="text-base text-left pl-1 pt-3 font-bold w-full text-black/60">
@@ -37,9 +54,16 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
         </div>
         <div className="pb-1 m-2 rounded-md text-xs flex justify-end text-black/50 space-x-4">
           <p className="text-xs">
-            Links Found:{" "}
+            Headings Found:{" "}
             <span className="px-1 py-0.5 bg-gray-400 text-white rounded-md">
               {headings?.length}
+            </span>
+          </p>
+          {/* Find duplicated headings. */}
+          <p>
+            Duplicates Found:{" "}
+            <span className="px-1 py-0.5 bg-red-400 text-white rounded-md">
+              {findDuplicates(headings).length}
             </span>
           </p>
         </div>

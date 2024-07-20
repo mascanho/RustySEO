@@ -6,12 +6,12 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
       ?.items || [];
 
   return (
-    <section className="shadow rounded-md overflow-hidden h-full">
-      <h2 className="bg-apple-spaceGray font-semibold text-white pt-1 px-2 rounded-t-md w-full  text-center">
-        Large Network Payloads
+    <section className="table_container">
+      <h2 className="text-base text-left pl-1 pt-3 font-bold w-full text-black/60">
+        Total Byte Weight
       </h2>
 
-      <div className="overflow-auto h-[25.2rem] shadow">
+      <div className="overflow-auto h-[33.2rem] shadow">
         <table className="w-full h-full">
           <thead className="sticky top-0 bg-white shadow">
             <tr>
@@ -32,10 +32,10 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
             ) : (
               scripts.map((item: any, index: number) => (
                 <tr key={item.url || index}>
-                  <td className="px-4 py-1 text-sm text-blue-600 truncate max-w-full">
+                  <td className="px-4  text-sm text-blue-600 truncate max-w-full">
                     {item?.url}
                   </td>
-                  <td className="px-4 py-1 text-xs text-gray-700">
+                  <td className="px-4  text-xs text-gray-700">
                     {(
                       Math.round(item?.totalBytes * 1000) / 1000
                     ).toLocaleString() + " KiB"}
@@ -47,14 +47,13 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
         </table>
       </div>
 
-      <div className="flex items-center justify-center  bg-white shadow">
-        <span className="bg-transparent border-t flex justify-center items-center text-xs text-center w-full p-2">
-          Scripts:{" "}
-          <span className="text-blue-500">
-            {""}
-            <span className="ml-1"> {scripts.length}</span>
+      <div className="pb-1 m-2 rounded-md text-xs flex justify-end text-black/50 space-x-4">
+        <p>
+          Total URLs:{" "}
+          <span className="px-1 py-0.5 bg-gray-400 text-white rounded-md min-w-3">
+            {scripts.length}
           </span>
-        </span>
+        </p>
       </div>
     </section>
   );

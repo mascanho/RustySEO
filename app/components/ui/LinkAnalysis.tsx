@@ -60,7 +60,7 @@ const LinkAnalysis = ({ visibleLinks }: { visibleLinks: any[] }) => {
             </span>
           </p>
           <p>
-            Links without Text:{" "}
+            No Anchor Text:{" "}
             <span className="px-1 py-0.5 bg-red-400 text-white rounded-md min-w-3">
               {visibleLinks.filter((link) => !link[1]).length}
             </span>

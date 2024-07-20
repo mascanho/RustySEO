@@ -125,8 +125,21 @@ const PerformanceEl = ({
             </div>
           ) : (
             <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
-              {stat?.lighthouseResult?.categories?.performance?.score * 100 ||
-                "..."}
+              <span
+                className={
+                  stat?.lighthouseResult?.categories?.performance?.score * 100 <
+                  50
+                    ? "text-red-500"
+                    : "text-green-500"
+                }
+              >
+                {stat?.lighthouseResult?.categories?.performance?.score ? (
+                  stat?.lighthouseResult?.categories?.performance?.score * 100 +
+                    " %" || "..."
+                ) : (
+                  <span className="text-gray-400">...</span>
+                )}
+              </span>
             </span>
           )}{" "}
         </div>

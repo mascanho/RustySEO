@@ -10,9 +10,6 @@ const GooglePreview = ({
   openGraphDetails: any;
   url: string;
 }) => {
-  console.log(openGraphDetails);
-  console.log(favicon_url);
-
   return (
     <div
       className={`shadow overflow-hidden rounded-md ${openGraphDetails.length === 0 ? "bg-white/40" : "bg-white"}`}

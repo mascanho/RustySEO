@@ -6,12 +6,12 @@ const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
       ?.items || [];
 
   return (
-    <section className="shadow rounded-md overflow-hidden h-full">
-      <h2 className="bg-apple-spaceGray font-semibold text-white pt-1 px-2 rounded-t-md w-full  text-center">
-        Third Party
+    <section className="table_container">
+      <h2 className="text-base text-left pl-1 pt-3 font-bold w-full text-black/60">
+        Third Party Scripts
       </h2>
 
-      <div className="overflow-auto h-[25.2rem] shadow">
+      <div className="overflow-auto h-[33rem] shadow">
         <table className="w-full h-full">
           <thead className="sticky top-0 bg-white shadow">
             <tr>
@@ -38,13 +38,13 @@ const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
                     {item?.entity}
                   </td>
                   <td className="px-4 py-1 text-xs text-gray-700">
-                    {item?.mainThreadTime}
+                    {Math.round(item?.mainThreadTime)}
                   </td>
                   <td className="px-4 py-1 text-xs text-gray-700">
                     {item?.transferSize} bytes
                   </td>
                   <td className="px-4 py-1  text-xs text-gray-700">
-                    {item?.blockingTime}
+                    {Math.round(item?.blockingTime) + " ms"}
                   </td>
                 </tr>
               ))
@@ -53,15 +53,14 @@ const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
         </table>
       </div>
 
-      <div className="flex items-center justify-center  bg-white shadow">
-        <span className="bg-transparent border-t flex justify-center items-center text-xs text-center w-full p-2">
-          Scripts:{" "}
-          <span className="text-blue-500">
-            {""}
-            <span className="ml-1"> {scripts.length}</span>
+      <footer className="pb-1 m-2 rounded-md text-xs flex justify-end text-black/50 space-x-4">
+        <p>
+          Total scripts:{" "}
+          <span className="px-1 py-0.5 bg-gray-400 text-white rounded-md min-w-3">
+            {scripts.length}
           </span>
-        </span>
-      </div>
+        </p>
+      </footer>
     </section>
   );
 };

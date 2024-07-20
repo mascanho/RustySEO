@@ -1,8 +1,10 @@
 use reqwest::Client;
 use rusqlite::{Connection, Result};
 use serde::{Deserialize, Serialize};
-use std::{error::Error, process::Command};
+use std::{error::Error, io, process::Command};
 use url::{ParseError, Url};
+
+use scraper::{Html, Selector};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CoreWebVitals {
@@ -119,4 +121,40 @@ pub async fn get_robots(domain_url: &String) -> Result<String, Box<dyn Error>> {
     let body = response.text().await?;
 
     Ok(body)
+}
+
+// Function to check if a meta tag content indicates "noindex"
+pub fn is_noindex(meta_content: &str) -> bool {
+    meta_content.to_lowercase().contains("noindex")
+}
+
+// Function to get indexation status from the HTML document
+pub fn get_indexation_status(document: &Html) -> String {
+    let noindex_selector = match Selector::parse("meta[name=robots]") {
+        Ok(selector) => selector,
+        Err(_) => return String::from("Error parsing selector"), // Handle error internally
+    };
+
+    let mut index_status = String::from("Indexable");
+    let mut noindex_found = false;
+
+    for meta_tag in document.select(&noindex_selector) {
+        if let Some(content) = meta_tag.value().attr("content") {
+            if is_noindex(content) {
+                index_status = String::from("Not Indexable");
+                noindex_found = true;
+                break;
+            }
+        } else {
+            index_status = String::from("Not Available");
+            noindex_found = true;
+            break;
+        }
+    }
+
+    if !noindex_found && index_status == "Indexed" {
+        index_status = String::from("Indexed");
+    }
+
+    index_status
 }
