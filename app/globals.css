@@ -89,7 +89,7 @@ td {
 
 pre {
   display: overflow-scroll;
-  height: 28rem !important;
+  height: 34.6rem !important;
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.1),
     0 4px 11px rgba(0, 0, 0, 0.1);
@@ -118,6 +118,10 @@ pre {
 
   h2 {
     @apply p-4 font-semibold text-lg;
+  }
+
+  pre {
+    height: 90% !important;
   }
 }
 
@@ -177,4 +181,10 @@ pre {
     --chart-4: 210 98% 78%;
     --chart-5: 212 97% 87%;
   }
+}
+
+.recharts-wrapper svg {
+  min-width: 650px !important;
+  margin-left: -200px !important;
+  padding: 0 !important;
 }

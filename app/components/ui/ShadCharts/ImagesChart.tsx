@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { TrendingUp } from "lucide-react";
+import Link from "next/link";
 import { Label, Pie, PieChart } from "recharts";
 
 import {
@@ -18,13 +18,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-const chartData = [
-  { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
-  { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
-  { browser: "firefox", visitors: 287, fill: "var(--color-firefox)" },
-  { browser: "edge", visitors: 173, fill: "var(--color-edge)" },
-  { browser: "other", visitors: 190, fill: "var(--color-other)" },
-];
 
 const chartConfig = {
   visitors: {
@@ -52,34 +45,29 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function ImagesChart({ images }: { images: any }) {
+export function ImagesChart({ images, url }: { images: any; url: string }) {
   const imagesAltText = images?.filter((image: any) => image.alt_text);
   const imagesLinks = images?.filter((image: any) => image.link);
   const imagesNoAltText = images?.filter((image: any) => !image.alt_text);
 
   const chartData = [
     {
-      browser: "Images with alt text",
+      browser: "With Alt Text",
       visitors: imagesAltText?.length,
       fill: "var(--color-chrome)",
     },
     {
-      browser: "Images without alt text",
+      browser: "No Alt Text",
       visitors: imagesNoAltText?.length,
       fill: "var(--color-safari)",
-    },
-    {
-      browser: "Images with links",
-      visitors: imagesLinks?.length,
-      fill: "var(--color-firefox)",
     },
   ];
 
   return (
-    <Card className="flex flex-col bg-white">
+    <Card className="flex flex-col dark:bg-white">
       <CardHeader className="items-center pb-0">
-        <CardTitle>Pie Chart - Donut with Text</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardTitle className="text-black">Images on page</CardTitle>
+        <CardDescription>{url}</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
@@ -112,14 +100,14 @@ export function ImagesChart({ images }: { images: any }) {
                         <tspan
                           x={viewBox.cx}
                           y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold text-white"
+                          className="fill-foreground text-3xl font-bold"
                         >
                           {images?.length}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foregroundo text-white"
+                          className="fill-muted-foregroundod  dark:fill-black text-sm text-black"
                         >
                           Total Images
                         </tspan>
@@ -132,13 +120,35 @@ export function ImagesChart({ images }: { images: any }) {
           </PieChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
-        </div>
+      <CardFooter className="flex-col gap-2 text-sm min-h-[5.5rem]">
+        {images.length === 0 ? (
+          ""
+        ) : (
+          <>
+            <div className="flex items-center gap-2 font-medium leading-none dark:text-black">
+              {imagesNoAltText?.length > 0 ? (
+                <span>
+                  Discovered
+                  <Link
+                    href="#imagestable"
+                    className=" font-semibold text-muted-foreground dark:text-black"
+                  >
+                    {" "}
+                    {imagesAltText?.length} images{" "}
+                  </Link>
+                  with no alt text.
+                </span>
+              ) : (
+                ""
+              )}
+            </div>
+            <div className="leading-none text-muted-foreground dark:text-black">
+              {imagesNoAltText?.length > 0
+                ? "Ensure there is a descriptive alt text for each image"
+                : "Good job, All images have alt text 🎉"}
+            </div>
+          </>
+        )}
       </CardFooter>
     </Card>
   );

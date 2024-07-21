@@ -6,7 +6,7 @@ const ImageAnalysis = ({ images }: { images: any[] }) => {
   const imagesWithoutAltText = images.filter((image) => !image.alt_text);
 
   return (
-    <section className="table_container">
+    <section className="table_container" id="imagestable">
       <h2 className="text-base text-left pl-1 pt-3 font-bold w-full text-black/60">
         Image analysis
       </h2>

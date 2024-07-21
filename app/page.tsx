@@ -28,14 +28,14 @@ import PageSchemaTable from "./components/ui/PageSchemaTable";
 import { useDisclosure } from "@mantine/hooks";
 import RedirectsTable from "./components/ui/RedirectsTable";
 import ThirdPartyScripts from "./components/ui/ThirdPartyScripts";
-import { Modal } from "@mantine/core";
-import { log } from "console";
 import NetworkPayload from "./components/NetworkPayloads";
 import TotalByteWeight from "./components/ui/TotalByteWeightTable";
 import LCPEl from "./components/LCP";
 import NetworkRequests from "./components/NetworkRequests";
 import RobotsTable from "./components/ui/RobotsTable";
 import ImagesChart from "./components/ui/ShadCharts/ImagesChart";
+import { Tabs } from "@mantine/core";
+import KeywordChart from "./components/ui/ShadCharts/KeywordChart";
 
 interface HomeProps {}
 
@@ -252,8 +252,6 @@ const Home: React.FC<HomeProps> = () => {
   // Remove everything after the last dot
   const domainWithoutLastPart = domain.substring(0, lastDotIndex);
 
-  console.log(images, "--- Images");
-
   function handleStrategychange(event: any) {
     console.log(event.target.value);
     setStrategy((prev: any) => ({
@@ -263,7 +261,7 @@ const Home: React.FC<HomeProps> = () => {
     window?.sessionStorage.setItem("strategy", event.target.value);
   }
 
-  console.log(robots, "--- Robots");
+  console.log(keywords, "KWS");
 
   return (
     <>
@@ -363,8 +361,19 @@ const Home: React.FC<HomeProps> = () => {
         url={url}
         strategy={strategy}
       />
+
+      {/* TABS SECTION */}
+
+      <Tabs defaultValue="first">
+        <Tabs.List justify="center">
+          <Tabs.Tab value="first">First tab</Tabs.Tab>
+          <Tabs.Tab value="second">Second tab</Tabs.Tab>
+          <Tabs.Tab value="third">Third tab</Tabs.Tab>
+        </Tabs.List>
+      </Tabs>
+
       {/* WIDGET SECTION */}
-      <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 my-10 gap-y-5 pb-5 mt-6">
+      <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 my-10 gap-y-5 mt-8">
         <PerformanceEl stat={pageSpeed} loading={loading} url={url} />
         <FcpEl stat={pageSpeed} loading={loading} url={url} />
         <LCPEl stat={pageSpeed} loading={loading} url={url} />
@@ -381,10 +390,13 @@ const Home: React.FC<HomeProps> = () => {
         <NetworkPayload stat={pageSpeed} loading={loading} url={url} />
         <NetworkRequests stat={pageSpeed} loading={loading} url={url} />
       </section>
-      {/* END OF WIDGET SECTION */}
 
-      <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-2 2xl:grid-cols-3 my-10 gap-y-5">
-        <ImagesChart images={images} />
+      {/* CHARTS SECTION */}
+
+      <section className="grid grid-cols-3 gap-6 mb-10">
+        <KeywordChart keywords={keywords} url={url} />
+        <ImagesChart url={url} images={images} />
+        <KeywordChart keywords={keywords} url={url} />
       </section>
 
       {/* Head starts here */}
