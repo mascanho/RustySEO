@@ -7,7 +7,7 @@ const RedirectsTable = ({ pageSpeed }: { pageSpeed: any }) => {
 
   return (
     <section className="naked_table">
-      <h2>Link Analysis</h2>
+      <h2>Redirects</h2>
       <div className="flex flex-col pt-8 px-4">
         {redirects.length === 0 ? (
           <p className="text-center text-gray-500 pt-2">No redirects found.</p>

@@ -36,7 +36,7 @@ const Footer = ({ url, loading }: { url: string; loading: boolean }) => {
   console.log("Current tasks in state:", tasks);
 
   return (
-    <footer className="w-full text-xs justify-between bg-apple-silver shadow fixed ml-0 left-0 bottom-0 z-[1000] border-t-2 flex items-center py-1 rounded-b-md overflow-hidden">
+    <footer className="w-full text-xs justify-between bg-apple-silver shadow fixed ml-0 left-0 bottom-0 z-[1000] border-t-2 flex items-center py-1  overflow-hidden">
       <section>
         <div className="flex items-center ml-2 space-x-1 w-96 border">
           {!loading && url && (

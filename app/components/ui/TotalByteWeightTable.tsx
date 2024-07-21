@@ -7,7 +7,7 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
 
   return (
     <section className="table_container">
-      <h2 className="text-base text-left pl-1 pt-3 font-bold w-full text-black/60">
+      <h2 className="text-base text-left pl-1 pt-3 font-bold w-full ">
         Total Byte Weight
       </h2>
 
