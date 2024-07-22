@@ -11,8 +11,6 @@ function MenuDrawer() {
 
   const pathname = usePathname();
 
-  console.log(pathname);
-
   let path = pathname;
   if (path === "/") {
     path = "Home";
@@ -24,8 +22,8 @@ function MenuDrawer() {
 
   return (
     <>
-      <div className="flex items-center mt-3">
-        <span className="text-xs bg-apple-spaceGray px-3 pt-[1px]  rounded-full text-white">
+      <div className="flex items-center mt-2">
+        <span className="text-xs bg-apple-spaceGray px-3  py-1  rounded-full text-white">
           Page crawler
         </span>
       </div>

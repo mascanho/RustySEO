@@ -16,7 +16,7 @@ const DomElements = ({
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
   return (
-    <section className="border p-4 border-apple-spaceGray shadow bg-white w-60 rounded-md space-y-2 relative">
+    <section className="border p-4 border-apple-spaceGray shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative">
       <span className="absolute right-5">
         <svg
           xmlns="http://www.w3.org/2000/svg"

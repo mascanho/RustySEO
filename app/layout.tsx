@@ -24,9 +24,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="min-w-[600px] overflowi-hidden">
+    <html lang="en" className="min-w-[600px] overflow-hidden">
       <body
-        className={`relative overflow-x-hidden rounded-md bg-slate-800/30 ${roboto.className}`}
+        className={`relative overflow-x-hidden overflow-y-scroll rounded-md bg-white dark:bg-[#636363] ${roboto.className}`}
       >
         <MantineProvider>
           {/* Fixed MenuDrawer */}

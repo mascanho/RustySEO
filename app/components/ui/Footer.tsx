@@ -21,7 +21,14 @@ const Footer = ({ url, loading }: { url: string; loading: boolean }) => {
       const storedTasks = JSON.parse(
         localStorage.getItem("tasks") || "[]",
       ) as Task[];
-      setTasks(storedTasks);
+
+      // filter the ones that are not completed
+      const filteredTasks = storedTasks.filter((task) => !task.completed);
+      if (filteredTasks.length > 0) {
+        setTasks(filteredTasks);
+      }
+
+      setTasks(filteredTasks);
     };
 
     updateTasks();
@@ -31,7 +38,7 @@ const Footer = ({ url, loading }: { url: string; loading: boolean }) => {
     return () => {
       window.removeEventListener("tasksUpdated", updateTasks);
     };
-  }, []);
+  }, [tasks]);
 
   console.log("Current tasks in state:", tasks);
 
@@ -48,7 +55,7 @@ const Footer = ({ url, loading }: { url: string; loading: boolean }) => {
         </div>
       </section>
       <section className="flex items-center space-x-4">
-        <div className="flex border w-20 items-center">
+        <div className="flex w-20 items-center">
           <LiaTasksSolid className="text-xl" />
           <div className="flex items-center mt-1 mr-1">
             <span>Tasks:</span>

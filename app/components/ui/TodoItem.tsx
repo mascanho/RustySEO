@@ -50,16 +50,6 @@ const TodoItem = ({
   handleRemoveTask: (index: number) => void;
 }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [opened, { toggle }] = useDisclosure(false);
-  const [newTask, setNewTask] = useState<Task>({
-    title: "",
-    type: [],
-    priority: "",
-    url: url,
-    date: "",
-    completed: false,
-    strategy: "",
-  });
 
   // Load tasks from localStorage when the component mounts
   useEffect(() => {

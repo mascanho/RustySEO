@@ -188,3 +188,16 @@ pre {
   margin-left: -200px !important;
   padding: 0 !important;
 }
+
+.line_chart {
+  .recharts-wrapper svg {
+    min-width: 150px !important;
+    margin-left: 0px !important;
+    padding: 0 !important;
+  }
+}
+
+button:where([data-active]) {
+  border-color: var(--tabs-color);
+  @apply dark:bg-white !important;
+}

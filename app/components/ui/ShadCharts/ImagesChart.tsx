@@ -64,7 +64,7 @@ export function ImagesChart({ images, url }: { images: any; url: string }) {
   ];
 
   return (
-    <Card className="flex flex-col dark:bg-white">
+    <Card className="flex flex-col dark:bg-white dark:border-gray-300">
       <CardHeader className="items-center pb-0">
         <CardTitle className="text-black">Images on page</CardTitle>
         <CardDescription>{url}</CardDescription>
@@ -134,7 +134,7 @@ export function ImagesChart({ images, url }: { images: any; url: string }) {
                     className=" font-semibold text-muted-foreground dark:text-black"
                   >
                     {" "}
-                    {imagesAltText?.length} images{" "}
+                    {imagesNoAltText?.length} images{" "}
                   </Link>
                   with no alt text.
                 </span>
