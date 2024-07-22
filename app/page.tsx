@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import PerformanceEl from "./components/Performance";
 import replaceDoubleSlash from "./Hooks/DecodeURL";
@@ -12,7 +12,6 @@ import SpeedIndex from "./components/SpeedIndex";
 import ContentSummary from "./components/ui/ContentSummary";
 import LinkAnalysis from "./components/ui/LinkAnalysis";
 import ImageAnalysis from "./components/ui/ImageAnalysis";
-import HeadAnalysis from "./components/ui/HeadAnalysis";
 import { HiMagnifyingGlass } from "react-icons/hi2";
 import ClsEl from "./components/Cls";
 import TbtEl from "./components/Tbt";
@@ -36,6 +35,8 @@ import RobotsTable from "./components/ui/RobotsTable";
 import ImagesChart from "./components/ui/ShadCharts/ImagesChart";
 import { Tabs } from "@mantine/core";
 import KeywordChart from "./components/ui/ShadCharts/KeywordChart";
+import { useDebounce } from "use-debounce";
+const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
 interface HomeProps {}
 
@@ -74,20 +75,28 @@ const Home: React.FC<HomeProps> = () => {
   const [AiContentAnalysis, setAiContentAnalysis] = useState<any>("");
   const [open, { toggle }] = useDisclosure(false);
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const userinput = event.target.value;
-    const lowercaseURL = userinput.toLowerCase();
-    setFavicon_url([]);
+  const [debouncedURL] = useDebounce(url, 300);
 
-    if (
-      !lowercaseURL.includes("https://") &&
-      !lowercaseURL.includes("http://")
-    ) {
-      setUrl("https://" + userinput);
-    } else {
-      setUrl(lowercaseURL);
+  const handleChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setUrl(event.target.value);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (debouncedURL) {
+      const lowercaseURL = debouncedURL.toLowerCase();
+      if (
+        !lowercaseURL.includes("https://") &&
+        !lowercaseURL.includes("http://")
+      ) {
+        setUrl("https://" + debouncedURL);
+      } else {
+        setUrl(lowercaseURL);
+      }
     }
-  };
+  }, [debouncedURL]);
 
   const handleClick = (url: string) => {
     // Clear previous results before starting the new crawl
@@ -211,28 +220,31 @@ const Home: React.FC<HomeProps> = () => {
       .catch(console.error);
   }
 
-  function handleSpeed(url: string) {
-    invoke<{}>("fetch_page_speed", { url: url, strategy: strategy.strategy })
-      .then((result: any) => setPageSpeed(result))
-      .then(() => setLoading(false))
-      .catch(console.error);
-  }
+  const handleSpeed = useCallback(
+    (url: string) => {
+      invoke<{}>("fetch_page_speed", { url: url, strategy: strategy.strategy })
+        .then((result: any) => setPageSpeed(result))
+        .then(() => setLoading(false))
+        .catch(console.error);
+    },
+    [strategy.strategy, setPageSpeed, setLoading],
+  );
 
-  const showLinksSequentially = (links: string[]) => {
+  const showLinksSequentially = useCallback((links: string[]) => {
     links.forEach((link, index) => {
       setTimeout(() => {
         setVisibleLinks((prevVisibleLinks) => [...prevVisibleLinks, link]);
-      }, index * 50); // Adjust timing for each link appearance
+      }, index * 50);
     });
-  };
+  }, []);
 
-  const showHeadingsSequentially = (headings: string[]) => {
+  const showHeadingsSequentially = useCallback((headings: string[]) => {
     headings.forEach((heading, index) => {
       setTimeout(() => {
         setHeadings((prevHeadings) => [...prevHeadings, heading]);
-      }, index * 50); // Adjust timing for each link appearance
+      }, index * 50);
     });
-  };
+  }, []);
 
   // Generates a codified URL to use LinkedIn's social post tool
   const originalURL = url;
@@ -252,14 +264,16 @@ const Home: React.FC<HomeProps> = () => {
   // Remove everything after the last dot
   const domainWithoutLastPart = domain.substring(0, lastDotIndex);
 
-  function handleStrategychange(event: any) {
-    console.log(event.target.value);
-    setStrategy((prev: any) => ({
-      ...prev,
-      strategy: event.target.value,
-    }));
-    window?.sessionStorage.setItem("strategy", event.target.value);
-  }
+  const handleStrategyChange = useCallback(
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
+      setStrategy((prev: any) => ({
+        ...prev,
+        strategy: event.target.value,
+      }));
+      window?.sessionStorage.setItem("strategy", event.target.value);
+    },
+    [],
+  );
 
   console.log(keywords, "KWS");
 
@@ -269,7 +283,7 @@ const Home: React.FC<HomeProps> = () => {
       <div className="fixed top-[28px] z-[1000] left-1/2 transform -translate-x-1/2 flex justify-center items-center py-2 ">
         <div className="flex items-center bg-white rounded-xl border overflow-hidden custom-select">
           <select
-            onChange={(event) => handleStrategychange(event)}
+            onChange={(event) => handleStrategyChange(event)}
             className=" bg-white border-0 outline-none text-sm h-2"
           >
             <option value="desktop">Desktop</option>
