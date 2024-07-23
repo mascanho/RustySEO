@@ -1,3 +1,4 @@
+use db::CrawledData;
 use html5ever::driver::parse_document;
 use html5ever::serialize::{serialize, SerializeOpts, TraversalScope};
 use html5ever::tendril::{ByteTendril, TendrilSink};
@@ -5,6 +6,7 @@ use markup5ever_rcdom::{Handle, RcDom, SerializableHandle};
 use regex::Regex;
 use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT};
 use reqwest::Client;
+use rusqlite::Connection;
 use scraper::{ElementRef, Html, Selector};
 use serde::de::Error;
 use serde::{Deserialize, Serialize};
@@ -21,8 +23,10 @@ use std::{
 };
 use url::Url;
 
+use crate::crawler;
+
 mod content;
-mod db;
+pub mod db;
 mod libs;
 
 #[derive(Serialize)]
@@ -449,6 +453,13 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
 
     let images = fetch_image_info(&url).await.unwrap();
     // println!("Images: {:?}", images);
+    //
+
+    let _create_table = db::create_table();
+    let _add_crawled_data = db::add_crawled_data(&url, &page_title);
+    let db_data = db::read_data_from_db();
+
+    println!("The data from the db: {:#?}", db_data);
 
     Ok(CrawlResult {
         links,

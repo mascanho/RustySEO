@@ -5,6 +5,7 @@ const date = new Date();
 const year = date.getFullYear();
 
 type Task = {
+  id: string;
   title: string;
   type: string[];
   priority: string;
@@ -24,6 +25,7 @@ const Footer = ({ url, loading }: { url: string[]; loading: boolean }) => {
     // filter the ones that are not completed
     const filteredTasks = storedTasks.filter((task) => !task.completed);
     setTasks(filteredTasks);
+    console.log("Tasks updated in Footer:", filteredTasks);
   };
 
   useEffect(() => {

@@ -1,21 +1,11 @@
-import { Chip, Collapse, Tabs, Title, Box, Group } from "@mantine/core";
+import { Tabs } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import React, { useEffect, useState } from "react";
-import { BsThreeDotsVertical } from "react-icons/bs";
-import { FaDesktop, FaMobile, FaMobileAlt } from "react-icons/fa";
-import { Button } from "@/components/ui/button";
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import TodoItem from "./TodoItem";
+import { v4 as uuidv4 } from "uuid";
 
 type Task = {
+  id: string;
   title: string;
   type: string[];
   priority: string;
@@ -25,21 +15,11 @@ type Task = {
   strategy?: string;
 };
 
-const taskColors: any = {
-  CWV: "blue",
-  Head: "green",
-  Content: "red",
-  Links: "yellow",
-  Images: "purple",
-  Headings: "pink",
-  Keywords: "orange",
-  Schema: "teal",
-};
-
 const TodoItems = ({ url, strategy }: { url: string; strategy: string }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [opened, { toggle }] = useDisclosure(false);
   const [newTask, setNewTask] = useState<Task>({
+    id: uuidv4(),
     title: "",
     type: [],
     priority: "",
@@ -67,18 +47,25 @@ const TodoItems = ({ url, strategy }: { url: string; strategy: string }) => {
     localStorage.setItem("tasks", JSON.stringify(tasks));
   }, [tasks]);
 
-  const handleRemoveTask = (index: number) => {
-    const newTasks = tasks.filter((_, taskIndex) => taskIndex !== index);
+  const handleRemoveTask = (id: string) => {
+    console.log("Removing task with id:", id);
+    const newTasks = tasks.filter((task) => task.id !== id);
     setTasks(newTasks);
+    console.log("Updated tasks after removal:", newTasks);
+
     // Dispatch custom event
     const event = new Event("tasksUpdated");
     window.dispatchEvent(event);
   };
 
-  const handleMarkCompleted = (index: number) => {
-    const newTasks = [...tasks];
-    newTasks[index].completed = true;
+  const handleMarkCompleted = (id: string) => {
+    console.log("Marking task as completed with id:", id);
+    const newTasks = tasks.map((task) =>
+      task.id === id ? { ...task, completed: true } : task,
+    );
     setTasks(newTasks);
+    console.log("Updated tasks after marking as completed:", newTasks);
+
     // Dispatch custom event
     const event = new Event("tasksUpdated");
     window.dispatchEvent(event);
@@ -88,56 +75,47 @@ const TodoItems = ({ url, strategy }: { url: string; strategy: string }) => {
     <section className="relative h-full">
       <Tabs color="red" defaultValue="first">
         <Tabs.List className="tabs-list z-[5000] sticky -top-6 bg-white w-[88%] mx-auto shadow-2">
-          <Tabs.Tab className=" py-2" value="first">
+          <Tabs.Tab className="py-2" value="first">
             Pending
           </Tabs.Tab>
-          <Tabs.Tab className=" py-2" value="second" color="green">
+          <Tabs.Tab className="py-2" value="second" color="green">
             Completed
           </Tabs.Tab>
         </Tabs.List>
         <section className="mt-4">
           <Tabs.Panel value="first" pt="xs">
-            <section className="py-4 overflow-auto h-full -mt-8 ">
-              <Tabs color="red" defaultValue="first">
-                <Tabs.Panel value="first" pt="xs">
-                  <section className="todoItems custom-scrollbar mx-4 -mt-3">
-                    {pendingTasks
-                      .sort(
-                        (a, b) =>
-                          new Date(b.date).getTime() -
-                          new Date(a.date).getTime(),
-                      )
-                      .map((task, index) => (
-                        <TodoItem
-                          key={index}
-                          task={task}
-                          index={index}
-                          url={url}
-                          handleRemoveTask={handleRemoveTask}
-                          handleMarkCompleted={handleMarkCompleted}
-                        />
-                      ))}
-                  </section>
-                </Tabs.Panel>
-              </Tabs>
-            </section>{" "}
+            <section className="py-4 overflow-auto h-full -mt-8">
+              <section className="todoItems custom-scrollbar mx-4 -mt-3">
+                {pendingTasks
+                  .sort(
+                    (a, b) =>
+                      new Date(b.date).getTime() - new Date(a.date).getTime(),
+                  )
+                  .map((task) => (
+                    <TodoItem
+                      key={task.id}
+                      task={task}
+                      handleRemoveTask={handleRemoveTask}
+                      handleMarkCompleted={handleMarkCompleted}
+                    />
+                  ))}
+              </section>
+            </section>
           </Tabs.Panel>
 
           {/* COMPLETED TASKS */}
 
           <Tabs.Panel value="second" pt="xs">
-            <section className="todoItems custom-scrollbar mx-4 -mt-1.5 ">
+            <section className="todoItems custom-scrollbar mx-4 -mt-1.5">
               {completedTasks
                 .sort(
                   (a, b) =>
                     new Date(b.date).getTime() - new Date(a.date).getTime(),
                 )
-                .map((task, index) => (
+                .map((task) => (
                   <TodoItem
-                    key={index}
+                    key={task.id}
                     task={task}
-                    index={index}
-                    url={url}
                     handleRemoveTask={handleRemoveTask}
                     handleMarkCompleted={handleMarkCompleted}
                   />

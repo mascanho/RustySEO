@@ -38,6 +38,7 @@ import KeywordChart from "./components/ui/ShadCharts/KeywordChart";
 import { Button } from "@/components/ui/button";
 import ThirdPartyScriptChart from "./components/ui/ShadCharts/ThirdPartyScriptChart";
 import { useDebounce } from "use-debounce";
+import { table } from "console";
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
 interface HomeProps {}
@@ -73,11 +74,19 @@ const Home: React.FC<HomeProps> = () => {
     strategy: "DESKTOP",
   });
   const [robots, setRobots] = useState<string>("");
-
   const [AiContentAnalysis, setAiContentAnalysis] = useState<any>("");
+  const [DBDATA, setDBDATA] = useState<any>("");
+
   const [open, { toggle }] = useDisclosure(false);
 
   const [debouncedURL] = useDebounce(url, 300);
+
+  useEffect(() => {
+    invoke("get_db_data").then((result) => {
+      setDBDATA(result);
+      console.log(result, "This comes from the DB");
+    });
+  }, [pageTitle]);
 
   const handleChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -422,6 +431,19 @@ const Home: React.FC<HomeProps> = () => {
             />
             <RobotsTable robots={robots} />
           </main>
+        </Tabs.Panel>
+
+        <Tabs.Panel value="fifth">
+          <table className="mt-20">
+            {Object.values(DBDATA).map((data, index) => (
+              <tr key={index}>
+                <td>{data?.url}</td>
+                <td>{data?.date}</td>
+                <td>{data?.time}</td>
+                <td>{data?.title}</td>
+              </tr>
+            ))}
+          </table>
         </Tabs.Panel>
       </Tabs>
       <Footer url={canonical} loading={loading} />

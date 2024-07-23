@@ -27,6 +27,7 @@ const taskColors: any = {
 };
 
 type Task = {
+  id: number;
   title: string;
   type: string[];
   priority: string;
@@ -38,13 +39,10 @@ type Task = {
 
 const TodoItem = ({
   task,
-  index,
-  url,
   handleMarkCompleted,
   handleRemoveTask,
 }: {
   task: Task;
-  index: number;
   url: string;
   handleMarkCompleted: (index: number) => void;
   handleRemoveTask: (index: number) => void;
@@ -68,7 +66,7 @@ const TodoItem = ({
 
   return (
     <Box
-      key={index}
+      key={task.id}
       className="mb-3 bg-white shadow-sm border relative overflow-hidden w-full rounded-lg p-3"
     >
       <div className="flex justify-between items-center">
@@ -121,13 +119,13 @@ const TodoItem = ({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="cursor-pointer"
-                  onClick={() => handleMarkCompleted(index)}
+                  onClick={() => handleMarkCompleted(task?.id)}
                 >
                   Completed
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="cursor-pointer text-red-500"
-                  onClick={() => handleRemoveTask(index)}
+                  onClick={() => handleRemoveTask(task?.id)}
                 >
                   Delete
                 </DropdownMenuItem>
