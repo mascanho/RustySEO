@@ -211,7 +211,7 @@ const Home: React.FC<HomeProps> = () => {
       }
     };
     checkSystem();
-  }, ["random"]);
+  }, []);
 
   function checkGSC() {
     invoke<{}>("fetch_google_search_console")
@@ -412,7 +412,7 @@ const Home: React.FC<HomeProps> = () => {
             <HeadingsTable headings={headings} />
             <LinkAnalysis visibleLinks={visibleLinks} />
             <ImageAnalysis images={images} />
-
+            {/**/}
             <ThirdPartyScripts pageSpeed={pageSpeed} />
             <TotalByteWeight pageSpeed={pageSpeed} />
             <RedirectsTable pageSpeed={pageSpeed} />
@@ -424,7 +424,7 @@ const Home: React.FC<HomeProps> = () => {
           </main>
         </Tabs.Panel>
       </Tabs>
-      <Footer url={url} loading={loading} />
+      <Footer url={canonical} loading={loading} />
     </>
   );
 };

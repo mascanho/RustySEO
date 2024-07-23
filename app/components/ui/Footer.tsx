@@ -8,29 +8,25 @@ type Task = {
   title: string;
   type: string[];
   priority: string;
-  url: string | null;
+  url: [] | null;
   date: string;
   completed?: boolean;
 };
 
-const Footer = ({ url, loading }: { url: string; loading: boolean }) => {
+const Footer = ({ url, loading }: { url: string[]; loading: boolean }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
 
+  const updateTasks = () => {
+    const storedTasks = JSON.parse(
+      localStorage.getItem("tasks") || "[]",
+    ) as Task[];
+
+    // filter the ones that are not completed
+    const filteredTasks = storedTasks.filter((task) => !task.completed);
+    setTasks(filteredTasks);
+  };
+
   useEffect(() => {
-    const updateTasks = () => {
-      const storedTasks = JSON.parse(
-        localStorage.getItem("tasks") || "[]",
-      ) as Task[];
-
-      // filter the ones that are not completed
-      const filteredTasks = storedTasks.filter((task) => !task.completed);
-      if (filteredTasks.length > 0) {
-        setTasks(filteredTasks);
-      }
-
-      setTasks(filteredTasks);
-    };
-
     updateTasks();
 
     window.addEventListener("tasksUpdated", updateTasks);
@@ -38,12 +34,10 @@ const Footer = ({ url, loading }: { url: string; loading: boolean }) => {
     return () => {
       window.removeEventListener("tasksUpdated", updateTasks);
     };
-  }, [tasks]);
-
-  console.log("Current tasks in state:", tasks);
+  }, []);
 
   return (
-    <footer className="w-full text-xs justify-between bg-apple-silver shadow fixed ml-0 left-0 bottom-0 z-[1000] border-t-2 flex items-center py-1  overflow-hidden">
+    <footer className="w-full text-xs justify-between bg-apple-silver shadow fixed ml-0 left-0 bottom-0 z-[1000] border-t-2 flex items-center py-1 overflow-hidden">
       <section>
         <div className="flex items-center ml-2 space-x-1 w-96 border">
           {!loading && url && (

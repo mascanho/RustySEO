@@ -71,8 +71,8 @@ pub struct CrawlResult {
     pub google_tag_manager: Vec<String>,
     pub tag_container: Vec<String>,
     pub images: Vec<ImageInfo>,
-    pub head_elements: Vec<String>,
-    pub body_elements: Vec<String>,
+    //pub head_elements: Vec<String>,
+    //pub body_elements: Vec<String>,
     pub robots: Result<String, libs::MyError>,
 }
 
@@ -168,8 +168,8 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut readings = Vec::new();
     let mut google_tag_manager: Vec<String> = Vec::new();
     let mut tag_container = Vec::new();
-    let mut head_elements = Vec::new();
-    let mut body_elements = Vec::new();
+    //let mut head_elements = Vec::new();
+    //let mut body_elements = Vec::new();
 
     if response.status().is_success() {
         let body = response
@@ -218,30 +218,30 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         }
 
         // Get all the elements that exist inside <head>
-        let head_selector = Selector::parse("head").unwrap();
+        //let head_selector = Selector::parse("head").unwrap();
 
-        if let Some(head) = document.select(&head_selector).next() {
-            // println!("Found head element: {:?}", head.html());
-            head_elements.push(head.html());
+        //if let Some(head) = document.select(&head_selector).next() {
+        // println!("Found head element: {:?}", head.html());
+        //head_elements.push(head.html());
 
-            // Serialize the head element and output in JSON format
-            let head_contents = serialize_element(&head);
-            let json_head_contents = serde_json::to_string_pretty(&head_contents).unwrap();
-            // println!("Head contents: {}", json_head_contents);
-        }
+        // Serialize the head element and output in JSON format
+        //let head_contents = serialize_element(&head);
+        //let json_head_contents = serde_json::to_string_pretty(&head_contents).unwrap();
+        // println!("Head contents: {}", json_head_contents);
+        //}
 
         // Get all the elements that exist inside <body>
-        let body_selector = Selector::parse("body").unwrap();
+        //let body_selector = Selector::parse("body").unwrap();
 
-        if let Some(body) = document.select(&body_selector).next() {
-            // println!("Found head element: {:?}", body.html());
-            body_elements.push(body.html());
+        //if let Some(body) = document.select(&body_selector).next() {
+        // println!("Found head element: {:?}", body.html());
+        //body_elements.push(body.html());
 
-            // Serialize the head element and output in JSON format
-            let body_contents = serialize_element(&body);
-            let json_head_contents = serde_json::to_string_pretty(&body_contents).unwrap();
-            // println!("Head contents: {}", json_head_contents);
-        }
+        // Serialize the head element and output in JSON format
+        //let body_contents = serialize_element(&body);
+        //let json_head_contents = serde_json::to_string_pretty(&body_contents).unwrap();
+        // println!("Head contents: {}", json_head_contents);
+        //}
 
         // check for Google Tag Manager and Its content
         let gtm_selector = Selector::parse("script").unwrap();
@@ -469,8 +469,8 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         google_tag_manager,
         tag_container,
         images,
-        head_elements,
-        body_elements,
+        //head_elements,
+        //body_elements,
         robots,
     })
 }

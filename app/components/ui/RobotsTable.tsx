@@ -2,8 +2,6 @@ import React from "react";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 
 const RobotsTable = ({ robots }: any) => {
-  console.log(robots);
-
   return (
     <section className="naked_table">
       <h2>Robots</h2>

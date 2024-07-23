@@ -70,12 +70,18 @@ const TodoItems = ({ url, strategy }: { url: string; strategy: string }) => {
   const handleRemoveTask = (index: number) => {
     const newTasks = tasks.filter((_, taskIndex) => taskIndex !== index);
     setTasks(newTasks);
+    // Dispatch custom event
+    const event = new Event("tasksUpdated");
+    window.dispatchEvent(event);
   };
 
   const handleMarkCompleted = (index: number) => {
     const newTasks = [...tasks];
     newTasks[index].completed = true;
     setTasks(newTasks);
+    // Dispatch custom event
+    const event = new Event("tasksUpdated");
+    window.dispatchEvent(event);
   };
 
   return (

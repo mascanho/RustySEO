@@ -90,6 +90,9 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
         completed: false,
         strategy,
       });
+      // Dispatch custom event
+      const event = new Event("tasksUpdated");
+      window.dispatchEvent(event);
       console.log("Task added", updatedTasks);
       updateTasks(updatedTasks);
       closeModal(); // Ensure this is a function call
