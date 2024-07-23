@@ -435,11 +435,17 @@ const Home: React.FC<HomeProps> = () => {
 
         <Tabs.Panel value="fifth">
           <table className="mt-20">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>URL</th>
+                <th>Title</th>
+              </tr>
+            </thead>
             {Object.values(DBDATA).map((data, index) => (
               <tr key={index}>
-                <td>{data?.url}</td>
                 <td>{data?.date}</td>
-                <td>{data?.time}</td>
+                <td>{data?.url}</td>
                 <td>{data?.title}</td>
               </tr>
             ))}
