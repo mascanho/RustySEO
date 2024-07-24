@@ -20,6 +20,7 @@
     "@radix-ui/react-popover": "^1.1.1",
     "@radix-ui/react-select": "^2.1.1",
     "@radix-ui/react-slot": "^1.1.0",
+    "@radix-ui/react-tabs": "^1.1.0",
     "@tabler/icons-react": "^3.6.0",
     "@tauri-apps/api": "^1.5.6",
     "@types/react-syntax-highlighter": "^15.5.13",
@@ -42,15 +43,19 @@
     "react-syntax-highlighter": "^15.5.0",
     "react-virtualized": "^9.22.5",
     "react-window": "^1.8.10",
+    "recharts": "^2.12.7",
     "sonner": "^1.5.0",
     "tailwind-merge": "^2.4.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "use-debounce": "^10.0.1",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.5.14",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.19",
     "eslint": "^8",
     "eslint-config-next": "14.2.4",

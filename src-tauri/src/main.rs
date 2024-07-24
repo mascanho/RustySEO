@@ -56,6 +56,17 @@ async fn get_genai(query: String) -> Result<String, String> {
     }
 }
 
+//FETCH THE DATA FROM THE DB
+#[tauri::command]
+fn get_db_data() -> Result<Vec<crawler::db::CrawledData>, String> {
+    let result = crawler::db::read_data_from_db();
+
+    match result {
+        Ok(result) => Ok(result),
+        Err(err) => Err(err.to_string()),
+    }
+}
+
 #[tokio::main]
 async fn main() {
     // Tauri setup
@@ -67,7 +78,8 @@ async fn main() {
             fetch_page_speed,
             fetch_google_search_console,
             add_api_key,
-            get_genai
+            get_genai,
+            get_db_data
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

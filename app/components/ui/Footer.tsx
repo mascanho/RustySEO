@@ -5,25 +5,30 @@ const date = new Date();
 const year = date.getFullYear();
 
 type Task = {
+  id: string;
   title: string;
   type: string[];
   priority: string;
-  url: string | null;
+  url: [] | null;
   date: string;
   completed?: boolean;
 };
 
-const Footer = ({ url, loading }: { url: string; loading: boolean }) => {
+const Footer = ({ url, loading }: { url: string[]; loading: boolean }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
 
-  useEffect(() => {
-    const updateTasks = () => {
-      const storedTasks = JSON.parse(
-        localStorage.getItem("tasks") || "[]",
-      ) as Task[];
-      setTasks(storedTasks);
-    };
+  const updateTasks = () => {
+    const storedTasks = JSON.parse(
+      localStorage.getItem("tasks") || "[]",
+    ) as Task[];
 
+    // filter the ones that are not completed
+    const filteredTasks = storedTasks.filter((task) => !task.completed);
+    setTasks(filteredTasks);
+    console.log("Tasks updated in Footer:", filteredTasks);
+  };
+
+  useEffect(() => {
     updateTasks();
 
     window.addEventListener("tasksUpdated", updateTasks);
@@ -33,10 +38,8 @@ const Footer = ({ url, loading }: { url: string; loading: boolean }) => {
     };
   }, []);
 
-  console.log("Current tasks in state:", tasks);
-
   return (
-    <footer className="w-full text-xs justify-between bg-apple-silver shadow fixed ml-0 left-0 bottom-0 z-[1000] border-t-2 flex items-center py-1 rounded-b-md overflow-hidden">
+    <footer className="w-full text-xs justify-between bg-apple-silver shadow fixed ml-0 left-0 bottom-0 z-[1000] border-t-2 flex items-center py-1 overflow-hidden">
       <section>
         <div className="flex items-center ml-2 space-x-1 w-96 border">
           {!loading && url && (
@@ -48,7 +51,7 @@ const Footer = ({ url, loading }: { url: string; loading: boolean }) => {
         </div>
       </section>
       <section className="flex items-center space-x-4">
-        <div className="flex border w-20 items-center">
+        <div className="flex w-20 items-center">
           <LiaTasksSolid className="text-xl" />
           <div className="flex items-center mt-1 mr-1">
             <span>Tasks:</span>

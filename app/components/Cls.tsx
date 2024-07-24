@@ -16,7 +16,7 @@ const ClsEl = ({
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
   return (
-    <section className="border px-4 py-3 border-apple-spaceGray shadow bg-white w-60 rounded-md space-y-2 relative overflow-hidden">
+    <section className="border px-4 py-3 border-apple-spaceGray shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative overflow-hidden">
       <span className="absolute right-5">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -126,7 +126,8 @@ const ClsEl = ({
         <h2
           onClick={() =>
             openBrowserWindow(
-              "https://pagespeed.web.dev/report?url=" + url || "No URL provided"
+              "https://pagespeed.web.dev/report?url=" + url ||
+                "No URL provided",
             )
           }
           className="text-xs underline cursor-pointer"

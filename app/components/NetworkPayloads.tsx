@@ -16,7 +16,7 @@ const NetworkPayload = ({
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
   return (
-    <section className="border px-4 py-3 border-apple-spaceGray shadow bg-white w-60 rounded-md space-y-2 relative">
+    <section className="border px-4 py-3 border-apple-spaceGray shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative">
       <span className="absolute right-5">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -104,7 +104,7 @@ const NetworkPayload = ({
         </Popover.Dropdown>
       </Popover>
       <div className="flex flex-col space-y-1.5 h-fit">
-        <h2 className="font-bold">Large Net. Payloads</h2>
+        <h2 className="font-bold">Large Payloads</h2>
         <div className="text-xl h-8">
           {loading ? (
             <div className="-mt-1">

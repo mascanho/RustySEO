@@ -14,22 +14,22 @@ const RedirectsTable = ({ pageSpeed }: { pageSpeed: any }) => {
         ) : (
           redirects.map((item: any, index: any) => (
             <div key={item.url || index} className="flex flex-col">
-              <div className="flex items-center mb-2 relative pl-10">
+              <div className="flex items-center mb-2 relative pl-4">
                 <div
-                  className={`absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 rounded-full 
+                  className={`absolute left-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full 
                     ${
                       index === redirects.length - 1
                         ? "bg-green-500"
                         : "bg-white border border-blue-500"
                     }`}
                 />
-                <span className="text-xl text-blue-600 px-3 py-1 bg-blue-100 rounded-full truncate max-w-full hover:text-clip hover:overflow-visible">
+                <span className="text-xs text-blue-600 px-2 py-1 bg-blue-100 rounded-full truncate max-w-full hover:text-clip hover:overflow-visible">
                   {item.url}
                 </span>
               </div>
               {index < redirects.length - 1 && (
-                <div className="flex items-center h-8 -ml-2 -mt-1">
-                  <FaLongArrowAltDown className="w-8 h-8 text-gray-400" />
+                <div className="flex items-center h-6 -ml-1 -mt-1">
+                  <FaLongArrowAltDown className="w-4 h-4 text-gray-400" />
                 </div>
               )}
             </div>

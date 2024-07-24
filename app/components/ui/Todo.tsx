@@ -14,6 +14,7 @@ import { updateTasks } from "@/app/Hooks/taskUtils";
 import { toast } from "sonner";
 
 type Task = {
+  id: number;
   title: string;
   type: string[];
   priority: string;
@@ -47,6 +48,7 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
   const [opened, { toggle }] = useDisclosure(false);
 
   const [newTask, setNewTask] = useState<Task>({
+    id: Math.random() * 100000,
     title: "",
     type: [],
     priority: "",
@@ -79,6 +81,7 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
       const updatedTasks = [...tasks, newTask];
       setTasks(updatedTasks);
       setNewTask({
+        id: Math.random() * 100000,
         title: "",
         type: [],
         priority: "",
@@ -87,6 +90,9 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
         completed: false,
         strategy,
       });
+      // Dispatch custom event
+      const event = new Event("tasksUpdated");
+      window.dispatchEvent(event);
       console.log("Task added", updatedTasks);
       updateTasks(updatedTasks);
       closeModal(); // Ensure this is a function call

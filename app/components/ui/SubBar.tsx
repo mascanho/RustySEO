@@ -69,8 +69,8 @@ const SubBar = ({
       </div>
       <div className="flex items-center space-x-4">
         {/* @ts-ignore */}
-        <TodoMenu url={url} />
-        <MenuEl />
+        {/* <TodoMenu url={url} /> */}
+        {/* <MenuEl /> */}
       </div>
     </section>
   );
