@@ -21,6 +21,11 @@ const config: Config = {
         "custom-light-gray": "#f7f7f7",
         "custom-border-gray": "#eeeeee",
         "custom-footer-bg": "#1d2124",
+        "sky-lightest": "#CDF5FD",
+        "sky-lighter": "#A0E9FF",
+        "sky-light": "#89CFF3",
+        "sky-bright": "#00A9FF",
+        "sky-dark": "#2463EB",
         brand: {
           normal: "#F5F5F5",
           highlight: "#D7B590",

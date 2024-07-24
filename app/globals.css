@@ -201,3 +201,15 @@ button:where([data-active]) {
   border-color: var(--tabs-color);
   @apply dark:bg-white !important;
 }
+
+/* CHARTS COLOURS END */
+
+/* CHARTS COLOURS */
+
+.m_539e827b:where([data-active]) {
+  @apply text-black !important;
+}
+
+.m_539e827b:hover {
+  @apply dark:text-black !important;
+}

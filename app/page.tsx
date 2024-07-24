@@ -192,6 +192,7 @@ const Home: React.FC<HomeProps> = () => {
         setBodyElements(result.body_elements);
         setRobots(result.robots);
       })
+      .then(() => setLoading(false))
       .catch(console.error);
   };
 
@@ -228,14 +229,25 @@ const Home: React.FC<HomeProps> = () => {
     checkSystem();
   }, []);
 
-  function checkGSC() {
-    invoke<{}>("fetch_google_search_console")
+  const addToDB = useCallback(() => {
+    const data = {
+      url: url,
+      date: new Date().toLocaleDateString(),
+      text: "hello",
+      title: pageTitle,
+    };
+    invoke("add_data_to_db", {
+      data,
+    })
       .then((result) => {
-        console.log("Starting gsc........");
-        console.log(result);
+        console.log(result, "This comes from the DB");
       })
-      .catch(console.error);
-  }
+      .catch((error) => {
+        console.error("Error invoking add_data_to_db:", error);
+      });
+  }, [pageSpeed]);
+
+  addToDB();
 
   const handleSpeed = useCallback(
     (url: string) => {
@@ -291,6 +303,8 @@ const Home: React.FC<HomeProps> = () => {
     },
     [],
   );
+
+  console.log(pageSpeed, " pageSpeed");
 
   return (
     <>
@@ -350,115 +364,120 @@ const Home: React.FC<HomeProps> = () => {
       />
 
       {/* TABS SECTION */}
+      <section className="mt-2">
+        <Tabs defaultValue="first">
+          <Tabs.List justify="center" className="dark:text-white">
+            <Tabs.Tab value="first">Diagnostics</Tabs.Tab>
+            <Tabs.Tab value="third">Improvements</Tabs.Tab>
+            <Tabs.Tab value="fourth">Task Manager</Tabs.Tab>
+            <Tabs.Tab value="fifth">Crawl History</Tabs.Tab>
+          </Tabs.List>
 
-      <Tabs defaultValue="first">
-        <Tabs.List justify="center">
-          <Tabs.Tab value="first">Diagnostics</Tabs.Tab>
-          <Tabs.Tab value="third">Improvements</Tabs.Tab>
-          <Tabs.Tab value="fourth">Task Manager</Tabs.Tab>
-          <Tabs.Tab value="fifth">Crawl History</Tabs.Tab>
-        </Tabs.List>
+          <Tabs.Panel value="first">
+            {/* WIDGET SECTION */}
+            <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7  my-10 gap-y-5 mt-12">
+              <PerformanceEl stat={pageSpeed} loading={loading} url={url} />
+              <FcpEl stat={pageSpeed} loading={loading} url={url} />
+              <LCPEl stat={pageSpeed} loading={loading} url={url} />
+              <TtiEl stat={pageSpeed} loading={loading} url={url} />
+              <TbtEl stat={pageSpeed} loading={loading} url={url} />
+              <ClsEl stat={pageSpeed} loading={loading} url={url} />
+              <DomElements stat={pageSpeed} loading={loading} url={url} />
 
-        <Tabs.Panel value="first">
-          {/* WIDGET SECTION */}
-          <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7  my-10 gap-y-5 mt-12">
-            <PerformanceEl stat={pageSpeed} loading={loading} url={url} />
-            <FcpEl stat={pageSpeed} loading={loading} url={url} />
-            <LCPEl stat={pageSpeed} loading={loading} url={url} />
-            <TtiEl stat={pageSpeed} loading={loading} url={url} />
-            <TbtEl stat={pageSpeed} loading={loading} url={url} />
-            <ClsEl stat={pageSpeed} loading={loading} url={url} />
-            <DomElements stat={pageSpeed} loading={loading} url={url} />
+              <SpeedIndex stat={pageSpeed} loading={loading} url={url} />
+              <Redirects stat={pageSpeed} loading={loading} url={url} />
+              <ServerResponseTime
+                stat={pageSpeed}
+                loading={loading}
+                url={url}
+              />
+              <LongTasks stat={pageSpeed} loading={loading} url={url} />
+              <RenderBlocking stat={pageSpeed} loading={loading} url={url} />
+              <NetworkPayload stat={pageSpeed} loading={loading} url={url} />
+              <NetworkRequests stat={pageSpeed} loading={loading} url={url} />
+            </section>
 
-            <SpeedIndex stat={pageSpeed} loading={loading} url={url} />
-            <Redirects stat={pageSpeed} loading={loading} url={url} />
-            <ServerResponseTime stat={pageSpeed} loading={loading} url={url} />
-            <LongTasks stat={pageSpeed} loading={loading} url={url} />
-            <RenderBlocking stat={pageSpeed} loading={loading} url={url} />
-            <NetworkPayload stat={pageSpeed} loading={loading} url={url} />
-            <NetworkRequests stat={pageSpeed} loading={loading} url={url} />
-          </section>
+            {/* CHARTS SECTION */}
 
-          {/* CHARTS SECTION */}
+            <section className="grid grid-cols-3 gap-6 mb-10">
+              <KeywordChart keywords={keywords} url={url} />
+              <ImagesChart url={url} images={images} />
+              <ThirdPartyScriptChart url={url} />
+            </section>
 
-          <section className="grid grid-cols-3 gap-6 mb-10">
-            <KeywordChart keywords={keywords} url={url} />
-            <ImagesChart url={url} images={images} />
-            <ThirdPartyScriptChart url={url} />
-          </section>
-
-          {/* Head starts here */}
-          <HeadAnalysis
-            pageTitle={pageTitle}
-            pageDescription={pageDescription}
-            canonical={canonical}
-            hreflangs={hreflangs}
-            pageSchema={pageSchema}
-            openGraphDetails={openGraphDetails}
-            url={url}
-            tagManager={tagManager}
-            favicon_url={favicon_url}
-            code={headElements}
-            indexation={indexation}
-          />
-
-          {/* TABLES START HERE */}
-          <main
-            id="tables"
-            className="mx-auto w-full flex-col my-10 py-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-16 items-stretch"
-          >
-            <ContentSummary
-              keywords={keywords}
-              wordCount={wordCount ? wordCount[0] : ""}
-              readingTime={readingTime}
-              readingLevelResults={readingLevelResults}
+            {/* Head starts here */}
+            <HeadAnalysis
               pageTitle={pageTitle}
-              AiContentAnalysis={AiContentAnalysis}
-            />
-            <GooglePreview
-              favicon_url={favicon_url}
+              pageDescription={pageDescription}
+              canonical={canonical}
+              hreflangs={hreflangs}
+              pageSchema={pageSchema}
               openGraphDetails={openGraphDetails}
               url={url}
+              tagManager={tagManager}
+              favicon_url={favicon_url}
+              code={headElements}
+              indexation={indexation}
             />
-            <OpenGraphCard
-              linkedInInspect={linkedInInspect}
-              openGraphDetails={openGraphDetails}
-            />
-            <HeadingsTable headings={headings} />
-            <LinkAnalysis visibleLinks={visibleLinks} />
-            <ImageAnalysis images={images} />
-            {/**/}
-            <ThirdPartyScripts pageSpeed={pageSpeed} />
-            <TotalByteWeight pageSpeed={pageSpeed} />
-            <RedirectsTable pageSpeed={pageSpeed} />
-            <PageSchemaTable
-              pageSchema={pageSchema}
-              googleSchemaTestUrl={url}
-            />
-            <RobotsTable robots={robots} />
-          </main>
-        </Tabs.Panel>
 
-        <Tabs.Panel value="fifth">
-          <table className="mt-20">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>URL</th>
-                <th>Title</th>
-              </tr>
-            </thead>
-            {Object.values(DBDATA).map((data: any, index: number) => (
-              <tr key={index}>
-                <td>{data?.date}</td>
-                <td>{data?.url}</td>
-                <td>{data?.title}</td>
-              </tr>
-            ))}
-          </table>
-        </Tabs.Panel>
-      </Tabs>
-      <Footer url={canonical} loading={loading} />
+            {/* TABLES START HERE */}
+            <main
+              id="tables"
+              className="mx-auto w-full flex-col my-10 py-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-6 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-16 items-stretch"
+            >
+              <ContentSummary
+                keywords={keywords}
+                wordCount={wordCount ? wordCount[0] : ""}
+                readingTime={readingTime}
+                readingLevelResults={readingLevelResults}
+                pageTitle={pageTitle}
+                AiContentAnalysis={AiContentAnalysis}
+              />
+              <GooglePreview
+                favicon_url={favicon_url}
+                openGraphDetails={openGraphDetails}
+                url={url}
+              />
+              <OpenGraphCard
+                linkedInInspect={linkedInInspect}
+                openGraphDetails={openGraphDetails}
+              />
+              <HeadingsTable headings={headings} />
+              <LinkAnalysis visibleLinks={visibleLinks} />
+              <ImageAnalysis images={images} />
+              {/**/}
+              <ThirdPartyScripts pageSpeed={pageSpeed} />
+              <TotalByteWeight pageSpeed={pageSpeed} />
+              <RedirectsTable pageSpeed={pageSpeed} />
+              <PageSchemaTable
+                pageSchema={pageSchema}
+                googleSchemaTestUrl={url}
+              />
+              <RobotsTable robots={robots} />
+            </main>
+          </Tabs.Panel>
+
+          <Tabs.Panel value="fifth">
+            <table className="mt-20">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>URL</th>
+                  <th>Title</th>
+                </tr>
+              </thead>
+              {Object.values(DBDATA).map((data: any, index: number) => (
+                <tr key={index}>
+                  <td>{data?.date}</td>
+                  <td>{data?.url}</td>
+                  <td>{data?.title}</td>
+                </tr>
+              ))}
+            </table>
+          </Tabs.Panel>
+        </Tabs>
+      </section>
+      <Footer url={url} loading={loading} />
     </>
   );
 };

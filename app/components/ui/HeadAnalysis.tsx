@@ -37,7 +37,7 @@ export const HeadAnalysis = ({
       <section
         className={`mb-10 flex-wrap  w-full h-full shadow bg-white ${pageTitle[0]?.length > 0 ? "" : "bg-opacity-40"} p-4 rounded-b-md relative`}
       >
-        <StampEl indexation={indexation} />
+        <StampEl indexation={indexation} hidden={hidden} />
         <div
           onDoubleClick={() => {
             setHidden(!hidden);
