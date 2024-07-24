@@ -81,6 +81,12 @@ const Home: React.FC<HomeProps> = () => {
 
   const [debouncedURL] = useDebounce(url, 300);
 
+  type DBDataCrawl = {
+    url: string | null;
+    date: string | null;
+    title: string[] | null;
+  };
+
   useEffect(() => {
     invoke("get_db_data").then((result) => {
       setDBDATA(result);
@@ -442,7 +448,7 @@ const Home: React.FC<HomeProps> = () => {
                 <th>Title</th>
               </tr>
             </thead>
-            {Object.values(DBDATA).map((data, index) => (
+            {Object.values(DBDATA).map((data: any, index: number) => (
               <tr key={index}>
                 <td>{data?.date}</td>
                 <td>{data?.url}</td>
