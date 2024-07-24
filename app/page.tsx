@@ -192,7 +192,6 @@ const Home: React.FC<HomeProps> = () => {
         setBodyElements(result.body_elements);
         setRobots(result.robots);
       })
-      .then(() => setLoading(false))
       .catch(console.error);
   };
 
@@ -229,25 +228,14 @@ const Home: React.FC<HomeProps> = () => {
     checkSystem();
   }, []);
 
-  const addToDB = useCallback(() => {
-    const data = {
-      url: url,
-      date: new Date().toLocaleDateString(),
-      text: "hello",
-      title: pageTitle,
-    };
-    invoke("add_data_to_db", {
-      data,
-    })
+  function checkGSC() {
+    invoke<{}>("fetch_google_search_console")
       .then((result) => {
-        console.log(result, "This comes from the DB");
+        console.log("Starting gsc........");
+        console.log(result);
       })
-      .catch((error) => {
-        console.error("Error invoking add_data_to_db:", error);
-      });
-  }, [pageSpeed]);
-
-  addToDB();
+      .catch(console.error);
+  }
 
   const handleSpeed = useCallback(
     (url: string) => {
@@ -304,7 +292,7 @@ const Home: React.FC<HomeProps> = () => {
     [],
   );
 
-  console.log(pageSpeed, " pageSpeed");
+  console.log(pageSpeed);
 
   return (
     <>
