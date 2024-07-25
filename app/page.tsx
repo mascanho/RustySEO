@@ -337,17 +337,17 @@ const Home: React.FC<HomeProps> = () => {
       {/* Fixed Input and Crawl Button */}
       <div className=" fixed top-[27px] z-[1000]  left-0  mx-auto justify-center w-full  items-center py-2 ">
         <section className="flex   items-end justify-end w-[500px] mx-auto relative ">
-          <div className="flex justify-center w-full items-center bg-white rounded-xl border overflow-hidden custom-select">
+          <div className="flex justify-center w-full border items-center bg-slate-100 rounded-xl  overflow-hidden custom-select">
             <select
               onChange={(event) => handleStrategyChange(event)}
-              className=" bg-white border-0 outline-none text-sm h-full"
+              className=" bg-slate-100 border-0 outline-none text-sm h-full"
             >
               <option value="desktop">Desktop</option>
               <option value="mobile">Mobile</option>
             </select>
             <div className="overflow-hidden">
               <input
-                className=" h-6 text-xs min-w-80 w-[40em] pl-7 pt-[2px] rounded-xl  pr-2 placeholder:text-gray-500 relative "
+                className=" h-6 text-xs min-w-80 w-[40em] pl-7 pt-[2px] rounded-xl  pr-2 placeholder:text-gray-500 relative bg-slate-100 "
                 type="url"
                 placeholder="https://yourwebsite.com"
                 // value={url}
