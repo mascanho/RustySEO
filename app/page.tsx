@@ -335,53 +335,54 @@ const Home: React.FC<HomeProps> = () => {
       </Modal>
 
       {/* Fixed Input and Crawl Button */}
-      <div className="fixed top-[27px] z-[1000] left-1/2 transform -translate-x-1/2 flex justify-center  items-center py-2 ">
-        <div className="flex items-center bg-white rounded-xl border overflow-hidden custom-select">
-          <select
-            onChange={(event) => handleStrategyChange(event)}
-            className=" bg-white border-0 outline-none text-sm h-full"
-          >
-            <option value="desktop">Desktop</option>
-            <option value="mobile">Mobile</option>
-          </select>
-          <div className="overflow-hidden">
-            <input
-              className=" h-6 text-xs min-w-80 w-[40em] pl-7 pt-[2px] rounded-xl  pr-2 placeholder:text-gray-500 relative "
-              type="url"
-              placeholder="https://yourwebsite.com"
-              // value={url}
-              onChange={handleChange}
-              style={{ outline: "none", boxShadow: "none" }}
-              onKeyPress={(event) => {
-                if (event.key === "Enter") {
-                  handleClick(url);
-                }
-              }}
-            />
-          </div>
-          <div className="absolute top-2 -right-32 space-x-2 flex">
-            <Button
-              onClick={() => handleClick(url)}
-              className=" top-[2px] rounded-lg px-2 h-4 py-3 flex items-center bg-green-300"
+      <div className=" fixed top-[27px] z-[1000]  left-0  mx-auto justify-center w-full  items-center py-2 ">
+        <section className="flex   items-end justify-end w-[500px] mx-auto relative ">
+          <div className="flex justify-center w-full items-center bg-white rounded-xl border overflow-hidden custom-select">
+            <select
+              onChange={(event) => handleStrategyChange(event)}
+              className=" bg-white border-0 outline-none text-sm h-full"
             >
-              crawl
-            </Button>
-            <Button
-              onClick={() => window.location.reload()}
-              className=" top-[2px] rounded-lg px-2 h-4 flex py-3 items-center"
-            >
-              cancel
-            </Button>
+              <option value="desktop">Desktop</option>
+              <option value="mobile">Mobile</option>
+            </select>
+            <div className="overflow-hidden">
+              <input
+                className=" h-6 text-xs min-w-80 w-[40em] pl-7 pt-[2px] rounded-xl  pr-2 placeholder:text-gray-500 relative "
+                type="url"
+                placeholder="https://yourwebsite.com"
+                // value={url}
+                onChange={handleChange}
+                style={{ outline: "none", boxShadow: "none" }}
+                onKeyPress={(event) => {
+                  if (event.key === "Enter") {
+                    handleClick(url);
+                  }
+                }}
+              />
+            </div>
+            <div className="absolute top-2 -right-32 space-x-2 flex">
+              <Button
+                onClick={() => handleClick(url)}
+                className=" top-[2px] rounded-lg px-2 h-4 py-3 flex items-center bg-green-300"
+              >
+                crawl
+              </Button>
+              <Button
+                onClick={() => window.location.reload()}
+                className=" top-[2px] rounded-lg px-2 h-4 flex py-3 items-center"
+              >
+                cancel
+              </Button>
+            </div>
+            {loading && (
+              <div
+                className="animate-spin inline-block size-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full absolute t3333 right-2"
+                role="status"
+                aria-label="loading"
+              ></div>
+            )}
           </div>
-          <HiMagnifyingGlass className="absolute top-[15px] text-sm left-20 ml-3" />
-          {loading && (
-            <div
-              className="animate-spin inline-block size-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full absolute t3333 right-2"
-              role="status"
-              aria-label="loading"
-            ></div>
-          )}
-        </div>
+        </section>
       </div>
       <SubBar
         domainWithoutLastPart={domainWithoutLastPart}
@@ -390,9 +391,9 @@ const Home: React.FC<HomeProps> = () => {
       />
 
       {/* TABS SECTION */}
-      <section className="mt-2 relative h-full">
+      <section className="mt-2 relative h-full overflow-hidden">
         <Tabs defaultValue="first">
-          <div className="transition-all ease-in duration-150 fixed top-16 pt-2 left-1/2 transform -translate-x-1/2 w-full bg-white z-10">
+          <div className="transition-all ease-in duration-150 fixed left-0 right-0 top-16 pt-2 transform   bg-white z-10">
             <Tabs.List justify="center" className="dark:text-white">
               <Tabs.Tab value="first">Diagnostics</Tabs.Tab>
               <Tabs.Tab value="third">Improvements</Tabs.Tab>

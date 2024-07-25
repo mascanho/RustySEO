@@ -204,7 +204,11 @@ button:where([data-active]) {
 
 /* CHARTS COLOURS END */
 
-/* CHARTS COLOURS */
+/* TABS COLOURS */
+
+.m_539e827b {
+  @apply text-gray-400 !important;
+}
 
 .m_539e827b:where([data-active]) {
   @apply text-black !important;
