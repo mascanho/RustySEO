@@ -309,7 +309,7 @@ const Home: React.FC<HomeProps> = () => {
           <div className="overflow-hidden">
             <input
               className=" h-6 text-xs min-w-80 w-[40em] pl-7 pt-[2px] rounded-xl  pr-2 placeholder:text-gray-500 relative "
-              type="text"
+              type="url"
               placeholder="https://yourwebsite.com"
               // value={url}
               onChange={handleChange}

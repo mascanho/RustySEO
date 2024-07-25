@@ -103,12 +103,13 @@ pub struct PageSpeedResponse {
     id: String,
     captcha_result: Option<String>,
     lighthouseResult: Option<LighthouseResult>,
+    audits: Option<serde_json::Value>,
     // Add other fields based on the JSON response structure
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-struct LighthouseResult {
-    categories: Categories,
+pub struct LighthouseResult {
+    pub categories: Categories,
     lighthouseVersion: String,
     diagnostics: Option<serde_json::Value>,
     audits: Option<serde_json::Value>,
@@ -116,18 +117,18 @@ struct LighthouseResult {
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-struct Categories {
-    performance: Performance,
+pub struct Categories {
+    pub performance: Performance,
     // Add other fields based on the JSON response structure
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-struct audits {
+pub struct audits {
     score: Option<f64>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
-struct Performance {
+pub struct Performance {
     score: Option<f64>,
 }
 
@@ -441,15 +442,15 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
 
     // SITEMAP FETCHING
     let sitemap_from_url = libs::get_sitemap(&url);
-    println!("Sitemap: {:?}", sitemap_from_url.await);
+    //println!("Sitemap: {:?}", sitemap_from_url.await);
 
     // Robots FETCHING
     let robots = libs::get_robots(&url).await;
-    println!("Robots: {:#?}", robots);
+    //println!("Robots: {:#?}", robots);
 
     // println!("Hreflangs: {:?}", hreflangs);
 
-    println!("Google Tag Manager: {:?}", tag_container);
+    //println!("Google Tag Manager: {:?}", tag_container);
 
     let images = fetch_image_info(&url).await.unwrap();
     // println!("Images: {:?}", images);
@@ -516,6 +517,9 @@ pub async fn get_page_speed_insights(
 
             // println!("Raw JSON response: {}", response_text);
             println!("Page Speed Results: OK ");
+
+            // PUSH DATA INTO DB
+            db::add_data_from_pagespeed(&response_text);
 
             // Parse the response text into PageSpeedResponse struct
             match serde_json::from_str::<PageSpeedResponse>(&response_text) {

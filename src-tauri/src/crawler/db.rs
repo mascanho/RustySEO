@@ -5,6 +5,52 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::fs;
 
+mod models;
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PageSpeedDB {
+    pub id: String,
+    pub lighthouse_result: LighthouseResult,
+    // Add other fields as needed
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LighthouseResult {
+    pub categories: Categories,
+    pub audits: Audits,
+    // Add other fields as needed
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Categories {
+    pub performance: Performance,
+    // Add other categories as needed
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Performance {
+    pub score: f64,
+    // Add other fields as needed
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Audits {
+    #[serde(rename = "first-contentful-paint")]
+    pub first_contentful_paint: Audit,
+    #[serde(rename = "speed-index")]
+    pub speed_index: Audit,
+    // Add other audits as needed
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Audit {
+    pub id: String,
+    pub title: String,
+    pub description: String,
+    pub score: Option<f64>,
+    // Add other fields as needed
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CrawledData {
     pub id: Option<i64>, // Add id as Option to handle inserts where id is not available
@@ -43,16 +89,14 @@ pub fn create_table() -> Result<Connection, rusqlite::Error> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS results (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            url TEXT NOT NULL,
-            status_code INTEGER NOT NULL,
-            content TEXT,
             date TEXT,
-            title TEXT
+            url TEXT NOT NULL,
+            strategy TEXT,
+            performance TEXT
         )",
         [],
-    )?;
-
-    println!("Table created");
+    )
+    .expect("Failed to create table");
 
     Ok(conn)
 }
@@ -72,14 +116,6 @@ pub fn add_crawled_data(url: &str, title: &Vec<String>) -> Result<(), rusqlite::
         date,
         title: title.clone(), // No need to convert again
     };
-
-    // Insert data into the results table
-    conn.execute(
-        "INSERT INTO results (url, status_code, content, date, title) VALUES (?1, ?2, ?3, ?4, ?5)",
-        params![data.url, 200, data.text, data.date, title_json],
-    )?;
-
-    println!("Data added");
 
     Ok(())
 }
@@ -110,4 +146,27 @@ pub fn read_data_from_db() -> Result<Vec<CrawledData>, rusqlite::Error> {
     }
 
     Ok(data)
+}
+
+pub fn add_data_from_pagespeed(data: &str) {
+    let conn =
+        open_db_connection().expect("Failed to open database connection for page speed insights");
+
+    match serde_json::from_str::<models::PageSpeedResponse>(data) {
+        Ok(mut parsed_data) => {
+            println!(
+                "Parsed data: {:#?}",
+                parsed_data.lighthouse_result.categories.performance.score
+            );
+
+            let score = parsed_data.lighthouse_result.categories.performance.score;
+            // Insert data into the results table
+            conn.execute("INSERT INTO results (score) VALUES (?5)", params![score]);
+
+            println!("Data added");
+        }
+        Err(e) => {
+            println!("Error: {}", e);
+        }
+    }
 }
