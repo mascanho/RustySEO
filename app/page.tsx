@@ -33,12 +33,13 @@ import LCPEl from "./components/LCP";
 import NetworkRequests from "./components/NetworkRequests";
 import RobotsTable from "./components/ui/RobotsTable";
 import ImagesChart from "./components/ui/ShadCharts/ImagesChart";
-import { Tabs } from "@mantine/core";
+import { Modal, Tabs } from "@mantine/core";
 import KeywordChart from "./components/ui/ShadCharts/KeywordChart";
 import { Button } from "@/components/ui/button";
 import ThirdPartyScriptChart from "./components/ui/ShadCharts/ThirdPartyScriptChart";
 import { useDebounce } from "use-debounce";
 import { table } from "console";
+import Todo from "./components/ui/Todo";
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
 interface HomeProps {}
@@ -195,6 +196,29 @@ const Home: React.FC<HomeProps> = () => {
       .catch(console.error);
   };
 
+  // KEYBOARD PRESS TO OPEN THE TASKS
+  useEffect(() => {
+    // Function to handle keydown events
+    const handleKeyDown = (event: any) => {
+      // Check if Control + T are pressed
+      if (event.metaKey && event.key === "t") {
+        event.preventDefault(); // Prevent the default action (e.g., opening a new tab)
+        console.log("Control + T was pressed");
+
+        // Open the tasks
+        openModal();
+      }
+    };
+
+    // Add event listener when the component mounts
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Clean up event listener when the component unmounts
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   // Get the AI stuff
   useEffect(() => {
     if (keywords.length > 0) {
@@ -296,6 +320,20 @@ const Home: React.FC<HomeProps> = () => {
 
   return (
     <>
+      <Modal
+        opened={openedModal}
+        overlayProps={{ backgroundOpacity: 0.5 }}
+        closeOnEscape
+        closeOnClickOutside
+        onClose={closeModal}
+        title={openedModal ? "" : "Page Speed Insights API key"}
+        centered
+      >
+        {openedModal && (
+          <Todo url={url} close={closeModal} strategy={strategy} />
+        )}
+      </Modal>
+
       {/* Fixed Input and Crawl Button */}
       <div className="fixed top-[27px] z-[1000] left-1/2 transform -translate-x-1/2 flex justify-center  items-center py-2 ">
         <div className="flex items-center bg-white rounded-xl border overflow-hidden custom-select">
@@ -352,14 +390,16 @@ const Home: React.FC<HomeProps> = () => {
       />
 
       {/* TABS SECTION */}
-      <section className="mt-2">
+      <section className="mt-2 relative h-full">
         <Tabs defaultValue="first">
-          <Tabs.List justify="center" className="dark:text-white">
-            <Tabs.Tab value="first">Diagnostics</Tabs.Tab>
-            <Tabs.Tab value="third">Improvements</Tabs.Tab>
-            <Tabs.Tab value="fourth">Task Manager</Tabs.Tab>
-            <Tabs.Tab value="fifth">Crawl History</Tabs.Tab>
-          </Tabs.List>
+          <div className="transition-all ease-in duration-150 fixed top-16 pt-2 left-1/2 transform -translate-x-1/2 w-full bg-white z-10">
+            <Tabs.List justify="center" className="dark:text-white">
+              <Tabs.Tab value="first">Diagnostics</Tabs.Tab>
+              <Tabs.Tab value="third">Improvements</Tabs.Tab>
+              <Tabs.Tab value="fourth">Task Manager</Tabs.Tab>
+              <Tabs.Tab value="fifth">Crawl History</Tabs.Tab>
+            </Tabs.List>
+          </div>
 
           <Tabs.Panel value="first">
             {/* WIDGET SECTION */}

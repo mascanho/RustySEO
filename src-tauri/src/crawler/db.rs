@@ -8,50 +8,6 @@ use std::fs;
 mod models;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct PageSpeedDB {
-    pub id: String,
-    pub lighthouse_result: LighthouseResult,
-    // Add other fields as needed
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct LighthouseResult {
-    pub categories: Categories,
-    pub audits: Audits,
-    // Add other fields as needed
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Categories {
-    pub performance: Performance,
-    // Add other categories as needed
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Performance {
-    pub score: f64,
-    // Add other fields as needed
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Audits {
-    #[serde(rename = "first-contentful-paint")]
-    pub first_contentful_paint: Audit,
-    #[serde(rename = "speed-index")]
-    pub speed_index: Audit,
-    // Add other audits as needed
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Audit {
-    pub id: String,
-    pub title: String,
-    pub description: String,
-    pub score: Option<f64>,
-    // Add other fields as needed
-}
-
-#[derive(Serialize, Deserialize, Debug)]
 pub struct CrawledData {
     pub id: Option<i64>, // Add id as Option to handle inserts where id is not available
     pub url: String,
@@ -92,7 +48,13 @@ pub fn create_table() -> Result<Connection, rusqlite::Error> {
             date TEXT,
             url TEXT NOT NULL,
             strategy TEXT,
-            performance TEXT
+            performance FLOAT,
+            fcp FLOAT,
+            lcp FLOAT,
+            tti FLOAT,
+            tbt FLOAT,
+            cls FLOAT,
+            dom_size FLOAT
         )",
         [],
     )
@@ -148,7 +110,7 @@ pub fn read_data_from_db() -> Result<Vec<CrawledData>, rusqlite::Error> {
     Ok(data)
 }
 
-pub fn add_data_from_pagespeed(data: &str) {
+pub fn add_data_from_pagespeed(data: &str, strategy: &str, url: &str) {
     let conn =
         open_db_connection().expect("Failed to open database connection for page speed insights");
 
@@ -156,17 +118,46 @@ pub fn add_data_from_pagespeed(data: &str) {
         Ok(mut parsed_data) => {
             println!(
                 "Parsed data: {:#?}",
-                parsed_data.lighthouse_result.categories.performance.score
+                parsed_data.lighthouse_result.audits.interactive.score
             );
-
+            // BINDING RESPONSE VALUES TO VARIABLES
             let score = parsed_data.lighthouse_result.categories.performance.score;
-            // Insert data into the results table
-            conn.execute("INSERT INTO results (score) VALUES (?5)", params![score]);
+            let fcp = parsed_data
+                .lighthouse_result
+                .audits
+                .first_contentful_paint
+                .score;
+            let lcp = parsed_data
+                .lighthouse_result
+                .audits
+                .largest_contentful_paint
+                .score;
+            let tti = parsed_data.lighthouse_result.audits.interactive.score;
+            let tbt = parsed_data
+                .lighthouse_result
+                .audits
+                .total_blocking_time
+                .score;
+            let cls = parsed_data
+                .lighthouse_result
+                .audits
+                .cumulative_layout_shift
+                .score;
+            let dom_size = parsed_data.lighthouse_result.audits.dom_size.display_value;
+            let performance = format!("{}", score); // Adjust formatting if necessary
+            let date = "2024-07-25"; // Use actual date if available
 
-            println!("Data added");
+            // Insert data into the results table
+            match conn.execute(
+                "INSERT INTO results (date, url, strategy, performance, fcp, lcp, tti, tbt, cls, dom_size) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+                params![date, url, strategy, performance, fcp, lcp, tti, tbt, cls, dom_size],
+            ) {
+                Ok(_) => println!("Data added"),
+                Err(e) => eprintln!("Failed to insert data: {}", e),
+            }
         }
         Err(e) => {
-            println!("Error: {}", e);
+            eprintln!("Error parsing JSON: {}", e);
         }
     }
 }

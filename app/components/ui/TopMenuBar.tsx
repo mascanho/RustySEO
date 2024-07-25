@@ -80,17 +80,10 @@ const TopMenuBar = () => {
       >
         <TodoItems url={url} strategy={strategy} />
       </Drawer>
-      <Menubar className="fixed w-full top-0 z-[1001] p-0 pl-1 bg-gray-400 ">
+      <Menubar className="fixed w-full top-0 z-[1000] p-0 pl-1 dark:bg-gray-400 bg-white ">
         <MenubarMenu>
           <MenubarTrigger className="ml-4">File</MenubarTrigger>
           <MenubarContent>
-            <MenubarItem>
-              New Tab <MenubarShortcut>⌘T</MenubarShortcut>
-            </MenubarItem>
-            <MenubarItem>New Window</MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem>Share</MenubarItem>
-            <MenubarSeparator />
             <MenubarItem onClick={onClose}>Exit</MenubarItem>
           </MenubarContent>
         </MenubarMenu>
@@ -111,7 +104,10 @@ const TopMenuBar = () => {
         <MenubarMenu>
           <MenubarTrigger className="ml-3">Tasks</MenubarTrigger>
           <MenubarContent>
-            <MenubarItem onClick={openModal}>New task</MenubarItem>
+            <MenubarItem onClick={openModal}>
+              New task
+              <MenubarShortcut>⌘T</MenubarShortcut>
+            </MenubarItem>
             <MenubarItem>New</MenubarItem>
             <MenubarSeparator />
             <MenubarItem>Share</MenubarItem>

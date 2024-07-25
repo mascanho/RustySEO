@@ -76,9 +76,18 @@ pub struct Audits {
     pub interactive: Audit,
     #[serde(rename = "render-blocking-resources")]
     pub render_blocking_resources: Audit,
-
-    #[serde(rename = "third-party-summary")]
-    pub third_party_summary: Audit,
+    #[serde(rename = "first-contentful-paint")]
+    pub first_contentful_paint: Audit,
+    #[serde(rename = "largest-contentful-paint")]
+    pub largest_contentful_paint: Audit,
+    #[serde(rename = "cumulative-layout-shift")]
+    pub cumulative_layout_shift: Audit,
+    #[serde(rename = "total-blocking-time")]
+    pub total_blocking_time: Audit,
+    #[serde(rename = "total-byte-weight")]
+    pub total_byte_weight: Audit,
+    #[serde(rename = "dom-size")]
+    pub dom_size: Audit,
 }
 
 // Categories struct
@@ -99,7 +108,7 @@ pub struct Audit {
     pub id: String,
     pub title: String,
     pub description: String,
-    pub score: Option<f64>,
+    pub score: f64,
     #[serde(rename = "scoreDisplayMode")]
     pub score_display_mode: Option<String>,
     #[serde(rename = "displayValue")]

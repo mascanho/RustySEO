@@ -32,11 +32,11 @@ export default function RootLayout({
           {/* Fixed MenuDrawer */}
 
           <TopMenuBar />
-          <div className="fixed top-7 pl-6  bg-apple-silver h-10 overflow-hidden   border-b shadow w-full overflow-x-hidden z-[1000]  ">
+          <div className="fixed top-7 pl-6 border-t bg-white  dark:bg-gray-400 h-10 overflow-hidden   border-b shadow w-full overflow-x-hidden z-[1000]  ">
             <MenuDrawer />
           </div>
           {/* Main Content Area */}
-          <main className="mt-16 p-6 rounded-md  bg-brand-gradient ">
+          <main className="mt-16 p-6 rounded-md   ">
             {children}
             <Toaster />
           </main>

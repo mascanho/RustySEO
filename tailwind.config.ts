@@ -28,7 +28,7 @@ const config: Config = {
         "sky-dark": "#2463EB",
         brand: {
           normal: "#F5F5F5",
-          highlight: "#D7B590",
+          highlight: "#B2C3F8",
           background: "#ecf8f8",
           gradient: "linear-gradient(180deg, #D7B590 40%, #C4E1FF 100%)",
         },

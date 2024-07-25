@@ -16,14 +16,13 @@ const PerformanceEl = ({
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
   return (
-    <section className="border px-4 py-3 border-apple-spaceGray shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative">
+    <section className="widget border px-4 py-3  shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative">
       <span className="absolute right-5">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
           width={38}
           height={38}
-          color={"#a6a5a2"}
           fill={"none"}
         >
           <circle

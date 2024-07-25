@@ -519,7 +519,7 @@ pub async fn get_page_speed_insights(
             println!("Page Speed Results: OK ");
 
             // PUSH DATA INTO DB
-            db::add_data_from_pagespeed(&response_text);
+            db::add_data_from_pagespeed(&response_text, &strategy, &url);
 
             // Parse the response text into PageSpeedResponse struct
             match serde_json::from_str::<PageSpeedResponse>(&response_text) {
