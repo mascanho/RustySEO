@@ -201,3 +201,32 @@ button:where([data-active]) {
   border-color: var(--tabs-color);
   @apply dark:bg-white !important;
 }
+
+/* CHARTS COLOURS END */
+
+/* TABS COLOURS */
+
+.m_539e827b {
+  @apply text-gray-400 !important;
+}
+
+.m_539e827b:where([data-active]) {
+  @apply text-black !important;
+}
+
+.m_539e827b:hover {
+  @apply dark:text-black !important;
+}
+
+/*WIDGETS*/
+
+.widget {
+  @apply border;
+}
+
+.widget > div > h2:first-of-type {
+  @apply text-sky-dark;
+}
+.widget span svg {
+  @apply text-brand-highlight;
+}

@@ -18,7 +18,7 @@ const ContentSummary = ({
 }) => {
   return (
     <section
-      className={`flex-wrap w-full h-full space-y-2 ${keywords.length === 0 ? "bg-white/40" : "bg-white"} p-2 rounded-md relative h-fit overflow-auto shadow`}
+      className={`flex-wrap w-full h-full space-y-2 bg-white p-2 rounded-md relative h-fit overflow-auto shadow`}
     >
       <div className="w-full bg-apple-spaceGray left-0 top-0  rounded-t-md  h-7 absolute flex items-center justify-center">
         <h2 className=" bg-apple-spaceGray font-semibold text-white relative  rounded-t-md w-full  text-center">
@@ -30,11 +30,11 @@ const ContentSummary = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <svg
+                className="text-sky-dark"
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 width={28}
                 height={28}
-                color={"#a6a5a2"}
                 fill={"none"}
               >
                 <circle
@@ -93,7 +93,7 @@ const ContentSummary = ({
                 viewBox="0 0 24 24"
                 width={28}
                 height={28}
-                color={"#a6a5a2"}
+                className="text-sky-dark"
                 fill={"none"}
               >
                 <path
@@ -123,7 +123,7 @@ const ContentSummary = ({
                 viewBox="0 0 24 24"
                 width={28}
                 height={28}
-                color={"#a6a5a2"}
+                className="text-sky-dark"
                 fill={"none"}
               >
                 <path
@@ -168,7 +168,7 @@ const ContentSummary = ({
               viewBox="0 0 24 24"
               width={28}
               height={28}
-              color={"#a6a5a2"}
+              className="text-sky-dark"
               fill={"none"}
             >
               <path

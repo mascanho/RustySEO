@@ -33,12 +33,13 @@ import LCPEl from "./components/LCP";
 import NetworkRequests from "./components/NetworkRequests";
 import RobotsTable from "./components/ui/RobotsTable";
 import ImagesChart from "./components/ui/ShadCharts/ImagesChart";
-import { Tabs } from "@mantine/core";
+import { Modal, Tabs } from "@mantine/core";
 import KeywordChart from "./components/ui/ShadCharts/KeywordChart";
 import { Button } from "@/components/ui/button";
 import ThirdPartyScriptChart from "./components/ui/ShadCharts/ThirdPartyScriptChart";
 import { useDebounce } from "use-debounce";
 import { table } from "console";
+import Todo from "./components/ui/Todo";
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
 interface HomeProps {}
@@ -80,6 +81,12 @@ const Home: React.FC<HomeProps> = () => {
   const [open, { toggle }] = useDisclosure(false);
 
   const [debouncedURL] = useDebounce(url, 300);
+
+  type DBDataCrawl = {
+    url: string | null;
+    date: string | null;
+    title: string[] | null;
+  };
 
   useEffect(() => {
     invoke("get_db_data").then((result) => {
@@ -189,6 +196,29 @@ const Home: React.FC<HomeProps> = () => {
       .catch(console.error);
   };
 
+  // KEYBOARD PRESS TO OPEN THE TASKS
+  useEffect(() => {
+    // Function to handle keydown events
+    const handleKeyDown = (event: any) => {
+      // Check if Control + T are pressed
+      if (event.metaKey && event.key === "t") {
+        event.preventDefault(); // Prevent the default action (e.g., opening a new tab)
+        console.log("Control + T was pressed");
+
+        // Open the tasks
+        openModal();
+      }
+    };
+
+    // Add event listener when the component mounts
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Clean up event listener when the component unmounts
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   // Get the AI stuff
   useEffect(() => {
     if (keywords.length > 0) {
@@ -286,56 +316,73 @@ const Home: React.FC<HomeProps> = () => {
     [],
   );
 
+  console.log(pageSpeed);
+
   return (
     <>
+      <Modal
+        opened={openedModal}
+        overlayProps={{ backgroundOpacity: 0.5 }}
+        closeOnEscape
+        closeOnClickOutside
+        onClose={closeModal}
+        title={openedModal ? "" : "Page Speed Insights API key"}
+        centered
+      >
+        {openedModal && (
+          <Todo url={url} close={closeModal} strategy={strategy} />
+        )}
+      </Modal>
+
       {/* Fixed Input and Crawl Button */}
-      <div className="fixed top-[27px] z-[1000] left-1/2 transform -translate-x-1/2 flex justify-center  items-center py-2 ">
-        <div className="flex items-center bg-white rounded-xl border overflow-hidden custom-select">
-          <select
-            onChange={(event) => handleStrategyChange(event)}
-            className=" bg-white border-0 outline-none text-sm h-full"
-          >
-            <option value="desktop">Desktop</option>
-            <option value="mobile">Mobile</option>
-          </select>
-          <div className="overflow-hidden">
-            <input
-              className=" h-6 text-xs min-w-80 w-[40em] pl-7 pt-[2px] rounded-xl  pr-2 placeholder:text-gray-500 relative "
-              type="text"
-              placeholder="https://yourwebsite.com"
-              // value={url}
-              onChange={handleChange}
-              style={{ outline: "none", boxShadow: "none" }}
-              onKeyPress={(event) => {
-                if (event.key === "Enter") {
-                  handleClick(url);
-                }
-              }}
-            />
-          </div>
-          <div className="absolute top-2 -right-32 space-x-2 flex">
-            <Button
-              onClick={() => handleClick(url)}
-              className=" top-[2px] rounded-lg px-2 h-4 py-3 flex items-center bg-green-300"
+      <div className=" fixed top-[27px] z-[1000]  left-0  mx-auto justify-center w-full  items-center py-2 ">
+        <section className="flex   items-end justify-end w-[500px] mx-auto relative ">
+          <div className="flex justify-center w-full border items-center bg-slate-100 rounded-xl  overflow-hidden custom-select">
+            <select
+              onChange={(event) => handleStrategyChange(event)}
+              className=" bg-slate-100 border-0 outline-none text-sm h-full"
             >
-              crawl
-            </Button>
-            <Button
-              onClick={() => window.location.reload()}
-              className=" top-[2px] rounded-lg px-2 h-4 flex py-3 items-center"
-            >
-              cancel
-            </Button>
+              <option value="desktop">Desktop</option>
+              <option value="mobile">Mobile</option>
+            </select>
+            <div className="overflow-hidden">
+              <input
+                className=" h-6 text-xs min-w-80 w-[40em] pl-7 pt-[2px] rounded-xl  pr-2 placeholder:text-gray-500 relative bg-slate-100 "
+                type="url"
+                placeholder="https://yourwebsite.com"
+                // value={url}
+                onChange={handleChange}
+                style={{ outline: "none", boxShadow: "none" }}
+                onKeyPress={(event) => {
+                  if (event.key === "Enter") {
+                    handleClick(url);
+                  }
+                }}
+              />
+            </div>
+            <div className="absolute top-2 -right-32 space-x-2 flex">
+              <Button
+                onClick={() => handleClick(url)}
+                className=" top-[2px] rounded-lg px-2 h-4 py-3 flex items-center bg-green-300"
+              >
+                crawl
+              </Button>
+              <Button
+                onClick={() => window.location.reload()}
+                className=" top-[2px] rounded-lg px-2 h-4 flex py-3 items-center"
+              >
+                cancel
+              </Button>
+            </div>
+            {loading && (
+              <div
+                className="animate-spin inline-block size-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full absolute t3333 right-2"
+                role="status"
+                aria-label="loading"
+              ></div>
+            )}
           </div>
-          <HiMagnifyingGlass className="absolute top-[15px] text-sm left-20 ml-3" />
-          {loading && (
-            <div
-              className="animate-spin inline-block size-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full absolute t3333 right-2"
-              role="status"
-              aria-label="loading"
-            ></div>
-          )}
-        </div>
+        </section>
       </div>
       <SubBar
         domainWithoutLastPart={domainWithoutLastPart}
@@ -344,115 +391,122 @@ const Home: React.FC<HomeProps> = () => {
       />
 
       {/* TABS SECTION */}
+      <section className="mt-2 relative h-full overflow-hidden">
+        <Tabs defaultValue="first">
+          <div className="transition-all ease-in duration-150 fixed left-0 right-0 top-16 pt-2 transform   bg-white z-10">
+            <Tabs.List justify="center" className="dark:text-white">
+              <Tabs.Tab value="first">Diagnostics</Tabs.Tab>
+              <Tabs.Tab value="third">Improvements</Tabs.Tab>
+              <Tabs.Tab value="fourth">Task Manager</Tabs.Tab>
+              <Tabs.Tab value="fifth">Crawl History</Tabs.Tab>
+            </Tabs.List>
+          </div>
 
-      <Tabs defaultValue="first">
-        <Tabs.List justify="center">
-          <Tabs.Tab value="first">Diagnostics</Tabs.Tab>
-          <Tabs.Tab value="third">Improvements</Tabs.Tab>
-          <Tabs.Tab value="fourth">Task Manager</Tabs.Tab>
-          <Tabs.Tab value="fifth">Crawl History</Tabs.Tab>
-        </Tabs.List>
+          <Tabs.Panel value="first">
+            {/* WIDGET SECTION */}
+            <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7  my-10 gap-y-5 mt-12">
+              <PerformanceEl stat={pageSpeed} loading={loading} url={url} />
+              <FcpEl stat={pageSpeed} loading={loading} url={url} />
+              <LCPEl stat={pageSpeed} loading={loading} url={url} />
+              <TtiEl stat={pageSpeed} loading={loading} url={url} />
+              <TbtEl stat={pageSpeed} loading={loading} url={url} />
+              <ClsEl stat={pageSpeed} loading={loading} url={url} />
+              <DomElements stat={pageSpeed} loading={loading} url={url} />
 
-        <Tabs.Panel value="first">
-          {/* WIDGET SECTION */}
-          <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7  my-10 gap-y-5 mt-12">
-            <PerformanceEl stat={pageSpeed} loading={loading} url={url} />
-            <FcpEl stat={pageSpeed} loading={loading} url={url} />
-            <LCPEl stat={pageSpeed} loading={loading} url={url} />
-            <TtiEl stat={pageSpeed} loading={loading} url={url} />
-            <TbtEl stat={pageSpeed} loading={loading} url={url} />
-            <ClsEl stat={pageSpeed} loading={loading} url={url} />
-            <DomElements stat={pageSpeed} loading={loading} url={url} />
+              <SpeedIndex stat={pageSpeed} loading={loading} url={url} />
+              <Redirects stat={pageSpeed} loading={loading} url={url} />
+              <ServerResponseTime
+                stat={pageSpeed}
+                loading={loading}
+                url={url}
+              />
+              <LongTasks stat={pageSpeed} loading={loading} url={url} />
+              <RenderBlocking stat={pageSpeed} loading={loading} url={url} />
+              <NetworkPayload stat={pageSpeed} loading={loading} url={url} />
+              <NetworkRequests stat={pageSpeed} loading={loading} url={url} />
+            </section>
 
-            <SpeedIndex stat={pageSpeed} loading={loading} url={url} />
-            <Redirects stat={pageSpeed} loading={loading} url={url} />
-            <ServerResponseTime stat={pageSpeed} loading={loading} url={url} />
-            <LongTasks stat={pageSpeed} loading={loading} url={url} />
-            <RenderBlocking stat={pageSpeed} loading={loading} url={url} />
-            <NetworkPayload stat={pageSpeed} loading={loading} url={url} />
-            <NetworkRequests stat={pageSpeed} loading={loading} url={url} />
-          </section>
+            {/* CHARTS SECTION */}
 
-          {/* CHARTS SECTION */}
+            <section className="grid grid-cols-3 gap-6 mb-10">
+              <KeywordChart keywords={keywords} url={url} />
+              <ImagesChart url={url} images={images} />
+              <ThirdPartyScriptChart url={url} />
+            </section>
 
-          <section className="grid grid-cols-3 gap-6 mb-10">
-            <KeywordChart keywords={keywords} url={url} />
-            <ImagesChart url={url} images={images} />
-            <ThirdPartyScriptChart url={url} />
-          </section>
-
-          {/* Head starts here */}
-          <HeadAnalysis
-            pageTitle={pageTitle}
-            pageDescription={pageDescription}
-            canonical={canonical}
-            hreflangs={hreflangs}
-            pageSchema={pageSchema}
-            openGraphDetails={openGraphDetails}
-            url={url}
-            tagManager={tagManager}
-            favicon_url={favicon_url}
-            code={headElements}
-            indexation={indexation}
-          />
-
-          {/* TABLES START HERE */}
-          <main
-            id="tables"
-            className="mx-auto w-full flex-col my-10 py-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-16 items-stretch"
-          >
-            <ContentSummary
-              keywords={keywords}
-              wordCount={wordCount ? wordCount[0] : ""}
-              readingTime={readingTime}
-              readingLevelResults={readingLevelResults}
+            {/* Head starts here */}
+            <HeadAnalysis
               pageTitle={pageTitle}
-              AiContentAnalysis={AiContentAnalysis}
-            />
-            <GooglePreview
-              favicon_url={favicon_url}
+              pageDescription={pageDescription}
+              canonical={canonical}
+              hreflangs={hreflangs}
+              pageSchema={pageSchema}
               openGraphDetails={openGraphDetails}
               url={url}
+              tagManager={tagManager}
+              favicon_url={favicon_url}
+              code={headElements}
+              indexation={indexation}
             />
-            <OpenGraphCard
-              linkedInInspect={linkedInInspect}
-              openGraphDetails={openGraphDetails}
-            />
-            <HeadingsTable headings={headings} />
-            <LinkAnalysis visibleLinks={visibleLinks} />
-            <ImageAnalysis images={images} />
-            {/**/}
-            <ThirdPartyScripts pageSpeed={pageSpeed} />
-            <TotalByteWeight pageSpeed={pageSpeed} />
-            <RedirectsTable pageSpeed={pageSpeed} />
-            <PageSchemaTable
-              pageSchema={pageSchema}
-              googleSchemaTestUrl={url}
-            />
-            <RobotsTable robots={robots} />
-          </main>
-        </Tabs.Panel>
 
-        <Tabs.Panel value="fifth">
-          <table className="mt-20">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>URL</th>
-                <th>Title</th>
-              </tr>
-            </thead>
-            {Object.values(DBDATA).map((data, index) => (
-              <tr key={index}>
-                <td>{data?.date}</td>
-                <td>{data?.url}</td>
-                <td>{data?.title}</td>
-              </tr>
-            ))}
-          </table>
-        </Tabs.Panel>
-      </Tabs>
-      <Footer url={canonical} loading={loading} />
+            {/* TABLES START HERE */}
+            <main
+              id="tables"
+              className="mx-auto w-full flex-col my-10 py-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-6 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-16 items-stretch"
+            >
+              <ContentSummary
+                keywords={keywords}
+                wordCount={wordCount ? wordCount[0] : ""}
+                readingTime={readingTime}
+                readingLevelResults={readingLevelResults}
+                pageTitle={pageTitle}
+                AiContentAnalysis={AiContentAnalysis}
+              />
+              <GooglePreview
+                favicon_url={favicon_url}
+                openGraphDetails={openGraphDetails}
+                url={url}
+              />
+              <OpenGraphCard
+                linkedInInspect={linkedInInspect}
+                openGraphDetails={openGraphDetails}
+              />
+              <HeadingsTable headings={headings} />
+              <LinkAnalysis visibleLinks={visibleLinks} />
+              <ImageAnalysis images={images} />
+              {/**/}
+              <ThirdPartyScripts pageSpeed={pageSpeed} />
+              <TotalByteWeight pageSpeed={pageSpeed} />
+              <RedirectsTable pageSpeed={pageSpeed} />
+              <PageSchemaTable
+                pageSchema={pageSchema}
+                googleSchemaTestUrl={url}
+              />
+              <RobotsTable robots={robots} />
+            </main>
+          </Tabs.Panel>
+
+          <Tabs.Panel value="fifth">
+            <table className="mt-20">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>URL</th>
+                  <th>Title</th>
+                </tr>
+              </thead>
+              {Object.values(DBDATA).map((data: any, index: number) => (
+                <tr key={index}>
+                  <td>{data?.date}</td>
+                  <td>{data?.url}</td>
+                  <td>{data?.title}</td>
+                </tr>
+              ))}
+            </table>
+          </Tabs.Panel>
+        </Tabs>
+      </section>
+      <Footer url={url} loading={loading} />
     </>
   );
 };
