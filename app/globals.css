@@ -233,7 +233,7 @@ button:where([data-active]) {
 /*WIDGETS*/
 
 .widget {
-  @apply border w-56 !important;
+  @apply border w-56 dark:bg-brand-darker dark:border-brand-dark !important;
 }
 
 .widget > div > h2:first-of-type {
