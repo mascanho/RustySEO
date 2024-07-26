@@ -50,7 +50,6 @@ input:focus {
 }
 
 table {
-  @apply border;
   border-collapse: collapse;
   width: 100%;
   background-color: white;

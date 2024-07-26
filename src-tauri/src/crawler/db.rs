@@ -54,7 +54,10 @@ pub fn create_table() -> Result<Connection, rusqlite::Error> {
             tti FLOAT,
             tbt FLOAT,
             cls FLOAT,
-            dom_size FLOAT
+            dom_size FLOAT,
+            speed_index FLOAT,
+            server_response_time FLOAT,
+            total_byte_weight FLOAT
         )",
         [],
     )
@@ -144,13 +147,21 @@ pub fn add_data_from_pagespeed(data: &str, strategy: &str, url: &str) {
                 .cumulative_layout_shift
                 .score;
             let dom_size = parsed_data.lighthouse_result.audits.dom_size.display_value;
+            let speed_index = parsed_data.lighthouse_result.audits.dom_size.score;
+            let server_response_time = parsed_data
+                .lighthouse_result
+                .audits
+                .server_response_time
+                .numeric_value;
+
+            let total_byte_weight = parsed_data.lighthouse_result.audits.total_byte_weight.score;
             let performance = format!("{}", score); // Adjust formatting if necessary
             let date = "2024-07-25"; // Use actual date if available
 
             // Insert data into the results table
             match conn.execute(
-                "INSERT INTO results (date, url, strategy, performance, fcp, lcp, tti, tbt, cls, dom_size) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
-                params![date, url, strategy, performance, fcp, lcp, tti, tbt, cls, dom_size],
+                "INSERT INTO results (date, url, strategy, performance, fcp, lcp, tti, tbt, cls, dom_size, speed_index, server_response_time, total_byte_weight) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+                params![date, url, strategy, performance, fcp, lcp, tti, tbt, cls, dom_size, speed_index, server_response_time, total_byte_weight],
             ) {
                 Ok(_) => println!("Data added"),
                 Err(e) => eprintln!("Failed to insert data: {}", e),
