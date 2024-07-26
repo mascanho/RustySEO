@@ -32,7 +32,7 @@ const SubBar = ({
   };
 
   return (
-    <section className="w-full flex items-center space-x-2 justify-between mt-1 relative">
+    <section className="w-full flex items-center space-x-2 justify-between pt-14 relative">
       <div className="flex items-center space-x-2">
         <div className="uppercase overflow-x-hidden py-1 font-semibold flex items-center space-x-2 border border-apple-spaceGray/60 dark:border-white dark:text-white dark:bg-[#60A8FB] border-2 text-sm shadow px-3 rounded-full">
           {getStrategyIcon(strategy.strategy)}

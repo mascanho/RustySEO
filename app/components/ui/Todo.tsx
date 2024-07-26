@@ -20,7 +20,7 @@ type Task = {
   priority: string;
   url: string | null;
   date: string;
-  completed?: boolean;
+  staus: any;
   strategy: string;
 };
 
@@ -54,7 +54,8 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
     priority: "",
     url: url,
     date: new Date().toISOString(),
-    completed: false,
+    // @ts-ignore
+    status: "todo",
     strategy,
   });
 
@@ -87,7 +88,8 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
         priority: "",
         url: url,
         date: new Date().toISOString(),
-        completed: false,
+        // @ts-ignore
+        status: "todo",
         strategy,
       });
       // Dispatch custom event

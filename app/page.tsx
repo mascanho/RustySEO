@@ -41,6 +41,7 @@ import { useDebounce } from "use-debounce";
 import { table } from "console";
 import Todo from "./components/ui/Todo";
 import { IoSearchCircle } from "react-icons/io5";
+import TaskManagerContainer from "./components/ui/TaskManager/TaskManagerContainer";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -404,7 +405,7 @@ const Home: React.FC<HomeProps> = () => {
       />
 
       {/* TABS SECTION */}
-      <section className="mt-2 relative h-full overflow-hidden">
+      <section className="mt-2 relative h-full overflow-hidden -mb-14">
         <Tabs defaultValue="first">
           <div className="transition-all shadow  ease-in pt-5 bg-white duration-150 border fixed left-0 right-0 top-16 transform dark:border-0  dark:bg-brand-darker z-10 pb-0">
             <Tabs.List justify="center" className="dark:text-white ">
@@ -417,7 +418,7 @@ const Home: React.FC<HomeProps> = () => {
 
           <Tabs.Panel value="first">
             {/* WIDGET SECTION */}
-            <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7  my-10 gap-y-5 mt-12">
+            <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7  my-10 gap-y-5 mt-4">
               <PerformanceEl stat={pageSpeed} loading={loading} url={url} />
               <FcpEl stat={pageSpeed} loading={loading} url={url} />
               <LCPEl stat={pageSpeed} loading={loading} url={url} />
@@ -465,7 +466,7 @@ const Home: React.FC<HomeProps> = () => {
             {/* TABLES START HERE */}
             <main
               id="tables"
-              className="mx-auto w-full flex-col my-10 py-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-6 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-16 items-stretch"
+              className="mx-auto w-full flex-col  pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-6 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-16 items-stretch"
             >
               <ContentSummary
                 keywords={keywords}
@@ -497,6 +498,10 @@ const Home: React.FC<HomeProps> = () => {
               />
               <RobotsTable robots={robots} />
             </main>
+          </Tabs.Panel>
+
+          <Tabs.Panel value="fourth">
+            <TaskManagerContainer />
           </Tabs.Panel>
 
           <Tabs.Panel value="fifth">

@@ -3,6 +3,7 @@ import { Tabs } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import React, { useEffect, useState } from "react";
 import TodoItem from "./TodoItem";
+// @ts-ignore
 import { v4 as uuidv4 } from "uuid";
 
 type Task = {

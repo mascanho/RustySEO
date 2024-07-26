@@ -16,7 +16,7 @@ const ClsEl = ({
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
   return (
-    <section className="border px-4 py-3 border-apple-spaceGray shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative overflow-hidden">
+    <section className="widget border px-4 py-3  shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative overflow-hidden">
       <span className="absolute right-5">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -89,7 +89,7 @@ const ClsEl = ({
         </Popover.Dropdown>
       </Popover>
       <div className="flex flex-col space-y-1.5 h-fit">
-        <h5 className="font-bold">CLS</h5>
+        <h2 className="font-bold">CLS</h2>
         <div className="text-xl h-8">
           {loading ? (
             <div className="-mt-1">
