@@ -207,11 +207,19 @@ button:where([data-active]) {
 /* TABS COLOURS */
 
 .m_539e827b {
-  @apply text-gray-400 !important;
+  @apply dark:bg-brand-darker !important;
+}
+
+.m_539e827b span {
+  @apply text-black  dark:text-white !important;
+}
+
+.m_539e827b:not([data-active]) {
+  @apply text-gray-400  !important;
 }
 
 .m_539e827b:where([data-active]) {
-  @apply text-black !important;
+  @apply text-black  dark:text-white dark:bg-brand-highlight !important;
 }
 
 .m_539e827b:hover {
@@ -229,4 +237,53 @@ button:where([data-active]) {
 }
 .widget span svg {
   @apply text-brand-highlight;
+}
+
+/* Custom Select Element */
+.custom-select {
+  @apply text-black bg-white dark:bg-[#171717] dark:text-white;
+}
+
+/* Selected Option */
+.custom-select-selected {
+  flex: 1;
+}
+
+/* Custom Arrow */
+.custom-select::after {
+  content: "▼";
+  position: absolute;
+  right: 10px;
+  font-size: 12px;
+  color: #666;
+}
+
+/* Options Container */
+.custom-select-options {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+/* Individual Options */
+.custom-select-option {
+  padding: 8px 12px;
+  cursor: pointer;
+  color: #333;
+}
+
+.custom-select-option:hover {
+  background-color: #f0f0f0;
+}
+
+/* Show options when select is active */
+.custom-select.active .custom-select-options {
+  display: block;
 }

@@ -40,6 +40,8 @@ import ThirdPartyScriptChart from "./components/ui/ShadCharts/ThirdPartyScriptCh
 import { useDebounce } from "use-debounce";
 import { table } from "console";
 import Todo from "./components/ui/Todo";
+import { IoSearchCircle } from "react-icons/io5";
+
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
 interface HomeProps {}
@@ -201,7 +203,7 @@ const Home: React.FC<HomeProps> = () => {
     // Function to handle keydown events
     const handleKeyDown = (event: any) => {
       // Check if Control + T are pressed
-      if (event.metaKey && event.key === "t") {
+      if (event.ctrlKey && event.key === "t") {
         event.preventDefault(); // Prevent the default action (e.g., opening a new tab)
         console.log("Control + T was pressed");
 
@@ -218,6 +220,25 @@ const Home: React.FC<HomeProps> = () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+
+  useEffect(() => {
+    // Define the handler function
+    const handleKeyDown = (event: any) => {
+      if (event.ctrlKey === "r") {
+        // Perform the action when Escape key is pressed
+        console.log("Escape key pressed!");
+        window?.location?.reload();
+      }
+    };
+
+    // Add the event listener
+    document.addEventListener("keydown", handleKeyDown);
+
+    // Cleanup function to remove the event listener
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []); //
 
   // Get the AI stuff
   useEffect(() => {
@@ -336,18 +357,18 @@ const Home: React.FC<HomeProps> = () => {
 
       {/* Fixed Input and Crawl Button */}
       <div className=" fixed top-[27px] z-[1000]  left-0  mx-auto justify-center w-full  items-center py-2 ">
-        <section className="flex   items-end justify-end w-[500px] mx-auto relative ">
-          <div className="flex justify-center w-full border items-center bg-slate-100 rounded-xl  overflow-hidden custom-select">
+        <section className="flex   items-end justify-end w-[600px] mx-auto relative ">
+          <div className="flex justify-center w-full  items-center  overflow-hidden">
             <select
               onChange={(event) => handleStrategyChange(event)}
-              className=" bg-slate-100 border-0 outline-none text-sm h-full"
+              className="custom-select  bg-slate-100 border-0 outline-none rounded-full text-sm h-6"
             >
               <option value="desktop">Desktop</option>
               <option value="mobile">Mobile</option>
             </select>
             <div className="overflow-hidden">
               <input
-                className=" h-6 text-xs min-w-80 w-[40em] pl-7 pt-[2px] rounded-xl  pr-2 placeholder:text-gray-500 relative bg-slate-100 "
+                className=" h-6 text-xs min-w-80 w-[40em] pl-5 pt-[2px] rounded-2xl -ml-2  pr-2 placeholder:text-gray-500 relative bg-slate-100 "
                 type="url"
                 placeholder="https://yourwebsite.com"
                 // value={url}
@@ -359,28 +380,20 @@ const Home: React.FC<HomeProps> = () => {
                   }
                 }}
               />
+              {loading ? (
+                <div
+                  className="animate-spin cursor-pointer inline-block size-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full absolute top-1 right-7"
+                  role="status"
+                  aria-label="loading"
+                  onClick={() => window?.location?.reload()}
+                ></div>
+              ) : (
+                <IoSearchCircle
+                  onClick={() => handleClick(url)}
+                  className="absolute top-0 text-2xl py-[2px] right-6 text-sky-500"
+                />
+              )}
             </div>
-            <div className="absolute top-2 -right-32 space-x-2 flex">
-              <Button
-                onClick={() => handleClick(url)}
-                className=" top-[2px] rounded-lg px-2 h-4 py-3 flex items-center bg-green-300"
-              >
-                crawl
-              </Button>
-              <Button
-                onClick={() => window.location.reload()}
-                className=" top-[2px] rounded-lg px-2 h-4 flex py-3 items-center"
-              >
-                cancel
-              </Button>
-            </div>
-            {loading && (
-              <div
-                className="animate-spin inline-block size-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full absolute t3333 right-2"
-                role="status"
-                aria-label="loading"
-              ></div>
-            )}
           </div>
         </section>
       </div>
@@ -393,9 +406,9 @@ const Home: React.FC<HomeProps> = () => {
       {/* TABS SECTION */}
       <section className="mt-2 relative h-full overflow-hidden">
         <Tabs defaultValue="first">
-          <div className="transition-all ease-in duration-150 fixed left-0 right-0 top-16 pt-2 transform   bg-white z-10">
-            <Tabs.List justify="center" className="dark:text-white">
-              <Tabs.Tab value="first">Diagnostics</Tabs.Tab>
+          <div className="transition-all shadow dark:shadow-white ease-in pt-5 bg-white duration-150 fixed left-0 right-0 top-16 transform   dark:bg-brand-darker z-10 pb-0">
+            <Tabs.List justify="center" className="dark:text-white ">
+              <Tabs.Tab value="first"> Diagnostics</Tabs.Tab>
               <Tabs.Tab value="third">Improvements</Tabs.Tab>
               <Tabs.Tab value="fourth">Task Manager</Tabs.Tab>
               <Tabs.Tab value="fifth">Crawl History</Tabs.Tab>
