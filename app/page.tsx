@@ -361,14 +361,14 @@ const Home: React.FC<HomeProps> = () => {
           <div className="flex justify-center w-full  items-center  overflow-hidden">
             <select
               onChange={(event) => handleStrategyChange(event)}
-              className="custom-select  bg-slate-100 border-0 outline-none rounded-full text-sm h-6"
+              className="custom-select  bg-slate-100 dark:bg-white dark:text-black border-0 outline-none rounded-full text-sm h-6"
             >
               <option value="desktop">Desktop</option>
               <option value="mobile">Mobile</option>
             </select>
             <div className="overflow-hidden">
               <input
-                className=" h-6 text-xs min-w-80 w-[40em] pl-5 pt-[2px] rounded-2xl -ml-2  pr-2 placeholder:text-gray-500 relative bg-slate-100 "
+                className=" h-6 text-xs min-w-80 w-[40em] pl-5 pt-[2px] rounded-2xl -ml-2  pr-2 placeholder:text-gray-500 relative bg-slate-100 dark:border dark:border-white dark:bg-white "
                 type="url"
                 placeholder="https://yourwebsite.com"
                 // value={url}
@@ -406,7 +406,7 @@ const Home: React.FC<HomeProps> = () => {
       {/* TABS SECTION */}
       <section className="mt-2 relative h-full overflow-hidden">
         <Tabs defaultValue="first">
-          <div className="transition-all shadow dark:shadow-white ease-in pt-5 bg-white duration-150 fixed left-0 right-0 top-16 transform   dark:bg-brand-darker z-10 pb-0">
+          <div className="transition-all shadow  ease-in pt-5 bg-white duration-150 border fixed left-0 right-0 top-16 transform dark:border-0  dark:bg-brand-darker z-10 pb-0">
             <Tabs.List justify="center" className="dark:text-white ">
               <Tabs.Tab value="first"> Diagnostics</Tabs.Tab>
               <Tabs.Tab value="third">Improvements</Tabs.Tab>

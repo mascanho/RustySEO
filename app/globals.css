@@ -50,6 +50,7 @@ input:focus {
 }
 
 table {
+  @apply border;
   border-collapse: collapse;
   width: 100%;
   background-color: white;
@@ -206,20 +207,24 @@ button:where([data-active]) {
 
 /* TABS COLOURS */
 
+.m_576c9d4::before {
+  @apply dark:hidden !important;
+}
+
 .m_539e827b {
-  @apply dark:bg-brand-darker !important;
+  @apply dark:bg-transparent !important;
 }
 
 .m_539e827b span {
-  @apply text-black  dark:text-white !important;
+  @apply text-black  dark:text-brand-normal !important;
 }
 
 .m_539e827b:not([data-active]) {
-  @apply text-gray-400  !important;
+  @apply text-gray-400   !important;
 }
 
 .m_539e827b:where([data-active]) {
-  @apply text-black  dark:text-white dark:bg-brand-highlight !important;
+  @apply text-black  dark:text-brand-highlight dark:bg-transparent !important;
 }
 
 .m_539e827b:hover {

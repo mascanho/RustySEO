@@ -80,7 +80,7 @@ const TopMenuBar = () => {
       >
         <TodoItems url={url} strategy={strategy} />
       </Drawer>
-      <Menubar className="fixed w-full top-0 z-[1000] p-0 pl-1 dark:bg-gray-400 bg-white ">
+      <Menubar className="fixed w-full top-0 z-[1000] p-0 pl-1 dark:bg-brand-darker dark:text-white bg-white ">
         <MenubarMenu>
           <MenubarTrigger className="ml-4">File</MenubarTrigger>
           <MenubarContent>

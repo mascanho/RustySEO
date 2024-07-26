@@ -31,7 +31,7 @@ const config: Config = {
           highlight: "#B2C3F8",
           background: "#ecf8f8",
           gradient: "linear-gradient(180deg, #D7B590 40%, #C4E1FF 100%)",
-          dark: "#212121",
+          dark: "#39393a",
           darker: "#171717",
         },
         apple: {

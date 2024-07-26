@@ -26,13 +26,13 @@ export default function RootLayout({
   return (
     <html lang="en" className="min-w-[600px]">
       <body
-        className={`relative overflow-x-visible overflow-y-scroll rounded-md bg-white dark:bg-brand-normal ${roboto.className}`}
+        className={`relative overflow-x-visible overflow-y-scroll rounded-md bg-white dark:bg-brand-dark ${roboto.className}`}
       >
         <MantineProvider>
           {/* Fixed MenuDrawer */}
 
           <TopMenuBar />
-          <div className="fixed top-7 pl-6 border-t bg-white  dark:bg-gray-400 h-10 overflow-hidden   border-b  w-full overflow-x-hidden z-[1000]  ">
+          <div className="fixed top-7 pl-6 border-t bg-white  dark:bg-brand-darker h-10 overflow-hidden   border-b dark:border-gray-800  w-full overflow-x-hidden z-[1000]  ">
             <MenuDrawer />
           </div>
           {/* Main Content Area */}
