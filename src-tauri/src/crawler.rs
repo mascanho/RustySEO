@@ -138,6 +138,9 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         url.pop();
     }
 
+    // HANDLE DB CREATION AAND check
+    let _create_table = db::create_table();
+
     let client = Client::new();
     let response = client
         .get(&url)
@@ -254,14 +257,13 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         for script in document.select(&gtm_selector) {
             if let Some(script_text) = script.text().next() {
                 if script_text.contains("googletagmanager.com") {
-                    println!("Found Google Tag Manager script:\n{}", script_text);
+                    //println!("Found Google Tag Manager script:\n{}", script_text);
                     google_tag_manager.push(script_text.to_string());
                 }
             }
         }
         // Print all found GTM scripts
         if !google_tag_manager.is_empty() {
-            println!("\nAll Google Tag Manager scripts found:");
             for (index, script) in google_tag_manager.iter().enumerate() {
                 // grab the GTM container part of the script
                 let gtm_container = script
@@ -269,8 +271,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
                     .collect::<Vec<&str>>()
                     .join("googletagmanager.com")
                     .to_string();
-
-                println!("GTM Container: {}", gtm_container);
 
                 let re = Regex::new(r"GTM-[A-Z0-9]+").unwrap();
                 let gtm_id = re
@@ -297,12 +297,12 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             html.to_string()
         }
         let reading_level = content::calculate_reading_level(&html_to_string(&text_content));
-        println!("Reading Level: {:?}", reading_level);
+        //println!("Reading Level: {:?}", reading_level);
         readings.push(reading_level);
 
         // Get the top keywords from the content
         let top_keywords = content::get_top_keywords(&text_content, 10);
-        println!("Top Keywords: {:?}", top_keywords);
+        //println!("Top Keywords: {:?}", top_keywords);
         keywords.push(top_keywords);
 
         // Fetch headings
@@ -321,6 +321,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             Selector::parse("title").map_err(|e| format!("Selector error: {}", e))?;
         for element in document.select(&title_selector) {
             let title = element.text().collect::<Vec<_>>().join(" ");
+            db::add_page_title_to_db(&title, &url);
             page_title.push(title)
         }
 
@@ -408,14 +409,14 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         }
         // Fetch the word count
         let (word_count, words) = content::count_words_accurately(&document);
-        println!(
-            "This is the word count: {:#?} and the words are {:#?}",
-            word_count, words
-        );
+        //println!(
+        //    "This is the word count: {:#?} and the words are {:#?}",
+        //    word_count, words
+        //);
 
         let reading_time = content::calculate_reading_time(word_count, 250);
         words_arr.push((word_count, words, reading_time));
-        println!("From the array: {:#?}", words_arr);
+        //println!("From the array: {:#?}", words_arr);
     } else {
         return Err(format!("Failed to fetch the URL: {}", response.status()));
     }
@@ -456,11 +457,8 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     // println!("Images: {:?}", images);
     //
 
-    let _create_table = db::create_table();
     let _add_crawled_data = db::add_crawled_data(&url, &page_title);
     let db_data = db::read_data_from_db();
-
-    println!("The data from the db: {:#?}", db_data);
 
     Ok(CrawlResult {
         links,

@@ -25,10 +25,6 @@ pub fn open_db_connection() -> Result<Connection, rusqlite::Error> {
     let db_dir = project_dirs.data_dir(); // Use data_dir() for application data
     let db_path = db_dir.join("crawl_results.db");
 
-    println!("Project directories: {:?}", project_dirs);
-    println!("DB directory: {:?}", db_dir);
-    println!("DB path: {:?}", db_path);
-
     // Ensure the directory exists
     if !db_dir.exists() {
         fs::create_dir_all(db_dir).expect("Failed to create directory");
@@ -57,12 +53,13 @@ pub fn create_table() -> Result<Connection, rusqlite::Error> {
             dom_size FLOAT,
             speed_index FLOAT,
             server_response_time FLOAT,
-            total_byte_weight FLOAT
+            total_byte_weight FLOAT,
+            title TEXT
         )",
         [],
     )
     .expect("Failed to create table");
-
+    println!("Table created");
     Ok(conn)
 }
 
@@ -117,13 +114,10 @@ pub fn add_data_from_pagespeed(data: &str, strategy: &str, url: &str) {
     let conn =
         open_db_connection().expect("Failed to open database connection for page speed insights");
 
+    // Attempt to parse the JSON data
     match serde_json::from_str::<models::PageSpeedResponse>(data) {
-        Ok(mut parsed_data) => {
-            println!(
-                "Parsed data: {:#?}",
-                parsed_data.lighthouse_result.audits.interactive.score
-            );
-            // BINDING RESPONSE VALUES TO VARIABLES
+        Ok(parsed_data) => {
+            // Extract response values
             let score = parsed_data.lighthouse_result.categories.performance.score;
             let fcp = parsed_data
                 .lighthouse_result
@@ -147,28 +141,49 @@ pub fn add_data_from_pagespeed(data: &str, strategy: &str, url: &str) {
                 .cumulative_layout_shift
                 .score;
             let dom_size = parsed_data.lighthouse_result.audits.dom_size.display_value;
-            let speed_index = parsed_data.lighthouse_result.audits.dom_size.score;
+            let speed_index = parsed_data.lighthouse_result.audits.speed_index.score;
             let server_response_time = parsed_data
                 .lighthouse_result
                 .audits
                 .server_response_time
                 .numeric_value;
-
             let total_byte_weight = parsed_data.lighthouse_result.audits.total_byte_weight.score;
-            let performance = format!("{}", score); // Adjust formatting if necessary
-            let date = "2024-07-25"; // Use actual date if available
+            let performance = format!("{}", score);
+            let date = Utc::now().naive_utc().to_string();
 
-            // Insert data into the results table
-            match conn.execute(
-                "INSERT INTO results (date, url, strategy, performance, fcp, lcp, tti, tbt, cls, dom_size, speed_index, server_response_time, total_byte_weight) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
-                params![date, url, strategy, performance, fcp, lcp, tti, tbt, cls, dom_size, speed_index, server_response_time, total_byte_weight],
-            ) {
-                Ok(_) => println!("Data added"),
-                Err(e) => eprintln!("Failed to insert data: {}", e),
+            // Attempt to update existing record
+            let rows_updated = conn.execute(
+                "UPDATE results SET date = ?1, strategy = ?2, performance = ?3, fcp = ?4, lcp = ?5, tti = ?6, tbt = ?7, cls = ?8, dom_size = ?9, speed_index = ?10, server_response_time = ?11, total_byte_weight = ?12 WHERE url = ?13",
+                params![date, strategy, performance, fcp, lcp, tti, tbt, cls, dom_size, speed_index, server_response_time, total_byte_weight, url],
+            ).expect("Failed to execute update query");
+
+            if rows_updated == 0 {
+                // No rows were updated, so insert a new record
+                conn.execute(
+                    "INSERT INTO results (date, url, strategy, performance, fcp, lcp, tti, tbt, cls, dom_size, speed_index, server_response_time, total_byte_weight) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+                    params![date, url, strategy, performance, fcp, lcp, tti, tbt, cls, dom_size, speed_index, server_response_time, total_byte_weight],
+                ).expect("Failed to execute insert query");
             }
         }
         Err(e) => {
             eprintln!("Error parsing JSON: {}", e);
         }
+    }
+}
+
+pub fn add_page_title_to_db(title: &str, url: &str) {
+    let conn = open_db_connection().expect("Failed to open database connection");
+
+    println!("Page title is: {}", title);
+    println!("Page url is: {}", url);
+
+    let title_added = conn.execute(
+        "INSERT INTO results (url, title) VALUES (?1, ?2)",
+        [url, title],
+    );
+
+    match title_added {
+        Ok(_) => println!("Title added to database"),
+        Err(e) => println!("Failed to add title to database: {}", e),
     }
 }

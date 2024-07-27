@@ -83,8 +83,6 @@ async fn main() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-    println!("Running from Tauri");
-    println!("Running from Main");
 }
 
 // Configurations & system checks
@@ -145,7 +143,7 @@ fn add_api_key(key: String, api_type: String) -> Result<String, String> {
 
         std::fs::write(&config_file, toml_string)
             .map_err(|e| format!("Failed to write config file: {}", e))?;
-        println!("Config file created at: {}", config_file.display());
+        //println!("Config file created at: {}", config_file.display());
         return Ok(key);
     }
 
@@ -161,7 +159,7 @@ fn add_api_key(key: String, api_type: String) -> Result<String, String> {
 
         std::fs::write(&config_file, toml_string)
             .map_err(|e| format!("Failed to write config file: {}", e))?;
-        println!("Config file created at: {}", config_file.display());
+        //println!("Config file created at: {}", config_file.display());
         return Ok(key);
     }
 
