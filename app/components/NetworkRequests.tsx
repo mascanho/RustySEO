@@ -134,10 +134,8 @@ const NetworkRequests = ({
                 </span>
               ) : (
                 <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
-                  {
-                    stat?.lighthouseResult?.audits?.["network-requests"]
-                      ?.details?.items?.length
-                  }
+                  {stat?.lighthouseResult?.audits?.["network-requests"]?.details
+                    ?.items?.length + " requests"}
                 </span>
               )}
             </>

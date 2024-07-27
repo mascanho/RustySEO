@@ -318,3 +318,23 @@ button:where([data-active]) {
 .custom-select.active .custom-select-options {
   display: block;
 }
+
+/*CRAWL HISTORY TABLE*/
+.table_history {
+  height: 100%;
+  border-collapse: collapse;
+  border-spacing: 0 10px;
+  width: 100%;
+  text-align: center;
+
+  thead {
+    th {
+      padding: 10px;
+      font-weight: 800;
+    }
+  }
+
+  td {
+    padding: 5px;
+  }
+}

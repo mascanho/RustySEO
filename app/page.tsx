@@ -42,6 +42,7 @@ import { table } from "console";
 import Todo from "./components/ui/Todo";
 import { IoSearchCircle } from "react-icons/io5";
 import TaskManagerContainer from "./components/ui/TaskManager/TaskManagerContainer";
+import CrawlHistory from "./components/ui/CrawlHistory/CrawlHistory";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -398,11 +399,11 @@ const Home: React.FC<HomeProps> = () => {
           </div>
         </section>
       </div>
-      <SubBar
-        domainWithoutLastPart={domainWithoutLastPart}
-        url={url}
-        strategy={strategy}
-      />
+      {/* <SubBar */}
+      {/*   domainWithoutLastPart={domainWithoutLastPart} */}
+      {/*   url={url} */}
+      {/*   strategy={strategy} */}
+      {/* /> */}
 
       {/* TABS SECTION */}
       <section className="mt-2 relative h-full overflow-hidden -mb-14">
@@ -418,7 +419,7 @@ const Home: React.FC<HomeProps> = () => {
 
           <Tabs.Panel value="first">
             {/* WIDGET SECTION */}
-            <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7  my-10 gap-y-5 mt-4">
+            <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7  my-10 gap-y-5 mt-14">
               <PerformanceEl stat={pageSpeed} loading={loading} url={url} />
               <FcpEl stat={pageSpeed} loading={loading} url={url} />
               <LCPEl stat={pageSpeed} loading={loading} url={url} />
@@ -504,22 +505,7 @@ const Home: React.FC<HomeProps> = () => {
           </Tabs.Panel>
 
           <Tabs.Panel value="fifth">
-            <table className="mt-20">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>URL</th>
-                  <th>Title</th>
-                </tr>
-              </thead>
-              {Object.values(DBDATA).map((data: any, index: number) => (
-                <tr key={index}>
-                  <td>{data?.date}</td>
-                  <td>{data?.url}</td>
-                  <td>{data?.title}</td>
-                </tr>
-              ))}
-            </table>
+            <CrawlHistory dbdata={DBDATA} />
           </Tabs.Panel>
         </Tabs>
       </section>

@@ -1,4 +1,3 @@
-use db::CrawledData;
 use html5ever::driver::parse_document;
 use html5ever::serialize::{serialize, SerializeOpts, TraversalScope};
 use html5ever::tendril::{ByteTendril, TendrilSink};
@@ -12,7 +11,6 @@ use serde::de::Error;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::error::Error as StdError;
-use std::io;
 use std::time::Instant;
 use std::{
     collections::HashMap,
@@ -21,6 +19,7 @@ use std::{
     io::{Read, Write},
     usize,
 };
+use std::{io, vec};
 use url::Url;
 
 use crate::crawler;
@@ -139,7 +138,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     }
 
     // HANDLE DB CREATION AAND check
-    let _create_table = db::create_table();
+    let _create_table = db::create_results_table();
 
     let client = Client::new();
     let response = client
@@ -321,7 +320,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             Selector::parse("title").map_err(|e| format!("Selector error: {}", e))?;
         for element in document.select(&title_selector) {
             let title = element.text().collect::<Vec<_>>().join(" ");
-            db::add_page_title_to_db(&title, &url);
             page_title.push(title)
         }
 
@@ -457,8 +455,16 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     // println!("Images: {:?}", images);
     //
 
-    let _add_crawled_data = db::add_crawled_data(&url, &page_title);
-    let db_data = db::read_data_from_db();
+    // Add the data to the DB
+    let mut db_data = Vec::new();
+
+    db_data.push(&page_title[0]);
+    db_data.push(&page_description[0]);
+    //db_data.push(&canonical_url);
+    //db_data.push(&index_type);
+    //db_data.push(&page_schema);
+
+    db::add_technical_data(db_data, &url).unwrap();
 
     Ok(CrawlResult {
         links,
