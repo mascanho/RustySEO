@@ -64,7 +64,7 @@ const TodoContainerItems: React.FC<TodoContainerItemsProps> = ({ status }) => {
   }, []); // Dependency array should be empty, as you want to listen to any changes in localStorage
 
   return (
-    <div className="p-2 space-y-3">
+    <div className="p-2 space-y-3  w-full rounded-md pb-5">
       {todoItems.map((item) => (
         <TaskManagerContainerItem key={item.id} data={item} />
       ))}
