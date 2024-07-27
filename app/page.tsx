@@ -368,7 +368,7 @@ const Home: React.FC<HomeProps> = () => {
       </Modal>
 
       {/* Fixed Input and Crawl Button */}
-      <div className=" fixed top-[27px] z-[1000]  left-0  mx-auto justify-center w-full  items-center py-2 ">
+      <div className="overflow-hidden fixed top-[28px] pt-2 z-[1000] h-12 pb-2 border-b  left-0  mx-auto justify-center w-full dark:bg-brand-darker  items-center ">
         <section className="flex   items-end justify-end w-[600px] mx-auto relative ">
           <div className="flex justify-center w-full  items-center  overflow-hidden">
             <select
@@ -416,9 +416,9 @@ const Home: React.FC<HomeProps> = () => {
       {/* /> */}
 
       {/* TABS SECTION */}
-      <section className="mt-2 relative h-full overflow-hidden -mb-14">
+      <section className="mt-2 relative h-screen overflow-y-scroll -mb-14 p-6">
         <Tabs defaultValue="first">
-          <div className="transition-all  ease-in pt-5 bg-white duration-150 border fixed left-0 right-0 top-16 transform dark:border-0  dark:bg-brand-darker z-10 pb-0">
+          <div className="transition-all  ease-in  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-2 top-[70px]  transform dark:bg-brand-darker z-[2000] pb-0">
             <Tabs.List justify="center" className="dark:text-white ">
               <Tabs.Tab value="first"> Diagnostics</Tabs.Tab>
               <Tabs.Tab value="third">Improvements</Tabs.Tab>
@@ -429,7 +429,7 @@ const Home: React.FC<HomeProps> = () => {
 
           <Tabs.Panel value="first">
             {/* WIDGET SECTION */}
-            <div className="mt-10 flex flex-col flex-wrap items-end">
+            <div className="mt-5 flex flex-col flex-wrap items-end">
               <Switch
                 checked={!hidden.widget}
                 className="mb-5 mr-0"
