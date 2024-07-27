@@ -16,7 +16,7 @@ const SpeedIndex = ({
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
   return (
-    <section className="border p-4 border-apple-spaceGray shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative">
+    <section className="widget border p-4  shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative">
       <span className="absolute right-5">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -112,25 +112,29 @@ const SpeedIndex = ({
             </div>
           ) : (
             <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
-              {Math.floor(
-                stat?.lighthouseResult?.audits?.["speed-index"].score * 100,
-              ) || "..."}
+              {stat?.lighthouseResult?.audits?.["speed-index"]?.score !==
+              undefined
+                ? `${Math.floor(stat.lighthouseResult.audits["speed-index"].score * 100)}%`
+                : "..."}
             </span>
           )}{" "}
         </div>
-        <h2
-          onClick={() =>
-            openBrowserWindow(
-              "https://pagespeed.web.dev/report?url=" + url ||
-                "No URL provided",
-            )
-          }
-          className="text-xs  cursor-pointer"
-        >
-          Loading Time:{" "}
-          {stat?.lighthouseResult?.audits?.["speed-index"].displayValue ||
-            " ..."}
-        </h2>
+        <div className="flex items-center space-x-1">
+          <h2
+            onClick={() =>
+              openBrowserWindow(
+                "https://pagespeed.web.dev/report?url=" + url ||
+                  "No URL provided",
+              )
+            }
+            className="text-xs underline  cursor-pointer font-semibold text-gray-500"
+          >
+            Loading time:{" "}
+          </h2>
+          <span className="inline text-xs">
+            {stat?.lighthouseResult?.audits?.interactive?.displayValue || "..."}
+          </span>
+        </div>
       </div>
     </section>
   );

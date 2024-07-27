@@ -16,7 +16,7 @@ const RenderBlocking = ({
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
   return (
-    <section className="border p-4 border-apple-spaceGray shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative">
+    <section className="widget border p-4  shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative">
       <span className="absolute right-5">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -101,8 +101,8 @@ const RenderBlocking = ({
           </Text>
         </Popover.Dropdown>
       </Popover>
-      <div className="flex flex-col space-y-1.5 h-fit">
-        <h2 className="font-bold">Render Blocking</h2>
+      <div className="flex flex-col space-y-1 h-fit">
+        <h2 className="font-bold -mt-1">Render Blocking</h2>
         <div className="text-xl h-8">
           {loading && (
             <div className="-mt-1">
@@ -133,11 +133,14 @@ const RenderBlocking = ({
               ...
             </span>
           )}
+
           {stat?.lighthouseResult?.audits?.["render-blocking-resources"]
-            .displayValue && (
-            <span className="h-10 font-bold text-xl text-apple-spaceGray/50">
-              {stat?.lighthouseResult?.audits?.["render-blocking-resources"]
-                .details?.items.length + " tasks"}
+            ?.displayValue && (
+            <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
+              {stat.lighthouseResult.audits["render-blocking-resources"].details
+                ?.items
+                ? `${stat.lighthouseResult.audits["render-blocking-resources"].details.items.length} tasks`
+                : "No tasks available"}
             </span>
           )}
         </div>

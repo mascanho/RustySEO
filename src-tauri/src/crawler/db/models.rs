@@ -88,6 +88,10 @@ pub struct Audits {
     pub total_byte_weight: Audit,
     #[serde(rename = "dom-size")]
     pub dom_size: Audit,
+    #[serde(rename = "server-response-time")]
+    pub server_response_time: Audit,
+    #[serde(rename = "speed-index")]
+    pub speed_index: Audit,
 }
 
 // Categories struct
@@ -130,6 +134,8 @@ pub struct AuditDetails {
     pub items: Option<Vec<AuditDetailItem>>,
     #[serde(rename = "sortedBy")]
     pub sorted_by: Option<Vec<String>>,
+    #[serde(rename = "numericValue")]
+    pub numeric_value: Option<f64>,
 }
 
 // Heading struct

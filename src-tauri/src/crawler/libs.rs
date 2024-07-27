@@ -92,8 +92,6 @@ pub async fn get_sitemap(url: &String) -> Result<(), Box<dyn Error>> {
     let body = response.text().await?;
 
     // Print the sitemap XML to the user
-    println!("Sitemap XML:");
-    println!("{}", body);
 
     // Optionally, you can parse the XML content here if needed
     // let parser = EventReader::new(body.as_bytes());

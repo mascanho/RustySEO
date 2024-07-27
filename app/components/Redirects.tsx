@@ -16,7 +16,7 @@ const Redirects = ({
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
   return (
-    <section className="border px-4 py-3 border-apple-spaceGray bg-white w-60 xl:w-52 rounded-md space-y-2 relative shadow overflow-hidden">
+    <section className="widget border px-4 py-3 bg-white w-60 xl:w-52 rounded-md space-y-2 relative shadow overflow-hidden">
       <span className="absolute right-5">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -127,8 +127,9 @@ const Redirects = ({
           ) : (
             <>
               <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
-                {stat?.lighthouseResult?.audits?.redirects?.details.items
-                  .length || "..."}{" "}
+                {stat?.lighthouseResult?.audits?.redirects?.details?.items
+                  ? `${stat.lighthouseResult.audits.redirects.details.items.length} items`
+                  : "..."}
               </span>
             </>
           )}{" "}

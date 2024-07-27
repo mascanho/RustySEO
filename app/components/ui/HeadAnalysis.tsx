@@ -13,7 +13,7 @@ export const HeadAnalysis = ({
   hreflangs,
   pageSchema,
   openGraphDetails,
-  url,
+  // url,
   tagManager,
   favicon_url,
   indexation,
@@ -217,7 +217,7 @@ export const HeadAnalysis = ({
               }
                 ${openGraphDetails?.title?.length > 0 && openGraphDetails?.image === null && "bg-gray-200"}
                 ${openGraphDetails?.title === null && openGraphDetails?.image === null && "bg-red-500 text-white"}
-${url === "" && openGraphDetails?.image === null && "bg-gray-200"} }
+${openGraphDetails?.image === null && "bg-gray-200"} }
 ${openGraphDetails && "bg-gray-200"}
 `}
             >
@@ -239,7 +239,7 @@ ${openGraphDetails && "bg-gray-200"}
           </div>
           <div className="flex items-center mt-2">
             <div
-              className={`flex rounded-full items-center justify-center h-10 w-10 ${pageSchema.length > 0 && "bg-green-500 text-white"} ${!url && pageSchema.length === 0 && "bg-gray-200"}
+              className={`flex rounded-full items-center justify-center h-10 w-10 ${pageSchema.length > 0 && "bg-green-500 text-white"} ${pageSchema.length === 0 && "bg-gray-200"}
                         ${pageTitle.length > 0 && pageSchema.length === 0 && "bg-red-500 text-white"} ${pageTitle?.length === 0 && "bg-gray-200"}
 `}
             >
@@ -263,7 +263,7 @@ ${openGraphDetails && "bg-gray-200"}
           </div>
           <div className="flex items-center mt-2">
             <div
-              className={`flex rounded-full items-center justify-center h-10 w-10 ${tagManager.length > 0 && "bg-green-500 text-white"} ${!url && pageSchema.length === 0 && "bg-gray-200"}
+              className={`flex rounded-full items-center justify-center h-10 w-10 ${tagManager.length > 0 && "bg-green-500 text-white"} ${pageSchema.length === 0 && "bg-gray-200"}
                         ${pageTitle.length > 0 && tagManager.length === 0 && "bg-red-500 text-white"} ${pageTitle?.length === 0 && "bg-gray-200"}
 `}
             >

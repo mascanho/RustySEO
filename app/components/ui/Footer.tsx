@@ -14,7 +14,7 @@ type Task = {
   completed?: boolean;
 };
 
-const Footer = ({ url, loading }: { url: string[]; loading: boolean }) => {
+const Footer = ({ url, loading }: { url: string; loading: boolean }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
 
   const updateTasks = () => {
