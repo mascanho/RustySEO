@@ -338,7 +338,7 @@ const Home: React.FC<HomeProps> = () => {
     [],
   );
 
-  console.log(pageSpeed);
+  console.log(pageSpeed, "page speed");
 
   return (
     <>
@@ -456,7 +456,6 @@ const Home: React.FC<HomeProps> = () => {
               hreflangs={hreflangs}
               pageSchema={pageSchema}
               openGraphDetails={openGraphDetails}
-              url={url}
               tagManager={tagManager}
               favicon_url={favicon_url}
               code={headElements}

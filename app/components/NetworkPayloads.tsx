@@ -131,22 +131,30 @@ const NetworkPayload = ({
             </div>
           ) : (
             <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
-              {stat?.lighthouseResult?.audits?.["total-byte-weight"]?.details
-                ?.items.length || "..."}
+              {stat?.lighthouseResult?.audits?.["total-byte-weight"]?.score !==
+              undefined
+                ? `${Math.round(stat.lighthouseResult.audits["total-byte-weight"].score * 100)}%`
+                : "..."}
             </span>
           )}{" "}
         </div>
-        <h2
-          onClick={() =>
-            openBrowserWindow(
-              "https://pagespeed.web.dev/report?url=" + url ||
-                "No URL provided",
-            )
-          }
-          className="text-xs underline cursor-pointer"
-        >
-          View PageSpeed Insights
-        </h2>
+        <div className="flex items-center">
+          <h2
+            onClick={() =>
+              openBrowserWindow(
+                "https://pagespeed.web.dev/report?url=" + url ||
+                  "No URL provided",
+              )
+            }
+            className="text-xs underline  cursor-pointer font-semibold text-gray-500"
+          >
+            {" "}
+          </h2>
+          <span className="inline text-xs font-semibold">
+            {stat?.lighthouseResult?.audits?.["total-byte-weight"]
+              ?.displayValue || "..."}{" "}
+          </span>
+        </div>
       </div>
     </section>
   );

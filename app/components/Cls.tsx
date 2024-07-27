@@ -118,22 +118,30 @@ const ClsEl = ({
             <>
               <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
                 {stat?.lighthouseResult?.audits?.["cumulative-layout-shift"]
-                  ?.displayValue || "..."}{" "}
+                  ?.score !== undefined
+                  ? `${Math.round(stat.lighthouseResult.audits["cumulative-layout-shift"].score * 100)}%`
+                  : "..."}
               </span>
             </>
           )}{" "}
         </div>
-        <h2
-          onClick={() =>
-            openBrowserWindow(
-              "https://pagespeed.web.dev/report?url=" + url ||
-                "No URL provided",
-            )
-          }
-          className="text-xs underline cursor-pointer"
-        >
-          View PageSpeed Insights
-        </h2>
+        <div className="flex items-center space-x-1">
+          <h2
+            onClick={() =>
+              openBrowserWindow(
+                "https://pagespeed.web.dev/report?url=" + url ||
+                  "No URL provided",
+              )
+            }
+            className="text-xs underline  cursor-pointer font-semibold text-gray-500"
+          >
+            Layout Shift:{" "}
+          </h2>
+          <span className="inline text-xs">
+            {stat?.lighthouseResult?.audits?.["cumulative-layout-shift"]
+              ?.displayValue || "..."}{" "}
+          </span>
+        </div>
       </div>
     </section>
   );

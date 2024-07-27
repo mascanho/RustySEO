@@ -102,7 +102,7 @@ const PerformanceEl = ({
           {loading ? (
             <div className="-mt-1">
               <svg
-                className="animate-spin h-9 w-9 mb-1"
+                className="animate-spin h-9 w-9 mb-1 dark:text-white"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -124,14 +124,7 @@ const PerformanceEl = ({
             </div>
           ) : (
             <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
-              <span
-                className={
-                  stat?.lighthouseResult?.categories?.performance?.score * 100 <
-                  50
-                    ? "text-red-500"
-                    : "text-green-500"
-                }
-              >
+              <span>
                 {stat?.lighthouseResult?.categories?.performance?.score ? (
                   Math.floor(
                     stat?.lighthouseResult?.categories?.performance?.score *

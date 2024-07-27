@@ -90,6 +90,8 @@ pub struct Audits {
     pub dom_size: Audit,
     #[serde(rename = "server-response-time")]
     pub server_response_time: Audit,
+    #[serde(rename = "speed-index")]
+    pub speed_index: Audit,
 }
 
 // Categories struct

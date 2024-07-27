@@ -131,26 +131,32 @@ const LCPEl = ({
                 </span>
               ) : (
                 <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
-                  {
-                    stat?.lighthouseResult?.audits?.["largest-contentful-paint"]
-                      .displayValue
-                  }
+                  {stat?.lighthouseResult?.audits?.["largest-contentful-paint"]
+                    .score *
+                    100 +
+                    "%"}
                 </span>
               )}
             </>
           )}{" "}
         </div>
-        <h2
-          onClick={() =>
-            openBrowserWindow(
-              "https://pagespeed.web.dev/report?url=" + url ||
-                "No URL provided",
-            )
-          }
-          className="text-xs underline cursor-pointer"
-        >
-          View PageSpeed Insights
-        </h2>
+        <div className="flex items-center space-x-1">
+          <h2
+            onClick={() =>
+              openBrowserWindow(
+                "https://pagespeed.web.dev/report?url=" + url ||
+                  "No URL provided",
+              )
+            }
+            className="text-xs underline  cursor-pointer font-semibold text-gray-500"
+          >
+            Paint Timing:{" "}
+          </h2>
+          <span className="inline text-xs">
+            {stat?.lighthouseResult?.audits?.["largest-contentful-paint"]
+              .displayValue || "..."}
+          </span>
+        </div>
       </div>
     </section>
   );

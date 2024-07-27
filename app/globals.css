@@ -237,12 +237,39 @@ button:where([data-active]) {
 }
 
 .widget > div > h2:first-of-type {
-  @apply text-sky-dark;
+  @apply text-sky-dark !important;
 }
+
+.widget > div > h2:last-of-type {
+  @apply dark:text-brand-background/50 text-gray-500 font-semibold;
+}
+
+.widget div span:first-of-type {
+  @apply text-brand-normal dark:text-sky-500 text-gray-500 !important;
+}
+
+/*TIMES*/
+
+.widget div span:last-of-type {
+  @apply text-brand-normal dark:text-sky-500 text-sky-500;
+}
+
 .widget span svg {
   @apply text-brand-highlight;
 }
 
+.widget div > svg {
+  @apply text-brand-highlight;
+}
+
+/*SVG HOVER BUTTON*/
+.widget button {
+  @apply dark:text-brand-normal/60;
+}
+
+.widget div span:last-of-type {
+  @apply dark:text-brand-background/60;
+}
 /* Custom Select Element */
 .custom-select {
   @apply text-black bg-white dark:bg-[#171717] dark:text-white;
