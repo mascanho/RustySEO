@@ -429,14 +429,14 @@ const Home: React.FC<HomeProps> = () => {
 
           <Tabs.Panel value="first">
             {/* WIDGET SECTION */}
-            <div className="mt-10">
+            <div className="mt-10 flex flex-col flex-wrap items-end">
               <Switch
                 checked={!hidden.widget}
-                className="mb-5"
+                className="mb-5 mr-0"
                 onCheckedChange={(checked) => setHidden({ widget: !checked })}
               />
               <section
-                className={`grid grid-cols-2 ${hidden.widget ? "hidden" : ""} gap-x-6 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7   mb-10 gap-y-5`}
+                className={`grid grid-cols-2 ${hidden.widget ? "hidden" : ""} gap-x-6 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 justify-items-stretch w-full   mb-10 gap-y-5 `}
               >
                 <PerformanceEl stat={pageSpeed} loading={loading} url={url} />
                 <FcpEl stat={pageSpeed} loading={loading} url={url} />
@@ -462,10 +462,11 @@ const Home: React.FC<HomeProps> = () => {
 
             {/* CHARTS SECTION */}
 
-            <section className="grid grid-cols-3 gap-6 mb-10">
+            <section className="grid grid-cols-4 gap-6 mb-10">
               <KeywordChart keywords={keywords} url={url} />
               <HtmlToTextChart htmlToTextRatio={htmlToTextRatio} />
               <ImagesChart url={url} images={images} />
+              <KeywordChart keywords={keywords} url={url} />
             </section>
 
             {/* Head starts here */}

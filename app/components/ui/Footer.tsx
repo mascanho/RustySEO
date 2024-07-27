@@ -41,10 +41,10 @@ const Footer = ({ url, loading }: { url: string; loading: boolean }) => {
   return (
     <footer className="w-full text-xs justify-between bg-apple-silver shadow fixed ml-0 left-0 bottom-0 z-[1000] border-t-2 flex items-center py-1 overflow-hidden">
       <section>
-        <div className="flex items-center ml-2 space-x-1 w-96 border">
+        <div className="flex items-center ml-2 space-x-1 w-full">
           {!loading && url && (
             <>
-              <div className="w-2 h-2 rounded-full bg-green-500" />
+              <div className="w-2 h-2 rounded-full bg-green-500 mt-1" />
               <span className="mt-[5px]">{url}</span>
             </>
           )}
