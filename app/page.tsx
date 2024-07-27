@@ -43,6 +43,8 @@ import Todo from "./components/ui/Todo";
 import { IoSearchCircle } from "react-icons/io5";
 import TaskManagerContainer from "./components/ui/TaskManager/TaskManagerContainer";
 import CrawlHistory from "./components/ui/CrawlHistory/CrawlHistory";
+import HtmlToTextChart from "./components/ui/ShadCharts/HtmlToTextChart";
+import { Switch } from "@/components/ui/switch";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -80,7 +82,11 @@ const Home: React.FC<HomeProps> = () => {
   });
   const [robots, setRobots] = useState<string>("");
   const [AiContentAnalysis, setAiContentAnalysis] = useState<any>("");
+  const [htmlToTextRatio, setHtmlToTextRatio] = useState<any>("");
   const [DBDATA, setDBDATA] = useState<any>("");
+  const [hidden, setHidden] = useState({
+    widget: false,
+  });
 
   const [open, { toggle }] = useDisclosure(false);
 
@@ -152,6 +158,7 @@ const Home: React.FC<HomeProps> = () => {
     setAiContentAnalysis("");
     setRobots("");
     handleSpeed(url);
+    setHtmlToTextRatio([]);
 
     invoke<{
       links: [];
@@ -174,6 +181,7 @@ const Home: React.FC<HomeProps> = () => {
       head_elements: any[];
       body_elements: any[];
       robots: string;
+      ratio: any;
     }>("crawl", { url })
       .then((result) => {
         showLinksSequentially(result.links); // Show links one by one
@@ -196,6 +204,7 @@ const Home: React.FC<HomeProps> = () => {
         setHeadElements(result.head_elements);
         setBodyElements(result.body_elements);
         setRobots(result.robots);
+        setHtmlToTextRatio(result.ratio);
       })
       .catch(console.error);
   };
@@ -340,6 +349,7 @@ const Home: React.FC<HomeProps> = () => {
   );
 
   console.log(pageSpeed, "page speed");
+  console.log(htmlToTextRatio, "htmlToTextRatio");
 
   return (
     <>
@@ -408,7 +418,7 @@ const Home: React.FC<HomeProps> = () => {
       {/* TABS SECTION */}
       <section className="mt-2 relative h-full overflow-hidden -mb-14">
         <Tabs defaultValue="first">
-          <div className="transition-all shadow  ease-in pt-5 bg-white duration-150 border fixed left-0 right-0 top-16 transform dark:border-0  dark:bg-brand-darker z-10 pb-0">
+          <div className="transition-all  ease-in pt-5 bg-white duration-150 border fixed left-0 right-0 top-16 transform dark:border-0  dark:bg-brand-darker z-10 pb-0">
             <Tabs.List justify="center" className="dark:text-white ">
               <Tabs.Tab value="first"> Diagnostics</Tabs.Tab>
               <Tabs.Tab value="third">Improvements</Tabs.Tab>
@@ -419,34 +429,43 @@ const Home: React.FC<HomeProps> = () => {
 
           <Tabs.Panel value="first">
             {/* WIDGET SECTION */}
-            <section className="grid grid-cols-2 gap-x-6 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7  my-10 gap-y-5 mt-14">
-              <PerformanceEl stat={pageSpeed} loading={loading} url={url} />
-              <FcpEl stat={pageSpeed} loading={loading} url={url} />
-              <LCPEl stat={pageSpeed} loading={loading} url={url} />
-              <TtiEl stat={pageSpeed} loading={loading} url={url} />
-              <TbtEl stat={pageSpeed} loading={loading} url={url} />
-              <ClsEl stat={pageSpeed} loading={loading} url={url} />
-              <DomElements stat={pageSpeed} loading={loading} url={url} />
-
-              <SpeedIndex stat={pageSpeed} loading={loading} url={url} />
-              <Redirects stat={pageSpeed} loading={loading} url={url} />
-              <ServerResponseTime
-                stat={pageSpeed}
-                loading={loading}
-                url={url}
+            <div className="mt-10">
+              <Switch
+                checked={!hidden.widget}
+                className="mb-5"
+                onCheckedChange={(checked) => setHidden({ widget: !checked })}
               />
-              <LongTasks stat={pageSpeed} loading={loading} url={url} />
-              <RenderBlocking stat={pageSpeed} loading={loading} url={url} />
-              <NetworkPayload stat={pageSpeed} loading={loading} url={url} />
-              <NetworkRequests stat={pageSpeed} loading={loading} url={url} />
-            </section>
+              <section
+                className={`grid grid-cols-2 ${hidden.widget ? "hidden" : ""} gap-x-6 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7   mb-10 gap-y-5`}
+              >
+                <PerformanceEl stat={pageSpeed} loading={loading} url={url} />
+                <FcpEl stat={pageSpeed} loading={loading} url={url} />
+                <LCPEl stat={pageSpeed} loading={loading} url={url} />
+                <TtiEl stat={pageSpeed} loading={loading} url={url} />
+                <TbtEl stat={pageSpeed} loading={loading} url={url} />
+                <ClsEl stat={pageSpeed} loading={loading} url={url} />
+                <DomElements stat={pageSpeed} loading={loading} url={url} />
+
+                <SpeedIndex stat={pageSpeed} loading={loading} url={url} />
+                <Redirects stat={pageSpeed} loading={loading} url={url} />
+                <ServerResponseTime
+                  stat={pageSpeed}
+                  loading={loading}
+                  url={url}
+                />
+                <LongTasks stat={pageSpeed} loading={loading} url={url} />
+                <RenderBlocking stat={pageSpeed} loading={loading} url={url} />
+                <NetworkPayload stat={pageSpeed} loading={loading} url={url} />
+                <NetworkRequests stat={pageSpeed} loading={loading} url={url} />
+              </section>
+            </div>
 
             {/* CHARTS SECTION */}
 
             <section className="grid grid-cols-3 gap-6 mb-10">
               <KeywordChart keywords={keywords} url={url} />
+              <HtmlToTextChart htmlToTextRatio={htmlToTextRatio} />
               <ImagesChart url={url} images={images} />
-              <ThirdPartyScriptChart url={url} />
             </section>
 
             {/* Head starts here */}

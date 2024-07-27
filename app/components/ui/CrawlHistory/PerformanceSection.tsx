@@ -1,4 +1,5 @@
-import React from "react";
+import { FaDesktop } from "react-icons/fa";
+import { FaMobileAlt } from "react-icons/fa";
 
 const PerformanceSection = ({ dbdata }: any) => {
   console.log(dbdata, "dbdata");

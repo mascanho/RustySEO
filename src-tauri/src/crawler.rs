@@ -77,6 +77,7 @@ pub struct CrawlResult {
     //pub head_elements: Vec<String>,
     //pub body_elements: Vec<String>,
     pub robots: Result<String, libs::MyError>,
+    pub ratio: Vec<(f64, f64, f64)>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -175,6 +176,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut readings = Vec::new();
     let mut google_tag_manager: Vec<String> = Vec::new();
     let mut tag_container = Vec::new();
+    let mut ratio = Vec::new();
     //let mut head_elements = Vec::new();
     //let mut body_elements = Vec::new();
 
@@ -415,6 +417,10 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         let reading_time = content::calculate_reading_time(word_count, 250);
         words_arr.push((word_count, words, reading_time));
         //println!("From the array: {:#?}", words_arr);
+
+        // CALCULATE HTML TO TEXT RATIO
+        let html_to_text_ratio = content::html_to_text_ratio(&document);
+        ratio.push(html_to_text_ratio);
     } else {
         return Err(format!("Failed to fetch the URL: {}", response.status()));
     }
@@ -488,6 +494,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         //head_elements,
         //body_elements,
         robots,
+        ratio,
     })
 }
 

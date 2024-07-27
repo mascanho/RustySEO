@@ -16,8 +16,28 @@ type Task = {
 
 const TaskManagerContainer = () => {
   return (
-    <div className="grid grid-cols-3 p-7 w-full max-w-400px gap-8 h-screen bg-slate-800 overflow-hidden dark:bg-brand-darker rounded-xl max-w-[1800px] mx-auto shadow">
-      <section className="w-full max-w-[380px] h-[61rem]  border bg-white dark:bg-brand-normal rounded-xl mb-10  overflow-hidden">
+    <div className="grid grid-cols-3 px-7 pt-8 w-full max-w-400px   bg-slate-100 overflow-hidden dark:bg-brand-darker rounded-xl max-w-[1800px] mx-auto shadow mt-20 place-items-center">
+      <section className="w-full max-w-[380px] h-[61rem]  border bg-white dark:bg-brand-normal rounded-xl mb-10  overflow-hidden my-auto">
+        <div className="flex items-center border-b justify-between px-6 py-5 font-semibold">
+          <h1 className="text-xl">TODO</h1>
+          <FaCirclePlus className="text-2xl text-brand-highlight dark:text-brand-dark" />
+        </div>
+        <div className="p-2 overflow-scroll h-[57.6rem] mb-5 rounded-md">
+          {/* @ts-ignore */}
+          <TodoContainerItems status={"todo"} />
+        </div>
+      </section>
+      <section className="w-full max-w-[380px] h-[61rem]  border bg-white dark:bg-brand-normal rounded-xl mb-10  overflow-hidden my-auto">
+        <div className="flex items-center border-b justify-between px-6 py-5 font-semibold">
+          <h1 className="text-xl">TODO</h1>
+          <FaCirclePlus className="text-2xl text-brand-highlight dark:text-brand-dark" />
+        </div>
+        <div className="p-2 overflow-scroll h-[57.6rem] mb-5 rounded-md">
+          {/* @ts-ignore */}
+          <TodoContainerItems status={"todo"} />
+        </div>
+      </section>
+      <section className="w-full max-w-[380px] h-[61rem]  border bg-white dark:bg-brand-normal rounded-xl mb-10  overflow-hidden my-auto">
         <div className="flex items-center border-b justify-between px-6 py-5 font-semibold">
           <h1 className="text-xl">TODO</h1>
           <FaCirclePlus className="text-2xl text-brand-highlight dark:text-brand-dark" />

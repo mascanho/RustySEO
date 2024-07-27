@@ -95,8 +95,19 @@ pub fn extract_text(html: &Html) -> String {
     for element in document.select(&selector) {
         text.push_str(&element.text().collect::<Vec<_>>().join(" "));
     }
-
+    println!("Extracted HTML: {}", document.html().len());
+    println!("Extracted text: {}", text.len());
     text
+}
+
+//CALCULATE HTML TO TEXT RATIO
+pub fn html_to_text_ratio(html: &Html) -> (f64, f64, f64) {
+    let text = extract_text(html);
+    let html_length = html.html().len() as f64;
+    let text_length = text.len() as f64;
+    let ratio = text_length / html_length;
+    println!("HTML to text ratio: {}%", ratio as f64 * 100 as f64);
+    (ratio, html_length, text_length)
 }
 
 pub fn get_top_keywords(text: &str, top_n: usize) -> Vec<(String, usize)> {
