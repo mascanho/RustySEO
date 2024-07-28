@@ -1,9 +1,7 @@
-// @ts-ignore
+import React, { useEffect, useState } from "react";
 import { Tabs } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
-import React, { useEffect, useState } from "react";
 import TodoItem from "./TodoItem";
-// @ts-ignore
 import { v4 as uuidv4 } from "uuid";
 
 type Task = {
@@ -14,65 +12,48 @@ type Task = {
   url: string;
   date: string;
   completed?: boolean;
-  strategy?: string;
+  strategy?: "mobile" | "desktop";
 };
 
 const TodoItems = ({ url, strategy }: { url: string; strategy: string }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [opened, { toggle }] = useDisclosure(false);
-  const [newTask, setNewTask] = useState<Task>({
-    id: uuidv4(),
-    title: "",
-    type: [],
-    priority: "",
-    url: url,
-    date: "",
-    completed: false,
-    strategy: "",
-  });
 
   // Load tasks from localStorage when the component mounts
   useEffect(() => {
     const storedTasks = JSON.parse(
       localStorage.getItem("tasks") || "[]",
     ) as Task[];
-    if (storedTasks && storedTasks.length > 0) {
+    if (storedTasks.length > 0) {
       setTasks(storedTasks);
     }
   }, []);
 
-  const completedTasks = tasks.filter((task) => task.completed);
-  const pendingTasks = tasks.filter((task) => !task.completed);
-
   // Save tasks to localStorage whenever they are updated
   useEffect(() => {
     localStorage.setItem("tasks", JSON.stringify(tasks));
-  }, [tasks]);
-
-  const handleRemoveTask = (id: number) => {
-    console.log("Removing task with id:", id);
-    // @ts-ignore
-    const newTasks = tasks.filter((task) => task.id !== id);
-    setTasks(newTasks);
-    console.log("Updated tasks after removal:", newTasks);
-
     // Dispatch custom event
     const event = new Event("tasksUpdated");
     window.dispatchEvent(event);
+  }, [tasks]);
+
+  const completedTasks = tasks.filter((task) => task.completed);
+  const pendingTasks = tasks.filter((task) => !task.completed);
+
+  const handleRemoveTask = (id: string) => {
+    console.log("Removing task with id:", id);
+    const newTasks = tasks.filter((task) => task.id !== id);
+    setTasks(newTasks);
+    console.log("Updated tasks after removal:", newTasks);
   };
 
-  const handleMarkCompleted = (id: number) => {
+  const handleMarkCompleted = (id: string) => {
     console.log("Marking task as completed with id:", id);
     const newTasks = tasks.map((task) =>
-      // @ts-ignore
       task.id === id ? { ...task, completed: true } : task,
     );
     setTasks(newTasks);
     console.log("Updated tasks after marking as completed:", newTasks);
-
-    // Dispatch custom event
-    const event = new Event("tasksUpdated");
-    window.dispatchEvent(event);
   };
 
   return (
@@ -98,7 +79,6 @@ const TodoItems = ({ url, strategy }: { url: string; strategy: string }) => {
                   .map((task) => (
                     <TodoItem
                       key={task.id}
-                      // @ts-ignore
                       task={task}
                       handleRemoveTask={handleRemoveTask}
                       handleMarkCompleted={handleMarkCompleted}
@@ -108,8 +88,7 @@ const TodoItems = ({ url, strategy }: { url: string; strategy: string }) => {
             </section>
           </Tabs.Panel>
 
-          {/* COMPLETED TASKS */}
-
+          {/* Completed Tasks */}
           <Tabs.Panel value="second" pt="xs">
             <section className="todoItems custom-scrollbar mx-4 -mt-1.5">
               {completedTasks
@@ -120,7 +99,6 @@ const TodoItems = ({ url, strategy }: { url: string; strategy: string }) => {
                 .map((task) => (
                   <TodoItem
                     key={task.id}
-                    // @ts-ignore
                     task={task}
                     handleRemoveTask={handleRemoveTask}
                     handleMarkCompleted={handleMarkCompleted}

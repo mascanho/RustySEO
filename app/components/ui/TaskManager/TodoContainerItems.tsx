@@ -75,9 +75,11 @@ const TodoContainerItems: React.FC<TodoContainerItemsProps> = ({ status }) => {
 
   return (
     <div className="p-2 space-y-3 w-full rounded-md pb-5">
-      {filteredTodoItems.map((item) => (
-        <TaskManagerContainerItem key={item.id} data={item} />
-      ))}
+      {filteredTodoItems
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .map((item) => (
+          <TaskManagerContainerItem key={item.id} data={item} />
+        ))}
     </div>
   );
 };

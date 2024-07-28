@@ -34,7 +34,7 @@ const taskColors: Record<string, string> = {
   Schema: "teal",
 };
 
-const TaskManagerContainerItem: React.FC<{ data: Task }> = ({ data }) => {
+const TaskManagerContainerItem: React.FC<{ data: any }> = ({ data }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [currentStatus, setCurrentStatus] = useState<Task["status"]>(
     data.status,

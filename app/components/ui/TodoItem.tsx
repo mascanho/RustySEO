@@ -1,10 +1,6 @@
 import React from "react";
-
 import { Title, Box, Group } from "@mantine/core";
-
-import { useDisclosure } from "@mantine/hooks";
-import { useEffect, useState } from "react";
-import { FaDesktop, FaMobile, FaMobileAlt } from "react-icons/fa";
+import { FaDesktop, FaMobileAlt } from "react-icons/fa";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import {
   DropdownMenu,
@@ -15,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const taskColors: any = {
+const taskColors: Record<string, string> = {
   CWV: "blue",
   Head: "green",
   Content: "red",
@@ -27,14 +23,14 @@ const taskColors: any = {
 };
 
 type Task = {
-  id: number;
+  id: string; // Changed to string
   title: string;
   type: string[];
   priority: string;
   url: string;
   date: string;
   completed?: boolean;
-  strategy?: string;
+  strategy?: "mobile" | "desktop";
 };
 
 const TodoItem = ({
@@ -43,27 +39,9 @@ const TodoItem = ({
   handleRemoveTask,
 }: {
   task: Task;
-  url: string;
-  handleMarkCompleted: (index: number) => void;
-  handleRemoveTask: (index: number) => void;
+  handleMarkCompleted: (id: string) => void; // Changed to string
+  handleRemoveTask: (id: string) => void; // Changed to string
 }) => {
-  const [tasks, setTasks] = useState<Task[]>([]);
-
-  // Load tasks from localStorage when the component mounts
-  useEffect(() => {
-    const storedTasks = JSON.parse(
-      localStorage.getItem("tasks") || "[]",
-    ) as Task[];
-    if (storedTasks && storedTasks.length > 0) {
-      setTasks(storedTasks);
-    }
-  }, []);
-
-  // Save tasks to localStorage whenever they are updated
-  useEffect(() => {
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-  }, [tasks]);
-
   return (
     <Box
       key={task.id}
@@ -74,7 +52,7 @@ const TodoItem = ({
           {task.title}
         </Title>
         <span
-          className={`w-12 h-fit rounded-bl-lg absolute right-0 flex justify-center items-center top-0 text-[10px] py-0.5  font-semibold ${
+          className={`w-12 h-fit rounded-bl-lg absolute right-0 flex justify-center items-center top-0 text-[10px] py-0.5 font-semibold ${
             task.priority === "High"
               ? "bg-red-500 text-white"
               : task.priority === "Medium"
@@ -87,26 +65,25 @@ const TodoItem = ({
       </div>
       <span className="text-sm text-gray-500">{task.url}</span>
       <Group className="flex flex-wrap">
-        {/* make the types to have all different colours */}
         {task.type.map((type, index) => (
           <span
             key={index}
             className="text-[10px] text-white pt-0.5 px-1 -mr-3 rounded-xl"
             style={{
-              backgroundColor: taskColors[type],
+              backgroundColor: taskColors[type] || "gray", // Fallback color
             }}
           >
             {type}
           </span>
-        ))}{" "}
+        ))}
         <div className="w-full h-[1px] -mt-2 bg-gray-100" />
         <footer className="flex justify-around items-center p-0 -mb-2 w-full -mt-3 space-x-2">
-          <div className="flex-1 flex space-x-2 ">
-            <span className="text-[10px] text-gray-500 ">
+          <div className="flex-1 flex space-x-2">
+            <span className="text-[10px] text-gray-500">
               {task.date.substring(0, 10)}
             </span>
             <span>
-              {task?.strategy === "DESKTOP" ? <FaDesktop /> : <FaMobileAlt />}
+              {task.strategy === "desktop" ? <FaDesktop /> : <FaMobileAlt />}
             </span>
           </div>
           <div className="relative">
@@ -119,13 +96,13 @@ const TodoItem = ({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="cursor-pointer"
-                  onClick={() => handleMarkCompleted(task?.id)}
+                  onClick={() => handleMarkCompleted(task.id)}
                 >
-                  Completed
+                  Mark as Completed
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className="cursor-pointer text-red-500"
-                  onClick={() => handleRemoveTask(task?.id)}
+                  onClick={() => handleRemoveTask(task.id)}
                 >
                   Delete
                 </DropdownMenuItem>

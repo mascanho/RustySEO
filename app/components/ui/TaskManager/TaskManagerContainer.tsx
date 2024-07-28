@@ -5,6 +5,10 @@ import TodoContainerItems from "./TodoContainerItems";
 import { Modal } from "@mantine/core";
 import Todo from "../Todo";
 import { useDisclosure } from "@mantine/hooks";
+import { RiTodoLine } from "react-icons/ri";
+import { MdDoneOutline } from "react-icons/md";
+import { MdOutlineIncompleteCircle } from "react-icons/md";
+import { GoTasklist } from "react-icons/go";
 
 type Task = {
   id: string;
@@ -47,10 +51,13 @@ const TaskManagerContainer: React.FC<{ strategy: string }> = ({ strategy }) => {
       >
         <Todo url={url} close={closeModal} strategy={strategy} />
       </Modal>
-      <div className="grid grid-cols-3 px-7 pt-8 w-full max-w-400px overflow-hidden rounded-xl max-w-[1800px] mx-auto shadow mt-20 place-items-center">
-        <section className="w-full max-w-[380px] h-[61rem] dark:border-brand-dark border bg-white dark:bg-brand-darker rounded-xl mb-10 overflow-hidden my-auto shadow">
+      <div className="grid grid-cols-3 px-7 pt-8 w-full max-w-[85rem] overflow-hidden rounded-xl  mx-auto  mt-20 place-items-center">
+        <section className="w-full max-w-[380px] h-[61rem] dark:border-brand-dark  bg-white dark:bg-brand-darker rounded-xl mb-10 overflow-hidden my-auto shadow border">
           <div className="flex items-center border-b dark:border-b-brand-dark justify-between px-6 py-5 font-semibold">
-            <h1 className="text-xl dark:text-white">TODO 📝</h1>
+            <div className="flex items-center space-x-2">
+              <h1 className="text-xl dark:text-white">TODO</h1>
+              <RiTodoLine className="text-2xl text-brand-highlight dark:text-white/50" />
+            </div>
             <FaCirclePlus
               onClick={openModal}
               className="text-2xl cursor-pointer hover:scale-110 active:scale-90 text-brand-highlight dark:text-brand-highlight transition-all ease-in delay-75"
@@ -62,7 +69,10 @@ const TaskManagerContainer: React.FC<{ strategy: string }> = ({ strategy }) => {
         </section>
         <section className="w-full max-w-[380px] h-[61rem] dark:border-brand-dark border bg-white dark:bg-brand-darker rounded-xl mb-10 overflow-hidden my-auto shadow">
           <div className="flex items-center border-b dark:border-b-brand-dark justify-between px-6 py-5 font-semibold">
-            <h1 className="text-xl dark:text-white">DOING ⏳</h1>
+            <div className="flex items-center space-x-2">
+              <h1 className="text-xl dark:text-white">DOING</h1>
+              <GoTasklist className="text-3xl text-brand-highlight dark:text-white/50" />
+            </div>
             <FaCirclePlus
               onClick={openModal}
               className="text-2xl cursor-pointer hover:scale-110 active:scale-90 text-brand-highlight dark:text-brand-highlight transition-all ease-in delay-75"
@@ -74,7 +84,10 @@ const TaskManagerContainer: React.FC<{ strategy: string }> = ({ strategy }) => {
         </section>
         <section className="w-full max-w-[380px] h-[61rem] dark:border-brand-dark border bg-white dark:bg-brand-darker rounded-xl mb-10 overflow-hidden my-auto shadow">
           <div className="flex items-center border-b dark:border-b-brand-dark justify-between px-6 py-5 font-semibold">
-            <h1 className="text-xl dark:text-white">Completed 🎉</h1>
+            <div className="flex items-center space-x-2">
+              <h1 className="text-xl dark:text-white">COMPLETE</h1>
+              <MdDoneOutline className="text-2xl text-brand-highlight dark:text-white/50" />
+            </div>
             <FaCirclePlus
               onClick={openModal}
               className="text-2xl cursor-pointer hover:scale-110 active:scale-90 text-brand-highlight dark:text-brand-highlight transition-all ease-in delay-75"
