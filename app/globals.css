@@ -95,12 +95,14 @@ pre {
     0 4px 11px rgba(0, 0, 0, 0.1);
 }
 
+/* DRAWER */
 .mantine-Drawer-root,
 .mantine-Drawer-inner,
 .mantine-Drawer-content {
   margin: 70px 0 35px 0;
   overflow: hidden !important ;
   padding: 0 !important;
+  z-index: 100000000 !important;
 }
 
 .mantine-Drawer-body {
@@ -108,7 +110,7 @@ pre {
 }
 
 .todoItems {
-  height: calc(85vh - 70px);
+  height: calc(85vh - 7rem);
   overflow: unset;
   padding-right: 10px;
 }
