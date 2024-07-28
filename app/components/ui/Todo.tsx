@@ -16,6 +16,7 @@ import { toast } from "sonner";
 type Task = {
   id: number;
   title: string;
+  description: string;
   type: string[];
   priority: string;
   url: string | null;
@@ -50,6 +51,7 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
   const [newTask, setNewTask] = useState<Task>({
     id: Math.random() * 100000,
     title: "",
+    description: "",
     type: [],
     priority: "",
     url: url,
@@ -84,6 +86,7 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
       setNewTask({
         id: Math.random() * 100000,
         title: "",
+        description: "",
         type: [],
         priority: "",
         url: url,
@@ -139,6 +142,18 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
               value={newTask.title}
               onChange={(event) =>
                 setNewTask({ ...newTask, title: event.currentTarget.value })
+              }
+              mb="md"
+            />
+            <TextInput
+              label="Task Description"
+              placeholder="Enter task description"
+              value={newTask.title}
+              onChange={(event) =>
+                setNewTask({
+                  ...newTask,
+                  description: event.currentTarget.value,
+                })
               }
               mb="md"
             />

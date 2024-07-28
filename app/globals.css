@@ -114,10 +114,9 @@ pre {
 .mantine-Drawer-root,
 .mantine-Drawer-inner,
 .mantine-Drawer-content {
-  margin: 70px 0 35px 0;
+  margin: 110px 0 35px 0;
   overflow: hidden !important ;
   padding: 0 !important;
-  z-index: 100000000 !important;
 }
 
 .mantine-Drawer-body {

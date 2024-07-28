@@ -76,7 +76,7 @@ const TopMenuBar = () => {
         style={{ paddingTop: "5rem" }}
         closeOnEscape
         closeOnClickOutside
-        overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+        overlayProps={{ backgroundOpacity: 0.5 }}
       >
         <TodoItems url={url} strategy={strategy} />
       </Drawer>

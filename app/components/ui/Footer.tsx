@@ -2,6 +2,21 @@
 import React, { useEffect, useState } from "react";
 import { LiaTasksSolid } from "react-icons/lia";
 import { CgWebsite } from "react-icons/cg";
+import { FaRobot } from "react-icons/fa6";
+import { useChat } from "ai/react";
+
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import { Button } from "@mantine/core";
+import AIcontainer from "./AiContainer/AIcontainer";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -20,6 +35,7 @@ const Footer = () => {
   const [url, setUrl] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const { messages, input, handleInputChange, handleSubmit } = useChat();
 
   // Function to update URL and loading state from session storage
   const updateSessionState = () => {
@@ -81,35 +97,56 @@ const Footer = () => {
   }, []);
 
   return (
-    <footer className="w-full text-xs justify-between bg-apple-silver shadow fixed ml-0 left-0 bottom-0 z-[1000] border-t-2 flex items-center py-1 overflow-hidden">
-      <section>
-        <div className="flex items-center ml-2 space-x-1 w-full">
-          {loading ? (
-            <>
-              <div className="w-2 h-2 rounded-full bg-orange-500 mt-1" />
-              <span className="mt-[5px] text-orange-500">Fetching...</span>
-            </>
-          ) : (
-            url && (
-              <div className="flex items-center space-x-1">
-                <CgWebsite className="text-xl" />
-                <span className="mt-[2px]">{url}</span>
-              </div>
-            )
-          )}
-        </div>
-      </section>
-      <section className="flex items-center space-x-4">
-        <div className="flex w-20 items-center">
-          <LiaTasksSolid className="text-xl" />
-          <div className="flex items-center mt-1 mr-1">
-            <span>Tasks:</span>
-            <span className="text-red-500 ml-1">{tasks.length}</span>
+    <>
+      <footer className="w-full text-xs justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[1000] border-t-2 dark:border-t-brand-dark flex items-center py-1 overflow-hidden">
+        <section>
+          <div className="flex items-center ml-2 space-x-1 w-full">
+            {loading ? (
+              <>
+                <div className="w-2 h-2 rounded-full bg-orange-500 mt-1" />
+                <span className="mt-[5px] text-orange-500">Fetching...</span>
+              </>
+            ) : (
+              url && (
+                <div className="flex items-center space-x-1">
+                  <CgWebsite className="text-xl" />
+                  <span className="mt-[2px]">{url}</span>
+                </div>
+              )
+            )}
           </div>
-        </div>
-        <span className="pt-1">{`© ${year} - RustySEO`}</span>
-      </section>
-    </footer>
+        </section>
+        <section className="flex items-center space-x-4">
+          <Drawer>
+            <DrawerTrigger className="flex items-center space-x-1">
+              <FaRobot className="text-lg" />
+              <span className="text-xs mt-[2px]">Oxide AI</span>
+            </DrawerTrigger>
+            <DrawerContent>
+              <DrawerHeader>
+                <DrawerDescription>
+                  <AIcontainer />
+                </DrawerDescription>
+              </DrawerHeader>
+              <DrawerFooter>
+                <DrawerClose></DrawerClose>
+              </DrawerFooter>
+            </DrawerContent>
+          </Drawer>
+
+          <div className="flex w-50 items-center space-x-2 pr-1">
+            <div className="flex items-center mr-1 text-xs mt-[2px] space-x-3">
+              <div className="flex items-center">
+                <LiaTasksSolid className="text-2xl dark:text-white/50" />
+                <span>Tasks:</span>
+                <span className="text-red-500 ml-1">{tasks.length}</span>
+              </div>
+              <span>{`© ${year} - RustySEO`}</span>
+            </div>
+          </div>
+        </section>
+      </footer>
+    </>
   );
 };
 
