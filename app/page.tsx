@@ -416,7 +416,7 @@ const Home: React.FC<HomeProps> = () => {
       {/* /> */}
 
       {/* TABS SECTION */}
-      <section className="mt-2 relative h-screen overflow-y-scroll -mb-14 p-6">
+      <section className="mt-2 relative h-screen overflow-y-scroll  p-6">
         <Tabs defaultValue="first">
           <div className="transition-all  ease-in  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-2 top-[70px]  transform dark:bg-brand-darker z-[2000] pb-0">
             <Tabs.List justify="center" className="dark:text-white ">
@@ -429,7 +429,7 @@ const Home: React.FC<HomeProps> = () => {
 
           <Tabs.Panel value="first">
             {/* WIDGET SECTION */}
-            <div className="mt-5 flex flex-col flex-wrap items-end">
+            <div className="flex flex-col flex-wrap items-end">
               <Switch
                 checked={!hidden.widget}
                 className="mb-5 mr-0"
@@ -486,7 +486,7 @@ const Home: React.FC<HomeProps> = () => {
             {/* TABLES START HERE */}
             <main
               id="tables"
-              className="mx-auto w-full flex-col  pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-6 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-16 items-stretch"
+              className="mx-auto w-full flex-col  pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-6 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-16 items-stretch pb-40"
             >
               <ContentSummary
                 keywords={keywords}
@@ -529,7 +529,6 @@ const Home: React.FC<HomeProps> = () => {
           </Tabs.Panel>
         </Tabs>
       </section>
-      <Footer url={url} loading={loading} />
     </>
   );
 };

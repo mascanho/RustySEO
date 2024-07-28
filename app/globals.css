@@ -40,30 +40,45 @@ input:focus {
 /* Tables Styles */
 
 .table_container {
-  @apply border bg-white shadow rounded-md h-[38rem] overflow-hidden dark:hover:border-white hover:border-blue-500;
+  @apply bg-white border dark:border-brand-dark dark:bg-brand-darker dark:text-white shadow rounded-md h-[38rem] overflow-hidden  dark:hover:border-blue-500 !important;
+
+  div {
+    @apply dark:text-white dark:bg-brand-darker !important;
+  }
 
   h2 {
+    @apply dark:text-white;
     margin-left: 0.5em;
     margin-bottom: 0.6em;
     text-align: left;
   }
+
+  p {
+    @apply dark:text-white !important;
+  }
 }
 
 table {
+  @apply dark:bg-brand-darker dark:text-white border-0 !important;
   border-collapse: collapse;
   width: 100%;
   background-color: white;
 }
 
 thead {
-  @apply z-20 overflow-clip bg-white border-b-2;
+  @apply z-20 overflow-clip bg-white border-b-2 dark:bg-brand-darker dark:text-white !important;
+}
+
+tbody {
+  @apply bg-white dark:bg-brand-darker dark:text-white border-0 !important;
 }
 
 th {
+  @apply dark:bg-brand-darker dark:text-white !important;
   padding: 4px 0 1em 1em;
   position: sticky;
   top: 0;
-  /* background-color: slategray; */
+  background-color: slategray;
   z-index: 1;
   color: black;
   background-color: white;
@@ -77,14 +92,13 @@ tr {
 
 td {
   padding: 2px 0;
-  border: 1px solid #ddd;
   vertical-align: center;
   @apply text-sm;
   z-index: 0;
 }
 
 :is(tbody, table) > tr:nth-child(odd) {
-  background: #0001;
+  background: #0001 !important;
 }
 
 pre {
@@ -339,4 +353,26 @@ button:where([data-active]) {
   td {
     padding: 5px;
   }
+}
+
+/* Style the entire scrollbar */
+::-webkit-scrollbar {
+  width: 12px; /* Width of the scrollbar */
+  height: 12px; /* Height of the horizontal scrollbar */
+}
+
+/* Style the draggable part of the scrollbar */
+::-webkit-scrollbar-thumb {
+  background: #555; /* Color when hovering */
+  border-radius: 10px; /* Rounded corners for the thumb */
+}
+
+/* Style the draggable part of the scrollbar on hover */
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-brand-highlight dark:bg-sky-500;
+}
+
+/* Style the bottom-right corner where two scrollbars meet */
+::-webkit-scrollbar-corner {
+  background: #f1f1f1;
 }

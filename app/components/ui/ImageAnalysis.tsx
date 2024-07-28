@@ -67,13 +67,13 @@ const ImageAnalysis = ({ images }: { images: any[] }) => {
             </span>
           </p>
           <p>
-            Links with Text:{" "}
+            With Anchor Text:{" "}
             <span className="px-1 py-0.5 bg-green-400 text-white rounded-md">
               {imagesWithAltText.length}
             </span>
           </p>
           <p>
-            Links without Text:{" "}
+            Missing Anchor Text:{" "}
             <span className="px-1 py-0.5 bg-red-400 text-white rounded-md min-w-3">
               {imagesWithoutAltText.length}
             </span>

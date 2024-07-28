@@ -64,9 +64,11 @@ export function ImagesChart({ images, url }: { images: any; url: string }) {
   ];
 
   return (
-    <Card className="flex flex-col dark:bg-white dark:border-gray-300">
+    <Card className="flex flex-col dark:bg-brand-darker dark:border-0">
       <CardHeader className="items-center pb-0">
-        <CardTitle className="text-black">Images on page</CardTitle>
+        <CardTitle className="text-black dark:text-white">
+          Images on page
+        </CardTitle>
         <CardDescription>{url}</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">

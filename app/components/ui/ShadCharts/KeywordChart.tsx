@@ -49,7 +49,7 @@ export function KeywordChart({
   const chartData = changeData(keywords);
 
   return (
-    <Card className="dark:bg-brand-darker w-full shadow dark:border-gray-300">
+    <Card className="dark:bg-brand-darker w-full shadow dark:border-0">
       <CardHeader className="items-center pb-4">
         <CardTitle className="dark:text-white">Top 10 Keywords</CardTitle>
         <CardDescription>{url}</CardDescription>
