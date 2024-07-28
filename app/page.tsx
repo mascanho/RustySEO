@@ -45,6 +45,7 @@ import TaskManagerContainer from "./components/ui/TaskManager/TaskManagerContain
 import CrawlHistory from "./components/ui/CrawlHistory/CrawlHistory";
 import HtmlToTextChart from "./components/ui/ShadCharts/HtmlToTextChart";
 import { Switch } from "@/components/ui/switch";
+import SEOImprovements from "./components/ui/Improvements/SEOimprovements";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -368,11 +369,11 @@ const Home: React.FC<HomeProps> = () => {
         closeOnEscape
         closeOnClickOutside
         onClose={closeModal}
-        title={openedModal ? "" : "Page Speed Insights API key"}
+        title=""
         centered
       >
         {openedModal && (
-          <Todo url={url} close={closeModal} strategy={strategy} />
+          <Todo url={debouncedURL} close={closeModal} strategy={strategy} />
         )}
       </Modal>
 
@@ -441,12 +442,15 @@ const Home: React.FC<HomeProps> = () => {
             <div className="flex flex-col flex-wrap items-end">
               <Switch
                 checked={!hidden.widget}
-                className="mb-5 mr-0"
+                className="mb-5 -mt-2 mr-0"
                 onCheckedChange={(checked) => setHidden({ widget: !checked })}
               />
               <section
-                className={`grid grid-cols-2 ${hidden.widget ? "hidden" : ""} gap-x-6 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 justify-items-stretch w-full   mb-10 gap-y-5 `}
+                className={`grid grid-cols-2 ${hidden.widget ? "hidden" : ""} gap-x-6 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 justify-items-stretch w-full mt-2  mb-10 gap-y-5 `}
               >
+                <h1 className="absolute font-bold top-4 left-7 text-2xl text-brand-dark/50 dark:text-white/30">
+                  Performance Overview
+                </h1>
                 <PerformanceEl
                   stat={pageSpeed}
                   loading={loading}
@@ -559,6 +563,10 @@ const Home: React.FC<HomeProps> = () => {
               />
               <RobotsTable robots={robots} />
             </main>
+          </Tabs.Panel>
+
+          <Tabs.Panel value="third">
+            <SEOImprovements />
           </Tabs.Panel>
 
           <Tabs.Panel value="fourth">

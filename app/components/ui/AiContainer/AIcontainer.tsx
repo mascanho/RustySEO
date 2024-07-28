@@ -24,7 +24,7 @@ const AIcontainer = () => {
                 <span>Oxide AI</span>
               </div>
             )}
-            <Markdown className="bg-brand-highlight mb-3 mt-1 text-black dark:bg-brand-dark p-2 dark:text-white/50 rounded-lg">
+            <Markdown className="bg-brand-dark/10 mb-3 mt-1 text-black dark:bg-brand-dark p-2 dark:text-white/50 rounded-lg">
               {m.content}
             </Markdown>
           </div>

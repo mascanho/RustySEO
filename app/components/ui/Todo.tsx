@@ -148,7 +148,7 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
             <TextInput
               label="Task Description"
               placeholder="Enter task description"
-              value={newTask.title}
+              value={newTask.description}
               onChange={(event) =>
                 setNewTask({
                   ...newTask,

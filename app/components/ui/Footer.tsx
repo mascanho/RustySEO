@@ -124,6 +124,12 @@ const Footer = () => {
             </DrawerTrigger>
             <DrawerContent>
               <DrawerHeader>
+                <div className="flex items-center space-x-2">
+                  <FaRobot className="text-2xl text-brand-highlight" />
+                  <span className="text-xl font-bold text-brand-highlight dark:text-white/40">
+                    Interact with Oxide AI
+                  </span>
+                </div>
                 <DrawerDescription>
                   <AIcontainer />
                 </DrawerDescription>

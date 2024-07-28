@@ -25,7 +25,8 @@ const TopMenuBar = () => {
 
   const [openedPageSpeed, { open: openPageSpeed, close: closePageSpeed }] =
     useDisclosure(false);
-  const [opened, { open, close }] = useDisclosure(false);
+  const [openedDrawer, { open: openDrawer, close: closeDrawer }] =
+    useDisclosure(false);
   const [openedModal, { open: openModal, close: closeModal }] =
     useDisclosure(false);
   const [url, setUrl] = useState<string>("");
@@ -49,26 +50,38 @@ const TopMenuBar = () => {
 
   return (
     <>
+      {/* PageSpeed Insights Modal */}
       <Modal
-        opened={openedModal || openedPageSpeed}
+        opened={openedPageSpeed}
         overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
         closeOnEscape
         closeOnClickOutside
-        onClose={openedModal ? closeModal : closePageSpeed}
-        title={openedModal ? "" : "Page Speed Insights API key"}
+        onClose={closePageSpeed}
+        title="Page Speed Insights API key"
         centered
       >
-        {openedModal && (
-          <Todo url={url} close={closeModal} strategy={strategy} />
-        )}
-        {openedPageSpeed && <PageSpeedInsigthsApi />}
+        <PageSpeedInsigthsApi />
       </Modal>
 
+      {/* Todo Modal */}
+      <Modal
+        opened={openedModal}
+        overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+        closeOnEscape
+        closeOnClickOutside
+        onClose={closeModal}
+        title=""
+        centered
+      >
+        <Todo url={url} close={closeModal} strategy={strategy} />
+      </Modal>
+
+      {/* Drawer */}
       <Drawer
         offset={8}
         radius="md"
-        opened={opened}
-        onClose={close}
+        opened={openedDrawer}
+        onClose={closeDrawer}
         title=""
         size="sm"
         position="left"
@@ -80,7 +93,9 @@ const TopMenuBar = () => {
       >
         <TodoItems url={url} strategy={strategy} />
       </Drawer>
-      <Menubar className="fixed w-full top-0 z-[1000] p-0 pl-1 dark:bg-brand-darker dark:text-white bg-white dark:border-b-brand-dark border-b pb-1 ">
+
+      {/* Menubar */}
+      <Menubar className="fixed w-full top-0 z-[1000] p-0 pl-1 dark:bg-brand-darker dark:text-white bg-white dark:border-b-brand-dark border-b pb-1">
         <MenubarMenu>
           <MenubarTrigger className="ml-4">File</MenubarTrigger>
           <MenubarContent>
@@ -112,7 +127,7 @@ const TopMenuBar = () => {
             <MenubarSeparator />
             <MenubarItem>Share</MenubarItem>
             <MenubarSeparator />
-            <MenubarItem onClick={open}>
+            <MenubarItem onClick={openDrawer}>
               View all tasks
               <MenubarShortcut>
                 <LuPanelRight />

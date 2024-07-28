@@ -364,13 +364,13 @@ button:where([data-active]) {
 
 /* Style the entire scrollbar */
 ::-webkit-scrollbar {
-  width: 12px; /* Width of the scrollbar */
-  height: 12px; /* Height of the horizontal scrollbar */
+  width: 5px; /* Width of the scrollbar */
+  height: 5px; /* Height of the horizontal scrollbar */
 }
 
 /* Style the draggable part of the scrollbar */
 ::-webkit-scrollbar-thumb {
-  background: #555; /* Color when hovering */
+  @apply bg-brand-highlight dark:bg-sky-500;
   border-radius: 10px; /* Rounded corners for the thumb */
 }
 
