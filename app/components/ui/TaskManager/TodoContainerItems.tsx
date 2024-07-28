@@ -3,28 +3,43 @@ import TaskManagerContainerItem from "./TaskManagerContainerItem";
 
 // Define a type for the Todo item
 interface TodoItem {
-  id: number;
+  id: string; // Changed to string to match the example in the TaskManagerContainerItem
   text: string;
   completed: boolean;
+  status: string; // Ensure that status is part of the TodoItem interface
+  priority: string;
+  strategy: string;
+  date: string;
+  url: string;
+  description: string;
+  title: string;
 }
 
 // Define props type
 interface TodoContainerItemsProps {
-  status: string; // Update this type based on what `status` represents
+  status: string; // Represents the current status filter
 }
 
 const TodoContainerItems: React.FC<TodoContainerItemsProps> = ({ status }) => {
   // State with type annotation
   const [todoItems, setTodoItems] = useState<TodoItem[]>([]);
 
-  useEffect(() => {
-    // Function to handle the custom event
-    const handleTasksUpdated = (event: Event) => {
-      // Retrieve tasks from localStorage and update state
+  // Update todoItems state when tasks are updated in localStorage
+  const updateTodoItems = () => {
+    try {
       const tasks = localStorage.getItem("tasks");
       if (tasks) {
         setTodoItems(JSON.parse(tasks));
       }
+    } catch (error) {
+      console.error("Failed to parse JSON from localStorage:", error);
+    }
+  };
+
+  useEffect(() => {
+    // Function to handle custom event
+    const handleTasksUpdated = () => {
+      updateTodoItems();
     };
 
     // Add event listener for the custom event
@@ -34,26 +49,18 @@ const TodoContainerItems: React.FC<TodoContainerItemsProps> = ({ status }) => {
     return () => {
       window.removeEventListener("tasksUpdated", handleTasksUpdated);
     };
-  }, []); // Empty dependency array means this effect runs once on mount and cleans up on unmount
+  }, []); // Only run once on mount and cleanup on unmount
 
   useEffect(() => {
-    try {
-      const tasks = localStorage.getItem("tasks");
-      if (tasks) {
-        setTodoItems(JSON.parse(tasks));
-      }
-    } catch (error) {
-      console.error("Failed to parse JSON from localStorage:", error);
-    }
+    // Fetch tasks on mount
+    updateTodoItems();
   }, []);
 
   useEffect(() => {
+    // Handle changes in localStorage
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === "tasks") {
-        const tasks = localStorage.getItem("tasks");
-        if (tasks) {
-          setTodoItems(JSON.parse(tasks));
-        }
+        updateTodoItems();
       }
     };
 
@@ -61,11 +68,14 @@ const TodoContainerItems: React.FC<TodoContainerItemsProps> = ({ status }) => {
     return () => {
       window.removeEventListener("storage", handleStorageChange);
     };
-  }, []); // Dependency array should be empty, as you want to listen to any changes in localStorage
+  }, []);
+
+  // Filter tasks based on the current status
+  const filteredTodoItems = todoItems.filter((item) => item.status === status);
 
   return (
-    <div className="p-2 space-y-3  w-full rounded-md pb-5">
-      {todoItems.map((item) => (
+    <div className="p-2 space-y-3 w-full rounded-md pb-5">
+      {filteredTodoItems.map((item) => (
         <TaskManagerContainerItem key={item.id} data={item} />
       ))}
     </div>

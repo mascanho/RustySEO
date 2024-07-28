@@ -372,9 +372,7 @@ const Home: React.FC<HomeProps> = () => {
         title=""
         centered
       >
-        {openedModal && (
-          <Todo url={debouncedURL} close={closeModal} strategy={strategy} />
-        )}
+        <Todo url={debouncedURL} close={closeModal} strategy={strategy} />
       </Modal>
 
       {/* Fixed Input and Crawl Button */}
@@ -570,7 +568,7 @@ const Home: React.FC<HomeProps> = () => {
           </Tabs.Panel>
 
           <Tabs.Panel value="fourth">
-            <TaskManagerContainer />
+            <TaskManagerContainer strategy={strategy} />
           </Tabs.Panel>
 
           <Tabs.Panel value="fifth">

@@ -383,3 +383,21 @@ button:where([data-active]) {
 ::-webkit-scrollbar-corner {
   background: #f1f1f1;
 }
+
+/*Cards animations*/
+
+/* styles.css or global.css */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px); /* Slightly move from below */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}

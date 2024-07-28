@@ -57,7 +57,7 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
     url: url,
     date: new Date().toISOString(),
     // @ts-ignore
-    status: "todo",
+    status: "Todo",
     strategy,
   });
 
@@ -92,7 +92,7 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
         url: url,
         date: new Date().toISOString(),
         // @ts-ignore
-        status: "todo",
+        status: "Todo",
         strategy,
       });
       // Dispatch custom event
