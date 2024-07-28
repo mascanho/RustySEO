@@ -102,14 +102,14 @@ export function ImagesChart({ images, url }: { images: any; url: string }) {
                         <tspan
                           x={viewBox.cx}
                           y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold"
+                          className="fill-foreground dark:fill-white text-3xl font-bold"
                         >
                           {images?.length}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foregroundod  dark:fill-black text-sm text-black"
+                          className="fill-muted-foregroundod  dark:fill-white text-sm text-black"
                         >
                           Total Images
                         </tspan>
@@ -129,11 +129,11 @@ export function ImagesChart({ images, url }: { images: any; url: string }) {
           <>
             <div className="flex items-center gap-2 font-medium leading-none dark:text-black">
               {imagesNoAltText?.length > 0 ? (
-                <span>
+                <span className="dark:text-white/50">
                   Discovered
                   <Link
                     href="#imagestable"
-                    className=" font-semibold text-muted-foreground dark:text-black"
+                    className=" font-semibold text-muted-foreground dark:text-white/50"
                   >
                     {" "}
                     {imagesNoAltText?.length} images{" "}
@@ -144,7 +144,7 @@ export function ImagesChart({ images, url }: { images: any; url: string }) {
                 ""
               )}
             </div>
-            <div className="leading-none text-muted-foreground dark:text-black">
+            <div className="leading-none text-muted-foreground dark:text-white/50">
               {imagesNoAltText?.length > 0
                 ? "Ensure there is a descriptive alt text for each image"
                 : "Good job, All images have alt text 🎉"}

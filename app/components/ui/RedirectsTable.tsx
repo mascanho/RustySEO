@@ -10,7 +10,11 @@ const RedirectsTable = ({ pageSpeed }: { pageSpeed: any }) => {
       <h2>Redirects</h2>
       <div className="flex flex-col pt-8 px-4">
         {redirects.length === 0 ? (
-          <p className="text-center text-gray-500 pt-2">No redirects found.</p>
+          <div className="h-full flex items-center">
+            <p className="text-center text-gray-500 pt-2 m-auto">
+              No redirects found.
+            </p>
+          </div>
         ) : (
           redirects.map((item: any, index: any) => (
             <div key={item.url || index} className="flex flex-col">

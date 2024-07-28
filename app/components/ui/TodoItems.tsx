@@ -78,8 +78,8 @@ const TodoItems = ({ url, strategy }: { url: string; strategy: string }) => {
   return (
     <section className="relative h-full">
       <Tabs color="red" defaultValue="first">
-        <Tabs.List className="tabs-list z-[5000] sticky -top-6 bg-white w-[88%] mx-auto shadow-2">
-          <Tabs.Tab className="py-2" value="first">
+        <Tabs.List className="tabs-list tabs-drawer z-[5000] sticky -top-6 bg-white dark:text-dark w-[88%] mx-auto shadow-2">
+          <Tabs.Tab className="py-2 dark:text-black" value="first">
             Pending
           </Tabs.Tab>
           <Tabs.Tab className="py-2" value="second" color="green">

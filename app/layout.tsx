@@ -31,18 +31,18 @@ export default function RootLayout({
       >
         <MantineProvider>
           {/* Fixed MenuDrawer */}
-          <section className="pb-[75px] mb-40">
+          <section className="pb-[75px] mb-[40px]">
             <TopMenuBar />
           </section>
           {/* <div className="fixed top-7 pl-6 border-t bg-white  dark:bg-brand-darker h-22.5 overflow-hidden   border-b dark:border-gray-800  w-full overflow-hidden z-[1000]  "> */}
           {/*   <MenuDrawer /> */}
           {/* </div> */}
           {/* Main Content Area */}
-          <main className="mt-10   rounded-md   ">
+          <main className="mt-10   rounded-md  ">
             {children}
             <Toaster />
           </main>
-          <Footer url="https://www.google.com" loading={false} />
+          <Footer />
         </MantineProvider>
       </body>
     </html>

@@ -79,7 +79,7 @@ export function HtmlToTextChart({ htmlToTextRatio }: any) {
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 4}
-                          className="fill-muted-foreground dark:fill-white"
+                          className="fill-muted-foreground dark:fill-white/50"
                         >
                           Text / HTML
                         </tspan>
@@ -106,7 +106,7 @@ export function HtmlToTextChart({ htmlToTextRatio }: any) {
           </RadialBarChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm -mt-8 mb-10">
+      <CardFooter className="flex-col gap-2 text-sm -mt-8 mb-10 dark:text-white/50">
         <div className="flex items-center gap-2 font-medium leading-none -mt-10">
           Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
         </div>

@@ -126,6 +126,13 @@ const Home: React.FC<HomeProps> = () => {
     }
   }, [debouncedURL]);
 
+  // Set the URL globally on session storage
+  useEffect(() => {
+    sessionStorage.setItem("url", debouncedURL);
+    // @ts-ignore
+    sessionStorage.setItem("loading", loading);
+  }, [debouncedURL, loading]);
+
   const handleClick = (url: string) => {
     // Clear previous results before starting the new crawl
 
@@ -133,6 +140,8 @@ const Home: React.FC<HomeProps> = () => {
 
     // set the url being searched in the session storage
     sessionStorage.setItem("url", url);
+
+    window.dispatchEvent(new Event("sessionStorageUpdated"));
 
     setCrawlResult([]);
     setVisibleLinks([]);
@@ -352,7 +361,7 @@ const Home: React.FC<HomeProps> = () => {
   console.log(htmlToTextRatio, "htmlToTextRatio");
 
   return (
-    <>
+    <section className="overflow-hidden">
       <Modal
         opened={openedModal}
         overlayProps={{ backgroundOpacity: 0.5 }}
@@ -438,35 +447,67 @@ const Home: React.FC<HomeProps> = () => {
               <section
                 className={`grid grid-cols-2 ${hidden.widget ? "hidden" : ""} gap-x-6 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 justify-items-stretch w-full   mb-10 gap-y-5 `}
               >
-                <PerformanceEl stat={pageSpeed} loading={loading} url={url} />
-                <FcpEl stat={pageSpeed} loading={loading} url={url} />
-                <LCPEl stat={pageSpeed} loading={loading} url={url} />
-                <TtiEl stat={pageSpeed} loading={loading} url={url} />
-                <TbtEl stat={pageSpeed} loading={loading} url={url} />
-                <ClsEl stat={pageSpeed} loading={loading} url={url} />
-                <DomElements stat={pageSpeed} loading={loading} url={url} />
+                <PerformanceEl
+                  stat={pageSpeed}
+                  loading={loading}
+                  url={debouncedURL}
+                />
+                <FcpEl stat={pageSpeed} loading={loading} url={debouncedURL} />
+                <LCPEl stat={pageSpeed} loading={loading} url={debouncedURL} />
+                <TtiEl stat={pageSpeed} loading={loading} url={debouncedURL} />
+                <TbtEl stat={pageSpeed} loading={loading} url={debouncedURL} />
+                <ClsEl stat={pageSpeed} loading={loading} url={debouncedURL} />
+                <DomElements
+                  stat={pageSpeed}
+                  loading={loading}
+                  url={debouncedURL}
+                />
 
-                <SpeedIndex stat={pageSpeed} loading={loading} url={url} />
-                <Redirects stat={pageSpeed} loading={loading} url={url} />
+                <SpeedIndex
+                  stat={pageSpeed}
+                  loading={loading}
+                  url={debouncedURL}
+                />
+                <Redirects
+                  stat={pageSpeed}
+                  loading={loading}
+                  url={debouncedURL}
+                />
                 <ServerResponseTime
                   stat={pageSpeed}
                   loading={loading}
-                  url={url}
+                  url={debouncedURL}
                 />
-                <LongTasks stat={pageSpeed} loading={loading} url={url} />
-                <RenderBlocking stat={pageSpeed} loading={loading} url={url} />
-                <NetworkPayload stat={pageSpeed} loading={loading} url={url} />
-                <NetworkRequests stat={pageSpeed} loading={loading} url={url} />
+                <LongTasks
+                  stat={pageSpeed}
+                  loading={loading}
+                  url={debouncedURL}
+                />
+                <RenderBlocking
+                  stat={pageSpeed}
+                  loading={loading}
+                  url={debouncedURL}
+                />
+                <NetworkPayload
+                  stat={pageSpeed}
+                  loading={loading}
+                  url={debouncedURL}
+                />
+                <NetworkRequests
+                  stat={pageSpeed}
+                  loading={loading}
+                  url={debouncedURL}
+                />
               </section>
             </div>
 
             {/* CHARTS SECTION */}
 
             <section className="grid grid-cols-4 gap-6 mb-10">
-              <KeywordChart keywords={keywords} url={url} />
+              <KeywordChart keywords={keywords} url={debouncedURL} />
               <HtmlToTextChart htmlToTextRatio={htmlToTextRatio} />
-              <ImagesChart url={url} images={images} />
-              <KeywordChart keywords={keywords} url={url} />
+              <ImagesChart url={debouncedURL} images={images} />
+              <KeywordChart keywords={keywords} url={debouncedURL} />
             </section>
 
             {/* Head starts here */}
@@ -499,7 +540,7 @@ const Home: React.FC<HomeProps> = () => {
               <GooglePreview
                 favicon_url={favicon_url}
                 openGraphDetails={openGraphDetails}
-                url={url}
+                url={debouncedURL}
               />
               <OpenGraphCard
                 linkedInInspect={linkedInInspect}
@@ -514,7 +555,7 @@ const Home: React.FC<HomeProps> = () => {
               <RedirectsTable pageSpeed={pageSpeed} />
               <PageSchemaTable
                 pageSchema={pageSchema}
-                googleSchemaTestUrl={url}
+                googleSchemaTestUrl={debouncedURL}
               />
               <RobotsTable robots={robots} />
             </main>
@@ -529,7 +570,7 @@ const Home: React.FC<HomeProps> = () => {
           </Tabs.Panel>
         </Tabs>
       </section>
-    </>
+    </section>
   );
 };
 

@@ -35,7 +35,7 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
                   <td className="px-4  text-sm text-blue-600 truncate max-w-full">
                     {item?.url}
                   </td>
-                  <td className="px-4  text-xs text-gray-700">
+                  <td className="px-4  text-xs text-gray-700 ">
                     {(
                       Math.round(item?.totalBytes * 1000) / 1000
                     ).toLocaleString() + " KiB"}

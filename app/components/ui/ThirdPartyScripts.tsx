@@ -37,13 +37,13 @@ const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
                   <td className="px-4 py-1 text-sm text-blue-600 truncate max-w-full">
                     {item?.entity}
                   </td>
-                  <td className="px-4 py-1 text-xs text-gray-700">
+                  <td className="px-4 py-1 text-xs text-gray-700 dark:text-white/50">
                     {Math.round(item?.mainThreadTime)}
                   </td>
-                  <td className="px-4 py-1 text-xs text-gray-700">
+                  <td className="px-4 py-1 text-xs text-gray-700 dark:text-white/50">
                     {item?.transferSize} bytes
                   </td>
-                  <td className="px-4 py-1  text-xs text-gray-700">
+                  <td className="px-4 py-1  text-xs text-gray-700 dark:text-white/50">
                     {Math.round(item?.blockingTime) + " ms"}
                   </td>
                 </tr>

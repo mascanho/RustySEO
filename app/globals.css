@@ -74,7 +74,7 @@ tbody {
 }
 
 th {
-  @apply dark:bg-brand-darker dark:text-white !important;
+  @apply dark:bg-brand-darker dark:text-white border-0 !important;
   padding: 4px 0 1em 1em;
   position: sticky;
   top: 0;
@@ -93,7 +93,7 @@ tr {
 td {
   padding: 2px 0;
   vertical-align: center;
-  @apply text-sm;
+  @apply text-sm dark:border-brand-dark !important;
   z-index: 0;
 }
 
@@ -102,6 +102,7 @@ td {
 }
 
 pre {
+  @apply dark:bg-brand-darker dark:text-white/50 border-0 !important;
   display: overflow-scroll;
   height: 34.6rem !important;
   box-shadow:
@@ -124,20 +125,23 @@ pre {
 }
 
 .todoItems {
-  height: calc(85vh - 7rem);
+  height: calc(85vh - 40px);
   overflow: unset;
   padding-right: 10px;
 }
 
 .naked_table {
-  @apply border bg-white shadow rounded-md h-[38rem] overflow-hidden;
+  @apply dark:border-brand-darker hover:border-sky-500 border bg-white dark:bg-brand-darker shadow rounded-md h-[38rem] overflow-hidden;
 
   h2 {
-    @apply p-4 font-semibold text-lg;
+    @apply p-4 font-semibold text-lg dark:text-white;
   }
 
   pre {
-    height: 90% !important;
+    @apply dark:bg-brand-darker dark:text-white/50 border-0 !important;
+    display: overflow-scroll;
+    height: 87% !important;
+    overflow-x: hidden;
   }
 }
 
@@ -244,6 +248,10 @@ button:where([data-active]) {
 
 .m_539e827b:hover {
   @apply dark:text-black !important;
+}
+
+.tabs-drawer button span {
+  @apply dark:text-brand-darker !important;
 }
 
 /*WIDGETS*/
