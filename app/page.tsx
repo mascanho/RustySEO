@@ -424,7 +424,7 @@ const Home: React.FC<HomeProps> = () => {
       {/* /> */}
 
       {/* TABS SECTION */}
-      <section className="mt-2 relative h-screen overflow-y-scroll  p-6">
+      <section className="mt-2 relative h-screen overflow-x-hidden   p-6">
         <Tabs defaultValue="first">
           <div className="transition-all  ease-in  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-2 top-[70px]  transform dark:bg-brand-darker z-[2000] pb-0">
             <Tabs.List justify="center" className="dark:text-white ">
