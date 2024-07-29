@@ -123,17 +123,39 @@ const PerformanceEl = ({
               </svg>
             </div>
           ) : (
-            <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
-              <span>
+            <span className="h-10 font-bold text-2xl">
+              <h3>
                 {stat?.lighthouseResult?.categories?.performance?.score ? (
-                  Math.floor(
-                    stat?.lighthouseResult?.categories?.performance?.score *
-                      100,
-                  ) + "%" || "..."
+                  (() => {
+                    const score = Math.floor(
+                      stat?.lighthouseResult?.categories?.performance?.score *
+                        100,
+                    );
+                    let label = "";
+
+                    if (score < 50) {
+                      label = "Poor";
+                    } else if (score >= 50 && score < 70) {
+                      label = "Average";
+                    } else if (score >= 70) {
+                      label = "Good";
+                    }
+
+                    return (
+                      <span className="flex items-center">
+                        {score}%{" "}
+                        <p
+                          className={` rounded-full ml-2 px-2 text-xs py-[1px] text-green-500 ${label === "Poor" && "bg-red-500 text-white"} ${label === "Good" && "bg-green-500 text-white"}text-white ${label === "Average" && "bg-orange-500 text-white"}`}
+                        >
+                          {label}
+                        </p>
+                      </span>
+                    );
+                  })()
                 ) : (
                   <span className="text-gray-400">...</span>
                 )}
-              </span>
+              </h3>
             </span>
           )}{" "}
         </div>

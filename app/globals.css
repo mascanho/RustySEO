@@ -202,11 +202,11 @@ pre {
   }
 }
 
-.recharts-wrapper svg {
-  min-width: 650px !important;
-  margin-left: -200px !important;
-  padding: 0 !important;
-}
+/* .recharts-wrapper svg { */
+/* min-width: 650px !important; */
+/* margin-left: -200px !important; */
+/* padding: 0 !important; */
+/* } */
 
 .line_chart {
   .recharts-wrapper svg {

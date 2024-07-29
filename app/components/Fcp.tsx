@@ -118,12 +118,44 @@ const FcpEl = ({
           ) : (
             <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
               {stat?.lighthouseResult?.audits?.["first-contentful-paint"]
-                ?.score !== undefined
-                ? (
+                ?.score !== undefined ? (
+                (() => {
+                  const score = Math.floor(
                     stat.lighthouseResult.audits["first-contentful-paint"]
-                      .score * 100
-                  ).toFixed(0) + "%"
-                : "..."}
+                      .score * 100,
+                  );
+                  let label = "";
+
+                  if (score < 50) {
+                    label = "Poor";
+                  } else if (score >= 50 && score < 70) {
+                    label = "Average";
+                  } else if (score >= 70) {
+                    label = "Good";
+                  }
+
+                  // Determine the background color and text color based on the label
+                  const labelClass =
+                    {
+                      Poor: "bg-red-500 text-white",
+                      Average: "bg-orange-500 text-white",
+                      Good: "bg-green-500 text-white",
+                    }[label] || "bg-gray-200 text-black"; // Default styling if label is not found
+
+                  return (
+                    <span className="flex items-center">
+                      <span className="font-bold text-2xl">{score}%</span>{" "}
+                      <p
+                        className={`rounded-full ml-2 px-2 text-xs py-[1px] ${labelClass}`}
+                      >
+                        {label}
+                      </p>
+                    </span>
+                  );
+                })()
+              ) : (
+                <span className="text-gray-400">...</span>
+              )}
             </span>
           )}{" "}
         </div>

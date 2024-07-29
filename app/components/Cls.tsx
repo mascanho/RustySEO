@@ -116,12 +116,52 @@ const ClsEl = ({
             </div>
           ) : (
             <>
-              <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
-                {stat?.lighthouseResult?.audits?.["cumulative-layout-shift"]
-                  ?.score !== undefined
-                  ? `${Math.round(stat.lighthouseResult.audits["cumulative-layout-shift"].score * 100)}%`
-                  : "..."}
-              </span>
+              {stat.length === 0 ||
+              stat?.lighthouseResult?.audits?.["cumulative-layout-shift"]
+                ?.score === undefined ? (
+                <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
+                  ...
+                </span>
+              ) : (
+                (() => {
+                  // Extract score and calculate percentage
+                  const score = Math.round(
+                    stat.lighthouseResult.audits["cumulative-layout-shift"]
+                      .score * 100,
+                  );
+                  let label = "";
+
+                  // Determine label based on score
+                  if (score < 50) {
+                    label = "Poor";
+                  } else if (score >= 50 && score < 70) {
+                    label = "Average";
+                  } else if (score >= 70) {
+                    label = "Good";
+                  }
+
+                  // Determine the background color and text color based on the label
+                  const labelClass =
+                    {
+                      Poor: "bg-red-500 text-white",
+                      Average: "bg-orange-500 text-white",
+                      Good: "bg-green-500 text-white",
+                    }[label] || "bg-gray-200 text-black"; // Default styling if label is not found
+
+                  return (
+                    <span className="flex items-center">
+                      <span className="font-bold text-2xl text-apple-spaceGray/50">
+                        {score}%
+                      </span>{" "}
+                      <p
+                        className={`rounded-full ml-2 px-2 text-xs py-[1px] ${labelClass}`}
+                      >
+                        {label}
+                      </p>
+                    </span>
+                  );
+                })()
+              )}
             </>
           )}{" "}
         </div>

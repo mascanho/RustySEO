@@ -3,7 +3,7 @@ use html5ever::serialize::{serialize, SerializeOpts, TraversalScope};
 use html5ever::tendril::{ByteTendril, TendrilSink};
 use markup5ever_rcdom::{Handle, RcDom, SerializableHandle};
 use regex::Regex;
-use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT};
+use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, USER_AGENT};
 use reqwest::Client;
 use rusqlite::Connection;
 use scraper::{ElementRef, Html, Selector};
@@ -144,6 +144,8 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let client = Client::new();
     let response = client
         .get(&url)
+        .header(USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+        .header(ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
         .send()
         .await
         .map_err(|e| format!("Request error: {}", e))?;
