@@ -376,7 +376,7 @@ const Home: React.FC<HomeProps> = () => {
       </Modal>
 
       {/* Fixed Input and Crawl Button */}
-      <div className="overflow-hidden fixed top-[28px] pt-2 z-[1000] h-12 pb-2 border-b  left-0  mx-auto justify-center w-full dark:bg-brand-darker  items-center ">
+      <div className="overflow-hidden fixed top-[28px] pt-2 z-[1000] h-12 pb-2 border-b  left-0  mx-auto justify-center w-full dark:bg-brand-darker  items-center bg-white ">
         <section className="flex   items-end justify-end w-[600px] mx-auto relative ">
           <div className="flex justify-center w-full  items-center  overflow-hidden">
             <select
