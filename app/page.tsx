@@ -362,7 +362,7 @@ const Home: React.FC<HomeProps> = () => {
   console.log(htmlToTextRatio, "htmlToTextRatio");
 
   return (
-    <section className="overflow-hidden">
+    <section className="h-full overflow-y-clip">
       <Modal
         opened={openedModal}
         overlayProps={{ backgroundOpacity: 0.5 }}
@@ -424,7 +424,7 @@ const Home: React.FC<HomeProps> = () => {
       {/* /> */}
 
       {/* TABS SECTION */}
-      <section className="mt-2 relative h-screen overflow-x-hidden   p-6">
+      <section className="mt-2 relative h-[calc(100vh-9.2rem)] overflow-x-hidden   p-6 ">
         <Tabs defaultValue="first">
           <div className="transition-all  ease-in  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-2 top-[70px]  transform dark:bg-brand-darker z-[2000] pb-0">
             <Tabs.List justify="center" className="dark:text-white ">
@@ -529,7 +529,7 @@ const Home: React.FC<HomeProps> = () => {
             {/* TABLES START HERE */}
             <main
               id="tables"
-              className="mx-auto w-full flex-col  pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-6 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-16 items-stretch pb-40"
+              className="mx-auto w-full flex-col  pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-6 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-16 items-stretch pb-2"
             >
               <ContentSummary
                 keywords={keywords}
