@@ -130,11 +130,50 @@ const NetworkPayload = ({
               </svg>
             </div>
           ) : (
-            <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
+            <span className="h-10 font-bold text-2xl">
               {stat?.lighthouseResult?.audits?.["total-byte-weight"]?.score !==
-              undefined
-                ? `${Math.round(stat.lighthouseResult.audits["total-byte-weight"].score * 100)}%`
-                : "..."}
+              undefined ? (
+                (() => {
+                  // Extract score and calculate percentage
+                  const score = Math.floor(
+                    stat.lighthouseResult.audits["total-byte-weight"].score *
+                      100,
+                  );
+                  let label = "";
+
+                  // Determine label based on score
+                  if (score < 50) {
+                    label = "Poor";
+                  } else if (score >= 50 && score < 70) {
+                    label = "Average";
+                  } else if (score >= 70) {
+                    label = "Good";
+                  }
+
+                  // Determine the background color and text color based on the label
+                  const labelClass =
+                    {
+                      Poor: "bg-red-500 text-white",
+                      Average: "bg-orange-500 text-white",
+                      Good: "bg-green-500 text-white",
+                    }[label] || "bg-gray-200 text-black"; // Default styling if label is not found
+
+                  return (
+                    <span className="flex items-center">
+                      <span className="font-bold text-2xl text-apple-spaceGray/50">
+                        {score}%
+                      </span>{" "}
+                      <p
+                        className={`rounded-full ml-2 px-2 text-xs py-[1px] ${labelClass}`}
+                      >
+                        {label}
+                      </p>
+                    </span>
+                  );
+                })()
+              ) : (
+                <span className="text-gray-400">...</span>
+              )}
             </span>
           )}{" "}
         </div>

@@ -459,23 +459,28 @@ const Home: React.FC<HomeProps> = () => {
                 <TtiEl stat={pageSpeed} loading={loading} url={debouncedURL} />
                 <TbtEl stat={pageSpeed} loading={loading} url={debouncedURL} />
                 <ClsEl stat={pageSpeed} loading={loading} url={debouncedURL} />
+                <SpeedIndex
+                  stat={pageSpeed}
+                  loading={loading}
+                  url={debouncedURL}
+                />
+                <ServerResponseTime
+                  stat={pageSpeed}
+                  loading={loading}
+                  url={debouncedURL}
+                />
+                <NetworkPayload
+                  stat={pageSpeed}
+                  loading={loading}
+                  url={debouncedURL}
+                />
                 <DomElements
                   stat={pageSpeed}
                   loading={loading}
                   url={debouncedURL}
                 />
 
-                <SpeedIndex
-                  stat={pageSpeed}
-                  loading={loading}
-                  url={debouncedURL}
-                />
                 <Redirects
-                  stat={pageSpeed}
-                  loading={loading}
-                  url={debouncedURL}
-                />
-                <ServerResponseTime
                   stat={pageSpeed}
                   loading={loading}
                   url={debouncedURL}
@@ -486,11 +491,6 @@ const Home: React.FC<HomeProps> = () => {
                   url={debouncedURL}
                 />
                 <RenderBlocking
-                  stat={pageSpeed}
-                  loading={loading}
-                  url={debouncedURL}
-                />
-                <NetworkPayload
                   stat={pageSpeed}
                   loading={loading}
                   url={debouncedURL}

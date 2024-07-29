@@ -93,12 +93,12 @@ const TaskManagerContainerItem: React.FC<{ data: any }> = ({ data }) => {
 
   return (
     <section
-      className={`border dark:border-brand-dark rounded-lg transition-all delay-75 ${animate ? "fade-in" : ""}`}
+      className={`border dark:border-brand-dark rounded-lg overflow-auto transition-all delay-75 ${animate ? "fade-in" : ""}`}
     >
       <div className="rounded-md flex flex-col p-3">
         <section className="flex items-center justify-between">
           <div className="flex flex-wrap gap-1 items-center">
-            {data.type.map((item, index) => (
+            {data.type.map((item: any, index: any) => (
               <span
                 key={index}
                 className="text-[10px] text-white px-2 py-0.5 rounded-xl"
@@ -161,7 +161,11 @@ const TaskManagerContainerItem: React.FC<{ data: any }> = ({ data }) => {
             {data.priority}
           </span>
           <div className="flex items-center space-x-2">
-            {data.strategy === "mobile" ? <FaMobileAlt /> : <FaDesktop />}
+            {data.strategy.strategy === "DESKTOP" ? (
+              <FaDesktop />
+            ) : (
+              <FaMobileAlt />
+            )}
             <span className="text-xs">
               {new Date(data.date).toDateString()}
             </span>
