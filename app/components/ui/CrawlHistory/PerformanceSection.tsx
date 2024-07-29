@@ -12,7 +12,7 @@ const PerformanceSection = ({ dbdata }: any) => {
             <tr>
               <th>Date</th>
               <th>Device</th>
-              <th>URL</th>
+              <th align="left">URL</th>
               <th>Performance</th>
               <th>FCP</th>
               <th>LCP</th>
@@ -26,7 +26,7 @@ const PerformanceSection = ({ dbdata }: any) => {
             <tr className="w-full" key={index}>
               <td>{new Date(data?.date).toLocaleDateString()}</td>
               <td>{data?.strategy}</td>
-              <td>{data?.url}</td>
+              <td align="left">{data?.url}</td>
               <td>{data?.performance}</td>
               <td>{data?.fcp}</td>
               <td>{data?.lcp}</td>
