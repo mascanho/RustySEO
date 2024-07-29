@@ -6,7 +6,7 @@ const PerformanceSection = ({ dbdata }: any) => {
 
   return (
     <section className="rounded-md mt-4 overflow-hidden shadow border">
-      <div className="h-[60rem] overflow-scroll">
+      <div className="h-[48rem] overflow-scroll">
         <table className="table_history w-full shadow">
           <thead>
             <tr>

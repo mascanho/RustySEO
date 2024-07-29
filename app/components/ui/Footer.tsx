@@ -143,7 +143,7 @@ const Footer = () => {
           <div className="flex w-50 items-center space-x-2 pr-1">
             <div className="flex items-center mr-1 text-xs mt-[2px] space-x-3">
               <div className="flex items-center">
-                <LiaTasksSolid className="text-2xl dark:text-white/50" />
+                <LiaTasksSolid className="text-xl dark:text-white/50" />
                 <span>Tasks:</span>
                 <span className="text-red-500 ml-1">{tasks.length}</span>
               </div>
