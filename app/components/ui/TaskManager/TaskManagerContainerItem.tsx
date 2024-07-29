@@ -93,7 +93,7 @@ const TaskManagerContainerItem: React.FC<{ data: any }> = ({ data }) => {
 
   return (
     <section
-      className={`border dark:border-brand-dark rounded-lg overflow-auto transition-all delay-75 ${animate ? "fade-in" : ""}`}
+      className={`shadow border dark:border-brand-dark rounded-lg overflow-auto transition-all delay-75 ${animate ? "fade-in" : ""}`}
     >
       <div className="rounded-md flex flex-col p-3">
         <section className="flex items-center justify-between">

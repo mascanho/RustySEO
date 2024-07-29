@@ -27,8 +27,16 @@ const PerformanceSection = ({ dbdata }: any) => {
               <td>{new Date(data?.date).toLocaleDateString()}</td>
               <td>{data?.strategy}</td>
               <td align="left">{data?.url}</td>
-              <td>{data?.performance}</td>
-              <td>{data?.fcp}</td>
+              <td
+                className={`${data?.performance <= 50 ? "text-red-600" : "text-green-600"}`}
+              >
+                {data?.performance}
+              </td>
+              <td
+                className={`${data?.performance <= 50 ? "text-red-600" : "text-green-600"}`}
+              >
+                {data?.fcp}
+              </td>
               <td>{data?.lcp}</td>
               <td>{data?.tti}</td>
               <td>{data?.cls}</td>
