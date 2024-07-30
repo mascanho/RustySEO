@@ -31,7 +31,7 @@ export default function RootLayout({
       >
         <MantineProvider>
           {/* Fixed MenuDrawer */}
-          <section className="mb-[7.2rem]">
+          <section className="mb-[6.7rem]">
             <TopMenuBar />
           </section>
           {/* <div className="fixed top-7 pl-6  bg-white  dark:bg-brand-darker   dark:border-gray-800  w-full overflow-hidden z-[1000]  "> */}

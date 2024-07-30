@@ -47,6 +47,13 @@ import HtmlToTextChart from "./components/ui/ShadCharts/HtmlToTextChart";
 import { Switch } from "@/components/ui/switch";
 import SEOImprovements from "./components/ui/Improvements/SEOimprovements";
 
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
+import SidebarContainer from "./components/ui/Sidebar/SidebarContainer";
+
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
 interface HomeProps {}
@@ -362,220 +369,238 @@ const Home: React.FC<HomeProps> = () => {
   console.log(htmlToTextRatio, "htmlToTextRatio");
 
   return (
-    <section className="h-full overflow-y-clip">
-      <Modal
-        opened={openedModal}
-        overlayProps={{ backgroundOpacity: 0.5 }}
-        closeOnEscape
-        closeOnClickOutside
-        onClose={closeModal}
-        title=""
-        centered
-      >
-        <Todo url={debouncedURL} close={closeModal} strategy={strategy} />
-      </Modal>
+    <section className="h-full overflow-y-clip flex">
+      <div className="w-full">
+        <Modal
+          opened={openedModal}
+          overlayProps={{ backgroundOpacity: 0.5 }}
+          closeOnEscape
+          closeOnClickOutside
+          onClose={closeModal}
+          title=""
+          centered
+        >
+          <Todo url={debouncedURL} close={closeModal} strategy={strategy} />
+        </Modal>
 
-      {/* Fixed Input and Crawl Button */}
-      <div className="overflow-hidden fixed top-[28px] pt-2 z-[1000] h-12 pb-2 border-b  left-0  mx-auto justify-center w-full dark:bg-brand-darker  items-center bg-white ">
-        <section className="flex   items-end justify-end w-[600px] mx-auto relative ">
-          <div className="flex justify-center w-full  items-center  overflow-hidden">
-            <select
-              onChange={(event) => handleStrategyChange(event)}
-              className="custom-select  bg-slate-100 dark:bg-white dark:text-black border-0 outline-none rounded-full text-sm h-6"
-            >
-              <option value="desktop">Desktop</option>
-              <option value="mobile">Mobile</option>
-            </select>
-            <div className="overflow-hidden">
-              <input
-                className=" h-6 text-xs min-w-80 w-[40em] pl-5 pt-[2px] rounded-2xl -ml-2  pr-2 placeholder:text-gray-500 relative bg-slate-100 dark:border dark:border-white dark:bg-white "
-                type="url"
-                placeholder="https://yourwebsite.com"
-                // value={url}
-                onChange={handleChange}
-                style={{ outline: "none", boxShadow: "none" }}
-                onKeyPress={(event) => {
-                  if (event.key === "Enter") {
-                    handleClick(url);
-                  }
-                }}
-              />
-              {loading ? (
-                <div
-                  className="animate-spin cursor-pointer inline-block size-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full absolute top-1 right-7"
-                  role="status"
-                  aria-label="loading"
-                  onClick={() => window?.location?.reload()}
-                ></div>
-              ) : (
-                <IoSearchCircle
-                  onClick={() => handleClick(url)}
-                  className="absolute top-0 text-2xl py-[2px] right-6 text-sky-500"
+        {/* Fixed Input and Crawl Button */}
+        <div className="overflow-hidden fixed top-[28px] pt-2 z-[1000] h-12 pb-2 border-b  left-0  mx-auto justify-center w-full dark:bg-brand-darker  items-center bg-white ">
+          <section className="flex   items-end justify-end w-[600px] mx-auto relative ">
+            <div className="flex justify-center w-full  items-center  overflow-hidden">
+              <select
+                onChange={(event) => handleStrategyChange(event)}
+                className="custom-select  bg-slate-100 dark:bg-white dark:text-black border-0 outline-none rounded-full text-sm h-6"
+              >
+                <option value="desktop">Desktop</option>
+                <option value="mobile">Mobile</option>
+              </select>
+              <div className="overflow-hidden">
+                <input
+                  className=" h-6 text-xs min-w-80 w-[40em] pl-5 pt-[2px] rounded-2xl -ml-2  pr-2 placeholder:text-gray-500 relative bg-slate-100 dark:border dark:border-white dark:bg-white "
+                  type="url"
+                  placeholder="https://yourwebsite.com"
+                  // value={url}
+                  onChange={handleChange}
+                  style={{ outline: "none", boxShadow: "none" }}
+                  onKeyPress={(event) => {
+                    if (event.key === "Enter") {
+                      handleClick(url);
+                    }
+                  }}
                 />
-              )}
+                {loading ? (
+                  <div
+                    className="animate-spin cursor-pointer inline-block size-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full absolute top-1 right-7"
+                    role="status"
+                    aria-label="loading"
+                    onClick={() => window?.location?.reload()}
+                  ></div>
+                ) : (
+                  <IoSearchCircle
+                    onClick={() => handleClick(url)}
+                    className="absolute top-0 text-2xl py-[2px] right-6 text-sky-500"
+                  />
+                )}
+              </div>
             </div>
-          </div>
+          </section>
+        </div>
+        {/* <SubBar */}
+        {/*   domainWithoutLastPart={domainWithoutLastPart} */}
+        {/*   url={url} */}
+        {/*   strategy={strategy} */}
+        {/* /> */}
+
+        {/* TABS SECTION */}
+        <section className="mt-2 relative h-[calc(100vh-9.2rem)] overflow-x-hidden   p-6 ">
+          <Tabs defaultValue="first">
+            <div className="transition-all  ease-in  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-2 top-[70px]  transform dark:bg-brand-darker z-[2000] pb-0">
+              <Tabs.List justify="center" className="dark:text-white ">
+                <Tabs.Tab value="first"> Diagnostics</Tabs.Tab>
+                <Tabs.Tab value="third">Improvements</Tabs.Tab>
+                <Tabs.Tab value="fourth">Task Manager</Tabs.Tab>
+                <Tabs.Tab value="fifth">Crawl History</Tabs.Tab>
+              </Tabs.List>
+            </div>
+
+            <Tabs.Panel value="first">
+              {/* WIDGET SECTION */}
+              <div className="flex flex-col flex-wrap items-end">
+                <Switch
+                  checked={!hidden.widget}
+                  className="mb-5 -mt-2 mr-0"
+                  onCheckedChange={(checked) => setHidden({ widget: !checked })}
+                />
+                <section
+                  className={`grid grid-cols-2 ${hidden.widget ? "hidden" : ""} gap-x-6 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 justify-items-stretch w-full mt-2  mb-10 gap-y-5 `}
+                >
+                  <h1 className="absolute font-bold top-4 left-7 text-2xl text-brand-dark/50 dark:text-white/30">
+                    Performance Overview
+                  </h1>
+
+                  <FcpEl
+                    stat={pageSpeed}
+                    loading={loading}
+                    url={debouncedURL}
+                  />
+                  <LCPEl
+                    stat={pageSpeed}
+                    loading={loading}
+                    url={debouncedURL}
+                  />
+                  <TtiEl
+                    stat={pageSpeed}
+                    loading={loading}
+                    url={debouncedURL}
+                  />
+                  <TbtEl
+                    stat={pageSpeed}
+                    loading={loading}
+                    url={debouncedURL}
+                  />
+                  <ClsEl
+                    stat={pageSpeed}
+                    loading={loading}
+                    url={debouncedURL}
+                  />
+                  <SpeedIndex
+                    stat={pageSpeed}
+                    loading={loading}
+                    url={debouncedURL}
+                  />
+                  <ServerResponseTime
+                    stat={pageSpeed}
+                    loading={loading}
+                    url={debouncedURL}
+                  />
+                  <NetworkPayload
+                    stat={pageSpeed}
+                    loading={loading}
+                    url={debouncedURL}
+                  />
+                  <DomElements
+                    stat={pageSpeed}
+                    loading={loading}
+                    url={debouncedURL}
+                  />
+
+                  <Redirects
+                    stat={pageSpeed}
+                    loading={loading}
+                    url={debouncedURL}
+                  />
+                  <LongTasks
+                    stat={pageSpeed}
+                    loading={loading}
+                    url={debouncedURL}
+                  />
+                  <RenderBlocking
+                    stat={pageSpeed}
+                    loading={loading}
+                    url={debouncedURL}
+                  />
+                  <NetworkRequests
+                    stat={pageSpeed}
+                    loading={loading}
+                    url={debouncedURL}
+                  />
+                </section>
+              </div>
+
+              {/* CHARTS SECTION */}
+
+              <section className="grid grid-cols-4 gap-6 mb-10">
+                <KeywordChart keywords={keywords} url={debouncedURL} />
+                <HtmlToTextChart htmlToTextRatio={htmlToTextRatio} />
+                <ImagesChart url={debouncedURL} images={images} />
+                <KeywordChart keywords={keywords} url={debouncedURL} />
+              </section>
+
+              {/* Head starts here */}
+              <HeadAnalysis
+                pageTitle={pageTitle}
+                pageDescription={pageDescription}
+                canonical={canonical}
+                hreflangs={hreflangs}
+                pageSchema={pageSchema}
+                openGraphDetails={openGraphDetails}
+                tagManager={tagManager}
+                favicon_url={favicon_url}
+                code={headElements}
+                indexation={indexation}
+              />
+
+              {/* TABLES START HERE */}
+              <main
+                id="tables"
+                className="mx-auto w-full flex-col  pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-6 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-2 -mt-16 items-stretch pb-2"
+              >
+                <ContentSummary
+                  keywords={keywords}
+                  wordCount={wordCount ? wordCount[0] : ""}
+                  readingTime={readingTime}
+                  readingLevelResults={readingLevelResults}
+                  pageTitle={pageTitle}
+                  AiContentAnalysis={AiContentAnalysis}
+                />
+                <GooglePreview
+                  favicon_url={favicon_url}
+                  openGraphDetails={openGraphDetails}
+                  url={debouncedURL}
+                />
+                <OpenGraphCard
+                  linkedInInspect={linkedInInspect}
+                  openGraphDetails={openGraphDetails}
+                />
+                <HeadingsTable headings={headings} />
+                <LinkAnalysis visibleLinks={visibleLinks} />
+                <ImageAnalysis images={images} />
+                {/**/}
+                <ThirdPartyScripts pageSpeed={pageSpeed} />
+                <TotalByteWeight pageSpeed={pageSpeed} />
+                <PageSchemaTable
+                  pageSchema={pageSchema}
+                  googleSchemaTestUrl={debouncedURL}
+                />
+                <RobotsTable robots={robots} />
+              </main>
+            </Tabs.Panel>
+
+            <Tabs.Panel value="third">
+              <SEOImprovements />
+            </Tabs.Panel>
+
+            <Tabs.Panel value="fourth">
+              <TaskManagerContainer strategy={strategy} />
+            </Tabs.Panel>
+
+            <Tabs.Panel value="fifth">
+              <CrawlHistory dbdata={DBDATA} />
+            </Tabs.Panel>
+          </Tabs>
         </section>
       </div>
-      {/* <SubBar */}
-      {/*   domainWithoutLastPart={domainWithoutLastPart} */}
-      {/*   url={url} */}
-      {/*   strategy={strategy} */}
-      {/* /> */}
-
-      {/* TABS SECTION */}
-      <section className="mt-2 relative h-[calc(100vh-9.2rem)] overflow-x-hidden   p-6 ">
-        <Tabs defaultValue="first">
-          <div className="transition-all  ease-in  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-2 top-[70px]  transform dark:bg-brand-darker z-[2000] pb-0">
-            <Tabs.List justify="center" className="dark:text-white ">
-              <Tabs.Tab value="first"> Diagnostics</Tabs.Tab>
-              <Tabs.Tab value="third">Improvements</Tabs.Tab>
-              <Tabs.Tab value="fourth">Task Manager</Tabs.Tab>
-              <Tabs.Tab value="fifth">Crawl History</Tabs.Tab>
-            </Tabs.List>
-          </div>
-
-          <Tabs.Panel value="first">
-            {/* WIDGET SECTION */}
-            <div className="flex flex-col flex-wrap items-end">
-              <Switch
-                checked={!hidden.widget}
-                className="mb-5 -mt-2 mr-0"
-                onCheckedChange={(checked) => setHidden({ widget: !checked })}
-              />
-              <section
-                className={`grid grid-cols-2 ${hidden.widget ? "hidden" : ""} gap-x-6 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 justify-items-stretch w-full mt-2  mb-10 gap-y-5 `}
-              >
-                <h1 className="absolute font-bold top-4 left-7 text-2xl text-brand-dark/50 dark:text-white/30">
-                  Performance Overview
-                </h1>
-                <PerformanceEl
-                  stat={pageSpeed}
-                  loading={loading}
-                  url={debouncedURL}
-                />
-                <FcpEl stat={pageSpeed} loading={loading} url={debouncedURL} />
-                <LCPEl stat={pageSpeed} loading={loading} url={debouncedURL} />
-                <TtiEl stat={pageSpeed} loading={loading} url={debouncedURL} />
-                <TbtEl stat={pageSpeed} loading={loading} url={debouncedURL} />
-                <ClsEl stat={pageSpeed} loading={loading} url={debouncedURL} />
-                <SpeedIndex
-                  stat={pageSpeed}
-                  loading={loading}
-                  url={debouncedURL}
-                />
-                <ServerResponseTime
-                  stat={pageSpeed}
-                  loading={loading}
-                  url={debouncedURL}
-                />
-                <NetworkPayload
-                  stat={pageSpeed}
-                  loading={loading}
-                  url={debouncedURL}
-                />
-                <DomElements
-                  stat={pageSpeed}
-                  loading={loading}
-                  url={debouncedURL}
-                />
-
-                <Redirects
-                  stat={pageSpeed}
-                  loading={loading}
-                  url={debouncedURL}
-                />
-                <LongTasks
-                  stat={pageSpeed}
-                  loading={loading}
-                  url={debouncedURL}
-                />
-                <RenderBlocking
-                  stat={pageSpeed}
-                  loading={loading}
-                  url={debouncedURL}
-                />
-                <NetworkRequests
-                  stat={pageSpeed}
-                  loading={loading}
-                  url={debouncedURL}
-                />
-              </section>
-            </div>
-
-            {/* CHARTS SECTION */}
-
-            <section className="grid grid-cols-4 gap-6 mb-10">
-              <KeywordChart keywords={keywords} url={debouncedURL} />
-              <HtmlToTextChart htmlToTextRatio={htmlToTextRatio} />
-              <ImagesChart url={debouncedURL} images={images} />
-              <KeywordChart keywords={keywords} url={debouncedURL} />
-            </section>
-
-            {/* Head starts here */}
-            <HeadAnalysis
-              pageTitle={pageTitle}
-              pageDescription={pageDescription}
-              canonical={canonical}
-              hreflangs={hreflangs}
-              pageSchema={pageSchema}
-              openGraphDetails={openGraphDetails}
-              tagManager={tagManager}
-              favicon_url={favicon_url}
-              code={headElements}
-              indexation={indexation}
-            />
-
-            {/* TABLES START HERE */}
-            <main
-              id="tables"
-              className="mx-auto w-full flex-col  pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-6 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-16 items-stretch pb-2"
-            >
-              <ContentSummary
-                keywords={keywords}
-                wordCount={wordCount ? wordCount[0] : ""}
-                readingTime={readingTime}
-                readingLevelResults={readingLevelResults}
-                pageTitle={pageTitle}
-                AiContentAnalysis={AiContentAnalysis}
-              />
-              <GooglePreview
-                favicon_url={favicon_url}
-                openGraphDetails={openGraphDetails}
-                url={debouncedURL}
-              />
-              <OpenGraphCard
-                linkedInInspect={linkedInInspect}
-                openGraphDetails={openGraphDetails}
-              />
-              <HeadingsTable headings={headings} />
-              <LinkAnalysis visibleLinks={visibleLinks} />
-              <ImageAnalysis images={images} />
-              {/**/}
-              <ThirdPartyScripts pageSpeed={pageSpeed} />
-              <TotalByteWeight pageSpeed={pageSpeed} />
-              <RedirectsTable pageSpeed={pageSpeed} />
-              <PageSchemaTable
-                pageSchema={pageSchema}
-                googleSchemaTestUrl={debouncedURL}
-              />
-              <RobotsTable robots={robots} />
-            </main>
-          </Tabs.Panel>
-
-          <Tabs.Panel value="third">
-            <SEOImprovements />
-          </Tabs.Panel>
-
-          <Tabs.Panel value="fourth">
-            <TaskManagerContainer strategy={strategy} />
-          </Tabs.Panel>
-
-          <Tabs.Panel value="fifth">
-            <CrawlHistory dbdata={DBDATA} />
-          </Tabs.Panel>
-        </Tabs>
-      </section>
+      <SidebarContainer pageSpeed={pageSpeed} />
     </section>
   );
 };
