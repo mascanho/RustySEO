@@ -95,6 +95,7 @@ td {
   vertical-align: center;
   @apply text-sm dark:border-brand-dark !important;
   z-index: 0;
+  font-size: 0.8rem !important;
 }
 
 :is(tbody, table) > tr:nth-child(odd) {

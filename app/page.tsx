@@ -527,15 +527,6 @@ const Home: React.FC<HomeProps> = () => {
                 </section>
               </div>
 
-              {/* CHARTS SECTION */}
-
-              <section className="grid grid-cols-4 gap-6 mb-10">
-                <KeywordChart keywords={keywords} url={debouncedURL} />
-                <HtmlToTextChart htmlToTextRatio={htmlToTextRatio} />
-                <ImagesChart url={debouncedURL} images={images} />
-                <KeywordChart keywords={keywords} url={debouncedURL} />
-              </section>
-
               {/* Head starts here */}
               <HeadAnalysis
                 pageTitle={pageTitle}
@@ -549,6 +540,15 @@ const Home: React.FC<HomeProps> = () => {
                 code={headElements}
                 indexation={indexation}
               />
+
+              {/* CHARTS SECTION */}
+
+              <section className="grid grid-cols-4 gap-6 mb-10">
+                <KeywordChart keywords={keywords} url={debouncedURL} />
+                <HtmlToTextChart htmlToTextRatio={htmlToTextRatio} />
+                <ImagesChart url={debouncedURL} images={images} />
+                <KeywordChart keywords={keywords} url={debouncedURL} />
+              </section>
 
               {/* TABLES START HERE */}
               <main
@@ -600,7 +600,15 @@ const Home: React.FC<HomeProps> = () => {
           </Tabs>
         </section>
       </div>
-      <SidebarContainer pageSpeed={pageSpeed} />
+      <SidebarContainer
+        pageSpeed={pageSpeed}
+        keywords={keywords}
+        wordCount={wordCount ? wordCount[0] : ""}
+        readingTime={readingTime}
+        readingLevelResults={readingLevelResults}
+        pageTitle={pageTitle}
+        AiContentAnalysis={AiContentAnalysis}
+      />
     </section>
   );
 };
