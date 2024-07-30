@@ -18,18 +18,18 @@ const ContentSummary = ({
 }) => {
   return (
     <section
-      className={`flex-wrap w-full border h-full space-y-2 bg-white p-2 rounded-md relative overflow-auto`}
+      className={`flex-wrap w-full overflow-scroll  min-h-[calc(96rem - 3.5rem)] space-y-1 bg-white p-2 rounded-md relative h-30`}
     >
-      <div className="p-3 grid gap-6">
-        <div className="grid gap-4">
+      <div className="p-3 grid gap-5 overflow-y-scroll">
+        <div className="grid gap-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <svg
                 className="text-sky-dark"
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
-                width={28}
-                height={28}
+                width={18}
+                height={18}
                 fill={"none"}
               >
                 <circle
@@ -86,8 +86,8 @@ const ContentSummary = ({
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
-                width={28}
-                height={28}
+                width={18}
+                height={18}
                 className="text-sky-dark"
                 fill={"none"}
               >
@@ -116,8 +116,8 @@ const ContentSummary = ({
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
-                width={28}
-                height={28}
+                width={18}
+                height={18}
                 className="text-sky-dark"
                 fill={"none"}
               >
@@ -156,13 +156,13 @@ const ContentSummary = ({
             </span>
           </div>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-start flex-col">
           <div className="flex items-center space-x-2 -mt-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
-              width={28}
-              height={28}
+              width={18}
+              height={18}
               className="text-sky-dark"
               fill={"none"}
             >
@@ -193,24 +193,17 @@ const ContentSummary = ({
                 strokeLinecap="round"
               />
             </svg>
-            <span className="font-semibold w-full">Top Keywords</span>
+            <span className="font-semibold">Top Keywords</span>
           </div>
-          <div className="flex flex-wrap gap-2 justify-end  w-3/4">
-            {keywords[0]?.map((keyword: string, index: number) => (
-              <span
-                key={index}
-                className=" text-black py-1  border border-apple-spaceGray rounded-full px-2 text-xs"
-              >
-                {keyword[0]}
-              </span>
-            ))}
+
+          <div className="grid gap-1 min-h-[8rem] overflow-y-auto">
+            <h3 className="text-xs font-semibold">Summary</h3>
+            <p className="text-muted-foreground text-xs">
+              {AiContentAnalysis}{" "}
+            </p>
           </div>
-        </div>
-        <div className="grid gap-1 min-h-[8rem]">
-          <h3 className="text-lg font-semibold">Summary</h3>
-          <p className="text-muted-foreground">{AiContentAnalysis} </p>
-        </div>
-      </div>{" "}
+        </div>{" "}
+      </div>
     </section>
   );
 };

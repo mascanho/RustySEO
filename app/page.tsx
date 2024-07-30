@@ -432,7 +432,7 @@ const Home: React.FC<HomeProps> = () => {
         {/* /> */}
 
         {/* TABS SECTION */}
-        <section className="mt-2 relative h-[calc(100vh-9.2rem)] overflow-x-hidden   p-6 ">
+        <section className="mt-2 relative h-[calc(100vh-9.2rem)] overflow-x-hidden   py-6 px-3 ">
           <Tabs defaultValue="first">
             <div className="transition-all  ease-in  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-2 top-[70px]  transform dark:bg-brand-darker z-[2000] pb-0">
               <Tabs.List justify="center" className="dark:text-white ">
@@ -555,14 +555,6 @@ const Home: React.FC<HomeProps> = () => {
                 id="tables"
                 className="mx-auto w-full flex-col  pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-6 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-2 -mt-16 items-stretch pb-2"
               >
-                <ContentSummary
-                  keywords={keywords}
-                  wordCount={wordCount ? wordCount[0] : ""}
-                  readingTime={readingTime}
-                  readingLevelResults={readingLevelResults}
-                  pageTitle={pageTitle}
-                  AiContentAnalysis={AiContentAnalysis}
-                />
                 <GooglePreview
                   favicon_url={favicon_url}
                   openGraphDetails={openGraphDetails}

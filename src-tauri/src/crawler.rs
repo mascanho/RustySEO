@@ -279,7 +279,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
                 let gtm_id = re
                     .captures_iter(&gtm_container)
                     .next()
-                    .unwrap()
+                    .expect("No GTM ID found")
                     .get(0)
                     .unwrap()
                     .as_str()
