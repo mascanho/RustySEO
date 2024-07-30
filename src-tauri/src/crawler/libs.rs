@@ -208,7 +208,6 @@ pub fn get_indexation_status(document: &Html) -> String {
 }
 
 // Define the synchronous function to load API keys
-// Define the synchronous function to load API keys
 pub async fn load_api_keys() -> Result<ApiKeys, Box<dyn Error>> {
     let config_dir =
         ProjectDirs::from("", "", "rustyseo").ok_or_else(|| "Failed to get project directories")?;

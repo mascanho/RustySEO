@@ -16,8 +16,6 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 
-
-
 import { Button } from "@mantine/core";
 import AIcontainer from "./AiContainer/AIcontainer";
 
@@ -148,7 +146,9 @@ const Footer = () => {
               <div className="flex items-center">
                 <LiaTasksSolid className="text-xl dark:text-white/50" />
                 <span>Tasks:</span>
-                <span className="text-red-500 ml-1">{tasks.length}</span>
+                <span className="text-red-500 dark:text-sky-dark ml-1">
+                  {tasks.length}
+                </span>
               </div>
               <span>{`© ${year} - RustySEO`}</span>
             </div>
