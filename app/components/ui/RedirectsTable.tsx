@@ -6,7 +6,7 @@ const RedirectsTable = ({ pageSpeed }: { pageSpeed: any }) => {
     pageSpeed?.lighthouseResult?.audits?.redirects?.details?.items || [];
 
   return (
-    <section className="naked_table overflow-scroll h-10">
+    <section className="h-full border-0 overflow-scroll">
       <div className="flex flex-col pt-8 px-4">
         {redirects.length === 0 ? (
           <div className="h-full flex items-center">

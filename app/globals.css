@@ -235,7 +235,7 @@ button:where([data-active]) {
 }
 
 .m_539e827b span {
-  @apply text-black  dark:text-brand-normal !important;
+  @apply text-black  dark:text-brand-normal text-xs h-3 !important;
 }
 
 .m_539e827b:not([data-active]) {
