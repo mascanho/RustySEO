@@ -31,15 +31,15 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
   console.log(wordCount, "Wordssssss");
 
   return (
-    <aside className="w-[20rem] md:w-[25rem] h-screen border-l border-2 overflow-y-auto overflow-x-hidden flex flex-col">
+    <aside className="w-[20rem] md:w-[25rem] h-screen border-l dark:border-l-white/20  overflow-y-auto overflow-hidden flex flex-col bg-white dark:bg-brand-darker">
       <ResizablePanelGroup direction="vertical">
-        <ResizablePanel defaultSize={180} className="overflow-scroll">
+        <ResizablePanel defaultSize={180}>
           <Tabs defaultValue="first" className="text-xs aside-tabs">
             <Tabs.List justify="left" className="dark:text-white text-xs">
               <Tabs.Tab value="first">Content</Tabs.Tab>
               <Tabs.Tab value="third">Improvements</Tabs.Tab>
             </Tabs.List>
-            <Tabs.Panel value="first">
+            <Tabs.Panel value="first" className="h-full w-full">
               <ContentSummary
                 keywords={keywords}
                 wordCount={wordCount ? wordCount : ""}
@@ -55,7 +55,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
         <ResizablePanel defaultSize={200}>
           <Tabs defaultValue="first" className="text-xs aside-tabs">
             <Tabs.List justify="left" className="dark:text-white text-xs">
-              <Tabs.Tab value="first">Diagnostics</Tabs.Tab>
+              <Tabs.Tab value="first">Redirects</Tabs.Tab>
               <Tabs.Tab value="third">Improvements</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="first">

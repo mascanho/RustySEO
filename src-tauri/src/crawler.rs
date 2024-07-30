@@ -1,3 +1,4 @@
+use directories::ProjectDirs;
 use html5ever::driver::parse_document;
 use html5ever::serialize::{serialize, SerializeOpts, TraversalScope};
 use html5ever::tendril::{ByteTendril, TendrilSink};
@@ -101,7 +102,7 @@ pub struct ImageInfo {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PageSpeedResponse {
     id: String,
-    captcha_result: Option<String>,
+    //captcha_result: Option<String>,
     lighthouseResult: Option<LighthouseResult>,
     audits: Option<serde_json::Value>,
     // Add other fields based on the JSON response structure
@@ -124,6 +125,7 @@ pub struct Categories {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct audits {
+    category: Option<String>,
     score: Option<f64>,
 }
 
@@ -506,7 +508,10 @@ pub async fn get_page_speed_insights(
 ) -> Result<PageSpeedResponse, String> {
     dotenv::dotenv().ok();
 
-    let api_key = "AIzaSyCCZu9Qxvkv8H0sCR9YPP7aP6CCQTZHFt8";
+    //let api_key = "AIzaSyCCZu9Qxvkv8H0sCR9YPP7aP6CCQTZHFt8";
+    let api_key = libs::load_api_keys().await.unwrap().page_speed_key;
+
+    println!("API key in the crawler: {:?}", api_key);
     let page_speed_url = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
 
     let client = Client::new();

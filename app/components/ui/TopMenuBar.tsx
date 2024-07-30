@@ -60,7 +60,7 @@ const TopMenuBar = () => {
         title="Page Speed Insights API key"
         centered
       >
-        <PageSpeedInsigthsApi />
+        <PageSpeedInsigthsApi close={closePageSpeed} />
       </Modal>
 
       {/* Todo Modal */}

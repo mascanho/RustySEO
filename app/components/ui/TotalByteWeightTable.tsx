@@ -16,10 +16,13 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
           <thead className="sticky top-0 bg-white shadow">
             <tr>
               <th align="left" className="text-xs px-4  w-2/5 border-r">
-                URL
-              </th>
-              <th align="left" className="text-xs px-4 w-1/5 border-r">
                 Trasnfer Size
+              </th>
+              <th
+                align="left"
+                className="text-xs px-4 w-1/5 border-r dark:text-white"
+              >
+                URL
               </th>
             </tr>
           </thead>
@@ -28,7 +31,7 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
               <tr>
                 <td
                   colSpan={2}
-                  className="text-center py-4 text-gray-500 h-full"
+                  className="text-center py-4 text-gray-500 h-full dark:text-white"
                 >
                   No third party connections found.
                 </td>
@@ -36,7 +39,7 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
             ) : (
               scripts.map((item: any, index: number) => (
                 <tr key={item.url || index}>
-                  <td className="px-3  text-[6px] text-gray-700 ">
+                  <td className="px-3  text-[6px] text-gray-700 dark:text-white ">
                     {(
                       Math.round(item?.totalBytes * 1000) / 1000
                     ).toLocaleString() + " KiB"}

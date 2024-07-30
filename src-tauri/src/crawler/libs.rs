@@ -1,11 +1,20 @@
 use core::fmt;
+use directories::ProjectDirs;
 use reqwest::Client;
 use rusqlite::{Connection, Result};
+use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::error::Error;
+use tauri::Config;
+use tokio::fs;
 use url::{ParseError, Url};
 
-use scraper::{Html, Selector};
+use toml::de::Error as TomlError;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ApiKeys {
+    pub page_speed_key: String,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CoreWebVitals {
@@ -196,4 +205,28 @@ pub fn get_indexation_status(document: &Html) -> String {
     }
 
     index_status
+}
+
+// Define the synchronous function to load API keys
+// Define the synchronous function to load API keys
+pub async fn load_api_keys() -> Result<ApiKeys, Box<dyn Error>> {
+    let config_dir =
+        ProjectDirs::from("", "", "rustyseo").ok_or_else(|| "Failed to get project directories")?;
+    let config_file = config_dir.config_dir().join("api_keys.toml");
+
+    let config_content = fs::read_to_string(&config_file).await.map_err(|e| {
+        format!(
+            "Failed to read config file '{}': {}",
+            config_file.display(),
+            e
+        )
+    })?;
+
+    let api_keys: ApiKeys =
+        toml::from_str(&config_content).map_err(|e| format!("Failed to parse config: {}", e))?;
+
+    // Only print the struct representation for debugging
+    println!("Loaded API keys: {:?}", api_keys);
+
+    Ok(api_keys)
 }

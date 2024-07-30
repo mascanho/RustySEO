@@ -1,7 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
-import PerformanceEl from "./components/Performance";
 import replaceDoubleSlash from "./Hooks/DecodeURL";
 import SchemaTextEncoder from "./Hooks/SchemaTest";
 import OpenGraphCard from "./components/ui/OpenGraphCard";
@@ -9,23 +8,18 @@ import GooglePreview from "./components/GooglePreview";
 import FcpEl from "./components/Fcp";
 import DomElements from "./components/DomElements";
 import SpeedIndex from "./components/SpeedIndex";
-import ContentSummary from "./components/ui/ContentSummary";
 import LinkAnalysis from "./components/ui/LinkAnalysis";
 import ImageAnalysis from "./components/ui/ImageAnalysis";
-import { HiMagnifyingGlass } from "react-icons/hi2";
 import ClsEl from "./components/Cls";
 import TbtEl from "./components/Tbt";
 import Redirects from "./components/Redirects";
 import ServerResponseTime from "./components/ServeResponseTime";
 import LongTasks from "./components/LongTasks";
 import TtiEl from "./components/TTI";
-import Footer from "./components/ui/Footer";
 import HeadingsTable from "./components/HeadingsTable";
-import SubBar from "./components/ui/SubBar";
 import RenderBlocking from "./components/RenderBlocking";
 import PageSchemaTable from "./components/ui/PageSchemaTable";
 import { useDisclosure } from "@mantine/hooks";
-import RedirectsTable from "./components/ui/RedirectsTable";
 import ThirdPartyScripts from "./components/ui/ThirdPartyScripts";
 import NetworkPayload from "./components/NetworkPayloads";
 import TotalByteWeight from "./components/ui/TotalByteWeightTable";
@@ -35,10 +29,7 @@ import RobotsTable from "./components/ui/RobotsTable";
 import ImagesChart from "./components/ui/ShadCharts/ImagesChart";
 import { Modal, Tabs } from "@mantine/core";
 import KeywordChart from "./components/ui/ShadCharts/KeywordChart";
-import { Button } from "@/components/ui/button";
-import ThirdPartyScriptChart from "./components/ui/ShadCharts/ThirdPartyScriptChart";
 import { useDebounce } from "use-debounce";
-import { table } from "console";
 import Todo from "./components/ui/Todo";
 import { IoSearchCircle } from "react-icons/io5";
 import TaskManagerContainer from "./components/ui/TaskManager/TaskManagerContainer";
@@ -47,11 +38,6 @@ import HtmlToTextChart from "./components/ui/ShadCharts/HtmlToTextChart";
 import { Switch } from "@/components/ui/switch";
 import SEOImprovements from "./components/ui/Improvements/SEOimprovements";
 
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
 import SidebarContainer from "./components/ui/Sidebar/SidebarContainer";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));

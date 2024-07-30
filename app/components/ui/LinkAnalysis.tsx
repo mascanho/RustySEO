@@ -26,7 +26,7 @@ const LinkAnalysis = ({ visibleLinks }: { visibleLinks: any[] }) => {
                   {visibleLinks.map((link, index) => (
                     <tr key={index} className="align-middle">
                       <td className="border-r border-b">
-                        <span className="block py-1 px-3 text-sm w-[180px]">
+                        <span className="block py-1 px-3 w-[180px]">
                           {link[1] || "-"}
                         </span>
                       </td>

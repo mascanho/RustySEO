@@ -18,9 +18,9 @@ const ContentSummary = ({
 }) => {
   return (
     <section
-      className={`flex-wrap w-full overflow-scroll  min-h-[calc(96rem - 3.5rem)] space-y-1 bg-white p-2 rounded-md relative h-30`}
+      className={`flex-wrap w-full  min-h-[calc(96rem - 2.5rem)] h-full space-y-1 bg-white dark:bg-brand-darker dark:text-white p-2 rounded-md relative`}
     >
-      <div className="p-3 grid gap-5 overflow-y-scroll">
+      <div className="p-3 grid gap-5 overflow-y-scroll h-full">
         <div className="grid gap-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">

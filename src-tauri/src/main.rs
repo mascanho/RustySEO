@@ -128,6 +128,10 @@ fn add_api_key(key: String, api_type: String) -> Result<String, String> {
     let project_dirs = ProjectDirs::from("", "", "rustyseo")
         .ok_or_else(|| "Failed to get project directories".to_string())?;
     let config_dir = project_dirs.config_dir();
+
+    println!("Config directory: {:?}", config_dir);
+    println!("project_dirs: {:?}", project_dirs);
+
     std::fs::create_dir_all(config_dir)
         .map_err(|e| format!("Failed to create config directory: {}", e))?;
 
@@ -143,7 +147,11 @@ fn add_api_key(key: String, api_type: String) -> Result<String, String> {
 
         std::fs::write(&config_file, toml_string)
             .map_err(|e| format!("Failed to write config file: {}", e))?;
-        //println!("Config file created at: {}", config_file.display());
+        println!(
+            "Key: {} \n added to configuration file {}",
+            key,
+            config_file.display()
+        );
         return Ok(key);
     }
 

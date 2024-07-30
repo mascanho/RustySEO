@@ -1,7 +1,8 @@
 import { invoke } from "@tauri-apps/api/tauri";
 import React, { useState } from "react";
+import { toast } from "sonner";
 
-const PageSpeedInsigthsApi = () => {
+const PageSpeedInsigthsApi = ({ close }: any) => {
   const [userInput, setUserInput] = useState("");
 
   console.log(userInput);
@@ -12,9 +13,10 @@ const PageSpeedInsigthsApi = () => {
         key,
         apiType: "page_speed",
       });
-      console.log(result);
-      if (result.success) {
+      console.log(result, "This is the result");
+      if (result) {
         console.log("API key added successfully");
+        toast("API key added successfully");
         // Perform any additional actions on success
       } else {
         console.log("Failed to add API key");
@@ -24,6 +26,7 @@ const PageSpeedInsigthsApi = () => {
       console.error("Error adding API key:", error);
       // Handle the error (e.g., show an error message to the user)
     }
+    close();
   };
 
   return (
