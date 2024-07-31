@@ -560,7 +560,6 @@ const Home: React.FC<HomeProps> = () => {
                   pageSchema={pageSchema}
                   googleSchemaTestUrl={debouncedURL}
                 />
-                <RobotsTable robots={robots} />
               </main>
             </Tabs.Panel>
 
@@ -586,6 +585,7 @@ const Home: React.FC<HomeProps> = () => {
         readingLevelResults={readingLevelResults}
         pageTitle={pageTitle}
         AiContentAnalysis={AiContentAnalysis}
+        robots={robots}
       />
     </section>
   );

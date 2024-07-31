@@ -116,12 +116,9 @@ td {
 
 pre {
   @apply dark:bg-brand-darker dark:text-white/50 border-0 !important;
-  display: overflow-scroll;
+  overflow: scroll;
   height: 34.6rem !important;
   font-size: 0.8rem !important;
-  box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.1),
-    0 4px 11px rgba(0, 0, 0, 0.1);
 }
 
 /* DRAWER */
@@ -152,7 +149,7 @@ pre {
 
   pre {
     @apply dark:bg-brand-darker dark:text-white/50 border-0 !important;
-    display: overflow-scroll;
+    overflow: scroll;
     height: 87% !important;
     overflow-x: hidden;
   }

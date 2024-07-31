@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/resizable";
 import RedirectsTable from "../RedirectsTable";
 import ContentSummary from "../ContentSummary";
+import RobotsTable from "../RobotsTable";
 
 // Define prop types for better type checking
 interface SidebarContainerProps {
@@ -26,6 +27,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
   readingTime,
   readingLevelResults,
   pageTitle,
+  robots,
   AiContentAnalysis,
 }) => {
   console.log(wordCount, "Wordssssss");
@@ -47,19 +49,24 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
                 readingLevelResults={readingLevelResults}
                 pageTitle={pageTitle}
                 AiContentAnalysis={AiContentAnalysis}
+                robots={robots}
               />
             </Tabs.Panel>
           </Tabs>
         </ResizablePanel>
         <ResizableHandle />
-        <ResizablePanel defaultSize={200}>
+        <ResizablePanel defaultSize={200} className="h-[calc(100vh-1.5rem)]">
           <Tabs defaultValue="first" className="text-xs aside-tabs">
             <Tabs.List justify="left" className="dark:text-white text-xs">
               <Tabs.Tab value="first">Redirects</Tabs.Tab>
-              <Tabs.Tab value="third">Improvements</Tabs.Tab>
+              <Tabs.Tab value="third">Robots</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="first">
               <RedirectsTable pageSpeed={pageSpeed} />
+            </Tabs.Panel>
+
+            <Tabs.Panel value="third">
+              <RobotsTable robots={robots} />
             </Tabs.Panel>
           </Tabs>
         </ResizablePanel>
