@@ -6,7 +6,7 @@ const ContentSummary = ({
   readingTime,
   readingLevelResults,
   AiContentAnalysis,
-}) => {
+}: any) => {
   return (
     <section className="flex-wrap min-h-[calc(96rem - 2.5rem)] h-full space-y-1 bg-white dark:bg-brand-darker dark:text-white p-2 rounded-md relative">
       <div className="p-3 grid gap-5 overflow-y-scroll w-full h-full">

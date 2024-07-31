@@ -18,6 +18,7 @@ interface SidebarContainerProps {
   readingLevelResults: any;
   pageTitle: string[];
   AiContentAnalysis: any;
+  robots: any;
 }
 
 const SidebarContainer: React.FC<SidebarContainerProps> = ({
@@ -30,8 +31,6 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
   robots,
   AiContentAnalysis,
 }) => {
-  console.log(wordCount, "Wordssssss");
-
   return (
     <aside className="w-[20rem] md:w-[25rem] h-screen border-l dark:border-l-white/20  overflow-y-auto overflow-hidden flex flex-col bg-white dark:bg-brand-darker">
       <ResizablePanelGroup direction="vertical">

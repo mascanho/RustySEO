@@ -1,3 +1,4 @@
+// @ts-ignore
 import create from "zustand";
 
 interface BearState {
@@ -6,8 +7,8 @@ interface BearState {
   decrease: () => void;
 }
 
-export const useBearStore = create<BearState>((set) => ({
+export const useBearStore = create<BearState>((set: any) => ({
   bears: 2,
-  increase: () => set((state) => ({ bears: state.bears + 1 })),
-  decrease: () => set((state) => ({ bears: state.bears - 1 })),
+  increase: () => set((state: any) => ({ bears: state.bears + 1 })),
+  decrease: () => set((state: any) => ({ bears: state.bears - 1 })),
 }));
