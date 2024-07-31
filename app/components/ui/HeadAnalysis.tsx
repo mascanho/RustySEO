@@ -61,7 +61,7 @@ export const HeadAnalysis = ({
           />
         </div>
         <section
-          className={`${hidden && "hidden"} transition-all ease-in delay-300 `}
+          className={`${hidden && "hidden"} transition-all ease-in delay-300 text-sm `}
         >
           <div className="flex items-center mt-4">
             <div
@@ -96,7 +96,7 @@ export const HeadAnalysis = ({
             <span className={`flex font-semibold  text-black/60 ml-2 `}>
               Page Title:
             </span>
-            <span className="flex ml-2 text-black text-lg font-black">
+            <span className="flex ml-2 text-black text-base font-black">
               {pageTitle[0]}
             </span>
             {pageTitle.length > 0 && (
@@ -119,7 +119,7 @@ export const HeadAnalysis = ({
             >
               Description:
             </span>
-            <span className="text-black text-lg font-black ml-2">
+            <span className="text-black text-base font-black ml-2">
               {pageDescription[0]}
             </span>
             {pageDescription[0]?.length > 0 && (
@@ -169,11 +169,11 @@ export const HeadAnalysis = ({
               )}
               {hreflangs.length > 1 && (
                 <Group justify="center" mb={5}>
-                  <div className="bg-brand-highlight flex ml-2 rounded-md px-3 py-0.5 text-xs items-center">
+                  <div className="bg-brand-highlight flex ml-2 rounded-md px-3 text-xs items-center">
                     <span>{hreflangs.length}</span>
                     <IconChevronDown
                       onClick={toggle}
-                      className={`text-[6px] transition-all animate duration-100 ease-in ${opened && "rotate-180"}`}
+                      className={`text-[4px] transition-all animate duration-100 ease-in ${opened && "rotate-180"}`}
                     />
                   </div>
                 </Group>
@@ -275,7 +275,7 @@ ${openGraphDetails && "bg-gray-200"}
             <span className="text-black/80 ml-2">
               {tagManager.length > 0 && pageTitle?.length > 0 && (
                 <a href="#sd">
-                  <span className="text-black text-lg font-black">
+                  <span className="text-black text-base font-black">
                     {tagManager}
                   </span>
                 </a>

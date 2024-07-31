@@ -8,6 +8,18 @@
   --background-end-rgb: 255, 255, 255;
 }
 
+h1 {
+  font-size: 1rem !important;
+}
+
+h2 {
+  font-size: 0.9rem;
+}
+
+h3 {
+  font-size: 0.9rem !important;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
@@ -106,6 +118,7 @@ pre {
   @apply dark:bg-brand-darker dark:text-white/50 border-0 !important;
   display: overflow-scroll;
   height: 34.6rem !important;
+  font-size: 0.8rem !important;
   box-shadow:
     0 0 0 1px rgba(0, 0, 0, 0.1),
     0 4px 11px rgba(0, 0, 0, 0.1);
@@ -203,11 +216,11 @@ pre {
   }
 }
 
-/* .recharts-wrapper svg { */
-/* min-width: 650px !important; */
-/* margin-left: -200px !important; */
-/* padding: 0 !important; */
-/* } */
+.recharts-wrapper svg {
+  min-width: 650px !important;
+  margin-left: -200px !important;
+  padding: 0 !important;
+}
 
 .line_chart {
   .recharts-wrapper svg {
@@ -257,7 +270,7 @@ button:where([data-active]) {
 /*WIDGETS*/
 
 .widget {
-  @apply border w-56 2xl:w-full  dark:bg-brand-darker dark:border-brand-dark !important;
+  @apply border w-56 2xl:w-full  dark:bg-brand-darker dark:border-brand-dark h-[7.8em] !important;
 }
 
 .widget > div > h2:first-of-type {
@@ -269,7 +282,7 @@ button:where([data-active]) {
 }
 
 .widget div span:first-of-type {
-  @apply text-brand-normal dark:text-sky-500 text-gray-500 !important;
+  @apply dark:text-sky-500 text-gray-500 !important;
 }
 
 /*TIMES*/

@@ -69,7 +69,7 @@ export function ImagesChart({ images, url }: { images: any; url: string }) {
         <CardTitle className="text-black dark:text-white">
           Images on page
         </CardTitle>
-        <CardDescription>{url}</CardDescription>
+        {/* <CardDescription>{url}</CardDescription> */}
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer

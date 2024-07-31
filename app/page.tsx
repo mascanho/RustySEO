@@ -438,9 +438,9 @@ const Home: React.FC<HomeProps> = () => {
                   onCheckedChange={(checked) => setHidden({ widget: !checked })}
                 />
                 <section
-                  className={`grid grid-cols-2 ${hidden.widget ? "hidden" : ""} gap-x-6 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 justify-items-stretch w-full mt-2  mb-10 gap-y-5 `}
+                  className={`grid grid-cols-2 ${hidden.widget ? "hidden" : ""} gap-x-3 md:gap-x-4 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 justify-items-stretch w-full   mb-10 gap-y-5 `}
                 >
-                  <h1 className="absolute font-bold top-4 left-7 text-2xl text-brand-dark/50 dark:text-white/30">
+                  <h1 className="absolute font-bold top-4 left-4 text-2xl text-brand-dark/50 dark:text-white/30">
                     Performance Overview
                   </h1>
 
