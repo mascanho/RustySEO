@@ -34,9 +34,6 @@ export default function RootLayout({
           <section className="mb-[6.7rem]">
             <TopMenuBar />
           </section>
-          {/* <div className="fixed top-7 pl-6  bg-white  dark:bg-brand-darker   dark:border-gray-800  w-full overflow-hidden z-[1000]  "> */}
-          {/*   <MenuDrawer /> */}
-          {/* </div> */}
           <main className="mt-10   rounded-md  ">
             {children}
             <Toaster />

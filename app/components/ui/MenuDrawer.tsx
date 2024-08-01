@@ -22,7 +22,7 @@ function MenuDrawer() {
 
   return (
     <>
-      <div className="flex items-center mt-2 z-[2000]">
+      <div className="flex items-center  z-[2000] absolute top-2 left-5">
         <span className="text-xs bg-apple-spaceGray px-3  py-1  rounded-full text-white">
           Page crawler
         </span>

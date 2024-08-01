@@ -28,6 +28,7 @@ use crate::crawler;
 mod content;
 pub mod db;
 mod libs;
+mod page_rank;
 
 #[derive(Serialize)]
 struct Element {

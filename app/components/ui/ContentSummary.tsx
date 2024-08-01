@@ -203,7 +203,7 @@ const ContentSummary = ({
             <h3 className="text-xs font-semibold dark:text-sky-dark">
               Summary
             </h3>
-            <p className="text-muted-foreground text-xs -mt-9">
+            <p className="text-muted-foreground text-xs -mt-6">
               {AiContentAnalysis}
             </p>
           </div>

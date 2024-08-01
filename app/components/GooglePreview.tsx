@@ -2,17 +2,19 @@
 import React from "react";
 
 const GooglePreview = ({
-  openGraphDetails,
-  favicon_url,
+  pageTitle,
+  pageDescription,
   url,
+  favicon_url,
 }: {
   favicon_url: string[];
-  openGraphDetails: any;
+  pageTitle: any;
   url: string;
+  pageDescription: any;
 }) => {
   return (
     <div
-      className={`shadow overflow-hidden rounded-md ${openGraphDetails.length === 0 ? "bg-white/40" : "bg-white"}`}
+      className={`shadow overflow-hidden rounded-md ${pageTitle.length === 0 ? "bg-white/40" : "bg-white"}`}
     >
       <h2 className=" bg-apple-spaceGray font-semibold text-white   rounded-t-md w-full pt-1  text-center ">
         SERP Preview
@@ -29,13 +31,11 @@ const GooglePreview = ({
               fontSize: "18px",
             }}
           >
-            {openGraphDetails.title}
+            {pageTitle}
           </a>
-          <div style={{ color: "green", fontSize: "14px" }}>
-            {openGraphDetails.url}
-          </div>
+          <div style={{ color: "green", fontSize: "14px" }}>{url}</div>
           <div style={{ color: "#4d5156", fontSize: "14px" }}>
-            {openGraphDetails.description}
+            {pageDescription}
           </div>
         </div>{" "}
       </section>

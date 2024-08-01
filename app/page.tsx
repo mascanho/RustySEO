@@ -39,6 +39,8 @@ import { Switch } from "@/components/ui/switch";
 import SEOImprovements from "./components/ui/Improvements/SEOimprovements";
 
 import SidebarContainer from "./components/ui/Sidebar/SidebarContainer";
+import MenuDrawer from "./components/ui/MenuDrawer";
+import PageRankChart from "./components/ui/ShadCharts/PageRankChart";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -368,55 +370,50 @@ const Home: React.FC<HomeProps> = () => {
         >
           <Todo url={debouncedURL} close={closeModal} strategy={strategy} />
         </Modal>
-
         {/* Fixed Input and Crawl Button */}
-        <div className="overflow-hidden fixed top-[28px] pt-2 z-[1000] h-12 pb-2 border-b  left-0  mx-auto justify-center w-full dark:bg-brand-darker  items-center bg-white ">
-          <section className="flex   items-end justify-end w-[600px] mx-auto relative ">
-            <div className="flex justify-center w-full  items-center  overflow-hidden">
+        <div className="fixed top-[28px] left-0 right-0 z-[1000] h-12 border-b bg-white dark:bg-brand-darker flex items-center px-4">
+          <MenuDrawer />
+          <section className="flex items-center justify-end mx-auto relative w-full max-w-[600px]">
+            <div className="flex items-center w-full">
               <select
-                onChange={(event) => handleStrategyChange(event)}
-                className="custom-select  bg-slate-100 dark:bg-white dark:text-black border-0 outline-none rounded-full text-sm h-6"
+                onChange={handleStrategyChange}
+                className="bg-slate-100 dark:bg-white dark:text-black border-0 rounded-full text-sm h-6 px-2"
               >
                 <option value="desktop">Desktop</option>
                 <option value="mobile">Mobile</option>
               </select>
-              <div className="overflow-hidden">
+              <div className="relative flex items-center ml-2 flex-grow">
                 <input
-                  className=" h-6 text-xs min-w-80 w-[40em] pl-5 pt-[2px] rounded-2xl -ml-2  pr-2 placeholder:text-gray-500 relative bg-slate-100 dark:border dark:border-white dark:bg-white "
                   type="url"
                   placeholder="https://yourwebsite.com"
-                  // value={url}
                   onChange={handleChange}
-                  style={{ outline: "none", boxShadow: "none" }}
                   onKeyPress={(event) => {
                     if (event.key === "Enter") {
                       handleClick(url);
                     }
                   }}
+                  className="w-full h-6 text-xs pl-5 rounded-2xl bg-slate-100 dark:bg-white dark:border dark:border-white placeholder:text-gray-500"
+                  style={{ outline: "none", boxShadow: "none" }}
                 />
-                {loading ? (
+                {loading && (
                   <div
-                    className="animate-spin cursor-pointer inline-block size-4 border-[3px] border-current border-t-transparent text-blue-600 rounded-full absolute top-1 right-7"
+                    className="absolute top-0.5 right-2 w-5 h-5 border-4 border-t-transparent border-blue-600 rounded-full animate-spin cursor-pointer"
                     role="status"
                     aria-label="loading"
-                    onClick={() => window?.location?.reload()}
-                  ></div>
-                ) : (
-                  <IoSearchCircle
-                    onClick={() => handleClick(url)}
-                    className="absolute top-0 text-2xl py-[2px] right-6 text-sky-500"
+                    onClick={() => window.location.reload()}
                   />
                 )}
+                <span
+                  onClick={() => handleClick(url)}
+                  className="absolute top-0 text-sm rounded-full -right-14 bg-sky-500 text-white px-2 py-0.5 cursor-pointer"
+                >
+                  {" "}
+                  crawl{" "}
+                </span>
               </div>
             </div>
           </section>
         </div>
-        {/* <SubBar */}
-        {/*   domainWithoutLastPart={domainWithoutLastPart} */}
-        {/*   url={url} */}
-        {/*   strategy={strategy} */}
-        {/* /> */}
-
         {/* TABS SECTION */}
         <section className="mt-2 relative h-[calc(100vh-9.2rem)] overflow-x-hidden   py-6 px-3 ">
           <Tabs defaultValue="first">
@@ -533,7 +530,7 @@ const Home: React.FC<HomeProps> = () => {
                 <KeywordChart keywords={keywords} url={debouncedURL} />
                 <HtmlToTextChart htmlToTextRatio={htmlToTextRatio} />
                 <ImagesChart url={debouncedURL} images={images} />
-                <KeywordChart keywords={keywords} url={debouncedURL} />
+                <PageRankChart />
               </section>
 
               {/* TABLES START HERE */}
@@ -543,7 +540,8 @@ const Home: React.FC<HomeProps> = () => {
               >
                 <GooglePreview
                   favicon_url={favicon_url}
-                  openGraphDetails={openGraphDetails}
+                  pageTitle={pageTitle}
+                  pageDescription={pageDescription}
                   url={debouncedURL}
                 />
                 <OpenGraphCard

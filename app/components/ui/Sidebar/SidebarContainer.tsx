@@ -8,6 +8,7 @@ import {
 import RedirectsTable from "../RedirectsTable";
 import ContentSummary from "../ContentSummary";
 import RobotsTable from "../RobotsTable";
+import PageRankChart from "../ShadCharts/PageRankChart";
 
 // Define prop types for better type checking
 interface SidebarContainerProps {
@@ -58,14 +59,18 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
           <Tabs defaultValue="first" className="text-xs aside-tabs">
             <Tabs.List justify="left" className="dark:text-white text-xs">
               <Tabs.Tab value="first">Redirects</Tabs.Tab>
-              <Tabs.Tab value="third">Robots</Tabs.Tab>
+              <Tabs.Tab value="second">Robots</Tabs.Tab>
+              <Tabs.Tab value="third">Domain</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="first">
               <RedirectsTable pageSpeed={pageSpeed} />
             </Tabs.Panel>
 
-            <Tabs.Panel value="third">
+            <Tabs.Panel value="second">
               <RobotsTable robots={robots} />
+            </Tabs.Panel>
+            <Tabs.Panel value="third">
+              <PageRankChart />
             </Tabs.Panel>
           </Tabs>
         </ResizablePanel>

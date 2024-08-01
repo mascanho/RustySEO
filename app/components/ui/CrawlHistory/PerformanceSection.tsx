@@ -1,8 +1,31 @@
-import { FaDesktop } from "react-icons/fa";
-import { FaMobileAlt } from "react-icons/fa";
+import React from "react";
+import { FaDesktop, FaMobileAlt } from "react-icons/fa";
 
-const PerformanceSection = ({ dbdata }: any) => {
-  console.log(dbdata, "dbdata");
+// Define TypeScript types for better type safety
+interface PerformanceData {
+  date: string;
+  strategy: string;
+  url: string;
+  performance: number;
+  fcp: number;
+  lcp: number;
+  tti: number;
+  cls: number;
+  tbt: number;
+  dom_size: number;
+}
+
+interface PerformanceSectionProps {
+  dbdata: PerformanceData[];
+}
+
+const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
+  // Ensure dbdata is an array before calling sort
+  const sortedData = Array.isArray(dbdata)
+    ? dbdata.sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+      )
+    : [];
 
   return (
     <section className="rounded-md mt-4 overflow-hidden shadow border">
@@ -22,28 +45,52 @@ const PerformanceSection = ({ dbdata }: any) => {
               <th>DOM</th>
             </tr>
           </thead>
-          {Object?.values(dbdata)?.map((data: any, index: number) => (
-            <tr className="w-full" key={index}>
-              <td>{new Date(data?.date).toLocaleDateString()}</td>
-              <td>{data?.strategy}</td>
-              <td align="left">{data?.url}</td>
-              <td
-                className={`${data?.performance <= 50 ? "text-red-600" : "text-green-600"}`}
-              >
-                {data?.performance}
-              </td>
-              <td
-                className={`${data?.performance <= 50 ? "text-red-600" : "text-green-600"}`}
-              >
-                {data?.fcp}
-              </td>
-              <td>{data?.lcp}</td>
-              <td>{data?.tti}</td>
-              <td>{data?.cls}</td>
-              <td>{data?.tbt}</td>
-              <td>{data?.dom_size}</td>
-            </tr>
-          ))}
+          <tbody>
+            {sortedData.map((data, index) => (
+              <tr className="w-full" key={index}>
+                <td>{new Date(data.date).toLocaleDateString()}</td>
+                <td>
+                  {data.strategy === "DESKTOP" ? (
+                    <FaDesktop />
+                  ) : (
+                    <FaMobileAlt />
+                  )}
+                </td>
+                <td align="left">{data.url}</td>
+                <td
+                  className={`${data.performance <= 0.5 ? "text-red-600" : "text-green-600"}`}
+                >
+                  {data.performance}
+                </td>
+                <td
+                  className={`${data.fcp <= 0.5 ? "text-red-600" : "text-green-600"}`}
+                >
+                  {data.fcp}
+                </td>
+                <td
+                  className={`${data.lcp <= 0.5 ? "text-red-600" : "text-green-600"}`}
+                >
+                  {data.lcp}
+                </td>
+                <td
+                  className={`${data.tti <= 0.5 ? "text-red-600" : "text-green-600"}`}
+                >
+                  {data.tti}
+                </td>
+                <td
+                  className={`${data.cls <= 0.5 ? "text-red-600" : "text-green-600"}`}
+                >
+                  {data.cls}
+                </td>
+                <td
+                  className={`${data.tbt <= 0.5 ? "text-red-600" : "text-green-600"}`}
+                >
+                  {data.tbt}
+                </td>
+                <td>{data.dom_size}</td>
+              </tr>
+            ))}
+          </tbody>
         </table>
       </div>
     </section>
