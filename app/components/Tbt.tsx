@@ -117,7 +117,7 @@ const TbtEl = ({
             </div>
           ) : (
             <>
-              {stat.length === 0 ||
+              {stat?.length === 0 ||
               stat?.lighthouseResult?.audits?.["total-blocking-time"]?.score ===
                 undefined ? (
                 <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">

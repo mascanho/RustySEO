@@ -43,6 +43,8 @@ import MenuDrawer from "./components/ui/MenuDrawer";
 import PageRankChart from "./components/ui/ShadCharts/PageRankChart";
 import PerformanceEl from "./components/Performance";
 import { FaChevronDown, FaDesktop, FaMobile } from "react-icons/fa";
+import { CgLayoutGrid } from "react-icons/cg";
+import { CiGlobe } from "react-icons/ci";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -66,7 +68,7 @@ const Home: React.FC<HomeProps> = () => {
   const [wordCount, setWordCount] = useState<any>([]);
   const [readingTime, setReadingTime] = useState<number | undefined>();
   const [openGraphDetails, setOpenGraphDetails] = useState<any[]>([]);
-  const [pageSpeed, setPageSpeed] = useState<any[]>([]);
+  let [pageSpeed, setPageSpeed] = useState<any[]>([]);
   const [favicon_url, setFavicon_url] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [keywords, setKeywords] = useState<string[]>([]);
@@ -307,7 +309,9 @@ const Home: React.FC<HomeProps> = () => {
   const handleSpeed = useCallback(
     (url: string) => {
       invoke<{}>("fetch_page_speed", { url: url, strategy: strategy.strategy })
-        .then((result: any) => setPageSpeed(result))
+        .then((result: any) => {
+          setPageSpeed(result);
+        })
         .then(() => setLoading(false))
         .catch(console.error);
     },
@@ -362,8 +366,16 @@ const Home: React.FC<HomeProps> = () => {
   const [selectedOption, setSelectedOption] = useState("DESKTOP");
 
   const options = [
-    { value: "DESKTOP", label: "Desktop", icon: <FaDesktop /> },
-    { value: "mobile", label: "Mobile", icon: <FaMobile /> },
+    {
+      value: "DESKTOP",
+      label: "Desktop",
+      icon: <FaDesktop />,
+    },
+    {
+      value: "mobile",
+      label: "Mobile",
+      icon: <FaMobile />,
+    },
   ];
 
   const handleSelect = (value: any) => {
@@ -375,7 +387,10 @@ const Home: React.FC<HomeProps> = () => {
     }));
   };
 
-  console.log(pageRank, "this is the page rank");
+  const seoPageSpeed = pageSpeed && pageSpeed[1];
+  pageSpeed = pageSpeed && pageSpeed[0];
+
+  console.log(seoPageSpeed);
 
   return (
     <section className="h-full overflow-y-clip flex">
@@ -392,7 +407,7 @@ const Home: React.FC<HomeProps> = () => {
           <Todo url={debouncedURL} close={closeModal} strategy={strategy} />
         </Modal>
         {/* Fixed Input and Crawl Button */}
-        <div className="fixed top-[28px] left-0 right-0 z-[1000] h-12 border-b bg-white dark:bg-brand-darker flex items-center px-4">
+        <div className="fixed top-[28px] left-0 right-0 z-[1000] h-12 border-b bg-white dark:bg-brand-darker flex items-center px-4 dark:border-b-white/10">
           <MenuDrawer />
           <section className="flex items-center justify-end mx-auto relative w-full max-w-[600px]">
             <div className="flex items-center w-full">
@@ -401,7 +416,7 @@ const Home: React.FC<HomeProps> = () => {
                   <button
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
-                    className="inline-flex justify-center w-28 rounded-md border border-gray-300 shadow-sm px-3 py-0.5 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
+                    className="inline-flex justify-center w-[98px] rounded-md border border-gray-300 shadow-sm px-2  bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 h-6 py-[3px] focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500 items-center mt-[1px]"
                     id="options-menu"
                     aria-haspopup="true"
                     aria-expanded="true"
@@ -417,7 +432,7 @@ const Home: React.FC<HomeProps> = () => {
                       }
                     </span>
                     <FaChevronDown
-                      className="ml-1 -mr-1 h-4 w-4"
+                      className="ml-1 -mr-1 h-4 w-4 text-xs text-black/50"
                       aria-hidden="true"
                     />
                   </button>
@@ -449,6 +464,7 @@ const Home: React.FC<HomeProps> = () => {
                 )}
               </div>
               <div className="relative flex items-center ml-2 flex-grow">
+                <CiGlobe className="absolute ml-2 text-gray-400" />
                 <input
                   type="url"
                   placeholder="https://yourwebsite.com"
@@ -458,7 +474,7 @@ const Home: React.FC<HomeProps> = () => {
                       handleClick(url);
                     }
                   }}
-                  className="w-full h-6 text-xs pl-5 rounded-md bg-slate-100 dark:bg-white dark:border dark:border-white placeholder:text-gray-500"
+                  className="w-full h-6 text-xs pl-7 rounded-md bg-slate-100 dark:bg-white dark:border dark:border-white placeholder:text-gray-500"
                   style={{ outline: "none", boxShadow: "none" }}
                 />
                 {loading && (
@@ -471,7 +487,7 @@ const Home: React.FC<HomeProps> = () => {
                 )}
                 <button
                   onClick={() => handleClick(url)}
-                  className="absolute top-0 text-sm rounded-md -right-14 bg-sky-500 text-white px-2 py-0.5 cursor-pointer"
+                  className="absolute top-0 text-sm rounded-md -right-[4rem] bg-sky-500 active:scale-95 text-white px-3 py-0.5 cursor-pointer"
                 >
                   {" "}
                   crawl{" "}
@@ -511,6 +527,7 @@ const Home: React.FC<HomeProps> = () => {
                     loading={loading}
                     url={debouncedURL}
                   />
+
                   <FcpEl
                     stat={pageSpeed}
                     loading={loading}
@@ -556,7 +573,6 @@ const Home: React.FC<HomeProps> = () => {
                     loading={loading}
                     url={debouncedURL}
                   />
-
                   <Redirects
                     stat={pageSpeed}
                     loading={loading}
@@ -655,6 +671,7 @@ const Home: React.FC<HomeProps> = () => {
         AiContentAnalysis={AiContentAnalysis}
         robots={robots}
         pageRank={pageRank}
+        seo={seoPageSpeed}
       />
     </section>
   );

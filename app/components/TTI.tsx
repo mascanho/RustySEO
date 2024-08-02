@@ -120,7 +120,7 @@ const TtiEl = ({
             </div>
           ) : (
             <>
-              {stat.length === 0 ||
+              {stat?.length === 0 ||
               stat?.lighthouseResult?.audits?.interactive?.score ===
                 undefined ? (
                 <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">

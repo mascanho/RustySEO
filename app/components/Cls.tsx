@@ -116,7 +116,7 @@ const ClsEl = ({
             </div>
           ) : (
             <>
-              {stat.length === 0 ||
+              {stat?.length === 0 ||
               stat?.lighthouseResult?.audits?.["cumulative-layout-shift"]
                 ?.score === undefined ? (
                 <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">

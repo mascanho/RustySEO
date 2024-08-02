@@ -128,7 +128,7 @@ const Redirects = ({
             <>
               <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
                 {stat?.lighthouseResult?.audits?.redirects?.details?.items
-                  ? `${stat.lighthouseResult.audits.redirects.details.items.length} items`
+                  ? `${stat?.lighthouseResult.audits.redirects.details.items.length} items`
                   : "..."}
               </span>
             </>

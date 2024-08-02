@@ -1,4 +1,5 @@
 use directories::ProjectDirs;
+use dotenv::dotenv;
 use html5ever::driver::parse_document;
 use html5ever::serialize::{serialize, SerializeOpts, TraversalScope};
 use html5ever::tendril::{ByteTendril, TendrilSink};
@@ -99,6 +100,21 @@ pub struct ImageInfo {
     alt_text: String,
     link: String,
     size_mb: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SeoPageSpeedResponse {
+    id: String,
+    lighthouseResult: Option<SEOLighthouseResponse>,
+    audits: Option<serde_json::Value>,
+    // Add other fields based on the JSON response structure
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct SEOLighthouseResponse {
+    audits: Option<serde_json::Value>,
+    categories: Option<serde_json::Value>,
+    // Add other fields based on the JSON response structure
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -521,109 +537,75 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
 // Fetch the performance data from page spoeed insights
 pub async fn get_page_speed_insights(
     url: String,
-    strategy: String,
-) -> Result<PageSpeedResponse, String> {
-    dotenv::dotenv().ok();
+    strategy: Option<String>,
+) -> Result<(PageSpeedResponse, SeoPageSpeedResponse), String> {
+    dotenv().ok();
 
-    //let api_key = "AIzaSyCCZu9Qxvkv8H0sCR9YPP7aP6CCQTZHFt8";
-    let api_key = libs::load_api_keys().await.unwrap().page_speed_key;
+    let api_key = libs::load_api_keys()
+        .await
+        .map_err(|e| format!("Failed to load API keys: {}", e))?
+        .page_speed_key;
 
-    println!("API key in the crawler: {:?}", api_key);
     let page_speed_url = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
-
     let client = Client::new();
-    let request_url = format!(
-        "{}?url={}&strategy={}&key={}",
-        page_speed_url, url, strategy, api_key
+
+    // General page speed insights request URL
+    let general_request_url = format!(
+        "{}?url={}&key={}{}",
+        page_speed_url,
+        url,
+        api_key,
+        if let Some(strategy) = &strategy {
+            format!("&strategy={}", strategy)
+        } else {
+            String::new()
+        }
     );
 
-    let seo_score = get_seo(&url).await;
-
-    match client.get(&request_url).send().await {
-        Ok(response) => {
-            let response_text = response
-                .text()
-                .await
-                .map_err(|e| format!("Failed to read response text: {}", e))?;
-
-            // Save the raw JSON response into a file
-            // let mut file = File::create("page_speed_results.json")
-            //     .map_err(|e| format!("Failed to create file: {}", e))?;
-            // file.write_all(&response_text.as_bytes())
-            //     .map_err(|e| format!("Failed to write to file: {}", e))?;
-
-            // println!("Raw JSON response: {}", response_text);
-            println!("Page Speed Results: OK ");
-
-            // PUSH DATA INTO DB
-            db::add_data_from_pagespeed(&response_text, &strategy, &url);
-
-            // Parse the response text into PageSpeedResponse struct
-            match serde_json::from_str::<PageSpeedResponse>(&response_text) {
-                Ok(page_speed_response) => Ok((page_speed_response, seo_score)),
-                Err(e) => {
-                    eprintln!("Failed to parse response: {}", e);
-                    Err(format!("Failed to parse response: {}", e))
-                }
-            }
-        }
-        Err(e) => {
-            eprintln!("Failed to make request: {}", e);
-            Err(format!("Failed to make request: {}", e))
-        }
-    }
-}
-
-// Fetch the SEO data from page spoeed insights
-pub async fn get_seo(url: &str) -> Result<PageSpeedResponse, String> {
-    dotenv::dotenv().ok();
-
-    //let api_key = "AIzaSyCCZu9Qxvkv8H0sCR9YPP7aP6CCQTZHFt8";
-    let api_key = libs::load_api_keys().await.unwrap().page_speed_key;
-
-    println!("API key in the crawler: {:?}", api_key);
-    let page_speed_url = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
-    let category = "seo";
-    let client = Client::new();
-    let request_url = format!(
-        "{}?url={}&category={}&key={}",
-        page_speed_url, url, category, api_key
+    // SEO-specific insights request URL
+    let seo_request_url = format!(
+        "{}?url={}&category=seo&key={}",
+        page_speed_url, url, api_key
     );
 
-    match client.get(&request_url).send().await {
-        Ok(response) => {
-            let response_text = response
-                .text()
-                .await
-                .map_err(|e| format!("Failed to read response text: {}", e))?;
+    // Send both requests concurrently
+    let (general_response, seo_response) = tokio::try_join!(
+        client.get(&general_request_url).send(),
+        client.get(&seo_request_url).send()
+    )
+    .map_err(|e| format!("Failed to make one or both requests: {}", e))?;
 
-            // Save the raw JSON response into a file
-            // let mut file = File::create("page_speed_results.json")
-            //     .map_err(|e| format!("Failed to create file: {}", e))?;
-            // file.write_all(&response_text.as_bytes())
-            //     .map_err(|e| format!("Failed to write to file: {}", e))?;
+    // Handle general response
+    let general_response_text = general_response
+        .text()
+        .await
+        .map_err(|e| format!("Failed to read general response text: {}", e))?;
 
-            // println!("Raw JSON response: {}", response_text);
-            println!("Page Speed Results: OK ");
-            println!("Page SEO: {}  ", response_text);
+    // Handle SEO response
+    let seo_response_text = seo_response
+        .text()
+        .await
+        .map_err(|e| format!("Failed to read SEO response text: {}", e))?;
 
-            // PUSH DATA INTO DB
-            //db::add_data_from_pagespeed(&response_text, &strategy, &url);
+    println!("General Page Speed Results: OK ");
+    println!("SEO Page Speed Results: OK ");
 
-            // Parse the response text into PageSpeedResponse struct
-            match serde_json::from_str::<PageSpeedResponse>(&response_text) {
-                Ok(page_speed_response) => Ok(page_speed_response),
-                Err(e) => {
-                    eprintln!("Failed to parse response: {}", e);
-                    Err(format!("Failed to parse response: {}", e))
-                }
-            }
-        }
-        Err(e) => {
-            eprintln!("Failed to make request: {}", e);
-            Err(format!("Failed to make request: {}", e))
-        }
-    }
+    // Optionally, cache results here if applicable
+
+    // Push data into DB (consider doing this asynchronously)
+    // You may want to implement retry logic or batch this
+    db::add_data_from_pagespeed(&general_response_text, &strategy.unwrap_or_default(), &url);
+    //db::add_data_from_pagespeed(&seo_response_text, "seo", &url);
+
+    // Parse responses into PageSpeedResponse structs
+    let general_page_speed_response =
+        serde_json::from_str::<PageSpeedResponse>(&general_response_text)
+            .map_err(|e| format!("Failed to parse general response: {}", e))?;
+
+    let seo_page_speed_response = serde_json::from_str::<SeoPageSpeedResponse>(&seo_response_text)
+        .map_err(|e| format!("Failed to parse SEO response: {}", e))?;
+
+    Ok((general_page_speed_response, seo_page_speed_response))
 }
 
 async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError + Send + Sync>> {

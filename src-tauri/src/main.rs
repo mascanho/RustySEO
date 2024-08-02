@@ -1,6 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use crawler::{CrawlResult, LinkResult, PageSpeedResponse};
+use crawler::{
+    CrawlResult, LinkResult, PageSpeedResponse, SEOLighthouseResponse, SeoPageSpeedResponse,
+};
 use directories::ProjectDirs;
 use genai::genai;
 use serde::{Deserialize, Serialize};
@@ -32,11 +34,17 @@ async fn crawl(url: String) -> Result<CrawlResult, String> {
 }
 
 #[tauri::command]
-async fn fetch_page_speed(url: &str, strategy: &str) -> Result<PageSpeedResponse, String> {
-    let result = crawler::get_page_speed_insights(url.to_string(), strategy.to_string()).await;
+async fn fetch_page_speed(
+    url: &str,
+    strategy: &str,
+) -> Result<(PageSpeedResponse, SeoPageSpeedResponse), String> {
+    let result =
+        crawler::get_page_speed_insights(url.to_string(), Some(strategy.to_string())).await;
+
+    println!("Result: {:?}", result);
 
     match result {
-        Ok(result) => Ok(result),
+        Ok((general_response, seo_response)) => Ok((general_response, seo_response)),
         Err(err) => Err(err),
     }
 }

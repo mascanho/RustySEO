@@ -120,7 +120,7 @@ const ServerResponseTime = ({
             </div>
           ) : (
             <>
-              {stat.length === 0 ? (
+              {!stat ? (
                 <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
                   ...
                 </span>
@@ -128,8 +128,8 @@ const ServerResponseTime = ({
                 (() => {
                   // Extract score and calculate percentage
                   const score = Math.floor(
-                    stat.lighthouseResult.audits["server-response-time"].score *
-                      100,
+                    stat?.lighthouseResult.audits["server-response-time"]
+                      .score * 100,
                   );
                   let label = "";
 
@@ -180,8 +180,9 @@ const ServerResponseTime = ({
             Response time:{" "}
           </h2>
           <span className="inline text-xs">
-            {stat?.lighthouseResult?.audits?.["server-response-time"]
-              .numericValue + " ms"}
+            {stat &&
+              stat?.lighthouseResult?.audits?.["server-response-time"]
+                .numericValue + " ms"}
           </span>
         </div>
       </div>

@@ -152,7 +152,7 @@ export const HeadAnalysis = ({
             <span className="font-semibold  ml-2 rounded-md text-black/60">
               Hreflangs:
             </span>
-            <div className="flex">
+            <div className="flex flex-wrap space-y-2">
               {hreflangs[0] === "No hreflang found" ? (
                 <span className="ml-2">No hreflang found</span>
               ) : (

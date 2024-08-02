@@ -9,6 +9,7 @@ import RedirectsTable from "../RedirectsTable";
 import ContentSummary from "../ContentSummary";
 import RobotsTable from "../RobotsTable";
 import PageRankChart from "../ShadCharts/PageRankChart";
+import SeoChart from "../ShadCharts/SeoChart";
 
 // Define prop types for better type checking
 interface SidebarContainerProps {
@@ -21,6 +22,7 @@ interface SidebarContainerProps {
   AiContentAnalysis: any;
   robots: any;
   pageRank: any;
+  seo: any;
 }
 
 const SidebarContainer: React.FC<SidebarContainerProps> = ({
@@ -33,6 +35,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
   robots,
   AiContentAnalysis,
   pageRank,
+  seo,
 }) => {
   return (
     <aside className="w-[20rem] md:w-[25rem] h-screen border-l dark:border-l-white/20  overflow-y-auto overflow-hidden flex flex-col bg-white dark:bg-brand-darker">
@@ -42,6 +45,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
             <Tabs.List justify="left" className="dark:text-white text-xs">
               <Tabs.Tab value="first">Content</Tabs.Tab>
               <Tabs.Tab value="third">Ranking</Tabs.Tab>
+              <Tabs.Tab value="second">SEO</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="first" className="h-full w-full">
               <ContentSummary
@@ -53,6 +57,10 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
                 AiContentAnalysis={AiContentAnalysis}
                 robots={robots}
               />
+            </Tabs.Panel>
+
+            <Tabs.Panel value="second" className="h-full w-full">
+              <SeoChart seo={seo} />
             </Tabs.Panel>
           </Tabs>
         </ResizablePanel>
