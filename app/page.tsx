@@ -41,6 +41,7 @@ import SEOImprovements from "./components/ui/Improvements/SEOimprovements";
 import SidebarContainer from "./components/ui/Sidebar/SidebarContainer";
 import MenuDrawer from "./components/ui/MenuDrawer";
 import PageRankChart from "./components/ui/ShadCharts/PageRankChart";
+import PerformanceEl from "./components/Performance";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -440,7 +441,11 @@ const Home: React.FC<HomeProps> = () => {
                   <h1 className="absolute font-bold top-4 left-4 text-2xl text-brand-dark/50 dark:text-white/30">
                     Performance Overview
                   </h1>
-
+                  <PerformanceEl
+                    stat={pageSpeed}
+                    loading={loading}
+                    url={debouncedURL}
+                  />
                   <FcpEl
                     stat={pageSpeed}
                     loading={loading}
