@@ -42,6 +42,7 @@ import SidebarContainer from "./components/ui/Sidebar/SidebarContainer";
 import MenuDrawer from "./components/ui/MenuDrawer";
 import PageRankChart from "./components/ui/ShadCharts/PageRankChart";
 import PerformanceEl from "./components/Performance";
+import { FaChevronDown, FaDesktop, FaMobile } from "react-icons/fa";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -353,9 +354,22 @@ const Home: React.FC<HomeProps> = () => {
     },
     [],
   );
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedOption, setSelectedOption] = useState("DESKTOP");
 
-  console.log(pageSpeed, "page speed");
-  console.log(htmlToTextRatio, "htmlToTextRatio");
+  const options = [
+    { value: "DESKTOP", label: "Desktop", icon: <FaDesktop /> },
+    { value: "mobile", label: "Mobile", icon: <FaMobile /> },
+  ];
+
+  const handleSelect = (value: any) => {
+    setSelectedOption(value);
+    setIsOpen(false);
+    setStrategy((prev: any) => ({
+      ...prev,
+      strategy: value,
+    }));
+  };
 
   return (
     <section className="h-full overflow-y-clip flex">
@@ -376,13 +390,58 @@ const Home: React.FC<HomeProps> = () => {
           <MenuDrawer />
           <section className="flex items-center justify-end mx-auto relative w-full max-w-[600px]">
             <div className="flex items-center w-full">
-              <select
-                onChange={handleStrategyChange}
-                className="bg-slate-100 dark:bg-white dark:text-black border-0 rounded-full text-sm h-6 px-2"
-              >
-                <option value="desktop">Desktop</option>
-                <option value="mobile">Mobile</option>
-              </select>
+              <div className="relative inline-block text-left z-[900000]">
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="inline-flex justify-center w-28 rounded-md border border-gray-300 shadow-sm px-3 py-0.5 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500"
+                    id="options-menu"
+                    aria-haspopup="true"
+                    aria-expanded="true"
+                  >
+                    {
+                      options?.find((opt) => opt?.value === selectedOption)
+                        ?.icon
+                    }
+                    <span className="ml-2">
+                      {
+                        options.find((opt) => opt.value === selectedOption)
+                          ?.label
+                      }
+                    </span>
+                    <FaChevronDown
+                      className="ml-1 -mr-1 h-4 w-4"
+                      aria-hidden="true"
+                    />
+                  </button>
+                </div>
+
+                {isOpen && (
+                  <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                    <div
+                      className="py-1"
+                      role="menu"
+                      aria-orientation="vertical"
+                      aria-labelledby="options-menu"
+                    >
+                      {options.map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => handleSelect(option.value)}
+                          className="flex items-center px-4 py-2 z-[10000000000] text-sm text-gray-700 hover:bg-red-100 hover:text-gray-900 w-full text-left"
+                          role="menuitem"
+                        >
+                          {option.icon}
+                          <span className="ml-2 z-[1000000000000]">
+                            {option.label}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
               <div className="relative flex items-center ml-2 flex-grow">
                 <input
                   type="url"
@@ -393,7 +452,7 @@ const Home: React.FC<HomeProps> = () => {
                       handleClick(url);
                     }
                   }}
-                  className="w-full h-6 text-xs pl-5 rounded-2xl bg-slate-100 dark:bg-white dark:border dark:border-white placeholder:text-gray-500"
+                  className="w-full h-6 text-xs pl-5 rounded-md bg-slate-100 dark:bg-white dark:border dark:border-white placeholder:text-gray-500"
                   style={{ outline: "none", boxShadow: "none" }}
                 />
                 {loading && (
@@ -404,13 +463,13 @@ const Home: React.FC<HomeProps> = () => {
                     onClick={() => window.location.reload()}
                   />
                 )}
-                <span
+                <button
                   onClick={() => handleClick(url)}
-                  className="absolute top-0 text-sm rounded-full -right-14 bg-sky-500 text-white px-2 py-0.5 cursor-pointer"
+                  className="absolute top-0 text-sm rounded-md -right-14 bg-sky-500 text-white px-2 py-0.5 cursor-pointer"
                 >
                   {" "}
                   crawl{" "}
-                </span>
+                </button>
               </div>
             </div>
           </section>
@@ -418,7 +477,7 @@ const Home: React.FC<HomeProps> = () => {
         {/* TABS SECTION */}
         <section className="mt-2 relative h-[calc(100vh-9.2rem)] overflow-x-hidden   py-6 px-3 ">
           <Tabs defaultValue="first">
-            <div className="transition-all  ease-in  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-2 top-[70px]  transform dark:bg-brand-darker z-[2000] pb-0">
+            <div className="transition-all  ease-in  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-2 top-[70px]  transform dark:bg-brand-darker z-[900] pb-0">
               <Tabs.List justify="center" className="dark:text-white ">
                 <Tabs.Tab value="first"> Diagnostics</Tabs.Tab>
                 <Tabs.Tab value="third">Improvements</Tabs.Tab>

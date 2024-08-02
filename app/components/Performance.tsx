@@ -124,7 +124,7 @@ const PerformanceEl = ({
             </div>
           ) : (
             <span className="h-10 font-bold text-2xl">
-              <h3>
+              <span>
                 {stat?.lighthouseResult?.categories?.performance?.score ? (
                   (() => {
                     const score = Math.floor(
@@ -155,7 +155,7 @@ const PerformanceEl = ({
                 ) : (
                   <span className="text-gray-400">...</span>
                 )}
-              </h3>
+              </span>
             </span>
           )}{" "}
         </div>
