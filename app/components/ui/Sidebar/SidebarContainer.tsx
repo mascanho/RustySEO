@@ -10,6 +10,8 @@ import ContentSummary from "../ContentSummary";
 import RobotsTable from "../RobotsTable";
 import PageRankChart from "../ShadCharts/PageRankChart";
 import SeoChart from "../ShadCharts/SeoChart";
+import { IoChevronBackCircleOutline } from "react-icons/io5";
+import { useVisibilityStore } from "@/store/VisibilityStore";
 
 // Define prop types for better type checking
 interface SidebarContainerProps {
@@ -37,8 +39,12 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
   pageRank,
   seo,
 }) => {
+  const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
+
   return (
-    <aside className="w-[20rem] md:w-[25rem] h-screen border-l dark:border-l-white/20  overflow-y-auto overflow-hidden flex flex-col bg-white dark:bg-brand-darker">
+    <aside
+      className={` overflow-y-auto overflow-hidden flex relative flex-col bg-white transition-all ease-linear delay-75  dark:bg-brand-darker ${visibility.sidebar ? "w-96" : "w-0"}`}
+    >
       <ResizablePanelGroup direction="vertical">
         <ResizablePanel defaultSize={180}>
           <Tabs defaultValue="first" className="text-xs aside-tabs">
@@ -50,7 +56,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
             <Tabs.Panel value="first" className="h-full w-full">
               <ContentSummary
                 keywords={keywords}
-                wordCount={wordCount ? wordCount : ""}
+                wordCount={wordCount || ""}
                 readingTime={readingTime}
                 readingLevelResults={readingLevelResults}
                 pageTitle={pageTitle}
@@ -58,7 +64,6 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
                 robots={robots}
               />
             </Tabs.Panel>
-
             <Tabs.Panel value="second" className="h-full w-full">
               <SeoChart seo={seo} />
             </Tabs.Panel>
@@ -75,7 +80,6 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
             <Tabs.Panel value="first">
               <RedirectsTable pageSpeed={pageSpeed} />
             </Tabs.Panel>
-
             <Tabs.Panel value="second">
               <RobotsTable robots={robots} />
             </Tabs.Panel>

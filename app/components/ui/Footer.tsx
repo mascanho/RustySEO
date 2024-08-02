@@ -4,7 +4,7 @@ import { LiaTasksSolid } from "react-icons/lia";
 import { CgWebsite } from "react-icons/cg";
 import { FaRobot } from "react-icons/fa6";
 import { useChat } from "ai/react";
-
+import { BsLayoutSidebarInsetReverse } from "react-icons/bs";
 import {
   Drawer,
   DrawerClose,
@@ -15,9 +15,9 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-
 import { Button } from "@mantine/core";
 import AIcontainer from "./AiContainer/AIcontainer";
+import { useVisibilityStore } from "@/store/VisibilityStore";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -37,6 +37,7 @@ const Footer = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const { messages, input, handleInputChange, handleSubmit } = useChat();
+  const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
 
   // Function to update URL and loading state from session storage
   const updateSessionState = () => {
@@ -98,64 +99,74 @@ const Footer = () => {
   }, []);
 
   return (
-    <>
-      <footer className="w-full text-xs justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[1000] border-t-2 dark:border-t-brand-dark flex items-center py-1 overflow-hidden">
-        <section>
-          <div className="flex items-center ml-2 space-x-1 w-full">
-            {loading ? (
-              <>
-                <div className="w-2 h-2 rounded-full bg-orange-500 mt-1" />
-                <span className="mt-[5px] text-orange-500">Fetching...</span>
-              </>
-            ) : (
-              url && (
-                <div className="flex items-center space-x-1">
+    <footer className="w-full text-xs justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[1000] border-t-2 dark:border-t-brand-dark flex items-center py-1 overflow-hidden">
+      <section>
+        <div className="flex items-center ml-2 space-x-1 w-full">
+          {loading ? (
+            <>
+              <div className="w-2 h-2 rounded-full bg-orange-500 mt-1" />
+              <span className="mt-[5px] text-orange-500">Fetching...</span>
+            </>
+          ) : (
+            url && (
+              <div className="flex items-center space-x-1">
+                <a href={url} rel="noreferrer">
                   <CgWebsite className="text-xl" />
-                  <span className="mt-[2px]">{url}</span>
-                </div>
-              )
-            )}
-          </div>
-        </section>
-        <section className="flex items-center space-x-4">
-          <Drawer>
-            <DrawerTrigger className="flex items-center space-x-1">
-              <FaRobot className="text-lg" />
-              <span className="text-xs mt-[2px]">Oxide AI</span>
-            </DrawerTrigger>
-            <DrawerContent>
-              <DrawerHeader>
-                <div className="flex items-center space-x-2">
-                  <FaRobot className="text-2xl text-brand-highlight" />
-                  <span className="text-xl font-bold text-brand-highlight dark:text-white/40">
-                    Interact with Oxide AI
-                  </span>
-                </div>
-                <DrawerDescription>
-                  <AIcontainer />
-                </DrawerDescription>
-              </DrawerHeader>
-              <DrawerFooter>
-                <DrawerClose></DrawerClose>
-              </DrawerFooter>
-            </DrawerContent>
-          </Drawer>
-
-          <div className="flex w-50 items-center space-x-2 pr-1">
-            <div className="flex items-center mr-1 text-xs mt-[2px] space-x-3">
-              <div className="flex items-center">
-                <LiaTasksSolid className="text-xl dark:text-white/50" />
-                <span>Tasks:</span>
-                <span className="text-red-500 dark:text-sky-dark ml-1">
-                  {tasks.length}
+                </a>
+                <span className="mt-[2px]">{url}</span>
+              </div>
+            )
+          )}
+        </div>
+      </section>
+      <section className="flex items-center space-x-3">
+        <Drawer>
+          <DrawerTrigger className="flex items-center space-x-1">
+            <FaRobot className="text-lg" />
+            <span className="text-xs mt-[2px]">Oxide AI</span>
+          </DrawerTrigger>
+          <DrawerContent>
+            <DrawerHeader>
+              <div className="flex items-center space-x-2">
+                <FaRobot className="text-2xl text-brand-highlight" />
+                <span className="text-xl font-bold text-brand-highlight dark:text-white/40">
+                  Interact with Oxide AI
                 </span>
               </div>
-              <span>{`© ${year} - RustySEO`}</span>
+              <DrawerDescription>
+                <AIcontainer />
+              </DrawerDescription>
+            </DrawerHeader>
+            <DrawerFooter>
+              <DrawerClose></DrawerClose>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+
+        <div className="flex w-50 items-center justify-center pr-4">
+          <div className="flex items-center  text-xs mt-[2px] space-x-4">
+            <div className="flex items-center">
+              <LiaTasksSolid className="text-xl dark:text-white/50" />
+              <span>Tasks:</span>
+              <span className="text-red-500 dark:text-sky-dark ml-1">
+                {tasks.length}
+              </span>
             </div>
+            <BsLayoutSidebarInsetReverse
+              className="text-md cursor-pointer"
+              onClick={() => {
+                // Toggle visibility based on current state
+                if (visibility.sidebar) {
+                  hideSidebar();
+                } else {
+                  showSidebar();
+                }
+              }}
+            />
           </div>
-        </section>
-      </footer>
-    </>
+        </div>
+      </section>
+    </footer>
   );
 };
 
