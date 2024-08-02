@@ -39,7 +39,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
           <Tabs defaultValue="first" className="text-xs aside-tabs">
             <Tabs.List justify="left" className="dark:text-white text-xs">
               <Tabs.Tab value="first">Content</Tabs.Tab>
-              <Tabs.Tab value="third">Improvements</Tabs.Tab>
+              <Tabs.Tab value="third">Ranking</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="first" className="h-full w-full">
               <ContentSummary
