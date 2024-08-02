@@ -78,6 +78,7 @@ const Home: React.FC<HomeProps> = () => {
   const [strategy, setStrategy] = useState<any>({
     strategy: "DESKTOP",
   });
+  const [pageRank, setPageRank] = useState<any[]>([]);
   const [robots, setRobots] = useState<string>("");
   const [AiContentAnalysis, setAiContentAnalysis] = useState<any>("");
   const [htmlToTextRatio, setHtmlToTextRatio] = useState<any>("");
@@ -166,6 +167,7 @@ const Home: React.FC<HomeProps> = () => {
     setRobots("");
     handleSpeed(url);
     setHtmlToTextRatio([]);
+    setPageRank([]);
 
     invoke<{
       links: [];
@@ -189,6 +191,7 @@ const Home: React.FC<HomeProps> = () => {
       body_elements: any[];
       robots: string;
       ratio: any;
+      page_rank: any[];
     }>("crawl", { url })
       .then((result) => {
         showLinksSequentially(result.links); // Show links one by one
@@ -212,6 +215,7 @@ const Home: React.FC<HomeProps> = () => {
         setBodyElements(result.body_elements);
         setRobots(result.robots);
         setHtmlToTextRatio(result.ratio);
+        setPageRank(result.page_rank);
       })
       .catch(console.error);
   };
@@ -370,6 +374,8 @@ const Home: React.FC<HomeProps> = () => {
       strategy: value,
     }));
   };
+
+  console.log(pageRank, "this is the page rank");
 
   return (
     <section className="h-full overflow-y-clip flex">
@@ -648,6 +654,7 @@ const Home: React.FC<HomeProps> = () => {
         pageTitle={pageTitle}
         AiContentAnalysis={AiContentAnalysis}
         robots={robots}
+        pageRank={pageRank}
       />
     </section>
   );

@@ -20,6 +20,7 @@ interface SidebarContainerProps {
   pageTitle: string[];
   AiContentAnalysis: any;
   robots: any;
+  pageRank: any;
 }
 
 const SidebarContainer: React.FC<SidebarContainerProps> = ({
@@ -31,6 +32,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
   pageTitle,
   robots,
   AiContentAnalysis,
+  pageRank,
 }) => {
   return (
     <aside className="w-[20rem] md:w-[25rem] h-screen border-l dark:border-l-white/20  overflow-y-auto overflow-hidden flex flex-col bg-white dark:bg-brand-darker">
@@ -70,7 +72,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
               <RobotsTable robots={robots} />
             </Tabs.Panel>
             <Tabs.Panel value="third">
-              <PageRankChart />
+              <PageRankChart pageRank={pageRank} />
             </Tabs.Panel>
           </Tabs>
         </ResizablePanel>

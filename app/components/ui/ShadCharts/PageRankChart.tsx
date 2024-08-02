@@ -18,26 +18,31 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
-const chartData = [
-  { browser: "safari", visitors: 10, fill: "var(--color-safari)" },
-];
 
-const chartConfig = {
-  visitors: {
-    label: "Rank",
-  },
-  safari: {
-    label: "Safari",
-    color: "hsl(var(--chart-2))",
-  },
-} satisfies ChartConfig;
+export function PageRankChart({ pageRank }: { pageRank: any }) {
+  const chartData = [
+    {
+      source: "safari",
+      visitors: pageRank?.[0] ?? 0,
+      fill: "var(--color-safari)",
+    },
+  ];
 
-export function PageRankChart() {
+  const chartConfig = {
+    visitors: {
+      label: "Rank",
+    },
+    safari: {
+      label: "Safari",
+      color: "hsl(var(--chart-2))",
+    },
+  } satisfies ChartConfig;
+
   return (
-    <Card className="flex flex-col border-0 p-0">
+    <Card className="flex flex-col border-0 p-0  dark:bg-brand-darker">
       <CardHeader className="items-center pb-0">
-        <CardTitle>Radial Chart - Text</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardTitle>Page Rank</CardTitle>
+        <CardDescription>{new Date().toDateString()}</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
@@ -55,7 +60,7 @@ export function PageRankChart() {
               gridType="circle"
               radialLines={false}
               stroke="none"
-              className="first:fill-gray-500 last:fill-sky-200"
+              className="first:fill-gray-500 last:fill-white"
               polarRadius={[86, 74]}
             />
             <RadialBar dataKey="visitors" background cornerRadius={10} />
@@ -94,11 +99,8 @@ export function PageRankChart() {
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
+        <div className="flex items-center gap-2 font-medium text-center text-xs text-gray-500 leading-none">
+          This represents the page rank of the domain. based on open page rank
         </div>
       </CardFooter>
     </Card>

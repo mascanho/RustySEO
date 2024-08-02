@@ -80,6 +80,7 @@ pub struct CrawlResult {
     //pub body_elements: Vec<String>,
     pub robots: Result<String, libs::MyError>,
     pub ratio: Vec<(f64, f64, f64)>,
+    pub page_rank: Vec<f32>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -477,6 +478,19 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
 
     db::add_technical_data(db_data, &url).unwrap();
 
+    // Fetch the PAGERANK
+    let mut page_rank = Vec::new();
+    let page_score = page_rank::fetch_page_rank(&url).await;
+    match page_score {
+        Ok(page_score) => {
+            println!("Page Rank: {:?}", page_score);
+            page_rank.push(page_score);
+        }
+        Err(e) => {
+            println!("Error: {:?}", e);
+        }
+    }
+
     Ok(CrawlResult {
         links,
         headings,
@@ -500,9 +514,11 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         //body_elements,
         robots,
         ratio,
+        page_rank,
     })
 }
 
+// Fetch the performance data from page spoeed insights
 pub async fn get_page_speed_insights(
     url: String,
     strategy: String,
@@ -520,6 +536,8 @@ pub async fn get_page_speed_insights(
         "{}?url={}&strategy={}&key={}",
         page_speed_url, url, strategy, api_key
     );
+
+    let seo_score = get_seo(&url).await;
 
     match client.get(&request_url).send().await {
         Ok(response) => {
@@ -539,6 +557,58 @@ pub async fn get_page_speed_insights(
 
             // PUSH DATA INTO DB
             db::add_data_from_pagespeed(&response_text, &strategy, &url);
+
+            // Parse the response text into PageSpeedResponse struct
+            match serde_json::from_str::<PageSpeedResponse>(&response_text) {
+                Ok(page_speed_response) => Ok((page_speed_response, seo_score)),
+                Err(e) => {
+                    eprintln!("Failed to parse response: {}", e);
+                    Err(format!("Failed to parse response: {}", e))
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("Failed to make request: {}", e);
+            Err(format!("Failed to make request: {}", e))
+        }
+    }
+}
+
+// Fetch the SEO data from page spoeed insights
+pub async fn get_seo(url: &str) -> Result<PageSpeedResponse, String> {
+    dotenv::dotenv().ok();
+
+    //let api_key = "AIzaSyCCZu9Qxvkv8H0sCR9YPP7aP6CCQTZHFt8";
+    let api_key = libs::load_api_keys().await.unwrap().page_speed_key;
+
+    println!("API key in the crawler: {:?}", api_key);
+    let page_speed_url = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
+    let category = "seo";
+    let client = Client::new();
+    let request_url = format!(
+        "{}?url={}&category={}&key={}",
+        page_speed_url, url, category, api_key
+    );
+
+    match client.get(&request_url).send().await {
+        Ok(response) => {
+            let response_text = response
+                .text()
+                .await
+                .map_err(|e| format!("Failed to read response text: {}", e))?;
+
+            // Save the raw JSON response into a file
+            // let mut file = File::create("page_speed_results.json")
+            //     .map_err(|e| format!("Failed to create file: {}", e))?;
+            // file.write_all(&response_text.as_bytes())
+            //     .map_err(|e| format!("Failed to write to file: {}", e))?;
+
+            // println!("Raw JSON response: {}", response_text);
+            println!("Page Speed Results: OK ");
+            println!("Page SEO: {}  ", response_text);
+
+            // PUSH DATA INTO DB
+            //db::add_data_from_pagespeed(&response_text, &strategy, &url);
 
             // Parse the response text into PageSpeedResponse struct
             match serde_json::from_str::<PageSpeedResponse>(&response_text) {
