@@ -37,6 +37,7 @@ toml = "0.7"
 genai = "=0.1.2"
 anyhow = "1.0.70"
 chrono = "0.4.26"
+csv = "1.2.1"
 
 
 [features]

@@ -12,6 +12,9 @@ use tokio;
 use toml;
 
 mod crawler;
+mod downloads {
+    pub mod csv;
+}
 mod genai;
 mod gsc;
 mod redirects;
@@ -90,7 +93,8 @@ async fn main() {
             get_genai,
             get_db_data,
             genai::generated_page_title,
-            genai::generated_page_description
+            genai::generated_page_description,
+            downloads::csv::generate_csv_command
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

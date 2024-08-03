@@ -40,14 +40,14 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
 
   const handleDownloadXLSX = () => {
     //call the rust function
-    invoke("write_to_excel").then((result) => {
+    invoke("generate_csv_command").then((result) => {
       console.log(result);
     });
   };
 
   return (
     <div className="relative w-full">
-      <div className=" -top-12 -right-0 w-full flex space-x-3 justify-end pb-3 border-b dark:border-b-brand-normal/20">
+      <div className=" -top-12 -right-0 w-full flex space-x-3 justify-end pb-3 border-b dark:border-b-brand-normal/10">
         <DropdownMenu>
           <DropdownMenuTrigger className="w-12 border-r rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center  dark:bg-white py-1 text-black ">
             <IoIosSearch className="w-4 h-4" />
@@ -63,15 +63,25 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
         </DropdownMenu>
         <div className="w-[2px] h-8 bg-gray-200/20" />
         <DropdownMenu>
-          <DropdownMenuTrigger className="w-32 rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center  dark:bg-sky-600 py-1 text-white ">
-            <FiDownload className="w-4 h-4 mr-2 mb-1" /> Export
+          <DropdownMenuTrigger className="transition-all ease-linear active:scale-75 w-32 rounded-md justify-center flex items-center   text-black">
+            <button className="w-32 rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center  dark:bg-sky-600 py-1 text-white ">
+              <FiDownload className="w-4 h-4 mr-2 mb-1" />
+              Export
+            </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-white mr-12 mt-1">
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>XLSX</DropdownMenuItem>
-            <DropdownMenuItem>Billing</DropdownMenuItem>
-            <DropdownMenuItem>Team</DropdownMenuItem>
-            <DropdownMenuItem>Subscription</DropdownMenuItem>
+          <DropdownMenuContent className="bg-white mr-12">
+            <DropdownMenuItem
+              className="cursor-pointer hover:bg-gray-100"
+              onClick={handleDownloadXLSX}
+            >
+              CSV
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="cursor-pointer hover:bg-gray-100"
+              onClick={handleDownloadXLSX}
+            >
+              xlsx
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
