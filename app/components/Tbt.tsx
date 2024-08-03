@@ -155,7 +155,7 @@ const TbtEl = ({
                         {score}%
                       </span>{" "}
                       <p
-                        className={`rounded-full ml-2 px-2 text-xs py-[1px] ${labelClass}`}
+                        className={`rounded-full font-semibold ml-2 px-2 text-xs py-[1px] ${labelClass}`}
                       >
                         {label}
                       </p>

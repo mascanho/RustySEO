@@ -122,7 +122,7 @@ export function ImagesChart({ images, url }: { images: any; url: string }) {
           </PieChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm min-h-[5.5rem]">
+      <CardFooter className="flex-col gap-2 text-sm min-h-[5.5rem] text-center">
         {images.length === 0 ? (
           ""
         ) : (

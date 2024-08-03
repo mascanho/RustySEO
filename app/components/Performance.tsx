@@ -145,7 +145,7 @@ const PerformanceEl = ({
                       <span className="flex items-center">
                         {score}%{" "}
                         <p
-                          className={` rounded-full ml-2 px-2 text-xs py-[1px] text-green-500 ${label === "Poor" && "bg-red-500 text-white"} ${label === "Good" && "bg-green-500 text-white"}text-white ${label === "Average" && "bg-orange-500 text-white"}`}
+                          className={` rounded-full ml-2 px-2 text-xs py-[1px] text-white ${label === "Poor" && "bg-red-500 text-white"} ${label === "Good" && "bg-green-500 text-white"}text-white ${label === "Average" && "bg-orange-500 text-white"}`}
                         >
                           {label}
                         </p>

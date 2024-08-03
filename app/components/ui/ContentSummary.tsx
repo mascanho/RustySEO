@@ -6,7 +6,10 @@ const ContentSummary = ({
   readingTime,
   readingLevelResults,
   AiContentAnalysis,
+  htmlToTextRatio,
 }: any) => {
+  console.log(htmlToTextRatio, "ratio");
+
   return (
     <section className="flex-wrap min-h-[calc(96rem - 2.5rem)] h-full space-y-1 bg-white dark:bg-brand-darker dark:text-white p-2 rounded-md relative">
       <div className="p-3 grid gap-5 overflow-y-scroll w-full h-full">
@@ -67,9 +70,14 @@ const ContentSummary = ({
               <span className="font-semibold pt-1">Reading Time</span>
             </div>
             <span>
-              {wordCount === undefined ? "" : wordCount[2] + " min(s)"}
+              {wordCount === undefined
+                ? ""
+                : wordCount[2]
+                  ? `${wordCount[2]} min(s)`
+                  : ""}
             </span>
           </div>
+
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 -mt-2">
               <svg
@@ -97,7 +105,7 @@ const ContentSummary = ({
               </svg>
               <span className="font-semibold mt-2">Word Count</span>
             </div>
-            <span>{wordCount ? wordCount[0] : ""}</span>
+            <span>{wordCount ? wordCount[0] + " words" : ""}</span>
           </div>
 
           <div className="flex items-center justify-between">
@@ -145,6 +153,44 @@ const ContentSummary = ({
             </span>
           </div>
         </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2 -mt-3">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              width={18}
+              height={18}
+              className="text-sky-dark mt-1"
+              fill="none"
+            >
+              <path
+                d="M3 12H21"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+              />
+              <path
+                d="M14.5 5.5C14.5 6.88071 13.3807 8 12 8C10.6193 8 9.5 6.88071 9.5 5.5C9.5 4.11929 10.6193 3 12 3C13.3807 3 14.5 4.11929 14.5 5.5Z"
+                stroke="currentColor"
+                stroke-width="1.5"
+              />
+              <path
+                d="M14.5 18.5C14.5 19.8807 13.3807 21 12 21C10.6193 21 9.5 19.8807 9.5 18.5C9.5 17.1193 10.6193 16 12 16C13.3807 16 14.5 17.1193 14.5 18.5Z"
+                stroke="currentColor"
+                stroke-width="1.5"
+              />
+            </svg>
+            <span className="font-semibold mt-2">Text Ratio</span>
+          </div>
+          <span>
+            {htmlToTextRatio
+              ? htmlToTextRatio[0] &&
+                htmlToTextRatio[0][0].toFixed(2) * 100 + "%"
+              : ""}{" "}
+          </span>
+        </div>
+
         <div className="flex items-start justify-start flex-col">
           <div className="flex items-start space-x-2">
             <div className="flex flex-col w-full justify-center">

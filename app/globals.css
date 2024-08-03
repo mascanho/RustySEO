@@ -97,6 +97,7 @@ th {
 }
 
 tr {
+  @apply dark:border-white/20 !important;
   padding: 20px 0;
   vertical-align: center;
   z-index: 0;
@@ -257,7 +258,7 @@ button:where([data-active]) {
 }
 
 .m_539e827b:hover {
-  @apply dark:text-black !important;
+  @apply dark:text-black dark:border-0  !important;
 }
 
 .tabs-drawer button span {
@@ -411,4 +412,34 @@ button:where([data-active]) {
 
 .fade-in {
   animation: fadeIn 0.2s ease-out;
+}
+
+/*---------------- LOADER ANIMATION ----------------*/
+/* HTML: <div class="loader"></div> */
+.loader {
+  width: 20px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #000;
+  box-shadow: 0 0 0 0 #0004;
+  animation: l2 1.5s infinite linear;
+  position: relative;
+}
+.loader:before,
+.loader:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0 0 #0004;
+  animation: inherit;
+  animation-delay: -0.5s;
+}
+.loader:after {
+  animation-delay: -1s;
+}
+@keyframes l2 {
+  100% {
+    box-shadow: 0 0 0 40px #0000;
+  }
 }

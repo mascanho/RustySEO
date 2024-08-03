@@ -56,6 +56,7 @@ async fn fetch_google_search_console() -> Result<(), String> {
     Ok(result)
 }
 
+// ----------------- GENERATE AI SUMMARY OF CONTENT -----------------
 #[tauri::command]
 async fn get_genai(query: String) -> Result<String, String> {
     match genai(query).await {
@@ -87,13 +88,15 @@ async fn main() {
             fetch_google_search_console,
             add_api_key,
             get_genai,
-            get_db_data
+            get_db_data,
+            genai::generated_page_title,
+            genai::generated_page_description
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
-// Configurations & system checks
+// -------------------- CHECK SYSTEM ---------------------
 #[tauri::command]
 async fn check_system() -> Result<String, String> {
     let project_dirs = ProjectDirs::from("", "", "rustyseo").unwrap();

@@ -34,16 +34,16 @@ const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
             ) : (
               scripts.map((item: any, index: number) => (
                 <tr key={item.url || index}>
-                  <td className="px-4 py-1 text-sm text-blue-600 truncate max-w-full">
+                  <td className="px-4 py-2 text-sm border text-blue-600 truncate max-w-full">
                     {item?.entity}
                   </td>
-                  <td className="px-4 py-1 text-xs text-gray-700 dark:text-white/50">
+                  <td className="px-4 py-1 text-xs border text-gray-700 dark:text-white/50">
                     {Math.round(item?.mainThreadTime)}
                   </td>
-                  <td className="px-4 py-1 text-xs text-gray-700 dark:text-white/50">
+                  <td className="px-4 py-1 text-xs text-gray-700 border dark:text-white/50">
                     {item?.transferSize} bytes
                   </td>
-                  <td className="px-4 py-1  text-xs text-gray-700 dark:text-white/50">
+                  <td className="px-4 py-1  text-xs text-gray-700 border dark:text-white/50">
                     {Math.round(item?.blockingTime) + " ms"}
                   </td>
                 </tr>

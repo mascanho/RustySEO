@@ -390,7 +390,7 @@ const Home: React.FC<HomeProps> = () => {
   const seoPageSpeed = pageSpeed && pageSpeed[1];
   pageSpeed = pageSpeed && pageSpeed[0];
 
-  console.log(seoPageSpeed);
+  console.log(seoPageSpeed, "SEO PAGE SPEED");
 
   return (
     <section className="h-full overflow-y-clip flex">
@@ -616,7 +616,6 @@ const Home: React.FC<HomeProps> = () => {
                 <KeywordChart keywords={keywords} url={debouncedURL} />
                 <HtmlToTextChart htmlToTextRatio={htmlToTextRatio} />
                 <ImagesChart url={debouncedURL} images={images} />
-                <PageRankChart />
               </section>
 
               {/* TABLES START HERE */}
@@ -648,7 +647,12 @@ const Home: React.FC<HomeProps> = () => {
             </Tabs.Panel>
 
             <Tabs.Panel value="third">
-              <SEOImprovements />
+              <SEOImprovements
+                pageTitle={pageTitle}
+                seo={seoPageSpeed}
+                pageSpeed={pageSpeed}
+                pageDescription={pageDescription}
+              />
             </Tabs.Panel>
 
             <Tabs.Panel value="fourth">
@@ -672,6 +676,7 @@ const Home: React.FC<HomeProps> = () => {
         robots={robots}
         pageRank={pageRank}
         seo={seoPageSpeed}
+        htmlToTextRatio={htmlToTextRatio}
       />
     </section>
   );

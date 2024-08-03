@@ -7,7 +7,7 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
 
   return (
     <section className="table_container">
-      <h2 className="text-base text-left pl-1 pt-3 font-bold w-full ">
+      <h2 className="text-base text-left pl-1 pt-3 font-bold w-full">
         Total Byte Weight
       </h2>
 
@@ -15,23 +15,26 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
         <table className="w-full h-full">
           <thead className="sticky top-0 bg-white shadow">
             <tr>
-              <th align="left" className="text-xs px-4  w-2/5 border-r">
-                Trasnfer Size
+              <th
+                align="left"
+                className="text-xs px-4 w-2/5 border-r border-gray-300"
+              >
+                Transfer Size
               </th>
               <th
                 align="left"
-                className="text-xs px-4 w-1/5 border-r dark:text-white"
+                className="text-xs px-4 w-1/5 border-r border-gray-300 dark:text-white"
               >
                 URL
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200 h-[calc(30rem - 3.5rem)] overflow-y-auto">
+          <tbody className="bg-white  divide-gray-100 h-[calc(30rem - 3.5rem)] overflow-y-auto">
             {scripts.length === 0 ? (
               <tr>
                 <td
                   colSpan={2}
-                  className="text-center py-4 text-gray-500 h-full dark:text-white"
+                  className="text-center text-gray-500 h-full dark:text-white"
                 >
                   No third party connections found.
                 </td>
@@ -39,12 +42,12 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
             ) : (
               scripts.map((item: any, index: number) => (
                 <tr key={item.url || index}>
-                  <td className="px-3  text-[6px] text-gray-700 dark:text-white ">
+                  <td className="px-3 text-[6px] text-gray-700 dark:text-white border">
                     {(
                       Math.round(item?.totalBytes * 1000) / 1000
                     ).toLocaleString() + " KiB"}
                   </td>{" "}
-                  <td className="px-4  text-xs text-blue-600 truncate max-w-full">
+                  <td className="px-4 text-xs text-blue-600 truncate max-w-full border">
                     {item?.url}
                   </td>
                 </tr>

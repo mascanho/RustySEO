@@ -25,6 +25,7 @@ interface SidebarContainerProps {
   robots: any;
   pageRank: any;
   seo: any;
+  htmlToTextRatio: any;
 }
 
 const SidebarContainer: React.FC<SidebarContainerProps> = ({
@@ -38,12 +39,13 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
   AiContentAnalysis,
   pageRank,
   seo,
+  htmlToTextRatio,
 }) => {
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
 
   return (
     <aside
-      className={` overflow-y-auto overflow-hidden flex relative flex-col bg-white transition-all ease-linear delay-75  dark:bg-brand-darker ${visibility.sidebar ? "w-96" : "w-0"}`}
+      className={` overflow-y-auto overflow-hidden h-screen border-l dark:border-gray-600 flex relative flex-col  transition-all ease-linear delay-75  dark:bg-brand-darker ${visibility.sidebar ? "w-96" : "w-0"}`}
     >
       <ResizablePanelGroup direction="vertical">
         <ResizablePanel defaultSize={180}>
@@ -62,6 +64,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
                 pageTitle={pageTitle}
                 AiContentAnalysis={AiContentAnalysis}
                 robots={robots}
+                htmlToTextRatio={htmlToTextRatio}
               />
             </Tabs.Panel>
             <Tabs.Panel value="second" className="h-full w-full">

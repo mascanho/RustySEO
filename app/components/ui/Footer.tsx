@@ -119,7 +119,7 @@ const Footer = () => {
           )}
         </div>
       </section>
-      <section className="flex items-center space-x-3">
+      <section className="flex items-center space-x-4">
         <Drawer>
           <DrawerTrigger className="flex items-center space-x-1">
             <FaRobot className="text-lg" />
@@ -144,7 +144,7 @@ const Footer = () => {
         </Drawer>
 
         <div className="flex w-50 items-center justify-center pr-4">
-          <div className="flex items-center  text-xs mt-[2px] space-x-4">
+          <div className="flex items-center  text-xs mt-[2px] space-x-6">
             <div className="flex items-center">
               <LiaTasksSolid className="text-xl dark:text-white/50" />
               <span>Tasks:</span>
@@ -153,7 +153,7 @@ const Footer = () => {
               </span>
             </div>
             <BsLayoutSidebarInsetReverse
-              className="text-md cursor-pointer"
+              className="text-base cursor-pointer"
               onClick={() => {
                 // Toggle visibility based on current state
                 if (visibility.sidebar) {

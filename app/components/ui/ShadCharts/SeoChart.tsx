@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/card";
 import { ChartConfig, ChartContainer } from "@/components/ui/chart";
 
-export function SeoChart({ pageRank, seo }: { pageRank: any; seo: any }) {
+export function SeoChart({ seo }: { seo: any }) {
   const seoScore = seo?.lighthouseResult?.categories?.seo?.score ?? 0;
 
   console.log(seoScore, "seoscore");

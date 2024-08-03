@@ -47,47 +47,51 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
           </thead>
           <tbody>
             {sortedData.map((data, index) => (
-              <tr className="w-full" key={index}>
-                <td>{new Date(data.date).toLocaleDateString()}</td>
-                <td>
+              <tr className="w-full border" key={index}>
+                <td className="border">
+                  {new Date(data.date).toLocaleDateString()}
+                </td>
+                <td align="center" className="border">
                   {data.strategy === "DESKTOP" ? (
                     <FaDesktop />
                   ) : (
                     <FaMobileAlt />
                   )}
                 </td>
-                <td align="left">{data.url}</td>
+                <td align="left" className="py-[20px] border">
+                  {data.url}
+                </td>
                 <td
-                  className={`${data.performance <= 0.5 ? "text-red-600" : "text-green-600"}`}
+                  className={`border ${data.performance <= 0.5 ? "text-red-600" : "text-green-600"}`}
                 >
                   {data.performance}
                 </td>
                 <td
-                  className={`${data.fcp <= 0.5 ? "text-red-600" : "text-green-600"}`}
+                  className={`border ${data.fcp <= 0.5 ? "text-red-600" : "text-green-600"}`}
                 >
                   {data.fcp}
                 </td>
                 <td
-                  className={`${data.lcp <= 0.5 ? "text-red-600" : "text-green-600"}`}
+                  className={`border ${data.lcp <= 0.5 ? "text-red-600" : "text-green-600"}`}
                 >
                   {data.lcp}
                 </td>
                 <td
-                  className={`${data.tti <= 0.5 ? "text-red-600" : "text-green-600"}`}
+                  className={`border ${data.tti <= 0.5 ? "text-red-600" : "text-green-600"}`}
                 >
                   {data.tti}
                 </td>
                 <td
-                  className={`${data.cls <= 0.5 ? "text-red-600" : "text-green-600"}`}
+                  className={`border ${data.cls <= 0.5 ? "text-red-600" : "text-green-600"}`}
                 >
                   {data.cls}
                 </td>
                 <td
-                  className={`${data.tbt <= 0.5 ? "text-red-600" : "text-green-600"}`}
+                  className={`border ${data.tbt <= 0.5 ? "text-red-600" : "text-green-600"}`}
                 >
                   {data.tbt}
                 </td>
-                <td>{data.dom_size}</td>
+                <td className="border">{data.dom_size}</td>
               </tr>
             ))}
           </tbody>
