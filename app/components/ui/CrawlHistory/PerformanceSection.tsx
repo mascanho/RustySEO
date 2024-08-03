@@ -63,11 +63,9 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
         </DropdownMenu>
         <div className="w-[2px] h-8 bg-gray-200/20" />
         <DropdownMenu>
-          <DropdownMenuTrigger className="transition-all ease-linear active:scale-75 w-32 rounded-md justify-center flex items-center   text-black">
-            <button className="w-32 rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center  dark:bg-sky-600 py-1 text-white ">
-              <FiDownload className="w-4 h-4 mr-2 mb-1" />
-              Export
-            </button>
+          <DropdownMenuTrigger className="transition-all ease-linear active:scale-75 w-32 rounded-md justify-center flex items-center    bg-sky-600 text-white">
+            <FiDownload className="w-4 h-4 mr-2 mb-1" />
+            Export
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-white mr-12">
             <DropdownMenuItem

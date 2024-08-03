@@ -18,16 +18,16 @@ const ImageAnalysis = ({ images }: { images: any[] }) => {
           <div className="relative">
             <div className="overflow-auto h-[32.9rem]">
               <table className="w-full">
-                <thead className="text-xs text-left py-2 border-b-2">
+                <thead className="text-xs text-left py-2 ">
                   <tr>
-                    <th>Image</th>
+                    <th className="py-4 border">Image</th>
                     <th>Alt Text</th>
                     <th>Size</th>
                     <th>Link</th>{" "}
                   </tr>
                 </thead>
 
-                <tbody className="border-t">
+                <tbody>
                   {images.map((image: any, index: number) => (
                     <tr key={index} className="align-middle">
                       <td className="border-r border-b px-2 py-1 text-center">
