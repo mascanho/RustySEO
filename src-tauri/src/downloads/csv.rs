@@ -24,7 +24,7 @@ pub struct ResultRecord {
 
 // Fetch data from SQLite and generate a CSV file
 #[command]
-pub fn generate_csv_command() -> Result<(), String> {
+pub fn generate_csv_command() -> Result<String, String> {
     // Retrieve the config directory for the application
     let project_dirs = ProjectDirs::from("com", "YourCompany", "YourAppName")
         .ok_or_else(|| "Failed to get project directories".to_string())?;
@@ -110,17 +110,23 @@ pub fn generate_csv_command() -> Result<(), String> {
 }
 
 // Function to generate CSV file from data
-pub fn generate_csv(data: Vec<Vec<String>>, file_path: &Path) -> Result<(), String> {
+pub fn generate_csv(data: Vec<Vec<String>>, file_path: &Path) -> Result<String, String> {
     // Create a new CSV writer that writes to the specified file path
     let mut wtr = Writer::from_path(file_path).map_err(|e| e.to_string())?;
 
-    // Write each row of data
-    for row in data {
+    //Write each row of data
+    for row in data.clone() {
         wtr.write_record(&row).map_err(|e| e.to_string())?;
     }
 
     // Ensure all data is written to the file
     wtr.flush().map_err(|e| e.to_string())?;
     println!("CSV file created at: {:?}", file_path);
-    Ok(())
+    let csv = &data.clone();
+    let csv_data = csv
+        .iter()
+        .map(|row| row.join(","))
+        .collect::<Vec<_>>()
+        .join("\n");
+    Ok(csv_data)
 }

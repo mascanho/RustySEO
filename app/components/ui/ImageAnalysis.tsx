@@ -15,48 +15,46 @@ const ImageAnalysis = ({ images }: { images: any[] }) => {
         <section
           className={`mx-auto flex flex-col shadow w-full ${images.length === 0 ? "bg-white/40" : "bg-white"}`}
         >
-          <div className="relative">
-            <div className="overflow-auto h-[32.9rem]">
-              <table className="w-full">
-                <thead className="text-xs text-left py-2 ">
-                  <tr>
-                    <th className="py-4 border">Image</th>
-                    <th>Alt Text</th>
-                    <th>Size</th>
-                    <th>Link</th>{" "}
-                  </tr>
-                </thead>
+          <div className="overflow-auto h-[32.9rem]">
+            <table className="w-full">
+              <thead className="text-xs text-left py-2 ">
+                <tr>
+                  <th className="py-4 border">Image</th>
+                  <th>Alt Text</th>
+                  <th>Size</th>
+                  <th>Link</th>{" "}
+                </tr>
+              </thead>
 
-                <tbody>
-                  {images.map((image: any, index: number) => (
-                    <tr key={index} className="align-middle">
-                      <td className="border-r border-b px-2 py-1 text-center">
-                        <a href={image?.link} className="block w-full h-full">
-                          <img
-                            src={image?.link}
-                            alt={image?.alt_text}
-                            className="m-auto w-40 h-14 object-contain" // Adjusted size
-                          />
-                        </a>
-                      </td>
-                      <td className="border-r border-b px-4 py-1 text-xs">
-                        {image.alt_text}
-                      </td>
-                      <td className="border-r border-b px-2 py-1 text-xs text-center">
-                        {image.size_mb} KB
-                      </td>
-                      <td
-                        onClick={() => openBrowserWindow(image.link)}
-                        className="border-b px-2 py-1 cursor-pointer text-sm text-blue-500 underline"
-                        style={{ width: "100px !important" }}
-                      >
-                        <span className="w-2">{image.link}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+              <tbody>
+                {images.map((image: any, index: number) => (
+                  <tr key={index} className="align-middle">
+                    <td className="border-r border-b px-2 py-1 text-center">
+                      <a href={image?.link} className="block w-full h-full">
+                        <img
+                          src={image?.link}
+                          alt={image?.alt_text}
+                          className="m-auto w-40 h-14 object-contain" // Adjusted size
+                        />
+                      </a>
+                    </td>
+                    <td className="border-r border-b px-4 py-1 text-xs">
+                      {image.alt_text}
+                    </td>
+                    <td className="border-r border-b px-2 py-1 text-xs text-center">
+                      {image.size_mb} KB
+                    </td>
+                    <td
+                      onClick={() => openBrowserWindow(image.link)}
+                      className="border-b px-2 py-1 cursor-pointer text-sm text-blue-500 underline"
+                      style={{ width: "100px !important" }}
+                    >
+                      <span className="w-2">{image.link}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
         <div className="pb-1 m-2 rounded-md text-xs flex justify-end text-black/50 space-x-4">

@@ -510,16 +510,17 @@ const Home: React.FC<HomeProps> = () => {
 
             <Tabs.Panel value="first">
               {/* WIDGET SECTION */}
-              <div className="flex flex-col flex-wrap items-end">
-                <Switch
-                  checked={!hidden.widget}
-                  className="mb-5 -mt-2 mr-0"
-                  onCheckedChange={(checked) => setHidden({ widget: !checked })}
-                />
-                <section
-                  className={`grid grid-cols-2 ${hidden.widget ? "hidden" : ""} gap-x-3 md:gap-x-4 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 justify-items-stretch w-full   mb-10 gap-y-5 `}
+              <div className="flex flex-col flex-wrap items-end mt-3">
+                <span
+                  className="mb-2 cursor-pointer -mt-6 mr-0 h-10  text-black/20 dark:text-white/20 text-xs"
+                  onClick={() => setHidden({ widget: !hidden.widget })}
                 >
-                  <h1 className="absolute font-bold top-4 left-4 text-2xl text-brand-dark/50 dark:text-white/30">
+                  {hidden.widget ? "Show widgets" : "Hide widgets"}
+                </span>
+                <section
+                  className={`grid grid-cols-2 ${hidden.widget ? "hidden" : ""} gap-x-3 md:gap-x-4 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 justify-items-stretch w-full   mb-10 gap-y-5 -mt-6 `}
+                >
+                  <h1 className="absolute font-bold top-1 left-4 text-2xl text-brand-dark/30 dark:text-white/20">
                     Performance Overview
                   </h1>
                   <PerformanceEl

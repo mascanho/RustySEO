@@ -76,10 +76,10 @@ table {
   width: 100%;
   background-color: white;
 }
-
-thead {
-  @apply z-20 overflow-clip bg-white border-b-2 dark:border-b-white/10 dark:bg-brand-darker dark:text-white !important;
-}
+/**/
+/*thead {*/
+/*  @apply z-20 overflow-clip bg-white border-b-2 dark:border-b-white/10 dark:bg-brand-darker dark:text-white !important;*/
+/*}*/
 
 tbody {
   @apply bg-white dark:bg-brand-darker dark:text-white border-0 !important;

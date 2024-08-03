@@ -4,8 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const CrawlHistory = ({ dbdata }: any) => {
   return (
-    <section className="w-full flex justify-end">
-      <Tabs defaultValue="account" className="w-full">
+    <section className="w-full flex justify-end mt-10">
+      <Tabs defaultValue="account" className="w-full max-w-7xl mx-auto">
         <TabsList>
           <TabsTrigger value="account">Core Vitals</TabsTrigger>
           <TabsTrigger value="password">On Page</TabsTrigger>
