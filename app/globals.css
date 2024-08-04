@@ -52,7 +52,7 @@ input:focus {
 /* Tables Styles */
 
 .table_container {
-  @apply bg-white border dark:border-brand-dark dark:bg-brand-darker dark:text-white shadow rounded-md h-[38rem] overflow-hidden  dark:hover:border-blue-500 !important;
+  @apply bg-white border dark:border-brand-dark dark:bg-brand-darker dark:text-white shadow rounded-md h-[38rem] overflow-hidden  !important;
 
   div {
     @apply dark:text-white dark:bg-brand-darker !important;
@@ -68,6 +68,15 @@ input:focus {
   p {
     @apply dark:text-white !important;
   }
+}
+
+/* Webkit browsers (Chrome, Safari) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px; /* Adjust the width of the scrollbar */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply dark:bg-gray-800 rounded-none;
 }
 
 table {
@@ -142,7 +151,7 @@ pre {
 }
 
 .naked_table {
-  @apply dark:border-brand-darker hover:border-sky-500 border bg-white dark:bg-brand-darker shadow rounded-md h-[38rem] overflow-hidden;
+  @apply dark:border-brand-darker  bg-white dark:bg-brand-darker shadow rounded-md h-[38rem] overflow-hidden;
 
   h2 {
     @apply p-4 font-semibold text-lg dark:text-white;
@@ -214,7 +223,7 @@ pre {
   }
 }
 
-.recharts-wrapper svg {
+.keyword-chart svg {
   min-width: 650px !important;
   margin-left: -200px !important;
   padding: 0 !important;

@@ -11,40 +11,37 @@ const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
         Third Party Scripts
       </h2>
 
-      <div className="overflow-auto h-[33rem] shadow">
-        <table className="w-full h-full">
-          <thead className="sticky top-0 bg-white shadow">
+      <div className="overflow-auto custom-scrollbar h-[33rem] shadow">
+        <table className="w-full pr-1">
+          <thead>
             <tr>
-              <th className="text-xs px-4  w-2/5 border-r">Entity</th>
-              <th className="text-xs px-4 w-1/5 border-r">Thread Time</th>
-              <th className="text-xs px-4  w-1/5 border-r">T. Size</th>
-              <th className="text-xs px-4  w-1/5">Blocking Time</th>
+              <th className="text-xs px-4 py-2 border">Entity</th>
+              <th className="text-xs px-4 py-2 border">Thread Time</th>
+              <th className="text-xs px-4 py-2 border">T. Size</th>
+              <th className="text-xs px-4 py-2 border">Blocking Time</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200 h-[calc(30rem - 3.5rem)] overflow-y-auto">
+          <tbody className="bg-white divide-y divide-gray-200">
             {scripts.length === 0 ? (
               <tr>
-                <td
-                  colSpan={4}
-                  className="text-center py-4 text-gray-500 h-full"
-                >
+                <td colSpan={4} className="text-center py-4 text-gray-500">
                   No third party connections found.
                 </td>
               </tr>
             ) : (
               scripts.map((item: any, index: number) => (
                 <tr key={item.url || index}>
-                  <td className="px-4 py-2 text-sm border text-blue-600 truncate max-w-full">
+                  <td className="px-4 py-2 text-sm border text-blue-600 truncate">
                     {item?.entity}
                   </td>
-                  <td className="px-4 py-1 text-xs border text-gray-700 dark:text-white/50">
-                    {Math.round(item?.mainThreadTime)}
+                  <td className="px-4 py-2 text-xs border text-gray-700 dark:text-white/50">
+                    {Math.round(item?.mainThreadTime)} ms
                   </td>
-                  <td className="px-4 py-1 text-xs text-gray-700 border dark:text-white/50">
+                  <td className="px-4 py-2 text-xs border text-gray-700 dark:text-white/50">
                     {item?.transferSize} bytes
                   </td>
-                  <td className="px-4 py-1  text-xs text-gray-700 border dark:text-white/50">
-                    {Math.round(item?.blockingTime) + " ms"}
+                  <td className="px-4 py-2 text-xs border text-gray-700 dark:text-white/50">
+                    {Math.round(item?.blockingTime)} ms
                   </td>
                 </tr>
               ))

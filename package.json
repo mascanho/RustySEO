@@ -50,6 +50,7 @@
     "react-remark": "^2.1.0",
     "react-resizable-panels": "^2.0.22",
     "react-syntax-highlighter": "^15.5.0",
+    "react-tooltip": "^5.27.1",
     "react-virtualized": "^9.22.5",
     "react-window": "^1.8.10",
     "recharts": "^2.12.7",

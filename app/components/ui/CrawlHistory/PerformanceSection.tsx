@@ -1,7 +1,13 @@
+// Import relevant components and hooks
 import React, { useState, useCallback, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { FaDesktop, FaMobileAlt } from "react-icons/fa";
+import { FiDownload, FiCheckCircle } from "react-icons/fi";
+import { IoIosSearch } from "react-icons/io";
+import { save } from "@tauri-apps/api/dialog";
+import { writeTextFile } from "@tauri-apps/api/fs";
+import { invoke } from "@tauri-apps/api/tauri";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,14 +15,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { FiDownload } from "react-icons/fi";
-import { IoIosSearch } from "react-icons/io";
-import { save } from "@tauri-apps/api/dialog";
-import { writeTextFile } from "@tauri-apps/api/fs";
-import { invoke } from "@tauri-apps/api/tauri";
+} from "@/components/ui/dropdown-menu"; // Ensure this path is correct
 
-// Define TypeScript types for better type safety
+// Define TypeScript types
 interface PerformanceData {
   date: string;
   strategy: string;
@@ -35,6 +36,7 @@ interface PerformanceSectionProps {
 }
 
 const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
+  // Component state and handlers
   const [download, setDownload] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -42,19 +44,20 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
   const [data, setData] = useState<PerformanceData[]>(dbdata);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [sortColumn, setSortColumn] = useState<keyof PerformanceData>("date");
+  const [todoUrl, setTodoUrl] = useState<string | null>(null);
 
-  // Effect to update data when dbdata changes
   useEffect(() => {
-    setData(dbdata);
+    if (Array.isArray(dbdata)) {
+      setData(dbdata);
+    }
   }, [dbdata]);
 
-  // Filter and sort data based on the search query, date range, and sort options
-  const filteredData = data
-    .filter((data) =>
-      data.url.toLowerCase().includes(searchQuery.toLowerCase()),
+  const filteredData = (Array.isArray(data) ? data : [])
+    .filter((item) =>
+      item.url.toLowerCase().includes(searchQuery.toLowerCase()),
     )
-    .filter((data) => {
-      const date = new Date(data.date);
+    .filter((item) => {
+      const date = new Date(item.date);
       return (!startDate || date >= startDate) && (!endDate || date <= endDate);
     });
 
@@ -78,23 +81,21 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
       })
     : [];
 
-  // Handle column header click for sorting
   const handleSort = (column: keyof PerformanceData) => {
     if (sortColumn === column) {
-      // Toggle sort direction
       setSortDirection((prevDirection) =>
         prevDirection === "asc" ? "desc" : "asc",
       );
     } else {
-      // Set new column and default to ascending direction
       setSortColumn(column);
       setSortDirection("asc");
     }
   };
 
-  // Refresh the table data
   const refreshTable = useCallback(() => {
-    setData(dbdata);
+    if (Array.isArray(dbdata)) {
+      setData(dbdata);
+    }
     setSearchQuery("");
     setStartDate(null);
     setEndDate(null);
@@ -102,14 +103,12 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
 
   const handleDownloadXLSX = async () => {
     let path;
-    // Call the Rust function
     invoke("generate_csv_command").then((result) => {
       console.log(result);
       // @ts-ignore
       setDownload(result);
     });
 
-    // Save the file
     path = await save({
       defaultPath: "performance.csv",
       filters: [
@@ -125,22 +124,27 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
     }
   };
 
+  const handleAddTodo = (url: string) => {
+    setTodoUrl(url);
+    alert(`To-Do item created for URL: ${url}`);
+  };
+
   return (
     <div className="relative w-full max-w-7xl mx-auto">
       <div className=" -top-12 -right-0 w-full flex space-x-3 justify-end pb-3 border-b dark:border-b-brand-normal/10">
         <div className="flex items-center space-x-2 relative">
-          <IoIosSearch className="w-4 h-4 absolute left-4" />
+          <IoIosSearch className="w-4 h-4 absolute left-4 dark:text-white" />
           <input
             type="text"
             placeholder="Search by URL"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="border rounded-md p-1 text-sm h-full pl-7"
+            className="border dark:text-white rounded-md p-1 text-sm h-full pl-7 dark:border-brand-normal/20 dark:bg-brand-darker"
           />
         </div>
 
         <DropdownMenu>
-          <DropdownMenuTrigger className="w-fit px-3 border rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center dark:bg-white py-1 text-black">
+          <DropdownMenuTrigger className="w-fit px-4 border rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center dark:text-white dark:border-brand-normal/20  py-0.5 dark:bg-brand-darker text-black">
             Options
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-white dark:bg-brand-dark dark:text-white emr-12 mt-1 dark:border-brand-normal/20">
@@ -220,8 +224,14 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
                       <FaMobileAlt />
                     )}
                   </td>
-                  <td align="left" className="py-[20px] border">
+                  <td align="left" className="py-[20px] border relative group">
                     {data.url}
+                    <span
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      onClick={() => handleAddTodo(data.url)}
+                    >
+                      <FiCheckCircle className="text-green-500" />
+                    </span>
                   </td>
                   <td
                     className={`border ${data.performance <= 0.5 ? "text-red-600" : "text-green-600"}`}

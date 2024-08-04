@@ -45,6 +45,7 @@ import PerformanceEl from "./components/Performance";
 import { FaChevronDown, FaDesktop, FaMobile } from "react-icons/fa";
 import { CgLayoutGrid } from "react-icons/cg";
 import { CiGlobe } from "react-icons/ci";
+import LinksCharts from "./components/ui/ShadCharts/LinksCharts";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -617,6 +618,7 @@ const Home: React.FC<HomeProps> = () => {
                 <KeywordChart keywords={keywords} url={debouncedURL} />
                 <HtmlToTextChart htmlToTextRatio={htmlToTextRatio} />
                 <ImagesChart url={debouncedURL} images={images} />
+                <LinksCharts />
               </section>
 
               {/* TABLES START HERE */}
