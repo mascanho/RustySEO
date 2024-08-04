@@ -33,7 +33,7 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
             </tr>
           </thead>
         </table>
-        <div className="flex-grow overflow-auto h-[30.8rem]">
+        <div className="flex-grow custom-scrollbar overflow-auto h-[30.8rem]">
           <table className="w-full">
             <tbody>
               {headings.map((link, index) => {

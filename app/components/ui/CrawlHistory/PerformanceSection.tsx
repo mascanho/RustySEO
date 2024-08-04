@@ -181,7 +181,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
         </DropdownMenu>
       </div>
       <section className="rounded-md mt-3 overflow-hidden shadow border dark:border-white/10 dark:bg-brand-darker">
-        <div className="h-[48rem] overflow-scroll">
+        <div className="h-[48rem] custom-scrollbar overflow-scroll">
           <table className="table_history w-full shadow">
             <thead>
               <tr>

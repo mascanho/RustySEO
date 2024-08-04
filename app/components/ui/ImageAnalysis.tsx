@@ -16,7 +16,7 @@ const ImageAnalysis = ({ images }: { images: any[] }) => {
           className={`mx-auto flex flex-col shadow w-full ${images.length === 0 ? "bg-white/40" : "bg-white"}`}
         >
           <div className="relative">
-            <div className="overflow-auto h-[32.9rem]">
+            <div className="overflow-auto custom-scrollbar h-[32.9rem]">
               <table className="w-full dark:bg-brand-darker">
                 <thead className="text-xs dark:bg-brand-darker py-4 ">
                   <tr className="py-10">

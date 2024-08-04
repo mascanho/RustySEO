@@ -11,13 +11,13 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
         Total Byte Weight
       </h2>
 
-      <div className="overflow-auto h-[33.1rem] shadow">
+      <div className="overflow-auto h-[33.1rem] shadow custom-scrollbar">
         <table className="w-full h-full">
-          <thead className="sticky top-0 bg-white shadow">
+          <thead className="sticky top-0 bg-white dark:bg-transparent shadow">
             <tr>
               <th
                 align="left"
-                className="text-xs px-4 w-2/5 border-r border-gray-300"
+                className="text-xs px-4 w-[120px] border-r border-gray-300"
               >
                 Transfer Size
               </th>
@@ -34,7 +34,7 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
               <tr>
                 <td
                   colSpan={2}
-                  className="text-center text-gray-500 h-full dark:text-white"
+                  className="text-center text-gray-500 h-full  dark:text-white"
                 >
                   No third party connections found.
                 </td>
@@ -42,10 +42,9 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
             ) : (
               scripts.map((item: any, index: number) => (
                 <tr key={item.url || index}>
-                  <td className="px-3 text-[6px] text-gray-700 dark:text-white border">
-                    {(
-                      Math.round(item?.totalBytes * 1000) / 1000
-                    ).toLocaleString() + " KiB"}
+                  <td className="px-2 text-[6px] text-gray-700 w-[200px] min-w-[95px] dark:text-white border">
+                    {(Math.floor(item?.totalBytes * 1000) / 1000).toFixed(0) +
+                      " KiB"}
                   </td>{" "}
                   <td className="px-4 text-xs text-blue-600 truncate max-w-full border">
                     {item?.url}
