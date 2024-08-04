@@ -25,6 +25,15 @@ pub struct ResultRecord {
     pub total_byte_weight: Option<f64>,    // For FLOAT
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SEOResultRecord {
+    id: Option<i64>,
+    date: String,
+    url: String,
+    title: String,
+    description: String,
+}
+
 pub fn open_db_connection() -> Result<Connection> {
     // Retrieve the config directory for the application
     let project_dirs = ProjectDirs::from("com", "YourCompany", "YourAppName")
@@ -89,7 +98,7 @@ pub fn create_technical_data_table() -> Result<()> {
     Ok(())
 }
 
-// Function to read data from the database
+//----------- Function to read data from the database -----------
 pub fn read_data_from_db() -> Result<Vec<ResultRecord>> {
     let conn = open_db_connection()?;
     let mut stmt = conn.prepare("SELECT * FROM results")?;
@@ -121,6 +130,34 @@ pub fn read_data_from_db() -> Result<Vec<ResultRecord>> {
     Ok(data)
 }
 
+// ---------------- READ DATA FROM THE SEO ON PAGE DATA ----------------
+pub fn read_seo_data_from_db() -> Result<Vec<SEOResultRecord>> {
+    let conn = open_db_connection().expect("Failed to open database connection");
+    let mut stmt = conn
+        .prepare("SELECT * FROM technical_data")
+        .expect("Failed to prepare statement");
+
+    let results = stmt
+        .query_map([], |row| {
+            Ok(SEOResultRecord {
+                id: row.get(0)?,
+                date: row.get(1)?,
+                url: row.get(2)?,
+                title: row.get(3)?,
+                description: row.get(4)?,
+            })
+        })
+        .expect("Failed to execute query");
+    let mut data = Vec::new();
+
+    for result in results {
+        data.push(result?);
+    }
+    println!("Page SEO Data: {:#?}", data);
+    Ok(data)
+}
+
+//----------- Function to add page speed data to the database -----------
 pub fn add_data_from_pagespeed(data: &str, strategy: &str, url: &str) -> Result<()> {
     // Open the database connection
     let conn = open_db_connection()?;
@@ -157,6 +194,7 @@ pub fn add_data_from_pagespeed(data: &str, strategy: &str, url: &str) -> Result<
     Ok(())
 }
 
+//----------- Function to add technical data to the database -----------
 pub fn add_technical_data(data: Vec<&String>, url: &str) -> Result<()> {
     // Ensure the technical_data table exists
     create_technical_data_table()?;

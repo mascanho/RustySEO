@@ -1,6 +1,7 @@
 import React from "react";
 import PerformanceSection from "./PerformanceSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import SEOtableSection from "./SEOtableSection";
 
 const CrawlHistory = ({ dbdata, loading }: any) => {
   return (
@@ -11,9 +12,11 @@ const CrawlHistory = ({ dbdata, loading }: any) => {
           <TabsTrigger value="password">On Page</TabsTrigger>
         </TabsList>
         <TabsContent value="account" className="mt-8">
-          <PerformanceSection dbdata={dbdata} loading={loading} />
+          <PerformanceSection dbdata={dbdata} />
         </TabsContent>
-        <TabsContent value="password">Change your password here.</TabsContent>
+        <TabsContent value="password" className="mt-8">
+          <SEOtableSection dbdata={dbdata} />
+        </TabsContent>
       </Tabs>
     </section>
   );

@@ -15,6 +15,7 @@ mod crawler;
 mod downloads {
     pub mod csv;
 }
+mod commands;
 mod genai;
 mod gsc;
 mod redirects;
@@ -94,7 +95,8 @@ async fn main() {
             get_db_data,
             genai::generated_page_title,
             genai::generated_page_description,
-            downloads::csv::generate_csv_command
+            downloads::csv::generate_csv_command,
+            commands::read_seo_data_from_db
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

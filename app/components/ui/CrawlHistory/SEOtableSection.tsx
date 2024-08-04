@@ -35,7 +35,7 @@ interface PerformanceSectionProps {
   dbdata: PerformanceData[];
 }
 
-const PerformanceSection: React.FC<PerformanceSectionProps> = ({
+const SEOtableSection: React.FC<PerformanceSectionProps> = ({
   dbdata,
 }: any) => {
   // Component state and handlers
@@ -47,6 +47,16 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc"); // Default to descending
   const [sortColumn, setSortColumn] = useState<keyof PerformanceData>("date");
   const [todoUrl, setTodoUrl] = useState<string | null>(null);
+
+  // GET THE DATA FROM THE DB
+  useEffect(() => {
+    invoke("read_seo_data_from_db").then((result: any) => {
+      console.log(result);
+      setData(result);
+    });
+  }, []);
+
+  console.log(data, "SEO ON PAGE");
 
   // Effect to update data when dbdata changes
   useEffect(() => {
@@ -202,23 +212,9 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
                   {sortColumn === "date" &&
                     (sortDirection === "asc" ? "↑" : "↓")}
                 </th>
-                <th
-                  className="cursor-pointer"
-                  onClick={() => handleSort("strategy")}
-                >
-                  Device{" "}
-                  {sortColumn === "strategy" &&
-                    (sortDirection === "asc" ? "↑" : "↓")}
-                </th>
                 <th align="left">URL</th>
-                <th>Performance</th>
-                <th>Speed</th>
-                <th>FCP</th>
-                <th>LCP</th>
-                <th>TTI</th>
-                <th>CLS</th>
-                <th>TBT</th>
-                <th>DOM</th>
+                <th>Page Title</th>
+                <th>Meta Description</th>
               </tr>
             </thead>
             <tbody>
@@ -226,13 +222,6 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
                 <tr className="w-full border" key={index}>
                   <td className="border">
                     {new Date(data.date).toLocaleDateString()}
-                  </td>
-                  <td align="center" className="border">
-                    {data.strategy === "DESKTOP" ? (
-                      <FaDesktop />
-                    ) : (
-                      <FaMobileAlt />
-                    )}
                   </td>
                   <td align="left" className="py-2 border relative group">
                     {data.url}
@@ -243,60 +232,12 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
                       <FiCheckCircle className="text-green-500" />
                     </span>
                   </td>
-                  <td
-                    className={`border ${
-                      data.performance <= 0.5
-                        ? "text-red-600"
-                        : "text-green-600"
-                    }`}
-                  >
-                    {data.performance}
+                  <td align="left" className={`border`}>
+                    {data.title}
                   </td>
-                  <td
-                    className={`border ${
-                      data.speed_index <= 0.5
-                        ? "text-red-600"
-                        : "text-green-600"
-                    }`}
-                  >
-                    {data.speed_index}
+                  <td align="left" className={`border`}>
+                    {data.description}
                   </td>
-                  <td
-                    className={`border ${
-                      data.fcp <= 0.5 ? "text-red-600" : "text-green-600"
-                    }`}
-                  >
-                    {data.fcp}
-                  </td>
-                  <td
-                    className={`border ${
-                      data.lcp <= 0.5 ? "text-red-600" : "text-green-600"
-                    }`}
-                  >
-                    {data.lcp}
-                  </td>
-                  <td
-                    className={`border ${
-                      data.tti <= 0.5 ? "text-red-600" : "text-green-600"
-                    }`}
-                  >
-                    {data.tti}
-                  </td>
-                  <td
-                    className={`border ${
-                      data.cls <= 0.5 ? "text-red-600" : "text-green-600"
-                    }`}
-                  >
-                    {data.cls}
-                  </td>
-                  <td
-                    className={`border ${
-                      data.tbt <= 0.5 ? "text-red-600" : "text-green-600"
-                    }`}
-                  >
-                    {data.tbt}
-                  </td>
-                  <td className="border">{data.dom_size}</td>
                 </tr>
               ))}
             </tbody>
@@ -307,4 +248,4 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
   );
 };
 
-export default PerformanceSection;
+export default SEOtableSection;
