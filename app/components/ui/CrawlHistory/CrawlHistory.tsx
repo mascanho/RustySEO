@@ -2,7 +2,7 @@ import React from "react";
 import PerformanceSection from "./PerformanceSection";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const CrawlHistory = ({ dbdata }: any) => {
+const CrawlHistory = ({ dbdata, loading }: any) => {
   return (
     <section className="w-full flex justify-end mt-10">
       <Tabs defaultValue="account" className="w-full max-w-7xl mx-auto">
@@ -11,7 +11,7 @@ const CrawlHistory = ({ dbdata }: any) => {
           <TabsTrigger value="password">On Page</TabsTrigger>
         </TabsList>
         <TabsContent value="account" className="mt-8">
-          <PerformanceSection dbdata={dbdata} />
+          <PerformanceSection dbdata={dbdata} loading={loading} />
         </TabsContent>
         <TabsContent value="password">Change your password here.</TabsContent>
       </Tabs>

@@ -1,4 +1,3 @@
-// Import relevant components and hooks
 import React, { useState, useCallback, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -29,29 +28,35 @@ interface PerformanceData {
   cls: number;
   tbt: number;
   dom_size: number;
+  speed_index: number;
 }
 
 interface PerformanceSectionProps {
   dbdata: PerformanceData[];
 }
 
-const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
+const PerformanceSection: React.FC<PerformanceSectionProps> = ({
+  dbdata,
+  loading,
+}: any) => {
   // Component state and handlers
   const [download, setDownload] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [data, setData] = useState<PerformanceData[]>(dbdata);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc"); // Default to descending
   const [sortColumn, setSortColumn] = useState<keyof PerformanceData>("date");
   const [todoUrl, setTodoUrl] = useState<string | null>(null);
 
+  // Effect to update data when dbdata changes
   useEffect(() => {
     if (Array.isArray(dbdata)) {
       setData(dbdata);
     }
-  }, [dbdata]);
+  }, [dbdata, loading]);
 
+  // Filter and sort data
   const filteredData = (Array.isArray(data) ? data : [])
     .filter((item) =>
       item.url.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -81,6 +86,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
       })
     : [];
 
+  // Handle sorting
   const handleSort = (column: keyof PerformanceData) => {
     if (sortColumn === column) {
       setSortDirection((prevDirection) =>
@@ -88,10 +94,11 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
       );
     } else {
       setSortColumn(column);
-      setSortDirection("asc");
+      setSortDirection("desc"); // Default to descending when sorting by a new column
     }
   };
 
+  // Refresh table function
   const refreshTable = useCallback(() => {
     if (Array.isArray(dbdata)) {
       setData(dbdata);
@@ -101,6 +108,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
     setEndDate(null);
   }, [dbdata]);
 
+  // Handle download
   const handleDownloadXLSX = async () => {
     let path;
     invoke("generate_csv_command").then((result) => {
@@ -124,6 +132,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
     }
   };
 
+  // Handle adding to-do
   const handleAddTodo = (url: string) => {
     setTodoUrl(url);
     alert(`To-Do item created for URL: ${url}`);
@@ -144,7 +153,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
         </div>
 
         <DropdownMenu>
-          <DropdownMenuTrigger className="w-fit px-4 border rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center dark:text-white dark:border-brand-normal/20  py-0.5 dark:bg-brand-darker text-black">
+          <DropdownMenuTrigger className="w-fit px-4 border rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center dark:text-white dark:border-brand-normal/20 dark:bg-brand-darker text-black">
             Options
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-white dark:bg-brand-dark dark:text-white emr-12 mt-1 dark:border-brand-normal/20">
@@ -180,10 +189,11 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
       <section className="rounded-md mt-3 overflow-hidden shadow border dark:border-white/10 dark:bg-brand-darker">
         <div className="h-[48rem] custom-scrollbar overflow-scroll">
           <table className="table_history w-full shadow">
-            <thead>
+            <thead className="bg-white dark:bg-brand-darker sticky top-0 z-10">
               <tr>
                 <th
                   className="cursor-pointer"
@@ -203,6 +213,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
                 </th>
                 <th align="left">URL</th>
                 <th>Performance</th>
+                <th>Speed</th>
                 <th>FCP</th>
                 <th>LCP</th>
                 <th>TTI</th>
@@ -224,7 +235,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
                       <FaMobileAlt />
                     )}
                   </td>
-                  <td align="left" className="py-[20px] border relative group">
+                  <td align="left" className="py-2 border relative group">
                     {data.url}
                     <span
                       className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
@@ -234,32 +245,55 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({ dbdata }) => {
                     </span>
                   </td>
                   <td
-                    className={`border ${data.performance <= 0.5 ? "text-red-600" : "text-green-600"}`}
+                    className={`border ${
+                      data.performance <= 0.5
+                        ? "text-red-600"
+                        : "text-green-600"
+                    }`}
                   >
                     {data.performance}
                   </td>
                   <td
-                    className={`border ${data.fcp <= 0.5 ? "text-red-600" : "text-green-600"}`}
+                    className={`border ${
+                      data.speed_index <= 0.5
+                        ? "text-red-600"
+                        : "text-green-600"
+                    }`}
+                  >
+                    {data.speed_index}
+                  </td>
+                  <td
+                    className={`border ${
+                      data.fcp <= 0.5 ? "text-red-600" : "text-green-600"
+                    }`}
                   >
                     {data.fcp}
                   </td>
                   <td
-                    className={`border ${data.lcp <= 0.5 ? "text-red-600" : "text-green-600"}`}
+                    className={`border ${
+                      data.lcp <= 0.5 ? "text-red-600" : "text-green-600"
+                    }`}
                   >
                     {data.lcp}
                   </td>
                   <td
-                    className={`border ${data.tti <= 0.5 ? "text-red-600" : "text-green-600"}`}
+                    className={`border ${
+                      data.tti <= 0.5 ? "text-red-600" : "text-green-600"
+                    }`}
                   >
                     {data.tti}
                   </td>
                   <td
-                    className={`border ${data.cls <= 0.5 ? "text-red-600" : "text-green-600"}`}
+                    className={`border ${
+                      data.cls <= 0.5 ? "text-red-600" : "text-green-600"
+                    }`}
                   >
                     {data.cls}
                   </td>
                   <td
-                    className={`border ${data.tbt <= 0.5 ? "text-red-600" : "text-green-600"}`}
+                    className={`border ${
+                      data.tbt <= 0.5 ? "text-red-600" : "text-green-600"
+                    }`}
                   >
                     {data.tbt}
                   </td>

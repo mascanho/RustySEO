@@ -105,7 +105,7 @@ const Home: React.FC<HomeProps> = () => {
       setDBDATA(result);
       console.log(result, "This comes from the DB");
     });
-  }, [pageTitle]);
+  }, [DBDATA]);
 
   const handleChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -663,7 +663,7 @@ const Home: React.FC<HomeProps> = () => {
             </Tabs.Panel>
 
             <Tabs.Panel value="fifth">
-              <CrawlHistory dbdata={DBDATA} />
+              <CrawlHistory loading={loading} dbdata={DBDATA} />
             </Tabs.Panel>
           </Tabs>
         </section>
