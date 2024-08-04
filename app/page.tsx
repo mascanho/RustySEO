@@ -518,7 +518,7 @@ const Home: React.FC<HomeProps> = () => {
                   {hidden.widget ? "Show widgets" : "Hide widgets"}
                 </span>
                 <section
-                  className={`grid grid-cols-2 ${hidden.widget ? "hidden" : ""} gap-x-3 md:gap-x-4 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 justify-items-stretch w-full   mb-10 gap-y-5 -mt-6 `}
+                  className={`grid grid-cols-2 ${hidden.widget ? "hidden" : ""} gap-x-3 md:gap-x-4 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 justify-items-stretch w-full   mb-10 gap-y-5 -mt-6 `}
                 >
                   <h1 className="absolute font-bold top-1 left-4 text-2xl text-brand-dark/30 dark:text-white/20">
                     Performance Overview
@@ -650,7 +650,7 @@ const Home: React.FC<HomeProps> = () => {
             <Tabs.Panel value="third">
               <SEOImprovements
                 pageTitle={pageTitle}
-                seo={seoPageSpeed}
+                // seo={seoPageSpeed}
                 pageSpeed={pageSpeed}
                 pageDescription={pageDescription}
               />
