@@ -52,7 +52,7 @@ input:focus {
 /* Tables Styles */
 
 .table_container {
-  @apply bg-slate-200 border dark:border-brand-dark dark:bg-brand-darker dark:text-white shadow rounded-md h-[38rem] overflow-hidden p-1  !important;
+  @apply bg-slate-200 border dark:border-brand-dark dark:bg-brand-darker dark:text-white shadow rounded-md h-[30rem] overflow-hidden p-1  !important;
 
   div {
     @apply dark:text-white dark:bg-brand-darker mt-0 !important;
@@ -149,16 +149,16 @@ pre {
 }
 
 .naked_table {
-  @apply dark:border-brand-darker  bg-white dark:bg-brand-darker shadow rounded-md h-[38rem] overflow-hidden border;
+  @apply dark:border-brand-darker  bg-slate-100 p-1 dark:bg-brand-darker shadow rounded-md h-[30rem] overflow-hidden border;
 
   h2 {
     @apply p-4 font-semibold text-lg dark:text-white;
   }
 
   pre {
-    @apply dark:bg-brand-darker dark:text-white/50 border-0 !important;
+    @apply dark:bg-brand-darker dark:text-white/50 border-0  !important;
     overflow: scroll;
-    height: 87% !important;
+    height: 86% !important;
     overflow-x: hidden;
   }
 }

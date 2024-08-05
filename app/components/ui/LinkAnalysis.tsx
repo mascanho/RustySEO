@@ -9,7 +9,7 @@ const LinkAnalysis = ({ visibleLinks }: { visibleLinks: any[] }) => {
 
       <div className="h-full overflow-hidden sticky top-0">
         <section
-          className={`mx-auto flex flex-col shadow w-full ${visibleLinks.length === 0 ? "bg-white/40" : "bg-white"}`}
+          className={`mx-auto flex flex-col  w-full ${visibleLinks.length === 0 ? "bg-white/40" : "bg-white"}`}
         >
           <div className="relative">
             <table className="w-full">
@@ -20,7 +20,7 @@ const LinkAnalysis = ({ visibleLinks }: { visibleLinks: any[] }) => {
                 </tr>
               </thead>
             </table>
-            <div className="overflow-auto custom-scrollbar h-[30.8rem]">
+            <div className="overflow-auto custom-scrollbar h-[23rem]">
               <table className="w-full">
                 <tbody>
                   {visibleLinks.map((link, index) => (

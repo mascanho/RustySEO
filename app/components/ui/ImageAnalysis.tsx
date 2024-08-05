@@ -16,7 +16,7 @@ const ImageAnalysis = ({ images }: { images: any[] }) => {
           className={`mx-auto flex flex-col  w-full ${images.length === 0 ? "bg-white/40" : "bg-white"}`}
         >
           <div className="relative">
-            <div className="overflow-auto custom-scrollbar h-[32.9rem]">
+            <div className="overflow-auto custom-scrollbar h-[25rem]">
               <table className="w-full dark:bg-brand-darker">
                 <thead className="text-xs text-left">
                   <tr className="">
@@ -59,7 +59,7 @@ const ImageAnalysis = ({ images }: { images: any[] }) => {
             </div>
           </div>
         </section>
-        <div className="pb-1 m-2 rounded-md text-xs flex justify-end text-black/50 space-x-4">
+        <div className="m-2 pt-2 rounded-md text-xs flex justify-end text-black/50 space-x-4">
           <p className="text-xs">
             Images Found:{" "}
             <span className="px-1 py-0.5 bg-gray-400 text-white rounded-md">

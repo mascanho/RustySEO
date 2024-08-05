@@ -52,7 +52,7 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
   }
 
   return (
-    <div className="bg-gray-100 w-full dark:bg-brand-darker p-6 rounded-lg shadow-lg max-w-7xl mx-auto mt-10">
+    <div className="bg-gray-100 w-full dark:bg-brand-darker p-6 rounded-lg shadow max-w-7xl mx-auto mt-10">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">
           Performance Improvements

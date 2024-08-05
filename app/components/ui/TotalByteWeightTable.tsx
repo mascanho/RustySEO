@@ -11,7 +11,7 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
         Total Byte Weight
       </h2>
 
-      <div className="overflow-auto h-[33.1rem] shadow custom-scrollbar">
+      <div className="overflow-auto h-[25rem] shadow custom-scrollbar">
         <table className="w-full h-full">
           <thead className="sticky top-0 bg-white dark:bg-transparent shadow">
             <tr>
@@ -56,7 +56,7 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
         </table>
       </div>
 
-      <div className="pb-3 m-2 rounded-md text-xs flex justify-end text-black/50 space-x-4">
+      <div className="pt-2  m-2 rounded-md text-xs flex justify-end text-black/50 space-x-4">
         <p>
           Total URLs:{" "}
           <span className="px-1 py-0.5 bg-gray-400 text-white rounded-md min-w-3">

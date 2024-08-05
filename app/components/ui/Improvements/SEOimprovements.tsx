@@ -94,7 +94,7 @@ const SEOImprovements = ({
           <PerformanceImprovements pageSpeed={pageSpeed} />
         </TabsContent>
         <TabsContent value="seo">
-          <div className="bg-gray-100 dark:bg-brand-darker p-6 rounded-lg shadow-lg max-w-7xl mx-auto mt-10">
+          <div className="bg-gray-100 dark:bg-brand-darker p-6 rounded-lg shadow max-w-7xl mx-auto mt-10">
             <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">
               SEO Improvements
             </h2>
