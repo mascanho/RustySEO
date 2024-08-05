@@ -105,7 +105,7 @@ const Home: React.FC<HomeProps> = () => {
       setDBDATA(result);
       console.log(result, "This comes from the DB");
     });
-  }, [DBDATA]);
+  }, [pageSpeed]);
 
   const handleChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {

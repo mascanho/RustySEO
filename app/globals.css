@@ -52,10 +52,10 @@ input:focus {
 /* Tables Styles */
 
 .table_container {
-  @apply bg-white border dark:border-brand-dark dark:bg-brand-darker dark:text-white shadow rounded-md h-[38rem] overflow-hidden  !important;
+  @apply bg-slate-200 border dark:border-brand-dark dark:bg-brand-darker dark:text-white shadow rounded-md h-[38rem] overflow-hidden  !important;
 
   div {
-    @apply dark:text-white dark:bg-brand-darker !important;
+    @apply dark:text-white dark:bg-brand-darker mt-0 !important;
   }
 
   h2 {

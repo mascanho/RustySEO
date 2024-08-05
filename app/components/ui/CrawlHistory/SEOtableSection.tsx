@@ -63,7 +63,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
     if (Array.isArray(dbdata)) {
       setData(dbdata);
     }
-  }, []);
+  }, [dbdata]);
 
   // Filter and sort data
   const filteredData = (Array.isArray(data) ? data : [])
