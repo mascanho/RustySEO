@@ -11,14 +11,14 @@ const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
         Third Party Scripts
       </h2>
 
-      <div className="overflow-auto custom-scrollbar h-[33rem] shadow">
-        <table className="w-full pr-1">
+      <div className="overflow-auto custom-scrollbar h-[33rem] ">
+        <table className="w-full ">
           <thead>
-            <tr>
-              <th className="text-xs px-4 py-2 border">Entity</th>
-              <th className="text-xs px-4 py-2 border">Thread Time</th>
-              <th className="text-xs px-4 py-2 border">T. Size</th>
-              <th className="text-xs px-4 py-2 border">Blocking Time</th>
+            <tr align="left">
+              <th className="text-xs  border">Entity</th>
+              <th className="text-xs  border">Thread Time</th>
+              <th className="text-xs  border">T. Size</th>
+              <th className="text-xs  border">Blocking Time</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">

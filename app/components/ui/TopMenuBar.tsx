@@ -168,7 +168,7 @@ const TopMenuBar = () => {
         <MenubarMenu>
           <MenubarTrigger className="ml-3">Tools</MenubarTrigger>
           <MenubarContent>
-            <MenubarItem onClick={openPageSpeed}>PageSpeed Key</MenubarItem>
+            <MenubarItem onClick={openPageSpeed}>Crawl Scheduler</MenubarItem>
             <MenubarItem
               onClick={() => {
                 openBrowserWindow("https://www.ollama.com/");

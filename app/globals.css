@@ -52,7 +52,7 @@ input:focus {
 /* Tables Styles */
 
 .table_container {
-  @apply bg-slate-200 border dark:border-brand-dark dark:bg-brand-darker dark:text-white shadow rounded-md h-[38rem] overflow-hidden  !important;
+  @apply bg-slate-200 border dark:border-brand-dark dark:bg-brand-darker dark:text-white shadow rounded-md h-[38rem] overflow-hidden p-1  !important;
 
   div {
     @apply dark:text-white dark:bg-brand-darker mt-0 !important;
@@ -85,29 +85,27 @@ table {
   width: 100%;
   background-color: white;
 }
-/**/
-/*thead {*/
-/*  @apply z-20 overflow-clip bg-white border-b-2 dark:border-b-white/10 dark:bg-brand-darker dark:text-white !important;*/
-/*}*/
+
+thead {
+  @apply z-20 overflow-clip bg-red-500 border-b-2 dark:border-b-white/10 dark:bg-brand-darker dark:text-white !important;
+}
 
 tbody {
   @apply bg-white dark:bg-brand-darker dark:text-white border-0 !important;
 }
 
 th {
-  @apply dark:bg-brand-darker dark:text-white border-0 !important;
-  padding: 4px 0 1em 1em;
+  @apply dark:bg-brand-darker dark:text-white bg-red-500 border-0 !important;
+  padding: 4px 0;
   position: sticky;
   top: 0;
-  background-color: slategray;
   z-index: 1;
   color: black;
-  background-color: white;
 }
 
 tr {
   @apply dark:border-white/20 !important;
-  padding: 20px 0;
+  /* padding: 20px 0; */
   vertical-align: center;
   z-index: 0;
 }
@@ -151,7 +149,7 @@ pre {
 }
 
 .naked_table {
-  @apply dark:border-brand-darker  bg-white dark:bg-brand-darker shadow rounded-md h-[38rem] overflow-hidden;
+  @apply dark:border-brand-darker  bg-white dark:bg-brand-darker shadow rounded-md h-[38rem] overflow-hidden border;
 
   h2 {
     @apply p-4 font-semibold text-lg dark:text-white;

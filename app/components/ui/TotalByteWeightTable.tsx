@@ -17,13 +17,13 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
             <tr>
               <th
                 align="left"
-                className="text-xs px-4 w-[120px] border-r border-gray-300"
+                className="text-xs  w-[120px] border-r border-gray-300"
               >
                 Transfer Size
               </th>
               <th
                 align="left"
-                className="text-xs px-4 w-1/5 border-r border-gray-300 dark:text-white"
+                className="text-xs w-1/5 border-r border-gray-300 dark:text-white"
               >
                 URL
               </th>

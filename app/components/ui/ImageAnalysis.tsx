@@ -6,20 +6,20 @@ const ImageAnalysis = ({ images }: { images: any[] }) => {
   const imagesWithoutAltText = images.filter((image) => !image.alt_text);
 
   return (
-    <section className="table_container" id="imagestable">
+    <section className="table_container">
       <h2 className="text-base text-left pl-1 pt-3 font-bold w-full text-black/60">
         Image analysis
       </h2>
 
       <div className="h-full overflow-hidden sticky top-0">
         <section
-          className={`mx-auto flex flex-col shadow w-full ${images.length === 0 ? "bg-white/40" : "bg-white"}`}
+          className={`mx-auto flex flex-col  w-full ${images.length === 0 ? "bg-white/40" : "bg-white"}`}
         >
           <div className="relative">
             <div className="overflow-auto custom-scrollbar h-[32.9rem]">
               <table className="w-full dark:bg-brand-darker">
-                <thead className="text-xs dark:bg-brand-darker py-4 ">
-                  <tr className="py-10">
+                <thead className="text-xs text-left">
+                  <tr className="">
                     <th>Image</th>
                     <th>Alt Text</th>
                     <th>Size</th>

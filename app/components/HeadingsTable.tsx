@@ -28,8 +28,8 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
         <table className="w-full">
           <thead className="text-xs text-left">
             <tr className="w-full">
-              <th className="w-1/6">Anchor</th>
-              <th className="w-5/6">Link</th>
+              <th>Anchor</th>
+              <th>Link</th>
             </tr>
           </thead>
         </table>
