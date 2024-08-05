@@ -298,14 +298,11 @@ const Home: React.FC<HomeProps> = () => {
     checkSystem();
   }, []);
 
-  function checkGSC() {
-    invoke<{}>("fetch_google_search_console")
-      .then((result) => {
-        console.log("Starting gsc........");
-        console.log(result);
-      })
-      .catch(console.error);
-  }
+  useEffect(() => {
+    invoke<{}>("check_links").then((result) => {
+      console.log(result, "The links");
+    });
+  }, [visibleLinks, loading, url, crawlResult]);
 
   const handleSpeed = useCallback(
     (url: string) => {

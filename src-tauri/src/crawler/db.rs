@@ -7,6 +7,17 @@ use std::fs;
 
 mod models;
 
+pub struct DataBase {
+    conn: Connection,
+}
+
+impl DataBase {
+    pub fn new() -> Result<Self> {
+        let conn = open_db_connection()?;
+        Ok(Self { conn })
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ResultRecord {
     pub id: Option<i64>,                   // For INTEGER PRIMARY KEY AUTOINCREMENT
@@ -153,7 +164,7 @@ pub fn read_seo_data_from_db() -> Result<Vec<SEOResultRecord>> {
     for result in results {
         data.push(result?);
     }
-    println!("Page SEO Data: {:#?}", data);
+    //println!("Page SEO Data: {:#?}", data);
     Ok(data)
 }
 
@@ -214,4 +225,62 @@ pub fn add_technical_data(data: Vec<&String>, url: &str) -> Result<()> {
     println!("Data: {:#?}", data[0]);
 
     Ok(())
+}
+
+// ---------------- FUNCTION TO STORE THE LINKS IN THE DATABASE ----------------
+
+pub fn create_links_table() -> Result<()> {
+    let conn = open_db_connection()?;
+
+    // Create the links table if it does not exist
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS links (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            url TEXT NOT NULL,
+            links TEXT
+        )",
+        [],
+    )?;
+
+    Ok(())
+}
+
+pub fn store_links_in_db(links: Vec<(String, String)>) -> Result<()> {
+    // Open the database connection
+    let conn = open_db_connection()?;
+
+    // DELETE FROM TABLE
+    conn.execute("DELETE FROM links", [])?;
+
+    // Ensure the links table exists
+    create_links_table()?;
+
+    // Insert new record into links table
+    for (url, strategy) in links {
+        conn.execute(
+            "INSERT INTO links (url, links) VALUES (?1, ?2)",
+            params![url, strategy],
+        )?;
+        println!("Addeding links to DB......");
+        println!("Data: {:#?}", url);
+    }
+
+    Ok(())
+}
+
+// --------------- FUNCTION TO FETCH THE LINKS FROM THE DATABASE ---------------
+
+pub fn read_links_from_db() -> Result<Vec<(String, String)>> {
+    let conn = open_db_connection()?;
+    let mut stmt = conn.prepare("SELECT * FROM links")?;
+
+    let links = stmt.query_map([], |row| Ok((row.get(1)?, row.get(2)?)))?;
+
+    let mut data = Vec::new();
+
+    for link in links {
+        data.push(link?);
+    }
+    //println!("Page SEO Data: {:#?}", data);
+    Ok(data)
 }

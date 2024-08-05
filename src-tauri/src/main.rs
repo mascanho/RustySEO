@@ -45,8 +45,6 @@ async fn fetch_page_speed(
     let result =
         crawler::get_page_speed_insights(url.to_string(), Some(strategy.to_string())).await;
 
-    println!("Result: {:?}", result);
-
     match result {
         Ok((general_response, seo_response)) => Ok((general_response, seo_response)),
         Err(err) => Err(err),
@@ -96,7 +94,8 @@ async fn main() {
             genai::generated_page_title,
             genai::generated_page_description,
             downloads::csv::generate_csv_command,
-            commands::read_seo_data_from_db
+            commands::read_seo_data_from_db,
+            commands::check_links
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

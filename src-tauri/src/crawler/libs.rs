@@ -1,4 +1,3 @@
-use core::fmt;
 use directories::ProjectDirs;
 use reqwest::Client;
 use rusqlite::{Connection, Result};
@@ -10,6 +9,8 @@ use tokio::fs;
 use url::{ParseError, Url};
 
 use toml::de::Error as TomlError;
+
+use super::crawler;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ApiKeys {
@@ -68,6 +69,13 @@ impl From<url::ParseError> for MyError {
     fn from(error: url::ParseError) -> Self {
         MyError::Other(error.to_string())
     }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LinkStatus {
+    pub url: String,
+    pub status_code: u16,
+    pub description: String,
 }
 
 // GET THE SITEMAP
@@ -228,4 +236,62 @@ pub async fn load_api_keys() -> Result<ApiKeys, Box<dyn Error>> {
     println!("Loaded API keys: {:?}", api_keys);
 
     Ok(api_keys)
+}
+
+// Function to check the status of links asynchronously
+
+pub async fn check_links() -> Result<Vec<LinkStatus>, String> {
+    let client = Client::new(); // Initialize reqwest client
+
+    let mut results = Vec::new(); // To store the results
+
+    let links = crawler::db::read_links_from_db(); // Get links from the database
+    let base_url = "http://example.com"; // Replace with your base URL
+
+    // Helper function to convert relative URLs to absolute URLs
+    fn resolve_url(base: &str, relative: &str) -> Result<String, ParseError> {
+        let base_url = Url::parse(base)?;
+        let resolved_url = base_url.join(relative)?;
+        Ok(resolved_url.to_string())
+    }
+
+    for link in links.unwrap() {
+        let url = link.0;
+        let link_text = link.1;
+
+        // Skip mailto: and other non-http(s) URLs
+        if url.starts_with("mailto:") || url.starts_with("tel:") || url.starts_with("ftp:") {
+            results.push(LinkStatus {
+                url: url.clone(),
+                status_code: 0,
+                description: format!("Unsupported URL scheme: {}", url),
+            });
+            continue;
+        }
+
+        // Resolve URL to handle both relative and absolute URLs
+        let absolute_url = if url.starts_with("http://") || url.starts_with("https://") {
+            url // Full URL
+        } else {
+            resolve_url(base_url, &url).map_err(|e| e.to_string())? // Convert to full URL
+        };
+
+        // Send the request and get the response
+        let response = client
+            .get(&absolute_url)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
+
+        let status_code = response.status().as_u16(); // Get the status code
+
+        results.push(LinkStatus {
+            url: absolute_url,
+            status_code,
+            description: format!("{}", link_text),
+        });
+    }
+
+    println!("CHECKING LINK STATUS: {:?}", results);
+    Ok(results)
 }

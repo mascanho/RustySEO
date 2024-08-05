@@ -28,7 +28,7 @@ use crate::crawler;
 
 mod content;
 pub mod db;
-mod libs;
+pub mod libs;
 mod page_rank;
 
 #[derive(Serialize)]
@@ -247,6 +247,9 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
                 }
             }
         }
+
+        // ------------------------- Push the links Vector to the DB -------------------------
+        db::store_links_in_db(links.clone());
 
         // Get all the elements that exist inside <head>
         //let head_selector = Selector::parse("head").unwrap();
@@ -499,7 +502,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let page_score = page_rank::fetch_page_rank(&url).await;
     match page_score {
         Ok(page_score) => {
-            println!("Page Rank: {:?}", page_score);
             page_rank.push(page_score);
         }
         Err(e) => {
