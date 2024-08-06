@@ -51,7 +51,7 @@ export function HtmlToTextChart({ htmlToTextRatio }: any) {
       <CardContent className="flex flex-1 items-center pb-0">
         <ChartContainer
           config={chartConfig}
-          className="mx-auto aspect-square w-full max-w-[250px]"
+          className="mx-auto aspect-square w-full max-w-[280px]"
         >
           <RadialBarChart
             data={chartData}

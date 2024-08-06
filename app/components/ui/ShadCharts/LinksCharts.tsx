@@ -18,13 +18,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-const chartData = [
-  { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
-  { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
-  { browser: "firefox", visitors: 287, fill: "var(--color-firefox)" },
-  { browser: "edge", visitors: 173, fill: "var(--color-edge)" },
-  { browser: "other", visitors: 190, fill: "var(--color-other)" },
-];
 
 const chartConfig = {
   visitors: {
@@ -56,6 +49,29 @@ const chartConfig = {
 export function LinksChart({ linkStatusCodes }: { linksStatusCodes: any }) {
   console.log(linkStatusCodes, "linksStatusCodes from the charts");
 
+  const externalLinks = linkStatusCodes?.filter(
+    (link: any) => link?.is_external === true,
+  );
+
+  const internalLinks = linkStatusCodes?.filter(
+    (link: any) => link?.is_external === false,
+  );
+
+  console.log(externalLinks, "The external links");
+
+  const chartData = [
+    {
+      browser: "External",
+      visitors: externalLinks.length,
+      fill: "var(--color-chrome)",
+    },
+    {
+      browser: "Internal",
+      visitors: internalLinks.length,
+      fill: "var(--color-safari)",
+    },
+  ];
+
   const totalVisitors = React.useMemo(() => {
     return chartData.reduce((acc, curr) => acc + curr.visitors, 0);
   }, []);
@@ -63,8 +79,7 @@ export function LinksChart({ linkStatusCodes }: { linksStatusCodes: any }) {
   return (
     <Card className="flex flex-col dark:bg-brand-darker">
       <CardHeader className="items-center pb-0">
-        <CardTitle>Pie Chart - Donut with Text</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
+        <CardTitle>On page Links</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
@@ -96,16 +111,16 @@ export function LinksChart({ linkStatusCodes }: { linksStatusCodes: any }) {
                         <tspan
                           x={viewBox.cx}
                           y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold"
+                          className="fill-foreground text-3xl font-bold dark:fill-white"
                         >
-                          {totalVisitors.toLocaleString()}
+                          {linkStatusCodes.length}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground"
+                          className="fill-muted-foreground dark:fill-white"
                         >
-                          Visitors
+                          Links
                         </tspan>
                       </text>
                     );
@@ -116,12 +131,13 @@ export function LinksChart({ linkStatusCodes }: { linksStatusCodes: any }) {
           </PieChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+      <CardFooter className="flex-col gap-2 text-sm text-cxenter mb-6 dark:text-white/50">
+        <div className="flex items-center font-medium leading-none -mt-10">
+          This page contains {linkStatusCodes?.length} links.
         </div>
         <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
+          From those, {externalLinks?.length} are external and{" "}
+          {internalLinks?.length} are internal
         </div>
       </CardFooter>
     </Card>

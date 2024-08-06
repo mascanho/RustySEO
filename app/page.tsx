@@ -172,6 +172,8 @@ const Home: React.FC<HomeProps> = () => {
     handleSpeed(url);
     setHtmlToTextRatio([]);
     setPageRank([]);
+    setLinkStatusCodes([]);
+    handleLinkStatusCheck(url);
 
     invoke<{
       links: [];
@@ -198,7 +200,6 @@ const Home: React.FC<HomeProps> = () => {
       page_rank: any[];
     }>("crawl", { url })
       .then((result) => {
-        handleLinkStatusCheck(url);
         showLinksSequentially(result.links); // Show links one by one
         showHeadingsSequentially(result.headings);
         setPageTitle(result.page_title);
@@ -301,7 +302,7 @@ const Home: React.FC<HomeProps> = () => {
   }, []);
 
   const handleLinkStatusCheck = (url: any) => {
-    invoke<{}>("check_links", { url: url }).then((result: any) => {
+    invoke<{}>("check_link_status", { url: url }).then((result: any) => {
       console.log(result, "The links");
       setLinkStatusCodes(result);
     });

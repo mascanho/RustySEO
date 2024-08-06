@@ -95,7 +95,7 @@ async fn main() {
             genai::generated_page_description,
             downloads::csv::generate_csv_command,
             commands::read_seo_data_from_db,
-            commands::check_links
+            commands::check_link_status
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

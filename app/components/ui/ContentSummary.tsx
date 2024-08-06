@@ -191,7 +191,7 @@ const ContentSummary = ({
           </span>
         </div>
 
-        <div className="flex items-start justify-start flex-col">
+        <div className="flex items-start justify-start flex-col mt-4">
           <div className="flex items-start space-x-2">
             <div className="flex flex-col w-full justify-center">
               <div className="flex items-center mb-3 -mt-2">
@@ -245,11 +245,11 @@ const ContentSummary = ({
             </div>
           </div>
 
-          <div className="grid gap-1 min-h-[8rem] overflow-y-auto mt-4">
+          <div className="grid gap-1 min-h-[8rem] overflow-y-auto mt-8">
             <h3 className="text-xs font-semibold dark:text-sky-dark">
               Summary
             </h3>
-            <p className="text-muted-foreground text-xs -mt-6">
+            <p className="text-muted-foreground text-xs mt-0">
               {AiContentAnalysis}
             </p>
           </div>

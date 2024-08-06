@@ -1,10 +1,10 @@
 import React from "react";
-
+import { PiLinkSimpleBold } from "react-icons/pi";
 const LinkAnalysis = ({ visibleLinks }: { visibleLinks: any[] }) => {
   return (
     <section className="table_container">
-      <h2 className="text-base text-left pl-1 pt-3 font-bold w-full text-black/60">
-        Link Analysis
+      <h2 className="text-base text-left pl-1 flex items-center pt-3 font-bold w-full text-black/60">
+        <PiLinkSimpleBold className="mr-1.5" /> Link Analysis
       </h2>
 
       <div className="h-full overflow-hidden sticky top-0">

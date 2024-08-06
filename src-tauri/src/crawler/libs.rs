@@ -76,6 +76,7 @@ pub struct LinkStatus {
     pub url: String,
     pub status_code: u16,
     pub description: String,
+    pub is_external: bool,
 }
 
 // GET THE SITEMAP
@@ -240,20 +241,29 @@ pub async fn load_api_keys() -> Result<ApiKeys, Box<dyn Error>> {
 
 // Function to check the status of links asynchronously
 
-pub async fn check_links(url: &str) -> Result<Vec<LinkStatus>, Box<dyn Error>> {
-    let client = Client::new(); // Initialize reqwest client
+#[tauri::command]
+pub async fn check_links(url: String) -> Result<Vec<LinkStatus>, String> {
+    let client = reqwest::Client::new(); // Initialize reqwest client
     let mut results = Vec::new(); // To store the results
 
     // Convert the provided URL into a base URL
-    let base_url = Url::parse(url)?;
+    let base_url = Url::parse(&url).map_err(|e| e.to_string())?;
     let base_str = base_url.as_str();
 
-    let links = crawler::db::read_links_from_db()?; // Get links from the database
+    let links = match crawler::db::read_links_from_db() {
+        Ok(links) => links,
+        Err(e) => return Err(e.to_string()),
+    }; // Get links from the database
 
     // Helper function to convert relative URLs to absolute URLs
     fn resolve_url(base: &Url, relative: &str) -> Result<Url, url::ParseError> {
         let resolved_url = base.join(relative)?;
         Ok(resolved_url)
+    }
+
+    // Helper function to determine if a URL is external
+    fn is_external(base_url: &Url, link_url: &Url) -> bool {
+        base_url.domain() != link_url.domain()
     }
 
     for link in links {
@@ -269,6 +279,7 @@ pub async fn check_links(url: &str) -> Result<Vec<LinkStatus>, Box<dyn Error>> {
                 url: link_url.clone(),
                 status_code: 0,
                 description: format!("Unsupported URL scheme: {}", link_url),
+                is_external: false, // Unsupported URLs are not flagged as external
             });
             continue;
         }
@@ -280,6 +291,10 @@ pub async fn check_links(url: &str) -> Result<Vec<LinkStatus>, Box<dyn Error>> {
             let resolved_url = resolve_url(&base_url, &link_url).map_err(|e| e.to_string())?;
             resolved_url.to_string()
         };
+
+        // Parse absolute URL to determine if it is external
+        let link_url = Url::parse(&absolute_url).map_err(|e| e.to_string())?;
+        let is_external = is_external(&base_url, &link_url);
 
         // Send the request and get the response
         let response = client
@@ -295,6 +310,7 @@ pub async fn check_links(url: &str) -> Result<Vec<LinkStatus>, Box<dyn Error>> {
             url: absolute_url,
             status_code,
             description: format!("{} {}", link_text, status_code),
+            is_external,
         });
     }
 

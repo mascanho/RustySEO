@@ -1,4 +1,4 @@
-import React from "react";
+import { SiJavascript } from "react-icons/si";
 
 const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
   const scripts =
@@ -7,8 +7,8 @@ const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
 
   return (
     <section className="table_container">
-      <h2 className="text-base text-left pl-1 pt-3 font-bold w-full text-black/60">
-        Third Party Scripts
+      <h2 className="text-base text-left pl-1 flex items-center pt-3 font-bold w-full text-black/60">
+        <SiJavascript className="mr-1.5" /> Third Party Scripts
       </h2>
 
       <div className="overflow-auto custom-scrollbar h-[25rem] ">

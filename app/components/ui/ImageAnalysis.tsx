@@ -1,5 +1,6 @@
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import React from "react";
+import { BsImage } from "react-icons/bs";
 
 const ImageAnalysis = ({ images }: { images: any[] }) => {
   const imagesWithAltText = images.filter((image) => image.alt_text);
@@ -7,8 +8,8 @@ const ImageAnalysis = ({ images }: { images: any[] }) => {
 
   return (
     <section className="table_container">
-      <h2 className="text-base text-left pl-1 pt-3 font-bold w-full text-black/60">
-        Image analysis
+      <h2 className="text-base text-left flex items-center pl-1 pt-3 font-bold w-full text-black/60">
+        <BsImage className="mr-1.5" /> Image analysis
       </h2>
 
       <div className="h-full overflow-hidden sticky top-0">

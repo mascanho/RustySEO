@@ -1,4 +1,5 @@
 import React from "react";
+import { LiaHeadingSolid } from "react-icons/lia";
 
 const HeadingsTable = ({ headings }: { headings: string[] }) => {
   const findDuplicates = (array: any) => {
@@ -20,8 +21,8 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
 
   return (
     <section className="table_container">
-      <h2 className="text-base text-left pl-1 pt-3 font-bold w-full text-black/60">
-        Headings
+      <h2 className="text-base text-left pl-1 pt-3 font-bold w-full text-black/60 flex items-center ">
+        <LiaHeadingSolid className="mr-1.5" /> Headings
       </h2>
 
       <section className="flex flex-col flex-grow">
