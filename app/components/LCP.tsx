@@ -92,8 +92,7 @@ const LCPEl = ({
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
           <Text size="sm">
-            This metric shows the performance of the page/URL on Desktop, synced
-            from Page Speed Insights.
+            How long it takes for the main content of the page to load.
           </Text>
         </Popover.Dropdown>
       </Popover>

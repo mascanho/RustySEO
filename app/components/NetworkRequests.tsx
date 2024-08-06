@@ -95,8 +95,8 @@ const NetworkRequests = ({
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
           <Text size="sm">
-            This metric shows the performance of the page/URL on Desktop, synced
-            from Page Speed Insights.
+            The HTTP requests made by a browser to fetch resources like HTML,
+            CSS, JavaScript, images, and fonts from a server.
           </Text>
         </Popover.Dropdown>
       </Popover>

@@ -84,8 +84,8 @@ const FcpEl = ({
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
           <Text size="sm">
-            This metric shows the performance of the page/URL on Desktop, synced
-            from Page Speed Insights.
+            The time it takes for the browser to render any part of the page's
+            content. This includes text, images, or background colors
           </Text>
         </Popover.Dropdown>
       </Popover>

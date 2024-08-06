@@ -93,8 +93,8 @@ const Redirects = ({
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
           <Text size="sm">
-            This metric shows the performance of the page/URL on Desktop, synced
-            from Page Speed Insights.
+            Occur when a user (or search engine bot) requests one URL, but the
+            server responds with a different one.
           </Text>
         </Popover.Dropdown>
       </Popover>

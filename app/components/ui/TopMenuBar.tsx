@@ -123,9 +123,6 @@ const TopMenuBar = () => {
               New task
               <MenubarShortcut>⌘T</MenubarShortcut>
             </MenubarItem>
-            <MenubarItem>New</MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem>Share</MenubarItem>
             <MenubarSeparator />
             <MenubarItem onClick={openDrawer}>
               View all tasks

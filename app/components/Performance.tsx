@@ -91,8 +91,8 @@ const PerformanceEl = ({
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
           <Text size="sm">
-            This metric shows the performance of the page/URL on Desktop, synced
-            from Page Speed Insights.
+            A score between 0 and 100 indicating how well your page performs in
+            terms of speed and optimization.
           </Text>
         </Popover.Dropdown>
       </Popover>

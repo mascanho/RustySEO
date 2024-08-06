@@ -87,8 +87,8 @@ const ServerResponseTime = ({
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
           <Text size="sm">
-            This metric shows the performance of the page/URL on Desktop, synced
-            from Page Speed Insights.
+            The time it takes for a web server to process a request and send a
+            response back to the client
           </Text>
         </Popover.Dropdown>
       </Popover>

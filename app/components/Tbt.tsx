@@ -84,8 +84,8 @@ const TbtEl = ({
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
           <Text size="sm">
-            This metric shows the performance of the page/URL on Desktop, synced
-            from Page Speed Insights.
+            Total amount of time a user is prevented from interacting with a
+            page due to long tasks blocking the main thread.
           </Text>
         </Popover.Dropdown>
       </Popover>

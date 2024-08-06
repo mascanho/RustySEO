@@ -123,7 +123,7 @@ const Footer = () => {
         <Drawer>
           <DrawerTrigger className="flex items-center space-x-1">
             <FaRobot className="text-lg" />
-            <span className="text-xs mt-[2px]">Oxide AI</span>
+            {/* <span className="text-xs mt-[2px]">Oxide AI</span> */}
           </DrawerTrigger>
           <DrawerContent>
             <DrawerHeader>
@@ -143,8 +143,8 @@ const Footer = () => {
           </DrawerContent>
         </Drawer>
 
-        <div className="flex w-50 items-center justify-center pr-4">
-          <div className="flex items-center  text-xs mt-[2px] space-x-6">
+        <div className="flex w-50 items-center justify-center pr-2">
+          <div className="flex items-center  text-xs mt-[2px] space-x-4">
             <div className="flex items-center">
               <LiaTasksSolid className="text-xl dark:text-white/50" />
               <span>Tasks:</span>
@@ -153,7 +153,7 @@ const Footer = () => {
               </span>
             </div>
             <BsLayoutSidebarInsetReverse
-              className="text-base cursor-pointer"
+              className="text-xl hover:scale-105  transition-all ease-linear delay-75 cursor-pointer"
               onClick={() => {
                 // Toggle visibility based on current state
                 if (visibility.sidebar) {

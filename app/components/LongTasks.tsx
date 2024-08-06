@@ -103,8 +103,8 @@ const LongTasks = ({
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
           <Text size="sm">
-            This metric shows the performance of the page/URL on Desktop, synced
-            from Page Speed Insights.
+            Any operations that take a significant amount of time for the
+            browser&apos;s main thread to execute.
           </Text>
         </Popover.Dropdown>
       </Popover>

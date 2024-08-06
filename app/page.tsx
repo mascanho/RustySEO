@@ -430,7 +430,7 @@ const Home: React.FC<HomeProps> = () => {
                       }
                     </span>
                     <FaChevronDown
-                      className="ml-1 -mr-1 h-4 w-4 text-xs text-black/50"
+                      className="ml-1 -mr-1 h-2 w-2 text-xs text-black/50"
                       aria-hidden="true"
                     />
                   </button>

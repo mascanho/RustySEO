@@ -87,8 +87,7 @@ const TtiEl = ({
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
           <Text size="sm">
-            This metric shows the performance of the page/URL on Desktop, synced
-            from Page Speed Insights.
+            How responsive the page is to user interactions.
           </Text>
         </Popover.Dropdown>
       </Popover>

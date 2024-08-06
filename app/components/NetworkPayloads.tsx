@@ -98,8 +98,8 @@ const NetworkPayload = ({
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
           <Text size="sm">
-            This metric shows the performance of the page/URL on Desktop, synced
-            from Page Speed Insights.
+            Large payloads refer to web page resources that are large in size
+            and take a long time to download.
           </Text>
         </Popover.Dropdown>
       </Popover>

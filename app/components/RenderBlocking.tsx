@@ -96,8 +96,8 @@ const RenderBlocking = ({
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
           <Text size="sm">
-            This metric shows the performance of the page/URL on Desktop, synced
-            from Page Speed Insights.
+            Resources that prevent the browser from displaying any content on
+            the screen until they are fully downloaded, parsed, and executed.
           </Text>
         </Popover.Dropdown>
       </Popover>
