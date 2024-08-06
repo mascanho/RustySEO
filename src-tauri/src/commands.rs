@@ -13,8 +13,8 @@ pub fn read_seo_data_from_db() -> Result<Vec<db::SEOResultRecord>, String> {
 
 // CHECK THE LINKS STATUS CODES
 #[tauri::command]
-pub async fn check_links() -> Result<Vec<libs::LinkStatus>, String> {
-    let result = libs::check_links().await;
+pub async fn check_links(url: &str) -> Result<Vec<libs::LinkStatus>, String> {
+    let result = libs::check_links(&url).await;
     match result {
         Ok(result) => Ok(result),
         Err(err) => Err(err.to_string()),

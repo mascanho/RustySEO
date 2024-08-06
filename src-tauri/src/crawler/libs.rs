@@ -240,45 +240,51 @@ pub async fn load_api_keys() -> Result<ApiKeys, Box<dyn Error>> {
 
 // Function to check the status of links asynchronously
 
-pub async fn check_links() -> Result<Vec<LinkStatus>, String> {
+pub async fn check_links(url: &str) -> Result<Vec<LinkStatus>, Box<dyn Error>> {
     let client = Client::new(); // Initialize reqwest client
-
     let mut results = Vec::new(); // To store the results
 
-    let links = crawler::db::read_links_from_db(); // Get links from the database
-    let base_url = "http://example.com"; // Replace with your base URL
+    // Convert the provided URL into a base URL
+    let base_url = Url::parse(url)?;
+    let base_str = base_url.as_str();
+
+    let links = crawler::db::read_links_from_db()?; // Get links from the database
 
     // Helper function to convert relative URLs to absolute URLs
-    fn resolve_url(base: &str, relative: &str) -> Result<String, ParseError> {
-        let base_url = Url::parse(base)?;
-        let resolved_url = base_url.join(relative)?;
-        Ok(resolved_url.to_string())
+    fn resolve_url(base: &Url, relative: &str) -> Result<Url, url::ParseError> {
+        let resolved_url = base.join(relative)?;
+        Ok(resolved_url)
     }
 
-    for link in links.unwrap() {
-        let url = link.0;
+    for link in links {
+        let link_url = link.0;
         let link_text = link.1;
 
         // Skip mailto: and other non-http(s) URLs
-        if url.starts_with("mailto:") || url.starts_with("tel:") || url.starts_with("ftp:") {
+        if link_url.starts_with("mailto:")
+            || link_url.starts_with("tel:")
+            || link_url.starts_with("ftp:")
+        {
             results.push(LinkStatus {
-                url: url.clone(),
+                url: link_url.clone(),
                 status_code: 0,
-                description: format!("Unsupported URL scheme: {}", url),
+                description: format!("Unsupported URL scheme: {}", link_url),
             });
             continue;
         }
 
         // Resolve URL to handle both relative and absolute URLs
-        let absolute_url = if url.starts_with("http://") || url.starts_with("https://") {
-            url // Full URL
+        let absolute_url = if link_url.starts_with("http://") || link_url.starts_with("https://") {
+            link_url // Full URL
         } else {
-            resolve_url(base_url, &url).map_err(|e| e.to_string())? // Convert to full URL
+            let resolved_url = resolve_url(&base_url, &link_url).map_err(|e| e.to_string())?;
+            resolved_url.to_string()
         };
 
         // Send the request and get the response
         let response = client
             .get(&absolute_url)
+            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
             .send()
             .await
             .map_err(|e| e.to_string())?;
@@ -288,7 +294,7 @@ pub async fn check_links() -> Result<Vec<LinkStatus>, String> {
         results.push(LinkStatus {
             url: absolute_url,
             status_code,
-            description: format!("{}", link_text),
+            description: format!("{} {}", link_text, status_code),
         });
     }
 

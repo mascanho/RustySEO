@@ -55,6 +55,7 @@ const Home: React.FC<HomeProps> = () => {
   const [openedModal, { open: openModal, close: closeModal }] =
     useDisclosure(false);
 
+  const [linkStatusCodes, setLinkStatusCodes] = useState<any[]>([]);
   const [url, setUrl] = useState<string>("");
   const [crawlResult, setCrawlResult] = useState<string[]>([]);
   const [visibleLinks, setVisibleLinks] = useState<string[]>([]);
@@ -197,6 +198,7 @@ const Home: React.FC<HomeProps> = () => {
       page_rank: any[];
     }>("crawl", { url })
       .then((result) => {
+        handleLinkStatusCheck(url);
         showLinksSequentially(result.links); // Show links one by one
         showHeadingsSequentially(result.headings);
         setPageTitle(result.page_title);
@@ -298,11 +300,12 @@ const Home: React.FC<HomeProps> = () => {
     checkSystem();
   }, []);
 
-  useEffect(() => {
-    invoke<{}>("check_links").then((result) => {
+  const handleLinkStatusCheck = (url: any) => {
+    invoke<{}>("check_links", { url: url }).then((result: any) => {
       console.log(result, "The links");
+      setLinkStatusCodes(result);
     });
-  }, [visibleLinks, loading, url, crawlResult]);
+  };
 
   const handleSpeed = useCallback(
     (url: string) => {
@@ -485,11 +488,10 @@ const Home: React.FC<HomeProps> = () => {
                 )}
                 <button
                   onClick={() => handleClick(url)}
-                  className="absolute top-0 text-sm rounded-md -right-[4rem] bg-sky-500 active:scale-95 text-white px-3 py-0.5 cursor-pointer"
+                  className="rounded w-20 text-sm relative inline-flex group py-[1px] items-center justify-center  ml-2 cursor-pointer border-b-4 border-l-2 active:border-blue-600 active:shadow-none shadow-lg bg-gradient-to-tr from-blue-600 to-blue-500 border-blue-700 text-white"
                 >
-                  {" "}
-                  crawl{" "}
-                </button>
+                  <span className="relative"> Crawl</span>
+                </button>{" "}
               </div>
             </div>
           </section>
@@ -615,7 +617,8 @@ const Home: React.FC<HomeProps> = () => {
                 <KeywordChart keywords={keywords} url={debouncedURL} />
                 <HtmlToTextChart htmlToTextRatio={htmlToTextRatio} />
                 <ImagesChart url={debouncedURL} images={images} />
-                <LinksCharts />
+                {/* @ts-ignore */}
+                <LinksCharts linkStatusCodes={linkStatusCodes} />
               </section>
 
               {/* TABLES START HERE */}
