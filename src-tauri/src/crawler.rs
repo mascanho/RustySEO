@@ -160,6 +160,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
 
     // HANDLE DB CREATION AAND check
     let _create_table = db::create_results_table();
+    let _create_links_table = db::create_links_table();
 
     let client = Client::new();
     let response = client

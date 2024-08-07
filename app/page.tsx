@@ -141,6 +141,8 @@ const Home: React.FC<HomeProps> = () => {
 
     setLoading(!loading);
 
+    handleLinkStatusCheck(url);
+
     // set the url being searched in the session storage
     sessionStorage.setItem("url", url);
 
@@ -173,7 +175,6 @@ const Home: React.FC<HomeProps> = () => {
     setHtmlToTextRatio([]);
     setPageRank([]);
     setLinkStatusCodes([]);
-    handleLinkStatusCheck(url);
 
     invoke<{
       links: [];
@@ -305,6 +306,7 @@ const Home: React.FC<HomeProps> = () => {
     invoke<{}>("check_link_status", { url: url }).then((result: any) => {
       console.log(result, "The links");
       setLinkStatusCodes(result);
+      console.log("This is from the Link STATUS CODES");
     });
   };
 
@@ -469,6 +471,7 @@ const Home: React.FC<HomeProps> = () => {
                 <CiGlobe className="absolute ml-2 text-gray-400" />
                 <input
                   type="url"
+                  required
                   placeholder="https://yourwebsite.com"
                   onChange={handleChange}
                   onKeyPress={(event) => {

@@ -240,8 +240,10 @@ pub fn create_links_table() -> Result<()> {
             links TEXT
         )",
         [],
-    )?;
+    )
+    .expect("Failed to create links table");
 
+    println!("Links table created successfully");
     Ok(())
 }
 
