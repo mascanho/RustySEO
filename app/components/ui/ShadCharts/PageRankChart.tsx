@@ -39,7 +39,7 @@ export function PageRankChart({ pageRank }: { pageRank: any }) {
   } satisfies ChartConfig;
 
   return (
-    <Card className="flex flex-col border-0 p-0  dark:bg-brand-darker">
+    <Card className="flex flex-col border-0 p-0 shadow-none  dark:bg-brand-darker">
       <CardHeader className="items-center pb-0">
         <CardTitle>Page Rank</CardTitle>
         <CardDescription>{new Date().toDateString()}</CardDescription>
