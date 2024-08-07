@@ -489,9 +489,9 @@ const Home: React.FC<HomeProps> = () => {
                 )}
                 <button
                   onClick={() => handleClick(url)}
-                  className="rounded w-20 text-sm relative inline-flex group py-[1px] items-center justify-center  ml-2 cursor-pointer border-b-4 border-l-2 active:border-blue-600 active:shadow-none shadow-lg bg-gradient-to-tr from-blue-600 to-blue-500 border-blue-700 text-white"
+                  className="rounded w-20 active:scale-95 text-sm relative inline-flex group py-[3px] items-center justify-center  ml-2 cursor-pointer border-b-4 border-l-2 active:border-blue-600 active:shadow-none bg-gradient-to-tr from-blue-600 to-blue-500 border-blue-700 text-white"
                 >
-                  <span className="relative"> Crawl</span>
+                  <span className="relative text-xs"> Crawl</span>
                 </button>{" "}
               </div>
             </div>

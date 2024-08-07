@@ -52,7 +52,7 @@ input:focus {
 /* Tables Styles */
 
 .table_container {
-  @apply bg-slate-200 border dark:border-brand-dark dark:bg-brand-darker dark:text-white shadow rounded-md h-[30rem] overflow-hidden p-1  !important;
+  @apply bg-slate-200 border dark:border-brand-dark dark:bg-brand-darker dark:text-white shadow rounded-md h-[30rem] overflow-hidden p-0.5  !important;
 
   div {
     @apply dark:text-white dark:bg-brand-darker mt-0 !important;
@@ -95,7 +95,7 @@ tbody {
 }
 
 th {
-  @apply dark:bg-brand-darker dark:text-white bg-red-500 border-0 !important;
+  @apply pb-2 dark:bg-brand-darker dark:text-white bg-slate-200 border-0 pl-3.5 text-black/50  !important;
   padding: 4px 0;
   position: sticky;
   top: 0;

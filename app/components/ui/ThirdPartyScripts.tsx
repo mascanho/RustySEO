@@ -15,10 +15,18 @@ const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
         <table className="w-full ">
           <thead>
             <tr>
-              <th className="text-xs  border">Entity</th>
-              <th className="text-xs  border">Thread Time</th>
-              <th className="text-xs  border">T. Size</th>
-              <th className="text-xs  border">Blocking Time</th>
+              <th align="left" className="text-xs  border">
+                Entity
+              </th>
+              <th align="left" className="text-xs  border">
+                Thread Time
+              </th>
+              <th align="left" className="text-xs  border">
+                T. Size
+              </th>
+              <th align="left" className="text-xs  border">
+                Blocking Time
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -34,13 +42,13 @@ const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
                   <td className="px-4 py-2 text-sm border text-blue-600 truncate">
                     {item?.entity}
                   </td>
-                  <td className="px-4 py-2 text-xs border text-gray-700 dark:text-white/50">
+                  <td className="px-4  text-xs border text-gray-700 dark:text-white/50">
                     {Math.round(item?.mainThreadTime)} ms
                   </td>
-                  <td className="px-4 py-2 text-xs border text-gray-700 dark:text-white/50">
+                  <td className="px-4 text-xs border text-gray-700 dark:text-white/50">
                     {item?.transferSize} bytes
                   </td>
-                  <td className="px-4 py-2 text-xs border text-gray-700 dark:text-white/50">
+                  <td className="px-4  text-xs border text-gray-700 dark:text-white/50">
                     {Math.round(item?.blockingTime)} ms
                   </td>
                 </tr>

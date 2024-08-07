@@ -73,10 +73,6 @@ const TaskManagerContainer: React.FC<{ strategy: string }> = ({ strategy }) => {
               <h1 className="text-xl dark:text-white">DOING</h1>
               <GoTasklist className="text-3xl text-brand-highlight dark:text-white/50" />
             </div>
-            <FaCirclePlus
-              onClick={openModal}
-              className="text-2xl cursor-pointer hover:scale-110 active:scale-90 text-brand-highlight dark:text-brand-highlight transition-all ease-in delay-75"
-            />
           </div>
           <div className="p-2 overflow-scroll h-[calc(100vh-24rem)] mb-5 rounded-md">
             <TodoContainerItems status={"Doing"} />
@@ -88,10 +84,6 @@ const TaskManagerContainer: React.FC<{ strategy: string }> = ({ strategy }) => {
               <h1 className="text-xl dark:text-white">COMPLETE</h1>
               <MdDoneOutline className="text-2xl text-brand-highlight dark:text-white/50" />
             </div>
-            <FaCirclePlus
-              onClick={openModal}
-              className="text-2xl cursor-pointer hover:scale-110 active:scale-90 text-brand-highlight dark:text-brand-highlight transition-all ease-in delay-75"
-            />
           </div>
           <div className="p-2 overflow-scroll h-[calc(100vh-24rem)] mb-5 rounded-md">
             <TodoContainerItems status={"Completed"} />

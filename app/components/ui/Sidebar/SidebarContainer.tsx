@@ -70,6 +70,10 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
             <Tabs.Panel value="second" className="h-full w-full">
               <SeoChart seo={seo} />
             </Tabs.Panel>
+
+            <Tabs.Panel value="third" className="h-full w-full">
+              <PageRankChart pageRank={pageRank} />
+            </Tabs.Panel>
           </Tabs>
         </ResizablePanel>
         <ResizableHandle />
