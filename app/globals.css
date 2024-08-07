@@ -55,7 +55,7 @@ input:focus {
   @apply bg-slate-200 border dark:border-brand-dark dark:bg-brand-darker dark:text-white shadow rounded-md h-[30rem] overflow-hidden p-0.5  !important;
 
   div {
-    @apply dark:text-white dark:bg-brand-darker mt-0 !important;
+    @apply dark:text-white dark:bg-brand-darker mt-0 bg-slate-200 !important;
   }
 
   h2 {

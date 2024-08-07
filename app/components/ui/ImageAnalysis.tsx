@@ -19,14 +19,14 @@ const ImageAnalysis = ({ images }: { images: any[] }) => {
           <div className="relative">
             <div className="overflow-auto custom-scrollbar h-[25rem]">
               <table className="w-full dark:bg-brand-darker">
-                <thead className="text-xs text-left">
-                  <tr className="">
-                    <th>Image</th>
-                    <th>Alt Text</th>
-                    <th>Size</th>
-                    <th>Link</th>{" "}
-                  </tr>
-                </thead>
+                {/* <thead className="text-xs text-left"> */}
+                {/*   <tr className=""> */}
+                {/*     <th>Image</th> */}
+                {/*     <th>Alt Text</th> */}
+                {/*     <th>Size</th> */}
+                {/*     <th>Link</th>{" "} */}
+                {/*   </tr> */}
+                {/* </thead> */}
 
                 <tbody>
                   {images.map((image: any, index: number) => (

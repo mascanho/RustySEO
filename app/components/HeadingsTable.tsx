@@ -30,7 +30,9 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
           <thead className="text-xs text-left">
             <tr className="w-full">
               <th>Anchor</th>
-              <th>Link</th>
+              <th align="left" className="ml-0 w-[20px]" colSpan={8}>
+                Text
+              </th>
             </tr>
           </thead>
         </table>

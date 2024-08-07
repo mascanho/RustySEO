@@ -56,11 +56,11 @@ const TaskManagerContainer: React.FC<{ strategy: string }> = ({ strategy }) => {
           <div className="flex items-center border-b dark:border-b-brand-dark justify-between px-6 py-5 font-semibold">
             <div className="flex items-center space-x-2">
               <h1 className="text-xl dark:text-white">TODO</h1>
-              <RiTodoLine className="text-2xl text-brand-highlight dark:text-white/50" />
+              <RiTodoLine className="text-xl text-brand-highlight dark:text-white/50" />
             </div>
             <FaCirclePlus
               onClick={openModal}
-              className="text-2xl cursor-pointer hover:scale-110 active:scale-90 text-brand-highlight dark:text-brand-highlight transition-all ease-in delay-75"
+              className="text-2xl cursor-pointer hover:scale-110 active:scale-90 text-blue-500 dark:text-brand-highlight transition-all ease-in delay-75"
             />
           </div>
           <div className="p-2 overflow-scroll h-[calc(100vh-24rem)] mb-5 rounded-md">
@@ -71,7 +71,7 @@ const TaskManagerContainer: React.FC<{ strategy: string }> = ({ strategy }) => {
           <div className="flex items-center border-b dark:border-b-brand-dark justify-between px-6 py-5 font-semibold">
             <div className="flex items-center space-x-2">
               <h1 className="text-xl dark:text-white">DOING</h1>
-              <GoTasklist className="text-3xl text-brand-highlight dark:text-white/50" />
+              <GoTasklist className="text-2xl text-brand-highlight dark:text-white/50" />
             </div>
           </div>
           <div className="p-2 overflow-scroll h-[calc(100vh-24rem)] mb-5 rounded-md">
@@ -82,7 +82,7 @@ const TaskManagerContainer: React.FC<{ strategy: string }> = ({ strategy }) => {
           <div className="flex items-center border-b dark:border-b-brand-dark justify-between px-6 py-5 font-semibold">
             <div className="flex items-center space-x-2">
               <h1 className="text-xl dark:text-white">COMPLETE</h1>
-              <MdDoneOutline className="text-2xl text-brand-highlight dark:text-white/50" />
+              <MdDoneOutline className="text-xl text-brand-highlight dark:text-white/50" />
             </div>
           </div>
           <div className="p-2 overflow-scroll h-[calc(100vh-24rem)] mb-5 rounded-md">

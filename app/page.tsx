@@ -441,7 +441,7 @@ const Home: React.FC<HomeProps> = () => {
                 </div>
 
                 {isOpen && (
-                  <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                  <div className="origin-top-right absolute right-0 mt-2 w-[7rem] rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 dark:bg-brand-darker">
                     <div
                       className="py-1"
                       role="menu"
@@ -452,7 +452,7 @@ const Home: React.FC<HomeProps> = () => {
                         <button
                           key={option.value}
                           onClick={() => handleSelect(option.value)}
-                          className="flex items-center px-4 py-2 z-[10000000000] text-sm text-gray-700 hover:bg-red-100 hover:text-gray-900 w-full text-left"
+                          className="flex items-center px-4 py-2 z-[10000000000] text-sm text-gray-700 hover:bg-slate-300 hover:text-gray-900 w-full text-left"
                           role="menuitem"
                         >
                           {option.icon}

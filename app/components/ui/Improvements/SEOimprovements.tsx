@@ -87,8 +87,8 @@ const SEOImprovements = ({
     <section className="max-w-7xl mx-auto">
       <Tabs defaultValue="performance" className="w-full">
         <TabsList>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
-          <TabsTrigger value="seo">SEO</TabsTrigger>
+          <TabsTrigger value="performance">Technical</TabsTrigger>
+          <TabsTrigger value="seo">On-Page</TabsTrigger>
         </TabsList>
         <TabsContent value="performance" className="w-full">
           <PerformanceImprovements pageSpeed={pageSpeed} />

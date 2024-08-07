@@ -14,7 +14,7 @@ const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
       <div className="overflow-auto custom-scrollbar h-[25rem] ">
         <table className="w-full ">
           <thead>
-            <tr>
+            <tr c>
               <th align="left" className="text-xs  border">
                 Entity
               </th>
