@@ -10,6 +10,8 @@ use url::{ParseError, Url};
 
 use toml::de::Error as TomlError;
 
+use crate::crawler::db::refresh_links_table;
+
 use super::crawler;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -241,8 +243,9 @@ pub async fn load_api_keys() -> Result<ApiKeys, Box<dyn Error>> {
 
 // Function to check the status of links asynchronously
 
-#[tauri::command]
 pub async fn check_links(url: String) -> Result<Vec<LinkStatus>, String> {
+    // --------------------- MAKE SURE THE LINKS TABLE HAS BEEN CLEARED -------------------------
+
     let client = reqwest::Client::new(); // Initialize reqwest client
     let mut results = Vec::new(); // To store the results
 

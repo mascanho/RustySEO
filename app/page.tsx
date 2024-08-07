@@ -141,8 +141,6 @@ const Home: React.FC<HomeProps> = () => {
 
     setLoading(!loading);
 
-    handleLinkStatusCheck(url);
-
     // set the url being searched in the session storage
     sessionStorage.setItem("url", url);
 
@@ -201,6 +199,7 @@ const Home: React.FC<HomeProps> = () => {
       page_rank: any[];
     }>("crawl", { url })
       .then((result) => {
+        handleLinkStatusCheck(url);
         showLinksSequentially(result.links); // Show links one by one
         showHeadingsSequentially(result.headings);
         setPageTitle(result.page_title);
@@ -482,19 +481,22 @@ const Home: React.FC<HomeProps> = () => {
                   className="w-full h-6 text-xs pl-7 rounded-md bg-slate-100 dark:bg-white dark:border dark:border-white placeholder:text-gray-500"
                   style={{ outline: "none", boxShadow: "none" }}
                 />
-                {loading && (
-                  <div
-                    className="absolute top-0.5 right-2 w-5 h-5 border-4 border-t-transparent border-blue-600 rounded-full animate-spin cursor-pointer"
-                    role="status"
-                    aria-label="loading"
-                    onClick={() => window.location.reload()}
-                  />
-                )}
                 <button
                   onClick={() => handleClick(url)}
                   className="rounded w-20 active:scale-95 text-sm relative inline-flex group py-[3px] items-center justify-center  ml-2 cursor-pointer border-b-4 border-l-2 active:border-blue-600 active:shadow-none bg-gradient-to-tr from-blue-600 to-blue-500 border-blue-700 text-white"
                 >
-                  <span className="relative text-xs"> Crawl</span>
+                  <span className="relative text-xs">
+                    {loading ? (
+                      <div
+                        className="top-0.5 right-4 z-[32423454] w-4 h-4 border-4 border-t-transparent border-white rounded-full animate-spin cursor-pointer"
+                        role="status"
+                        aria-label="loading"
+                        onClick={() => window.location.reload()}
+                      />
+                    ) : (
+                      "Crawl"
+                    )}
+                  </span>
                 </button>{" "}
               </div>
             </div>

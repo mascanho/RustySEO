@@ -229,6 +229,12 @@ pub fn add_technical_data(data: Vec<&String>, url: &str) -> Result<()> {
 
 // ---------------- FUNCTION TO STORE THE LINKS IN THE DATABASE ----------------
 
+pub fn refresh_links_table() -> Result<()> {
+    let conn = open_db_connection()?;
+    conn.execute("DELETE FROM links", [])?;
+    Ok(())
+}
+
 pub fn create_links_table() -> Result<()> {
     let conn = open_db_connection()?;
 
@@ -251,9 +257,6 @@ pub fn store_links_in_db(links: Vec<(String, String)>) -> Result<()> {
     // Open the database connection
     let conn = open_db_connection()?;
 
-    // DELETE FROM TABLE
-    conn.execute("DELETE FROM links", [])?;
-
     // Ensure the links table exists
     create_links_table()?;
 
@@ -263,8 +266,6 @@ pub fn store_links_in_db(links: Vec<(String, String)>) -> Result<()> {
             "INSERT INTO links (url, links) VALUES (?1, ?2)",
             params![url, strategy],
         )?;
-        println!("Addeding links to DB......");
-        println!("Data: {:#?}", url);
     }
 
     Ok(())

@@ -131,15 +131,17 @@ export function LinksChart({ linkStatusCodes }: { linksStatusCodes: any }) {
           </PieChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm text-cxenter mb-6 dark:text-white/50">
-        <div className="flex items-center font-medium leading-none -mt-10">
-          This page contains {linkStatusCodes?.length} links.
-        </div>
-        <div className="leading-none text-muted-foreground">
-          From those, {externalLinks?.length} are external and{" "}
-          {internalLinks?.length} are internal
-        </div>
-      </CardFooter>
+      {linkStatusCodes?.length > 0 && (
+        <CardFooter className="flex-col gap-2 text-sm text-center mb-6 dark:text-white/50">
+          <div className="flex items-center font-medium leading-none -mt-10">
+            This page contains {linkStatusCodes?.length} links.
+          </div>
+          <div className="leading-none text-muted-foreground">
+            From those, {externalLinks?.length} are external and{" "}
+            {internalLinks?.length} are internal
+          </div>
+        </CardFooter>
+      )}
     </Card>
   );
 }

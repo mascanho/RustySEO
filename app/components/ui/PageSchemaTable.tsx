@@ -1,10 +1,13 @@
 import React from "react";
-import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
+import { BsFiletypeJson } from "react-icons/bs";
 
 const PageSchemaTable = ({ pageSchema, googleSchemaTestUrl }: any) => {
   return (
     <section className="naked_table">
-      <h2>Page Schema</h2>
+      <h2 className="flex items-center -ml-1 !important">
+        <BsFiletypeJson className="mr-1.5" />
+        Page Schema
+      </h2>
 
       <section className="mx-auto  w-full rounded-md overflow-auto bg-white/40 dark:bg-brand-darker relative h-[30rem]">
         {pageSchema.length === 0 ? (

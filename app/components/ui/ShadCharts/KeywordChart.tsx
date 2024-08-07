@@ -76,7 +76,7 @@ export function KeywordChart({
           </RadarChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm dark:text-white/50 min-h-[5.5rem] mt-2">
+      <CardFooter className="flex-col gap-2 text-sm dark:text-white/50 min-h-[5.5rem] mt-2 text-center">
         {keywords.length > 0 && (
           <>
             <div className="flex items-center gap-2 font-medium leading-none">

@@ -1,4 +1,4 @@
-import React from "react";
+import { GiWeight } from "react-icons/gi";
 
 const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
   const scripts =
@@ -7,8 +7,8 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
 
   return (
     <section className="table_container">
-      <h2 className="text-base text-left pl-1 pt-3 font-bold w-full">
-        Total Byte Weight
+      <h2 className="text-base flex items-center text-left pl-1 pt-3 font-bold w-full">
+        <GiWeight className="mr-1.5" /> Total Byte Weight
       </h2>
 
       <div className="overflow-auto h-[25rem] shadow custom-scrollbar">
