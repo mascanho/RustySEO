@@ -16,6 +16,7 @@ import { useCallback, useEffect, useState } from "react";
 import PageSpeedInsigthsApi from "../PageSpeedInsigthsApi";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import { LuPanelRight } from "react-icons/lu";
+import OllamaSelect from "./OllamaSelector/OllamaSelect";
 
 const TopMenuBar = () => {
   const onClose = useCallback(async () => {
@@ -31,6 +32,9 @@ const TopMenuBar = () => {
     useDisclosure(false);
   const [url, setUrl] = useState<string>("");
   const [strategy, setStrategy] = useState("");
+
+  const [openedOllama, { open: openOllama, close: closeOllama }] =
+    useDisclosure(true);
 
   useEffect(() => {
     const fetchUrlFromSessionStorage = () => {
@@ -76,7 +80,22 @@ const TopMenuBar = () => {
         <Todo url={url} close={closeModal} strategy={strategy} />
       </Modal>
 
+      {/* Todo Modal */}
+      <Modal
+        opened={openedOllama}
+        overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+        closeOnEscape
+        closeOnClickOutside
+        onClose={closeOllama}
+        title="Ollama Model Selector"
+        centered
+        size={"500px"}
+      >
+        <OllamaSelect closeOllama={closeOllama} />
+      </Modal>
+
       {/* Drawer */}
+
       <Drawer
         offset={8}
         radius="md"
@@ -151,7 +170,8 @@ const TopMenuBar = () => {
             <MenubarItem onClick={openPageSpeed}>PageSpeed Key</MenubarItem>
             <MenubarItem
               onClick={() => {
-                openBrowserWindow("https://www.ollama.com/");
+                // openBrowserWindow("https://www.ollama.com/");
+                openOllama();
               }}
             >
               Ollama
