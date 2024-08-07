@@ -94,8 +94,8 @@ const DomElements = ({
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
           <Text size="sm">
-            The number of elements (nodes) in a webpage's Document Object Model
-            (DOM). A large DOM can negatively impact page performance.
+            The number of elements (nodes) in a webpage&apos;s Document Object
+            Model (DOM). A large DOM can negatively impact page performance.
           </Text>
         </Popover.Dropdown>
       </Popover>

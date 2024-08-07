@@ -84,8 +84,9 @@ const FcpEl = ({
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
           <Text size="sm">
-            The time it takes for the browser to render any part of the page's
-            content. This includes text, images, or background colors
+            The time it takes for the browser to render any part of the
+            page&apos;s content. This includes text, images, or background
+            colors
           </Text>
         </Popover.Dropdown>
       </Popover>

@@ -233,9 +233,11 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
                     </span>
                   </td>
                   <td align="left" className={`border`}>
+                    {/* @ts-ignore */}
                     {data.title}
                   </td>
                   <td align="left" className={`border`}>
+                    {/* @ts-ignore */}
                     {data.description}
                   </td>
                 </tr>
