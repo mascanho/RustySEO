@@ -14,7 +14,7 @@ const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
       <div className="overflow-auto custom-scrollbar h-[25rem] ">
         <table className="w-full ">
           <thead>
-            <tr c>
+            <tr>
               <th align="left" className="text-xs  border">
                 Entity
               </th>
@@ -29,10 +29,14 @@ const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody>
             {scripts.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="text-center py-4 text-gray-500">
+              <tr className="w-full h-full border">
+                <td
+                  colSpan={4}
+                  rowSpan={8}
+                  className="text-gray-500 text-center bg-slate-200 pt-[10rem]"
+                >
                   No third party connections found.
                 </td>
               </tr>
