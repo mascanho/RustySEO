@@ -31,11 +31,11 @@ const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
           </thead>
           <tbody>
             {scripts.length === 0 ? (
-              <tr className="w-full h-full border">
+              <tr className="w-full h-full border-none">
                 <td
                   colSpan={4}
                   rowSpan={8}
-                  className="text-gray-500 text-center bg-slate-200 pt-[10rem]"
+                  className="text-gray-500 dark:text-white/50 text-center bg-white dark:bg-transparent pt-[10rem] border-none"
                 >
                   No third party connections found.
                 </td>

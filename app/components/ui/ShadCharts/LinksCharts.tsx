@@ -57,6 +57,10 @@ export function LinksChart({ linkStatusCodes }: { linksStatusCodes: any }) {
     (link: any) => link?.is_external === false,
   );
 
+  const statusError = linkStatusCodes?.filter(
+    (link: any) => link?.status_code === 404,
+  );
+
   console.log(externalLinks, "The external links");
 
   const chartData = [
@@ -67,6 +71,11 @@ export function LinksChart({ linkStatusCodes }: { linksStatusCodes: any }) {
     },
     {
       browser: "Internal",
+      visitors: internalLinks.length,
+      fill: "var(--color-safari)",
+    },
+    {
+      browser: "404",
       visitors: internalLinks.length,
       fill: "var(--color-safari)",
     },

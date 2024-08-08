@@ -85,7 +85,7 @@ const ContentSummary = ({
                 viewBox="0 0 24 24"
                 width={18}
                 height={18}
-                className="text-sky-dark"
+                className="text-sky-dark mt-[5px]"
                 fill="none"
               >
                 <path
@@ -154,7 +154,7 @@ const ContentSummary = ({
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between -mt-1">
           <div className="flex items-center space-x-2 -mt-3">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -194,7 +194,7 @@ const ContentSummary = ({
         <div className="flex items-start justify-start flex-col mt-4">
           <div className="flex items-start space-x-2">
             <div className="flex flex-col w-full justify-center">
-              <div className="flex items-center mb-3 -mt-2">
+              <div className="flex items-center mb-3 -mt-4">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"

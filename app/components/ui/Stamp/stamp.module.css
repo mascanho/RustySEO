@@ -1,23 +1,25 @@
 .stamp {
-  color: #555;
+  color: #ffffff;
   font-size: 1.8rem;
   font-weight: 700;
   display: inline-block;
   font-family: "Courier";
   -webkit-mask-image: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/8399/grunge.png");
   -webkit-mask-size: 944px 604px;
-  mix-blend-mode: multiply;
+  /*mix-blend-mode: multiply;*/
   position: absolute;
   top: 30px;
   right: 2%;
-  z-index: 2;
+  z-index: 20000;
   height: 200px;
   transition: all 0.3s ease-in-out;
 }
 
 .is-approved {
-  color: #0a9928;
+  @apply bg-[#0a9928] text-[#0a9928] !important;
+  /*color: #0a9928;*/
   -webkit-mask-position: 13rem 6rem;
   transform: rotate(-14deg);
   border-radius: 0;
+  z-index: 100000;
 }

@@ -29,12 +29,12 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white  divide-gray-100 h-[calc(30rem - 3.5rem)] overflow-y-auto">
+          <tbody className="bg-white  h-[calc(30rem - 3.5rem)] overflow-y-auto">
             {scripts.length === 0 ? (
-              <tr>
+              <tr className="bg-white">
                 <td
                   colSpan={2}
-                  className="text-center text-gray-500 h-full  dark:text-white"
+                  className="text-center text-gray-500 h-full bg-white dark:text-white"
                 >
                   No third party connections found.
                 </td>

@@ -99,7 +99,7 @@ const Footer = () => {
   }, []);
 
   return (
-    <footer className="w-full text-xs justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[1000] border-t-2 dark:border-t-brand-dark flex items-center py-1 overflow-hidden text-xs">
+    <footer className="w-full text-xs justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[1000] border-t-2 pb-2 dark:border-t-brand-dark flex items-center py-1 overflow-hidden text-xs">
       <section>
         <div className="flex items-center ml-2 space-x-1 w-full">
           {loading ? (
@@ -120,30 +120,7 @@ const Footer = () => {
         </div>
       </section>
       <section className="flex items-center space-x-4">
-        <Drawer>
-          <DrawerTrigger className="flex items-center space-x-1">
-            <FaRobot className="text-lg" />
-            {/* <span className="text-xs mt-[2px]">Oxide AI</span> */}
-          </DrawerTrigger>
-          <DrawerContent>
-            <DrawerHeader>
-              <div className="flex items-center space-x-2">
-                <FaRobot className="text-2xl text-brand-highlight" />
-                <span className="text-xl font-bold text-brand-highlight dark:text-white/40">
-                  Interact with Oxide AI
-                </span>
-              </div>
-              <DrawerDescription>
-                <AIcontainer />
-              </DrawerDescription>
-            </DrawerHeader>
-            <DrawerFooter>
-              <DrawerClose></DrawerClose>
-            </DrawerFooter>
-          </DrawerContent>
-        </Drawer>
-
-        <div className="flex w-50 items-center justify-center pr-2">
+        <div className="flex w-50 items-center justify-center pr-3">
           <div className="flex items-center  text-xs mt-[2px] space-x-4">
             <div className="flex items-center">
               <LiaTasksSolid className="text-sm dark:text-white/50" />
@@ -152,6 +129,28 @@ const Footer = () => {
                 {tasks.length}
               </span>
             </div>
+            <Drawer>
+              <DrawerTrigger className="flex items-center space-x-1">
+                <FaRobot className="text-lg pb-[2px]" />
+                {/* <span className="text-xs mt-[2px]">Oxide AI</span> */}
+              </DrawerTrigger>
+              <DrawerContent>
+                <DrawerHeader>
+                  <div className="flex items-center space-x-2">
+                    <FaRobot className="text-2xl text-brand-highlight" />
+                    <span className="text-xl font-bold text-brand-highlight dark:text-white/40">
+                      Interact with Oxide AI
+                    </span>
+                  </div>
+                  <DrawerDescription>
+                    <AIcontainer />
+                  </DrawerDescription>
+                </DrawerHeader>
+                <DrawerFooter>
+                  <DrawerClose></DrawerClose>
+                </DrawerFooter>
+              </DrawerContent>
+            </Drawer>
             <BsLayoutSidebarInsetReverse
               className="text-base hover:scale-105  transition-all ease-linear delay-75 cursor-pointer"
               onClick={() => {

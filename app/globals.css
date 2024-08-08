@@ -52,10 +52,10 @@ input:focus {
 /* Tables Styles */
 
 .table_container {
-  @apply bg-slate-200 border dark:border-brand-dark dark:bg-brand-darker dark:text-white shadow rounded-md h-[30rem] overflow-hidden p-0.5  !important;
+  @apply bg-white border dark:border-brand-dark dark:bg-brand-darker dark:text-white shadow rounded-md h-[30rem] overflow-hidden p-0.5  !important;
 
   div {
-    @apply dark:text-white dark:bg-brand-darker mt-0 bg-slate-200 !important;
+    @apply dark:text-white dark:bg-brand-darker mt-0 bg-white !important;
   }
 
   h2 {
@@ -95,7 +95,7 @@ tbody {
 }
 
 th {
-  @apply pb-2 dark:bg-brand-darker dark:text-white bg-slate-200 border-0 pl-3.5 text-black/50  !important;
+  @apply pb-2 dark:bg-brand-darker dark:text-white bg-white border-0 pl-3.5 text-black/50  !important;
   padding: 4px 0;
   position: sticky;
   top: 0;
@@ -150,7 +150,7 @@ pre:not([class*="robots"]) {
 }
 
 .naked_table {
-  @apply dark:border-brand-darker  bg-slate-100 p-1 dark:bg-brand-darker shadow rounded-md h-[30rem] overflow-hidden border;
+  @apply dark:border-brand-darker  bg-white p-1 dark:bg-brand-darker shadow rounded-md h-[30rem] overflow-hidden border;
 
   h2 {
     @apply p-4 font-semibold text-lg dark:text-white text-black/60;

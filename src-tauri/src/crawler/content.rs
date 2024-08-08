@@ -12,7 +12,7 @@ pub async fn fetch_url(url: &str) -> Result<String, Box<dyn Error>> {
 // TODO: make this more accurate
 // --------------------------------- WORD COUNT ---------------------------------
 pub fn count_words_accurately(document: &Html) -> (usize, Vec<String>) {
-    let text_selector = Selector::parse("h1, h2, h3, h4, h5, h6, p").unwrap();
+    let text_selector = Selector::parse("h1, h2, h3, h4, h5, h6, p, span").unwrap();
     let word_regex = Regex::new(r"\p{L}+(?:[-']\p{L}+)*").unwrap();
 
     let mut word_count = 0;
@@ -54,7 +54,7 @@ fn should_skip_element(element: &ElementRef) -> bool {
     let tag_name = element.value().name();
     let skip_tags = [
         "script", "style", "noscript", "iframe", "img", "svg", "path", "meta", "link", "footer",
-        "form", "ul", "li", "nav", "header",
+        "form", "nav", "header", "head", "a", "button", "input", "select", "textarea",
     ];
 
     if skip_tags.contains(&tag_name) {
@@ -89,8 +89,7 @@ fn clean_text(text: &str) -> String {
 
 pub fn extract_text(html: &Html) -> String {
     let document = html;
-    let selector =
-        Selector::parse("h1, h2, h3, h4, h5, h6, p, span, blockquote, ul, ol , li").unwrap();
+    let selector = Selector::parse("h1, h2, h3, h4, h5, h6, p, span, blockquote").unwrap();
     let mut text = String::new();
 
     for element in document.select(&selector) {

@@ -15,8 +15,14 @@ mod crawler;
 mod downloads {
     pub mod csv;
 }
+
+pub mod globals {
+    pub mod actions;
+}
+
 mod commands;
 mod genai;
+
 mod gsc;
 mod redirects;
 mod schema;
@@ -80,6 +86,10 @@ fn get_db_data() -> Result<Vec<crawler::db::ResultRecord>, String> {
 
 #[tokio::main]
 async fn main() {
+    // Execute the ID check
+    let uuid = globals::actions::uuid_creation_check();
+    println!("UUID: {}", uuid);
+
     // Tauri setup
     tauri::Builder::default()
         .manage(LinkResult { links: vec![] })

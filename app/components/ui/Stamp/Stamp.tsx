@@ -9,7 +9,7 @@ const StampEl = ({ indexation, hidden }: any) => {
   return (
     <div className={`${styles.stamp}`}>
       <span
-        className={`${styles.isApproved} ${hidden ? "hidden" : ""} ${indexation[0] === "Indexable" ? "text-green-500" : "text-red-500"}`}
+        className={`${styles.isApproved} ${hidden ? "hidden" : ""} ${indexation[0] === "Indexable" ? "text-green-500 dark:text-green-500" : "text-red-500"}`}
       >
         {indexation || "Not Index"}
       </span>
