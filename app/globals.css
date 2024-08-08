@@ -122,7 +122,7 @@ td {
   background: #0001 !important;
 }
 
-pre {
+pre:not([class*="robots"]) {
   @apply dark:bg-brand-darker bg-gray-200/50 dark:text-white/50 border-0 !important;
   overflow: scroll;
   padding: 6px;
@@ -156,7 +156,7 @@ pre {
     @apply p-4 font-semibold text-lg dark:text-white text-black/60;
   }
 
-  pre {
+  pre:not([class*="robots"]) {
     @apply dark:bg-brand-darker dark:text-white/50 border-0  !important;
     overflow: scroll;
     height: 86% !important;

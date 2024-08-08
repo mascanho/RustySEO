@@ -55,7 +55,7 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
             </tbody>
           </table>
         </div>
-        <footer className="pb-1 border-t dark:border-0 text-xs flex justify-end text-black/50 space-x-4 pt-2">
+        <footer className="pb-1 border-t border-t-gray-300  dark:border-0 text-xs flex justify-end text-black/50 space-x-4 pt-2">
           <p className="text-xs">
             Headings Found:{" "}
             <span className="px-1 py-0.5 bg-gray-400 text-white rounded-md">

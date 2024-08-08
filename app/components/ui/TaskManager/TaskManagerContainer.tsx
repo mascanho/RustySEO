@@ -53,7 +53,7 @@ const TaskManagerContainer: React.FC<{ strategy: string }> = ({ strategy }) => {
       </Modal>
       <div className="grid gap-4 grid-cols-3 px-7 pt-8 w-full max-w-[85rem] overflow-hidden rounded-xl  mx-auto   place-items-center">
         <section className="w-full max-w-[380px] h-[calc(100vh-20rem)] dark:border-brand-dark  bg-white dark:bg-brand-darker rounded-xl mb-10 overflow-hidden my-auto shadow border">
-          <div className="flex items-center border-b dark:border-b-brand-dark justify-between px-6 py-5 font-semibold">
+          <div className="flex items-center border-b dark:border-b-brand-dark justify-between px-5 py-2 font-semibold">
             <div className="flex items-center space-x-2">
               <h1 className="text-xl dark:text-white">TODO</h1>
               <RiTodoLine className="text-xl text-brand-highlight dark:text-white/50" />
@@ -68,7 +68,7 @@ const TaskManagerContainer: React.FC<{ strategy: string }> = ({ strategy }) => {
           </div>
         </section>
         <section className="w-full max-w-[380px] h-[calc(100vh-20rem)] dark:border-brand-dark  bg-white dark:bg-brand-darker rounded-xl mb-10 overflow-hidden my-auto shadow border">
-          <div className="flex items-center border-b dark:border-b-brand-dark justify-between px-6 py-5 font-semibold">
+          <div className="flex items-center border-b dark:border-b-brand-dark justify-between px-5 py-2 font-semibold">
             <div className="flex items-center space-x-2">
               <h1 className="text-xl dark:text-white">DOING</h1>
               <GoTasklist className="text-2xl text-brand-highlight dark:text-white/50" />
@@ -79,7 +79,7 @@ const TaskManagerContainer: React.FC<{ strategy: string }> = ({ strategy }) => {
           </div>
         </section>
         <section className="w-full max-w-[380px] h-[calc(100vh-20rem)] dark:border-brand-dark  bg-white dark:bg-brand-darker rounded-xl mb-10 overflow-hidden my-auto shadow border">
-          <div className="flex items-center border-b dark:border-b-brand-dark justify-between px-6 py-5 font-semibold">
+          <div className="flex items-center border-b dark:border-b-brand-dark justify-between px-5 py-2 font-semibold">
             <div className="flex items-center space-x-2">
               <h1 className="text-xl dark:text-white">COMPLETE</h1>
               <MdDoneOutline className="text-xl text-brand-highlight dark:text-white/50" />
