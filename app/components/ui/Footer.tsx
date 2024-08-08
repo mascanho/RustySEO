@@ -99,7 +99,7 @@ const Footer = () => {
   }, []);
 
   return (
-    <footer className="w-full text-xs justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[1000] border-t-2 dark:border-t-brand-dark flex items-center py-1 overflow-hidden">
+    <footer className="w-full text-xs justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[1000] border-t-2 dark:border-t-brand-dark flex items-center py-1 overflow-hidden text-xs">
       <section>
         <div className="flex items-center ml-2 space-x-1 w-full">
           {loading ? (
@@ -146,14 +146,14 @@ const Footer = () => {
         <div className="flex w-50 items-center justify-center pr-2">
           <div className="flex items-center  text-xs mt-[2px] space-x-4">
             <div className="flex items-center">
-              <LiaTasksSolid className="text-xl dark:text-white/50" />
+              <LiaTasksSolid className="text-sm dark:text-white/50" />
               <span>Tasks:</span>
               <span className="text-red-500 dark:text-sky-dark ml-1">
                 {tasks.length}
               </span>
             </div>
             <BsLayoutSidebarInsetReverse
-              className="text-xl hover:scale-105  transition-all ease-linear delay-75 cursor-pointer"
+              className="text-base hover:scale-105  transition-all ease-linear delay-75 cursor-pointer"
               onClick={() => {
                 // Toggle visibility based on current state
                 if (visibility.sidebar) {

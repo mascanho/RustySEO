@@ -5,16 +5,20 @@ import SEOtableSection from "./SEOtableSection";
 
 const CrawlHistory = ({ dbdata, loading }: any) => {
   return (
-    <section className="w-full flex justify-end mt-2">
+    <section className="w-full flex justify-end mt-1">
       <Tabs defaultValue="account" className="w-full max-w-7xl mx-auto">
-        <TabsList>
-          <TabsTrigger value="account">Core Vitals</TabsTrigger>
-          <TabsTrigger value="password">On Page</TabsTrigger>
+        <TabsList className="text-xs">
+          <TabsTrigger className="text-xs" value="account">
+            Technical
+          </TabsTrigger>
+          <TabsTrigger className="text-xs" value="password">
+            On-Page
+          </TabsTrigger>
         </TabsList>
-        <TabsContent value="account" className="mt-8">
+        <TabsContent value="account" className="mt-2">
           <PerformanceSection dbdata={dbdata} />
         </TabsContent>
-        <TabsContent value="password" className="mt-8">
+        <TabsContent value="password" className="mt-2">
           <SEOtableSection dbdata={dbdata} />
         </TabsContent>
       </Tabs>
