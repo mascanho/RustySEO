@@ -9,8 +9,8 @@ pub async fn fetch_url(url: &str) -> Result<String, Box<dyn Error>> {
     let response = reqwest::get(url).await?.text().await?;
     Ok(response)
 }
-
-// word count
+// TODO: make this more accurate
+// --------------------------------- WORD COUNT ---------------------------------
 pub fn count_words_accurately(document: &Html) -> (usize, Vec<String>) {
     let text_selector = Selector::parse("h1, h2, h3, h4, h5, h6, p").unwrap();
     let word_regex = Regex::new(r"\p{L}+(?:[-']\p{L}+)*").unwrap();
@@ -89,7 +89,8 @@ fn clean_text(text: &str) -> String {
 
 pub fn extract_text(html: &Html) -> String {
     let document = html;
-    let selector = Selector::parse("h1, h2, h3, h4, h5, h6, p").unwrap();
+    let selector =
+        Selector::parse("h1, h2, h3, h4, h5, h6, p, span, blockquote, ul, ol , li").unwrap();
     let mut text = String::new();
 
     for element in document.select(&selector) {
@@ -151,6 +152,7 @@ pub fn calculate_reading_time(word_count: usize, words_per_minute: usize) -> usi
     (word_count as f64 / words_per_minute as f64).ceil() as usize
 }
 
+// TODO: make this more accurate
 // Function to calculate the reading level and classify it
 pub fn calculate_reading_level(html: &str) -> (f64, String) {
     let text = from_read(html.as_bytes(), 80); // Convert HTML to plain text
