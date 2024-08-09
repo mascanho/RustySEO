@@ -57,12 +57,13 @@ const TopMenuBar = () => {
       {/* PageSpeed Insights Modal */}
       <Modal
         opened={openedPageSpeed}
-        overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+        // overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
         closeOnEscape
         closeOnClickOutside
         onClose={closePageSpeed}
         title="Page Speed Insights API key"
         centered
+        // zIndex={"100000"}
       >
         <PageSpeedInsigthsApi close={closePageSpeed} />
       </Modal>
@@ -70,12 +71,13 @@ const TopMenuBar = () => {
       {/* Todo Modal */}
       <Modal
         opened={openedModal}
-        overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+        // overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
         closeOnEscape
         closeOnClickOutside
         onClose={closeModal}
         title=""
         centered
+        zIndex={"100000"}
       >
         <Todo url={url} close={closeModal} strategy={strategy} />
       </Modal>
@@ -83,13 +85,14 @@ const TopMenuBar = () => {
       {/* Todo Modal */}
       <Modal
         opened={openedOllama}
-        overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+        // overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
         closeOnEscape
         closeOnClickOutside
         onClose={closeOllama}
         title="Ollama Model Selector"
         centered
         size={"500px"}
+        // zIndex={"100000"}
       >
         <OllamaSelect closeOllama={closeOllama} />
       </Modal>
@@ -108,7 +111,7 @@ const TopMenuBar = () => {
         style={{ paddingTop: "5rem" }}
         closeOnEscape
         closeOnClickOutside
-        overlayProps={{ backgroundOpacity: 0.5 }}
+        // overlayProps={{ backgroundOpacity: 0.5 }}
       >
         <TodoItems url={url} strategy={strategy} />
       </Drawer>

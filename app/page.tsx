@@ -406,6 +406,7 @@ const Home: React.FC<HomeProps> = () => {
           onClose={closeModal}
           title=""
           centered
+          zIndex={"10000"}
         >
           <Todo url={debouncedURL} close={closeModal} strategy={strategy} />
         </Modal>
@@ -503,10 +504,10 @@ const Home: React.FC<HomeProps> = () => {
           </section>
         </div>
         {/* TABS SECTION */}
-        <section className="mt-2 relative h-[calc(100vh-9.2rem)] overflow-x-hidden   py-6 px-3 ">
+        <section className="mt-2 relative h-[calc(100vh-9.2rem)] overflow-x-hidden py-6 px-3   ">
           <Tabs defaultValue="first">
-            <div className="transition-all  ease-in  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-2 top-[70px]  transform dark:bg-brand-darker z-[900] pb-0">
-              <Tabs.List justify="center" className="dark:text-white ">
+            <div className="transition-all  ease-in z-[1000]  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-2 top-[70px]  transform dark:bg-brand-darker  pb-0">
+              <Tabs.List justify="center" className="dark:text-white  ">
                 <Tabs.Tab value="first"> Diagnostics</Tabs.Tab>
                 <Tabs.Tab value="third">Improvements</Tabs.Tab>
                 <Tabs.Tab value="fourth">Task Manager</Tabs.Tab>

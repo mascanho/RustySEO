@@ -10,7 +10,6 @@
   position: absolute;
   top: 30px;
   right: 2%;
-  z-index: 20000;
   height: 200px;
   transition: all 0.3s ease-in-out;
 }
@@ -21,5 +20,4 @@
   -webkit-mask-position: 13rem 6rem;
   transform: rotate(-14deg);
   border-radius: 0;
-  z-index: 100000;
 }

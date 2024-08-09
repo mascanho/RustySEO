@@ -250,7 +250,7 @@ button:where([data-active]) {
 }
 
 .m_539e827b {
-  @apply dark:bg-transparent !important;
+  @apply dark:bg-transparent  !important;
 }
 
 .m_539e827b span {
@@ -390,22 +390,23 @@ button:where([data-active]) {
 ::-webkit-scrollbar {
   width: 5px; /* Width of the scrollbar */
   height: 5px; /* Height of the horizontal scrollbar */
+  z-index: 0 !important;
 }
 
 /* Style the draggable part of the scrollbar */
 ::-webkit-scrollbar-thumb {
-  @apply bg-brand-highlight dark:bg-sky-500;
+  @apply bg-brand-highlight dark:bg-sky-500 z-0 !important;
   border-radius: 10px; /* Rounded corners for the thumb */
 }
 
 /* Style the draggable part of the scrollbar on hover */
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-brand-highlight dark:bg-sky-500;
+  @apply bg-brand-highlight dark:bg-sky-500 z-0 !important;
 }
 
 /* Style the bottom-right corner where two scrollbars meet */
 ::-webkit-scrollbar-corner {
-  background: #f1f1f1;
+  /* background: #f1f1f1; */
 }
 
 /*Cards animations*/
