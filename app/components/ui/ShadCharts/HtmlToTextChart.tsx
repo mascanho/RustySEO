@@ -31,7 +31,7 @@ const chartConfig = {
 
 export function HtmlToTextChart({ htmlToTextRatio }: any) {
   const totalVisitors =
-    Math.floor((htmlToTextRatio?.[0]?.[0] ?? 0) * 100) + "%";
+    htmlToTextRatio?.[0]?.[0].toFixed(2) * 100 + "%" ?? 0 * 100 + "%";
 
   // Safely accessing htmlToTextRatio values for chartData
   const chartData = [
