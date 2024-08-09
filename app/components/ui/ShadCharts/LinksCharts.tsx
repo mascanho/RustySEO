@@ -76,7 +76,7 @@ export function LinksChart({ linkStatusCodes }: { linksStatusCodes: any }) {
     },
     {
       browser: "404",
-      visitors: internalLinks.length,
+      visitors: statusError.length,
       fill: "var(--color-safari)",
     },
   ];

@@ -74,7 +74,7 @@ export function HtmlToTextChart({ htmlToTextRatio }: any) {
                           y={(viewBox.cy || 0) - 16}
                           className="fill-foreground text-2xl font-bold dark:fill-white"
                         >
-                          {htmlToTextRatio &&
+                          {htmlToTextRatio?.[0] &&
                             Math.round(htmlToTextRatio?.[0]?.[0] * 100) + "%"}
                         </tspan>
                         <tspan

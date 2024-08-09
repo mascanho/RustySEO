@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="min-w-[600px]">
       <body
-        className={`relative overflow-hidden rounded-md bg-white dark:bg-brand-dark ${roboto.className}`}
+        className={`relative overflow-hidden rounded-md bg-gray-50 dark:bg-brand-dark ${roboto.className}`}
       >
         <MantineProvider>
           {/* Fixed MenuDrawer */}

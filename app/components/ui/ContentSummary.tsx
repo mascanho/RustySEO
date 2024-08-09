@@ -9,7 +9,7 @@ const ContentSummary = ({
   htmlToTextRatio,
 }: any) => {
   return (
-    <section className="flex-wrap min-h-[calc(96rem - 2.5rem)] h-full space-y-1 bg-white dark:bg-brand-darker dark:text-white p-2 rounded-md relative">
+    <section className="flex-wrap min-h-[calc(96rem - 2.5rem)] h-full space-y-1 bg-transparent dark:bg-brand-darker dark:text-white p-2 rounded-md relative">
       <div className="p-3 grid gap-5 overflow-y-scroll w-full h-full">
         <div className="grid gap-3">
           <div className="flex items-center justify-between">
@@ -234,7 +234,7 @@ const ContentSummary = ({
                 {keywords[0]?.map((keyword: any, index: any) => (
                   <span
                     key={index}
-                    className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded-full"
+                    className="text-xs bg-slate-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded-full border border-gray-400"
                   >
                     {keyword[0]}
                   </span>
