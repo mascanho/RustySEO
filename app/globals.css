@@ -395,7 +395,7 @@ button:where([data-active]) {
 
 /* Style the draggable part of the scrollbar */
 ::-webkit-scrollbar-thumb {
-  @apply bg-brand-highlight dark:bg-sky-500 z-0 !important;
+  @apply bg-brand-highlight dark:bg-sky-900 z-0 !important;
   border-radius: 10px; /* Rounded corners for the thumb */
 }
 

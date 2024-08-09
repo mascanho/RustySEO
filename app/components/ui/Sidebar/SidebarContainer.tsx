@@ -45,7 +45,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
 
   return (
     <aside
-      className={` overflow-y-auto overflow-hidden h-screen border-l dark:border-gray-600 flex relative flex-col  transition-all ease-linear delay-75  dark:bg-brand-darker ${visibility.sidebar ? "w-96" : "w-0"}`}
+      className={` overflow-y-auto overflow-hidden h-screen border-l mt-1.5 border-t dark:border-gray-600 flex relative flex-col  transition-all ease-linear delay-75  dark:bg-brand-darker ${visibility.sidebar ? "w-96" : "w-0"}`}
     >
       <ResizablePanelGroup direction="vertical">
         <ResizablePanel defaultSize={180}>

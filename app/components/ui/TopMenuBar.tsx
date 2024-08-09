@@ -17,6 +17,7 @@ import PageSpeedInsigthsApi from "../PageSpeedInsigthsApi";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import { LuPanelRight } from "react-icons/lu";
 import OllamaSelect from "./OllamaSelector/OllamaSelect";
+import { invoke } from "@tauri-apps/api/tauri";
 
 const TopMenuBar = () => {
   const onClose = useCallback(async () => {
@@ -34,7 +35,7 @@ const TopMenuBar = () => {
   const [strategy, setStrategy] = useState("");
 
   const [openedOllama, { open: openOllama, close: closeOllama }] =
-    useDisclosure(true);
+    useDisclosure(false);
 
   useEffect(() => {
     const fetchUrlFromSessionStorage = () => {

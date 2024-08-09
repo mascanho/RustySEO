@@ -16,14 +16,29 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
   const fcp =
     pageSpeed?.lighthouseResult?.audits?.["first-contentful-paint"]?.score;
 
-  console.log(fcp, "performance");
+  const lcp =
+    pageSpeed?.lighthouseResult?.audits?.["largest-contentful-paint"]?.score;
+
+  const tti = pageSpeed?.lighthouseResult?.audits?.["interactive"]?.score;
+
+  const cls =
+    pageSpeed?.lighthouseResult?.audits?.["cumulative-layout-shift"]?.score;
+
+  const speedIndex =
+    pageSpeed?.lighthouseResult?.audits?.["speed-index"]?.score;
+
+  const serverResponse =
+    pageSpeed?.lighthouseResult?.audits?.["server-response-time"]?.score;
+
+  const largePayloads =
+    pageSpeed?.lighthouseResult?.audits?.["total-byte-weight"]?.score;
 
   const AIfeedback = false;
 
   const dummyImprovements = [
     {
       id: 1,
-      title: "Performance Score",
+      title: "Performance ",
       improved: performance > 0.5 ? true : false,
       passAdvice: "Your performance score is good.",
       failsAdvice: "Your performance score is too low.",
@@ -33,13 +48,73 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
     },
     {
       id: 2,
-      title: "First Contentful Paint",
+      title: "FCP (First Contentful Paint)",
       passAdvice: "Your First Contentful Paint score is good.",
-      failsAdvice: "",
+      failsAdvice: "Your FCP value is too low.",
       improved: fcp > 0.5 ? true : false,
       aiImprovement: AIfeedback
         ? "Function call"
         : "To improve your First Contentful Paint (FCP), optimize critical rendering by inlining essential CSS, deferring non-critical CSS and JavaScript, using `font-display: swap`, preloading fonts, reducing server response time with caching and CDNs, minimizing and compressing resources, serving optimized images, asynchronously loading third-party scripts, considering server-side or static site rendering, and applying effective caching headers.",
+    },
+    {
+      id: 3,
+      title: "LCP (Last Contentful Paint)",
+      passAdvice: "Your Last Contentful Paint score is good.",
+      failsAdvice: "Your LCP value is too low.",
+      improved: lcp > 0.5 ? true : false,
+      aiImprovement: AIfeedback
+        ? "Function call"
+        : "To enhance LCP, first reduce server response times and utilize a Content Delivery Network (CDN) to expedite content delivery. Compress and serve images in modern formats, and implement lazy loading for images and videos below the fold. Optimize resource loading by deferring non-essential JavaScript and inlining critical CSS. Preload key resources needed for the initial render to ensure they are available quickly. Regularly monitor and test performance to identify and address potential bottlenecks.",
+    },
+    {
+      id: 4,
+      title: "TTI (Time to Interactive)",
+      passAdvice: "Your Time to Interactive score is good.",
+      failsAdvice: "Your TTI value is too low.",
+      improved: tti > 0.5 ? true : false,
+      aiImprovement: AIfeedback
+        ? "Function call"
+        : "To improve Time to Interactive (TTI), begin by reducing server response times and utilizing a Content Delivery Network (CDN) to speed up resource delivery. Optimize JavaScript execution by splitting large scripts, deferring non-essential code, and using async or defer attributes. Minimize render-blocking CSS and inline critical styles to ensure quick rendering. Implement lazy loading for non-essential resources and reduce third-party scripts. Regularly test performance to identify and fix issues affecting interactivity.",
+    },
+    {
+      id: 5,
+      title: "CLS (Cumulative Layout Shift)",
+      passAdvice: "Your Cumulative Layout Shift score is good.",
+      failsAdvice: "Your CLS value is too low.",
+      improved: cls > 0.5 ? true : false,
+      aiImprovement: AIfeedback
+        ? "Function call"
+        : "To improve Cumulative Layout Shift (CLS), start by reserving space for images and other media with explicit width and height attributes to prevent layout shifts. Ensure fonts are loaded with a font-display strategy to avoid text shifting during loading. Use CSS animations and transitions carefully to avoid unexpected layout changes. Implement lazy loading for offscreen content while maintaining layout stability. Regularly test and audit your site for layout shifts to identify and address issues promptly.",
+    },
+    {
+      id: 6,
+      title: "Speed Index",
+      passAdvice: "Your Speed Index score is good.",
+      failsAdvice: "Your Speed Index value is too low.",
+      improved: speedIndex > 0.5 ? true : false,
+      aiImprovement: AIfeedback
+        ? "Function call"
+        : "To improve Speed Index, start by optimizing server response times and using a Content Delivery Network (CDN) to accelerate resource delivery. Minimize render-blocking resources by deferring non-critical JavaScript and inlining critical CSS. Optimize the loading of above-the-fold content to ensure it displays quickly and use efficient image formats with lazy loading for below-the-fold images. Reduce the complexity of your layout and avoid excessive reflows and repaints. Regularly monitor performance to identify and address any bottlenecks.",
+    },
+    {
+      id: 7,
+      title: "Server Response",
+      passAdvice: "Your Server Response score is good.",
+      failsAdvice: "Your Server Response value is too low.",
+      improved: serverResponse > 0.5 ? true : false,
+      aiImprovement: AIfeedback
+        ? "Function call"
+        : "To improve server response time, optimize your server configuration and use a Content Delivery Network (CDN) to reduce latency. Implement server-side caching to speed up data retrieval and minimize processing times. Optimize your database queries and ensure efficient code execution on the backend. Monitor server performance and scale resources appropriately to handle traffic spikes. Regularly review and update your server infrastructure to keep up with performance improvements.",
+    },
+    {
+      id: 8,
+      title: "Large Payloads",
+      passAdvice: "Your Large Payloads score is good.",
+      failsAdvice: "Your Large Payloads value is too low.",
+      improved: largePayloads > 0.5 ? true : false,
+      aiImprovement: AIfeedback
+        ? "Function call"
+        : "To improve performance with large payloads, compress data using gzip or Brotli to reduce size during transmission. Implement lazy loading for non-essential content to defer loading until needed. Optimize and minify JavaScript and CSS files to reduce their size. Use efficient data formats such as JSON over XML, and paginate or split large datasets into smaller, more manageable chunks. Regularly review and refine payloads to ensure only necessary data is transmitted.",
     },
   ];
 
@@ -93,10 +168,6 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
                     View suggestion
                   </CollapsibleTrigger>
                   <CollapsibleContent className="bg-blue-200 rounded-md p-2 mt-2 relative min-h-8">
-                    <FiClipboard
-                      onClick={() => handleCopy(item.aiImprovement)}
-                      className="absolute active:bg-gray-300 active:scale-95 top-3 cursor-pointer right-3 text-gray-800"
-                    />
                     {item.aiImprovement}
                   </CollapsibleContent>
                 </Collapsible>

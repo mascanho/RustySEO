@@ -1,11 +1,12 @@
 // @ts-nocheck
 import { Select } from "@mantine/core";
-import React from "react";
+import { invoke } from "@tauri-apps/api/tauri";
+import React, { useState } from "react";
 
 const ollamaModels = [
   {
-    name: "LLaMA 2",
-    value: "llama2",
+    name: "Llama3",
+    value: "llama3",
   },
   {
     name: "CodeLlama",
@@ -46,8 +47,21 @@ const ollamaModels = [
 ];
 
 const OllamaSelect = ({ closeOllama }: any) => {
-  const handleOllamaSelect = (selection: any) => {
-    console.log(selection);
+  const [model, setModel] = useState("");
+
+  const handleModelSelection = async (model: any) => {
+    try {
+      // Call the Tauri command with the model parameter
+      const result = await invoke("write_model_to_disk", { model });
+      console.log("Model saved to:", result);
+      setModel(model);
+    } catch (error) {
+      console.error("Failed to save model:", error);
+    }
+  };
+
+  const handleOllamaSelect = (e: any) => {
+    setModel(e);
   };
 
   return (
@@ -84,7 +98,10 @@ const OllamaSelect = ({ closeOllama }: any) => {
       </div>
 
       <button
-        onClick={() => closeOllama()}
+        onClick={() => {
+          handleModelSelection(model);
+          closeOllama();
+        }}
         type="button"
         className="w-[96%] mx-auto flex justify-center mt-2 rounded-md  bg-blue-500 text-white px-3 py-1"
       >

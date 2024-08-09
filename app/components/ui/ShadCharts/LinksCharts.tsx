@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import * as React from "react";
@@ -45,8 +46,13 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-// @ts-expect-error
-export function LinksChart({ linkStatusCodes }: { linksStatusCodes: any }) {
+export function LinksChart({
+  linkStatusCodes,
+  linkStatusCodeStatus,
+}: {
+  linksStatusCodes: any;
+  linkStatusCodeStatus: any;
+}) {
   console.log(linkStatusCodes, "linksStatusCodes from the charts");
 
   const externalLinks = linkStatusCodes?.filter(
@@ -84,6 +90,10 @@ export function LinksChart({ linkStatusCodes }: { linksStatusCodes: any }) {
   const totalVisitors = React.useMemo(() => {
     return chartData.reduce((acc, curr) => acc + curr.visitors, 0);
   }, []);
+
+  if (linkStatusCodeStatus === true) {
+    return "loading";
+  }
 
   return (
     <Card className="flex flex-col dark:bg-brand-darker">
@@ -142,13 +152,18 @@ export function LinksChart({ linkStatusCodes }: { linksStatusCodes: any }) {
       </CardContent>
       {linkStatusCodes?.length > 0 && (
         <CardFooter className="flex-col gap-2 text-sm text-center mb-6 dark:text-white/50">
-          <div className="flex items-center font-medium leading-none -mt-10">
+          <p className="flex items-center font-medium leading-none -mt-10">
             This page contains {linkStatusCodes?.length} links.
-          </div>
-          <div className="leading-none text-muted-foreground">
-            From those, {externalLinks?.length} are external and{" "}
-            {internalLinks?.length} are internal
-          </div>
+          </p>
+          <p className="leading-none text-muted-foreground">
+            <span className="font-bold">Internal:</span> {internalLinks?.length}
+            {""} links <span className="font-bold ml-2">External:</span>{" "}
+            {externalLinks?.length} links{" "}
+          </p>
+          <p className="leading-none text-muted-foreground">
+            <span className="font-bold">404 Error:</span> {statusError?.length}{" "}
+            links
+          </p>
         </CardFooter>
       )}
     </Card>

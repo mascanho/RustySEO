@@ -190,7 +190,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
       </div>
 
       <section className="rounded-md mt-3 overflow-hidden shadow border dark:border-white/10 dark:bg-brand-darker">
-        <div className="h-full max-h-[38rem] custom-scrollbar overflow-scroll bg-white dark:bg-brand-darker">
+        <div className="h-full max-h-[38rem] custom-scrollbar overflow-auto bg-white dark:bg-brand-darker">
           <table className="table_history w-full shadow text-xs">
             <thead className="bg-white dark:bg-brand-darker sticky top-0 z-10">
               <tr>

@@ -230,11 +230,11 @@ const ContentSummary = ({
                 </svg>
                 <span className="font-semibold block ml-2">Top Keywords</span>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 mt-1">
                 {keywords[0]?.map((keyword: any, index: any) => (
                   <span
                     key={index}
-                    className="text-xs bg-slate-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-2 py-1 rounded-full border border-gray-400"
+                    className="text-xs bg-slate-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-2 py-1 rounded-full border border-gray-400 dark:border-none"
                   >
                     {keyword[0]}
                   </span>
@@ -243,11 +243,11 @@ const ContentSummary = ({
             </div>
           </div>
 
-          <div className="grid gap-1 min-h-[8rem] overflow-y-auto mt-8">
+          <div className="grid gap-1  overflow-y-auto mt-8">
             <h3 className="text-xs font-semibold dark:text-sky-dark">
               Summary
             </h3>
-            <p className="text-muted-foreground text-xs mt-0">
+            <p className="text-muted-foreground text-xs mt-1">
               {AiContentAnalysis}
             </p>
           </div>

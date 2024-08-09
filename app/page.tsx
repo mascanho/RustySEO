@@ -90,6 +90,7 @@ const Home: React.FC<HomeProps> = () => {
   const [hidden, setHidden] = useState({
     widget: false,
   });
+  const [linkStatusCodeStatus, setLinkStatusCodeStatus] = useState(false);
 
   const [open, { toggle }] = useDisclosure(false);
 
@@ -302,11 +303,14 @@ const Home: React.FC<HomeProps> = () => {
   }, []);
 
   const handleLinkStatusCheck = (url: any) => {
-    invoke<{}>("check_link_status", { url: url }).then((result: any) => {
-      console.log(result, "The links");
-      setLinkStatusCodes(result);
-      console.log("This is from the Link STATUS CODES");
-    });
+    setLinkStatusCodeStatus(true);
+    invoke<{}>("check_link_status", { url: url })
+      .then((result: any) => {
+        console.log(result, "The links");
+        setLinkStatusCodes(result);
+        console.log("This is from the Link STATUS CODES");
+      })
+      .then(() => setLinkStatusCodeStatus(false));
   };
 
   const handleSpeed = useCallback(
@@ -411,7 +415,7 @@ const Home: React.FC<HomeProps> = () => {
           <Todo url={debouncedURL} close={closeModal} strategy={strategy} />
         </Modal>
         {/* Fixed Input and Crawl Button */}
-        <div className="fixed top-[28px] left-0 right-0 z-[1000] h-12 border-b bg-white dark:bg-brand-darker flex items-center px-4 dark:border-b-white/10">
+        <div className="fixed top-[28px] left-0 right-0 z-[1000] h-11 border-b  bg-white dark:bg-brand-darker flex items-center px-4 dark:border-b-black">
           <MenuDrawer />
           <section className="flex items-center justify-end mx-auto relative w-full max-w-[600px]">
             <div className="flex items-center w-full">
@@ -625,7 +629,10 @@ const Home: React.FC<HomeProps> = () => {
                 <HtmlToTextChart htmlToTextRatio={htmlToTextRatio} />
                 <ImagesChart url={debouncedURL} images={images} />
                 {/* @ts-ignore */}
-                <LinksCharts linkStatusCodes={linkStatusCodes} />
+                <LinksCharts
+                  linkStatusCodeStatuses={linkStatusCodeStatus}
+                  linkStatusCodes={linkStatusCodes}
+                />
               </section>
 
               {/* TABLES START HERE */}
