@@ -8,8 +8,6 @@ const ContentSummary = ({
   AiContentAnalysis,
   htmlToTextRatio,
 }: any) => {
-  console.log(htmlToTextRatio, "ratio");
-
   return (
     <section className="flex-wrap min-h-[calc(96rem - 2.5rem)] h-full space-y-1 bg-white dark:bg-brand-darker dark:text-white p-2 rounded-md relative">
       <div className="p-3 grid gap-5 overflow-y-scroll w-full h-full">
@@ -186,7 +184,7 @@ const ContentSummary = ({
           <span>
             {htmlToTextRatio
               ? htmlToTextRatio[0] &&
-                htmlToTextRatio[0][0].toFixed(2) * 100 + "%"
+                Math.round(htmlToTextRatio[0][0] * 100) + "%"
               : ""}{" "}
           </span>
         </div>
