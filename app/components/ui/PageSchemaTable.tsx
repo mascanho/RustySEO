@@ -29,7 +29,7 @@ const PageSchemaTable = ({
         Page Schema
       </h2>
 
-      <section className="mx-auto w-full rounded-md overflow-auto bg-white/40 dark:bg-brand-darker relative h-[30rem]">
+      <section className="mx-auto w-full rounded-md overflow-auto bg-white/40 dark:bg-brand-darker relative h-[29.2rem]">
         {newSchema.trim().length === 0 ? ( // Use newSchema for checking empty state
           <div className="flex items-center justify-center h-[78%]">
             <p className="text-center m-auto text-sm pt-2 dark:text-white/50">

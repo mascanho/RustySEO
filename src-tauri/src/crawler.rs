@@ -120,7 +120,7 @@ pub struct SEOLighthouseResponse {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PageSpeedResponse {
     id: String,
-    //captcha_result: Option<String>,
+    captcha_result: Option<String>,
     lighthouseResult: Option<LighthouseResult>,
     audits: Option<serde_json::Value>,
     // Add other fields based on the JSON response structure

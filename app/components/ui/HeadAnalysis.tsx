@@ -44,11 +44,6 @@ export const HeadAnalysis = ({
       className="  dark:border-brand-darker  bg-white p-1 dark:bg-brand-darker shadow rounded-md mb-5 pb-5 overflow-hidden border relative -mt-5"
     >
       <StampEl indexation={indexation} hidden={hidden} />
-      <img
-        src={favicon_url[0]}
-        alt=""
-        className="mix-blend-multiply right-10 absolute bottom-10"
-      />
       <h2 className="flex items-center text-center font-semibold text-gray-400 w-fit relative p-4 mx-auto text-xl">
         <AiFillTag className="mr-1.5" /> Head
       </h2>

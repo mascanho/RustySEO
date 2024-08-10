@@ -1,5 +1,15 @@
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
-import React from "react";
+import { FaLinkedin } from "react-icons/fa";
+import { BsThreeDotsVertical } from "react-icons/bs";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const OpenGraphCard = ({
   openGraphDetails,
@@ -9,21 +19,37 @@ export const OpenGraphCard = ({
   linkedInInspect: string | undefined;
 }) => {
   return (
-    <div className="shadow overflow-hidden rounded-md h-ful bg-whitel">
-      <h2 className=" bg-apple-spaceGray font-semibold text-white rounded-t-md w-full pt-1   text-center ">
-        Social Media Preview
-      </h2>
-      <section className="mx-auto h-full w-full rounded-md overflow-auto relative bg-white/40">
+    <div className="shadow naked_table overflow-hidden">
+      <div className="flex items-center justify-between">
+        <h2 className="flex items-center z-10">
+          <FaLinkedin className="mr-1.5 " /> Social Media Preview
+        </h2>
+        <div className="relative z-10">
+          <DropdownMenu>
+            <DropdownMenuTrigger>
+              <BsThreeDotsVertical className="dark:text-white mr-2 z-10" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-brand-darker border bg-white dark:border-brand-dark dark:text-white mr-36">
+              <DropdownMenuLabel>Social Previews</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => openBrowserWindow(linkedInInspect)}
+                className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer"
+              >
+                LinkedIn
+              </DropdownMenuItem>
+              <DropdownMenuItem>Billing</DropdownMenuItem>
+              <DropdownMenuItem>Team</DropdownMenuItem>
+              <DropdownMenuItem>Subscription</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+      <section className="mx-auto h-full w-full overflow-auto relative bg-white/40 -mt-10 -z-1">
         <div
-          className={`border p-10  flex flex-col rounded-md items-center justify-center ${openGraphDetails.length === 0 ? "bg-white/40 h-full" : "bg-white h-full"}`}
+          className={`px-10  flex flex-col  items-center justify-center ${openGraphDetails.length === 0 ? "bg-white/40 h-full" : "bg-white dark:bg-brand-darker h-full"}`}
         >
-          <span
-            className="absolute right-4 px-3 hover:border-black hover:text-white transition-all duration-300 active:border-2 hover:bg-apple-spaceGray py-1 text-xs w-fit flex flex-nowrap bg-apple-silver rounded-md text-right cursor-pointer top-3"
-            onClick={() => openBrowserWindow(linkedInInspect)}
-          >
-            Inspect
-          </span>
-          {openGraphDetails.length !== 0 && (
+          {openGraphDetails?.image?.length > 0 ? (
             <div className="flex flex-col flex-wrap justify-start items-start">
               <img
                 src={openGraphDetails?.image}
@@ -31,13 +57,17 @@ export const OpenGraphCard = ({
                 className="rounded-md w-full  max-h-52 object-cover ml-0"
               />
             </div>
+          ) : (
+            <span className="text-black/50">No opengraph found</span>
           )}
           <div
             onClick={() => openBrowserWindow(openGraphDetails.url)}
             className="flex flex-col flex-wrap cursor-pointer py-2"
           >
-            <span className="font-bold">{openGraphDetails.title}</span>
-            <span className="w-11/12 break-words">
+            <span className="font-bold dark:text-white/50">
+              {openGraphDetails.title}
+            </span>
+            <span className="w-11/12 break-words dark:text-white/50">
               {openGraphDetails.description}
             </span>
             <span className="text-sm mt-1 text-apple-spaceGray/70">
