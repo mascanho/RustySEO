@@ -138,11 +138,12 @@ const RenderBlocking = ({
             ?.displayValue && (
             <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
               {stat.lighthouseResult.audits["render-blocking-resources"].details
-                ?.items
+                ?.items?.length > 0
                 ? `${stat.lighthouseResult.audits["render-blocking-resources"].details.items.length} tasks`
                 : "No tasks available"}
             </span>
           )}
+          {}
         </div>
         <h2
           onClick={() =>

@@ -156,13 +156,13 @@ export function LinksChart({
             This page contains {linkStatusCodes?.length} links.
           </p>
           <p className="leading-none text-muted-foreground">
-            <span className="font-bold">Internal:</span> {internalLinks?.length}
-            {""} links <span className="font-bold ml-2">External:</span>{" "}
-            {externalLinks?.length} links{" "}
+            <span className="font-bold">Internal Links: </span>
+            {internalLinks?.length}
+            <span className="font-bold ml-2">External Links:</span>{" "}
+            {externalLinks?.length}
           </p>
           <p className="leading-none text-muted-foreground">
-            <span className="font-bold">404 Error:</span> {statusError?.length}{" "}
-            links
+            <span className="font-bold">404 Links:</span> {statusError?.length}{" "}
           </p>
         </CardFooter>
       )}

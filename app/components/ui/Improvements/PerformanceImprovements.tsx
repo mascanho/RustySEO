@@ -33,6 +33,16 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
   const largePayloads =
     pageSpeed?.lighthouseResult?.audits?.["total-byte-weight"]?.score;
 
+  const domSize =
+    pageSpeed?.lighthouseResult?.audits?.["dom-size"]?.numericValue;
+
+  const urlRedirects =
+    pageSpeed?.lighthouseResult?.audits?.redirects?.details?.items.length;
+
+  const longTasks = pageSpeed?.lighthouseResult?.audits?.["long-tasks"]?.score;
+
+  console.log(longTasks, "DOM SIZE");
+
   const AIfeedback = false;
 
   const dummyImprovements = [
@@ -116,6 +126,37 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
         ? "Function call"
         : "To improve performance with large payloads, compress data using gzip or Brotli to reduce size during transmission. Implement lazy loading for non-essential content to defer loading until needed. Optimize and minify JavaScript and CSS files to reduce their size. Use efficient data formats such as JSON over XML, and paginate or split large datasets into smaller, more manageable chunks. Regularly review and refine payloads to ensure only necessary data is transmitted.",
     },
+    {
+      id: 9,
+      title: "Dom Size",
+      passAdvice: "You have a good dom size, below 1500 nodes.",
+      failsAdvice: "You have too many nodes in your dom.",
+      improved: domSize < 1500 ? true : false,
+      aiImprovement: AIfeedback
+        ? "Function call"
+        : " Minimize unnecessary elements and nesting, use semantic HTML for cleaner structure, consolidate CSS to reduce complexity, eliminate redundant or duplicate scripts, and employ lazy loading for deferred content to effectively manage and reduce DOM size.",
+    },
+    {
+      id: 10,
+      title: "Redirects",
+      passAdvice: "This page does not have too many redirects on its URL.",
+      failsAdvice: "You have too many redirects in the URL.",
+      improved: urlRedirects <= 2 ? true : false,
+      aiImprovement: AIfeedback
+        ? "Function call"
+        : "This page has too many redirects on its URL, causing a redirect chain loop that could potentially slow down your application.",
+    },
+    {
+      id: 11,
+      title: "Long Tasks",
+      passAdvice: "Thre are no long tasks slowing down your application",
+      failsAdvice:
+        "There are too many long tasks slowing down your application.",
+      improved: longTasks < 0.5 ? true : false,
+      aiImprovement: AIfeedback
+        ? "Function call"
+        : "This page has too many redirects on its URL, causing a redirect chain loop that could potentially slow down your application.",
+    },
   ];
 
   const handleCopy = (text: any) => {
@@ -127,7 +168,7 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
   }
 
   return (
-    <div className="bg-gray-100 w-full dark:bg-brand-darker p-6 rounded-lg shadow max-w-7xl mx-auto mt-10">
+    <div className="bg-gray-300 w-full dark:bg-brand-darker p-6 rounded-lg shadow max-w-7xl mx-auto mt-10">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">
           Technical Improvements
