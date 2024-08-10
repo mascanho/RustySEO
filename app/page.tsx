@@ -416,7 +416,7 @@ const Home: React.FC<HomeProps> = () => {
           <Todo url={debouncedURL} close={closeModal} strategy={strategy} />
         </Modal>
         {/* Fixed Input and Crawl Button */}
-        <div className="fixed top-[28px] left-0 right-0 z-[1000] h-11 border-b  bg-white dark:bg-brand-darker flex items-center px-4 dark:border-b-black">
+        <div className="fixed top-[28px] left-0 right-0 z-[2000] h-11 border-b  bg-white dark:bg-brand-darker flex items-center px-4 dark:border-b-black">
           <MenuDrawer />
           <section className="flex items-center justify-end mx-auto relative w-full max-w-[600px]">
             <div className="flex items-center w-full">
@@ -448,9 +448,9 @@ const Home: React.FC<HomeProps> = () => {
                 </div>
 
                 {isOpen && (
-                  <div className="origin-top-right absolute right-0 mt-2 w-[7rem] rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50 dark:bg-brand-darker">
+                  <div className="origin-top-right absolute right-0 mt-2 w-[7rem] rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5  dark:bg-brand-darker dark:text-white z-[9000000000]">
                     <div
-                      className="py-1"
+                      className="py-1 z-[90000000000]"
                       role="menu"
                       aria-orientation="vertical"
                       aria-labelledby="options-menu"
@@ -459,7 +459,7 @@ const Home: React.FC<HomeProps> = () => {
                         <button
                           key={option.value}
                           onClick={() => handleSelect(option.value)}
-                          className="flex items-center px-4 py-2 z-[10000000000] text-sm text-gray-700 hover:bg-slate-300 hover:text-gray-900 w-full text-left"
+                          className="flex items-center px-4 py-2  text-sm text-gray-700 hover:bg-slate-300 hover:text-gray-900 w-full text-left z-[1000000000000000000]"
                           role="menuitem"
                         >
                           {option.icon}
