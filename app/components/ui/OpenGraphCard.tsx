@@ -29,7 +29,7 @@ export const OpenGraphCard = ({
             <DropdownMenuTrigger>
               <BsThreeDotsVertical className="dark:text-white mr-2 z-10" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-brand-darker border bg-white dark:border-brand-dark dark:text-white mr-36">
+            <DropdownMenuContent className="bg-brand-darker border bg-white dark:bg-brand-darker  dark:border-brand-dark dark:text-white mr-36">
               <DropdownMenuLabel>Social Previews</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -58,7 +58,9 @@ export const OpenGraphCard = ({
               />
             </div>
           ) : (
-            <span className="text-black/50">No opengraph found</span>
+            <span className="text-black/50 dark:text-white/50">
+              No opengraph found
+            </span>
           )}
           <div
             onClick={() => openBrowserWindow(openGraphDetails.url)}

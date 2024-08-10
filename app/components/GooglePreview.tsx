@@ -72,16 +72,15 @@ const GooglePreview = ({
             </div>
           </div>
           <a
-            className="mt-20"
+            className="mt-10 dark:text-blue-400"
             style={{
               textDecoration: "none",
-              color: "#1a0dab",
               fontSize: "18px",
             }}
           >
             {pageTitle}
           </a>
-          <div style={{ color: "#4d5156", fontSize: "14px" }}>
+          <div style={{ fontSize: "14px" }} className="dark:text-white/60 mt-1">
             {pageDescription}
           </div>
         </div>{" "}
