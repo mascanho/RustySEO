@@ -34,7 +34,7 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
               <tr className="bg-white">
                 <td
                   colSpan={2}
-                  className="text-center text-gray-500 h-full bg-white dark:text-white"
+                  className="text-center text-gray-500 h-full bg-white dark:bg-brand-darker dark:text-white"
                 >
                   No third party connections found.
                 </td>

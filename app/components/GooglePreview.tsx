@@ -14,7 +14,7 @@ const GooglePreview = ({
 }) => {
   // get the domain name only from the url
 
-  const capitalizeFirstLetter = (str) =>
+  const capitalizeFirstLetter = (str: any) =>
     str.charAt(0).toUpperCase() + str.slice(1);
 
   const domainWithoutLastPart = url
@@ -44,32 +44,36 @@ const GooglePreview = ({
       >
         <div>
           <div className="flex items-center mb-2">
-            <div className="w-fit h-fit p-1 bg-white rounded-full -mr-2">
-              <img
-                src={favicon_url[0]}
-                alt="favicon"
-                className="rounded-full w-8 h-8 object-cover"
-              />
-            </div>
-            <div className="ml-4">
-              <a
-                className="text-black dark:text-white"
-                style={{
-                  textDecoration: "none",
-                  fontSize: "18px",
-                }}
-              >
-                {domainWithoutLastPart}
-              </a>
-              <div
-                style={{
-                  color: "green",
-                  fontSize: "12px",
-                }}
-              >
-                {url}
+            {favicon_url[0] && (
+              <div className="w-fit h-fit p-1 bg-white rounded-full -mr-2">
+                <img
+                  src={favicon_url[0]}
+                  alt="favicon"
+                  className="rounded-full w-8 h-8 object-cover"
+                />
               </div>
-            </div>
+            )}
+            {favicon_url[0] && (
+              <div className="ml-4">
+                <a
+                  className="text-black dark:text-white"
+                  style={{
+                    textDecoration: "none",
+                    fontSize: "18px",
+                  }}
+                >
+                  {domainWithoutLastPart}
+                </a>
+                <div
+                  style={{
+                    color: "green",
+                    fontSize: "12px",
+                  }}
+                >
+                  {url}
+                </div>
+              </div>
+            )}
           </div>
           <a
             className="mt-10 dark:text-blue-400"

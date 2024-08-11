@@ -47,7 +47,7 @@ export const OpenGraphCard = ({
       </div>
       <section className="mx-auto h-full w-full overflow-auto relative bg-white/40 -mt-10 -z-1">
         <div
-          className={`px-10  flex flex-col  items-center justify-center ${openGraphDetails.length === 0 ? "bg-white/40 h-full" : "bg-white dark:bg-brand-darker h-full"}`}
+          className={`px-10  flex flex-col  items-center justify-center ${openGraphDetails.length === 0 ? "bg-white/40 h-full dark:bg-brand-darker" : "bg-white dark:bg-brand-darker h-full"}`}
         >
           {openGraphDetails?.image?.length > 0 ? (
             <div className="flex flex-col flex-wrap justify-start items-start">
@@ -66,7 +66,7 @@ export const OpenGraphCard = ({
             onClick={() => openBrowserWindow(openGraphDetails.url)}
             className="flex flex-col flex-wrap cursor-pointer py-2"
           >
-            <span className="font-bold dark:text-white/50">
+            <span className="font-bold dark:text-white/50 bg-red-5000">
               {openGraphDetails.title}
             </span>
             <span className="w-11/12 break-words dark:text-white/50">

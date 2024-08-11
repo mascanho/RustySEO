@@ -35,7 +35,7 @@ const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
                 <td
                   colSpan={4}
                   rowSpan={8}
-                  className="text-gray-500 dark:text-white/50 text-center bg-white dark:bg-transparent pt-[10rem] border-none"
+                  className="text-gray-500 dark:text-white/50 text-center bg-white dark:bg-brand-darker pt-[10rem] border-none"
                 >
                   No third party connections found.
                 </td>
