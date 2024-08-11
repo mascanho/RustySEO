@@ -245,7 +245,7 @@ const ContentSummary = ({
 
           <div className="grid gap-1  overflow-y-auto mt-8">
             <h3 className="text-xs font-semibold dark:text-sky-dark">
-              Summary
+              Page Summary
             </h3>
             <p className="text-muted-foreground text-xs mt-1">
               {AiContentAnalysis}

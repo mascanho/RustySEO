@@ -83,6 +83,7 @@ const Home: React.FC<HomeProps> = () => {
   const [strategy, setStrategy] = useState<any>({
     strategy: "DESKTOP",
   });
+  const [charset, setCharset] = useState<any[]>([]);
   const [pageRank, setPageRank] = useState<any[]>([]);
   const [robots, setRobots] = useState<string>("");
   const [AiContentAnalysis, setAiContentAnalysis] = useState<any>("");
@@ -199,6 +200,7 @@ const Home: React.FC<HomeProps> = () => {
       robots: string;
       ratio: any;
       page_rank: any[];
+      charset_arr: any[];
     }>("crawl", { url })
       .then((result) => {
         handleLinkStatusCheck(url);
@@ -216,6 +218,7 @@ const Home: React.FC<HomeProps> = () => {
         setOpenGraphDetails(result.og_details);
         setFavicon_url(result.favicon_url);
         setKeywords(result.keywords);
+        setCharset(result.charset_arr);
         setReadingLevelResults(result.readings);
         setTagManager(result.tag_container);
         setImages(result.images);
@@ -301,6 +304,13 @@ const Home: React.FC<HomeProps> = () => {
       }
     };
     checkSystem();
+  }, []);
+
+  // CONNECT TO GOOGLE SEARCH console
+  useEffect(() => {
+    invoke<{}>("call_google_search_console").then((result) => {
+      console.log(result);
+    });
   }, []);
 
   const handleLinkStatusCheck = (url: any) => {
@@ -399,6 +409,7 @@ const Home: React.FC<HomeProps> = () => {
   pageSpeed = pageSpeed && pageSpeed[0];
 
   console.log(pageSpeed, "PAGE SPEED");
+  console.log(charset, "This is the charset arr");
 
   return (
     <section className="h-full overflow-y-clip flex">
@@ -416,7 +427,7 @@ const Home: React.FC<HomeProps> = () => {
           <Todo url={debouncedURL} close={closeModal} strategy={strategy} />
         </Modal>
         {/* Fixed Input and Crawl Button */}
-        <div className="fixed top-[28px] left-0 right-0 z-[2000] h-11 border-b  bg-white dark:bg-brand-darker flex items-center px-4 dark:border-b-black">
+        <div className="fixed top-[28px] left-0 right-0 z-[2000] h-11 border-b  bg-white dark:bg-brand-darker flex items-center px-4 dark:border-b-brand-dark">
           <MenuDrawer />
           <section className="flex items-center justify-end mx-auto relative w-full max-w-[600px]">
             <div className="flex items-center w-full">
@@ -621,6 +632,7 @@ const Home: React.FC<HomeProps> = () => {
                 favicon_url={favicon_url}
                 code={headElements}
                 indexation={indexation}
+                charset={charset}
               />
 
               {/* CHARTS SECTION */}

@@ -1,5 +1,7 @@
 use crate::crawler::db;
 use crate::crawler::libs;
+use serde::Deserialize;
+use serde::Serialize;
 use std::fs;
 use std::io::{self, BufWriter, Write};
 use std::path::PathBuf;
@@ -51,4 +53,39 @@ pub fn write_model_to_disk(model: String) -> Result<String, String> {
     // Return the path to the file as a success indication
     println!("Model {} written to: {}", model, model_path.display());
     Ok(model)
+}
+
+// ------------- CHECK IF OLLAMA IS RUNNING ON THE SYSTEM
+#[derive(Serialize, Debug, Deserialize)]
+pub struct OllamaProcess {
+    pub text: String,
+    pub status: bool,
+}
+
+#[tauri::command]
+pub fn check_ollama() -> Result<OllamaProcess, String> {
+    let result = libs::check_ollama();
+
+    println!("Ollama Status: {:?}", result);
+
+    Ok(if result {
+        OllamaProcess {
+            text: String::from("Ollama is running"),
+            status: true,
+        }
+    } else {
+        OllamaProcess {
+            text: String::from("Ollama is not running"),
+            status: false,
+        }
+    })
+}
+
+// ------ CALL THE GOOGLE SEARCH CONSOLE FUNCTION
+#[tauri::command]
+pub async fn call_google_search_console() {
+    println!("Calling Google Search Console");
+    let result = libs::get_google_search_console()
+        .await
+        .expect("Failed to call Google Search Console");
 }

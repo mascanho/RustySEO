@@ -1,12 +1,17 @@
 use directories::ProjectDirs;
+use hyper::Client as HyperClient;
+use hyper_rustls::HttpsConnectorBuilder;
 use reqwest::Client;
 use rusqlite::{Connection, Result};
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
-use std::error::Error;
+use serde_json::Value as JsonValue;
+use std::{error::Error, path::PathBuf};
+use sysinfo::{ProcessExt, ProcessStatus, System, SystemExt};
 use tauri::Config;
 use tokio::fs;
 use url::{ParseError, Url};
+use yup_oauth2::{InstalledFlowAuthenticator, InstalledFlowReturnMethod};
 
 use toml::de::Error as TomlError;
 
@@ -319,4 +324,120 @@ pub async fn check_links(url: String) -> Result<Vec<LinkStatus>, String> {
 
     println!("CHECKING LINK STATUS: {:?}", results);
     Ok(results)
+}
+
+// ------------- CHECK IF OLLAMA IS INSTALLED & RUNNING ON THE SYSTEM
+pub fn check_ollama() -> bool {
+    let ollama = String::from("ollama");
+    let mut system = System::new();
+    system.refresh_processes();
+
+    for process in system.processes_by_name(&ollama) {
+        if process.name() == ollama {
+            return true;
+        }
+    }
+    false
+}
+
+// ------ CONNECT TO GOOGLE SEARCH CONSOLE
+#[derive(Deserialize, Serialize)]
+struct SearchAnalyticsQuery {
+    start_date: String,
+    end_date: String,
+    dimensions: Vec<String>,
+}
+
+// FUNCTION TO SET GOOGLE SEARCH CONSOLE DATA ON THE DISK
+pub async fn set_search_console_data(secret: String) -> Result<PathBuf, String> {
+    // Get the project directories
+    let config_dirs = match ProjectDirs::from("", "", "rustyseo") {
+        Some(dirs) => dirs,
+        None => return Err("Failed to get project directories".to_string()),
+    };
+
+    let config_dir = config_dirs.data_dir();
+
+    // Create the config directory if it doesn't exist
+    if let Err(e) = fs::create_dir_all(&config_dir).await {
+        return Err(format!("Failed to create config directory: {:#?}", e));
+    }
+
+    let secret_file = config_dir.join("client_secret.txt");
+
+    // Write the secret to the file
+    if let Err(e) = fs::write(&secret_file, secret).await {
+        return Err(format!("Failed to write client secret: {}", e));
+    }
+
+    println!("Client secret written to: {}", secret_file.display());
+
+    Ok(secret_file)
+}
+
+pub async fn get_google_search_console() -> Result<(), Box<dyn std::error::Error>> {
+    // RUN THE CHECK ON THE SECRET IN THE DISK
+    set_search_console_data(String::from("Marco")).await;
+
+    // Set up the OAuth2 flow
+    let secret_path = directories::ProjectDirs::from("", "", "rustyseo")
+        .expect("Failed to get project directories")
+        .data_dir()
+        .join("client_secret.txt");
+    println!("Secret path with error: {}", secret_path.display());
+    let secret = yup_oauth2::read_application_secret(&secret_path).await?;
+
+    // Create an authenticator
+    let auth_path = directories::ProjectDirs::from("", "", "rustyseo")
+        .expect("Failed to get project directories")
+        .data_dir()
+        .join("tokencache.json");
+    let auth = InstalledFlowAuthenticator::builder(secret, InstalledFlowReturnMethod::HTTPRedirect)
+        .persist_tokens_to_disk(&auth_path)
+        .build()
+        .await?;
+
+    // Create an authorized client
+    let https = HttpsConnectorBuilder::new()
+        .with_native_roots()
+        .https_only()
+        .enable_http1()
+        .build();
+    let client = HyperClient::builder().build(https);
+
+    // Prepare the request
+    let site_url = "https://www.algarvewonders.com/";
+    let query = SearchAnalyticsQuery {
+        start_date: "2023-01-01".to_string(),
+        end_date: "2023-12-31".to_string(),
+        dimensions: vec!["query".to_string()],
+    };
+    let body = serde_json::to_string(&query)?;
+
+    // Make the API request
+    let token = auth
+        .token(&["https://www.googleapis.com/auth/webmasters.readonly"])
+        .await?;
+    let request = hyper::Request::builder()
+        .method("POST")
+        .uri(format!(
+            "https://searchconsole.googleapis.com/webmasters/v3/sites/{}/searchAnalytics/query",
+            urlencoding::encode(site_url)
+        ))
+        .header(
+            "Authorization",
+            format!("Bearer {}", token.token().unwrap()),
+        )
+        .header("Content-Type", "application/json")
+        .body(hyper::Body::from(body))?;
+
+    let response = client.request(request).await?;
+    let body_bytes = hyper::body::to_bytes(response.into_body()).await?;
+    let body_str = String::from_utf8(body_bytes.to_vec())?;
+
+    // Parse and print the results
+    let data: JsonValue = serde_json::from_str(&body_str)?;
+    println!("Search Console Data: {:?}", data);
+
+    Ok(())
 }

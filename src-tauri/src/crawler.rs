@@ -82,6 +82,7 @@ pub struct CrawlResult {
     pub robots: Result<String, libs::MyError>,
     pub ratio: Vec<(f64, f64, f64)>,
     pub page_rank: Vec<f32>,
+    pub charset_arr: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -202,6 +203,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut ratio = Vec::new();
     //let mut head_elements = Vec::new();
     //let mut body_elements = Vec::new();
+    let mut charset_arr = Vec::new();
 
     if response.status().is_success() {
         let body = response
@@ -334,6 +336,14 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         let top_keywords = content::get_top_keywords(&text_content, 10);
         //println!("Top Keywords: {:?}", top_keywords);
         keywords.push(top_keywords);
+
+        // Fetch the charset
+        let charset_selector = Selector::parse("meta[charset]").unwrap();
+        for meta in document.select(&charset_selector) {
+            if let Some(charset) = meta.value().attr("charset") {
+                charset_arr.push(charset.to_string());
+            }
+        }
 
         // Fetch headings
         for level in 1..=6 {
@@ -537,6 +547,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         robots,
         ratio,
         page_rank,
+        charset_arr,
     })
 }
 

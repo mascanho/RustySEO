@@ -18,6 +18,7 @@ export const HeadAnalysis = ({
   tagManager,
   favicon_url,
   indexation,
+  charset,
 }: any) => {
   // Mantine Collapse
   const [opened, { toggle }] = useDisclosure(false);
@@ -43,14 +44,14 @@ export const HeadAnalysis = ({
       }}
       className="  dark:border-brand-darker  bg-white p-1 dark:bg-brand-darker shadow rounded-md mb-5 pb-5 overflow-hidden border relative -mt-5"
     >
-      <StampEl indexation={indexation} hidden={hidden} />
+      {/* <StampEl indexation={indexation} hidden={hidden} /> */}
       <h2 className="flex items-center text-center font-semibold text-gray-400 w-fit relative p-4 mx-auto text-xl">
         <AiFillTag className="mr-1.5" /> Head
       </h2>
       <section
-        className={`${hidden && "hidden"} transition-all ease-in delay-300 text-sm px-3 -mt-8 block lg:flex`}
+        className={`${hidden && "hidden"} transition-all ease-in delay-300 text-xs px-3 -mt-8 block xl:flex`}
       >
-        <aside className="w-9/12">
+        <aside className="lg:w-9/12">
           <div className="flex items-center mt-4">
             <div
               className={`flex justify-center items-center w-8 h-8 p-1.5 rounded-full ${favicon_url.length > 0 ? "bg-green-500 text-white" : "bg-gray-200"} 
@@ -88,16 +89,16 @@ export const HeadAnalysis = ({
             >
               Page Title:
             </span>
-            <span className="flex ml-2 text-black dark:text-white text-base font-black">
+            <span className="flex ml-2 text-black dark:text-white  font-black">
               {pageTitle[0]}
             </span>
-            {pageTitle.length > 0 && (
-              <span
-                className={`bg-gray-100 text-xs px-2 py-1 rounded-md items-center flex ml-2 ${pageTitle[0].length > 60 ? "text-red-500" : "text-green-600"}`}
-              >
-                {pageTitle[0].length} / 60
-              </span>
-            )}
+            {/* {pageTitle.length > 0 && ( */}
+            {/*   <span */}
+            {/*     className={`bg-gray-100 text-xs px-1 py-0.5 rounded-md items-center flex ml-2 ${pageTitle[0].length > 60 ? "text-red-500" : "text-green-600"}`} */}
+            {/*   > */}
+            {/*     {pageTitle[0].length} / 60 */}
+            {/*   </span> */}
+            {/* )} */}
           </div>
 
           <div className="flex items-center mt-2">
@@ -111,16 +112,16 @@ export const HeadAnalysis = ({
             >
               Description:
             </span>
-            <span className="text-black text-base font-black ml-2 dark:text-white">
+            <span className="text-black  font-black ml-2 dark:text-white">
               {pageDescription[0]}
             </span>
-            {pageDescription[0]?.length > 0 && (
-              <span
-                className={`bg-gray-100 text-xs px-2 py-1 rounded-md items-center flex ml-2 ${pageDescription[0].length > 160 ? "text-red-500" : "text-green-500"}`}
-              >
-                {pageDescription[0].length} / 160
-              </span>
-            )}
+            {/* {pageDescription[0]?.length > 0 && ( */}
+            {/*   <span */}
+            {/*     className={`bg-gray-100 text-xs px-2 py-1 rounded-md items-center flex ml-2 ${pageDescription[0].length > 160 ? "text-red-500" : "text-green-500"}`} */}
+            {/*   > */}
+            {/*     {pageDescription[0].length} / 160 */}
+            {/*   </span> */}
+            {/* )} */}
           </div>
 
           <div className="flex items-center mt-2">
@@ -151,7 +152,7 @@ export const HeadAnalysis = ({
                 hreflangs.map((hreflang: any, index: any) => (
                   <div key={index}>
                     <span
-                      className="flex ml-2  text-black p-0.2 border px-2 bg-gray-100 rounded-md"
+                      className="flex ml-2 text-xs  text-black p-0.2 border px-2 bg-gray-100 rounded-md"
                       key={index}
                     >
                       {hreflang?.lang}
@@ -161,11 +162,11 @@ export const HeadAnalysis = ({
               )}
               {hreflangs.length > 1 && (
                 <Group justify="center" mb={5} className="mt-1">
-                  <div className="bg-brand-highlight flex ml-2 rounded-md px-3 text-xs items-center">
-                    <span>{hreflangs.length}</span>
+                  <div className="bg-brand-highlight  flex ml-2 rounded-md pl-1.5 h-[19px]  text-xs items-center">
+                    <span className="text-xs">{hreflangs.length}</span>
                     <IconChevronDown
                       onClick={toggle}
-                      className={`text-[4px] transition-all animate duration-100 ease-in ${opened && "rotate-180"}`}
+                      className={`transition-all text-xs py-1 animate duration-100 ease-in ${opened && "rotate-180 text-xs"}`}
                     />
                   </div>
                 </Group>
@@ -197,8 +198,8 @@ export const HeadAnalysis = ({
             </Collapse>
           </Box>
         </aside>
-        <aside className="md:pl-5 md:ml-5 border-l dark:border-l-brand-dark/40 block">
-          <div className="flex items-center mt-2">
+        <aside className="xl:pl-5 xl:ml-5 xl:border-l dark:border-l-brand-dark/40 block">
+          <div className="flex items-center mt-2 mt-0 sm:mt-0 xl:mt-4">
             <div
               className={`flex items-center justify-center rounded-full w-8 h-8 p-1.5 ${
                 openGraphDetails?.title?.length > 0 &&
@@ -275,17 +276,45 @@ ${openGraphDetails && "bg-gray-200"}
             <span className="text-black/80 ml-2">
               {tagManager.length > 0 && pageTitle?.length > 0 && (
                 <a href="#sd">
-                  <span className="text-black text-base font-black dark:text-white">
+                  <span className="text-black text-xs font-black dark:text-white">
                     {tagManager}
                   </span>
                 </a>
               )}
               {tagManager.length === 0 && pageTitle?.length > 0 && (
-                <span className="text-red-500">No container Found</span>
+                <span className="text-red-500">Missing container</span>
               )}
             </span>
           </div>
 
+          <div className="flex items-center mt-2">
+            <div
+              className={`flex rounded-full items-center justify-center h-8 w-8 p-1.5 bg-gray-200 ${charset[0] > 0 && "bg-green-500 text-white"} ${charset[0] && "bg-green-500 text-white"} ${pageSchema?.length === 0 && "bg-gray-200"}
+                        ${pageTitle.length > 0 && tagManager.length === 0 && "bg-red-500 text-white"} ${pageTitle?.length === 0 && "bg-gray-200"}
+`}
+            >
+              <TagIcon />
+            </div>{" "}
+            <span
+              className={`font-semibold ml-2 text-black/60 dark:text-white/50`}
+            >
+              Charset:
+            </span>
+            <span className="text-black/80 ml-2">
+              {indexation.length > 0 && (
+                <a href="#sd">
+                  <span
+                    className={`text-black text-xs font-black ${charset[0] ? "text-green-500 " : "text-red-500"}`}
+                  >
+                    {charset && charset[0]}
+                  </span>
+                </a>
+              )}
+              {charset.length === 0 && pageTitle?.length > 0 && (
+                <span className="text-red-500">Not Found</span>
+              )}
+            </span>
+          </div>
           <div className="flex items-center mt-2">
             <div
               className={`flex rounded-full items-center justify-center h-8 w-8 p-1.5 ${indexation[0] === "Indexable" && "bg-green-500 text-white"} ${pageSchema.length === 0 && "bg-gray-200"}
@@ -300,14 +329,16 @@ ${openGraphDetails && "bg-gray-200"}
               Indexability:
             </span>
             <span className="text-black/80 ml-2">
-              {tagManager.length > 0 && pageTitle?.length > 0 && (
+              {indexation.length > 0 && pageTitle?.length > 0 && (
                 <a href="#sd">
-                  <span className="text-black text-base font-black dark:text-white">
-                    {tagManager}
+                  <span
+                    className={`text-black text-xs font-black ${indexation[0] === "Indexable" ? "text-green-500 " : "text-red-500"}`}
+                  >
+                    {indexation[0]}
                   </span>
                 </a>
               )}
-              {tagManager.length === 0 && pageTitle?.length > 0 && (
+              {indexation.length === 0 && pageTitle?.length > 0 && (
                 <span className="text-red-500">No container Found</span>
               )}
             </span>
