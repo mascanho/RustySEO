@@ -341,15 +341,53 @@ pub fn check_ollama() -> bool {
 }
 
 // ------ CONNECT TO GOOGLE SEARCH CONSOLE
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 struct SearchAnalyticsQuery {
     start_date: String,
     end_date: String,
     dimensions: Vec<String>,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct ClientSecret {
+    installed: InstalledInfo,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct InstalledInfo {
+    client_id: String,
+    project_id: String,
+    auth_uri: String,
+    token_uri: String,
+    auth_provider_x509_cert_url: String,
+    client_secret: String,
+    redirect_uris: Vec<String>,
+}
+
 // FUNCTION TO SET GOOGLE SEARCH CONSOLE DATA ON THE DISK
 pub async fn set_search_console_data(secret: String) -> Result<PathBuf, String> {
+    // Define the JSON structure
+    let client_secret = ClientSecret {
+        installed: InstalledInfo {
+            client_id: "YOUR_CLIENT_ID".to_string(),
+            project_id: "YOUR_PROJECT_ID".to_string(),
+            auth_uri: "https://accounts.google.com/o/oauth2/auth".to_string(),
+            token_uri: "https://oauth2.googleapis.com/token".to_string(),
+            auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs".to_string(),
+            client_secret: secret.clone(),
+            redirect_uris: vec![
+                "urn:ietf:wg:oauth:2.0:oob".to_string(),
+                "http://localhost".to_string(),
+            ],
+        },
+    };
+
+    // Serialize the JSON data
+    let json_data = match serde_json::to_string_pretty(&client_secret) {
+        Ok(data) => data,
+        Err(e) => return Err(format!("Failed to serialize JSON: {}", e)),
+    };
+
     // Get the project directories
     let config_dirs = match ProjectDirs::from("", "", "rustyseo") {
         Some(dirs) => dirs,
@@ -359,14 +397,14 @@ pub async fn set_search_console_data(secret: String) -> Result<PathBuf, String> 
     let config_dir = config_dirs.data_dir();
 
     // Create the config directory if it doesn't exist
-    if let Err(e) = fs::create_dir_all(&config_dir).await {
-        return Err(format!("Failed to create config directory: {:#?}", e));
+    if let Err(e) = fs::create_dir_all(config_dir).await {
+        return Err(format!("Failed to create config directory: {}", e));
     }
 
-    let secret_file = config_dir.join("client_secret.txt");
+    let secret_file = config_dir.join("client_secret.json");
 
-    // Write the secret to the file
-    if let Err(e) = fs::write(&secret_file, secret).await {
+    // Write the JSON data to the file
+    if let Err(e) = fs::write(&secret_file, json_data).await {
         return Err(format!("Failed to write client secret: {}", e));
     }
 
@@ -383,7 +421,7 @@ pub async fn get_google_search_console() -> Result<(), Box<dyn std::error::Error
     let secret_path = directories::ProjectDirs::from("", "", "rustyseo")
         .expect("Failed to get project directories")
         .data_dir()
-        .join("client_secret.txt");
+        .join("client_secret.json");
     println!("Secret path with error: {}", secret_path.display());
     let secret = yup_oauth2::read_application_secret(&secret_path).await?;
 
