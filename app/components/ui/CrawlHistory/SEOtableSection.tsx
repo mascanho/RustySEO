@@ -56,14 +56,12 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
     });
   }, []);
 
-  console.log(data, "SEO ON PAGE");
-
   // Effect to update data when dbdata changes
   useEffect(() => {
     if (Array.isArray(dbdata)) {
       setData(dbdata);
     }
-  }, [dbdata]);
+  }, []);
 
   // Filter and sort data
   const filteredData = (Array.isArray(data) ? data : [])

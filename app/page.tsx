@@ -459,7 +459,7 @@ const Home: React.FC<HomeProps> = () => {
                 </div>
 
                 {isOpen && (
-                  <div className="origin-top-right absolute right-0 mt-2 w-[7rem] rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5  dark:bg-brand-darker dark:text-white z-[9000000000]">
+                  <div className="origin-top-right absolute right-0 mt-2 w-[7rem] rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5  dark:bg-brand-white dark:text-white z-[9000000000]">
                     <div
                       className="py-1 z-[90000000000]"
                       role="menu"
@@ -500,7 +500,7 @@ const Home: React.FC<HomeProps> = () => {
                 />
                 <button
                   onClick={() => handleClick(url)}
-                  className="rounded w-20 active:scale-95 text-sm relative inline-flex group py-[3px] items-center justify-center  ml-2 cursor-pointer border-b-4 border-l-2 active:border-blue-600 active:shadow-none bg-gradient-to-tr from-blue-600 to-blue-500 border-blue-700 text-white"
+                  className="rounded w-20 active:scale-95 text-sm relative inline-flex group py-[3px] items-center justify-center  ml-2 cursor-pointer border-b-4 border-l-2 active:border-blue-600 active:shadow-none bg-gradient-to-tr from-brand-bright to-blue-500 border-blue-700 text-white"
                 >
                   <span className="relative text-xs">
                     {loading ? (

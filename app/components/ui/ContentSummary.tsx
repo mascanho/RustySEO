@@ -1,3 +1,4 @@
+import { useOllamaStore } from "@/store/store";
 import React from "react";
 
 const ContentSummary = ({
@@ -8,6 +9,39 @@ const ContentSummary = ({
   AiContentAnalysis,
   htmlToTextRatio,
 }: any) => {
+  const ollamaStatus = useOllamaStore();
+
+  // @ts-ignore
+  const generateFallbackSummary = (
+    keywords: any,
+    wordCount: any,
+    readingTime: any,
+    readingLevelResult: any,
+    htmlToTextRatio: any,
+  ) => {
+    const topKeywords = keywords[0]
+      ?.slice(0, 5)
+      // @ts-ignore
+      .map((k): any => k[0])
+      .join(", ");
+    const wordCountNum = wordCount ? wordCount[0] : 0;
+    const readingTimeMin = wordCount ? wordCount[2] : 0;
+    const readingLevel = readingLevelResults[0]
+      ? readingLevelResults[0][1]
+      : "Unknown";
+    const textRatio =
+      htmlToTextRatio && htmlToTextRatio[0]
+        ? Math.round(htmlToTextRatio[0][0] * 100)
+        : 0;
+
+    return `This content contains approximately ${wordCountNum} words and takes about ${readingTimeMin} minutes to read. 
+  The text is written at a ${readingLevel} reading level. 
+  The main topics covered, based on keyword analysis, are: ${topKeywords}. 
+  The content has a text-to-HTML ratio of ${textRatio}%, which ${textRatio > 50 ? "indicates good content density" : "suggests there might be room for more textual content"}.
+  ${readingTimeMin > 7 ? "Consider breaking longer sections into smaller, more digestible parts for improved readability." : "The content length seems appropriate for quick consumption."}
+  ${readingLevel === "College Graduate" ? "The advanced reading level may limit accessibility for some audiences." : "The reading level appears suitable for a general audience."}`;
+  };
+
   return (
     <section className="flex-wrap min-h-[calc(96rem - 2.5rem)] h-full space-y-1 bg-transparent dark:bg-brand-darker dark:text-white p-2 rounded-md relative">
       <div className="p-3 grid gap-5 overflow-y-scroll w-full h-full">
@@ -243,12 +277,21 @@ const ContentSummary = ({
             </div>
           </div>
 
-          <div className="grid gap-1  overflow-y-auto mt-8">
+          <div className="grid gap-1 overflow-y-auto mt-8">
             <h3 className="text-xs font-semibold dark:text-sky-dark">
               Page Summary
             </h3>
             <p className="text-muted-foreground text-xs mt-1">
-              {AiContentAnalysis}
+              {ollamaStatus.ollama
+                ? AiContentAnalysis
+                : readingTime &&
+                  generateFallbackSummary(
+                    keywords,
+                    wordCount,
+                    readingTime,
+                    readingLevelResults,
+                    htmlToTextRatio,
+                  )}
             </p>
           </div>
         </div>

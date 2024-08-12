@@ -174,7 +174,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
         <div className="w-[2px] h-8 bg-gray-300 dark:bg-gray-200/20" />
 
         <DropdownMenu>
-          <DropdownMenuTrigger className="transition-all hover:bg-sky-500 ease-linear active:scale-75 w-fit px-4 rounded-md justify-center flex items-center bg-sky-600 text-white">
+          <DropdownMenuTrigger className="transition-all hover:bg-brand-bright ease-linear active:scale-75 w-fit px-4 rounded-md justify-center flex items-center bg-brand-bright text-white">
             <FiDownload className="w-4 h-4 mr-2 mb-1" />
             Export
           </DropdownMenuTrigger>

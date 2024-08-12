@@ -84,7 +84,7 @@ const SEOImprovements = ({
   }
 
   return (
-    <section className="max-w-7xl mx-auto">
+    <section className="max-w-7xl mx-auto text-xs">
       <Tabs defaultValue="performance" className="w-full">
         <TabsList>
           <TabsTrigger value="performance">Technical</TabsTrigger>
@@ -98,13 +98,13 @@ const SEOImprovements = ({
             <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">
               SEO Improvements
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {improvements.map((item) => (
                 <div
                   key={item.id}
                   className={`p-4 rounded-lg border ${item.improved ? "border-green-400 bg-green-50" : "border-red-400 bg-red-50"}`}
                 >
-                  <div className="flex items-center space-x-2 mb-2">
+                  <div id="og" className="flex items-center space-x-2 mb-2">
                     {item.improved ? (
                       <FaCheckCircle className="text-green-500" />
                     ) : (
@@ -124,10 +124,10 @@ const SEOImprovements = ({
                   <section>
                     {!item.improved && (
                       <Collapsible>
-                        <CollapsibleTrigger className="text-xs underline">
+                        <CollapsibleTrigger className="text-xs underline -mt-2">
                           View suggestion
                         </CollapsibleTrigger>
-                        <CollapsibleContent className="bg-gray-200 rounded-md p-1 mt-1 relative min-h-2 h-8">
+                        <CollapsibleContent className="bg-gray-200 rounded-md p-0.5 mt-1 relative min-h-2 h-8">
                           <FiClipboard
                             onClick={() => handleCopy(item.aiImprovement)}
                             className="absolute active:bg-gray-300 active:scale-95 top-2 cursor-pointer right-1 text-gray-800"

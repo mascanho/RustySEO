@@ -2,6 +2,7 @@ import React from "react";
 import {
   FaCheckCircle,
   FaChevronCircleDown,
+  FaChevronDown,
   FaExclamationCircle,
 } from "react-icons/fa";
 import {
@@ -172,8 +173,8 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
   }
 
   return (
-    <div className="bg-gray-300 w-full dark:bg-brand-darker p-6 rounded-lg shadow max-w-7xl mx-auto mt-10 text-xs">
-      <div className="flex items-center justify-between">
+    <div className="bg-gray-300 w-full dark:bg-brand-darker py-6 px-1 pl-6 rounded-lg shadow max-w-7xl mx-auto mt-10 text-xs">
+      <div className="flex items-center justify-between pr-6">
         <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">
           Technical Improvements
         </h2>
@@ -185,7 +186,7 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
           <Switch className="" />
         </div>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-3 overflow-auto max-h-[40rem] pr-4">
         {dummyImprovements.map((item) => (
           <div
             key={item.id}
@@ -203,14 +204,17 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
                 {item.title}
               </h3>
             </div>
-            <p className="text-gray-700 -mt-1">
+            <p className="text-gray-700 -mt-1 relative">
               {item.improved ? item.passAdvice : `${item.failsAdvice}`}
             </p>
-            <section className="mt-0.5">
+            <section className="mt-0.5 ">
               {!item.improved && (
                 <Collapsible>
-                  <CollapsibleTrigger className="text-xs underline">
-                    <FaChevronCircleDown />
+                  <CollapsibleTrigger className="text-xs flex">
+                    <span className="flex items-center text-gray-600 text-[9px]">
+                      Fix
+                      <FaChevronDown className="ml-1" />
+                    </span>
                   </CollapsibleTrigger>
                   <CollapsibleContent className="bg-blue-200 rounded-md p-2 mt-2 relative min-h-8">
                     {item.aiImprovement}

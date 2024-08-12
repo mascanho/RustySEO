@@ -225,7 +225,9 @@ ${openGraphDetails && "bg-gray-200"}
             </span>
             <span className="text-black ml-2">
               {openGraphDetails.image === null && (
-                <span className="text-red-500">Not Found</span>
+                <a href="/#og" className="text-red-500">
+                  Not Found
+                </a>
               )}
               {openGraphDetails.image !== null && pageTitle?.length > 0 && (
                 <span className="text-green-500">OG Found in your markup</span>

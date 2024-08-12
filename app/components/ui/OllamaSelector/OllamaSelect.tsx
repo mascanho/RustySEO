@@ -5,44 +5,21 @@ import React, { useState } from "react";
 
 const ollamaModels = [
   {
-    name: "Llama3",
-    value: "llama3",
-  },
-  {
-    name: "CodeLlama",
-    value: "codellama",
+    name: "Llama-3.1",
+    value: "llama3.1",
   },
   {
     name: "Mistral",
     value: "mistral",
   },
+
   {
-    name: "Mixtral",
-    value: "mixtral",
+    name: "Phi-3",
+    value: "phi3",
   },
   {
-    name: "Phi-2",
-    value: "phi",
-  },
-  {
-    name: "Orca 2",
-    value: "orca2",
-  },
-  {
-    name: "Vicuna",
-    value: "vicuna",
-  },
-  {
-    name: "Starling-LM",
-    value: "starling-lm",
-  },
-  {
-    name: "Neural Chat",
-    value: "neural-chat",
-  },
-  {
-    name: "Stable Beluga",
-    value: "stable-beluga",
+    name: "Gemma 2",
+    value: "gemma2",
   },
 ];
 
@@ -65,17 +42,19 @@ const OllamaSelect = ({ closeOllama }: any) => {
   };
 
   return (
-    <section className="w-full h-full pb-5 overflow-hidden">
+    <section className="w-full h-full pb-3 overflow-hidden">
       <div className="p-2">
         <h2 className="font-semibold text-sm">
-          To enhance your experience, you’ll need to download an AI model from
-          Ollama.
+          To enhance your experience, you’ll need to download Ollama.
         </h2>
 
         <ol className="text-sm mt-2 list-decimal list-inside">
           <li>
             Visit Ollama&apos;s Website:{" "}
-            <span className="underline">ollama.com</span> download page.
+            <a href="https://ollama.com" _target="_blank" className="underline">
+              ollama.com
+            </a>{" "}
+            download page.
           </li>
           <li>
             Select Your Model: Choose the AI model that best fits your needs.
@@ -84,6 +63,7 @@ const OllamaSelect = ({ closeOllama }: any) => {
             Download and Install: Follow the installation instructions provided.
           </li>
           <li>Once installed you can select the model bellow.</li>
+          <li>Restart the app.</li>
         </ol>
       </div>
       <div className="p-2">

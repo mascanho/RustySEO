@@ -31,6 +31,16 @@ const PageSpeedInsigthsApi = ({ close }: any) => {
 
   return (
     <div className="flex flex-col space-y-3">
+      <h2>
+        Paste your{" "}
+        <a
+          href="https://developers.google.com/speed/docs/insights/v5/get-started"
+          target="_blank"
+          className="underline"
+        >
+          Google PageSpeed Insights API key
+        </a>
+      </h2>
       <input
         onChange={(e) => setUserInput(e.target.value)}
         type="text"
@@ -42,7 +52,7 @@ const PageSpeedInsigthsApi = ({ close }: any) => {
         type="button"
         className="w-full flex items-center pt-1 h-9 justify-center font-semibold border bg-blue-500 text-white rounded-md"
       >
-        Go
+        Connect
       </button>
     </div>
   );

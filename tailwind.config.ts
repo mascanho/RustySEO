@@ -29,6 +29,7 @@ const config: Config = {
         brand: {
           normal: "#F5F5F5",
           highlight: "#B2C3F8",
+          bright: "#2B6CC4",
           background: "#ecf8f8",
           gradient: "linear-gradient(180deg, #D7B590 40%, #C4E1FF 100%)",
           dark: "#39393a",
