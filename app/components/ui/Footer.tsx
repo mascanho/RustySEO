@@ -99,7 +99,7 @@ const Footer = () => {
   }, []);
 
   return (
-    <footer className="w-full text-xs justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[1000] border-t-2 pb-2 dark:border-t-brand-dark flex items-center py-1 overflow-hidden text-xs">
+    <footer className="w-full text-xs justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[1000] border-t-2 pb-1.5 dark:border-t-brand-dark flex items-center py-1 overflow-hidden text-xs">
       <section>
         <div className="flex items-center ml-2 space-x-1 w-full">
           {loading ? (
@@ -119,9 +119,9 @@ const Footer = () => {
           )}
         </div>
       </section>
-      <section className="flex items-center space-x-4">
+      <section className="flex items-center space-x-2">
         <div className="flex w-50 items-center justify-center pr-3">
-          <div className="flex items-center  text-xs mt-[2px] space-x-4">
+          <div className="flex items-center  text-xs mt-[2px] space-x-3">
             <div className="flex items-center">
               <LiaTasksSolid className="text-sm dark:text-white/50" />
               <span>Tasks:</span>

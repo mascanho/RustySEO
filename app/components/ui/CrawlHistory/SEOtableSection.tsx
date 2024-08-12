@@ -162,7 +162,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
         </div>
 
         <DropdownMenu>
-          <DropdownMenuTrigger className="w-fit px-4 border rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center dark:text-white dark:border-brand-normal/20 dark:bg-brand-darker text-black">
+          <DropdownMenuTrigger className="w-fit px-4 border border-gray-300 rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center dark:text-white dark:border-brand-normal/20 dark:bg-brand-darker text-black">
             Options
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-white dark:bg-brand-dark dark:text-white emr-12 mt-1 dark:border-brand-normal/20">
@@ -181,7 +181,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <div className="w-[2px] h-8 bg-gray-100 dark:bg-gray-200/20" />
+        <div className="w-[2px] h-8 bg-gray-300 dark:bg-gray-200/20" />
 
         <DropdownMenu>
           <DropdownMenuTrigger className="transition-all hover:bg-sky-500 ease-linear active:scale-75 w-fit px-4 rounded-md justify-center flex items-center bg-sky-600 text-white">

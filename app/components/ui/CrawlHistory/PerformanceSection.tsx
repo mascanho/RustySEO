@@ -139,7 +139,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
 
   return (
     <div className="relative w-full max-w-7xl mx-auto text-xs">
-      <div className=" -top-16 -right-0 w-full flex space-x-3 justify-end pb-3 border-b dark:border-b-brand-normal/10">
+      <div className=" -top-16 -right-0 w-full flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10">
         <div className="flex items-center space-x-2 relative">
           <IoIosSearch className="w-4 h-4 absolute left-4 dark:text-white" />
           <input
@@ -152,7 +152,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
         </div>
 
         <DropdownMenu>
-          <DropdownMenuTrigger className="w-fit px-4 border rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center dark:text-white dark:border-brand-normal/20 dark:bg-brand-darker text-black">
+          <DropdownMenuTrigger className="w-fit px-4 border border-gray-300 rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center dark:text-white dark:border-brand-normal/20 dark:bg-brand-darker text-black">
             Options
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-white dark:bg-brand-dark dark:text-white emr-12 mt-1 dark:border-brand-normal/20">
@@ -171,7 +171,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <div className="w-[2px] h-8 bg-gray-100 dark:bg-gray-200/20" />
+        <div className="w-[2px] h-8 bg-gray-300 dark:bg-gray-200/20" />
 
         <DropdownMenu>
           <DropdownMenuTrigger className="transition-all hover:bg-sky-500 ease-linear active:scale-75 w-fit px-4 rounded-md justify-center flex items-center bg-sky-600 text-white">

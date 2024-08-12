@@ -1,5 +1,9 @@
 import React from "react";
-import { FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
+import {
+  FaCheckCircle,
+  FaChevronCircleDown,
+  FaExclamationCircle,
+} from "react-icons/fa";
 import {
   Collapsible,
   CollapsibleContent,
@@ -168,7 +172,7 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
   }
 
   return (
-    <div className="bg-gray-300 w-full dark:bg-brand-darker p-6 rounded-lg shadow max-w-7xl mx-auto mt-10">
+    <div className="bg-gray-300 w-full dark:bg-brand-darker p-6 rounded-lg shadow max-w-7xl mx-auto mt-10 text-xs">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">
           Technical Improvements
@@ -181,17 +185,17 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
           <Switch className="" />
         </div>
       </div>
-      <div className="space-y-4">
+      <div className="space-y-3">
         {dummyImprovements.map((item) => (
           <div
             key={item.id}
-            className={`p-4 rounded-lg border ${item.improved ? "border-green-400 bg-green-50" : "border-red-400 bg-red-50"}`}
+            className={`p-2 px-3 rounded-lg border ${item.improved ? "border-green-400 bg-green-50" : "border-red-400 bg-red-50"}`}
           >
-            <div className="flex items-center space-x-2 mb-2">
+            <div className="flex items-center space-x-2 mb-1">
               {item.improved ? (
-                <FaCheckCircle className="text-green-500" />
+                <FaCheckCircle className="text-green-500 mb-0.5" />
               ) : (
-                <FaExclamationCircle className="text-red-500" />
+                <FaExclamationCircle className="text-red-500 mb-0.5" />
               )}
               <h3
                 className={`text-lg font-semibold ${item.improved ? "text-green-800" : "text-red-800"}`}
@@ -199,14 +203,14 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
                 {item.title}
               </h3>
             </div>
-            <p className="text-gray-700">
+            <p className="text-gray-700 -mt-1">
               {item.improved ? item.passAdvice : `${item.failsAdvice}`}
             </p>
-            <section>
+            <section className="mt-0.5">
               {!item.improved && (
                 <Collapsible>
                   <CollapsibleTrigger className="text-xs underline">
-                    View suggestion
+                    <FaChevronCircleDown />
                   </CollapsibleTrigger>
                   <CollapsibleContent className="bg-blue-200 rounded-md p-2 mt-2 relative min-h-8">
                     {item.aiImprovement}

@@ -566,7 +566,7 @@ pub async fn get_page_speed_insights(
     //
 
     // ------- BAKEDINS API KEY -------
-    let api_key = "AIzaSyBgmQLFn13sZ7TOQfajjnxLFyYM6MywEJc";
+    let api_key = "AIzaSyADhimFwkVUWEcFhHWclTGCU56USITLn9k";
 
     let page_speed_url = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
     let client = Client::new();
