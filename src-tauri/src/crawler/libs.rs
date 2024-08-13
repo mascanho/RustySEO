@@ -369,12 +369,13 @@ pub async fn set_search_console_data(secret: String) -> Result<PathBuf, String> 
     // Define the JSON structure
     let client_secret = ClientSecret {
         installed: InstalledInfo {
-            client_id: "YOUR_CLIENT_ID".to_string(),
-            project_id: "YOUR_PROJECT_ID".to_string(),
+            client_id: "826003140984-umml9pa2cpuce9nnef2scd90a9tatn2s.apps.googleusercontent.com"
+                .to_string(),
+            project_id: "110933103965834828344".to_string(),
             auth_uri: "https://accounts.google.com/o/oauth2/auth".to_string(),
             token_uri: "https://oauth2.googleapis.com/token".to_string(),
             auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs".to_string(),
-            client_secret: secret.clone(),
+            client_secret: "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".to_string(),
             redirect_uris: vec![
                 "urn:ietf:wg:oauth:2.0:oob".to_string(),
                 "http://localhost".to_string(),
@@ -444,7 +445,7 @@ pub async fn get_google_search_console() -> Result<(), Box<dyn std::error::Error
     let client = HyperClient::builder().build(https);
 
     // Prepare the request
-    let site_url = "https://www.algarvewonders.com/";
+    let site_url = "sc-domain:algarvewonders.com";
     let query = SearchAnalyticsQuery {
         start_date: "2023-01-01".to_string(),
         end_date: "2023-12-31".to_string(),
