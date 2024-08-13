@@ -365,6 +365,11 @@ struct InstalledInfo {
     aggregationType: String,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct SearchAnalyticsResponse {
+    rows: Vec<String>,
+}
+
 // FUNCTION TO SET GOOGLE SEARCH CONSOLE DATA ON THE DISK
 pub async fn set_search_console_data(secret: String) -> Result<PathBuf, String> {
     // Define the JSON structure
@@ -416,7 +421,7 @@ pub async fn set_search_console_data(secret: String) -> Result<PathBuf, String> 
     Ok(secret_file)
 }
 
-pub async fn get_google_search_console() -> Result<(), Box<dyn std::error::Error>> {
+pub async fn get_google_search_console() -> Result<JsonValue, Box<dyn std::error::Error>> {
     // RUN THE CHECK ON THE SECRET IN THE DISK
     set_search_console_data(String::from("Marco")).await;
 
@@ -478,7 +483,7 @@ pub async fn get_google_search_console() -> Result<(), Box<dyn std::error::Error
 
     // Parse and print the results
     let data: JsonValue = serde_json::from_str(&body_str)?;
-    println!("Search Console Data: {:?}", data);
+    println!("Search Console Data: {:#?}", &data);
 
-    Ok(())
+    Ok(data)
 }
