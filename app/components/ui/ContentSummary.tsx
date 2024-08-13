@@ -282,16 +282,15 @@ const ContentSummary = ({
               Page Summary
             </h3>
             <p className="text-muted-foreground text-xs mt-1">
-              {ollamaStatus.ollama
-                ? AiContentAnalysis
-                : readingTime &&
-                  generateFallbackSummary(
-                    keywords,
-                    wordCount,
-                    readingTime,
-                    readingLevelResults,
-                    htmlToTextRatio,
-                  )}
+              {ollamaStatus.ollama && AiContentAnalysis}
+              {!ollamaStatus.ollama &&
+                generateFallbackSummary(
+                  keywords,
+                  wordCount,
+                  readingTime,
+                  readingLevelResults,
+                  htmlToTextRatio,
+                )}
             </p>
           </div>
         </div>

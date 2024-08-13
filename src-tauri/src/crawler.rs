@@ -159,6 +159,8 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         url.pop();
     }
 
+    println!("Crawling: {}", &url);
+
     // HANDLE DB CREATION AAND check
     let _create_table = db::create_results_table();
     let _create_links_table = db::create_links_table();

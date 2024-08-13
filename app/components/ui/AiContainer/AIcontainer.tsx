@@ -36,7 +36,7 @@ const AIcontainer = () => {
             </div>
           ))
         ) : (
-          <div className="h-full flex flex-col items-center justify-center text-xl">
+          <div className="h-full flex flex-col items-center justify-center text-lg">
             <span>No AI model found.</span>
             <span className="block">
               Go to <strong>Menu</strong> &gt; <strong>Connectors</strong> &gt;{" "}
