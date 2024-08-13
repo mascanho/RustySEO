@@ -47,6 +47,7 @@ import { FaChevronDown, FaDesktop, FaMobile } from "react-icons/fa";
 import { CgLayoutGrid } from "react-icons/cg";
 import { CiGlobe } from "react-icons/ci";
 import LinksCharts from "./components/ui/ShadCharts/LinksCharts";
+import RenderBlockingResources from "./components/ui/RenderBlockingResources";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -651,7 +652,7 @@ const Home: React.FC<HomeProps> = () => {
               {/* TABLES START HERE */}
               <main
                 id="tables"
-                className="mx-auto w-full flex-col  pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-6 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-2 -mt-16 items-stretch pb-2"
+                className="mx-auto w-full flex-col  pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-6 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-16 items-stretch pb-2"
               >
                 <GooglePreview
                   favicon_url={favicon_url}
@@ -669,6 +670,7 @@ const Home: React.FC<HomeProps> = () => {
                 {/**/}
                 <ThirdPartyScripts pageSpeed={pageSpeed} />
                 <TotalByteWeight pageSpeed={pageSpeed} />
+                <RenderBlockingResources pageSpeed={pageSpeed} />
                 <PageSchemaTable
                   pageSchema={pageSchema}
                   googleSchemaTestUrl={debouncedURL}

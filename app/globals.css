@@ -72,7 +72,7 @@ input:focus {
 
 /* Webkit browsers (Chrome, Safari) */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px; /* Adjust the width of the scrollbar */
+  width: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
@@ -87,7 +87,7 @@ table {
 }
 
 thead {
-  @apply z-20 overflow-clip border-b-2 dark:border-b-white/10 dark:bg-brand-darker dark:text-white !important;
+  @apply z-20 overflow-clip border-none border-b-2 dark:border-b-white/10 dark:bg-brand-darker dark:text-white/20 !important;
 }
 
 tbody {
@@ -95,7 +95,7 @@ tbody {
 }
 
 th {
-  @apply pb-2 dark:bg-brand-darker dark:text-white bg-white border-0 pl-3.5 text-black/50  !important;
+  @apply pb-2 dark:bg-brand-darker dark:text-white/30 bg-white border-0 pl-3.5 text-black/50  !important;
   padding: 4px 0;
   position: sticky;
   top: 0;
@@ -276,7 +276,7 @@ button:where([data-active]) {
 /*WIDGETS*/
 
 .widget {
-  @apply border w-56 2xl:w-full  dark:bg-brand-darker dark:border-brand-dark h-[7.8em] !important;
+  @apply border w-48 sm:w-[13rem]  2xl:w-56 dark:bg-brand-darker dark:border-brand-dark h-[7.8em] !important;
 }
 
 .widget > div > h2:first-of-type {
@@ -299,6 +299,10 @@ button:where([data-active]) {
 
 .widget div span:last-of-type {
   @apply text-brand-normal dark:text-sky-500 text-sky-500;
+}
+
+.widget div span:first-child {
+  @apply text-base sm:text-lg lg:text-xl !important;
 }
 
 .widget span svg {
@@ -406,7 +410,7 @@ button:where([data-active]) {
 
 /* Style the bottom-right corner where two scrollbars meet */
 ::-webkit-scrollbar-corner {
-  /* background: #f1f1f1; */
+  background: #f1f1f1;
 }
 
 /*Cards animations*/

@@ -20,7 +20,7 @@ const LinkAnalysis = ({ visibleLinks }: { visibleLinks: any[] }) => {
                 </tr>
               </thead>
             </table>
-            <div className="overflow-auto custom-scrollbar h-[23rem]">
+            <div className="overflow-auto custom-scrollbar scroll-m-0 h-[23rem]">
               <table className="w-full">
                 <tbody>
                   {visibleLinks.map((link, index) => (

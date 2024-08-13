@@ -46,6 +46,10 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
 
   const longTasks = pageSpeed?.lighthouseResult?.audits?.["long-tasks"]?.score;
 
+  const renderBlocking =
+    pageSpeed?.lighthouseResult?.audits?.["render-blocking-resources"]
+      ?.numericValue;
+
   console.log(longTasks, "DOM SIZE");
 
   const AIfeedback = false;
@@ -160,7 +164,19 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
       improved: longTasks < 0.5 ? true : false,
       aiImprovement: AIfeedback
         ? "Function call"
-        : "This page has too many redirects on its URL, causing a redirect chain loop that could potentially slow down your application.",
+        : "To manage long tasks, break them into smaller, manageable chunks using `setTimeout` or `requestIdleCallback`. Prioritize and schedule critical tasks to ensure they run first. Monitor performance using tools like the Performance tab in Chrome DevTools to identify and optimize long tasks.",
+    },
+    {
+      id: 12,
+      title: "Render Blocking",
+      passAdvice:
+        "There are no render-blocking resources slowing down your application",
+      failsAdvice:
+        "There are too many render-blocking resources slowing down your application.",
+      improved: renderBlocking === 0 ? true : false,
+      aiImprovement: AIfeedback
+        ? "Function call"
+        : "To improve render-blocking resources, first, move critical CSS inline to the HTML to prioritize it. Next, defer non-essential JavaScript by using the `defer` or `async` attributes. Finally, ensure that non-critical CSS is loaded asynchronously or via media queries to avoid blocking the initial render.",
     },
   ];
 

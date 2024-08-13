@@ -34,7 +34,7 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
               <tr className="bg-white">
                 <td
                   colSpan={2}
-                  className="text-center text-gray-500 h-full bg-white dark:bg-brand-darker dark:text-white"
+                  className="text-center text-gray-500 pb-8 h-full bg-white dark:bg-brand-darker dark:text-white/50"
                 >
                   No third party connections found.
                 </td>
@@ -42,11 +42,11 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
             ) : (
               scripts.map((item: any, index: number) => (
                 <tr key={item.url || index}>
-                  <td className="px-2 text-[6px] text-gray-700 w-[200px] min-w-[95px] dark:text-white border">
+                  <td className="px-2 text-[6px] text-gray-700 w-[200px] min-w-[95px] dark:text-white border-b border-r">
                     {(Math.floor(item?.totalBytes * 1000) / 1000).toFixed(0) +
                       " KiB"}
                   </td>{" "}
-                  <td className="px-4 text-xs text-blue-600 truncate max-w-full border">
+                  <td className="px-4 text-xs text-blue-600 truncate max-w-full border-b">
                     {item?.url}
                   </td>
                 </tr>
