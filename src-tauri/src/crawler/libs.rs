@@ -362,6 +362,7 @@ struct InstalledInfo {
     auth_provider_x509_cert_url: String,
     client_secret: String,
     redirect_uris: Vec<String>,
+    aggregationType: String,
 }
 
 // FUNCTION TO SET GOOGLE SEARCH CONSOLE DATA ON THE DISK
@@ -369,6 +370,7 @@ pub async fn set_search_console_data(secret: String) -> Result<PathBuf, String> 
     // Define the JSON structure
     let client_secret = ClientSecret {
         installed: InstalledInfo {
+            aggregationType: "byPage".to_string(),
             client_id: "826003140984-umml9pa2cpuce9nnef2scd90a9tatn2s.apps.googleusercontent.com"
                 .to_string(),
             project_id: "110933103965834828344".to_string(),
@@ -447,9 +449,9 @@ pub async fn get_google_search_console() -> Result<(), Box<dyn std::error::Error
     // Prepare the request
     let site_url = "sc-domain:algarvewonders.com";
     let query = SearchAnalyticsQuery {
-        start_date: "2023-01-01".to_string(),
-        end_date: "2023-12-31".to_string(),
-        dimensions: vec!["query".to_string()],
+        start_date: "2024-01-01".to_string(),
+        end_date: "2024-12-31".to_string(),
+        dimensions: vec!["query".to_string(), "page".to_string()],
     };
     let body = serde_json::to_string(&query)?;
 
