@@ -291,7 +291,7 @@ ${openGraphDetails && "bg-gray-200"}
 
           <div className="flex items-center mt-2">
             <div
-              className={`flex rounded-full items-center justify-center h-8 w-8 p-1.5 bg-gray-200 ${charset[0] > 0 && "bg-green-500 text-white"} ${charset[0] && "bg-green-500 text-white"} ${pageSchema?.length === 0 && "bg-gray-200"}
+              className={`flex rounded-full items-center justify-center h-8 w-8 p-1.5 bg-gray-200 ${charset[0] > 0 && "bg-green-500 text-white"}  text-white"} 
                         ${pageTitle.length > 0 && tagManager.length === 0 && "bg-red-500 text-white"} ${pageTitle?.length === 0 && "bg-gray-200"}
 `}
             >

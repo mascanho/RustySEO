@@ -283,16 +283,25 @@ const ContentSummary = ({
             </h3>
             <p className="text-muted-foreground text-xs mt-1">
               {ollamaStatus.ollama && AiContentAnalysis}
-              {!ollamaStatus.ollama && keywords && keywords.length > 0
-                ? generateFallbackSummary(
-                    keywords,
-                    wordCount,
-                    readingTime,
-                    readingLevelResults,
-                    htmlToTextRatio,
-                  )
-                : ""}
+              {/* {!ollamaStatus.ollama && keywords && keywords.length > 0 */}
+              {/*   ? generateFallbackSummary( */}
+              {/*       keywords, */}
+              {/*       wordCount, */}
+              {/*       readingTime, */}
+              {/*       readingLevelResults, */}
+              {/*       htmlToTextRatio, */}
+              {/*     ) */}
+              {/*   : ""} */}
             </p>
+            {!ollamaStatus.ollama && keywords && keywords.length > 0 && (
+              <>
+                <p>AI Model Not Available</p>
+                <p>
+                  Go to <kbd>Menu</kbd> &gt; <kbd>Connectors</kbd> &gt;{" "}
+                  <kbd>Ollama</kbd>
+                </p>
+              </>
+            )}
           </div>
         </div>
       </div>

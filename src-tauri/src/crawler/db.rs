@@ -54,6 +54,8 @@ pub fn open_db_connection() -> Result<Connection> {
     let db_dir = project_dirs.data_dir(); // Use data_dir() for application data
     let db_path = db_dir.join("crawl_results.db");
 
+    println!("DB path: {:?}", db_path);
+
     // Ensure the directory exists
     if !db_dir.exists() {
         fs::create_dir_all(db_dir).expect("Failed to create directory");
@@ -286,4 +288,44 @@ pub fn read_links_from_db() -> Result<Vec<(String, String)>> {
     }
     //println!("Page SEO Data: {:#?}", data);
     Ok(data)
+}
+
+// --------- PUSH GOOGLE SEARCH CONSOLE DATA TO THE DATABASE ------------
+pub fn push_gsc_data_to_db(data: &Vec<serde_json::Value>) -> Result<()> {
+    let conn = open_db_connection().expect("Failed to open database connection");
+
+    // CREATE NEW TABLE ON DB
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS gsc_data (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT,
+            url TEXT NOT NULL,
+            impressions INTEGER,
+            clicks INTEGER,
+            ctr FLOAT,
+            position INTEGER
+        )",
+        [],
+    )
+    .expect("Failed to create table with data");
+
+    for item in data {
+        let objects = item["rows"].as_array().unwrap();
+
+        for object in objects {
+            println!("{:#?}", object);
+            let url = object["keys"][1].as_str().unwrap();
+            let ctr = object["ctr"].as_f64().unwrap();
+            let clicks = object["clicks"].as_i64().unwrap();
+            let impressions = object["impressions"].as_i64().unwrap();
+            let position = object["position"].to_string();
+            let date = Utc::now().naive_utc().to_string();
+            conn.execute(
+                "INSERT INTO gsc_data (date, url, impressions, clicks, ctr, position) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                params![date, url, impressions, clicks, ctr, position],
+            )?;
+        }
+    }
+
+    Ok(())
 }

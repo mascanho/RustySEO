@@ -15,7 +15,7 @@ use yup_oauth2::{InstalledFlowAuthenticator, InstalledFlowReturnMethod};
 
 use toml::de::Error as TomlError;
 
-use crate::crawler::db::refresh_links_table;
+use crate::crawler::db::{self, refresh_links_table};
 
 use super::crawler;
 
@@ -421,7 +421,7 @@ pub async fn set_search_console_data(secret: String) -> Result<PathBuf, String> 
     Ok(secret_file)
 }
 
-pub async fn get_google_search_console() -> Result<JsonValue, Box<dyn std::error::Error>> {
+pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::error::Error>> {
     // RUN THE CHECK ON THE SECRET IN THE DISK
     set_search_console_data(String::from("Marco")).await;
 
@@ -454,8 +454,8 @@ pub async fn get_google_search_console() -> Result<JsonValue, Box<dyn std::error
     // Prepare the request
     let site_url = "sc-domain:algarvewonders.com";
     let query = SearchAnalyticsQuery {
-        start_date: "2024-01-01".to_string(),
-        end_date: "2024-12-31".to_string(),
+        start_date: "2024-08-01".to_string(),
+        end_date: "2024-08-12".to_string(),
         dimensions: vec!["query".to_string(), "page".to_string()],
     };
     let body = serde_json::to_string(&query)?;
@@ -483,7 +483,11 @@ pub async fn get_google_search_console() -> Result<JsonValue, Box<dyn std::error
 
     // Parse and print the results
     let data: JsonValue = serde_json::from_str(&body_str)?;
-    println!("Search Console Data: {:#?}", &data);
+    //println!("Search Console Data: {:#?}", &data);
+    let mut gsc_data = Vec::new();
+    gsc_data.push(data);
 
-    Ok(data)
+    db::push_gsc_data_to_db(&gsc_data).expect("Failed to push data to database");
+
+    Ok(gsc_data)
 }
