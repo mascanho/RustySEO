@@ -73,6 +73,7 @@ input:focus {
 /* Webkit browsers (Chrome, Safari) */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
+  overflow: auto;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
