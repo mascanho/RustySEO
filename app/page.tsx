@@ -423,7 +423,7 @@ const Home: React.FC<HomeProps> = () => {
           onClose={closeModal}
           title=""
           centered
-          zIndex={"10000"}
+          // zIndex={"10000"}
         >
           <Todo url={debouncedURL} close={closeModal} strategy={strategy} />
         </Modal>
@@ -529,6 +529,7 @@ const Home: React.FC<HomeProps> = () => {
                 <Tabs.Tab value="third">Improvements</Tabs.Tab>
                 <Tabs.Tab value="fourth">Task Manager</Tabs.Tab>
                 <Tabs.Tab value="fifth">Crawl History</Tabs.Tab>
+                <Tabs.Tab value="ranking">Search Console</Tabs.Tab>
               </Tabs.List>
             </div>
 
@@ -542,7 +543,7 @@ const Home: React.FC<HomeProps> = () => {
                   {hidden.widget ? "Show widgets" : "Hide widgets"}
                 </span>
                 <section
-                  className={`grid grid-cols-2 ${hidden.widget ? "hidden" : ""} gap-x-3 md:gap-x-4 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 justify-items-stretch w-full   mb-10 gap-y-5 -mt-6 `}
+                  className={`grid grid-cols-2 ${hidden.widget ? "hidden" : ""} gap-x-3 md:gap-x-4 sm:grid-cols-3  md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-7 justify-items-stretch w-full   mb-10 gap-y-5 -mt-6 `}
                 >
                   <h1 className="absolute font-bold top-1 left-4 text-2xl text-brand-dark/30 dark:text-white/20">
                     Performance Overview
@@ -638,7 +639,7 @@ const Home: React.FC<HomeProps> = () => {
 
               {/* CHARTS SECTION */}
 
-              <section className="grid grid-cols-4 gap-6 mb-10">
+              <section className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
                 <KeywordChart keywords={keywords} url={debouncedURL} />
                 <HtmlToTextChart htmlToTextRatio={htmlToTextRatio} />
                 <ImagesChart url={debouncedURL} images={images} />
@@ -652,7 +653,7 @@ const Home: React.FC<HomeProps> = () => {
               {/* TABLES START HERE */}
               <main
                 id="tables"
-                className="mx-auto w-full flex-col  pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-6 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 -mt-16 items-stretch pb-2"
+                className="mx-auto w-full flex-col  pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-6 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-2 -mt-16 items-stretch pb-2"
               >
                 <GooglePreview
                   favicon_url={favicon_url}

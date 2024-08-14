@@ -78,7 +78,7 @@ const TopMenuBar = () => {
         onClose={closeModal}
         title=""
         centered
-        zIndex={"100000"}
+        // zIndex={"100000"}
       >
         <Todo url={url} close={closeModal} strategy={strategy} />
       </Modal>
@@ -171,7 +171,10 @@ const TopMenuBar = () => {
         <MenubarMenu>
           <MenubarTrigger className="ml-3">Connectors</MenubarTrigger>
           <MenubarContent>
-            <MenubarItem onClick={openPageSpeed}>PageSpeed Key</MenubarItem>
+            <MenubarItem onClick={openPageSpeed}>
+              PageSpeed Insights
+            </MenubarItem>
+            <MenubarSeparator />
             <MenubarItem
               onClick={() => {
                 // openBrowserWindow("https://www.ollama.com/");
@@ -180,10 +183,6 @@ const TopMenuBar = () => {
             >
               Ollama
             </MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem>Share</MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem>Print</MenubarItem>
           </MenubarContent>
         </MenubarMenu>
         <MenubarMenu>

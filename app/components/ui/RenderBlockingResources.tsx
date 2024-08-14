@@ -40,7 +40,7 @@ const RenderBlockingResources = ({ pageSpeed }: { pageSpeed: any }) => {
             ) : (
               scripts.map((item: any, index: number) => (
                 <tr key={item.url || index}>
-                  <td className="px-4 py-2 text-sm border-b border-b-brand-darker/20 text-blue-600 truncate">
+                  <td className="px-4 py-2 text-sm border-b  border-b-gray-100 text-blue-600 truncate">
                     {item?.url}
                   </td>
                   <td className="px-4  text-xs border text-gray-700 dark:text-white/50">

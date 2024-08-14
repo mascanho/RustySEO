@@ -116,7 +116,7 @@ const TaskManagerContainerItem: React.FC<{ data: any }> = ({ data }) => {
             <DropdownMenuContent className="bg-white absolute right-0 dark:border-brand-dark dark:bg-brand-darker dark:text-white">
               <DropdownMenuLabel>Task Status</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {["Completed", "Doing", "Todo"].map((status) => (
+              {["Todo", "Doing", "Completed"].map((status) => (
                 <DropdownMenuItem
                   key={status}
                   className={`hover:dark:bg-white hover:bg-gray-100 hover:dark:text-brand-darker cursor-pointer ${
