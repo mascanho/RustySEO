@@ -276,7 +276,7 @@ button:where([data-active]) {
 /*WIDGETS*/
 
 .widget {
-  @apply border w-full sm:w-[13rem]  2xl:w-[13.3rem] dark:bg-brand-darker dark:border-brand-dark h-[7.8em] !important;
+  @apply border w-full sm:w-[13rem]  xl:w-full  dark:bg-brand-darker dark:border-brand-dark h-[7.8em] !important;
 }
 
 .widget > div > h2:first-of-type {
