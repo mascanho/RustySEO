@@ -15,6 +15,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"; // Ensure this path is correct
+import { CiViewList } from "react-icons/ci";
+
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import PopUpTable from "./PopUpTable";
 
 // Define TypeScript types
 interface PerformanceData {
@@ -47,6 +55,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc"); // Default to descending
   const [sortColumn, setSortColumn] = useState<keyof PerformanceData>("date");
   const [todoUrl, setTodoUrl] = useState<string | null>(null);
+  const [matchedUrlData, setMatchedUrlData] = useState([]);
 
   // Effect to update data when dbdata changes
   useEffect(() => {
@@ -84,6 +93,14 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
             : 1;
       })
     : [];
+
+  // Handle Matching URL
+  const handleUrlMatch = (url: string) => {
+    invoke("call_gsc_match_url", { url: url }).then((result: any) => {
+      console.log(result);
+      setMatchedUrlData(result);
+    });
+  };
 
   // Handle sorting
   const handleSort = (column: keyof PerformanceData) => {
@@ -138,172 +155,190 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
   };
 
   return (
-    <div className="relative w-full max-w-7xl mx-auto text-xs">
-      <div className=" -top-16 -right-0 w-full flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10">
-        <div className="flex items-center space-x-2 relative">
-          <IoIosSearch className="w-4 h-4 absolute left-4 dark:text-white" />
-          <input
-            type="text"
-            placeholder="Search by URL"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="border dark:text-white rounded-md p-1 text-sm h-full pl-7 dark:border-brand-normal/20 dark:bg-brand-darker"
-          />
+    <>
+      <div className="relative w-full max-w-7xl mx-auto text-xs">
+        <div className=" -top-16 -right-0 w-full flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10">
+          <div className="flex items-center space-x-2 relative">
+            <IoIosSearch className="w-4 h-4 absolute left-4 dark:text-white" />
+            <input
+              type="text"
+              placeholder="Search by URL"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="border dark:text-white rounded-md p-1 text-sm h-full pl-7 dark:border-brand-normal/20 dark:bg-brand-darker"
+            />
+          </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger className="w-fit px-4 border border-gray-300 rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center dark:text-white dark:border-brand-normal/20 dark:bg-brand-darker text-black">
+              Options
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-white dark:bg-brand-dark dark:text-white emr-12 mt-1 dark:border-brand-normal/20">
+              <DropdownMenuLabel>Table options</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="cursor-pointer hover:bg-gray-100 dark:hover:text-black"
+                onClick={refreshTable}
+              >
+                Refresh Table
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-black/20 dark:bg-white/20" />
+              <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer  ">
+                Match URL
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer  ">
+                Clear Table
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <div className="w-[2px] h-8 bg-gray-300 dark:bg-gray-200/20" />
+
+          <DropdownMenu>
+            <DropdownMenuTrigger className="transition-all hover:bg-brand-bright ease-linear active:scale-75 w-fit px-4 rounded-md justify-center flex items-center bg-brand-bright text-white">
+              <FiDownload className="w-4 h-4 mr-2 mb-1" />
+              Export
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-white mr-12 dark:border-brand-normal/20 dark:bg-brand-dark dark:text-white">
+              <DropdownMenuItem
+                className="cursor-pointer hover:bg-gray-100 dark:border:brand-normal/20 dark:text-white dark:hover:text-black"
+                onClick={handleDownloadXLSX}
+              >
+                CSV
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger className="w-fit px-4 border border-gray-300 rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center dark:text-white dark:border-brand-normal/20 dark:bg-brand-darker text-black">
-            Options
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-white dark:bg-brand-dark dark:text-white emr-12 mt-1 dark:border-brand-normal/20">
-            <DropdownMenuLabel>Table options</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className="cursor-pointer hover:bg-gray-100 dark:hover:text-black"
-              onClick={refreshTable}
-            >
-              Refresh Table
-            </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-black/20 dark:bg-white/20" />
-            <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer  ">
-              Clear Table
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <div className="w-[2px] h-8 bg-gray-300 dark:bg-gray-200/20" />
-
-        <DropdownMenu>
-          <DropdownMenuTrigger className="transition-all hover:bg-brand-bright ease-linear active:scale-75 w-fit px-4 rounded-md justify-center flex items-center bg-brand-bright text-white">
-            <FiDownload className="w-4 h-4 mr-2 mb-1" />
-            Export
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-white mr-12 dark:border-brand-normal/20 dark:bg-brand-dark dark:text-white">
-            <DropdownMenuItem
-              className="cursor-pointer hover:bg-gray-100 dark:border:brand-normal/20 dark:text-white dark:hover:text-black"
-              onClick={handleDownloadXLSX}
-            >
-              CSV
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      <section className="rounded-md mt-3 overflow-hidden shadow border dark:border-white/10 dark:bg-brand-darker">
-        <div className="h-full max-h-[38rem] custom-scrollbar overflow-auto bg-white dark:bg-brand-darker">
-          <table className="table_history w-full shadow text-xs">
-            <thead className="bg-white dark:bg-brand-darker sticky top-0 z-10">
-              <tr>
-                <th
-                  className="cursor-pointer"
-                  onClick={() => handleSort("date")}
-                >
-                  Date{" "}
-                  {sortColumn === "date" &&
-                    (sortDirection === "asc" ? "↑" : "↓")}
-                </th>
-                <th
-                  className="cursor-pointer"
-                  onClick={() => handleSort("strategy")}
-                >
-                  Device{" "}
-                  {sortColumn === "strategy" &&
-                    (sortDirection === "asc" ? "↑" : "↓")}
-                </th>
-                <th align="left">URL</th>
-                <th>Performance</th>
-                <th>Speed</th>
-                <th>FCP</th>
-                <th>LCP</th>
-                <th>TTI</th>
-                <th>CLS</th>
-                <th>TBT</th>
-                <th>DOM</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedData.map((data, index) => (
-                <tr className="w-full border" key={index}>
-                  <td className="border">
-                    {new Date(data.date).toLocaleDateString()}
-                  </td>
-                  <td align="center" className="border">
-                    {data.strategy === "DESKTOP" ? (
-                      <FaDesktop />
-                    ) : (
-                      <FaMobileAlt />
-                    )}
-                  </td>
-                  <td align="left" className="py-2 border relative group">
-                    {data.url}
-                    <span
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                      onClick={() => handleAddTodo(data.url)}
-                    >
-                      <FiCheckCircle className="text-green-500" />
-                    </span>
-                  </td>
-                  <td
-                    className={`border ${
-                      data.performance <= 0.5
-                        ? "text-red-600"
-                        : "text-green-600"
-                    }`}
+        <section className="rounded-md mt-3 overflow-hidden shadow border dark:border-white/10 dark:bg-brand-darker">
+          <div className="h-full max-h-[38rem] custom-scrollbar overflow-auto bg-white dark:bg-brand-darker">
+            <table className="table_history w-full shadow text-xs">
+              <thead className="bg-white dark:bg-brand-darker sticky top-0 z-10">
+                <tr>
+                  <th
+                    className="cursor-pointer"
+                    onClick={() => handleSort("date")}
                   >
-                    {data.performance}
-                  </td>
-                  <td
-                    className={`border ${
-                      data.speed_index <= 0.5
-                        ? "text-red-600"
-                        : "text-green-600"
-                    }`}
+                    Date{" "}
+                    {sortColumn === "date" &&
+                      (sortDirection === "asc" ? "↑" : "↓")}
+                  </th>
+                  <th
+                    className="cursor-pointer"
+                    onClick={() => handleSort("strategy")}
                   >
-                    {data.speed_index}
-                  </td>
-                  <td
-                    className={`border ${
-                      data.fcp <= 0.5 ? "text-red-600" : "text-green-600"
-                    }`}
-                  >
-                    {data.fcp}
-                  </td>
-                  <td
-                    className={`border ${
-                      data.lcp <= 0.5 ? "text-red-600" : "text-green-600"
-                    }`}
-                  >
-                    {data.lcp}
-                  </td>
-                  <td
-                    className={`border ${
-                      data.tti <= 0.5 ? "text-red-600" : "text-green-600"
-                    }`}
-                  >
-                    {data.tti}
-                  </td>
-                  <td
-                    className={`border ${
-                      data.cls <= 0.5 ? "text-red-600" : "text-green-600"
-                    }`}
-                  >
-                    {data.cls}
-                  </td>
-                  <td
-                    className={`border ${
-                      data.tbt <= 0.5 ? "text-red-600" : "text-green-600"
-                    }`}
-                  >
-                    {data.tbt}
-                  </td>
-                  <td className="border">{data.dom_size}</td>
+                    Device{" "}
+                    {sortColumn === "strategy" &&
+                      (sortDirection === "asc" ? "↑" : "↓")}
+                  </th>
+                  <th align="left">URL</th>
+                  <th>Performance</th>
+                  <th>Speed</th>
+                  <th>FCP</th>
+                  <th>LCP</th>
+                  <th>TTI</th>
+                  <th>CLS</th>
+                  <th>TBT</th>
+                  <th>DOM</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
+              </thead>
+              <tbody>
+                {sortedData.map((data, index) => (
+                  <tr className="w-full border" key={index}>
+                    <td className="border">
+                      {new Date(data.date).toLocaleDateString()}
+                    </td>
+                    <td align="center" className="border">
+                      {data.strategy === "DESKTOP" ? (
+                        <FaDesktop />
+                      ) : (
+                        <FaMobileAlt />
+                      )}
+                    </td>
+                    <td align="left" className="py-2 border relative group">
+                      {data.url}
+                      <span
+                        className="absolute right-7 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                        onClick={() => handleAddTodo(data.url)}
+                      >
+                        <FiCheckCircle className="text-green-500" />
+                      </span>{" "}
+                      <Popover>
+                        <PopoverTrigger>
+                          <span className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                            <CiViewList
+                              className="text-blue-500 text-base"
+                              onClick={() => handleUrlMatch(data.url)}
+                            />
+                          </span>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full">
+                          <PopUpTable data={matchedUrlData} />
+                        </PopoverContent>
+                      </Popover>
+                    </td>
+                    <td
+                      className={`border ${
+                        data.performance <= 0.5
+                          ? "text-red-600"
+                          : "text-green-600"
+                      }`}
+                    >
+                      {data.performance}
+                    </td>
+                    <td
+                      className={`border ${
+                        data.speed_index <= 0.5
+                          ? "text-red-600"
+                          : "text-green-600"
+                      }`}
+                    >
+                      {data.speed_index}
+                    </td>
+                    <td
+                      className={`border ${
+                        data.fcp <= 0.5 ? "text-red-600" : "text-green-600"
+                      }`}
+                    >
+                      {data.fcp}
+                    </td>
+                    <td
+                      className={`border ${
+                        data.lcp <= 0.5 ? "text-red-600" : "text-green-600"
+                      }`}
+                    >
+                      {data.lcp}
+                    </td>
+                    <td
+                      className={`border ${
+                        data.tti <= 0.5 ? "text-red-600" : "text-green-600"
+                      }`}
+                    >
+                      {data.tti}
+                    </td>
+                    <td
+                      className={`border ${
+                        data.cls <= 0.5 ? "text-red-600" : "text-green-600"
+                      }`}
+                    >
+                      {data.cls}
+                    </td>
+                    <td
+                      className={`border ${
+                        data.tbt <= 0.5 ? "text-red-600" : "text-green-600"
+                      }`}
+                    >
+                      {data.tbt}
+                    </td>
+                    <td className="border">{data.dom_size}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </>
   );
 };
 

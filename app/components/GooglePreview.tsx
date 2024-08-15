@@ -42,14 +42,14 @@ const GooglePreview = ({
       <section
         className={`px-8 h-full  pb-24 min-h-28 flex items-center  w-full rounded-md overflow-auto`}
       >
-        <div className="w-[20px]">
-          <div className="flex items-center mb-2 w-[]">
+        <div className="w-full">
+          <div className="flex items-center mb-2 ">
             {favicon_url[0] && (
               <div className="h-fit p-1 bg-white rounded-full border -mr-2 min-w-20">
                 <img
                   src={favicon_url[0]}
                   alt="favicon"
-                  className="rounded-full min-w-8 w-10 h-auto object-contain"
+                  className="rounded-full min-w-8 w-full h-auto object-contain"
                 />
               </div>
             )}

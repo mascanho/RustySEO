@@ -300,6 +300,7 @@ pub fn push_gsc_data_to_db(data: &Vec<serde_json::Value>) -> Result<()> {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             date TEXT,
             url TEXT NOT NULL,
+            query TEXT NOT NULL,
             impressions INTEGER,
             clicks INTEGER,
             ctr FLOAT,
@@ -315,17 +316,150 @@ pub fn push_gsc_data_to_db(data: &Vec<serde_json::Value>) -> Result<()> {
         for object in objects {
             println!("{:#?}", object);
             let url = object["keys"][1].as_str().unwrap();
+            let query = object["keys"][0].as_str().unwrap();
             let ctr = object["ctr"].as_f64().unwrap();
             let clicks = object["clicks"].as_i64().unwrap();
             let impressions = object["impressions"].as_i64().unwrap();
             let position = object["position"].to_string();
             let date = Utc::now().naive_utc().to_string();
             conn.execute(
-                "INSERT INTO gsc_data (date, url, impressions, clicks, ctr, position) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-                params![date, url, impressions, clicks, ctr, position],
+                "INSERT INTO gsc_data (date, url, query, impressions, clicks, ctr, position) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                params![date, url, query, impressions, clicks, ctr, position],
             )?;
         }
     }
 
     Ok(())
+}
+
+// ------------ QUERY THE GSC DB AND ISOLATE THE QUERY URL AND ITS PROPERTIES ------------
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GscUrl {
+    id: i32,
+    url: String,
+    query: String,
+    ctr: f64,
+    clicks: i64,
+    impressions: i64,
+    position: f64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GscMatched {
+    id: i32,
+    original_id: i32,
+    url: String,
+    query: String,
+    ctr: f64,
+    clicks: i64,
+    impressions: i64,
+    position: f64,
+}
+
+pub fn match_gsc_url(url: &str) -> Result<(), Box<dyn std::error::Error>> {
+    // Connect to the database
+    let conn = open_db_connection()?;
+
+    // URL to query
+    let url_to_query = url.to_string();
+
+    // Prepare the SQL statement
+    let mut stmt = conn.prepare(
+        "SELECT id, url, query, ctr, clicks, impressions, position FROM gsc_data WHERE url = ?1",
+    )?;
+
+    // Execute the query and map the result to a GscUrl struct
+    let matched_urls = stmt.query_map(params![url_to_query], |row| {
+        Ok(GscUrl {
+            id: row.get(0)?,
+            url: row.get(1)?,
+            query: row.get(2)?,
+            ctr: row.get(3)?,
+            clicks: row.get(4)?,
+            impressions: row.get(5)?,
+            position: row.get(6)?,
+        })
+    })?;
+
+    // Convert the query result into a vector
+    let matched_urls: Vec<GscUrl> = matched_urls.collect::<Result<Vec<_>, _>>()?;
+
+    // Print matched URLs
+    println!("Matched URLs: {:#?}", matched_urls);
+
+    // Insert matched URLs into the 'gsc_matched' table
+    insert_matched_urls(&conn, &matched_urls)?;
+
+    Ok(())
+}
+
+// Function to insert matched URLs into the 'gsc_matched' table
+fn insert_matched_urls(conn: &Connection, matched_urls: &[GscUrl]) -> Result<()> {
+    // Create a new table 'gsc_matched' if it does not exist
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS gsc_matched (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+            original_id INTEGER NOT NULL,
+            url TEXT NOT NULL,
+            query TEXT NOT NULL,
+            ctr REAL,
+            clicks INTEGER,
+            impressions INTEGER,
+            position INTEGER
+        )",
+        [],
+    )?;
+
+    // Prepare the insertion statement
+    let mut insert_stmt = conn.prepare(
+        "INSERT INTO gsc_matched (original_id, url, query, ctr, clicks, impressions, position) 
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+    )?;
+
+    // REMOVE EXISTING DATA FROM THE gsc_matched TABLE
+    conn.execute("DELETE FROM gsc_matched", [])?;
+
+    // Insert each matched URL into the table
+    for url in matched_urls {
+        insert_stmt.execute(params![
+            url.id,
+            url.url,
+            url.query,
+            url.ctr,
+            url.clicks,
+            url.impressions,
+            url.position
+        ])?;
+    }
+
+    println!("Matched URLs have been inserted into the gsc_matched table.");
+
+    Ok(())
+}
+
+pub fn read_gsc_matched_from_db() -> Result<Vec<GscMatched>> {
+    let conn = open_db_connection()?;
+    let mut stmt = conn.prepare("SELECT * FROM gsc_matched")?;
+
+    let matched_urls = stmt.query_map([], |row| {
+        Ok(GscMatched {
+            id: row.get(0)?,
+            original_id: row.get(1)?,
+            url: row.get(2)?,
+            query: row.get(3)?,
+            ctr: row.get(4)?,
+            clicks: row.get(5)?,
+            impressions: row.get(6)?,
+            position: row.get(7)?,
+        })
+    })?;
+
+    let mut data = Vec::new();
+
+    for url in matched_urls {
+        data.push(url?);
+    }
+    //println!("Page SEO Data: {:#?}", data);
+    Ok(data)
 }

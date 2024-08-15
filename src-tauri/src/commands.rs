@@ -1,4 +1,5 @@
 use crate::crawler::db;
+use crate::crawler::db::GscMatched;
 use crate::crawler::libs;
 use serde::Deserialize;
 use serde::Serialize;
@@ -88,4 +89,22 @@ pub async fn call_google_search_console() {
     let result = libs::get_google_search_console()
         .await
         .expect("Failed to call Google Search Console");
+}
+
+// ------- CALL GSC MATCH URL FUNCTION
+#[tauri::command]
+pub fn call_gsc_match_url(url: String) -> Result<Vec<GscMatched>, String> {
+    println!("Calling Google Search Console");
+
+    // Assuming match_gsc_url does not require arguments and does not return a result
+    // If it does return a result, make sure to handle it accordingly
+    if let Err(e) = db::match_gsc_url(&url) {
+        return Err(e.to_string());
+    }
+
+    // Read matched URLs from the database
+    match db::read_gsc_matched_from_db() {
+        Ok(result) => Ok(result),
+        Err(err) => Err(err.to_string()),
+    }
 }

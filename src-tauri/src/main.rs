@@ -108,7 +108,8 @@ async fn main() {
             commands::check_link_status,
             commands::write_model_to_disk,
             commands::check_ollama,
-            commands::call_google_search_console
+            commands::call_google_search_console,
+            commands::call_gsc_match_url
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

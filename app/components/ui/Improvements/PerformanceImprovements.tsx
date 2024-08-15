@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   FaCheckCircle,
   FaChevronCircleDown,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/collapsible";
 import { FiClipboard } from "react-icons/fi";
 import { Switch } from "@/components/ui/switch";
+import { invoke } from "@tauri-apps/api/tauri";
 
 const PerformanceImprovements = ({ pageSpeed }: any) => {
   // ------------- HELPERS -------------
