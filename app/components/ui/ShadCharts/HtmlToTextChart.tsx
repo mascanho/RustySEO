@@ -82,7 +82,7 @@ export function HtmlToTextChart({ htmlToTextRatio }: any) {
                           y={(viewBox.cy || 0) + 4}
                           className="fill-muted-foreground dark:fill-white/50"
                         >
-                          Text / HTML
+                          {htmlToTextRatio?.[0] && "Text to HTML"}
                         </tspan>
                       </text>
                     );
