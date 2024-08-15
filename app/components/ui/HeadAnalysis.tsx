@@ -176,7 +176,7 @@ export const HeadAnalysis = ({
           <Box className="mt-1" mx="0">
             <Collapse in={opened}>
               <span className="text-left m-2 pt-3">
-                <div className="bg-gray-200 rounded-md">
+                <div className="bg-gray-100 rounded-md">
                   {hreflangs?.map((hreflang: any, index: any) => (
                     <span
                       className="flex ml-2 items-center space-x-2 text-black p-2  px-2   border-b border-white"
@@ -291,8 +291,8 @@ ${openGraphDetails && "bg-gray-200"}
 
           <div className="flex items-center mt-2">
             <div
-              className={`flex rounded-full items-center justify-center h-8 w-8 p-1.5 bg-gray-200 ${charset[0] > 0 && "bg-green-500 text-white"}  text-white"} 
-                        ${pageTitle.length > 0 && tagManager.length === 0 && "bg-red-500 text-white"} ${pageTitle?.length === 0 && "bg-gray-200"}
+              className={`flex rounded-full items-center justify-center h-8 w-8 p-1.5  ${charset && pageTitle.length > 0 && "bg-green-500 text-white"} bg-gray-200  text-white"} 
+                      
 `}
             >
               <TagIcon />
@@ -319,8 +319,7 @@ ${openGraphDetails && "bg-gray-200"}
           </div>
           <div className="flex items-center mt-2">
             <div
-              className={`flex rounded-full items-center justify-center h-8 w-8 p-1.5 ${indexation[0] === "Indexable" && "bg-green-500 text-white"} ${pageSchema.length === 0 && "bg-gray-200"}
-                        ${pageTitle.length > 0 && tagManager.length === 0 && "bg-red-500 text-white"} ${pageTitle?.length === 0 && "bg-gray-200"}
+              className={`flex rounded-full items-center justify-center h-8 w-8 p-1.5 ${indexation[0] === "Indexable" && "bg-green-500 text-white"} bg-gray-200
 `}
             >
               <TagIcon />

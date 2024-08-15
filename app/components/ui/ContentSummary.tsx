@@ -294,13 +294,13 @@ const ContentSummary = ({
               {/*   : ""} */}
             </p>
             {!ollamaStatus.ollama && keywords && keywords.length > 0 && (
-              <>
+              <div className="text-black/50">
                 <p>AI Model Not Available</p>
                 <p>
                   Go to <kbd>Menu</kbd> &gt; <kbd>Connectors</kbd> &gt;{" "}
                   <kbd>Ollama</kbd>
                 </p>
-              </>
+              </div>
             )}
           </div>
         </div>

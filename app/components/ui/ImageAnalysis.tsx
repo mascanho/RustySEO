@@ -36,7 +36,7 @@ const ImageAnalysis = ({ images }: { images: any[] }) => {
                           <img
                             src={image?.link}
                             alt={image?.alt_text}
-                            className="m-auto w-40 h-14 object-contain" // Adjusted size
+                            className="m-auto w-40 min-w-[100px] h-14 object-contain" // Adjusted size
                           />
                         </a>
                       </td>

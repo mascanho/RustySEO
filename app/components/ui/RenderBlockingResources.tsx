@@ -11,7 +11,7 @@ const RenderBlockingResources = ({ pageSpeed }: { pageSpeed: any }) => {
         <SiOctanerender className="mr-1.5" /> Render Blocking
       </h2>
 
-      <div className="overflow-auto custom-scrollbar overflow-x-hidden h-[25rem] ">
+      <div className="overflow-auto custom-scrollbar  h-[25rem] ">
         <table className="w-full ">
           <thead>
             <tr>
@@ -21,7 +21,7 @@ const RenderBlockingResources = ({ pageSpeed }: { pageSpeed: any }) => {
               <th align="left" className="text-xs ">
                 Total Bytes
               </th>
-              <th align="left" className="text-xs min-w-[80px] ">
+              <th align="left" className="text-xs min-w-[90px] ">
                 Wasted Ms
               </th>
             </tr>
@@ -58,8 +58,10 @@ const RenderBlockingResources = ({ pageSpeed }: { pageSpeed: any }) => {
 
       <footer className="pb-1 m-2 rounded-md text-xs flex justify-end text-black/50 space-x-4">
         <p>
-          Total scripts:{" "}
-          <span className="px-1 py-0.5 bg-gray-400 text-white rounded-md min-w-3">
+          Blocking:{" "}
+          <span
+            className={`px-1 py-0.5 bg-gray-400 ${scripts.length > 0 && "bg-red-400"} text-white rounded-md min-w-3`}
+          >
             {scripts.length}
           </span>
         </p>
