@@ -143,13 +143,14 @@ const RenderBlocking = ({
             </span>
           )}
 
-          {!stat?.lighthouseResult?.audits?.["render-blocking-resources"]
-            ?.displayValue &&
+          {(stat?.lighthouseResult?.audits?.["render-blocking-resources"]
+            ?.details.items?.length < 1 &&
             url && (
               <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
                 0 tasks
               </span>
-            )}
+            )) ||
+            ""}
         </div>
         <h2
           onClick={() =>

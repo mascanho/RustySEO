@@ -319,7 +319,7 @@ ${openGraphDetails && "bg-gray-200"}
           </div>
           <div className="flex items-center mt-2">
             <div
-              className={`flex rounded-full items-center justify-center h-8 w-8 p-1.5 ${indexation[0] === "Indexable" && "bg-green-500 text-white"} bg-gray-200
+              className={`flex rounded-full items-center justify-center h-8 w-8 p-1.5 ${indexation[0] === "Indexable" && "bg-green-500 text-white"} ${indexation[0] === "Not Indexable" && "bg-red-500 text-white"}  bg-gray-200
 `}
             >
               <TagIcon />

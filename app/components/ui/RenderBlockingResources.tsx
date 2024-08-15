@@ -34,7 +34,7 @@ const RenderBlockingResources = ({ pageSpeed }: { pageSpeed: any }) => {
                   rowSpan={8}
                   className="text-gray-500 dark:text-white/50 text-center bg-white dark:bg-brand-darker pt-[10rem] border-none"
                 >
-                  No third party connections found.
+                  No Render Blocking Resources Found on This Page
                 </td>
               </tr>
             ) : (

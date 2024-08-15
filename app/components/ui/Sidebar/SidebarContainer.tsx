@@ -15,6 +15,7 @@ import { useVisibilityStore } from "@/store/VisibilityStore";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useOllamaStore } from "@/store/store";
 import AIFeedbackTab from "./AiAnalysis";
+import { useParams } from "next/navigation";
 
 // Define prop types for better type checking
 interface SidebarContainerProps {
@@ -48,6 +49,10 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
 }) => {
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
   const ollamaStatus = useOllamaStore();
+
+  const params = useParams();
+
+  console.log(params, "pathname");
 
   // CHECK THE STATUS OF OLLAMA AND STORE INTO GLOBAL STATE
   useEffect(() => {

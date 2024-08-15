@@ -100,7 +100,7 @@ const DomElements = ({
         </Popover.Dropdown>
       </Popover>
       <div className="flex flex-col space-y-1.5 h-fit">
-        <h2 className="font-bold">DOM Size</h2>
+        <h2 className="font-bold -mt-1">DOM Size</h2>
         <div className="text-xl h-8">
           {loading ? (
             <div className="-mt-1">

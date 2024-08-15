@@ -1,5 +1,6 @@
 // @ts-nocheck
 "use client";
+import Link from "next/link";
 import React, { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import replaceDoubleSlash from "./Hooks/DecodeURL";
@@ -527,7 +528,14 @@ const Home: React.FC<HomeProps> = () => {
               <Tabs.List justify="center" className="dark:text-white  ">
                 <Tabs.Tab value="first"> Diagnostics</Tabs.Tab>
                 <Tabs.Tab value="third">Improvements</Tabs.Tab>
-                <Tabs.Tab value="fourth">Task Manager</Tabs.Tab>
+                <Link href="/?tab=second">
+                  <Tabs.Tab
+                    onClick={(e) => console.log(e.target.value)}
+                    value="fourth"
+                  >
+                    Task Manager
+                  </Tabs.Tab>
+                </Link>
                 <Tabs.Tab value="fifth">Crawl History</Tabs.Tab>
                 <Tabs.Tab value="ranking">Search Console</Tabs.Tab>
               </Tabs.List>
