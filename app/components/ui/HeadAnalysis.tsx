@@ -152,7 +152,7 @@ export const HeadAnalysis = ({
                 hreflangs.map((hreflang: any, index: any) => (
                   <div key={index}>
                     <span
-                      className="flex ml-1 text-xs  text-black p-0.2 border px-2 bg-gray-100 rounded-md"
+                      className="flex ml-1 text-xs  text-black py-0.5 border px-2 bg-gray-100 rounded-md"
                       key={index}
                     >
                       {hreflang?.lang}

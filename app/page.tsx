@@ -537,7 +537,7 @@ const Home: React.FC<HomeProps> = () => {
                   </Tabs.Tab>
                 </Link>
                 <Tabs.Tab value="fifth">Crawl History</Tabs.Tab>
-                <Tabs.Tab value="ranking">Search Console</Tabs.Tab>
+                <Tabs.Tab value="analytics">Analytics</Tabs.Tab>
               </Tabs.List>
             </div>
 

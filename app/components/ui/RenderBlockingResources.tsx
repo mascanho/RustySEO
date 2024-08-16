@@ -43,10 +43,10 @@ const RenderBlockingResources = ({ pageSpeed }: { pageSpeed: any }) => {
                   <td className="px-4 py-2 text-sm border-b  border-b-gray-100 text-blue-600 truncate">
                     {item?.url}
                   </td>
-                  <td className="px-4  text-xs border text-gray-700 dark:text-white/50">
+                  <td className="px-4  text-xs border-b text-gray-700 dark:text-white/50">
                     {Math.round(item?.totalBytes)}
                   </td>
-                  <td className="px-4 text-xs border text-gray-700 dark:text-white/50">
+                  <td className="px-4 text-xs border-b text-gray-700 dark:text-white/50">
                     {item?.wastedMs} ms
                   </td>
                 </tr>
