@@ -146,8 +146,8 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
   };
 
   return (
-    <div className="relative w-full max-w-7xl mx-auto text-xs">
-      <div className=" -top-12 -right-0 w-full flex space-x-3 justify-end pb-3 border-b dark:border-b-brand-normal/10">
+    <div className="relative w-full max-w-8xl mx-auto text-xs">
+      <div className=" -top-16 -right-0 w-full flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10">
         <div className="flex items-center space-x-2 relative">
           <IoIosSearch className="w-4 h-4 absolute left-4 dark:text-white" />
           <input
@@ -173,7 +173,10 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
               Refresh Table
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-black/20 dark:bg-white/20" />
-            <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer">
+            <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer  ">
+              Match URL
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer  ">
               Clear Table
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -182,7 +185,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
         <div className="w-[2px] h-8 bg-gray-300 dark:bg-gray-200/20" />
 
         <DropdownMenu>
-          <DropdownMenuTrigger className="transition-all hover:bg-sky-500 ease-linear active:scale-75 w-fit px-4 rounded-md justify-center flex items-center bg-sky-600 text-white">
+          <DropdownMenuTrigger className="transition-all hover:bg-brand-bright ease-linear active:scale-75 w-fit px-4 rounded-md justify-center flex items-center bg-brand-bright text-white">
             <FiDownload className="w-4 h-4 mr-2 mb-1" />
             Export
           </DropdownMenuTrigger>
@@ -221,8 +224,13 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
                   <td className="border">
                     {new Date(data.date).toLocaleDateString()}
                   </td>
-                  <td align="left" className="py-2 border relative group">
-                    {data.url}
+                  <td
+                    align="left"
+                    className="py-2 border relative group min-w-[360px] "
+                  >
+                    {data.url.length > 50
+                      ? data.url.substring(0, 50) + "..."
+                      : data.url}
                     <span
                       className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                       onClick={() => handleAddTodo(data.url)}
@@ -230,11 +238,17 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
                       <FiCheckCircle className="text-green-500" />
                     </span>
                   </td>
-                  <td align="left" className={`border`}>
+                  <td
+                    align="left"
+                    className={`border ${data?.title?.length > 60 ? "text-red-500" : "text-green-700"}`}
+                  >
                     {/* @ts-ignore */}
                     {data.title}
                   </td>
-                  <td align="left" className={`border`}>
+                  <td
+                    align="left"
+                    className={`border ${data?.description?.length > 160 ? "text-red-500" : "text-green-700"}`}
+                  >
                     {/* @ts-ignore */}
                     {data.description}
                   </td>

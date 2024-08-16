@@ -46,21 +46,39 @@ const LinkAnalysis = ({ visibleLinks }: { visibleLinks: any[] }) => {
             </div>
           </div>
         </section>
-        <footer className="pb-1 m-2 rounded-md text-xs flex justify-end text-black/50 space-x-4 pt-0.5">
+        <footer className="pb-1 m-2 rounded-md text-xs flex justify-end text-black/50 space-x-3 pt-0.5">
           <p className="text-xs">
-            Links Found:{" "}
+            Total:{" "}
             <span className="px-1 py-0.5 bg-gray-400 text-white rounded-md">
               {visibleLinks.length}
             </span>
           </p>
+          <p className="text-xs">
+            Internal:{" "}
+            <span className="px-1 py-0.5 bg-blue-400 text-white rounded-md">
+              {visibleLinks.length}
+            </span>
+          </p>
+          <p className="text-xs">
+            External:{" "}
+            <span className="px-1 py-0.5 bg-blue-400 text-white rounded-md">
+              {visibleLinks.length}
+            </span>
+          </p>
           <p>
-            Links with Text:{" "}
+            With Text:{" "}
             <span className="px-1 py-0.5 bg-green-400 text-white rounded-md">
               {visibleLinks.filter((link) => link[1]).length}
             </span>
           </p>
           <p>
-            No Anchor Text:{" "}
+            Missing Text:{" "}
+            <span className="px-1 py-0.5 bg-red-400 text-white rounded-md min-w-3">
+              {visibleLinks.filter((link) => !link[1]).length}
+            </span>
+          </p>
+          <p>
+            404:{" "}
             <span className="px-1 py-0.5 bg-red-400 text-white rounded-md min-w-3">
               {visibleLinks.filter((link) => !link[1]).length}
             </span>

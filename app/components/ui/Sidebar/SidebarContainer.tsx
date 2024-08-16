@@ -16,6 +16,8 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { useOllamaStore } from "@/store/store";
 import AIFeedbackTab from "./AiAnalysis";
 import { useParams } from "next/navigation";
+import PopUpTable from "../CrawlHistory/PopUpTable";
+import RankingInfo from "./RankingInfo";
 
 // Define prop types for better type checking
 interface SidebarContainerProps {
@@ -100,7 +102,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
             </Tabs.Panel>
 
             <Tabs.Panel value="third" className="h-full w-full">
-              <PageRankChart pageRank={pageRank} />
+              <RankingInfo />
             </Tabs.Panel>
 
             <Tabs.Panel value="summary" className="h-full w-full">

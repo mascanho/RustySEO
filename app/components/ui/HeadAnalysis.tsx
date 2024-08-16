@@ -89,7 +89,7 @@ export const HeadAnalysis = ({
             >
               Page Title:
             </span>
-            <span className="flex ml-2 text-black dark:text-white  font-black">
+            <span className="flex text-base ml-2 text-black dark:text-white  font-black">
               {pageTitle[0]}
             </span>
             {/* {pageTitle.length > 0 && ( */}
@@ -112,7 +112,7 @@ export const HeadAnalysis = ({
             >
               Description:
             </span>
-            <span className="text-black  font-black ml-2 dark:text-white">
+            <span className="text-black text-base font-black ml-2 dark:text-white">
               {pageDescription[0]}
             </span>
             {/* {pageDescription[0]?.length > 0 && ( */}

@@ -87,13 +87,10 @@ const PopUpTable = ({ data }: any) => {
   console.log(data, "From GSC bla bla bla");
 
   return (
-    <section className="overflow-x-auto bg-white dark:bg-gray-800 shadow-md rounded-lg">
-      <table className="min-w-full table-auto">
+    <section className="overflow-x-auto bg-white dark:bg-brand-darker p-0 rounded-lg text-xs">
+      <table className="min-w-full">
         <thead>
           <tr className="bg-gray-200 dark:bg-gray-700">
-            <th className="px-4 py-2 text-left text-gray-600 dark:text-gray-300">
-              Date
-            </th>
             <th className="px-4 py-2 text-left text-gray-600 dark:text-gray-300">
               Clicks
             </th>
@@ -106,9 +103,6 @@ const PopUpTable = ({ data }: any) => {
             <th className="px-4 py-2 text-left text-gray-600 dark:text-gray-300">
               Position
             </th>
-            <th className="px-4 py-2 text-left text-gray-600 dark:text-gray-300">
-              Queries
-            </th>
           </tr>
         </thead>
         <tbody>
@@ -117,9 +111,6 @@ const PopUpTable = ({ data }: any) => {
               key={index}
               className="border-b border-gray-200 dark:border-gray-700"
             >
-              <td className="px-4 py-2 text-gray-800 dark:text-gray-300">
-                {row?.date}
-              </td>
               <td className="px-4 py-2 text-gray-800 dark:text-gray-300">
                 {row.clicks.toLocaleString()}
               </td>
@@ -131,9 +122,6 @@ const PopUpTable = ({ data }: any) => {
               </td>
               <td className="px-4 py-2 text-gray-800 dark:text-gray-300">
                 {row.position.toFixed(1)}
-              </td>
-              <td className="px-4 py-2 text-gray-800 dark:text-gray-300">
-                {row.queries.toLocaleString()}
               </td>
             </tr>
           ))}

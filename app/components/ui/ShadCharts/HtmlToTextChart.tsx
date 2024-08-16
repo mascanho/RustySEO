@@ -113,7 +113,7 @@ export function HtmlToTextChart({ htmlToTextRatio }: any) {
             {htmlToTextRatio?.[0] &&
               Math.round(htmlToTextRatio?.[0]?.[0] * 100) < 25 && (
                 <>
-                  <span>There is a small content to HTML ratio.</span>
+                  <span>There is a small Text to HTML ratio.</span>
                   <span>This page needs more text to rank better.</span>
                 </>
               )}
