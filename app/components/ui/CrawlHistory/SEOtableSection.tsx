@@ -48,19 +48,19 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
   const [sortColumn, setSortColumn] = useState<keyof PerformanceData>("date");
   const [todoUrl, setTodoUrl] = useState<string | null>(null);
 
+  // Effect to update data when dbdata changes
+  useEffect(() => {
+    if (Array.isArray(dbdata)) {
+      setData(dbdata);
+    }
+  }, []);
+
   // GET THE DATA FROM THE DB
   useEffect(() => {
     invoke("read_seo_data_from_db").then((result: any) => {
       console.log(result);
       setData(result);
     });
-  }, []);
-
-  // Effect to update data when dbdata changes
-  useEffect(() => {
-    if (Array.isArray(dbdata)) {
-      setData(dbdata);
-    }
   }, []);
 
   // Filter and sort data

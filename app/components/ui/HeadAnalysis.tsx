@@ -80,7 +80,7 @@ export const HeadAnalysis = ({
           </div>
           <div className="flex items-center mt-2 ">
             <div
-              className={`flex justify-center items-center  ${pageTitle[0]?.length > 60 ? "bg-red-500 text-white" : pageTitle[0]?.length < 60 && pageTitle[0]?.length !== 0 ? "bg-green-500 text-white" : "bg-gray-200"} w-8 h-8 p-1.5 rounded-full`}
+              className={`flex justify-center items-center ${pageTitle[0]?.length <= 60 && "bg-green-500 text-white"}  ${pageTitle[0]?.length > 60 ? "bg-red-500 text-white" : pageTitle[0]?.length < 60 && pageTitle[0]?.length !== 0 ? "bg-green-500 text-white" : "bg-gray-200"} w-8 h-8 p-1.5 rounded-full`}
             >
               <TagIcon />
             </div>
@@ -152,7 +152,7 @@ export const HeadAnalysis = ({
                 hreflangs.map((hreflang: any, index: any) => (
                   <div key={index}>
                     <span
-                      className="flex ml-2 text-xs  text-black p-0.2 border px-2 bg-gray-100 rounded-md"
+                      className="flex ml-1 text-xs  text-black p-0.2 border px-2 bg-gray-100 rounded-md"
                       key={index}
                     >
                       {hreflang?.lang}

@@ -45,18 +45,18 @@ const GooglePreview = ({
         <div className="w-full">
           <div className="flex items-center mb-2 ">
             {favicon_url[0] && (
-              <div className="h-fit p-1 bg-white rounded-full border -mr-2 ">
+              <div className="h-fit p-1.5 bg-white rounded-full border -mr-2 ">
                 <img
                   src={favicon_url[0]}
                   alt="favicon"
-                  className="rounded-full min-w-12 w-fullw-full max-w-12 max-h-12 object-contain"
+                  className="rounded-full min-w-10 w-fullw-full max-w-10 max-h-10 object-contain"
                 />
               </div>
             )}
             {favicon_url[0] && (
               <div className="ml-4">
                 <a
-                  className="text-black dark:text-white"
+                  className="text-blue-800 dark:text-white"
                   style={{
                     textDecoration: "none",
                     fontSize: "18px",

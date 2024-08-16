@@ -51,7 +51,7 @@ const SEOImprovements = ({
       failsAdvise:
         "Your page title should have between 10 and 60 characters. Your title length is: ",
       passAdvice: "Title tag is unique and includes primary keywords.",
-      improved: pageTitle && pageTitle[0]?.length < 60 ? true : false,
+      improved: pageTitle && pageTitle[0]?.length <= 60 ? true : false,
       aiImprovement: aiPageTitle,
       length: pageTitle && pageTitle[0]?.length,
     },

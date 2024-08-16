@@ -8,7 +8,7 @@ import {
   MenubarShortcut,
   MenubarTrigger,
 } from "@/components/ui/menubar";
-import { Drawer, Modal } from "@mantine/core";
+import { Alert, Drawer, Modal } from "@mantine/core";
 import Todo from "./Todo";
 import { useDisclosure } from "@mantine/hooks";
 import TodoItems from "./TodoItems";
@@ -17,7 +17,6 @@ import PageSpeedInsigthsApi from "../PageSpeedInsigthsApi";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import { LuPanelRight } from "react-icons/lu";
 import OllamaSelect from "./OllamaSelector/OllamaSelect";
-import { invoke } from "@tauri-apps/api/tauri";
 
 const TopMenuBar = () => {
   const onClose = useCallback(async () => {
@@ -191,32 +190,36 @@ const TopMenuBar = () => {
             <MenubarItem onClick={openPageSpeed}>Crawl Scheduler</MenubarItem>
             <MenubarItem
               onClick={() => {
-                openBrowserWindow("https://www.ollama.com/");
+                const userConfirmed = window.confirm(
+                  "Are you sure you want to perform this action?",
+                );
+
+                if (userConfirmed) {
+                  // User confirmed the action
+                  window?.location?.reload();
+                  // Here, you can call any function or API to perform the actual action
+                } else {
+                  // User canceled the action
+                  console.log("Action was canceled.");
+                }
               }}
             >
-              Ollama
+              Clear Cache
             </MenubarItem>
             <MenubarSeparator />
             <MenubarItem>Share</MenubarItem>
             <MenubarSeparator />
-            <MenubarItem>Print</MenubarItem>
+            <MenubarItem>Clear Cache</MenubarItem>
           </MenubarContent>
         </MenubarMenu>
         <MenubarMenu>
           <MenubarTrigger className="ml-3">Help</MenubarTrigger>
           <MenubarContent>
-            <MenubarItem onClick={openPageSpeed}>PageSpeed Key</MenubarItem>
-            <MenubarItem
-              onClick={() => {
-                openBrowserWindow("https://www.ollama.com/");
-              }}
-            >
-              Ollama
-            </MenubarItem>
+            <MenubarItem onClick={openPageSpeed}>About</MenubarItem>
+            <MenubarItem>Ollama</MenubarItem>
             <MenubarSeparator />
             <MenubarItem>Share</MenubarItem>
             <MenubarSeparator />
-            <MenubarItem>Print</MenubarItem>
           </MenubarContent>
         </MenubarMenu>
       </Menubar>
