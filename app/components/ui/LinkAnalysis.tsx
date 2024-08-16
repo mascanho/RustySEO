@@ -1,6 +1,21 @@
 import React from "react";
 import { PiLinkSimpleBold } from "react-icons/pi";
-const LinkAnalysis = ({ visibleLinks }: { visibleLinks: any[] }) => {
+const LinkAnalysis = ({
+  links,
+  visibleLinks,
+}: {
+  visibleLinks: any[];
+  links: any;
+}) => {
+  console.log(links, "from the links table");
+
+  const links404 = links.filter((link: any) => link?.status_code === 404);
+
+  const linksExternal = links.filter((link: any) => link?.is_external === true);
+  const linksInternal = links.filter(
+    (link: any) => link?.is_external === false,
+  );
+
   return (
     <section className="table_container">
       <h2 className="text-base text-left pl-1 flex items-center pt-3 font-bold w-full text-black/60">
@@ -56,23 +71,17 @@ const LinkAnalysis = ({ visibleLinks }: { visibleLinks: any[] }) => {
           <p className="text-xs">
             Internal:{" "}
             <span className="px-1 py-0.5 bg-blue-400 text-white rounded-md">
-              {visibleLinks.length}
+              {linksInternal.length}
             </span>
           </p>
           <p className="text-xs">
             External:{" "}
             <span className="px-1 py-0.5 bg-blue-400 text-white rounded-md">
-              {visibleLinks.length}
+              {linksExternal.length}
             </span>
           </p>
           <p>
-            With Text:{" "}
-            <span className="px-1 py-0.5 bg-green-400 text-white rounded-md">
-              {visibleLinks.filter((link) => link[1]).length}
-            </span>
-          </p>
-          <p>
-            Missing Text:{" "}
+            Missing Anchor:{" "}
             <span className="px-1 py-0.5 bg-red-400 text-white rounded-md min-w-3">
               {visibleLinks.filter((link) => !link[1]).length}
             </span>

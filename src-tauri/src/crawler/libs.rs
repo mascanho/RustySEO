@@ -454,7 +454,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
     // Prepare the request
     let site_url = "sc-domain:algarvewonders.com";
     let query = SearchAnalyticsQuery {
-        start_date: "2024-08-01".to_string(),
+        start_date: "2024-01-01".to_string(),
         end_date: "2024-08-12".to_string(),
         dimensions: vec!["query".to_string(), "page".to_string()],
     };

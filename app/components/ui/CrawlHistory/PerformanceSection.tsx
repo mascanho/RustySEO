@@ -272,7 +272,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
                             />
                           </span>
                         </PopoverTrigger>
-                        <PopoverContent className="w-full">
+                        <PopoverContent className="w-[600px]">
                           <PopUpTable data={matchedUrlData} />
                         </PopoverContent>
                       </Popover>

@@ -674,7 +674,10 @@ const Home: React.FC<HomeProps> = () => {
                   openGraphDetails={openGraphDetails}
                 />
                 <HeadingsTable headings={headings} />
-                <LinkAnalysis visibleLinks={visibleLinks} />
+                <LinkAnalysis
+                  links={linkStatusCodes}
+                  visibleLinks={visibleLinks}
+                />
                 <ImageAnalysis images={images} />
                 {/**/}
                 <ThirdPartyScripts pageSpeed={pageSpeed} />

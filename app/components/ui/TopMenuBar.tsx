@@ -17,6 +17,7 @@ import PageSpeedInsigthsApi from "../PageSpeedInsigthsApi";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import { LuPanelRight } from "react-icons/lu";
 import OllamaSelect from "./OllamaSelector/OllamaSelect";
+import GoogleSearchConsoleModal from "./GoogleSearchConsole/GoogleSearchConsoleModal";
 
 const TopMenuBar = () => {
   const onClose = useCallback(async () => {
@@ -35,6 +36,11 @@ const TopMenuBar = () => {
 
   const [openedOllama, { open: openOllama, close: closeOllama }] =
     useDisclosure(false);
+
+  const [
+    openedSearchConsole,
+    { open: openSearchConsole, close: closeSearchConsole },
+  ] = useDisclosure(false);
 
   useEffect(() => {
     const fetchUrlFromSessionStorage = () => {
@@ -116,6 +122,17 @@ const TopMenuBar = () => {
         <TodoItems url={url} strategy={strategy} />
       </Drawer>
 
+      {/* GOOGLE SEACH CONSOLE MODAL */}
+      <Modal
+        opened={openedSearchConsole}
+        onClose={closeSearchConsole}
+        title="Search Console"
+        centered
+      >
+        {/* @ts-ignore */}
+        <GoogleSearchConsoleModal close={closeSearchConsole} />
+      </Modal>
+
       {/* Menubar */}
       <Menubar className="fixed w-full top-0 z-[1000] p-0 pl-0 dark:bg-brand-darker dark:text-white bg-white dark:border-b-brand-dark border-b pb-1">
         <MenubarMenu>
@@ -174,13 +191,21 @@ const TopMenuBar = () => {
               PageSpeed Insights
             </MenubarItem>
             <MenubarSeparator />
+            <MenubarItem onClick={openSearchConsole}>
+              Search Console
+            </MenubarItem>
+            <MenubarSeparator />
             <MenubarItem
+              className="flex items-center"
               onClick={() => {
                 // openBrowserWindow("https://www.ollama.com/");
                 openOllama();
               }}
             >
-              Ollama
+              Ollama{" "}
+              <span className="text-[10px] text-gray-300/50 ml-1">
+                (AI Models)
+              </span>
             </MenubarItem>
           </MenubarContent>
         </MenubarMenu>
