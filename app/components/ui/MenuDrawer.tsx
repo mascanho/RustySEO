@@ -1,24 +1,24 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Drawer, Button, Group } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { MENUS } from "@/app/Data/Menus";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 function MenuDrawer() {
   const [opened, setOpened] = useState(false);
   const mobile = useMediaQuery("(max-width: 768px)");
-
+  const [badge, setBadge] = useState("Page Crawler");
   const pathname = usePathname();
 
   let path = pathname;
-  if (path === "/") {
-    path = "Home";
-  }
 
-  if (path === "/sitemaps") {
-    path = "Sitemaps";
-  }
+  useEffect(() => {
+    if (path === "/images") {
+      setBadge("Image Converter");
+    }
+  }, []);
 
   return (
     <>
@@ -29,9 +29,12 @@ function MenuDrawer() {
             alt=""
             className="w-6 h-auto py-1 object-cover mr-2"
           />
-          <span className="text-xs bg-brand-dark px-3  py-1  rounded-full text-white">
-            Page crawler
-          </span>
+          <Link
+            href="/images"
+            className="text-xs bg-brand-dark px-3  py-1  rounded-full text-white"
+          >
+            {badge}
+          </Link>
         </div>
       </div>
     </>
