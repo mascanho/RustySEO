@@ -390,7 +390,7 @@ button:where([data-active]) {
 
 /* Style the draggable part of the scrollbar */
 ::-webkit-scrollbar-thumb {
-  @apply bg-brand-bright dark:bg-sky-900 z-0 !important;
+  @apply bg-brand-bright dark:bg-sky-600 z-0 !important;
 }
 
 /* Style the draggable part of the scrollbar on hover */

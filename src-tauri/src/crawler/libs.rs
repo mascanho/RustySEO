@@ -1,3 +1,4 @@
+use chrono::Utc;
 use directories::ProjectDirs;
 use hyper::Client as HyperClient;
 use hyper_rustls::HttpsConnectorBuilder;
@@ -363,6 +364,9 @@ struct InstalledInfo {
     client_secret: String,
     redirect_uris: Vec<String>,
     aggregationType: String,
+    range: String,
+    search_type: String,
+    url: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -380,16 +384,50 @@ pub struct Credentials {
     pub range: String,
 }
 
+// helper function to move credentials around
+async fn read_credentials_file() -> Result<InstalledInfo, String> {
+    let config_dirs =
+        ProjectDirs::from("", "", "rustyseo").expect("Failed to get project directories");
+    let config_dir = config_dirs.data_dir();
+    let secret_file = config_dir.join("client_secret.json");
+
+    let data = fs::read_to_string(&secret_file)
+        .await
+        .expect("Failed to read client secret file");
+    let secret: ClientSecret =
+        serde_json::from_str(&data).expect("Failed to parse client secret file");
+
+    let result = InstalledInfo {
+        client_id: secret.installed.client_id,
+        project_id: secret.installed.project_id,
+        auth_uri: secret.installed.auth_uri,
+        token_uri: secret.installed.token_uri,
+        auth_provider_x509_cert_url: secret.installed.auth_provider_x509_cert_url,
+        client_secret: secret.installed.client_secret,
+        redirect_uris: secret.installed.redirect_uris,
+        aggregationType: secret.installed.aggregationType,
+        range: secret.installed.range,
+        search_type: secret.installed.search_type,
+        url: secret.installed.url,
+    };
+
+    Ok(result)
+}
+
 // FUNCTION TO SET GOOGLE SEARCH CONSOLE DATA ON THE DISK
 pub async fn set_search_console_credentials(credentials: Credentials) -> Result<PathBuf, String> {
-    println!("SET SEARCH CONSOLE CREDENTIALS: {:?}", credentials);
+    let credentials_client_id = credentials.clientId;
+    let credentials_project_id = credentials.projectId;
+    let credentials_client_secret = credentials.clientSecret;
+    let credentials_url = credentials.url;
+    let credentials_search_type = credentials.searchType;
+    let credentials_range = credentials.range;
 
     // Define the JSON structure
     let client_secret = ClientSecret {
         installed: InstalledInfo {
             aggregationType: "byPage".to_string(),
-            client_id: "826003140984-umml9pa2cpuce9nnef2scd90a9tatn2s.apps.googleusercontent.com"
-                .to_string(),
+            client_id: credentials_client_id.to_string(),
             project_id: "110933103965834828344".to_string(),
             auth_uri: "https://accounts.google.com/o/oauth2/auth".to_string(),
             token_uri: "https://oauth2.googleapis.com/token".to_string(),
@@ -399,6 +437,9 @@ pub async fn set_search_console_credentials(credentials: Credentials) -> Result<
                 "urn:ietf:wg:oauth:2.0:oob".to_string(),
                 "http://localhost".to_string(),
             ],
+            search_type: credentials_search_type.to_string(),
+            range: credentials_range.to_string(),
+            url: credentials_url.to_string(),
         },
     };
 
@@ -462,11 +503,44 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
         .build();
     let client = HyperClient::builder().build(https);
 
+    // READ THE FILE ON THE DISK
+    let gsc_settings_info = read_credentials_file()
+        .await
+        .expect("Failed to read credentials file");
+    let initial_date = gsc_settings_info.range;
+    let url = gsc_settings_info.url;
+    let search_type = gsc_settings_info.search_type;
+
+    // Initialize variables
+    let mut domain = false;
+    let mut site = false;
+
+    match search_type.as_str() {
+        "domain" => {
+            println!("Domain Selected");
+            domain = true;
+        }
+        "site" => {
+            println!("Site Selected");
+            site = true;
+        }
+        _ => {
+            println!("Search type: Unknown");
+        }
+    }
+
+    println!("domain is: {}", domain);
+    println!("site is: {}", site);
+
+    // Set the end date to TODAY's date
+    let finish_date = Utc::now().format("%Y-%m-%d").to_string();
+
     // Prepare the request
+
     let site_url = "sc-domain:algarvewonders.com";
     let query = SearchAnalyticsQuery {
         start_date: "2024-01-01".to_string(),
-        end_date: "2024-08-12".to_string(),
+        end_date: finish_date,
         dimensions: vec!["query".to_string(), "page".to_string()],
     };
     let body = serde_json::to_string(&query)?;

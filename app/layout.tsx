@@ -1,3 +1,4 @@
+export const dynamic = "force-static";
 import "@mantine/core/styles.css";
 import { Roboto } from "next/font/google";
 import "./globals.css";

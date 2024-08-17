@@ -1,27 +1,29 @@
 // @ts-nocheck
+import { invoke } from "@tauri-apps/api/tauri";
 import React, { useState } from "react";
 
-const GoogleSearchConsoleModal = ({ onSubmit }) => {
+const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
   const [formData, setFormData] = useState({
     clientId: "",
     projectId: "",
     clientSecret: "",
     url: "",
-    searchType: "",
-    duration: "",
+    propertyType: "",
+    range: "",
   });
 
   const [errors, setErrors] = useState({});
 
   const searchTypes = [
     { value: "domain", label: "Domain" },
-    { value: "url", label: "URL" },
+    { value: "site", label: "URL" },
   ];
 
   const durations = [
-    { value: "1month", label: "1 Month" },
-    { value: "3months", label: "3 Months" },
-    { value: "6months", label: "6 Months" },
+    { value: "1 month", label: "1 Month" },
+    { value: "3 months", label: "3 Months" },
+    { value: "6 months", label: "6 Months" },
+    { value: "12 months", label: "12 Months" },
   ];
 
   const handleChange = (e) => {
@@ -46,11 +48,11 @@ const GoogleSearchConsoleModal = ({ onSubmit }) => {
     if (!formData.url.trim()) {
       newErrors.url = "URL is required";
     }
-    if (!formData.searchType) {
-      newErrors.searchType = "Search Type is required";
+    if (!formData.propertyType) {
+      newErrors.propertyType = "Search Type is required";
     }
-    if (!formData.duration) {
-      newErrors.duration = "Duration is required";
+    if (!formData.range) {
+      newErrors.range = "Duration is required";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -60,6 +62,14 @@ const GoogleSearchConsoleModal = ({ onSubmit }) => {
     e.preventDefault();
     if (validateForm()) {
       console.log(formData);
+
+      invoke("set_google_search_console_credentials", {
+        credentials: formData,
+      }).then(() => {
+        console.log("Credentials saved successfully");
+      });
+
+      // close;
     }
   };
 
@@ -169,67 +179,64 @@ const GoogleSearchConsoleModal = ({ onSubmit }) => {
 
         <div className="mb-4">
           <label
-            htmlFor="searchType"
+            htmlFor="propertyType"
             className="block text-gray-700 font-bold mb-2"
           >
-            Search Type
+            Property Type
           </label>
           <select
-            id="searchType"
-            name="searchType"
-            value={formData.searchType}
+            id="propertyType"
+            name="propertyType"
+            value={formData.propertyType}
             onChange={handleChange}
             className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-0 ${
-              errors.searchType
+              errors.propertyType
                 ? "border-red-500 focus:ring-red-200"
                 : "focus:ring-blue-200"
             }`}
           >
-            <option value="">Select a search type</option>
+            <option value="">Select a property type</option>
             {searchTypes.map((type) => (
               <option key={type.value} value={type.value}>
                 {type.label}
               </option>
             ))}
           </select>
-          {errors.searchType && (
-            <p className="text-red-500 text-sm mt-1">{errors.searchType}</p>
+          {errors.propertyType && (
+            <p className="text-red-500 text-sm mt-1">{errors.propertyType}</p>
           )}
         </div>
 
         <div className="mb-6">
-          <label
-            htmlFor="duration"
-            className="block text-gray-700 font-bold mb-2"
-          >
-            Duration
+          <label htmlFor="range" className="block text-gray-700 font-bold mb-2">
+            Date Range
           </label>
           <select
-            id="duration"
-            name="duration"
-            value={formData.duration}
+            id="range"
+            name="range"
+            value={formData.range}
             onChange={handleChange}
             className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-0 ${
-              errors.duration
+              errors.range
                 ? "border-red-500 focus:ring-red-200"
                 : "focus:ring-blue-200"
             }`}
           >
-            <option value="">Select a duration</option>
-            {durations.map((duration) => (
-              <option key={duration.value} value={duration.value}>
-                {duration.label}
+            <option value="">Select a range</option>
+            {durations.map((range) => (
+              <option key={range.value} value={range.value}>
+                {range.label}
               </option>
             ))}
           </select>
-          {errors.duration && (
-            <p className="text-red-500 text-sm mt-1">{errors.duration}</p>
+          {errors.range && (
+            <p className="text-red-500 text-sm mt-1">{errors.range}</p>
           )}
         </div>
 
         <button
           type="submit"
-          className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200"
+          className="w-full active:scale-95  bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200"
         >
           Submit
         </button>

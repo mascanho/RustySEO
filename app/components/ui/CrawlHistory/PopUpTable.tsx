@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useMemo } from "react";
 
 const PopUpTable = ({ data }: any) => {

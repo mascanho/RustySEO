@@ -189,8 +189,8 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
             />
             <TextInput
               label="Page Url"
-              placeholder="Custom layout"
-              value={url}
+              placeholder={!url ? "" : url}
+              value={url || "..."}
               readOnly
             />
             <Button className="mt-4 w-full" fullWidth onClick={handleAddTask}>

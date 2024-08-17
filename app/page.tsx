@@ -1,5 +1,6 @@
 // @ts-nocheck
 "use client";
+export const dynamic = "force-static";
 import Link from "next/link";
 import React, { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";

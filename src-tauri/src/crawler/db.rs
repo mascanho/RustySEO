@@ -224,7 +224,7 @@ pub fn add_technical_data(data: Vec<&String>, url: &str) -> Result<()> {
     )
     .expect("Failed to insert data into technical_data table");
 
-    println!("Data: {:#?}", data[0]);
+    //println!("Data: {:#?}", data[0]);
 
     Ok(())
 }
@@ -314,7 +314,7 @@ pub fn push_gsc_data_to_db(data: &Vec<serde_json::Value>) -> Result<()> {
         let objects = item["rows"].as_array().unwrap();
 
         for object in objects {
-            println!("{:#?}", object);
+            //println!("{:#?}", object);
             let url = object["keys"][1].as_str().unwrap();
             let query = object["keys"][0].as_str().unwrap();
             let ctr = object["ctr"].as_f64().unwrap();
@@ -386,7 +386,7 @@ pub fn match_gsc_url(url: &str) -> Result<(), Box<dyn std::error::Error>> {
     let matched_urls: Vec<GscUrl> = matched_urls.collect::<Result<Vec<_>, _>>()?;
 
     // Print matched URLs
-    println!("Matched URLs: {:#?}", matched_urls);
+    //println!("Matched URLs: {:#?}", matched_urls);
 
     // Insert matched URLs into the 'gsc_matched' table
     insert_matched_urls(&conn, &matched_urls)?;
