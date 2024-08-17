@@ -435,7 +435,7 @@ pub async fn set_search_console_credentials(credentials: Credentials) -> Result<
             client_secret: "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".to_string(),
             redirect_uris: vec![
                 "urn:ietf:wg:oauth:2.0:oob".to_string(),
-                "http://localhost".to_string(),
+                //"http://localhost".to_string(),
             ],
             search_type: credentials_search_type.to_string(),
             range: credentials_range.to_string(),
