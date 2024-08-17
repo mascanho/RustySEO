@@ -134,7 +134,7 @@ const TopMenuBar = () => {
       </Modal>
 
       {/* Menubar */}
-      <Menubar className="fixed w-full top-0 z-[1000] p-0 pl-0 dark:bg-brand-darker dark:text-white bg-white dark:border-b-brand-dark border-b pb-1">
+      <Menubar className="fixed w-full top-0 z-[1000] p-0 pl-0 -ml-2 dark:bg-brand-darker dark:text-white bg-white dark:border-b-brand-dark border-b pb-1">
         <MenubarMenu>
           <MenubarTrigger className="ml-4">File</MenubarTrigger>
           <MenubarContent>

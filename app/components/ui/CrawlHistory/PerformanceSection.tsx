@@ -27,6 +27,13 @@ import { Modal } from "@mantine/core";
 import Todo from "../Todo";
 import { useDisclosure } from "@mantine/hooks";
 
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
+
 // Define TypeScript types
 interface PerformanceData {
   date: string;
@@ -60,6 +67,38 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
   const [todoUrl, setTodoUrl] = useState<string | null>(null);
   const [matchedUrlData, setMatchedUrlData] = useState([]);
   const [todoStrategy, setTodoStrategy] = useState<string>("");
+
+  // CONTEXT MENU SETTINGS
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const [showMenu, setShowMenu] = useState(false);
+
+  const handleContextMenu = (event: any) => {
+    event.preventDefault();
+    setMenuPosition({ x: event.pageX, y: event.pageY });
+    setShowMenu(true);
+  };
+
+  const handleCloseMenu = () => {
+    setShowMenu(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showMenu) {
+        handleCloseMenu();
+      }
+    };
+
+    window.addEventListener("click", handleClickOutside);
+    return () => {
+      window.removeEventListener("click", handleClickOutside);
+    };
+  }, [showMenu]);
+
+  const menuItems = [
+    { label: "Action 1", onClick: () => console.log("Action 1 clicked") },
+    { label: "Action 2", onClick: () => console.log("Action 2 clicked") },
+  ];
 
   const [openedModal, { open: openModal, close: closeModal }] =
     useDisclosure(false);
@@ -277,28 +316,42 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
                         <FaMobileAlt />
                       )}
                     </td>
-                    <td align="left" className="py-2 border relative group">
-                      {data.url}
-                      <span
-                        className="absolute right-7 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                        onClick={() => handleAddTodo(data.url, data.strategy)}
-                      >
-                        <FiCheckCircle className="text-green-500" />
-                      </span>{" "}
-                      <Popover>
-                        <PopoverTrigger>
-                          <span className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                            <CiViewList
-                              className="text-blue-500 text-base"
-                              onClick={() => handleUrlMatch(data.url)}
-                            />
+                    <ContextMenu>
+                      <td align="left" className="py-2 border relative group">
+                        <ContextMenuTrigger className="w-full">
+                          <ContextMenuContent>
+                            <ContextMenuItem>{data.strategy}</ContextMenuItem>
+                            <ContextMenuItem>Billing</ContextMenuItem>
+                            <ContextMenuItem>Team</ContextMenuItem>
+                            <ContextMenuItem>Subscription</ContextMenuItem>
+                          </ContextMenuContent>
+                          <span className="hover:text-blue-500 cursor-pointer">
+                            {data.url}
                           </span>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[600px]">
-                          <PopUpTable data={matchedUrlData} />
-                        </PopoverContent>
-                      </Popover>
-                    </td>
+                          <span
+                            className="absolute right-7 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                            onClick={() =>
+                              handleAddTodo(data.url, data.strategy)
+                            }
+                          >
+                            <FiCheckCircle className="text-green-500" />
+                          </span>{" "}
+                          <Popover>
+                            <PopoverTrigger>
+                              <span className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                <CiViewList
+                                  className="text-blue-500 text-base"
+                                  onClick={() => handleUrlMatch(data.url)}
+                                />
+                              </span>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[600px]">
+                              <PopUpTable data={matchedUrlData} />
+                            </PopoverContent>
+                          </Popover>
+                        </ContextMenuTrigger>
+                      </td>
+                    </ContextMenu>
                     <td
                       className={`border ${
                         data.performance <= 0.5

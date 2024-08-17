@@ -22,9 +22,13 @@ function MenuDrawer() {
 
   return (
     <>
-      <div className="items-center hidden md:flex  z-[2000] absolute top-[6px] left-5">
-        <div className="flex items-center">
-          <img src="icon.png" alt="" className="w-8 h-8 mr-2" />
+      <div className="items-center hidden md:flex  z-[2000] absolute top-[6px] left-4">
+        <div className="flex items-center flex bg-transparent rounded-md">
+          <img
+            src="icon.png"
+            alt=""
+            className="w-6 h-auto py-1 object-cover mr-2"
+          />
           <span className="text-xs bg-brand-dark px-3  py-1  rounded-full text-white">
             Page crawler
           </span>
