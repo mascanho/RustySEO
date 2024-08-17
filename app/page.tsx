@@ -699,6 +699,7 @@ const Home: React.FC<HomeProps> = () => {
                 pageDescription={pageDescription}
                 hreflangs={hreflangs}
                 canonical={canonical}
+                crawl={handleClick}
               />
             </Tabs.Panel>
 
@@ -707,7 +708,11 @@ const Home: React.FC<HomeProps> = () => {
             </Tabs.Panel>
 
             <Tabs.Panel value="fifth">
-              <CrawlHistory loading={loading} dbdata={DBDATA} />
+              <CrawlHistory
+                crawl={handleClick}
+                loading={loading}
+                dbdata={DBDATA}
+              />
             </Tabs.Panel>
           </Tabs>
         </section>

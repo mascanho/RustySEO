@@ -55,6 +55,7 @@ interface PerformanceSectionProps {
 
 const PerformanceSection: React.FC<PerformanceSectionProps> = ({
   dbdata,
+  crawl,
 }: any) => {
   // Component state and handlers
   const [download, setDownload] = useState("");
@@ -83,7 +84,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
   };
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: any) => {
       if (showMenu) {
         handleCloseMenu();
       }
@@ -319,9 +320,13 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
                     <ContextMenu>
                       <td align="left" className="py-2 border relative group">
                         <ContextMenuTrigger className="w-full">
-                          <ContextMenuContent>
-                            <ContextMenuItem>{data.strategy}</ContextMenuItem>
-                            <ContextMenuItem>Billing</ContextMenuItem>
+                          <ContextMenuContent className="text-xs">
+                            <ContextMenuItem className="text-xs">
+                              {data.strategy}
+                            </ContextMenuItem>
+                            <ContextMenuItem onClick={() => crawl(data.url)}>
+                              Crawl
+                            </ContextMenuItem>
                             <ContextMenuItem>Team</ContextMenuItem>
                             <ContextMenuItem>Subscription</ContextMenuItem>
                           </ContextMenuContent>

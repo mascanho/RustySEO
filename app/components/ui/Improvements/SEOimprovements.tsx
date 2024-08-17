@@ -20,12 +20,14 @@ const SEOImprovements = ({
   pageSpeed,
   canonical,
   hreflangs,
+  crawl,
 }: {
   pageDescription: string[];
   pageTitle: string[];
   pageSpeed: any;
   canonical: string[];
   hreflangs: string[];
+  crawl: any;
 }) => {
   const [aiPageTitle, setAiPageTitle] = React.useState<string>("");
   const [aiPageDescription, setAiPageDescription] = React.useState<string>("");
