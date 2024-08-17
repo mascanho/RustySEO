@@ -128,7 +128,7 @@ const RenderBlocking = ({
               </svg>
             </div>
           )}
-          {!loading && !url && (
+          {!loading && !url && !stat && (
             <span className="h-10 font-bold text-xl text-apple-spaceGray/50">
               ...
             </span>

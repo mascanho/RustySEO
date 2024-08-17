@@ -432,14 +432,14 @@ const Home: React.FC<HomeProps> = () => {
         {/* Fixed Input and Crawl Button */}
         <div className="fixed top-[28px] left-0 right-0 z-[2000] h-11 border-b  bg-white dark:bg-brand-darker flex items-center px-4 dark:border-b-brand-dark">
           <MenuDrawer />
-          <section className="flex items-center justify-end mx-auto relative w-full max-w-[600px]">
+          <section className="flex items-center justify-end mx-auto relative w-full max-w-[600px] border-r border-l pl-4 dark:border-l-brand-dark dark:border-r-brand-dark h-full pr-4">
             <div className="flex items-center w-full">
               <div className="relative inline-block text-left z-[900000]">
-                <div>
+                <div className="-mr-3">
                   <button
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
-                    className="inline-flex justify-center w-[98px] rounded-md border border-gray-300 shadow-sm px-2  bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 h-6 py-[3px] focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500 items-center mt-[1px]"
+                    className="inline-flex justify-center w-[98px] rounded-l-md border-gray-300 shadow-sm px-2  bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 h-6 py-[3px] focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500 items-center mt-[1px] border-l-0"
                     id="options-menu"
                     aria-haspopup="true"
                     aria-expanded="true"
@@ -487,7 +487,7 @@ const Home: React.FC<HomeProps> = () => {
                 )}
               </div>
               <div className="relative flex items-center ml-2 flex-grow">
-                <CiGlobe className="absolute ml-2 text-gray-400" />
+                <CiGlobe className="absolute ml-3 text-gray-400" />
                 <input
                   type="url"
                   required
@@ -498,7 +498,7 @@ const Home: React.FC<HomeProps> = () => {
                       handleClick(url);
                     }
                   }}
-                  className="w-full h-6 text-xs pl-7 rounded-md bg-slate-100 dark:bg-white dark:border dark:border-white placeholder:text-gray-500"
+                  className="w-full h-6 text-xs pl-8 rounded-md bg-slate-100 dark:bg-white dark:border dark:border-white placeholder:text-gray-500"
                   style={{ outline: "none", boxShadow: "none" }}
                 />
                 <button
@@ -552,7 +552,7 @@ const Home: React.FC<HomeProps> = () => {
                   {hidden.widget ? "Show widgets" : "Hide widgets"}
                 </span>
                 <section
-                  className={`grid grid-cols-2 ${hidden.widget ? "hidden" : ""} gap-x-3 md:gap-x-4 sm:grid-cols-3  md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-7 justify-items-stretch w-full mb-10 gap-y-5 -mt-6`}
+                  className={`grid grid-cols-2 ${hidden.widget ? "hidden" : ""} gap-x-3 md:gap-x-4 sm:grid-cols-3  md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-7 2xl:gap-x-2 justify-items-stretch w-full mb-10 gap-y-5 -mt-6`}
                 >
                   <h1 className="absolute font-bold top-1 left-4 text-2xl text-brand-dark/30 dark:text-white/20">
                     Performance Overview
