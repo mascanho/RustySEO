@@ -134,119 +134,121 @@ const TopMenuBar = () => {
       </Modal>
 
       {/* Menubar */}
-      <Menubar className="fixed w-full top-0 z-[1000] p-0 pl-0 -ml-2 dark:bg-brand-darker dark:text-white bg-white dark:border-b-brand-dark border-b pb-1">
-        <MenubarMenu>
-          <MenubarTrigger className="ml-4">File</MenubarTrigger>
-          <MenubarContent>
-            <MenubarItem onClick={onClose}>Exit</MenubarItem>
-          </MenubarContent>
-        </MenubarMenu>
+      <Menubar className="fixed w-full top-0 z-[1000] p-0 pl-0 dark:bg-brand-darker dark:text-white bg-white dark:border-b-brand-dark border-b pb-1">
+        <section className="flex -ml-3">
+          <MenubarMenu>
+            <MenubarTrigger className="ml-4">File</MenubarTrigger>
+            <MenubarContent>
+              <MenubarItem onClick={onClose}>Exit</MenubarItem>
+            </MenubarContent>
+          </MenubarMenu>
 
-        <MenubarMenu>
-          <MenubarTrigger className="ml-4">View</MenubarTrigger>
-          <MenubarContent>
-            <MenubarItem>
-              New Tab <MenubarShortcut>⌘T</MenubarShortcut>
-            </MenubarItem>
-            <MenubarItem>New Window</MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem>Share</MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem onClick={onClose}>Exit</MenubarItem>
-          </MenubarContent>
-        </MenubarMenu>
-        <MenubarMenu>
-          <MenubarTrigger className="ml-3">Tasks</MenubarTrigger>
-          <MenubarContent>
-            <MenubarItem onClick={openModal}>
-              New task
-              <MenubarShortcut>⌘T</MenubarShortcut>
-            </MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem onClick={openDrawer}>
-              View all tasks
-              <MenubarShortcut>
-                <LuPanelRight />
-              </MenubarShortcut>
-            </MenubarItem>
-          </MenubarContent>
-        </MenubarMenu>
-        <MenubarMenu>
-          <MenubarTrigger className="ml-3">Reports</MenubarTrigger>
-          <MenubarContent>
-            <MenubarItem>
-              New Tab <MenubarShortcut>⌘T</MenubarShortcut>
-            </MenubarItem>
-            <MenubarItem>New Window</MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem>Share</MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem>Print</MenubarItem>
-          </MenubarContent>
-        </MenubarMenu>
-        <MenubarMenu>
-          <MenubarTrigger className="ml-3">Connectors</MenubarTrigger>
-          <MenubarContent>
-            <MenubarItem onClick={openPageSpeed}>
-              PageSpeed Insights
-            </MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem onClick={openSearchConsole}>
-              Search Console
-            </MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem
-              className="flex items-center"
-              onClick={() => {
-                // openBrowserWindow("https://www.ollama.com/");
-                openOllama();
-              }}
-            >
-              Ollama{" "}
-              <span className="text-[10px] text-gray-300/50 ml-1">
-                (AI Models)
-              </span>
-            </MenubarItem>
-          </MenubarContent>
-        </MenubarMenu>
-        <MenubarMenu>
-          <MenubarTrigger className="ml-3">Tools</MenubarTrigger>
-          <MenubarContent>
-            <MenubarItem onClick={openPageSpeed}>Crawl Scheduler</MenubarItem>
-            <MenubarItem
-              onClick={() => {
-                const userConfirmed = window.confirm(
-                  "Are you sure you want to perform this action?",
-                );
+          <MenubarMenu>
+            <MenubarTrigger className="ml-4">View</MenubarTrigger>
+            <MenubarContent>
+              <MenubarItem>
+                New Tab <MenubarShortcut>⌘T</MenubarShortcut>
+              </MenubarItem>
+              <MenubarItem>New Window</MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem>Share</MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem onClick={onClose}>Exit</MenubarItem>
+            </MenubarContent>
+          </MenubarMenu>
+          <MenubarMenu>
+            <MenubarTrigger className="ml-3">Tasks</MenubarTrigger>
+            <MenubarContent>
+              <MenubarItem onClick={openModal}>
+                New task
+                <MenubarShortcut>⌘T</MenubarShortcut>
+              </MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem onClick={openDrawer}>
+                View all tasks
+                <MenubarShortcut>
+                  <LuPanelRight />
+                </MenubarShortcut>
+              </MenubarItem>
+            </MenubarContent>
+          </MenubarMenu>
+          <MenubarMenu>
+            <MenubarTrigger className="ml-3">Reports</MenubarTrigger>
+            <MenubarContent>
+              <MenubarItem>
+                New Tab <MenubarShortcut>⌘T</MenubarShortcut>
+              </MenubarItem>
+              <MenubarItem>New Window</MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem>Share</MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem>Print</MenubarItem>
+            </MenubarContent>
+          </MenubarMenu>
+          <MenubarMenu>
+            <MenubarTrigger className="ml-3">Connectors</MenubarTrigger>
+            <MenubarContent>
+              <MenubarItem onClick={openPageSpeed}>
+                PageSpeed Insights
+              </MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem onClick={openSearchConsole}>
+                Search Console
+              </MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem
+                className="flex items-center"
+                onClick={() => {
+                  // openBrowserWindow("https://www.ollama.com/");
+                  openOllama();
+                }}
+              >
+                Ollama{" "}
+                <span className="text-[10px] text-gray-300/50 ml-1">
+                  (AI Models)
+                </span>
+              </MenubarItem>
+            </MenubarContent>
+          </MenubarMenu>
+          <MenubarMenu>
+            <MenubarTrigger className="ml-3">Tools</MenubarTrigger>
+            <MenubarContent>
+              <MenubarItem onClick={openPageSpeed}>Crawl Scheduler</MenubarItem>
+              <MenubarItem
+                onClick={() => {
+                  const userConfirmed = window.confirm(
+                    "Are you sure you want to perform this action?",
+                  );
 
-                if (userConfirmed) {
-                  // User confirmed the action
-                  window?.location?.reload();
-                  // Here, you can call any function or API to perform the actual action
-                } else {
-                  // User canceled the action
-                  console.log("Action was canceled.");
-                }
-              }}
-            >
-              Clear Cache
-            </MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem>Share</MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem>Clear Cache</MenubarItem>
-          </MenubarContent>
-        </MenubarMenu>
-        <MenubarMenu>
-          <MenubarTrigger className="ml-3">Help</MenubarTrigger>
-          <MenubarContent>
-            <MenubarItem onClick={openPageSpeed}>About</MenubarItem>
-            <MenubarItem>Ollama</MenubarItem>
-            <MenubarSeparator />
-            <MenubarItem>Share</MenubarItem>
-            <MenubarSeparator />
-          </MenubarContent>
-        </MenubarMenu>
+                  if (userConfirmed) {
+                    // User confirmed the action
+                    window?.location?.reload();
+                    // Here, you can call any function or API to perform the actual action
+                  } else {
+                    // User canceled the action
+                    console.log("Action was canceled.");
+                  }
+                }}
+              >
+                Clear Cache
+              </MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem>Share</MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem>Clear Cache</MenubarItem>
+            </MenubarContent>
+          </MenubarMenu>
+          <MenubarMenu>
+            <MenubarTrigger className="ml-3">Help</MenubarTrigger>
+            <MenubarContent>
+              <MenubarItem onClick={openPageSpeed}>About</MenubarItem>
+              <MenubarItem>Ollama</MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem>Share</MenubarItem>
+              <MenubarSeparator />
+            </MenubarContent>
+          </MenubarMenu>
+        </section>
       </Menubar>
     </>
   );

@@ -498,12 +498,12 @@ const Home: React.FC<HomeProps> = () => {
                       handleClick(url);
                     }
                   }}
-                  className="w-full h-6 text-xs pl-8 rounded-md bg-slate-100 dark:bg-white dark:border dark:border-white placeholder:text-gray-500"
+                  className="w-full h-6 text-xs pl-8 rounded-l-md bg-slate-100 dark:bg-white dark:border dark:border-white placeholder:text-gray-500"
                   style={{ outline: "none", boxShadow: "none" }}
                 />
                 <button
                   onClick={() => handleClick(url)}
-                  className="rounded w-20 active:scale-95 text-sm relative inline-flex group py-[3px] items-center justify-center  ml-2 cursor-pointer border-b-4 border-l-2 active:border-blue-600 active:shadow-none bg-gradient-to-tr from-brand-bright to-blue-500 border-blue-700 text-white"
+                  className="rounded w-20 active:scale-95 text-sm relative inline-flex group py-[3px] items-center justify-center  ml-0 cursor-pointer border-b-4 border-l-2 active:border-blue-600 active:shadow-none bg-gradient-to-tr from-brand-bright to-blue-500 border-blue-700 text-white"
                 >
                   <span className="relative text-xs">
                     {loading ? (
