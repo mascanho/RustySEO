@@ -23,6 +23,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import PopUpTable from "./PopUpTable";
+import { Modal } from "@mantine/core";
+import Todo from "../Todo";
+import { useDisclosure } from "@mantine/hooks";
 
 // Define TypeScript types
 interface PerformanceData {
@@ -56,6 +59,10 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
   const [sortColumn, setSortColumn] = useState<keyof PerformanceData>("date");
   const [todoUrl, setTodoUrl] = useState<string | null>(null);
   const [matchedUrlData, setMatchedUrlData] = useState([]);
+  const [todoStrategy, setTodoStrategy] = useState<string>("");
+
+  const [openedModal, { open: openModal, close: closeModal }] =
+    useDisclosure(false);
 
   // Effect to update data when dbdata changes
   useEffect(() => {
@@ -149,13 +156,28 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
   };
 
   // Handle adding to-do
-  const handleAddTodo = (url: string) => {
+  const handleAddTodo = (url: string, strategy: string) => {
+    setTodoStrategy(strategy);
     setTodoUrl(url);
-    alert(`To-Do item created for URL: ${url}`);
+    openModal();
   };
 
   return (
     <>
+      {/* Todo Modal */}
+      <Modal
+        opened={openedModal}
+        // overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+        closeOnEscape
+        closeOnClickOutside
+        onClose={closeModal}
+        title=""
+        centered
+        // zIndex={"100000"}
+      >
+        {/* @ts-ignore */}
+        <Todo url={todoUrl} close={closeModal} strategy={todoStrategy} />
+      </Modal>
       <div className="relative w-full max-w-7xl mx-auto text-xs">
         <div className=" -top-16 -right-0 w-full flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10">
           <div className="flex items-center space-x-2 relative">
@@ -259,7 +281,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
                       {data.url}
                       <span
                         className="absolute right-7 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                        onClick={() => handleAddTodo(data.url)}
+                        onClick={() => handleAddTodo(data.url, data.strategy)}
                       >
                         <FiCheckCircle className="text-green-500" />
                       </span>{" "}

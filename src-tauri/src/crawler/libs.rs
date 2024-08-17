@@ -370,8 +370,20 @@ struct SearchAnalyticsResponse {
     rows: Vec<String>,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Credentials {
+    pub clientId: String,
+    pub projectId: String,
+    pub clientSecret: String,
+    pub url: String,
+    pub searchType: String,
+    pub range: String,
+}
+
 // FUNCTION TO SET GOOGLE SEARCH CONSOLE DATA ON THE DISK
-pub async fn set_search_console_data(secret: String) -> Result<PathBuf, String> {
+pub async fn set_search_console_credentials(credentials: Credentials) -> Result<PathBuf, String> {
+    println!("SET SEARCH CONSOLE CREDENTIALS: {:?}", credentials);
+
     // Define the JSON structure
     let client_secret = ClientSecret {
         installed: InstalledInfo {
@@ -423,7 +435,6 @@ pub async fn set_search_console_data(secret: String) -> Result<PathBuf, String> 
 
 pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::error::Error>> {
     // RUN THE CHECK ON THE SECRET IN THE DISK
-    set_search_console_data(String::from("Marco")).await;
 
     // Set up the OAuth2 flow
     let secret_path = directories::ProjectDirs::from("", "", "rustyseo")

@@ -696,6 +696,8 @@ const Home: React.FC<HomeProps> = () => {
                 // seo={seoPageSpeed}
                 pageSpeed={pageSpeed}
                 pageDescription={pageDescription}
+                hreflangs={hreflangs}
+                canonical={canonical}
               />
             </Tabs.Panel>
 

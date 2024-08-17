@@ -145,9 +145,11 @@ const TaskManagerContainerItem: React.FC<{ data: any }> = ({ data }) => {
         <span className="text-sm text-black/50 dark:text-white/50 line-clamp-2">
           {data.description}
         </span>
-        <span className="text-sm text-sky-400 dark:text-brand-highlight mt-1">
-          {data.url}
-        </span>
+        <div className="overflow-auto flex flex-col flex-wrap">
+          <span className="text-sm text-sky-400 dark:text-brand-highlight mt-1">
+            {data.url}
+          </span>
+        </div>
       </div>
       <footer className="border-t dark:border-brand-dark flex items-center h-10 px-3">
         <div className="flex items-center justify-between w-full space-x-1 text-black/50 dark:text-white/50">

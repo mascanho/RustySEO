@@ -1,160 +1,89 @@
+import { invoke } from "@tauri-apps/api/tauri";
 import React, { useState, useEffect } from "react";
 
-const RankingInfo = () => {
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [selectedData, setSelectedData] = useState<any | null>(null);
+interface MatchedDataItem {
+  query: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+}
 
-  const data = [
-    {
-      date: "2024-08-01",
-      clicks: 1245,
-      impressions: 25678,
-      ctr: 4.85,
-      position: 12.3,
-      queries: 587,
-    },
-    {
-      date: "2024-08-02",
-      clicks: 1378,
-      impressions: 27456,
-      ctr: 5.02,
-      position: 11.8,
-      queries: 612,
-    },
-    {
-      date: "2024-08-03",
-      clicks: 1156,
-      impressions: 23987,
-      ctr: 4.82,
-      position: 12.5,
-      queries: 549,
-    },
-    {
-      date: "2024-08-04",
-      clicks: 1489,
-      impressions: 29765,
-      ctr: 5.0,
-      position: 11.6,
-      queries: 635,
-    },
-    {
-      date: "2024-08-05",
-      clicks: 1312,
-      impressions: 26543,
-      ctr: 4.94,
-      position: 12.1,
-      queries: 598,
-    },
-    {
-      date: "2024-08-06",
-      clicks: 1423,
-      impressions: 28976,
-      ctr: 4.91,
-      position: 11.9,
-      queries: 621,
-    },
-    {
-      date: "2024-08-07",
-      clicks: 1267,
-      impressions: 25234,
-      ctr: 5.02,
-      position: 12.2,
-      queries: 573,
-    },
-    {
-      date: "2024-08-08",
-      clicks: 1534,
-      impressions: 30123,
-      ctr: 5.09,
-      position: 11.5,
-      queries: 649,
-    },
-    {
-      date: "2024-08-09",
-      clicks: 1398,
-      impressions: 27865,
-      ctr: 5.02,
-      position: 11.7,
-      queries: 608,
-    },
-    {
-      date: "2024-08-10",
-      clicks: 1289,
-      impressions: 26098,
-      ctr: 4.94,
-      position: 12.0,
-      queries: 582,
-    },
-  ];
-
-  useEffect(() => {
-    if (data && data.length > 0) {
-      setSelectedDate(data[0].date);
-      setSelectedData(data[0]);
-    }
-  }, [data]);
-
-  useEffect(() => {
-    if (data && selectedDate) {
-      const newSelectedData = data.find(
-        (item: any) => item.date === selectedDate,
-      );
-      if (newSelectedData) {
-        setSelectedData(newSelectedData);
-      }
-    }
-  }, [selectedDate, data]);
-
-  const InfoItem = ({
-    label,
-    value,
-  }: {
-    label: string;
-    value: string | number;
-  }) => (
-    <div className="bg-blue-50 p-2 rounded">
-      <div className="text-xs text-blue-600 font-medium">{label}</div>
-      <div className="font-semibold">{value}</div>
-    </div>
+const RankingInfo = ({ keywords }: { keywords: string[] }) => {
+  const [matchedData, setMatchedData] = useState<MatchedDataItem[] | null>(
+    null,
   );
 
-  if (!data || data.length === 0 || !selectedData) {
-    return <div>No data available</div>;
+  useEffect(() => {
+    const handleUrlMatch = async (url: string) => {
+      try {
+        const result: MatchedDataItem[] = await invoke("call_gsc_match_url", {
+          url,
+        });
+        console.log(result, "from the Ranking sidebar");
+
+        const uniqueData = result.reduce((acc: MatchedDataItem[], current) => {
+          const x = acc.find((item) => item.query === current.query);
+          if (!x) {
+            return acc.concat([current]);
+          } else {
+            return acc;
+          }
+        }, []);
+
+        setMatchedData(uniqueData);
+      } catch (error) {
+        console.error("Error fetching matched data:", error);
+        setMatchedData(null);
+      }
+    };
+
+    const url = sessionStorage.getItem("url");
+    if (url) {
+      handleUrlMatch(url);
+    }
+  }, [keywords]);
+
+  if (!matchedData || matchedData.length === 0) {
+    return (
+      <div className="w-full max-w-[400px] h-[10rem] flex items-center justify-center text-gray-500">
+        No data available
+      </div>
+    );
   }
 
   return (
-    <div className="w-full bg-white rounded-lg overflow-hidden">
-      <div className="p-4">
-        <select
-          value={selectedDate || ""}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          className="w-full p-2 text-sm text-gray-700 bg-white rounded"
-        >
-          {data.map((item: any) => (
-            <option key={item.date} value={item.date}>
-              {item.date}
-            </option>
+    <div className="w-full ranking-table max-w-[23rem] rounded-lg h-[28rem] border-red-500 overflow-auto bg-white dark:bg-transparent shadow px-1">
+      <table className="w-full text-xs">
+        <thead className="bg-gray-100 dark:bg-gray-700 sticky top-0">
+          <tr>
+            <th align="left" className="py-2 -pl-2 text-left">
+              Queries
+            </th>
+            <th className="py-2 text-center">Clicks</th>
+            <th className="py-2 text-right">Imp.</th>
+            <th className="py-2 text-right">Pos.</th>
+          </tr>
+        </thead>
+        <tbody className="text-[9px]">
+          {matchedData.map((item: MatchedDataItem, index: number) => (
+            <tr
+              key={index}
+              className={`
+                ${index % 1 === 0 ? "bg-gray-50 dark:bg-gray-800" : "bg-white dark:bg-gray-900"}
+                hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors duration-150
+              `}
+            >
+              <td className="py-2 pl-2 truncate text-[9px]">{item.query}</td>
+              <td align="left" className="py-2 text-center">
+                {item.clicks}
+              </td>
+              <td className="py-2 text-center">{item.impressions}</td>
+              <td className="py-2 text-center">{item.position.toFixed(0)}</td>
+            </tr>
           ))}
-        </select>
-      </div>
-      <div className="p-4">
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <InfoItem
-            label="Clicks"
-            value={selectedData.clicks.toLocaleString()}
-          />
-          <InfoItem
-            label="Impressions"
-            value={selectedData.impressions.toLocaleString()}
-          />
-          <InfoItem label="CTR" value={`${selectedData.ctr.toFixed(2)}%`} />
-          <InfoItem label="Position" value={selectedData.position.toFixed(1)} />
-          <InfoItem
-            label="Queries"
-            value={selectedData.queries.toLocaleString()}
-          />
-        </div>
-      </div>
+        </tbody>
+      </table>
     </div>
   );
 };

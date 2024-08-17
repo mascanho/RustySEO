@@ -68,11 +68,9 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
     });
   }, []);
 
-  console.log(ollamaStatus.ollama, "ollama status");
-
   return (
     <aside
-      className={`bg-white overflow-y-auto overflow-hidden min-h-[100%]  border-l mt-[5px] border-t dark:border-gray-600 flex relative flex-col  transition-all ease-linear delay-75  dark:bg-brand-darker ${visibility.sidebar ? "w-96" : "w-0"}`}
+      className={`bg-white overflow-y-auto overflow-hidden min-h-[100%]  border-l mt-[5px] border-t dark:border-gray-600 flex relative flex-col  transition-all ease-linear delay-75  dark:bg-brand-darker ${visibility.sidebar ? "w-[24.5rem]" : "w-0"}`}
     >
       <ResizablePanelGroup direction="vertical">
         <ResizablePanel defaultSize={220} className="h-[calc(100vh-1.5rem)]">
@@ -102,7 +100,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
             </Tabs.Panel>
 
             <Tabs.Panel value="third" className="h-full w-full">
-              <RankingInfo />
+              <RankingInfo keywords={keywords} />
             </Tabs.Panel>
 
             <Tabs.Panel value="summary" className="h-full w-full">

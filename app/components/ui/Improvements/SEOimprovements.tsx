@@ -18,10 +18,14 @@ const SEOImprovements = ({
   pageTitle,
   pageDescription,
   pageSpeed,
+  canonical,
+  hreflangs,
 }: {
   pageDescription: string[];
   pageTitle: string[];
   pageSpeed: any;
+  canonical: string[];
+  hreflangs: string[];
 }) => {
   const [aiPageTitle, setAiPageTitle] = React.useState<string>("");
   const [aiPageDescription, setAiPageDescription] = React.useState<string>("");
@@ -63,6 +67,30 @@ const SEOImprovements = ({
       passAdvice: "Title tag is unique and includes primary keywords.",
       improved: description?.length < 160 ? true : false,
       aiImprovement: aiPageDescription,
+      length: description?.length,
+    },
+    {
+      id: 3,
+      title: "Canonical Optimization",
+      failsAdvise:
+        "Canonicals are important to help distinguisdh between similar content/pages on your website yes.",
+      passAdvice:
+        'This page has a canonical tag. This tag is used to tell search engines which version of a webpage is the "preferred" or "canonical" version when there are multiple pages with similar or identical content.',
+      improved: canonical.length === 0 ? true : false,
+      aiImprovement:
+        'Canonical tags are often needed in websites, particularly for SEO (Search Engine Optimization) purposes. A canonical tag (<link rel="canonical" href="URL">) is used to tell search engines which version of a webpage is the "preferred" or "canonical" version when there are multiple pages with similar or identical content.',
+      length: description?.length,
+    },
+    {
+      id: 4,
+      title: " Hreflangs",
+      failsAdvise:
+        "Hreflangs help search engines to better find your content if you have multiple languages on your website.",
+      passAdvice:
+        "This page has hreflangs, which are used to differentiate different languages on a website",
+      improved: hreflangs?.length < 0 ? true : false,
+      aiImprovement:
+        "Check if your hreflangs are well configured if you have multiple languages on your website",
       length: description?.length,
     },
   ];
@@ -117,9 +145,12 @@ const SEOImprovements = ({
                     </h3>
                   </div>
                   <p className="text-gray-700">
-                    {item.improved
-                      ? item.passAdvice
-                      : item.failsAdvise + item.length}
+                    {item.improved && item.passAdvice}
+
+                    {item.failsAdvise &&
+                      item.id < 3 &&
+                      item.failsAdvise + item.length}
+                    {item.id > 2 && item.failsAdvise}
                   </p>
                   <section>
                     {!item.improved && (
@@ -130,7 +161,7 @@ const SEOImprovements = ({
                         <CollapsibleContent className="bg-gray-200 rounded-md p-0.5 mt-1 relative min-h-2 h-8">
                           <FiClipboard
                             onClick={() => handleCopy(item.aiImprovement)}
-                            className="absolute active:bg-gray-300 active:scale-95 top-2 cursor-pointer right-1 text-gray-800"
+                            className={`absolute active:bg-gray-300 active:scale-95 top-2 cursor-pointer ${item.id > 2 && "hidden"} right-1 text-gray-800`}
                           />
                           {item.aiImprovement}
                         </CollapsibleContent>

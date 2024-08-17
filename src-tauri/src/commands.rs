@@ -1,6 +1,8 @@
 use crate::crawler::db;
 use crate::crawler::db::GscMatched;
 use crate::crawler::libs;
+use crate::crawler::libs::ApiKeys;
+use crate::crawler::libs::Credentials;
 use serde::Deserialize;
 use serde::Serialize;
 use std::fs;
@@ -80,6 +82,12 @@ pub fn check_ollama() -> Result<OllamaProcess, String> {
             status: false,
         }
     })
+}
+
+// ------- SETTING GOOGLE SEARCH CONSOLE CREDENTIALS
+#[tauri::command]
+pub fn set_google_search_console_credentials(credentials: Credentials) {
+    let credentials = libs::set_search_console_credentials(credentials);
 }
 
 // ------ CALL THE GOOGLE SEARCH CONSOLE FUNCTION
