@@ -1,0 +1,16 @@
+name: Clone
+on:
+  #Run every 12 hours
+  schedule:
+    - cron: "* */* * * *"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run action
+        uses: andrewthetechie/gha-clone-releases@v1.7.0
+        with:
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          src_repo: some-account/private-or-internal-repo
+          dst_repo: some-other-account/public-repo
+          copy_assets: true
