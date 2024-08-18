@@ -1,13 +1,5 @@
-name: Clone
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Clone repository
-        uses: mascanho/RustyFrog/Releases@v1.7.0
-        with:
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          src_repo: mascanho/RustyFrog
-          dst_repo: mascanho/RustySEO
-          copy_assets: true
-
+name: Publish
+  env:
+    GITHUB_TOKEN: "${{ secrets.RELEASE_REPO_SECRET }}"
+  run: |
+    gh release create v0.0.1 foobar.zip -R https://github.com/mascanho/RustyFrog
