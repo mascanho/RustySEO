@@ -15,6 +15,13 @@ const RenderBlocking = ({
   url: string;
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
+
+  console.log(
+    stat?.lighthouseResult.audits["render-blocking-resources"].details.items
+      .length,
+    "from the render blocking",
+  );
+
   return (
     <section className="widget border p-4  shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative">
       <span className="absolute right-5">
@@ -146,6 +153,15 @@ const RenderBlocking = ({
           {(stat?.lighthouseResult?.audits?.["render-blocking-resources"]
             ?.details.items?.length < 1 &&
             url && (
+              <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
+                0 tasks
+              </span>
+            )) ||
+            ""}
+
+          {(stat?.lighthouseResult?.audits?.["render-blocking-resources"]
+            ?.details.items?.length < 1 &&
+            !url && (
               <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
                 0 tasks
               </span>

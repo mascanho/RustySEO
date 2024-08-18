@@ -16,6 +16,7 @@ const CrawlHistory = ({ dbdata, loading, crawl }: any) => {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="account" className="mt-2">
+          {/* @ts-ignore */}
           <PerformanceSection dbdata={dbdata} crawl={crawl} />
         </TabsContent>
         <TabsContent value="password" className="mt-2">

@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import { writeBinaryFile, BaseDirectory } from "@tauri-apps/api/fs";

@@ -27,7 +27,12 @@ function MenuDrawer() {
           <img
             src="icon.png"
             alt=""
-            className="w-6 h-auto py-1 object-cover mr-2"
+            className="w-6 h-auto py-1 object-cover mr-2 hidden dark:flex"
+          />
+          <img
+            src="icon-light.png"
+            alt=""
+            className="w-6 h-auto py-1 object-cover mr-2  dark:hidden"
           />
           <Link
             href="/images"
