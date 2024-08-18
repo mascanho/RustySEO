@@ -2,7 +2,7 @@ name: Clone
 on:
   #Run every 12 hours
   schedule:
-    - cron: "* */* * * *"
+    - cron: "0 */12 * * *"
 jobs:
   build:
     runs-on: ubuntu-latest
