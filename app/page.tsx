@@ -439,7 +439,7 @@ const Home: React.FC<HomeProps> = () => {
                   <button
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
-                    className="inline-flex justify-center w-[98px] rounded-l-md border-gray-300 shadow-sm px-2  bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 h-6 py-[3px] focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500 items-center mt-[1px] border-l-0"
+                    className="inline-flex justify-center w-[98px] border-l border-b border-t rounded-l-md border-gray-300 shadow-sm px-2  bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 h-7 py-[3px] focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500 items-center mt-[1px] "
                     id="options-menu"
                     aria-haspopup="true"
                     aria-expanded="true"
@@ -498,12 +498,12 @@ const Home: React.FC<HomeProps> = () => {
                       handleClick(url);
                     }
                   }}
-                  className="w-full h-6 text-xs pl-8 rounded-l-md bg-slate-100 dark:bg-white dark:border dark:border-white placeholder:text-gray-500"
+                  className="w-full h-7 text-xs pl-8 rounded-l-md bg-slate-100 dark:bg-white dark:border dark:border-white placeholder:text-gray-500 border rounded-r-md"
                   style={{ outline: "none", boxShadow: "none" }}
                 />
                 <button
                   onClick={() => handleClick(url)}
-                  className="rounded w-20 active:scale-95 text-sm relative inline-flex group py-[3px] items-center justify-center  ml-0 cursor-pointer border-b-4 border-l-2 active:border-blue-600 active:shadow-none bg-gradient-to-tr from-brand-bright to-blue-500 border-blue-700 text-white"
+                  className="rounded w-20 active:scale-95 text-sm relative inline-flex group py-[3px] items-center justify-center  ml-3 cursor-pointer border-b-4 border-l-2 active:border-blue-600 active:shadow-none bg-gradient-to-tr from-brand-bright to-blue-500 border-blue-700 text-white"
                 >
                   <span className="relative text-xs">
                     {loading ? (
@@ -700,6 +700,8 @@ const Home: React.FC<HomeProps> = () => {
                 hreflangs={hreflangs}
                 canonical={canonical}
                 crawl={handleClick}
+                opengraph={openGraphDetails}
+                pageSchema={pageSchema}
               />
             </Tabs.Panel>
 

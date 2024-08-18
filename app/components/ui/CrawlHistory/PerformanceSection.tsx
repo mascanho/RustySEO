@@ -325,7 +325,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
                               {data.strategy}
                             </ContextMenuItem>
                             <ContextMenuItem onClick={() => crawl(data.url)}>
-                              Crawl
+                              Re-crawl
                             </ContextMenuItem>
                             <ContextMenuItem>Team</ContextMenuItem>
                             <ContextMenuItem>Subscription</ContextMenuItem>

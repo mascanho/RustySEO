@@ -1,10 +1,10 @@
 "use client";
+import { useEffect, useState } from "react";
 import { ImGoogle2 } from "react-icons/im";
 
 const GooglePreview = ({
   pageTitle,
   pageDescription,
-  url,
   favicon_url,
 }: {
   favicon_url: string[];
@@ -13,22 +13,31 @@ const GooglePreview = ({
   pageDescription: any;
 }) => {
   // get the domain name only from the url
+  const [url, setUrl] = useState("");
+
+  useEffect(() => {
+    // Fetch the URL from the session storage
+    const urlStored = sessionStorage?.getItem("url") || "";
+
+    if (urlStored) {
+      setUrl(urlStored);
+    }
+  }, [pageTitle]);
 
   const capitalizeFirstLetter = (str: any) =>
     str.charAt(0).toUpperCase() + str.slice(1);
-
-  const domainWithoutLastPart = url
-    .replace(/^https?:\/\//, "") // Remove http:// or https://
-    .replace(/^www\./, "") // Remove www.
-    .split(/[/?#]/)[0] // Split by /, ?, or # and take the first part
-    .split(".") // Split by dots
-    .slice(0, -1) // Remove the last part
-    .join(".") // Rejoin the remaining parts
-    .replace(/^\w/, (c) => c.toUpperCase()); // Capitalize the first letter
+  const domainWithoutLastPart =
+    url &&
+    url
+      .replace(/^https?:\/\//, "") // Remove http:// or https://
+      .replace(/^www\./, "") // Remove www.
+      .split(/[/?#]/)[0] // Split by /, ?, or # and take the first part
+      .split(".") // Split by dots
+      .slice(0, -1) // Remove the last part
+      .join(".") // Rejoin the remaining parts
+      .replace(/^\w/, (c) => c.toUpperCase()); // Capitalize the first letter
 
   const capitalizedDomain = capitalizeFirstLetter(domainWithoutLastPart);
-
-  console.log(capitalizedDomain);
 
   return (
     <div

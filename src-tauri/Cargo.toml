@@ -44,7 +44,8 @@ yup-oauth2 = "8.0.0"
 hyper = "0.14.26"
 hyper-rustls = { version = "0.24", features = ["http2"] }
 urlencoding = "2.1"
-
+base64 = "0.22.1"
+image = "0.24.1"
 
 
 [features]

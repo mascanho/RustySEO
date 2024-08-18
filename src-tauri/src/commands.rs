@@ -3,6 +3,7 @@ use crate::crawler::db::GscMatched;
 use crate::crawler::libs;
 use crate::crawler::libs::ApiKeys;
 use crate::crawler::libs::Credentials;
+use crate::image_converter::converter;
 use serde::Deserialize;
 use serde::Serialize;
 use std::fs;

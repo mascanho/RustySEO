@@ -1,4 +1,6 @@
 "use client";
+
+import { writeBinaryFile, BaseDirectory } from "@tauri-apps/api/fs";
 import React, { useState, useCallback, useEffect } from "react";
 import {
   Card,
@@ -21,6 +23,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { useDropzone } from "react-dropzone";
+import { invoke } from "@tauri-apps/api/tauri";
 
 export default function ImageOptimizer() {
   const [image, setImage] = useState(null);
@@ -36,6 +39,8 @@ export default function ImageOptimizer() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
   const [cropMode, setCropMode] = useState(false);
+  const [optimizedImages, setOptimizedImages] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const onDrop = useCallback((acceptedFiles) => {
     const file = acceptedFiles[0];
@@ -89,12 +94,54 @@ export default function ImageOptimizer() {
   };
 
   const handleOptimize = async () => {
-    if (!validateInputs()) return;
+    if (!validateInputs() || !image) return;
+
     setIsProcessing(true);
-    // Implement image optimization logic here
-    // This is a placeholder for actual image processing
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsProcessing(false);
+    setLoading(true);
+
+    try {
+      // Convert image to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(image);
+      reader.onload = async () => {
+        const base64Image = reader.result.split(",")[1];
+
+        try {
+          // Call the Tauri command to handle image upload and optimization
+          const results = await invoke("handle_image_conversion", {
+            image: base64Image,
+            format,
+            quality,
+            width: dimensions.width,
+            height: dimensions.height,
+          });
+
+          console.log("Optimization results:", results);
+          // Set the optimized images
+          setOptimizedImages(
+            results.map((result, index) => ({
+              src: `data:image/${format};base64,${result}`,
+              format: format,
+              size: ["original", "half", "quarter"][index % 3],
+            })),
+          );
+        } catch (invokeError) {
+          console.error("Error invoking Tauri command:", invokeError);
+          // Handle Tauri command error
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      reader.onerror = (error) => {
+        console.error("Error reading file:", error);
+        setLoading(false);
+      };
+    } catch (error) {
+      console.error("Error optimizing image:", error);
+      // Handle the error (e.g., show an error message to the user)
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -105,9 +152,29 @@ export default function ImageOptimizer() {
     setFileSize(estimatedSize);
   }, [dimensions, quality]);
 
+  // Function to save the image using Tauri's file system API
+  const saveImage = async (img) => {
+    const base64Data = img.src.split(",")[1]; // Get base64 string
+    const binaryData = Uint8Array.from(atob(base64Data), (c) =>
+      c.charCodeAt(0),
+    );
+
+    const fileName = `optimized_${img.format}_${img.size}.${img.format}`;
+
+    try {
+      await writeBinaryFile(fileName, binaryData, {
+        dir: BaseDirectory.Download,
+      });
+      alert(`Image saved as ${fileName} in your Downloads folder.`);
+    } catch (error) {
+      console.error("Failed to save the file:", error);
+      alert("Failed to save the file. Please try again.");
+    }
+  };
+
   return (
-    <div className="flex flex-col items-center h-full rounded-none justify-center min-h-screen bg-brand-dark">
-      <Card className="w-full rounded-none h-screen p-10 bg-brand-dark ">
+    <div className="flex flex-col items-center h-[calc(100vh-6rem)] pb-20 mb-10 overflow-auto rounded-none bg-white justify-center dark:bg-brand-dark">
+      <Card className="w-full border-none rounded-none h-full p-10 dark:bg-brand-dark shadow-none">
         <CardHeader>
           <CardTitle>Advanced Image Optimizer</CardTitle>
           <CardDescription>
@@ -133,7 +200,10 @@ export default function ImageOptimizer() {
               ) : (
                 <>
                   <UploadIcon className="w-12 h-12 mb-4 text-gray-400" />
-                  <p>Drag 'n' drop an image here, or click to select one</p>
+                  <p>
+                    Drag &apos;n&apos; drop an image here, or click to select
+                    one
+                  </p>
                 </>
               )}
             </div>
@@ -216,21 +286,41 @@ export default function ImageOptimizer() {
             </div>
             <div>
               <Label htmlFor="fileSize">Estimated File Size</Label>
-              <Input
-                id="fileSize"
-                type="number"
-                value={fileSize}
-                readOnly
-                suffix="KB"
-              />
+              <Input id="fileSize" type="number" value={fileSize} readOnly />
             </div>
           </div>
         </CardContent>
         <CardFooter className="flex justify-end">
-          <Button onClick={handleOptimize} disabled={!image || isProcessing}>
-            {isProcessing ? "Processing..." : "Optimize and Download"}
+          <Button onClick={handleOptimize} disabled={!image || loading}>
+            {loading ? "Processing..." : "Optimize and Download"}
           </Button>
         </CardFooter>
+        {/* Grid for optimized images */}
+        {optimizedImages && (
+          <div className="mt-4 pb-10">
+            <h3 className="text-lg font-semibold mb-2">Optimized Images</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {optimizedImages.map((img, index) => (
+                <div key={index} className="p-4 border rounded-lg shadow-md">
+                  <img
+                    src={img.src}
+                    alt={`Optimized ${img.format} ${img.size}`}
+                    className="w-1/2 h-auto object-contain"
+                  />
+                  <p className="mt-2 text-sm text-gray-700">
+                    Format: {img.format}, Size: {img.size}
+                  </p>
+                  <button
+                    onClick={() => saveImage(img)}
+                    className="mt-2 inline-block bg-blue-500 text-white px-4 py-2 rounded"
+                  >
+                    Download
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );
@@ -256,3 +346,21 @@ function UploadIcon(props) {
     </svg>
   );
 }
+
+// Function to save the image using Tauri's file system API
+const saveImage = async (img) => {
+  const base64Data = img.src.split(",")[1]; // Get base64 string
+  const binaryData = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
+
+  const fileName = `optimized_${img.format}_${img.size}.${img.format}`;
+
+  try {
+    await writeBinaryFile(fileName, binaryData, {
+      dir: BaseDirectory.Download,
+    });
+    alert(`Image saved as ${fileName} in your Downloads folder.`);
+  } catch (error) {
+    console.error("Failed to save the file:", error);
+    alert("Failed to save the file. Please try again.");
+  }
+};

@@ -20,6 +20,8 @@ const SEOImprovements = ({
   pageSpeed,
   canonical,
   hreflangs,
+  opengraph,
+  pageSchema,
   crawl,
 }: {
   pageDescription: string[];
@@ -28,6 +30,8 @@ const SEOImprovements = ({
   canonical: string[];
   hreflangs: string[];
   crawl: any;
+  opengraph: any;
+  pageSchema: any;
 }) => {
   const [aiPageTitle, setAiPageTitle] = React.useState<string>("");
   const [aiPageDescription, setAiPageDescription] = React.useState<string>("");
@@ -49,6 +53,8 @@ const SEOImprovements = ({
 
   // Helpers
   const description = pageDescription && pageDescription[0];
+
+  console.log(pageSchema, "Page Schema");
 
   const improvements = [
     {
@@ -92,7 +98,29 @@ const SEOImprovements = ({
         "This page has hreflangs, which are used to differentiate different languages on a website",
       improved: hreflangs?.length < 0 ? true : false,
       aiImprovement:
-        "Check if your hreflangs are well configured if you have multiple languages on your website",
+        "Check if your hreflangs are well configured if you have multiple languages on your website.",
+      length: description?.length,
+    },
+    {
+      id: 5,
+      title: "Opengraph",
+      failsAdvise:
+        "Opengraph tags have not been found int this page. These tags allow social media platforms to better render images from your webpage.",
+      passAdvice: "This page contains Opengraph tags.",
+      improved: opengraph?.image ? true : false,
+      aiImprovement:
+        "Veritfy if your OpenGraph tags are well configured and contain the necessary information to render the image and the data.",
+      length: description?.length,
+    },
+    {
+      id: 6,
+      title: "Structured Data - Schema",
+      failsAdvise:
+        "No structured data has been found on this page. Structured Data helps search engines to better understand your page's content.",
+      passAdvice: "This page contains Opengraph tags.",
+      improved: opengraph?.image ? true : false,
+      aiImprovement:
+        "Veritfy if your OpenGraph tags are well configured and contain the necessary information to render the image and the data.",
       length: description?.length,
     },
   ];
@@ -152,7 +180,7 @@ const SEOImprovements = ({
                     {item.failsAdvise &&
                       item.id < 3 &&
                       item.failsAdvise + item.length}
-                    {item.id > 2 && item.failsAdvise}
+                    {item.id > 2 && !item?.improved && item.failsAdvise}
                   </p>
                   <section>
                     {!item.improved && (

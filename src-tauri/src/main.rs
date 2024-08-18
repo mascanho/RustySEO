@@ -22,8 +22,8 @@ pub mod globals {
 
 mod commands;
 mod genai;
-
 mod gsc;
+mod image_converter;
 mod redirects;
 mod schema;
 
@@ -110,7 +110,8 @@ async fn main() {
             commands::check_ollama,
             commands::call_google_search_console,
             commands::call_gsc_match_url,
-            commands::set_google_search_console_credentials
+            commands::set_google_search_console_credentials,
+            image_converter::converter::handle_image_conversion
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

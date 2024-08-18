@@ -14,6 +14,19 @@
   },
   "tauri": {
     "allowlist": {
+      "fs": {
+        "all": false,
+        "copyFile": false,
+        "createDir": false,
+        "exists": false,
+        "readDir": true,
+        "readFile": true,
+        "removeDir": false,
+        "removeFile": false,
+        "renameFile": false,
+        "writeFile": true,
+        "scope": ["**"]
+      },
       "dialog": {
         "all": true,
         "ask": true,

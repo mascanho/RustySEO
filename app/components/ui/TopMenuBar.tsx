@@ -18,12 +18,15 @@ import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import { LuPanelRight } from "react-icons/lu";
 import OllamaSelect from "./OllamaSelector/OllamaSelect";
 import GoogleSearchConsoleModal from "./GoogleSearchConsole/GoogleSearchConsoleModal";
+import { useRouter } from "next/navigation";
 
 const TopMenuBar = () => {
   const onClose = useCallback(async () => {
     const { appWindow } = await import("@tauri-apps/api/window");
     appWindow.close();
   }, []);
+
+  const router = useRouter();
 
   const [openedPageSpeed, { open: openPageSpeed, close: closePageSpeed }] =
     useDisclosure(false);
@@ -135,7 +138,7 @@ const TopMenuBar = () => {
 
       {/* Menubar */}
       <Menubar className="fixed w-full top-0 z-[1000] p-0 pl-0 dark:bg-brand-darker dark:text-white bg-white dark:border-b-brand-dark border-b pb-1">
-        <section className="flex -ml-3">
+        <section className="flex -ml-3 space-x-1">
           <MenubarMenu>
             <MenubarTrigger className="ml-4">File</MenubarTrigger>
             <MenubarContent>
@@ -213,7 +216,12 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-3">Tools</MenubarTrigger>
             <MenubarContent>
-              <MenubarItem onClick={openPageSpeed}>Crawl Scheduler</MenubarItem>
+              <MenubarItem onClick={() => router.push("/")}>
+                Page Crawler
+              </MenubarItem>
+              <MenubarItem onClick={() => router.push("/images")}>
+                Image Converter
+              </MenubarItem>
               <MenubarItem
                 onClick={() => {
                   const userConfirmed = window.confirm(
