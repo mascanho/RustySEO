@@ -22,17 +22,17 @@ function MenuDrawer() {
 
   return (
     <>
-      <div className="items-center hidden md:flex  z-[2000] absolute top-[6px] left-4">
+      <div className="items-center hidden md:flex  z-[2000] absolute top-[1px] left-2">
         <div className="flex items-center flex bg-transparent rounded-md">
           <img
             src="icon.png"
             alt=""
-            className="w-6 h-auto py-1 object-cover mr-2 hidden dark:flex"
+            className="w-8 h-auto py-1 object-cover mr-2 hidden dark:flex"
           />
           <img
             src="icon-light.png"
             alt=""
-            className="w-6 h-auto py-1 object-cover mr-2  dark:hidden"
+            className="w-8 h-auto py-1 object-cover mr-2  dark:hidden"
           />
           <Link
             href="/images"

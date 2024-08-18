@@ -135,8 +135,9 @@ const SEOImprovements = ({
   if (!pageSpeed) {
     return (
       <section className="h-[calc(100vh-13rem)] flex items-center justify-center">
-        <img className="dark:hidden" src="/loader.gif" alt="Loading..." />
-        <div className="loader hidden dark:flex"></div>
+        <span className="text-brand-dark/40 dark:text-white/20">
+          No page crawled
+        </span>
       </section>
     );
   }
