@@ -347,6 +347,9 @@ struct SearchAnalyticsQuery {
     start_date: String,
     end_date: String,
     dimensions: Vec<String>,
+    #[serde(rename = "rowLimit")]
+    row_limit: u32,
+    search_type: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -380,7 +383,7 @@ pub struct Credentials {
     pub projectId: String,
     pub clientSecret: String,
     pub url: String,
-    pub searchType: String,
+    pub propertyType: String,
     pub range: String,
 }
 
@@ -420,7 +423,7 @@ pub async fn set_search_console_credentials(credentials: Credentials) -> Result<
     let credentials_project_id = credentials.projectId;
     let credentials_client_secret = credentials.clientSecret;
     let credentials_url = credentials.url;
-    let credentials_search_type = credentials.searchType;
+    let credentials_search_type = credentials.propertyType;
     let credentials_range = credentials.range;
 
     // Define the JSON structure
@@ -541,7 +544,9 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
     let query = SearchAnalyticsQuery {
         start_date: "2024-01-01".to_string(),
         end_date: finish_date,
-        dimensions: vec!["query".to_string(), "page".to_string()],
+        dimensions: vec!["query".to_string()],
+        row_limit: 2,
+        search_type: "web".to_string(),
     };
     let body = serde_json::to_string(&query)?;
 

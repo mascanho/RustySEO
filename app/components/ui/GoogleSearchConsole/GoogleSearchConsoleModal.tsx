@@ -62,12 +62,15 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
     e.preventDefault();
     if (validateForm()) {
       console.log(formData);
-
-      invoke("set_google_search_console_credentials", {
-        credentials: formData,
-      }).then(() => {
-        console.log("Credentials saved successfully");
-      });
+      try {
+        invoke("set_google_search_console_credentials", {
+          credentials: formData,
+        }).then(() => {
+          console.log("Credentials saved successfully");
+        });
+      } catch (error) {
+        console.error("Failed to save credentials:", error);
+      }
 
       // close;
     }
