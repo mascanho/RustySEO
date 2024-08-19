@@ -411,7 +411,7 @@ button:where([data-active]) {
 
 /* Style the bottom-right corner where two scrollbars meet */
 ::-webkit-scrollbar-corner {
-  background: #f1f1f1;
+  background: transparent;
 }
 
 /*Cards animations*/
@@ -471,7 +471,6 @@ button:where([data-active]) {
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
   @apply dark:bg-gray-800 rounded-none bg-brand-dark/20 active:bg-brand-darker !important;
-  color: red;
 }
 
 .ranking-table td {
