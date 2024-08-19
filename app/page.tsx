@@ -523,9 +523,9 @@ const Home: React.FC<HomeProps> = () => {
           </section>
         </div>
         {/* TABS SECTION */}
-        <section className="mt-2 relative h-[calc(100vh-9.2rem)] overflow-x-hidden py-6 px-3   ">
+        <section className="mt-2 relative h-[calc(100vh-9.2rem)] overflow-x-hidden py-6 px-3 side-scrollbar  ">
           <Tabs defaultValue="first">
-            <div className="transition-all  ease-in z-[1000]  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-2 top-[70px]  transform dark:bg-brand-darker  pb-0">
+            <div className="transition-all   ease-in z-[1000]  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-2 top-[70px]  transform dark:bg-brand-darker  pb-0">
               <Tabs.List justify="center" className="dark:text-white  ">
                 <Tabs.Tab value="first"> Diagnostics</Tabs.Tab>
                 <Tabs.Tab value="third">Improvements</Tabs.Tab>

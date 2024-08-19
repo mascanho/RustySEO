@@ -399,17 +399,15 @@ button:where([data-active]) {
   z-index: 0 !important;
 }
 
-/* Style the draggable part of the scrollbar */
+/* STYLE THE SCHEMA SCROLLBAR */
 ::-webkit-scrollbar-thumb {
-  @apply bg-brand-bright dark:bg-sky-600 z-0 !important;
+  @apply dark:bg-gray-800 rounded-none bg-brand-dark/20 active:bg-brand-darker !important;
 }
 
-/* Style the draggable part of the scrollbar on hover */
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-brand-highlight dark:bg-sky-500 z-0 !important;
 }
 
-/* Style the bottom-right corner where two scrollbars meet */
 ::-webkit-scrollbar-corner {
   background: transparent;
 }
@@ -475,4 +473,13 @@ button:where([data-active]) {
 
 .ranking-table td {
   @apply text-[10px] !important;
+}
+
+/* VERTICAL SIDE SCROLL BAR STYLING */
+.side-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-blue-500 dark:bg-sky-600 z-0 !important;
+}
+
+.side-scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-sky-500 dark:bg-sky-500 z-0 !important;
 }
