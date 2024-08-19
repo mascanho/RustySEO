@@ -59,7 +59,7 @@ const TodoItems = ({ url, strategy }: { url: string; strategy: string }) => {
   return (
     <section className="relative h-full">
       <Tabs color="red" defaultValue="first">
-        <Tabs.List className="tabs-list tabs-drawer z-[5000] sticky -top-6 bg-white dark:text-dark w-[88%] mx-auto shadow-2">
+        <Tabs.List className="tabs-list tabs-drawer z-[5000] sticky -top-10 bg-white dark:text-dark w-[88%] mx-auto shadow-2 -mt-5">
           <Tabs.Tab className="py-2 dark:text-black" value="first">
             Pending
           </Tabs.Tab>
@@ -69,7 +69,7 @@ const TodoItems = ({ url, strategy }: { url: string; strategy: string }) => {
         </Tabs.List>
         <section className="mt-4">
           <Tabs.Panel value="first" pt="xs">
-            <section className="py-4 overflow-auto h-full -mt-8">
+            <section className="py-4 overflow-auto h-full -mt-2">
               <section className="todoItems custom-scrollbar mx-4 -mt-3">
                 {pendingTasks
                   .sort(

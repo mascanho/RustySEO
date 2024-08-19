@@ -94,7 +94,9 @@ export default function ImageOptimizer() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleOptimize = async () => {
+  const handleOptimize = () => {
+    console.log("Clicking Optimize Image");
+
     if (!validateInputs() || !image) return;
 
     setIsProcessing(true);
@@ -109,7 +111,7 @@ export default function ImageOptimizer() {
 
         try {
           // Call the Tauri command to handle image upload and optimization
-          const results = await invoke("handle_image_conversion", {
+          const results = invoke("handle_image_conversion", {
             image: base64Image,
             format,
             quality,

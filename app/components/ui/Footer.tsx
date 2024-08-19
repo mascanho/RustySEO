@@ -108,7 +108,7 @@ const Footer = () => {
     <>
       <MantineDrawer
         offset={8}
-        radius="md"
+        radius="sm"
         opened={openedDrawer}
         onClose={closeDrawer}
         title=""
