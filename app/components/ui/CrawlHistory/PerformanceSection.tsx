@@ -1,5 +1,4 @@
 import React, { useState, useCallback, useEffect } from "react";
-import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { FaDesktop, FaMobileAlt } from "react-icons/fa";
 import { FiDownload, FiCheckCircle } from "react-icons/fi";
@@ -27,37 +26,6 @@ import { Modal } from "@mantine/core";
 import Todo from "../Todo";
 import { useDisclosure } from "@mantine/hooks";
 
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuShortcut,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import {
-  DropdownMenuPortal,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-} from "@radix-ui/react-dropdown-menu";
-import { Mail, MessageSquare, PlusCircle, UserPlus } from "lucide-react";
-import {
-  ContextMenuSeparator,
-  ContextMenuSub,
-  ContextMenuSubContent,
-  ContextMenuSubTrigger,
-} from "@radix-ui/react-context-menu";
-
-import {
-  FiExternalLink,
-  FiRefreshCw,
-  FiSave,
-  FiShortcut,
-  FiEdit,
-  FiTool,
-  FiUsers,
-  FiDollarSign,
-} from "react-icons/fi";
 import TableMenus from "./TableMenus";
 
 // Define TypeScript types
