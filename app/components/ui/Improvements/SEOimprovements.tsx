@@ -134,8 +134,9 @@ const SEOImprovements = ({
 
   if (!pageSpeed) {
     return (
-      <section className="h-[calc(100vh-13rem)] flex items-center justify-center">
-        <span className="text-brand-dark/40 dark:text-white/20">
+      <section className="h-[calc(100vh-13rem)] flex flex-col space-y-2 items-center justify-center">
+        <img src="loadingDog.png" alt="dog" />
+        <span className="block text-brand-dark/40 dark:text-white/20">
           No page crawled
         </span>
       </section>

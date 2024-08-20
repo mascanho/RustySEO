@@ -25,6 +25,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { useDropzone } from "react-dropzone";
 import { invoke } from "@tauri-apps/api/tauri";
+import { UploadIcon } from "lucide-react";
 
 export default function ImageOptimizer() {
   const [image, setImage] = useState(null);
