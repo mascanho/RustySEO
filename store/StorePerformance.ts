@@ -14,6 +14,7 @@ const usePageSpeedStore = create((set, get) => ({
   urlRedirects: null,
   longTasks: null,
   renderBlocking: null,
+  netowrkRequests: null,
   passedChecks: 0,
   failedChecks: 0,
   // Function to set all the values at once
@@ -52,6 +53,9 @@ const usePageSpeedStore = create((set, get) => ({
       renderBlocking:
         pageSpeed?.lighthouseResult?.audits?.["render-blocking-resources"]
           ?.numericValue || null,
+      networkRequests:
+        pageSpeed?.lighthouseResult?.audits?.["network-requests"]?.score ||
+        null,
     }),
   setChecksData: (passedChecks, failedChecks) =>
     set({

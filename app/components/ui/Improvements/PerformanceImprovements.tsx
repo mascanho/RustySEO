@@ -56,6 +56,9 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
     pageSpeed?.lighthouseResult?.audits?.["render-blocking-resources"]
       ?.numericValue;
 
+  const networkRequests =
+    pageSpeed?.lighthouseResult?.audits?.["network-requests"]?.score;
+
   const AIfeedback = false;
 
   useEffect(() => {
@@ -197,6 +200,17 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
       aiImprovement: AIfeedback
         ? "Function call"
         : "To improve render-blocking resources, first, move critical CSS inline to the HTML to prioritize it. Next, defer non-essential JavaScript by using the `defer` or `async` attributes. Finally, ensure that non-critical CSS is loaded asynchronously or via media queries to avoid blocking the initial render.",
+    },
+
+    {
+      id: 13,
+      title: "Network Requests",
+      passAdvice: "This page does not have too many network requests.",
+      failsAdvice: "This page has too many network requests.",
+      improved: networkRequests > 0.5 ? true : false,
+      aiImprovement: AIfeedback
+        ? "Function call"
+        : "To improve network requests, prioritize and schedule critical network requests. Monitor and optimize network performance using tools like the Network tab in Chrome DevTools.",
     },
   ];
 

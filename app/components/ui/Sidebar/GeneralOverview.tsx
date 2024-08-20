@@ -28,15 +28,17 @@ export default function GeneralOverview({ pageSpeed, loading }: any) {
     memoizedSetChecksData();
   }, [memoizedSetChecksData]);
 
+  const iconsGray = pageSpeed === undefined;
+
   return (
     <>
-      <section className="w-full h-[21rem] pb-12 overflow-auto relative">
+      <section className="w-full h-[22.5rem] pb-12 overflow-auto relative mt-0.5">
         <div className="container mx-auto max-w-4xl h-full">
           <div className="grid h-full pb-12">
             {checks.map((check, index) => (
               <div
                 key={check.id}
-                className={`flex items-center justify-between px-4 py-2 border-b dark:border-b-white/10 ${
+                className={`flex items-center justify-between px-4 py-1.5 border-b dark:border-b-white/10 ${
                   index % 2 === 0
                     ? "bg-gray-100 dark:bg-brand-darker dark:text-white"
                     : "bg-gray-200 dark:bg-brand-darker dark:text-white"
@@ -48,26 +50,38 @@ export default function GeneralOverview({ pageSpeed, loading }: any) {
                   ) : (
                     <>
                       {check.status === "Passed" ? (
-                        <CheckIcon className="w-5 h-5 text-green-500" />
+                        <CheckIcon
+                          className={`w-5 h-5 ${iconsGray ? "text-gray-400" : "text-green-500"}`}
+                        />
                       ) : (
-                        <XIcon className="w-5 h-5 text-red-500" />
+                        <XIcon
+                          className={`w-5 h-5 ${iconsGray ? "text-gray-400" : "text-red-500"}`}
+                        />
                       )}
                     </>
                   )}
                   <div className="flex justify-between w-full ml-2 items-center">
-                    <span className="text-xs font-semibold flex-1">
+                    <span
+                      className={`text-xs font-semibold flex-1 ${iconsGray ? "text-gray-400" : ""}`}
+                    >
                       {check.name}
                     </span>
-                    <span
-                      className={`text-xs ${
-                        check.status === "Passed"
-                          ? "text-green-500"
-                          : "text-red-500"
-                      }`}
-                    >
-                      {!loading && check.status}
-                      {loading && <Spinner />}
-                    </span>
+
+                    {iconsGray ? (
+                      <span className="text-black/50 dark:text-white/50">
+                        n/a
+                      </span>
+                    ) : (
+                      <span
+                        className={`text-xs ${
+                          check.status === "Passed"
+                            ? "text-green-500"
+                            : "text-red-500"
+                        }`}
+                      >
+                        {check.status}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -75,14 +89,18 @@ export default function GeneralOverview({ pageSpeed, loading }: any) {
           </div>
         </div>
       </section>
-      <footer className="absolute bottom-0 w-full p-2 px-4 bg-gray-800 dark:bg-brand-bright text-white flex justify-between">
+      <footer className="absolute bottom-0 w-full font-bold p-1 px-4 bg-brand-bright dark:bg-brand-bright text-white flex justify-between">
         <div>
           <span>Passed:</span>{" "}
-          <span className="font-bold">{passedChecks.length}</span>
+          <span className="font-bold">
+            {iconsGray ? "-" : passedChecks.length}
+          </span>
         </div>
         <div>
           <span>Failed:</span>{" "}
-          <span className="font-bold">{failedChecks.length}</span>
+          <span className="font-bold">
+            {iconsGray ? "-" : failedChecks.length}
+          </span>
         </div>
       </footer>
     </>

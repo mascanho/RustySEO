@@ -18,7 +18,7 @@ const RedirectsTable = ({ pageSpeed }: { pageSpeed: any }) => {
       <div className="flex flex-col pt-7 px-4">
         {redirects.length === 0 ? (
           <div className="h-[20rem] flex items-center overflow-hidden ">
-            <span className="text-black/50 darK:text-white/50 m-auto text-center translate-y-1/2 h-full">
+            <span className="text-black/50 darK:text-white/50 m-auto text-center translate-y-1/2 h-full dark:text-white/50">
               No Redirects Found
             </span>
           </div>

@@ -17,6 +17,7 @@ const useGetChecks = () => {
   const urlRedirects = usePageSpeedStore((state) => state.urlRedirects);
   const longTasks = usePageSpeedStore((state) => state.longTasks);
   const renderBlocking = usePageSpeedStore((state) => state.renderBlocking);
+  const networkRequests = usePageSpeedStore((state) => state.netowrkRequests);
 
   // Use useMemo to avoid recalculating on every render
   const checks = useMemo(() => {
@@ -89,6 +90,11 @@ const useGetChecks = () => {
         name: "Render Blocking Resources",
         status: renderBlocking <= 0 ? "Passed" : "Failed",
       },
+      {
+        id: "14",
+        name: "Network Requests",
+        status: networkRequests <= 0.5 ? "Passed" : "Failed",
+      },
     ];
   }, [
     performance,
@@ -104,6 +110,7 @@ const useGetChecks = () => {
     urlRedirects,
     longTasks,
     renderBlocking,
+    networkRequests,
   ]);
 
   return checks;
