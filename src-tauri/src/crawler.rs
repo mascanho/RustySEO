@@ -506,7 +506,13 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut db_data = Vec::new();
 
     db_data.push(&page_title[0]);
-    db_data.push(&page_description[0]);
+
+    let no_description = "".to_string();
+    if !page_description.is_empty() {
+        db_data.push(&page_description[0]);
+    } else {
+        db_data.push(&no_description);
+    }
     //db_data.push(&canonical_url);
     //db_data.push(&index_type);
     //db_data.push(&page_schema);

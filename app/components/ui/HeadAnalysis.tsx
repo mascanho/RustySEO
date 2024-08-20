@@ -99,14 +99,16 @@ export const HeadAnalysis = ({
             >
               {pageTitle[0]}{" "}
             </span>
-            <span className="text-black/20 dark:text-white/20 ml-2 text-[9px]">
-              ({pageTitle[0]?.length} / 60)
-            </span>
+            {pageTitle[0] && (
+              <span className="text-black/20 dark:text-white/20 ml-2 text-[9px]">
+                ({pageTitle[0]?.length} / 60)
+              </span>
+            )}
           </div>
 
           <div className="flex items-center mt-2">
             <div
-              className={`flex justify-center items-center min-w-8 ${pageDescription[0]?.length > 160 ? "bg-red-500 text-white" : pageDescription[0]?.length < 160 && pageDescription[0]?.length !== 0 ? "bg-green-500 text-white" : "bg-gray-200"} w-8 h-8 p-1.5 rounded-full`}
+              className={`flex justify-center items-center min-w-8 ${pageDescription[0]?.length > 160 || (!pageDescription[0] && pageTitle.length > 0) ? "bg-red-500 text-white" : pageDescription[0]?.length < 160 && pageDescription[0]?.length !== 0 ? "bg-green-500 text-white" : "bg-gray-200"} w-8 h-8 p-1.5 rounded-full`}
             >
               <TagIcon />
             </div>
@@ -116,12 +118,16 @@ export const HeadAnalysis = ({
               Description:
             </span>
             <div className="flex items-center">
-              <span className=" text-black text-sm  items-center font-black ml-2 dark:text-white max-w-[calc(100% - 100px)] break-words relative">
-                {pageDescription[0]}
-                <p className=" text-black/20 dark:text-white/20 ml-2 text-[9px]  inline-flex items-center m-auto">
-                  ({pageDescription[0]?.length} / 160)
-                </p>
-              </span>
+              {pageDescription[0] && (
+                <span className=" text-black text-sm  items-center font-black ml-2 dark:text-white max-w-[calc(100% - 100px)] break-words relative">
+                  {pageDescription[0]}
+                  {pageDescription[0] && (
+                    <p className=" text-black/20 dark:text-white/20 ml-2 text-[9px]  inline-flex items-center m-auto">
+                      ({pageDescription[0]?.length} / 160)
+                    </p>
+                  )}
+                </span>
+              )}
             </div>
           </div>
 

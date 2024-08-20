@@ -15,7 +15,7 @@ const RedirectsTable = ({ pageSpeed }: { pageSpeed: any }) => {
 
   return (
     <section className="h-full border-0">
-      <div className="flex flex-col pt-2 px-4">
+      <div className="flex flex-col pt-7 px-4">
         {redirects.length === 0 ? (
           <div className="h-[20rem] flex items-center overflow-hidden ">
             <span className="text-black/50 darK:text-white/50 m-auto text-center translate-y-1/2 h-full">
