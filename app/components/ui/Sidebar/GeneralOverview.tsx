@@ -1,5 +1,6 @@
 import React from "react";
 import { checks } from "./checks/checks";
+import Link from "next/link";
 
 export default function GeneralOverview() {
   return (
@@ -31,7 +32,7 @@ export default function GeneralOverview() {
                           : "text-red-500"
                       }`}
                     >
-                      {check.status}
+                      <a href="/#og">{check.status}</a>
                     </span>
                   </div>
                 </div>

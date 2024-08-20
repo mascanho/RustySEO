@@ -112,24 +112,28 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
         <ResizableHandle />
         <ResizablePanel defaultSize={200} className="h-[calc(100vh-90rem)]">
           <Tabs defaultValue="first" className="text-xs aside-tabs">
-            <Tabs.List justify="left" className="dark:text-white text-xs">
-              <Tabs.Tab value="overview">Checklist</Tabs.Tab>
-              <Tabs.Tab value="first">Redirects</Tabs.Tab>
-              <Tabs.Tab value="second">Robots</Tabs.Tab>
-              <Tabs.Tab value="third">Domain</Tabs.Tab>
+            <Tabs.List
+              justify="left"
+              className="dark:text-white text-xs sidebar-tabs"
+            >
+              <Tabs.Tab value="first">Checkllist</Tabs.Tab>
+              <Tabs.Tab value="second">Redirects</Tabs.Tab>
+              <Tabs.Tab value="third">Robots</Tabs.Tab>
+              <Tabs.Tab value="forth">Domain</Tabs.Tab>
             </Tabs.List>
+
             <Tabs.Panel value="first">
-              <RedirectsTable pageSpeed={pageSpeed} />
-            </Tabs.Panel>
-            <Tabs.Panel value="second">
-              <RobotsTable robots={robots} />
-            </Tabs.Panel>
-            <Tabs.Panel value="third">
-              <PageRankChart pageRank={pageRank} />
+              <GeneralOverview />
             </Tabs.Panel>
 
-            <Tabs.Panel value="overview">
-              <GeneralOverview />
+            <Tabs.Panel value="second">
+              <RedirectsTable pageSpeed={pageSpeed} />
+            </Tabs.Panel>
+            <Tabs.Panel value="third">
+              <RobotsTable robots={robots} />
+            </Tabs.Panel>
+            <Tabs.Panel value="forth">
+              <PageRankChart pageRank={pageRank} />
             </Tabs.Panel>
           </Tabs>
         </ResizablePanel>

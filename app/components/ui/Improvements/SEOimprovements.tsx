@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
 import { FiClipboard } from "react-icons/fi";
 
@@ -53,6 +53,8 @@ const SEOImprovements = ({
 
   // Helpers
   const description = pageDescription && pageDescription[0];
+
+  const ref = useRef(null);
 
   console.log(pageSchema, "Page Schema");
 

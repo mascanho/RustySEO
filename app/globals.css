@@ -271,6 +271,8 @@ button:where([data-active]) {
   @apply dark:text-black dark:border-0  !important;
 }
 
+/* TABS FONTS */
+
 .tabs-drawer button span {
   @apply dark:text-brand-darker !important;
 }
@@ -482,4 +484,9 @@ button:where([data-active]) {
 
 .side-scrollbar::-webkit-scrollbar-thumb:hover {
   @apply bg-sky-500 dark:bg-sky-500 z-0 !important;
+}
+
+/* SIDEBAR TABS */
+.sidebar-tabs span {
+  @apply text-xs !important;
 }
