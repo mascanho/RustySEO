@@ -38,7 +38,7 @@ export function PageRankChart({ pageRank }: { pageRank: any }) {
     },
   } satisfies ChartConfig;
 
-  if (pageRank.length === 0) {
+  if (!pageRank) {
     return (
       <div className="h-[20rem] flex items-center ">
         <span className="text-black/50 darK:text-white/50 m-auto text-center translate-y-1/2 h-full">

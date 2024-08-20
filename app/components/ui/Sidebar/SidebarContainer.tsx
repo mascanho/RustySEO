@@ -18,6 +18,7 @@ import AIFeedbackTab from "./AiAnalysis";
 import { useParams } from "next/navigation";
 import PopUpTable from "../CrawlHistory/PopUpTable";
 import RankingInfo from "./RankingInfo";
+import GeneralOverview from "./GeneralOverview";
 
 // Define prop types for better type checking
 interface SidebarContainerProps {
@@ -115,6 +116,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
               <Tabs.Tab value="first">Redirects</Tabs.Tab>
               <Tabs.Tab value="second">Robots</Tabs.Tab>
               <Tabs.Tab value="third">Domain</Tabs.Tab>
+              <Tabs.Tab value="overview">Overview</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="first">
               <RedirectsTable pageSpeed={pageSpeed} />
@@ -124,6 +126,10 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
             </Tabs.Panel>
             <Tabs.Panel value="third">
               <PageRankChart pageRank={pageRank} />
+            </Tabs.Panel>
+
+            <Tabs.Panel value="overview">
+              <GeneralOverview />
             </Tabs.Panel>
           </Tabs>
         </ResizablePanel>

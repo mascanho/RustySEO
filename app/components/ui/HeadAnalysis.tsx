@@ -89,21 +89,24 @@ export const HeadAnalysis = ({
             >
               Page Title:
             </span>
-            <span className="flex text-base ml-2 text-black dark:text-white  font-black">
-              {pageTitle[0]}
+            <span
+              onClick={() => {
+                if (pageTitle[0]) {
+                  navigator?.clipboard.writeText(pageTitle[0]);
+                }
+              }}
+              className="flex items-center text-base ml-2 text-black dark:text-white  font-black"
+            >
+              {pageTitle[0]}{" "}
             </span>
-            {/* {pageTitle.length > 0 && ( */}
-            {/*   <span */}
-            {/*     className={`bg-gray-100 text-xs px-1 py-0.5 rounded-md items-center flex ml-2 ${pageTitle[0].length > 60 ? "text-red-500" : "text-green-600"}`} */}
-            {/*   > */}
-            {/*     {pageTitle[0].length} / 60 */}
-            {/*   </span> */}
-            {/* )} */}
+            <span className="text-black/20 dark:text-white/20 ml-2 text-[9px]">
+              ({pageTitle[0]?.length} / 60)
+            </span>
           </div>
 
           <div className="flex items-center mt-2">
             <div
-              className={`flex justify-center items-center min-w-8  ${pageDescription[0]?.length > 160 ? "bg-red-500 text-white" : pageDescription[0]?.length < 160 && pageDescription[0]?.length !== 0 ? "bg-green-500 text-white" : "bg-gray-200"} w-8 h-8 p-1.5 rounded-full`}
+              className={`flex justify-center items-center min-w-8 ${pageDescription[0]?.length > 160 ? "bg-red-500 text-white" : pageDescription[0]?.length < 160 && pageDescription[0]?.length !== 0 ? "bg-green-500 text-white" : "bg-gray-200"} w-8 h-8 p-1.5 rounded-full`}
             >
               <TagIcon />
             </div>
@@ -112,16 +115,14 @@ export const HeadAnalysis = ({
             >
               Description:
             </span>
-            <span className="text-black text-base font-black ml-2 dark:text-white">
-              {pageDescription[0]}
-            </span>
-            {/* {pageDescription[0]?.length > 0 && ( */}
-            {/*   <span */}
-            {/*     className={`bg-gray-100 text-xs px-2 py-1 rounded-md items-center flex ml-2 ${pageDescription[0].length > 160 ? "text-red-500" : "text-green-500"}`} */}
-            {/*   > */}
-            {/*     {pageDescription[0].length} / 160 */}
-            {/*   </span> */}
-            {/* )} */}
+            <div className="flex items-center">
+              <span className=" text-black text-sm  items-center font-black ml-2 dark:text-white max-w-[calc(100% - 100px)] break-words relative">
+                {pageDescription[0]}
+                <p className=" text-black/20 dark:text-white/20 ml-2 text-[9px]  inline-flex items-center m-auto">
+                  ({pageDescription[0]?.length} / 160)
+                </p>
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center mt-2">

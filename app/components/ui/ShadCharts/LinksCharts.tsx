@@ -151,7 +151,7 @@ export function LinksChart({
         </ChartContainer>
       </CardContent>
       {linkStatusCodes?.length > 0 && (
-        <CardFooter className="flex-col gap-2 text-sm text-center mb-6 dark:text-white/50">
+        <CardFooter className="flex-col gap-2 text-sm text-left mb-6 dark:text-white/50">
           <p className="flex items-center font-medium leading-none -mt-10">
             This page contains{" "}
             <span className="mx-1 font-bold text-brand-bright">

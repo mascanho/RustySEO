@@ -439,7 +439,7 @@ const Home: React.FC<HomeProps> = () => {
                   <button
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
-                    className="inline-flex justify-center w-[98px] border-l border-b border-t rounded-l-md border-gray-300 shadow-sm px-2  bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 h-7 py-[3px] focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500 items-center mt-[1px] "
+                    className="inline-flex justify-center w-[98px] border-l border-b border-t  rounded-l-md border-gray-200 shadow-sm px-2  bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 h-7 py-[3px] focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500 items-center mt-[1px] "
                     id="options-menu"
                     aria-haspopup="true"
                     aria-expanded="true"
@@ -529,14 +529,7 @@ const Home: React.FC<HomeProps> = () => {
               <Tabs.List justify="center" className="dark:text-white  ">
                 <Tabs.Tab value="first"> Diagnostics</Tabs.Tab>
                 <Tabs.Tab value="third">Improvements</Tabs.Tab>
-                <Link href="/?tab=second">
-                  <Tabs.Tab
-                    onClick={(e) => console.log(e.target.value)}
-                    value="fourth"
-                  >
-                    Task Manager
-                  </Tabs.Tab>
-                </Link>
+                <Tabs.Tab value="fourth">Task Manager</Tabs.Tab>
                 <Tabs.Tab value="fifth">Crawl History</Tabs.Tab>
                 <Tabs.Tab value="analytics">Analytics</Tabs.Tab>
               </Tabs.List>

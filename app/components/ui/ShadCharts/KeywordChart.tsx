@@ -82,7 +82,7 @@ export function KeywordChart({
             <div className="flex items-center gap-2 font-medium leading-none">
               {keywords.length > 0 && (
                 <span>
-                  The top keyword in your content is:{" "}
+                  Top keyword:{" "}
                   <span className="font-bold text-brand-bright">
                     {keywords?.map((key: any) => key[0][0])}
                   </span>
