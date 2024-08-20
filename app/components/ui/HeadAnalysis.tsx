@@ -159,7 +159,7 @@ export const HeadAnalysis = ({
                 hreflangs.map((hreflang: any, index: any) => (
                   <div key={index}>
                     <span
-                      className="flex ml-1 text-xs  text-black py-0.5 border px-2 bg-gray-100 rounded-md"
+                      className="flex ml-1 text-[10px]  text-black py-0.5 border px-2 bg-gray-100 rounded-md"
                       key={index}
                     >
                       {hreflang?.lang}
@@ -183,10 +183,10 @@ export const HeadAnalysis = ({
           <Box className="mt-1" mx="0">
             <Collapse in={opened}>
               <span className="text-left m-2 pt-3">
-                <div className="bg-gray-100 rounded-md">
+                <div className="bg-gray-100 dark:bg-black/60 rounded-md">
                   {hreflangs?.map((hreflang: any, index: any) => (
                     <span
-                      className="flex ml-2 items-center space-x-2 text-black p-2  px-2   border-b border-white"
+                      className="flex ml-2 items-center space-x-2 text-black p-2  px-2   border-b border-white dark:border-b-white/5"
                       key={index}
                     >
                       <a
@@ -195,7 +195,7 @@ export const HeadAnalysis = ({
                       >
                         {hreflang?.href}
                       </a>
-                      <span className="border px-2 py-1 text-xs text-white bg-black/50 rounded-md w-fit h-6 items-center flex justify-center">
+                      <span className="border px-2 py-1 text-xs text-white bg-black/50 dark:bg-brand-dark  rounded-md w-fit h-6 items-center flex justify-center">
                         {hreflang?.lang}
                       </span>
                     </span>

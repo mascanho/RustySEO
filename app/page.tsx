@@ -724,6 +724,7 @@ const Home: React.FC<HomeProps> = () => {
         pageRank={pageRank}
         seo={seoPageSpeed}
         htmlToTextRatio={htmlToTextRatio}
+        loading={loading}
       />
     </section>
   );

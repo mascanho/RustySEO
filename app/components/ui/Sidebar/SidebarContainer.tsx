@@ -33,6 +33,7 @@ interface SidebarContainerProps {
   pageRank: any;
   seo: any;
   htmlToTextRatio: any;
+  loading: boolean;
 }
 
 const ollama = true;
@@ -49,6 +50,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
   pageRank,
   seo,
   htmlToTextRatio,
+  loading,
 }) => {
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
   const ollamaStatus = useOllamaStore();
@@ -123,7 +125,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
             </Tabs.List>
 
             <Tabs.Panel value="first">
-              <GeneralOverview />
+              <GeneralOverview loading={loading} pageSpeed={pageSpeed} />
             </Tabs.Panel>
 
             <Tabs.Panel value="second">

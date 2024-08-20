@@ -1,82 +1,112 @@
-export const checks = [
-  {
-    id: "1",
-    name: "Meta Tags",
-    status: "Passed",
-  },
-  {
-    id: "2",
-    name: "Page Speed",
-    status: "Failed",
-  },
-  {
-    id: "3",
-    name: "Robots.txt",
-    status: "Passed",
-  },
-  {
-    id: "4",
-    name: "Crawl History",
-    status: "Passed",
-  },
-  {
-    id: "5",
-    name: "Mobile Friendliness",
-    status: "Passed",
-  },
-  {
-    id: "6",
-    name: "Alt Tags for Images",
-    status: "Passed",
-  },
-  {
-    id: "7",
-    name: "SSL Certificate",
-    status: "Passed",
-  },
-  {
-    id: "8",
-    name: "Broken Links",
-    status: "Failed",
-  },
-  {
-    id: "9",
-    name: "Structured Data",
-    status: "Passed",
-  },
-  {
-    id: "10",
-    name: "Accessibility",
-    status: "Passed",
-  },
-  {
-    id: "11",
-    name: "XML Sitemap",
-    status: "Passed",
-  },
-  {
-    id: "12",
-    name: "Cache Control",
-    status: "Passed",
-  },
-  {
-    id: "13",
-    name: "Structured Data",
-    status: "Passed",
-  },
-  {
-    id: "14",
-    name: "Accessibility",
-    status: "Passed",
-  },
-  {
-    id: "15",
-    name: "XML Sitemap",
-    status: "Passed",
-  },
-  {
-    id: "16",
-    name: "Cache Control",
-    status: "Passed",
-  },
-];
+// @ts-nocheck
+import usePageSpeedStore from "@/store/StorePerformance";
+import { useMemo } from "react";
+
+const useGetChecks = () => {
+  // Extract all necessary state from Zustand store
+  const performance = usePageSpeedStore((state) => state.performance);
+  const fcp = usePageSpeedStore((state) => state.fcp);
+  const lcp = usePageSpeedStore((state) => state.lcp);
+  const tti = usePageSpeedStore((state) => state.tti);
+  const tbt = usePageSpeedStore((state) => state.tbt);
+  const cls = usePageSpeedStore((state) => state.cls);
+  const speedIndex = usePageSpeedStore((state) => state.speedIndex);
+  const serverResponse = usePageSpeedStore((state) => state.serverResponse);
+  const largePayloads = usePageSpeedStore((state) => state.largePayloads);
+  const domSize = usePageSpeedStore((state) => state.domSize);
+  const urlRedirects = usePageSpeedStore((state) => state.urlRedirects);
+  const longTasks = usePageSpeedStore((state) => state.longTasks);
+  const renderBlocking = usePageSpeedStore((state) => state.renderBlocking);
+
+  // Use useMemo to avoid recalculating on every render
+  const checks = useMemo(() => {
+    return [
+      {
+        id: "1",
+        name: "Performance",
+        status: performance >= 0.8 ? "Passed" : "Failed", // Dynamically set based on performance score
+      },
+
+      {
+        id: "3",
+        name: "First Contentful Paint",
+        status: fcp >= 0.5 ? "Passed" : "Failed",
+      },
+      {
+        id: "4",
+        name: "Largest Contentful Paint",
+        status: lcp >= 0.5 ? "Passed" : "Failed",
+      },
+      {
+        id: "5",
+        name: "Time to Interactive",
+        status: tti >= 0.5 ? "Passed" : "Failed",
+      },
+
+      {
+        id: "5",
+        name: "Total Blocking Time",
+        status: tbt >= 0.5 ? "Passed" : "Failed",
+      },
+
+      {
+        id: "6",
+        name: "Cumulative Layout Shift",
+        status: cls >= 0.5 ? "Passed" : "Failed",
+      },
+      {
+        id: "7",
+        name: "Speed Index",
+        status: speedIndex >= 0.5 ? "Passed" : "Failed",
+      },
+      {
+        id: "8",
+        name: "Server Response Time",
+        status: serverResponse >= 0.5 ? "Passed" : "Failed",
+      },
+      {
+        id: "9",
+        name: "Total Byte Weight",
+        status: largePayloads >= 0.5 ? "Passed" : "Failed",
+      },
+      {
+        id: "10",
+        name: "DOM Size",
+        status: domSize <= 1500 ? "Passed" : "Failed",
+      },
+      {
+        id: "11",
+        name: "URL Redirects",
+        status: urlRedirects <= 0 ? "Passed" : "Failed",
+      },
+      {
+        id: "12",
+        name: "Long Tasks",
+        status: longTasks >= 0.8 ? "Passed" : "Failed",
+      },
+      {
+        id: "13",
+        name: "Render Blocking Resources",
+        status: renderBlocking <= 0 ? "Passed" : "Failed",
+      },
+    ];
+  }, [
+    performance,
+    fcp,
+    lcp,
+    tti,
+    tbt,
+    cls,
+    speedIndex,
+    serverResponse,
+    largePayloads,
+    domSize,
+    urlRedirects,
+    longTasks,
+    renderBlocking,
+  ]);
+
+  return checks;
+};
+
+export default useGetChecks;
