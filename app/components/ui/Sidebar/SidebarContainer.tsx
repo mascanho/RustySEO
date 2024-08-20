@@ -34,6 +34,7 @@ interface SidebarContainerProps {
   seo: any;
   htmlToTextRatio: any;
   loading: boolean;
+  favicon: string[];
 }
 
 const ollama = true;
@@ -51,6 +52,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
   seo,
   htmlToTextRatio,
   loading,
+  favicon,
 }) => {
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
   const ollamaStatus = useOllamaStore();

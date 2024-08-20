@@ -1,3 +1,4 @@
+// @ts-ignore
 "use client";
 import React, { useEffect, useRef } from "react";
 import { FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
@@ -13,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { invoke } from "@tauri-apps/api/tauri";
 import PerformanceImprovements from "./PerformanceImprovements";
+import useOnPageSeo from "@/store/storeOnPageSeo";
 
 const SEOImprovements = ({
   pageTitle,
@@ -22,6 +24,7 @@ const SEOImprovements = ({
   hreflangs,
   opengraph,
   pageSchema,
+  favicon: faviconUrl,
   crawl,
 }: {
   pageDescription: string[];
@@ -32,9 +35,41 @@ const SEOImprovements = ({
   crawl: any;
   opengraph: any;
   pageSchema: any;
+  favicon: string[];
 }) => {
   const [aiPageTitle, setAiPageTitle] = React.useState<string>("");
   const [aiPageDescription, setAiPageDescription] = React.useState<string>("");
+  const {
+    favicon,
+    seopagetitle,
+    seodescription,
+    setFavicon,
+    setPagetitle,
+    setDescription,
+  } = useOnPageSeo((state) => ({
+    favicon: state.favicon,
+    seopagetitle: state.seopagetitle,
+    seodescription: state.seodescription,
+    setFavicon: state.setFavicon,
+    setPagetitle: state.setPagetitle,
+    setDescription: state.setDescription,
+  }));
+
+  // Update the store
+  const updateSeoInfo = () => {
+    setFavicon(faviconUrl);
+    setPagetitle(pageTitle[0]);
+    setDescription(pageDescription[0]);
+  };
+
+  useEffect(() => {
+    updateSeoInfo();
+
+    return () => {
+      updateSeoInfo();
+    };
+  }, [pageTitle]);
+
   useEffect(() => {
     invoke("generated_page_title", { query: pageTitle[0] }).then(
       (result: any) => {
@@ -54,11 +89,17 @@ const SEOImprovements = ({
   // Helpers
   const description = pageDescription && pageDescription[0];
 
-  const ref = useRef(null);
-
-  console.log(pageSchema, "Page Schema");
-
   const improvements = [
+    {
+      id: 99,
+      title: "Favicon",
+      failsAdvise:
+        "Favicons help increase your brand awareness and conversions.",
+      passAdvice: "Favicon was found for this page.",
+      improved: pageTitle && pageTitle[0]?.length <= 60 ? true : false,
+      aiImprovement: aiPageTitle,
+      length: pageTitle && pageTitle[0]?.length,
+    },
     {
       id: 1,
       title: "Title Tag Optimization",
@@ -86,19 +127,21 @@ const SEOImprovements = ({
         "Canonicals are important to help distinguisdh between similar content/pages on your website yes.",
       passAdvice:
         'This page has a canonical tag. This tag is used to tell search engines which version of a webpage is the "preferred" or "canonical" version when there are multiple pages with similar or identical content.',
-      improved: canonical?.length > 0 ? true : false,
+      improved:
+        canonical && canonical[0] !== "No canonical URL found" ? true : false,
       aiImprovement:
         'Canonical tags are often needed in websites, particularly for SEO (Search Engine Optimization) purposes. A canonical tag (<link rel="canonical" href="URL">) is used to tell search engines which version of a webpage is the "preferred" or "canonical" version when there are multiple pages with similar or identical content.',
       length: description?.length,
     },
     {
       id: 4,
-      title: " Hreflangs",
+      title: "Hreflangs",
       failsAdvise:
         "Hreflangs help search engines to better find your content if you have multiple languages on your website.",
       passAdvice:
         "This page has hreflangs, which are used to differentiate different languages on a website",
-      improved: hreflangs?.length > 0 ? true : false,
+      improved:
+        hreflangs && hreflangs[0]?.lang !== "No hreflangs found" ? true : false,
       aiImprovement:
         "Check if your hreflangs are well configured if you have multiple languages on your website.",
       length: description?.length,

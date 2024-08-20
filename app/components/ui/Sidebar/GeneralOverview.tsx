@@ -45,7 +45,7 @@ export default function GeneralOverview({ pageSpeed, loading }: any) {
                 }`}
               >
                 <div className="flex items-center w-full">
-                  {loading ? (
+                  {loading && pageSpeed ? (
                     <Spinner />
                   ) : (
                     <>

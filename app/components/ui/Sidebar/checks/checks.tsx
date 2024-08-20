@@ -1,4 +1,5 @@
 // @ts-nocheck
+import useOnPageSeo from "@/store/storeOnPageSeo";
 import usePageSpeedStore from "@/store/StorePerformance";
 import { useMemo } from "react";
 
@@ -19,13 +20,24 @@ const useGetChecks = () => {
   const renderBlocking = usePageSpeedStore((state) => state.renderBlocking);
   const networkRequests = usePageSpeedStore((state) => state.netowrkRequests);
 
+  // Extract the SEO from Zustand
+  const favicon = useOnPageSeo((state) => state.favicon);
+  const seoTitle = useOnPageSeo((state) => state.seopagetitle);
+  const seoDescription = useOnPageSeo((state) => state.seodescription);
+  const seoCanonical = useOnPageSeo((state) => state.seocanonical);
+  const seoHreflangs = useOnPageSeo((state) => state.seohreflangs);
+  const seoOpengraph = useOnPageSeo((state) => state.seoopengraph);
+  const seoSchema = useOnPageSeo((state) => state.seoschema);
+
+  console.log(favicon, "SEO CHECKLIST");
+
   // Use useMemo to avoid recalculating on every render
   const checks = useMemo(() => {
     return [
       {
         id: "1",
         name: "Performance",
-        status: performance >= 0.8 ? "Passed" : "Failed", // Dynamically set based on performance score
+        status: performance >= 0.5 ? "Passed" : "Failed", // Dynamically set based on performance score
       },
 
       {
@@ -83,7 +95,7 @@ const useGetChecks = () => {
       {
         id: "12",
         name: "Long Tasks",
-        status: longTasks >= 0.8 ? "Passed" : "Failed",
+        status: longTasks <= 0 ? "Passed" : "Failed",
       },
       {
         id: "13",
@@ -94,6 +106,16 @@ const useGetChecks = () => {
         id: "14",
         name: "Network Requests",
         status: networkRequests <= 0.5 ? "Passed" : "Failed",
+      },
+      {
+        id: "16",
+        name: "Favicon",
+        status: favicon?.length > 0 ? "Passed" : "Failed",
+      },
+      {
+        id: "16",
+        name: "Page Title",
+        status: seoTitle?.length < 60 ? "Passed" : "Failed",
       },
     ];
   }, [
@@ -111,6 +133,8 @@ const useGetChecks = () => {
     longTasks,
     renderBlocking,
     networkRequests,
+    seoTitle,
+    favicon,
   ]);
 
   return checks;

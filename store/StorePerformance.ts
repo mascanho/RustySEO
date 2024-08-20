@@ -18,7 +18,7 @@ const usePageSpeedStore = create((set, get) => ({
   passedChecks: 0,
   failedChecks: 0,
   // Function to set all the values at once
-  setPageSpeedData: (pageSpeed) =>
+  setPageSpeedData: (pageSpeed: any) =>
     set({
       performance:
         pageSpeed?.lighthouseResult?.categories?.performance?.score || null,
@@ -57,7 +57,7 @@ const usePageSpeedStore = create((set, get) => ({
         pageSpeed?.lighthouseResult?.audits?.["network-requests"]?.score ||
         null,
     }),
-  setChecksData: (passedChecks, failedChecks) =>
+  setChecksData: (passedChecks: any, failedChecks: any) =>
     set({
       passedChecks,
       failedChecks,

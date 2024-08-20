@@ -695,6 +695,7 @@ const Home: React.FC<HomeProps> = () => {
                 crawl={handleClick}
                 opengraph={openGraphDetails}
                 pageSchema={pageSchema}
+                favicon={favicon_url}
               />
             </Tabs.Panel>
 

@@ -110,7 +110,7 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
     },
     {
       id: 4.1,
-      title: "TTB (Total Blocking Time)",
+      title: "TBT (Total Blocking Time)",
       passAdvice: "Your Total Blocking Time score is good.",
       failsAdvice: "Your Total Blocking Time value is too high.",
       improved: tbt > 0.5 ? true : false,
