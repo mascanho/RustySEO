@@ -84,7 +84,7 @@ const SEOImprovements = ({
         "Canonicals are important to help distinguisdh between similar content/pages on your website yes.",
       passAdvice:
         'This page has a canonical tag. This tag is used to tell search engines which version of a webpage is the "preferred" or "canonical" version when there are multiple pages with similar or identical content.',
-      improved: canonical.length === 0 ? true : false,
+      improved: canonical?.length > 0 ? true : false,
       aiImprovement:
         'Canonical tags are often needed in websites, particularly for SEO (Search Engine Optimization) purposes. A canonical tag (<link rel="canonical" href="URL">) is used to tell search engines which version of a webpage is the "preferred" or "canonical" version when there are multiple pages with similar or identical content.',
       length: description?.length,
@@ -96,7 +96,7 @@ const SEOImprovements = ({
         "Hreflangs help search engines to better find your content if you have multiple languages on your website.",
       passAdvice:
         "This page has hreflangs, which are used to differentiate different languages on a website",
-      improved: hreflangs?.length < 0 ? true : false,
+      improved: hreflangs?.length > 0 ? true : false,
       aiImprovement:
         "Check if your hreflangs are well configured if you have multiple languages on your website.",
       length: description?.length,
@@ -118,7 +118,7 @@ const SEOImprovements = ({
       failsAdvise:
         "No structured data has been found on this page. Structured Data helps search engines to better understand your page's content.",
       passAdvice: "This page contains Opengraph tags.",
-      improved: opengraph?.image ? true : false,
+      improved: pageSchema.length > 0 ? true : false,
       aiImprovement:
         "Veritfy if your OpenGraph tags are well configured and contain the necessary information to render the image and the data.",
       length: description?.length,

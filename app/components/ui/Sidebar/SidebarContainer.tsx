@@ -113,10 +113,10 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
         <ResizablePanel defaultSize={200} className="h-[calc(100vh-90rem)]">
           <Tabs defaultValue="first" className="text-xs aside-tabs">
             <Tabs.List justify="left" className="dark:text-white text-xs">
+              <Tabs.Tab value="overview">Checklist</Tabs.Tab>
               <Tabs.Tab value="first">Redirects</Tabs.Tab>
               <Tabs.Tab value="second">Robots</Tabs.Tab>
               <Tabs.Tab value="third">Domain</Tabs.Tab>
-              <Tabs.Tab value="overview">Overview</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="first">
               <RedirectsTable pageSpeed={pageSpeed} />
