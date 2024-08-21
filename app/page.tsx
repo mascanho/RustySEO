@@ -439,7 +439,7 @@ const Home: React.FC<HomeProps> = () => {
                   <button
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
-                    className="inline-flex justify-center w-[98px] border-l border-b border-t  rounded-l-md border-gray-200 shadow-sm px-2  bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 h-7 py-[3px] focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500 items-center mt-[1px] "
+                    className="inline-flex justify-center w-[98px] border-l border-b border-t  rounded-l-md border-gray-200 shadow-sm px-2  bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-0 h-7 py-[3px] focus:ring-offset-2 focus:ring-offset-gray-100 focus:ring-indigo-500 items-center mt-[1px] "
                     id="options-menu"
                     aria-haspopup="true"
                     aria-expanded="true"
@@ -462,7 +462,7 @@ const Home: React.FC<HomeProps> = () => {
                 </div>
 
                 {isOpen && (
-                  <div className="origin-top-right absolute right-0 mt-2 w-[7rem] rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5  dark:bg-brand-white dark:text-white z-[9000000000]">
+                  <div className="origin-top-right absolute -right-4 mt-2 w-[7rem] rounded-md shadow-lg bg-white ring-0 ring-black ring-opacity-5  dark:bg-brand-white dark:text-white z-[9000000000]">
                     <div
                       className="py-1 z-[90000000000]"
                       role="menu"
