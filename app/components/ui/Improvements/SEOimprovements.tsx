@@ -99,7 +99,7 @@ const SEOImprovements = ({
       failsAdvise:
         "Favicons help increase your brand awareness and conversions.",
       passAdvice: "Favicon was found for this page.",
-      improved: pageTitle && pageTitle[0]?.length <= 60 ? true : false,
+      improved: favicon && favicon[0]?.length > 0 ? true : false,
       aiImprovement: aiPageTitle,
       length: pageTitle && pageTitle[0]?.length,
     },
@@ -206,7 +206,7 @@ const SEOImprovements = ({
             <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">
               SEO Improvements
             </h2>
-            <div className="space-y-3">
+            <div className="space-y-3 overflow-auto custom-scrollbar max-h-[40rem] pl-2 py-2 pr-3 bg-trasnparent rounded-md dark:bg-brand-darker rounded-lg">
               {improvements.map((item) => (
                 <div
                   key={item.id}
