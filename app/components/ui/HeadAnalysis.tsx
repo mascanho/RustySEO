@@ -45,7 +45,7 @@ export const HeadAnalysis = ({
       className="  dark:border-brand-darker  bg-white p-1 dark:bg-brand-darker shadow rounded-md mb-5 pb-5 overflow-hidden border relative -mt-5"
     >
       {/* <StampEl indexation={indexation} hidden={hidden} /> */}
-      <h2 className="flex items-center text-center font-semibold  w-fit relative p-4 mx-auto text-black/50 ">
+      <h2 className="flex items-center text-center font-semibold  w-fit relative p-4 mx-auto text-black/50 dark:text-white/50 ">
         <AiFillTag className="mr-1.5" /> Head
       </h2>
       <section

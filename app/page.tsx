@@ -101,6 +101,8 @@ const Home: React.FC<HomeProps> = () => {
 
   const [debouncedURL] = useDebounce(url, 300);
 
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
   type DBDataCrawl = {
     url: string | null;
     date: string | null;
@@ -233,6 +235,20 @@ const Home: React.FC<HomeProps> = () => {
       })
       .catch(console.error);
   };
+
+  // GET THE THEME AND SET IT
+  useEffect(() => {
+    // On component mount, check local storage for dark mode preference
+    const darkMode = localStorage.getItem("dark-mode") === "true";
+    setIsDarkMode(darkMode);
+
+    // Add or remove the dark class on the root element
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
 
   // KEYBOARD PRESS TO OPEN THE TASKS
   useEffect(() => {
