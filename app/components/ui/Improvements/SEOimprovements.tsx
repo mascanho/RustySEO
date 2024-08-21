@@ -46,6 +46,7 @@ const SEOImprovements = ({
     setFavicon,
     setPagetitle,
     setDescription,
+    setCanonical,
   } = useOnPageSeo((state) => ({
     favicon: state.favicon,
     seopagetitle: state.seopagetitle,
@@ -53,6 +54,7 @@ const SEOImprovements = ({
     setFavicon: state.setFavicon,
     setPagetitle: state.setPagetitle,
     setDescription: state.setDescription,
+    setCanonical: state.setCanonical,
   }));
 
   // Update the store
@@ -60,6 +62,7 @@ const SEOImprovements = ({
     setFavicon(faviconUrl);
     setPagetitle(pageTitle[0]);
     setDescription(pageDescription[0]);
+    setCanonical(canonical[0]);
   };
 
   useEffect(() => {

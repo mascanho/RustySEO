@@ -54,7 +54,7 @@ export const OpenGraphCard = ({
               <img
                 src={openGraphDetails?.image}
                 alt="OpenGraph Image"
-                className="rounded-md w-full  max-h-52 object-cover ml-0"
+                className="rounded-md w-[50%] h-auto   object-cover ml-0"
               />
             </div>
           ) : (
@@ -66,13 +66,13 @@ export const OpenGraphCard = ({
             onClick={() => openBrowserWindow(openGraphDetails.url)}
             className="flex flex-col flex-wrap cursor-pointer py-2"
           >
-            <span className="font-bold dark:text-white/50 bg-red-5000">
+            <span className="font-bold dark:text-white/50 bg-red-5000 text-xs">
               {openGraphDetails.title}
             </span>
-            <span className="w-11/12 break-words dark:text-white/50">
+            <span className="w-11/12 break-words dark:text-white/50 text-xs">
               {openGraphDetails.description}
             </span>
-            <span className="text-sm mt-1 text-apple-spaceGray/70">
+            <span className="text-xs mt-1 text-apple-spaceGray/70">
               {openGraphDetails.url}
             </span>
           </div>

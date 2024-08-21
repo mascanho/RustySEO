@@ -108,7 +108,7 @@ const useGetChecks = () => {
         status: networkRequests <= 0.5 ? "Passed" : "Failed",
       },
       {
-        id: "16",
+        id: "15",
         name: "Favicon",
         status: favicon?.length > 0 ? "Passed" : "Failed",
       },
@@ -116,6 +116,17 @@ const useGetChecks = () => {
         id: "16",
         name: "Page Title",
         status: seoTitle?.length <= 60 ? "Passed" : "Failed",
+      },
+
+      {
+        id: "17",
+        name: "Page Description",
+        status: seoDescription?.length <= 160 ? "Passed" : "Failed",
+      },
+      {
+        id: "18",
+        name: "Canonical",
+        status: seoCanonical?.length > 0 ? "Passed" : "Failed",
       },
     ];
   }, [
@@ -135,6 +146,8 @@ const useGetChecks = () => {
     networkRequests,
     seoTitle,
     favicon,
+    seoDescription,
+    seoCanonical,
   ]);
 
   return checks;

@@ -135,7 +135,7 @@ export default function GeneralOverview({
                     )}
                     <div className="flex justify-between w-full ml-2 items-center">
                       <span
-                        className={`text-xs font-semibold flex-1 ${!pageTitle ? "text-gray-400" : ""}`}
+                        className={`text-xs font-semibold flex-1 ${pageTitle.length <= 0 ? "text-gray-400" : ""}`}
                       >
                         {check.name}
                       </span>
@@ -146,13 +146,13 @@ export default function GeneralOverview({
                         </span>
                       )}
                       <span
-                        className={`text-xs ${
-                          check.status === "Passed" && pageTitle.length > 0
-                            ? "text-green-500"
-                            : "text-red-500"
-                        }`}
+                        className={`text-xs text-gray-400 ${
+                          check.status === "Passed" &&
+                          pageTitle.length > 0 &&
+                          "text-green-500"
+                        } ${check.status === "Failed" && pageTitle.length > 0 && "text-red-500"} ${pageTitle.length <= 0 && "text-gray-400"}text-gray-400`}
                       >
-                        {pageTitle.length > 0 ? check.status : "n/a"}
+                        {pageTitle.length ? check.status : "n/a"}
                       </span>
                     </div>
                   </div>

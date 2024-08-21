@@ -66,9 +66,7 @@ export function ImagesChart({ images, url }: { images: any; url: string }) {
   return (
     <Card className="flex flex-col dark:bg-brand-darker dark:border-0 overflow-hidden">
       <CardHeader className="items-center pb-0">
-        <CardTitle className="text-black dark:text-white">
-          Images on page
-        </CardTitle>
+        <CardTitle className=" dark:text-white">Images on page</CardTitle>
         {/* <CardDescription>{url}</CardDescription> */}
       </CardHeader>
       <CardContent className="flex-1 pb-0">
@@ -122,7 +120,7 @@ export function ImagesChart({ images, url }: { images: any; url: string }) {
           </PieChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm min-h-[5.5rem] text-center">
+      <CardFooter className="flex-col gap-2 text-xs min-h-[5.5rem] text-center">
         {images.length === 0 ? (
           ""
         ) : (

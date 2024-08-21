@@ -18,7 +18,7 @@ const LinkAnalysis = ({
 
   return (
     <section className="table_container">
-      <h2 className="text-base text-left pl-1 flex items-center pt-3 font-bold w-full text-black/60">
+      <h2 className=" text-left text-sm pl-1 flex items-center pt-3 font-bold w-full ">
         <PiLinkSimpleBold className="mr-1.5" /> Link Analysis
       </h2>
 
