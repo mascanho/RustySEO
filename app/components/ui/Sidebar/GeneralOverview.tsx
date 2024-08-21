@@ -32,10 +32,11 @@ export default function GeneralOverview({ pageSpeed, loading }: any) {
 
   return (
     <>
-      <section className="w-full h-[22.5rem] pb-12 overflow-auto relative mt-0.5">
+      <section className="w-full h-[23.5rem] pb-12 overflow-auto relative mt-0.5">
         <div className="container mx-auto max-w-4xl h-full">
           <div className="grid h-full pb-12">
-            {checks.map((check, index) => (
+            {/* CHECKS THE CORE WEB VITALS */}
+            {checks.slice(0, 14).map((check, index) => (
               <div
                 key={check.id}
                 className={`flex items-center justify-between px-4 py-1.5 border-b dark:border-b-white/10 ${
@@ -45,7 +46,60 @@ export default function GeneralOverview({ pageSpeed, loading }: any) {
                 }`}
               >
                 <div className="flex items-center w-full">
-                  {loading && pageSpeed ? (
+                  {loading ? (
+                    <Spinner />
+                  ) : (
+                    <>
+                      {check.status === "Passed" ? (
+                        <CheckIcon
+                          className={`w-5 h-5 ${iconsGray ? "text-gray-400" : "text-green-500"}`}
+                        />
+                      ) : (
+                        <XIcon
+                          className={`w-5 h-5 ${iconsGray ? "text-gray-400" : "text-red-500"}`}
+                        />
+                      )}
+                    </>
+                  )}
+                  <div className="flex justify-between w-full ml-2 items-center">
+                    <span
+                      className={`text-xs font-semibold flex-1 ${iconsGray ? "text-gray-400" : ""}`}
+                    >
+                      {check.name}
+                    </span>
+
+                    {iconsGray ? (
+                      <span className="text-black/50 dark:text-white/50">
+                        n/a
+                      </span>
+                    ) : (
+                      <span
+                        className={`text-xs ${
+                          check.status === "Passed"
+                            ? "text-green-500"
+                            : "text-red-500"
+                        }`}
+                      >
+                        {check.status}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* CHECKS THE SEO */}
+            {checks.slice(14, checks.length).map((check, index) => (
+              <div
+                key={check.id}
+                className={`flex items-center justify-between px-4 py-1.5 border-b dark:border-b-white/10 ${
+                  index % 2 === 0
+                    ? "bg-gray-100 dark:bg-brand-darker dark:text-white"
+                    : "bg-gray-200 dark:bg-brand-darker dark:text-white"
+                }`}
+              >
+                <div className="flex items-center w-full">
+                  {false ? (
                     <Spinner />
                   ) : (
                     <>
