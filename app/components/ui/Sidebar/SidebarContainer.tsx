@@ -127,7 +127,11 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
             </Tabs.List>
 
             <Tabs.Panel value="first">
-              <GeneralOverview loading={loading} pageSpeed={pageSpeed} />
+              <GeneralOverview
+                pageTitle={pageTitle}
+                loading={loading}
+                pageSpeed={pageSpeed}
+              />
             </Tabs.Panel>
 
             <Tabs.Panel value="second">

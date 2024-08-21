@@ -115,7 +115,7 @@ const useGetChecks = () => {
       {
         id: "16",
         name: "Page Title",
-        status: seoTitle?.length < 60 ? "Passed" : "Failed",
+        status: seoTitle?.length <= 60 ? "Passed" : "Failed",
       },
     ];
   }, [

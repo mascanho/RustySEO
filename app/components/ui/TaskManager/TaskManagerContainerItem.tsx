@@ -139,19 +139,19 @@ const TaskManagerContainerItem: React.FC<{ data: any }> = ({ data }) => {
             </DropdownMenuContent>
           </DropdownMenu>
         </section>
-        <span className="block mt-2 max-w-[90%] font-semibold dark:text-white line-clamp-1">
+        <span className="block mt-2 max-w-[90%] text-xs font-semibold dark:text-white line-clamp-1">
           {data.title}
         </span>
-        <span className="text-sm text-black/50 dark:text-white/50 line-clamp-2">
+        <span className=" text-black/50 dark:text-white/50 line-clamp-2 text-xs mt-1">
           {data.description}
         </span>
         <div className="overflow-auto flex flex-col flex-wrap">
-          <span className="text-sm text-sky-400 dark:text-brand-highlight mt-1">
+          <span className=" text-sky-400 dark:text-brand-highlight mt-1 text-xs">
             {data.url}
           </span>
         </div>
       </div>
-      <footer className="border-t dark:border-brand-dark flex items-center h-10 px-3">
+      <footer className="border-t dark:border-brand-dark flex items-center h-10 px-3 text-xs">
         <div className="flex items-center justify-between w-full space-x-1 text-black/50 dark:text-white/50">
           <span
             className={`text-xs py-[2px] px-[6px] rounded-md text-black ${
@@ -162,7 +162,7 @@ const TaskManagerContainerItem: React.FC<{ data: any }> = ({ data }) => {
           >
             {data.priority}
           </span>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 text-xs">
             {data.strategy.strategy === "DESKTOP" ? (
               <FaDesktop />
             ) : (
