@@ -25,6 +25,7 @@ import {
   FiCheckSquare,
   FiClock,
   FiGlobe,
+  FiClipboard,
 } from "react-icons/fi";
 
 const handleCopy = (url: string) => {
@@ -37,7 +38,7 @@ const TableMenus = ({ children, data, crawl }: any) => {
       <ContextMenuTrigger>{children}</ContextMenuTrigger>
       <ContextMenuContent className="w-40">
         <ContextMenuItem onClick={() => handleCopy(data.url)}>
-          Copy
+          <FiClipboard className="mr-2" /> Copy
         </ContextMenuItem>
         <ContextMenuItem onClick={() => crawl(data.url)}>
           <FiGlobe className="mr-2" />
