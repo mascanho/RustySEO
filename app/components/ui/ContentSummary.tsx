@@ -268,7 +268,7 @@ const ContentSummary = ({
                 {keywords[0]?.map((keyword: any, index: any) => (
                   <span
                     key={index}
-                    className="text-xs bg-slate-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-2 py-1 rounded-full border border-gray-400 dark:border-none"
+                    className="text-[10px] bg-slate-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-2 py-1 rounded-full border  dark:border-none"
                   >
                     {keyword[0]}
                   </span>

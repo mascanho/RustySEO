@@ -65,8 +65,8 @@ export default function GeneralOverview({
                     ) : (
                       <>
                         {check.status === "Passed" ? (
-                          <CheckIcon
-                            className={`w-5 h-5 ${iconsGray ? "text-gray-400" : "text-green-500"}`}
+                          <FaCheckCircle
+                            className={`w-4 h-4 ${iconsGray ? "text-gray-400" : "text-green-500"}`}
                           />
                         ) : (
                           <XIcon
@@ -123,8 +123,8 @@ export default function GeneralOverview({
                     ) : (
                       <>
                         {check.status === "Passed" ? (
-                          <CheckIcon
-                            className={`w-5 h-5 ${pageTitle.length <= 0 ? "text-gray-400" : "text-green-500"}`}
+                          <FaCheckCircle
+                            className={`w-4 h-4 ${pageTitle.length <= 0 ? "text-gray-400" : "text-green-500"}`}
                           />
                         ) : (
                           <XIcon
