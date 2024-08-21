@@ -124,7 +124,7 @@ export default function GeneralOverview({
                       <>
                         {check.status === "Passed" ? (
                           <CheckIcon
-                            className={`w-5 h-5 ${!pageTitle ? "text-gray-400" : "text-green-500"}`}
+                            className={`w-5 h-5 ${pageTitle.length <= 0 ? "text-gray-400" : "text-green-500"}`}
                           />
                         ) : (
                           <XIcon
@@ -140,21 +140,20 @@ export default function GeneralOverview({
                         {check.name}
                       </span>
 
-                      {!pageTitle ? (
+                      {!pageTitle && (
                         <span className="text-black/50 dark:text-white/50">
                           n/a
                         </span>
-                      ) : (
-                        <span
-                          className={`text-xs ${
-                            check.status === "Passed"
-                              ? "text-green-500"
-                              : "text-red-500"
-                          }`}
-                        >
-                          {check.status}
-                        </span>
                       )}
+                      <span
+                        className={`text-xs ${
+                          check.status === "Passed" && pageTitle.length > 0
+                            ? "text-green-500"
+                            : "text-red-500"
+                        }`}
+                      >
+                        {pageTitle.length > 0 ? check.status : "n/a"}
+                      </span>
                     </div>
                   </div>
                 </div>
