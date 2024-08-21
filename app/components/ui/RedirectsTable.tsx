@@ -5,14 +5,22 @@ const RedirectsTable = ({ pageSpeed }: { pageSpeed: any }) => {
   const redirects =
     pageSpeed?.lighthouseResult?.audits?.redirects?.details?.items || [];
 
+  if (!redirects) {
+    <div className="h-[20rem] flex items-center ">
+      <span className="text-black/50 darK:text-white/50 m-auto text-center translate-y-1/2 h-full">
+        No page crawled
+      </span>
+    </div>;
+  }
+
   return (
     <section className="h-full border-0">
-      <div className="flex flex-col pt-8 px-4">
+      <div className="flex flex-col pt-7 px-4">
         {redirects.length === 0 ? (
-          <div className="h-full flex items-center">
-            <p className="text-center text-gray-500 pt-2 m-auto">
-              No redirects found.
-            </p>
+          <div className="h-[20rem] flex items-center overflow-hidden ">
+            <span className="text-black/50 darK:text-white/50 m-auto text-center translate-y-1/2 h-full dark:text-white/50">
+              No Redirects Found
+            </span>
           </div>
         ) : (
           redirects.map((item: any, index: any) => (

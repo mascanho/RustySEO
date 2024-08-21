@@ -27,6 +27,8 @@ const TopMenuBar = () => {
   }, []);
 
   const router = useRouter();
+  // Theme
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   const [openedPageSpeed, { open: openPageSpeed, close: closePageSpeed }] =
     useDisclosure(false);
@@ -60,6 +62,21 @@ const TopMenuBar = () => {
       // Cleanup logic if needed
     };
   }, [openModal, openedModal, url, strategy]);
+
+  // CHANGE THEME
+
+  const toggleDarkMode = () => {
+    setIsDarkMode((prevMode) => {
+      const newMode = !prevMode;
+      localStorage.setItem("dark-mode", newMode); // Save preference to localStorage
+      if (newMode) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+      return newMode;
+    });
+  };
 
   return (
     <>
@@ -156,7 +173,9 @@ const TopMenuBar = () => {
               <MenubarSeparator />
               <MenubarItem>Share</MenubarItem>
               <MenubarSeparator />
-              <MenubarItem onClick={onClose}>Exit</MenubarItem>
+              <MenubarItem onClick={toggleDarkMode}>
+                {isDarkMode ? "Light Mode" : "Dark Mode"}
+              </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
           <MenubarMenu>

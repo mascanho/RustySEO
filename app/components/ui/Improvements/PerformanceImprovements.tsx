@@ -1,7 +1,9 @@
+// @ts-nocheck
 import React, { useEffect } from "react";
+import usePageSpeedStore from "@/store/StorePerformance";
+import { Switch } from "@mantine/core";
 import {
   FaCheckCircle,
-  FaChevronCircleDown,
   FaChevronDown,
   FaExclamationCircle,
 } from "react-icons/fa";
@@ -9,12 +11,12 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { FiClipboard } from "react-icons/fi";
-import { Switch } from "@/components/ui/switch";
-import { invoke } from "@tauri-apps/api/tauri";
+} from "@radix-ui/react-collapsible";
 
 const PerformanceImprovements = ({ pageSpeed }: any) => {
+  // Performance Store
+  const setPageSpeedData = usePageSpeedStore((state) => state.setPageSpeedData);
+
   // ------------- HELPERS -------------
   const performance =
     pageSpeed?.lighthouseResult?.categories?.performance?.score;
@@ -26,6 +28,9 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
     pageSpeed?.lighthouseResult?.audits?.["largest-contentful-paint"]?.score;
 
   const tti = pageSpeed?.lighthouseResult?.audits?.["interactive"]?.score;
+
+  const tbt =
+    pageSpeed?.lighthouseResult?.audits?.["total-blocking-time"]?.score;
 
   const cls =
     pageSpeed?.lighthouseResult?.audits?.["cumulative-layout-shift"]?.score;
@@ -51,9 +56,16 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
     pageSpeed?.lighthouseResult?.audits?.["render-blocking-resources"]
       ?.numericValue;
 
-  console.log(longTasks, "DOM SIZE");
+  const networkRequests =
+    pageSpeed?.lighthouseResult?.audits?.["network-requests"]?.score;
 
   const AIfeedback = false;
+
+  useEffect(() => {
+    if (pageSpeed) {
+      setPageSpeedData(pageSpeed);
+    }
+  }, [pageSpeed, setPageSpeedData]);
 
   const dummyImprovements = [
     {
@@ -95,6 +107,16 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
       aiImprovement: AIfeedback
         ? "Function call"
         : "To improve Time to Interactive (TTI), begin by reducing server response times and utilizing a Content Delivery Network (CDN) to speed up resource delivery. Optimize JavaScript execution by splitting large scripts, deferring non-essential code, and using async or defer attributes. Minimize render-blocking CSS and inline critical styles to ensure quick rendering. Implement lazy loading for non-essential resources and reduce third-party scripts. Regularly test performance to identify and fix issues affecting interactivity.",
+    },
+    {
+      id: 4.1,
+      title: "TBT (Total Blocking Time)",
+      passAdvice: "Your Total Blocking Time score is good.",
+      failsAdvice: "Your Total Blocking Time value is too high.",
+      improved: tbt > 0.5 ? true : false,
+      aiImprovement: AIfeedback
+        ? "Function call"
+        : "To improve the total blocking time, you can optimize your JavaScript execution by minifying and compressing your JavaScript files, breaking up large scripts into smaller, more manageable chunks that can be loaded asynchronously or deferred, and identify and remove any long-running tasks or blocking operations in your code, such as synchronous network requests or computationally intensive operations, and replace them with more efficient, non-blocking alternatives.",
     },
     {
       id: 5,
@@ -179,6 +201,17 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
         ? "Function call"
         : "To improve render-blocking resources, first, move critical CSS inline to the HTML to prioritize it. Next, defer non-essential JavaScript by using the `defer` or `async` attributes. Finally, ensure that non-critical CSS is loaded asynchronously or via media queries to avoid blocking the initial render.",
     },
+
+    {
+      id: 13,
+      title: "Network Requests",
+      passAdvice: "This page does not have too many network requests.",
+      failsAdvice: "This page has too many network requests.",
+      improved: networkRequests > 0.5 ? true : false,
+      aiImprovement: AIfeedback
+        ? "Function call"
+        : "To improve network requests, prioritize and schedule critical network requests. Monitor and optimize network performance using tools like the Network tab in Chrome DevTools.",
+    },
   ];
 
   const handleCopy = (text: any) => {
@@ -203,7 +236,7 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
           <Switch className="" />
         </div>
       </div>
-      <div className="space-y-3 overflow-auto custom-scrollbar max-h-[40rem] pl-2 py-2 pr-3 bg-brand-dark rounded-md dark:bg-brand-darker rounded-lg">
+      <div className="space-y-3 overflow-auto custom-scrollbar max-h-[40rem] pl-2 py-2 pr-3 bg-trasnparent rounded-md dark:bg-brand-darker rounded-lg">
         {dummyImprovements.map((item) => (
           <div
             key={item.id}

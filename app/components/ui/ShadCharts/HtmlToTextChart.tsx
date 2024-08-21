@@ -108,7 +108,7 @@ export function HtmlToTextChart({ htmlToTextRatio }: any) {
         </ChartContainer>
       </CardContent>
       {htmlToTextRatio && (
-        <CardFooter className="flex-col gap-2 text-center text-sm -mt-8 mb-10 dark:text-white/50">
+        <CardFooter className="flex-col gap-2 text-center text-xs -mt-8 mb-10 dark:text-white/50">
           <div className="flex flex-col items-center gap-2 font-medium leading-none -mt-10">
             {htmlToTextRatio?.[0] &&
               Math.round(htmlToTextRatio?.[0]?.[0] * 100) < 25 && (

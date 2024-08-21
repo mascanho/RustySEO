@@ -19,6 +19,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import useOnPageSeo from "@/store/storeOnPageSeo";
 
 const chartConfig = {
   visitors: {
@@ -53,8 +54,6 @@ export function LinksChart({
   linksStatusCodes: any;
   linkStatusCodeStatus: any;
 }) {
-  console.log(linkStatusCodes, "linksStatusCodes from the charts");
-
   const externalLinks = linkStatusCodes?.filter(
     (link: any) => link?.is_external === true,
   );
@@ -67,7 +66,11 @@ export function LinksChart({
     (link: any) => link?.status_code === 404,
   );
 
-  console.log(externalLinks, "The external links");
+  const { setSeoStatusCodes } = useOnPageSeo((state) => state);
+
+  React.useEffect(() => {
+    setSeoStatusCodes(statusError);
+  }, [linkStatusCodes]);
 
   const chartData = [
     {
@@ -151,18 +154,29 @@ export function LinksChart({
         </ChartContainer>
       </CardContent>
       {linkStatusCodes?.length > 0 && (
-        <CardFooter className="flex-col gap-2 text-sm text-center mb-6 dark:text-white/50">
+        <CardFooter className="flex-col gap-2 text-xs text-left mb-6 dark:text-white/50">
           <p className="flex items-center font-medium leading-none -mt-10">
-            This page contains {linkStatusCodes?.length} links.
+            This page contains{" "}
+            <span className="mx-1 font-bold text-brand-bright">
+              {linkStatusCodes?.length}
+            </span>
+            links.
           </p>
           <p className="leading-none text-muted-foreground">
             <span className="font-bold">Internal Links: </span>
-            {internalLinks?.length}
+            <span className="text-brand-bright font-bold">
+              {internalLinks?.length}
+            </span>
             <span className="font-bold ml-2">External Links:</span>{" "}
-            {externalLinks?.length}
+            <span className="text-brand-bright font-bold">
+              {externalLinks?.length}
+            </span>
           </p>
           <p className="leading-none text-muted-foreground">
-            <span className="font-bold">404 Links:</span> {statusError?.length}{" "}
+            <span className="font-bold">404 Links:{""}</span>
+            <span className="text-brand-bright font-bold ml-1">
+              {statusError?.length}{" "}
+            </span>
           </p>
         </CardFooter>
       )}

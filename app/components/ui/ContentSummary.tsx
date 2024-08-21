@@ -44,7 +44,7 @@ const ContentSummary = ({
 
   return (
     <section className="flex-wrap min-h-[calc(96rem - 2.5rem)] h-full space-y-1 bg-transparent dark:bg-brand-darker dark:text-white p-2 rounded-md relative">
-      <div className="p-3 grid gap-5 overflow-y-scroll w-full h-full">
+      <div className="px-2 py-0.5 grid gap-5 overflow-y-scroll w-full h-full">
         <div className="grid gap-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -223,10 +223,10 @@ const ContentSummary = ({
           </span>
         </div>
 
-        <div className="flex items-start justify-start flex-col mt-4">
+        <div className="flex items-start justify-start flex-col mt-4 ">
           <div className="flex items-start space-x-2">
             <div className="flex flex-col w-full justify-center">
-              <div className="flex items-center mb-3 -mt-4">
+              <div className="flex items-center mb-3 -mt-6">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
@@ -264,11 +264,11 @@ const ContentSummary = ({
                 </svg>
                 <span className="font-semibold block ml-2">Top Keywords</span>
               </div>
-              <div className="flex flex-wrap gap-2 mt-1">
+              <div className="flex flex-wrap gap-2 min-h-12">
                 {keywords[0]?.map((keyword: any, index: any) => (
                   <span
                     key={index}
-                    className="text-xs bg-slate-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-2 py-1 rounded-full border border-gray-400 dark:border-none"
+                    className="text-[10px] bg-slate-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-2 py-1 rounded-full border  dark:border-none"
                   >
                     {keyword[0]}
                   </span>
@@ -277,7 +277,7 @@ const ContentSummary = ({
             </div>
           </div>
 
-          <div className="grid gap-1 overflow-y-auto mt-8">
+          <div className="grid gap-1 overflow-y-auto mt-4">
             <h3 className="text-xs font-semibold dark:text-sky-dark">
               Page Summary
             </h3>
@@ -294,7 +294,7 @@ const ContentSummary = ({
               {/*   : ""} */}
             </p>
             {!ollamaStatus.ollama && keywords && keywords.length > 0 && (
-              <div className="text-black/50">
+              <div className="text-black/50 dark:text-white/50">
                 <p>AI Model Not Available</p>
                 <p>
                   Go to <kbd>Menu</kbd> &gt; <kbd>Connectors</kbd> &gt;{" "}

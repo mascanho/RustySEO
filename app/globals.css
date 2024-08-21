@@ -59,7 +59,7 @@ input:focus {
   }
 
   h2 {
-    @apply dark:text-white text-black/60;
+    @apply dark:text-white text-black/50 font-semibold text-sm;
     margin-left: 0.5em;
     margin-bottom: 0.6em;
     text-align: left;
@@ -125,13 +125,24 @@ pre:not([class*="robots"]) {
 .mantine-Drawer-root,
 .mantine-Drawer-inner,
 .mantine-Drawer-content {
-  margin: 110px 0 35px 0;
+  margin: 3.7rem 0 36px 0.1rem;
   overflow: hidden !important ;
   padding: 0 !important;
 }
 
-.mantine-Drawer-body {
+.mantine-Drawer-body,
+.mantine-Drawer-header {
   padding: 0 !important;
+  @apply dark:bg-brand-darker  !important;
+  padding: 0 !important;
+}
+
+.mantine-Drawer-header button {
+  @apply mr-2 mb-2 pb-1;
+}
+
+.mantine-Tabs-list {
+  @apply bg-transparent dark:text-white  !important;
 }
 
 .todoItems {
@@ -144,7 +155,7 @@ pre:not([class*="robots"]) {
   @apply dark:border-brand-darker  bg-white p-1 dark:bg-brand-darker shadow rounded-md h-[30rem] overflow-hidden border;
 
   h2 {
-    @apply p-4 font-semibold text-lg dark:text-white text-black/60;
+    @apply p-4 font-semibold text-sm dark:text-white text-black/50;
   }
 
   pre:not([class*="robots"]) {
@@ -259,6 +270,8 @@ button:where([data-active]) {
 .m_539e827b:hover {
   @apply dark:text-black dark:border-0  !important;
 }
+
+/* TABS FONTS */
 
 .tabs-drawer button span {
   @apply dark:text-brand-darker !important;
@@ -388,19 +401,17 @@ button:where([data-active]) {
   z-index: 0 !important;
 }
 
-/* Style the draggable part of the scrollbar */
+/* STYLE THE SCHEMA SCROLLBAR */
 ::-webkit-scrollbar-thumb {
-  @apply bg-brand-bright dark:bg-sky-600 z-0 !important;
+  @apply dark:bg-gray-800 rounded-none bg-brand-dark/20 active:bg-brand-darker !important;
 }
 
-/* Style the draggable part of the scrollbar on hover */
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-brand-highlight dark:bg-sky-500 z-0 !important;
 }
 
-/* Style the bottom-right corner where two scrollbars meet */
 ::-webkit-scrollbar-corner {
-  background: #f1f1f1;
+  background: transparent;
 }
 
 /*Cards animations*/
@@ -460,9 +471,22 @@ button:where([data-active]) {
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
   @apply dark:bg-gray-800 rounded-none bg-brand-dark/20 active:bg-brand-darker !important;
-  color: red;
 }
 
 .ranking-table td {
   @apply text-[10px] !important;
+}
+
+/* VERTICAL SIDE SCROLL BAR STYLING */
+.side-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-blue-500 dark:bg-sky-600 z-0 !important;
+}
+
+.side-scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-sky-500 dark:bg-sky-500 z-0 !important;
+}
+
+/* SIDEBAR TABS */
+.sidebar-tabs span {
+  @apply text-xs !important;
 }

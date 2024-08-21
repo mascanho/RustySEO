@@ -38,6 +38,16 @@ export function PageRankChart({ pageRank }: { pageRank: any }) {
     },
   } satisfies ChartConfig;
 
+  if (!pageRank) {
+    return (
+      <div className="h-[20rem] flex items-center ">
+        <span className="text-black/50 darK:text-white/50 m-auto text-center translate-y-1/2 h-full">
+          No page crawled
+        </span>
+      </div>
+    );
+  }
+
   return (
     <Card className="flex flex-col border-0 p-0 shadow-none  dark:bg-brand-darker">
       <CardHeader className="items-center pb-0">

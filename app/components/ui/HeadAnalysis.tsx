@@ -45,7 +45,7 @@ export const HeadAnalysis = ({
       className="  dark:border-brand-darker  bg-white p-1 dark:bg-brand-darker shadow rounded-md mb-5 pb-5 overflow-hidden border relative -mt-5"
     >
       {/* <StampEl indexation={indexation} hidden={hidden} /> */}
-      <h2 className="flex items-center text-center font-semibold text-gray-400 w-fit relative p-4 mx-auto text-xl">
+      <h2 className="flex items-center text-center font-semibold  w-fit relative p-4 mx-auto text-black/50 dark:text-white/50 ">
         <AiFillTag className="mr-1.5" /> Head
       </h2>
       <section
@@ -89,21 +89,26 @@ export const HeadAnalysis = ({
             >
               Page Title:
             </span>
-            <span className="flex text-base ml-2 text-black dark:text-white  font-black">
-              {pageTitle[0]}
+            <span
+              onClick={() => {
+                if (pageTitle[0]) {
+                  navigator?.clipboard.writeText(pageTitle[0]);
+                }
+              }}
+              className="flex items-center text-base ml-2 text-black dark:text-white  font-black"
+            >
+              {pageTitle[0]}{" "}
             </span>
-            {/* {pageTitle.length > 0 && ( */}
-            {/*   <span */}
-            {/*     className={`bg-gray-100 text-xs px-1 py-0.5 rounded-md items-center flex ml-2 ${pageTitle[0].length > 60 ? "text-red-500" : "text-green-600"}`} */}
-            {/*   > */}
-            {/*     {pageTitle[0].length} / 60 */}
-            {/*   </span> */}
-            {/* )} */}
+            {pageTitle[0] && (
+              <span className="text-black/20 dark:text-white/20 ml-2 text-[9px]">
+                ({pageTitle[0]?.length} / 60)
+              </span>
+            )}
           </div>
 
           <div className="flex items-center mt-2">
             <div
-              className={`flex justify-center items-center min-w-8  ${pageDescription[0]?.length > 160 ? "bg-red-500 text-white" : pageDescription[0]?.length < 160 && pageDescription[0]?.length !== 0 ? "bg-green-500 text-white" : "bg-gray-200"} w-8 h-8 p-1.5 rounded-full`}
+              className={`flex justify-center items-center min-w-8 ${pageDescription[0]?.length > 160 || (!pageDescription[0] && pageTitle.length > 0) ? "bg-red-500 text-white" : pageDescription[0]?.length < 160 && pageDescription[0]?.length !== 0 ? "bg-green-500 text-white" : "bg-gray-200"} w-8 h-8 p-1.5 rounded-full`}
             >
               <TagIcon />
             </div>
@@ -112,16 +117,18 @@ export const HeadAnalysis = ({
             >
               Description:
             </span>
-            <span className="text-black text-base font-black ml-2 dark:text-white">
-              {pageDescription[0]}
-            </span>
-            {/* {pageDescription[0]?.length > 0 && ( */}
-            {/*   <span */}
-            {/*     className={`bg-gray-100 text-xs px-2 py-1 rounded-md items-center flex ml-2 ${pageDescription[0].length > 160 ? "text-red-500" : "text-green-500"}`} */}
-            {/*   > */}
-            {/*     {pageDescription[0].length} / 160 */}
-            {/*   </span> */}
-            {/* )} */}
+            <div className="flex items-center">
+              {pageDescription[0] && (
+                <span className=" text-black text-sm  items-center font-black ml-2 dark:text-white max-w-[calc(100% - 100px)] break-words relative">
+                  {pageDescription[0]}
+                  {pageDescription[0] && (
+                    <p className=" text-black/20 dark:text-white/20 ml-2 text-[9px]  inline-flex items-center m-auto">
+                      ({pageDescription[0]?.length} / 160)
+                    </p>
+                  )}
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center mt-2">
@@ -152,7 +159,7 @@ export const HeadAnalysis = ({
                 hreflangs.map((hreflang: any, index: any) => (
                   <div key={index}>
                     <span
-                      className="flex ml-1 text-xs  text-black py-0.5 border px-2 bg-gray-100 rounded-md"
+                      className="flex ml-1 text-[10px]  text-black py-0.5 border px-2 bg-gray-100 rounded-md"
                       key={index}
                     >
                       {hreflang?.lang}
@@ -176,10 +183,10 @@ export const HeadAnalysis = ({
           <Box className="mt-1" mx="0">
             <Collapse in={opened}>
               <span className="text-left m-2 pt-3">
-                <div className="bg-gray-100 rounded-md">
+                <div className="bg-gray-100 dark:bg-black/60 rounded-md">
                   {hreflangs?.map((hreflang: any, index: any) => (
                     <span
-                      className="flex ml-2 items-center space-x-2 text-black p-2  px-2   border-b border-white"
+                      className="flex ml-2 items-center space-x-2 text-black p-2  px-2   border-b border-white dark:border-b-white/5"
                       key={index}
                     >
                       <a
@@ -188,7 +195,7 @@ export const HeadAnalysis = ({
                       >
                         {hreflang?.href}
                       </a>
-                      <span className="border px-2 py-1 text-xs text-white bg-black/50 rounded-md w-fit h-6 items-center flex justify-center">
+                      <span className="border px-2 py-1 text-xs text-white bg-black/50 dark:bg-brand-dark  rounded-md w-fit h-6 items-center flex justify-center">
                         {hreflang?.lang}
                       </span>
                     </span>

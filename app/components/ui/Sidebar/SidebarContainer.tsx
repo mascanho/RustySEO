@@ -18,6 +18,7 @@ import AIFeedbackTab from "./AiAnalysis";
 import { useParams } from "next/navigation";
 import PopUpTable from "../CrawlHistory/PopUpTable";
 import RankingInfo from "./RankingInfo";
+import GeneralOverview from "./GeneralOverview";
 
 // Define prop types for better type checking
 interface SidebarContainerProps {
@@ -32,6 +33,8 @@ interface SidebarContainerProps {
   pageRank: any;
   seo: any;
   htmlToTextRatio: any;
+  loading: boolean;
+  favicon: string[];
 }
 
 const ollama = true;
@@ -48,6 +51,8 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
   pageRank,
   seo,
   htmlToTextRatio,
+  loading,
+  favicon,
 }) => {
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
   const ollamaStatus = useOllamaStore();
@@ -70,7 +75,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
 
   return (
     <aside
-      className={`bg-white overflow-y-auto overflow-hidden min-h-[100%]  border-l-2 mt-[5px] border-t dark:border-gray-700 flex relative flex-col  transition-all ease-linear delay-75  dark:bg-brand-darker ${visibility.sidebar ? "w-[24.5rem]" : "w-0"}`}
+      className={`bg-white dark:bg-brand-darker overflow-y-auto overflow-hidden min-h-[100%]  border-l-2 mt-[5px] border-t dark:border-gray-700 flex relative flex-col  transition-all ease-linear delay-75  dark:bg-brand-darker ${visibility.sidebar ? "w-[24.5rem]" : "w-0"}`}
     >
       <ResizablePanelGroup direction="vertical">
         <ResizablePanel defaultSize={220} className="h-[calc(100vh-1.5rem)]">
@@ -111,18 +116,31 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
         <ResizableHandle />
         <ResizablePanel defaultSize={200} className="h-[calc(100vh-90rem)]">
           <Tabs defaultValue="first" className="text-xs aside-tabs">
-            <Tabs.List justify="left" className="dark:text-white text-xs">
-              <Tabs.Tab value="first">Redirects</Tabs.Tab>
-              <Tabs.Tab value="second">Robots</Tabs.Tab>
-              <Tabs.Tab value="third">Domain</Tabs.Tab>
+            <Tabs.List
+              justify="left"
+              className="dark:text-white text-xs sidebar-tabs"
+            >
+              <Tabs.Tab value="first">Checkllist</Tabs.Tab>
+              <Tabs.Tab value="second">Redirects</Tabs.Tab>
+              <Tabs.Tab value="third">Robots</Tabs.Tab>
+              <Tabs.Tab value="forth">Domain</Tabs.Tab>
             </Tabs.List>
+
             <Tabs.Panel value="first">
+              <GeneralOverview
+                pageTitle={pageTitle}
+                loading={loading}
+                pageSpeed={pageSpeed}
+              />
+            </Tabs.Panel>
+
+            <Tabs.Panel value="second">
               <RedirectsTable pageSpeed={pageSpeed} />
             </Tabs.Panel>
-            <Tabs.Panel value="second">
+            <Tabs.Panel value="third">
               <RobotsTable robots={robots} />
             </Tabs.Panel>
-            <Tabs.Panel value="third">
+            <Tabs.Panel value="forth">
               <PageRankChart pageRank={pageRank} />
             </Tabs.Panel>
           </Tabs>

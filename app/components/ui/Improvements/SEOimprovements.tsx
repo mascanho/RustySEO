@@ -1,5 +1,6 @@
+// @ts-ignore
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
 import { FiClipboard } from "react-icons/fi";
 
@@ -13,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { invoke } from "@tauri-apps/api/tauri";
 import PerformanceImprovements from "./PerformanceImprovements";
+import useOnPageSeo from "@/store/storeOnPageSeo";
 
 const SEOImprovements = ({
   pageTitle,
@@ -22,7 +24,11 @@ const SEOImprovements = ({
   hreflangs,
   opengraph,
   pageSchema,
-  crawl,
+  favicon: faviconUrl,
+  charset,
+  indexation,
+  images, // To get the ones missing Alts
+  linkStatusCodes,
 }: {
   pageDescription: string[];
   pageTitle: string[];
@@ -32,9 +38,69 @@ const SEOImprovements = ({
   crawl: any;
   opengraph: any;
   pageSchema: any;
+  favicon: string[];
+  charset: string;
+  indexation: any;
+  images: any;
+  linkStatusCodes: any;
 }) => {
   const [aiPageTitle, setAiPageTitle] = React.useState<string>("");
   const [aiPageDescription, setAiPageDescription] = React.useState<string>("");
+  const {
+    favicon,
+    setFavicon,
+    setPagetitle,
+    setDescription,
+    setCanonical,
+    setHreflangs,
+    setOpengraph,
+    setSchema,
+    setCharset,
+    setSeoIndexability,
+    setAltTags,
+    setSeoStatusCodes,
+  } = useOnPageSeo((state) => ({
+    favicon: state.favicon,
+    seopagetitle: state.seopagetitle,
+    seodescription: state.seodescription,
+    setFavicon: state.setFavicon,
+    setPagetitle: state.setPagetitle,
+    setDescription: state.setDescription,
+    setCanonical: state.setCanonical,
+    setHreflangs: state.setHreflangs,
+    setOpengraph: state.setOpengraph,
+    setSchema: state.setSchema,
+    setCharset: state.setSeoCharset,
+    setSeoIndexability: state.setSeoIndexability,
+    setAltTags: state.setAltTags,
+    setSeoStatusCodes: state.setSeoStatusCodes,
+  }));
+
+  // Update the store
+  const updateSeoInfo = () => {
+    setFavicon(faviconUrl);
+    setPagetitle(pageTitle[0]);
+    setDescription(pageDescription[0]);
+    setCanonical(canonical[0]);
+    setHreflangs(hreflangs);
+    setOpengraph(opengraph);
+    setSchema(pageSchema);
+    setCharset(charset);
+    setSeoIndexability(indexation);
+    setAltTags(images);
+    setSeoStatusCodes(linkStatusCodes);
+  };
+
+  useEffect(() => {
+    updateSeoInfo();
+
+    return () => {
+      updateSeoInfo();
+    };
+  }, [pageTitle]);
+
+  console.log(linkStatusCodes, "The link status codes");
+
   useEffect(() => {
     invoke("generated_page_title", { query: pageTitle[0] }).then(
       (result: any) => {
@@ -54,9 +120,17 @@ const SEOImprovements = ({
   // Helpers
   const description = pageDescription && pageDescription[0];
 
-  console.log(pageSchema, "Page Schema");
-
   const improvements = [
+    {
+      id: 99,
+      title: "Favicon",
+      failsAdvise:
+        "Favicons help increase your brand awareness and conversions.",
+      passAdvice: "Favicon was found for this page.",
+      improved: favicon && favicon[0]?.length > 0 ? true : false,
+      aiImprovement: aiPageTitle,
+      length: pageTitle && pageTitle[0]?.length,
+    },
     {
       id: 1,
       title: "Title Tag Optimization",
@@ -84,19 +158,21 @@ const SEOImprovements = ({
         "Canonicals are important to help distinguisdh between similar content/pages on your website yes.",
       passAdvice:
         'This page has a canonical tag. This tag is used to tell search engines which version of a webpage is the "preferred" or "canonical" version when there are multiple pages with similar or identical content.',
-      improved: canonical.length === 0 ? true : false,
+      improved:
+        canonical && canonical[0] !== "No canonical URL found" ? true : false,
       aiImprovement:
         'Canonical tags are often needed in websites, particularly for SEO (Search Engine Optimization) purposes. A canonical tag (<link rel="canonical" href="URL">) is used to tell search engines which version of a webpage is the "preferred" or "canonical" version when there are multiple pages with similar or identical content.',
       length: description?.length,
     },
     {
       id: 4,
-      title: " Hreflangs",
+      title: "Hreflangs",
       failsAdvise:
         "Hreflangs help search engines to better find your content if you have multiple languages on your website.",
       passAdvice:
         "This page has hreflangs, which are used to differentiate different languages on a website",
-      improved: hreflangs?.length < 0 ? true : false,
+      improved:
+        hreflangs && hreflangs[0]?.lang !== "No hreflangs found" ? true : false,
       aiImprovement:
         "Check if your hreflangs are well configured if you have multiple languages on your website.",
       length: description?.length,
@@ -118,9 +194,31 @@ const SEOImprovements = ({
       failsAdvise:
         "No structured data has been found on this page. Structured Data helps search engines to better understand your page's content.",
       passAdvice: "This page contains Opengraph tags.",
-      improved: opengraph?.image ? true : false,
+      improved: pageSchema.length > 0 ? true : false,
       aiImprovement:
         "Veritfy if your OpenGraph tags are well configured and contain the necessary information to render the image and the data.",
+      length: description?.length,
+    },
+    {
+      id: 7,
+      title: "Page Charset",
+      failsAdvise:
+        "No charset has been found on this page. Structured Data helps search engines to better understand your page's content.",
+      passAdvice: "Charset found on this page.",
+      improved: charset?.length > 0 ? true : false,
+      aiImprovement:
+        "Check if your charset tags are defined in the head of your website code.",
+      length: description?.length,
+    },
+    {
+      id: 8,
+      title: "Indexability",
+      failsAdvise:
+        "This page is not indexable, this means search engines will not list your page on the SERPs.",
+      passAdvice: "This page is indexable.",
+      improved: indexation && indexation[0] === "Indexable" ? true : false,
+      aiImprovement:
+        "Check if your charset tags are defined in the head of your website code.",
       length: description?.length,
     },
   ];
@@ -134,8 +232,9 @@ const SEOImprovements = ({
 
   if (!pageSpeed) {
     return (
-      <section className="h-[calc(100vh-13rem)] flex items-center justify-center">
-        <span className="text-brand-dark/40 dark:text-white/20">
+      <section className="h-[calc(100vh-13rem)] flex flex-col space-y-2 items-center justify-center">
+        <img src="loadingDog.png" alt="dog" />
+        <span className="block text-brand-dark/40 dark:text-white/20">
           No page crawled
         </span>
       </section>
@@ -157,7 +256,7 @@ const SEOImprovements = ({
             <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">
               SEO Improvements
             </h2>
-            <div className="space-y-3">
+            <div className="space-y-3 overflow-auto custom-scrollbar max-h-[40rem] pl-2 py-2 pr-3 bg-trasnparent rounded-md dark:bg-brand-darker rounded-lg">
               {improvements.map((item) => (
                 <div
                   key={item.id}

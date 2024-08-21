@@ -79,10 +79,10 @@ const PageSchemaTable = ({
           </DropdownMenu>
         </div>
       </section>
-      <section className="mx-auto w-full rounded-md overflow-auto bg-white/40 dark:bg-brand-darker relative h-[29.2rem]">
+      <section className="mx-auto w-full schema custom-scrollbar rounded-md overflow-auto bg-white/40 dark:bg-brand-darker relative h-[29.2rem]">
         {newSchema.trim().length === 0 ? ( // Use newSchema for checking empty state
           <div className="flex items-center justify-center h-[78%]">
-            <p className="text-center m-auto text-sm pt-2 dark:text-white/50">
+            <p className="text-center m-auto text-sm text-black/50 pt-2 dark:text-white/50">
               No Schema Found
             </p>
           </div>

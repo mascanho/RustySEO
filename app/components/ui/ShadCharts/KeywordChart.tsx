@@ -51,7 +51,7 @@ export function KeywordChart({
   return (
     <Card className="dark:bg-brand-darker w-full shadow dark:border-0 overflow-x-hidden keyword-chart">
       <CardHeader className="items-center pb-4">
-        <CardTitle className="dark:text-white">Top 10 Keywords</CardTitle>
+        <CardTitle>Top 10 Keywords</CardTitle>
         {/* <CardDescription>{url}</CardDescription> */}
       </CardHeader>
       <CardContent className="pb-0">
@@ -76,21 +76,18 @@ export function KeywordChart({
           </RadarChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm dark:text-white/50 min-h-[5.5rem] mt-2 text-center">
+      <CardFooter className="flex-col gap-2 text-xs dark:text-white/50 min-h-[5.5rem] mt-2 text-center">
         {keywords.length > 0 && (
           <>
             <div className="flex items-center gap-2 font-medium leading-none">
               {keywords.length > 0 && (
                 <span>
-                  The top keyword in your content is:{" "}
-                  <span className="font-bold">
+                  Top keyword:{" "}
+                  <span className="font-bold text-brand-bright">
                     {keywords?.map((key: any) => key[0][0])}
                   </span>
                 </span>
               )}
-            </div>
-            <div className="flex items-center gap-2 leading-none text-muted-foreground">
-              January - June 2024
             </div>
           </>
         )}

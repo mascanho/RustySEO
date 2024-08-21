@@ -1,5 +1,4 @@
 import React, { useState, useCallback, useEffect } from "react";
-import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { FaDesktop, FaMobileAlt } from "react-icons/fa";
 import { FiDownload, FiCheckCircle } from "react-icons/fi";
@@ -27,12 +26,7 @@ import { Modal } from "@mantine/core";
 import Todo from "../Todo";
 import { useDisclosure } from "@mantine/hooks";
 
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
+import TableMenus from "./TableMenus";
 
 // Define TypeScript types
 interface PerformanceData {
@@ -317,46 +311,32 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
                         <FaMobileAlt />
                       )}
                     </td>
-                    <ContextMenu>
-                      <td align="left" className="py-2 border relative group">
-                        <ContextMenuTrigger className="w-full">
-                          <ContextMenuContent className="text-xs">
-                            <ContextMenuItem className="text-xs">
-                              {data.strategy}
-                            </ContextMenuItem>
-                            <ContextMenuItem onClick={() => crawl(data.url)}>
-                              Re-crawl
-                            </ContextMenuItem>
-                            <ContextMenuItem>Team</ContextMenuItem>
-                            <ContextMenuItem>Subscription</ContextMenuItem>
-                          </ContextMenuContent>
-                          <span className="hover:text-blue-500 cursor-pointer">
-                            {data.url}
+                    <td align="left" className="py-2 border relative group">
+                      <TableMenus data={data} crawl={crawl}>
+                        <span className="hover:text-blue-500 cursor-pointer">
+                          {data.url}
+                        </span>
+                      </TableMenus>
+                      <span
+                        className="absolute right-7 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                        onClick={() => handleAddTodo(data.url, data.strategy)}
+                      >
+                        <FiCheckCircle className="text-green-500" />
+                      </span>{" "}
+                      <Popover>
+                        <PopoverTrigger>
+                          <span className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                            <CiViewList
+                              className="text-blue-500 text-base"
+                              onClick={() => handleUrlMatch(data.url)}
+                            />
                           </span>
-                          <span
-                            className="absolute right-7 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                            onClick={() =>
-                              handleAddTodo(data.url, data.strategy)
-                            }
-                          >
-                            <FiCheckCircle className="text-green-500" />
-                          </span>{" "}
-                          <Popover>
-                            <PopoverTrigger>
-                              <span className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                                <CiViewList
-                                  className="text-blue-500 text-base"
-                                  onClick={() => handleUrlMatch(data.url)}
-                                />
-                              </span>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[600px]">
-                              <PopUpTable data={matchedUrlData} />
-                            </PopoverContent>
-                          </Popover>
-                        </ContextMenuTrigger>
-                      </td>
-                    </ContextMenu>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[600px]">
+                          <PopUpTable data={matchedUrlData} />
+                        </PopoverContent>
+                      </Popover>
+                    </td>
                     <td
                       className={`border ${
                         data.performance <= 0.5
