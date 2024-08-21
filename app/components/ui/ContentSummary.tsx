@@ -223,7 +223,7 @@ const ContentSummary = ({
           </span>
         </div>
 
-        <div className="flex items-start justify-start flex-col mt-4">
+        <div className="flex items-start justify-start flex-col mt-4 ">
           <div className="flex items-start space-x-2">
             <div className="flex flex-col w-full justify-center">
               <div className="flex items-center mb-3 -mt-6">
@@ -264,7 +264,7 @@ const ContentSummary = ({
                 </svg>
                 <span className="font-semibold block ml-2">Top Keywords</span>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 min-h-12">
                 {keywords[0]?.map((keyword: any, index: any) => (
                   <span
                     key={index}

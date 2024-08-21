@@ -25,7 +25,10 @@ const SEOImprovements = ({
   opengraph,
   pageSchema,
   favicon: faviconUrl,
-  crawl,
+  charset,
+  indexation,
+  images, // To get the ones missing Alts
+  linkStatusCodes,
 }: {
   pageDescription: string[];
   pageTitle: string[];
@@ -36,17 +39,26 @@ const SEOImprovements = ({
   opengraph: any;
   pageSchema: any;
   favicon: string[];
+  charset: string;
+  indexation: any;
+  images: any;
+  linkStatusCodes: any;
 }) => {
   const [aiPageTitle, setAiPageTitle] = React.useState<string>("");
   const [aiPageDescription, setAiPageDescription] = React.useState<string>("");
   const {
     favicon,
-    seopagetitle,
-    seodescription,
     setFavicon,
     setPagetitle,
     setDescription,
     setCanonical,
+    setHreflangs,
+    setOpengraph,
+    setSchema,
+    setCharset,
+    setSeoIndexability,
+    setAltTags,
+    setSeoStatusCodes,
   } = useOnPageSeo((state) => ({
     favicon: state.favicon,
     seopagetitle: state.seopagetitle,
@@ -55,6 +67,13 @@ const SEOImprovements = ({
     setPagetitle: state.setPagetitle,
     setDescription: state.setDescription,
     setCanonical: state.setCanonical,
+    setHreflangs: state.setHreflangs,
+    setOpengraph: state.setOpengraph,
+    setSchema: state.setSchema,
+    setCharset: state.setSeoCharset,
+    setSeoIndexability: state.setSeoIndexability,
+    setAltTags: state.setAltTags,
+    setSeoStatusCodes: state.setSeoStatusCodes,
   }));
 
   // Update the store
@@ -63,6 +82,13 @@ const SEOImprovements = ({
     setPagetitle(pageTitle[0]);
     setDescription(pageDescription[0]);
     setCanonical(canonical[0]);
+    setHreflangs(hreflangs);
+    setOpengraph(opengraph);
+    setSchema(pageSchema);
+    setCharset(charset);
+    setSeoIndexability(indexation);
+    setAltTags(images);
+    setSeoStatusCodes(linkStatusCodes);
   };
 
   useEffect(() => {
@@ -72,6 +98,8 @@ const SEOImprovements = ({
       updateSeoInfo();
     };
   }, [pageTitle]);
+
+  console.log(linkStatusCodes, "The link status codes");
 
   useEffect(() => {
     invoke("generated_page_title", { query: pageTitle[0] }).then(
@@ -169,6 +197,28 @@ const SEOImprovements = ({
       improved: pageSchema.length > 0 ? true : false,
       aiImprovement:
         "Veritfy if your OpenGraph tags are well configured and contain the necessary information to render the image and the data.",
+      length: description?.length,
+    },
+    {
+      id: 7,
+      title: "Page Charset",
+      failsAdvise:
+        "No charset has been found on this page. Structured Data helps search engines to better understand your page's content.",
+      passAdvice: "Charset found on this page.",
+      improved: charset?.length > 0 ? true : false,
+      aiImprovement:
+        "Check if your charset tags are defined in the head of your website code.",
+      length: description?.length,
+    },
+    {
+      id: 8,
+      title: "Indexability",
+      failsAdvise:
+        "This page is not indexable, this means search engines will not list your page on the SERPs.",
+      passAdvice: "This page is indexable.",
+      improved: indexation && indexation[0] === "Indexable" ? true : false,
+      aiImprovement:
+        "Check if your charset tags are defined in the head of your website code.",
       length: description?.length,
     },
   ];

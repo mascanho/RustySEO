@@ -50,6 +50,7 @@ import { CgLayoutGrid } from "react-icons/cg";
 import { CiGlobe } from "react-icons/ci";
 import LinksCharts from "./components/ui/ShadCharts/LinksCharts";
 import RenderBlockingResources from "./components/ui/RenderBlockingResources";
+import useOnPageSeo from "@/store/storeOnPageSeo";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -102,6 +103,7 @@ const Home: React.FC<HomeProps> = () => {
   const [debouncedURL] = useDebounce(url, 300);
 
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const seoIsLoading = useOnPageSeo();
 
   type DBDataCrawl = {
     url: string | null;
@@ -147,7 +149,10 @@ const Home: React.FC<HomeProps> = () => {
   const handleClick = (url: string) => {
     // Clear previous results before starting the new crawl
 
+    // page speed loading
     setLoading(!loading);
+    // set SEO LOADING
+    seoIsLoading.setSeoLoading(!seoIsLoading.seoLoading);
 
     // set the url being searched in the session storage
     sessionStorage.setItem("url", url);
@@ -212,6 +217,8 @@ const Home: React.FC<HomeProps> = () => {
         showLinksSequentially(result.links); // Show links one by one
         showHeadingsSequentially(result.headings);
         setPageTitle(result.page_title);
+        // stop the loading of SEO
+        seoIsLoading.setSeoLoading(false);
         setPageDescription(result.page_description);
         setCanonical(result.canonical_url);
         setHreflangs(result.hreflangs);
@@ -455,7 +462,7 @@ const Home: React.FC<HomeProps> = () => {
                   <button
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
-                    className="inline-flex justify-center w-[98px] border-l border-b border-t  rounded-l-md border-gray-200 shadow-sm px-2  bg-white text-xs font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-0 h-7 py-[3px] focus:ring-offset-0 focus:ring-offset-gray-100 focus:ring-indigo-500 items-center mt-[1px] "
+                    className="inline-flex justify-center w-[98px] border-l border-b border-t  rounded-l-md border-gray-200 dark:border-white/20 shadow-sm px-2  bg-white dark:bg-brand-darker text-xs font-medium text-gray-700 dark:text-white/50 hover:bg-gray-50 focus:outline-none focus:ring-0 h-7 py-[3px] focus:ring-offset-0 focus:ring-offset-gray-100 focus:ring-indigo-500 items-center mt-[1px] "
                     id="options-menu"
                     aria-haspopup="true"
                     aria-expanded="true"
@@ -471,7 +478,7 @@ const Home: React.FC<HomeProps> = () => {
                       }
                     </span>
                     <FaChevronDown
-                      className="ml-1 -mr-1 h-2 w-2 text-xs text-black/50"
+                      className="ml-1 -mr-1 h-2 w-2 text-xs text-black/50 dark:text-white/50"
                       aria-hidden="true"
                     />
                   </button>
@@ -514,7 +521,7 @@ const Home: React.FC<HomeProps> = () => {
                       handleClick(url);
                     }
                   }}
-                  className="w-full h-7 text-xs pl-8 rounded-l-md bg-slate-100 dark:bg-white dark:border dark:border-white placeholder:text-gray-500 border rounded-r-md"
+                  className="w-full h-7 text-xs pl-8 rounded-l-md bg-slate-100 dark:bg-blue-900/5 dark:bg-brand-darker dark:border dark:border-white/20 dark:text-white placeholder:text-gray-500 border rounded-r-md"
                   style={{ outline: "none", boxShadow: "none" }}
                 />
                 <button
@@ -712,6 +719,10 @@ const Home: React.FC<HomeProps> = () => {
                 opengraph={openGraphDetails}
                 pageSchema={pageSchema}
                 favicon={favicon_url}
+                charset={charset}
+                indexation={indexation}
+                images={images}
+                linkStatusCodes={linkStatusCodes}
               />
             </Tabs.Panel>
 

@@ -2,6 +2,7 @@ import create from "zustand";
 
 // Define TypeScript interface for the state
 interface OnPageSeoState {
+  seoLoading: boolean;
   favicon: string[] | null;
   seopagetitle: string | null;
   seodescription: string | null;
@@ -9,7 +10,12 @@ interface OnPageSeoState {
   seohreflangs: string[] | null;
   seoopengraph: Record<string, any> | null; // Adjust according to your Open Graph data structure
   seoschema: Record<string, any> | null; // Adjust according to your schema data structure
+  seocharset: string | null;
+  seoindexability: string | null;
+  seoalttags: string[] | null;
+  seostatusCodes: number[] | null;
 
+  setSeoLoading: (loading: boolean) => void;
   setFavicon: (favicon: string[] | null) => void;
   setPagetitle: (title: string | null) => void;
   setDescription: (description: string | null) => void;
@@ -17,10 +23,15 @@ interface OnPageSeoState {
   setHreflangs: (hreflangs: string[] | null) => void;
   setOpengraph: (opengraph: Record<string, any> | null) => void;
   setSchema: (schema: Record<string, any> | null) => void;
+  setSeoCharset: (seocharset: string | null) => void;
+  setSeoIndexability: (seoindexability: string | null) => void;
+  setAltTags: (seoalttags: string[] | null) => void;
+  setSeoStatusCodes: (seostatusCodes: number[] | null) => void;
 }
 
 // Create the Zustand store with the defined interface
 const useOnPageSeo = create<OnPageSeoState>((set) => ({
+  seoLoading: false,
   favicon: null,
   seopagetitle: null,
   seodescription: null,
@@ -28,7 +39,11 @@ const useOnPageSeo = create<OnPageSeoState>((set) => ({
   seohreflangs: null,
   seoopengraph: null,
   seoschema: null,
-
+  seocharset: null,
+  seoindexability: null,
+  seoalttags: null,
+  seostatusCodes: null,
+  setSeoLoading: (loading) => set({ seoLoading: loading }),
   setFavicon: (favicon) => set({ favicon }),
   setPagetitle: (title) => set({ seopagetitle: title }),
   setDescription: (description) => set({ seodescription: description }),
@@ -36,6 +51,12 @@ const useOnPageSeo = create<OnPageSeoState>((set) => ({
   setHreflangs: (hreflangs) => set({ seohreflangs: hreflangs }),
   setOpengraph: (opengraph) => set({ seoopengraph: opengraph }),
   setSchema: (schema) => set({ seoschema: schema }),
+  setSeoCharset: (seocharset) => set({ seocharset: seocharset }),
+  setSeoIndexability: (seoindexability) =>
+    set({ seoindexability: seoindexability }),
+  setAltTags: (seoalttags) => set({ seoalttags: seoalttags }),
+  setSeoStatusCodes: (seostatusCodes) =>
+    set({ seostatusCodes: seostatusCodes }),
 }));
 
 export default useOnPageSeo;

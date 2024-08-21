@@ -19,6 +19,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import useOnPageSeo from "@/store/storeOnPageSeo";
 
 const chartConfig = {
   visitors: {
@@ -53,8 +54,6 @@ export function LinksChart({
   linksStatusCodes: any;
   linkStatusCodeStatus: any;
 }) {
-  console.log(linkStatusCodes, "linksStatusCodes from the charts");
-
   const externalLinks = linkStatusCodes?.filter(
     (link: any) => link?.is_external === true,
   );
@@ -67,7 +66,11 @@ export function LinksChart({
     (link: any) => link?.status_code === 404,
   );
 
-  console.log(externalLinks, "The external links");
+  const { setSeoStatusCodes } = useOnPageSeo((state) => state);
+
+  React.useEffect(() => {
+    setSeoStatusCodes(statusError);
+  }, [linkStatusCodes]);
 
   const chartData = [
     {

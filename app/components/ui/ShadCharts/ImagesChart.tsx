@@ -1,6 +1,5 @@
 "use client";
 
-import * as React from "react";
 import Link from "next/link";
 import { Label, Pie, PieChart } from "recharts";
 
@@ -18,6 +17,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import useOnPageSeo from "@/store/storeOnPageSeo";
+import { use, useEffect } from "react";
 
 const chartConfig = {
   visitors: {
@@ -66,7 +67,7 @@ export function ImagesChart({ images, url }: { images: any; url: string }) {
   return (
     <Card className="flex flex-col dark:bg-brand-darker dark:border-0 overflow-hidden">
       <CardHeader className="items-center pb-0">
-        <CardTitle className=" dark:text-white">Images on page</CardTitle>
+        <CardTitle>Images on page</CardTitle>
         {/* <CardDescription>{url}</CardDescription> */}
       </CardHeader>
       <CardContent className="flex-1 pb-0">

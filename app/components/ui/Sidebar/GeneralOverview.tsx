@@ -10,6 +10,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@shadcn/ui";
+import useOnPageSeo from "@/store/storeOnPageSeo";
 
 export default function GeneralOverview({
   pageSpeed,
@@ -18,8 +19,9 @@ export default function GeneralOverview({
 }: any) {
   const storePageSpeed = usePageSpeedStore();
   const { setChecksData } = usePageSpeedStore();
+  const { seoLoading, setSeoLoading } = useOnPageSeo();
 
-  console.log(storePageSpeed);
+  // console.log("SEO is: :", seoLoading);
 
   // Get All the data from the stores (PageSpeed Performance & SEO)
   const checks = getChecks();
@@ -39,6 +41,7 @@ export default function GeneralOverview({
   }, [memoizedSetChecksData]);
 
   const iconsGray = pageSpeed === undefined;
+  const seoIconsGray = pageTitle[0] === undefined;
 
   return (
     <>
@@ -47,7 +50,7 @@ export default function GeneralOverview({
           <div className="grid h-full ">
             {/* CHECKS THE CORE WEB VITALS */}
             <details open className="h-fit">
-              <summary className="text-xs bg-gray-100 pl-2 py-1">
+              <summary className="text-xs bg-gray-100 dark:bg-brand-darker dark:text-slate-400 pl-2 py-1">
                 Page Speed
               </summary>
               {checks.slice(0, 14).map((check, index) => (
@@ -105,7 +108,7 @@ export default function GeneralOverview({
 
             {/* CHECKS THE SEO */}
             <details className="flex items-center h-full" open>
-              <summary className="flex items-center pl-2 py-1 bg-gray-200">
+              <summary className="flex items-center pl-2 py-1 bg-gray-200 dark:text-slate-400 dark:bg-brand-darker">
                 SEO
               </summary>
               {checks.slice(14, checks.length).map((check, index) => (
@@ -118,17 +121,17 @@ export default function GeneralOverview({
                   }`}
                 >
                   <div className="flex items-center w-full">
-                    {false ? (
+                    {seoLoading ? (
                       <Spinner />
                     ) : (
                       <>
                         {check.status === "Passed" ? (
                           <FaCheckCircle
-                            className={`w-4 h-4 ${pageTitle.length <= 0 ? "text-gray-400" : "text-green-500"}`}
+                            className={`w-4 h-4 ${seoIconsGray ? "text-gray-400" : "text-green-500"}`}
                           />
                         ) : (
                           <XIcon
-                            className={`w-5 h-5 ${!pageTitle ? "text-gray-400" : "text-red-500"}`}
+                            className={`w-5 h-5 ${seoIconsGray ? "text-gray-400" : "text-red-500"}`}
                           />
                         )}
                       </>
@@ -162,7 +165,7 @@ export default function GeneralOverview({
           </div>
         </div>
       </section>
-      <footer className="absolute bottom-0 w-full font-bold p-1 px-5 bg-brand-dark dark:bg-brand-bright text-white flex justify-center space-x-4">
+      <footer className="absolute bottom-0 w-full font-bold p-1 px-5 bg-brand-dark dark:bg-blue-950 text-white flex justify-center space-x-10">
         <div className="flex items-center">
           <FaCheckCircle className="mr-1 text-green-500" />
           <span>Passed: </span>{" "}

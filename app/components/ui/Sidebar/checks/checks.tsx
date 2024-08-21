@@ -28,8 +28,13 @@ const useGetChecks = () => {
   const seoHreflangs = useOnPageSeo((state) => state.seohreflangs);
   const seoOpengraph = useOnPageSeo((state) => state.seoopengraph);
   const seoSchema = useOnPageSeo((state) => state.seoschema);
+  const seoCharset = useOnPageSeo((state) => state.seocharset);
+  const seoIndexability = useOnPageSeo((state) => state.seoindexability);
+  const seoAltTags = useOnPageSeo((state) => state.seoalttags);
+  const noAltTags = seoAltTags?.filter((tag) => tag?.alt_text === "");
+  const seoStatusCodes = useOnPageSeo((state) => state.seostatusCodes);
 
-  console.log(favicon, "SEO CHECKLIST");
+  console.log(seoStatusCodes, "SEO CHECKLIST ----------");
 
   // Use useMemo to avoid recalculating on every render
   const checks = useMemo(() => {
@@ -126,7 +131,45 @@ const useGetChecks = () => {
       {
         id: "18",
         name: "Canonical",
-        status: seoCanonical?.length > 0 ? "Passed" : "Failed",
+        status: seoCanonical !== "No canonical URL found" ? "Passed" : "Failed",
+      },
+      {
+        id: "19",
+        name: "Hreflangs",
+        status: seoHreflangs?.length > 1 ? "Passed" : "Failed",
+      },
+      {
+        id: "20",
+        name: "OpenGraph",
+        status: seoOpengraph?.image ? "Passed" : "Failed",
+      },
+      {
+        id: "21",
+        name: "Structured Data",
+        status: seoSchema?.length > 0 ? "Passed" : "Failed",
+      },
+      {
+        id: "22",
+        name: "Page Charset",
+        status: seoCharset?.length > 0 ? "Passed" : "Failed",
+      },
+      {
+        id: "23",
+        name: "Indexability",
+        status:
+          seoIndexability && seoIndexability[0] === "Indexable"
+            ? "Passed"
+            : "Failed",
+      },
+      {
+        id: "24",
+        name: "Images Alt Text",
+        status: noAltTags?.length === 0 ? "Passed" : "Failed",
+      },
+      {
+        id: "25",
+        name: "404 Links",
+        status: seoStatusCodes?.length === 0 ? "Passed" : "Failed",
       },
     ];
   }, [
@@ -148,6 +191,14 @@ const useGetChecks = () => {
     favicon,
     seoDescription,
     seoCanonical,
+    seoHreflangs,
+    seoOpengraph,
+    seoSchema,
+    seoCharset,
+    seoIndexability,
+    // seoAltTags,
+    noAltTags,
+    seoStatusCodes,
   ]);
 
   return checks;
