@@ -16,8 +16,8 @@ const ServerResponseTime = ({
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
   return (
-    <section className="widget border px-4 py-3  shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative overflow-hidden">
-      <span className="absolute right-5">
+    <section className="widget border px-4 py-3  shadow bg-white w-60 xl:w-52 rounded-md space-y-3 relative overflow-hidden">
+      <span className="absolute right-5 mt-1">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
