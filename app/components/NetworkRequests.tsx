@@ -150,12 +150,12 @@ const NetworkRequests = ({
               </svg>
             </div>
           ) : (
-            <div className="flex items-center space-x-4">
-              <span className="font-bold text-2xl text-apple-spaceGray/50">
-                {networkRequestCount + " requests"}
+            <div className="flex items-center space-x-2">
+              <span className="font-bold text-xl text-apple-spaceGray/50">
+                {(stat && networkRequestCount + " requests") || "..."}
               </span>
               <p
-                className={`rounded-full font-semibold ml-2 px-2 text-xs py-[1px] ${labelClass}`}
+                className={`rounded-full font-semibold ml-1 px-2 text-xs py-[1px] ${!stat && "hidden"} ${labelClass}`}
               >
                 {label}
               </p>

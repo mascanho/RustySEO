@@ -54,7 +54,7 @@ export const OpenGraphCard = ({
               <img
                 src={openGraphDetails?.image}
                 alt="OpenGraph Image"
-                className="rounded-md w-[50%] h-auto   object-cover ml-0"
+                className="rounded-md w-[] h-auto   object-cover ml-0"
               />
             </div>
           ) : (
