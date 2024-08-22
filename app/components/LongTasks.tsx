@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-
 import { useDisclosure } from "@mantine/hooks";
 import { Popover, Text, Button } from "@mantine/core";
 import openBrowserWindow from "../Hooks/OpenBrowserWindow";
@@ -15,8 +14,31 @@ const LongTasks = ({
   url: string;
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
+
+  // Calculate the number of long tasks
+  const numLongTasks =
+    stat?.lighthouseResult?.audits?.["long-tasks"]?.details?.items?.length || 0;
+
+  // Determine the label based on the number of long tasks
+  let label = "";
+  if (numLongTasks === 0) {
+    label = "Good";
+  } else if (numLongTasks > 0 && numLongTasks <= 5) {
+    label = "Average";
+  } else {
+    label = "Poor";
+  }
+
+  // Determine the background color and text color based on the label
+  const labelClass =
+    {
+      Poor: "bg-red-500 text-white",
+      Average: "bg-orange-500 text-white",
+      Good: "bg-green-500 text-white",
+    }[label] || "bg-gray-200 text-black";
+
   return (
-    <section className="widget border px-4 py-3  shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative overflow-hidden">
+    <section className="widget border px-4 py-3 shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative overflow-hidden">
       <span className="absolute right-5">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -135,14 +157,19 @@ const LongTasks = ({
               </svg>
             </div>
           ) : (
-            <>
-              <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
-                {stat?.lighthouseResult?.audits?.["long-tasks"]?.details?.items
-                  ? `${stat.lighthouseResult.audits["long-tasks"].details.items.length} tasks`
-                  : "..."}
-              </span>
-            </>
-          )}{" "}
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
+                <span className="font-bold text-2xl text-apple-spaceGray/50">
+                  {(stat && stat.numLongTasks + " tasks") || "..."}
+                </span>
+                <p
+                  className={`rounded-full font-semibold ml-2 px-2 text-xs py-[1px] ${!stat && "hidden"} ${labelClass}`}
+                >
+                  {label}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex items-center space-x-1">
           <h2
@@ -152,9 +179,9 @@ const LongTasks = ({
                   "No URL provided",
               )
             }
-            className="text-xs underline  cursor-pointer font-semibold text-gray-500"
+            className="text-xs underline cursor-pointer font-semibold text-gray-500"
           >
-            Tasks:{" "}
+            Tasks:
           </h2>
           <span className="inline text-xs">
             {stat?.lighthouseResult?.audits?.["long-tasks"]?.displayValue ||

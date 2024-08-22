@@ -1,8 +1,7 @@
 "use client";
 import React from "react";
-
 import { useDisclosure } from "@mantine/hooks";
-import { Popover, Text, Button } from "@mantine/core";
+import { Popover, Text } from "@mantine/core";
 import openBrowserWindow from "../Hooks/OpenBrowserWindow";
 
 const NetworkRequests = ({
@@ -15,16 +14,40 @@ const NetworkRequests = ({
   url: string;
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
+
+  // Extract the number of network requests
+  const networkRequestCount =
+    stat?.lighthouseResult?.audits?.["network-requests"]?.details?.items
+      ?.length || 0;
+
+  // Determine the label based on the number of network requests
+  let label = "";
+  if (networkRequestCount <= 20) {
+    label = "Good";
+  } else if (networkRequestCount > 20 && networkRequestCount <= 50) {
+    label = "Average";
+  } else {
+    label = "Poor";
+  }
+
+  // Determine the background color and text color based on the label
+  const labelClass =
+    {
+      Poor: "bg-red-500 text-white",
+      Average: "bg-orange-500 text-white",
+      Good: "bg-green-500 text-white",
+    }[label] || "bg-gray-200 text-black";
+
   return (
-    <section className="widget border px-4 py-3  shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative overflow-hidden">
+    <section className="widget border px-4 py-3 shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative overflow-hidden">
       <span className="absolute right-5">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
           width={38}
           height={38}
-          color={"#a6a5a2"}
-          fill={"none"}
+          color="#a6a5a2"
+          fill="none"
         >
           <circle
             cx="12"
@@ -48,7 +71,7 @@ const NetworkRequests = ({
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-        </svg>{" "}
+        </svg>
       </span>
       <Popover
         width={200}
@@ -68,8 +91,8 @@ const NetworkRequests = ({
               viewBox="0 0 24 24"
               width={18}
               height={18}
-              color={"#000000"}
-              fill={"none"}
+              color="#000000"
+              fill="none"
             >
               <path
                 d="M22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12Z"
@@ -101,7 +124,7 @@ const NetworkRequests = ({
         </Popover.Dropdown>
       </Popover>
       <div className="flex flex-col space-y-1.5 h-fit">
-        <h2 className="font-bold ">Network</h2>
+        <h2 className="font-bold">Network</h2>
         <div className="text-xl h-8">
           {loading ? (
             <div className="-mt-1">
@@ -117,7 +140,7 @@ const NetworkRequests = ({
                   cy="12"
                   r="10"
                   stroke="currentColor"
-                  stroke-width="4"
+                  strokeWidth="4"
                 ></circle>
                 <path
                   className="opacity-75"
@@ -127,25 +150,24 @@ const NetworkRequests = ({
               </svg>
             </div>
           ) : (
-            <>
-              {!stat ? (
-                <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
-                  ...
-                </span>
-              ) : (
-                <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
-                  {stat?.lighthouseResult?.audits?.["network-requests"]?.details
-                    ?.items?.length + " requests"}
-                </span>
-              )}
-            </>
-          )}{" "}
+            <div className="flex items-center space-x-2">
+              <span className="font-bold text-xl text-apple-spaceGray/50">
+                {(stat && networkRequestCount + " requests") || "..."}
+              </span>
+              <p
+                className={`rounded-full font-semibold ml-1 px-2 text-xs py-[1px] ${!stat && "hidden"} ${labelClass}`}
+              >
+                {label}
+              </p>
+            </div>
+          )}
         </div>
         <h2
           onClick={() =>
             openBrowserWindow(
-              "https://pagespeed.web.dev/report?url=" + url ||
-                "No URL provided",
+              url
+                ? `https://pagespeed.web.dev/report?url=${url}`
+                : "No URL provided",
             )
           }
           className="text-xs underline cursor-pointer"

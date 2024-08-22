@@ -63,7 +63,7 @@ export function SeoChart({ seo }: { seo: any }) {
               gridType="circle"
               radialLines={false}
               stroke="none"
-              className={`first:fill-gray-500 last:fill-white ${seoScore > 0.5 ? "last:fill-green-300" : ""}`}
+              className={`first:fill-gray-500 last:fill-white dark:last:fill-brand-darker ${seoScore > 0.5 ? "last:fill-green-300" : ""}`}
               polarRadius={[86, 74]}
             />
             <RadialBar dataKey="visitors" background cornerRadius={10} />
@@ -81,14 +81,14 @@ export function SeoChart({ seo }: { seo: any }) {
                         <tspan
                           x={viewBox.cx}
                           y={viewBox.cy}
-                          className="fill-foreground text-4xl font-bold"
+                          className="fill-foreground dark:fill-white text-4xl font-bold"
                         >
                           {chartData[0].visitors.toLocaleString() + "%"}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
-                          className="fill-black"
+                          className="fill-black dark:fill-white"
                         >
                           SEO score
                         </tspan>

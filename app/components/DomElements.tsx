@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-
 import { useDisclosure } from "@mantine/hooks";
 import { Popover, Text, Button } from "@mantine/core";
 import openBrowserWindow from "../Hooks/OpenBrowserWindow";
@@ -15,9 +14,34 @@ const DomElements = ({
   url: string;
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
+
+  // Extract score and calculate percentage
+  const score = Math.floor(
+    stat?.lighthouseResult?.audits["dom-size"]?.score * 100,
+  );
+
+  // Determine the label based on the score
+  let label = "";
+  if (score >= 80) {
+    label = "Good";
+  } else if (score >= 50) {
+    label = "Average";
+  } else {
+    label = "Poor";
+  }
+
+  // Determine the background color and text color based on the label
+  const labelClass =
+    {
+      Poor: "bg-red-500 text-white",
+      Average: "bg-orange-500 text-white",
+      Good: "bg-green-500 text-white",
+    }[label] || "bg-gray-200 text-black";
+
   return (
-    <section className="widget border p-4  shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative">
+    <section className="widget border p-4 shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative">
       <span className="absolute right-5">
+        {/* SVG icon */}
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
@@ -33,21 +57,8 @@ const DomElements = ({
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          <path
-            d="M21.1075 11.5762C21.3692 12.0271 21.5 12.2525 21.5 12.5C21.5 12.7475 21.3692 12.9729 21.1075 13.4238L19.858 15.5762C19.5964 16.0271 19.4655 16.2525 19.25 16.3762C19.0345 16.5 18.7728 16.5 18.2494 16.5H15.7506C15.2272 16.5 14.9655 16.5 14.75 16.3762C14.5345 16.2525 14.4036 16.0271 14.142 15.5762L12.8925 13.4238C12.6308 12.9729 12.5 12.7475 12.5 12.5C12.5 12.2525 12.6308 12.0271 12.8925 11.5762L14.142 9.42376C14.4036 8.97293 14.5345 8.74752 14.75 8.62376C14.9655 8.5 15.2272 8.5 15.7506 8.5L18.2494 8.5C18.7728 8.5 19.0345 8.5 19.25 8.62376C19.4655 8.74752 19.5964 8.97293 19.858 9.42376L21.1075 11.5762Z"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M11.1075 16.5762C11.3692 17.0271 11.5 17.2525 11.5 17.5C11.5 17.7475 11.3692 17.9729 11.1075 18.4238L9.85804 20.5762C9.59636 21.0271 9.46551 21.2525 9.25 21.3762C9.03449 21.5 8.7728 21.5 8.24943 21.5H5.75057C5.2272 21.5 4.96551 21.5 4.75 21.3762C4.53449 21.2525 4.40364 21.0271 4.14196 20.5762L2.89253 18.4238C2.63084 17.9729 2.5 17.7475 2.5 17.5C2.5 17.2525 2.63084 17.0271 2.89253 16.5762L4.14196 14.4238C4.40364 13.9729 4.53449 13.7475 4.75 13.6238C4.96551 13.5 5.2272 13.5 5.75057 13.5L8.24943 13.5C8.7728 13.5 9.03449 13.5 9.25 13.6238C9.46551 13.7475 9.59636 13.9729 9.85804 14.4238L11.1075 16.5762Z"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>{" "}
+          {/* Additional paths for the SVG icon */}
+        </svg>
       </span>
       <Popover
         width={200}
@@ -62,6 +73,7 @@ const DomElements = ({
             onMouseLeave={close}
             className="absolute bottom-3 right-3"
           >
+            {/* Small SVG icon */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -116,7 +128,7 @@ const DomElements = ({
                   cy="12"
                   r="10"
                   stroke="currentColor"
-                  stroke-width="4"
+                  strokeWidth="4"
                 ></circle>
                 <path
                   className="opacity-75"
@@ -126,23 +138,40 @@ const DomElements = ({
               </svg>
             </div>
           ) : (
-            <span className="h-10 font-bold text-xl text-apple-spaceGray/50">
-              {stat?.lighthouseResult?.audits?.["dom-size"].displayValue ||
-                "..."}
-            </span>
-          )}{" "}
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
+                <span className="font-bold text-2xl text-apple-spaceGray/50">
+                  {(stat && score + "%") || "..."}
+                </span>
+                <p
+                  className={`rounded-full font-semibold ml-2 px-2 text-xs py-[1px] ${!stat && "hidden"} ${labelClass}`}
+                >
+                  {label}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
-        <h2
+        <div
           onClick={() =>
             openBrowserWindow(
-              "https://pagespeed.web.dev/report?url=" + url ||
-                "No URL provided",
+              "https://pagespeed.web.dev/report?url=" +
+                (url || "No URL provided"),
             )
           }
-          className="text-xs underline cursor-pointer"
+          className="flex underline cursor-pointer"
         >
-          View PageSpeed Insights
-        </h2>
+          <div className="flex items-center">
+            <h4 className="text-[12px] font-semibold dark:text-white/50">
+              Nodes found:
+            </h4>
+            <span className="font-bold text-apple-spaceGray/50">
+              {stat?.lighthouseResult?.audits?.["dom-size"]?.numericValue
+                ? `${stat.lighthouseResult.audits["dom-size"].numericValue}`
+                : "..."}
+            </span>
+          </div>
+        </div>
       </div>
     </section>
   );

@@ -1,3 +1,4 @@
+"use client";
 export const dynamic = "force-static";
 import "@mantine/core/styles.css";
 import { Roboto } from "next/font/google";
@@ -5,7 +6,7 @@ import "./globals.css";
 import { MantineProvider } from "@mantine/core";
 import MenuDrawer from "./components/ui/MenuDrawer";
 import TopMenuBar from "./components/ui/TopMenuBar";
-
+import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import Footer from "./components/ui/Footer";
 
@@ -25,6 +26,22 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // GET THE THEME AND SET IT
+  useEffect(() => {
+    // On component mount, check local storage for dark mode preference
+    const darkMode = localStorage.getItem("dark-mode") === "true";
+    setIsDarkMode(darkMode);
+
+    // Add or remove the dark class on the root element
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
+
   return (
     <html lang="en" className="min-w-[600px]">
       <body

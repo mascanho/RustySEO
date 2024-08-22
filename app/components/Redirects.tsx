@@ -15,6 +15,29 @@ const Redirects = ({
   url: string;
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
+
+  // Calculate the number of redirects
+  const numRedirects =
+    stat?.lighthouseResult?.audits?.redirects?.details?.items?.length || 0;
+
+  // Determine the label based on the number of redirects
+  let label = "";
+  if (numRedirects === 0) {
+    label = "Good";
+  } else if (numRedirects > 0 && numRedirects <= 3) {
+    label = "Average";
+  } else {
+    label = "Poor";
+  }
+
+  // Determine the background color and text color based on the label
+  const labelClass =
+    {
+      Poor: "bg-red-500 text-white",
+      Average: "bg-orange-500 text-white",
+      Good: "bg-green-500 text-white",
+    }[label] || "bg-gray-200 text-black";
+
   return (
     <section className="widget border px-4 py-3 bg-white w-60 xl:w-52 rounded-md space-y-2 relative shadow overflow-hidden">
       <span className="absolute right-5">
@@ -115,7 +138,7 @@ const Redirects = ({
                   cy="12"
                   r="10"
                   stroke="currentColor"
-                  stroke-width="4"
+                  strokeWidth="4"
                 ></circle>
                 <path
                   className="opacity-75"
@@ -125,14 +148,19 @@ const Redirects = ({
               </svg>
             </div>
           ) : (
-            <>
-              <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
-                {stat?.lighthouseResult?.audits?.redirects?.details?.items
-                  ? `${stat?.lighthouseResult.audits.redirects.details.items.length} items`
-                  : "..."}
-              </span>
-            </>
-          )}{" "}
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
+                <span className="font-bold text-2xl text-apple-spaceGray/50">
+                  {(stat && numRedirects + " items") || "..."}
+                </span>
+                <p
+                  className={`rounded-full font-semibold ml-2 px-2 text-xs py-[1px] ${!stat && "hidden"} ${labelClass}`}
+                >
+                  {label}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
         <h2
           onClick={() =>

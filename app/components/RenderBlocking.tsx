@@ -1,37 +1,59 @@
 "use client";
 import React from "react";
-
 import { useDisclosure } from "@mantine/hooks";
-import { Popover, Text, Button } from "@mantine/core";
+import { Popover, Text } from "@mantine/core";
 import openBrowserWindow from "../Hooks/OpenBrowserWindow";
 
-const RenderBlocking = ({
-  stat,
-  loading,
-  url,
-}: {
+interface RenderBlockingProps {
   stat: any;
   loading: boolean;
   url: string;
+}
+
+const RenderBlocking: React.FC<RenderBlockingProps> = ({
+  stat,
+  loading,
+  url,
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
 
-  console.log(
-    stat?.lighthouseResult.audits["render-blocking-resources"].details.items
-      .length,
-    "from the render blocking",
-  );
+  const renderBlockingItems =
+    stat?.lighthouseResult?.audits?.["render-blocking-resources"]?.details
+      ?.items ?? [];
+
+  const renderBlockingCount = renderBlockingItems.length;
+
+  const displayValue =
+    stat?.lighthouseResult?.audits?.["render-blocking-resources"]?.displayValue;
+
+  // Determine the label based on the number of render-blocking resources
+  let label = "";
+  if (renderBlockingCount === 0) {
+    label = "Good";
+  } else if (renderBlockingCount > 0 && renderBlockingCount <= 3) {
+    label = "Average";
+  } else {
+    label = "Poor";
+  }
+
+  // Determine the background color and text color based on the label
+  const labelClass =
+    {
+      Poor: "bg-red-500 text-white",
+      Average: "bg-orange-500 text-white",
+      Good: "bg-green-500 text-white",
+    }[label] || "bg-gray-200 text-black";
 
   return (
-    <section className="widget border p-4  shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative">
+    <section className="widget border p-4 shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative">
       <span className="absolute right-5">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
           width={38}
           height={38}
-          color={"#a6a5a2"}
-          fill={"none"}
+          color="#a6a5a2"
+          fill="none"
         >
           <path
             d="M15 2L21 8M21 2L15 8"
@@ -76,8 +98,8 @@ const RenderBlocking = ({
               viewBox="0 0 24 24"
               width={18}
               height={18}
-              color={"#000000"}
-              fill={"none"}
+              color="#000000"
+              fill="none"
             >
               <path
                 d="M22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12Z"
@@ -111,7 +133,7 @@ const RenderBlocking = ({
       <div className="flex flex-col space-y-1 h-fit">
         <h2 className="font-bold -mt-1">Render Blocking</h2>
         <div className="text-xl h-8">
-          {loading && (
+          {loading ? (
             <div className="-mt-1">
               <svg
                 className="animate-spin h-9 w-9 mb-1"
@@ -125,7 +147,7 @@ const RenderBlocking = ({
                   cy="12"
                   r="10"
                   stroke="currentColor"
-                  stroke-width="4"
+                  strokeWidth="4"
                 ></circle>
                 <path
                   className="opacity-75"
@@ -134,51 +156,23 @@ const RenderBlocking = ({
                 ></path>
               </svg>
             </div>
-          )}
-          {!loading && !url && !stat && (
-            <span className="h-10 font-bold text-xl text-apple-spaceGray/50">
-              ...
-            </span>
-          )}
-
-          {stat?.lighthouseResult?.audits?.["render-blocking-resources"]
-            ?.displayValue && (
-            <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
-              {stat.lighthouseResult.audits["render-blocking-resources"].details
-                ?.items?.length > 0 &&
-                `${stat.lighthouseResult.audits["render-blocking-resources"].details.items.length} tasks`}
-            </span>
-          )}
-
-          {(stat?.lighthouseResult?.audits?.["render-blocking-resources"]
-            ?.details.items?.length < 1 &&
-            url && (
-              <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
-                0 tasks
+          ) : (
+            <div className="flex items-center space-x-2">
+              <span className="font-bold text-2xl text-apple-spaceGray/50">
+                {renderBlockingCount > 0 && `${renderBlockingCount} tasks`}
+                {stat && renderBlockingCount === 0 ? `0 tasks` : "..."}
               </span>
-            )) ||
-            ""}
-
-          {(stat?.lighthouseResult?.audits?.["render-blocking-resources"]
-            ?.details.items?.length < 1 &&
-            !url && (
-              <span className="h-10 font-bold text-2xl text-apple-spaceGray/50">
-                0 tasks
-              </span>
-            )) ||
-            ""}
+              <p
+                className={`rounded-full font-semibold ml-2 px-2 text-xs py-[1px] ${!stat && "hidden"} ${labelClass}`}
+              >
+                {label}
+              </p>
+            </div>
+          )}
         </div>
-        <h2
-          onClick={() =>
-            openBrowserWindow(
-              "https://pagespeed.web.dev/report?url=" + url ||
-                "No URL provided",
-            )
-          }
-          className="text-xs underline cursor-pointer"
-        >
-          View PageSpeed Insights
-        </h2>
+        <span className="inline text-xs break-words">
+          {displayValue || "..."}
+        </span>
       </div>
     </section>
   );

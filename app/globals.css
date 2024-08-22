@@ -130,19 +130,23 @@ pre:not([class*="robots"]) {
   padding: 0 !important;
 }
 
+.tabs-list {
+  @apply dark:bg-transparent dark:text-white !important;
+}
+
+.tabs-list button .mantine-Tabs-tabLabel {
+  @apply dark:text-white !important;
+}
+
 .mantine-Drawer-body,
 .mantine-Drawer-header {
   padding: 0 !important;
-  @apply dark:bg-brand-darker  !important;
+  @apply dark:bg-brand-dark !important;
   padding: 0 !important;
 }
 
 .mantine-Drawer-header button {
-  @apply mr-2 mb-2 pb-1;
-}
-
-.mantine-Tabs-list {
-  @apply bg-transparent dark:text-white  !important;
+  @apply mr-2 mb-2 pb-1 dark:text-white;
 }
 
 .todoItems {

@@ -70,7 +70,7 @@ export function PageRankChart({ pageRank }: { pageRank: any }) {
               gridType="circle"
               radialLines={false}
               stroke="none"
-              className="first:fill-gray-500 last:fill-white"
+              className="first:fill-gray-500 last:fill-white dark:last:fill-brand-darker"
               polarRadius={[86, 74]}
             />
             <RadialBar dataKey="visitors" background cornerRadius={10} />
@@ -88,14 +88,14 @@ export function PageRankChart({ pageRank }: { pageRank: any }) {
                         <tspan
                           x={viewBox.cx}
                           y={viewBox.cy}
-                          className="fill-foreground text-4xl font-bold"
+                          className="fill-foreground text-4xl font-bold dark:fill-white"
                         >
                           {chartData[0].visitors.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
-                          className="fill-black"
+                          className="fill-black dark:fill-white"
                         >
                           Domain Rank
                         </tspan>
