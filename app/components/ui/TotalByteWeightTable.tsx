@@ -1,12 +1,15 @@
+import useStore from "@/store/Panes";
 import { GiWeight } from "react-icons/gi";
 
 const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
+  const { Visible } = useStore();
+
   const scripts =
     pageSpeed?.lighthouseResult?.audits?.["total-byte-weight"]?.details
       ?.items || [];
 
   return (
-    <section className="table_container">
+    <section className={`table_container ${Visible.tbw ? "block" : "hidden"}`}>
       <h2 className="text-base flex items-center text-left pl-1 pt-3 font-bold w-full">
         <GiWeight className="mr-1.5" /> Total Byte Weight
       </h2>

@@ -1,12 +1,16 @@
+import useStore from "@/store/Panes";
 import { SiOctanerender } from "react-icons/si";
 
 const RenderBlockingResources = ({ pageSpeed }: { pageSpeed: any }) => {
+  const { Visible } = useStore();
   const scripts =
     pageSpeed?.lighthouseResult?.audits?.["render-blocking-resources"]?.details
       ?.items || [];
 
   return (
-    <section className="table_container">
+    <section
+      className={`table_container ${Visible.renderBlocking ? "block" : "hidden"}`}
+    >
       <h2 className="text-base text-left pl-1 flex items-center pt-3 font-bold w-full text-black/60">
         <SiOctanerender className="mr-1.5" /> Render Blocking
       </h2>

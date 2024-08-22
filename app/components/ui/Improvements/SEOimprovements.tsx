@@ -40,6 +40,7 @@ const SEOImprovements = ({
   indexation: any;
   images: any;
   linkStatusCodes: any;
+  seoalttags: any;
 }) => {
   const [aiPageTitle, setAiPageTitle] = useState<string>("");
   const [aiPageDescription, setAiPageDescription] = useState<string>("");
@@ -86,7 +87,6 @@ const SEOImprovements = ({
     setCharset(charset);
     setSeoIndexability(indexation);
     setAltTags(images);
-    setSeoStatusCodes(linkStatusCodes);
   };
 
   useEffect(() => {
@@ -104,6 +104,11 @@ const SEOImprovements = ({
     images,
     linkStatusCodes,
   ]);
+
+  const seoAltTags = useOnPageSeo((state) => state.seoalttags);
+  // @ts-ignore
+  const imagesWithoutAltTags = seoAltTags?.filter((image) => !image.alt_text);
+  const seoStatusCodes = useOnPageSeo((state) => state.seostatusCodes);
 
   useEffect(() => {
     if (pageTitle[0]) {
@@ -227,6 +232,30 @@ const SEOImprovements = ({
         "Check if your page is properly configured to be indexed by search engines.",
       length: description?.length,
     },
+    {
+      id: 9,
+      title: "Images Alt Text",
+      failsAdvise:
+        "Make sure your images have alt text to improve accessibility and search engine rankings.",
+      passAdvice: "Your images have alt text!",
+      improved: imagesWithoutAltTags?.length <= 0 ? true : false,
+      aiImprovement:
+        "Add alt text to your images to make them more accessible and help with SEO.",
+      length: description?.length,
+    },
+    {
+      id: 10,
+      title: "404 Status Code",
+      failsAdvise:
+        "Some pages on your site are returning non-200 status codes. This may affect crawling and indexing.",
+      passAdvice: "All checked pages are returning 200 OK status codes.",
+      improved:
+        seoStatusCodes &&
+        Object.values(seoStatusCodes).every((code) => code === 200),
+      aiImprovement:
+        "Review and fix any pages returning non-200 status codes to ensure proper crawling and indexing.",
+      length: Object.keys(seoStatusCodes || {}).length,
+    },
   ];
 
   const handleCopy = (text: string) => {
@@ -279,9 +308,7 @@ const SEOImprovements = ({
                     </h3>
                   </div>
                   <p className="text-gray-700">
-                    {item.improved
-                      ? item.passAdvice
-                      : item.failsAdvise + (item.length ? item.length : "")}
+                    {item.improved ? item.passAdvice : item.failsAdvise}
                   </p>
                   {!item.improved && (
                     <Collapsible>

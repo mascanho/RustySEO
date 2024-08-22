@@ -1,3 +1,4 @@
+import useStore from "@/store/Panes";
 import React from "react";
 import { PiLinkSimpleBold } from "react-icons/pi";
 const LinkAnalysis = ({
@@ -10,14 +11,16 @@ const LinkAnalysis = ({
   console.log(links, "from the links table");
 
   const links404 = links.filter((link: any) => link?.status_code === 404);
-
+  const { Visible } = useStore();
   const linksExternal = links.filter((link: any) => link?.is_external === true);
   const linksInternal = links.filter(
     (link: any) => link?.is_external === false,
   );
 
   return (
-    <section className="table_container">
+    <section
+      className={`${Visible.links ? "block" : "hidden"}  table_container  `}
+    >
       <h2 className=" text-left text-sm pl-1 flex items-center pt-3 font-bold w-full ">
         <PiLinkSimpleBold className="mr-1.5" /> Link Analysis
       </h2>

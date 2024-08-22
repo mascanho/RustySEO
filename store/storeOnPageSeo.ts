@@ -14,6 +14,7 @@ interface OnPageSeoState {
   seoindexability: string | null;
   seoalttags: string[] | null;
   seostatusCodes: number[] | null;
+  seorepeatedHeadings: number[] | null;
 
   setSeoLoading: (loading: boolean) => void;
   setFavicon: (favicon: string[] | null) => void;
@@ -27,6 +28,7 @@ interface OnPageSeoState {
   setSeoIndexability: (seoindexability: string | null) => void;
   setAltTags: (seoalttags: string[] | null) => void;
   setSeoStatusCodes: (seostatusCodes: number[] | null) => void;
+  setRepeatedHeadings: (seorepeatedHeadings: number[] | null) => void;
 }
 
 // Create the Zustand store with the defined interface
@@ -43,6 +45,7 @@ const useOnPageSeo = create<OnPageSeoState>((set) => ({
   seoindexability: null,
   seoalttags: null,
   seostatusCodes: null,
+  seorepeatedHeadings: null,
   setSeoLoading: (loading) => set({ seoLoading: loading }),
   setFavicon: (favicon) => set({ favicon }),
   setPagetitle: (title) => set({ seopagetitle: title }),
@@ -51,12 +54,11 @@ const useOnPageSeo = create<OnPageSeoState>((set) => ({
   setHreflangs: (hreflangs) => set({ seohreflangs: hreflangs }),
   setOpengraph: (opengraph) => set({ seoopengraph: opengraph }),
   setSchema: (schema) => set({ seoschema: schema }),
-  setSeoCharset: (seocharset) => set({ seocharset: seocharset }),
-  setSeoIndexability: (seoindexability) =>
-    set({ seoindexability: seoindexability }),
-  setAltTags: (seoalttags) => set({ seoalttags: seoalttags }),
-  setSeoStatusCodes: (seostatusCodes) =>
-    set({ seostatusCodes: seostatusCodes }),
+  setSeoCharset: (seocharset) => set({ seocharset }),
+  setSeoIndexability: (seoindexability) => set({ seoindexability }),
+  setAltTags: (seoalttags) => set({ seoalttags }),
+  setSeoStatusCodes: (seostatusCodes) => set({ seostatusCodes }),
+  setRepeatedHeadings: (seorepeatedHeadings) => set({ seorepeatedHeadings }),
 }));
 
 export default useOnPageSeo;

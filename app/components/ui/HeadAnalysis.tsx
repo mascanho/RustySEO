@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { TagIcon } from "lucide-react";
 import { Collapse, Box, Group } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
@@ -6,6 +7,7 @@ import { useEffect, useState } from "react";
 import { BsArrowsCollapse } from "react-icons/bs";
 import StampEl from "./Stamp/Stamp";
 import { AiFillTag, AiFillTags } from "react-icons/ai";
+import useStore from "@/store/Panes";
 
 export const HeadAnalysis = ({
   pageTitle,
@@ -24,6 +26,7 @@ export const HeadAnalysis = ({
   const [opened, { toggle }] = useDisclosure(false);
   const [openedCode, { toggle: toggleCode }] = useDisclosure(false);
   const [hidden, setHidden] = useState(false);
+  const { Visible } = useStore();
 
   useEffect(() => {
     if (typeof localStorage !== "undefined") {
@@ -42,7 +45,7 @@ export const HeadAnalysis = ({
           localStorage.setItem("HeadIsHidden", JSON.stringify(!hidden));
         }
       }}
-      className="  dark:border-brand-darker  bg-white p-1 dark:bg-brand-darker shadow rounded-md mb-5 pb-5 overflow-hidden border relative -mt-5"
+      className={`dark:border-brand-darker  ${Visible.head ? "block" : "hidden"} ${!Visible.widgets && "mt-0"} bg-white p-1 dark:bg-brand-darker shadow rounded-md mb-5 pb-5 overflow-hidden border relative -mt-5`}
     >
       {/* <StampEl indexation={indexation} hidden={hidden} /> */}
       <h2 className="flex items-center text-center font-semibold  w-fit relative p-4 mx-auto text-black/50 dark:text-white/50 ">
@@ -54,7 +57,7 @@ export const HeadAnalysis = ({
         <aside className="lg:w-9/12">
           <div className="flex items-center mt-4">
             <div
-              className={`flex justify-center items-center w-8 h-8 p-1.5 rounded-full ${favicon_url.length > 0 ? "bg-green-500 text-white" : "bg-gray-200"} 
+              className={`flex justify-center items-center w-8 h-8 p-1.5 rounded-full ${favicon_url.length > 0 ? "bg-green-500 text-white" : "bg-gray-200"}
               ${favicon_url.length <= 0 && pageTitle?.length > 0 ? "bg-red-500 text-white" : ""}
 `}
             >
@@ -298,8 +301,8 @@ ${openGraphDetails && "bg-gray-200"}
 
           <div className="flex items-center mt-2">
             <div
-              className={`flex rounded-full items-center justify-center h-8 w-8 p-1.5  ${charset && pageTitle.length > 0 && "bg-green-500 text-white"} bg-gray-200  text-white"} 
-                      
+              className={`flex rounded-full items-center justify-center h-8 w-8 p-1.5  ${charset && pageTitle.length > 0 && "bg-green-500 text-white"} bg-gray-200  text-white"}
+
 `}
             >
               <TagIcon />

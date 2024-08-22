@@ -1,13 +1,17 @@
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
+import useStore from "@/store/Panes";
 import React from "react";
 import { BsImage } from "react-icons/bs";
 
 const ImageAnalysis = ({ images }: { images: any[] }) => {
   const imagesWithAltText = images.filter((image) => image.alt_text);
   const imagesWithoutAltText = images.filter((image) => !image.alt_text);
+  const { Visible } = useStore();
 
   return (
-    <section className="table_container">
+    <section
+      className={`table_container ${Visible.images ? "block" : "hidden"}`}
+    >
       <h2 className="text-base text-left flex items-center pl-1 pt-3 font-bold w-full text-black/60">
         <BsImage className="mr-1.5" /> Image analysis
       </h2>

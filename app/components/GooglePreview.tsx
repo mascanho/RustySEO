@@ -1,4 +1,5 @@
 "use client";
+import useStore from "@/store/Panes";
 import { useEffect, useState } from "react";
 import { ImGoogle2 } from "react-icons/im";
 
@@ -14,6 +15,7 @@ const GooglePreview = ({
 }) => {
   // get the domain name only from the url
   const [url, setUrl] = useState("");
+  const { Visible } = useStore();
 
   useEffect(() => {
     // Fetch the URL from the session storage
@@ -41,7 +43,7 @@ const GooglePreview = ({
 
   return (
     <div
-      className={`naked_table shadow overflow-hidden rounded-md ${pageTitle.length === 0 ? "bg-white/40" : "bg-white"}`}
+      className={`${Visible.serp ? "block" : "hidden"}  naked_table shadow overflow-hidden rounded-md ${pageTitle.length === 0 ? "bg-white/40" : "bg-white"}`}
     >
       <h2 className="flex items-center">
         <ImGoogle2 className="mr-1.5" />

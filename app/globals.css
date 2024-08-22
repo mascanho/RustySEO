@@ -494,3 +494,22 @@ button:where([data-active]) {
 .sidebar-tabs span {
   @apply text-xs !important;
 }
+
+/* Mantine Modal Styling */
+.mantine-Paper-root,
+.mantine-Modal-header {
+  @apply dark:bg-brand-darker border dark:border-blue-900/30;
+}
+
+.mantine-Modal-header {
+  @apply border-b-0 border-r-0 border-l-0;
+}
+
+.mantine-Modal-close,
+.mantine-Modal-title {
+  @apply dark:text-white dark:hover:bg-brand-dark;
+}
+
+.mantine-Modal-title {
+  @apply ml-4;
+}

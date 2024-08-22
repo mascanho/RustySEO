@@ -1,8 +1,31 @@
 import create from "zustand";
 import { persist } from "zustand/middleware";
 
-// Define the Zustand store with persistence
-const useStore = create(
+// Define the type for the visible state
+interface VisibleState {
+  widgets: boolean;
+  head: boolean;
+  charts: boolean;
+  serp: boolean;
+  opengraph: boolean;
+  headings: boolean;
+  links: boolean;
+  images: boolean;
+  scripts: boolean;
+  tbw: boolean;
+  renderBlocking: boolean;
+  schema: boolean;
+}
+
+// Define the type for the store
+interface StoreState {
+  Visible: VisibleState;
+  showComponent: (component: keyof VisibleState) => void;
+  hideComponent: (component: keyof VisibleState) => void;
+  toggleComponent: (component: keyof VisibleState) => void;
+}
+
+const useStore = create<StoreState>()(
   persist(
     (set) => ({
       Visible: {
