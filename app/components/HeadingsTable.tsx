@@ -1,7 +1,10 @@
+import useStore from "@/store/Panes";
 import React from "react";
 import { LiaHeadingSolid } from "react-icons/lia";
 
 const HeadingsTable = ({ headings }: { headings: string[] }) => {
+  const { Visible } = useStore();
+
   const findDuplicates = (array: any) => {
     const count: any = {};
     const duplicates = [];
@@ -20,7 +23,9 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
   };
 
   return (
-    <section className="table_container">
+    <section
+      className={`table_container  ${Visible.headings ? "block" : "hidden"} `}
+    >
       <h2 className="text-base text-left pl-1 pt-3 font-bold w-full text-black/60 flex items-center ">
         <LiaHeadingSolid className="mr-1.5" /> Headings
       </h2>

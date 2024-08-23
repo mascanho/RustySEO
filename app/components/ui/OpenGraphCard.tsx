@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import useStore from "@/store/Panes";
 
 export const OpenGraphCard = ({
   openGraphDetails,
@@ -18,8 +19,12 @@ export const OpenGraphCard = ({
   openGraphDetails: any;
   linkedInInspect: string | undefined;
 }) => {
+  const { Visible } = useStore();
+
   return (
-    <div className="shadow naked_table overflow-hidden">
+    <div
+      className={`opengraph shadow naked_table overflow-hidden ${Visible.opengraph ? "block" : "hidden"} `}
+    >
       <div className="flex items-center justify-between">
         <h2 className="flex items-center z-10">
           <FaLinkedin className="mr-1.5 " /> Social Media Preview

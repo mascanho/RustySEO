@@ -19,6 +19,8 @@ const LongTasks = ({
   const numLongTasks =
     stat?.lighthouseResult?.audits?.["long-tasks"]?.details?.items?.length || 0;
 
+  const percenLongTasks = stat?.lighthouseResult?.audits?.["long-taks"];
+
   // Determine the label based on the number of long tasks
   let label = "";
   if (numLongTasks === 0) {
@@ -160,7 +162,7 @@ const LongTasks = ({
             <div className="flex items-center space-x-4">
               <div className="flex items-center">
                 <span className="font-bold text-2xl text-apple-spaceGray/50">
-                  {(stat && stat.numLongTasks + " tasks") || "..."}
+                  {numLongTasks + " tasks" || "..."}
                 </span>
                 <p
                   className={`rounded-full font-semibold ml-2 px-2 text-xs py-[1px] ${!stat && "hidden"} ${labelClass}`}

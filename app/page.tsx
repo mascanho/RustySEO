@@ -51,6 +51,7 @@ import { CiGlobe } from "react-icons/ci";
 import LinksCharts from "./components/ui/ShadCharts/LinksCharts";
 import RenderBlockingResources from "./components/ui/RenderBlockingResources";
 import useOnPageSeo from "@/store/storeOnPageSeo";
+import useStore from "@/store/Panes";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -104,6 +105,11 @@ const Home: React.FC<HomeProps> = () => {
 
   const [isDarkMode, setIsDarkMode] = useState(false);
   const seoIsLoading = useOnPageSeo();
+
+  // Panes Store
+  const { Visible } = useStore();
+
+  // Get the status from localstorage
 
   type DBDataCrawl = {
     url: string | null;
@@ -299,6 +305,14 @@ const Home: React.FC<HomeProps> = () => {
     };
   }, []); //
 
+  // UPDATE THE WIDGETS PANEL VISIBILITY
+  useEffect(() => {
+    const widgetsElement = document.querySelector("widgets");
+    if (widgetsElement) {
+      widgetsElement.classList.toggle("hidden", !Visible.widgets);
+    }
+  }, [Visible]);
+
   // Get the AI stuff
   useEffect(() => {
     if (keywords.length > 0) {
@@ -435,7 +449,6 @@ const Home: React.FC<HomeProps> = () => {
   pageSpeed = pageSpeed && pageSpeed[0];
 
   console.log(pageSpeed, "PAGE SPEED");
-  console.log(charset, "This is the charset arr");
 
   return (
     <section className="h-full overflow-y-clip flex">
@@ -560,19 +573,17 @@ const Home: React.FC<HomeProps> = () => {
 
             <Tabs.Panel value="first">
               {/* WIDGET SECTION */}
-              <div className="flex flex-col flex-wrap items-end mt-3">
-                <span
-                  className="mb-2 cursor-pointer -mt-6 mr-0 h-10  text-black/20 dark:text-white/20 text-xs"
-                  onClick={() => setHidden({ widget: !hidden.widget })}
-                >
-                  {hidden.widget ? "Show widgets" : "Hide widgets"}
-                </span>
+
+              <div
+                className={`-mt-[20px] widgets ${Visible.widgets ? "block" : "hidden"}`}
+              >
+                <h2 className="bottom-0 text-black/20 dark:text-white/20 font-semibold py-1 ml-1 text-base">
+                  Performance
+                </h2>
+
                 <section
-                  className={`grid grid-cols-2 ${hidden.widget ? "hidden" : ""} gap-x-3 md:gap-x-4 sm:grid-cols-3  md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-7 2xl:gap-x-2 justify-items-stretch w-full mb-10 gap-y-5 -mt-6`}
+                  className={`grid grid-cols-2  gap-x-3 md:gap-x-4 sm:grid-cols-3  md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-7 2xl:gap-x-2 justify-items-stretch w-full mb-10 gap-y-5  relative`}
                 >
-                  <h1 className="absolute font-bold top-1 left-4 text-2xl text-brand-dark/30 dark:text-white/20">
-                    Performance Overview
-                  </h1>
                   <PerformanceEl
                     stat={pageSpeed}
                     loading={loading}
@@ -664,7 +675,9 @@ const Home: React.FC<HomeProps> = () => {
 
               {/* CHARTS SECTION */}
 
-              <section className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+              <section
+                className={`charts grid grid-cols-2 lg:grid-cols-4 gap-6 mb-10 ${Visible.charts ? "grid" : "hidden"}`}
+              >
                 <KeywordChart keywords={keywords} url={debouncedURL} />
                 <HtmlToTextChart htmlToTextRatio={htmlToTextRatio} />
                 <ImagesChart url={debouncedURL} images={images} />
@@ -678,7 +691,7 @@ const Home: React.FC<HomeProps> = () => {
               {/* TABLES START HERE */}
               <main
                 id="tables"
-                className="mx-auto w-full flex-col  pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-6 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-2 -mt-16 items-stretch pb-2"
+                className={`mx-auto w-full flex-col  pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-6 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-2 -mt-16 items-stretch pb-2 ${!Visible.charts && "-mt-[40px]"}`}
               >
                 <GooglePreview
                   favicon_url={favicon_url}

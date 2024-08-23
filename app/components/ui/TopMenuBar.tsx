@@ -20,6 +20,7 @@ import { LuPanelRight } from "react-icons/lu";
 import OllamaSelect from "./OllamaSelector/OllamaSelect";
 import GoogleSearchConsoleModal from "./GoogleSearchConsole/GoogleSearchConsoleModal";
 import { useRouter } from "next/navigation";
+import WindowToggler from "./Panes/WindowToggler";
 
 const TopMenuBar = () => {
   const onClose = useCallback(async () => {
@@ -42,6 +43,9 @@ const TopMenuBar = () => {
 
   const [openedOllama, { open: openOllama, close: closeOllama }] =
     useDisclosure(false);
+
+  const [openedPanes, { open: openPanes, close: closePanes }] =
+    useDisclosure(true);
 
   const [
     openedSearchConsole,
@@ -81,6 +85,19 @@ const TopMenuBar = () => {
 
   return (
     <>
+      {/* Panes Insights Modal */}
+      <Modal
+        opened={openedPanes}
+        // overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+        closeOnEscape
+        closeOnClickOutside
+        onClose={closePanes}
+        title="Toggle Panes"
+        centered
+        // zIndex={"100000"}
+      >
+        <WindowToggler />
+      </Modal>
       {/* PageSpeed Insights Modal */}
       <Modal
         opened={openedPageSpeed}
@@ -167,8 +184,8 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-4">View</MenubarTrigger>
             <MenubarContent>
-              <MenubarItem>
-                New Tab <MenubarShortcut>⌘T</MenubarShortcut>
+              <MenubarItem onClick={openPanes}>
+                Panels <MenubarShortcut>ctr + p</MenubarShortcut>
               </MenubarItem>
               <MenubarItem>New Window</MenubarItem>
               <MenubarSeparator />

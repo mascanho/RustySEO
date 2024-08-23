@@ -139,6 +139,7 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
             <TextInput
               label="Task Title"
               placeholder="Enter task title"
+              className="dark:text-white"
               value={newTask.title}
               onChange={(event) =>
                 setNewTask({ ...newTask, title: event.currentTarget.value })
@@ -148,6 +149,7 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
             <TextInput
               label="Task Description"
               placeholder="Enter task description"
+              className="dark:text-white"
               value={newTask.description}
               onChange={(event) =>
                 setNewTask({
@@ -160,6 +162,7 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
             <MultiSelect
               label="Type"
               placeholder="Select task type"
+              className="dark:text-white"
               data={taskTypes.map((type) => ({ value: type, label: type }))}
               value={newTask.type}
               onChange={(value) => setNewTask({ ...newTask, type: value })}
@@ -173,6 +176,7 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
             <Select
               label="Priority"
               placeholder="Select priority"
+              className="dark:text-white"
               data={priorities.map((priority) => ({
                 value: priority,
                 label: priority,
@@ -188,6 +192,7 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
               }}
             />
             <TextInput
+              className="dark:text-white dark:placeholder:text-white"
               label="Page Url"
               placeholder={!url ? "" : url}
               value={url || "..."}

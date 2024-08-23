@@ -1,12 +1,17 @@
+import useStore from "@/store/Panes";
 import { SiJavascript } from "react-icons/si";
 
 const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
+  const { Visible } = useStore();
+
   const scripts =
     pageSpeed?.lighthouseResult?.audits?.["third-party-summary"]?.details
       ?.items || [];
 
   return (
-    <section className="table_container">
+    <section
+      className={`scripts table_container ${Visible.scripts ? "block" : "hidden"} `}
+    >
       <h2 className="text-base text-left pl-1 flex items-center pt-3 font-bold w-full text-black/60">
         <SiJavascript className="mr-1.5" /> Third Party Scripts
       </h2>

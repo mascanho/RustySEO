@@ -494,3 +494,63 @@ button:where([data-active]) {
 .sidebar-tabs span {
   @apply text-xs !important;
 }
+
+/* Mantine Modal Styling */
+.mantine-Paper-root,
+.mantine-Modal-header {
+  @apply dark:bg-brand-darker border dark:border-blue-900/60;
+}
+
+.mantine-Modal-header {
+  @apply border-b-0 border-r-0 border-l-0;
+}
+
+.mantine-Modal-close,
+.mantine-Modal-title {
+  @apply dark:text-white dark:hover:bg-brand-dark;
+}
+
+.mantine-Modal-title {
+  @apply ml-4;
+}
+
+.mantine-Input-input {
+  @apply dark:bg-transparent dark:border-white/20;
+}
+
+.mantine-MultiSelect-option,
+.mantine-Popover-dropdown {
+  @apply dark:bg-brand-darker text-white dark:border-white/20;
+}
+
+.mantine-MultiSelect-option {
+  @apply dark:hover:bg-brand-bright;
+}
+
+.mantine-Input-input:is(.dark *) {
+  @apply dark:text-white;
+}
+
+/* GSC MODAL STYLING */
+select:focus {
+  /* Styles when the select box is focused */
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+select,
+#range {
+  appearance: none; /* Remove default styling */
+  -webkit-appearance: none; /* For Safari */
+  -moz-appearance: none; /* For Firefox */
+  padding-right: 30px; /* Adjust for the icon */
+  @apply dark:border-white/30;
+}
+
+select option {
+  /* Styling the options in the dropdown */
+  appearance: none; /* Remove default styling */
+  -webkit-appearance: none; /* For Safari */
+  -moz-appearance: none; /* For Firefox */
+}

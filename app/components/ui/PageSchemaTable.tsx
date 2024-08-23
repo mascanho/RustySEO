@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
+import useStore from "@/store/Panes";
 
 const PageSchemaTable = ({
   pageSchema = "",
@@ -20,6 +21,8 @@ const PageSchemaTable = ({
   pageSchema?: string;
   googleSchemaTestUrl?: string;
 }) => {
+  const { Visible } = useStore();
+
   // Function to format the schema to create a new line after each comma ","
   function formatSchema(schema: any) {
     // Convert schema to string if it's not already
@@ -46,7 +49,9 @@ const PageSchemaTable = ({
   const testURL = convertToGoogleRichResultsURL(googleSchemaTestUrl);
 
   return (
-    <section className="naked_table">
+    <section
+      className={`schema naked_table ${Visible.schema ? "block" : "hidden"}`}
+    >
       <section className="flex justify-between items-center">
         <h2 className="flex items-center -ml-1 !important">
           <BsFiletypeJson className="mr-1.5" />
