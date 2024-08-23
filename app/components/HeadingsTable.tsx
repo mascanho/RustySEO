@@ -24,7 +24,7 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
 
   return (
     <section
-      className={`table_container  ${Visible.headings ? "block" : "hidden"} `}
+      className={`table_container .headings  ${Visible.headings ? "block" : "hidden"} `}
     >
       <h2 className="text-base text-left pl-1 pt-3 font-bold w-full text-black/60 flex items-center ">
         <LiaHeadingSolid className="mr-1.5" /> Headings
