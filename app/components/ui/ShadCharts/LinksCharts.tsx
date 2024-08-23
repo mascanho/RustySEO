@@ -94,64 +94,65 @@ export function LinksChart({
     return chartData.reduce((acc, curr) => acc + curr.visitors, 0);
   }, []);
 
-  if (linkStatusCodeStatus === true) {
-    return "loading";
-  }
-
   return (
     <Card className="flex flex-col dark:bg-brand-darker">
       <CardHeader className="items-center pb-0">
         <CardTitle>On page Links</CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 pb-0">
-        <ChartContainer
-          config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px]"
-        >
-          <PieChart>
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
-            <Pie
-              data={chartData}
-              dataKey="visitors"
-              nameKey="browser"
-              innerRadius={60}
-              strokeWidth={5}
-            >
-              <Label
-                content={({ viewBox }) => {
-                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                    return (
-                      <text
-                        x={viewBox.cx}
-                        y={viewBox.cy}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                      >
-                        <tspan
+      <CardContent className="flex-1 pb-0 items-center relative">
+        {!linkStatusCodes && (
+          <div className="loader absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+        )}
+        {linkStatusCodes && (
+          <ChartContainer
+            config={chartConfig}
+            className="mx-auto aspect-square max-h-[250px]"
+          >
+            <PieChart>
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent hideLabel />}
+              />
+              <Pie
+                data={chartData}
+                dataKey="visitors"
+                nameKey="browser"
+                innerRadius={60}
+                strokeWidth={5}
+              >
+                <Label
+                  content={({ viewBox }) => {
+                    if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                      return (
+                        <text
                           x={viewBox.cx}
                           y={viewBox.cy}
-                          className="fill-foreground text-3xl font-bold dark:fill-white"
+                          textAnchor="middle"
+                          dominantBaseline="middle"
                         >
-                          {linkStatusCodes.length}
-                        </tspan>
-                        <tspan
-                          x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground dark:fill-white"
-                        >
-                          Links
-                        </tspan>
-                      </text>
-                    );
-                  }
-                }}
-              />
-            </Pie>
-          </PieChart>
-        </ChartContainer>
+                          <tspan
+                            x={viewBox.cx}
+                            y={viewBox.cy}
+                            className="fill-foreground text-3xl font-bold dark:fill-white"
+                          >
+                            {linkStatusCodes.length}
+                          </tspan>
+                          <tspan
+                            x={viewBox.cx}
+                            y={(viewBox.cy || 0) + 24}
+                            className="fill-muted-foreground dark:fill-white"
+                          >
+                            Links
+                          </tspan>
+                        </text>
+                      );
+                    }
+                  }}
+                />
+              </Pie>
+            </PieChart>
+          </ChartContainer>
+        )}
       </CardContent>
       {linkStatusCodes?.length > 0 && (
         <CardFooter className="flex-col gap-2 text-xs text-left mb-6 dark:text-white/50">
