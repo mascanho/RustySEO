@@ -77,13 +77,13 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
   };
 
   return (
-    <div className="max-w-md mx-auto -mt-3 p-2 bg-white rounded-lg text-xs">
+    <div className="max-w-md mx-auto -mt-3 p-2 px-4 pb-5 bg-white dark:bg-brand-darker dark:text-white rounded-lg text-xs">
       <h2 className="text-lg font-semibold mb-4">Enter Credentials</h2>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="dark:bg-brand-darker">
         <div className="mb-4 relative">
           <label
             htmlFor="clientId"
-            className="block text-gray-700 text-[10px] font-bold mb-2 absolute -top-[8px] px-1 bg-white left-[10px]"
+            className="block text-gray-700 text-[10px] font-bold mb-2 absolute -top-[8px] px-1 bg-white left-[10px] dark:bg-brand-darker dark:text-white"
           >
             Client ID
           </label>
@@ -93,7 +93,7 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
             name="clientId"
             value={formData.clientId}
             onChange={handleChange}
-            className={`w-full px-3 py-2 border  rounded-lg focus:outline-none focus:ring-2 ${
+            className={`w-full px-3 py-2 border  rounded-lg dark:bg-brand-darker dark:border-white/30 focus:outline-none focus:ring-2 ${
               errors.clientId
                 ? "border-red-500 focus:ring-red-200"
                 : "focus:ring-blue-200"

@@ -498,7 +498,7 @@ button:where([data-active]) {
 /* Mantine Modal Styling */
 .mantine-Paper-root,
 .mantine-Modal-header {
-  @apply dark:bg-brand-darker border dark:border-blue-900/30;
+  @apply dark:bg-brand-darker border dark:border-blue-900/60;
 }
 
 .mantine-Modal-header {
@@ -512,4 +512,21 @@ button:where([data-active]) {
 
 .mantine-Modal-title {
   @apply ml-4;
+}
+
+.mantine-Input-input {
+  @apply dark:bg-transparent dark:border-white/20;
+}
+
+.mantine-MultiSelect-option,
+.mantine-Popover-dropdown {
+  @apply dark:bg-brand-darker text-white dark:border-white/20;
+}
+
+.mantine-MultiSelect-option {
+  @apply dark:hover:bg-brand-bright;
+}
+
+.mantine-Input-input:is(.dark *) {
+  @apply dark:text-white;
 }

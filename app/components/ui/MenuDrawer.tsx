@@ -5,12 +5,28 @@ import { useMediaQuery } from "@mantine/hooks";
 import { MENUS } from "@/app/Data/Menus";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import useStore from "../../../store/Panes";
 
 function MenuDrawer() {
   const [opened, setOpened] = useState(false);
   const mobile = useMediaQuery("(max-width: 768px)");
   const [badge, setBadge] = useState("Page Crawler");
   const pathname = usePathname();
+  const { Visible } = useStore();
+
+  useEffect(() => {
+    const chartsElement = document.querySelector(".charts");
+    if (chartsElement) {
+      chartsElement.classList.toggle("hidden", !Visible.charts);
+    }
+
+    const headingsElement = document.querySelector(".headings");
+    if (headingsElement) {
+      headingsElement.classList.toggle("hidden", !Visible.headings);
+    }
+
+    // Add similar blocks for other components as needed
+  }, [Visible]);
 
   let path = pathname;
 
