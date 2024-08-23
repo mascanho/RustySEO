@@ -513,6 +513,14 @@ button:where([data-active]) {
   @apply border-b-0 border-r-0 border-l-0;
 }
 
+.mantine-ScrollArea-viewport {
+  @apply dark:bg-brand-darker dark:border-white/20;
+}
+
+.mantine-Select-option {
+  @apply dark:bg-brand-darker dark:border-white/20 hover:dark:bg-brand-bright;
+}
+
 .mantine-Modal-close,
 .mantine-Modal-title {
   @apply dark:text-white dark:hover:bg-brand-dark;
