@@ -49,7 +49,9 @@ const PageSchemaTable = ({
   const testURL = convertToGoogleRichResultsURL(googleSchemaTestUrl);
 
   return (
-    <section className={`naked_table ${Visible.schema ? "block" : "hidden"}`}>
+    <section
+      className={`schema naked_table ${Visible.schema ? "block" : "hidden"}`}
+    >
       <section className="flex justify-between items-center">
         <h2 className="flex items-center -ml-1 !important">
           <BsFiletypeJson className="mr-1.5" />

@@ -23,7 +23,7 @@ export const OpenGraphCard = ({
 
   return (
     <div
-      className={`shadow naked_table overflow-hidden ${Visible.opengraph ? "block" : "hidden"} `}
+      className={`opengraph shadow naked_table overflow-hidden ${Visible.opengraph ? "block" : "hidden"} `}
     >
       <div className="flex items-center justify-between">
         <h2 className="flex items-center z-10">

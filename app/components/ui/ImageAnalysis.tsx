@@ -10,7 +10,7 @@ const ImageAnalysis = ({ images }: { images: any[] }) => {
 
   return (
     <section
-      className={`table_container ${Visible.images ? "block" : "hidden"}`}
+      className={`images table_container ${Visible.images ? "block" : "hidden"}`}
     >
       <h2 className="text-base text-left flex items-center pl-1 pt-3 font-bold w-full text-black/60">
         <BsImage className="mr-1.5" /> Image analysis

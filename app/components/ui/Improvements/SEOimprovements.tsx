@@ -1,4 +1,4 @@
-// @ts-ignore
+// @ts-nocheck
 "use client";
 import React, { useEffect, useState } from "react";
 import { FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
@@ -238,6 +238,7 @@ const SEOImprovements = ({
       failsAdvise:
         "Make sure your images have alt text to improve accessibility and search engine rankings.",
       passAdvice: "Your images have alt text!",
+      // @ts-ignore
       improved: imagesWithoutAltTags?.length <= 0 ? true : false,
       aiImprovement:
         "Add alt text to your images to make them more accessible and help with SEO.",

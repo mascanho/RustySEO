@@ -43,7 +43,7 @@ const GooglePreview = ({
 
   return (
     <div
-      className={`${Visible.serp ? "block" : "hidden"}  naked_table shadow overflow-hidden rounded-md ${pageTitle.length === 0 ? "bg-white/40" : "bg-white"}`}
+      className={`serp ${Visible.serp ? "block" : "hidden"}  naked_table shadow overflow-hidden rounded-md ${pageTitle.length === 0 ? "bg-white/40" : "bg-white"}`}
     >
       <h2 className="flex items-center">
         <ImGoogle2 className="mr-1.5" />

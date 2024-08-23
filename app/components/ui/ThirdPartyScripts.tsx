@@ -10,7 +10,7 @@ const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
 
   return (
     <section
-      className={`table_container ${Visible.scripts ? "block" : "hidden"} `}
+      className={`scripts table_container ${Visible.scripts ? "block" : "hidden"} `}
     >
       <h2 className="text-base text-left pl-1 flex items-center pt-3 font-bold w-full text-black/60">
         <SiJavascript className="mr-1.5" /> Third Party Scripts

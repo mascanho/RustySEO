@@ -19,7 +19,7 @@ const LinkAnalysis = ({
 
   return (
     <section
-      className={`${Visible.links ? "block" : "hidden"}  table_container  `}
+      className={`links ${Visible.links ? "block" : "hidden"}  table_container  `}
     >
       <h2 className=" text-left text-sm pl-1 flex items-center pt-3 font-bold w-full ">
         <PiLinkSimpleBold className="mr-1.5" /> Link Analysis

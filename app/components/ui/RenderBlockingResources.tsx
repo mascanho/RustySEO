@@ -9,7 +9,7 @@ const RenderBlockingResources = ({ pageSpeed }: { pageSpeed: any }) => {
 
   return (
     <section
-      className={`table_container ${Visible.renderBlocking ? "block" : "hidden"}`}
+      className={`render-blocking table_container ${Visible.renderBlocking ? "block" : "hidden"}`}
     >
       <h2 className="text-base text-left pl-1 flex items-center pt-3 font-bold w-full text-black/60">
         <SiOctanerender className="mr-1.5" /> Render Blocking

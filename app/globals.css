@@ -530,3 +530,27 @@ button:where([data-active]) {
 .mantine-Input-input:is(.dark *) {
   @apply dark:text-white;
 }
+
+/* GSC MODAL STYLING */
+select:focus {
+  /* Styles when the select box is focused */
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+select,
+#range {
+  appearance: none; /* Remove default styling */
+  -webkit-appearance: none; /* For Safari */
+  -moz-appearance: none; /* For Firefox */
+  padding-right: 30px; /* Adjust for the icon */
+  @apply dark:border-white/30;
+}
+
+select option {
+  /* Styling the options in the dropdown */
+  appearance: none; /* Remove default styling */
+  -webkit-appearance: none; /* For Safari */
+  -moz-appearance: none; /* For Firefox */
+}

@@ -305,6 +305,14 @@ const Home: React.FC<HomeProps> = () => {
     };
   }, []); //
 
+  // UPDATE THE WIDGETS PANEL VISIBILITY
+  useEffect(() => {
+    const widgetsElement = document.querySelector("widgets");
+    if (widgetsElement) {
+      widgetsElement.classList.toggle("hidden", !Visible.widgets);
+    }
+  }, [Visible]);
+
   // Get the AI stuff
   useEffect(() => {
     if (keywords.length > 0) {
@@ -441,7 +449,6 @@ const Home: React.FC<HomeProps> = () => {
   pageSpeed = pageSpeed && pageSpeed[0];
 
   console.log(pageSpeed, "PAGE SPEED");
-  console.log(charset, "This is the charset arr");
 
   return (
     <section className="h-full overflow-y-clip flex">
@@ -568,7 +575,7 @@ const Home: React.FC<HomeProps> = () => {
               {/* WIDGET SECTION */}
 
               <div
-                className={`-mt-[20px] ${Visible.widgets ? "block" : "hidden"}`}
+                className={`-mt-[20px] widgets ${Visible.widgets ? "block" : "hidden"}`}
               >
                 <h2 className="bottom-0 text-black/20 dark:text-white/20 font-semibold py-1 ml-1 text-base">
                   Performance
@@ -669,7 +676,7 @@ const Home: React.FC<HomeProps> = () => {
               {/* CHARTS SECTION */}
 
               <section
-                className={`grid grid-cols-2 lg:grid-cols-4 gap-6 mb-10 ${Visible.charts ? "grid" : "hidden"}`}
+                className={`charts grid grid-cols-2 lg:grid-cols-4 gap-6 mb-10 ${Visible.charts ? "grid" : "hidden"}`}
               >
                 <KeywordChart keywords={keywords} url={debouncedURL} />
                 <HtmlToTextChart htmlToTextRatio={htmlToTextRatio} />

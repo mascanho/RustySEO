@@ -30,22 +30,22 @@ const PageSpeedInsigthsApi = ({ close }: any) => {
   };
 
   return (
-    <div className="flex flex-col space-y-3">
-      <h2>
+    <div className="flex flex-col space-y-3 px-4 pb-4">
+      <h2 className="dark:text-white">
         Paste your{" "}
         <a
           href="https://developers.google.com/speed/docs/insights/v5/get-started"
           target="_blank"
-          className="underline"
+          className="underline dark:text-white"
         >
           Google PageSpeed Insights API key
         </a>
       </h2>
       <input
         onChange={(e) => setUserInput(e.target.value)}
-        type="text"
+        type="password"
         name="pagespeed"
-        className="border rounded-md py-1"
+        className="border rounded-md py-1 dark:text-white px-2 dark:bg-brand-darker dark:border-white/30"
       />
       <button
         onClick={() => handleAddApiKey(userInput)}

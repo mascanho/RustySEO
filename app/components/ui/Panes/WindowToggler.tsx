@@ -3,7 +3,7 @@ import React from "react";
 import { FaToggleOn, FaToggleOff } from "react-icons/fa";
 
 const WindowSelector = () => {
-  const { Visible, toggleComponent } = useStore();
+  const { Visible, toggleComponent }: any = useStore();
 
   const components = [
     { id: "widgets", label: "Widgets" },
@@ -25,7 +25,7 @@ const WindowSelector = () => {
   return (
     <div className="text-xs pt-5">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 gap-x-8 pb-4 px-4">
-        {components.map((component) => (
+        {components.map((component: any) => (
           <div key={component.id} className="rounded-lg">
             <button
               className={`flex items-center justify-between w-full px-4 py-2 rounded-md transition-colors duration-300 ${
