@@ -33,8 +33,10 @@ const useGetChecks = () => {
   const seoAltTags = useOnPageSeo((state) => state.seoalttags);
   const noAltTags = seoAltTags?.filter((tag) => tag?.alt_text === "");
   const seoStatusCodes = useOnPageSeo((state) => state.seostatusCodes);
+  const seoheadings = useOnPageSeo((state) => state.seoheadings);
+  const seoImages = useOnPageSeo((state) => state.seoImages);
 
-  console.log(seoStatusCodes, "SEO CHECKLIST ----------");
+  console.log(seoImages?.length, "SEO CHECKLIST ----------");
 
   // Use useMemo to avoid recalculating on every render
   const checks = useMemo(() => {
@@ -171,6 +173,16 @@ const useGetChecks = () => {
         name: "404 Links",
         status: seoStatusCodes?.length === 0 ? "Passed" : "Failed",
       },
+      {
+        id: "26",
+        name: "Repeated Headings",
+        status: seoheadings?.length === 0 ? "Passed" : "Failed",
+      },
+      {
+        id: "27",
+        name: "Images Alt Tags",
+        status: seoImages?.length === 0 ? "Passed" : "Failed",
+      },
     ];
   }, [
     performance,
@@ -199,6 +211,7 @@ const useGetChecks = () => {
     // seoAltTags,
     noAltTags,
     seoStatusCodes,
+    seoheadings,
   ]);
 
   return checks;

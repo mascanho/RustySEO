@@ -1,9 +1,11 @@
 import useStore from "@/store/Panes";
-import React from "react";
+import useOnPageSeo from "@/store/storeOnPageSeo";
+import React, { useEffect } from "react";
 import { LiaHeadingSolid } from "react-icons/lia";
 
 const HeadingsTable = ({ headings }: { headings: string[] }) => {
   const { Visible } = useStore();
+  const setRepeatedHeadings = useOnPageSeo((state) => state.setHeadings);
 
   const findDuplicates = (array: any) => {
     const count: any = {};
@@ -21,6 +23,14 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
 
     return duplicates;
   };
+
+  const repeated: any = findDuplicates(headings);
+
+  console.log(repeated, "Repated stuff");
+
+  useEffect(() => {
+    setRepeatedHeadings(repeated);
+  }, [headings]);
 
   return (
     <section

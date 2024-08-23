@@ -54,7 +54,7 @@ const TopMenuBar = () => {
     useDisclosure(false);
 
   const [openedPanes, { open: openPanes, close: closePanes }] =
-    useDisclosure(true);
+    useDisclosure(false);
 
   const [
     openedSearchConsole,
@@ -96,6 +96,24 @@ const TopMenuBar = () => {
       document.documentElement.classList.remove("dark");
     }
   };
+
+  useEffect(() => {
+    // Retrieve the dark mode setting from localStorage
+    const savedMode = localStorage.getItem("dark-mode");
+
+    // If a saved mode exists, parse it and update the state
+    if (savedMode !== null) {
+      const parsedMode = JSON.parse(savedMode);
+      setIsDarkMode(parsedMode);
+
+      // Update the class on the document
+      if (parsedMode) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    }
+  }, []);
 
   return (
     <>

@@ -14,7 +14,8 @@ interface OnPageSeoState {
   seoindexability: string | null;
   seoalttags: string[] | null;
   seostatusCodes: number[] | null;
-  seorepeatedHeadings: number[] | null;
+  seoheadings: number[] | null;
+  seoImages: string[] | null;
 
   setSeoLoading: (loading: boolean) => void;
   setFavicon: (favicon: string[] | null) => void;
@@ -28,7 +29,8 @@ interface OnPageSeoState {
   setSeoIndexability: (seoindexability: string | null) => void;
   setAltTags: (seoalttags: string[] | null) => void;
   setSeoStatusCodes: (seostatusCodes: number[] | null) => void;
-  setRepeatedHeadings: (seorepeatedHeadings: number[] | null) => void;
+  setHeadings: (seoheadings: number[] | null) => void;
+  setSeoImages: (seoImages: string[] | null) => void;
 }
 
 // Create the Zustand store with the defined interface
@@ -45,20 +47,23 @@ const useOnPageSeo = create<OnPageSeoState>((set) => ({
   seoindexability: null,
   seoalttags: null,
   seostatusCodes: null,
-  seorepeatedHeadings: null,
-  setSeoLoading: (loading) => set({ seoLoading: loading }),
-  setFavicon: (favicon) => set({ favicon }),
-  setPagetitle: (title) => set({ seopagetitle: title }),
-  setDescription: (description) => set({ seodescription: description }),
-  setCanonical: (canonical) => set({ seocanonical: canonical }),
-  setHreflangs: (hreflangs) => set({ seohreflangs: hreflangs }),
-  setOpengraph: (opengraph) => set({ seoopengraph: opengraph }),
-  setSchema: (schema) => set({ seoschema: schema }),
-  setSeoCharset: (seocharset) => set({ seocharset }),
-  setSeoIndexability: (seoindexability) => set({ seoindexability }),
-  setAltTags: (seoalttags) => set({ seoalttags }),
-  setSeoStatusCodes: (seostatusCodes) => set({ seostatusCodes }),
-  setRepeatedHeadings: (seorepeatedHeadings) => set({ seorepeatedHeadings }),
+  seoheadings: null,
+  seoImages: null,
+
+  setSeoLoading: (loading) => set(() => ({ seoLoading: loading })),
+  setFavicon: (favicon) => set(() => ({ favicon })),
+  setPagetitle: (title) => set(() => ({ seopagetitle: title })),
+  setDescription: (description) => set(() => ({ seodescription: description })),
+  setCanonical: (canonical) => set(() => ({ seocanonical: canonical })),
+  setHreflangs: (hreflangs) => set(() => ({ seohreflangs: hreflangs })),
+  setOpengraph: (opengraph) => set(() => ({ seoopengraph: opengraph })),
+  setSchema: (schema) => set(() => ({ seoschema: schema })),
+  setSeoCharset: (seocharset) => set(() => ({ seocharset })),
+  setSeoIndexability: (seoindexability) => set(() => ({ seoindexability })),
+  setAltTags: (seoalttags) => set(() => ({ seoalttags })),
+  setSeoStatusCodes: (seostatusCodes) => set(() => ({ seostatusCodes })),
+  setHeadings: (headings) => set(() => ({ seoheadings: headings })),
+  setSeoImages: (seoImages) => set(() => ({ seoImages })),
 }));
 
 export default useOnPageSeo;

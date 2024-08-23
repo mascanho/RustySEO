@@ -1,0 +1,19 @@
+use oauth2::http::response;
+use reqwest::header::{AUTHORIZATION, Client};
+use serde_json::Value;
+use std::error::Error;
+
+pub async fn fetch_page_rank(url: &url) -> Result<(), Box<dyn Error>> {
+    let api_key = "AIzaSyCCZu9Qxvkv8H0sCR9YPP7aP6CCQTZHFt8";
+    let api_url = format!(
+        "https://www.googleapis.com/webmasters/v3/searchanalytics/query?siteUrl={}&key={}",
+        &url, api_key
+    );
+
+    // CREATE HTTP CLIENT
+    let client = reqwest:Client::new();
+
+    // SEND THE GET REQUEST
+    let response = client.get(&api_url).send().await?;
+
+}

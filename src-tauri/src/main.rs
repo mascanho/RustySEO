@@ -7,7 +7,7 @@ use directories::ProjectDirs;
 use genai::genai;
 use serde::{Deserialize, Serialize};
 use std::io::Write;
-use tauri::api::path::config_dir;
+use tauri::{api::path::config_dir, Manager};
 use tokio;
 use toml;
 
@@ -93,6 +93,29 @@ async fn main() {
     // Tauri setup
     tauri::Builder::default()
         .manage(LinkResult { links: vec![] })
+        // .setup(|app| {
+        //     let window = app.get_window("main").unwrap();
+        //     window.set_decorations(true).unwrap();
+        //     // Create and show splash screen
+        //     let splash = tauri::WindowBuilder::new(
+        //         app,
+        //         "splash",
+        //         tauri::WindowUrl::App("splashscreen.html".into()),
+        //     )
+        //     .decorations(false)
+        //     .always_on_top(true)
+        //     .center()
+        //     .build()
+        //     .expect("Failed to create splash window");
+        //     // Schedule splash screen removal
+        //     let main_window = window.clone();
+        //     tauri::async_runtime::spawn(async move {
+        //         std::thread::sleep(std::time::Duration::from_secs(3));
+        //         splash.close().unwrap();
+        //         main_window.show().unwrap();
+        //     });
+        //     Ok(())
+        // })
         .invoke_handler(tauri::generate_handler![
             check_system,
             crawl,

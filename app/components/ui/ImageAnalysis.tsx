@@ -1,12 +1,18 @@
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import useStore from "@/store/Panes";
-import React from "react";
+import useOnPageSeo from "@/store/storeOnPageSeo";
+import React, { useEffect } from "react";
 import { BsImage } from "react-icons/bs";
 
 const ImageAnalysis = ({ images }: { images: any[] }) => {
   const imagesWithAltText = images.filter((image) => image.alt_text);
   const imagesWithoutAltText = images.filter((image) => !image.alt_text);
   const { Visible } = useStore();
+  const setImagesStore = useOnPageSeo((state) => state.setSeoImages);
+
+  useEffect(() => {
+    setImagesStore(imagesWithoutAltText);
+  }, [images]);
 
   return (
     <section
