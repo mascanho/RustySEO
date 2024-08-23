@@ -9,7 +9,9 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
       ?.items || [];
 
   return (
-    <section className={`table_container ${Visible.tbw ? "block" : "hidden"}`}>
+    <section
+      className={`table_container tbw ${Visible.tbw ? "block" : "hidden"}`}
+    >
       <h2 className="text-base flex items-center text-left pl-1 pt-3 font-bold w-full">
         <GiWeight className="mr-1.5" /> Total Byte Weight
       </h2>

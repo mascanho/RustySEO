@@ -32,6 +32,15 @@ const TopMenuBar = () => {
   // Theme
   const [isDarkMode, setIsDarkMode] = useState(false);
 
+  useEffect(() => {
+    const theme = localStorage.getItem("dark-mode");
+    if (theme === true) {
+      setIsDarkMode(true);
+    } else {
+      setIsDarkMode(false);
+    }
+  }, []);
+
   const [openedPageSpeed, { open: openPageSpeed, close: closePageSpeed }] =
     useDisclosure(false);
   const [openedDrawer, { open: openDrawer, close: closeDrawer }] =
@@ -71,16 +80,21 @@ const TopMenuBar = () => {
   // CHANGE THEME
 
   const toggleDarkMode = () => {
-    setIsDarkMode((prevMode) => {
-      const newMode = !prevMode;
-      localStorage.setItem("dark-mode", newMode); // Save preference to localStorage
-      if (newMode) {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
-      return newMode;
-    });
+    // Get the current mode
+    const newMode = !isDarkMode;
+
+    // Update the state
+    setIsDarkMode(newMode);
+
+    // Update localStorage
+    localStorage.setItem("dark-mode", newMode);
+
+    // Toggle the dark mode class on the document
+    if (newMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
   };
 
   return (
