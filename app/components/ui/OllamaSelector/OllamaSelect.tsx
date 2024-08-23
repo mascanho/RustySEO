@@ -43,12 +43,12 @@ const OllamaSelect = ({ closeOllama }: any) => {
 
   return (
     <section className="w-full h-full pb-3 overflow-hidden">
-      <div className="p-2">
-        <h2 className="font-semibold text-sm">
+      <div className="p-4">
+        <h2 className="font-semibold text-sm dark:text-white">
           To enhance your experience, you’ll need to download Ollama.
         </h2>
 
-        <ol className="text-sm mt-2 list-decimal list-inside">
+        <ol className="text-sm mt-2 list-decimal list-inside dark:text-white">
           <li>
             Visit Ollama&apos;s Website:{" "}
             <a href="https://ollama.com" _target="_blank" className="underline">
@@ -72,7 +72,7 @@ const OllamaSelect = ({ closeOllama }: any) => {
           placeholder="Select Model"
           defaultValue="llama2"
           data={ollamaModels}
-          className="w-full"
+          className="w-full dark:bg-brand-darker hover:bg-red-500"
           onChange={(e) => handleOllamaSelect(e)}
         />
       </div>

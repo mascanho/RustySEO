@@ -50,7 +50,7 @@ const PageSpeedInsigthsApi = ({ close }: any) => {
       <button
         onClick={() => handleAddApiKey(userInput)}
         type="button"
-        className="w-full flex items-center pt-1 h-9 justify-center font-semibold border bg-blue-500 text-white rounded-md"
+        className="w-full flex items-center pt-1 h-9 justify-center font-semibold border bg-blue-500 text-white rounded-md dark:border-white/10"
       >
         Connect
       </button>
