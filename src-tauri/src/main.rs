@@ -26,7 +26,7 @@ mod gsc;
 mod image_converter;
 mod redirects;
 mod schema;
-mod server;
+pub mod server;
 
 #[derive(Serialize, Debug, Deserialize)]
 struct Config {

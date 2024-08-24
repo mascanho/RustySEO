@@ -17,6 +17,7 @@ use yup_oauth2::{InstalledFlowAuthenticator, InstalledFlowReturnMethod};
 use toml::de::Error as TomlError;
 
 use crate::crawler::db::{self, refresh_links_table};
+use crate::server;
 
 use super::crawler;
 
@@ -465,6 +466,7 @@ pub async fn set_search_console_credentials(credentials: Credentials) -> Result<
         return Err(format!("Failed to create config directory: {}", e));
     }
 
+    // create the file
     let secret_file = config_dir.join("client_secret.json");
 
     // Write the JSON data to the file
@@ -532,7 +534,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
         }
     }
 
-    println!("domain is: {}", domain);
+    println!("domain is fucking: {}", domain);
     println!("site is: {}", site);
 
     // Set the end date to TODAY's date
@@ -543,7 +545,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
     let site_url = "sc-domain:algarvewonders.com";
     let query = SearchAnalyticsQuery {
         start_date: "2024-01-01".to_string(),
-        end_date: "2024-08-01".to_string(),
+        end_date: finish_date,
         dimensions: vec![
             "query".to_string(),
             "page".to_string(),
@@ -554,10 +556,15 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
     };
     let body = serde_json::to_string(&query)?;
 
+    println!("does this print?");
+
     // Make the API request
     let token = auth
         .token(&["https://www.googleapis.com/auth/webmasters.readonly"])
         .await?;
+
+    println!("This is the token stuff -----------------------------------");
+
     let request = hyper::Request::builder()
         .method("POST")
         .uri(format!(
@@ -579,9 +586,10 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
     let data: JsonValue = serde_json::from_str(&body_str)?;
     // println!("Search Console Data: {:#?}", &data);
     let mut gsc_data = Vec::new();
+
+    // Add data to DB
+    db::push_gsc_data_to_db(&gsc_data).expect("Failed to push data to database");
     gsc_data.push(data);
 
-    db::push_gsc_data_to_db(&gsc_data).expect("Failed to push data to database");
-
-    Ok(gsc_data).map_err(|e| e)
+    Ok(gsc_data)
 }

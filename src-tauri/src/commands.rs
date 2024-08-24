@@ -95,11 +95,18 @@ pub async fn set_google_search_console_credentials(credentials: Credentials) {
 
 // ------ CALL THE GOOGLE SEARCH CONSOLE FUNCTION
 #[tauri::command]
-pub async fn call_google_search_console() {
+pub async fn call_google_search_console() -> Result<(), String> {
     println!("Calling Google Search Console");
-    let result = libs::get_google_search_console()
-        .await
-        .expect("Failed to call Google Search Console");
+    match libs::get_google_search_console().await {
+        Ok(_) => {
+            println!("Successfully called Google Search Console");
+            Ok(())
+        }
+        Err(e) => {
+            eprintln!("Failed to call Google Search Console: {}", e);
+            Err(format!("Failed to call Google Search Console: {}", e))
+        }
+    }
 }
 
 // ------- CALL GSC MATCH URL FUNCTION

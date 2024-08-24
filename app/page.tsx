@@ -348,9 +348,25 @@ const Home: React.FC<HomeProps> = () => {
 
   // CONNECT TO GOOGLE SEARCH console
   useEffect(() => {
-    invoke<{}>("call_google_search_console").then((result) => {
-      console.log(result);
-    });
+    try {
+      invoke<{}>("call_google_search_console")
+        .then((result) => {
+          console.log(result);
+        })
+        .catch((error) => {
+          if (error instanceof Error) {
+            console.error("Google Search Console API error:", error.message);
+          } else {
+            console.error("An unknown error occurred:", error);
+          }
+        });
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Error invoking Google Search Console:", error.message);
+      } else {
+        console.error("An unexpected error occurred:", error);
+      }
+    }
   }, []);
 
   const handleLinkStatusCheck = (url: any) => {

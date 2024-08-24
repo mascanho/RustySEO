@@ -59,8 +59,6 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
 
   const params = useParams();
 
-  console.log(params, "pathname");
-
   // CHECK THE STATUS OF OLLAMA AND STORE INTO GLOBAL STATE
   useEffect(() => {
     invoke("check_ollama").then((result: any) => {
