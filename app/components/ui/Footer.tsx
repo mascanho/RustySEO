@@ -45,6 +45,7 @@ const Footer = () => {
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
   const [openedDrawer, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
+  const [hasOllama, setHasOllama] = useState("");
 
   // Function to update URL and loading state from session storage
   const updateSessionState = () => {
