@@ -22,6 +22,7 @@ import { useDisclosure } from "@mantine/hooks";
 import Todo from "./Todo";
 import TodoItems from "./TodoItems";
 import { Drawer as MantineDrawer } from "@mantine/core";
+import { IoMdClose } from "react-icons/io";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -123,7 +124,7 @@ const Footer = () => {
         <TodoItems url={url} strategy={""} />
       </MantineDrawer>
 
-      <footer className="w-full text-xs justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[1000] border-t-2 pb-1.5 dark:border-t-brand-dark flex items-center py-1 overflow-hidden text-xs">
+      <footer className="w-full justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[1000000] border-t-2 pb-1.5 dark:border-t-brand-dark flex items-center py-1 overflow-hidden text-xs">
         <section>
           <div className="flex items-center ml-2 space-x-1 w-full">
             {loading ? (
@@ -147,7 +148,7 @@ const Footer = () => {
           <div className="flex w-50 items-center justify-center pr-3">
             <div className="flex items-center  text-xs mt-[2px] space-x-3">
               <div
-                onClick={() => openDrawer()}
+                onClick={() => (openedDrawer ? closeDrawer() : openDrawer())}
                 className="flex items-center cursor-pointer pt-[2px]"
               >
                 <LiaTasksSolid className="text-sm dark:text-white/50" />
@@ -164,7 +165,12 @@ const Footer = () => {
                 <DrawerContent>
                   <DrawerHeader>
                     <div className="flex items-center space-x-2">
-                      <FaRobot className="text-2xl text-brand-highlight" />
+                      <FaRobot
+                        onClick={() =>
+                          openedDrawer ? closeDrawer() : openDrawer()
+                        }
+                        className="text-2xl text-brand-highlight"
+                      />
                       <span className="text-xl font-bold text-brand-highlight dark:text-white/40">
                         Rusty Chat
                       </span>
@@ -174,7 +180,9 @@ const Footer = () => {
                     </DrawerDescription>
                   </DrawerHeader>
                   <DrawerFooter>
-                    <DrawerClose></DrawerClose>
+                    <DrawerClose className="text-white absolute right-6 top-6 dark:text-white/30">
+                      <IoMdClose className="text-lg" />
+                    </DrawerClose>
                   </DrawerFooter>
                 </DrawerContent>
               </Drawer>

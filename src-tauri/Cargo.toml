@@ -7,7 +7,7 @@ license = ""
 repository = ""
 default-run = "app"
 edition = "2021"
-rust-version = "1.60"
+rust-version = "1.78"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -46,7 +46,7 @@ hyper-rustls = { version = "0.24", features = ["http2"] }
 urlencoding = "2.1"
 base64 = "0.22.1"
 image = "0.24.1"
-
+actix-web = "4.0"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.

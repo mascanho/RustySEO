@@ -26,6 +26,7 @@ mod gsc;
 mod image_converter;
 mod redirects;
 mod schema;
+mod server;
 
 #[derive(Serialize, Debug, Deserialize)]
 struct Config {
@@ -89,6 +90,9 @@ async fn main() {
     // Execute the ID check
     let uuid = globals::actions::uuid_creation_check();
     println!("UUID: {}", uuid);
+
+    // Start the server
+    let _start_server = server::rusty_server().await;
 
     // Tauri setup
     tauri::Builder::default()

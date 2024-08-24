@@ -576,7 +576,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
 
     // Parse and print the results
     let data: JsonValue = serde_json::from_str(&body_str)?;
-    println!("Search Console Data: {:#?}", &data);
+    // println!("Search Console Data: {:#?}", &data);
     let mut gsc_data = Vec::new();
     gsc_data.push(data);
 
