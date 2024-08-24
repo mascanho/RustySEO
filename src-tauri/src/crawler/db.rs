@@ -177,7 +177,8 @@ pub fn add_data_from_pagespeed(data: &str, strategy: &str, url: &str) -> Result<
     let conn = open_db_connection()?;
 
     // Attempt to parse the JSON data
-    let parsed_data: models::PageSpeedResponse = serde_json::from_str(data).expect("Invalid JSON");
+    let parsed_data: models::PageSpeedResponse =
+        serde_json::from_str(data).expect("Couldn't Insert Into DB - Invalid JSON");
 
     // Extract response values
     let audits = parsed_data.lighthouse_result.audits;

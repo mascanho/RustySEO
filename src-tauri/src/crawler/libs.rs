@@ -323,7 +323,7 @@ pub async fn check_links(url: String) -> Result<Vec<LinkStatus>, String> {
         });
     }
 
-    println!("CHECKING LINK STATUS: {:?}", results);
+    // println!("CHECKING LINK STATUS: {:?}", results);
     Ok(results)
 }
 
@@ -582,5 +582,5 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
 
     db::push_gsc_data_to_db(&gsc_data).expect("Failed to push data to database");
 
-    Ok(gsc_data)
+    Ok(gsc_data).map_err(|e| e)
 }
