@@ -53,11 +53,11 @@ const RankingInfo = ({ keywords }: { keywords: string[] }) => {
   }
 
   return (
-    <div className="w-full ranking-table max-w-[23rem] rounded-lg h-[28rem] border-red-500 overflow-auto bg-white dark:bg-transparent shadow px-1">
-      <table className="w-full text-xs">
+    <div className="w-full ranking-table max-w-[23rem] rounded-lg h-[28rem] border-red-500 overflow-auto bg-white dark:bg-transparent shadow pr-2">
+      <table className="w-full text-xs ">
         <thead className="bg-gray-100 dark:bg-gray-700 sticky top-0">
           <tr>
-            <th align="left" className="py-2 -pl-2 text-left">
+            <th align="left" className="py-2 -ml-4 text-left">
               Queries
             </th>
             <th className="py-2 text-center">Clicks</th>
@@ -65,7 +65,7 @@ const RankingInfo = ({ keywords }: { keywords: string[] }) => {
             <th className="py-2 text-right">Pos.</th>
           </tr>
         </thead>
-        <tbody className="text-[9px]">
+        <tbody className="text-[9px] ">
           {matchedData.map((item: MatchedDataItem, index: number) => (
             <tr
               key={index}
@@ -78,7 +78,10 @@ const RankingInfo = ({ keywords }: { keywords: string[] }) => {
               <td align="left" className="py-2 text-center">
                 {item.clicks}
               </td>
-              <td className="py-2 text-center">{item.impressions}</td>
+              <td align="right" className="py-2">
+                {item.impressions}
+              </td>
+
               <td className="py-2 text-center">{item.position.toFixed(0)}</td>
             </tr>
           ))}

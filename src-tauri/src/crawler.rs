@@ -284,21 +284,22 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         //let json_head_contents = serde_json::to_string_pretty(&body_contents).unwrap();
         // println!("Head contents: {}", json_head_contents);
         //}
-
         // check for Google Tag Manager and Its content
-        let gtm_selector = Selector::parse("script").unwrap();
+        let gtm_selector = Selector::parse("script").unwrap_or_else(|_| {
+            println!("Failed to parse script selector, GTM detection may be incomplete");
+            Selector::parse("invalid").unwrap() // This will never be used, but satisfies the type system
+        });
         // Iterate over script tags and check for GTM
         for script in document.select(&gtm_selector) {
             if let Some(script_text) = script.text().next() {
                 if script_text.contains("googletagmanager.com") {
-                    //println!("Found Google Tag Manager script:\n{}", script_text);
                     google_tag_manager.push(script_text.to_string());
                 }
             }
         }
-        // Print all found GTM scripts
+        // Process all found GTM scripts
         if !google_tag_manager.is_empty() {
-            for (index, script) in google_tag_manager.iter().enumerate() {
+            for script in google_tag_manager.iter() {
                 // grab the GTM container part of the script
                 let gtm_container = script
                     .split("googletagmanager.com")
@@ -306,17 +307,24 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
                     .join("googletagmanager.com")
                     .to_string();
 
-                let re = Regex::new(r"GTM-[A-Z0-9]+").unwrap();
-                let gtm_id = re
-                    .captures_iter(&gtm_container)
-                    .next()
-                    .expect("No GTM ID found")
-                    .get(0)
-                    .unwrap()
-                    .as_str()
-                    .to_string();
-
-                tag_container.push(gtm_id);
+                if let Ok(re) = Regex::new(r"GTM-[A-Z0-9]+") {
+                    if let Some(captures) = re.captures(&gtm_container) {
+                        if let Some(gtm_match) = captures.get(0) {
+                            let gtm_id = gtm_match.as_str().to_string();
+                            if !gtm_id.is_empty() {
+                                tag_container.push(gtm_id);
+                            } else {
+                                println!("Found GTM script, but ID is empty");
+                            }
+                        } else {
+                            println!("Found GTM script, but couldn't extract ID");
+                        }
+                    } else {
+                        println!("Found GTM script, but no ID matches the expected format");
+                    }
+                } else {
+                    println!("Failed to create regex for GTM ID extraction");
+                }
             }
         } else {
             println!("No Google Tag Manager scripts found.");
@@ -414,12 +422,39 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         indexation.push(indexation_type);
 
         // Fetch the favicon
-        let favicon_selector = Selector::parse("link[rel=icon]").unwrap();
-        for favicon in document.select(&favicon_selector) {
-            if let Some(favicon) = favicon.value().attr("href") {
-                favicon_url.push(favicon.to_string());
+        let favicon_selectors = [
+            Selector::parse("link[rel='icon']").unwrap(),
+            Selector::parse("link[rel='shortcut icon']").unwrap(),
+            Selector::parse("link[rel='apple-touch-icon']").unwrap(),
+        ];
+
+        for selector in &favicon_selectors {
+            for favicon in document.select(selector) {
+                if let Some(favicon_href) = favicon.value().attr("href") {
+                    let full_url = match Url::parse(&url).and_then(|base| base.join(favicon_href)) {
+                        Ok(full_url) => full_url.to_string(),
+                        Err(_) => favicon_href.to_string(),
+                    };
+                    favicon_url.push(full_url);
+                }
+            }
+            if !favicon_url.is_empty() {
+                break;
             }
         }
+
+        if favicon_url.is_empty() {
+            // Check for favicon.ico in the root directory
+            if let Ok(root_url) = Url::parse(&url) {
+                let favicon_ico_url = root_url
+                    .join("/favicon.ico")
+                    .unwrap_or(root_url)
+                    .to_string();
+                favicon_url.push(favicon_ico_url);
+            }
+        }
+
+        favicon_url.dedup(); // Remove any duplicates
 
         // Fetch The page Schema
         let schema_selector = Selector::parse("script[type='application/ld+json']").unwrap();

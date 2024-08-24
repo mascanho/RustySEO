@@ -104,7 +104,6 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
             <p className="text-red-500 text-sm mt-1">{errors.clientId}</p>
           )}
         </div>
-
         <div className="mb-4 relative">
           <label
             htmlFor="projectId"
@@ -129,7 +128,6 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
             <p className="text-red-500 text-sm mt-1">{errors.projectId}</p>
           )}
         </div>
-
         <div className="mb-4 relative">
           <label
             htmlFor="clientSecret"
@@ -154,7 +152,6 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
             <p className="text-red-500 text-sm mt-1">{errors.clientSecret}</p>
           )}
         </div>
-
         <div className="mb-4 relative">
           <label
             htmlFor="url"
@@ -179,8 +176,7 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
             <p className="text-red-500 text-sm mt-1">{errors.url}</p>
           )}
         </div>
-
-        <div className="mb-4">
+        <div className="mb-4 mt-8">
           <label
             htmlFor="propertyType"
             className="block text-gray-700 font-bold mb-2 dark:text-white"
@@ -209,7 +205,6 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
             <p className=" text-sm mt-1">{errors.propertyType}</p>
           )}
         </div>
-
         <div className="mb-6">
           <label
             htmlFor="range"
@@ -239,7 +234,6 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
             <p className="text-red-500 text-sm mt-1">{errors.range}</p>
           )}
         </div>
-
         <button
           type="submit"
           className="w-full active:scale-95  bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200"

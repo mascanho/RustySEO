@@ -323,7 +323,7 @@ pub async fn check_links(url: String) -> Result<Vec<LinkStatus>, String> {
         });
     }
 
-    // println!("CHECKING LINK STATUS: {:?}", results);
+    println!("CHECKING LINK STATUS: {:?}", results);
     Ok(results)
 }
 
@@ -347,8 +347,8 @@ struct SearchAnalyticsQuery {
     start_date: String,
     end_date: String,
     dimensions: Vec<String>,
-    // #[serde(rename = "rowLimit")]
-    // row_limit: u32,
+    #[serde(rename = "rowLimit")]
+    row_limit: u32,
     search_type: String,
 }
 
@@ -550,6 +550,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
             "country".to_string(),
         ],
         search_type: "web".to_string(),
+        row_limit: 50,
     };
     let body = serde_json::to_string(&query)?;
 

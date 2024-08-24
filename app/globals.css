@@ -125,7 +125,7 @@ pre:not([class*="robots"]) {
 .mantine-Drawer-root,
 .mantine-Drawer-inner,
 .mantine-Drawer-content {
-  margin: 3.7rem 0 36px 0.1rem;
+  margin: 8rem 0 36px 0.1rem;
   overflow: hidden !important ;
   padding: 0 !important;
 }
@@ -146,7 +146,7 @@ pre:not([class*="robots"]) {
 }
 
 .mantine-Drawer-header button {
-  @apply mr-2 mb-2 pb-1 dark:text-white;
+  @apply mr-2 mb-2 pb-1 dark:text-white dark:hover:bg-brand-bright;
 }
 
 .todoItems {
@@ -527,7 +527,7 @@ button:where([data-active]) {
 }
 
 .mantine-Modal-title {
-  @apply ml-4;
+  @apply pl-4 !important;
 }
 
 .mantine-Input-input {

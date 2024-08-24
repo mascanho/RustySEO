@@ -181,7 +181,7 @@ const Footer = () => {
                     </DrawerDescription>
                   </DrawerHeader>
                   <DrawerFooter>
-                    <DrawerClose className="text-white absolute right-6 top-6 dark:text-white/30">
+                    <DrawerClose className="dark:text-white text-gray-600 absolute right-4 top-6 dark:text-white/30">
                       <IoMdClose className="text-lg" />
                     </DrawerClose>
                   </DrawerFooter>

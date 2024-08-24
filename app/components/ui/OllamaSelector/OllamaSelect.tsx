@@ -50,7 +50,7 @@ const OllamaSelect = ({ closeOllama }: any) => {
     <section className="w-full h-full pb-3 overflow-hidden">
       <div className="p-4">
         <h2 className="font-semibold text-sm dark:text-white">
-          To enhance your experience, you'll need to download Ollama.
+          To enhance your experience, you&apos;ll need to download Ollama.
         </h2>
 
         <ol className="text-sm mt-2 list-decimal list-inside dark:text-white">
