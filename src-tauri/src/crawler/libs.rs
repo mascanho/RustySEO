@@ -347,8 +347,8 @@ struct SearchAnalyticsQuery {
     start_date: String,
     end_date: String,
     dimensions: Vec<String>,
-    #[serde(rename = "rowLimit")]
-    row_limit: u32,
+    // #[serde(rename = "rowLimit")]
+    // row_limit: u32,
     search_type: String,
 }
 
@@ -543,9 +543,12 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
     let site_url = "sc-domain:algarvewonders.com";
     let query = SearchAnalyticsQuery {
         start_date: "2024-01-01".to_string(),
-        end_date: finish_date,
-        dimensions: vec!["query".to_string()],
-        row_limit: 2,
+        end_date: "2024-08-01".to_string(),
+        dimensions: vec![
+            "query".to_string(),
+            "page".to_string(),
+            "country".to_string(),
+        ],
         search_type: "web".to_string(),
     };
     let body = serde_json::to_string(&query)?;
@@ -573,7 +576,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
 
     // Parse and print the results
     let data: JsonValue = serde_json::from_str(&body_str)?;
-    //println!("Search Console Data: {:#?}", &data);
+    println!("Search Console Data: {:#?}", &data);
     let mut gsc_data = Vec::new();
     gsc_data.push(data);
 

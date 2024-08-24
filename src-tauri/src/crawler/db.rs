@@ -11,6 +11,7 @@ pub struct DataBase {
     conn: Connection,
 }
 
+// Need to check this
 impl DataBase {
     pub fn new() -> Result<Self> {
         let conn = open_db_connection()?;
@@ -47,7 +48,7 @@ pub struct SEOResultRecord {
 
 pub fn open_db_connection() -> Result<Connection> {
     // Retrieve the config directory for the application
-    let project_dirs = ProjectDirs::from("com", "YourCompany", "YourAppName")
+    let project_dirs = ProjectDirs::from("", "", "rustyseo")
         .ok_or_else(|| rusqlite::Error::QueryReturnedNoRows)?;
 
     // Define the directory for the DB file
@@ -95,7 +96,7 @@ pub fn create_results_table() -> Result<()> {
 pub fn create_technical_data_table() -> Result<()> {
     let conn = open_db_connection()?;
 
-    // Create the technical_data table if it does not exist
+    // Create the technical_data table if it does not exists yet
     conn.execute(
         "CREATE TABLE IF NOT EXISTS technical_data (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -315,11 +316,11 @@ pub fn push_gsc_data_to_db(data: &Vec<serde_json::Value>) -> Result<()> {
 
         for object in objects {
             //println!("{:#?}", object);
-            let url = object["keys"][1].as_str().unwrap();
-            let query = object["keys"][0].as_str().unwrap();
-            let ctr = object["ctr"].as_f64().unwrap();
-            let clicks = object["clicks"].as_i64().unwrap();
-            let impressions = object["impressions"].as_i64().unwrap();
+            let url = object["keys"][1].as_str().unwrap_or("");
+            let query = object["keys"][0].as_str().unwrap_or("");
+            let ctr = object["ctr"].as_f64().unwrap_or(0.0);
+            let clicks = object["clicks"].as_i64().unwrap_or(0);
+            let impressions = object["impressions"].as_i64().unwrap_or(0);
             let position = object["position"].to_string();
             let date = Utc::now().naive_utc().to_string();
             conn.execute(
@@ -413,7 +414,7 @@ fn insert_matched_urls(conn: &Connection, matched_urls: &[GscUrl]) -> Result<()>
 
     // Prepare the insertion statement
     let mut insert_stmt = conn.prepare(
-        "INSERT INTO gsc_matched (original_id, url, query, ctr, clicks, impressions, position) 
+        "INSERT INTO gsc_matched (original_id, url, query, ctr, clicks, impressions, position)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
     )?;
 
@@ -433,7 +434,7 @@ fn insert_matched_urls(conn: &Connection, matched_urls: &[GscUrl]) -> Result<()>
         ])?;
     }
 
-    println!("Matched URLs have been inserted into the gsc_matched table.");
+    println!("Matched URLs have been inserted into the gsc_matched on the tables");
 
     Ok(())
 }
@@ -460,6 +461,6 @@ pub fn read_gsc_matched_from_db() -> Result<Vec<GscMatched>> {
     for url in matched_urls {
         data.push(url?);
     }
-    //println!("Page SEO Data: {:#?}", data);
+    println!("Page SEO Data: {:#?}", data);
     Ok(data)
 }
