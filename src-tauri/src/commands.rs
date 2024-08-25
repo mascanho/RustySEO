@@ -3,9 +3,11 @@ use crate::crawler::db::GscMatched;
 use crate::crawler::libs;
 use crate::crawler::libs::ApiKeys;
 use crate::crawler::libs::Credentials;
+use crate::domain_crawler;
 use crate::image_converter::converter;
 use serde::Deserialize;
 use serde::Serialize;
+use std::error::Error;
 use std::fs;
 use std::io::{self, BufWriter, Write};
 use std::path::PathBuf;
@@ -125,4 +127,13 @@ pub fn call_gsc_match_url(url: String) -> Result<Vec<GscMatched>, String> {
         Ok(result) => Ok(result),
         Err(err) => Err(err.to_string()),
     }
+}
+
+// ---------- CALL THE CRAWL DOMAIN FUNCTION
+#[tauri::command]
+pub async fn crawl_domain(url: &str) -> Result<(), Box<dyn Error>> {
+    println!("crawling domain..");
+    let crawler = domain_crawler::crawl_domain(url).await?;
+    println!("Results from Domain crawler: {:#?}", crawler);
+    Ok(())
 }

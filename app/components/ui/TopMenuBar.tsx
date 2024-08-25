@@ -288,6 +288,9 @@ const TopMenuBar = () => {
               <MenubarItem onClick={() => router.push("/")}>
                 Page Crawler
               </MenubarItem>
+              <MenubarItem onClick={() => router.push("/global")}>
+                Global Crawler
+              </MenubarItem>
               <MenubarItem onClick={() => router.push("/images")}>
                 Image Converter
               </MenubarItem>

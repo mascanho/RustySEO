@@ -12,6 +12,7 @@ use tokio;
 use toml;
 
 mod crawler;
+mod domain_crawler;
 mod downloads {
     pub mod csv;
 }
@@ -136,7 +137,8 @@ async fn main() {
             commands::call_google_search_console,
             commands::call_gsc_match_url,
             commands::set_google_search_console_credentials,
-            image_converter::converter::handle_image_conversion
+            image_converter::converter::handle_image_conversion,
+            commands::crawl_domain
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

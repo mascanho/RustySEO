@@ -84,6 +84,7 @@ function MenuDrawer() {
     if (path === "/images") {
       setBadge("Image Converter");
     }
+    if (path === "/global") setBadge("Domain Crawler");
   }, []);
 
   return (
