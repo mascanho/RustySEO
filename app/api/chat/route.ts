@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
     // Process the request with the fetched model
     const result = await streamText({
-      model: ollama("llama3"), // Use the fetched model string
+      model: ollama(model), // Use the fetched model string
       messages,
     });
 

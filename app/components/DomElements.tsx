@@ -177,7 +177,7 @@ const DomElements = ({
             <h4 className="text-[12px] font-semibold dark:text-white/50">
               Nodes found:
             </h4>
-            <span className="font-bold text-apple-spaceGray/50">
+            <span className="font-semibold text-xs text-apple-spaceGray/50">
               {stat?.lighthouseResult?.audits?.["dom-size"]?.numericValue
                 ? `${stat.lighthouseResult.audits["dom-size"].numericValue}`
                 : "..."}

@@ -92,8 +92,8 @@ const ServerResponseTime = ({
           </Text>
         </Popover.Dropdown>
       </Popover>
-      <div className="flex flex-col space-y-1.5 h-fit">
-        <h2 className="font-bold">Server Status</h2>
+      <div className="flex flex-col space-y-1.5 h-fit -mt-2">
+        <h2 className="font-bold -mt-1.5">Server Status</h2>
         <div className="text-xl h-8">
           {loading ? (
             <div className="-mt-1">

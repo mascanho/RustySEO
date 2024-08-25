@@ -24,8 +24,6 @@ mod commands;
 mod genai;
 mod gsc;
 mod image_converter;
-mod redirects;
-mod schema;
 pub mod server;
 
 #[derive(Serialize, Debug, Deserialize)]

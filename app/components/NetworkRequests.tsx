@@ -117,7 +117,7 @@ const NetworkRequests = ({
           </button>
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
-          <Text size="sm">
+          <Text className="text-black dark:text-white leading-[2px] text-xs">
             The HTTP requests made by a browser to fetch resources like HTML,
             CSS, JavaScript, images, and fonts from a server.
           </Text>
@@ -152,7 +152,7 @@ const NetworkRequests = ({
           ) : (
             <div className="flex items-center space-x-2">
               <span className="font-bold text-xl text-apple-spaceGray/50">
-                {(stat && networkRequestCount + " requests") || "..."}
+                {(stat && networkRequestCount + " req.") || "..."}
               </span>
               <p
                 className={`rounded-full font-semibold ml-1 px-2 text-xs py-[1px] ${!stat && "hidden"} ${labelClass}`}
@@ -166,13 +166,14 @@ const NetworkRequests = ({
           onClick={() =>
             openBrowserWindow(
               url
-                ? `https://pagespeed.web.dev/report?url=${url}`
+                ? `https://pagespeed.web.dev/report?url=${encodeURIComponent(url)}`
                 : "No URL provided",
             )
           }
-          className="text-xs underline cursor-pointer"
+          className="text-xs underline cursor-pointer hover:text-blue-600 transition-colors duration-200"
+          title="Open PageSpeed Insights report"
         >
-          View PageSpeed Insights
+          View Detailed Report
         </h2>
       </div>
     </section>
