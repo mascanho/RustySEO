@@ -1,8 +1,14 @@
 import useStore from "@/store/Panes";
+import useOnPageSeo from "@/store/storeOnPageSeo";
+import { useEffect } from "react";
 import { SiOctanerender } from "react-icons/si";
 
 const RenderBlockingResources = ({ pageSpeed }: { pageSpeed: any }) => {
   const { Visible } = useStore();
+  const setSeoRenderBlocking = useOnPageSeo(
+    (state) => state.setSeoRenderBlocking,
+  );
+
   const scripts =
     pageSpeed?.lighthouseResult?.audits?.["render-blocking-resources"]?.details
       ?.items || [];

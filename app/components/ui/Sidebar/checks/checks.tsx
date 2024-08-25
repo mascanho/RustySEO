@@ -35,8 +35,9 @@ const useGetChecks = () => {
   const seoStatusCodes = useOnPageSeo((state) => state.seostatusCodes);
   const seoheadings = useOnPageSeo((state) => state.seoheadings);
   const seoImages = useOnPageSeo((state) => state.seoImages);
+  const seoOpenGraph = useOnPageSeo((state) => state.seoOpenGraph);
 
-  console.log(seoImages?.length, "SEO CHECKLIST ----------");
+  console.log(seoOpenGraph, "SEO CHECKLIST ----------");
 
   // Use useMemo to avoid recalculating on every render
   const checks = useMemo(() => {
@@ -183,6 +184,11 @@ const useGetChecks = () => {
         name: "Images Alt Tags",
         status: seoImages?.length === 0 ? "Passed" : "Failed",
       },
+      {
+        id: "28",
+        name: "OpenGraph",
+        status: seoOpenGraph?.image ? "Passed" : "Failed",
+      },
     ];
   }, [
     performance,
@@ -212,6 +218,7 @@ const useGetChecks = () => {
     noAltTags,
     seoStatusCodes,
     seoheadings,
+    seoOpenGraph,
   ]);
 
   return checks;

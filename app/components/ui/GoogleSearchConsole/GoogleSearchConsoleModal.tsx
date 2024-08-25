@@ -3,7 +3,7 @@
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import { useFetch } from "@mantine/hooks";
 import { invoke } from "@tauri-apps/api/tauri";
-import React, { useEffect, useId, useState } from "react";
+import React, { useCallback, useEffect, useId, useState } from "react";
 import { FaExternalLinkAlt } from "react-icons/fa";
 
 const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
@@ -86,29 +86,60 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
     }
   };
 
+  const handleClose = useCallback(async () => {
+    const { appWindow } = await import("@tauri-apps/api/window");
+    appWindow.close();
+  }, []);
+
   return (
     <section>
       {/* SECONDARY SCREEN GOES HERE */}
       <div
-        className={`${!isNextScreen && "hidden"} max-w-md mx-auto  dark:bg-brand-darker dark:text-white rounded-lg `}
+        className={`${!isNextScreen && "hidden"} max-w-md mx-auto pl-4 pr-2  dark:bg-brand-darker dark:text-white rounded-lg `}
       >
-        <h2 className="text-lg font-semibold mb-4">Open URL</h2>
-        <div className="flex items-center  mb-4 flex-col">
-          <input
-            type="text"
-            value={isSubmitedId}
-            readOnly
-            className="w-full flex-grow px-2 py-1 border rounded-lg dark:bg-brand-dark dark:border-white/30"
-          />
-          <button
-            onClick={() => {
-              openBrowserWindow(isSubmitedId);
-            }}
-            className="px-1 py-1 rounded-md mt-4 bg-brand-bright text-white w-full "
-          >
-            Verify Google Account
-          </button>
+        <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">
+          How to Log In
+        </h2>
+        <ol className="list-decimal list-inside space-y-3">
+          <li className="text-gray-700 dark:text-white">
+            <strong>Step 1:</strong> Close RustySEO
+          </li>
+          <li className="text-gray-700 dark:text-white">
+            <strong>Step 2:</strong> Open your system terminal
+          </li>
+          <li className="text-gray-700 dark:text-white">
+            <strong>Step 3:</strong> Launch RustySEO from your terminal with by
+            typping <strong>rustyseo</strong> in your terminal then{" "}
+            <strong>press enter</strong>
+          </li>
+          <li className="text-gray-700 dark:text-white">
+            <strong>Step 4:</strong> copy the link that appears in your terminal
+            and open it in your browser
+          </li>
+          <li className="text-gray-700 dark:text-white">
+            <strong>Step 5:</strong> After successful login, you will be
+            redirected to your dashboard.
+          </li>
+        </ol>
+        <div className="mt-6 text-sm text-gray-600 dark:text-white/50">
+          <p>
+            Need further assistance? Contact our support team at{" "}
+            <a
+              href="mailto:530rusty@gmail.com"
+              className="text-blue-500 hover:underline"
+            >
+              530rusty@gmail.com
+            </a>
+            .
+          </p>
         </div>
+
+        <button
+          onClick={handleClose}
+          className="w-full mt-5 active:scale-95  bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200"
+        >
+          Close RustySEO
+        </button>
       </div>
 
       {/* MAIN SCREEN GOES HERE */}

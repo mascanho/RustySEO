@@ -174,8 +174,8 @@ export default function ImageOptimizer() {
   };
 
   return (
-    <div className="flex flex-col items-center h-[calc(100vh-6rem)] pb-20 mb-10 overflow-auto rounded-none bg-white justify-center dark:bg-brand-dark">
-      <Card className="w-full border-none rounded-none h-full p-10 dark:bg-brand-dark shadow-none">
+    <section className="w-full border-none rounded-none h-full p-10 dark:bg-brand-dark shadow-none flex">
+      <div className="w-2/3">
         <CardHeader>
           <CardTitle>Advanced Image Optimizer</CardTitle>
           <CardDescription>
@@ -301,6 +301,8 @@ export default function ImageOptimizer() {
             <Button onClick={handleOptimize} disabled={isProcessing}>
               {loading ? "Optimizing..." : "Optimize Image"}
             </Button>
+          </div>
+          <div>
             {optimizedImages.length > 0 && (
               <div className="grid gap-4 sm:grid-cols-2">
                 {optimizedImages.map((img, index) => (
@@ -319,8 +321,7 @@ export default function ImageOptimizer() {
             )}
           </div>
         </CardContent>
-        <CardFooter></CardFooter>
-      </Card>
-    </div>
+      </div>
+    </section>
   );
 }

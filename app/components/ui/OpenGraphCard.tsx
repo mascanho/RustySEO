@@ -1,6 +1,7 @@
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import { FaLinkedin } from "react-icons/fa";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import { useEffect } from "react";
 
 import {
   DropdownMenu,
@@ -11,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import useStore from "@/store/Panes";
+import useOnPageSeo from "@/store/storeOnPageSeo";
 
 export const OpenGraphCard = ({
   openGraphDetails,
@@ -20,6 +22,24 @@ export const OpenGraphCard = ({
   linkedInInspect: string | undefined;
 }) => {
   const { Visible } = useStore();
+
+  const setSeoOpenGraph = useOnPageSeo((state) => state.setSeoOpenGraph);
+
+  // Log the openGraphDetails for debugging
+  console.log(openGraphDetails, "---- OG card -----");
+
+  // useEffect to set SEO Open Graph data when component mounts
+  useEffect(() => {
+    if (openGraphDetails) {
+      setSeoOpenGraph(openGraphDetails);
+    }
+  }, [openGraphDetails]);
+
+  console.log(openGraphDetails, "---- OG card -----");
+
+  useEffect(() => {
+    setSeoOpenGraph(openGraphDetails);
+  }, []);
 
   return (
     <div

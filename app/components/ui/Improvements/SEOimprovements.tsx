@@ -109,6 +109,7 @@ const SEOImprovements = ({
   // @ts-ignore
   const imagesWithoutAltTags = seoAltTags?.filter((image) => !image.alt_text);
   const seoStatusCodes = useOnPageSeo((state) => state.seostatusCodes);
+  const seoOpenGraph = useOnPageSeo((state) => state.seoOpenGraph);
 
   useEffect(() => {
     if (pageTitle[0]) {
@@ -233,6 +234,19 @@ const SEOImprovements = ({
       length: description?.length,
     },
     {
+      id: 10,
+      title: "404 Links",
+      failsAdvise:
+        "Some pages on your site are returning non-200 status codes. This may affect crawling and indexing.",
+      passAdvice: "All checked pages are returning 200 OK status codes.",
+      improved:
+        seoStatusCodes &&
+        Object.values(seoStatusCodes).every((code) => code === 200),
+      aiImprovement:
+        "Review and fix any pages returning non-200 status codes to ensure proper crawling and indexing.",
+      length: Object.keys(seoStatusCodes || {}).length,
+    },
+    {
       id: 9,
       title: "Images Alt Text",
       failsAdvise:
@@ -245,17 +259,16 @@ const SEOImprovements = ({
       length: description?.length,
     },
     {
-      id: 10,
-      title: "404 Status Code",
+      id: 11,
+      title: "Opengraph",
       failsAdvise:
-        "Some pages on your site are returning non-200 status codes. This may affect crawling and indexing.",
-      passAdvice: "All checked pages are returning 200 OK status codes.",
-      improved:
-        seoStatusCodes &&
-        Object.values(seoStatusCodes).every((code) => code === 200),
+        "No OpenGraph tags where found in the page. These tags allow social media platforms to better render images from your webpage.",
+      passAdvice: "This page contains OpenGraph tags.",
+      // @ts-ignore
+      improved: seoOpenGraph?.image ? true : false,
       aiImprovement:
-        "Review and fix any pages returning non-200 status codes to ensure proper crawling and indexing.",
-      length: Object.keys(seoStatusCodes || {}).length,
+        "Add alt text to your images to make them more accessible and help with SEO.",
+      length: description?.length,
     },
   ];
 
