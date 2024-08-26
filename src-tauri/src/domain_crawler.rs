@@ -1,23 +1,30 @@
 use reqwest::Client;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::{collections::HashSet, error::Error};
 use url::Url;
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct PageDetails {
+    title: String,
+    h1: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GlobalCrawlResults {
-    visited_urls: HashSet<String>,
+    visited_urls: HashMap<String, PageDetails>,
     all_files: HashSet<String>,
 }
 
 pub async fn crawl_domain(base_url: &str) -> Result<GlobalCrawlResults, Box<dyn Error>> {
     let client = Client::new();
     let mut urls_to_visit = vec![base_url.to_string()];
-    let mut visited_urls = HashSet::new();
+    let mut visited_urls = HashMap::new(); // Updated type
     let mut all_files = HashSet::new();
 
     while let Some(url) = urls_to_visit.pop() {
-        if visited_urls.contains(&url) {
+        if visited_urls.contains_key(&url) {
             continue;
         }
 
@@ -26,13 +33,33 @@ pub async fn crawl_domain(base_url: &str) -> Result<GlobalCrawlResults, Box<dyn 
         match fetch_page(&client, &url).await {
             Ok(body) => {
                 let document = Html::parse_document(&body);
+
+                // Extract page title
+                let title_selector = Selector::parse("title").unwrap();
+                let title = document
+                    .select(&title_selector)
+                    .next()
+                    .map(|e| e.inner_html())
+                    .unwrap_or_else(|| "Untitled".to_string());
+
+                // Extract h1 content
+                let h1_selector = Selector::parse("h1").unwrap();
+                let h1_content: Vec<String> = document
+                    .select(&h1_selector)
+                    .map(|e| e.inner_html())
+                    .collect();
+                let h1 = h1_content.join(", ");
+
+                // Store URL with details
+                visited_urls.insert(url.clone(), PageDetails { title, h1 });
+
                 extract_links(
                     &document,
                     &url,
                     base_url,
                     &mut urls_to_visit,
                     &mut all_files,
-                    &mut visited_urls,
+                    &visited_urls,
                 );
                 check_directory_listings(
                     &document,
@@ -40,13 +67,11 @@ pub async fn crawl_domain(base_url: &str) -> Result<GlobalCrawlResults, Box<dyn 
                     base_url,
                     &mut urls_to_visit,
                     &mut all_files,
-                    &mut visited_urls,
+                    &visited_urls,
                 );
             }
             Err(e) => eprintln!("Error fetching {}: {:?}", url, e),
         }
-
-        visited_urls.insert(url);
     }
 
     println!("Total files found: {:?}", all_files.len());
@@ -69,7 +94,7 @@ fn extract_links(
     base_url: &str,
     urls_to_visit: &mut Vec<String>,
     all_files: &mut HashSet<String>,
-    visited_urls: &HashSet<String>,
+    visited_urls: &HashMap<String, PageDetails>, // Updated type
 ) {
     let link_selector = Selector::parse("a[href], link[href], script[src], img[src]").unwrap();
 
@@ -89,7 +114,7 @@ fn extract_links(
                         .contains('.')
                     {
                         all_files.insert(absolute_url_str.clone());
-                    } else if !visited_urls.contains(&absolute_url_str) {
+                    } else if !visited_urls.contains_key(&absolute_url_str) {
                         urls_to_visit.push(absolute_url_str);
                     }
                 }
@@ -104,7 +129,7 @@ fn check_directory_listings(
     base_url: &str,
     urls_to_visit: &mut Vec<String>,
     all_files: &mut HashSet<String>,
-    visited_urls: &HashSet<String>,
+    visited_urls: &HashMap<String, PageDetails>, // Updated type
 ) {
     let directory_selector = Selector::parse("pre").unwrap();
 
@@ -118,7 +143,7 @@ fn check_directory_listings(
                     if absolute_url_str.starts_with(base_url) {
                         if file_or_dir.contains('.') {
                             all_files.insert(absolute_url_str.clone());
-                        } else if !visited_urls.contains(&absolute_url_str) {
+                        } else if !visited_urls.contains_key(&absolute_url_str) {
                             urls_to_visit.push(absolute_url_str);
                         }
                     }
