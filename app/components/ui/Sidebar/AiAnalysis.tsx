@@ -29,10 +29,22 @@ const AIFeedbackTab = ({ pageSpeed }) => {
     setLoading(true);
     // In a real scenario, this would be an API call
 
+    // Determine summary based on overallScore
+    let summaryText;
+    if (overallScore >= 85) {
+      summaryText =
+        "The page is performing excellently, with just a few minor areas for improvement.";
+    } else if (overallScore >= 60) {
+      summaryText =
+        "The page shows promise but has room for improvement in key areas.";
+    } else {
+      summaryText =
+        "The page needs significant improvement in several key areas to enhance performance.";
+    }
+
     const aiFeedback = {
       overallScore: overallScore.toFixed(2),
-      summary:
-        "The page shows promise but has room for improvement in key areas.",
+      summary: summaryText,
       insights: [
         {
           aspect: "Content Quality",
@@ -58,7 +70,7 @@ const AIFeedbackTab = ({ pageSpeed }) => {
 
     setFeedback(aiFeedback);
     setLoading(false);
-  }, [pageSpeed]);
+  }, [pageSpeed, overallScore]);
 
   if (loading) {
     return (
@@ -78,7 +90,7 @@ const AIFeedbackTab = ({ pageSpeed }) => {
 
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
-          <span>Overall Score</span>
+          <span className="text-xs font-medium">Overall Score</span>
           <span className="text-xl font-bold text-blue-400">
             {feedback.overallScore}%
           </span>
@@ -91,7 +103,7 @@ const AIFeedbackTab = ({ pageSpeed }) => {
         </div>
       </div>
 
-      <p className="text-sm mb-4">{feedback.summary}</p>
+      <p className="text-xs mb-4">{feedback.summary}</p>
 
       <div className="space-y-3 mb-4">
         {feedback.insights.map((insight, index) => (
@@ -100,7 +112,7 @@ const AIFeedbackTab = ({ pageSpeed }) => {
             className="border-b border-b-gray-300 dark:border-brand-dark border-gray-700 pb-2"
           >
             <div className="flex justify-between items-center">
-              <span className="font-medium">{insight.aspect}</span>
+              <span className="font-medium text-xs">{insight.aspect}</span>
               <span
                 className={`text-xs px-2 py-[2px] rounded ${
                   insight.status === "Excellent"
@@ -119,8 +131,10 @@ const AIFeedbackTab = ({ pageSpeed }) => {
       </div>
 
       <div className="text-sm">
-        <span className="font-medium">Top Recommendation:</span>
-        <p className="mt-1 text-blue-300">{feedback.topRecommendation}</p>
+        <span className="font-medium text-xs">Top Recommendation:</span>
+        <p className="mt-1 text-blue-300 text-xs">
+          {feedback.topRecommendation}
+        </p>
       </div>
     </div>
   );

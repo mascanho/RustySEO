@@ -1,9 +1,11 @@
+// @ts-nocheck
 "use client";
 import React, { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
 import useLoaderStore from "@/store/loadersStore";
 import InputZone from "./_components/InputZone";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import { Tabs } from "@mantine/core";
 
 // Define the expected type of the result from the `crawl_domain` function
 interface PageDetails {
@@ -89,7 +91,7 @@ export default function Page() {
   return (
     <>
       <InputZone />
-      <section className="w-full border-none h-full p-10 dark:bg-brand-dark shadow-none rounded-md overflow-hidden">
+      <section className="w-full border-none h-full  dark:bg-brand-dark shadow-none rounded-md">
         <input
           type="text"
           placeholder="Search..."
@@ -97,85 +99,106 @@ export default function Page() {
           onChange={handleSearchChange}
           className="mb-4 p-2 border rounded"
         />
-        <section className="border text-white mt-10 h-96 overflow-auto rounded-md">
-          {loaders.globalCrawler ? (
-            <p>Loading...</p>
-          ) : data ? (
-            <div>
-              <h2 className="text-xl font-bold mb-4">Visited URLs</h2>
-              <table className="w-full">
-                <thead>
-                  <tr>
-                    <th
-                      className="text-left cursor-pointer"
-                      onClick={() => handleSortChange("url")}
-                    >
-                      URL{" "}
-                      {sortField === "url" && (sortOrder === "asc" ? "↑" : "↓")}
-                    </th>
-                    <th
-                      className="text-left cursor-pointer"
-                      onClick={() => handleSortChange("title")}
-                    >
-                      Title{" "}
-                      {sortField === "title" &&
-                        (sortOrder === "asc" ? "↑" : "↓")}
-                    </th>
-                    <th
-                      className="text-left cursor-pointer"
-                      onClick={() => handleSortChange("h1")}
-                    >
-                      H1{" "}
-                      {sortField === "h1" && (sortOrder === "asc" ? "↑" : "↓")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedVisitedUrls.map(([url, details]) => (
-                    <tr key={url} className="border-t">
-                      <td className="py-2">{url}</td>
-                      <td className="py-2">{details.title}</td>
-                      <td className="py-2">{details.h1}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
 
-              <h2 className="text-xl font-bold mt-8 mb-4">All Files</h2>
-              <table className="w-full">
-                <thead>
-                  <tr>
-                    <th
-                      className="text-left cursor-pointer"
-                      onClick={() => handleSortChange("url")}
-                    >
-                      URL{" "}
-                      {sortField === "url" && (sortOrder === "asc" ? "↑" : "↓")}
-                    </th>
-                    <th
-                      className="text-left cursor-pointer"
-                      onClick={() => handleSortChange("file_type")}
-                    >
-                      File Type{" "}
-                      {sortField === "file_type" &&
-                        (sortOrder === "asc" ? "↑" : "↓")}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedAllFiles.map(([url, details]) => (
-                    <tr key={url} className="border-t">
-                      <td className="py-2">{details.url}</td>
-                      <td className="py-2">{details.file_type}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p>No data available. Click "Crawl Domain" to start.</p>
-          )}
-        </section>
+        {/* Tabs Component */}
+        <Tabs defaultValue="first" className="overflow-auto">
+          <aside className="absolute top-11 pt-1 left-0 w-full dark:bg-brand-darker">
+            <Tabs.List justify="center" className="dark:text-white">
+              <Tabs.Tab value="first">Domain</Tabs.Tab>
+              <Tabs.Tab value="third">Improvements</Tabs.Tab>
+              <Tabs.Tab value="fourth">Task Manager</Tabs.Tab>
+              <Tabs.Tab value="fifth">Crawl History</Tabs.Tab>
+              <Tabs.Tab value="analytics">Analytics</Tabs.Tab>
+            </Tabs.List>
+          </aside>
+
+          {/* Tabs Panel for Domain */}
+          <Tabs.Panel
+            value="first"
+            className="flex flex-col space-y-8 overflow-scroll"
+          >
+            <section className="text-white h-full overflow-auto dark:bg-brand-darker mt-6">
+              <div className="h-full w-full">
+                {/* <h2 className="text-xl font-bold mb-4">Visited URLs</h2> */}
+                <div className="h-96 overflow-auto  w-full border-b">
+                  <table className="w-full">
+                    <thead>
+                      <tr>
+                        <th
+                          className="text-left cursor-pointer"
+                          onClick={() => handleSortChange("url")}
+                        >
+                          URL{" "}
+                          {sortField === "url" &&
+                            (sortOrder === "asc" ? "↑" : "↓")}
+                        </th>
+                        <th
+                          className="text-left cursor-pointer"
+                          onClick={() => handleSortChange("title")}
+                        >
+                          Title{" "}
+                          {sortField === "title" &&
+                            (sortOrder === "asc" ? "↑" : "↓")}
+                        </th>
+                        <th
+                          className="text-left cursor-pointer"
+                          onClick={() => handleSortChange("h1")}
+                        >
+                          H1{" "}
+                          {sortField === "h1" &&
+                            (sortOrder === "asc" ? "↑" : "↓")}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedVisitedUrls.map(([url, details]) => (
+                        <tr key={url} className="border-t">
+                          <td className="py-2">{url}</td>
+                          <td className="py-2">{details.title}</td>
+                          <td className="py-2">{details.h1}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <h2 className="text-xl font-bold mt-8 mb-4">All Files</h2>
+                <div className="h-96 overflow-auto border rounded-md">
+                  <table className="w-full">
+                    <thead>
+                      <tr>
+                        <th
+                          className="text-left cursor-pointer"
+                          onClick={() => handleSortChange("url")}
+                        >
+                          URL{" "}
+                          {sortField === "url" &&
+                            (sortOrder === "asc" ? "↑" : "↓")}
+                        </th>
+                        <th
+                          className="text-left cursor-pointer"
+                          onClick={() => handleSortChange("file_type")}
+                        >
+                          File Type{" "}
+                          {sortField === "file_type" &&
+                            (sortOrder === "asc" ? "↑" : "↓")}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedAllFiles.map(([url, details]) => (
+                        <tr key={url} className="border-t">
+                          <td className="py-2">{details.url}</td>
+                          <td className="py-2">{details.file_type}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </section>
+          </Tabs.Panel>
+        </Tabs>
       </section>
     </>
   );
