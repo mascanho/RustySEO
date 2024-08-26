@@ -2,50 +2,63 @@
 import React, { useState, useEffect } from "react";
 import { Bot } from "lucide-react";
 
-const AIFeedbackTab = () => {
+const AIFeedbackTab = ({ pageSpeed }) => {
   const [feedback, setFeedback] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [sessionScore, setSessionScore] = useState(null);
+
+  // GET THE SCORE FROM SESSION STORAGE
+  useEffect(() => {
+    const scoring = sessionStorage.getItem("score");
+
+    if (scoring) {
+      setSessionScore(JSON.parse(scoring));
+    }
+  }, [pageSpeed]);
+
+  console.log(sessionScore, "session score");
+
+  const overallScore =
+    (sessionScore &&
+      (sessionScore[0]?.passed / sessionScore[0]?.total) * 100) ||
+    0;
+  console.log(overallScore, "overall score");
 
   useEffect(() => {
     // Simulating API call to get AI feedback
-    const fetchFeedback = async () => {
-      setLoading(true);
-      // In a real scenario, this would be an API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+    setLoading(true);
+    // In a real scenario, this would be an API call
 
-      const aiFeedback = {
-        overallScore: 99,
-        summary:
-          "The page shows promise but has room for improvement in key areas.",
-        insights: [
-          {
-            aspect: "Content Quality",
-            status: "Good",
-            description:
-              "Content is relevant and engaging, but could be more comprehensive.",
-          },
-          {
-            aspect: "User Experience",
-            status: "Needs Improvement",
-            description:
-              "Page load time is slightly higher than recommended, affecting UX.",
-          },
-          {
-            aspect: "Mobile Optimization",
-            status: "Excellent",
-            description: "The page is well-optimized for mobile devices.",
-          },
-        ],
-        topRecommendation:
-          "Focus on improving page load speed and expanding content depth.",
-      };
-
-      setFeedback(aiFeedback);
-      setLoading(false);
+    const aiFeedback = {
+      overallScore: overallScore.toFixed(2),
+      summary:
+        "The page shows promise but has room for improvement in key areas.",
+      insights: [
+        {
+          aspect: "Content Quality",
+          status: "Good",
+          description:
+            "Content is relevant and engaging, but could be more comprehensive.",
+        },
+        {
+          aspect: "User Experience",
+          status: "Needs Improvement",
+          description:
+            "Page load time is slightly higher than recommended, affecting UX.",
+        },
+        {
+          aspect: "Mobile Optimization",
+          status: "Excellent",
+          description: "The page is well-optimized for mobile devices.",
+        },
+      ],
+      topRecommendation:
+        "Focus on improving page load speed and expanding content depth.",
     };
 
-    fetchFeedback();
-  }, []);
+    setFeedback(aiFeedback);
+    setLoading(false);
+  }, [pageSpeed]);
 
   if (loading) {
     return (
@@ -58,9 +71,9 @@ const AIFeedbackTab = () => {
 
   return (
     <div className="p-4 dark:text-gray-300 dark:bg-gray-900 h-screen bg-white">
-      <div className="flex items-center mb-4">
+      <div className="flex items-center mb-2">
         <Bot className="w-6 h-6 mr-2 text-blue-400" />
-        <h2 className="text-lg font-semibold">AI Feedback</h2>
+        <h2 className="text-lg font-semibold">Rusty Feedback</h2>
       </div>
 
       <div className="mb-4">

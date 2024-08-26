@@ -107,7 +107,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
             </Tabs.Panel>
 
             <Tabs.Panel value="summary" className="h-full w-full">
-              <AIFeedbackTab />
+              <AIFeedbackTab pageSpeed={pageSpeed} />
             </Tabs.Panel>
           </Tabs>
         </ResizablePanel>

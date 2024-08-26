@@ -600,3 +600,8 @@ select option {
     box-shadow: 0 0 0 40px #0000;
   }
 }
+
+/*MANTINE POPOVER*/
+.mantine-Popover-dropdown {
+  @apply text-black;
+}

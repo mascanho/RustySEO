@@ -43,6 +43,20 @@ export default function GeneralOverview({
   const iconsGray = pageSpeed === undefined;
   const seoIconsGray = pageTitle[0] === undefined;
 
+  // set the results into the session storage
+  useEffect(() => {
+    const scoring = [
+      {
+        name: "global Scoring",
+        passed: passedChecks.length,
+        failed: failedChecks.length,
+        total: passedChecks.length + failedChecks.length,
+      },
+    ];
+
+    window.sessionStorage.setItem("score", JSON.stringify(scoring));
+  }, [pageSpeed, checks]);
+
   return (
     <>
       <section className="w-full h-[23.5rem]  overflow-auto relative mt-0.5 bg-transparent">

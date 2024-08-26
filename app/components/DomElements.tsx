@@ -171,10 +171,10 @@ const DomElements = ({
                 (url || "No URL provided"),
             )
           }
-          className="flex underline cursor-pointer"
+          className="flex cursor-pointer underline"
         >
           <div className="flex items-center">
-            <h4 className="text-[12px] font-semibold dark:text-white/50">
+            <h4 className="text-[12px] font-semibold dark:text-white/50 text-apple-spaceGray/70">
               Nodes found:
             </h4>
             <span className="font-semibold text-xs text-apple-spaceGray/50">

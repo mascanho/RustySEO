@@ -70,16 +70,16 @@ export const OpenGraphCard = ({
           </DropdownMenu>
         </div>
       </div>
-      <section className="mx-auto h-full w-full overflow-auto relative bg-white/40 -mt-10 -z-1">
+      <section className="mx-auto h-full w-full relative overflow-hidden rounded-lg bg-white/40  -z-1">
         <div
-          className={`px-10  flex flex-col  items-center justify-center ${openGraphDetails.length === 0 ? "bg-white/40 h-full dark:bg-brand-darker" : "bg-white dark:bg-brand-darker h-full"}`}
+          className={`px-10 m-auto w-10/12  flex flex-col -mt-10  items-center justify-center ${openGraphDetails.length === 0 ? "bg-white/40 h-full dark:bg-brand-darker" : "bg-white dark:bg-brand-darker h-full"}`}
         >
           {openGraphDetails?.image?.length > 0 ? (
-            <div className="flex flex-col flex-wrap justify-start items-start">
+            <div className="flex flex-col flex-wrap justify-start items-start h-19/12">
               <img
                 src={openGraphDetails?.image}
                 alt="OpenGraph Image"
-                className="rounded-md w-[] h-auto   object-cover ml-0"
+                className="rounded-md w-full   object-cover ml-0 max-h-72"
               />
             </div>
           ) : (

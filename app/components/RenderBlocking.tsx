@@ -160,7 +160,8 @@ const RenderBlocking: React.FC<RenderBlockingProps> = ({
             <div className="flex items-center space-x-2">
               <span className="font-bold text-2xl text-apple-spaceGray/50">
                 {renderBlockingCount > 0 && `${renderBlockingCount} tasks`}
-                {stat && renderBlockingCount === 0 ? `0 tasks` : "..."}
+                {stat && renderBlockingCount === 0 && `0 tasks`}
+                {renderBlockingCount === 0 && !stat && `...`}
               </span>
               <p
                 className={`rounded-full font-semibold ml-2 px-2 text-xs py-[1px] ${!stat && "hidden"} ${labelClass}`}
