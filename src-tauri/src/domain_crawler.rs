@@ -1,14 +1,16 @@
 use reqwest::Client;
 use scraper::{Html, Selector};
+use serde::{Deserialize, Serialize};
 use std::{collections::HashSet, error::Error};
 use url::{ParseError, Url};
 
 #[derive(Serialize, Deserialize, Debug)]
-struct CrawlResults {
+pub struct GlobalCrawlResults {
     visited_urls: HashSet<String>,
+    all_files: HashSet<String>,
 }
 
-pub async fn crawl_domain(base_url: &str) -> Result<HashSet<String>, Box<dyn Error>> {
+pub async fn crawl_domain(base_url: &str) -> Result<GlobalCrawlResults, Box<dyn Error>> {
     let client = Client::new();
     let mut urls_to_visit = vec![base_url.to_string()];
     let mut visited_urls = HashSet::new();
@@ -77,5 +79,11 @@ pub async fn crawl_domain(base_url: &str) -> Result<HashSet<String>, Box<dyn Err
         visited_urls.insert(url);
     }
 
-    Ok(all_files)
+    println!("All files: {:?}", all_files.len());
+    println!("Visited URLs: {:?}", visited_urls.len());
+
+    Ok(GlobalCrawlResults {
+        visited_urls,
+        all_files,
+    })
 }

@@ -4,9 +4,11 @@ use crate::crawler::libs;
 use crate::crawler::libs::ApiKeys;
 use crate::crawler::libs::Credentials;
 use crate::domain_crawler;
+use crate::domain_crawler::GlobalCrawlResults;
 use crate::image_converter::converter;
 use serde::Deserialize;
 use serde::Serialize;
+use std::collections::HashSet;
 use std::error::Error;
 use std::fs;
 use std::io::{self, BufWriter, Write};
@@ -130,10 +132,21 @@ pub fn call_gsc_match_url(url: String) -> Result<Vec<GscMatched>, String> {
 }
 
 // ---------- CALL THE CRAWL DOMAIN FUNCTION
+
 #[tauri::command]
-pub async fn crawl_domain(url: &str) -> Result<(), Box<dyn Error>> {
-    println!("crawling domain..");
-    let crawler = domain_crawler::crawl_domain(url).await?;
-    println!("Results from Domain crawler: {:#?}", crawler);
-    Ok(())
+pub async fn crawl_domain(url: &str) -> Result<GlobalCrawlResults, String> {
+    println!("Crawling domain...");
+
+    // Attempt to crawl the domain and handle any errors
+    match domain_crawler::crawl_domain(url).await {
+        Ok(results) => {
+            println!("Results from Domain crawler: {:#?}", results);
+            Ok(results) // Successfully return an empty tuple on success
+        }
+        Err(e) => {
+            // Handle the error by converting it to a string
+            println!("Error occurred during domain crawl: {:?}", e);
+            Err(format!("Failed to crawl domain: {}", e))
+        }
+    }
 }
