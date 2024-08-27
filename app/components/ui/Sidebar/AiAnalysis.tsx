@@ -31,8 +31,6 @@ const AIFeedbackTab = ({ pageSpeed, loading }) => {
     [sessionScore],
   );
 
-  console.log(seoContentQuality, "Content Score");
-
   useEffect(() => {
     const getSummaryText = (score) => {
       if (score >= 85)
@@ -92,13 +90,13 @@ const AIFeedbackTab = ({ pageSpeed, loading }) => {
           description: contentQuality.description,
         },
         {
-          aspect: "User Experience",
+          aspect: "Page Performance",
           status: "Needs Improvement",
           description:
             "Page load time is slightly higher than recommended, affecting UX.",
         },
         {
-          aspect: "Mobile Optimization",
+          aspect: "SEO",
           status: "Excellent",
           description: "The page is well-optimized for mobile devices.",
         },
@@ -113,8 +111,9 @@ const AIFeedbackTab = ({ pageSpeed, loading }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[20rem] text-gray-400">
-        <Bot className="w-6 h-6 mr-2 animate-pulse" />
+        <Bot className="w-6 h-6 mr-2" />
         <span>Analyzing...</span>
+        <div className="animate-spin ml-2 rounded-full h-5 w-5 border-t-2 border-b-2 border-brand-bright mr-3" />
       </div>
     );
   }
