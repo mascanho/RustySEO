@@ -184,11 +184,6 @@ const useGetChecks = () => {
         name: "Images Alt Tags",
         status: seoImages?.length === 0 ? "Passed" : "Failed",
       },
-      {
-        id: "28",
-        name: "OpenGraph",
-        status: seoOpenGraph?.image ? "Passed" : "Failed",
-      },
     ];
   }, [
     performance,

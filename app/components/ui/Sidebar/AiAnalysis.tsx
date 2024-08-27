@@ -1,56 +1,95 @@
 // @ts-nocheck
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Bot } from "lucide-react";
+import useOnPageSeo from "@/store/storeOnPageSeo";
 
-const AIFeedbackTab = ({ pageSpeed }) => {
+const AIFeedbackTab = ({ pageSpeed, loading }) => {
   const [feedback, setFeedback] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [sessionScore, setSessionScore] = useState(null);
+  const { seoContentQuality } = useOnPageSeo();
 
-  // GET THE SCORE FROM SESSION STORAGE
+  const pageScoring = useMemo(
+    () => ({
+      readingLevel:
+        seoContentQuality?.readingLevelResults?.[0]?.[1] || "Unknown",
+    }),
+    [seoContentQuality],
+  );
+
   useEffect(() => {
     const scoring = sessionStorage.getItem("score");
-
     if (scoring) {
       setSessionScore(JSON.parse(scoring));
     }
   }, [pageSpeed]);
 
-  console.log(sessionScore, "session score");
+  const overallScore = useMemo(
+    () =>
+      (sessionScore &&
+        (sessionScore[0]?.passed / sessionScore[0]?.total) * 100) ||
+      0,
+    [sessionScore],
+  );
 
-  const overallScore =
-    (sessionScore &&
-      (sessionScore[0]?.passed / sessionScore[0]?.total) * 100) ||
-    0;
-  console.log(overallScore, "overall score");
+  console.log(seoContentQuality, "Content Score");
 
   useEffect(() => {
-    // Simulating API call to get AI feedback
-    setLoading(true);
-    // In a real scenario, this would be an API call
+    const getSummaryText = (score) => {
+      if (score >= 85)
+        return "The page is performing excellently, with just a few minor areas for improvement.";
+      if (score >= 60)
+        return "The page shows promise but has room for improvement in key areas.";
+      return "The page needs significant improvement in several key areas to enhance performance.";
+    };
 
-    // Determine summary based on overallScore
-    let summaryText;
-    if (overallScore >= 85) {
-      summaryText =
-        "The page is performing excellently, with just a few minor areas for improvement.";
-    } else if (overallScore >= 60) {
-      summaryText =
-        "The page shows promise but has room for improvement in key areas.";
-    } else {
-      summaryText =
-        "The page needs significant improvement in several key areas to enhance performance.";
-    }
+    const getContentQuality = (level) => {
+      switch (level) {
+        case "Very Easy":
+        case "Easy":
+          return {
+            status: "Excellent",
+            description:
+              "Content is very easy to read and understand, suitable for a wide audience.",
+          };
+        case "Fairly Easy":
+        case "Standard":
+          return {
+            status: "Good",
+            description:
+              "Content is fairly easy to read, appropriate for most readers.",
+          };
+        case "Fairly Difficult":
+          return {
+            status: "Needs Improvement",
+            description:
+              "Content may be challenging for some readers. Consider simplifying.",
+          };
+        case "Difficult":
+        case "Very Confusing":
+          return {
+            status: "Poor",
+            description:
+              "Content is difficult to read. Significant simplification is recommended.",
+          };
+        default:
+          return {
+            status: "Unknown",
+            description:
+              "Unable to determine content readability. Please review manually.",
+          };
+      }
+    };
+
+    const contentQuality = getContentQuality(pageScoring?.readingLevel);
 
     const aiFeedback = {
       overallScore: overallScore.toFixed(2),
-      summary: summaryText,
+      summary: getSummaryText(overallScore),
       insights: [
         {
           aspect: "Content Quality",
-          status: "Good",
-          description:
-            "Content is relevant and engaging, but could be more comprehensive.",
+          status: contentQuality.status,
+          description: contentQuality.description,
         },
         {
           aspect: "User Experience",
@@ -69,14 +108,22 @@ const AIFeedbackTab = ({ pageSpeed }) => {
     };
 
     setFeedback(aiFeedback);
-    setLoading(false);
-  }, [pageSpeed, overallScore]);
+  }, [pageSpeed, overallScore, pageScoring.readingLevel]);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-400">
+      <div className="flex items-center justify-center h-[20rem] text-gray-400">
         <Bot className="w-6 h-6 mr-2 animate-pulse" />
         <span>Analyzing...</span>
+      </div>
+    );
+  }
+
+  if (!pageSpeed && !loading) {
+    return (
+      <div className="flex items-center justify-center h-[20rem] text-gray-400">
+        <Bot className="w-6 h-6 mr-2 animate-pulse" />
+        <span>Crawl a page to get data</span>
       </div>
     );
   }
@@ -85,21 +132,23 @@ const AIFeedbackTab = ({ pageSpeed }) => {
     <div className="p-4 dark:text-gray-300 dark:bg-gray-900 h-screen bg-white">
       <div className="flex items-center mb-2">
         <Bot className="w-6 h-6 mr-2 text-blue-400" />
-        <h2 className="text-lg font-semibold">Rusty Feedback</h2>
+        <h2 className="text-sm font-semibold">Rusty Feedback</h2>
       </div>
 
       <div className="mb-4">
         <div className="flex justify-between items-center mb-2">
           <span className="text-xs font-medium">Overall Score</span>
-          <span className="text-xl font-bold text-blue-400">
-            {feedback.overallScore}%
+          <span className="text-sm font-bold text-blue-400">
+            {pageSpeed && `${feedback.overallScore}%`}
           </span>
         </div>
         <div className="w-full bg-gray-700 rounded-full h-2.5">
-          <div
-            className="bg-blue-400 h-2.5 rounded-full"
-            style={{ width: `${feedback.overallScore}%` }}
-          ></div>
+          {pageSpeed && (
+            <div
+              className="bg-blue-400 h-2.5 rounded-full"
+              style={{ width: `${feedback.overallScore}%` }}
+            />
+          )}
         </div>
       </div>
 
@@ -119,7 +168,9 @@ const AIFeedbackTab = ({ pageSpeed }) => {
                     ? "bg-green-900 text-green-300"
                     : insight.status === "Good"
                       ? "bg-blue-900 text-blue-300"
-                      : "bg-red-900 text-red-300"
+                      : insight.status === "Needs Improvement"
+                        ? "bg-yellow-900 text-yellow-300"
+                        : "bg-red-900 text-red-300"
                 }`}
               >
                 {insight.status}

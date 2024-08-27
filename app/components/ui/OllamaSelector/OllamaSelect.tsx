@@ -77,7 +77,7 @@ const OllamaSelect = ({ closeOllama }: any) => {
           placeholder="Select Model"
           value={model}
           data={ollamaModels}
-          className="w-full dark:bg-brand-darker hover:bg-red-500 dark:text-white"
+          className="w-full dark:bg-brand-darker  dark:text-white"
           onChange={(e) => handleOllamaSelect(e)}
         />
       </div>

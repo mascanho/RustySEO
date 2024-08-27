@@ -54,7 +54,7 @@ export const OpenGraphCard = ({
             <DropdownMenuTrigger>
               <BsThreeDotsVertical className="dark:text-white mr-2 z-10" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-brand-darker border bg-white dark:bg-brand-darker  dark:border-brand-dark dark:text-white mr-36">
+            <DropdownMenuContent className="bg-brand-darker border  dark:bg-brand-darker  dark:border-brand-dark dark:text-white mr-36">
               <DropdownMenuLabel>Social Previews</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -70,7 +70,7 @@ export const OpenGraphCard = ({
           </DropdownMenu>
         </div>
       </div>
-      <section className="mx-auto h-full w-full relative overflow-hidden rounded-lg bg-white/40  -z-1">
+      <section className="mx-auto h-full w-full relative overflow-hidden rounded-lg  -z-1">
         <div
           className={`px-10 m-auto w-10/12  flex flex-col -mt-10  items-center justify-center ${openGraphDetails.length === 0 ? "bg-white/40 h-full dark:bg-brand-darker" : "bg-white dark:bg-brand-darker h-full"}`}
         >

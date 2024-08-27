@@ -1,5 +1,6 @@
 import { useOllamaStore } from "@/store/store";
-import React from "react";
+import useOnPageSeo from "@/store/storeOnPageSeo";
+import React, { useEffect } from "react";
 
 const ContentSummary = ({
   keywords,
@@ -10,6 +11,19 @@ const ContentSummary = ({
   htmlToTextRatio,
 }: any) => {
   const ollamaStatus = useOllamaStore();
+  const { setSeoContentQuality } = useOnPageSeo();
+
+  useEffect(() => {
+    if (keywords) {
+      setSeoContentQuality({
+        keywords,
+        wordCount,
+        readingTime,
+        readingLevelResults,
+        htmlToTextRatio,
+      });
+    }
+  }, [keywords, readingTime, readingLevelResults]);
 
   // @ts-ignore
   const generateFallbackSummary = (
@@ -34,9 +48,9 @@ const ContentSummary = ({
         ? Math.round(htmlToTextRatio[0][0] * 100)
         : 0;
 
-    return `This content contains approximately ${wordCountNum} words and takes about ${readingTimeMin} minutes to read. 
-  The text is written at a ${readingLevel} reading level. 
-  The main topics covered, based on keyword analysis, are: ${topKeywords}. 
+    return `This content contains approximately ${wordCountNum} words and takes about ${readingTimeMin} minutes to read.
+  The text is written at a ${readingLevel} reading level.
+  The main topics covered, based on keyword analysis, are: ${topKeywords}.
   The content has a text-to-HTML ratio of ${textRatio}%, which ${textRatio > 50 ? "indicates good content density" : "suggests there might be room for more textual content"}.
   ${readingTimeMin > 7 ? "Consider breaking longer sections into smaller, more digestible parts for improved readability." : "The content length seems appropriate for quick consumption."}
   ${readingLevel === "College Graduate" ? "The advanced reading level may limit accessibility for some audiences." : "The reading level appears suitable for a general audience."}`;

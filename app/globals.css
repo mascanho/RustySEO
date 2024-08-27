@@ -603,5 +603,5 @@ select option {
 
 /*MANTINE POPOVER*/
 .mantine-Popover-dropdown {
-  @apply text-black;
+  @apply text-black dark:text-white;
 }

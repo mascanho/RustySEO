@@ -82,9 +82,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
               <Tabs.Tab value="first">Content</Tabs.Tab>
               <Tabs.Tab value="third">Ranking</Tabs.Tab>
               <Tabs.Tab value="second">SEO</Tabs.Tab>
-              {ollamaStatus.ollama && (
-                <Tabs.Tab value="summary">General</Tabs.Tab>
-              )}
+              <Tabs.Tab value="summary">General</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="first" className="h-full w-full">
               <ContentSummary
@@ -101,13 +99,11 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
             <Tabs.Panel value="second" className="h-full w-full">
               <SeoChart seo={seo} />
             </Tabs.Panel>
-
             <Tabs.Panel value="third" className="h-full w-full">
               <RankingInfo keywords={keywords} />
             </Tabs.Panel>
-
             <Tabs.Panel value="summary" className="h-full w-full">
-              <AIFeedbackTab pageSpeed={pageSpeed} />
+              <AIFeedbackTab loading={loading} pageSpeed={pageSpeed} />
             </Tabs.Panel>
           </Tabs>
         </ResizablePanel>
