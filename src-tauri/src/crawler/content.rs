@@ -72,19 +72,20 @@ fn get_visible_text(element: &ElementRef) -> String {
 }
 
 fn clean_text(text: &str) -> String {
-    text.replace('\n', " ")
-        .replace('\r', " ")
-        .replace('\t', " ")
+    let mut cleaned = text
+        .replace(['\n', '\r', '\t'], " ")
         .replace("&nbsp;", " ")
         .replace("&amp;", "&")
         .replace("&lt;", "<")
         .replace("&gt;", ">")
         .replace("&quot;", "\"")
-        .replace("&apos;", "'")
-        .replace("   ", " ")
-        .replace("  ", " ")
-        .trim()
-        .to_string()
+        .replace("&apos;", "'");
+
+    // Collapse multiple spaces into a single space
+    let re = Regex::new(r"\s+").unwrap();
+    cleaned = re.replace_all(&cleaned, " ").into_owned();
+
+    cleaned.trim().to_string()
 }
 
 pub fn extract_text(html: &Html) -> String {
