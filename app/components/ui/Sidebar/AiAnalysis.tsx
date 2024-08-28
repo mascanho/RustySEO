@@ -16,37 +16,37 @@ const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
   console.log(seoScore, "SEO SCORE FROM SCORE");
 
   const metrics = {
-    performance: globalPerformanceScore?.performance || 0.56,
-    fcp: globalPerformanceScore?.fcp || 0.97,
-    lcp: globalPerformanceScore?.lcp || 0.8,
-    tti: globalPerformanceScore?.tti || 0.59,
-    tbt: globalPerformanceScore?.tbt || 0.15,
-    cls: globalPerformanceScore?.cls || 0.54,
-    speedIndex: globalPerformanceScore?.speedIndex || 0.78,
-    serverResponse: globalPerformanceScore?.serverResponse || 1,
-    largePayloads: globalPerformanceScore?.largePayloads || 1,
-    domSize: globalPerformanceScore?.domSize || 2475,
-    longTasks: globalPerformanceScore?.longTasks || 1,
+    performance: globalPerformanceScore?.performance || 0,
+    fcp: globalPerformanceScore?.fcp || 0,
+    lcp: globalPerformanceScore?.lcp || 0,
+    tti: globalPerformanceScore?.tti || 0,
+    tbt: globalPerformanceScore?.tbt || 0,
+    cls: globalPerformanceScore?.cls || 0,
+    speedIndex: globalPerformanceScore?.speedIndex || 0,
+    serverResponse: globalPerformanceScore?.serverResponse || 0,
+    largePayloads: globalPerformanceScore?.largePayloads || 0,
+    domSize: globalPerformanceScore?.domSize || 0,
+    longTasks: globalPerformanceScore?.longTasks || 0,
     networkRequests: globalPerformanceScore?.networkRequests || null,
-    renderBlocking: globalPerformanceScore?.renderBlocking || 315,
+    renderBlocking: globalPerformanceScore?.renderBlocking || 0,
     urlRedirects: globalPerformanceScore?.urlRedirects || null,
   };
 
   const weights = {
-    performance: 0.25,
-    fcp: 0.1,
-    lcp: 0.1,
-    tti: 0.1,
+    performance: 0.24,
+    fcp: 0.15,
+    lcp: 0.15,
+    tti: 0.14,
     tbt: 0.05,
     cls: 0.05,
     speedIndex: 0.05,
     serverResponse: 0.05,
     largePayloads: 0.05,
-    domSize: 0.05,
-    urlRedirects: 0.05,
-    longTasks: 0.05,
-    renderBlocking: 0.05,
-    networkRequests: 0.05,
+    domSize: 0.01,
+    urlRedirects: 0.01,
+    longTasks: 0.01,
+    renderBlocking: 0.03,
+    networkRequests: 0.01,
   };
 
   function calculateGlobalScore(metrics, weights) {
@@ -153,13 +153,13 @@ const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
           description:
             "Webpage performance is critical, causing significant user experience issues. Immediate action is required.",
         };
-      } else if (score < 50) {
+      } else if (score < 70) {
         return {
           status: "Needs Improvement",
           description:
             "Webpage performance is below average, with noticeable delays. Optimization is recommended.",
         };
-      } else if (score < 75) {
+      } else if (score < 85) {
         return {
           status: "Acceptable",
           description:
