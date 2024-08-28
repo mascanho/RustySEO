@@ -13,6 +13,7 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { useEffect, useState } from "react";
 
 import {
   FiRefreshCw,
@@ -32,19 +33,19 @@ const handleCopy = (url: string) => {
   navigator?.clipboard.writeText(url);
 };
 
-const TableMenus = ({ children, data, crawl }: any) => {
+const TableMenus = ({ children, data, crawl, url }: any) => {
   return (
     <ContextMenu>
       <ContextMenuTrigger>{children}</ContextMenuTrigger>
       <ContextMenuContent className="w-40">
-        <ContextMenuItem onClick={() => handleCopy(data.url)}>
+        <ContextMenuItem onClick={() => handleCopy(data?.url || url)}>
           <FiClipboard className="mr-2" /> Copy
         </ContextMenuItem>
-        <ContextMenuItem onClick={() => crawl(data.url)}>
+        <ContextMenuItem onClick={() => crawl(data?.url || url)}>
           <FiGlobe className="mr-2" />
-          Open in Browser
+          Open in Browser ,
         </ContextMenuItem>
-        <ContextMenuItem onClick={() => crawl(data.url)}>
+        <ContextMenuItem onClick={() => crawl(data?.url || url)}>
           <FiRefreshCw className="mr-2" /> Re-crawl
         </ContextMenuItem>
         <ContextMenuSub>
@@ -131,10 +132,9 @@ const TableMenus = ({ children, data, crawl }: any) => {
             </ContextMenuItem>
           </ContextMenuSubContent>
         </ContextMenuSub>
-        <ContextMenuSeparator />
-        <ContextMenuRadioGroup value="pedro">
-          <ContextMenuLabel>People</ContextMenuLabel>
-        </ContextMenuRadioGroup>
+        {/* <ContextMenuRadioGroup value="pedro">
+            <ContextMenuLabel>People</ContextMenuLabel>
+          </ContextMenuRadioGroup> */}
       </ContextMenuContent>
     </ContextMenu>
   );

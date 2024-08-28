@@ -82,7 +82,6 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
               <Tabs.Tab value="summary">General</Tabs.Tab>
               <Tabs.Tab value="first">Content</Tabs.Tab>
               <Tabs.Tab value="third">GSC</Tabs.Tab>
-              <Tabs.Tab value="second">SEO</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="first" className="h-full w-full">
               <ContentSummary
@@ -95,9 +94,6 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
                 robots={robots}
                 htmlToTextRatio={htmlToTextRatio}
               />
-            </Tabs.Panel>
-            <Tabs.Panel value="second" className="h-full w-full">
-              <SeoChart seo={seo} />
             </Tabs.Panel>
             <Tabs.Panel value="third" className="h-full w-full">
               <RankingInfo keywords={keywords} />

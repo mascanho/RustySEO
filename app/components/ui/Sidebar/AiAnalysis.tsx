@@ -33,7 +33,7 @@ const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
   };
 
   const weights = {
-    performance: 0.15,
+    performance: 0.25,
     fcp: 0.1,
     lcp: 0.1,
     tti: 0.1,
@@ -44,8 +44,8 @@ const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
     largePayloads: 0.05,
     domSize: 0.05,
     urlRedirects: 0.05,
-    longTasks: 0.1,
-    renderBlocking: 0.1,
+    longTasks: 0.05,
+    renderBlocking: 0.05,
     networkRequests: 0.05,
   };
 

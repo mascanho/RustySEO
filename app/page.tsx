@@ -160,9 +160,8 @@ const Home: React.FC<HomeProps> = () => {
     // set SEO LOADING
     seoIsLoading.setSeoLoading(!seoIsLoading.seoLoading);
 
-    // set the url being searched in the session storage
-    sessionStorage.setItem("url", url);
-
+    // set the url beng searched in the session storage
+    sessionStorage.setItem("url", url || "No URL");
     window.dispatchEvent(new Event("sessionStorageUpdated"));
 
     setCrawlResult([]);
@@ -687,6 +686,8 @@ const Home: React.FC<HomeProps> = () => {
                 code={headElements}
                 indexation={indexation}
                 charset={charset}
+                crawl={handleClick}
+                url={url}
               />
 
               {/* CHARTS SECTION */}
