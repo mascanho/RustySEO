@@ -179,11 +179,6 @@ const useGetChecks = () => {
         name: "Repeated Headings",
         status: seoheadings?.length === 0 ? "Passed" : "Failed",
       },
-      {
-        id: "27",
-        name: "Images Alt Tags",
-        status: seoImages?.length === 0 ? "Passed" : "Failed",
-      },
     ];
   }, [
     performance,
