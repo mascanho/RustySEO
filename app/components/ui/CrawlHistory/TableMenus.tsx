@@ -43,7 +43,7 @@ const TableMenus = ({ children, data, crawl, url }: any) => {
         </ContextMenuItem>
         <ContextMenuItem onClick={() => crawl(data?.url || url)}>
           <FiGlobe className="mr-2" />
-          Open in Browser ,
+          Open in Browser
         </ContextMenuItem>
         <ContextMenuItem onClick={() => crawl(data?.url || url)}>
           <FiRefreshCw className="mr-2" /> Re-crawl
