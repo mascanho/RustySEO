@@ -3,11 +3,86 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Bot } from "lucide-react";
 import useOnPageSeo from "@/store/storeOnPageSeo";
 import Spinner from "./checks/_components/Spinner";
+import usePageSpeedStore from "@/store/StorePerformance";
 
 const AIFeedbackTab = ({ pageSpeed, loading }) => {
   const [feedback, setFeedback] = useState(null);
   const [sessionScore, setSessionScore] = useState(null);
   const { seoContentQuality } = useOnPageSeo();
+  const globalPerformanceScore = usePageSpeedStore(
+    (state) => state.GlobalPerformanceScore,
+  );
+
+  console.log(globalPerformanceScore, "Global Score");
+
+  const performanceMetrics = {
+    performance: globalPerformanceScore?.performance,
+    fcp: globalPerformanceScore?.fcp,
+    lcp: globalPerformanceScore?.lcp,
+    tti: globalPerformanceScore?.tti,
+    tbt: globalPerformanceScore?.tbt,
+    cls: globalPerformanceScore?.cls,
+    speedIndex: globalPerformanceScore?.speedIndex,
+    serverResponse: globalPerformanceScore?.serverResponse,
+    largePayloads: globalPerformanceScore?.largePayloads,
+    domSize: globalPerformanceScore?.domSize <= 1500 ? 1 : 0,
+    urlRedirects: globalPerformanceScore?.urlRedirects,
+    longTasks: globalPerformanceScore?.longTasks,
+    renderBlocking: globalPerformanceScore?.renderBlocking,
+    networkRequests: globalPerformanceScore?.networkRequests,
+  };
+
+  const weights = {
+    performance: 0.15,
+    fcp: 0.1,
+    lcp: 0.1,
+    tti: 0.1,
+    tbt: 0.05,
+    cls: 0.05,
+    speedIndex: 0.05,
+    serverResponse: 0.05,
+    largePayloads: 0.05,
+    domSize: 0.05,
+    urlRedirects: 0.05,
+    longTasks: 0.1,
+    renderBlocking: 0.1,
+    networkRequests: 0.05,
+  };
+
+  function calculateGlobalScore(metrics, weights) {
+    let totalWeight = 0;
+    let weightedSum = 0;
+
+    Object.keys(metrics).forEach((key) => {
+      const value = metrics[key];
+      const weight = weights[key];
+
+      if (value !== null && weight !== undefined) {
+        // Normalize domSize and renderBlocking to be between 0 and 1 if necessary
+        let normalizedValue = value;
+        if (key === "domSize") {
+          normalizedValue = Math.min(1, value / 3000); // cap domSize at 3000
+        } else if (key === "renderBlocking") {
+          normalizedValue = Math.min(1, value / 1000); // cap renderBlocking at 1000
+        }
+
+        weightedSum += normalizedValue * weight;
+        totalWeight += weight;
+      }
+    });
+
+    // Compute weighted average
+    const globalScore = weightedSum / totalWeight;
+    return globalScore;
+  }
+
+  // Calculate the global percentage score
+  const globalPercentageScore =
+    calculateGlobalScore(performanceMetrics, weights) * 100;
+
+  console.log(
+    `The global percentage score is: ${globalPercentageScore.toFixed(2)}%`,
+  );
 
   const pageScoring = useMemo(
     () => ({
@@ -128,9 +203,8 @@ const AIFeedbackTab = ({ pageSpeed, loading }) => {
         },
         {
           aspect: "Page Performance",
-          status: "Needs Improvement",
-          description:
-            "Page load time is slightly higher than recommended, affecting UX.",
+          status: performanceRating.status,
+          description: performanceRating.description,
         },
         {
           aspect: "SEO",
@@ -170,7 +244,7 @@ const AIFeedbackTab = ({ pageSpeed, loading }) => {
           {pageSpeed && (
             <div
               className="bg-blue-400 h-2.5 rounded-full"
-              style={{ width: `${feedback.overallScore}%` }}
+              style={{ width: `${feedback?.overallScore}%` }}
             />
           )}
         </div>
@@ -190,7 +264,8 @@ const AIFeedbackTab = ({ pageSpeed, loading }) => {
                 className={`text-xs px-2 py-[2px] rounded ${
                   insight.status === "Excellent"
                     ? "bg-green-900 text-green-300"
-                    : insight.status === "Good"
+                    : insight.status === "Good" ||
+                        insight.status === "Acceptable"
                       ? "bg-blue-900 text-blue-300"
                       : insight.status === "Needs Improvement"
                         ? "bg-yellow-900 text-yellow-300"

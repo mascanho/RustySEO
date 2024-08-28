@@ -1,7 +1,7 @@
 // @ts-nocheck
 import useOnPageSeo from "@/store/storeOnPageSeo";
 import usePageSpeedStore from "@/store/StorePerformance";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 const useGetChecks = () => {
   // Extract all necessary state from Zustand store
@@ -36,6 +36,32 @@ const useGetChecks = () => {
   const seoheadings = useOnPageSeo((state) => state.seoheadings);
   const seoImages = useOnPageSeo((state) => state.seoImages);
   const seoOpenGraph = useOnPageSeo((state) => state.seoOpenGraph);
+
+  // SET ALL OF THE PERFOMANCE STATE INTO A GLOBAL STATE
+  const setGlobalPerformanceScore = usePageSpeedStore(
+    (state) => state.setGlobalPerformanceScore,
+  );
+
+  useEffect(() => {
+    const score = {
+      performance,
+      fcp,
+      lcp,
+      tti,
+      tbt,
+      cls,
+      speedIndex,
+      serverResponse,
+      largePayloads,
+      domSize,
+      urlRedirects,
+      longTasks,
+      renderBlocking,
+      networkRequests,
+    };
+
+    setGlobalPerformanceScore(score);
+  }, [performance]);
 
   console.log(seoOpenGraph, "SEO CHECKLIST ----------");
 

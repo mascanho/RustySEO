@@ -17,6 +17,7 @@ const usePageSpeedStore = create((set, get) => ({
   netowrkRequests: null,
   passedChecks: 0,
   failedChecks: 0,
+  GlobalPerformanceScore: null,
   // Function to set all the values at once
   setPageSpeedData: (pageSpeed: any) =>
     set({
@@ -61,6 +62,10 @@ const usePageSpeedStore = create((set, get) => ({
     set({
       passedChecks,
       failedChecks,
+    }),
+  setGlobalPerformanceScore: (GlobalPerformanceScore: object) =>
+    set({
+      GlobalPerformanceScore,
     }),
 }));
 
