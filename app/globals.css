@@ -125,9 +125,10 @@ pre:not([class*="robots"]) {
 .mantine-Drawer-root,
 .mantine-Drawer-inner,
 .mantine-Drawer-content {
-  margin: 8rem 0 36px 0.1rem;
+  margin: 1.6rem 0 36px 0.1rem;
   overflow: hidden !important ;
   padding: 0 !important;
+  z-index: 9999999 !important;
 }
 
 .tabs-list {
@@ -150,7 +151,7 @@ pre:not([class*="robots"]) {
 }
 
 .todoItems {
-  height: calc(85vh - 40px);
+  height: calc(85vh - 10px);
   overflow: unset;
   padding-right: 10px;
 }
