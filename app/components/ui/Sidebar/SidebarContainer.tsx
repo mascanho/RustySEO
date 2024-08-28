@@ -77,12 +77,12 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
     >
       <ResizablePanelGroup direction="vertical">
         <ResizablePanel defaultSize={220} className="h-[calc(100vh-1.5rem)]">
-          <Tabs defaultValue="first" className="text-xs aside-tabs">
+          <Tabs defaultValue="summary" className="text-xs aside-tabs">
             <Tabs.List justify="left" className="dark:text-white text-xs">
-              <Tabs.Tab value="first">Content</Tabs.Tab>
-              <Tabs.Tab value="third">Ranking</Tabs.Tab>
-              <Tabs.Tab value="second">SEO</Tabs.Tab>
               <Tabs.Tab value="summary">General</Tabs.Tab>
+              <Tabs.Tab value="first">Content</Tabs.Tab>
+              <Tabs.Tab value="third">GSC</Tabs.Tab>
+              <Tabs.Tab value="second">SEO</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="first" className="h-full w-full">
               <ContentSummary

@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 import { writeBinaryFile, BaseDirectory } from "@tauri-apps/api/fs";
@@ -174,40 +173,42 @@ export default function ImageOptimizer() {
   };
 
   return (
-    <section className="w-full border-none rounded-none h-full p-10 dark:bg-brand-dark shadow-none flex">
-      <div className="w-2/3">
-        <CardHeader>
-          <CardTitle>Advanced Image Optimizer</CardTitle>
-          <CardDescription>
-            Upload an image and customize its dimensions, format, quality, and
-            more.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-6">
-            <div
-              {...getRootProps()}
-              className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer"
-            >
-              <input {...getInputProps()} />
-              {image ? (
-                <img
-                  src={image.preview}
-                  alt="Preview"
-                  className="max-w-full max-h-64 object-contain"
-                />
-              ) : isDragActive ? (
-                <p>Drop the image here ...</p>
-              ) : (
-                <>
-                  <UploadIcon className="w-12 h-12 mb-4 text-gray-400" />
-                  <p>
-                    Drag &apos;n&apos; drop an image here, or click to select
-                    one
-                  </p>
-                </>
-              )}
-            </div>
+    <section className="w-full border-none rounded-none h-full p-10 dark:bg-brand-dark shadow-none">
+      <CardTitle>Advanced Image Optimizer</CardTitle>
+      <CardHeader>
+        <CardDescription>
+          Upload an image and customize its dimensions, format, quality, and
+          more.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex">
+          {/* Left Column: Drag and Drop Area */}
+          <div
+            {...getRootProps()}
+            className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer w-1/2"
+          >
+            <input {...getInputProps()} />
+            {image ? (
+              <img
+                src={image.preview}
+                alt="Preview"
+                className="max-w-full max-h-64 object-contain"
+              />
+            ) : isDragActive ? (
+              <p>Drop the image here ...</p>
+            ) : (
+              <>
+                <UploadIcon className="w-12 h-12 mb-4 text-gray-400" />
+                <p>
+                  Drag &apos;n&apos; drop an image here, or click to select one
+                </p>
+              </>
+            )}
+          </div>
+
+          {/* Right Column: All Controls */}
+          <div className="flex flex-col space-y-4 w-1/2 ml-6">
             <div className="flex items-center space-x-2">
               <Switch
                 id="aspect-ratio"
@@ -216,6 +217,7 @@ export default function ImageOptimizer() {
               />
               <Label htmlFor="aspect-ratio">Maintain aspect ratio</Label>
             </div>
+
             <div className="flex items-center space-x-2">
               <Switch
                 id="crop-mode"
@@ -224,6 +226,7 @@ export default function ImageOptimizer() {
               />
               <Label htmlFor="crop-mode">Enable crop mode</Label>
             </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="width">Width (px)</Label>
@@ -241,6 +244,7 @@ export default function ImageOptimizer() {
                   <p className="text-red-500 text-sm mt-1">{errors.width}</p>
                 )}
               </div>
+
               <div>
                 <Label htmlFor="height">Height (px)</Label>
                 <Input
@@ -258,70 +262,65 @@ export default function ImageOptimizer() {
                 )}
               </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <Label htmlFor="format">Format</Label>
-                <Select value={format} onValueChange={setFormat}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select format" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="jpg">JPG</SelectItem>
-                    <SelectItem value="png">PNG</SelectItem>
-                    <SelectItem value="webp">WebP</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="quality">Quality</Label>
-                <Slider
-                  id="quality"
-                  value={[quality]}
-                  onValueChange={(value) => setQuality(value[0])}
-                  min={1}
-                  max={100}
-                  step={1}
-                  aria-invalid={errors.quality ? "true" : "false"}
-                />
-                {errors.quality && (
-                  <p className="text-red-500 text-sm mt-1">{errors.quality}</p>
-                )}
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="file-size">Estimated File Size (KB)</Label>
-              <Input
-                id="file-size"
-                name="file-size"
-                type="number"
-                value={fileSize}
-                readOnly
-              />
-            </div>
+
+            <Label htmlFor="format">Format</Label>
+            <Select value={format} onValueChange={setFormat}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select format" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="jpg">JPG</SelectItem>
+                <SelectItem value="png">PNG</SelectItem>
+                <SelectItem value="webp">WebP</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Label htmlFor="quality">Quality</Label>
+            <Slider
+              id="quality"
+              value={[quality]}
+              onValueChange={(value) => setQuality(value[0])}
+              min={1}
+              max={100}
+              step={1}
+              aria-invalid={errors.quality ? "true" : "false"}
+            />
+            {errors.quality && (
+              <p className="text-red-500 text-sm mt-1">{errors.quality}</p>
+            )}
+
+            <Label htmlFor="file-size">Estimated File Size (KB)</Label>
+            <Input
+              id="file-size"
+              name="file-size"
+              type="number"
+              value={fileSize}
+              readOnly
+            />
+
             <Button onClick={handleOptimize} disabled={isProcessing}>
               {loading ? "Optimizing..." : "Optimize Image"}
             </Button>
           </div>
-          <div>
-            {optimizedImages.length > 0 && (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {optimizedImages.map((img, index) => (
-                  <div key={index} className="flex flex-col items-center">
-                    <img
-                      src={img.src}
-                      alt={`Optimized ${img.format}`}
-                      className="max-w-full max-h-64 object-contain"
-                    />
-                    <Button onClick={() => saveImage(img)} className="mt-2">
-                      Save {img.format.toUpperCase()}
-                    </Button>
-                  </div>
-                ))}
+        </div>
+
+        {optimizedImages.length > 0 && (
+          <div className="grid gap-4 sm:grid-cols-2 mt-6">
+            {optimizedImages.map((img, index) => (
+              <div key={index} className="flex flex-col items-center">
+                <img
+                  src={img.src}
+                  alt={`Optimized ${img.format}`}
+                  className="max-w-full max-h-64 object-contain"
+                />
+                <Button onClick={() => saveImage(img)} className="mt-2">
+                  Save {img.format.toUpperCase()}
+                </Button>
               </div>
-            )}
+            ))}
           </div>
-        </CardContent>
-      </div>
+        )}
+      </CardContent>
     </section>
   );
 }

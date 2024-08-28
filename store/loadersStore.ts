@@ -14,6 +14,7 @@ interface LoaderStore {
 const useLoaderStore = create<LoaderStore>((set) => ({
   loaders: {
     links: false,
+    seoLoader: false,
   }, // Initial state with no loaders
 
   showLoader: (loaderName: string) =>
