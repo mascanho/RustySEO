@@ -61,10 +61,48 @@ const useGetChecks = () => {
     };
 
     setGlobalPerformanceScore(score);
-  }, [performance]);
+  }, []);
 
-  console.log(seoOpenGraph, "SEO CHECKLIST ----------");
+  // Use useMemo to calculate the score only when its dependencies change
+  const score = useMemo(
+    () => ({
+      performance,
+      fcp,
+      lcp,
+      tti,
+      tbt,
+      cls,
+      speedIndex,
+      serverResponse,
+      largePayloads,
+      domSize,
+      urlRedirects,
+      longTasks,
+      renderBlocking,
+      networkRequests,
+    }),
+    [
+      performance,
+      fcp,
+      lcp,
+      tti,
+      tbt,
+      cls,
+      speedIndex,
+      serverResponse,
+      largePayloads,
+      domSize,
+      urlRedirects,
+      longTasks,
+      renderBlocking,
+      networkRequests,
+    ],
+  );
 
+  // Use useEffect to set the global performance score only once
+  useEffect(() => {
+    setGlobalPerformanceScore(score);
+  }, [score, setGlobalPerformanceScore]);
   // Use useMemo to avoid recalculating on every render
   const checks = useMemo(() => {
     return [

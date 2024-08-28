@@ -103,7 +103,11 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
               <RankingInfo keywords={keywords} />
             </Tabs.Panel>
             <Tabs.Panel value="summary" className="h-full w-full">
-              <AIFeedbackTab loading={loading} pageSpeed={pageSpeed} />
+              <AIFeedbackTab
+                seo={seo}
+                loading={loading}
+                pageSpeed={pageSpeed}
+              />
             </Tabs.Panel>
           </Tabs>
         </ResizablePanel>

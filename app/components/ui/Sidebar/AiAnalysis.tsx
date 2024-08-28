@@ -2,34 +2,34 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Bot } from "lucide-react";
 import useOnPageSeo from "@/store/storeOnPageSeo";
-import Spinner from "./checks/_components/Spinner";
 import usePageSpeedStore from "@/store/StorePerformance";
 
-const AIFeedbackTab = ({ pageSpeed, loading }) => {
+const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
   const [feedback, setFeedback] = useState(null);
   const [sessionScore, setSessionScore] = useState(null);
   const { seoContentQuality } = useOnPageSeo();
   const globalPerformanceScore = usePageSpeedStore(
     (state) => state.GlobalPerformanceScore,
   );
+  const seoScore = seo?.lighthouseResult?.categories?.seo?.score ?? 0;
 
-  console.log(globalPerformanceScore, "Global Score");
+  console.log(seoScore, "SEO SCORE FROM SCORE");
 
-  const performanceMetrics = {
-    performance: globalPerformanceScore?.performance,
-    fcp: globalPerformanceScore?.fcp,
-    lcp: globalPerformanceScore?.lcp,
-    tti: globalPerformanceScore?.tti,
-    tbt: globalPerformanceScore?.tbt,
-    cls: globalPerformanceScore?.cls,
-    speedIndex: globalPerformanceScore?.speedIndex,
-    serverResponse: globalPerformanceScore?.serverResponse,
-    largePayloads: globalPerformanceScore?.largePayloads,
-    domSize: globalPerformanceScore?.domSize <= 1500 ? 1 : 0,
-    urlRedirects: globalPerformanceScore?.urlRedirects,
-    longTasks: globalPerformanceScore?.longTasks,
-    renderBlocking: globalPerformanceScore?.renderBlocking,
-    networkRequests: globalPerformanceScore?.networkRequests,
+  const metrics = {
+    performance: globalPerformanceScore?.performance || 0.56,
+    fcp: globalPerformanceScore?.fcp || 0.97,
+    lcp: globalPerformanceScore?.lcp || 0.8,
+    tti: globalPerformanceScore?.tti || 0.59,
+    tbt: globalPerformanceScore?.tbt || 0.15,
+    cls: globalPerformanceScore?.cls || 0.54,
+    speedIndex: globalPerformanceScore?.speedIndex || 0.78,
+    serverResponse: globalPerformanceScore?.serverResponse || 1,
+    largePayloads: globalPerformanceScore?.largePayloads || 1,
+    domSize: globalPerformanceScore?.domSize || 2475,
+    longTasks: globalPerformanceScore?.longTasks || 1,
+    networkRequests: globalPerformanceScore?.networkRequests || null,
+    renderBlocking: globalPerformanceScore?.renderBlocking || 315,
+    urlRedirects: globalPerformanceScore?.urlRedirects || null,
   };
 
   const weights = {
@@ -58,31 +58,23 @@ const AIFeedbackTab = ({ pageSpeed, loading }) => {
       const weight = weights[key];
 
       if (value !== null && weight !== undefined) {
-        // Normalize domSize and renderBlocking to be between 0 and 1 if necessary
-        let normalizedValue = value;
-        if (key === "domSize") {
-          normalizedValue = Math.min(1, value / 3000); // cap domSize at 3000
-        } else if (key === "renderBlocking") {
-          normalizedValue = Math.min(1, value / 1000); // cap renderBlocking at 1000
-        }
+        const normalizedValue =
+          key === "domSize"
+            ? Math.min(1, value / 3000)
+            : key === "renderBlocking"
+              ? Math.min(1, value / 1000)
+              : value;
 
         weightedSum += normalizedValue * weight;
         totalWeight += weight;
       }
     });
 
-    // Compute weighted average
     const globalScore = weightedSum / totalWeight;
     return globalScore;
   }
 
-  // Calculate the global percentage score
-  const globalPercentageScore =
-    calculateGlobalScore(performanceMetrics, weights) * 100;
-
-  console.log(
-    `The global percentage score is: ${globalPercentageScore.toFixed(2)}%`,
-  );
+  const globalPercentageScore = calculateGlobalScore(metrics, weights);
 
   const pageScoring = useMemo(
     () => ({
@@ -155,42 +147,64 @@ const AIFeedbackTab = ({ pageSpeed, loading }) => {
     };
 
     const getPerformanceRating = (score) => {
-      if (score < 0.25) {
+      if (score < 25) {
         return {
           status: "Unacceptable",
           description:
             "Webpage performance is critical, causing significant user experience issues. Immediate action is required.",
         };
-      } else if (score < 0.5) {
+      } else if (score < 50) {
         return {
           status: "Needs Improvement",
           description:
             "Webpage performance is below average, with noticeable delays. Optimization is recommended.",
         };
-      } else if (score >= 0.75) {
+      } else if (score < 75) {
         return {
           status: "Acceptable",
           description:
             "Webpage performance is adequate, but there may be room for improvement in load times or responsiveness.",
         };
-      } else if (score === 1) {
+      } else {
         return {
           status: "Optimal",
           description:
             "Webpage performance is excellent, ensuring fast load times and a smooth user experience.",
         };
+      }
+    };
+
+    const getSeoRating = (score) => {
+      if (score < 0.25) {
+        return {
+          status: "Unacceptable",
+          description:
+            "SEO performance is critically low, potentially harming search rankings and visibility. Urgent optimization of key SEO elements is necessary.",
+        };
+      } else if (score < 0.5) {
+        return {
+          status: "Needs Improvement",
+          description:
+            "SEO performance is suboptimal, likely affecting search engine rankings. Focus on enhancing meta tags, content quality, and site structure.",
+        };
+      } else if (score < 0.75) {
+        return {
+          status: "Acceptable",
+          description:
+            "SEO performance is moderate, but there's room for improvement. Consider refining keyword strategies and improving content relevance.",
+        };
       } else {
         return {
-          status: "Unknown",
+          status: "Optimal",
           description:
-            "Unable to assess webpage performance. Please review metrics manually.",
+            "SEO performance is excellent, supporting strong search engine visibility. Continue monitoring and adjusting strategies to maintain high rankings.",
         };
       }
     };
 
     const performanceRating = getPerformanceRating(overallScore);
-
     const contentQuality = getContentQuality(pageScoring?.readingLevel);
+    const seoRating = getSeoRating(seoScore);
 
     const aiFeedback = {
       overallScore: overallScore.toFixed(2),
@@ -208,8 +222,8 @@ const AIFeedbackTab = ({ pageSpeed, loading }) => {
         },
         {
           aspect: "SEO",
-          status: "Excellent",
-          description: "The page is well-optimized for mobile devices.",
+          status: seoRating.status,
+          description: seoRating.description,
         },
       ],
       topRecommendation:
@@ -256,13 +270,13 @@ const AIFeedbackTab = ({ pageSpeed, loading }) => {
         {feedback?.insights.map((insight, index) => (
           <div
             key={index}
-            className="border-b border-b-gray-300 dark:border-brand-dark border-gray-700 pb-2"
+            className="border-b border-b-gray-300 last-of-type:border-b-0 last:pb-0 dark:border-brand-dark border-gray-700 pb-2"
           >
             <div className="flex justify-between items-center">
               <span className="font-medium text-xs">{insight?.aspect}</span>
               <span
                 className={`text-xs px-2 py-[2px] rounded ${
-                  insight.status === "Excellent"
+                  insight.status === "Excellent" || insight.status === "Optimal"
                     ? "bg-green-900 text-green-300"
                     : insight.status === "Good" ||
                         insight.status === "Acceptable"
@@ -282,12 +296,12 @@ const AIFeedbackTab = ({ pageSpeed, loading }) => {
         ))}
       </div>
 
-      <div className="text-sm">
-        <span className="font-medium text-xs">Top Recommendation:</span>
-        <p className="mt-1 text-blue-300 text-xs">
-          {feedback?.topRecommendation}
-        </p>
-      </div>
+      {/* <div className="text-sm"> */}
+      {/*   <span className="font-medium text-xs">Top Recommendation:</span> */}
+      {/*   <p className="mt-1 text-blue-300 text-xs"> */}
+      {/*     {feedback?.topRecommendation} */}
+      {/*   </p> */}
+      {/* </div> */}
     </div>
   );
 };
