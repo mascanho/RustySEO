@@ -8,7 +8,6 @@ const LinkAnalysis = ({
   visibleLinks: any[];
   links: any;
 }) => {
-  console.log(links, "from the links table");
 
   const links404 = links.filter((link: any) => link?.status_code === 404);
   const { Visible } = useStore();

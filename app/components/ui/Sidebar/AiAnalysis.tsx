@@ -13,8 +13,6 @@ const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
   );
   const seoScore = seo?.lighthouseResult?.categories?.seo?.score ?? 0;
 
-  console.log(seoScore, "SEO SCORE FROM SCORE");
-
   const metrics = {
     performance: globalPerformanceScore?.performance || 0,
     fcp: globalPerformanceScore?.fcp || 0,
@@ -33,19 +31,19 @@ const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
   };
 
   const weights = {
-    performance: 0.24,
-    fcp: 0.15,
-    lcp: 0.15,
+    performance: 0.3,
+    fcp: 0.19,
+    lcp: 0.19,
     tti: 0.14,
     tbt: 0.05,
     cls: 0.05,
-    speedIndex: 0.05,
-    serverResponse: 0.05,
-    largePayloads: 0.05,
+    speedIndex: 0.01,
+    serverResponse: 0.01,
+    largePayloads: 0.01,
     domSize: 0.01,
     urlRedirects: 0.01,
     longTasks: 0.01,
-    renderBlocking: 0.03,
+    renderBlocking: 0.01,
     networkRequests: 0.01,
   };
 
@@ -58,23 +56,37 @@ const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
       const weight = weights[key];
 
       if (value !== null && weight !== undefined) {
-        const normalizedValue =
-          key === "domSize"
-            ? Math.min(1, value / 3000)
-            : key === "renderBlocking"
-              ? Math.min(1, value / 1000)
-              : value;
+        let normalizedValue;
+
+        switch (key) {
+          case "domSize":
+            normalizedValue = Math.min(1, value / 3000);
+            break;
+          case "renderBlocking":
+            normalizedValue = Math.min(1, value / 1000);
+            break;
+          case "cls":
+            normalizedValue = Math.min(1, value);
+            break;
+          case "tbt":
+            normalizedValue = Math.min(1, value / 600);
+            break;
+          default:
+            normalizedValue = value;
+            break;
+        }
 
         weightedSum += normalizedValue * weight;
         totalWeight += weight;
       }
     });
 
-    const globalScore = weightedSum / totalWeight;
-    return globalScore;
+    return totalWeight > 0 ? (weightedSum / totalWeight) * 100 : 0;
   }
 
-  const globalPercentageScore = calculateGlobalScore(metrics, weights);
+  const globalPercentageScore = calculateGlobalScore(metrics, weights).toFixed(
+    2,
+  );
 
   const pageScoring = useMemo(
     () => ({
@@ -153,13 +165,13 @@ const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
           description:
             "Webpage performance is critical, causing significant user experience issues. Immediate action is required.",
         };
-      } else if (score < 70) {
+      } else if (score < 50) {
         return {
           status: "Needs Improvement",
           description:
             "Webpage performance is below average, with noticeable delays. Optimization is recommended.",
         };
-      } else if (score < 85) {
+      } else if (score < 75) {
         return {
           status: "Acceptable",
           description:
@@ -179,11 +191,11 @@ const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
         return {
           status: "Unacceptable",
           description:
-            "SEO performance is critically low, potentially harming search rankings and visibility. Urgent optimization of key SEO elements is necessary.",
+            "SEO performance is critically low, potentially harming search rankings and visibility. Urgent optimization is necessary.",
         };
       } else if (score < 0.5) {
         return {
-          status: "Needs Improvement",
+          status: "Poor",
           description:
             "SEO performance is suboptimal, likely affecting search engine rankings. Focus on enhancing meta tags, content quality, and site structure.",
         };
@@ -202,19 +214,14 @@ const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
       }
     };
 
-    const performanceRating = getPerformanceRating(overallScore);
+    const performanceRating = getPerformanceRating(globalPercentageScore);
     const contentQuality = getContentQuality(pageScoring?.readingLevel);
     const seoRating = getSeoRating(seoScore);
 
     const aiFeedback = {
-      overallScore: overallScore.toFixed(2),
-      summary: getSummaryText(overallScore),
+      overallScore: globalPercentageScore,
+      summary: getSummaryText(globalPercentageScore),
       insights: [
-        {
-          aspect: "Content Quality",
-          status: contentQuality.status,
-          description: contentQuality.description,
-        },
         {
           aspect: "Page Performance",
           status: performanceRating.status,
@@ -225,13 +232,18 @@ const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
           status: seoRating.status,
           description: seoRating.description,
         },
+        {
+          aspect: "Content Quality",
+          status: contentQuality.status,
+          description: contentQuality.description,
+        },
       ],
       topRecommendation:
         "Focus on improving page load speed and expanding content depth.",
     };
 
     setFeedback(aiFeedback);
-  }, [pageSpeed, overallScore, pageScoring.readingLevel]);
+  }, [pageSpeed, globalPercentageScore, pageScoring.readingLevel]);
 
   return (
     <div className="p-4 dark:text-gray-300 dark:bg-gray-900 h-screen bg-white">
@@ -244,7 +256,9 @@ const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
         <div className="flex justify-between items-center mb-2">
           <span className="text-xs font-medium">Overall Score</span>
 
-          <span className="text-sm font-bold text-blue-400">
+          <span
+            className={`text-sm font-bold ${feedback?.overallScore >= 80 ? "text-green-500" : "text-red-500"} text-blue-400`}
+          >
             {loading ? (
               <div className="animate-spin ml-2 h-5 w-5 border-t-2 border-b-2 border-brand-bright rounded-full mr-3" />
             ) : pageSpeed ? (
@@ -257,7 +271,7 @@ const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
         <div className="w-full bg-gray-700 rounded-full h-2.5">
           {pageSpeed && (
             <div
-              className="bg-blue-400 h-2.5 rounded-full"
+              className={`${feedback?.overallScore >= 80 ? "bg-green-500" : "bg-red-500"} bg-blue-400 h-2.5 rounded-full`}
               style={{ width: `${feedback?.overallScore}%` }}
             />
           )}
@@ -295,13 +309,6 @@ const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
           </div>
         ))}
       </div>
-
-      {/* <div className="text-sm"> */}
-      {/*   <span className="font-medium text-xs">Top Recommendation:</span> */}
-      {/*   <p className="mt-1 text-blue-300 text-xs"> */}
-      {/*     {feedback?.topRecommendation} */}
-      {/*   </p> */}
-      {/* </div> */}
     </div>
   );
 };

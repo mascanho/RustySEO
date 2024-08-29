@@ -26,8 +26,6 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
 
   const repeated: any = findDuplicates(headings);
 
-  console.log(repeated, "Repated stuff");
-
   useEffect(() => {
     setRepeatedHeadings(repeated);
   }, [headings]);

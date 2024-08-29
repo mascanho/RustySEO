@@ -120,7 +120,6 @@ const Home: React.FC<HomeProps> = () => {
   useEffect(() => {
     invoke("get_db_data").then((result) => {
       setDBDATA(result);
-      console.log(result, "This comes from the DB");
     });
   }, [pageSpeed]);
 
@@ -372,9 +371,7 @@ const Home: React.FC<HomeProps> = () => {
     setLinkStatusCodeStatus(true);
     invoke<{}>("check_link_status", { url: url })
       .then((result: any) => {
-        console.log(result, "The links");
         setLinkStatusCodes(result);
-        console.log("This is from the Link STATUS CODES");
       })
       .then(() => setLinkStatusCodeStatus(false));
   };
@@ -582,7 +579,6 @@ const Home: React.FC<HomeProps> = () => {
                 <Tabs.Tab value="third">Improvements</Tabs.Tab>
                 <Tabs.Tab value="fourth">Task Manager</Tabs.Tab>
                 <Tabs.Tab value="fifth">Crawl History</Tabs.Tab>
-                <Tabs.Tab value="analytics">Analytics</Tabs.Tab>
               </Tabs.List>
             </div>
 

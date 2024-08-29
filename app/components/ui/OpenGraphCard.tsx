@@ -26,7 +26,6 @@ export const OpenGraphCard = ({
   const setSeoOpenGraph = useOnPageSeo((state) => state.setSeoOpenGraph);
 
   // Log the openGraphDetails for debugging
-  console.log(openGraphDetails, "---- OG card -----");
 
   // useEffect to set SEO Open Graph data when component mounts
   useEffect(() => {
@@ -34,8 +33,6 @@ export const OpenGraphCard = ({
       setSeoOpenGraph(openGraphDetails);
     }
   }, [openGraphDetails]);
-
-  console.log(openGraphDetails, "---- OG card -----");
 
   useEffect(() => {
     setSeoOpenGraph(openGraphDetails);
