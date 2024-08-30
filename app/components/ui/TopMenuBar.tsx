@@ -21,6 +21,7 @@ import OllamaSelect from "./OllamaSelector/OllamaSelect";
 import GoogleSearchConsoleModal from "./GoogleSearchConsole/GoogleSearchConsoleModal";
 import { useRouter } from "next/navigation";
 import WindowToggler from "./Panes/WindowToggler";
+import GeminiSelector from "./GeminiSelector/GeminiSelector";
 
 const TopMenuBar = () => {
   const onClose = useCallback(async () => {
@@ -52,7 +53,8 @@ const TopMenuBar = () => {
 
   const [openedOllama, { open: openOllama, close: closeOllama }] =
     useDisclosure(false);
-
+  const [openedGemini, { open: openGemini, close: closeGemini }] =
+    useDisclosure(false);
   const [openedPanes, { open: openPanes, close: closePanes }] =
     useDisclosure(false);
 
@@ -158,7 +160,7 @@ const TopMenuBar = () => {
         <Todo url={url} close={closeModal} strategy={strategy} />
       </Modal>
 
-      {/* Todo Modal */}
+      {/* Ollama Model */}
       <Modal
         opened={openedOllama}
         // overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
@@ -172,7 +174,20 @@ const TopMenuBar = () => {
       >
         <OllamaSelect closeOllama={closeOllama} />
       </Modal>
-
+      {/* Gemini Model */}
+      <Modal
+        opened={openedGemini}
+        // overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+        closeOnEscape
+        closeOnClickOutside
+        onClose={closeGemini}
+        title="Google Gemini"
+        centered
+        size={"500px"}
+        // zIndex={"100000"}
+      >
+        <GeminiSelector closeGemini={closeGemini} />
+      </Modal>
       {/* Drawer */}
 
       <Drawer
@@ -277,6 +292,15 @@ const TopMenuBar = () => {
                   (AI Models)
                 </span>
               </MenubarItem>
+              <MenubarItem
+                className="flex items-center"
+                onClick={() => {
+                  // openBrowserWindow("https://www.ollama.com/");
+                  openGemini();
+                }}
+              >
+                Google Gemini{" "}
+              </MenubarItem>{" "}
             </MenubarContent>
           </MenubarMenu>
           <MenubarMenu>

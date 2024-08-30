@@ -5,6 +5,7 @@ use crawler::{
 };
 use directories::ProjectDirs;
 use genai::genai;
+use globals::actions;
 use serde::{Deserialize, Serialize};
 use std::io::Write;
 use tauri::{api::path::config_dir, Manager};
@@ -128,7 +129,7 @@ async fn main() {
             add_api_key,
             get_genai,
             get_db_data,
-            //gemini::greet,
+            globals::actions::ai_model_selected,
             downloads::csv::generate_csv_command,
             commands::read_seo_data_from_db,
             commands::check_link_status,
@@ -200,6 +201,7 @@ fn add_api_key(key: String, api_type: String) -> Result<String, String> {
             page_speed_key: key.clone(),
             openai_key: "".to_string(),
         };
+
         let config_file = config_dir.join("api_keys.toml");
         let toml_string =
             toml::to_string(&config).map_err(|e| format!("Failed to serialize config: {}", e))?;

@@ -1,4 +1,5 @@
 use anyhow::{anyhow, Result};
+use directories::ProjectDirs;
 use reqwest;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -87,6 +88,22 @@ pub async fn greet(prompt: &str) -> Result<(), String> {
     match ask_gemini(prompt).await {
         Ok(response) => println!("Gemini's response: {}", response),
         Err(e) => eprintln!("Error: {}", e),
+    }
+    Ok(())
+}
+
+// --------- Set up the Gemini API key
+pub fn set_gemini_api_key(key: String) -> Result<(), String> {
+    // create the config directory if it doesn't exist
+    let config_dirs = ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
+
+    let config_dir = config_dirs.data_dir();
+
+    // create the file if it does not exit
+    let secret_file = config_dir.join("gemini_api_key.txt");
+    if !secret_file.exists() {
+        std::fs::write(&secret_file, key).map_err(|e| format!("Failed to write file: {}", e))?;
     }
     Ok(())
 }

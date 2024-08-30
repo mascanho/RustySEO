@@ -22,7 +22,10 @@ pub fn get_ai_model() -> String {
 }
 
 pub async fn genai(query: String) -> Result<ChatResponse, Box<dyn Error>> {
-    // Generate GEMINI
+    // get the model selection
+    let model_selection = get_ai_model().trim().to_string(); // Ensure it's a String
+
+    // Generate GEMINI and get the results
     let results = gemini::greet(&query)
         .await
         .expect("Failed to generate gemini");
@@ -38,7 +41,6 @@ pub async fn genai(query: String) -> Result<ChatResponse, Box<dyn Error>> {
     ]);
 
     // Retrieve and trim the model selection
-    let model_selection = get_ai_model().trim().to_string(); // Ensure it's a String
     let model = model_selection;
     println!("Using model: {}", model);
 

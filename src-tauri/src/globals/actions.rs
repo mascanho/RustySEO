@@ -26,3 +26,53 @@ pub fn uuid_creation_check() -> String {
         return uuid;
     }
 }
+
+// ---------- Write to disk the AI Model being used
+#[tauri::command]
+pub fn ai_model_selected(model: String) -> String {
+    // CHECK FOR THE FILE IN THE CONFIG DIRECTORY
+    println!("Checking for AI Model file");
+    let project_dirs =
+        ProjectDirs::from("", "", "rustyseo").expect("Failed to get project directories");
+    println!("Config directory: {:?}", project_dirs.config_dir());
+    let config_dir = project_dirs.config_dir();
+    let ai_model_file = config_dir.join("chosen_ai_model.toml");
+
+    // Create directories if they don't exist
+    if !config_dir.exists() {
+        std::fs::create_dir_all(config_dir).unwrap();
+    }
+
+    // Check if the file exists
+    if ai_model_file.exists() {
+        let ai_model = std::fs::read_to_string(&ai_model_file).unwrap();
+        return ai_model;
+    } else {
+        std::fs::write(&ai_model_file, &model).unwrap();
+        return model;
+    }
+}
+
+// ------ read the AI Model being used
+pub fn ai_model_read() -> String {
+    // CHECK FOR THE FILE IN THE CONFIG DIRECTORY
+    println!("Checking for AI Model file");
+    let project_dirs =
+        ProjectDirs::from("", "", "rustyseo").expect("Failed to get project directories");
+    println!("Config directory: {:?}", project_dirs.config_dir());
+    let config_dir = project_dirs.config_dir();
+    let ai_model_file = config_dir.join("chosen_ai_model.toml");
+
+    // Create directories if they don't exist
+    if !config_dir.exists() {
+        std::fs::create_dir_all(config_dir).unwrap();
+    }
+
+    // Check if the file exists
+    if ai_model_file.exists() {
+        let ai_model = std::fs::read_to_string(&ai_model_file).unwrap();
+        return ai_model;
+    } else {
+        return "No AI Model selected".to_string();
+    }
+}
