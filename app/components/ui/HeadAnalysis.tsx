@@ -55,7 +55,7 @@ export const HeadAnalysis = ({
             localStorage.setItem("HeadIsHidden", JSON.stringify(!hidden));
           }
         }}
-        className={`head dark:border-brand-darker  ${Visible.head ? "block" : "hidden"} ${!Visible.widgets && "mt-0"} bg-white p-1 dark:bg-brand-darker shadow rounded-md mb-5 pb-5 overflow-hidden border relative -mt-5`}
+        className={`head dark:border-brand-darker  ${Visible.head ? "block" : "hidden"} ${!Visible.widgets && "mt-0"} bg-white p-1 dark:bg-brand-darker shadow rounded-md mb-5 pb-5 overflow-hidden border relative mt-5`}
       >
         {/* <StampEl indexation={indexation} hidden={hidden} /> */}
         <h2 className="flex items-center text-center font-semibold  w-fit relative p-4 mx-auto text-black/50 dark:text-white/50 ">

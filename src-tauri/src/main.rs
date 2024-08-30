@@ -22,6 +22,7 @@ pub mod globals {
 }
 
 mod commands;
+pub mod gemini;
 mod genai;
 mod gsc;
 mod image_converter;
@@ -127,8 +128,7 @@ async fn main() {
             add_api_key,
             get_genai,
             get_db_data,
-            genai::generated_page_title,
-            genai::generated_page_description,
+            //gemini::greet,
             downloads::csv::generate_csv_command,
             commands::read_seo_data_from_db,
             commands::check_link_status,

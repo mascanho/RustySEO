@@ -27,6 +27,7 @@ import {
   FiClock,
   FiGlobe,
   FiClipboard,
+  FiSearch,
 } from "react-icons/fi";
 
 const handleCopy = (url: string) => {
@@ -54,20 +55,21 @@ const TableMenus = ({ children, data, crawl, url }: any) => {
           </ContextMenuSubTrigger>
           <ContextMenuSubContent className="w-48">
             <ContextMenuItem>
-              <FiSave className="mr-2" /> Save Page As...
-              <ContextMenuShortcut>⇧⌘S</ContextMenuShortcut>
+              <FiSearch className="mr-2" /> Google
             </ContextMenuItem>
             <ContextMenuItem>
-              <FiPlusSquare className="mr-2" /> Create Shortcut...
+              <FiSearch className="mr-2" /> Bing
             </ContextMenuItem>
             <ContextMenuItem>
-              <FiEdit className="mr-2" /> Name Window...
+              <FiSearch className="mr-2" /> DuckDuckGo
             </ContextMenuItem>
-            <ContextMenuSeparator />
             <ContextMenuItem>
-              <FiTool className="mr-2" /> Developer Tools
+              <FiSearch className="mr-2" /> Yandex
             </ContextMenuItem>
           </ContextMenuSubContent>
+          <ContextMenuItem>
+            <FiSearch className="mr-2" /> Yahoo!
+          </ContextMenuItem>
         </ContextMenuSub>
         <ContextMenuSub>
           <ContextMenuSubTrigger>
