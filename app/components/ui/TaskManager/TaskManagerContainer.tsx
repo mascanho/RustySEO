@@ -51,7 +51,7 @@ const TaskManagerContainer: React.FC<{ strategy: string }> = ({ strategy }) => {
       >
         <Todo url={url} close={closeModal} strategy={strategy} />
       </Modal>
-      <div className="grid gap-4 grid-cols-3 px-7 pt-8 w-full max-w-[80rem] overflow-hidden rounded-xl  mx-auto   place-items-center">
+      <div className="grid gap-4 lg:gap-1 grid-cols-3 px-7 pt-8 w-full max-w-[80rem] overflow-hidden rounded-xl  mx-auto   place-items-center">
         <section className="w-full max-w-[380px] h-[calc(100vh-20rem)] dark:border-brand-dark  bg-white dark:bg-brand-darker rounded-xl mb-10 overflow-hidden my-auto shadow border">
           <div className="flex items-center border-b dark:border-b-brand-dark justify-between px-5 py-3 font-semibold">
             <div className="flex items-center space-x-2">

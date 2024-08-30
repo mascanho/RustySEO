@@ -219,9 +219,6 @@ const TopMenuBar = () => {
               <MenubarItem onClick={openPanes}>
                 Panels <MenubarShortcut>ctr + p</MenubarShortcut>
               </MenubarItem>
-              <MenubarItem>New Window</MenubarItem>
-              <MenubarSeparator />
-              <MenubarItem>Share</MenubarItem>
               <MenubarSeparator />
               <MenubarItem onClick={toggleDarkMode}>
                 {isDarkMode ? "Light Mode" : "Dark Mode"}
@@ -321,11 +318,7 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-3">Help</MenubarTrigger>
             <MenubarContent>
-              <MenubarItem onClick={openPageSpeed}>About</MenubarItem>
-              <MenubarItem>Ollama</MenubarItem>
-              <MenubarSeparator />
-              <MenubarItem>Share</MenubarItem>
-              <MenubarSeparator />
+              <MenubarItem>About</MenubarItem>
             </MenubarContent>
           </MenubarMenu>
         </section>
