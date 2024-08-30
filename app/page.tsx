@@ -588,12 +588,12 @@ const Home: React.FC<HomeProps> = () => {
               <div
                 className={`-mt-[20px] widgets ${Visible.widgets ? "block" : "hidden"}`}
               >
-                <h2 className="bottom-0 text-black/20 dark:text-white/20 font-semibold py-1 ml-1 text-base">
-                  Performance
+                <h2 className="bottom-0 text-black/20 dark:text-white/20 font-semibold pb-1 ml-1 text-sm">
+                Technical Performance
                 </h2>
 
                 <section
-                  className={`grid grid-cols-2  gap-x-3 md:gap-x-4 sm:grid-cols-3  md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-7 2xl:gap-x-2 justify-items-stretch w-full mb-10 gap-y-5  relative`}
+                  className={`grid grid-cols-2  gap-x-3 md:gap-x-4 sm:grid-cols-3  md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-7 2xl:gap-x-2 justify-items-stretch w-full  gap-y-3  relative`}
                 >
                   <PerformanceEl
                     stat={pageSpeed}
@@ -689,7 +689,7 @@ const Home: React.FC<HomeProps> = () => {
               {/* CHARTS SECTION */}
 
               <section
-                className={`charts grid grid-cols-2 lg:grid-cols-4 gap-6 mb-10 ${Visible.charts ? "grid" : "hidden"}`}
+                className={`charts grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 ${Visible.charts ? "grid" : "hidden"}`}
               >
                 <KeywordChart keywords={keywords} url={debouncedURL} />
                 <HtmlToTextChart htmlToTextRatio={htmlToTextRatio} />
@@ -704,7 +704,7 @@ const Home: React.FC<HomeProps> = () => {
               {/* TABLES START HERE */}
               <main
                 id="tables"
-                className={`mx-auto w-full flex-col  pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-6 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-2 -mt-16 items-stretch pb-2 ${!Visible.charts && "-mt-[40px]"}`}
+                className={`mx-auto w-full flex-col  pt-10 tables rounded-lg text-black relative overflow-auto grid grid-cols-1 gap-4 sm:grid-cols-1 lg:grid-cols-2 2xl:grid-cols-2 -mt-16 items-stretch pb-2 ${!Visible.charts && "-mt-[40px]"}`}
               >
                 <GooglePreview
                   favicon_url={favicon_url}

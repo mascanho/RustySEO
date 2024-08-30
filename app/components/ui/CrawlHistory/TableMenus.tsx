@@ -14,6 +14,7 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { useEffect, useState } from "react";
+import { FaSearchengin } from "react-icons/fa";
 
 import {
   FiRefreshCw,
@@ -28,6 +29,7 @@ import {
   FiGlobe,
   FiClipboard,
 } from "react-icons/fi";
+import { PiFileMagnifyingGlassDuotone } from "react-icons/pi";
 
 const handleCopy = (url: string) => {
   navigator?.clipboard.writeText(url);
@@ -54,18 +56,17 @@ const TableMenus = ({ children, data, crawl, url }: any) => {
           </ContextMenuSubTrigger>
           <ContextMenuSubContent className="w-48">
             <ContextMenuItem>
-              <FiSave className="mr-2" /> Save Page As...
-              <ContextMenuShortcut>⇧⌘S</ContextMenuShortcut>
+              <FaSearchengin className="mr-2" /> Google
             </ContextMenuItem>
             <ContextMenuItem>
-              <FiPlusSquare className="mr-2" /> Create Shortcut...
+              <FaSearchengin className="mr-2" /> Bing
             </ContextMenuItem>
             <ContextMenuItem>
-              <FiEdit className="mr-2" /> Name Window...
+              <FaSearchengin className="mr-2" /> Yahoo
             </ContextMenuItem>
             <ContextMenuSeparator />
             <ContextMenuItem>
-              <FiTool className="mr-2" /> Developer Tools
+              <FaSearchengin className="mr-2" /> Yandex
             </ContextMenuItem>
           </ContextMenuSubContent>
         </ContextMenuSub>

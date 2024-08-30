@@ -161,7 +161,7 @@ const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
     const getPerformanceRating = (score) => {
       if (score < 25) {
         return {
-          status: "Unacceptable",
+          status: "Poor",
           description:
             "Webpage performance is critical, causing significant user experience issues. Immediate action is required.",
         };
@@ -260,7 +260,7 @@ const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
             className={`text-sm font-bold ${feedback?.overallScore >= 80 ? "text-green-500" : "text-red-500"} text-blue-400`}
           >
             {loading ? (
-              <div className="animate-spin ml-2 h-5 w-5 border-t-2 border-b-2 border-brand-bright rounded-full mr-3" />
+              <div className="animate-spin ml-2 h-5 w-5 border-t-2 border-b-2 border-brand-bright rounded-full mr-3 mb-1" />
             ) : pageSpeed ? (
               `${feedback?.overallScore}%`
             ) : (
