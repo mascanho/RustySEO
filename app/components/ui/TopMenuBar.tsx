@@ -22,6 +22,7 @@ import GoogleSearchConsoleModal from "./GoogleSearchConsole/GoogleSearchConsoleM
 import { useRouter } from "next/navigation";
 import WindowToggler from "./Panes/WindowToggler";
 import GeminiSelector from "./GeminiSelector/GeminiSelector";
+import About from "./About/About";
 
 const TopMenuBar = () => {
   const onClose = useCallback(async () => {
@@ -57,6 +58,8 @@ const TopMenuBar = () => {
     useDisclosure(false);
   const [openedPanes, { open: openPanes, close: closePanes }] =
     useDisclosure(false);
+  const [openedAbout, { open: openAbout, close: closeAbout }] =
+    useDisclosure(true);
 
   const [
     openedSearchConsole,
@@ -126,7 +129,7 @@ const TopMenuBar = () => {
         closeOnEscape
         closeOnClickOutside
         onClose={closePanes}
-        title="Toggle Panes"
+        title="Toggle Panels"
         centered
         // zIndex={"100000"}
       >
@@ -188,6 +191,22 @@ const TopMenuBar = () => {
       >
         <GeminiSelector closeGemini={closeGemini} />
       </Modal>
+
+      {/* About Section */}
+      <Modal
+        opened={openedAbout}
+        // overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+        closeOnEscape
+        closeOnClickOutside
+        onClose={closeAbout}
+        title="About RustySEO"
+        centered
+        size={"500px"}
+        // zIndex={"100000"}
+      >
+        <About closeGemini={closeAbout} />
+      </Modal>
+
       {/* Drawer */}
 
       <Drawer
@@ -342,7 +361,7 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-3">Help</MenubarTrigger>
             <MenubarContent>
-              <MenubarItem>About</MenubarItem>
+              <MenubarItem onClick={openAbout}>About</MenubarItem>
             </MenubarContent>
           </MenubarMenu>
         </section>

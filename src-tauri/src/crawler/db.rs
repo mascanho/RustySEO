@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 use std::fs;
 
+use super::DBData;
+
 mod models;
 
 pub struct DataBase {
@@ -44,6 +46,7 @@ pub struct SEOResultRecord {
     url: String,
     title: String,
     description: String,
+    keywords: String,
 }
 
 pub fn open_db_connection() -> Result<Connection> {
@@ -103,7 +106,8 @@ pub fn create_technical_data_table() -> Result<()> {
             date TEXT,
             url TEXT NOT NULL,
             title TEXT NOT NULL,
-            description TEXT
+            description TEXT,
+            keywords TEXT
         )",
         [],
     )
@@ -159,6 +163,7 @@ pub fn read_seo_data_from_db() -> Result<Vec<SEOResultRecord>> {
                 url: row.get(2)?,
                 title: row.get(3)?,
                 description: row.get(4)?,
+                keywords: row.get(5)?,
             })
         })
         .expect("Failed to execute query");
@@ -210,19 +215,19 @@ pub fn add_data_from_pagespeed(data: &str, strategy: &str, url: &str) -> Result<
 }
 
 //----------- Function to add technical data to the database -----------
-pub fn add_technical_data(data: Vec<&String>, url: &str) -> Result<()> {
+pub fn add_technical_data(data: DBData, url: &str) -> Result<()> {
     // Ensure the technical_data table exists
     create_technical_data_table()?;
 
     let date = Utc::now().naive_utc().to_string();
-    let (title, description) = (data[0], data[1]);
-
+    let (title, description, keywords) = (data.title, data.description, data.keywords);
+    let keywords = serde_json::to_string(&keywords).unwrap();
     let conn = open_db_connection()?;
 
     // Insert new record into technical_data table
     conn.execute(
-        "INSERT INTO technical_data (date, url, title, description) VALUES (?1, ?2, ?3, ?4)",
-        params![date, url, title, description],
+        "INSERT INTO technical_data (date, url, title, description, keywords) VALUES (?1, ?2, ?3, ?4, ?5)",
+        params![date, url, title, description, keywords],
     )
     .expect("Failed to insert data into technical_data table");
 

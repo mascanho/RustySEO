@@ -432,7 +432,6 @@ pub async fn set_search_console_credentials(credentials: Credentials) -> Result<
     let client_secret = ClientSecret {
         installed: InstalledInfo {
             aggregationType: "byPage".to_string(),
-            // client_id: "826003140984-umml9pa2cpuce9nnef2scd90a9tatn2s.apps.googleusercontent.com".to_string();   // CLIENT ID BACKUP
             client_id: credentials_client_id.to_string(),
             // project_id: "110933103965834828344".to_string(), // project ID backup
             project_id: credentials_project_id.to_string(),
@@ -535,7 +534,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
 
     // Prepare the request
 
-    let site_url = "sc-domain:algarvewonders.com";
+    // let site_url = "sc-domain:algarvewonders.com";
     let query = SearchAnalyticsQuery {
         start_date: "2024-01-01".to_string(),
         end_date: finish_date,
@@ -545,7 +544,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
             "country".to_string(),
         ],
         search_type: "web".to_string(),
-        row_limit: 50,
+        row_limit: 200,
     };
     let body = serde_json::to_string(&query)?;
 
@@ -556,24 +555,22 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
         .token(&["https://www.googleapis.com/auth/webmasters.readonly"])
         .await?;
 
-    println!("This is the token stuff -----------------------------------");
-
-    // let site_url = match search_type.as_str() {
-    //     "domain" => {
-    //         domain = true;
-    //         println!("Domain selected, URL: {}", &credentials_url);
-    //         format!("sc-domain:{}", &credentials_url)
-    //     }
-    //     "site" => {
-    //         site = true;
-    //         println!("Site selected, URL: {}", &credentials_url);
-    //         credentials_url.clone()
-    //     }
-    //     _ => {
-    //         println!("Search type: Unknown");
-    //         credentials_url.clone()
-    //     }
-    // };
+    let site_url = match search_type.as_str() {
+        "domain" => {
+            domain = true;
+            println!("Domain selected, URL: {}", &credentials_url);
+            format!("sc-domain:{}", &credentials_url)
+        }
+        "site" => {
+            site = true;
+            println!("Site selected, URL: {}", &credentials_url);
+            credentials_url.clone()
+        }
+        _ => {
+            println!("Search type: Unknown");
+            credentials_url.clone()
+        }
+    };
 
     let request = hyper::Request::builder()
         .method("POST")

@@ -81,7 +81,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
             <Tabs.List justify="left" className="dark:text-white text-xs">
               <Tabs.Tab value="summary">General</Tabs.Tab>
               <Tabs.Tab value="first">Content</Tabs.Tab>
-              <Tabs.Tab value="third">GSC</Tabs.Tab>
+              <Tabs.Tab value="third">Console</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="first" className="h-full w-full">
               <ContentSummary

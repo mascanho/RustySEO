@@ -573,7 +573,7 @@ const Home: React.FC<HomeProps> = () => {
                 className={`-mt-[20px] widgets ${Visible.widgets ? "block" : "hidden"}`}
               >
                 <h2 className="bottom-0 text-black/20 dark:text-white/20 font-semibold pb-1 ml-1 text-sm">
-                  Technical Performance
+                  Widgets
                 </h2>
 
                 <section

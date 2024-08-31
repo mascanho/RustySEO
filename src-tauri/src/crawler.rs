@@ -31,6 +31,13 @@ pub mod db;
 pub mod libs;
 mod page_rank;
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DBData {
+    title: String,
+    description: String,
+    keywords: Vec<String>,
+}
+
 #[derive(Serialize)]
 struct Element {
     tag_name: String,
@@ -538,16 +545,29 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     //
 
     // Add the data to the DB
-    let mut db_data = Vec::new();
 
-    db_data.push(&page_title[0]);
+    let title = match page_title.len() {
+        0 => String::from("No title found"),
+        _ => page_title[0].clone(),
+    };
 
-    let no_description = "".to_string();
-    if !page_description.is_empty() {
-        db_data.push(&page_description[0]);
-    } else {
-        db_data.push(&no_description);
-    }
+    let description = match page_description.len() {
+        0 => String::from("No description found"),
+        _ => page_description[0].clone(),
+    };
+
+    let kws = keywords[0].clone();
+    let words: Vec<String> = kws.iter().map(|(word, _)| word.clone()).collect();
+
+    let mut db_data: DBData = DBData {
+        title: page_title[0].clone(),
+        description: page_description[0].clone(),
+        keywords: words.clone(),
+    };
+
+    println!("Keywords: {:?}", kws);
+    println!("db_data: {:?}", &db_data);
+
     //db_data.push(&canonical_url);
     //db_data.push(&index_type);
     //db_data.push(&page_schema);
