@@ -22,6 +22,15 @@ const OllamaSelect = ({ closeOllama }: any) => {
 
   const handleModelSelection = async (model: any) => {
     try {
+      const model = await invoke<{ success: boolean }>("ai_model_selected", {
+        model: "ollama",
+      });
+      console.log(model, "This is the model");
+      if (model) {
+        console.log("Model selected successfully");
+        toast("Model selected successfully");
+      }
+
       // Call the Tauri command with the model parameter
       const result = await invoke("write_model_to_disk", { model });
       console.log("Model saved to:", result);

@@ -324,7 +324,7 @@ pub async fn check_links(url: String) -> Result<Vec<LinkStatus>, String> {
         });
     }
 
-    println!("CHECKING LINK STATUS: {:?}", results);
+    // println!("CHECKING LINK STATUS: {:?}", results);
     Ok(results)
 }
 
@@ -415,6 +415,7 @@ async fn read_credentials_file() -> Result<InstalledInfo, String> {
         url: secret.installed.url,
     };
 
+    println!("Search Console Config: {:?}", result);
     Ok(result)
 }
 
@@ -432,18 +433,20 @@ pub async fn set_search_console_credentials(credentials: Credentials) -> Result<
         installed: InstalledInfo {
             aggregationType: "byPage".to_string(),
             client_id: credentials_client_id.to_string(),
-            project_id: "110933103965834828344".to_string(),
+            // project_id: "110933103965834828344".to_string(), // project ID backup
+            project_id: credentials_project_id.to_string(),
+            client_secret: credentials_client_secret.to_string(),
+            // client_secret: "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".to_string(),   // CLIENT SECRET BACKUP
             auth_uri: "https://accounts.google.com/o/oauth2/auth".to_string(),
             token_uri: "https://oauth2.googleapis.com/token".to_string(),
             auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs".to_string(),
-            client_secret: "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".to_string(),
             redirect_uris: vec![
                 "urn:ietf:wg:oauth:2.0:oob".to_string(),
                 //"http://localhost".to_string(),
             ],
+            url: credentials_url.to_string(),
             search_type: credentials_search_type.to_string(),
             range: credentials_range.to_string(),
-            url: credentials_url.to_string(),
         },
     };
 
@@ -513,26 +516,15 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
         .await
         .expect("Failed to read credentials file");
     let initial_date = gsc_settings_info.range;
-    let url = gsc_settings_info.url;
+    let credentials_url = gsc_settings_info.url;
     let search_type = gsc_settings_info.search_type;
+    let credentials_project_id = gsc_settings_info.project_id;
+    let credentials_client_id = gsc_settings_info.client_id;
+    let credentials_client_secret = gsc_settings_info.client_secret;
 
     // Initialize variables
     let mut domain = false;
     let mut site = false;
-
-    match search_type.as_str() {
-        "domain" => {
-            println!("Domain Selected");
-            domain = true;
-        }
-        "site" => {
-            println!("Site Selected");
-            site = true;
-        }
-        _ => {
-            println!("Search type: Unknown");
-        }
-    }
 
     println!("domain is fucking: {}", domain);
     println!("site is: {}", site);
@@ -542,7 +534,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
 
     // Prepare the request
 
-    let site_url = "sc-domain:algarvewonders.com";
+    // let site_url = "sc-domain:algarvewonders.com";
     let query = SearchAnalyticsQuery {
         start_date: "2024-01-01".to_string(),
         end_date: finish_date,
@@ -565,11 +557,28 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
 
     println!("This is the token stuff -----------------------------------");
 
+    let site_url = match search_type.as_str() {
+        "domain" => {
+            domain = true;
+            println!("Domain selected, URL: {}", &credentials_url);
+            format!("sc-domain:{}", &credentials_url)
+        }
+        "site" => {
+            site = true;
+            println!("Site selected, URL: {}", &credentials_url);
+            credentials_url.clone()
+        }
+        _ => {
+            println!("Search type: Unknown");
+            credentials_url.clone()
+        }
+    };
+
     let request = hyper::Request::builder()
         .method("POST")
         .uri(format!(
             "https://searchconsole.googleapis.com/webmasters/v3/sites/{}/searchAnalytics/query",
-            urlencoding::encode(site_url)
+            urlencoding::encode(&site_url)
         ))
         .header(
             "Authorization",

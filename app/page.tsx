@@ -311,22 +311,6 @@ const Home: React.FC<HomeProps> = () => {
     }
   }, [Visible]);
 
-  // Get the AI stuff
-  useEffect(() => {
-    if (keywords.length > 0) {
-      invoke<string>("get_genai", { query: pageTitle[0] })
-        .then((result) => {
-          console.log(result);
-          setAiContentAnalysis(result);
-          return result;
-        })
-        .catch((error) => {
-          console.error("Error from get_genai:", error);
-          // Handle the error appropriately
-        });
-    }
-  }, [keywords, pageTitle]);
-
   // clear session storage on page reload
   // Check for the system settings
   useEffect(() => {
@@ -589,7 +573,7 @@ const Home: React.FC<HomeProps> = () => {
                 className={`-mt-[20px] widgets ${Visible.widgets ? "block" : "hidden"}`}
               >
                 <h2 className="bottom-0 text-black/20 dark:text-white/20 font-semibold pb-1 ml-1 text-sm">
-                Technical Performance
+                  Technical Performance
                 </h2>
 
                 <section

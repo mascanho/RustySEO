@@ -141,7 +141,8 @@ const SEOImprovements = ({
         "Favicons help increase your brand awareness and conversions.",
       passAdvice: "Favicon was found for this page.",
       improved: faviconUrl && faviconUrl.length > 0,
-      aiImprovement: aiPageTitle,
+      aiImprovement:
+        "In the head of the page, add a favicon tag with the URL of your favicon. It to make your website and brand standout on the SERP",
       length: pageTitle[0]?.length,
     },
     {
@@ -151,7 +152,9 @@ const SEOImprovements = ({
         "Your page title should have between 10 and 60 characters. Your title length is: ",
       passAdvice: "Title tag is unique and includes primary keywords.",
       improved: pageTitle[0]?.length <= 60,
-      aiImprovement: aiPageTitle,
+      aiImprovement:
+        aiPageTitle ||
+        "Improve your title tag with a title between 30 and 60 characters",
       length: pageTitle[0]?.length,
     },
     {
@@ -161,7 +164,9 @@ const SEOImprovements = ({
         "Page descriptions are important to improve CTR. Your page description should have between 10 and 160 characters. Your page description length is: ",
       passAdvice: "Page description is unique and includes primary keywords.",
       improved: description?.length < 160,
-      aiImprovement: aiPageDescription,
+      aiImprovement:
+        aiPageDescription ||
+        "Add a page description to your page with a description between 10 and 160 characters, this helps with conversions rates and SEO",
       length: description?.length,
     },
     {

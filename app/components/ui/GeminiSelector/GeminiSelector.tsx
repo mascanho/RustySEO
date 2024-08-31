@@ -8,10 +8,7 @@ const GeminiSelector = ({ closeGemini }: any) => {
   const [prevSelected, setPrevSelected] = useState("");
   const [userInput, setUserInput] = useState("");
 
-  const geminiModels = [
-    { value: "gemini-pro", label: "Gemini Pro" },
-    { value: "gemini-pro-vision", label: "Gemini Pro Vision" },
-  ];
+  const geminiModels = [{ value: "gemini-1.5-flash", label: "Gemini Flash" }];
 
   const handleGeminiSelect = (value: string | null) => {
     if (value) {
@@ -29,9 +26,20 @@ const GeminiSelector = ({ closeGemini }: any) => {
 
   const handleAddApiKey: any = async (key: string) => {
     try {
-      const result = await invoke<{ success: boolean }>("add_api_key", {
+      // Set the global AI Model
+      const model = await invoke<{ success: boolean }>("ai_model_selected", {
+        model: "gemini",
+      });
+      console.log(model, "This is the model");
+      if (model) {
+        console.log("Model selected successfully");
+      }
+
+      // Set the API key for the Gemini Model
+      const result = await invoke<{ success: boolean }>("set_gemini_api_key", {
         key,
-        apiType: "page_speed",
+        apiType: "gemini",
+        geminiModel,
       });
       console.log(result, "This is the result");
       if (result) {

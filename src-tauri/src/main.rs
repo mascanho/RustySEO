@@ -139,7 +139,8 @@ async fn main() {
             commands::call_gsc_match_url,
             commands::set_google_search_console_credentials,
             image_converter::converter::handle_image_conversion,
-            commands::crawl_domain
+            commands::crawl_domain,
+            gemini::set_gemini_api_key,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

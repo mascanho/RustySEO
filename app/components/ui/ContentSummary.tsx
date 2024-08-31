@@ -1,17 +1,19 @@
 import { useOllamaStore } from "@/store/store";
 import useOnPageSeo from "@/store/storeOnPageSeo";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/tauri";
 
 const ContentSummary = ({
   keywords,
   wordCount,
   readingTime,
   readingLevelResults,
-  AiContentAnalysis,
   htmlToTextRatio,
+  pageTitle,
 }: any) => {
   const ollamaStatus = useOllamaStore();
   const { setSeoContentQuality } = useOnPageSeo();
+  const [AiContentAnalysis, setAiContentAnalysis] = useState("");
 
   useEffect(() => {
     if (keywords) {
@@ -56,6 +58,21 @@ const ContentSummary = ({
   ${readingLevel === "College Graduate" ? "The advanced reading level may limit accessibility for some audiences." : "The reading level appears suitable for a general audience."}`;
   };
 
+  // Get the AI stuff
+  useEffect(() => {
+    if (keywords.length > 0) {
+      invoke<string>("get_genai", { query: pageTitle[0] })
+        .then((result) => {
+          console.log(result);
+          setAiContentAnalysis(result);
+          return result;
+        })
+        .catch((error) => {
+          console.error("Error from get_genai:", error);
+          // Handle the error appropriately
+        });
+    }
+  }, [keywords, pageTitle]);
   return (
     <section className="flex-wrap min-h-[calc(96rem - 2.5rem)] h-full space-y-1 bg-transparent dark:bg-brand-darker dark:text-white p-2 rounded-md relative">
       <div className="px-2 py-0.5 grid gap-5 overflow-y-scroll w-full h-full">

@@ -9,6 +9,8 @@ use std::io::Write;
 
 use crate::gemini;
 
+use crate::globals::actions;
+
 // ------- Page Summary ------------
 
 pub fn get_ai_model() -> String {
@@ -22,35 +24,52 @@ pub fn get_ai_model() -> String {
 }
 
 pub async fn genai(query: String) -> Result<ChatResponse, Box<dyn Error>> {
-    // get the model selection
-    let model_selection = get_ai_model().trim().to_string(); // Ensure it's a String
+    // Get the AI Global model selection
+    let global_model_selected = actions::ai_model_read();
+    println!("Global AI Model Selected : {:?}", global_model_selected);
 
-    // Generate GEMINI and get the results
-    let results = gemini::greet(&query)
-        .await
-        .expect("Failed to generate gemini");
-    println!("{:?}", results);
+    if global_model_selected == "gemini" {
+        // Create a dummy ChatResponse for Gemini
 
-    // Initialize the HTTP client
-    let client = Client::default();
+        let gemini_response = gemini::ask_gemini(&query).await;
 
-    // Create the chat request
-    let chat_req = ChatRequest::new(vec![
-        ChatMessage::system("Answer in one sentence"),
-        ChatMessage::user(query.clone()),
-    ]);
+        let gemini_response = ChatResponse {
+            content: Some(gemini_response.unwrap()),
+            ..Default::default()
+        };
+        println!("Gemini selected, not using Ollama");
+        Ok(gemini_response)
+    } else {
+        // get the Ollama model selection
+        let model_selection = get_ai_model().trim().to_string(); // Ensure it's a String
 
-    // Retrieve and trim the model selection
-    let model = model_selection;
-    println!("Using model: {}", model);
+        // Generate GEMINI and get the results
+        let results = gemini::greet(&query)
+            .await
+            .expect("Failed to generate gemini");
+        println!("{:?}", results);
 
-    // Execute the chat request
-    let chat_res = client.exec_chat(&model, chat_req.clone(), None).await?;
+        // Initialize the HTTP client
+        let client = Client::default();
 
-    // Print the response for debugging
-    println!("Chat request: {:#?}", chat_res);
-    println!("{}", chat_res.content.as_deref().unwrap_or("NO ANSWER"));
+        // Create the chat request
+        let chat_req = ChatRequest::new(vec![
+            ChatMessage::system("Answer in one sentence"),
+            ChatMessage::user(query.clone()),
+        ]);
 
-    // Return the response
-    Ok(chat_res)
+        // Retrieve and trim the model selection
+        let model = model_selection;
+        println!("Using model: {}", model);
+
+        // Execute the chat request
+        let chat_res = client.exec_chat(&model, chat_req.clone(), None).await?;
+
+        // Print the response for debugging
+        println!("Chat request: {:#?}", chat_res);
+        println!("{}", chat_res.content.as_deref().unwrap_or("NO ANSWER"));
+
+        // Return the response
+        Ok(chat_res)
+    }
 }

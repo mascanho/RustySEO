@@ -56,9 +56,16 @@ impl GeminiRequest {
 }
 
 pub async fn ask_gemini(prompt: &str) -> Result<String> {
+    // READ THE KEY IF IT EXISTS ELSE RETURN AN ERROR
+
+    let key = get_gemini_api_key().expect("Failed to read Gemini API key");
+
     let client = reqwest::Client::new();
 
-    let my_prompt = format!("explain this title in just one sentence: {}", &prompt);
+    let my_prompt = format!(
+        "Given the page title, explain and summarize what this page is about in one sentence: {}",
+        &prompt
+    );
 
     println!("Sending request to Gemini: {}", my_prompt);
 
@@ -66,7 +73,7 @@ pub async fn ask_gemini(prompt: &str) -> Result<String> {
 
     let response = client
         .post(API_ENDPOINT)
-        .query(&[("key", API_KEY)])
+        .query(&[("key", key)])
         .json(&request)
         .send()
         .await?;
@@ -93,17 +100,69 @@ pub async fn greet(prompt: &str) -> Result<(), String> {
 }
 
 // --------- Set up the Gemini API key
-pub fn set_gemini_api_key(key: String) -> Result<(), String> {
+
+#[derive(Serialize, Deserialize)]
+pub struct GeminiApiKey {
+    key: String,
+    api_type: String,
+    gemini_model: String,
+}
+
+#[tauri::command]
+pub fn set_gemini_api_key(
+    key: String,
+    api_type: String,
+    gemini_model: String,
+) -> Result<GeminiApiKey, String> {
     // create the config directory if it doesn't exist
     let config_dirs = ProjectDirs::from("", "", "rustyseo")
         .ok_or_else(|| "Failed to get project directories".to_string())?;
 
-    let config_dir = config_dirs.data_dir();
+    let config_dir = config_dirs.config_dir();
+
+    std::fs::create_dir_all(config_dir)
+        .map_err(|e| format!("Failed to create config directory: {}", e))?;
+
+    // create the file if it does not exist
+    let secret_file = config_dir.join("gemini_api_key.json");
+
+    let gemini_api_key = GeminiApiKey {
+        key,
+        api_type,
+        gemini_model,
+    };
+
+    let json = serde_json::to_string(&gemini_api_key)
+        .map_err(|e| format!("Failed to serialize API key: {}", e))?;
+    std::fs::write(&secret_file, json).map_err(|e| format!("Failed to write file: {}", e))?;
+
+    println!(
+        "Gemini API key set successfully in: {}",
+        secret_file.display()
+    );
+    Ok(gemini_api_key)
+}
+
+// ----- RED THE API KEY FROM THE CONGIF FILE AND RETURN IT
+pub fn get_gemini_api_key() -> Result<String, String> {
+    // create the config directory if it doesn't exist
+    let config_dirs = ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
+
+    let config_dir = config_dirs.config_dir();
 
     // create the file if it does not exit
-    let secret_file = config_dir.join("gemini_api_key.txt");
+    let secret_file = config_dir.join("gemini_api_key.json");
     if !secret_file.exists() {
-        std::fs::write(&secret_file, key).map_err(|e| format!("Failed to write file: {}", e))?;
+        return Err("Gemini API key not found".to_string());
     }
-    Ok(())
+
+    let json_content = std::fs::read_to_string(&secret_file)
+        .map_err(|e| format!("Failed to read Gemini API key file: {}", e))?;
+
+    let gemini_api_key: GeminiApiKey = serde_json::from_str(&json_content)
+        .map_err(|e| format!("Failed to parse Gemini API key JSON: {}", e))?;
+
+    println!("Gemini API key loaded successfully");
+    Ok(gemini_api_key.key)
 }
