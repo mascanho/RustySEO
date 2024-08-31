@@ -47,6 +47,7 @@ pub struct SEOResultRecord {
     title: String,
     description: String,
     keywords: String,
+    headings: String,
 }
 
 pub fn open_db_connection() -> Result<Connection> {
@@ -107,7 +108,8 @@ pub fn create_technical_data_table() -> Result<()> {
             url TEXT NOT NULL,
             title TEXT NOT NULL,
             description TEXT,
-            keywords TEXT
+            keywords TEXT,
+            headings TEXT
         )",
         [],
     )
@@ -164,6 +166,7 @@ pub fn read_seo_data_from_db() -> Result<Vec<SEOResultRecord>> {
                 title: row.get(3)?,
                 description: row.get(4)?,
                 keywords: row.get(5)?,
+                headings: row.get(6)?,
             })
         })
         .expect("Failed to execute query");
@@ -220,14 +223,17 @@ pub fn add_technical_data(data: DBData, url: &str) -> Result<()> {
     create_technical_data_table()?;
 
     let date = Utc::now().naive_utc().to_string();
-    let (title, description, keywords) = (data.title, data.description, data.keywords);
+    let (title, description, keywords, headings) =
+        (data.title, data.description, data.keywords, data.headings);
     let keywords = serde_json::to_string(&keywords).unwrap();
+    let headings = serde_json::to_string(&headings).unwrap();
+
     let conn = open_db_connection()?;
 
     // Insert new record into technical_data table
     conn.execute(
-        "INSERT INTO technical_data (date, url, title, description, keywords) VALUES (?1, ?2, ?3, ?4, ?5)",
-        params![date, url, title, description, keywords],
+        "INSERT INTO technical_data (date, url, title, description, keywords, headings) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        params![date, url, title, description, keywords, headings],
     )
     .expect("Failed to insert data into technical_data table");
 

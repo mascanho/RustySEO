@@ -20,7 +20,7 @@ const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
         <table className="w-full ">
           <thead>
             <tr>
-              <th align="left" className="text-xs  border">
+              <th align="left" className="text-xs border-l-0 ">
                 Entity
               </th>
               <th align="left" className="text-xs  border">
@@ -48,7 +48,7 @@ const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
             ) : (
               scripts.map((item: any, index: number) => (
                 <tr key={item.url || index}>
-                  <td className="px-4 py-2 text-sm border text-blue-600 truncate">
+                  <td className="px-4 py-2 text-sm border-t border-b text-blue-600 truncate">
                     {item?.entity}
                   </td>
                   <td className="px-4  text-xs border text-gray-700 dark:text-white/50">

@@ -147,7 +147,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
   };
 
   return (
-    <div className="relative w-full max-w-8xl mx-auto text-xs">
+    <div className="relative w-full  mx-auto text-xs">
       <div className=" -top-16 -right-0 w-full flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10">
         <div className="flex items-center space-x-2 relative">
           <IoIosSearch className="w-4 h-4 absolute left-4 dark:text-white" />
@@ -201,7 +201,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
         </DropdownMenu>
       </div>
 
-      <section className="rounded-md mt-3 overflow-hidden shadow border dark:border-white/10 dark:bg-brand-darker">
+      <section className="rounded-md mt-3 overflow-auto shadow border dark:border-white/10 dark:bg-brand-darker">
         <div className="h-full max-h-[38rem] custom-scrollbar overflow-auto">
           <table className="table_history w-full shadow">
             <thead className="bg-white dark:bg-brand-darker sticky top-0 z-10">
@@ -216,45 +216,66 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
                 </th>
                 <th align="left">URL</th>
                 <th>Page Title</th>
-                <th>Meta Description</th>
+                <th>Description</th>
+                <th>H1</th>
+                <th>H2</th>
+                <th>Keywords</th>
               </tr>
             </thead>
             <tbody>
-              {sortedData.map((data, index) => (
-                <tr className="w-full border" key={index}>
-                  <td className="border">
-                    {new Date(data.date).toLocaleDateString()}
-                  </td>
-                  <td
-                    align="left"
-                    className="py-2 border relative group min-w-[360px] "
-                  >
-                    {data.url.length > 50
-                      ? data.url.substring(0, 50) + "..."
-                      : data.url}
-                    <span
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                      onClick={() => handleAddTodo(data.url)}
+              {sortedData.map((data, index) => {
+                const kws = data?.keywords ? JSON.parse(data.keywords) : [];
+                const headings = data?.headings
+                  ? JSON.parse(data?.headings)
+                  : [];
+                const firstHeading = headings[0]?.replace(/^h1:\s*/, "") || "";
+                const secondHeading = headings[1]?.replace(/^h2:\s*/, "") || "";
+
+                return (
+                  <tr className="w-full border" key={index}>
+                    <td className="border">
+                      {new Date(data.date).toLocaleDateString()}
+                    </td>
+                    <td
+                      align="left"
+                      className="py-2 border relative group min-w-[360px] "
                     >
-                      <FiCheckCircle className="text-green-500" />
-                    </span>
-                  </td>
-                  <td
-                    align="left"
-                    className={`border ${data?.title?.length > 60 ? "text-red-500" : "text-green-700"}`}
-                  >
-                    {/* @ts-ignore */}
-                    {data.title}
-                  </td>
-                  <td
-                    align="left"
-                    className={`border ${data?.description?.length > 160 ? "text-red-500" : "text-green-700"}`}
-                  >
-                    {/* @ts-ignore */}
-                    {data.description}
-                  </td>
-                </tr>
-              ))}
+                      {data.url.length > 50
+                        ? data.url.substring(0, 50) + "..."
+                        : data.url}
+                      <span
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                        onClick={() => handleAddTodo(data.url)}
+                      >
+                        <FiCheckCircle className="text-green-500" />
+                      </span>
+                    </td>
+                    <td
+                      align="left"
+                      className={`border ${data?.title?.length > 60 ? "text-red-500" : "text-green-700"}`}
+                    >
+                      {/* @ts-ignore */}
+                      {data.title}
+                    </td>
+                    <td
+                      align="left"
+                      className={`border ${data?.description?.length > 160 ? "text-red-500" : "text-green-700"}`}
+                    >
+                      {/* @ts-ignore */}
+                      {data.description}
+                    </td>
+                    <td align="left" className="border">
+                      {firstHeading}
+                    </td>
+                    <td align="left" className="border">
+                      {secondHeading}
+                    </td>
+                    <td align="left" className="border">
+                      {kws.join(", ")}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

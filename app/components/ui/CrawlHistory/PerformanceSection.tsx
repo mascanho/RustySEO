@@ -212,7 +212,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
         {/* @ts-ignore */}
         <Todo url={todoUrl} close={closeModal} strategy={todoStrategy} />
       </Modal>
-      <div className="relative w-full max-w-7xl mx-auto text-xs">
+      <div className="relative w-full  mx-auto text-xs">
         <div className=" -top-16 -right-0 w-full flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10">
           <div className="flex items-center space-x-2 relative">
             <IoIosSearch className="w-4 h-4 absolute left-4 dark:text-white" />

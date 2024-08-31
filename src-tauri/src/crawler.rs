@@ -36,6 +36,7 @@ pub struct DBData {
     title: String,
     description: String,
     keywords: Vec<String>,
+    headings: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -563,9 +564,10 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         title: page_title[0].clone(),
         description: page_description[0].clone(),
         keywords: words.clone(),
+        headings: headings.clone(),
     };
 
-    println!("Keywords: {:?}", kws);
+    println!("Keywords: {:?}", &words);
     println!("db_data: {:?}", &db_data);
 
     //db_data.push(&canonical_url);
