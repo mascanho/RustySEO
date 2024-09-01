@@ -307,6 +307,12 @@ pub fn read_links_from_db() -> Result<Vec<(String, String)>> {
 pub fn push_gsc_data_to_db(data: &Vec<serde_json::Value>) -> Result<()> {
     let conn = open_db_connection().expect("Failed to open database connection");
 
+    // Clear the existing gsc_data table
+    conn.execute("DROP TABLE IF EXISTS gsc_data", [])
+        .expect("Failed to drop gsc_data table");
+
+    println!("Existing gsc_data table cleared");
+
     // CREATE NEW TABLE ON DB
     conn.execute(
         "CREATE TABLE IF NOT EXISTS gsc_data (
