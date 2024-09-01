@@ -113,7 +113,7 @@ const TaskManagerContainerItem: React.FC<{ data: any }> = ({ data }) => {
             <DropdownMenuTrigger>
               <BiDotsVerticalRounded className="text-xl dark:text-brand-highlight cursor-pointer hover:scale-105 active:scale-95 transition-all delay-75 ease-in-out" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-white absolute right-0 dark:border-brand-dark dark:bg-brand-darker dark:text-white">
+            <DropdownMenuContent className="bg-white absolute right-0 dark:border-brand-dark dark:bg-brand-darker dark:text-white z-[9999999999999]">
               <DropdownMenuLabel>Task Status</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {["Todo", "Doing", "Completed"].map((status) => (

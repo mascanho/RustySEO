@@ -142,7 +142,7 @@ pre:not([class*="robots"]) {
 .mantine-Drawer-body,
 .mantine-Drawer-header {
   padding: 0 !important;
-  @apply dark:bg-brand-dark !important;
+  @apply dark:bg-brand-darker !important;
   padding: 0 !important;
 }
 

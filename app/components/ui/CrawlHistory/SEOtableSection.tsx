@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useCallback, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -15,7 +14,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"; // Ensure this path is correct
+} from "@/components/ui/dropdown-menu";
 
 // Define TypeScript types
 interface PerformanceData {
@@ -45,7 +44,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [data, setData] = useState<PerformanceData[]>(dbdata);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc"); // Default to descending
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [sortColumn, setSortColumn] = useState<keyof PerformanceData>("date");
   const [todoUrl, setTodoUrl] = useState<string | null>(null);
 
@@ -102,7 +101,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
       );
     } else {
       setSortColumn(column);
-      setSortDirection("desc"); // Default to descending when sorting by a new column
+      setSortDirection("desc");
     }
   };
 
@@ -121,7 +120,6 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
     let path;
     invoke("generate_csv_command").then((result) => {
       console.log(result);
-      // @ts-ignore
       setDownload(result);
     });
 
@@ -147,8 +145,8 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
   };
 
   return (
-    <div className="relative w-full  mx-auto text-xs">
-      <div className=" -top-16 -right-0 w-full flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10">
+    <div className="relative w-full mx-auto text-xs">
+      <div className="-top-16 -right-0 w-full flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10">
         <div className="flex items-center space-x-2 relative">
           <IoIosSearch className="w-4 h-4 absolute left-4 dark:text-white" />
           <input
@@ -174,10 +172,10 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
               Refresh Table
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-black/20 dark:bg-white/20" />
-            <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer  ">
+            <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer">
               Match URL
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer  ">
+            <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer">
               Clear Table
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -201,83 +199,82 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
         </DropdownMenu>
       </div>
 
-      <section className="rounded-md mt-3 overflow-auto shadow border dark:border-white/10 dark:bg-brand-darker">
-        <div className="h-full max-h-[38rem] custom-scrollbar overflow-auto">
-          <table className="table_history w-full shadow">
-            <thead className="bg-white dark:bg-brand-darker sticky top-0 z-10">
-              <tr>
-                <th
-                  className="cursor-pointer"
-                  onClick={() => handleSort("date")}
-                >
-                  Date{" "}
-                  {sortColumn === "date" &&
-                    (sortDirection === "asc" ? "↑" : "↓")}
-                </th>
-                <th align="left">URL</th>
-                <th>Page Title</th>
-                <th>Description</th>
-                <th>H1</th>
-                <th>H2</th>
-                <th>Keywords</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedData.map((data, index) => {
-                const kws = data?.keywords ? JSON.parse(data.keywords) : [];
-                const headings = data?.headings
-                  ? JSON.parse(data?.headings)
-                  : [];
-                const firstHeading = headings[0]?.replace(/^h1:\s*/, "") || "";
-                const secondHeading = headings[1]?.replace(/^h2:\s*/, "") || "";
+      <section className="rounded-md mt-3 overflow-x-auto shadow border dark:border-white/10 dark:bg-brand-darker">
+        <div className="h-full max-h-[38rem] custom-scrollbar overflow-y-auto">
+          <div className="overflow-x-auto" style={{ width: "100%" }}>
+            <table className="table_history w-full shadow table-fixed">
+              <thead className="bg-white dark:bg-brand-darker sticky top-0 z-10">
+                <tr>
+                  <th
+                    className="cursor-pointer w-24"
+                    onClick={() => handleSort("date")}
+                  >
+                    Date{" "}
+                    {sortColumn === "date" &&
+                      (sortDirection === "asc" ? "↑" : "↓")}
+                  </th>
+                  <th className="w-60">URL</th>
+                  <th className="w-48">Page Title</th>
+                  <th className="w-64">Description</th>
+                  <th className="w-48">H1</th>
+                  <th className="w-48">H2</th>
+                  <th className="w-64">Keywords</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedData.map((data, index) => {
+                  const kws = data?.keywords ? JSON.parse(data.keywords) : [];
+                  const headings = data?.headings
+                    ? JSON.parse(data?.headings)
+                    : [];
+                  const firstHeading =
+                    headings[0]?.replace(/^h1:\s*/, "") || "";
+                  const secondHeading =
+                    headings[1]?.replace(/^h2:\s*/, "") || "";
 
-                return (
-                  <tr className="w-full border" key={index}>
-                    <td className="border">
-                      {new Date(data.date).toLocaleDateString()}
-                    </td>
-                    <td
-                      align="left"
-                      className="py-2 border relative group min-w-[360px] "
-                    >
-                      {data.url.length > 50
-                        ? data.url.substring(0, 50) + "..."
-                        : data.url}
-                      <span
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                        onClick={() => handleAddTodo(data.url)}
+                  return (
+                    <tr className="w-full border" key={index}>
+                      <td className="border p-2">
+                        <div className="line-clamp-2">
+                          {new Date(data.date).toLocaleDateString()}
+                        </div>
+                      </td>
+                      <td className="py-2 border relative group p-2">
+                        <div className="line-clamp-2">
+                          {data.url}
+                          <span
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                            onClick={() => handleAddTodo(data.url)}
+                          >
+                            <FiCheckCircle className="text-green-500" />
+                          </span>
+                        </div>
+                      </td>
+                      <td
+                        className={`border p-2 ${data?.title?.length > 60 ? "text-red-500" : "text-green-700"}`}
                       >
-                        <FiCheckCircle className="text-green-500" />
-                      </span>
-                    </td>
-                    <td
-                      align="left"
-                      className={`border ${data?.title?.length > 60 ? "text-red-500" : "text-green-700"}`}
-                    >
-                      {/* @ts-ignore */}
-                      {data.title}
-                    </td>
-                    <td
-                      align="left"
-                      className={`border ${data?.description?.length > 160 ? "text-red-500" : "text-green-700"}`}
-                    >
-                      {/* @ts-ignore */}
-                      {data.description}
-                    </td>
-                    <td align="left" className="border">
-                      {firstHeading}
-                    </td>
-                    <td align="left" className="border">
-                      {secondHeading}
-                    </td>
-                    <td align="left" className="border">
-                      {kws.join(", ")}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                        <div className="line-clamp-2">{data.title}</div>
+                      </td>
+                      <td
+                        className={`border p-2 ${data?.description?.length > 160 ? "text-red-500" : "text-green-700"}`}
+                      >
+                        <div className="line-clamp-2">{data.description}</div>
+                      </td>
+                      <td className="border p-2">
+                        <div className="line-clamp-2">{firstHeading}</div>
+                      </td>
+                      <td className="border p-2">
+                        <div className="line-clamp-2">{secondHeading}</div>
+                      </td>
+                      <td className="border p-2">
+                        <div className="line-clamp-2">{kws.join(", ")}</div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
     </div>

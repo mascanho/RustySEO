@@ -38,7 +38,7 @@ const About: React.FC = () => {
       <p>
         You can find us on{" "}
         <a
-          href="https://github.com/mascanho/rustyseo"
+          href="https://github.com/mascanho/RustySEO"
           target="_blank"
           className="underline dark:text-white"
         >

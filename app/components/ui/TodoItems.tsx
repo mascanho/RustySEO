@@ -3,6 +3,7 @@ import { Tabs } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import TodoItem from "./TodoItem";
 import { v4 as uuidv4 } from "uuid";
+import TaskManagerContainerItem from "./TaskManager/TaskManagerContainerItem";
 
 type Task = {
   id: string;
@@ -37,8 +38,8 @@ const TodoItems = ({ url, strategy }: { url: string; strategy: string }) => {
     window.dispatchEvent(event);
   }, [tasks]);
 
-  const completedTasks = tasks.filter((task) => task.completed);
-  const pendingTasks = tasks.filter((task) => !task.completed);
+  const completedTasks = tasks.filter((task) => task.status === "Completed");
+  const pendingTasks = tasks.filter((task) => task.status !== "Completed");
 
   const handleRemoveTask = (id: string) => {
     console.log("Removing task with id:", id);
@@ -70,19 +71,14 @@ const TodoItems = ({ url, strategy }: { url: string; strategy: string }) => {
         <section className="mt-4">
           <Tabs.Panel value="first" pt="xs">
             <section className="py-4 overflow-auto h-full -mt-2">
-              <section className="todoItems custom-scrollbar mx-4 -mt-3">
+              <section className="todoItems custom-scrollbar mx-4 -mt-3 space-y-3">
                 {pendingTasks
                   .sort(
                     (a, b) =>
                       new Date(b.date).getTime() - new Date(a.date).getTime(),
                   )
                   .map((task) => (
-                    <TodoItem
-                      key={task.id}
-                      task={task}
-                      handleRemoveTask={handleRemoveTask}
-                      handleMarkCompleted={handleMarkCompleted}
-                    />
+                    <TaskManagerContainerItem key={task.id} data={task} />
                   ))}
               </section>
             </section>
@@ -97,12 +93,7 @@ const TodoItems = ({ url, strategy }: { url: string; strategy: string }) => {
                     new Date(b.date).getTime() - new Date(a.date).getTime(),
                 )
                 .map((task) => (
-                  <TodoItem
-                    key={task.id}
-                    task={task}
-                    handleRemoveTask={handleRemoveTask}
-                    handleMarkCompleted={handleMarkCompleted}
-                  />
+                  <TaskManagerContainerItem key={task.id} data={task} />
                 ))}
             </section>
           </Tabs.Panel>
