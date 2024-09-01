@@ -23,8 +23,12 @@ import { useRouter } from "next/navigation";
 import WindowToggler from "./Panes/WindowToggler";
 import GeminiSelector from "./GeminiSelector/GeminiSelector";
 import About from "./About/About";
+import { invoke } from "@tauri-apps/api/tauri";
+import { save } from "@tauri-apps/api/dialog";
+import { writeTextFile } from "@tauri-apps/api/fs";
 
 const TopMenuBar = () => {
+  const [download, setDownload] = useState("");
   const onClose = useCallback(async () => {
     const { appWindow } = await import("@tauri-apps/api/window");
     appWindow.close();
@@ -59,7 +63,7 @@ const TopMenuBar = () => {
   const [openedPanes, { open: openPanes, close: closePanes }] =
     useDisclosure(false);
   const [openedAbout, { open: openAbout, close: closeAbout }] =
-    useDisclosure(true);
+    useDisclosure(false);
 
   const [
     openedSearchConsole,
@@ -119,6 +123,60 @@ const TopMenuBar = () => {
       }
     }
   }, []);
+
+  // Handle download
+  const handleDownloadSEO = async () => {
+    let path;
+    invoke("generate_seo_csv").then((result) => {
+      console.log(result);
+      setDownload(result);
+    });
+
+    path = await save({
+      defaultPath: "seo.csv",
+      filters: [
+        {
+          name: "CSV Files",
+          extensions: ["csv"],
+        },
+      ],
+    });
+    if (path) {
+      await writeTextFile(path, download);
+      console.log("File saved successfully");
+    }
+  };
+
+  // Handle download
+  const handleDownloadPerformance = async () => {
+    let path;
+    invoke("generate_csv_command").then((result) => {
+      console.log(result);
+      // @ts-ignore
+      setDownload(result);
+    });
+
+    path = await save({
+      defaultPath: "performance.csv",
+      filters: [
+        {
+          name: "CSV Files",
+          extensions: ["csv"],
+        },
+      ],
+    });
+    if (path) {
+      await writeTextFile(path, download);
+      console.log("File saved successfully");
+    }
+  };
+
+  // Handle adding to-do
+  const handleAddTodo = (url: string, strategy: string) => {
+    setTodoStrategy(strategy);
+    setTodoUrl(url);
+    openModal();
+  };
 
   return (
     <>
@@ -278,10 +336,10 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-3">Reports</MenubarTrigger>
             <MenubarContent>
-              <MenubarItem>
-                New Tab <MenubarShortcut>⌘T</MenubarShortcut>
+              <MenubarItem onClick={handleDownloadPerformance}>
+                Performance History
               </MenubarItem>
-              <MenubarItem>New Window</MenubarItem>
+              <MenubarItem onClick={handleDownloadSEO}>SEO History</MenubarItem>
               <MenubarSeparator />
               <MenubarItem>Share</MenubarItem>
               <MenubarSeparator />

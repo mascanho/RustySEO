@@ -5,6 +5,7 @@ use std::{error::Error, fs, path::Path};
 use tauri::command;
 
 // Define the ResultRecord struct if needed
+
 pub struct ResultRecord {
     pub id: Option<i64>,                   // For INTEGER PRIMARY KEY AUTOINCREMENT
     pub date: String,                      // For TEXT (assuming ISO 8601 format for date)
@@ -22,11 +23,94 @@ pub struct ResultRecord {
     pub total_byte_weight: Option<f64>,    // For FLOAT
 }
 
+pub struct OnPageResults {
+    pub url: String,
+    pub title: String,
+    pub description: String,
+    pub keywords: String,
+    pub headings: String,
+}
+
+// Function to generate CSV file from data
+pub fn generate_csv(data: Vec<Vec<String>>, file_path: &Path) -> Result<String, String> {
+    // Create a new CSV writer that writes to the specified file path
+    let mut wtr = Writer::from_path(file_path).map_err(|e| e.to_string())?;
+
+    //Write each row of data
+    for row in data.clone() {
+        wtr.write_record(&row).map_err(|e| e.to_string())?;
+    }
+
+    // Ensure all data is written to the file
+    wtr.flush().map_err(|e| e.to_string())?;
+    println!("CSV file created at: {:?}", file_path);
+    let csv = &data.clone();
+    let csv_data = csv
+        .iter()
+        .map(|row| row.join(","))
+        .collect::<Vec<_>>()
+        .join("\n");
+    Ok(csv_data)
+}
+
+// Fetch SEO ONPAGE data from the database and generate a CSV file
+#[command]
+pub fn generate_seo_csv() -> Result<String, String> {
+    // Retrieve the config directory for the application
+    let project_dirs = ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
+
+    // Define the directory for the DB file
+    let db_dir = project_dirs.data_dir();
+    let db_path = db_dir.join("crawl_results.db");
+
+    // Create a new SQLite database connection
+    let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
+
+    // Query the data
+    let mut stmt = conn
+        .prepare("SELECT url, title, description, keywords, headings FROM technical_data")
+        .map_err(|e| e.to_string())?;
+
+    let data_iter = stmt
+        .query_map([], |row| {
+            Ok(vec![
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, String>(3)?,
+                row.get::<_, String>(4)?,
+            ])
+        })
+        .map_err(|e| e.to_string())?;
+
+    // Convert the data to a Vec<Vec<String>>
+    let data: Vec<Vec<String>> = data_iter
+        .map(|result| result.map_err(|e| e.to_string()))
+        .collect::<Result<_, _>>()?;
+
+    // Define the file path for the CSV file
+    let file_path = project_dirs.data_dir().join("onpage_seo_output.csv");
+
+    // Add headers
+    let mut data_with_headers = vec![vec![
+        "URL".to_string(),
+        "Title".to_string(),
+        "Description".to_string(),
+        "Keywords".to_string(),
+        "Headings".to_string(),
+    ]];
+    data_with_headers.extend(data);
+
+    // Generate the CSV file
+    generate_csv(data_with_headers, &file_path)
+}
+
 // Fetch data from SQLite and generate a CSV file
 #[command]
 pub fn generate_csv_command() -> Result<String, String> {
     // Retrieve the config directory for the application
-    let project_dirs = ProjectDirs::from("com", "YourCompany", "YourAppName")
+    let project_dirs = ProjectDirs::from("", "", "rustyseo")
         .ok_or_else(|| "Failed to get project directories".to_string())?;
 
     // Define the directory for the DB file
@@ -107,26 +191,4 @@ pub fn generate_csv_command() -> Result<String, String> {
 
     // Generate the CSV file
     generate_csv(data_with_headers, &file_path)
-}
-
-// Function to generate CSV file from data
-pub fn generate_csv(data: Vec<Vec<String>>, file_path: &Path) -> Result<String, String> {
-    // Create a new CSV writer that writes to the specified file path
-    let mut wtr = Writer::from_path(file_path).map_err(|e| e.to_string())?;
-
-    //Write each row of data
-    for row in data.clone() {
-        wtr.write_record(&row).map_err(|e| e.to_string())?;
-    }
-
-    // Ensure all data is written to the file
-    wtr.flush().map_err(|e| e.to_string())?;
-    println!("CSV file created at: {:?}", file_path);
-    let csv = &data.clone();
-    let csv_data = csv
-        .iter()
-        .map(|row| row.join(","))
-        .collect::<Vec<_>>()
-        .join("\n");
-    Ok(csv_data)
 }

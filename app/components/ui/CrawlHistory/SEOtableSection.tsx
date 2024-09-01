@@ -118,13 +118,13 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
   // Handle download
   const handleDownloadXLSX = async () => {
     let path;
-    invoke("generate_csv_command").then((result) => {
+    invoke("generate_seo_csv").then((result) => {
       console.log(result);
       setDownload(result);
     });
 
     path = await save({
-      defaultPath: "performance.csv",
+      defaultPath: "seo.csv",
       filters: [
         {
           name: "CSV Files",
@@ -145,9 +145,9 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
   };
 
   return (
-    <div className="relative w-full mx-auto text-xs">
-      <div className="-top-16 -right-0 w-full flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10">
-        <div className="flex items-center space-x-2 relative">
+    <div className="relative w-full mx-auto text-xs  -mt-8">
+      <div className=" -right-0 w-full flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10  -z-10">
+        <div className="flex items-center space-x-2 relative z-0">
           <IoIosSearch className="w-4 h-4 absolute left-4 dark:text-white" />
           <input
             type="text"
@@ -199,7 +199,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
         </DropdownMenu>
       </div>
 
-      <section className="rounded-md mt-3 overflow-x-auto shadow border dark:border-white/10 dark:bg-brand-darker">
+      <section className="rounded-md mt-2 overflow-x-auto shadow border dark:border-white/10 dark:bg-brand-darker">
         <div className="h-full max-h-[38rem] custom-scrollbar overflow-y-auto">
           <div className="overflow-x-auto" style={{ width: "100%" }}>
             <table className="table_history w-full shadow table-fixed">

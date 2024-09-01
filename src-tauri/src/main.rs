@@ -141,6 +141,7 @@ async fn main() {
             image_converter::converter::handle_image_conversion,
             commands::crawl_domain,
             gemini::set_gemini_api_key,
+            downloads::csv::generate_seo_csv,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

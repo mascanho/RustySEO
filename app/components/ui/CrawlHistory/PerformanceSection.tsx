@@ -212,9 +212,9 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
         {/* @ts-ignore */}
         <Todo url={todoUrl} close={closeModal} strategy={todoStrategy} />
       </Modal>
-      <div className="relative w-full  mx-auto text-xs">
-        <div className=" -top-16 -right-0 w-full flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10">
-          <div className="flex items-center space-x-2 relative">
+      <div className="relative mr-0 w-full mx-auto text-xs z-0">
+        <div className=" -right-0  -z-10 flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10 -mt-8  w-full">
+          <div className="flex items-center space-x-2 relative z-0">
             <IoIosSearch className="w-4 h-4 absolute left-4 dark:text-white" />
             <input
               type="text"
@@ -266,8 +266,8 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
           </DropdownMenu>
         </div>
 
-        <section className="rounded-md mt-3 overflow-hidden shadow border dark:border-white/10 dark:bg-brand-darker">
-          <div className="h-full max-h-[38rem] custom-scrollbar overflow-auto bg-white dark:bg-brand-darker">
+        <section className="rounded-md mt-2 overflow-hidden shadow border dark:border-white/10 dark:bg-brand-darker w-full z-0">
+          <div className="h-full max-h-[38rem] custom-scrollbar overflow-auto bg-white dark:bg-brand-darker w-full">
             <table className="table_history w-full shadow text-xs">
               <thead className="bg-white dark:bg-brand-darker sticky top-0 z-10">
                 <tr>

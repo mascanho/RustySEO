@@ -296,9 +296,13 @@ const SEOImprovements = ({
   return (
     <section className="max-w-7xl mx-auto text-xs">
       <Tabs defaultValue="performance" className="w-full">
-        <TabsList>
-          <TabsTrigger value="performance">Technical</TabsTrigger>
-          <TabsTrigger value="seo">On-Page</TabsTrigger>
+        <TabsList className="text-xs">
+          <TabsTrigger value="performance" className="text-xs">
+            Technical
+          </TabsTrigger>
+          <TabsTrigger className="text-xs" value="seo">
+            On-Page
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="performance" className="w-full">
           <PerformanceImprovements pageSpeed={pageSpeed} />
