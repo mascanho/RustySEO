@@ -52,7 +52,7 @@ input:focus {
 /* Tables Styles */
 
 .table_container {
-  @apply bg-white border dark:border-brand-dark dark:bg-brand-darker dark:text-white shadow rounded-md h-[30rem] overflow-hidden p-0.5  !important;
+  @apply bg-white border dark:border-brand-darker dark:bg-brand-darker dark:text-white shadow rounded-md h-[30rem] overflow-hidden p-0.5  !important;
 
   div {
     @apply dark:text-white dark:bg-brand-darker mt-0 bg-white !important;
@@ -285,7 +285,7 @@ button:where([data-active]) {
 /*WIDGETS*/
 
 .widget {
-  @apply border w-full sm:w-[13rem]  xl:w-full  dark:bg-brand-darker dark:border-brand-dark h-[7.8em] !important;
+  @apply border w-full sm:w-[13rem]  xl:w-full  dark:bg-brand-darker dark:border-brand-darker h-[7.8em] !important;
 }
 
 .widget > div > h2:first-of-type {

@@ -43,7 +43,7 @@ export function HtmlToTextChart({ htmlToTextRatio }: any) {
   ];
 
   return (
-    <Card className="flex flex-col dark:bg-brand-darker">
+    <Card className="flex flex-col dark:bg-brand-darker dark:border-brand-darker">
       <CardHeader className="items-center pb-0">
         <CardTitle>Content Ratio</CardTitle>
         {/* <CardDescription>January - June 2024</CardDescription> */}

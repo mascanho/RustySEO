@@ -95,7 +95,7 @@ export function LinksChart({
   }, []);
 
   return (
-    <Card className="flex flex-col dark:bg-brand-darker">
+    <Card className="flex flex-col dark:bg-brand-darker dark:border-brand-darker">
       <CardHeader className="items-center pb-0">
         <CardTitle>On page Links</CardTitle>
       </CardHeader>

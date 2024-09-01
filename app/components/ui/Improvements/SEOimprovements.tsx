@@ -294,7 +294,7 @@ const SEOImprovements = ({
   }
 
   return (
-    <section className="max-w-7xl mx-auto text-xs">
+    <section className="max-w-7xl mx-auto text-xs -mt-4">
       <Tabs defaultValue="performance" className="w-full">
         <TabsList className="text-xs">
           <TabsTrigger value="performance" className="text-xs">
@@ -308,7 +308,7 @@ const SEOImprovements = ({
           <PerformanceImprovements pageSpeed={pageSpeed} />
         </TabsContent>
         <TabsContent value="seo">
-          <div className="bg-gray-300 dark:bg-brand-darker pr-2 pl-6 pt-6 pb-6 rounded-lg shadow max-w-7xl mx-auto mt-10">
+          <div className="bg-gray-300 dark:bg-brand-darker pr-2 pl-6 pt-6 pb-6 rounded-lg shadow max-w-7xl mx-auto mt-2">
             <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">
               SEO Improvements
             </h2>
