@@ -15,6 +15,9 @@ const LinkAnalysis = ({
     (link: any) => link?.is_external === false,
   );
 
+  console.log(links, "Links");
+  console.log(visibleLinks, "Visible Links");
+
   return (
     <section
       className={`links ${Visible.links ? "block" : "hidden"}  table_container  `}
