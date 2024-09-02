@@ -105,6 +105,8 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
     }
   }, [dbdata]);
 
+  console.log("this is the Performance Data: ", dbdata);
+
   // Filter and sort data
   const filteredData = (Array.isArray(data) ? data : [])
     .filter((item) =>
@@ -230,19 +232,21 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
               Options
             </DropdownMenuTrigger>
             <DropdownMenuContent className="bg-white dark:bg-brand-dark dark:text-white emr-12 mt-1 dark:border-brand-normal/20">
-              <DropdownMenuLabel>Table options</DropdownMenuLabel>
+              <DropdownMenuLabel className="text-xs">
+                Table options
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="cursor-pointer hover:bg-gray-100 dark:hover:text-black"
+                className="cursor-pointer hover:bg-gray-100 dark:hover:text-black text-xs"
                 onClick={refreshTable}
               >
                 Refresh Table
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-black/20 dark:bg-white/20" />
-              <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer  ">
+              <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer  text-xs">
                 Match URL
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer  ">
+              <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer text-xs ">
                 Clear Table
               </DropdownMenuItem>
             </DropdownMenuContent>

@@ -1,3 +1,4 @@
+import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import {
   ContextMenu,
   ContextMenuCheckboxItem,
@@ -28,6 +29,7 @@ import {
   FiClock,
   FiGlobe,
   FiClipboard,
+  FiExternalLink,
 } from "react-icons/fi";
 import { PiFileMagnifyingGlassDuotone } from "react-icons/pi";
 
@@ -55,17 +57,38 @@ const TableMenus = ({ children, data, crawl, url }: any) => {
             <FiCheckSquare className="mr-2" /> Check Index
           </ContextMenuSubTrigger>
           <ContextMenuSubContent className="w-48">
-            <ContextMenuItem>
+            <ContextMenuItem
+              onClick={() =>
+                openBrowserWindow(
+                  `https://www.google.com/search?q=${data?.url}`,
+                )
+              }
+            >
               <FaSearchengin className="mr-2" /> Google
             </ContextMenuItem>
-            <ContextMenuItem>
+            <ContextMenuItem
+              onClick={() =>
+                openBrowserWindow(`https://www.bing.com/search?q=${data?.url}`)
+              }
+            >
               <FaSearchengin className="mr-2" /> Bing
             </ContextMenuItem>
-            <ContextMenuItem>
+            <ContextMenuItem
+              onClick={() =>
+                openBrowserWindow(
+                  `https://search.yahoo.com/search?p=${data?.url}`,
+                )
+              }
+            >
               <FaSearchengin className="mr-2" /> Yahoo
             </ContextMenuItem>
-            <ContextMenuSeparator />
-            <ContextMenuItem>
+            <ContextMenuItem
+              onClick={() =>
+                openBrowserWindow(
+                  `https://www.yandex.com/search/?text=${data?.url}`,
+                )
+              }
+            >
               <FaSearchengin className="mr-2" /> Yandex
             </ContextMenuItem>
           </ContextMenuSubContent>
@@ -76,21 +99,17 @@ const TableMenus = ({ children, data, crawl, url }: any) => {
           </ContextMenuSubTrigger>
           <ContextMenuSubContent className="w-48">
             <ContextMenuItem>
-              <FiSave className="mr-2" /> Save Page As...
-              <ContextMenuShortcut>⇧⌘S</ContextMenuShortcut>
+              <FiExternalLink className="mr-2" /> Ahrefs
             </ContextMenuItem>
             <ContextMenuItem>
-              <FiPlusSquare className="mr-2" /> Create Shortcut...
+              <FiPlusSquare className="mr-2" /> Moz
             </ContextMenuItem>
             <ContextMenuItem>
-              <FiEdit className="mr-2" /> Name Window...
-            </ContextMenuItem>
-            <ContextMenuSeparator />
-            <ContextMenuItem>
-              <FiTool className="mr-2" /> Developer Tools
+              <FiGlobe className="mr-2" /> Majestic
             </ContextMenuItem>
           </ContextMenuSubContent>
         </ContextMenuSub>
+
         <ContextMenuSub>
           <ContextMenuSubTrigger>
             <FiCheckSquare className="mr-2" /> Validation

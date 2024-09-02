@@ -8,7 +8,6 @@ const LinkAnalysis = ({
   visibleLinks: any[];
   links: any;
 }) => {
-
   const links404 = links.filter((link: any) => link?.status_code === 404);
   const { Visible } = useStore();
   const linksExternal = links.filter((link: any) => link?.is_external === true);
@@ -91,7 +90,7 @@ const LinkAnalysis = ({
           <p>
             404:{" "}
             <span className="px-1 py-0.5 bg-red-400 text-white rounded-md min-w-3">
-              {visibleLinks.filter((link) => !link[1]).length}
+              {links404.length}
             </span>
           </p>
         </footer>

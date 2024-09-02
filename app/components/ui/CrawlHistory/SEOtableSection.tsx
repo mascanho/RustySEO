@@ -61,7 +61,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
       console.log(result);
       setData(result);
     });
-  }, []);
+  }, [dbdata]);
 
   // Filter and sort data
   const filteredData = (Array.isArray(data) ? data : [])
@@ -162,23 +162,25 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
 
         {/* Dropdown Menus for Options */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="w-fit px-4 border border-gray-300 rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center dark:text-white dark:border-brand-normal/20 dark:bg-brand-darker text-black">
+          <DropdownMenuTrigger className="w-fit px-4 border border-gray-300 rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center dark:text-white dark:border-brand-normal/20 dark:bg-brand-darker text-black text-xs">
             Options
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-white dark:bg-brand-dark dark:text-white emr-12 mt-1 dark:border-brand-normal/20">
-            <DropdownMenuLabel>Table options</DropdownMenuLabel>
+            <DropdownMenuLabel className="text-xs">
+              Table options
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              className="cursor-pointer hover:bg-gray-100 dark:hover:text-black"
+              className="cursor-pointer hover:bg-gray-100 dark:hover:text-black text-xs"
               onClick={refreshTable}
             >
               Refresh Table
             </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-black/20 dark:bg-white/20" />
-            <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer">
+            <DropdownMenuSeparator className="bg-black/20 dark:bg-white/20 text-xs" />
+            <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer text-xs">
               Match URL
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer">
+            <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer text-xs">
               Clear Table
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -229,10 +231,10 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
                   Description
                 </th>
                 <th className="w-48 sticky top-0 bg-white dark:bg-brand-darker z-20">
-                  H1
+                  Heading 1
                 </th>
                 <th className="w-48 sticky top-0 bg-white dark:bg-brand-darker z-20">
-                  H2
+                  Heading 2
                 </th>
                 <th className="w-64 sticky top-0 bg-white dark:bg-brand-darker z-20">
                   Keywords
@@ -255,7 +257,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
                         {new Date(data.date).toLocaleDateString()}
                       </div>
                     </td>
-                    <td className="py-2 border relative group p-2">
+                    <td align="left" className="py-2 border relative group p-2">
                       <div className="line-clamp-2">
                         {data.url}
                         <span
@@ -282,7 +284,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
                     <td className="border p-2">
                       <div className="line-clamp-2">{secondHeading}</div>
                     </td>
-                    <td className="border p-2">
+                    <td align="left" className="border p-2">
                       <div className="line-clamp-2">{kws.join(", ")}</div>
                     </td>
                   </tr>

@@ -38,6 +38,8 @@ export const OpenGraphCard = ({
     setSeoOpenGraph(openGraphDetails);
   }, []);
 
+  console.log(openGraphDetails, "This is the openGraphDetails");
+
   return (
     <div
       className={`opengraph shadow naked_table overflow-hidden ${Visible.opengraph ? "block" : "hidden"} `}
@@ -49,9 +51,9 @@ export const OpenGraphCard = ({
         <div className="relative z-10">
           <DropdownMenu>
             <DropdownMenuTrigger>
-              <BsThreeDotsVertical className="dark:text-white mr-2 z-10" />
+              <BsThreeDotsVertical className="dark:text-white mr-2 z-10 " />
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-brand-darker border  dark:bg-brand-darker  dark:border-brand-dark dark:text-white mr-36">
+            <DropdownMenuContent className="bg-brand-darker border  dark:bg-brand-darker  dark:border-brand-dark dark:text-white mr-36 bg-white">
               <DropdownMenuLabel>Social Previews</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -67,9 +69,9 @@ export const OpenGraphCard = ({
           </DropdownMenu>
         </div>
       </div>
-      <section className="mx-auto h-full w-full relative overflow-hidden rounded-lg  -z-1">
+      <section className="h-full w-full relative overflow-hidden rounded-lg  -z-1">
         <div
-          className={`px-10 m-auto w-10/12  flex flex-col -mt-10  items-center justify-center ${openGraphDetails.length === 0 ? "bg-white/40 h-full dark:bg-brand-darker" : "bg-white dark:bg-brand-darker h-full"}`}
+          className={`px-10 m-auto w-10/12  flex flex-col -mt-5  items-start justify-start ${openGraphDetails.length === 0 ? "bg-white/40 h-full dark:bg-brand-darker" : "bg-white dark:bg-brand-darker h-full"}`}
         >
           {openGraphDetails?.image?.length > 0 ? (
             <div className="flex flex-col flex-wrap justify-start items-start h-19/12">
@@ -86,7 +88,7 @@ export const OpenGraphCard = ({
           )}
           <div
             onClick={() => openBrowserWindow(openGraphDetails.url)}
-            className="flex flex-col flex-wrap cursor-pointer py-2"
+            className="flex flex-col flex-wrap cursor-pointer py-2 justify-start ml-0 w-full"
           >
             <span className="font-bold dark:text-white/50 bg-red-5000 text-xs">
               {openGraphDetails.title}

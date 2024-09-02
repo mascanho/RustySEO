@@ -64,8 +64,8 @@ export default function GeneralOverview({
           <div className="grid h-full ">
             {/* CHECKS THE CORE WEB VITALS */}
             <details open className="h-fit">
-              <summary className="text-xs bg-gray-100 dark:bg-brand-darker dark:text-slate-400 pl-2 py-1">
-                Page Speed
+              <summary className="text-xs bg-gray-100 dark:bg-brand-darker font-semibold dark:text-slate-400 pl-2 py-1">
+                Core Web Vitals
               </summary>
               {checks.slice(0, 14).map((check, index) => (
                 <div
@@ -94,7 +94,7 @@ export default function GeneralOverview({
                     )}
                     <div className="flex justify-between w-full ml-2 items-center">
                       <span
-                        className={`text-xs font-semibold flex-1 ${iconsGray ? "text-gray-400" : ""}`}
+                        className={`text-xs  flex-1 ${iconsGray ? "text-gray-400" : ""}`}
                       >
                         {check.name}
                       </span>
@@ -122,7 +122,7 @@ export default function GeneralOverview({
 
             {/* CHECKS THE SEO */}
             <details className="flex items-center h-full" open>
-              <summary className="flex items-center pl-2 py-1 bg-gray-200 dark:text-slate-400 dark:bg-brand-darker">
+              <summary className="flex items-center pl-2 py-1 bg-gray-200 dark:text-slate-400 font-semibold dark:bg-brand-darker">
                 SEO
               </summary>
               {checks.slice(14, checks.length).map((check, index) => (
@@ -152,7 +152,64 @@ export default function GeneralOverview({
                     )}
                     <div className="flex justify-between w-full ml-2 items-center">
                       <span
-                        className={`text-xs font-semibold flex-1 ${pageTitle.length <= 0 ? "text-gray-400" : ""}`}
+                        className={`text-xs  flex-1 ${pageTitle.length <= 0 ? "text-gray-400" : ""}`}
+                      >
+                        {check.name}
+                      </span>
+
+                      {!pageTitle && (
+                        <span className="text-black/50 dark:text-white/50">
+                          n/a
+                        </span>
+                      )}
+                      <span
+                        className={`text-xs text-gray-400 ${
+                          check.status === "Passed" &&
+                          pageTitle.length > 0 &&
+                          "text-green-500"
+                        } ${check.status === "Failed" && pageTitle.length > 0 && "text-red-500"} ${pageTitle.length <= 0 && "text-gray-400"}text-gray-400`}
+                      >
+                        {pageTitle.length ? check.status : "n/a"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </details>
+
+            {/* CHECKS THE Content */}
+            <details className="flex items-center h-full" open>
+              <summary className="flex items-center pl-2 py-1 bg-gray-100 dark:text-slate-400 font-semibold dark:bg-brand-darker">
+                Content
+              </summary>
+              {checks.slice(14, checks.length).map((check, index) => (
+                <div
+                  key={check.id}
+                  className={`flex items-center justify-between px-4 py-1.5 border-b dark:border-b-white/10 ${
+                    index % 2 === 0
+                      ? "bg-gray-200 dark:bg-brand-darker dark:text-white"
+                      : "bg-gray-100 dark:bg-brand-darker dark:text-white"
+                  }`}
+                >
+                  <div className="flex items-center w-full">
+                    {seoLoading ? (
+                      <Spinner />
+                    ) : (
+                      <>
+                        {check.status === "Passed" ? (
+                          <FaCheckCircle
+                            className={`w-4 h-4 ${seoIconsGray ? "text-gray-400" : "text-green-500"}`}
+                          />
+                        ) : (
+                          <XIcon
+                            className={`w-5 h-5 ${seoIconsGray ? "text-gray-400" : "text-red-500"}`}
+                          />
+                        )}
+                      </>
+                    )}
+                    <div className="flex justify-between w-full ml-2 items-center">
+                      <span
+                        className={`text-xs  flex-1 ${pageTitle.length <= 0 ? "text-gray-400" : ""}`}
                       >
                         {check.name}
                       </span>

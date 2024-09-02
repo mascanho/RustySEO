@@ -158,7 +158,7 @@ export const HeadAnalysis = ({
 
             <div className="flex items-center mt-2">
               <div
-                className={`flex justify-center items-center  ${hreflangs[0] === "No hreflang found" ? "bg-red-500 text-white" : hreflangs?.length > 1 && "bg-green-500 text-white"} w-8 h-8 p-1.5 rounded-full bg-gray-200`}
+                className={`flex justify-center items-center  ${hreflangs[0] === "No hreflang found" ? "bg-red-500 text-white" : hreflangs?.length >= 1 && "bg-green-500 text-white"} w-8 h-8 p-1.5 rounded-full bg-gray-200`}
               >
                 <TagIcon />
               </div>{" "}

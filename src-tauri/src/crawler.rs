@@ -369,6 +369,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
                 .map_err(|e| format!("Selector error: {}", e))?;
             for element in document.select(&heading_selector) {
                 let text = element.text().collect::<Vec<_>>().join(" ");
+                // Use a different separator if colon causes issues
                 let heading_with_type = format!("h{}: {}", level, text);
                 headings.push(heading_with_type);
             }
@@ -474,23 +475,33 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         }
 
         // Fetch the opengraph details
+
         let og_selector = Selector::parse("meta[property^='og:']").unwrap();
 
         for og in document.select(&og_selector) {
             if let (Some(property), Some(content)) =
                 (og.value().attr("property"), og.value().attr("content"))
             {
-                let key = property.trim_start_matches("og:").to_string();
-                if og_details.contains_key(&key) {
+                let key = property.strip_prefix("og:").unwrap_or(property).to_string();
+                println!(
+                    "Found OG tag - property: {}, content: {}",
+                    property, content
+                );
+
+                if key == "logo" {
+                    // Only set the image key if it hasn't been set yet
+                    if !og_details.contains_key(&key) {
+                        og_details.insert(key, Some(content.to_string()));
+                        println!("Inserting image: {}", content);
+                    } else {
+                        println!("Image already set, skipping: {}", content);
+                    }
+                } else {
                     og_details.insert(key, Some(content.to_string()));
                 }
             }
         }
 
-        // Output the details
-        for (key, value) in &og_details {
-            // println!("{}: {:?}", key, value);
-        }
         // Fetch the word count
         let (word_count, words) = content::count_words_accurately(&document);
         //println!(
@@ -561,8 +572,8 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let words: Vec<String> = kws.iter().map(|(word, _)| word.clone()).collect();
 
     let mut db_data: DBData = DBData {
-        title: page_title[0].clone(),
-        description: page_description[0].clone(),
+        title,
+        description,
         keywords: words.clone(),
         headings: headings.clone(),
     };

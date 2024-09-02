@@ -223,7 +223,7 @@ const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
       summary: getSummaryText(globalPercentageScore),
       insights: [
         {
-          aspect: "Page Performance",
+          aspect: "Core Web Vitals",
           status: performanceRating.status,
           description: performanceRating.description,
         },
