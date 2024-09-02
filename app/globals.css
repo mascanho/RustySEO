@@ -607,3 +607,8 @@ select option {
 .mantine-Popover-dropdown {
   @apply text-black dark:text-white;
 }
+
+/* TECHNICAL CHART COLOIURS */
+#chart-buttons button {
+  @apply dark:text-white dark:bg-brand-darker  text-black !important;
+}

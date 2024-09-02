@@ -1,5 +1,5 @@
 import useStore from "@/store/Panes";
-import React from "react";
+import { useEffect, useState } from "react";
 import { PiLinkSimpleBold } from "react-icons/pi";
 const LinkAnalysis = ({
   links,
@@ -8,12 +8,14 @@ const LinkAnalysis = ({
   visibleLinks: any[];
   links: any;
 }) => {
+  const [linksTable, setLinksTable] = useState<any[]>(visibleLinks);
   const links404 = links.filter((link: any) => link?.status_code === 404);
   const { Visible } = useStore();
   const linksExternal = links.filter((link: any) => link?.is_external === true);
   const linksInternal = links.filter(
     (link: any) => link?.is_external === false,
   );
+  const linksMissingAnchor = visibleLinks.filter((link: any) => !link[1]);
 
   console.log(links, "Links");
   console.log(visibleLinks, "Visible Links");
@@ -42,20 +44,20 @@ const LinkAnalysis = ({
             <div className="overflow-auto custom-scrollbar scroll-m-0 h-[23rem]">
               <table className="w-full">
                 <tbody>
-                  {visibleLinks.map((link, index) => (
+                  {linksTable.map((link: any, index: any) => (
                     <tr key={index} className="align-middle">
                       <td className="border-r border-b">
                         <span className="block py-1 px-3 w-[180px]">
-                          {link[1] || "-"}
+                          {link[1] || link?.description}
                         </span>
                       </td>
                       <td className="border-b">
                         <a
-                          href={link[0]}
+                          href={link[0] || link?.url}
                           className="block py-1 px-3 text-sm text-blue-500"
                           aria-label={`Link to ${link[0]}`}
                         >
-                          {link[0]}
+                          {link[0] || link?.url}
                         </a>
                       </td>
                     </tr>
@@ -66,31 +68,43 @@ const LinkAnalysis = ({
           </div>
         </section>
         <footer className="pb-1 m-2 rounded-md text-xs flex justify-end text-black/50 space-x-3 pt-0.5">
-          <p className="text-xs">
+          <p
+            className="text-xs cursor-pointer"
+            onClick={() => setLinksTable(visibleLinks)}
+          >
             Total:{" "}
             <span className="px-1 py-0.5 bg-gray-400 text-white rounded-md">
               {visibleLinks.length}
             </span>
           </p>
-          <p className="text-xs">
+          <p
+            className="text-xs cursor-pointer"
+            onClick={() => setLinksTable(linksInternal)}
+          >
             Internal:{" "}
             <span className="px-1 py-0.5 bg-blue-400 text-white rounded-md">
               {linksInternal.length}
             </span>
           </p>
-          <p className="text-xs">
+          <p
+            className="text-xs cursor-pointer"
+            onClick={() => setLinksTable(linksExternal)}
+          >
             External:{" "}
             <span className="px-1 py-0.5 bg-blue-400 text-white rounded-md">
               {linksExternal.length}
             </span>
           </p>
-          <p>
+          <p
+            className="text-xs cursor-pointer"
+            onClick={() => setLinksTable(linksMissingAnchor)}
+          >
             Missing Anchor:{" "}
             <span className="px-1 py-0.5 bg-red-400 text-white rounded-md min-w-3">
               {visibleLinks.filter((link) => !link[1]).length}
             </span>
           </p>
-          <p>
+          <p onClick={() => setLinksTable(links404)} className="cursor-pointer">
             404:{" "}
             <span className="px-1 py-0.5 bg-red-400 text-white rounded-md min-w-3">
               {links404.length}

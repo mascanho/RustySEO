@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"; // Ensure this path is correct
 import { CiViewList } from "react-icons/ci";
+import { TechnicalChart } from "../ShadCharts/TechnicalChart";
 
 import {
   Popover,
@@ -401,6 +402,9 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
             </table>
           </div>
         </section>
+        <aside className="my-1 pb-5">
+          <TechnicalChart />
+        </aside>
       </div>
     </>
   );
