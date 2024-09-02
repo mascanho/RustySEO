@@ -231,10 +231,10 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
                   Description
                 </th>
                 <th className="w-48 sticky top-0 bg-white dark:bg-brand-darker z-20">
-                  Heading 1
+                  Heading #1
                 </th>
                 <th className="w-48 sticky top-0 bg-white dark:bg-brand-darker z-20">
-                  Heading 2
+                  Heading #2
                 </th>
                 <th className="w-64 sticky top-0 bg-white dark:bg-brand-darker z-20">
                   Keywords
