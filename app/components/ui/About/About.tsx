@@ -14,21 +14,21 @@ const About: React.FC = () => {
         className="w-32 h-auto m-auto dark:hidden block animate-pulse"
       />
       <p>
-        Welcome to our innovative software! We've ingeniously combined the
+        Welcome to our innovative software! We&apos;ve ingeniously combined the
         realms of marketing, coding, and AI to create a truly unique and
         powerful tool. Our vision? To revolutionize how these disciplines
         interact and enhance each other.
       </p>
       <p>
-        This isn't just any ordinary software. It's a cutting-edge fusion of
-        technology and creativity, born from the intersection of marketing
-        expertise and coding brilliance, and nurtured by the latest advancements
-        in artificial intelligence. We're pushing boundaries and redefining
-        what's possible in this space.
+        This isn&apos;t just any ordinary software. It&apos;s a cutting-edge
+        fusion of technology and creativity, born from the intersection of
+        marketing expertise and coding brilliance, and nurtured by the latest
+        advancements in artificial intelligence. We&apos;re pushing boundaries
+        and redefining what&apos;s possible in this space.
       </p>
       <p>
-        While we're constantly evolving and improving, we believe in
-        transparency and collaboration. That's why we've embraced the
+        While we&apos;re constantly evolving and improving, we believe in
+        transparency and collaboration. That&apos;s why we&apos;ve embraced the
         open-source model. You have the opportunity to witness our development
         process firsthand, contribute your ideas, and be part of shaping the
         future of this groundbreaking software. Join us on this exciting journey
