@@ -86,7 +86,7 @@ pub struct CrawlResult {
     pub tag_container: Vec<String>,
     pub images: Vec<ImageInfo>,
     //pub head_elements: Vec<String>,
-    //pub body_elements: Vec<String>,
+    pub body_elements: Vec<String>,
     pub robots: Result<String, libs::MyError>,
     pub ratio: Vec<(f64, f64, f64)>,
     pub page_rank: Vec<f32>,
@@ -212,7 +212,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut tag_container = Vec::new();
     let mut ratio = Vec::new();
     //let mut head_elements = Vec::new();
-    //let mut body_elements = Vec::new();
+    let mut body_elements = Vec::new();
     let mut charset_arr = Vec::new();
 
     if response.status().is_success() {
@@ -281,17 +281,17 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         //}
 
         // Get all the elements that exist inside <body>
-        //let body_selector = Selector::parse("body").unwrap();
+        let body_selector = Selector::parse("body").unwrap();
 
-        //if let Some(body) = document.select(&body_selector).next() {
-        // println!("Found head element: {:?}", body.html());
-        //body_elements.push(body.html());
+        if let Some(body) = document.select(&body_selector).next() {
+            // println!("Found head element: {:?}", body.html());
+            body_elements.push(body.html());
 
-        // Serialize the head element and output in JSON format
-        //let body_contents = serialize_element(&body);
-        //let json_head_contents = serde_json::to_string_pretty(&body_contents).unwrap();
-        // println!("Head contents: {}", json_head_contents);
-        //}
+            // Serialize the head element and output in JSON format
+            let body_contents = serialize_element(&body);
+            //let json_head_contents = serde_json::to_string_pretty(&body_contents).unwrap();
+            // println!("Head contents: {}", json_head_contents);
+        }
         // check for Google Tag Manager and Its content
         let gtm_selector = Selector::parse("script").unwrap_or_else(|_| {
             println!("Failed to parse script selector, GTM detection may be incomplete");
@@ -523,41 +523,15 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     // Fine tuning the word count given the GPT variance
     // let words_adjusted = (words_amount as f64 * 2.9).round() as usize;
 
-    // println!("Links: {:?}", links);
-    // println!("Headings: {:?}", headings);
-    // println!("Alt texts: {:?}", alt_texts);
-    // println!("Page title: {:?}", page_title);
-    // println!("Page description: {:?}", page_description);
-    // println!("Canonical URL: {:?}", canonical_url);
-    // println!("Hreflang: {:?}", hreflangs);
-    // println!("Response code: {:?}", response_code);
-    // println!("Index Type: {:?}", index_type);
-    // println!("Image Links: {:?}", image_links);
-    // println!("Alt text count: {:?}", alt_text_count.len());
-    // println!("Page Schema: {:?}", page_schema);
-    // println!("Word Count: {:?}", words);
-    // println!("Reading Time: {:?}", reading_time);
-    // println!("Words Adjusted: {:?}", words_adjusted);
-    // println!("Open Graph Details: {:?}", og_details);
-
     // SITEMAP FETCHING
     let sitemap_from_url = libs::get_sitemap(&url);
-    //println!("Sitemap: {:?}", sitemap_from_url.await);
 
     // Robots FETCHING
     let robots = libs::get_robots(&url).await;
-    //println!("Robots: {:#?}", robots);
-
-    // println!("Hreflangs: {:?}", hreflangs);
-
-    //println!("Google Tag Manager: {:?}", tag_container);
 
     let images = fetch_image_info(&url).await.unwrap();
-    // println!("Images: {:?}", images);
-    //
 
     // Add the data to the DB
-
     let title = match page_title.len() {
         0 => String::from(""),
         _ => page_title[0].clone(),
@@ -599,6 +573,8 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         }
     }
 
+    println!("Body : {:?}", &body_elements);
+
     Ok(CrawlResult {
         links,
         headings,
@@ -619,7 +595,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         tag_container,
         images,
         //head_elements,
-        //body_elements,
+        body_elements,
         robots,
         ratio,
         page_rank,

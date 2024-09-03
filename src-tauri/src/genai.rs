@@ -73,3 +73,50 @@ pub async fn genai(query: String) -> Result<ChatResponse, Box<dyn Error>> {
         Ok(chat_res)
     }
 }
+
+// ------------- GENERATE TOPICS ---------------------
+pub async fn generate_topics(body: String) -> Result<ChatResponse, Box<dyn Error>> {
+    // Check the Global Model Selection
+    let global_model_selected = actions::ai_model_read();
+    println!(
+        "Global AI Model Selected for Topics : {:?}",
+        global_model_selected
+    );
+
+    if global_model_selected == "gemini" {
+        let gemini_response = gemini::generate_topics(body).await;
+
+        let gemini_response = ChatResponse {
+            content: Some(gemini_response.unwrap()),
+            ..Default::default()
+        };
+        println!("Gemini selected, not using Ollama");
+        Ok(gemini_response)
+    } else {
+        // get the Ollama model selection
+        let model_selection = get_ai_model().trim().to_string(); // Ensure it's a String
+
+        // Initialize the HTTP client
+        let client = Client::default();
+
+        // Create the chat request
+        let chat_req = ChatRequest::new(vec![
+            ChatMessage::system("Answer in one sentence"),
+            ChatMessage::user(body),
+        ]);
+
+        // Retrieve and trim the model selection
+        let model = model_selection;
+        println!("Using model: {}", model);
+
+        // Execute the chat request
+        let chat_res = client.exec_chat(&model, chat_req.clone(), None).await?;
+
+        // Print the response for debugging
+        println!("Chat request: {:#?}", chat_res);
+        println!("{}", chat_res.content.as_deref().unwrap_or("NO ANSWER"));
+
+        // Return the response
+        Ok(chat_res)
+    }
+}

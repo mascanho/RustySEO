@@ -166,3 +166,45 @@ pub fn get_gemini_api_key() -> Result<String, String> {
     println!("Gemini API key loaded successfully");
     Ok(gemini_api_key.key)
 }
+
+// ---------------- Ask Gemini for TOPICS of a page
+#[tauri::command]
+pub async fn generate_topics(body: String) -> Result<String> {
+    let key = get_gemini_api_key().expect("Failed to read Gemini API key To generate Topics");
+
+    let client = reqwest::Client::new();
+
+    let prompt = format!(
+        "Given the body of this page, generate a list of long tail keywords that can be derived from this page, generate the topics based on those keywords, a page title, a page description and a page H1 to create more content that is SEO friendly and complements this current page, output in string format, do not output backticks nor any strage characters! And do not mention anything else on your reply. The output should be {{keyword:, topic:, title: , description:, h1:}} the body of the page is :{}", body
+    );
+
+    println!("Sending Topic request to Gemini: {}", prompt);
+
+    let request = GeminiRequest::new(&prompt);
+
+    let response = client
+        .post(API_ENDPOINT)
+        .query(&[("key", key)])
+        .json(&request)
+        .send()
+        .await
+        .expect("Failed to generate Topics");
+
+    if !response.status().is_success() {
+        return Err(anyhow!(
+            "Gemini API Request failed with status code: {}",
+            response.status()
+        ));
+    }
+
+    let gemini_response: GeminiResponse = response
+        .json()
+        .await
+        .expect("Failed to parse Gemini Response");
+
+    let topics = gemini_response.candidates[0].content.parts[0].text.clone();
+
+    println!("Topics: {:?}", topics);
+
+    Ok(topics)
+}

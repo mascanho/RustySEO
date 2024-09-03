@@ -36,6 +36,7 @@ interface SidebarContainerProps {
   htmlToTextRatio: any;
   loading: boolean;
   favicon: string[];
+  bodyElements: any;
 }
 
 const ollama = true;
@@ -54,6 +55,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
   htmlToTextRatio,
   loading,
   favicon,
+  bodyElements,
 }) => {
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
   const ollamaStatus = useOllamaStore();
@@ -104,7 +106,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
             </Tabs.Panel>
 
             <Tabs.Panel value="topics" className="h-full w-full">
-              <Topics />
+              <Topics bodyElements={bodyElements} />
             </Tabs.Panel>
 
             <Tabs.Panel value="summary" className="h-full w-full">

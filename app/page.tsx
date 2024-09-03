@@ -763,6 +763,7 @@ const Home: React.FC<HomeProps> = () => {
         seo={seoPageSpeed}
         htmlToTextRatio={htmlToTextRatio}
         loading={loading}
+        bodyElements={bodyElements}
       />
     </section>
   );

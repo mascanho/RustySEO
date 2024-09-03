@@ -86,6 +86,15 @@ fn get_db_data() -> Result<Vec<crawler::db::ResultRecord>, String> {
     }
 }
 
+// ----------------- GENERATE AI TOPICS OF CONTENT -----------------
+#[tauri::command]
+async fn generate_ai_topics(body: String) -> Result<String, String> {
+    match gemini::generate_topics(body).await {
+        Ok(response) => Ok(response),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
 #[tokio::main]
 async fn main() {
     // Execute the ID check
@@ -142,6 +151,7 @@ async fn main() {
             commands::crawl_domain,
             gemini::set_gemini_api_key,
             downloads::csv::generate_seo_csv,
+            generate_ai_topics,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
