@@ -4,13 +4,13 @@ use crawler::{
     CrawlResult, LinkResult, PageSpeedResponse, SEOLighthouseResponse, SeoPageSpeedResponse,
 };
 use directories::ProjectDirs;
-use genai::genai;
 use globals::actions;
 use serde::{Deserialize, Serialize};
 use std::io::Write;
 use tauri::{api::path::config_dir, Manager};
 use tokio;
 use toml;
+
 
 mod crawler;
 mod domain_crawler;
@@ -69,7 +69,7 @@ async fn fetch_google_search_console() -> Result<(), String> {
 // ----------------- GENERATE AI SUMMARY OF CONTENT -----------------
 #[tauri::command]
 async fn get_genai(query: String) -> Result<String, String> {
-    match genai(query).await {
+    match genai::genai(query).await {
         Ok(response) => Ok(response.content.unwrap_or_default()),
         Err(e) => Err(e.to_string()),
     }
@@ -89,8 +89,8 @@ fn get_db_data() -> Result<Vec<crawler::db::ResultRecord>, String> {
 // ----------------- GENERATE AI TOPICS OF CONTENT -----------------
 #[tauri::command]
 async fn generate_ai_topics(body: String) -> Result<String, String> {
-    match gemini::generate_topics(body).await {
-        Ok(response) => Ok(response),
+    match genai::generate_topics(body).await {
+        Ok(response) => Ok(response.content.unwrap_or_default()),
         Err(e) => Err(e.to_string()),
     }
 }
@@ -136,7 +136,6 @@ async fn main() {
             fetch_page_speed,
             fetch_google_search_console,
             add_api_key,
-            get_genai,
             get_db_data,
             globals::actions::ai_model_selected,
             downloads::csv::generate_csv_command,
@@ -152,6 +151,7 @@ async fn main() {
             gemini::set_gemini_api_key,
             downloads::csv::generate_seo_csv,
             generate_ai_topics,
+            get_genai,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

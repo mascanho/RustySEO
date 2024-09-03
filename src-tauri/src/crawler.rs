@@ -573,7 +573,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         }
     }
 
-    println!("Body : {:?}", &body_elements);
 
     Ok(CrawlResult {
         links,

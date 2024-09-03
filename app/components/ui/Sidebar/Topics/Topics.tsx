@@ -53,40 +53,75 @@ import { BiKey } from "react-icons/bi";
 // ];
 
 export default function Component({ bodyElements }: any) {
-  const [topics, setTopics] = useState<any[]>([]);
+  let [topics, setTopics] = useState<any[]>([]);
   const [topicsJson, setTopicsJson] = useState<any[]>([]);
+  const [loadingTopics, setLoadingTopics] = useState<boolean>(false);
 
   useEffect(() => {
     invoke("generate_ai_topics", { body: bodyElements[0] })
       .then((res: any) => {
         console.log(res);
         setTopics(res);
-
-        // Assuming res is the JSON string you want to parse
-        const jsonString = topics;
-
-        // Wrap the JSON string in square brackets if it's not already an array
-        const jsonFile = jsonString.startsWith("[")
-          ? jsonString
-          : "[" + jsonString + "]";
-
-        try {
-          const dataEntries = JSON.parse(jsonFile);
-          setTopicsJson(dataEntries);
-        } catch (error) {
-          console.error("Error parsing JSON:", error);
-          // Handle the error appropriately, maybe set an error state
-        }
       })
-      .catch((error) => {
-        console.error("Error invoking generate_ai_topics:", error);
-        // Handle the error appropriately
+      .finally(() => {
+        setTopicsJson(topics);
       });
   }, [bodyElements]);
 
-  console.log(bodyElements, "body elements");
-  console.log(topics, "topics from topics");
-  console.log(topicsJson, "topicsJson");
+  useEffect(() => {
+    if (topics.length > 0) {
+      // Step 1: Remove the surrounding backticks
+      topics = topics?.replace(/^```|```$/g, "");
+
+      // Step 2: Remove any surrounding quotes (single or double)
+      topics = topics?.replace(/^["']|["']$/g, "");
+
+      let position = topics?.indexOf("{");
+
+      if (position !== -1) {
+        topics = topics?.substring(position);
+        console.log(topics, "Fixed topics 1");
+      }
+
+      // Step 3: Add commas between objects
+      topics = topics?.replace(/}\s*{/g, "},\n{");
+
+      // Step 4: Wrap the string in square brackets to make it a valid JSON array
+      topics = `[${topics}]`;
+
+      try {
+        // Step 5: Parse the JSON string into an array of objects
+        const parsedTopics = JSON.parse(topics);
+        setTopicsJson(parsedTopics);
+      } catch (error) {
+        console.error("Error parsing JSON:", error);
+        setTopicsJson([]);
+      }
+
+      console.log(topics, "Fixed topics 2");
+    }
+  }, [topics]);
+
+  if (
+    topicsJson.length === 0 ||
+    topicsJson === null ||
+    topicsJson === undefined
+  ) {
+    return (
+      <div className="bg-gradient-to-br from-gray-100 to-gray-200   overflow-y-auto h-[28rem]">
+        <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1">
+          <div className="flex flex-col items-center justify-center">
+            <h1 className="text-2xl font-bold text-gray-800">
+              No topics found
+            </h1>
+            <p className="text-sm text-gray-600">
+              Please add some topics to the body elements.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-gradient-to-br from-gray-100 to-gray-200   overflow-y-auto h-[28rem]">
@@ -96,16 +131,16 @@ export default function Component({ bodyElements }: any) {
             <Card className=" hover:shadow-lg transition-shadow duration-300 rounded-none">
               <CardContent className="p-3 flex flex-col">
                 <div className="flex items-center mb-2">
-                  {entry.icon}
+                  <BiKey className="h-6 w-6 text-blue-600" />
                   <span className="ml-2 text-xs  text-gray-500 bg-gray-200  px-2 py-0.5 rounded-full">
-                    {entry.keyword}
+                    {entry?.keyword}
                   </span>
                 </div>
                 <h2 className="text-sm font-semibold mb-1.5 text-gray-800">
-                  {entry.title}
+                  {entry?.title}
                 </h2>
                 <p className="text-xs text-gray-600 mb-2">
-                  {entry.PageDescription}
+                  {entry?.PageDescription}
                 </p>
                 <div className="space-y-1">
                   <div className="flex justify-start text-xs">
@@ -113,7 +148,7 @@ export default function Component({ bodyElements }: any) {
                       Topic:
                     </span>
                     <span className="text-gray-700 font-medium">
-                      {entry.Topic}
+                      {entry?.Topic}
                     </span>
                   </div>
                   <div className="flex justify-start text-xs">
@@ -121,7 +156,7 @@ export default function Component({ bodyElements }: any) {
                       H1:
                     </span>
                     <span className="text-gray-700 font-medium">
-                      {entry.h1}
+                      {entry?.h1}
                     </span>
                   </div>
                 </div>

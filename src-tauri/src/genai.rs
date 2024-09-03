@@ -53,6 +53,9 @@ pub async fn genai(query: String) -> Result<ChatResponse, Box<dyn Error>> {
         let client = Client::default();
 
         // Create the chat request
+
+
+
         let chat_req = ChatRequest::new(vec![
             ChatMessage::system("Answer in one sentence"),
             ChatMessage::user(query.clone()),
@@ -100,9 +103,12 @@ pub async fn generate_topics(body: String) -> Result<ChatResponse, Box<dyn Error
         let client = Client::default();
 
         // Create the chat request
+        let prompt = format!(
+              "Given the body of this page, generate a list of long tail keywords that can be derived from this page, generate the topics based on those keywords, a page title, a page description and a page H1 to create more content that is SEO friendly and complements this current page, , do not output backticks nor any strage characters! output a JSON And do not mention anything else on your reply. The output should be {{keyword:, topic:, title: , description:, h1:}} give me 5 results only, the body of the page is :{}", body
+          );
         let chat_req = ChatRequest::new(vec![
-            ChatMessage::system("Answer in one sentence"),
-            ChatMessage::user(body),
+            // ChatMessage::system("Output a JSON format, do not add anything else to your reply if it is not inside the JSON format"),
+            ChatMessage::user(prompt),
         ]);
 
         // Retrieve and trim the model selection
@@ -113,7 +119,7 @@ pub async fn generate_topics(body: String) -> Result<ChatResponse, Box<dyn Error
         let chat_res = client.exec_chat(&model, chat_req.clone(), None).await?;
 
         // Print the response for debugging
-        println!("Chat request: {:#?}", chat_res);
+        println!("Ollama Topics: {:#?}", chat_res);
         println!("{}", chat_res.content.as_deref().unwrap_or("NO ANSWER"));
 
         // Return the response
