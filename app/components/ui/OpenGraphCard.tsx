@@ -71,7 +71,7 @@ export const OpenGraphCard = ({
       </div>
       <section className="h-full w-full relative overflow-hidden rounded-lg  -z-1">
         <div
-          className={`px-10 m-auto w-10/12  flex flex-col -mt-5  items-start justify-start ${openGraphDetails.length === 0 ? "bg-white/40 h-full dark:bg-brand-darker" : "bg-white dark:bg-brand-darker h-full"}`}
+          className={`px-10 m-auto w-10/12  flex flex-col mt-2   items-start justify-start ${openGraphDetails.length === 0 ? "bg-white/40 h-full dark:bg-brand-darker" : "bg-white dark:bg-brand-darker h-full"}`}
         >
           {openGraphDetails?.image?.length > 0 ? (
             <div className="flex flex-col flex-wrap justify-start items-start h-19/12">
@@ -82,9 +82,11 @@ export const OpenGraphCard = ({
               />
             </div>
           ) : (
-            <span className="text-black/50 dark:text-white/50">
-              No opengraph found
-            </span>
+            <div className="flex flex-col flex-wrap justify-start mt-44 items-start h-full m-auto">
+              <span className="text-black/50 dark:text-white/50">
+                No opengraph found
+              </span>
+            </div>
           )}
           <div
             onClick={() => openBrowserWindow(openGraphDetails.url)}

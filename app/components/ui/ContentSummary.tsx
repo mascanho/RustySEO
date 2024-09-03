@@ -16,7 +16,7 @@ const ContentSummary = ({
   const [AiContentAnalysis, setAiContentAnalysis] = useState("");
 
   useEffect(() => {
-    if (keywords) {
+    if (!keywords) {
       setSeoContentQuality({
         keywords,
         wordCount,
@@ -27,36 +27,9 @@ const ContentSummary = ({
     }
   }, [keywords, readingTime, readingLevelResults]);
 
-  // @ts-ignore
-  const generateFallbackSummary = (
-    keywords: any,
-    wordCount: any,
-    readingTime: any,
-    readingLevelResult: any,
-    htmlToTextRatio: any,
-  ) => {
-    const topKeywords = keywords[0]
-      ?.slice(0, 5)
-      // @ts-ignore
-      .map((k): any => k[0])
-      .join(", ");
-    const wordCountNum = wordCount ? wordCount[0] : 0;
-    const readingTimeMin = wordCount ? wordCount[2] : 0;
-    const readingLevel = readingLevelResults[0]
-      ? readingLevelResults[0][1]
-      : "Unknown";
-    const textRatio =
-      htmlToTextRatio && htmlToTextRatio[0]
-        ? Math.round(htmlToTextRatio[0][0] * 100)
-        : 0;
-
-    return `This content contains approximately ${wordCountNum} words and takes about ${readingTimeMin} minutes to read.
-  The text is written at a ${readingLevel} reading level.
-  The main topics covered, based on keyword analysis, are: ${topKeywords}.
-  The content has a text-to-HTML ratio of ${textRatio}%, which ${textRatio > 50 ? "indicates good content density" : "suggests there might be room for more textual content"}.
-  ${readingTimeMin > 7 ? "Consider breaking longer sections into smaller, more digestible parts for improved readability." : "The content length seems appropriate for quick consumption."}
-  ${readingLevel === "College Graduate" ? "The advanced reading level may limit accessibility for some audiences." : "The reading level appears suitable for a general audience."}`;
-  };
+  useEffect(() => {
+    setAiContentAnalysis("...");
+  }, [keywords]);
 
   // Get the AI stuff
   useEffect(() => {
@@ -293,16 +266,23 @@ const ContentSummary = ({
                     strokeLinecap="round"
                   />
                 </svg>
-                <span className="font-semibold block ml-2">Top Keywords</span>
+                <span className="font-semibold block ml-2 pt-0.5">
+                  Top Keywords
+                </span>
               </div>
               <div className="flex flex-wrap gap-2 min-h-12">
                 {keywords[0]?.map((keyword: any, index: any) => (
-                  <span
+                  <div
                     key={index}
-                    className="text-[10px] bg-slate-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-2 py-1 rounded-full border  dark:border-none"
+                    className="dark:bg-gray-700 bg-slate-100 w-fit px-1.5 py-1 rounded-lg text-xs"
                   >
-                    {keyword[0]}
-                  </span>
+                    <span className="bg-brand-bright px-1 py-[1px] rounded-full text-white text-xs">
+                      {keyword[1]}
+                    </span>
+                    <span className="ml-1" key={index}>
+                      {keyword[0]}
+                    </span>
+                  </div>
                 ))}
               </div>
             </div>
@@ -313,24 +293,15 @@ const ContentSummary = ({
               Page Summary
             </h3>
             <p className="text-muted-foreground text-xs mt-1">
-              {ollamaStatus.ollama && AiContentAnalysis}
-              {/* {!ollamaStatus.ollama && keywords && keywords.length > 0 */}
-              {/*   ? generateFallbackSummary( */}
-              {/*       keywords, */}
-              {/*       wordCount, */}
-              {/*       readingTime, */}
-              {/*       readingLevelResults, */}
-              {/*       htmlToTextRatio, */}
-              {/*     ) */}
-              {/*   : ""} */}
+              {AiContentAnalysis}
             </p>
-            {!ollamaStatus.ollama && keywords && keywords.length > 0 && (
-              <div className="text-black/50 dark:text-white/50">
+            {AiContentAnalysis === "" && keywords && keywords.length > 0 && (
+              <div className="text-black/50 dark:text-white/50 space-y-1">
                 <p>AI Model Not Available</p>
                 <p>
-                  Go to <kbd>Menu</kbd> &gt; <kbd>Connectors</kbd> &gt;{" "}
-                  <kbd>Ollama</kbd>
+                  Go to <kbd>Menu</kbd> &gt; <kbd>Connectors</kbd>
                 </p>
+                <p>Then select your AI Model</p>
               </div>
             )}
           </div>

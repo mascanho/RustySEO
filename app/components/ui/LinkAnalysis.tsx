@@ -20,6 +20,10 @@ const LinkAnalysis = ({
   console.log(links, "Links");
   console.log(visibleLinks, "Visible Links");
 
+  useEffect(() => {
+    setLinksTable(visibleLinks);
+  }, [visibleLinks]);
+
   return (
     <section
       className={`links ${Visible.links ? "block" : "hidden"}  table_container  `}

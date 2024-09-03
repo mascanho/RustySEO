@@ -19,6 +19,7 @@ import { useParams } from "next/navigation";
 import PopUpTable from "../CrawlHistory/PopUpTable";
 import RankingInfo from "./RankingInfo";
 import GeneralOverview from "./GeneralOverview";
+import Topics from "./Topics/Topics";
 
 // Define prop types for better type checking
 interface SidebarContainerProps {
@@ -78,9 +79,12 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
       <ResizablePanelGroup direction="vertical">
         <ResizablePanel defaultSize={220} className="h-[calc(100vh-1.5rem)]">
           <Tabs defaultValue="summary" className="text-xs aside-tabs">
-            <Tabs.List justify="left" className="dark:text-white text-xs">
-              <Tabs.Tab value="summary">General</Tabs.Tab>
+            <Tabs.List justify="left" className="dark:text-white">
+              <Tabs.Tab className="text-[8px]" value="summary">
+                General
+              </Tabs.Tab>
               <Tabs.Tab value="first">Content</Tabs.Tab>
+              <Tabs.Tab value="topics">Topics</Tabs.Tab>
               <Tabs.Tab value="third">Console</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="first" className="h-full w-full">
@@ -98,6 +102,11 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
             <Tabs.Panel value="third" className="h-full w-full">
               <RankingInfo keywords={keywords} />
             </Tabs.Panel>
+
+            <Tabs.Panel value="topics" className="h-full w-full">
+              <Topics />
+            </Tabs.Panel>
+
             <Tabs.Panel value="summary" className="h-full w-full">
               <AIFeedbackTab
                 seo={seo}

@@ -319,7 +319,7 @@ pub async fn check_links(url: String) -> Result<Vec<LinkStatus>, String> {
         results.push(LinkStatus {
             url: absolute_url,
             status_code,
-            description: format!("{} {}", link_text, status_code),
+            description: format!("{}", link_text),
             is_external,
         });
     }

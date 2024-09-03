@@ -187,13 +187,17 @@ const useGetChecks = () => {
       {
         id: "16",
         name: "Page Title",
-        status: seoTitle?.length <= 60 ? "Passed" : "Failed",
+        status:
+          seoTitle?.length <= 60 && seoTitle.length > 0 ? "Passed" : "Failed",
       },
 
       {
         id: "17",
         name: "Page Description",
-        status: seoDescription?.length <= 160 ? "Passed" : "Failed",
+        status:
+          seoDescription?.length <= 160 && seoDescription.length > 0
+            ? "Passed"
+            : "Failed",
       },
       {
         id: "18",

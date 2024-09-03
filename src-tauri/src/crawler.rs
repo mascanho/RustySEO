@@ -559,12 +559,12 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     // Add the data to the DB
 
     let title = match page_title.len() {
-        0 => String::from("No title found"),
+        0 => String::from(""),
         _ => page_title[0].clone(),
     };
 
     let description = match page_description.len() {
-        0 => String::from("No description found"),
+        0 => String::from(""),
         _ => page_description[0].clone(),
     };
 
