@@ -402,7 +402,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
             </table>
           </div>
         </section>
-        <aside className="my-1 pb-5">
+        <aside className="my-3">
           <TechnicalChart />
         </aside>
       </div>

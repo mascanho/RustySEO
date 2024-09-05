@@ -14,6 +14,7 @@ type Task = {
   date: string;
   completed?: boolean;
   strategy?: "mobile" | "desktop";
+  status?: "Todo" | "Pending" | "Completed";
 };
 
 const TodoItems = ({ url, strategy }: { url: string; strategy: string }) => {

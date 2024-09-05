@@ -287,7 +287,7 @@ const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
             className="border-b border-b-gray-300 last-of-type:border-b-0 last:pb-0 dark:border-brand-dark border-gray-700 pb-2"
           >
             <div className="flex justify-between items-center">
-              <span className="font-medium text-xs">{insight?.aspect}</span>
+              <span className="font-semibold text-xs">{insight?.aspect}</span>
               <span
                 className={`text-xs px-2 py-[2px] rounded ${
                   insight.status === "Excellent" || insight.status === "Optimal"
@@ -303,7 +303,7 @@ const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
                 {(pageSpeed && insight.status) || "n/a"}
               </span>
             </div>
-            <p className="text-xs mt-2 text-gray-400">
+            <p className="text-xs mt-2 text-gray-800 dark:text-white/50">
               {(pageSpeed && insight.description) || "n/a"}
             </p>
           </div>

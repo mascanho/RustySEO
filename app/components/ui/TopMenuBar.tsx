@@ -16,7 +16,6 @@ import TodoItems from "./TodoItems";
 import { useCallback, useEffect, useState } from "react";
 import PageSpeedInsigthsApi from "../PageSpeedInsigthsApi";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
-import { LuPanelRight } from "react-icons/lu";
 import OllamaSelect from "./OllamaSelector/OllamaSelect";
 import GoogleSearchConsoleModal from "./GoogleSearchConsole/GoogleSearchConsoleModal";
 import { useRouter } from "next/navigation";
@@ -26,6 +25,19 @@ import About from "./About/About";
 import { invoke } from "@tauri-apps/api/tauri";
 import { save } from "@tauri-apps/api/dialog";
 import { writeTextFile } from "@tauri-apps/api/fs";
+import { LuPanelRight } from "react-icons/lu";
+import {
+  FiFile,
+  FiEye,
+  FiCheckSquare,
+  FiBarChart2,
+  FiZap,
+  FiTool,
+  FiHelpCircle,
+  FiLogOut,
+} from "react-icons/fi";
+import { FaRegLightbulb, FaRegMoon } from "react-icons/fa";
+import { AiOutlineShareAlt, AiOutlinePrinter } from "react-icons/ai";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -206,7 +218,6 @@ const TopMenuBar = () => {
       >
         <PageSpeedInsigthsApi close={closePageSpeed} />
       </Modal>
-
       {/* Todo Modal */}
       <Modal
         opened={openedModal}
@@ -220,7 +231,6 @@ const TopMenuBar = () => {
       >
         <Todo url={url} close={closeModal} strategy={strategy} />
       </Modal>
-
       {/* Ollama Model */}
       <Modal
         opened={openedOllama}
@@ -249,7 +259,6 @@ const TopMenuBar = () => {
       >
         <GeminiSelector closeGemini={closeGemini} />
       </Modal>
-
       {/* About Section */}
       <Modal
         opened={openedAbout}
@@ -264,9 +273,7 @@ const TopMenuBar = () => {
       >
         <About closeGemini={closeAbout} />
       </Modal>
-
       {/* Drawer */}
-
       <Drawer
         offset={8}
         radius="md"
@@ -283,7 +290,6 @@ const TopMenuBar = () => {
       >
         <TodoItems url={url} strategy={strategy} />
       </Drawer>
-
       {/* GOOGLE SEACH CONSOLE MODAL */}
       <Modal
         opened={openedSearchConsole}
@@ -294,14 +300,16 @@ const TopMenuBar = () => {
         {/* @ts-ignore */}
         <GoogleSearchConsoleModal close={closeSearchConsole} />
       </Modal>
-
       {/* Menubar */}
       <Menubar className="fixed w-full top-0 z-[1000] p-0 pl-0 dark:bg-brand-darker dark:text-white bg-white dark:border-b-brand-dark border-b pb-1">
         <section className="flex -ml-3 space-x-1">
           <MenubarMenu>
             <MenubarTrigger className="ml-4">File</MenubarTrigger>
             <MenubarContent>
-              <MenubarItem onClick={onClose}>Exit</MenubarItem>
+              <MenubarItem onClick={onClose}>
+                <FiLogOut className="mr-2" />
+                Exit
+              </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
 
@@ -309,23 +317,35 @@ const TopMenuBar = () => {
             <MenubarTrigger className="ml-4">View</MenubarTrigger>
             <MenubarContent>
               <MenubarItem onClick={openPanes}>
+                <FiEye className="mr-2" />
                 Panels <MenubarShortcut>ctr + p</MenubarShortcut>
               </MenubarItem>
               <MenubarSeparator />
               <MenubarItem onClick={toggleDarkMode}>
-                {isDarkMode ? "Light Mode" : "Dark Mode"}
+                {isDarkMode ? (
+                  <>
+                    <FaRegLightbulb className="mr-2" /> Light Mode
+                  </>
+                ) : (
+                  <>
+                    <FaRegMoon className="mr-2" /> Dark Mode
+                  </>
+                )}
               </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
+
           <MenubarMenu>
             <MenubarTrigger className="ml-3">Tasks</MenubarTrigger>
             <MenubarContent>
               <MenubarItem onClick={openModal}>
+                <FiCheckSquare className="mr-2" />
                 New task
                 <MenubarShortcut>⌘T</MenubarShortcut>
               </MenubarItem>
               <MenubarSeparator />
               <MenubarItem onClick={openDrawer}>
+                <LuPanelRight className="mr-2" />
                 View all tasks
                 <MenubarShortcut>
                   <LuPanelRight />
@@ -333,97 +353,87 @@ const TopMenuBar = () => {
               </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
+
           <MenubarMenu>
             <MenubarTrigger className="ml-3">Reports</MenubarTrigger>
             <MenubarContent>
               <MenubarItem onClick={handleDownloadPerformance}>
+                <FiBarChart2 className="mr-2" />
                 Performance History
               </MenubarItem>
-              <MenubarItem onClick={handleDownloadSEO}>SEO History</MenubarItem>
+              <MenubarItem onClick={handleDownloadSEO}>
+                <FiBarChart2 className="mr-2" />
+                SEO History
+              </MenubarItem>
               <MenubarSeparator />
-              <MenubarItem>Share</MenubarItem>
+              <MenubarItem>
+                <AiOutlineShareAlt className="mr-2" />
+                Share
+              </MenubarItem>
               <MenubarSeparator />
-              <MenubarItem>Print</MenubarItem>
+              <MenubarItem>
+                <AiOutlinePrinter className="mr-2" />
+                Print
+              </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
+
           <MenubarMenu>
             <MenubarTrigger className="ml-3">Connectors</MenubarTrigger>
             <MenubarContent>
               <MenubarItem onClick={openPageSpeed}>
+                <FiZap className="mr-2" />
                 PageSpeed Insights
               </MenubarItem>
               <MenubarSeparator />
               <MenubarItem onClick={openSearchConsole}>
+                <FiZap className="mr-2" />
                 Search Console
               </MenubarItem>
               <MenubarSeparator />
-              <MenubarItem
-                className="flex items-center"
-                onClick={() => {
-                  // openBrowserWindow("https://www.ollama.com/");
-                  openOllama();
-                }}
-              >
+              <MenubarItem className="flex items-center" onClick={openOllama}>
+                <FiZap className="mr-2" />
                 Ollama{" "}
                 <span className="text-[10px] text-gray-300/50 ml-1">
                   (AI Models)
                 </span>
               </MenubarItem>
-              <MenubarItem
-                className="flex items-center"
-                onClick={() => {
-                  // openBrowserWindow("https://www.ollama.com/");
-                  openGemini();
-                }}
-              >
-                Google Gemini{" "}
-              </MenubarItem>{" "}
+              <MenubarItem className="flex items-center" onClick={openGemini}>
+                <FiZap className="mr-2" />
+                Google Gemini
+              </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
+
           <MenubarMenu>
             <MenubarTrigger className="ml-3">Tools</MenubarTrigger>
             <MenubarContent>
               <MenubarItem onClick={() => router.push("/")}>
+                <FiTool className="mr-2" />
                 Page Crawler
               </MenubarItem>
               <MenubarItem onClick={() => router.push("/global")}>
+                <FiTool className="mr-2" />
                 Global Crawler
               </MenubarItem>
               <MenubarItem onClick={() => router.push("/images")}>
+                <FiTool className="mr-2" />
                 Image Converter
               </MenubarItem>
-              <MenubarItem
-                onClick={() => {
-                  const userConfirmed = window.confirm(
-                    "Are you sure you want to perform this action?",
-                  );
-
-                  if (userConfirmed) {
-                    // User confirmed the action
-                    window?.location?.reload();
-                    // Here, you can call any function or API to perform the actual action
-                  } else {
-                    // User canceled the action
-                    console.log("Action was canceled.");
-                  }
-                }}
-              >
-                Clear Cache
-              </MenubarItem>
-              <MenubarSeparator />
-              <MenubarItem>Share</MenubarItem>
-              <MenubarSeparator />
-              <MenubarItem>Clear Cache</MenubarItem>
             </MenubarContent>
           </MenubarMenu>
+
           <MenubarMenu>
             <MenubarTrigger className="ml-3">Help</MenubarTrigger>
             <MenubarContent>
-              <MenubarItem onClick={openAbout}>About</MenubarItem>
+              <MenubarItem onClick={openAbout}>
+                <FiHelpCircle className="mr-2" />
+                About
+              </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
         </section>
-      </Menubar>
+      </Menubar>{" "}
     </>
   );
 };

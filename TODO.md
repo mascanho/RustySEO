@@ -23,3 +23,11 @@ Add mobile verification check
 ## Content Summary AI
 
 Fix it so that it works when Gemini is selected
+
+### Right click menu on Topics
+
+-- Open on google
+-- Open on google Trends
+-- uber suggests
+-- google search console
+-- moz

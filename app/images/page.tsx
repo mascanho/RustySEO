@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import { writeBinaryFile, BaseDirectory } from "@tauri-apps/api/fs";
@@ -43,7 +44,7 @@ export default function ImageOptimizer() {
   const [optimizedImages, setOptimizedImages] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const onDrop = useCallback((acceptedFiles) => {
+  const onDrop = useCallback((acceptedFiles: any) => {
     const file = acceptedFiles[0];
     const img = new Image();
     img.onload = () => {

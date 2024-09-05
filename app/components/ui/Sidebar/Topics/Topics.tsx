@@ -44,6 +44,10 @@ export default function Component({ bodyElements }: any) {
       });
   }, [bodyElements]); // Dependency on bodyElements
 
+  useEffect(() => {
+    setTopicsJson(topicsJson);
+  }, [loadingTopics]);
+
   if (loadingTopics) {
     return (
       <div className="dark:bg-brand-darker bg-gradient-to-br bg-transparent dark:bg-brand-darker overflow-y-auto h-[28rem] flex items-center justify-center">
