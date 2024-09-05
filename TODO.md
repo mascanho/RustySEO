@@ -31,3 +31,8 @@ Fix it so that it works when Gemini is selected
 -- uber suggests
 -- google search console
 -- moz
+
+##### Clear Table Function
+
+-- Add a button to clear the table on both SEO and Technical Tables
+-- Add button shortcut to delete the DB file

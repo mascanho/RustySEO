@@ -2,8 +2,18 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useEffect, useState } from "react";
-import { BiKey } from "react-icons/bi";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
+
+import { BiKey, BiDotsVerticalRounded, BiDotsVertical } from "react-icons/bi";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { BsThreeDotsVertical } from "react-icons/bs";
 
 export default function Component({ bodyElements }: any) {
   const [topicsJson, setTopicsJson] = useState<any[]>([]);
@@ -62,10 +72,10 @@ export default function Component({ bodyElements }: any) {
         <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 dark:bg-brand-darker h-full">
           <div className="flex flex-col items-center justify-center">
             <h1 className="text-xl font-bold text-gray-800 dark:text-white/50">
-              No topics found
+              No topics to show
             </h1>
             <p className="text-sm text-gray-600 dark:text-white/40">
-              Please add some topics to the body elements.
+              Crawl a page to generate topics
             </p>
           </div>
         </div>
@@ -77,7 +87,36 @@ export default function Component({ bodyElements }: any) {
     <div className="w-full dark:bg-brand-darker  overflow-y-auto  h-[28rem] overflow-x-hidden">
       <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 dark:bg-brand-darker w-full border-0">
         {topicsJson.map((entry, index) => (
-          <Card key={index} className="dark:bg-brand-darker rounded-none">
+          <Card
+            key={index}
+            className="dark:bg-brand-darker rounded-none group relative"
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger className="absolute right-1 top-4">
+                <BsThreeDotsVertical className="dark:text-white mr-1 z-10" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-brand-darker border shadow shadow-lg  px-0.5 bg-white dark:bg-brand-darker  dark:border-brand-dark dark:text-white mt-1.5 mr-6 w-fit text-xs">
+                <DropdownMenuLabel className="font-semibold text-xs">
+                  Check Keyword
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => openBrowserWindow(testURL)}
+                  className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight text-xs cursor-pointer"
+                >
+                  Google
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-gray-100 dark:bg-brand-dark" />
+
+                <DropdownMenuItem
+                  onClick={() => openBrowserWindow(testURL)}
+                  className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer text-xs"
+                >
+                  Documentation
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <section className="transition-shadow duration-300 rounded-none dark:bg-brand-darker">
               <div className="p-3 flex flex-col">
                 <div className="flex items-center mb-2">
