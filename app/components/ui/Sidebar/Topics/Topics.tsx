@@ -1,120 +1,66 @@
+// @ts-nocheck
 import { Card, CardContent } from "@/components/ui/card";
 import { invoke } from "@tauri-apps/api/tauri";
 import { useEffect, useState } from "react";
-
 import { BiKey } from "react-icons/bi";
-
-// const dataEntries = [
-//   {
-//     keyword: "supply chain management",
-//     Topic: "Optimizing Supply Chain Efficiency",
-//     title: "Best Practices for Supply Chain Management", // Changed to title
-//     PageDescription:
-//       "Learn about strategies and tools for effective supply chain management.",
-//     h1: "Mastering Supply Chain Management",
-//     icon: <BiKey className="h-6 w-6 text-blue-600" />, // Smaller icon
-//   },
-//   {
-//     keyword: "supply chain management",
-//     Topic: "Optimizing Supply Chain Efficiency",
-//     title: "Best Practices for Supply Chain Management", // Changed to title
-//     PageDescription:
-//       "Learn about strategies and tools for effective supply chain management.",
-//     h1: "Mastering Supply Chain Management",
-//     icon: <BiKey className="h-6 w-6 text-blue-600" />, // Smaller icon
-//   },
-//   {
-//     keyword: "supply chain management",
-//     Topic: "Optimizing Supply Chain Efficiency",
-//     title: "Best Practices for Supply Chain Management", // Changed to title
-//     PageDescription:
-//       "Learn about strategies and tools for effective supply chain management.",
-//     h1: "Mastering Supply Chain Management",
-//     icon: <BiKey className="h-6 w-6 text-blue-600" />, // Smaller icon
-//   },
-//   {
-//     keyword: "supply chain management",
-//     Topic: "Optimizing Supply Chain Efficiency",
-//     title: "Best Practices for Supply Chain Management", // Changed to title
-//     PageDescription:
-//       "Learn about strategies and tools for effective supply chain management.",
-//     h1: "Mastering Supply Chain Management",
-//     icon: <BiKey className="h-6 w-6 text-blue-600" />, // Smaller icon
-//   },
-//   {
-//     keyword: "supply chain management",
-//     Topic: "Optimizing Supply Chain Efficiency",
-//     title: "Best Practices for Supply Chain Management", // Changed to title
-//     PageDescription:
-//       "Learn about strategies and tools for effective supply chain management.",
-//     h1: "Mastering Supply Chain Management",
-//     icon: <BiKey className="h-6 w-6 text-blue-600" />, // Smaller icon
-//   },
-// ];
+import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 
 export default function Component({ bodyElements }: any) {
-  let [topics, setTopics] = useState<any[]>([]);
   const [topicsJson, setTopicsJson] = useState<any[]>([]);
-  const [loadingTopics, setLoadingTopics] = useState<boolean>(false);
+  const [loadingTopics, setLoadingTopics] = useState<boolean>(true);
 
   useEffect(() => {
+    setLoadingTopics(true); // Set loading state to true initially
+
     invoke("generate_ai_topics", { body: bodyElements[0] })
       .then((res: any) => {
-        console.log(res);
-        setTopics(res);
+        let topics = res;
+
+        if (topics) {
+          topics = topics?.replace(/^```|```$/g, ""); // Remove surrounding backticks
+          topics = topics?.replace(/^["']|["']$/g, ""); // Remove surrounding quotes
+
+          const position = topics?.indexOf("{");
+          if (position !== -1) {
+            topics = topics?.substring(position);
+          }
+
+          topics = topics?.replace(/}\s*{/g, "},\n{"); // Add commas between objects
+          topics = `[${topics}]`; // Wrap string in brackets to form a valid JSON array
+
+          try {
+            const parsedTopics = JSON?.parse(topics);
+            setTopicsJson(parsedTopics);
+          } catch (error) {
+            console.error("Error parsing JSON:", error);
+            setTopicsJson([]);
+          }
+        } else {
+          setTopicsJson([]);
+        }
       })
       .finally(() => {
-        setTopicsJson(topics);
+        setLoadingTopics(false); // Set loading state to false after processing
       });
-  }, [bodyElements]);
+  }, [bodyElements]); // Dependency on bodyElements
 
-  useEffect(() => {
-    if (topics.length > 0) {
-      // Step 1: Remove the surrounding backticks
-      topics = topics?.replace(/^```|```$/g, "");
-
-      // Step 2: Remove any surrounding quotes (single or double)
-      topics = topics?.replace(/^["']|["']$/g, "");
-
-      let position = topics?.indexOf("{");
-
-      if (position !== -1) {
-        topics = topics?.substring(position);
-        console.log(topics, "Fixed topics 1");
-      }
-
-      // Step 3: Add commas between objects
-      topics = topics?.replace(/}\s*{/g, "},\n{");
-
-      // Step 4: Wrap the string in square brackets to make it a valid JSON array
-      topics = `[${topics}]`;
-
-      try {
-        // Step 5: Parse the JSON string into an array of objects
-        const parsedTopics = JSON.parse(topics);
-        setTopicsJson(parsedTopics);
-      } catch (error) {
-        console.error("Error parsing JSON:", error);
-        setTopicsJson([]);
-      }
-
-      console.log(topics, "Fixed topics 2");
-    }
-  }, [topics]);
-
-  if (
-    topicsJson.length === 0 ||
-    topicsJson === null ||
-    topicsJson === undefined
-  ) {
+  if (loadingTopics) {
     return (
-      <div className="bg-gradient-to-br from-gray-100 to-gray-200   overflow-y-auto h-[28rem]">
-        <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1">
+      <div className="dark:bg-brand-darker bg-gradient-to-br bg-transparent dark:bg-brand-darker overflow-y-auto h-[28rem] flex items-center justify-center">
+        <p className="text-gray-600 text-sm">Loading topics...</p>
+      </div>
+    );
+  }
+
+  if (!topicsJson || topicsJson.length === 0) {
+    return (
+      <div className="bg-gradient-to-br from-gray-100 to-gray-200 overflow-y-auto overflow-x-hidden h-[28rem] dark:bg-brand-darker">
+        <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 dark:bg-brand-darker h-full">
           <div className="flex flex-col items-center justify-center">
-            <h1 className="text-2xl font-bold text-gray-800">
+            <h1 className="text-xl font-bold text-gray-800 dark:text-white/50">
               No topics found
             </h1>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-white/40">
               Please add some topics to the body elements.
             </p>
           </div>
@@ -124,45 +70,36 @@ export default function Component({ bodyElements }: any) {
   }
 
   return (
-    <div className="bg-gradient-to-br from-gray-100 to-gray-200   overflow-y-auto h-[28rem]">
-      <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1">
-        {topicsJson?.map((entry, index) => (
-          <div key={index}>
-            <Card className=" hover:shadow-lg transition-shadow duration-300 rounded-none">
-              <CardContent className="p-3 flex flex-col">
+    <div className="w-full dark:bg-brand-darker  overflow-y-auto  h-[28rem] overflow-x-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 dark:bg-brand-darker w-full border-0">
+        {topicsJson.map((entry, index) => (
+          <Card key={index} className="dark:bg-brand-darker rounded-none">
+            <section className="transition-shadow duration-300 rounded-none dark:bg-brand-darker">
+              <div className="p-3 flex flex-col">
                 <div className="flex items-center mb-2">
                   <BiKey className="h-6 w-6 text-blue-600" />
-                  <span className="ml-2 text-xs  text-gray-500 bg-gray-200  px-2 py-0.5 rounded-full">
+
+                  <span
+                    onClick={() =>
+                      openBrowserWindow(
+                        `https://www.google.com/search?q=${encodeURIComponent(entry?.keyword || "")}`,
+                        "_blank",
+                      )
+                    }
+                    className="ml-1 text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full cursor-pointer font-medium"
+                  >
                     {entry?.keyword}
                   </span>
                 </div>
-                <h2 className="text-sm font-semibold mb-1.5 text-gray-800">
+                <h2 className="text-xs font-semibold mb-1.5 text-gray-800 dark:text-white/40">
                   {entry?.title}
                 </h2>
-                <p className="text-xs text-gray-600 mb-2">
-                  {entry?.PageDescription}
+                <p className="text-xs text-blue-400 mb-1">
+                  {entry?.description}
                 </p>
-                <div className="space-y-1">
-                  <div className="flex justify-start text-xs">
-                    <span className="text-gray-500 mr-1 font-semibold">
-                      Topic:
-                    </span>
-                    <span className="text-gray-700 font-medium">
-                      {entry?.Topic}
-                    </span>
-                  </div>
-                  <div className="flex justify-start text-xs">
-                    <span className="text-gray-500 mr-1 font-semibold">
-                      H1:
-                    </span>
-                    <span className="text-gray-700 font-medium">
-                      {entry?.h1}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </section>
+          </Card>
         ))}
       </div>
     </div>

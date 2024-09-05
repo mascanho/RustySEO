@@ -79,7 +79,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
       className={`bg-white dark:bg-brand-darker overflow-y-auto overflow-hidden min-h-[100%]  border-l-2 mt-[5px] border-t dark:border-gray-700 flex relative flex-col  transition-all ease-linear delay-75  dark:bg-brand-darker ${visibility.sidebar ? "w-[24.5rem]" : "w-0"}`}
     >
       <ResizablePanelGroup direction="vertical">
-        <ResizablePanel defaultSize={220} className="h-[calc(100vh-1.5rem)]">
+        <ResizablePanel defaultSize={220} className="h-[calc(100vh-1.5rem)] ">
           <Tabs defaultValue="summary" className="text-xs aside-tabs">
             <Tabs.List justify="left" className="dark:text-white">
               <Tabs.Tab className="text-[8px]" value="summary">

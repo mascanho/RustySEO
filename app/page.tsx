@@ -533,23 +533,22 @@ const Home: React.FC<HomeProps> = () => {
                   className="w-full h-7 text-xs pl-8 rounded-l-md bg-slate-100 dark:bg-blue-900/5 dark:bg-brand-darker dark:border dark:border-white/20 dark:text-white placeholder:text-gray-500 border rounded-r-md"
                   style={{ outline: "none", boxShadow: "none" }}
                 />
+
                 <button
                   onClick={() => handleClick(url)}
-                  className="rounded w-20 active:scale-95 text-sm relative inline-flex group py-[3px] items-center justify-center  ml-3 cursor-pointer border-b-4 border-l-2 active:border-blue-600 active:shadow-none bg-gradient-to-tr from-brand-bright to-blue-500 border-blue-700 text-white"
+                  className="rounded w-24 h-7 active:scale-95 text-sm relative inline-flex group py-[4px] items-center justify-center ml-3 cursor-pointer border-b-4 border-l-2 active:border-blue-600 active:shadow-none bg-gradient-to-tr from-brand-bright to-blue-500 border-blue-700 text-white transition-transform duration-200"
                 >
                   <span className="relative text-xs">
                     {loading ? (
                       <div
-                        className="top-0.5 right-4 z-[32423454] w-4 h-4 border-4 border-t-transparent border-white rounded-full animate-spin cursor-pointer"
-                        role="status"
-                        aria-label="loading"
                         onClick={() => window.location.reload()}
+                        className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white shadow-md"
                       />
                     ) : (
                       "Crawl"
                     )}
                   </span>
-                </button>{" "}
+                </button>
               </div>
             </div>
           </section>
@@ -570,7 +569,7 @@ const Home: React.FC<HomeProps> = () => {
               {/* WIDGET SECTION */}
 
               <div
-                className={`-mt-[20px] widgets ${Visible.widgets ? "block" : "hidden"}`}
+                className={`-mt-[20px] widgets ${Visible.widgets ? "block" : "hidden"} mb-2.5`}
               >
                 <h2 className="bottom-0 text-black/20 dark:text-white/20 font-semibold pb-1 ml-1 text-sm">
                   Widgets

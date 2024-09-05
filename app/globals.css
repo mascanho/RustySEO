@@ -405,6 +405,7 @@ button:where([data-active]) {
   width: 5px; /* Width of the scrollbar */
   height: 5px; /* Height of the horizontal scrollbar */
   z-index: 0 !important;
+  background: transparent;
 }
 
 /* STYLE THE SCHEMA SCROLLBAR */
@@ -473,6 +474,7 @@ button:where([data-active]) {
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
   overflow: auto;
+  background: trasnparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
@@ -611,4 +613,11 @@ select option {
 /* TECHNICAL CHART COLOIURS */
 #chart-buttons button {
   @apply dark:text-white dark:bg-brand-darker  text-black !important;
+}
+
+.topics-scrollbar::-webkit-scrollbar-thumb {
+  @apply text-red-500 dark:bg-brand-bright border-none border-0 hidden !important;
+}
+.topics-scrollbar::-webkit-scrollbar-track {
+  @apply dark:bg-brand-dark border-none border-0 !important;
 }
