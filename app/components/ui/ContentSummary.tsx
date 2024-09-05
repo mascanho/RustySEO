@@ -2,6 +2,7 @@ import { useOllamaStore } from "@/store/store";
 import useOnPageSeo from "@/store/storeOnPageSeo";
 import React, { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
+import useContentStore from "@/store/storeContent";
 
 const ContentSummary = ({
   keywords,
@@ -14,6 +15,10 @@ const ContentSummary = ({
   const ollamaStatus = useOllamaStore();
   const { setSeoContentQuality } = useOnPageSeo();
   const [AiContentAnalysis, setAiContentAnalysis] = useState("");
+  const setReadingTime = useContentStore((state) => state.setReadingTime);
+  const setWordCount = useContentStore((state) => state.setWordCount);
+  const setReadingLevel = useContentStore((state) => state.setReadingLevel);
+  const setTextRatio = useContentStore((state) => state.setTextRatio);
 
   useEffect(() => {
     if (!keywords) {
@@ -25,7 +30,15 @@ const ContentSummary = ({
         htmlToTextRatio,
       });
     }
+
+    // Set THE CONTENT STORE
+    setWordCount(wordCount);
+    setReadingTime(wordCount);
+    setReadingLevel(readingLevelResults);
+    setTextRatio(htmlToTextRatio);
   }, [keywords, readingTime, readingLevelResults]);
+
+  console.log(readingLevelResults, "READING LEVEL RESULTS FROM EL");
 
   useEffect(() => {
     setAiContentAnalysis("...");

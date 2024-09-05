@@ -125,7 +125,7 @@ export default function GeneralOverview({
               <summary className="flex items-center pl-2 py-1 bg-gray-200 dark:text-slate-400 font-semibold dark:bg-brand-darker cursor-pointer">
                 SEO
               </summary>
-              {checks.slice(14, checks.length).map((check, index) => (
+              {checks.slice(14, 25).map((check, index) => (
                 <div
                   key={check.id}
                   className={`flex items-center justify-between px-4 py-1.5 border-b dark:border-b-white/10 ${
@@ -182,7 +182,7 @@ export default function GeneralOverview({
               <summary className="flex items-center pl-2 py-1 bg-gray-100 dark:text-slate-400 font-semibold dark:bg-brand-darker cursor-pointer">
                 Content
               </summary>
-              {checks.slice(14, checks.length).map((check, index) => (
+              {checks.slice(25, checks.length).map((check, index) => (
                 <div
                   key={check.id}
                   className={`flex items-center justify-between px-4 py-1.5 border-b dark:border-b-white/10 ${

@@ -2,6 +2,7 @@
 import useOnPageSeo from "@/store/storeOnPageSeo";
 import usePageSpeedStore from "@/store/StorePerformance";
 import { useEffect, useMemo } from "react";
+import useContentStore from "@/store/storeContent";
 
 const useGetChecks = () => {
   // Extract all necessary state from Zustand store
@@ -36,6 +37,21 @@ const useGetChecks = () => {
   const seoheadings = useOnPageSeo((state) => state.seoheadings);
   const seoImages = useOnPageSeo((state) => state.seoImages);
   const seoOpenGraph = useOnPageSeo((state) => state.seoOpenGraph);
+
+  // Extract the CONTENT from ZUSTAND
+  const wordCount = useContentStore((state) => state.wordCount);
+  const readingTime = useContentStore((state) => state.readingTime);
+  const readingLevelResults = useContentStore((state) => state.readingLevel);
+  const contentStructure = useContentStore((state) => state.contentStructure);
+  const keywordDensity = useContentStore((state) => state.keywordDensity);
+  const contentSentiment = useContentStore((state) => state.contentSentiment);
+
+  console.log(wordCount, "WORD COUNT FROM STORE");
+  console.log(readingTime, "READING TIME FROM STORE");
+  console.log(readingLevelResults, "READING LEVEL RESULTS FROM STORE");
+  console.log(contentStructure, "CONTENT STRUCTURE FROM STORE");
+  console.log(keywordDensity, "KEYWORD DENSITY FROM STORE");
+  console.log(contentSentiment, "CONTENT SENTIMENT FROM STORE");
 
   // SET ALL OF THE PERFOMANCE STATE INTO A GLOBAL STATE
   const setGlobalPerformanceScore = usePageSpeedStore(
@@ -246,6 +262,56 @@ const useGetChecks = () => {
         id: "26",
         name: "Repeated Headings",
         status: seoheadings?.length === 0 ? "Passed" : "Failed",
+      },
+      {
+        id: "27",
+        name: "Word Count",
+        status: wordCount && wordCount[0] > 0 ? "Passed" : "Failed",
+      },
+      {
+        id: "28",
+        name: "Reading Time",
+        status: readingTime && readingTime[2] < 10 ? "Passed" : "Failed",
+      },
+      {
+        id: "29",
+        name: "Keyword Density",
+        status: keywordDensity === 0 ? "Passed" : "Failed",
+      },
+      {
+        id: "30",
+        name:
+          readingLevelResults &&
+          readingLevelResults[0] &&
+          readingLevelResults[0][1]
+            ? readingLevelResults[0][1]
+            : "Reading Level",
+        status:
+          readingLevelResults &&
+          readingLevelResults[0] &&
+          readingLevelResults[0][1] &&
+          (readingLevelResults[0][1] === "Very Easy" ||
+            readingLevelResults[0][1] === "Easy" ||
+            readingLevelResults[0][1] === "Fairly Easy" ||
+            readingLevelResults[0][1] === "Standard")
+            ? "Passed"
+            : "Failed",
+      },
+      {
+        id: "30",
+        name: "Content Sentiment",
+        status:
+          contentSentiment === "Very Easy" ||
+          contentSentiment === "Easy" ||
+          contentSentiment === "Fairly Easy" ||
+          contentSentiment === "Standard"
+            ? "Passed"
+            : "Failed",
+      },
+      {
+        id: "31",
+        name: "Content Structure",
+        status: contentStructure === "Neutral" ? "Passed" : "Failed",
       },
     ];
   }, [

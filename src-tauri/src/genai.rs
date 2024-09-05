@@ -54,8 +54,6 @@ pub async fn genai(query: String) -> Result<ChatResponse, Box<dyn Error>> {
 
         // Create the chat request
 
-
-
         let chat_req = ChatRequest::new(vec![
             ChatMessage::system("Answer in one sentence"),
             ChatMessage::user(query.clone()),
@@ -104,7 +102,7 @@ pub async fn generate_topics(body: String) -> Result<ChatResponse, Box<dyn Error
 
         // Create the chat request
         let prompt = format!(
-              "Given the body of this page, generate a list of long tail keywords that can be derived from this page, generate the topics based on those keywords, a page title, a page description and a page H1 to create more content that is SEO friendly and complements this current page, , do not output backticks nor any strage characters! output a JSON And do not mention anything else on your reply. The output should be {{keyword:, topic:, title: , description:, h1:}} give me 5 results only, the body of the page is :{}", body
+              "You are an amazing SEO expert. Given the body of this page, generate a list of long tail keywords that can be derived from this page, generate the topics based on those keywords, a page title, a page description and a page H1 to create more content that is SEO friendly and complements this current page, , do not output backticks nor any strage characters! output in JSON format And do not mention anything else on your reply. The output should be {{keyword:, topic:, title: , description:, h1:}} give me 1 result only, the body of the page to be analysed by you is :{} and you should output only the JSON format, do not say or add anything else to your reply.", body
           );
         let chat_req = ChatRequest::new(vec![
             // ChatMessage::system("Output a JSON format, do not add anything else to your reply if it is not inside the JSON format"),
