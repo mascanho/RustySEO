@@ -52,6 +52,7 @@ import LinksCharts from "./components/ui/ShadCharts/LinksCharts";
 import RenderBlockingResources from "./components/ui/RenderBlockingResources";
 import useOnPageSeo from "@/store/storeOnPageSeo";
 import useStore from "@/store/Panes";
+import TableMenus from "./components/ui/CrawlHistory/TableMenus";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -670,36 +671,6 @@ const Home: React.FC<HomeProps> = () => {
               />
 
               {/* CHARTS SECTION */}
-              <section
-                className={`charts grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 ${Visible.charts ? "grid" : "hidden"}`}
-              >
-                <KeywordChart keywords={keywords} url={debouncedURL} />
-                <HtmlToTextChart htmlToTextRatio={htmlToTextRatio} />
-                <ImagesChart url={debouncedURL} images={images} />
-                {/* @ts-ignore */}
-                <LinksCharts
-                  linkStatusCodeStatuses={linkStatusCodeStatus}
-                  linkStatusCodes={linkStatusCodes}
-                />
-              </section>
-              <HeadAnalysis
-                pageTitle={pageTitle}
-                pageDescription={pageDescription}
-                canonical={canonical}
-                hreflangs={hreflangs}
-                pageSchema={pageSchema}
-                openGraphDetails={openGraphDetails}
-                tagManager={tagManager}
-                favicon_url={favicon_url}
-                code={headElements}
-                indexation={indexation}
-                charset={charset}
-                crawl={handleClick}
-                url={url}
-              />
-
-              {/* CHARTS SECTION */}
-
               <section
                 className={`charts grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 ${Visible.charts ? "grid" : "hidden"}`}
               >

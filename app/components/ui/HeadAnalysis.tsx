@@ -41,13 +41,26 @@ export const HeadAnalysis = ({
 
   const [sessionUrl, setSessionUrl] = useState<string | null>(null);
 
+  let storedUrl;
   useEffect(() => {
-    const storedUrl = sessionStorage.getItem("url");
+    storedUrl = sessionStorage.getItem("reCrawledUrl");
     setSessionUrl(storedUrl);
-  }, [url, crawl]);
+  }, [
+    url,
+    crawl,
+    pageTitle,
+    pageDescription,
+    canonical,
+    hreflangs,
+    pageSchema,
+  ]);
+
+  const data = {
+    url: sessionUrl,
+  };
 
   return (
-    <TableMenus crawl={crawl} url={sessionUrl}>
+    <TableMenus data={data} crawl={crawl} url={sessionUrl}>
       <div
         onDoubleClick={() => {
           setHidden(!hidden);

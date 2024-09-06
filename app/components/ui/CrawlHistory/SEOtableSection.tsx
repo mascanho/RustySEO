@@ -16,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import TableMenus from "./TableMenus";
 
 // Define TypeScript types
 interface PerformanceData {
@@ -34,10 +35,12 @@ interface PerformanceData {
 
 interface PerformanceSectionProps {
   dbdata: PerformanceData[];
+  crawl: any;
 }
 
 const SEOtableSection: React.FC<PerformanceSectionProps> = ({
   dbdata,
+  crawl,
 }: any) => {
   // Component state and handlers
   const [download, setDownload] = useState("");
@@ -62,7 +65,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
       console.log(result);
       setData(result);
     });
-  }, [dbdata]);
+  }, []);
 
   // Filter and sort data
   const filteredData = (Array.isArray(data) ? data : [])
@@ -259,8 +262,10 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
                       </div>
                     </td>
                     <td align="left" className="py-2 border relative group p-2">
-                      <div className="line-clamp-2">
-                        {data.url}
+                      <div className="line-clamp-2 cursor-pointer hover:text-brand-bright">
+                        <TableMenus data={data} crawl={crawl}>
+                          {data.url}
+                        </TableMenus>
                         <span
                           className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                           onClick={() => handleAddTodo(data.url)}
