@@ -175,7 +175,7 @@ pub async fn generate_topics(body: String) -> Result<String> {
     let client = reqwest::Client::new();
 
     let prompt = format!(
-        "Given the body of this page, generate a list of long tail keywords that can be derived from this page and other content that can be created based on it, generate the topics based on those keywords, a page title, a page description to create more content that is SEO friendly and complements this current page, , do not output backticks nor any strage characters! And do not mention anything else on your reply. The output should be {{keyword:, title: , description:}} give me 10 results only, the body of the page is :{}", body
+        "Given the body of this page, generate a list of long tail keywords that can be derived from this page and other content that can be created based on it, generate the topics based on those keywords, a page title, a page description to create more content that is SEO friendly and complements this current page, , do not output backticks nor any strage characters! And do not mention anything else on your reply. The output should be {{keyword:, title: , description:}} give me 10 results only, make sure to pass the JSON details in the same language as the content/copy inside the body provided, the body of the page is :{}", body
     );
 
     println!("Sending Topic request to Gemini: {}", prompt);
