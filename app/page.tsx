@@ -654,7 +654,7 @@ const Home: React.FC<HomeProps> = () => {
               </div>
 
               {/* Head starts here */}
-              <TableMenus url={url} crawl={handleClick}>
+              <TableMenus url={debouncedURL} crawl={handleClick}>
                 <HeadAnalysis
                   pageTitle={pageTitle}
                   pageDescription={pageDescription}
@@ -673,7 +673,7 @@ const Home: React.FC<HomeProps> = () => {
               </TableMenus>
 
               {/* CHARTS SECTION */}
-              <TableMenus url={url} crawl={handleClick}>
+              <TableMenus url={debouncedURL} crawl={handleClick}>
                 <section
                   className={`charts grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 ${Visible.charts ? "grid" : "hidden"}`}
                 >

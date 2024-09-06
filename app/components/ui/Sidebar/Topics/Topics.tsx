@@ -23,24 +23,9 @@ interface ComponentProps {
   bodyElements: string[];
 }
 
-// Custom hook to force update on mount
-const useUpdateOnMount = () => {
-  const [, setTick] = useState(0);
-  const update = useCallback(() => {
-    setTick((tick) => tick + 1);
-  }, []);
-
-  useEffect(() => {
-    update();
-  }, [update]);
-
-  return update;
-};
-
 const Component: React.FC<ComponentProps> = ({ bodyElements }) => {
   const [topicsJson, setTopicsJson] = useState<Topic[]>([]);
   const [loadingTopics, setLoadingTopics] = useState<boolean>(true);
-  const updateOnMount = useUpdateOnMount();
 
   const parseTopics = useCallback((topics: string): Topic[] => {
     topics = topics.replace(/^```|```$/g, "").replace(/^["']|["']$/g, "");
@@ -76,13 +61,12 @@ const Component: React.FC<ComponentProps> = ({ bodyElements }) => {
       setTopicsJson([]);
     } finally {
       setLoadingTopics(false);
-      console.log("updated Topics");
     }
-  }, [bodyElements]);
+  }, [bodyElements, parseTopics]);
 
   useEffect(() => {
     fetchTopics();
-  }, [fetchTopics, updateOnMount]);
+  }, [fetchTopics]);
 
   if (loadingTopics) {
     return (
