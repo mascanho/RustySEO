@@ -20,7 +20,7 @@ const CrawlHistory = ({ dbdata, loading, crawl }: any) => {
           <PerformanceSection dbdata={dbdata} crawl={crawl} />
         </TabsContent>
         <TabsContent value="password" className="-mt-2 z-10">
-          <SEOtableSection dbdata={dbdata} crawl={crawl} />
+          <SEOtableSection dbdata={dbdata} />
         </TabsContent>
       </Tabs>
     </section>

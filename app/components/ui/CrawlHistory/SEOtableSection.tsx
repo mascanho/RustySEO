@@ -16,7 +16,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import TableMenus from "./TableMenus";
 
 // Define TypeScript types
 interface PerformanceData {
@@ -35,12 +34,10 @@ interface PerformanceData {
 
 interface PerformanceSectionProps {
   dbdata: PerformanceData[];
-  crawl: any;
 }
 
 const SEOtableSection: React.FC<PerformanceSectionProps> = ({
   dbdata,
-  crawl,
 }: any) => {
   // Component state and handlers
   const [download, setDownload] = useState("");
@@ -211,7 +208,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
       {/* Table Section */}
       <section className="rounded-md mt-2 overflow-x-auto shadow border dark:border-white/10 dark:bg-brand-darker">
         {/* Parent container for vertical scrolling */}
-        <div className="h-full max-h-[38rem] custom-scrollbar max-w-[100%] overflow-x-auto">
+        <div className="h-full max-h-[38rem] custom-scrollbar">
           {/* Container for horizontal scrolling */}
           <table className="table_history w-full shadow relative">
             <thead className="bg-white dark:bg-brand-darker sticky top-0 z-20">
@@ -261,14 +258,9 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
                         {new Date(data.date).toLocaleDateString()}
                       </div>
                     </td>
-                    <td
-                      align="left"
-                      className="py-2 border relative group p-2 cursor-pointer hover:text-blue-500"
-                    >
-                      <div className="line-clamp-2 cursor-pointer hover:text-blue-500">
-                        <TableMenus url={data?.url} crawl={crawl}>
-                          {data.url}
-                        </TableMenus>
+                    <td align="left" className="py-2 border relative group p-2">
+                      <div className="line-clamp-2">
+                        {data.url}
                         <span
                           className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                           onClick={() => handleAddTodo(data.url)}

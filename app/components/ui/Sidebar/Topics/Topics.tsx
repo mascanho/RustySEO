@@ -1,8 +1,10 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { Card } from "@/components/ui/card";
+// @ts-nocheck
+import { Card, CardContent } from "@/components/ui/card";
 import { invoke } from "@tauri-apps/api/tauri";
+import { useEffect, useState } from "react";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
-import { BiKey } from "react-icons/bi";
+
+import { BiKey, BiDotsVerticalRounded, BiDotsVertical } from "react-icons/bi";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,50 +25,48 @@ interface ComponentProps {
   bodyElements: string[];
 }
 
-const Component: React.FC<ComponentProps> = ({ bodyElements }) => {
-  const [topicsJson, setTopicsJson] = useState<Topic[]>([]);
+export default function Component({ bodyElements }: any) {
+  const [topicsJson, setTopicsJson] = useState<any[]>([]);
   const [loadingTopics, setLoadingTopics] = useState<boolean>(true);
 
-  const parseTopics = useCallback((topics: string): Topic[] => {
-    topics = topics.replace(/^```|```$/g, "").replace(/^["']|["']$/g, "");
-    const position = topics.indexOf("{");
-    if (position !== -1) {
-      topics = topics.substring(position);
-    }
-    topics = topics.replace(/}\s*{/g, "},\n{");
-    topics = `[${topics}]`;
+  useEffect(() => {
+    setLoadingTopics(true); // Set loading state to true initially
 
-    try {
-      return JSON.parse(topics);
-    } catch (error) {
-      console.error("Error parsing JSON:", error);
-      return [];
-    }
-  }, []);
+    invoke("generate_ai_topics", { body: bodyElements[0] })
+      .then((res: any) => {
+        let topics = res;
 
-  const fetchTopics = useCallback(async () => {
-    setLoadingTopics(true);
-    try {
-      const res: string = await invoke("generate_ai_topics", {
-        body: bodyElements[0],
+        if (topics) {
+          topics = topics?.replace(/^```|```$/g, ""); // Remove surrounding backticks
+          topics = topics?.replace(/^["']|["']$/g, ""); // Remove surrounding quotes
+
+          const position = topics?.indexOf("{");
+          if (position !== -1) {
+            topics = topics?.substring(position);
+          }
+
+          topics = topics?.replace(/}\s*{/g, "},\n{"); // Add commas between objects
+          topics = `[${topics}]`; // Wrap string in brackets to form a valid JSON array
+
+          try {
+            const parsedTopics = JSON?.parse(topics);
+            setTopicsJson(parsedTopics);
+          } catch (error) {
+            console.error("Error parsing JSON:", error);
+            setTopicsJson([]);
+          }
+        } else {
+          setTopicsJson([]);
+        }
+      })
+      .finally(() => {
+        setLoadingTopics(false); // Set loading state to false after processing
       });
-      if (res) {
-        const parsedTopics = parseTopics(res);
-        setTopicsJson(parsedTopics);
-      } else {
-        setTopicsJson([]);
-      }
-    } catch (error) {
-      console.error("Error fetching topics:", error);
-      setTopicsJson([]);
-    } finally {
-      setLoadingTopics(false);
-    }
-  }, [bodyElements, parseTopics]);
+  }, [bodyElements]); // Dependency on bodyElements
 
   useEffect(() => {
-    fetchTopics();
-  }, [fetchTopics]);
+    setTopicsJson(topicsJson);
+  }, [loadingTopics]);
 
   if (loadingTopics) {
     return (
@@ -76,7 +76,7 @@ const Component: React.FC<ComponentProps> = ({ bodyElements }) => {
     );
   }
 
-  if (topicsJson.length === 0) {
+  if (!topicsJson || topicsJson.length === 0) {
     return (
       <div className="bg-gradient-to-br from-gray-100 to-gray-200 overflow-y-auto overflow-x-hidden h-[28rem] dark:bg-brand-darker">
         <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 dark:bg-brand-darker h-full">
@@ -94,7 +94,7 @@ const Component: React.FC<ComponentProps> = ({ bodyElements }) => {
   }
 
   return (
-    <div className="w-full dark:bg-brand-darker overflow-y-auto h-[28rem] overflow-x-hidden">
+    <div className="w-full dark:bg-brand-darker  overflow-y-auto  h-[28rem] overflow-x-hidden">
       <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 dark:bg-brand-darker w-full border-0">
         {topicsJson.map((entry, index) => (
           <Card
@@ -105,75 +105,50 @@ const Component: React.FC<ComponentProps> = ({ bodyElements }) => {
               <DropdownMenuTrigger className="absolute right-1 top-4">
                 <BsThreeDotsVertical className="dark:text-white mr-1 z-10" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-brand-darker border shadow shadow-lg px-0.5 bg-white dark:bg-brand-darker dark:border-brand-dark dark:text-white mt-1.5 mr-6 w-fit text-xs">
+              <DropdownMenuContent className="bg-brand-darker border shadow shadow-lg  px-0.5 bg-white dark:bg-brand-darker  dark:border-brand-dark dark:text-white mt-1.5 mr-6 w-fit text-xs">
                 <DropdownMenuLabel className="font-semibold text-xs">
                   Check Keyword
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-gray-100 dark:bg-brand-dark" />
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() =>
-                    openBrowserWindow(
-                      `https://www.google.com/search?q=${encodeURIComponent(entry.keyword)}`,
-                    )
-                  }
+                  onClick={() => openBrowserWindow(testURL)}
                   className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight text-xs cursor-pointer"
                 >
-                  Google Search
+                  Google
                 </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-gray-100 dark:bg-brand-dark" />
+
                 <DropdownMenuItem
-                  onClick={() =>
-                    openBrowserWindow(
-                      `https://trends.google.com/trends/explore?q=${encodeURIComponent(entry.keyword)}`,
-                    )
-                  }
+                  onClick={() => openBrowserWindow(testURL)}
                   className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer text-xs"
                 >
-                  Google Trends
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    openBrowserWindow(
-                      `https://www.bing.com/search?q=${encodeURIComponent(entry.keyword)}`,
-                    )
-                  }
-                  className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer text-xs"
-                >
-                  Bing
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    openBrowserWindow(
-                      `https://duckduckgo.com/?q=${encodeURIComponent(entry.keyword)}`,
-                    )
-                  }
-                  className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer text-xs"
-                >
-                  DuckDuckGo
+                  Documentation
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
             <section className="transition-shadow duration-300 rounded-none dark:bg-brand-darker">
               <div className="p-3 flex flex-col">
-                <div className="flex items-center mb-2 mr-1">
+                <div className="flex items-center mb-2">
                   <BiKey className="h-6 w-6 text-blue-600" />
+
                   <span
                     onClick={() =>
                       openBrowserWindow(
-                        `https://www.google.com/search?q=${encodeURIComponent(entry.keyword)}`,
+                        `https://www.google.com/search?q=${encodeURIComponent(entry?.keyword || "")}`,
                         "_blank",
                       )
                     }
                     className="ml-1 text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full cursor-pointer font-medium"
                   >
-                    {entry.keyword}
+                    {entry?.keyword}
                   </span>
                 </div>
                 <h2 className="text-xs font-semibold mb-1.5 text-gray-800 dark:text-white/40">
-                  {entry.title}
+                  {entry?.title}
                 </h2>
                 <p className="text-xs text-blue-400 mb-1">
-                  {entry.description}
+                  {entry?.description}
                 </p>
               </div>
             </section>
@@ -182,6 +157,4 @@ const Component: React.FC<ComponentProps> = ({ bodyElements }) => {
       </div>
     </div>
   );
-};
-
-export default Component;
+}

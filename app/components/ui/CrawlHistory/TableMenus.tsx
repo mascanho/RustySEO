@@ -37,60 +37,59 @@ const handleCopy = (url: string) => {
   navigator?.clipboard.writeText(url);
 };
 
-const TableMenus = ({ children, crawl, url }: any) => {
+const TableMenus = ({ children, data, crawl, url }: any) => {
   return (
     <ContextMenu>
       <ContextMenuTrigger>{children}</ContextMenuTrigger>
       <ContextMenuContent className="w-40">
-        <ContextMenuItem onClick={() => handleCopy(url)}>
-          <FiClipboard className="mr-2" /> Copy url
+        <ContextMenuItem onClick={() => handleCopy(data?.url || url)}>
+          <FiClipboard className="mr-2" /> Copy
         </ContextMenuItem>
-        <ContextMenuItem onClick={() => openBrowserWindow(url)}>
+        <ContextMenuItem onClick={() => openBrowserWindow(data?.url || url)}>
           <FiGlobe className="mr-2" />
           Open in Browser
         </ContextMenuItem>
-        <ContextMenuItem onClick={() => crawl(url)}>
+        <ContextMenuItem onClick={() => crawl(data?.url || url)}>
           <FiRefreshCw className="mr-2" /> Re-crawl
         </ContextMenuItem>
         <ContextMenuSub>
           <ContextMenuSubTrigger>
             <FiCheckSquare className="mr-2" /> Check Index
           </ContextMenuSubTrigger>
-          <ContextMenuSubContent className="w-40 ml-1">
+          <ContextMenuSubContent className="w-48">
             <ContextMenuItem
               onClick={() =>
-                openBrowserWindow(`https://www.google.com/search?q=${url}`)
+                openBrowserWindow(
+                  `https://www.google.com/search?q=${data?.url}`,
+                )
               }
             >
               <FaSearchengin className="mr-2" /> Google
             </ContextMenuItem>
             <ContextMenuItem
               onClick={() =>
-                openBrowserWindow(`https://www.bing.com/search?q=${url}`)
+                openBrowserWindow(`https://www.bing.com/search?q=${data?.url}`)
               }
             >
               <FaSearchengin className="mr-2" /> Bing
             </ContextMenuItem>
             <ContextMenuItem
               onClick={() =>
-                openBrowserWindow(`https://search.yahoo.com/search?p=${url}`)
+                openBrowserWindow(
+                  `https://search.yahoo.com/search?p=${data?.url}`,
+                )
               }
             >
               <FaSearchengin className="mr-2" /> Yahoo
             </ContextMenuItem>
             <ContextMenuItem
               onClick={() =>
-                openBrowserWindow(`https://www.yandex.com/search/?text=${url}`)
+                openBrowserWindow(
+                  `https://www.yandex.com/search/?text=${data?.url}`,
+                )
               }
             >
               <FaSearchengin className="mr-2" /> Yandex
-            </ContextMenuItem>
-            <ContextMenuItem
-              onClick={() =>
-                openBrowserWindow(`https://duckduckgo.com/?q=${url}`)
-              }
-            >
-              <FaSearchengin className="mr-2" /> DuckDuckGo
             </ContextMenuItem>
           </ContextMenuSubContent>
         </ContextMenuSub>
@@ -98,7 +97,7 @@ const TableMenus = ({ children, crawl, url }: any) => {
           <ContextMenuSubTrigger>
             <FiLink className="mr-2" /> Backlinks
           </ContextMenuSubTrigger>
-          <ContextMenuSubContent className="w-48 ml-1">
+          <ContextMenuSubContent className="w-48">
             <ContextMenuItem>
               <FiExternalLink className="mr-2" /> Ahrefs
             </ContextMenuItem>
@@ -115,7 +114,7 @@ const TableMenus = ({ children, crawl, url }: any) => {
           <ContextMenuSubTrigger>
             <FiCheckSquare className="mr-2" /> Validation
           </ContextMenuSubTrigger>
-          <ContextMenuSubContent className="w-48 ml-1">
+          <ContextMenuSubContent className="w-48">
             <ContextMenuItem>
               <FiSave className="mr-2" /> Save Page As...
               <ContextMenuShortcut>⇧⌘S</ContextMenuShortcut>
@@ -136,7 +135,7 @@ const TableMenus = ({ children, crawl, url }: any) => {
           <ContextMenuSubTrigger>
             <FiClock className="mr-2" /> History
           </ContextMenuSubTrigger>
-          <ContextMenuSubContent className="w-48 ml-1">
+          <ContextMenuSubContent className="w-48">
             <ContextMenuItem>
               <FiSave className="mr-2" /> Save Page As...
               <ContextMenuShortcut>⇧⌘S</ContextMenuShortcut>
