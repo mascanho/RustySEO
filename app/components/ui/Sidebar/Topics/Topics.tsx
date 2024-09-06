@@ -111,18 +111,64 @@ export default function Component({ bodyElements }: any) {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => openBrowserWindow(testURL)}
+                  onClick={() =>
+                    openBrowserWindow(
+                      `https://www.google.com/search?q=${encodeURIComponent(entry?.keyword || "")}`,
+                    )
+                  }
                   className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight text-xs cursor-pointer"
                 >
                   Google
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-gray-100 dark:bg-brand-dark" />
-
                 <DropdownMenuItem
-                  onClick={() => openBrowserWindow(testURL)}
-                  className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer text-xs"
+                  onClick={() =>
+                    openBrowserWindow(
+                      `https://www.bing.com/search?q=${encodeURIComponent(entry?.keyword || "")}`,
+                    )
+                  }
+                  className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight text-xs cursor-pointer"
                 >
-                  Documentation
+                  Bing
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    openBrowserWindow(
+                      `https://search.yahoo.com/search?p=${encodeURIComponent(entry?.keyword || "")}`,
+                    )
+                  }
+                  className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight text-xs cursor-pointer"
+                >
+                  Yahoo
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    openBrowserWindow(
+                      `https://yandex.com/search/?text=${encodeURIComponent(entry?.keyword || "")}`,
+                    )
+                  }
+                  className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight text-xs cursor-pointer"
+                >
+                  Yandex
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    openBrowserWindow(
+                      `https://trends.google.com/trends/explore?q=${encodeURIComponent(entry?.keyword || "")}`,
+                    )
+                  }
+                  className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight text-xs cursor-pointer"
+                >
+                  Google Trends
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    openBrowserWindow(
+                      `https://duckduckgo.com/?q=${encodeURIComponent(entry?.keyword || "")}`,
+                    )
+                  }
+                  className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight text-xs cursor-pointer"
+                >
+                  DuckDuckGo
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
