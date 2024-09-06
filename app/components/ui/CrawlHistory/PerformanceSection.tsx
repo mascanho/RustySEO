@@ -317,7 +317,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
                       )}
                     </td>
                     <td align="left" className="py-2 border relative group">
-                      <TableMenus data={data} crawl={crawl}>
+                      <TableMenus url={data.url} crawl={crawl}>
                         <span className="hover:text-blue-500 cursor-pointer">
                           {data.url}
                         </span>

@@ -1,10 +1,8 @@
-// @ts-nocheck
-import { Card, CardContent } from "@/components/ui/card";
+import React, { useEffect, useState, useCallback } from "react";
+import { Card } from "@/components/ui/card";
 import { invoke } from "@tauri-apps/api/tauri";
-import { useEffect, useState } from "react";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
-
-import { BiKey, BiDotsVerticalRounded, BiDotsVertical } from "react-icons/bi";
+import { BiKey } from "react-icons/bi";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,48 +13,76 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { BsThreeDotsVertical } from "react-icons/bs";
 
-export default function Component({ bodyElements }: any) {
-  const [topicsJson, setTopicsJson] = useState<any[]>([]);
+interface Topic {
+  keyword: string;
+  title: string;
+  description: string;
+}
+
+interface ComponentProps {
+  bodyElements: string[];
+}
+
+// Custom hook to force update on mount
+const useUpdateOnMount = () => {
+  const [, setTick] = useState(0);
+  const update = useCallback(() => {
+    setTick((tick) => tick + 1);
+  }, []);
+
+  useEffect(() => {
+    update();
+  }, [update]);
+
+  return update;
+};
+
+const Component: React.FC<ComponentProps> = ({ bodyElements }) => {
+  const [topicsJson, setTopicsJson] = useState<Topic[]>([]);
   const [loadingTopics, setLoadingTopics] = useState<boolean>(true);
+  const updateOnMount = useUpdateOnMount();
 
-  useEffect(() => {
-    setLoadingTopics(true); // Set loading state to true initially
+  const parseTopics = useCallback((topics: string): Topic[] => {
+    topics = topics.replace(/^```|```$/g, "").replace(/^["']|["']$/g, "");
+    const position = topics.indexOf("{");
+    if (position !== -1) {
+      topics = topics.substring(position);
+    }
+    topics = topics.replace(/}\s*{/g, "},\n{");
+    topics = `[${topics}]`;
 
-    invoke("generate_ai_topics", { body: bodyElements[0] })
-      .then((res: any) => {
-        let topics = res;
+    try {
+      return JSON.parse(topics);
+    } catch (error) {
+      console.error("Error parsing JSON:", error);
+      return [];
+    }
+  }, []);
 
-        if (topics) {
-          topics = topics?.replace(/^```|```$/g, ""); // Remove surrounding backticks
-          topics = topics?.replace(/^["']|["']$/g, ""); // Remove surrounding quotes
-
-          const position = topics?.indexOf("{");
-          if (position !== -1) {
-            topics = topics?.substring(position);
-          }
-
-          topics = topics?.replace(/}\s*{/g, "},\n{"); // Add commas between objects
-          topics = `[${topics}]`; // Wrap string in brackets to form a valid JSON array
-
-          try {
-            const parsedTopics = JSON?.parse(topics);
-            setTopicsJson(parsedTopics);
-          } catch (error) {
-            console.error("Error parsing JSON:", error);
-            setTopicsJson([]);
-          }
-        } else {
-          setTopicsJson([]);
-        }
-      })
-      .finally(() => {
-        setLoadingTopics(false); // Set loading state to false after processing
+  const fetchTopics = useCallback(async () => {
+    setLoadingTopics(true);
+    try {
+      const res: string = await invoke("generate_ai_topics", {
+        body: bodyElements[0],
       });
-  }, [bodyElements]); // Dependency on bodyElements
+      if (res) {
+        const parsedTopics = parseTopics(res);
+        setTopicsJson(parsedTopics);
+      } else {
+        setTopicsJson([]);
+      }
+    } catch (error) {
+      console.error("Error fetching topics:", error);
+      setTopicsJson([]);
+    } finally {
+      setLoadingTopics(false);
+      console.log("updated Topics");
+    }
+  }, [bodyElements]);
 
   useEffect(() => {
-    setTopicsJson(topicsJson);
-  }, [loadingTopics]);
+    fetchTopics();
+  }, [fetchTopics, updateOnMount]);
 
   if (loadingTopics) {
     return (
@@ -66,7 +92,7 @@ export default function Component({ bodyElements }: any) {
     );
   }
 
-  if (!topicsJson || topicsJson.length === 0) {
+  if (topicsJson.length === 0) {
     return (
       <div className="bg-gradient-to-br from-gray-100 to-gray-200 overflow-y-auto overflow-x-hidden h-[28rem] dark:bg-brand-darker">
         <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 dark:bg-brand-darker h-full">
@@ -84,7 +110,7 @@ export default function Component({ bodyElements }: any) {
   }
 
   return (
-    <div className="w-full dark:bg-brand-darker  overflow-y-auto  h-[28rem] overflow-x-hidden">
+    <div className="w-full dark:bg-brand-darker overflow-y-auto h-[28rem] overflow-x-hidden">
       <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-1 dark:bg-brand-darker w-full border-0">
         {topicsJson.map((entry, index) => (
           <Card
@@ -95,50 +121,75 @@ export default function Component({ bodyElements }: any) {
               <DropdownMenuTrigger className="absolute right-1 top-4">
                 <BsThreeDotsVertical className="dark:text-white mr-1 z-10" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-brand-darker border shadow shadow-lg  px-0.5 bg-white dark:bg-brand-darker  dark:border-brand-dark dark:text-white mt-1.5 mr-6 w-fit text-xs">
+              <DropdownMenuContent className="bg-brand-darker border shadow shadow-lg px-0.5 bg-white dark:bg-brand-darker dark:border-brand-dark dark:text-white mt-1.5 mr-6 w-fit text-xs">
                 <DropdownMenuLabel className="font-semibold text-xs">
                   Check Keyword
                 </DropdownMenuLabel>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="bg-gray-100 dark:bg-brand-dark" />
                 <DropdownMenuItem
-                  onClick={() => openBrowserWindow(testURL)}
+                  onClick={() =>
+                    openBrowserWindow(
+                      `https://www.google.com/search?q=${encodeURIComponent(entry.keyword)}`,
+                    )
+                  }
                   className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight text-xs cursor-pointer"
                 >
-                  Google
+                  Google Search
                 </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-gray-100 dark:bg-brand-dark" />
-
                 <DropdownMenuItem
-                  onClick={() => openBrowserWindow(testURL)}
+                  onClick={() =>
+                    openBrowserWindow(
+                      `https://trends.google.com/trends/explore?q=${encodeURIComponent(entry.keyword)}`,
+                    )
+                  }
                   className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer text-xs"
                 >
-                  Documentation
+                  Google Trends
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    openBrowserWindow(
+                      `https://www.bing.com/search?q=${encodeURIComponent(entry.keyword)}`,
+                    )
+                  }
+                  className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer text-xs"
+                >
+                  Bing
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    openBrowserWindow(
+                      `https://duckduckgo.com/?q=${encodeURIComponent(entry.keyword)}`,
+                    )
+                  }
+                  className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer text-xs"
+                >
+                  DuckDuckGo
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
             <section className="transition-shadow duration-300 rounded-none dark:bg-brand-darker">
               <div className="p-3 flex flex-col">
-                <div className="flex items-center mb-2">
+                <div className="flex items-center mb-2 mr-1">
                   <BiKey className="h-6 w-6 text-blue-600" />
-
                   <span
                     onClick={() =>
                       openBrowserWindow(
-                        `https://www.google.com/search?q=${encodeURIComponent(entry?.keyword || "")}`,
+                        `https://www.google.com/search?q=${encodeURIComponent(entry.keyword)}`,
                         "_blank",
                       )
                     }
                     className="ml-1 text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full cursor-pointer font-medium"
                   >
-                    {entry?.keyword}
+                    {entry.keyword}
                   </span>
                 </div>
                 <h2 className="text-xs font-semibold mb-1.5 text-gray-800 dark:text-white/40">
-                  {entry?.title}
+                  {entry.title}
                 </h2>
                 <p className="text-xs text-blue-400 mb-1">
-                  {entry?.description}
+                  {entry.description}
                 </p>
               </div>
             </section>
@@ -147,4 +198,6 @@ export default function Component({ bodyElements }: any) {
       </div>
     </div>
   );
-}
+};
+
+export default Component;
