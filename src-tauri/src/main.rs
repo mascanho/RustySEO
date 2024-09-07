@@ -152,6 +152,7 @@ async fn main() {
             downloads::csv::generate_seo_csv,
             generate_ai_topics,
             get_genai,
+            crawler::db::clear_table,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

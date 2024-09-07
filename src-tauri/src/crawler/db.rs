@@ -482,3 +482,13 @@ pub fn read_gsc_matched_from_db() -> Result<Vec<GscMatched>> {
     println!("Page SEO Data: {:#?}", data);
     Ok(data)
 }
+
+// -------FUCTION TO DELET/CLEAR all the results from the DB
+#[tauri::command]
+pub fn clear_table(table: &str) -> String> {
+    let conn = open_db_connection()?;
+    let sql = format!("DELETE FROM {}", table);
+    conn.execute(&sql, [])?;
+    println!("Table {} has been cleared", table);
+    "Table has been cleared".to_string()
+}
