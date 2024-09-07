@@ -35,7 +35,11 @@ import {
   FiTool,
   FiHelpCircle,
   FiLogOut,
+  FiGlobe,
+  FiSearch,
 } from "react-icons/fi";
+
+import { GiRobotGrab } from "react-icons/gi";
 import { FaRegLightbulb, FaRegMoon } from "react-icons/fa";
 import { AiOutlineShareAlt, AiOutlinePrinter } from "react-icons/ai";
 
@@ -404,7 +408,7 @@ const TopMenuBar = () => {
               <MenubarItem className="flex items-center" onClick={openOllama}>
                 <FiZap className="mr-2" />
                 Ollama{" "}
-                <span className="text-[10px] text-gray-300/50 ml-1">
+                <span className="text-[10px] dark:text-gray-300/50 text-black/50 mt-[2px] ml-1">
                   (AI Models)
                 </span>
               </MenubarItem>
@@ -419,11 +423,11 @@ const TopMenuBar = () => {
             <MenubarTrigger className="ml-3">Crawlers</MenubarTrigger>
             <MenubarContent>
               <MenubarItem onClick={() => router.push("/")}>
-                <FiTool className="mr-2" />
+                <GiRobotGrab className="mr-2" />
                 Page Crawler
               </MenubarItem>
               <MenubarItem onClick={() => router.push("/global")}>
-                <FiTool className="mr-2" />
+                <GiRobotGrab className="mr-2" />
                 Global Crawler
               </MenubarItem>
             </MenubarContent>
