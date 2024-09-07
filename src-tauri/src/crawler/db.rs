@@ -4,6 +4,7 @@ use rusqlite::{params, Connection, Result};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::fs;
+use tauri::command;
 
 use super::DBData;
 
@@ -483,12 +484,16 @@ pub fn read_gsc_matched_from_db() -> Result<Vec<GscMatched>> {
     Ok(data)
 }
 
-// -------FUCTION TO DELET/CLEAR all the results from the DB
-#[tauri::command]
-pub fn clear_table(table: &str) -> String> {
+// -------FUNCTION TO DELETE/CLEAR all the results from the DB
+#[command]
+pub fn clear_table_command(table: &str) {
+    let result = clear_table(table).expect("Failed to clear table");
+}
+
+pub fn clear_table(table: &str) -> Result<(), Box<dyn std::error::Error>> {
     let conn = open_db_connection()?;
     let sql = format!("DELETE FROM {}", table);
     conn.execute(&sql, [])?;
     println!("Table {} has been cleared", table);
-    "Table has been cleared".to_string()
+    Ok(())
 }

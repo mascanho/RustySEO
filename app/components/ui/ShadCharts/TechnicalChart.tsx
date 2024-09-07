@@ -79,28 +79,38 @@ export function TechnicalChart({ dbdata }: any) {
       : [];
   }, [dbdata]);
 
-  const averages = React.useMemo(
-    () => ({
-      performance:
-        chartData.reduce((acc, curr) => acc + curr.performance, 0) /
-        chartData.length,
-      speed:
-        chartData.reduce((acc, curr) => acc + curr.speed, 0) / chartData.length,
-      fcp:
-        chartData.reduce((acc, curr) => acc + curr.fcp, 0) / chartData.length,
-      lcp:
-        chartData.reduce((acc, curr) => acc + curr.lcp, 0) / chartData.length,
-      tti:
-        chartData.reduce((acc, curr) => acc + curr.tti, 0) / chartData.length,
-      cls:
-        chartData.reduce((acc, curr) => acc + curr.cls, 0) / chartData.length,
-      tbt:
-        chartData.reduce((acc, curr) => acc + curr.tbt, 0) / chartData.length,
-      dom:
-        chartData.reduce((acc, curr) => acc + curr.dom, 0) / chartData.length,
-    }),
-    [chartData],
-  );
+  const averages = React.useMemo(() => {
+    const initialAverages = {
+      performance: 0,
+      speed: 0,
+      fcp: 0,
+      lcp: 0,
+      tti: 0,
+      cls: 0,
+      tbt: 0,
+      dom: 0,
+    };
+
+    if (chartData.length === 0) {
+      return initialAverages;
+    }
+
+    const sums = chartData.reduce(
+      (acc, curr) => {
+        Object.keys(initialAverages).forEach((key) => {
+          acc[key] += curr[key] || 0;
+        });
+        return acc;
+      },
+      { ...initialAverages },
+    );
+
+    Object.keys(sums).forEach((key) => {
+      sums[key] = sums[key] / chartData.length;
+    });
+
+    return sums;
+  }, [chartData]);
 
   return (
     <Card className="dark:bg-brand-darker">
@@ -125,7 +135,7 @@ export function TechnicalChart({ dbdata }: any) {
                   {chartConfig[chart].label}
                 </span>
                 <span className="text-sm font-bold leading-none ">
-                  {averages[chart].toLocaleString()}
+                  {averages[chart] ? averages[chart].toLocaleString() : "N/A"}
                 </span>
               </button>
             );

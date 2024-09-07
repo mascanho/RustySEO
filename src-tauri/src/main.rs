@@ -11,7 +11,6 @@ use tauri::{api::path::config_dir, Manager};
 use tokio;
 use toml;
 
-
 mod crawler;
 mod domain_crawler;
 mod downloads {
@@ -152,7 +151,7 @@ async fn main() {
             downloads::csv::generate_seo_csv,
             generate_ai_topics,
             get_genai,
-            crawler::db::clear_table,
+            crawler::db::clear_table_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

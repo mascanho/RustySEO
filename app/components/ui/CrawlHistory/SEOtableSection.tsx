@@ -3,7 +3,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { FaDesktop, FaMobileAlt } from "react-icons/fa";
-import { FiDownload, FiCheckCircle } from "react-icons/fi";
+import { FiDownload, FiCheckCircle, FiMenu } from "react-icons/fi";
 import { IoIosSearch } from "react-icons/io";
 import { save } from "@tauri-apps/api/dialog";
 import { writeTextFile } from "@tauri-apps/api/fs";
@@ -17,6 +17,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import TableMenus from "./TableMenus";
+import { toast } from "sonner";
+import TableFloatMenus from "./_components/TableFloatMenus";
+import { BsMenuDown } from "react-icons/bs";
+import { MdOutlineInsertChart } from "react-icons/md";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import PopUpTable from "./PopUpTable";
 
 // Define TypeScript types
 interface PerformanceData {
@@ -51,6 +61,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
   const [sortColumn, setSortColumn] = useState<keyof PerformanceData>("date");
   const [todoUrl, setTodoUrl] = useState<string | null>(null);
+  const [matchedUrlData, setMatchedUrlData] = useState([]);
 
   // Effect to update data when dbdata changes
   useEffect(() => {
@@ -60,12 +71,16 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
   }, [dbdata]);
 
   // GET THE DATA FROM THE DB
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     invoke("read_seo_data_from_db").then((result: any) => {
       console.log(result);
       setData(result);
     });
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // Filter and sort data
   const filteredData = (Array.isArray(data) ? data : [])
@@ -97,27 +112,13 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
       })
     : [];
 
-  // Handle sorting
-  const handleSort = (column: keyof PerformanceData) => {
-    if (sortColumn === column) {
-      setSortDirection((prevDirection) =>
-        prevDirection === "asc" ? "desc" : "asc",
-      );
-    } else {
-      setSortColumn(column);
-      setSortDirection("desc");
-    }
-  };
-
   // Refresh table function
   const refreshTable = useCallback(() => {
-    if (Array.isArray(dbdata)) {
-      setData(dbdata);
-    }
+    fetchData();
     setSearchQuery("");
     setStartDate(null);
     setEndDate(null);
-  }, [dbdata]);
+  }, [fetchData]);
 
   // Handle download
   const handleDownloadXLSX = async () => {
@@ -146,6 +147,38 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
   const handleAddTodo = (url: string) => {
     setTodoUrl(url);
     alert(`To-Do item created for URL: ${url}`);
+  };
+
+  // Clear Table
+  const handleClearTable = async () => {
+    try {
+      await invoke("clear_table_command", { table: "technical_data" });
+      toast("Tables have been cleared");
+      fetchData(); // Fetch updated data after clearing the table
+    } catch (error) {
+      console.error("Error clearing tables:", error);
+      toast("Error clearing tables");
+    }
+  };
+
+  // Handle Matching URL
+  const handleUrlMatch = (url: string) => {
+    invoke("call_gsc_match_url", { url: url }).then((result: any) => {
+      console.log(result);
+      setMatchedUrlData(result);
+    });
+  };
+
+  // Handle sorting
+  const handleSort = (column: keyof PerformanceData) => {
+    if (sortColumn === column) {
+      setSortDirection((prevDirection) =>
+        prevDirection === "asc" ? "desc" : "asc",
+      );
+    } else {
+      setSortColumn(column);
+      setSortDirection("desc"); // Default to descending when sorting by a new column
+    }
   };
 
   return (
@@ -184,7 +217,10 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
             <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer text-xs">
               Match URL
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer text-xs">
+            <DropdownMenuItem
+              onClick={handleClearTable}
+              className="text-red-500 hover:bg-red-200 cursor-pointer text-xs"
+            >
               Clear Table
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -262,16 +298,32 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
                       </div>
                     </td>
                     <td align="left" className="py-2 border relative group p-2">
-                      <div className="line-clamp-2 cursor-pointer hover:text-brand-bright">
-                        <TableMenus data={data} crawl={crawl}>
-                          {data.url}
-                        </TableMenus>
-                        <span
-                          className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                          onClick={() => handleAddTodo(data.url)}
-                        >
-                          <FiCheckCircle className="text-green-500" />
-                        </span>
+                      <div className="flex items-center justify-between">
+                        <div className="line-clamp-2 cursor-pointer hover:text-brand-bright mr-2">
+                          <TableMenus data={data} crawl={crawl}>
+                            {data.url}
+                          </TableMenus>
+                        </div>
+                        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <TableFloatMenus data={data} crawl={crawl}>
+                            <BsMenuDown className="text-purple-500" />
+                          </TableFloatMenus>
+                          <FiCheckCircle
+                            className="text-green-500 cursor-pointer"
+                            onClick={() => handleAddTodo(data.url)}
+                          />
+                          <Popover>
+                            <PopoverTrigger>
+                              <MdOutlineInsertChart
+                                className="text-blue-500 text-base cursor-pointer"
+                                onClick={() => handleUrlMatch(data.url)}
+                              />
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[600px] bg-white dark:bg-brand-darker">
+                              <PopUpTable data={matchedUrlData} />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
                       </div>
                     </td>
                     <td
