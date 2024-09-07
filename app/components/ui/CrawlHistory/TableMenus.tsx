@@ -14,7 +14,7 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { FaSearchengin } from "react-icons/fa";
 
 import {
@@ -33,23 +33,23 @@ import {
 } from "react-icons/fi";
 import { PiFileMagnifyingGlassDuotone } from "react-icons/pi";
 
-const handleCopy = (url: string) => {
-  navigator?.clipboard.writeText(url);
-};
+const TableMenus = ({ children, data, crawl }: any) => {
+  const handleCopy = useCallback((url: string) => {
+    navigator?.clipboard.writeText(url);
+  }, []);
 
-const TableMenus = ({ children, data, crawl, url }: any) => {
   return (
     <ContextMenu>
       <ContextMenuTrigger>{children}</ContextMenuTrigger>
       <ContextMenuContent className="w-40">
-        <ContextMenuItem onClick={() => handleCopy(data?.url || url)}>
+        <ContextMenuItem onClick={() => handleCopy(data?.url)}>
           <FiClipboard className="mr-2" /> Copy
         </ContextMenuItem>
-        <ContextMenuItem onClick={() => openBrowserWindow(data?.url || url)}>
+        <ContextMenuItem onClick={() => openBrowserWindow(data?.url)}>
           <FiGlobe className="mr-2" />
           Open in Browser
         </ContextMenuItem>
-        <ContextMenuItem onClick={() => crawl(data?.url || url)}>
+        <ContextMenuItem onClick={() => crawl(data?.url)}>
           <FiRefreshCw className="mr-2" /> Re-crawl
         </ContextMenuItem>
         <ContextMenuSub>
