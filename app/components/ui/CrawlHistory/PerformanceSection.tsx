@@ -1,4 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
+import { MdOutlineInsertChart } from "react-icons/md";
+import { BsMenuDown } from "react-icons/bs";
 import "react-datepicker/dist/react-datepicker.css";
 import { FaDesktop, FaMobileAlt } from "react-icons/fa";
 import { FiDownload, FiCheckCircle } from "react-icons/fi";
@@ -28,6 +30,7 @@ import Todo from "../Todo";
 import { useDisclosure } from "@mantine/hooks";
 
 import TableMenus from "./TableMenus";
+import TableFloatMenus from "./_components/TableFloatMenus";
 
 // Define TypeScript types
 interface PerformanceData {
@@ -226,22 +229,25 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
             <DropdownMenuTrigger className="w-fit px-4 border border-gray-300 rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center dark:text-white dark:border-brand-normal/20 dark:bg-brand-darker text-black">
               Options
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-white dark:bg-brand-dark dark:text-white emr-12 mt-1 dark:border-brand-normal/20">
+            <DropdownMenuContent
+              id="table-dropdown"
+              className="bg-white dark:bg-brand-darker dark:text-white emr-12 mt-1 dark:border-brand-normal/20"
+            >
               <DropdownMenuLabel className="text-xs">
                 Table options
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="cursor-pointer hover:bg-gray-100 dark:hover:text-black text-xs"
+                className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-white text-xs"
                 onClick={refreshTable}
               >
                 Refresh Table
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-black/20 dark:bg-white/20" />
-              <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer  text-xs">
+              <DropdownMenuItem className="text-red-500 hover:bg-red-200 dark:hover:bg-red-700 cursor-pointer text-xs">
                 Match URL
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer text-xs ">
+              <DropdownMenuItem className="text-red-500 hover:bg-red-200 dark:hover:bg-red-700 cursor-pointer text-xs">
                 Clear Table
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -254,9 +260,9 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
               <FiDownload className="w-4 h-4 mr-2 mb-1" />
               Export
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-white mr-12 dark:border-brand-normal/20 dark:bg-brand-dark dark:text-white">
+            <DropdownMenuContent className="bg-white dark:bg-brand-darker mr-12 dark:border-brand-normal/20 dark:text-white">
               <DropdownMenuItem
-                className="cursor-pointer hover:bg-gray-100 dark:border:brand-normal/20 dark:text-white dark:hover:text-black"
+                className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white dark:hover:text-white"
                 onClick={handleDownloadXLSX}
               >
                 CSV
@@ -316,6 +322,11 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
                           {data.url}
                         </span>
                       </TableMenus>
+                      <span className="absolute right-12 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                        <TableFloatMenus data={data} crawl={crawl}>
+                          <BsMenuDown className="mt-1.5 text-purple-500" />
+                        </TableFloatMenus>
+                      </span>{" "}
                       <span
                         className="absolute right-7 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                         onClick={() => handleAddTodo(data.url, data.strategy)}
@@ -325,13 +336,13 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
                       <Popover>
                         <PopoverTrigger>
                           <span className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                            <CiViewList
+                            <MdOutlineInsertChart
                               className="text-blue-500 text-base"
                               onClick={() => handleUrlMatch(data.url)}
                             />
                           </span>
                         </PopoverTrigger>
-                        <PopoverContent className="w-[600px]">
+                        <PopoverContent className="w-[600px] bg-white dark:bg-brand-darker">
                           <PopUpTable data={matchedUrlData} />
                         </PopoverContent>
                       </Popover>
@@ -397,7 +408,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
           </div>
         </section>
         <aside className="my-3">
-          <TechnicalChart dbdata={data} />
+          <TechnicalChart dbdata={sortedData} />
         </aside>
       </div>
     </>

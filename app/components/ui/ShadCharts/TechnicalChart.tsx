@@ -106,7 +106,7 @@ export function TechnicalChart({ dbdata }: any) {
     <Card className="dark:bg-brand-darker">
       <CardHeader className="flex flex-col items-stretch space-y-0 border-b dark:border-brand-darker p-0 sm:flex-row dark:bg-brand-darker">
         <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6 ">
-          <CardTitle>Line Chart - Interactive</CardTitle>
+          <CardTitle>Performance / Averages</CardTitle>
           <CardDescription>
             Showing metrics for the last 3 months
           </CardDescription>
@@ -118,7 +118,7 @@ export function TechnicalChart({ dbdata }: any) {
               <button
                 key={chart}
                 data-active={activeChart === chart}
-                className="flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left even:border-l data-[active=true]:bg-brand-darker/5 sm:border-l sm:border-t-0 sm:px-8 sm:py-6 dark:bg-brand-darker dark:border-brand-dark "
+                className="flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left  data-[active=true]:bg-brand-darker/5 sm:border-l sm:border-l-brand-dark/10 sm:border-t-0 sm:px-8 sm:py-6 dark:bg-brand-darker dark:border-brand-dark "
                 onClick={() => setActiveChart(chart)}
               >
                 <span className="text-xs text-muted-foreground dark:text-white">

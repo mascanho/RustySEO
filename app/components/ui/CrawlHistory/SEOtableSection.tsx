@@ -211,7 +211,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
       {/* Table Section */}
       <section className="rounded-md mt-2 overflow-x-auto shadow border dark:border-white/10 dark:bg-brand-darker">
         {/* Parent container for vertical scrolling */}
-        <div className="h-full max-h-[38rem] custom-scrollbar">
+        <div className="h-full max-h-[calc(100vh-220px)] overflow-y-auto">
           {/* Container for horizontal scrolling */}
           <table className="table_history w-full shadow relative">
             <thead className="bg-white dark:bg-brand-darker sticky top-0 z-20">

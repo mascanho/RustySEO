@@ -621,3 +621,24 @@ select option {
 .topics-scrollbar::-webkit-scrollbar-track {
   @apply dark:bg-brand-dark border-none border-0 !important;
 }
+
+/* TABLE DROPDOWN MENU */
+#table-dropdown {
+  @apply dark:bg-brand-darker dark:text-white bg-white !important;
+}
+
+#table-dropdown button {
+  @apply dark:text-white dark:bg-brand-darker dark:border-brand-normal/20 dark:hover:bg-brand-bright dark:hover:text-white;
+}
+
+#table-dropdown button:hover {
+  @apply dark:bg-brand-bright dark:text-white;
+}
+
+#table-dropdown button:focus {
+  @apply dark:bg-brand-bright dark:text-white;
+}
+
+#table-dropdown button:active {
+  @apply dark:bg-brand-bright dark:text-white;
+}
