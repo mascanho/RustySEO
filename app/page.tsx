@@ -473,7 +473,7 @@ const Home: React.FC<HomeProps> = () => {
                   <button
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
-                    className="inline-flex justify-center w-[98px] border-l border-b border-t  rounded-l-md border-gray-200 dark:border-white/20 shadow-sm px-2  bg-white dark:bg-brand-darker text-xs font-medium text-gray-700 dark:text-white/50 hover:bg-gray-50 focus:outline-none focus:ring-0 h-7 py-[3px] focus:ring-offset-0 focus:ring-offset-gray-100 focus:ring-indigo-500 items-center mt-[1px] "
+                    className="inline-flex justify-center w-[98px] border-l border-b border-t  rounded-l-md border-gray-200 dark:border-white/20 shadow-sm px-2  bg-white dark:bg-brand-darker text-xs font-medium text-gray-700 dark:text-white/50 hover:bg-gray-50 focus:outline-none focus:ring-0 h-7 mb-[1px] py-[5px] focus:ring-offset-0 focus:ring-offset-gray-100 focus:ring-indigo-500 items-center mt-[1px] "
                     id="options-menu"
                     aria-haspopup="true"
                     aria-expanded="true"
