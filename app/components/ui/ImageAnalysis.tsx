@@ -31,7 +31,7 @@ const ImageAnalysis = ({ images }: { images: any[] }) => {
           }`}
         >
           <div className="relative">
-            <div className="overflow-auto custom-scrollbar h-[25rem]">
+            <div className="overflow-auto custom-scrollbar h-[25.3rem]">
               <table className="w-full dark:bg-brand-darker">
                 <tbody>
                   {(filteredImages || []).map((image: any, index: number) => (

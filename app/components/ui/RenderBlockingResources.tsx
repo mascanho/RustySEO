@@ -21,7 +21,7 @@ const RenderBlockingResources = ({ pageSpeed }: { pageSpeed: any }) => {
         <SiOctanerender className="mr-1.5" /> Render Blocking
       </h2>
 
-      <div className="overflow-auto custom-scrollbar  h-[25rem] ">
+      <div className="overflow-auto custom-scrollbar  h-[25.3rem] ">
         <table className="w-full ">
           <thead>
             <tr>

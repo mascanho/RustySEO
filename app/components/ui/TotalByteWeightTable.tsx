@@ -16,7 +16,7 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
         <GiWeight className="mr-1.5" /> Total Byte Weight
       </h2>
 
-      <div className="overflow-auto h-[25rem] shadow custom-scrollbar">
+      <div className="overflow-auto h-[25.3rem] shadow custom-scrollbar">
         <table className="w-full h-full">
           <thead className="sticky top-0 bg-white dark:bg-transparent shadow">
             <tr>

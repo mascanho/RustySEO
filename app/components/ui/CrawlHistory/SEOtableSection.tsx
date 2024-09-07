@@ -214,9 +214,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
               Refresh Table
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-black/20 dark:bg-white/20 text-xs" />
-            <DropdownMenuItem className="text-red-500 hover:bg-red-200 cursor-pointer text-xs">
-              Match URL
-            </DropdownMenuItem>
+
             <DropdownMenuItem
               onClick={handleClearTable}
               className="text-red-500 hover:bg-red-200 cursor-pointer text-xs"

@@ -16,7 +16,7 @@ const ThirdPartyScripts = ({ pageSpeed }: { pageSpeed: any }) => {
         <SiJavascript className="mr-1.5" /> Third Party Scripts
       </h2>
 
-      <div className="overflow-auto custom-scrollbar h-[25rem] bg-red-500 overflow-x-hidden">
+      <div className="overflow-auto custom-scrollbar h-[25.3rem] bg-red-500 overflow-x-hidden">
         <table className="w-full ">
           <thead>
             <tr>

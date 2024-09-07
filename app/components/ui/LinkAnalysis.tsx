@@ -45,7 +45,7 @@ const LinkAnalysis = ({
                 </tr>
               </thead>
             </table>
-            <div className="overflow-auto custom-scrollbar scroll-m-0 h-[23rem]">
+            <div className="overflow-auto custom-scrollbar scroll-m-0 h-[23.5rem]">
               <table className="w-full">
                 <tbody>
                   {linksTable.map((link: any, index: any) => (

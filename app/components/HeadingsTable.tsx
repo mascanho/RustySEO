@@ -72,7 +72,7 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
             </tr>
           </thead>
         </table>
-        <div className="flex-grow custom-scrollbar overflow-auto h-[23rem]">
+        <div className="flex-grow custom-scrollbar overflow-auto h-[23.5rem]">
           <table className="w-full">
             <tbody>
               {headings.map((link, index) => {
@@ -91,7 +91,7 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
             </tbody>
           </table>
         </div>
-        <footer className="pb-1 border-t border-t-gray-100 dark:border-0 text-xs flex justify-end text-black/50 space-x-4 pt-2">
+        <footer className="border-t border-t-gray-100 dark:border-0 text-xs flex justify-end text-black/50 space-x-4 pt-2">
           <p className="text-xs">
             Headings Found:{" "}
             <span className="px-1 py-0.5 bg-gray-400 text-white rounded-md">
