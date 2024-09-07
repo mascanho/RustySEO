@@ -209,7 +209,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
   };
 
   return (
-    <>
+    <section>
       {/* Todo Modal */}
       <Modal
         opened={openedModal}
@@ -423,7 +423,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
           <TechnicalChart dbdata={sortedData} />
         </aside>
       </div>
-    </>
+    </section>
   );
 };
 

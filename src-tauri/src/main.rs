@@ -152,6 +152,7 @@ async fn main() {
             generate_ai_topics,
             get_genai,
             crawler::db::clear_table_command,
+            server::ask_rusty_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

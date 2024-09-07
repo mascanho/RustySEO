@@ -642,3 +642,8 @@ select option {
 #table-dropdown button:active {
   @apply dark:bg-brand-bright dark:text-white;
 }
+
+/* Technical table colours */
+#chart-buttons button[data-active="true"] {
+  @apply dark:bg-blue-500/10 !important;
+}

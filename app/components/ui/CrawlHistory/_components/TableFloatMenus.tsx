@@ -41,7 +41,7 @@ const TableFloatMenus = ({ children, data, crawl }: any) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>{children}</DropdownMenuTrigger>
-      <DropdownMenuContent className="w-40 bg-white dark:bg-brand-darker">
+      <DropdownMenuContent className="w-40 bg-white dark:bg-brand-darker dark:border-brand-dark text-white/50">
         <DropdownMenuItem
           className="hover:bg-brand-bright hover:text-white"
           onClick={() => handleCopy(data?.url)}
@@ -65,7 +65,7 @@ const TableFloatMenus = ({ children, data, crawl }: any) => {
           <DropdownMenuSubTrigger className="hover:bg-brand-bright hover:text-white">
             <FiCheckSquare className="mr-2" /> Check Index
           </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent className="w-48 ml-1 bg-white dark:bg-brand-darker">
+          <DropdownMenuSubContent className="w-48 ml-1 bg-white dark:bg-brand-darker dark:border-brand-dark">
             <DropdownMenuItem
               className="hover:bg-brand-bright hover:text-white"
               onClick={() =>
@@ -110,7 +110,7 @@ const TableFloatMenus = ({ children, data, crawl }: any) => {
           <DropdownMenuSubTrigger className="hover:bg-brand-bright hover:text-white">
             <FiLink className="mr-2" /> Backlinks
           </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent className="w-48 ml-1 bg-white dark:bg-brand-darker">
+          <DropdownMenuSubContent className="w-48 ml-1 bg-white dark:bg-brand-darker dark:border-brand-dark">
             <DropdownMenuItem className="hover:bg-brand-bright hover:text-white">
               <FiExternalLink className="mr-2" /> Ahrefs
             </DropdownMenuItem>
@@ -127,7 +127,7 @@ const TableFloatMenus = ({ children, data, crawl }: any) => {
           <DropdownMenuSubTrigger className="hover:bg-brand-bright hover:text-white">
             <FiCheckSquare className="mr-2" /> Validation
           </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent className="w-48 ml-1 bg-white dark:bg-brand-darker">
+          <DropdownMenuSubContent className="w-48 ml-1 bg-white dark:bg-brand-darker dark:border-brand-dark">
             <DropdownMenuItem className="hover:bg-brand-bright hover:text-white">
               <FiSave className="mr-2" /> Save Page As...
               <DropdownMenuShortcut>⇧⌘S</DropdownMenuShortcut>
@@ -148,7 +148,7 @@ const TableFloatMenus = ({ children, data, crawl }: any) => {
           <DropdownMenuSubTrigger className="hover:bg-brand-bright hover:text-white">
             <FiClock className="mr-2" /> History
           </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent className="w-48 ml-1 bg-white dark:bg-brand-darker">
+          <DropdownMenuSubContent className="w-48 ml-1 bg-white dark:bg-brand-darker dark:border-brand-dark">
             <DropdownMenuItem className="hover:bg-brand-bright hover:text-white">
               <FiSave className="mr-2" /> Save Page As...
               <DropdownMenuShortcut>⇧⌘S</DropdownMenuShortcut>

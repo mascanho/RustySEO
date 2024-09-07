@@ -228,13 +228,13 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
         <h2 className="text-2xl font-semibold mb-4  text-gray-800 dark:text-white">
           Technical Improvements
         </h2>
-        <div className="flex items-center -mt-4 space-x-2">
-          <span className="text-sm text-black/50 dark:text-white/50">
-            {" "}
-            A.I Feedback
-          </span>
-          <Switch className="" />
-        </div>
+        {/* <div className="flex items-center -mt-4 space-x-2">
+            <span className="text-sm text-black/50 dark:text-white/50">
+              {" "}
+              A.I Feedback
+            </span>
+            <Switch className="" />
+          </div> */}
       </div>
       <div className="space-y-3 overflow-auto custom-scrollbar max-h-[40rem] pl-2 py-2 pr-3 bg-trasnparent rounded-md dark:bg-brand-darker rounded-lg">
         {dummyImprovements.map((item) => (

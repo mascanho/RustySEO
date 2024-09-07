@@ -19,6 +19,7 @@ const ContentSummary = ({
   const setWordCount = useContentStore((state) => state.setWordCount);
   const setReadingLevel = useContentStore((state) => state.setReadingLevel);
   const setTextRatio = useContentStore((state) => state.setTextRatio);
+  const setKeywords = useContentStore((state) => state.setKeywords);
 
   useEffect(() => {
     if (!keywords) {
@@ -36,6 +37,7 @@ const ContentSummary = ({
     setReadingTime(wordCount);
     setReadingLevel(readingLevelResults);
     setTextRatio(htmlToTextRatio);
+    setKeywords(keywords);
   }, [keywords, readingTime, readingLevelResults]);
 
   console.log(readingLevelResults, "READING LEVEL RESULTS FROM EL");

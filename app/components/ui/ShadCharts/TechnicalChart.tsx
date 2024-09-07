@@ -114,12 +114,12 @@ export function TechnicalChart({ dbdata }: any) {
   }, [chartData]);
 
   return (
-    <Card className="dark:bg-brand-darker">
-      <CardHeader className="flex flex-col items-stretch space-y-0 border-b dark:border-brand-darker p-0 sm:flex-row dark:bg-brand-darker">
+    <Card className="dark:bg-brand-darker dark:border-brand-dark">
+      <CardHeader className="flex flex-col items-stretch space-y-0 border-b dark:border-brand-dark p-0 sm:flex-row dark:bg-brand-darker">
         <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6 ">
-          <CardTitle>Performance / Averages</CardTitle>
+          <CardTitle>Core Web Vitals</CardTitle>
           <CardDescription>
-            Showing metrics for the last 3 months
+            Showing the averages for the pages you crawled
           </CardDescription>
         </div>
         <div id="chart-buttons" className="flex flex-wrap">
@@ -129,14 +129,14 @@ export function TechnicalChart({ dbdata }: any) {
               <button
                 key={chart}
                 data-active={activeChart === chart}
-                className="flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left  data-[active=true]:bg-brand-darker/5 sm:border-l sm:border-l-brand-dark/10 sm:border-t-0 sm:px-8 sm:py-6 dark:bg-brand-darker dark:border-brand-dark "
+                className="flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left data-[active=true]:bg-brand-dark/10 data-[active=true]:dark:text-red-500 sm:border-l sm:border-l-brand-dark/10 sm:border-t-0 sm:px-8 sm:py-6 data-[active=true]:text-red-500  dark:border-brand-dark "
                 onClick={() => setActiveChart(chart)}
               >
                 <span className="text-xs text-muted-foreground dark:text-white">
                   {chartConfig[chart].label}
                 </span>
                 <span className="text-sm font-bold leading-none ">
-                  {averages[chart] ? averages[chart].toLocaleString() : "N/A"}
+                  {averages[chart] ? averages[chart].toFixed(2) : "N/A"}
                 </span>
               </button>
             );

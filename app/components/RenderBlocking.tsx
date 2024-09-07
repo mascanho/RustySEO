@@ -124,7 +124,7 @@ const RenderBlocking: React.FC<RenderBlockingProps> = ({
           </button>
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
-          <Text size="sm">
+          <Text size="xs">
             Resources that prevent the browser from displaying any content on
             the screen until they are fully downloaded, parsed, and executed.
           </Text>

@@ -1,14 +1,23 @@
 // @ts-nocheck
 "use client";
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { useChat } from "ai/react";
 import Markdown from "react-markdown";
 import { FaRobot } from "react-icons/fa";
 import { IoIosPerson } from "react-icons/io";
 import { useOllamaStore } from "@/store/store";
+import { invoke } from "@tauri-apps/api/tauri";
+
+interface Message {
+  id: number;
+  role: "user" | "assistant";
+  content: string;
+}
 
 const AIcontainer = () => {
-  const { messages, input, handleInputChange, handleSubmit } = useChat();
+  const { handleInputChange } = useChat();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState<string>("");
   const ollamaStatus = useOllamaStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -22,6 +31,36 @@ const AIcontainer = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+
+    const userMessage: Message = {
+      id: Date.now(),
+      role: "user",
+      content: input,
+    };
+
+    setMessages((prevMessages) => [...prevMessages, userMessage]);
+    setInput("");
+
+    try {
+      const response = await invoke("ask_rusty_command", {
+        prompt: input,
+      });
+
+      const assistantMessage: Message = {
+        id: Date.now() + 1,
+        role: "assistant",
+        content: response as string,
+      };
+
+      setMessages((prevMessages) => [...prevMessages, assistantMessage]);
+    } catch (error) {
+      console.error("Error from Ollama:", error);
+    }
+  };
 
   return (
     <div className="flex flex-col h-[70vh] max-w-8xl mx-auto bg-gray-100 dark:bg-brand-darker border border-gray-300 dark:border-brand-dark rounded-lg shadow-lg">
@@ -41,7 +80,7 @@ const AIcontainer = () => {
                 ) : (
                   <div className="flex items-center space-x-1">
                     <FaRobot className="text-xl" />
-                    <span>Oxide AI</span>
+                    <span>Rusty</span>
                   </div>
                 )}
                 <Markdown className="bg-brand-dark/10 mb-3 mt-1 text-black dark:bg-brand-dark p-2 dark:text-white/50 rounded-lg">
@@ -66,9 +105,9 @@ const AIcontainer = () => {
           <input
             type="text"
             value={input}
-            onChange={handleInputChange}
+            onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 handleSubmit(e as React.FormEvent<HTMLFormElement>);
               }
@@ -76,7 +115,10 @@ const AIcontainer = () => {
             placeholder="Type your message..."
             className="flex-1 p-2 border border-gray-300 dark:border-brand-dark rounded-lg mr-2 dark:bg-brand-darker"
           />
-          <button className="bg-blue-500 dark:bg-brand-dark text-white px-4 py-2 rounded-lg hover:bg-blue-600">
+          <button
+            type="submit"
+            className="bg-blue-500 dark:bg-brand-dark text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+          >
             Send
           </button>
         </form>

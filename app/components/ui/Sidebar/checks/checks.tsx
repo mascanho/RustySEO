@@ -45,13 +45,7 @@ const useGetChecks = () => {
   const contentStructure = useContentStore((state) => state.contentStructure);
   const keywordDensity = useContentStore((state) => state.keywordDensity);
   const contentSentiment = useContentStore((state) => state.contentSentiment);
-
-  console.log(wordCount, "WORD COUNT FROM STORE");
-  console.log(readingTime, "READING TIME FROM STORE");
-  console.log(readingLevelResults, "READING LEVEL RESULTS FROM STORE");
-  console.log(contentStructure, "CONTENT STRUCTURE FROM STORE");
-  console.log(keywordDensity, "KEYWORD DENSITY FROM STORE");
-  console.log(contentSentiment, "CONTENT SENTIMENT FROM STORE");
+  const keywords = useContentStore((state) => state.keywords);
 
   // SET ALL OF THE PERFOMANCE STATE INTO A GLOBAL STATE
   const setGlobalPerformanceScore = usePageSpeedStore(
@@ -276,7 +270,10 @@ const useGetChecks = () => {
       {
         id: "29",
         name: "Keyword Density",
-        status: keywordDensity === 0 ? "Passed" : "Failed",
+        status:
+          keywords && keywords[0] && keywords[0][0] && keywords[0][0][1] > 20
+            ? "Passed"
+            : "Failed",
       },
       {
         id: "30",
@@ -297,17 +294,7 @@ const useGetChecks = () => {
             ? "Passed"
             : "Failed",
       },
-      {
-        id: "30",
-        name: "Content Sentiment",
-        status:
-          contentSentiment === "Very Easy" ||
-          contentSentiment === "Easy" ||
-          contentSentiment === "Fairly Easy" ||
-          contentSentiment === "Standard"
-            ? "Passed"
-            : "Failed",
-      },
+
       {
         id: "31",
         name: "Content Structure",
