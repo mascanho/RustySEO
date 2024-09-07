@@ -379,6 +379,16 @@ const TopMenuBar = () => {
           </MenubarMenu>
 
           <MenubarMenu>
+            <MenubarTrigger className="ml-3">Tools</MenubarTrigger>
+            <MenubarContent>
+              <MenubarItem onClick={() => router.push("/images")}>
+                <FiTool className="mr-2" />
+                Image Converter
+              </MenubarItem>
+            </MenubarContent>
+          </MenubarMenu>
+
+          <MenubarMenu>
             <MenubarTrigger className="ml-3">Connectors</MenubarTrigger>
             <MenubarContent>
               <MenubarItem onClick={openPageSpeed}>
@@ -406,7 +416,7 @@ const TopMenuBar = () => {
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="ml-3">Tools</MenubarTrigger>
+            <MenubarTrigger className="ml-3">Crawlers</MenubarTrigger>
             <MenubarContent>
               <MenubarItem onClick={() => router.push("/")}>
                 <FiTool className="mr-2" />
@@ -415,10 +425,6 @@ const TopMenuBar = () => {
               <MenubarItem onClick={() => router.push("/global")}>
                 <FiTool className="mr-2" />
                 Global Crawler
-              </MenubarItem>
-              <MenubarItem onClick={() => router.push("/images")}>
-                <FiTool className="mr-2" />
-                Image Converter
               </MenubarItem>
             </MenubarContent>
           </MenubarMenu>

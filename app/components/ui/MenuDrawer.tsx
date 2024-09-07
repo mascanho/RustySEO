@@ -1,10 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Drawer, Button, Group } from "@mantine/core";
+import { Drawer, Button, Group, Menu } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
-import { MENUS } from "@/app/Data/Menus";
-import { usePathname } from "next/navigation";
-import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import useStore from "../../../store/Panes";
 
 function MenuDrawer() {
@@ -12,7 +10,13 @@ function MenuDrawer() {
   const mobile = useMediaQuery("(max-width: 768px)");
   const [badge, setBadge] = useState("Page Crawler");
   const pathname = usePathname();
+  const router = useRouter();
   const { Visible } = useStore();
+
+  const options = [
+    { name: "Page Crawler", route: "/" },
+    { name: "Domain Crawler", route: "/global" },
+  ];
 
   useEffect(() => {
     const widgetselement = document.querySelector(".widgets");
@@ -81,15 +85,22 @@ function MenuDrawer() {
   let path = pathname;
 
   useEffect(() => {
-    if (path === "/images") {
+    const currentOption = options.find((option) => option.route === path);
+    if (currentOption) {
+      setBadge(currentOption.name);
+    } else if (path === "/images") {
       setBadge("Image Converter");
     }
-    if (path === "/global") setBadge("Domain Crawler");
-  }, []);
+  }, [path]);
+
+  const handleOptionClick = (option) => {
+    setBadge(option.name);
+    router.push(option.route);
+  };
 
   return (
     <>
-      <div className="items-center hidden md:flex  z-[2000] absolute top-[1px] left-2">
+      <div className="items-center hidden md:flex  z-[10] absolute top-[1px] left-2">
         <div className="flex items-center flex bg-transparent rounded-md">
           <img
             src="icon.png"
@@ -101,12 +112,24 @@ function MenuDrawer() {
             alt=""
             className="w-8 h-auto py-1 object-cover mr-2  dark:hidden"
           />
-          <Link
-            href="/images"
-            className="text-xs bg-brand-dark px-3  py-1  rounded-full text-white"
-          >
-            {badge}
-          </Link>
+          <Menu>
+            <Menu.Target>
+              <Button className="text-xs bg-brand-dark px-3 h-7  rounded-full text-white">
+                {badge}
+              </Button>
+            </Menu.Target>
+            <Menu.Dropdown className="z-[2000] dark:bg-brand-darker dark:text-red-500 dark:border-brand-dark mt-1 ">
+              {options.map((option, index) => (
+                <Menu.Item
+                  className="z-[2000] hover:bg-brand-bright hover:text-white dark:text-white/60"
+                  key={index}
+                  onClick={() => handleOptionClick(option)}
+                >
+                  {option.name}
+                </Menu.Item>
+              ))}
+            </Menu.Dropdown>
+          </Menu>
         </div>
       </div>
     </>
