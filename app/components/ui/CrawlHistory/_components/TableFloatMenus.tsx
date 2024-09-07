@@ -41,7 +41,7 @@ const TableFloatMenus = ({ children, data, crawl }: any) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>{children}</DropdownMenuTrigger>
-      <DropdownMenuContent className="w-40 bg-white dark:bg-brand-darker dark:border-brand-dark text-white/50">
+      <DropdownMenuContent className="w-40 bg-white dark:bg-brand-darker dark:border-brand-dark dark:text-white/50">
         <DropdownMenuItem
           className="hover:bg-brand-bright hover:text-white"
           onClick={() => handleCopy(data?.url)}

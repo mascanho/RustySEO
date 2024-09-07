@@ -79,6 +79,14 @@ function MenuDrawer() {
       schemaElement.classList.toggle("hidden", !Visible.schema);
     }
 
+    const networkRequestsElement = document.querySelector(".network-requests");
+    if (networkRequestsElement) {
+      networkRequestsElement.classList.toggle(
+        "hidden",
+        !Visible.networkRequests,
+      );
+    }
+
     // Add similar blocks for other components as needed
   }, [Visible]);
 
@@ -93,7 +101,7 @@ function MenuDrawer() {
     }
   }, [path]);
 
-  const handleOptionClick = (option) => {
+  const handleOptionClick = (option: any) => {
     setBadge(option.name);
     router.push(option.route);
   };

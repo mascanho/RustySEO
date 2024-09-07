@@ -15,6 +15,7 @@ interface VisibleState {
   tbw: boolean;
   renderBlocking: boolean;
   schema: boolean;
+  networkRequests: boolean;
 }
 
 // Define the type for the store
@@ -41,6 +42,7 @@ const useStore = create<StoreState>()(
         tbw: true,
         renderBlocking: true,
         schema: true,
+        networkRequests: true,
       },
       showComponent: (component) =>
         set((state) => ({

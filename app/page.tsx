@@ -53,6 +53,7 @@ import RenderBlockingResources from "./components/ui/RenderBlockingResources";
 import useOnPageSeo from "@/store/storeOnPageSeo";
 import useStore from "@/store/Panes";
 import TableMenus from "./components/ui/CrawlHistory/TableMenus";
+import NetworkRequestsTable from "./components/ui/NetworkRequestsTable";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -706,6 +707,7 @@ const Home: React.FC<HomeProps> = () => {
                 />
                 <ImageAnalysis images={images} />
                 {/**/}
+                <NetworkRequestsTable pageSpeed={pageSpeed} />
                 <ThirdPartyScripts pageSpeed={pageSpeed} />
                 <TotalByteWeight pageSpeed={pageSpeed} />
                 <RenderBlockingResources pageSpeed={pageSpeed} />

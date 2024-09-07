@@ -14,6 +14,7 @@ const WindowSelector = () => {
     { id: "headings", label: "Headings" },
     { id: "links", label: "Links" },
     { id: "images", label: "Images" },
+    { id: "networkRequests", label: "Network Requests" },
     { id: "scripts", label: "Scripts" },
     { id: "tbw", label: "TBW" },
     { id: "renderBlocking", label: "Render Blocking" },

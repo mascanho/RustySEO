@@ -1,30 +1,27 @@
 import useStore from "@/store/Panes";
-import { GiWeight } from "react-icons/gi";
+import { BsHddNetwork } from "react-icons/bs";
 
-const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
+const NetworkRequestsTable = ({ pageSpeed }: { pageSpeed: any }) => {
   const { Visible } = useStore();
 
-  const scripts =
-    pageSpeed?.lighthouseResult?.audits?.["total-byte-weight"]?.details
-      ?.items || [];
+  const nr =
+    pageSpeed?.lighthouseResult?.audits?.["network-requests"]?.details?.items ||
+    [];
 
   return (
     <section
-      className={`table_container tbw ${Visible.tbw ? "block" : "hidden"}`}
+      className={`table_container network-requests ${Visible.networkRequests ? "block" : "hidden"}`}
     >
       <h2 className="text-base flex items-center text-left pl-1 pt-3 font-bold w-full">
-        <GiWeight className="mr-1.5" /> Total Byte Weight
+        <BsHddNetwork className="mr-1.5" /> Network Requests
       </h2>
 
       <div className="overflow-auto h-[25.3rem] shadow custom-scrollbar">
         <table className="w-full h-full">
           <thead className="sticky top-0 bg-white dark:bg-transparent shadow">
             <tr>
-              <th
-                align="left"
-                className="text-xs  w-[120px] border-r border-gray-300"
-              >
-                <span className="-ml-1">Transfer Size</span>
+              <th align="left" className="text-xs border-r border-gray-300">
+                <span className="-ml-1 ">Mime Type</span>
               </th>
               <th
                 align="left"
@@ -35,7 +32,7 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
             </tr>
           </thead>
           <tbody className="bg-white  h-[calc(30rem - 3.5rem)] overflow-y-auto">
-            {scripts.length === 0 ? (
+            {nr.length === 0 ? (
               <tr className="bg-white">
                 <td
                   colSpan={2}
@@ -45,13 +42,12 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
                 </td>
               </tr>
             ) : (
-              scripts.map((item: any, index: number) => (
+              nr.map((item: any, index: number) => (
                 <tr key={item.url || index}>
                   <td className="px-2 text-[6px] text-gray-700 w-[200px] min-w-[95px] dark:text-white border-b border-r">
-                    {(Math.floor(item?.totalBytes * 1000) / 1000).toFixed(0) +
-                      " KiB"}
+                    {item?.mimeType}
                   </td>{" "}
-                  <td className="px-4 text-xs text-blue-600 truncate max-w-full border-b">
+                  <td className="px-4 text-xs text-blue-600 truncate border-b">
                     {item?.url}
                   </td>
                 </tr>
@@ -63,9 +59,9 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
 
       <div className="pt-2  m-2 rounded-md text-xs flex justify-end text-black/50 space-x-4">
         <p>
-          Total URLs:{" "}
+          Total Requests:{" "}
           <span className="px-1 py-0.5 bg-gray-400 text-white rounded-md min-w-3">
-            {scripts.length}
+            {nr.length}
           </span>
         </p>
       </div>
@@ -73,4 +69,4 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
   );
 };
 
-export default TotalByteWeight;
+export default NetworkRequestsTable;

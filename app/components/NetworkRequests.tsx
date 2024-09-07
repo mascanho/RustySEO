@@ -150,7 +150,7 @@ const NetworkRequests = ({
               </svg>
             </div>
           ) : (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 mt-0.5">
               <span className="font-bold text-xl text-apple-spaceGray/50">
                 {(stat && networkRequestCount + " req.") || "..."}
               </span>
@@ -162,19 +162,19 @@ const NetworkRequests = ({
             </div>
           )}
         </div>
-        {/* <h2
-            onClick={() =>
-              openBrowserWindow(
-                url
-                  ? `https://pagespeed.web.dev/report?url=${encodeURIComponent(url)}`
-                  : "No URL provided",
-              )
-            }
-            className="text-xs underline cursor-pointer hover:text-blue-600 transition-colors duration-200"
-            title="Open PageSpeed Insights report"
-          >
-            View Detailed Report
-          </h2> */}
+        <h4
+          onClick={() =>
+            openBrowserWindow(
+              url
+                ? `https://pagespeed.web.dev/report?url=${encodeURIComponent(url)}`
+                : "No URL provided",
+            )
+          }
+          className="text-xs text-black/50 dark:text-white/50 underline cursor-pointer hover:text-blue-600 transition-colors duration-200 mt-1"
+          title="Open PageSpeed Insights report"
+        >
+          View Detailed Report
+        </h4>
       </div>
     </section>
   );

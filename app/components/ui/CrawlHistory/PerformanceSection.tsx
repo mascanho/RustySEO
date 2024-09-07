@@ -323,9 +323,9 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
                     </td>
                     <td align="center" className="border">
                       {data.strategy === "DESKTOP" ? (
-                        <FaDesktop />
+                        <FaDesktop className="text-blue-500" />
                       ) : (
-                        <FaMobileAlt />
+                        <FaMobileAlt className="text-purple-500" />
                       )}
                     </td>
                     <td align="left" className="py-2 border relative group">
@@ -335,7 +335,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
                             {data.url}
                           </span>
                         </TableMenus>
-                        <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <TableFloatMenus data={data} crawl={crawl}>
                             <BsMenuDown className="text-purple-500" />
                           </TableFloatMenus>
