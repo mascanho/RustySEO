@@ -68,12 +68,6 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [showMenu, setShowMenu] = useState(false);
 
-  const handleContextMenu = (event: any) => {
-    event.preventDefault();
-    setMenuPosition({ x: event.pageX, y: event.pageY });
-    setShowMenu(true);
-  };
-
   const handleCloseMenu = () => {
     setShowMenu(false);
   };
@@ -403,7 +397,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
           </div>
         </section>
         <aside className="my-3">
-          <TechnicalChart />
+          <TechnicalChart dbdata={data} />
         </aside>
       </div>
     </>
