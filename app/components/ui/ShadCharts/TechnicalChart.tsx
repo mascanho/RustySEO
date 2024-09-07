@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/chart";
 import FcpEl from "../../Fcp";
 
-export const description = "An interactive line chart";
+export const description = "Technical / Performance Averages";
 
 const chartConfig = {
   performance: {
@@ -61,32 +61,45 @@ export function TechnicalChart({ dbdata }: any) {
 
   console.log(dbdata, "DATA");
 
-  const chartData = dbdata.map((data: any) => {
-    return {
-      date: data.date,
-      performance: data.performance,
-      speed: data.speed_index,
-      fcp: data.fcp,
-      lcp: data.lcp,
-      tti: data.tti,
-      cls: data.cls,
-      tbt: data.tbt,
-      dom: data.dom_size,
-    };
-  });
+  const chartData = React.useMemo(() => {
+    return Array.isArray(dbdata)
+      ? dbdata.map((data: any) => {
+          return {
+            date: data.date,
+            performance: data.performance,
+            speed: data.speed_index,
+            fcp: data.fcp,
+            lcp: data.lcp,
+            tti: data.tti,
+            cls: data.cls,
+            tbt: data.tbt,
+            dom: data.dom_size,
+          };
+        })
+      : [];
+  }, [dbdata]);
 
-  const total = React.useMemo(
+  const averages = React.useMemo(
     () => ({
-      performance: chartData.reduce((acc, curr) => acc + curr.performance, 0),
-      speed: chartData.reduce((acc, curr) => acc + curr.speed, 0),
-      fcp: chartData.reduce((acc, curr) => acc + curr.fcp, 0),
-      lcp: chartData.reduce((acc, curr) => acc + curr.lcp, 0),
-      tti: chartData.reduce((acc, curr) => acc + curr.tti, 0),
-      cls: chartData.reduce((acc, curr) => acc + curr.cls, 0),
-      tbt: chartData.reduce((acc, curr) => acc + curr.tbt, 0),
-      dom: chartData.reduce((acc, curr) => acc + curr.dom, 0),
+      performance:
+        chartData.reduce((acc, curr) => acc + curr.performance, 0) /
+        chartData.length,
+      speed:
+        chartData.reduce((acc, curr) => acc + curr.speed, 0) / chartData.length,
+      fcp:
+        chartData.reduce((acc, curr) => acc + curr.fcp, 0) / chartData.length,
+      lcp:
+        chartData.reduce((acc, curr) => acc + curr.lcp, 0) / chartData.length,
+      tti:
+        chartData.reduce((acc, curr) => acc + curr.tti, 0) / chartData.length,
+      cls:
+        chartData.reduce((acc, curr) => acc + curr.cls, 0) / chartData.length,
+      tbt:
+        chartData.reduce((acc, curr) => acc + curr.tbt, 0) / chartData.length,
+      dom:
+        chartData.reduce((acc, curr) => acc + curr.dom, 0) / chartData.length,
     }),
-    [],
+    [chartData],
   );
 
   return (
@@ -112,7 +125,7 @@ export function TechnicalChart({ dbdata }: any) {
                   {chartConfig[chart].label}
                 </span>
                 <span className="text-sm font-bold leading-none ">
-                  {total[chart].toLocaleString()}
+                  {averages[chart].toLocaleString()}
                 </span>
               </button>
             );
