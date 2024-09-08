@@ -176,7 +176,7 @@ const TbtEl = ({
             }
             className="text-xs underline  cursor-pointer font-semibold text-gray-500"
           >
-            Total Blocking Time:
+            Blocking Time:
           </h2>
           <span className="inline text-xs">
             {stat?.lighthouseResult?.audits?.["total-blocking-time"]

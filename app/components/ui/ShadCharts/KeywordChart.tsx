@@ -84,7 +84,9 @@ export function KeywordChart({
                 <span>
                   Top keyword:{" "}
                   <span className="font-bold text-brand-bright">
-                    {keywords?.map((key: any) => key[0][0])}
+                    {keywords?.length > 0 && keywords[0]?.length > 0
+                      ? keywords[0][0][0]
+                      : "No keywords available"}
                   </span>
                 </span>
               )}

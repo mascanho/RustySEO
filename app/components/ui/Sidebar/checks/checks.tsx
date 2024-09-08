@@ -271,7 +271,15 @@ const useGetChecks = () => {
         id: "29",
         name: "Keyword Density",
         status:
-          keywords && keywords[0] && keywords[0][0] && keywords[0][0][1] > 20
+          keywords &&
+          Array.isArray(keywords) &&
+          keywords.length > 0 &&
+          Array.isArray(keywords[0]) &&
+          keywords[0].length > 0 &&
+          Array.isArray(keywords[0][0]) &&
+          keywords[0][0].length > 1 &&
+          typeof keywords[0][0][1] === "number" &&
+          keywords[0][0][1] > 20
             ? "Passed"
             : "Failed",
       },
