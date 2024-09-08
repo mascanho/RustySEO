@@ -168,7 +168,7 @@ const PerformanceEl = ({
           }
           className="text-xs underline cursor-pointer"
         >
-          View PageSpeed Insights
+          PageSpeed Insights
         </h2>
       </div>
     </section>

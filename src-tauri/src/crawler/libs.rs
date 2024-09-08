@@ -501,7 +501,19 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
     let auth = InstalledFlowAuthenticator::builder(secret, InstalledFlowReturnMethod::HTTPRedirect)
         .persist_tokens_to_disk(&auth_path)
         .build()
-        .await?;
+        .await
+        .map_err(|e| {
+            eprintln!("Failed to create authenticator: {}", e);
+            format!("Failed to create authenticator: {}", e)
+        })
+        .and_then(|ok_result| {
+            println!("Authenticator created successfully");
+            Ok(ok_result)
+        })
+        .map(|result| {
+            result
+        })?;
+
 
     // Create an authorized client
     let https = HttpsConnectorBuilder::new()
@@ -526,8 +538,6 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
     let mut domain = false;
     let mut site = false;
 
-    println!("domain is fucking: {}", domain);
-    println!("site is: {}", site);
 
     // Set the end date to TODAY's date
     let finish_date = Utc::now().format("%Y-%m-%d").to_string();
