@@ -5,7 +5,7 @@ import SEOtableSection from "./SEOtableSection";
 
 const CrawlHistory = ({ dbdata, loading, crawl }: any) => {
   return (
-    <section className="w-full flex justify-end -mt-6  dark:bg-brand-darker/80 pt-2 left-0 right-0 absolute  px-2">
+    <section className="w-full flex justify-end -mt-6  dark:bg-brand-darker/70 pt-2 left-0 right-0 absolute  px-2">
       <Tabs defaultValue="account" className="w-full max-w-8xl mx-auto z-10">
         <TabsList className="text-xs z-10">
           <TabsTrigger className="text-xs z-10" value="account">

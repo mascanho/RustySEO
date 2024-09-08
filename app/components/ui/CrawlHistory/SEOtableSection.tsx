@@ -199,41 +199,43 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
 
         {/* Dropdown Menus for Options */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="w-fit px-4 border border-gray-300 rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center dark:text-white dark:border-brand-normal/20 dark:bg-brand-darker text-black text-xs">
+          <DropdownMenuTrigger className="w-fit px-4 border border-gray-300 rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center dark:text-white dark:border-brand-normal/20 dark:bg-brand-darker text-black">
             Options
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-white dark:bg-brand-dark dark:text-white emr-12 mt-1 dark:border-brand-normal/20">
+          <DropdownMenuContent
+            id="table-dropdown"
+            className="bg-white dark:bg-brand-darker dark:text-white emr-12 mt-1 dark:border-brand-normal/20"
+          >
             <DropdownMenuLabel className="text-xs">
               Table options
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              className="cursor-pointer hover:bg-gray-100 dark:hover:text-black text-xs"
+              className="cursor-pointer hover:bg-gray-100 hover:text-white dark:hover:bg-gray-700 dark:hover:text-white text-xs"
               onClick={refreshTable}
             >
               Refresh Table
             </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-black/20 dark:bg-white/20 text-xs" />
-
+            <DropdownMenuSeparator className="bg-black/20 dark:bg-white/20" />
             <DropdownMenuItem
               onClick={handleClearTable}
-              className="text-red-500 hover:bg-red-200 cursor-pointer text-xs"
+              className="text-red-500  hover:text-red-500 dark:hover:bg-red-700 dark:hover:text-white cursor-pointer text-xs "
             >
               Clear Table
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Export Menu */}
         <div className="w-[2px] h-8 bg-gray-300 dark:bg-gray-200/20" />
+
         <DropdownMenu>
-          <DropdownMenuTrigger className="transition-all hover:bg-brand-bright ease-linear active:scale-75 w-fit px-4 rounded-md justify-center flex items-center bg-brand-bright text-white m-auto h-7">
+          <DropdownMenuTrigger className="transition-all hover:bg-brand-bright ease-linear active:scale-75 w-fit px-4 rounded-md justify-center flex items-center bg-brand-bright text-white h-7 m-auto">
             <FiDownload className="w-4 h-4 mr-2 mb-1" />
             Export
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-white mr-12 dark:border-brand-normal/20 dark:bg-brand-dark dark:text-white">
+          <DropdownMenuContent className="bg-white dark:bg-brand-darker mr-12 dark:border-brand-normal/20 dark:text-white">
             <DropdownMenuItem
-              className="cursor-pointer hover:bg-gray-100 dark:border:brand-normal/20 dark:text-white dark:hover:text-black"
+              className="cursor-pointer hover:bg-gray-100 hover:text-white dark:hover:bg-gray-700 dark:hover:text-white"
               onClick={handleDownloadXLSX}
             >
               CSV
