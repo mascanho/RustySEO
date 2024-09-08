@@ -359,18 +359,18 @@ struct ClientSecret {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct InstalledInfo {
-    client_id: String,
-    project_id: String,
-    auth_uri: String,
-    token_uri: String,
-    auth_provider_x509_cert_url: String,
-    client_secret: String,
-    redirect_uris: Vec<String>,
-    aggregationType: String,
-    range: String,
-    search_type: String,
-    url: String,
+pub struct InstalledInfo {
+    pub client_id: String,
+    pub project_id: String,
+    pub auth_uri: String,
+    pub token_uri: String,
+    pub auth_provider_x509_cert_url: String,
+    pub client_secret: String,
+    pub redirect_uris: Vec<String>,
+    pub aggregationType: String,
+    pub range: String,
+    pub search_type: String,
+    pub url: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -389,7 +389,7 @@ pub struct Credentials {
 }
 
 // helper function to move credentials around
-async fn read_credentials_file() -> Result<InstalledInfo, String> {
+pub async fn read_credentials_file() -> Result<InstalledInfo, String> {
     let config_dirs =
         ProjectDirs::from("", "", "rustyseo").expect("Failed to get project directories");
     let config_dir = config_dirs.data_dir();

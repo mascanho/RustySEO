@@ -47,6 +47,8 @@ urlencoding = "2.1"
 base64 = "0.22.1"
 image = "0.24.1"
 actix-web = "4.0"
+google-sheets4 = "*"
+async-trait = "*"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.

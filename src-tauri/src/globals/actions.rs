@@ -1,5 +1,9 @@
 use directories::ProjectDirs;
 use uuid::Uuid;
+use crate::crawler::libs::InstalledInfo;
+use std::fs;
+
+
 
 // ------------- Check if the UUID is present in the system  ---------------
 pub fn uuid_creation_check() -> String {

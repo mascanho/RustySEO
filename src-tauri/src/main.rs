@@ -11,20 +11,21 @@ use tauri::{api::path::config_dir, Manager};
 use tokio;
 use toml;
 
-mod crawler;
-mod domain_crawler;
-mod downloads {
+pub mod crawler;
+pub mod domain_crawler;
+pub mod downloads {
     pub mod csv;
+    pub mod google_sheets;
 }
 
 pub mod globals {
     pub mod actions;
 }
 
-mod commands;
+pub mod commands;
 pub mod gemini;
-mod genai;
-mod gsc;
+pub mod genai;
+pub mod gsc;
 mod image_converter;
 pub mod server;
 
@@ -153,6 +154,7 @@ async fn main() {
             get_genai,
             crawler::db::clear_table_command,
             server::ask_rusty_command,
+            downloads::google_sheets::sheets_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
