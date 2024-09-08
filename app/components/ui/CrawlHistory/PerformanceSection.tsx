@@ -219,6 +219,16 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
     }
   };
 
+  const handleExcel = () => {
+    invoke("export_to_excel_command", {
+      db_path: "data.db",
+      excel_path: "data.xlsx",
+    }).then((result) => {
+      console.log(result);
+      toast("Data has been exported to Excel");
+    });
+  };
+
   return (
     <section>
       {/* Todo Modal */}
@@ -284,6 +294,12 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
               Export
             </DropdownMenuTrigger>
             <DropdownMenuContent className="bg-white dark:bg-brand-darker mr-12 dark:border-brand-normal/20 dark:text-white">
+              <DropdownMenuItem
+                className="cursor-pointer hover:bg-gray-100 hover:text-white dark:hover:bg-gray-700 dark:hover:text-white"
+                onClick={handleExcel}
+              >
+                Excel (xlsx)
+              </DropdownMenuItem>{" "}
               <DropdownMenuItem
                 className="cursor-pointer hover:bg-gray-100 hover:text-white dark:hover:bg-gray-700 dark:hover:text-white"
                 onClick={handleSheetsData}

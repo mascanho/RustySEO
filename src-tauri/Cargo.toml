@@ -40,7 +40,7 @@ chrono = "0.4.26"
 csv = "1.2.1"
 uuid = "1.3.0"
 sysinfo = "0.26.2"
-yup-oauth2 = "8.0.0"
+yup-oauth2 = "11.0.0"
 hyper = "0.14.26"
 hyper-rustls = { version = "0.24", features = ["http2"] }
 urlencoding = "2.1"
@@ -49,6 +49,7 @@ image = "0.24.1"
 actix-web = "4.0"
 google-sheets4 = "*"
 async-trait = "*"
+rust_xlsxwriter = "0.75.0"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.

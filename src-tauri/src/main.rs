@@ -15,6 +15,7 @@ pub mod crawler;
 pub mod domain_crawler;
 pub mod downloads {
     pub mod csv;
+    pub mod excel;
     pub mod google_sheets;
 }
 
@@ -154,7 +155,7 @@ async fn main() {
             get_genai,
             crawler::db::clear_table_command,
             server::ask_rusty_command,
-            downloads::google_sheets::sheets_command,
+            downloads::excel::export_to_excel_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
