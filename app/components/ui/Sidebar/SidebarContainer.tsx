@@ -91,7 +91,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
             </Tabs.List>
             <Tabs.Panel
               value="first"
-              className="h-full w-full bg-brand-highlight/5"
+              className="h-full w-full bg-brand-highlight/5 dark:bg-brand-bright"
             >
               <ContentSummary
                 keywords={keywords}
@@ -104,7 +104,10 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
                 htmlToTextRatio={htmlToTextRatio}
               />
             </Tabs.Panel>
-            <Tabs.Panel value="third" className="h-full w-full">
+            <Tabs.Panel
+              value="third"
+              className="h-full w-full bg-brand-highlight/5"
+            >
               <RankingInfo keywords={keywords} />
             </Tabs.Panel>
 
@@ -112,7 +115,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
               <Topics bodyElements={bodyElements} />
             </Tabs.Panel>
 
-            <Tabs.Panel value="summary" className="h-full w-full">
+            <Tabs.Panel value="summary" className="h-full w-full ">
               <AIFeedbackTab
                 seo={seo}
                 loading={loading}

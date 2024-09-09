@@ -246,7 +246,7 @@ const AIFeedbackTab = ({ pageSpeed, loading, seo }) => {
   }, [pageSpeed, globalPercentageScore, pageScoring.readingLevel]);
 
   return (
-    <div className="p-4 dark:text-gray-300 dark:bg-gray-900 h-screen bg-white">
+    <div className="p-4 dark:text-gray-300 dark:bg-gray-900 h-screen bg-brand-bright/5">
       <div className="flex items-center mb-2">
         <Bot className="w-6 h-6 mr-2 text-blue-400" />
         <h2 className="text-sm font-semibold">Rusty Feedback</h2>

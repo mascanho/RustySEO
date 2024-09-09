@@ -67,7 +67,7 @@ const RankingInfo = ({ keywords }: { keywords: string[] }) => {
   }
 
   return (
-    <div className="w-full ranking-table max-w-[23rem] rounded-lg h-[28rem] overflow-auto bg-white dark:bg-transparent shadow pr-2">
+    <div className="w-full ranking-table max-w-[23rem] rounded-lg h-[28rem] overflow-auto bg-brand-bright/5 dark:bg-transparent shadow ">
       <table className="w-full text-xs ">
         <thead className="bg-gray-100 dark:bg-gray-700 sticky top-0">
           <tr>
@@ -103,7 +103,9 @@ const RankingInfo = ({ keywords }: { keywords: string[] }) => {
               <td align="right" className="py-2 text-purple-500">
                 {item.impressions}
               </td>
-              <td className="py-2 text-center">{item.position.toFixed(2)}</td>
+              <td className="py-2 text-center text-blue-500">
+                {item.position.toFixed(2)}
+              </td>
             </tr>
           ))}
         </tbody>
