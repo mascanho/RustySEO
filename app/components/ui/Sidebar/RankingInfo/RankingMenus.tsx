@@ -38,13 +38,12 @@ const RankingMenus = ({ children, url, query, credentials }: any) => {
     navigator?.clipboard.writeText(url);
   }, []);
 
-  //TODO - Get the URL from the API
   const openSearchConsoleUrl = (query: string) => {
     if (credentials.search_type === "site") {
       const baseUrl =
         "https://search.google.com/search-console/performance/search-analytics";
       const params = new URLSearchParams({
-        resource_id: "sc-domain:" + credentials.url,
+        resource_id: credentials.url,
         num_of_months: "6",
         query: "*" + query,
       });
@@ -61,16 +60,6 @@ const RankingMenus = ({ children, url, query, credentials }: any) => {
       const url = `${baseUrl}?${params.toString()}`;
       openBrowserWindow(url);
     }
-
-    const baseUrl =
-      "https://search.google.com/search-console/performance/search-analytics";
-    const params = new URLSearchParams({
-      resource_id: "sc-domain:algarvewonders.com",
-      num_of_months: "6",
-      query: "*" + query,
-    });
-    const url = `${baseUrl}?${params.toString()}`;
-    openBrowserWindow(url);
   };
 
   return (
