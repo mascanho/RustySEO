@@ -8,6 +8,8 @@ const NetworkRequestsTable = ({ pageSpeed }: { pageSpeed: any }) => {
     pageSpeed?.lighthouseResult?.audits?.["network-requests"]?.details?.items ||
     [];
 
+  let urlSize = 150;
+
   return (
     <section
       className={`table_container network-requests ${Visible.networkRequests ? "block" : "hidden"}`}
@@ -16,8 +18,8 @@ const NetworkRequestsTable = ({ pageSpeed }: { pageSpeed: any }) => {
         <BsHddNetwork className="mr-1.5" /> Network Requests
       </h2>
 
-      <div className="overflow-auto h-[25.3rem] shadow custom-scrollbar">
-        <table className="w-full h-full">
+      <div className="overflow-y-auto h-[25.3rem] shadow custom-scrollbar overflow-x-auto">
+        <table className="w-fit h-full">
           <thead className="sticky top-0 bg-white dark:bg-transparent shadow">
             <tr>
               <th align="left" className="text-xs border-r border-gray-300">
@@ -25,7 +27,7 @@ const NetworkRequestsTable = ({ pageSpeed }: { pageSpeed: any }) => {
               </th>
               <th
                 align="left"
-                className="text-xs w-1/5 border-r border-gray-300 dark:text-white"
+                className="text-xs max-w-[200px] border-r border-gray-300 dark:text-white"
               >
                 URL
               </th>
@@ -48,7 +50,11 @@ const NetworkRequestsTable = ({ pageSpeed }: { pageSpeed: any }) => {
                     {item?.mimeType}
                   </td>{" "}
                   <td className="px-4 text-xs text-blue-600 truncate border-b">
-                    {item?.url}
+                    <span className="max-w-[400px] ">
+                      {item?.url?.length > 50
+                        ? item?.url?.slice(0, urlSize) + "..."
+                        : item?.url}
+                    </span>
                   </td>
                 </tr>
               ))

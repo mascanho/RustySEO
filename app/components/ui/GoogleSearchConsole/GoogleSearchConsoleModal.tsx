@@ -144,34 +144,10 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
 
       {/* MAIN SCREEN GOES HERE */}
       <div
-        className={`${isNextScreen && "hidden"} max-w-md mx-auto -mt-3 p-2 px-4 pb-5 bg-white dark:bg-brand-darker dark:text-white rounded-lg text-xs`}
+        className={`${isNextScreen && "hidden"} max-w-md mx-auto -mt-3 p-2 px-3 pb-5 bg-white dark:bg-brand-darker dark:text-white rounded-lg text-xs`}
       >
         <h2 className="text-lg font-semibold mb-4 ml-1">Enter Credentials</h2>
         <form onSubmit={handleSubmit} className="dark:bg-brand-darker">
-          <div className="mb-4 relative">
-            <label
-              htmlFor="clientId"
-              className="block text-gray-700 text-[10px] font-bold mb-2 absolute -top-[8px] px-1 bg-white left-[10px] dark:bg-brand-darker dark:text-white"
-            >
-              Client ID
-            </label>
-            <input
-              type="text"
-              id="clientId"
-              name="clientId"
-              value={formData.clientId}
-              onChange={handleChange}
-              className={`w-full px-3 py-2 border  rounded-lg dark:bg-brand-darker dark:border-white/30 focus:outline-none focus:ring-2 ${
-                errors.clientId
-                  ? "border-red-500 focus:ring-red-200"
-                  : "focus:ring-blue-200"
-              }`}
-              placeholder="Enter Client ID"
-            />
-            {errors.clientId && (
-              <p className="text-red-500 text-sm mt-1">{errors.clientId}</p>
-            )}
-          </div>
           <div className="mb-4 relative">
             <label
               htmlFor="projectId"
@@ -194,6 +170,30 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
             />
             {errors.projectId && (
               <p className="text-red-500 text-sm mt-1">{errors.projectId}</p>
+            )}
+          </div>
+          <div className="mb-4 relative">
+            <label
+              htmlFor="clientId"
+              className="block text-gray-700 text-[10px] font-bold mb-2 absolute -top-[8px] px-1 bg-white left-[10px] dark:bg-brand-darker dark:text-white"
+            >
+              Client ID
+            </label>
+            <input
+              type="text"
+              id="clientId"
+              name="clientId"
+              value={formData.clientId}
+              onChange={handleChange}
+              className={`w-full px-3 py-2 border  rounded-lg dark:bg-brand-darker dark:border-white/30 focus:outline-none focus:ring-2 ${
+                errors.clientId
+                  ? "border-red-500 focus:ring-red-200"
+                  : "focus:ring-blue-200"
+              }`}
+              placeholder="Enter Client ID"
+            />
+            {errors.clientId && (
+              <p className="text-red-500 text-sm mt-1">{errors.clientId}</p>
             )}
           </div>
           <div className="mb-4 relative">

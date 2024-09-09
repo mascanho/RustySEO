@@ -5,15 +5,7 @@ import { useEffect, useState } from "react";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 
 import { BiKey, BiDotsVerticalRounded, BiDotsVertical } from "react-icons/bi";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { BsThreeDotsVertical } from "react-icons/bs";
+import TopicsMenu from "./TopicsMenu";
 
 interface Topic {
   keyword: string;
@@ -101,94 +93,24 @@ export default function Component({ bodyElements }: any) {
             key={index}
             className="dark:bg-brand-darker rounded-none group relative"
           >
-            <DropdownMenu>
-              <DropdownMenuTrigger className="absolute right-1 top-4">
-                <BsThreeDotsVertical className="dark:text-white mr-1 z-10" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-brand-darker border shadow shadow-lg  px-0.5 bg-white dark:bg-brand-darker  dark:border-brand-dark dark:text-white mt-1.5 mr-6 w-fit text-xs">
-                <DropdownMenuLabel className="font-semibold text-xs">
-                  Check Keyword
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() =>
-                    openBrowserWindow(
-                      `https://www.google.com/search?q=${encodeURIComponent(entry?.keyword || "")}`,
-                    )
-                  }
-                  className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight text-xs cursor-pointer"
-                >
-                  Google
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    openBrowserWindow(
-                      `https://www.bing.com/search?q=${encodeURIComponent(entry?.keyword || "")}`,
-                    )
-                  }
-                  className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight text-xs cursor-pointer"
-                >
-                  Bing
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    openBrowserWindow(
-                      `https://search.yahoo.com/search?p=${encodeURIComponent(entry?.keyword || "")}`,
-                    )
-                  }
-                  className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight text-xs cursor-pointer"
-                >
-                  Yahoo
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    openBrowserWindow(
-                      `https://yandex.com/search/?text=${encodeURIComponent(entry?.keyword || "")}`,
-                    )
-                  }
-                  className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight text-xs cursor-pointer"
-                >
-                  Yandex
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    openBrowserWindow(
-                      `https://trends.google.com/trends/explore?q=${encodeURIComponent(entry?.keyword || "")}`,
-                    )
-                  }
-                  className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight text-xs cursor-pointer"
-                >
-                  Google Trends
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    openBrowserWindow(
-                      `https://duckduckgo.com/?q=${encodeURIComponent(entry?.keyword || "")}`,
-                    )
-                  }
-                  className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight text-xs cursor-pointer"
-                >
-                  DuckDuckGo
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
             <section className="transition-shadow duration-300 rounded-none dark:bg-brand-darker">
               <div className="p-3 flex flex-col">
                 <div className="flex items-center mb-2">
                   <BiKey className="h-6 w-6 text-blue-600" />
 
-                  <span
-                    onClick={() =>
-                      openBrowserWindow(
-                        `https://www.google.com/search?q=${encodeURIComponent(entry?.keyword || "")}`,
-                        "_blank",
-                      )
-                    }
-                    className="ml-1 text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full cursor-pointer font-medium"
-                  >
-                    {entry?.keyword}
-                  </span>
+                  <TopicsMenu entry={entry}>
+                    <span
+                      onClick={() =>
+                        openBrowserWindow(
+                          `https://www.google.com/search?q=${encodeURIComponent(entry?.keyword || "")}`,
+                          "_blank",
+                        )
+                      }
+                      className="ml-1 text-xs text-gray-500 bg-gray-200 hover:bg-brand-bright hover:text-white px-2 py-1 rounded-full cursor-pointer font-medium"
+                    >
+                      {entry?.keyword}
+                    </span>
+                  </TopicsMenu>
                 </div>
                 <h2 className="text-xs font-semibold mb-1.5 text-gray-800 dark:text-white/40">
                   {entry?.title}

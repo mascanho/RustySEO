@@ -62,8 +62,8 @@ const ContentSummary = ({
     }
   }, [keywords, pageTitle]);
   return (
-    <section className="flex-wrap min-h-[calc(96rem - 2.5rem)] h-full space-y-1 bg-transparent dark:bg-brand-darker dark:text-white p-2 rounded-md relative">
-      <div className="px-2 py-0.5 grid gap-5 overflow-y-scroll w-full h-full">
+    <section className="flex-wrap min-h-[calc(96rem - 2.5rem)] h-[28rem] space-y-1  dark:bg-brand-darker dark:text-white  rounded-md relative">
+      <div className="px-2 py-1.5 grid gap-5  dark:text-white">
         <div className="grid gap-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -242,7 +242,7 @@ const ContentSummary = ({
           </span>
         </div>
 
-        <div className="flex items-start justify-start flex-col mt-4 ">
+        <div className="flex items-start justify-start flex-col mt-4 h-full ">
           <div className="flex items-start space-x-2">
             <div className="flex flex-col w-full justify-center">
               <div className="flex items-center mb-3 -mt-6">
@@ -289,7 +289,7 @@ const ContentSummary = ({
                 {keywords[0]?.map((keyword: any, index: any) => (
                   <div
                     key={index}
-                    className="dark:bg-gray-700 bg-slate-100 w-fit px-1.5 py-1 rounded-lg text-xs"
+                    className="dark:bg-gray-700 bg-slate-200 w-fit px-1.5 py-1 rounded-lg text-xs"
                   >
                     <span className="bg-brand-bright px-1 py-[1px] rounded-full text-white text-xs">
                       {keyword[1]}
@@ -303,7 +303,7 @@ const ContentSummary = ({
             </div>
           </div>
 
-          <div className="grid gap-1 overflow-y-auto mt-4">
+          <div className="grid gap-1 overflow-y-auto mt-4 h-full">
             <h3 className="text-xs font-semibold dark:text-sky-dark">
               Page Summary
             </h3>

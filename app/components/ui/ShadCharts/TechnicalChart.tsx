@@ -44,15 +44,15 @@ const chartConfig = {
   },
   cls: {
     label: "CLS",
-    color: "hsl(var(--chart-6))",
+    color: "hsl(var(--chart-3))",
   },
   tbt: {
     label: "TBT",
-    color: "hsl(var(--chart-7))",
+    color: "hsl(var(--chart-4))",
   },
   dom: {
     label: "DOM",
-    color: "hsl(var(--chart-8))",
+    color: "hsl(var(--chart-2))",
   },
 } satisfies ChartConfig;
 

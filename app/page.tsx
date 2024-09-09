@@ -106,6 +106,7 @@ const Home: React.FC<HomeProps> = () => {
   const [debouncedURL] = useDebounce(url, 300);
 
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [sessionUrl, setSessionUrl] = useState<string | null>(null);
   const seoIsLoading = useOnPageSeo();
 
   // Panes Store
@@ -163,6 +164,8 @@ const Home: React.FC<HomeProps> = () => {
 
     // set the url beng searched in the session storage
     sessionStorage.setItem("url", url || "No URL");
+    const sessionUrl = sessionStorage.getItem("url");
+    setSessionUrl(sessionUrl);
     window.dispatchEvent(new Event("sessionStorageUpdated"));
 
     setCrawlResult([]);
@@ -525,7 +528,7 @@ const Home: React.FC<HomeProps> = () => {
                 <input
                   type="url"
                   required
-                  placeholder="https://yourwebsite.com"
+                  placeholder={sessionUrl || "https://yourwebsite.com"}
                   onChange={handleChange}
                   onKeyPress={(event) => {
                     if (event.key === "Enter") {

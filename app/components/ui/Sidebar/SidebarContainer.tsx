@@ -76,7 +76,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
 
   return (
     <aside
-      className={`bg-white dark:bg-brand-darker overflow-y-auto overflow-hidden min-h-[100%]  border-l-2 mt-[5px] border-t dark:border-gray-700 flex relative flex-col  transition-all ease-linear delay-75  dark:bg-brand-darker ${visibility.sidebar ? "w-[24.9rem]" : "w-0"}`}
+      className={`bg-white dark:bg-brand-darker overflow-y-auto overflow-hidden min-h-[100%]  border-l-2 mt-[5px] border-t dark:border-gray-700 flex relative flex-col  transition-all ease-linear delay-75  dark:bg-brand-darker ${visibility.sidebar ? "w-[24.3rem]" : "w-0"}`}
     >
       <ResizablePanelGroup direction="vertical">
         <ResizablePanel defaultSize={220} className="h-[calc(100vh-1.5rem)] ">
@@ -89,7 +89,10 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
               <Tabs.Tab value="topics">Topics</Tabs.Tab>
               <Tabs.Tab value="third">Console</Tabs.Tab>
             </Tabs.List>
-            <Tabs.Panel value="first" className="h-full w-full">
+            <Tabs.Panel
+              value="first"
+              className="h-full w-full bg-brand-highlight/5"
+            >
               <ContentSummary
                 keywords={keywords}
                 wordCount={wordCount || ""}

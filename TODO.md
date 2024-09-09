@@ -1,7 +1,3 @@
-# CONTENT
-
-Improve the Content tab with keyword density -https://toolsaday.com/seo/keyword-density-checker
-
 ## HTML SIZE
 
 Get the HTML size OUTPUT, In length and in weight
@@ -34,5 +30,13 @@ Fix it so that it works when Gemini is selected
 
 ##### Clear Table Function
 
--- Add a button to clear the table on both SEO and Technical Tables
 -- Add button shortcut to delete the DB file
+
+# console Tab Menu functionalities
+
+-- Google Search Console open in new tab with: Query and URL
+-- Open search engines (google, bing, duckduckgo, etc...)
+
+### Character counts
+
+-- Add a tool that lists the characters of the old and the new title & description

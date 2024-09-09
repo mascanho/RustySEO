@@ -65,7 +65,7 @@ const AIcontainer = () => {
   return (
     <div className="flex flex-col h-[70vh] max-w-8xl mx-auto bg-gray-100 dark:bg-brand-darker border border-gray-300 dark:border-brand-dark rounded-lg shadow-lg">
       <div ref={containerRef} className="flex-1 p-4 overflow-y-auto">
-        {ollamaStatus.ollama === true ? (
+        {ollamaStatus.ollama === false ? (
           <>
             {messages.map((m) => (
               <div

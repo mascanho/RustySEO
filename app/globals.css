@@ -485,6 +485,10 @@ button:where([data-active]) {
   @apply text-[10px] !important;
 }
 
+.ranking-table table thead tr th {
+  @apply bg-red-500;
+}
+
 /* VERTICAL SIDE SCROLL BAR STYLING */
 .side-scrollbar::-webkit-scrollbar-thumb {
   @apply bg-blue-500 dark:bg-sky-600 z-0 !important;

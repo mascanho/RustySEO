@@ -510,10 +510,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
             println!("Authenticator created successfully");
             Ok(ok_result)
         })
-        .map(|result| {
-            result
-        })?;
-
+        .map(|result| result)?;
 
     // Create an authorized client
     let https = HttpsConnectorBuilder::new()
@@ -538,7 +535,6 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
     let mut domain = false;
     let mut site = false;
 
-
     // Set the end date to TODAY's date
     let finish_date = Utc::now().format("%Y-%m-%d").to_string();
 
@@ -554,7 +550,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
             "country".to_string(),
         ],
         search_type: "web".to_string(),
-        row_limit: 200,
+        row_limit: 976,
     };
     let body = serde_json::to_string(&query)?;
 
