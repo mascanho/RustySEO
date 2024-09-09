@@ -30,6 +30,7 @@ fn export_db_to_excel() -> Result<()> {
 
     let mut row = 0;
 
+
     // Iterate through each table
     for table_name in table_names {
         // Write table name as a header

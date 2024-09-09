@@ -30,12 +30,48 @@ import {
   FiGlobe,
   FiClipboard,
   FiExternalLink,
+  FiBarChart,
 } from "react-icons/fi";
 
-const RankingMenus = ({ children, url, query }: any) => {
+const RankingMenus = ({ children, url, query, credentials }: any) => {
   const handleCopy = useCallback((url: string) => {
     navigator?.clipboard.writeText(url);
   }, []);
+
+  //TODO - Get the URL from the API
+  const openSearchConsoleUrl = (query: string) => {
+    if (credentials.search_type === "site") {
+      const baseUrl =
+        "https://search.google.com/search-console/performance/search-analytics";
+      const params = new URLSearchParams({
+        resource_id: "sc-domain:" + credentials.url,
+        num_of_months: "6",
+        query: "*" + query,
+      });
+      const url = `${baseUrl}?${params.toString()}`;
+      openBrowserWindow(url);
+    } else {
+      const baseUrl =
+        "https://search.google.com/search-console/performance/search-analytics";
+      const params = new URLSearchParams({
+        resource_id: "sc-domain:" + credentials.url,
+        num_of_months: "6",
+        query: "*" + query,
+      });
+      const url = `${baseUrl}?${params.toString()}`;
+      openBrowserWindow(url);
+    }
+
+    const baseUrl =
+      "https://search.google.com/search-console/performance/search-analytics";
+    const params = new URLSearchParams({
+      resource_id: "sc-domain:algarvewonders.com",
+      num_of_months: "6",
+      query: "*" + query,
+    });
+    const url = `${baseUrl}?${params.toString()}`;
+    openBrowserWindow(url);
+  };
 
   return (
     <DropdownMenu>
@@ -49,10 +85,10 @@ const RankingMenus = ({ children, url, query }: any) => {
         </DropdownMenuItem>
         <DropdownMenuItem
           className="hover:bg-brand-bright hover:text-white"
-          onClick={() => openBrowserWindow(url)}
+          onClick={() => openSearchConsoleUrl(query)}
         >
-          <FiGlobe className="mr-2" />
-          Open in Browser
+          <FiBarChart className="mr-2" />
+          Open in Console
         </DropdownMenuItem>
         <DropdownMenuSub>
           <DropdownMenuSubTrigger className="hover:bg-brand-bright hover:text-white">

@@ -93,7 +93,7 @@
         "title": "RustySEO - v0.1",
         "minWidth": 1500,
         "minHeight": 1000,
-        "width": 900,
+        "width": 1000,
         "height": 800,
         "decorations": true
       }

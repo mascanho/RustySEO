@@ -156,6 +156,7 @@ async fn main() {
             crawler::db::clear_table_command,
             server::ask_rusty_command,
             downloads::excel::export_to_excel_command,
+            globals::actions::get_search_console_credentials,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -651,3 +651,8 @@ select option {
 #chart-buttons button[data-active="true"] {
   @apply dark:bg-blue-500/10 !important;
 }
+
+/* MANTINE TABS */
+button .mantine-Tabs-tabLabel {
+  @apply text-[11px] !important;
+}

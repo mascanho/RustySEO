@@ -14,6 +14,7 @@ const RankingInfo = ({ keywords }: { keywords: string[] }) => {
   const [matchedData, setMatchedData] = useState<MatchedDataItem[] | null>(
     null,
   );
+  const [credentials, setCredentials] = useState<InstalledInfo | null>(null);
   const [sessionUrl, setSessionUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -58,6 +59,19 @@ const RankingInfo = ({ keywords }: { keywords: string[] }) => {
     }
   }, [keywords]);
 
+  useEffect(() => {
+    const getCredentials = async () => {
+      try {
+        const credentials = await invoke("get_search_console_credentials");
+        setCredentials(credentials);
+      } catch (error) {
+        console.error("Error fetching credentials:", error);
+      }
+    };
+
+    getCredentials();
+  }, [matchedData]);
+
   if (!matchedData || matchedData.length === 0) {
     return (
       <div className="w-full max-w-[400px] h-[10rem] flex items-center justify-center text-gray-500">
@@ -86,13 +100,17 @@ const RankingInfo = ({ keywords }: { keywords: string[] }) => {
             <tr
               key={index}
               className={`
-                ${index % 1 === 0 ? "bg-gray-50 dark:bg-gray-800" : "bg-white dark:bg-gray-900"}
-                hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors duration-150
+                ${index % 1 === 0 ? "bg-gray-50 dark:bg-gray-800" : "bg-white dark:bg-gray-900 "}
+              transition-colors duration-150
               `}
             >
-              <td className="py-2 pl-2 truncate text-[9px]">
-                <RankingMenus url={sessionUrl} query={item.query}>
-                  <span className="pointer hover:underline hover:text-brand-bright">
+              <td className="py-2 pl-2 truncate text-[9px] ">
+                <RankingMenus
+                  credentials={credentials}
+                  url={sessionUrl}
+                  query={item.query}
+                >
+                  <span className="pointer hover:underline hover:text-brand-bright ">
                     {item.query}
                   </span>
                 </RankingMenus>

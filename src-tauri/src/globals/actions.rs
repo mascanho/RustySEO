@@ -1,6 +1,7 @@
 use directories::ProjectDirs;
 use uuid::Uuid;
 use crate::crawler::libs::InstalledInfo;
+use crate::crawler::libs::read_credentials_file;
 use std::fs;
 
 
@@ -69,4 +70,10 @@ pub fn ai_model_read() -> String {
     } else {
         return "No AI Model selected".to_string();
     }
+}
+
+#[tauri::command]
+pub async fn get_search_console_credentials() -> Result<InstalledInfo, String> {
+    let credentials = read_credentials_file().await.expect("Failed to read credentials file");
+    Ok(credentials)
 }
