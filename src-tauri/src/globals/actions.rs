@@ -1,10 +1,8 @@
-use directories::ProjectDirs;
-use uuid::Uuid;
-use crate::crawler::libs::InstalledInfo;
 use crate::crawler::libs::read_credentials_file;
+use crate::crawler::libs::InstalledInfo;
+use directories::ProjectDirs;
 use std::fs;
-
-
+use uuid::Uuid;
 
 // ------------- Check if the UUID is present in the system  ---------------
 pub fn uuid_creation_check() -> String {
@@ -48,6 +46,11 @@ pub fn ai_model_selected(model: String) -> String {
 }
 
 // ------ read the AI Model being used
+#[tauri::command]
+pub fn check_ai_model() -> String {
+    let ai_model = ai_model_read();
+    return ai_model;
+}
 pub fn ai_model_read() -> String {
     // CHECK FOR THE FILE IN THE CONFIG DIRECTORY
     println!("Checking for AI Model file");
@@ -74,6 +77,8 @@ pub fn ai_model_read() -> String {
 
 #[tauri::command]
 pub async fn get_search_console_credentials() -> Result<InstalledInfo, String> {
-    let credentials = read_credentials_file().await.expect("Failed to read credentials file");
+    let credentials = read_credentials_file()
+        .await
+        .expect("Failed to read credentials file");
     Ok(credentials)
 }

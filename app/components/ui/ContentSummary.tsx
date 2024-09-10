@@ -12,7 +12,6 @@ const ContentSummary = ({
   htmlToTextRatio,
   pageTitle,
 }: any) => {
-  const ollamaStatus = useOllamaStore();
   const { setSeoContentQuality } = useOnPageSeo();
   const [AiContentAnalysis, setAiContentAnalysis] = useState("");
   const setReadingTime = useContentStore((state) => state.setReadingTime);

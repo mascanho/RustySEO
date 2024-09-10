@@ -4,6 +4,8 @@ import { Drawer, Button, Group, Menu } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { usePathname, useRouter } from "next/navigation";
 import useStore from "../../../store/Panes";
+import { invoke } from "@tauri-apps/api/tauri";
+import useModelStore from "@/store/AIModels";
 
 function MenuDrawer() {
   const [opened, setOpened] = useState(false);
@@ -12,6 +14,7 @@ function MenuDrawer() {
   const pathname = usePathname();
   const router = useRouter();
   const { Visible } = useStore();
+  const { selectedModel, setSelectedModel } = useModelStore();
 
   const options = [
     { name: "Page Crawler", route: "/" },
@@ -105,6 +108,22 @@ function MenuDrawer() {
     setBadge(option.name);
     router.push(option.route);
   };
+
+  // CHECK THE AI MODEL BEING USED
+  useEffect(() => {
+    const checkModel = async () => {
+      try {
+        const model: string = await invoke("check_ai_model");
+        console.log(model, "THE NEW MODEL CHECK");
+        setSelectedModel(model);
+        localStorage.setItem("AI-provider", model);
+      } catch (error) {
+        console.error("Error checking AI model:", error);
+      }
+    };
+
+    checkModel();
+  }, []);
 
   return (
     <>

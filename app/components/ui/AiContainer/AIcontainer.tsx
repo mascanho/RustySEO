@@ -7,6 +7,7 @@ import { FaRobot } from "react-icons/fa";
 import { IoIosPerson } from "react-icons/io";
 import { useOllamaStore } from "@/store/store";
 import { invoke } from "@tauri-apps/api/tauri";
+import useModelStore from "@/store/AIModels";
 
 interface Message {
   id: number;
@@ -21,6 +22,7 @@ const AIcontainer = () => {
   const ollamaStatus = useOllamaStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { selectedModel, setSelectedModel } = useModelStore();
 
   const scrollToBottom = () => {
     if (containerRef.current) {
@@ -28,9 +30,13 @@ const AIcontainer = () => {
     }
   };
 
+  // CHECK THE AI-PROVIDER
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    const model = localStorage.getItem("AI-provider");
+    if (model) {
+      setSelectedModel(model);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -65,7 +71,7 @@ const AIcontainer = () => {
   return (
     <div className="flex flex-col h-[70vh] max-w-8xl mx-auto bg-gray-100 dark:bg-brand-darker border border-gray-300 dark:border-brand-dark rounded-lg shadow-lg">
       <div ref={containerRef} className="flex-1 p-4 overflow-y-auto">
-        {ollamaStatus.ollama === false ? (
+        {selectedModel === "ollama" || selectedModel === "gemini" ? (
           <>
             {messages.map((m) => (
               <div

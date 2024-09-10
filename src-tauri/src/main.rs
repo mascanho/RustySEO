@@ -157,6 +157,7 @@ async fn main() {
             server::ask_rusty_command,
             downloads::excel::export_to_excel_command,
             globals::actions::get_search_console_credentials,
+            globals::actions::check_ai_model,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
