@@ -246,7 +246,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
         <Todo url={todoUrl} close={closeModal} strategy={todoStrategy} />
       </Modal>
       <div className="relative mr-0 w-full mx-auto text-xs z-0">
-        <div className=" -right-0  -z-10 flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10 -mt-8  w-full">
+        <div className=" -right-0  -z-10 flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10 -mt-7  w-full">
           <div className="flex items-center space-x-2 relative z-0">
             <IoIosSearch className="w-4 h-4 absolute left-4 dark:text-white" />
             <input
@@ -254,12 +254,12 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
               placeholder="Search by URL"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="border dark:text-white rounded-md p-0.5 text-sm h-full pl-7 dark:border-brand-normal/20 dark:bg-brand-darker"
+              className="border dark:text-white rounded-md  text-xs h-6 pl-7 dark:border-brand-normal/20 dark:bg-brand-darker"
             />
           </div>
 
           <DropdownMenu>
-            <DropdownMenuTrigger className="w-fit px-4 border border-gray-300 rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center dark:text-white dark:border-brand-normal/20 dark:bg-brand-darker text-black">
+            <DropdownMenuTrigger className="w-fit px-4 border border-gray-300 rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center dark:text-white dark:border-brand-normal/20 dark:bg-brand-darker text-black h-6 ">
               Options
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -286,10 +286,10 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div className="w-[2px] h-8 bg-gray-300 dark:bg-gray-200/20" />
+          <div className="w-[2px] h-6 bg-gray-300 dark:bg-gray-200/20" />
 
           <DropdownMenu>
-            <DropdownMenuTrigger className="transition-all hover:bg-brand-bright ease-linear active:scale-75 w-fit px-4 rounded-md justify-center flex items-center bg-brand-bright text-white h-7 m-auto">
+            <DropdownMenuTrigger className="transition-all hover:bg-brand-bright ease-linear active:scale-75 w-fit px-4 rounded-md justify-center flex items-center bg-brand-bright text-white h-6 m-auto">
               <FiDownload className="w-4 h-4 mr-2 mb-1" />
               Export
             </DropdownMenuTrigger>
@@ -316,7 +316,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
           </DropdownMenu>
         </div>
 
-        <section className="rounded-md mt-2 overflow-hidden shadow border dark:border-white/10 dark:bg-brand-darker w-full z-0">
+        <section className="rounded-md mt-1 overflow-hidden shadow border dark:border-white/10 dark:bg-brand-darker w-full z-0">
           <div className="h-[28rem] max-h-[38rem] custom-scrollbar overflow-auto bg-white dark:bg-brand-darker w-full">
             <table className="table_history w-full shadow text-xs">
               <thead className="bg-white dark:bg-brand-darker sticky top-0 z-10">

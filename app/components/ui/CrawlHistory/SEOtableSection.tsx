@@ -182,7 +182,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
   };
 
   return (
-    <div className="relative w-full mx-auto text-xs -mt-8">
+    <div className="relative w-full mx-auto text-xs -mt-7">
       {/* Toolbar and Options */}
       <div className=" -right-0 w-full flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10 -z-10">
         {/* Search Bar */}
@@ -193,13 +193,13 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
             placeholder="Search by URL"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="border dark:text-white rounded-md p-0.5 text-sm h-full pl-7 dark:border-brand-normal/20 dark:bg-brand-darker"
+            className="border dark:text-white rounded-md  text-xs h-6 pl-7 dark:border-brand-normal/20 dark:bg-brand-darker"
           />
         </div>
 
         {/* Dropdown Menus for Options */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="w-fit px-4 border border-gray-300 rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center dark:text-white dark:border-brand-normal/20 dark:bg-brand-darker text-black">
+          <DropdownMenuTrigger className="w-fit px-4 border border-gray-300 rounded-md justify-center active:scale-95 transition-all ease-linear flex items-center dark:text-white dark:border-brand-normal/20 dark:bg-brand-darker text-black h-6 ">
             Options
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -226,10 +226,10 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <div className="w-[2px] h-8 bg-gray-300 dark:bg-gray-200/20" />
+        <div className="w-[2px] h-6 bg-gray-300 dark:bg-gray-200/20" />
 
         <DropdownMenu>
-          <DropdownMenuTrigger className="transition-all hover:bg-brand-bright ease-linear active:scale-75 w-fit px-4 rounded-md justify-center flex items-center bg-brand-bright text-white h-7 m-auto">
+          <DropdownMenuTrigger className="transition-all hover:bg-brand-bright ease-linear active:scale-75 w-fit px-4 rounded-md justify-center flex items-center bg-brand-bright text-white h-6 m-auto">
             <FiDownload className="w-4 h-4 mr-2 mb-1" />
             Export
           </DropdownMenuTrigger>
@@ -245,7 +245,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
       </div>
 
       {/* Table Section */}
-      <section className="rounded-md mt-2 overflow-x-auto shadow border dark:border-white/10 dark:bg-brand-darker">
+      <section className="rounded-md mt-1 overflow-x-auto shadow border dark:border-white/10 dark:bg-brand-darker">
         {/* Parent container for vertical scrolling */}
         <div className="h-full max-h-[calc(100vh-220px)] overflow-y-auto">
           {/* Container for horizontal scrolling */}

@@ -41,7 +41,7 @@ const TableFloatMenus = ({ children, data, crawl }: any) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>{children}</DropdownMenuTrigger>
-      <DropdownMenuContent className="w-40 bg-white dark:bg-brand-darker dark:border-brand-dark dark:text-white/50">
+      <DropdownMenuContent className="w-40 bg-white dark:bg-brand-darker dark:border-brand-dark dark:text-white/50 text-xs">
         <DropdownMenuItem
           className="hover:bg-brand-bright hover:text-white"
           onClick={() => handleCopy(data?.url)}
@@ -62,8 +62,8 @@ const TableFloatMenus = ({ children, data, crawl }: any) => {
           <FiRefreshCw className="mr-2" /> Re-crawl
         </DropdownMenuItem>
         <DropdownMenuSub>
-          <DropdownMenuSubTrigger className="hover:bg-brand-bright hover:text-white">
-            <FiCheckSquare className="mr-2" /> Check Index
+          <DropdownMenuSubTrigger className="text-xs hover:bg-brand-bright hover:text-white">
+            <FiCheckSquare className="mr-2 text-xs" /> Check Index
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="w-48 ml-1 bg-white dark:bg-brand-darker dark:border-brand-dark">
             <DropdownMenuItem
@@ -77,7 +77,7 @@ const TableFloatMenus = ({ children, data, crawl }: any) => {
               <FaSearchengin className="mr-2" /> Google
             </DropdownMenuItem>
             <DropdownMenuItem
-              className="hover:bg-brand-bright hover:text-white"
+              className="hover:bg-brand-bright text-xs hover:text-white"
               onClick={() =>
                 openBrowserWindow(`https://www.bing.com/search?q=${data?.url}`)
               }
@@ -107,7 +107,7 @@ const TableFloatMenus = ({ children, data, crawl }: any) => {
           </DropdownMenuSubContent>
         </DropdownMenuSub>
         <DropdownMenuSub>
-          <DropdownMenuSubTrigger className="hover:bg-brand-bright hover:text-white">
+          <DropdownMenuSubTrigger className="hover:bg-brand-bright hover:text-white text-xs">
             <FiLink className="mr-2" /> Backlinks
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="w-48 ml-1 bg-white dark:bg-brand-darker dark:border-brand-dark">
@@ -124,50 +124,71 @@ const TableFloatMenus = ({ children, data, crawl }: any) => {
         </DropdownMenuSub>
 
         <DropdownMenuSub>
-          <DropdownMenuSubTrigger className="hover:bg-brand-bright hover:text-white">
+          <DropdownMenuSubTrigger className="hover:bg-brand-bright hover:text-white text-xs">
             <FiCheckSquare className="mr-2" /> Validation
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="w-48 ml-1 bg-white dark:bg-brand-darker dark:border-brand-dark">
-            <DropdownMenuItem className="hover:bg-brand-bright hover:text-white">
-              <FiSave className="mr-2" /> Save Page As...
-              <DropdownMenuShortcut>⇧⌘S</DropdownMenuShortcut>
+            <DropdownMenuItem
+              onClick={() =>
+                openBrowserWindow(
+                  `https://validator.w3.org/nu/?doc=${data?.url}`,
+                )
+              }
+              className="hover:bg-brand-bright hover:text-white"
+            >
+              W3C Validator
             </DropdownMenuItem>
-            <DropdownMenuItem className="hover:bg-brand-bright hover:text-white">
-              <FiPlusSquare className="mr-2" /> Create Shortcut...
+            <DropdownMenuItem
+              onClick={() =>
+                openBrowserWindow(
+                  `https://validator.schema.org/#url=${data?.url}`,
+                )
+              }
+              className="hover:bg-brand-bright hover:text-white"
+            >
+              Schema Validator
             </DropdownMenuItem>
-            <DropdownMenuItem className="hover:bg-brand-bright hover:text-white">
-              <FiEdit className="mr-2" /> Name Window...
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="hover:bg-brand-bright hover:text-white">
-              <FiTool className="mr-2" /> Developer Tools
+
+            <DropdownMenuItem
+              onClick={() =>
+                openBrowserWindow(
+                  `https://search.google.com/test/rich-results?url=${data?.url}`,
+                )
+              }
+              className="hover:bg-brand-bright hover:text-white"
+            >
+              Rich Test Results
             </DropdownMenuItem>
           </DropdownMenuSubContent>
         </DropdownMenuSub>
         <DropdownMenuSub>
-          <DropdownMenuSubTrigger className="hover:bg-brand-bright hover:text-white">
+          <DropdownMenuSubTrigger className="hover:bg-brand-bright hover:text-white text-xs">
             <FiClock className="mr-2" /> History
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="w-48 ml-1 bg-white dark:bg-brand-darker dark:border-brand-dark">
-            <DropdownMenuItem className="hover:bg-brand-bright hover:text-white">
-              <FiSave className="mr-2" /> Save Page As...
+            <DropdownMenuItem
+              onClick={() =>
+                openBrowserWindow(
+                  `https://webcache.googleusercontent.com/search?q=cache:${data?.url}`,
+                )
+              }
+              className="hover:bg-brand-bright hover:text-white"
+            >
+              Google Cache
               <DropdownMenuShortcut>⇧⌘S</DropdownMenuShortcut>
             </DropdownMenuItem>
-            <DropdownMenuItem className="hover:bg-brand-bright hover:text-white">
-              <FiPlusSquare className="mr-2" /> Create Shortcut...
-            </DropdownMenuItem>
-            <DropdownMenuItem className="hover:bg-brand-bright hover:text-white">
-              <FiEdit className="mr-2" /> Name Window...
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="hover:bg-brand-bright hover:text-white">
-              <FiTool className="mr-2" /> Developer Tools
+            <DropdownMenuItem
+              onClick={() =>
+                openBrowserWindow(
+                  `https://web.archive.org/web/20240000000000*/${data?.url}`,
+                )
+              }
+              className="hover:bg-brand-bright hover:text-white"
+            >
+              WaybackMachine
             </DropdownMenuItem>
           </DropdownMenuSubContent>
         </DropdownMenuSub>
-        {/* <DropdownMenuRadioGroup value="pedro">
-            <DropdownMenuLabel>People</DropdownMenuLabel>
-          </DropdownMenuRadioGroup> */}
       </DropdownMenuContent>
     </DropdownMenu>
   );

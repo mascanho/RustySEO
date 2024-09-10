@@ -80,7 +80,7 @@ const RankingMenus = ({ children, url, query, credentials }: any) => {
           Open in Console
         </DropdownMenuItem>
         <DropdownMenuSub>
-          <DropdownMenuSubTrigger className="hover:bg-brand-bright hover:text-white">
+          <DropdownMenuSubTrigger className="hover:bg-brand-bright hover:text-white text-xs">
             <FiCheckSquare className="mr-2" /> SERP results
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="w-48 ml-1 bg-white dark:bg-brand-darker dark:border-brand-dark">
@@ -118,10 +118,18 @@ const RankingMenus = ({ children, url, query, credentials }: any) => {
             >
               <FaSearchengin className="mr-2" /> Yandex
             </DropdownMenuItem>
+            <DropdownMenuItem
+              className="hover:bg-brand-bright hover:text-white"
+              onClick={() =>
+                openBrowserWindow(`https://duckduckgo.com/?q=${query}&ia=web`)
+              }
+            >
+              <FaSearchengin className="mr-2" /> DuckDuckGo
+            </DropdownMenuItem>
           </DropdownMenuSubContent>
         </DropdownMenuSub>
         <DropdownMenuSub>
-          <DropdownMenuSubTrigger className="hover:bg-brand-bright hover:text-white">
+          <DropdownMenuSubTrigger className="hover:bg-brand-bright hover:text-white text-xs">
             <FiLink className="mr-2" /> Backlinks
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="w-48 ml-1 bg-white dark:bg-brand-darker dark:border-brand-dark">
@@ -136,52 +144,6 @@ const RankingMenus = ({ children, url, query, credentials }: any) => {
             </DropdownMenuItem>
           </DropdownMenuSubContent>
         </DropdownMenuSub>
-
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger className="hover:bg-brand-bright hover:text-white">
-            <FiCheckSquare className="mr-2" /> Validation
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent className="w-48 ml-1 bg-white dark:bg-brand-darker dark:border-brand-dark">
-            <DropdownMenuItem className="hover:bg-brand-bright hover:text-white">
-              <FiSave className="mr-2" /> Save Page As...
-              <DropdownMenuShortcut>⇧⌘S</DropdownMenuShortcut>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="hover:bg-brand-bright hover:text-white">
-              <FiPlusSquare className="mr-2" /> Create Shortcut...
-            </DropdownMenuItem>
-            <DropdownMenuItem className="hover:bg-brand-bright hover:text-white">
-              <FiEdit className="mr-2" /> Name Window...
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="hover:bg-brand-bright hover:text-white">
-              <FiTool className="mr-2" /> Developer Tools
-            </DropdownMenuItem>
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger className="hover:bg-brand-bright hover:text-white">
-            <FiClock className="mr-2" /> History
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent className="w-48 ml-1 bg-white dark:bg-brand-darker dark:border-brand-dark">
-            <DropdownMenuItem className="hover:bg-brand-bright hover:text-white">
-              <FiSave className="mr-2" /> Save Page As...
-              <DropdownMenuShortcut>⇧⌘S</DropdownMenuShortcut>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="hover:bg-brand-bright hover:text-white">
-              <FiPlusSquare className="mr-2" /> Create Shortcut...
-            </DropdownMenuItem>
-            <DropdownMenuItem className="hover:bg-brand-bright hover:text-white">
-              <FiEdit className="mr-2" /> Name Window...
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="hover:bg-brand-bright hover:text-white">
-              <FiTool className="mr-2" /> Developer Tools
-            </DropdownMenuItem>
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
-        {/* <DropdownMenuRadioGroup value="pedro">
-            <DropdownMenuLabel>People</DropdownMenuLabel>
-          </DropdownMenuRadioGroup> */}
       </DropdownMenuContent>
     </DropdownMenu>
   );

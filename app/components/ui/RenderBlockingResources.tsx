@@ -13,6 +13,16 @@ const RenderBlockingResources = ({ pageSpeed }: { pageSpeed: any }) => {
     pageSpeed?.lighthouseResult?.audits?.["render-blocking-resources"]?.details
       ?.items || [];
 
+  const totalBytes = scripts?.reduce(
+    (acc: number, item: any) => acc + item.totalBytes,
+    0,
+  );
+
+  const wastedMs = scripts?.reduce(
+    (acc: number, item: any) => acc + item.wastedMs,
+    0,
+  );
+
   return (
     <section
       className={`render-blocking table_container ${Visible.renderBlocking ? "block" : "hidden"}`}
@@ -67,6 +77,22 @@ const RenderBlockingResources = ({ pageSpeed }: { pageSpeed: any }) => {
       </div>
 
       <footer className="pb-1 m-2 rounded-md text-xs flex justify-end text-black/50 space-x-4">
+        <p>
+          Total wasted:{" "}
+          <span
+            className={`px-1 py-0.5 bg-gray-400 ${scripts.length > 0 && "bg-red-400"} text-white rounded-md min-w-3`}
+          >
+            {wastedMs}
+          </span>
+        </p>
+        <p>
+          Total blocking:{" "}
+          <span
+            className={`px-1 py-0.5 bg-gray-400 ${scripts.length > 0 && "bg-red-400"} text-white rounded-md min-w-3`}
+          >
+            {totalBytes}
+          </span>
+        </p>
         <p>
           Blocking:{" "}
           <span

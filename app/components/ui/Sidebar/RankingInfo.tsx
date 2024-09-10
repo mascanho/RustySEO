@@ -74,14 +74,14 @@ const RankingInfo = ({ keywords }: { keywords: string[] }) => {
 
   if (!matchedData || matchedData.length === 0) {
     return (
-      <div className="w-full max-w-[400px] h-[10rem] flex items-center justify-center text-gray-500">
+      <div className="w-full max-w-[400px] h-[28rem] flex items-center justify-center text-gray-500">
         No data available
       </div>
     );
   }
 
   return (
-    <div className="w-full ranking-table max-w-[23rem] rounded-lg h-[28rem] overflow-auto bg-brand-bright/5 dark:bg-transparent shadow ">
+    <div className="w-full ranking-table max-w-full rounded-lg h-[28rem] overflow-auto bg-brand-bright/5 dark:bg-transparent shadow ">
       <table className="w-full text-xs ">
         <thead className="bg-gray-100 dark:bg-gray-700 sticky top-0">
           <tr>

@@ -94,7 +94,7 @@ export default function Component({ bodyElements }: any) {
             className="dark:bg-brand-darker rounded-none group relative"
           >
             <section className="transition-shadow duration-300 rounded-none dark:bg-brand-darker">
-              <div className="p-3 flex flex-col">
+              <div className="p-3 flex flex-col flex-wrap">
                 <div className="flex items-center mb-2">
                   <BiKey className="h-6 w-6 text-blue-600" />
 
@@ -106,7 +106,7 @@ export default function Component({ bodyElements }: any) {
                           "_blank",
                         )
                       }
-                      className="ml-1 text-xs text-gray-500 bg-gray-200 hover:bg-brand-bright hover:text-white px-2 py-1 rounded-full cursor-pointer font-medium"
+                      className="ml-1 text-[11px] text-gray-500 bg-gray-200 hover:bg-brand-bright hover:text-white px-2 py-1 rounded-full cursor-pointer font-medium"
                     >
                       {entry?.keyword}
                     </span>
