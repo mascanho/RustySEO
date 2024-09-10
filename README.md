@@ -1,4 +1,4 @@
-# My Software
+# ![My Software Icon](./assets/icon.png) My Software
 
 Welcome to My Software! This guide will help you get started and use the software effectively.
 
@@ -104,4 +104,3 @@ We welcome contributions! If you'd like to contribute to My Software, please fol
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
-
