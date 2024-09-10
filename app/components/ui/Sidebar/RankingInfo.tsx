@@ -10,6 +10,11 @@ interface MatchedDataItem {
   position: number;
 }
 
+interface InstalledInfo {
+  clientId: string;
+  clientSecret: string;
+}
+
 const RankingInfo = ({ keywords }: { keywords: string[] }) => {
   const [matchedData, setMatchedData] = useState<MatchedDataItem[] | null>(
     null,
@@ -63,6 +68,7 @@ const RankingInfo = ({ keywords }: { keywords: string[] }) => {
     const getCredentials = async () => {
       try {
         const credentials = await invoke("get_search_console_credentials");
+        // @ts-ignore
         setCredentials(credentials);
       } catch (error) {
         console.error("Error fetching credentials:", error);

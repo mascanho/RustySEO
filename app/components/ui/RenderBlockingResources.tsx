@@ -82,15 +82,15 @@ const RenderBlockingResources = ({ pageSpeed }: { pageSpeed: any }) => {
           <span
             className={`px-1 py-0.5 bg-gray-400 ${scripts.length > 0 && "bg-red-400"} text-white rounded-md min-w-3`}
           >
-            {wastedMs}
+            {wastedMs + " ms"}
           </span>
         </p>
         <p>
-          Total blocking:{" "}
+          Total Bytes:{" "}
           <span
             className={`px-1 py-0.5 bg-gray-400 ${scripts.length > 0 && "bg-red-400"} text-white rounded-md min-w-3`}
           >
-            {totalBytes}
+            {(totalBytes / 1048576).toFixed(2) + " MB"}
           </span>
         </p>
         <p>

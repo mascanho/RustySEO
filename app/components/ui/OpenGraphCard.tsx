@@ -73,19 +73,13 @@ export const OpenGraphCard = ({
         <div
           className={`px-10 m-auto w-10/12  flex flex-col mt-2   items-start justify-start ${openGraphDetails.length === 0 ? "bg-white/40 h-full dark:bg-brand-darker" : "bg-white dark:bg-brand-darker h-full"}`}
         >
-          {openGraphDetails?.image?.length > 0 ? (
+          {openGraphDetails && openGraphDetails?.image?.length > 0 && (
             <div className="flex flex-col flex-wrap justify-start items-start h-19/12">
               <img
                 src={openGraphDetails?.image}
                 alt="OpenGraph Image"
                 className="rounded-md w-full   object-cover ml-0 max-h-72"
               />
-            </div>
-          ) : (
-            <div className="flex flex-col flex-wrap justify-start mt-44 items-start h-full m-auto">
-              <span className="text-black/50 dark:text-white/50">
-                No opengraph found
-              </span>
             </div>
           )}
           <div

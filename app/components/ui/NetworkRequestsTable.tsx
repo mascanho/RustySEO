@@ -34,31 +34,20 @@ const NetworkRequestsTable = ({ pageSpeed }: { pageSpeed: any }) => {
             </tr>
           </thead>
           <tbody className="bg-white  h-[calc(30rem - 3.5rem)] overflow-y-auto">
-            {nr.length === 0 ? (
-              <tr className="bg-white">
-                <td
-                  colSpan={2}
-                  className="text-center text-gray-500 pb-8 h-full bg-white dark:bg-brand-darker dark:text-white/50"
-                >
-                  No third party connections found.
+            {nr.map((item: any, index: number) => (
+              <tr key={item.url || index}>
+                <td className="px-2 text-[6px] text-gray-700 w-[200px] min-w-[95px] dark:text-white border-b border-r">
+                  {item?.mimeType}
+                </td>{" "}
+                <td className="px-4 text-xs text-blue-600 truncate border-b">
+                  <span className="max-w-[400px] ">
+                    {item?.url?.length > 50
+                      ? item?.url?.slice(0, urlSize) + "..."
+                      : item?.url}
+                  </span>
                 </td>
               </tr>
-            ) : (
-              nr.map((item: any, index: number) => (
-                <tr key={item.url || index}>
-                  <td className="px-2 text-[6px] text-gray-700 w-[200px] min-w-[95px] dark:text-white border-b border-r">
-                    {item?.mimeType}
-                  </td>{" "}
-                  <td className="px-4 text-xs text-blue-600 truncate border-b">
-                    <span className="max-w-[400px] ">
-                      {item?.url?.length > 50
-                        ? item?.url?.slice(0, urlSize) + "..."
-                        : item?.url}
-                    </span>
-                  </td>
-                </tr>
-              ))
-            )}
+            ))}
           </tbody>
         </table>
       </div>
