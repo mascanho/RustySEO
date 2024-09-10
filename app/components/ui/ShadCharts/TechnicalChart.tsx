@@ -116,7 +116,7 @@ export function TechnicalChart({ dbdata }: any) {
   return (
     <Card className="dark:bg-brand-darker dark:border-brand-dark">
       <CardHeader className="flex flex-col items-stretch space-y-0 border-b dark:border-brand-dark p-0 sm:flex-row dark:bg-brand-darker">
-        <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6 ">
+        <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-2 sm:py-3 ">
           <CardTitle>Core Web Vitals</CardTitle>
           <CardDescription>
             Showing the averages for the pages you crawled
@@ -129,7 +129,7 @@ export function TechnicalChart({ dbdata }: any) {
               <button
                 key={chart}
                 data-active={activeChart === chart}
-                className="flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left data-[active=true]:bg-brand-dark/10 data-[active=true]:dark:text-red-500 sm:border-l sm:border-l-brand-dark/10 sm:border-t-0 sm:px-8 sm:py-6 data-[active=true]:text-red-500  dark:border-brand-dark "
+                className="flex flex-1 flex-col justify-center gap-1 border-t px-6 py-2 text-left data-[active=true]:bg-brand-dark/10 data-[active=true]:dark:text-red-500 sm:border-l sm:border-l-brand-dark/10 sm:border-t-0 sm:px-8 sm:py-4 data-[active=true]:text-red-500  dark:border-brand-dark "
                 onClick={() => setActiveChart(chart)}
               >
                 <span className="text-xs text-muted-foreground dark:text-white">
