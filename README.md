@@ -1,4 +1,4 @@
-# ![My Software Icon](./assets/icon.png) RustySEO Tutorial
+# ![My Software Icon](./assets/icon.png) RustySEO - A cross platform SEO toolkit
 
 RustySEO is a cross platform SEO batteries included toolkit, that allows users to crawl websites and obtain valuable insights about their marketing and SEO.
 
@@ -15,6 +15,7 @@ The goal of this project is to provide a solid free alternative to the commercia
 - SEO insights (content analysis, Keyword density, etc...);
 - Improvements / Suggestions on page crawl;
 - Dashboards;
+- Task Manager / Tracker
 - Reporting (CSV, Excel, Google Sheets, PDF);
 - Topic generator;
 - Keyword generator;
@@ -29,30 +30,23 @@ The goal of this project is to provide a solid free alternative to the commercia
 - Deep crawl (multiple pages);
 - More integrations;
 
-## Table of Contents
+## Setting up Google Search Console
 
-- [Installation](#installation)
-- [Usage](#usage)
-- [Screenshots](#screenshots)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [License](#license)
+- [Windows](#windows)
+- [Mac OS](#usage)
+- [Linux](#screenshots)
 
-## Installation
+## Windows
 
-To get started with My Software, you'll need to install it first. Follow these steps:
+To setup Google Search Console, follow these steps:
 
-1. **Clone the repository**:
+1. **Launch RustySEO**;
 
-   ```bash
-   git clone https://github.com/yourusername/my-software.git
-   ```
+![RustySEO](./screenshots/rustyseo.png)
 
-2. **Navigate to the directory**:
+2. **Go to the menu Connectors 👉 Search Console**:
 
-   ```bash
-   cd my-software
-   ```
+![RustySEO](./screenshots/rustyseo.png)
 
 3. **Install dependencies**:
 
