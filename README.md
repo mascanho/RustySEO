@@ -1,6 +1,33 @@
-# ![My Software Icon](./assets/icon.png) My Software
+# ![My Software Icon](./assets/icon.png) RustySEO Tutorial
 
-Welcome to My Software! This guide will help you get started and use the software effectively.
+RustySEO is a cross platform SEO batteries included toolkit, that allows users to crawl websites and obtain valuable insights about their marketing and SEO.
+
+This is an opensource tool that will help you to improve your SEO, bugs and issues are expected in the first versions of this software.
+
+If you intend to use this software feel free to submit requests or bug fixes on this repo.
+
+The goal of this project is to provide a solid free alternative to the commercial PAID SEO tools currently available.
+
+## Features
+
+- Shallow crawl (single page);
+- Technical Diagnostics (core web vitals);
+- SEO insights (content analysis, Keyword density, etc...);
+- Improvements / Suggestions on page crawl;
+- Dashboards;
+- Reporting (CSV, Excel, Google Sheets, PDF);
+- Topic generator;
+- Keyword generator;
+- Local LLM (ollama);
+- Free API LLM (Google Gemini);
+- Built in AI chatbot;
+- Crawl history;
+- Integrations (Google Seach Console, GA)
+
+## Roadmap
+
+- Deep crawl (multiple pages);
+- More integrations;
 
 ## Table of Contents
 
@@ -17,27 +44,27 @@ To get started with My Software, you'll need to install it first. Follow these s
 
 1. **Clone the repository**:
 
-    ```bash
-    git clone https://github.com/yourusername/my-software.git
-    ```
+   ```bash
+   git clone https://github.com/yourusername/my-software.git
+   ```
 
 2. **Navigate to the directory**:
 
-    ```bash
-    cd my-software
-    ```
+   ```bash
+   cd my-software
+   ```
 
 3. **Install dependencies**:
 
-    ```bash
-    npm install
-    ```
+   ```bash
+   npm install
+   ```
 
 4. **Run the software**:
 
-    ```bash
-    npm start
-    ```
+   ```bash
+   npm start
+   ```
 
 ## Usage
 
@@ -45,25 +72,25 @@ After installation, you can start using My Software. Here are some basic instruc
 
 1. **Open the application**:
 
-    Open your browser and go to `http://localhost:3000`.
+   Open your browser and go to `http://localhost:3000`.
 
 2. **Login**:
 
-    ![Login Screen](./screenshots/login.png)
+   ![Login Screen](./screenshots/login.png)
 
-    Enter your username and password, then click "Login."
+   Enter your username and password, then click "Login."
 
 3. **Navigate the Dashboard**:
 
-    ![Dashboard](./screenshots/dashboard.png)
+   ![Dashboard](./screenshots/dashboard.png)
 
-    Use the menu on the left to navigate through different sections of the application.
+   Use the menu on the left to navigate through different sections of the application.
 
 4. **Perform a Task**:
 
-    ![Task Screen](./screenshots/task.png)
+   ![Task Screen](./screenshots/task.png)
 
-    Follow the instructions on the screen to complete your task.
+   Follow the instructions on the screen to complete your task.
 
 ## Screenshots
 
@@ -71,15 +98,15 @@ Here are some screenshots of the application:
 
 - **Login Screen**:
 
-    ![Login Screen](./screenshots/login.png)
+  ![Login Screen](./screenshots/login.png)
 
 - **Dashboard**:
 
-    ![Dashboard](./screenshots/dashboard.png)
+  ![Dashboard](./screenshots/dashboard.png)
 
 - **Task Screen**:
 
-    ![Task Screen](./screenshots/task.png)
+  ![Task Screen](./screenshots/task.png)
 
 ## Troubleshooting
 
