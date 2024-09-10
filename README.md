@@ -1,12 +1,10 @@
 # ![My Software Icon](./assets/icon.png) RustySEO - A cross platform SEO toolkit
 
-RustySEO is a cross platform SEO batteries included toolkit, that allows users to crawl websites and obtain valuable insights about their marketing and SEO.
+RustySEO is an all-in-one, cross-platform toolkit designed for comprehensive SEO analysis. It enables users to crawl websites and gain actionable insights into their marketing and SEO strategies.
 
-This is an opensource tool that will help you to improve your SEO, bugs and issues are expected in the first versions of this software.
+As an open-source project, RustySEO aims to enhance your SEO efforts. Please note that initial versions may have bugs and issues, and we welcome your contributions in the form of bug reports or fixes via our repository.
 
-If you intend to use this software feel free to submit requests or bug fixes on this repo.
-
-The goal of this project is to provide a solid free alternative to the commercial PAID SEO tools currently available.
+Our mission is to offer a robust, free alternative to the costly commercial SEO tools currently on the market.
 
 ## Features
 
@@ -40,11 +38,11 @@ The goal of this project is to provide a solid free alternative to the commercia
 
 To setup Google Search Console, follow these steps:
 
-1. **Launch RustySEO**;
+1. Launch RustySEO;
 
 ![RustySEO](./screenshots/rustyseo.png)
 
-2. **Go to the menu Connectors 👉 Search Console**:
+2. Go to the menu **Connectors** 👉 **Search Console**
 
 ![RustySEO](./screenshots/rustyseo.png)
 
