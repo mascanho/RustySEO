@@ -93,8 +93,6 @@ pub fn check_ollama() -> Result<OllamaProcess, String> {
 #[tauri::command]
 pub async fn set_google_search_console_credentials(credentials: Credentials) {
     let credentials = libs::set_search_console_credentials(credentials).await;
-
-    println!("Google Search Console Credentials: {:?}", credentials);
 }
 
 // ------ CALL THE GOOGLE SEARCH CONSOLE FUNCTION

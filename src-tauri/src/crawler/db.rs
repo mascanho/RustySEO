@@ -334,7 +334,7 @@ pub fn push_gsc_data_to_db(data: &Vec<serde_json::Value>) -> Result<()> {
         let objects = item["rows"].as_array().unwrap();
 
         for object in objects {
-            println!("Object: {:#?}", object);
+            // println!("Object: {:#?}", object);
             let url = object["keys"][1].as_str().unwrap_or("");
             let query = object["keys"][0].as_str().unwrap_or("");
             let ctr = object["ctr"].as_f64().unwrap_or(0.0);
