@@ -26,6 +26,7 @@ const AIcontainer = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { selectedModel, setSelectedModel } = useModelStore();
+  const bubbleRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     if (containerRef.current) {
@@ -71,11 +72,10 @@ const AIcontainer = () => {
     }
   };
 
-  const handlecopy = () => {
+  const handlecopy = (content: string) => {
     navigator.clipboard
-      .writeText(messages[messages.length - 1].content)
+      .writeText(content)
       .then(() => {
-        console.log("Text copied to clipboard");
         toast("Copied to clipboard");
       })
       .catch((error) => {
@@ -107,6 +107,7 @@ const AIcontainer = () => {
 
                 <div className="relative">
                   <Markdown
+                    ref={bubbleRef}
                     className={`mb-3 mt-1 p-2 rounded-lg relative pr-2 text-black dark:text-white/90 ${
                       m.role === "user"
                         ? "bg-blue-100 dark:bg-blue-900  dark:text-white"
@@ -117,7 +118,7 @@ const AIcontainer = () => {
                   </Markdown>
                   {m.role !== "user" && (
                     <FaRegCopy
-                      onClick={handlecopy}
+                      onClick={() => handlecopy(m.content)}
                       className="absolute right-1.5 top-2.5 cursor-pointer"
                     />
                   )}

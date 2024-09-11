@@ -104,8 +104,6 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
     }
   }, [dbdata]);
 
-  console.log("this is the Performance Data: ", dbdata);
-
   // Filter and sort data
   const filteredData = (Array.isArray(data) ? data : [])
     .filter((item) =>

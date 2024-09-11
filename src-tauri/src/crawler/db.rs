@@ -480,7 +480,7 @@ pub fn read_gsc_matched_from_db() -> Result<Vec<GscMatched>> {
     for url in matched_urls {
         data.push(url?);
     }
-    println!("Page SEO Data: {:#?}", data);
+    // println!("Page SEO Data: {:#?}", data);
     Ok(data)
 }
 

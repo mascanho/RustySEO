@@ -554,7 +554,6 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
     };
     let body = serde_json::to_string(&query)?;
 
-    println!("does this print?");
 
     // Make the API request
     let token = auth
@@ -600,7 +599,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
     // println!("Search Console Data: {:#?}", &data);
     let mut gsc_data = Vec::new();
 
-    println!("Search Console Data: {:#?}", &data);
+    // println!("Search Console Data: {:#?}", &data);
     // Add data to DB
     gsc_data.push(data);
     db::push_gsc_data_to_db(&gsc_data).expect("Failed to push data to database");

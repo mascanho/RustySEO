@@ -1,5 +1,5 @@
 use csv::Writer;
-use directories::ProjectDirs;
+use directories::{ProjectDirs, UserDirs};
 use rusqlite::{Connection, Result as SqlResult};
 use std::{error::Error, fs, path::Path};
 use tauri::command;
@@ -168,7 +168,11 @@ pub fn generate_csv_command() -> Result<String, String> {
         .collect::<Result<_, _>>()?;
 
     // Define the file path for the CSV file
-    let file_path = project_dirs.data_dir().join("output.csv");
+    let download_dir = project_dirs.data_local_dir();
+
+    println!("Download directory: {:?}", download_dir);
+
+    let file_path = project_dirs.data_dir().join("Performance.csv");
 
     // Add headers
     let mut data_with_headers = vec![vec![
@@ -190,5 +194,7 @@ pub fn generate_csv_command() -> Result<String, String> {
     data_with_headers.extend(data);
 
     // Generate the CSV file
+
+
     generate_csv(data_with_headers, &file_path)
 }

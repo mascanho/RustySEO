@@ -55,7 +55,6 @@ pub async fn check_google_search_console() {
         .set_pkce_challenge(pkce_code_challenge)
         .url();
 
-    println!("Open this URL in your browser:\n{}\n", auth_url);
 
     // Prompt the user to enter the authorization code
     println!("Enter the authorization code:");
@@ -103,14 +102,14 @@ pub async fn check_google_search_console() {
         .expect("Failed to deserialize response");
 
     // Process and display the response
-    for row in query_response.rows {
-        println!(
-            "Query: {}, Clicks: {}, Impressions: {}, CTR: {}, Position: {}",
-            row.keys.join(", "),
-            row.clicks,
-            row.impressions,
-            row.ctr,
-            row.position
-        );
-    }
+    // for row in query_response.rows {
+    //     println!(
+    //         "Query: {}, Clicks: {}, Impressions: {}, CTR: {}, Position: {}",
+    //         row.keys.join(", "),
+    //         row.clicks,
+    //         row.impressions,
+    //         row.ctr,
+    //         row.position
+    //     );
+    // }
 }

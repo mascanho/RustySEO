@@ -552,8 +552,8 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         headings: headings.clone(),
     };
 
-    println!("Keywords: {:?}", &words);
-    println!("db_data: {:?}", &db_data);
+    // println!("Keywords: {:?}", &words);
+    // println!("db_data: {:?}", &db_data);
 
     //db_data.push(&canonical_url);
     //db_data.push(&index_type);
