@@ -162,7 +162,7 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
             <MultiSelect
               label="Type"
               placeholder="Select task type"
-              className="dark:text-white"
+              className="dark:text-white text-black"
               data={taskTypes.map((type) => ({ value: type, label: type }))}
               value={newTask.type}
               onChange={(value) => setNewTask({ ...newTask, type: value })}

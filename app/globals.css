@@ -656,3 +656,8 @@ select option {
 button .mantine-Tabs-tabLabel {
   @apply text-[11px] !important;
 }
+
+/* MANTINE MULTI SELECT */
+.mantine-MultiSelect-option {
+  @apply text-black dark:text-white;
+}

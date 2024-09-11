@@ -7,7 +7,7 @@ use directories::ProjectDirs;
 use globals::actions;
 use serde::{Deserialize, Serialize};
 use std::io::Write;
-use tauri::{api::path::config_dir, Manager};
+use tauri::{api::path::config_dir, Manager, Window, WindowEvent};
 use tokio;
 use toml;
 
@@ -107,6 +107,12 @@ async fn main() {
 
     // Tauri setup
     tauri::Builder::default()
+        // Execute stuff on window exict/clise
+        .on_window_event(|event| {
+            if let WindowEvent::CloseRequested { .. } = event.event() {
+                println!("Window close requested");
+            }
+        })
         .manage(LinkResult { links: vec![] })
         // .setup(|app| {
         //     let window = app.get_window("main").unwrap();

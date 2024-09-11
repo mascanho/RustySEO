@@ -9,6 +9,9 @@ import { useOllamaStore } from "@/store/store";
 import { invoke } from "@tauri-apps/api/tauri";
 import useModelStore from "@/store/AIModels";
 
+import { FaRegCopy } from "react-icons/fa6";
+import { toast } from "sonner";
+
 interface Message {
   id: number;
   role: "user" | "assistant";
@@ -68,6 +71,18 @@ const AIcontainer = () => {
     }
   };
 
+  const handlecopy = () => {
+    navigator.clipboard
+      .writeText(messages[messages.length - 1].content)
+      .then(() => {
+        console.log("Text copied to clipboard");
+        toast("Copied to clipboard");
+      })
+      .catch((error) => {
+        console.error("Error copying text to clipboard:", error);
+      });
+  };
+
   return (
     <div className="flex flex-col h-[70vh] max-w-8xl mx-auto bg-gray-100 dark:bg-brand-darker border border-gray-300 dark:border-brand-dark rounded-lg shadow-lg">
       <div ref={containerRef} className="flex-1 p-4 overflow-y-auto">
@@ -89,9 +104,24 @@ const AIcontainer = () => {
                     <span>Rusty</span>
                   </div>
                 )}
-                <Markdown className="bg-brand-dark/10 mb-3 mt-1 text-black dark:bg-brand-dark p-2 dark:text-white/50 rounded-lg">
-                  {m.content}
-                </Markdown>
+
+                <div className="relative">
+                  <Markdown
+                    className={`mb-3 mt-1 p-2 rounded-lg relative pr-2 text-black dark:text-white/90 ${
+                      m.role === "user"
+                        ? "bg-blue-100 dark:bg-blue-900  dark:text-white"
+                        : "bg-brand-dark/10 dark:bg-purple-900"
+                    }`}
+                  >
+                    {m.content}
+                  </Markdown>
+                  {m.role !== "user" && (
+                    <FaRegCopy
+                      onClick={handlecopy}
+                      className="absolute right-1.5 top-2.5 cursor-pointer"
+                    />
+                  )}
+                </div>
               </div>
             ))}
             <div ref={messagesEndRef} />

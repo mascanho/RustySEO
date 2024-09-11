@@ -171,13 +171,13 @@ const DomElements = ({
                 (url || "No URL provided"),
             )
           }
-          className="flex cursor-pointer underline"
+          className="flex cursor-pointer"
         >
           <div className="flex items-center">
             <h4 className="text-[12px] font-semibold dark:text-white/50 text-apple-spaceGray/70">
-              Nodes found:
+              Nodes found:{""}
             </h4>
-            <span className="font-semibold text-xs text-apple-spaceGray/50">
+            <span className="font-semibold text-xs ml-1 text-brand-bright text-apple-spaceGray/50">
               {stat?.lighthouseResult?.audits?.["dom-size"]?.numericValue
                 ? `${stat.lighthouseResult.audits["dom-size"].numericValue}`
                 : "..."}

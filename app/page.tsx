@@ -54,6 +54,10 @@ import useOnPageSeo from "@/store/storeOnPageSeo";
 import useStore from "@/store/Panes";
 import TableMenus from "./components/ui/CrawlHistory/TableMenus";
 import NetworkRequestsTable from "./components/ui/NetworkRequestsTable";
+import { MdOutlineHealthAndSafety } from "react-icons/md";
+import { AiOutlineRise } from "react-icons/ai";
+import { MdOutlineTaskAlt } from "react-icons/md";
+import { GoTable } from "react-icons/go";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -499,9 +503,9 @@ const Home: React.FC<HomeProps> = () => {
                 </div>
 
                 {isOpen && (
-                  <div className="origin-top-right absolute top-6 -right-4 mt-2 w-[7rem] rounded-md shadow-lg bg-white dark:bg-brand-darker dark:border dark:border-white/10 ring-0 ring-black ring-opacity-5  dark:bg-brand-white  dark:text-white z-[9000000000]">
+                  <div className="origin-top-right absolute top-6 -right-4 mt-2 w-[7rem] rounded-md shadow-lg bg-white dark:bg-brand-darker dark:border dark:border-white/10 ring-0 ring-black ring-opacity-5  dark:bg-brand-white m-1 hover:text-white  dark:text-white z-[9000000000]">
                     <div
-                      className="py-1 z-[90000000000]"
+                      className="py-1 z-[90000000000] "
                       role="menu"
                       aria-orientation="vertical"
                       aria-labelledby="options-menu"
@@ -510,11 +514,11 @@ const Home: React.FC<HomeProps> = () => {
                         <button
                           key={option.value}
                           onClick={() => handleSelect(option.value)}
-                          className="flex items-center px-4 py-2  text-sm text-gray-700 hover:bg-slate-300 hover:text-gray-900 dark:hover:bg-brand-bright dark:hover:text-white w-full dark:text-white/50 text-left z-[1000000000000000000]"
+                          className="flex items-center px-4 py-1 p-1 hover:text-white  text-sm text-gray-700 hover:bg-brand-bright  dark:hover:bg-brand-bright dark:hover:text-white w-full dark:text-white/50 text-left  hover:rounded-md z-[1000000000000000000]"
                           role="menuitem"
                         >
                           {option.icon}
-                          <span className="ml-2 z-[1000000000000]">
+                          <span className="ml-2 z-[1000000000000] p-1">
                             {option.label}
                           </span>
                         </button>
@@ -562,11 +566,23 @@ const Home: React.FC<HomeProps> = () => {
         <section className="mt-1 relative h-[calc(100vh-9.0rem)] overflow-x-hidden pt-6 px-1.5 side-scrollbar  ">
           <Tabs defaultValue="first">
             <div className="transition-all   ease-in  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-1 top-[70px]  transform dark:bg-brand-darker  pb-0">
-              <Tabs.List justify="center" className="dark:text-white  ">
-                <Tabs.Tab value="first"> Diagnostics</Tabs.Tab>
-                <Tabs.Tab value="third">Improvements</Tabs.Tab>
-                <Tabs.Tab value="fourth">Task Manager</Tabs.Tab>
-                <Tabs.Tab value="fifth">Crawl History</Tabs.Tab>
+              <Tabs.List justify="center" className="dark:text-white">
+                <Tabs.Tab value="first">
+                  <MdOutlineHealthAndSafety className="inline-block text-sm mr-1" />{" "}
+                  Diagnostics
+                </Tabs.Tab>
+                <Tabs.Tab value="third">
+                  <AiOutlineRise className="inline-block mr-1 text-sm" />{" "}
+                  Improvements
+                </Tabs.Tab>
+                <Tabs.Tab value="fourth">
+                  <MdOutlineTaskAlt className="inline-block mr-1 text-sm" />{" "}
+                  Task Manager
+                </Tabs.Tab>
+                <Tabs.Tab value="fifth">
+                  <GoTable className="inline-block mr-1 text-sm" /> Crawl
+                  History
+                </Tabs.Tab>
               </Tabs.List>
             </div>
 

@@ -179,7 +179,7 @@ export default function GeneralOverview({
 
             {/* CHECKS THE Content */}
             <details className="flex items-center h-full" open>
-              <summary className="flex items-center pl-2 py-1 bg-gray-100 dark:text-slate-400 font-semibold dark:bg-brand-darker cursor-pointer">
+              <summary className="flex items-center pl-2 py-1 bg-gray-200 dark:text-slate-400 font-semibold dark:bg-brand-darker cursor-pointer">
                 Content
               </summary>
               {checks.slice(25, checks.length).map((check, index) => (
@@ -187,8 +187,8 @@ export default function GeneralOverview({
                   key={check.id}
                   className={`flex items-center justify-between px-4 py-1.5 border-b dark:border-b-white/10 ${
                     index % 2 === 0
-                      ? "bg-gray-200 dark:bg-brand-darker dark:text-white"
-                      : "bg-gray-100 dark:bg-brand-darker dark:text-white"
+                      ? "bg-gray-100 dark:bg-brand-darker dark:text-white"
+                      : "bg-gray-200 dark:bg-brand-darker dark:text-white"
                   }`}
                 >
                   <div className="flex items-center w-full">
