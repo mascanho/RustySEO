@@ -524,12 +524,12 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
     let gsc_settings_info = read_credentials_file()
         .await
         .expect("Failed to read credentials file");
-    let initial_date = gsc_settings_info.range;
     let credentials_url = gsc_settings_info.url;
     let search_type = gsc_settings_info.search_type;
     let credentials_project_id = gsc_settings_info.project_id;
     let credentials_client_id = gsc_settings_info.client_id;
     let credentials_client_secret = gsc_settings_info.client_secret;
+    let credentials_range = gsc_settings_info.range;
 
     // Initialize variables
     let mut domain = false;
@@ -540,9 +540,55 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
 
     // Prepare the request
 
+    let (start_date, end_date) = match credentials_range.as_str() {
+        "1 month" => {
+            let end_date = Utc::now().format("%Y-%m-%d").to_string();
+            let start_date = (Utc::now() - chrono::Duration::days(30))
+                .format("%Y-%m-%d")
+                .to_string();
+            (start_date, end_date)
+        }
+        "3 months" => {
+            let end_date = Utc::now().format("%Y-%m-%d").to_string();
+            let start_date = (Utc::now() - chrono::Duration::days(90))
+                .format("%Y-%m-%d")
+                .to_string();
+            (start_date, end_date)
+        }
+        "6 months" => {
+            let end_date = Utc::now().format("%Y-%m-%d").to_string();
+            let start_date = (Utc::now() - chrono::Duration::days(180))
+                .format("%Y-%m-%d")
+                .to_string();
+            (start_date, end_date)
+        }
+        "12 months" => {
+            let end_date = Utc::now().format("%Y-%m-%d").to_string();
+            let start_date = (Utc::now() - chrono::Duration::days(365))
+                // .format("%Y-%m-%d")
+                .to_string();
+            (start_date, end_date)
+        }
+        "24 months" => {
+            let end_date = Utc::now().format("%Y-%m-%d").to_string();
+            let start_date = (Utc::now() - chrono::Duration::days(730))
+                .format("%Y-%m-%d")
+                .to_string();
+            (start_date, end_date)
+        }
+        _ => {
+            let end_date = Utc::now().format("%Y-%m-%d").to_string();
+            let start_date = (Utc::now() - chrono::Duration::days(365))
+                .format("%Y-%m-%d")
+                .to_string();
+            (start_date, end_date)
+        }
+    };
+
     // let site_url = "sc-domain:algarvewonders.com";
     let query = SearchAnalyticsQuery {
-        start_date: "2024-01-01".to_string(),
+        // start_date: "2024-01-01".to_string(),
+        start_date,
         end_date: finish_date,
         dimensions: vec![
             "query".to_string(),
@@ -553,7 +599,6 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
         row_limit: 2976,
     };
     let body = serde_json::to_string(&query)?;
-
 
     // Make the API request
     let token = auth
