@@ -30,6 +30,7 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
     { value: "3 months", label: "3 Months" },
     { value: "6 months", label: "6 Months" },
     { value: "12 months", label: "12 Months" },
+    { value: "24 months", label: "24 Months" },
   ];
 
   const handleChange = (e) => {
