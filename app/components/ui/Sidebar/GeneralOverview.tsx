@@ -122,7 +122,7 @@ export default function GeneralOverview({
 
             {/* CHECKS THE SEO */}
             <details className="flex items-center h-full" open>
-              <summary className="flex items-center pl-2 py-1 bg-gray-200 dark:text-slate-400 font-semibold dark:bg-brand-darker cursor-pointer">
+              <summary className="flex items-center pl-2 py-1 bg-transparent dark:text-slate-400 font-semibold dark:bg-brand-darker cursor-pointer">
                 SEO
               </summary>
               {checks.slice(14, 25).map((check, index) => (
@@ -179,7 +179,7 @@ export default function GeneralOverview({
 
             {/* CHECKS THE Content */}
             <details className="flex items-center h-full" open>
-              <summary className="flex items-center pl-2 py-1 bg-gray-200 dark:text-slate-400 font-semibold dark:bg-brand-darker cursor-pointer">
+              <summary className="flex items-center pl-2 py-1 bg-transparent dark:text-slate-400 font-semibold dark:bg-brand-darker cursor-pointer">
                 Content
               </summary>
               {checks.slice(25, checks.length).map((check, index) => (

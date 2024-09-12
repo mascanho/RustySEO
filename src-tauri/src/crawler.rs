@@ -396,6 +396,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             }
         }
 
+
         // Fetch page Title
         let title_selector =
             Selector::parse("title").map_err(|e| format!("Selector error: {}", e))?;
