@@ -268,6 +268,8 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         db::refresh_links_table();
         db::store_links_in_db(links.clone());
 
+
+
         // Clear the links Table before the crawl
 
         // Get all the elements that exist inside <head>

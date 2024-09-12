@@ -1,79 +1,70 @@
 // @ts-nocheck
 import useOnPageSeo from "@/store/storeOnPageSeo";
 import usePageSpeedStore from "@/store/StorePerformance";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useCallback } from "react";
 import useContentStore from "@/store/storeContent";
 
 const useGetChecks = () => {
-  // Extract all necessary state from Zustand store
-  const performance = usePageSpeedStore((state) => state.performance);
-  const fcp = usePageSpeedStore((state) => state.fcp);
-  const lcp = usePageSpeedStore((state) => state.lcp);
-  const tti = usePageSpeedStore((state) => state.tti);
-  const tbt = usePageSpeedStore((state) => state.tbt);
-  const cls = usePageSpeedStore((state) => state.cls);
-  const speedIndex = usePageSpeedStore((state) => state.speedIndex);
-  const serverResponse = usePageSpeedStore((state) => state.serverResponse);
-  const largePayloads = usePageSpeedStore((state) => state.largePayloads);
-  const domSize = usePageSpeedStore((state) => state.domSize);
-  const urlRedirects = usePageSpeedStore((state) => state.urlRedirects);
-  const longTasks = usePageSpeedStore((state) => state.longTasks);
-  const renderBlocking = usePageSpeedStore((state) => state.renderBlocking);
-  const networkRequests = usePageSpeedStore((state) => state.netowrkRequests);
+  // Extract all necessary state from Zustand store using a custom hook
+  const usePageSpeedStoreState = (selector) =>
+    usePageSpeedStore(useCallback(selector, []));
+  const useOnPageSeoState = (selector) =>
+    useOnPageSeo(useCallback(selector, []));
+  const useContentStoreState = (selector) =>
+    useContentStore(useCallback(selector, []));
+
+  const performance = usePageSpeedStoreState((state) => state.performance);
+  const fcp = usePageSpeedStoreState((state) => state.fcp);
+  const lcp = usePageSpeedStoreState((state) => state.lcp);
+  const tti = usePageSpeedStoreState((state) => state.tti);
+  const tbt = usePageSpeedStoreState((state) => state.tbt);
+  const cls = usePageSpeedStoreState((state) => state.cls);
+  const speedIndex = usePageSpeedStoreState((state) => state.speedIndex);
+  const serverResponse = usePageSpeedStoreState(
+    (state) => state.serverResponse,
+  );
+  const largePayloads = usePageSpeedStoreState((state) => state.largePayloads);
+  const domSize = usePageSpeedStoreState((state) => state.domSize);
+  const urlRedirects = usePageSpeedStoreState((state) => state.urlRedirects);
+  const longTasks = usePageSpeedStoreState((state) => state.longTasks);
+  const renderBlocking = usePageSpeedStoreState(
+    (state) => state.renderBlocking,
+  );
+  const networkRequests = usePageSpeedStoreState(
+    (state) => state.networkRequests,
+  );
 
   // Extract the SEO from Zustand
-  const favicon = useOnPageSeo((state) => state.favicon);
-  const seoTitle = useOnPageSeo((state) => state.seopagetitle);
-  const seoDescription = useOnPageSeo((state) => state.seodescription);
-  const seoCanonical = useOnPageSeo((state) => state.seocanonical);
-  const seoHreflangs = useOnPageSeo((state) => state.seohreflangs);
-  const seoOpengraph = useOnPageSeo((state) => state.seoopengraph);
-  const seoSchema = useOnPageSeo((state) => state.seoschema);
-  const seoCharset = useOnPageSeo((state) => state.seocharset);
-  const seoIndexability = useOnPageSeo((state) => state.seoindexability);
-  const seoAltTags = useOnPageSeo((state) => state.seoalttags);
-  const noAltTags = seoAltTags?.filter((tag) => tag?.alt_text === "");
-  const seoStatusCodes = useOnPageSeo((state) => state.seostatusCodes);
-  const seoheadings = useOnPageSeo((state) => state.seoheadings);
-  const seoImages = useOnPageSeo((state) => state.seoImages);
-  const seoOpenGraph = useOnPageSeo((state) => state.seoOpenGraph);
+  const favicon = useOnPageSeoState((state) => state.favicon);
+  const seoTitle = useOnPageSeoState((state) => state.seopagetitle);
+  const seoDescription = useOnPageSeoState((state) => state.seodescription);
+  const seoCanonical = useOnPageSeoState((state) => state.seocanonical);
+  const seoHreflangs = useOnPageSeoState((state) => state.seohreflangs);
+  const seoOpengraph = useOnPageSeoState((state) => state.seoopengraph);
+  const seoSchema = useOnPageSeoState((state) => state.seoschema);
+  const seoCharset = useOnPageSeoState((state) => state.seocharset);
+  const seoIndexability = useOnPageSeoState((state) => state.seoindexability);
+  const seoAltTags = useOnPageSeoState((state) => state.seoalttags);
+  const seoStatusCodes = useOnPageSeoState((state) => state.seostatusCodes);
+  const seoheadings = useOnPageSeoState((state) => state.seoheadings);
+  const seoOpenGraph = useOnPageSeoState((state) => state.seoOpenGraph);
 
   // Extract the CONTENT from ZUSTAND
-  const wordCount = useContentStore((state) => state.wordCount);
-  const readingTime = useContentStore((state) => state.readingTime);
-  const readingLevelResults = useContentStore((state) => state.readingLevel);
-  const contentStructure = useContentStore((state) => state.contentStructure);
-  const keywordDensity = useContentStore((state) => state.keywordDensity);
-  const contentSentiment = useContentStore((state) => state.contentSentiment);
-  const keywords = useContentStore((state) => state.keywords);
+  const wordCount = useContentStoreState((state) => state.wordCount);
+  const readingTime = useContentStoreState((state) => state.readingTime);
+  const readingLevelResults = useContentStoreState(
+    (state) => state.readingLevel,
+  );
+  const contentStructure = useContentStoreState(
+    (state) => state.contentStructure,
+  );
+  const keywords = useContentStoreState((state) => state.keywords);
+  const video = useContentStoreState((state) => state.video);
 
-  // SET ALL OF THE PERFOMANCE STATE INTO A GLOBAL STATE
   const setGlobalPerformanceScore = usePageSpeedStore(
     (state) => state.setGlobalPerformanceScore,
   );
 
-  useEffect(() => {
-    const score = {
-      performance,
-      fcp,
-      lcp,
-      tti,
-      tbt,
-      cls,
-      speedIndex,
-      serverResponse,
-      largePayloads,
-      domSize,
-      urlRedirects,
-      longTasks,
-      renderBlocking,
-      networkRequests,
-    };
-
-    setGlobalPerformanceScore(score);
-  }, []);
-
-  // Use useMemo to calculate the score only when its dependencies change
   const score = useMemo(
     () => ({
       performance,
@@ -109,205 +100,78 @@ const useGetChecks = () => {
     ],
   );
 
-  // Use useEffect to set the global performance score only once
   useEffect(() => {
     setGlobalPerformanceScore(score);
   }, [score, setGlobalPerformanceScore]);
-  // Use useMemo to avoid recalculating on every render
+
   const checks = useMemo(() => {
+    const createCheck = (id, name, condition) => ({
+      id,
+      name,
+      status: condition ? "Passed" : "Failed",
+    });
+
     return [
-      {
-        id: "1",
-        name: "Performance",
-        status: performance >= 0.5 ? "Passed" : "Failed", // Dynamically set based on performance score
-      },
-
-      {
-        id: "3",
-        name: "First Contentful Paint",
-        status: fcp >= 0.5 ? "Passed" : "Failed",
-      },
-      {
-        id: "4",
-        name: "Largest Contentful Paint",
-        status: lcp >= 0.5 ? "Passed" : "Failed",
-      },
-      {
-        id: "5",
-        name: "Time to Interactive",
-        status: tti >= 0.5 ? "Passed" : "Failed",
-      },
-
-      {
-        id: "5",
-        name: "Total Blocking Time",
-        status: tbt >= 0.5 ? "Passed" : "Failed",
-      },
-
-      {
-        id: "6",
-        name: "Cumulative Layout Shift",
-        status: cls >= 0.5 ? "Passed" : "Failed",
-      },
-      {
-        id: "7",
-        name: "Speed Index",
-        status: speedIndex >= 0.5 ? "Passed" : "Failed",
-      },
-      {
-        id: "8",
-        name: "Server Response Time",
-        status: serverResponse >= 0.5 ? "Passed" : "Failed",
-      },
-      {
-        id: "9",
-        name: "Total Byte Weight",
-        status: largePayloads >= 0.5 ? "Passed" : "Failed",
-      },
-      {
-        id: "10",
-        name: "DOM Size",
-        status: domSize <= 1500 ? "Passed" : "Failed",
-      },
-      {
-        id: "11",
-        name: "URL Redirects",
-        status: urlRedirects <= 0 ? "Passed" : "Failed",
-      },
-      {
-        id: "12",
-        name: "Long Tasks",
-        status: longTasks <= 0 ? "Passed" : "Failed",
-      },
-      {
-        id: "13",
-        name: "Render Blocking Resources",
-        status: renderBlocking <= 0 ? "Passed" : "Failed",
-      },
-      {
-        id: "14",
-        name: "Network Requests",
-        status: networkRequests <= 0.5 ? "Passed" : "Failed",
-      },
-      {
-        id: "15",
-        name: "Favicon",
-        status: favicon?.length > 0 ? "Passed" : "Failed",
-      },
-      {
-        id: "16",
-        name: "Page Title",
-        status:
-          seoTitle?.length <= 60 && seoTitle.length > 0 ? "Passed" : "Failed",
-      },
-
-      {
-        id: "17",
-        name: "Page Description",
-        status:
-          seoDescription?.length <= 160 && seoDescription.length > 0
-            ? "Passed"
-            : "Failed",
-      },
-      {
-        id: "18",
-        name: "Canonical",
-        status: seoCanonical !== "No canonical URL found" ? "Passed" : "Failed",
-      },
-      {
-        id: "19",
-        name: "Hreflangs",
-        status: seoHreflangs?.length > 1 ? "Passed" : "Failed",
-      },
-      {
-        id: "20",
-        name: "OpenGraph",
-        status: seoOpengraph?.image ? "Passed" : "Failed",
-      },
-      {
-        id: "21",
-        name: "Structured Data",
-        status: seoSchema?.length > 0 ? "Passed" : "Failed",
-      },
-      {
-        id: "22",
-        name: "Page Charset",
-        status: seoCharset?.length > 0 ? "Passed" : "Failed",
-      },
-      {
-        id: "23",
-        name: "Indexability",
-        status:
-          seoIndexability && seoIndexability[0] === "Indexable"
-            ? "Passed"
-            : "Failed",
-      },
-      {
-        id: "24",
-        name: "Images Alt Text",
-        status: noAltTags?.length === 0 ? "Passed" : "Failed",
-      },
-      {
-        id: "25",
-        name: "404 Links",
-        status: seoStatusCodes?.length === 0 ? "Passed" : "Failed",
-      },
-      {
-        id: "26",
-        name: "Repeated Headings",
-        status: seoheadings?.length === 0 ? "Passed" : "Failed",
-      },
-      {
-        id: "27",
-        name: "Word Count",
-        status: wordCount && wordCount[0] > 0 ? "Passed" : "Failed",
-      },
-      {
-        id: "28",
-        name: "Reading Time",
-        status: readingTime && readingTime[2] < 10 ? "Passed" : "Failed",
-      },
-      {
-        id: "29",
-        name: "Keyword Density",
-        status:
-          keywords &&
-          Array.isArray(keywords) &&
-          keywords.length > 0 &&
-          Array.isArray(keywords[0]) &&
-          keywords[0].length > 0 &&
-          Array.isArray(keywords[0][0]) &&
-          keywords[0][0].length > 1 &&
-          typeof keywords[0][0][1] === "number" &&
-          keywords[0][0][1] > 20
-            ? "Passed"
-            : "Failed",
-      },
+      createCheck("1", "Performance", performance >= 0.5),
+      createCheck("3", "First Contentful Paint", fcp >= 0.5),
+      createCheck("4", "Largest Contentful Paint", lcp >= 0.5),
+      createCheck("5", "Time to Interactive", tti >= 0.5),
+      createCheck("5", "Total Blocking Time", tbt >= 0.5),
+      createCheck("6", "Cumulative Layout Shift", cls >= 0.5),
+      createCheck("7", "Speed Index", speedIndex >= 0.5),
+      createCheck("8", "Server Response Time", serverResponse >= 0.5),
+      createCheck("9", "Total Byte Weight", largePayloads >= 0.5),
+      createCheck("10", "DOM Size", domSize <= 1500),
+      createCheck("11", "URL Redirects", urlRedirects <= 0),
+      createCheck("12", "Long Tasks", longTasks <= 0),
+      createCheck("13", "Render Blocking Resources", renderBlocking <= 0),
+      createCheck("14", "Network Requests", networkRequests <= 0.5),
+      createCheck("15", "Favicon", favicon?.length > 0),
+      createCheck(
+        "16",
+        "Page Title",
+        seoTitle?.length <= 60 && seoTitle.length > 0,
+      ),
+      createCheck(
+        "17",
+        "Page Description",
+        seoDescription?.length <= 160 && seoDescription.length > 0,
+      ),
+      createCheck("18", "Canonical", seoCanonical !== "No canonical URL found"),
+      createCheck("19", "Hreflangs", seoHreflangs?.length > 1),
+      createCheck("20", "OpenGraph", seoOpengraph?.image),
+      createCheck("21", "Structured Data", seoSchema?.length > 0),
+      createCheck("22", "Page Charset", seoCharset?.length > 0),
+      createCheck(
+        "23",
+        "Indexability",
+        seoIndexability && seoIndexability[0] === "Indexable",
+      ),
+      createCheck(
+        "24",
+        "Images Alt Text",
+        seoAltTags?.filter((tag) => tag?.alt_text === "").length === 0,
+      ),
+      createCheck("25", "404 Links", seoStatusCodes?.length === 0),
+      createCheck("26", "Repeated Headings", seoheadings?.length === 0),
+      createCheck("27", "Word Count", wordCount && wordCount[0] > 0),
+      createCheck("28", "Reading Time", readingTime && readingTime[2] < 10),
+      createCheck(
+        "29",
+        "Keyword Density",
+        keywords?.length > 0 && keywords[0]?.[0]?.[1] > 20,
+      ),
       {
         id: "30",
-        name:
-          readingLevelResults &&
-          readingLevelResults[0] &&
-          readingLevelResults[0][1]
-            ? readingLevelResults[0][1]
-            : "Reading Level",
-        status:
-          readingLevelResults &&
-          readingLevelResults[0] &&
-          readingLevelResults[0][1] &&
-          (readingLevelResults[0][1] === "Very Easy" ||
-            readingLevelResults[0][1] === "Easy" ||
-            readingLevelResults[0][1] === "Fairly Easy" ||
-            readingLevelResults[0][1] === "Standard")
-            ? "Passed"
-            : "Failed",
+        name: readingLevelResults?.[0]?.[1] || "Reading Level",
+        status: ["Very Easy", "Easy", "Fairly Easy", "Standard"].includes(
+          readingLevelResults?.[0]?.[1],
+        )
+          ? "Passed"
+          : "Failed",
       },
-
-      {
-        id: "31",
-        name: "Content Structure",
-        status: contentStructure === "Neutral" ? "Passed" : "Failed",
-      },
+      createCheck("31", "Content Structure", contentStructure === "Neutral"),
+      createCheck("32", "Media / Video", video?.[0] === "Yes"),
     ];
   }, [
     performance,
@@ -333,11 +197,16 @@ const useGetChecks = () => {
     seoSchema,
     seoCharset,
     seoIndexability,
-    // seoAltTags,
-    noAltTags,
+    seoAltTags,
     seoStatusCodes,
     seoheadings,
     seoOpenGraph,
+    wordCount,
+    readingTime,
+    readingLevelResults,
+    contentStructure,
+    keywords,
+    video,
   ]);
 
   return checks;

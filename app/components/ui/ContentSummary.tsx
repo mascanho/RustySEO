@@ -29,6 +29,7 @@ const ContentSummary = ({
   const setReadingLevel = useContentStore((state) => state.setReadingLevel);
   const setTextRatio = useContentStore((state) => state.setTextRatio);
   const setKeywords = useContentStore((state) => state.setKeywords);
+  const setVideo = useContentStore((state) => state.setVideo);
 
   useEffect(() => {
     if (!keywords) {
@@ -47,6 +48,7 @@ const ContentSummary = ({
     setReadingLevel(readingLevelResults);
     setTextRatio(htmlToTextRatio);
     setKeywords(keywords);
+    setVideo(video);
   }, [keywords, readingTime, readingLevelResults]);
 
   console.log(readingLevelResults, "READING LEVEL RESULTS FROM EL");
