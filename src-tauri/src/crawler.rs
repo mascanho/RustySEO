@@ -592,6 +592,8 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         }
     }
 
+    println!("Video: {:?}", video);
+
     Ok(CrawlResult {
         links,
         headings,

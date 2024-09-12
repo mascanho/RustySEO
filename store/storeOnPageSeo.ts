@@ -19,6 +19,7 @@ interface OnPageSeoState {
   seoOpenGraph: Record<string, any> | null;
   seoRenderBlocking: Record<string, any> | null;
   seoContentQuality: Record<string, any> | null;
+  seoMedia: Record<string, any> | null;
 
   setSeoLoading: (loading: boolean) => void;
   setFavicon: (favicon: string[] | null) => void;
@@ -37,6 +38,7 @@ interface OnPageSeoState {
   setSeoOpenGraph: (seoOpenGraph: Record<string, any> | null) => void;
   setSeoRenderBlocking: (seoRenderBlocking: Record<string, any> | null) => void;
   setSeoContentQuality: (seoContentQuality: Record<string, any> | null) => void;
+  setSeoMedia: (seoMedia: Record<string, any> | null) => void;
 }
 
 // Create the Zustand store with the defined interface
@@ -58,6 +60,7 @@ const useOnPageSeo = create<OnPageSeoState>((set) => ({
   seoOpenGraph: null,
   seoRenderBlocking: null,
   seoContentQuality: null,
+  seoMedia: null,
 
   setSeoLoading: (loading) => set(() => ({ seoLoading: loading })),
   setFavicon: (favicon) => set(() => ({ favicon })),
@@ -78,6 +81,7 @@ const useOnPageSeo = create<OnPageSeoState>((set) => ({
     set(() => ({ seoRenderBlocking })),
   setSeoContentQuality: (seoContentQuality) =>
     set(() => ({ seoContentQuality })),
+  setSeoMedia: (seoMedia) => set(() => ({ seoMedia })),
 }));
 
 export default useOnPageSeo;

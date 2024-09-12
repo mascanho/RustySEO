@@ -790,6 +790,7 @@ const Home: React.FC<HomeProps> = () => {
         htmlToTextRatio={htmlToTextRatio}
         loading={loading}
         bodyElements={bodyElements}
+        video={video}
       />
     </section>
   );

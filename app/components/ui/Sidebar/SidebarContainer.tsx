@@ -37,6 +37,7 @@ interface SidebarContainerProps {
   loading: boolean;
   favicon: string[];
   bodyElements: any;
+  video: any;
 }
 
 const ollama = true;
@@ -56,6 +57,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
   loading,
   favicon,
   bodyElements,
+  video,
 }) => {
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
   const ollamaStatus = useOllamaStore();
@@ -102,13 +104,14 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
                 AiContentAnalysis={AiContentAnalysis}
                 robots={robots}
                 htmlToTextRatio={htmlToTextRatio}
+                video={video}
               />
             </Tabs.Panel>
             <Tabs.Panel
               value="third"
               className="h-full w-full bg-brand-highlight/5"
             >
-              <RankingInfo keywords={keywords} />
+              <RankingInfo keywords={keywords} pageSpeed={pageSpeed} />
             </Tabs.Panel>
 
             <Tabs.Panel value="topics" className="h-full w-full">
