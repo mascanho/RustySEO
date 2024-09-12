@@ -218,7 +218,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut charset_arr = Vec::new();
     let mut video = Vec::new();
 
-    if response.status().is_success()
+    if response.status().is_success() {
         let body = response
             .text()
             .await
@@ -267,8 +267,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         // ------------------------- Push the links Vector to the DB -------------------------
         db::refresh_links_table();
         db::store_links_in_db(links.clone());
-
-
 
         // Clear the links Table before the crawl
 
@@ -395,7 +393,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
                 headings.push(heading_with_type);
             }
         }
-
 
         // Fetch page Title
         let title_selector =
