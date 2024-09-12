@@ -106,7 +106,7 @@ export default function Component({ bodyElements }: any) {
                           "_blank",
                         )
                       }
-                      className="ml-1 text-[11px] text-gray-500 bg-gray-200 hover:bg-brand-bright hover:text-white px-2 py-1 rounded-full cursor-pointer font-medium"
+                      className="ml-1 text-[11px] text-white bg-gray-700 hover:bg-brand-bright hover:text-white px-2 py-1 rounded-full cursor-pointer font-medium"
                     >
                       {entry?.keyword}
                     </span>

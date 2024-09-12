@@ -54,7 +54,7 @@ const ContentSummary = ({
   console.log(readingLevelResults, "READING LEVEL RESULTS FROM EL");
 
   useEffect(() => {
-    setAiContentAnalysis("...");
+    setAiContentAnalysis("");
   }, [keywords]);
 
   // Get the AI stuff
@@ -167,10 +167,10 @@ const ContentSummary = ({
           </div>
 
           <div className="grid gap-1 overflow-y-auto mt-4 h-full">
-            <h3 className="text-xs font-semibold dark:text-sky-dark">
+            <h3 className="text-[10px] font-semibold dark:text-sky-dark">
               Page Summary
             </h3>
-            <p className="text-muted-foreground text-xs mt-1">
+            <p className="text-muted-foreground text-xs -mt-1">
               {AiContentAnalysis}
             </p>
             {AiContentAnalysis === "" && keywords && keywords.length > 0 && (

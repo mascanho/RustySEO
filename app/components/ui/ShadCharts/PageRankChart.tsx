@@ -108,11 +108,13 @@ export function PageRankChart({ pageRank }: { pageRank: any }) {
           </RadialBarChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium text-center text-xs text-gray-500 leading-none">
-          This represents the page rank of the domain. based on open page rank
-        </div>
-      </CardFooter>
+      {/*
+              <CardFooter className="flex-col gap-2 text-sm">
+                <div className="flex items-center gap-2 font-medium text-center text-xs text-gray-500 leading-none">
+                  This represents the page rank of the domain. based on open page rank
+                </div>
+              </CardFooter>
+        */}
     </Card>
   );
 }

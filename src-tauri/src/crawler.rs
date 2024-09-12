@@ -218,7 +218,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut charset_arr = Vec::new();
     let mut video = Vec::new();
 
-    if response.status().is_success() {
+    if response.status().is_success()
         let body = response
             .text()
             .await
