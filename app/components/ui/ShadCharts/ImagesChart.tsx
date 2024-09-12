@@ -65,7 +65,7 @@ export function ImagesChart({ images, url }: { images: any; url: string }) {
   ];
 
   return (
-    <Card className="flex flex-col dark:bg-brand-darker dark:border-0 overflow-hidden">
+    <Card className="flex flex-col dark:bg-brand-darker dark:border-0 overflow-hidden h-[22rem]">
       <CardHeader className="items-center pb-0">
         <CardTitle>Images on page</CardTitle>
         {/* <CardDescription>{url}</CardDescription> */}

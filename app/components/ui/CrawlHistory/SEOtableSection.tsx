@@ -64,9 +64,10 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
   const [matchedUrlData, setMatchedUrlData] = useState([]);
 
   // Effect to update data when dbdata changes
+
   useEffect(() => {
     if (Array.isArray(dbdata)) {
-      setData(dbdata);
+      setData([...dbdata]);
     }
   }, [dbdata]);
 
@@ -80,7 +81,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
 
   useEffect(() => {
     fetchData();
-  }, [fetchData]);
+  }, [ crawl]);
 
   // Filter and sort data
   const filteredData = (Array.isArray(data) ? data : [])
@@ -114,11 +115,13 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
 
   // Refresh table function
   const refreshTable = useCallback(() => {
-    fetchData();
+    if (Array.isArray(dbdata)) {
+      setData(dbdata);
+    }
     setSearchQuery("");
     setStartDate(null);
     setEndDate(null);
-  }, [fetchData]);
+  }, [dbdata]);
 
   // Handle download
   const handleDownloadXLSX = async () => {
@@ -230,7 +233,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
 
         <DropdownMenu>
           <DropdownMenuTrigger className="transition-all hover:bg-brand-bright ease-linear active:scale-75 w-fit px-4 rounded-md justify-center flex items-center bg-brand-bright text-white h-6 m-auto">
-            <FiDownload className="w-4 h-4 mr-2 mb-1" />
+            {/* <FiDownload className="w-4 h-4 mr-2" /> */}
             Export
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-white dark:bg-brand-darker mr-12 dark:border-brand-normal/20 dark:text-white">
@@ -247,7 +250,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
       {/* Table Section */}
       <section className="rounded-md mt-1 overflow-x-auto shadow border dark:border-white/10 dark:bg-brand-darker">
         {/* Parent container for vertical scrolling */}
-        <div className="h-full max-h-[calc(100vh-220px)] overflow-y-auto">
+        <div className="h-full max-h-[calc(100vh-190px)] overflow-y-auto">
           {/* Container for horizontal scrolling */}
           <table className="table_history w-full shadow relative">
             <thead className="bg-white dark:bg-brand-darker sticky top-0 z-20">
@@ -327,19 +330,21 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
                       </div>
                     </td>
                     <td
+                      align="left"
                       className={`border p-2 ${data?.title?.length > 60 ? "text-red-500" : "text-green-700"}`}
                     >
                       <div className="line-clamp-2">{data.title}</div>
                     </td>
                     <td
+                      align="left"
                       className={`border p-2 ${data?.description?.length > 160 ? "text-red-500" : "text-green-700"}`}
                     >
                       <div className="line-clamp-2">{data.description}</div>
                     </td>
-                    <td className="border p-2">
+                    <td align="left" className="border p-2">
                       <div className="line-clamp-2">{firstHeading}</div>
                     </td>
-                    <td className="border p-2">
+                    <td align="left" className="border p-2">
                       <div className="line-clamp-2">{secondHeading}</div>
                     </td>
                     <td align="left" className="border p-2">

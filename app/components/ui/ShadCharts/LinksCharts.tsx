@@ -95,7 +95,7 @@ export function LinksChart({
   }, []);
 
   return (
-    <Card className="flex flex-col dark:bg-brand-darker dark:border-brand-darker">
+    <Card className="flex flex-col dark:bg-brand-darker dark:border-brand-darker h-[22rem]">
       <CardHeader className="items-center pb-0">
         <CardTitle>On page Links</CardTitle>
       </CardHeader>
@@ -155,14 +155,14 @@ export function LinksChart({
         )}
       </CardContent>
       {linkStatusCodes?.length > 0 && (
-        <CardFooter className="flex-col gap-2 text-xs text-left mb-6 dark:text-white/50">
-          <p className="flex items-center font-medium leading-none -mt-10">
-            This page contains{" "}
-            <span className="mx-1 font-bold text-brand-bright">
-              {linkStatusCodes?.length}
-            </span>
-            links.
-          </p>
+        <CardFooter className="flex-col gap-2 text-xs text-left mb-12 dark:text-white/50">
+          {/* <p className="flex items-center font-medium leading-none -mt-10"> */}
+          {/*   This page contains{" "} */}
+          {/*   <span className="mx-1 font-bold text-brand-bright"> */}
+          {/*     {linkStatusCodes?.length} */}
+          {/*   </span> */}
+          {/*   links. */}
+          {/* </p> */}
           <p className="leading-none text-muted-foreground">
             <span className="font-bold">Internal Links: </span>
             <span className="text-brand-bright font-bold">

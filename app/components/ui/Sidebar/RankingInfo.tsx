@@ -15,7 +15,13 @@ interface InstalledInfo {
   clientSecret: string;
 }
 
-const RankingInfo = ({ keywords }: { keywords: string[] }) => {
+const RankingInfo = ({
+  keywords,
+  pageSpeed,
+}: {
+  keywords: string;
+  pageSpeed: any[];
+}) => {
   const [matchedData, setMatchedData] = useState<MatchedDataItem[] | null>(
     null,
   );
@@ -62,7 +68,7 @@ const RankingInfo = ({ keywords }: { keywords: string[] }) => {
       handleUrlMatch(url);
       setSessionUrl(url);
     }
-  }, [keywords]);
+  }, [keywords, pageSpeed]);
 
   useEffect(() => {
     const getCredentials = async () => {
@@ -116,18 +122,21 @@ const RankingInfo = ({ keywords }: { keywords: string[] }) => {
                   url={sessionUrl}
                   query={item.query}
                 >
-                  <span className="pointer hover:underline hover:text-brand-bright ">
+                  <span className="pointer hover:underline hover:text-brand-bright text-[10px] ">
                     {item.query}
                   </span>
                 </RankingMenus>
               </td>
-              <td align="left" className="py-2 text-center text-brand-bright">
+              <td
+                align="left"
+                className="py-2 text-center text-brand-bright text-[9px]"
+              >
                 {item.clicks}
               </td>
-              <td align="right" className="py-2 text-purple-500">
+              <td align="right" className="py-2 text-purple-500 text-[9px]">
                 {item.impressions}
               </td>
-              <td className="py-2 text-center text-blue-500">
+              <td className="py-2 text-center text-blue-500 text-[9px]">
                 {item.position.toFixed(2)}
               </td>
             </tr>

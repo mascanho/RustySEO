@@ -4,11 +4,20 @@ import { Collapse, Box, Group } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { IconChevronDown } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
-import { BsArrowsCollapse } from "react-icons/bs";
+import { BsArrowsCollapse, BsThreeDotsVertical } from "react-icons/bs";
 import StampEl from "./Stamp/Stamp";
 import { AiFillTag, AiFillTags } from "react-icons/ai";
 import useStore from "@/store/Panes";
 import TableMenus from "./CrawlHistory/TableMenus";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@radix-ui/react-dropdown-menu";
+import TableFloatMenus from "./CrawlHistory/_components/TableFloatMenus";
 
 export const HeadAnalysis = ({
   pageTitle,
@@ -56,7 +65,7 @@ export const HeadAnalysis = ({
   ]);
 
   const data = {
-    url: sessionUrl,
+    url: url,
   };
 
   return (
@@ -70,10 +79,16 @@ export const HeadAnalysis = ({
         }}
         className={`head dark:border-brand-darker  ${Visible.head ? "block" : "hidden"} ${!Visible.widgets && "mt-0"} bg-white p-1 dark:bg-brand-darker shadow rounded-md mb-3 pb-5 overflow-hidden border relative `}
       >
-        {/* <StampEl indexation={indexation} hidden={hidden} /> */}
-        <h2 className="flex items-center text-center font-semibold  w-fit relative p-4 mx-auto text-black/50 dark:text-white/50 ">
-          <AiFillTag className="mr-1.5" /> Head
-        </h2>
+        <div className="relative">
+          <h2 className="flex items-center text-center font-semibold  w-fit relative p-4 mx-auto text-black/50 dark:text-white/50 ">
+            <AiFillTag className="mr-1.5" /> Head
+          </h2>
+          <div className="absolute top-2.5 right-0">
+            <TableFloatMenus data={data} crawl={crawl} url={url}>
+              <BsThreeDotsVertical className="dark:text-white mr-2 z-10" />
+            </TableFloatMenus>
+          </div>
+        </div>
         <section
           className={`${hidden && "hidden"} transition-all ease-in delay-300 text-xs px-3 -mt-8 block xl:flex`}
         >

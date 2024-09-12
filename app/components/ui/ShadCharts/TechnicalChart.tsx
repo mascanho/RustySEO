@@ -63,21 +63,23 @@ export function TechnicalChart({ dbdata }: any) {
   console.log(dbdata, "DATA");
 
   const chartData = React.useMemo(() => {
-    return Array.isArray(dbdata)
-      ? dbdata.map((data: any) => {
-          return {
-            date: data.date,
-            performance: data.performance,
-            speed: data.speed_index,
-            fcp: data.fcp,
-            lcp: data.lcp,
-            tti: data.tti,
-            cls: data.cls,
-            tbt: data.tbt,
-            dom: data.dom_size,
-          };
-        })
-      : [];
+    if (!Array.isArray(dbdata)) return [];
+
+    // Map data to the correct format
+    const mappedData = dbdata.map((data: any) => ({
+      date: data.date,
+      performance: data.performance,
+      speed: data.speed_index,
+      fcp: data.fcp,
+      lcp: data.lcp,
+      tti: data.tti,
+      cls: data.cls,
+      tbt: data.tbt,
+      dom: data.dom_size,
+    }));
+
+    // Sort the data by date in ascending order
+    return mappedData.sort((a, b) => new Date(a.date) - new Date(b.date));
   }, [dbdata]);
 
   const averages = React.useMemo(() => {
@@ -114,9 +116,9 @@ export function TechnicalChart({ dbdata }: any) {
   }, [chartData]);
 
   return (
-    <Card className="dark:bg-brand-darker dark:border-brand-dark">
+    <Card className="dark:bg-brand-darker dark:border-brand-dark h-[30%]">
       <CardHeader className="flex flex-col items-stretch space-y-0 border-b dark:border-brand-dark p-0 sm:flex-row dark:bg-brand-darker">
-        <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-2 sm:py-3 ">
+        <div className="flex flex-1 flex-col justify-center gap-1 px-4 py-2 sm:py-3 ">
           <CardTitle>Core Web Vitals</CardTitle>
           <CardDescription>
             Showing the averages for the pages you crawled

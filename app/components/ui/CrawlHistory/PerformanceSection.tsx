@@ -288,7 +288,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
 
           <DropdownMenu>
             <DropdownMenuTrigger className="transition-all hover:bg-brand-bright ease-linear active:scale-75 w-fit px-4 rounded-md justify-center flex items-center bg-brand-bright text-white h-6 m-auto">
-              <FiDownload className="w-4 h-4 mr-2 mb-1" />
+              {/* <FiDownload className="w-4 h-4 mr-2 text-[10px]" /> */}
               Export
             </DropdownMenuTrigger>
             <DropdownMenuContent className="bg-white dark:bg-brand-darker mr-12 dark:border-brand-normal/20 dark:text-white">
@@ -315,7 +315,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
         </div>
 
         <section className="rounded-md mt-1 overflow-hidden shadow border dark:border-white/10 dark:bg-brand-darker w-full z-0">
-          <div className="h-[28rem] max-h-[38rem] custom-scrollbar overflow-auto bg-white dark:bg-brand-darker w-full">
+          <div className="h-[calc(60.5rem-30rem)] custom-scrollbar overflow-auto bg-white dark:bg-brand-darker w-full">
             <table className="table_history w-full shadow text-xs">
               <thead className="bg-white dark:bg-brand-darker sticky top-0 z-10">
                 <tr>

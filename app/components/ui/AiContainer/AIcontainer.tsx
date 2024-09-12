@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 import React, { useRef, useEffect, useState } from "react";
 import { useChat } from "ai/react";
@@ -8,7 +7,6 @@ import { IoIosPerson } from "react-icons/io";
 import { useOllamaStore } from "@/store/store";
 import { invoke } from "@tauri-apps/api/tauri";
 import useModelStore from "@/store/AIModels";
-
 import { FaRegCopy } from "react-icons/fa6";
 import { toast } from "sonner";
 
@@ -29,10 +27,15 @@ const AIcontainer = () => {
   const bubbleRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  // Ensure scroll is at the bottom when new messages arrive
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // CHECK THE AI-PROVIDER
   useEffect(() => {
@@ -119,7 +122,7 @@ const AIcontainer = () => {
                   {m.role !== "user" && (
                     <FaRegCopy
                       onClick={() => handlecopy(m.content)}
-                      className="absolute right-1.5 top-2.5 cursor-pointer"
+                      className="absolute right-1.5 top-2.5 cursor-pointer active:scale-90 transition ease-linear duration-150"
                     />
                   )}
                 </div>

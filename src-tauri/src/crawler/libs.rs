@@ -596,7 +596,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
             "country".to_string(),
         ],
         search_type: "web".to_string(),
-        row_limit: 2976,
+        row_limit: 3000,
     };
     let body = serde_json::to_string(&query)?;
 

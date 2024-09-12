@@ -42,7 +42,7 @@ export function HtmlToTextChart({ htmlToTextRatio }: any) {
   ];
 
   return (
-    <Card className="flex flex-col dark:bg-brand-darker dark:border-brand-darker">
+    <Card className="flex flex-col dark:bg-brand-darker dark:border-brand-darker h-[22rem]">
       <CardHeader className="items-center pb-0">
         <CardTitle>Content Ratio</CardTitle>
         {/* <CardDescription>January - June 2024</CardDescription> */}
@@ -50,7 +50,7 @@ export function HtmlToTextChart({ htmlToTextRatio }: any) {
       <CardContent className="flex flex-1 items-center pb-0">
         <ChartContainer
           config={chartConfig}
-          className="mx-auto aspect-square w-full max-w-[280px]"
+          className="mx-auto aspect-square w-full max-w-[280px] mt-5"
         >
           <RadialBarChart
             data={chartData}
@@ -107,7 +107,7 @@ export function HtmlToTextChart({ htmlToTextRatio }: any) {
         </ChartContainer>
       </CardContent>
       {htmlToTextRatio && (
-        <CardFooter className="flex-col gap-2 text-center text-xs -mt-8 mb-10 dark:text-white/50">
+        <CardFooter className="flex-col gap-2 text-center text-xs -mt-2.5  mb-10 dark:text-white/50">
           <div className="flex flex-col items-center gap-2 font-medium leading-none -mt-10">
             {htmlToTextRatio?.[0] &&
               Math.round(htmlToTextRatio?.[0]?.[0] * 100) < 25 && (

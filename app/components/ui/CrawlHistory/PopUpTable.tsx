@@ -129,7 +129,7 @@ const PopUpTable = ({ data }: any) => {
                   {row?.impressions}
                 </td>
                 <td className="px-4 py-2 text-gray-800 dark:text-gray-300">
-                  {row?.ctr}%
+                  {(row?.ctr).toFixed(2)}%
                 </td>
                 <td className="px-4 py-2 text-gray-800 dark:text-gray-300">
                   {row?.position.toFixed(1)}

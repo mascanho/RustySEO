@@ -59,6 +59,8 @@ import { AiOutlineRise } from "react-icons/ai";
 import { MdOutlineTaskAlt } from "react-icons/md";
 import { GoTable } from "react-icons/go";
 
+import { CgPerformance } from "react-icons/cg";
+
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
 interface HomeProps {}
@@ -568,20 +570,20 @@ const Home: React.FC<HomeProps> = () => {
             <div className="transition-all   ease-in  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-1 top-[70px]  transform dark:bg-brand-darker  pb-0">
               <Tabs.List justify="center" className="dark:text-white">
                 <Tabs.Tab value="first">
-                  <MdOutlineHealthAndSafety className="inline-block text-sm mr-1" />{" "}
+                  <CgPerformance className="inline-block text-sm mr-1 mb-[1px]" />{" "}
                   Diagnostics
                 </Tabs.Tab>
                 <Tabs.Tab value="third">
-                  <AiOutlineRise className="inline-block mr-1 text-sm" />{" "}
+                  <AiOutlineRise className="inline-block mr-1 text-sm mb-[2px]" />{" "}
                   Improvements
                 </Tabs.Tab>
                 <Tabs.Tab value="fourth">
-                  <MdOutlineTaskAlt className="inline-block mr-1 text-sm" />{" "}
+                  <MdOutlineTaskAlt className="inline-block mr-1 text-sm mb-[2px]" />{" "}
                   Task Manager
                 </Tabs.Tab>
                 <Tabs.Tab value="fifth">
-                  <GoTable className="inline-block mr-1 text-sm" /> Crawl
-                  History
+                  <GoTable className="inline-block mr-1 text-sm mb-[2px]" />{" "}
+                  Crawl History
                 </Tabs.Tab>
               </Tabs.List>
             </div>

@@ -163,9 +163,9 @@ pub struct Performance {
 
 pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     // remove the "/" at the end of the url
-    if url.ends_with("/") {
-        url.pop();
-    }
+    // if url.ends_with("/") {
+    //     url.pop();
+    // }
 
     println!("Crawling: {}", &url);
 
@@ -572,7 +572,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             println!("Error: {:?}", e);
         }
     }
-
 
     Ok(CrawlResult {
         links,
