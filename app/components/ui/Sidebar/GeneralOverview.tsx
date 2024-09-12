@@ -64,7 +64,7 @@ export default function GeneralOverview({
           <div className="grid h-full ">
             {/* CHECKS THE CORE WEB VITALS */}
             <details open className="h-fit">
-              <summary className="text-xs cursor-pointer bg-gray-100 dark:bg-brand-darker font-semibold dark:text-slate-400 pl-2 py-1">
+              <summary className="text-xs cursor-pointer bg-transparent dark:bg-brand-darker font-semibold dark:text-slate-400 pl-2 py-1">
                 Core Web Vitals
               </summary>
               {checks.slice(0, 14).map((check, index) => (
