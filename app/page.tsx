@@ -106,6 +106,7 @@ const Home: React.FC<HomeProps> = () => {
     widget: false,
   });
   const [linkStatusCodeStatus, setLinkStatusCodeStatus] = useState(false);
+  const [video, setVideo] = useState<any[]>([]);
 
   const [open, { toggle }] = useDisclosure(false);
 
@@ -201,6 +202,7 @@ const Home: React.FC<HomeProps> = () => {
     setHtmlToTextRatio([]);
     setPageRank([]);
     setLinkStatusCodes([]);
+    setVideo([]);
 
     invoke<{
       links: [];
@@ -226,6 +228,7 @@ const Home: React.FC<HomeProps> = () => {
       ratio: any;
       page_rank: any[];
       charset_arr: any[];
+      video: any[];
     }>("crawl", { url })
       .then((result) => {
         handleLinkStatusCheck(url);
@@ -254,6 +257,7 @@ const Home: React.FC<HomeProps> = () => {
         setRobots(result.robots);
         setHtmlToTextRatio(result.ratio);
         setPageRank(result.page_rank);
+        setVideo(result.video);
       })
       .catch(console.error);
   };

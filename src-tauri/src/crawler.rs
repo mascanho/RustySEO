@@ -8,6 +8,7 @@ use regex::Regex;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, USER_AGENT};
 use reqwest::Client;
 use rusqlite::Connection;
+use scraper::selectable::Selectable;
 use scraper::{ElementRef, Html, Selector};
 use serde::de::Error;
 use serde::{Deserialize, Serialize};
@@ -91,7 +92,7 @@ pub struct CrawlResult {
     pub ratio: Vec<(f64, f64, f64)>,
     pub page_rank: Vec<f32>,
     pub charset_arr: Vec<String>,
-    pub video: Vec<String>
+    pub video: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -371,8 +372,15 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         let embed_selector = Selector::parse("embed").unwrap();
 
         // Check if they are present on the page
+        let has_video = document.select(&video_selector).next().is_some()
+            || document.select(&iframe_selector).next().is_some()
+            || document.select(&embed_selector).next().is_some();
 
-
+        if has_video {
+            video.push(String::from("Yes"));
+        } else {
+            video.push(String::from("No"));
+        }
 
         // Fetch headings
         for level in 1..=6 {
@@ -609,7 +617,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         ratio,
         page_rank,
         charset_arr,
-        video
+        video,
     })
 }
 
