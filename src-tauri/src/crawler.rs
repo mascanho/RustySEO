@@ -91,6 +91,7 @@ pub struct CrawlResult {
     pub ratio: Vec<(f64, f64, f64)>,
     pub page_rank: Vec<f32>,
     pub charset_arr: Vec<String>,
+    pub video: Vec<String>
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -214,6 +215,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     //let mut head_elements = Vec::new();
     let mut body_elements = Vec::new();
     let mut charset_arr = Vec::new();
+    let mut video = Vec::new();
 
     if response.status().is_success() {
         let body = response
@@ -362,6 +364,15 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
                 charset_arr.push(charset.to_string());
             }
         }
+
+        // Fetch the video
+        let video_selector = Selector::parse("video").unwrap();
+        let iframe_selector = Selector::parse("iframe").unwrap();
+        let embed_selector = Selector::parse("embed").unwrap();
+
+        // Check if they are present on the page
+
+
 
         // Fetch headings
         for level in 1..=6 {
@@ -598,6 +609,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         ratio,
         page_rank,
         charset_arr,
+        video
     })
 }
 

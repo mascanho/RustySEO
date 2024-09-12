@@ -145,7 +145,7 @@ export function TechnicalChart({ dbdata }: any) {
           })}
         </div>
       </CardHeader>
-      <CardContent className="px-2 sm:p-6">
+      <CardContent className="px-2 sm:py-6">
         <ChartContainer
           config={chartConfig}
           className="aspect-auto h-[250px] w-full"

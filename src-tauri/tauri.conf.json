@@ -91,9 +91,9 @@
         "fullscreen": false,
         "resizable": true,
         "title": "RustySEO - v0.1",
-        "minWidth": 1500,
+        "minWidth": 1700,
         "minHeight": 1000,
-        "width": 1000,
+        "width": 1400,
         "height": 800,
         "decorations": true
       }

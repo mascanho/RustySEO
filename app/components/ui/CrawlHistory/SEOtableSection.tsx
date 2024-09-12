@@ -27,6 +27,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import PopUpTable from "./PopUpTable";
+import { IoIosClose } from "react-icons/io";
 
 // Define TypeScript types
 interface PerformanceData {
@@ -81,7 +82,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
 
   useEffect(() => {
     fetchData();
-  }, [ crawl]);
+  }, [crawl]);
 
   // Filter and sort data
   const filteredData = (Array.isArray(data) ? data : [])
@@ -190,13 +191,17 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
       <div className=" -right-0 w-full flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10 -z-10">
         {/* Search Bar */}
         <div className="flex items-center space-x-2 relative z-0">
-          <IoIosSearch className="w-4 h-4 absolute left-4 dark:text-white" />
+          <IoIosSearch className="w-3 h-3 absolute left-4 dark:text-white" />
           <input
             type="text"
             placeholder="Search by URL"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="border dark:text-white rounded-md  text-xs h-6 pl-7 dark:border-brand-normal/20 dark:bg-brand-darker"
+            className="border dark:text-white rounded-md  text-xs h-6 pl-6 pr-3 dark:border-brand-normal/20 dark:bg-brand-darker"
+          />
+          <IoIosClose
+            onClick={() => setSearchQuery("")}
+            className={`${searchQuery.length > 0 ? "" : "hidden"} cursor-pointer absolute right-1 text-red-500 top-1/2 -translate-y-1/2 w-3 h-3 dark:text-red-500`}
           />
         </div>
 

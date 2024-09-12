@@ -4,7 +4,7 @@ import { BsMenuDown } from "react-icons/bs";
 import "react-datepicker/dist/react-datepicker.css";
 import { FaDesktop, FaMobileAlt } from "react-icons/fa";
 import { FiDownload, FiCheckCircle } from "react-icons/fi";
-import { IoIosSearch } from "react-icons/io";
+import { IoIosClose, IoIosSearch } from "react-icons/io";
 import { save } from "@tauri-apps/api/dialog";
 import { writeTextFile } from "@tauri-apps/api/fs";
 import { invoke } from "@tauri-apps/api/tauri";
@@ -246,13 +246,17 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
       <div className="relative mr-0 w-full mx-auto text-xs z-0">
         <div className=" -right-0  -z-10 flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10 -mt-7  w-full">
           <div className="flex items-center space-x-2 relative z-0">
-            <IoIosSearch className="w-4 h-4 absolute left-4 dark:text-white" />
+            <IoIosSearch className="w-3 h-3 absolute left-4 dark:text-white" />
             <input
               type="text"
               placeholder="Search by URL"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="border dark:text-white rounded-md  text-xs h-6 pl-7 dark:border-brand-normal/20 dark:bg-brand-darker"
+              className="border dark:text-white rounded-md  text-xs h-6 pl-6 pttt dark:border-brand-normal/20 dark:bg-brand-darker"
+            />
+            <IoIosClose
+              onClick={() => setSearchQuery("")}
+              className={`${searchQuery.length > 0 ? "" : "hidden"} cursor-pointer absolute right-1 text-red-500 top-1/2 -translate-y-1/2 w-3 h-3 dark:text-red-500`}
             />
           </div>
 
@@ -315,7 +319,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
         </div>
 
         <section className="rounded-md mt-1 overflow-hidden shadow border dark:border-white/10 dark:bg-brand-darker w-full z-0">
-          <div className="h-[calc(60.5rem-30rem)] custom-scrollbar overflow-auto bg-white dark:bg-brand-darker w-full">
+          <div className="h-full max-h-[calc(100vh-570px)] min-h-[calc(100vh-570px)] custom-scrollbar overflow-auto bg-white dark:bg-brand-darker w-full">
             <table className="table_history w-full shadow text-xs">
               <thead className="bg-white dark:bg-brand-darker sticky top-0 z-10">
                 <tr>
