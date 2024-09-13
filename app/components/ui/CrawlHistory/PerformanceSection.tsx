@@ -281,7 +281,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
               <DropdownMenuSeparator className="bg-black/20 dark:bg-white/20" />
               <DropdownMenuItem
                 onClick={handleClearTable}
-                className="text-red-500  hover:text-red-500 dark:hover:bg-red-700 dark:hover:text-white cursor-pointer text-xs "
+                className="text-red-500  hover:text-red-500 dark:hover:bg-red-700 dark:hover:text-white cursor-pointer text-xs focus:bg-red-500 focus:text-white "
               >
                 Clear Table
               </DropdownMenuItem>
