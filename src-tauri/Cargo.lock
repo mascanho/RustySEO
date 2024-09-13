@@ -277,6 +277,7 @@ dependencies = [
  "csv",
  "directories",
  "dotenv",
+ "futures",
  "genai",
  "google-sheets4",
  "html2text",

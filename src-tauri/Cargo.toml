@@ -50,6 +50,7 @@ actix-web = "4.0"
 google-sheets4 = "*"
 async-trait = "*"
 rust_xlsxwriter = "0.75.0"
+futures = "*"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.

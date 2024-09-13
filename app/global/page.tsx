@@ -99,14 +99,14 @@ export default function Page() {
             placeholder="Search..."
             value={search}
             onChange={handleSearchChange}
-            className="mb-4 p-2 border rounded"
+            className="mb-4 p-2 border rounded text-xs"
           />
         </div>
 
         {/* Tabs Component */}
         <Tabs defaultValue="first" className="overflow-auto">
           <aside className="absolute top-11 pt-1 left-0 w-full dark:bg-brand-darker bg-white">
-            <Tabs.List justify="center" className="dark:text-white">
+            <Tabs.List justify="center" className="dark:text-white text-xs">
               <Tabs.Tab value="first">Domain</Tabs.Tab>
               <Tabs.Tab value="third">Improvements</Tabs.Tab>
               <Tabs.Tab value="fourth">Task Manager</Tabs.Tab>
@@ -124,7 +124,7 @@ export default function Page() {
               <div className="h-full w-full">
                 {/* <h2 className="text-xl font-bold mb-4">Visited URLs</h2> */}
                 <div className="h-96 overflow-auto  w-full border-b">
-                  <table className="w-full">
+                  <table className="w-full text-xs">
                     <thead>
                       <tr>
                         <th
@@ -167,7 +167,7 @@ export default function Page() {
 
                 <h2 className="text-xl font-bold mt-8 mb-4">All Files</h2>
                 <div className="h-96 overflow-auto border rounded-md">
-                  <table className="w-full">
+                  <table className="w-full text-xs">
                     <thead>
                       <tr>
                         <th
