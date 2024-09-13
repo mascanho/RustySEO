@@ -316,10 +316,6 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
                           <TableFloatMenus data={data} crawl={crawl}>
                             <BsMenuDown className="text-purple-500" />
                           </TableFloatMenus>
-                          <FiCheckCircle
-                            className="text-green-500 cursor-pointer"
-                            onClick={() => handleAddTodo(data.url)}
-                          />
                           <Popover>
                             <PopoverTrigger>
                               <MdOutlineInsertChart

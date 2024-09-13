@@ -27,8 +27,6 @@ import {
 } from "@/components/ui/popover";
 import PopUpTable from "./PopUpTable";
 import { Modal } from "@mantine/core";
-import Todo from "../Todo";
-import { useDisclosure } from "@mantine/hooks";
 
 import TableMenus from "./TableMenus";
 import TableFloatMenus from "./_components/TableFloatMenus";
@@ -64,12 +62,9 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
   const [data, setData] = useState<PerformanceData[]>(dbdata);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc"); // Default to descending
   const [sortColumn, setSortColumn] = useState<keyof PerformanceData>("date");
-  const [todoUrl, setTodoUrl] = useState<string | null>(null);
   const [matchedUrlData, setMatchedUrlData] = useState([]);
-  const [todoStrategy, setTodoStrategy] = useState<string>("");
 
   // CONTEXT MENU SETTINGS
-  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [showMenu, setShowMenu] = useState(false);
 
   const handleCloseMenu = () => {
@@ -88,14 +83,6 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
       window.removeEventListener("click", handleClickOutside);
     };
   }, [showMenu]);
-
-  const menuItems = [
-    { label: "Action 1", onClick: () => console.log("Action 1 clicked") },
-    { label: "Action 2", onClick: () => console.log("Action 2 clicked") },
-  ];
-
-  const [openedModal, { open: openModal, close: closeModal }] =
-    useDisclosure(false);
 
   // Effect to update data when dbdata changes
   useEffect(() => {
@@ -188,13 +175,6 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
     }
   };
 
-  // Handle adding to-do
-  const handleAddTodo = (url: string, strategy: string) => {
-    setTodoStrategy(strategy);
-    setTodoUrl(url);
-    openModal();
-  };
-
   // Clear Table
   const handleClearTable = async () => {
     try {
@@ -230,19 +210,7 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
   return (
     <section>
       {/* Todo Modal */}
-      <Modal
-        opened={openedModal}
-        // overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
-        closeOnEscape
-        closeOnClickOutside
-        onClose={closeModal}
-        title=""
-        centered
-        // zIndex={"100000"}
-      >
-        {/* @ts-ignore */}
-        <Todo url={todoUrl} close={closeModal} strategy={todoStrategy} />
-      </Modal>
+
       <div className="relative mr-0 w-full mx-auto text-xs z-0">
         <div className=" -right-0  -z-10 flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10 -mt-7  w-full">
           <div className="flex items-center space-x-2 relative z-0">
@@ -374,12 +342,6 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
                           <TableFloatMenus data={data} crawl={crawl}>
                             <BsMenuDown className="text-purple-500" />
                           </TableFloatMenus>
-                          <FiCheckCircle
-                            className="text-green-500 cursor-pointer"
-                            onClick={() =>
-                              handleAddTodo(data.url, data.strategy)
-                            }
-                          />
                           <Popover>
                             <PopoverTrigger>
                               <MdOutlineInsertChart

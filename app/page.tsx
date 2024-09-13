@@ -154,12 +154,7 @@ const Home: React.FC<HomeProps> = () => {
     }
   }, [debouncedURL]);
 
-  // Set the URL globally on session storage
-  useEffect(() => {
-    sessionStorage.setItem("url", debouncedURL);
-    // @ts-ignore
-    sessionStorage.setItem("loading", loading);
-  }, [debouncedURL, loading]);
+
 
   const handleClick = (url: string) => {
     // Clear previous results before starting the new crawl
@@ -536,6 +531,7 @@ const Home: React.FC<HomeProps> = () => {
               <div className="relative flex items-center ml-2 flex-grow">
                 <CiGlobe className="absolute ml-3 text-gray-400" />
                 <input
+                  value={url}
                   type="url"
                   required
                   placeholder={sessionUrl || "https://yourwebsite.com"}
@@ -694,6 +690,7 @@ const Home: React.FC<HomeProps> = () => {
                 charset={charset}
                 crawl={handleClick}
                 url={url}
+                sessionUrl={sessionUrl}
               />
 
               {/* CHARTS SECTION */}
@@ -739,6 +736,7 @@ const Home: React.FC<HomeProps> = () => {
                 <PageSchemaTable
                   pageSchema={pageSchema}
                   googleSchemaTestUrl={debouncedURL}
+                  sessionUrl={sessionUrl || url || debouncedURL}
                 />
               </main>
             </Tabs.Panel>

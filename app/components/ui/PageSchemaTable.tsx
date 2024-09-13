@@ -17,6 +17,7 @@ import useStore from "@/store/Panes";
 const PageSchemaTable = ({
   pageSchema = "",
   googleSchemaTestUrl,
+  sessionUrl,
 }: {
   pageSchema?: string;
   googleSchemaTestUrl?: string;
@@ -35,9 +36,9 @@ const PageSchemaTable = ({
   // Ensure pageSchema is properly formatted
   const newSchema = formatSchema(pageSchema);
 
-  function convertToGoogleRichResultsURL(url) {
+  function convertToGoogleRichResultsURL(sessionUrl) {
     // Encode the URL component
-    const encodedUrl = encodeURIComponent(url);
+    const encodedUrl = encodeURIComponent(sessionUrl);
 
     // Base URL for Google Rich Results Test
     const baseUrl = "https://search.google.com/test/rich-results?url=";
