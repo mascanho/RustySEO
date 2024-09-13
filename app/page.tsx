@@ -541,13 +541,13 @@ const Home: React.FC<HomeProps> = () => {
                       handleClick(url);
                     }
                   }}
-                  className="w-[30rem] h-7 text-xs pl-8 rounded-l-md bg-slate-100 dark:bg-blue-900/5 dark:bg-brand-darker dark:border dark:border-white/20 dark:text-white placeholder:text-gray-500 border rounded-r-md"
+                  className="w-[30rem] h-7 text-xs pl-8 rounded-l-md bg-slate-100 dark:bg-blue-900/5 dark:bg-brand-darker dark:border dark:border-white/20 dark:text-white placeholder:text-gray-500 border rounded-r-md pr-4"
                   style={{ outline: "none", boxShadow: "none" }}
                 />
 
                 <IoIosClose
                   onClick={() => setUrl("")}
-                  className={`absolute cursor-pointer right-[5.2rem] z-[10000] bottom-1.5 text-red-500 inline-block ${url ? "block" : "hidden"}`}
+                  className={`absolute cursor-pointer right-[5.0rem] z-[10000] bottom-1.5 text-red-500 inline-block ${url ? "block" : "hidden"}`}
                 />
 
                 <button
