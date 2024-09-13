@@ -60,6 +60,7 @@ import { MdOutlineTaskAlt } from "react-icons/md";
 import { GoTable } from "react-icons/go";
 
 import { CgPerformance } from "react-icons/cg";
+import { IoIosClose } from "react-icons/io";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -153,8 +154,6 @@ const Home: React.FC<HomeProps> = () => {
       }
     }
   }, [debouncedURL]);
-
-
 
   const handleClick = (url: string) => {
     // Clear previous results before starting the new crawl
@@ -474,7 +473,8 @@ const Home: React.FC<HomeProps> = () => {
         {/* Fixed Input and Crawl Button */}
         <div className="fixed top-[28px] left-0 right-0 z-[2000] h-11 border-b  bg-white dark:bg-brand-darker flex items-center px-4 dark:border-b-brand-dark">
           <MenuDrawer />
-          <section className="flex items-center justify-end mx-auto relative w-full max-w-[600px] border-r border-l pl-4 dark:border-l-brand-dark dark:border-r-brand-dark h-full pr-4">
+          {/* SEARCH STARTS HERE  */}
+          <section className="flex items-center justify-end mx-auto relative w-full max-w-[42.8rem] border-r border-l pl-4 dark:border-l-brand-dark dark:border-r-brand-dark h-full pr-4">
             <div className="flex items-center w-full">
               <div className="relative inline-block text-left z-[900000]">
                 <div className="-mr-3">
@@ -541,13 +541,18 @@ const Home: React.FC<HomeProps> = () => {
                       handleClick(url);
                     }
                   }}
-                  className="w-full h-7 text-xs pl-8 rounded-l-md bg-slate-100 dark:bg-blue-900/5 dark:bg-brand-darker dark:border dark:border-white/20 dark:text-white placeholder:text-gray-500 border rounded-r-md"
+                  className="w-[30rem] h-7 text-xs pl-8 rounded-l-md bg-slate-100 dark:bg-blue-900/5 dark:bg-brand-darker dark:border dark:border-white/20 dark:text-white placeholder:text-gray-500 border rounded-r-md"
                   style={{ outline: "none", boxShadow: "none" }}
+                />
+
+                <IoIosClose
+                  onClick={() => setUrl("")}
+                  className={`absolute cursor-pointer right-[5.2rem] z-[10000] bottom-1.5 text-red-500 inline-block ${url ? "block" : "hidden"}`}
                 />
 
                 <button
                   onClick={() => handleClick(url)}
-                  className="rounded w-24 h-7 active:scale-95 text-sm relative inline-flex group py-[4px] items-center justify-center ml-3 cursor-pointer border-b-4 border-l-2 active:border-blue-600 active:shadow-none bg-gradient-to-tr from-brand-bright to-blue-500 border-blue-700 text-white transition-transform duration-200"
+                  className="rounded w-[4rem] h-7 active:scale-95 text-sm relative inline-flex group py-[4px] items-center justify-center ml-3 cursor-pointer border-b-4 border-l-2 active:border-blue-600 active:shadow-none bg-gradient-to-tr from-brand-bright to-blue-500 border-blue-700 text-white transition-transform duration-200"
                 >
                   <span className="relative text-xs">
                     {loading ? (

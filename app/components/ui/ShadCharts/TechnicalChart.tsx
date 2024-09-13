@@ -120,9 +120,7 @@ export function TechnicalChart({ dbdata }: any) {
       <CardHeader className="flex flex-col items-stretch space-y-0 border-b dark:border-brand-dark p-0 sm:flex-row dark:bg-brand-darker">
         <div className="flex flex-1 flex-col justify-center gap-1 px-4 py-2 sm:py-3 ">
           <CardTitle>Core Web Vitals</CardTitle>
-          <CardDescription>
-            Showing the averages for the pages you crawled
-          </CardDescription>
+          <CardDescription>Averages based on crawled pages</CardDescription>
         </div>
         <div id="chart-buttons" className="flex flex-wrap">
           {Object.keys(chartConfig).map((key) => {
