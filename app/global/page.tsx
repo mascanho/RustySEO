@@ -128,7 +128,7 @@ export default function Page() {
                     <thead>
                       <tr>
                         <th
-                          className="text-left cursor-pointer"
+                          className="text-left cursor-pointer text-xs"
                           onClick={() => handleSortChange("url")}
                         >
                           URL{" "}
