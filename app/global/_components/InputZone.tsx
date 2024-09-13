@@ -6,6 +6,7 @@ import useLoaderStore from "@/store/loadersStore";
 import { invoke } from "@tauri-apps/api/tauri";
 import React, { useState } from "react";
 import { CiGlobe } from "react-icons/ci";
+import { IoIosClose } from "react-icons/io";
 
 interface PageDetails {
   title: string;
@@ -53,7 +54,7 @@ const InputZone = () => {
   return (
     <div className="fixed top-[28px] left-0 right-0 z-[2000] h-11 border-b  bg-white dark:bg-brand-darker flex items-center px-4 dark:border-b-brand-dark">
       <MenuDrawer />
-      <section className="flex items-center justify-end mx-auto relative w-full max-w-[600px] border-r border-l pl-4 dark:border-l-brand-dark dark:border-r-brand-dark h-full pr-4">
+      <section className="flex items-center justify-end mx-auto relative w-full max-w-[40rem] border-r border-l pl-4 dark:border-l-brand-dark dark:border-r-brand-dark h-full pr-4">
         <div className="flex items-center w-full">
           <div className="relative inline-block text-left z-[900000]"></div>
           <div className="relative flex items-center ml-2 flex-grow">
@@ -68,6 +69,10 @@ const InputZone = () => {
               className="w-full h-7 text-xs pl-8 rounded-l-md bg-slate-100 dark:bg-blue-900/5 dark:bg-brand-darker dark:border dark:border-white/20 dark:text-white placeholder:text-gray-500 border rounded-r-md"
               style={{ outline: "none", boxShadow: "none" }}
             />
+            <IoIosClose
+              onClick={() => setUrl("")}
+              className={`absolute cursor-pointer right-[5.5rem] z-[10000] bottom-1.5 text-red-500 inline-block ${url ? "block" : "hidden"}`}
+            />{" "}
             <button
               onClick={handleDomainCrawl}
               className="rounded w-20 active:scale-95 text-sm relative inline-flex group py-[3px] items-center justify-center  ml-3 cursor-pointer border-b-4 border-l-2 active:border-blue-600 active:shadow-none bg-gradient-to-tr from-brand-bright to-blue-500 border-blue-700 text-white"

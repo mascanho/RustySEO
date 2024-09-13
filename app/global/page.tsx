@@ -6,6 +6,7 @@ import useLoaderStore from "@/store/loadersStore";
 import InputZone from "./_components/InputZone";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { Tabs } from "@mantine/core";
+import { IoIosClose } from "react-icons/io";
 
 // Define the expected type of the result from the `crawl_domain` function
 interface PageDetails {
@@ -92,17 +93,19 @@ export default function Page() {
     <>
       <InputZone />
       <section className="w-full border-none h-full  dark:bg-brand-dark shadow-none rounded-md">
-        <input
-          type="text"
-          placeholder="Search..."
-          value={search}
-          onChange={handleSearchChange}
-          className="mb-4 p-2 border rounded"
-        />
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Search..."
+            value={search}
+            onChange={handleSearchChange}
+            className="mb-4 p-2 border rounded"
+          />
+        </div>
 
         {/* Tabs Component */}
         <Tabs defaultValue="first" className="overflow-auto">
-          <aside className="absolute top-11 pt-1 left-0 w-full dark:bg-brand-darker">
+          <aside className="absolute top-11 pt-1 left-0 w-full dark:bg-brand-darker bg-white">
             <Tabs.List justify="center" className="dark:text-white">
               <Tabs.Tab value="first">Domain</Tabs.Tab>
               <Tabs.Tab value="third">Improvements</Tabs.Tab>
