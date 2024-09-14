@@ -90,7 +90,7 @@ const PerformanceEl = ({
           </button>
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
-          <Text size="sm">
+          <Text size="xs">
             A score between 0 and 100 indicating how well your page performs in
             terms of speed and optimization.
           </Text>

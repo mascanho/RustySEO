@@ -112,7 +112,7 @@ export default function Page() {
 
         {/* Tabs Component */}
         <Tabs defaultValue="first" className="overflow-auto">
-          <aside className="absolute top-11 pt-1 left-0 w-full dark:bg-brand-darker bg-white">
+          <aside className="absolute top-11 pt-1 left-0 w-full dark:bg-brand-darker z-10 bg-white">
             <Tabs.List justify="center" className="dark:text-white text-xs">
               <Tabs.Tab value="first">
                 <FaGlobe className="inline-block mr-2" />
@@ -145,7 +145,7 @@ export default function Page() {
             <section className="text-white h-full overflow-auto dark:bg-brand-darker mt-6">
               <div className="h-full w-full">
                 {/* <h2 className="text-xl font-bold mb-4">Visited URLs</h2> */}
-                <div className="h-96 overflow-auto  w-full border-b">
+                <div className="h-96 overflow-auto  w-full border-b border-b-brand-darker">
                   <table className="w-full text-xs">
                     <thead>
                       <tr>
