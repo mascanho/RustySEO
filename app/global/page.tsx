@@ -7,6 +7,13 @@ import InputZone from "./_components/InputZone";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { Tabs } from "@mantine/core";
 import { IoIosClose } from "react-icons/io";
+import {
+  FaGlobe,
+  FaTools,
+  FaTasks,
+  FaHistory,
+  FaChartBar,
+} from "react-icons/fa"; // Import relevant icons
 
 // Define the expected type of the result from the `crawl_domain` function
 interface PageDetails {
@@ -107,11 +114,26 @@ export default function Page() {
         <Tabs defaultValue="first" className="overflow-auto">
           <aside className="absolute top-11 pt-1 left-0 w-full dark:bg-brand-darker bg-white">
             <Tabs.List justify="center" className="dark:text-white text-xs">
-              <Tabs.Tab value="first">Domain</Tabs.Tab>
-              <Tabs.Tab value="third">Improvements</Tabs.Tab>
-              <Tabs.Tab value="fourth">Task Manager</Tabs.Tab>
-              <Tabs.Tab value="fifth">Crawl History</Tabs.Tab>
-              <Tabs.Tab value="analytics">Analytics</Tabs.Tab>
+              <Tabs.Tab value="first">
+                <FaGlobe className="inline-block mr-2" />
+                Domain
+              </Tabs.Tab>
+              <Tabs.Tab value="third">
+                <FaTools className="inline-block mr-2" />
+                Improvements
+              </Tabs.Tab>
+              <Tabs.Tab value="fourth">
+                <FaTasks className="inline-block mr-2" />
+                Task Manager
+              </Tabs.Tab>
+              <Tabs.Tab value="fifth">
+                <FaHistory className="inline-block mr-2" />
+                Crawl History
+              </Tabs.Tab>
+              <Tabs.Tab value="analytics">
+                <FaChartBar className="inline-block mr-2" />
+                Analytics
+              </Tabs.Tab>
             </Tabs.List>
           </aside>
 
@@ -165,8 +187,8 @@ export default function Page() {
                   </table>
                 </div>
 
-                <h2 className="text-xl font-bold mt-8 mb-4">All Files</h2>
-                <div className="h-96 overflow-auto border rounded-md">
+                <h2 className="text-xs font-bold mt-8 mb-4">All Files</h2>
+                <div className="h-96 overflow-auto border-0 rounded-md">
                   <table className="w-full text-xs">
                     <thead>
                       <tr>

@@ -42,7 +42,7 @@ const InputZone = () => {
   };
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setUrl(event.target.value);
+    setUrl(event.target.value.toLowerCase());
   };
 
   const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -66,7 +66,7 @@ const InputZone = () => {
               value={url}
               onChange={handleInputChange}
               onKeyPress={handleKeyPress}
-              className="w-full h-7 text-xs pl-8 rounded-l-md bg-slate-100 dark:bg-blue-900/5 dark:bg-brand-darker dark:border dark:border-white/20 dark:text-white placeholder:text-gray-500 border rounded-r-md"
+              className="w-full h-7 text-xs pl-8 rounded-l-md bg-slate-100 dark:bg-blue-900/5 dark:bg-brand-darker dark:border dark:border-white/20 dark:text-white placeholder:text-gray-500 border rounded-r-md lowercase"
               style={{ outline: "none", boxShadow: "none" }}
             />
             <IoIosClose

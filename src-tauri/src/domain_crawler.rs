@@ -43,6 +43,11 @@ pub async fn crawl_domain(base_url: &str) -> Result<GlobalCrawlResults, Box<dyn 
             continue;
         }
 
+        // if the link contains "#" it means it's a fragment link
+        if url.contains('#') {
+            continue;
+        }
+
         println!("Crawling: {}", url);
 
         match fetch_page(&client, &url).await {
