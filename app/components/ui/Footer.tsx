@@ -23,6 +23,7 @@ import Todo from "./Todo";
 import TodoItems from "./TodoItems";
 import { Drawer as MantineDrawer } from "@mantine/core";
 import { IoMdClose } from "react-icons/io";
+import { usePathname } from "next/navigation";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -46,6 +47,7 @@ const Footer = () => {
   const [openedDrawer, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
   const [hasOllama, setHasOllama] = useState("");
+  const pathname = usePathname();
 
   // Function to update URL and loading state from session storage
   const updateSessionState = () => {

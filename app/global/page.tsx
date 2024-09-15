@@ -14,6 +14,7 @@ import {
   FaHistory,
   FaChartBar,
 } from "react-icons/fa"; // Import relevant icons
+import SidebarContainer from "./_components/Sidebar/SidebarContainer";
 
 // Define the expected type of the result from the `crawl_domain` function
 interface PageDetails {
@@ -142,10 +143,10 @@ export default function Page() {
             value="first"
             className="flex flex-col space-y-8 overflow-scroll"
           >
-            <section className="text-white h-full overflow-auto dark:bg-brand-darker mt-6">
+            <section className="text-white h-[58.9rem] overflow-auto dark:bg-brand-darker mt-8">
               <div className="h-full w-full">
                 {/* <h2 className="text-xl font-bold mb-4">Visited URLs</h2> */}
-                <div className="h-96 overflow-auto  w-full border-b border-b-brand-darker">
+                <div className="h-96 overflow-auto  w-full ">
                   <table className="w-full text-xs">
                     <thead>
                       <tr>
@@ -187,7 +188,9 @@ export default function Page() {
                   </table>
                 </div>
 
-                <h2 className="text-xs font-bold mt-8 mb-4">All Files</h2>
+                <h2 className="text-xs font-bold mt-8 mb-4 dark:text-white text-black">
+                  All Files
+                </h2>
                 <div className="h-96 overflow-auto border-0 rounded-md">
                   <table className="w-full text-xs">
                     <thead>
@@ -225,7 +228,9 @@ export default function Page() {
           </Tabs.Panel>
         </Tabs>
       </section>
-      <aside className="w-[23rem]">booooooo</aside>
+      <aside className="w-[23rem] h-[58.6rem]">
+        <SidebarContainer />
+      </aside>
     </main>
   );
 }
