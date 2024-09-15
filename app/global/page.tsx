@@ -15,6 +15,7 @@ import {
   FaChartBar,
 } from "react-icons/fa"; // Import relevant icons
 import SidebarContainer from "./_components/Sidebar/SidebarContainer";
+import { useVisibilityStore } from "@/store/VisibilityStore";
 
 // Define the expected type of the result from the `crawl_domain` function
 interface PageDetails {
@@ -36,6 +37,7 @@ export default function Page() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const { loaders, showLoader, hideLoader } = useLoaderStore();
   const { crawlData } = useGlobalCrawlStore();
+  const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
 
   useEffect(() => {
     const sessionData = sessionStorage.getItem("GlobalCrawldata");
@@ -98,7 +100,7 @@ export default function Page() {
   const sortedAllFiles = sortData(allFilesEntries);
 
   return (
-    <main className="flex h-full">
+    <main className="flex h-full w-full">
       <InputZone />
       <section className="w-full border-none h-full  dark:bg-brand-dark shadow-none rounded-md">
         <div className="relative">
@@ -112,7 +114,7 @@ export default function Page() {
         </div>
 
         {/* Tabs Component */}
-        <Tabs defaultValue="first" className="overflow-auto">
+        <Tabs defaultValue="first" className="ovefflow-auto">
           <aside className="absolute top-11 pt-1 left-0 w-full dark:bg-brand-darker z-10 bg-white">
             <Tabs.List justify="center" className="dark:text-white text-xs">
               <Tabs.Tab value="first">
@@ -228,7 +230,9 @@ export default function Page() {
           </Tabs.Panel>
         </Tabs>
       </section>
-      <aside className="w-[23rem] h-[58.6rem]">
+      <aside
+        className={`transition-all ease-linear delay-100  ${visibility.sidebar ? "w-[24.3rem]" : "w-0 "} h-[58.6rem]`}
+      >
         <SidebarContainer />
       </aside>
     </main>

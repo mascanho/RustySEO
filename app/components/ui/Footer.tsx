@@ -49,6 +49,9 @@ const Footer = () => {
   const [hasOllama, setHasOllama] = useState("");
   const pathname = usePathname();
 
+  const shallow = pathname === "/";
+  const deep = pathname === "/global";
+
   // Function to update URL and loading state from session storage
   const updateSessionState = () => {
     const storedUrl = sessionStorage.getItem("url") || "";
