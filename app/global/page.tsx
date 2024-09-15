@@ -97,7 +97,7 @@ export default function Page() {
   const sortedAllFiles = sortData(allFilesEntries);
 
   return (
-    <>
+    <main className="flex h-full">
       <InputZone />
       <section className="w-full border-none h-full  dark:bg-brand-dark shadow-none rounded-md">
         <div className="relative">
@@ -225,6 +225,7 @@ export default function Page() {
           </Tabs.Panel>
         </Tabs>
       </section>
-    </>
+      <aside className="w-[23rem]">booooooo</aside>
+    </main>
   );
 }
