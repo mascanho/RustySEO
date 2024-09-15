@@ -146,7 +146,7 @@ export default function Page() {
             <section className="text-white h-[58.9rem] overflow-auto dark:bg-brand-darker mt-8">
               <div className="h-full w-full">
                 {/* <h2 className="text-xl font-bold mb-4">Visited URLs</h2> */}
-                <div className="h-96 overflow-auto  w-full ">
+                <div className="h-96 overflow-auto  w-full text-black dark:text-white/50">
                   <table className="w-full text-xs">
                     <thead>
                       <tr>
