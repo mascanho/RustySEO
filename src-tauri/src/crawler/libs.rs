@@ -689,13 +689,13 @@ pub async fn get_google_analytics() -> Result<(), Box<dyn std::error::Error>> {
     let body = json!({
         "dateRanges": [
             {
-                "startDate": "7daysAgo",
+                "startDate": "2021-01-01",
                 "endDate": "today"
             }
         ],
         "dimensions": [
             {
-                "name": "pagePath"
+                "name": "pageViews"
             }
         ],
         "metrics": [
