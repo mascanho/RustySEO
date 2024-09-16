@@ -61,6 +61,8 @@ import { GoTable } from "react-icons/go";
 
 import { CgPerformance } from "react-icons/cg";
 import { IoIosClose } from "react-icons/io";
+import { FaChartBar } from "react-icons/fa6";
+import Analytics from "./components/ui/Analytics/Analytics";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -590,6 +592,10 @@ const Home: React.FC<HomeProps> = () => {
                   <GoTable className="inline-block mr-1 text-sm mb-[2px]" />{" "}
                   Crawl History
                 </Tabs.Tab>
+                <Tabs.Tab value="analytics">
+                  <FaChartBar className="inline-block mr-2" />
+                  Analytics
+                </Tabs.Tab>
               </Tabs.List>
             </div>
 
@@ -775,6 +781,10 @@ const Home: React.FC<HomeProps> = () => {
                 loading={loading}
                 dbdata={DBDATA}
               />
+            </Tabs.Panel>
+
+            <Tabs.Panel value="analytics">
+              <Analytics />
             </Tabs.Panel>
           </Tabs>
         </section>

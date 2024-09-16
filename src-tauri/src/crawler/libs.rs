@@ -7,11 +7,13 @@ use rusqlite::{Connection, Result};
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
+use serde_json::{json, Value};
 use std::{error::Error, path::PathBuf};
 use sysinfo::{ProcessExt, ProcessStatus, System, SystemExt};
 use tauri::Config;
 use tokio::fs;
 use url::{ParseError, Url};
+use yup_oauth2 as oauth2;
 use yup_oauth2::{InstalledFlowAuthenticator, InstalledFlowReturnMethod};
 
 use toml::de::Error as TomlError;
@@ -650,4 +652,73 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
     db::push_gsc_data_to_db(&gsc_data).expect("Failed to push data to database");
 
     Ok(gsc_data)
+}
+
+// ------------ FUNCTION TO GET THE GOOGLE ANALYTICS DATA
+
+pub async fn get_google_analytics() -> Result<(), Box<dyn std::error::Error>> {
+    // Set the direcotries for the client_secret.json file
+    let config_dir =
+        ProjectDirs::from("", "", "rustyseo").ok_or_else(|| "Failed to get project directories")?;
+    let config_dir = config_dir.data_dir();
+    let secret_path = config_dir.join("client_secret.json");
+
+    // Set up the OAuth2 client
+    let secret = oauth2::read_application_secret(&secret_path)
+        .await
+        .expect("Where is the client_secret.json file?");
+    let auth = oauth2::InstalledFlowAuthenticator::builder(
+        secret,
+        oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+    )
+    .build()
+    .await?;
+
+    // Get an access token
+    let scopes = &["https://www.googleapis.com/auth/analytics.readonly"];
+    let token = auth.token(scopes).await?;
+
+    // Create a client
+    let client = reqwest::Client::new();
+
+    // Prepare the request body
+    let body = json!({
+        "dateRanges": [
+            {
+                "startDate": "7daysAgo",
+                "endDate": "today"
+            }
+        ],
+        "dimensions": [
+            {
+                "name": "pagePath"
+            }
+        ],
+        "metrics": [
+            {
+                "name": "screenPageViews"
+            }
+        ]
+    });
+
+    // Make the request
+    let response: Value = client
+        .post("https://analyticsdata.googleapis.com/v1beta/properties/423125701:runReport")
+        .bearer_auth(token.token().unwrap()) // Use token() method to get the string
+        .json(&body)
+        .send()
+        .await?
+        .json()
+        .await?;
+
+    // Process and print the results
+    if let Some(rows) = response["rows"].as_array() {
+        for row in rows {
+            let page = &row["dimensionValues"][0]["value"];
+            let views = &row["metricValues"][0]["value"];
+            println!("Page: {}, Views: {}", page, views);
+        }
+    }
+
+    Ok(())
 }

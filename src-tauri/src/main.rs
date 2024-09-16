@@ -164,6 +164,7 @@ async fn main() {
             downloads::excel::export_to_excel_command,
             globals::actions::get_search_console_credentials,
             globals::actions::check_ai_model,
+            commands::get_google_analytics_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

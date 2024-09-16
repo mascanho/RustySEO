@@ -279,6 +279,7 @@ dependencies = [
  "dotenv",
  "futures",
  "genai",
+ "google-analytics3",
  "google-sheets4",
  "html2text",
  "html5ever 0.25.2",
@@ -2012,6 +2013,26 @@ dependencies = [
  "glib-sys",
  "libc",
  "system-deps 6.2.2",
+]
+
+[[package]]
+name = "google-analytics3"
+version = "5.0.5+20190807"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d6ab45bcdaff2eef4ed7902968ff8d67eb9f26f8f25e059fa598e7a1c3888e6b"
+dependencies = [
+ "anyhow",
+ "google-apis-common",
+ "http 0.2.12",
+ "hyper 0.14.29",
+ "hyper-rustls 0.25.0",
+ "itertools 0.13.0",
+ "mime",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tower-service",
+ "url 1.7.2",
 ]
 
 [[package]]

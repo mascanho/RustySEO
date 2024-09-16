@@ -132,11 +132,11 @@ pub fn call_gsc_match_url(url: String) -> Result<Vec<GscMatched>, String> {
 // ---------- CALL THE CRAWL DOMAIN FUNCTION
 
 #[tauri::command]
-pub async fn crawl_domain(url: &str) -> Result<GlobalCrawlResults, String> {
+pub async fn crawl_domain(url: &str, concurrency: usize) -> Result<GlobalCrawlResults, String> {
     println!("Crawling domain...");
 
     // Attempt to crawl the domain and handle any errors
-    match domain_crawler::crawl_domain(url).await {
+    match domain_crawler::crawl_domain(url, concurrency).await {
         Ok(results) => {
             println!("Results from Domain crawler: {:#?}", results);
             Ok(results) // Successfully return an empty tuple on success
@@ -145,6 +145,20 @@ pub async fn crawl_domain(url: &str) -> Result<GlobalCrawlResults, String> {
             // Handle the error by converting it to a string
             println!("Error occurred during domain crawl: {:?}", e);
             Err(format!("Failed to crawl domain: {}", e))
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn get_google_analytics_command() -> Result<(), String> {
+    match libs::get_google_analytics().await {
+        Ok(_) => {
+            println!("Successfully called Google Analytics");
+            Ok(())
+        }
+        Err(e) => {
+            eprintln!("Failed to call Google Analytics: {}", e);
+            Err(format!("Failed to call Google Analytics: {}", e))
         }
     }
 }

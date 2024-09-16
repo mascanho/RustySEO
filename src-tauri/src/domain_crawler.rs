@@ -1,11 +1,15 @@
+use futures::stream::{self, StreamExt};
 use reqwest::Client;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::error::Error;
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
+use tokio::time::sleep;
 use url::Url;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PageDetails {
     title: String,
     h1: String,
@@ -17,59 +21,114 @@ pub struct GlobalCrawlResults {
     all_files: HashMap<String, FileDetails>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FileDetails {
     url: String,
     file_type: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct CrawlState {
-    urls_to_visit: Vec<String>,
+    urls_to_visit: VecDeque<String>,
     visited_urls: HashMap<String, PageDetails>,
     all_files: HashMap<String, FileDetails>,
+    seen_urls: HashSet<String>,
 }
 
-pub async fn crawl_domain(base_url: &str) -> Result<GlobalCrawlResults, Box<dyn Error>> {
+pub async fn crawl_domain(
+    base_url: &str,
+    concurrency: usize,
+) -> Result<GlobalCrawlResults, Box<dyn Error + Send + Sync>> {
     let client = Client::new();
-    let mut state = CrawlState {
-        urls_to_visit: vec![base_url.to_string()],
+    let state = Arc::new(Mutex::new(CrawlState {
+        urls_to_visit: VecDeque::from(vec![base_url.to_string()]),
         visited_urls: HashMap::new(),
         all_files: HashMap::new(),
-    };
+        seen_urls: HashSet::new(),
+    }));
 
-    while let Some(url) = state.urls_to_visit.pop() {
-        if state.visited_urls.contains_key(&url) {
-            continue;
-        }
+    let mut tasks = Vec::new();
 
-        // if the link contains "#" it means it's a fragment link
-        if url.contains('#') {
-            continue;
-        }
+    loop {
+        let url = {
+            let mut state = state.lock().unwrap();
+            state.urls_to_visit.pop_front()
+        };
 
-        println!("Crawling: {}", url);
+        match url {
+            Some(url) => {
+                if state.lock().unwrap().visited_urls.len() >= concurrency {
+                    sleep(Duration::from_millis(100)).await;
+                    continue;
+                }
 
-        match fetch_page(&client, &url).await {
-            Ok(body) => {
-                let document = Html::parse_document(&body);
-                let page_details = extract_page_details(&document);
-                state.visited_urls.insert(url.clone(), page_details);
+                if !state.lock().unwrap().visited_urls.contains_key(&url) {
+                    println!("Crawling: {}", url);
 
-                extract_links(&document, &url, base_url, &mut state);
-                check_directory_listings(&document, &url, base_url, &mut state);
+                    let state_clone = Arc::clone(&state);
+                    tasks.push(tokio::spawn(crawl_page(
+                        client.clone(),
+                        url,
+                        base_url.to_string(),
+                        state_clone,
+                    )));
+                }
             }
-            Err(e) => eprintln!("Error fetching {}: {:?}", url, e),
+            None => {
+                if tasks.is_empty() {
+                    break;
+                }
+                sleep(Duration::from_millis(100)).await;
+            }
+        }
+
+        // Process completed tasks
+        let mut completed_tasks = Vec::new();
+        for (i, task) in tasks.iter_mut().enumerate() {
+            if task.is_finished() {
+                completed_tasks.push(i);
+            }
+        }
+        for i in completed_tasks.into_iter().rev() {
+            let _ = tasks.swap_remove(i).await;
         }
     }
 
-    println!("Total files found: {:?}", state.all_files.len());
-    println!("Total URLs visited: {:?}", state.visited_urls.len());
+    let final_state = state.lock().unwrap();
+    println!("Total files found: {:?}", final_state.all_files.len());
+    println!("Total URLs visited: {:?}", final_state.visited_urls.len());
 
     Ok(GlobalCrawlResults {
-        visited_urls: state.visited_urls,
-        all_files: state.all_files,
+        visited_urls: final_state.visited_urls.clone(),
+        all_files: final_state.all_files.clone(),
     })
+}
+
+async fn crawl_page(
+    client: Client,
+    url: String,
+    base_url: String,
+    state: Arc<Mutex<CrawlState>>,
+) -> Result<(), Box<dyn Error + Send + Sync>> {
+    sleep(Duration::from_millis(100)).await;
+
+    match fetch_page(&client, &url).await {
+        Ok(body) => {
+            let document = Html::parse_document(&body);
+            let page_details = extract_page_details(&document);
+
+            let mut state = state.lock().unwrap();
+            state.visited_urls.insert(url.clone(), page_details);
+
+            extract_links(&document, &url, &base_url, &mut state);
+            check_directory_listings(&document, &url, &base_url, &mut state);
+        }
+        Err(e) => {
+            eprintln!("Error fetching {}: {:?}", url, e);
+        }
+    }
+
+    Ok(())
 }
 
 async fn fetch_page(client: &Client, url: &str) -> Result<String, reqwest::Error> {
@@ -107,19 +166,20 @@ fn extract_links(document: &Html, current_url: &str, base_url: &str, state: &mut
             if let Ok(absolute_url) = Url::parse(current_url).and_then(|base| base.join(href)) {
                 let absolute_url_str = absolute_url.as_str().to_string();
                 if absolute_url_str.starts_with(base_url) {
-                    if let Some(file_name) = absolute_url_str.split('/').last() {
-                        if file_name.contains('.') {
-                            let file_type = file_name.split('.').last().unwrap_or("").to_string();
-                            state.all_files.insert(
-                                absolute_url_str.clone(),
-                                FileDetails {
-                                    url: absolute_url_str,
-                                    file_type,
-                                },
-                            );
-                        } else if !state.visited_urls.contains_key(&absolute_url_str) {
-                            state.urls_to_visit.push(absolute_url_str);
-                        }
+                    let file_name = absolute_url_str.split('/').last().unwrap_or("");
+                    if file_name.contains('.') {
+                        let file_type = file_name.split('.').last().unwrap_or("").to_string();
+                        state.all_files.insert(
+                            absolute_url_str.clone(),
+                            FileDetails {
+                                url: absolute_url_str.clone(),
+                                file_type,
+                            },
+                        );
+                    }
+                    if !state.seen_urls.contains(&absolute_url_str) {
+                        state.urls_to_visit.push_back(absolute_url_str.clone());
+                        state.seen_urls.insert(absolute_url_str);
                     }
                 }
             }
@@ -133,27 +193,33 @@ fn check_directory_listings(
     base_url: &str,
     state: &mut CrawlState,
 ) {
-    let directory_selector = Selector::parse("pre").unwrap();
+    let directory_selector = Selector::parse("pre, table").unwrap();
 
-    if let Some(directory_listing) = document.select(&directory_selector).next() {
+    for directory_listing in document.select(&directory_selector) {
         for line in directory_listing.text().collect::<Vec<_>>() {
-            if let Some(file_or_dir) = line.split_whitespace().last() {
-                if let Ok(absolute_url) =
-                    Url::parse(current_url).and_then(|base| base.join(file_or_dir))
-                {
-                    let absolute_url_str = absolute_url.as_str().to_string();
-                    if absolute_url_str.starts_with(base_url) {
-                        if file_or_dir.contains('.') {
-                            let file_type = file_or_dir.split('.').last().unwrap_or("").to_string();
-                            state.all_files.insert(
-                                absolute_url_str.clone(),
-                                FileDetails {
-                                    url: absolute_url_str,
-                                    file_type,
-                                },
-                            );
-                        } else if !state.visited_urls.contains_key(&absolute_url_str) {
-                            state.urls_to_visit.push(absolute_url_str);
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            if let Some(file_or_dir) = parts.last() {
+                if *file_or_dir != "./" && *file_or_dir != "../" {
+                    if let Ok(absolute_url) =
+                        Url::parse(current_url).and_then(|base| base.join(file_or_dir))
+                    {
+                        let absolute_url_str = absolute_url.as_str().to_string();
+                        if absolute_url_str.starts_with(base_url) {
+                            if file_or_dir.contains('.') {
+                                let file_type =
+                                    file_or_dir.split('.').last().unwrap_or("").to_string();
+                                state.all_files.insert(
+                                    absolute_url_str.clone(),
+                                    FileDetails {
+                                        url: absolute_url_str.clone(),
+                                        file_type,
+                                    },
+                                );
+                            }
+                            if !state.seen_urls.contains(&absolute_url_str) {
+                                state.urls_to_visit.push_back(absolute_url_str.clone());
+                                state.seen_urls.insert(absolute_url_str);
+                            }
                         }
                     }
                 }
