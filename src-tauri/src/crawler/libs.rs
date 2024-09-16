@@ -700,7 +700,7 @@ pub async fn get_google_analytics() -> Result<(), Box<dyn std::error::Error>> {
         ],
         "metrics": [
             {
-                "name": "screenPageViews"
+                "name": "ga:name"
             }
         ]
     });
