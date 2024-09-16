@@ -16,6 +16,7 @@ import {
 } from "react-icons/fa"; // Import relevant icons
 import SidebarContainer from "./_components/Sidebar/SidebarContainer";
 import { useVisibilityStore } from "@/store/VisibilityStore";
+import TaskManagerContainer from "../components/ui/TaskManager/TaskManagerContainer";
 
 // Define the expected type of the result from the `crawl_domain` function
 interface PageDetails {
@@ -125,7 +126,7 @@ export default function Page() {
                 <FaTools className="inline-block mr-2" />
                 Improvements
               </Tabs.Tab>
-              <Tabs.Tab value="fourth">
+              <Tabs.Tab value="tasks">
                 <FaTasks className="inline-block mr-2" />
                 Task Manager
               </Tabs.Tab>
@@ -194,7 +195,7 @@ export default function Page() {
                   All Files
                 </h2>
                 <div className="h-96 overflow-auto border-0 rounded-md">
-                  <table className="w-full text-xs">
+                  <table className="w-full text-xs text-black dark:text-white/50">
                     <thead>
                       <tr>
                         <th
@@ -226,6 +227,15 @@ export default function Page() {
                   </table>
                 </div>
               </div>
+            </section>
+          </Tabs.Panel>
+
+          <Tabs.Panel
+            value="tasks"
+            className="flex flex-col space-y-8 overflow-scroll"
+          >
+            <section className="mt-[5rem]">
+              <TaskManagerContainer />
             </section>
           </Tabs.Panel>
         </Tabs>

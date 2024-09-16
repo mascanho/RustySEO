@@ -45,7 +45,7 @@ import SidebarContainer from "./components/ui/Sidebar/SidebarContainer";
 import MenuDrawer from "./components/ui/MenuDrawer";
 import PageRankChart from "./components/ui/ShadCharts/PageRankChart";
 import PerformanceEl from "./components/Performance";
-import { FaChevronDown, FaDesktop, FaMobile } from "react-icons/fa";
+import { FaChevronDown, FaDesktop, FaMobile, FaTasks } from "react-icons/fa";
 import { CgLayoutGrid } from "react-icons/cg";
 import { CiGlobe } from "react-icons/ci";
 import LinksCharts from "./components/ui/ShadCharts/LinksCharts";
@@ -583,7 +583,7 @@ const Home: React.FC<HomeProps> = () => {
                   Improvements
                 </Tabs.Tab>
                 <Tabs.Tab value="fourth">
-                  <MdOutlineTaskAlt className="inline-block mr-1 text-sm mb-[2px]" />{" "}
+                  <FaTasks className="inline-block mr-1 text-sm mb-[2px]" />{" "}
                   Task Manager
                 </Tabs.Tab>
                 <Tabs.Tab value="fifth">
