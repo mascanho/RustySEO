@@ -657,7 +657,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
 // ------------ FUNCTION TO GET THE GOOGLE ANALYTICS DATA
 
 pub async fn get_google_analytics() -> Result<(), Box<dyn std::error::Error>> {
-    // Set the direcotries for the client_secret.json file
+    // Set the directories for the client_secret.json file
     let config_dir =
         ProjectDirs::from("", "", "rustyseo").ok_or_else(|| "Failed to get project directories")?;
     let config_dir = config_dir.data_dir();
@@ -667,10 +667,14 @@ pub async fn get_google_analytics() -> Result<(), Box<dyn std::error::Error>> {
     let secret = oauth2::read_application_secret(&secret_path)
         .await
         .expect("Where is the client_secret.json file?");
+
+    // Create an authenticator that persists tokens
+    let auth_path = config_dir.join("ga_tokencache.json");
     let auth = oauth2::InstalledFlowAuthenticator::builder(
         secret,
         oauth2::InstalledFlowReturnMethod::HTTPRedirect,
     )
+    .persist_tokens_to_disk(auth_path)
     .build()
     .await?;
 
@@ -704,7 +708,7 @@ pub async fn get_google_analytics() -> Result<(), Box<dyn std::error::Error>> {
     // Make the request
     let response: Value = client
         .post("https://analyticsdata.googleapis.com/v1beta/properties/423125701:runReport")
-        .bearer_auth(token.token().unwrap()) // Use token() method to get the string
+        .bearer_auth(token.token().unwrap())
         .json(&body)
         .send()
         .await?
