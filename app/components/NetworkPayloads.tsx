@@ -97,7 +97,7 @@ const NetworkPayload = ({
           </button>
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
-          <Text size="sm">
+          <Text size="xs">
             Large payloads refer to web page resources that are large in size
             and take a long time to download.
           </Text>

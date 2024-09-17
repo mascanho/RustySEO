@@ -126,7 +126,7 @@ const LongTasks = ({
           </button>
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
-          <Text size="sm">
+          <Text size="xs">
             Any operations that take a significant amount of time for the
             browser&apos;s main thread to execute.
           </Text>

@@ -83,7 +83,7 @@ const TbtEl = ({
           </button>
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
-          <Text size="sm">
+          <Text size="xs">
             Total amount of time a user is prevented from interacting with a
             page due to long tasks blocking the main thread.
           </Text>

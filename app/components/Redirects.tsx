@@ -115,7 +115,7 @@ const Redirects = ({
           </button>
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
-          <Text size="sm">
+          <Text size="xs">
             Occur when a user (or search engine bot) requests one URL, but the
             server responds with a different one.
           </Text>

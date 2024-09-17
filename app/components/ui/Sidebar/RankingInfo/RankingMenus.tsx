@@ -1,32 +1,20 @@
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useEffect, useState, useCallback } from "react";
+import { useCallback } from "react";
 import { FaSearchengin } from "react-icons/fa";
 
 import {
-  FiRefreshCw,
-  FiRotateCw,
-  FiSave,
   FiPlusSquare,
-  FiEdit,
-  FiTool,
   FiLink,
   FiCheckSquare,
-  FiClock,
   FiGlobe,
   FiClipboard,
   FiExternalLink,

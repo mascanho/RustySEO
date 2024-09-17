@@ -12,6 +12,17 @@ import {
   FiImage,
 } from "react-icons/fi";
 import { PiVideo } from "react-icons/pi";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+import { GoGear } from "react-icons/go";
 
 const ContentSummary = ({
   keywords,
@@ -147,6 +158,16 @@ const ContentSummary = ({
                 <span className="font-semibold block ml-2 pt-0.5">
                   Top Keywords
                 </span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger>
+                <GoGear className="text-sky-dark cursor-pointer ml-2 animate-spin hover:animate-none" size={12} />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                  <DropdownMenuItem className="hover:text-white">
+                   Hello
+                  </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               <div className="flex flex-wrap gap-2 min-h-12">
                 {keywords[0]?.map((keyword: any, index: any) => (

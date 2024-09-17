@@ -32,7 +32,7 @@ const LongTasksTable = ({ pageSpeed }: { pageSpeed: any }) => {
               </th>
               <th
                 align="left"
-                className="text-xs max-w-[200px] border-r border-gray-300 dark:text-white"
+                className="text-xs max-w-[400px] border-r border-gray-300 dark:text-white"
               >
                 URL
               </th>
@@ -41,11 +41,11 @@ const LongTasksTable = ({ pageSpeed }: { pageSpeed: any }) => {
           <tbody className="bg-white  h-[calc(30rem - 3.5rem)] overflow-y-auto">
             {lt.map((item: any, index: number) => (
               <tr key={item.url || index}>
-                <td className="px-2 text-[6px] text-gray-700 w-[200px] min-w-[70px] dark:text-white border-b border-r">
-                  {item?.duration} ms
+                <td className="px-2 text-[6px] text-gray-700 w-[90px] min-w-[70px] dark:text-white border-b border-r">
+                  {item?.duration.toFixed(0)} ms
                 </td>{" "}
-                <td className="px-4 text-xs text-blue-600 truncate border-b">
-                  <span className="max-w-[400px] ">
+                <td className="px-4 text-xs text-blue-600 truncate border-b max-w-[900px]">
+                  <span>
                     {item?.url?.length > 50
                       ? item?.url?.slice(0, urlSize) + "..."
                       : item?.url}
@@ -67,7 +67,7 @@ const LongTasksTable = ({ pageSpeed }: { pageSpeed: any }) => {
         <p>
           Total Time:{""}
           <span className="px-1 ml-1 py-0.5 bg-gray-400 text-white rounded-md min-w-3">
-            {totalTime} {totalTime && "ms"}
+            {totalTime.toFixed(1)} {totalTime && "ms"}
           </span>
         </p>
       </div>

@@ -86,7 +86,7 @@ const TtiEl = ({
           </button>
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
-          <Text size="sm">
+          <Text size="xs">
             How responsive the page is to user interactions.
           </Text>
         </Popover.Dropdown>

@@ -78,7 +78,7 @@ const SpeedIndex = ({
           </button>
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
-          <Text size="sm">
+          <Text size="xs">
             Measures how quickly a page appears to be loading to users. It
             calculates the average time it takes for content to appear on the
             screen, taking into account the visual progression of the page.

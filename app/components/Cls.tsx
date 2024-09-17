@@ -82,7 +82,7 @@ const ClsEl = ({
           </button>
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
-          <Text size="sm">
+          <Text size="xs">
             Measures the visual stability of your webpage content. It quantifies
             how often users experience unexpected layout shifts, which can be
             frustrating and disruptive.

@@ -86,7 +86,7 @@ const ServerResponseTime = ({
           </button>
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
-          <Text size="sm">
+          <Text size="xs">
             The time it takes for a web server to process a request and send a
             response back to the client
           </Text>

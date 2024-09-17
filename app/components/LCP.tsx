@@ -91,7 +91,7 @@ const LCPEl = ({
           </button>
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
-          <Text size="sm">
+          <Text size="xs">
             How long it takes for the main content of the page to load.
           </Text>
         </Popover.Dropdown>
