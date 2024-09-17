@@ -16,6 +16,7 @@ interface VisibleState {
   renderBlocking: boolean;
   schema: boolean;
   networkRequests: boolean;
+  longTasks: boolean;
 }
 
 // Define the type for the store
@@ -43,6 +44,7 @@ const useStore = create<StoreState>()(
         renderBlocking: true,
         schema: true,
         networkRequests: true,
+        longTasks: true,
       },
       showComponent: (component) =>
         set((state) => ({

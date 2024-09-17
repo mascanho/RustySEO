@@ -63,6 +63,7 @@ import { CgPerformance } from "react-icons/cg";
 import { IoIosClose } from "react-icons/io";
 import { FaChartBar } from "react-icons/fa6";
 import Analytics from "./components/ui/Analytics/Analytics";
+import LongTasksTable from "./components/ui/LongTasksTable";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -744,6 +745,7 @@ const Home: React.FC<HomeProps> = () => {
                 <ThirdPartyScripts pageSpeed={pageSpeed} />
                 <TotalByteWeight pageSpeed={pageSpeed} />
                 <RenderBlockingResources pageSpeed={pageSpeed} />
+                <LongTasksTable pageSpeed={pageSpeed} />
                 <PageSchemaTable
                   pageSchema={pageSchema}
                   googleSchemaTestUrl={debouncedURL}

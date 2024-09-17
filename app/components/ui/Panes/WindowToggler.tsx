@@ -19,6 +19,7 @@ const WindowSelector = () => {
     { id: "tbw", label: "TBW" },
     { id: "renderBlocking", label: "Render Blocking" },
     { id: "schema", label: "Schema" },
+    { id: "longTasks", label: "Long Tasks" },
   ];
 
   console.log(Visible);

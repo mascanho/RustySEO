@@ -90,6 +90,11 @@ function MenuDrawer() {
       );
     }
 
+    const longTasksElement = document.querySelector(".long-tasks");
+    if (longTasksElement) {
+      longTasksElement.classList.toggle("hidden", !Visible.longTasks);
+    }
+
     // Add similar blocks for other components as needed
   }, [Visible]);
 
