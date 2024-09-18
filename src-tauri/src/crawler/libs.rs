@@ -689,18 +689,48 @@ pub async fn get_google_analytics() -> Result<(), Box<dyn std::error::Error>> {
     let body = json!({
         "dateRanges": [
             {
-                "startDate": "2021-01-01",
+                "startDate": "2024-01-01",
                 "endDate": "today"
             }
         ],
         "dimensions": [
             {
-                "name": "pageViews"
+                "name": "pageTitle",
+                "name": "medium",
+                "name": "source",
+                "name": "pagePath",
+                "name": "pageTitle",
+                "name": "pageTitle",
+                "name": "medium",
+                "name": "source",
+                "name": "pagePath",
+                "name": "deviceCategory",
+                "name": "deviceCategory",
+                "name": "browser",
+                "name": "browserVersion",
+                "name": "operatingSystem",
+                "name": "operatingSystemVersion",
+                "name": "country",
+                "name": "city",
+                "name": "latitude",
+                "name": "longitude",
+                "name": "isMobile",
+                "name": "isTablet",
+                "name": "isDesktop",
+                "name": "isMobile",
+                "name": "isTablet",
+                "name": "isDesktop",
             }
         ],
         "metrics": [
             {
-                "name": "ga:name"
+                "name": "activeUsers"
+            },
+            {
+                "name": "newUsers"
+            },
+            {
+                "name": "sessions"
             }
         ]
     });
@@ -723,6 +753,8 @@ pub async fn get_google_analytics() -> Result<(), Box<dyn std::error::Error>> {
             println!("Page: {}, Views: {}", page, views);
         }
     }
+
+    println!("Analytics Data: {:#?}", response);
 
     Ok(())
 }
