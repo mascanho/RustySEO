@@ -3,8 +3,6 @@ use crate::crawler::db::GscMatched;
 use crate::crawler::libs;
 use crate::crawler::libs::ApiKeys;
 use crate::crawler::libs::Credentials;
-use crate::domain_crawler;
-use crate::domain_crawler::GlobalCrawlResults;
 use crate::image_converter::converter;
 use serde::Deserialize;
 use serde::Serialize;
@@ -126,26 +124,6 @@ pub fn call_gsc_match_url(url: String) -> Result<Vec<GscMatched>, String> {
     match db::read_gsc_matched_from_db() {
         Ok(result) => Ok(result),
         Err(err) => Err(err.to_string()),
-    }
-}
-
-// ---------- CALL THE CRAWL DOMAIN FUNCTION
-
-#[tauri::command]
-pub async fn crawl_domain(url: &str, concurrency: usize) -> Result<GlobalCrawlResults, String> {
-    println!("Crawling domain...");
-
-    // Attempt to crawl the domain and handle any errors
-    match domain_crawler::crawl_domain(url, concurrency).await {
-        Ok(results) => {
-            println!("Results from Domain crawler: {:#?}", results);
-            Ok(results) // Successfully return an empty tuple on success
-        }
-        Err(e) => {
-            // Handle the error by converting it to a string
-            println!("Error occurred during domain crawl: {:?}", e);
-            Err(format!("Failed to crawl domain: {}", e))
-        }
     }
 }
 

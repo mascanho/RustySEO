@@ -1,229 +1,165 @@
-use futures::stream::{self, StreamExt};
+use regex::Regex;
 use reqwest::Client;
 use scraper::{Html, Selector};
-use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
-use std::error::Error;
-use std::sync::{Arc, Mutex};
+use std::collections::{HashSet, VecDeque};
 use std::time::Duration;
-use tokio::time::sleep;
 use url::Url;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct PageDetails {
-    title: String,
-    h1: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct GlobalCrawlResults {
-    visited_urls: HashMap<String, PageDetails>,
-    all_files: HashMap<String, FileDetails>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct FileDetails {
-    url: String,
-    file_type: String,
-}
-
-#[derive(Debug, Clone)]
-struct CrawlState {
-    urls_to_visit: VecDeque<String>,
-    visited_urls: HashMap<String, PageDetails>,
-    all_files: HashMap<String, FileDetails>,
-    seen_urls: HashSet<String>,
-}
-
-pub async fn crawl_domain(
-    base_url: &str,
-    concurrency: usize,
-) -> Result<GlobalCrawlResults, Box<dyn Error + Send + Sync>> {
-    let client = Client::new();
-    let state = Arc::new(Mutex::new(CrawlState {
-        urls_to_visit: VecDeque::from(vec![base_url.to_string()]),
-        visited_urls: HashMap::new(),
-        all_files: HashMap::new(),
-        seen_urls: HashSet::new(),
-    }));
-
-    let mut tasks = Vec::new();
-
-    loop {
-        let url = {
-            let mut state = state.lock().unwrap();
-            state.urls_to_visit.pop_front()
-        };
-
-        match url {
-            Some(url) => {
-                if state.lock().unwrap().visited_urls.len() >= concurrency {
-                    sleep(Duration::from_millis(100)).await;
-                    continue;
-                }
-
-                if !state.lock().unwrap().visited_urls.contains_key(&url) {
-                    println!("Crawling: {}", url);
-
-                    let state_clone = Arc::clone(&state);
-                    tasks.push(tokio::spawn(crawl_page(
-                        client.clone(),
-                        url,
-                        base_url.to_string(),
-                        state_clone,
-                    )));
-                }
-            }
-            None => {
-                if tasks.is_empty() {
-                    break;
-                }
-                sleep(Duration::from_millis(100)).await;
-            }
-        }
-
-        // Process completed tasks
-        let mut completed_tasks = Vec::new();
-        for (i, task) in tasks.iter_mut().enumerate() {
-            if task.is_finished() {
-                completed_tasks.push(i);
-            }
-        }
-        for i in completed_tasks.into_iter().rev() {
-            let _ = tasks.swap_remove(i).await;
-        }
-    }
-
-    let final_state = state.lock().unwrap();
-    println!("Total files found: {:?}", final_state.all_files.len());
-    println!("Total URLs visited: {:?}", final_state.visited_urls.len());
-
-    Ok(GlobalCrawlResults {
-        visited_urls: final_state.visited_urls.clone(),
-        all_files: final_state.all_files.clone(),
-    })
-}
-
-async fn crawl_page(
-    client: Client,
-    url: String,
-    base_url: String,
-    state: Arc<Mutex<CrawlState>>,
-) -> Result<(), Box<dyn Error + Send + Sync>> {
-    sleep(Duration::from_millis(100)).await;
-
-    match fetch_page(&client, &url).await {
-        Ok(body) => {
-            let document = Html::parse_document(&body);
-            let page_details = extract_page_details(&document);
-
-            let mut state = state.lock().unwrap();
-            state.visited_urls.insert(url.clone(), page_details);
-
-            extract_links(&document, &url, &base_url, &mut state);
-            check_directory_listings(&document, &url, &base_url, &mut state);
-        }
-        Err(e) => {
-            eprintln!("Error fetching {}: {:?}", url, e);
-        }
-    }
-
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let start_url = "https://markwarrior.dev";
+    let mut crawler = Crawler::new(start_url);
+    let results = crawler.crawl().await?;
+    println!("Crawl results: {:?}", results);
     Ok(())
 }
 
-async fn fetch_page(client: &Client, url: &str) -> Result<String, reqwest::Error> {
-    let response = client.get(url).send().await?;
-    response.text().await
+struct Crawler {
+    client: Client,
+    to_visit: VecDeque<String>,
+    visited: HashSet<String>,
+    base_url: Url,
+    link_regex: Regex,
 }
 
-fn extract_page_details(document: &Html) -> PageDetails {
-    let title_selector = Selector::parse("title").unwrap();
-    let title = document
-        .select(&title_selector)
-        .next()
-        .map(|e| e.inner_html())
-        .unwrap_or_else(|| "Untitled".to_string());
+impl Crawler {
+    fn new(start_url: &str) -> Self {
+        let client = Client::builder()
+            .timeout(Duration::from_secs(30))
+            .build()
+            .expect("Failed to create HTTP client");
 
-    let h1_selector = Selector::parse("h1").unwrap();
-    let h1_content: Vec<String> = document
-        .select(&h1_selector)
-        .map(|e| e.inner_html())
-        .collect();
-    let h1 = h1_content.join(", ");
+        let base_url = Url::parse(start_url).expect("Invalid start URL");
 
-    PageDetails { title, h1 }
-}
+        let link_regex = Regex::new(r#"(?i)(?:href|src)=["']([^"']+)["']"#).unwrap();
 
-fn extract_links(document: &Html, current_url: &str, base_url: &str, state: &mut CrawlState) {
-    let link_selector = Selector::parse("a[href], link[href], script[src], img[src]").unwrap();
+        Crawler {
+            client,
+            to_visit: VecDeque::from([start_url.to_string()]),
+            visited: HashSet::new(),
+            base_url,
+            link_regex,
+        }
+    }
 
-    for element in document.select(&link_selector) {
-        if let Some(href) = element
-            .value()
-            .attr("href")
-            .or_else(|| element.value().attr("src"))
+    async fn crawl(&mut self) -> Result<Vec<CrawlResult>, Box<dyn std::error::Error>> {
+        let mut results = Vec::new();
+
+        while let Some(url) = self.to_visit.pop_front() {
+            if self.visited.contains(&url) {
+                continue;
+            }
+
+            println!("Crawling: {}", url);
+            self.visited.insert(url.clone());
+
+            match self.client.get(&url).send().await {
+                Ok(response) => {
+                    let content_type = response
+                        .headers()
+                        .get("content-type")
+                        .and_then(|v| v.to_str().ok())
+                        .unwrap_or("");
+
+                    if content_type.starts_with("text/html") {
+                        let body = response.text().await?;
+                        let links = self.parse_html(&url, &body)?;
+                        results.push(CrawlResult::Html { url, links });
+                    } else {
+                        results.push(CrawlResult::File {
+                            url,
+                            content_type: content_type.to_string(),
+                        });
+                    }
+                }
+                Err(e) => {
+                    results.push(CrawlResult::Error {
+                        url,
+                        error: e.to_string(),
+                    });
+                }
+            }
+
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+
+        Ok(results)
+    }
+
+    fn parse_html(
+        &mut self,
+        base_url: &str,
+        html: &str,
+    ) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+        let mut links = Vec::new();
+        links.extend(self.parse_html_with_scraper(base_url, html)?);
+        links.extend(self.parse_html_with_regex(base_url, html)?);
+        Ok(links)
+    }
+
+    fn parse_html_with_scraper(
+        &mut self,
+        base_url: &str,
+        html: &str,
+    ) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+        let document = Html::parse_document(html);
+        let selector = Selector::parse("a, link, script, img, source").unwrap();
+        let mut links = Vec::new();
+
+        for element in document.select(&selector) {
+            let href = element
+                .value()
+                .attr("href")
+                .or_else(|| element.value().attr("src"));
+
+            if let Some(href) = href {
+                if let Some(url) = self.add_url_to_queue(base_url, href) {
+                    links.push(url);
+                }
+            }
+        }
+
+        Ok(links)
+    }
+
+    fn parse_html_with_regex(
+        &mut self,
+        base_url: &str,
+        html: &str,
+    ) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+        let captures: Vec<_> = self.link_regex.captures_iter(html).collect();
+        let mut links = Vec::new();
+
+        for cap in captures {
+            if let Some(href) = cap.get(1) {
+                if let Some(url) = self.add_url_to_queue(base_url, href.as_str()) {
+                    links.push(url);
+                }
+            }
+        }
+
+        Ok(links)
+    }
+
+    fn add_url_to_queue(&mut self, base_url: &str, href: &str) -> Option<String> {
+        if let Ok(absolute_url) =
+            Url::parse(href).or_else(|_| Url::parse(base_url).and_then(|base| base.join(href)))
         {
-            if let Ok(absolute_url) = Url::parse(current_url).and_then(|base| base.join(href)) {
-                let absolute_url_str = absolute_url.as_str().to_string();
-                if absolute_url_str.starts_with(base_url) {
-                    let file_name = absolute_url_str.split('/').last().unwrap_or("");
-                    if file_name.contains('.') {
-                        let file_type = file_name.split('.').last().unwrap_or("").to_string();
-                        state.all_files.insert(
-                            absolute_url_str.clone(),
-                            FileDetails {
-                                url: absolute_url_str.clone(),
-                                file_type,
-                            },
-                        );
-                    }
-                    if !state.seen_urls.contains(&absolute_url_str) {
-                        state.urls_to_visit.push_back(absolute_url_str.clone());
-                        state.seen_urls.insert(absolute_url_str);
-                    }
+            if absolute_url.domain() == self.base_url.domain() {
+                let url_string = absolute_url.to_string();
+                if !self.visited.contains(&url_string) && !self.to_visit.contains(&url_string) {
+                    self.to_visit.push_back(url_string.clone());
+                    return Some(url_string);
                 }
             }
         }
+        None
     }
 }
 
-fn check_directory_listings(
-    document: &Html,
-    current_url: &str,
-    base_url: &str,
-    state: &mut CrawlState,
-) {
-    let directory_selector = Selector::parse("pre, table").unwrap();
-
-    for directory_listing in document.select(&directory_selector) {
-        for line in directory_listing.text().collect::<Vec<_>>() {
-            let parts: Vec<&str> = line.split_whitespace().collect();
-            if let Some(file_or_dir) = parts.last() {
-                if *file_or_dir != "./" && *file_or_dir != "../" {
-                    if let Ok(absolute_url) =
-                        Url::parse(current_url).and_then(|base| base.join(file_or_dir))
-                    {
-                        let absolute_url_str = absolute_url.as_str().to_string();
-                        if absolute_url_str.starts_with(base_url) {
-                            if file_or_dir.contains('.') {
-                                let file_type =
-                                    file_or_dir.split('.').last().unwrap_or("").to_string();
-                                state.all_files.insert(
-                                    absolute_url_str.clone(),
-                                    FileDetails {
-                                        url: absolute_url_str.clone(),
-                                        file_type,
-                                    },
-                                );
-                            }
-                            if !state.seen_urls.contains(&absolute_url_str) {
-                                state.urls_to_visit.push_back(absolute_url_str.clone());
-                                state.seen_urls.insert(absolute_url_str);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+#[derive(Debug)]
+enum CrawlResult {
+    Html { url: String, links: Vec<String> },
+    File { url: String, content_type: String },
+    Error { url: String, error: String },
 }
