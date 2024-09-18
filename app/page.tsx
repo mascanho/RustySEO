@@ -573,7 +573,7 @@ const Home: React.FC<HomeProps> = () => {
           </section>
         </div>
         {/* TABS SECTION */}
-        <section className="mt-1 relative h-[calc(100vh-9.0rem)] overflow-x-hidden pt-6 px-1.5 side-scrollbar  ">
+        <section className="mt-1 relative h-[calc(100vh-9.0rem)] overflow-x-hidden pt-0 px-1.5 side-scrollbar  ">
           <Tabs defaultValue="first">
             <div className="transition-all   ease-in  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-1 top-[70px]  transform dark:bg-brand-darker  pb-0">
               <Tabs.List justify="center" className="dark:text-white">
@@ -604,7 +604,7 @@ const Home: React.FC<HomeProps> = () => {
               {/* WIDGET SECTION */}
 
               <div
-                className={`-mt-[20px] widgets ${Visible.widgets ? "block" : "hidden"} mb-2.5`}
+                className={`widgets ${Visible.widgets ? "block" : "hidden"} mb-2.5`}
               >
                 <h2 className="bottom-0 text-black/20 dark:text-white/20 font-semibold pb-1 ml-1 text-sm">
                   Widgets

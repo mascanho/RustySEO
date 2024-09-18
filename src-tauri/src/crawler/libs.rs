@@ -8,6 +8,7 @@ use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use serde_json::{json, Value};
+use std::fmt::format;
 use std::{error::Error, path::PathBuf};
 use sysinfo::{ProcessExt, ProcessStatus, System, SystemExt};
 use tauri::Config;
@@ -700,11 +701,9 @@ pub async fn get_google_analytics() -> Result<(), Box<dyn std::error::Error>> {
                 "name": "source",
                 "name": "pagePath",
                 "name": "pageTitle",
-                "name": "pageTitle",
                 "name": "medium",
                 "name": "source",
                 "name": "pagePath",
-                "name": "deviceCategory",
                 "name": "deviceCategory",
                 "name": "browser",
                 "name": "browserVersion",
@@ -712,14 +711,15 @@ pub async fn get_google_analytics() -> Result<(), Box<dyn std::error::Error>> {
                 "name": "operatingSystemVersion",
                 "name": "country",
                 "name": "city",
-                "name": "latitude",
-                "name": "longitude",
-                "name": "isMobile",
-                "name": "isTablet",
-                "name": "isDesktop",
-                "name": "isMobile",
-                "name": "isTablet",
-                "name": "isDesktop",
+                "name": "fullPageUrl",
+                "name": "isoWeek",
+                "name": "isoYear",
+                "name": "language",
+                "name": "operatingSystem",
+                "name": "pageReferrer",
+
+
+
             }
         ],
         "metrics": [
@@ -735,9 +735,15 @@ pub async fn get_google_analytics() -> Result<(), Box<dyn std::error::Error>> {
         ]
     });
 
+    let client_id = "423125701".to_string();
+    let analytics_url = format!(
+        "https://analyticsdata.googleapis.com/v1beta/properties/{}:runReport",
+        client_id
+    );
+
     // Make the request
     let response: Value = client
-        .post("https://analyticsdata.googleapis.com/v1beta/properties/423125701:runReport")
+        .post(&analytics_url)
         .bearer_auth(token.token().unwrap())
         .json(&body)
         .send()
