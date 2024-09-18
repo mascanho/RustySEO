@@ -32,7 +32,7 @@ const LongTasksTable = ({ pageSpeed }: { pageSpeed: any }) => {
               </th>
               <th
                 align="left"
-                className="text-xs max-w-[400px] border-r border-gray-300 dark:text-white"
+                className="text-xs max-w-[100%] w-full border-r border-gray-300 dark:text-white"
               >
                 URL
               </th>
@@ -44,9 +44,9 @@ const LongTasksTable = ({ pageSpeed }: { pageSpeed: any }) => {
                 <td className="px-2 text-[6px] text-gray-700 w-[90px] min-w-[70px] dark:text-white border-b border-r">
                   {item?.duration.toFixed(0)} ms
                 </td>{" "}
-                <td className="px-4 text-xs text-blue-600 truncate border-b max-w-[1900px]">
+                <td className="px-4 text-xs text-blue-600 w-[100vw] flex-1  border-b max-w-[1900px]">
                   <span className="w-full">
-                    {item?.url?.length > 50
+                    {item?.url?.length > 80
                       ? item?.url?.slice(0, urlSize) + "..."
                       : item?.url}
                   </span>
