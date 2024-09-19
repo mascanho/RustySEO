@@ -661,3 +661,38 @@ button .mantine-Tabs-tabLabel {
 .mantine-MultiSelect-option {
   @apply text-black dark:text-white;
 }
+
+/* REACT SELECT ON SERP CRAWL */
+
+.select__input-container {
+  @apply dark:bg-brand-darker dark:text-white border-0 ring-0 outline-0 !important;
+}
+
+.select__control {
+  @apply dark:bg-brand-darker dark:text-white;
+}
+
+.select__multi-value {
+  @apply dark:bg-brand-bright dark:text-white ring-0 border-0 !important;
+}
+
+.select__multi-value__label::after {
+  @apply hidden !important;
+}
+
+.select__multi-value__label {
+  @apply dark:text-white !important;
+}
+
+.select__menu,
+.select__control--menu-is-open,
+.select__menu-list {
+  @apply dark:bg-brand-darker dark:text-white !important;
+}
+
+.css-d7l1ni-option {
+  @apply dark:bg-brand-darker dark:text-white !important;
+}
+.css-13cymwt-control {
+  @apply dark:border-brand-dark !important;
+}

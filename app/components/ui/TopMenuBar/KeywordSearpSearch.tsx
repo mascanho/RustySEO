@@ -81,7 +81,7 @@ export default function KeywordSearch() {
 
   return (
     <div
-      className={`${visibility.serpKeywords ? "" : "hidden"} relative bottom-[50px] transform translate-y-[4rem] transition-all ease-linear duration-75 w-[40rem] py-4 px-1 bg-white dark:bg-brand-dark text-black dark:text-white border-2 border-brand-bright h-[53rem] -ml-2 mb-0 rounded-md shadow-xl overflow-hidden`}
+      className={`${visibility.serpKeywords ? "" : "hidden"} fixed bottom-10  transition-all ease-linear duration-75 w-[40rem] py-4 px-1 bg-white dark:bg-brand-darker text-black dark:text-white border-2 border-brand-bright h-[53rem] -ml-2 mb-0 rounded-md shadow-xl overflow-hidden`}
     >
       <IoClose
         className="absolute top-4 right-4 text-gray-400 hover:text-gray-500 cursor-pointer hover:bg-gray-200 active:rounded-sm"
@@ -101,7 +101,7 @@ export default function KeywordSearch() {
           value={selectedKeywords}
           onChange={handleKeywordChange}
           placeholder="Google search..."
-          className="basic-multi-select w-11/12 text-xs pl-2"
+          className="basic-multi-select border-0 border-brand-dark w-11/12 text-xs pl-2 dark:bg-brand-darker dark:text-white  "
           classNamePrefix="select"
           formatCreateLabel={(inputValue) => `Add "${inputValue}"`}
           onKeyDown={handleKeyDown}
@@ -194,11 +194,13 @@ export default function KeywordSearch() {
                   {key?.headings.map((heading, headingIndex) => (
                     <div
                       key={headingIndex}
-                      className="flex items-center ml-4 space-x-1 mt-1 group"
+                      className="flex items-center ml-2 space-x-1 mt-1 group"
                     >
                       <span className="relative group">
                         <span className="text-brand-bright uppercase font-bold text-base mr-2">
-                          {heading[0]}
+                          {heading[0].length > 74
+                            ? `${heading[0].substring(0, 72)}...`
+                            : heading[0]}
                         </span>
 
                         {heading[1]}

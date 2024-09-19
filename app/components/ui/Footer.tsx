@@ -17,14 +17,14 @@ import {
 } from "@/components/ui/drawer";
 import { Button, Modal } from "@mantine/core";
 import AIcontainer from "./AiContainer/AIcontainer";
-import { useVisibilityStore } from "@/store/VisibilityStore";
 import { useDisclosure } from "@mantine/hooks";
 import Todo from "./Todo";
 import TodoItems from "./TodoItems";
 import { Drawer as MantineDrawer } from "@mantine/core";
 import { IoMdClose } from "react-icons/io";
 import { usePathname } from "next/navigation";
-
+import { LiaHeadingSolid } from "react-icons/lia";
+import { useVisibilityStore } from "@/store/VisibilityStore";
 const date = new Date();
 const year = date.getFullYear();
 
@@ -43,7 +43,13 @@ const Footer = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const { messages, input, handleInputChange, handleSubmit } = useChat();
-  const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
+  const {
+    visibility,
+    showSidebar,
+    hideSidebar,
+    showSerpKeywords,
+    hideSerpKeywords,
+  } = useVisibilityStore();
   const [openedDrawer, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
   const [hasOllama, setHasOllama] = useState("");
@@ -163,6 +169,14 @@ const Footer = () => {
                   {tasks.length}
                 </span>
               </div>
+              <LiaHeadingSolid
+                onClick={() =>
+                  visibility.serpKeywords
+                    ? hideSerpKeywords()
+                    : showSerpKeywords()
+                }
+                className="text-lg cursor-pointer active:scale-95 transition-all ease-linear duration-75"
+              />
               <Drawer>
                 <DrawerTrigger className="flex items-center space-x-1">
                   <FaRobot className="text-lg pb-[2px]" />
