@@ -174,7 +174,6 @@ const ContentSummary: React.FC<ContentSummaryProps> = ({
                 <span className="font-semibold block ml-2 pt-0.5">
                   Top Keywords
                 </span>
-                <ContentSheet keywords={keywords} />
               </div>
               <div className="flex flex-wrap gap-2 min-h-12">
                 {keywords[0]?.map((keyword: any, index: number) => (

@@ -42,6 +42,20 @@ import {
 import { GiRobotGrab } from "react-icons/gi";
 import { FaRegLightbulb, FaRegMoon } from "react-icons/fa";
 import { AiOutlineShareAlt, AiOutlinePrinter } from "react-icons/ai";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+import { useVisibilityStore } from "@/store/VisibilityStore";
+import KeywordSerp from "./TopMenuBar/KeywordSerp";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -49,6 +63,9 @@ const TopMenuBar = () => {
     const { appWindow } = await import("@tauri-apps/api/window");
     appWindow.close();
   }, []);
+
+  const { visibility, showSerpKeywords, hideSerpKeywords } =
+    useVisibilityStore();
 
   const router = useRouter();
   // Theme
@@ -389,6 +406,10 @@ const TopMenuBar = () => {
                 <FiTool className="mr-2" />
                 Image Converter
               </MenubarItem>
+              <MenubarItem onClick={showSerpKeywords}>
+                <FiTool className="mr-2" />
+                Headings SERP
+              </MenubarItem>{" "}
             </MenubarContent>
           </MenubarMenu>
 

@@ -75,7 +75,7 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
   };
 
   return (
-    <div className="mx-auto py-1 w-full px-1  z-10 text-xs overflow-hidden">
+    <div className="mx-auto py-1 px-1  z-10 text-xs overflow-y-hidden ">
       <h1
         onClick={handleGetGoogleAnalytics}
         className="text-xs font-bold mb-2 dark:text-white/50"
@@ -83,13 +83,13 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
         Google Analytics Dashboard
       </h1>
       <div className="mb-2 flex items-center space-x-4">
-        <div className="relative flex-grow rounded-md dark:border-brand-dark dark:bg-brand-darker">
+        <div className="relative flex-grow  rounded-md dark:border-brand-dark dark:bg-brand-darker">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground dark:text-white" />
           <Input
             placeholder="Search URLs..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 text-xs dark:bg-brand-darker"
+            className="pl-8 text-xs dark:bg-brand-darker w-full "
           />
         </div>
         <Popover>
@@ -129,8 +129,8 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
           </PopoverContent>
         </Popover>
       </div>
-      <div className="rounded-md border dark:border-brand-dark w-full h-[calc(100vh-15rem)] overflow-hidden">
-        <div className="h-full overflow-y-auto">
+      <div className="rounded-md w-full border dark:border-brand-dark  h-[calc(100vh-15rem)] overflow-y-hidden">
+        <div className="h-full w-full overflow-auto">
           <Table className="relative w-full text-xs">
             <TableHeader className="sticky top-0 bg-white z-10 shadow">
               <TableRow>

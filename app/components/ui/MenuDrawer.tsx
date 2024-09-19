@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import useStore from "../../../store/Panes";
 import { invoke } from "@tauri-apps/api/tauri";
 import useModelStore from "@/store/AIModels";
+import KeywordSerp from "./TopMenuBar/KeywordSerp";
 
 function MenuDrawer() {
   const [opened, setOpened] = useState(false);
@@ -132,6 +133,7 @@ function MenuDrawer() {
 
   return (
     <>
+      <KeywordSerp />
       <div className="items-center hidden md:flex  z-[10] absolute top-[1px] left-2">
         <div className="flex items-center flex bg-transparent rounded-md">
           <img
