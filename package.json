@@ -59,7 +59,7 @@
     "react-markdown": "^9.0.1",
     "react-remark": "^2.1.0",
     "react-resizable-panels": "^2.0.22",
-    "react-select": "^5.8.0",
+    "react-select": "^5.8.1",
     "react-syntax-highlighter": "^15.5.0",
     "react-tooltip": "^5.27.1",
     "react-virtualized": "^9.22.5",

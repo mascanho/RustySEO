@@ -1,14 +1,15 @@
+// @ts-nocheck
 "use client";
 
-import React, { useState } from "react";
-import Select, { MultiValue } from "react-select";
+import React, { useState, KeyboardEvent } from "react";
+import Creatable from "react-select/creatable";
+import { MultiValue } from "react-select";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useVisibilityStore } from "@/store/VisibilityStore";
 import { IoClose } from "react-icons/io5";
 import useContentStore from "@/store/storeContent";
 import { FaGlobe, FaHeading, FaExternalLinkAlt, FaCopy } from "react-icons/fa";
-import { TbH4, TbH5, TbH6 } from "react-icons/tb";
 import { toast } from "sonner";
 import { invoke } from "@tauri-apps/api/tauri";
 import {
@@ -18,43 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-// Mock function to simulate fetching links
-const fetchLinks = async (keywords: string[]): Promise<Link[]> => {
-  // In a real application, this would be an API call
-  await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API delay
-  return keywords.flatMap((keyword) => [
-    {
-      url: `https://example.com/${keyword}1`,
-      headings: [
-        {
-          text: `${keyword.charAt(0).toUpperCase() + keyword.slice(1)} Main Title`,
-          type: "h1",
-        },
-        { text: `${keyword} Subtitle`, type: "h2" },
-        { text: `About ${keyword}`, type: "h3" },
-        { text: `${keyword} Features`, type: "h4" },
-        { text: `${keyword} Benefits`, type: "h5" },
-        { text: `${keyword} Conclusion`, type: "h6" },
-      ],
-    },
-    {
-      url: `https://example.com/${keyword}2`,
-      headings: [
-        {
-          text: `${keyword.charAt(0).toUpperCase() + keyword.slice(1)} Guide`,
-          type: "h1",
-        },
-        { text: `Why ${keyword}?`, type: "h2" },
-        { text: `Types of ${keyword}`, type: "h3" },
-        { text: `How to use ${keyword}`, type: "h4" },
-        { text: `${keyword} Tips`, type: "h5" },
-        { text: `${keyword} Resources`, type: "h6" },
-      ],
-    },
-    // ... (repeat for other links, following the same pattern)
-  ]);
-};
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface KeywordOption {
   value: string;
@@ -63,24 +28,21 @@ interface KeywordOption {
 
 interface SerpResult {
   url: string;
-  headings: headings[];
+  headings: string[][];
 }
 
 export default function KeywordSearch() {
   const [selectedKeywords, setSelectedKeywords] = useState<KeywordOption[]>([]);
-  const [links, setLinks] = useState<Link[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [serpResults, setSerpResults] = useState<SerpResult[]>([]);
+  const [serpResults, setSerpResults] = useState<{
+    pages: SerpResult[];
+  } | null>(null);
   const { visibility, hideSerpKeywords } = useVisibilityStore();
   const { keywords } = useContentStore();
-  const [numberOfPages, setNumberOfPages] = useState(5);
+  const [numberOfPages, setNumberOfPages] = useState<number>(5);
 
   const handleKeywordChange = (selected: MultiValue<KeywordOption>) => {
     setSelectedKeywords(selected as KeywordOption[]);
-  };
-
-  const getHeadingIcon = (headingType: string) => {
-    return <FaHeading />;
   };
 
   const copyToClipboard = (text: string) => {
@@ -93,16 +55,25 @@ export default function KeywordSearch() {
   const handleSerpHeadings = async () => {
     setIsLoading(true);
     try {
-      const result = await invoke<string>("scrape_google_headings_command", {
-        keywords: selectedKeywords.map((k) => k.value),
-        number: numberOfPages,
-      });
+      const result = await invoke<{ pages: SerpResult[] }>(
+        "scrape_google_headings_command",
+        {
+          keywords: selectedKeywords.map((k) => k.value),
+          number: numberOfPages,
+        },
+      );
       console.log(result);
       setSerpResults(result);
     } catch (error) {
       console.error("Error scraping SERP headings:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter" && !isLoading && selectedKeywords.length > 0) {
+      handleSerpHeadings();
     }
   };
 
@@ -118,7 +89,7 @@ export default function KeywordSearch() {
       />
       <h1 className="text-2xl font-bold mb-2 pl-2">SERP Heading Results</h1>
       <div className="mb-2 flex w-full items-center pr-4">
-        <Select<KeywordOption, true>
+        <Creatable<KeywordOption>
           isMulti
           options={
             keywords &&
@@ -132,9 +103,11 @@ export default function KeywordSearch() {
           placeholder="Google search..."
           className="basic-multi-select w-11/12 text-xs pl-2"
           classNamePrefix="select"
+          formatCreateLabel={(inputValue) => `Add "${inputValue}"`}
+          onKeyDown={handleKeyDown}
         />
         <SelectShad
-          onValueChange={(value) => setNumberOfPages(value)}
+          onValueChange={(value) => setNumberOfPages(parseInt(value))}
           defaultValue="uk"
         >
           <SelectTrigger className="w-[90px] text-xs border border-brand-dark/25 ml-1 px-2 h-[38px]">
@@ -152,7 +125,7 @@ export default function KeywordSearch() {
           </SelectContent>
         </SelectShad>{" "}
         <SelectShad
-          onValueChange={(value) => setNumberOfPages(value)}
+          onValueChange={(value) => setNumberOfPages(parseInt(value))}
           defaultValue="en"
         >
           <SelectTrigger className="w-[90px] text-xs border border-brand-dark/25 ml-1 px-2 h-[38px]">
@@ -170,7 +143,7 @@ export default function KeywordSearch() {
           </SelectContent>
         </SelectShad>
         <SelectShad
-          onValueChange={(value) => setNumberOfPages(value)}
+          onValueChange={(value) => setNumberOfPages(parseInt(value))}
           defaultValue="5"
         >
           <SelectTrigger className="w-[90px] text-xs border border-brand-dark/25 ml-1 px-2 h-[38px]">
@@ -178,11 +151,11 @@ export default function KeywordSearch() {
           </SelectTrigger>
           <SelectContent
             className="z-[999999999] text-xs border w-10"
-            defaultValue={5}
+            defaultValue="5"
           >
-            <SelectItem value={5}>5</SelectItem>
-            <SelectItem value={10}>10</SelectItem>
-            <SelectItem value={15}>15</SelectItem>
+            <SelectItem value="5">5</SelectItem>
+            <SelectItem value="10">10</SelectItem>
+            <SelectItem value="15">15</SelectItem>
           </SelectContent>
         </SelectShad>
       </div>
@@ -196,45 +169,49 @@ export default function KeywordSearch() {
         </button>
       </div>
       <ScrollArea className="h-[710px] mt-2 pr-4 pl-2 pb-2">
-        {serpResults?.pages?.map((key, index) => (
-          <section
-            key={index}
-            className="mb-2 text-xs h-fit border rounded-md overflow-hidden w-full "
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-1">
-                <FaGlobe />
-                <h2 className="font-bold">
-                  {key.url.length > 76
-                    ? `${key.url.substring(0, 75)}...`
-                    : key.url}
-                </h2>
-                <span className="text-brand-bright">({index + 1})</span>
-                <a href={key.url} target="_blank" rel="noopener noreferrer">
-                  <FaExternalLinkAlt className="text-blue-500 hover:text-blue-700" />
-                </a>
-              </div>
-              {key?.headings.map((heading, headingIndex) => (
-                <div
-                  key={headingIndex}
-                  className="flex items-center ml-4 space-x-1 mt-1 group"
-                >
-                  <span className="relative group">
-                    <span className="text-brand-bright uppercase font-bold text-base mr-2">
-                      {heading[0]}
-                    </span>
+        {isLoading
+          ? Array.from({ length: 8 }).map((_, index) => (
+              <Skeleton key={index} className="w-full h-24 mb-2" />
+            ))
+          : serpResults?.pages?.map((key, index) => (
+              <section
+                key={index}
+                className="mb-2 text-xs h-fit border rounded-md overflow-hidden w-full "
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-1">
+                    <FaGlobe />
+                    <h2 className="font-bold">
+                      {key.url.length > 76
+                        ? `${key.url.substring(0, 75)}...`
+                        : key.url}
+                    </h2>
+                    <span className="text-brand-bright">({index + 1})</span>
+                    <a href={key.url} target="_blank" rel="noopener noreferrer">
+                      <FaExternalLinkAlt className="text-blue-500 hover:text-blue-700" />
+                    </a>
+                  </div>
+                  {key?.headings.map((heading, headingIndex) => (
+                    <div
+                      key={headingIndex}
+                      className="flex items-center ml-4 space-x-1 mt-1 group"
+                    >
+                      <span className="relative group">
+                        <span className="text-brand-bright uppercase font-bold text-base mr-2">
+                          {heading[0]}
+                        </span>
 
-                    {heading[1]}
-                    <FaCopy
-                      className="absolute right-[-20px] top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => copyToClipboard(heading[1])}
-                    />
-                  </span>
-                </div>
-              ))}
-            </CardContent>
-          </section>
-        ))}
+                        {heading[1]}
+                        <FaCopy
+                          className="absolute right-[-20px] top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={() => copyToClipboard(heading[1])}
+                        />
+                      </span>
+                    </div>
+                  ))}
+                </CardContent>
+              </section>
+            ))}
       </ScrollArea>
     </div>
   );
