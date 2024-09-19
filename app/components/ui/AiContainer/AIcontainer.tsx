@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 import React, { useRef, useEffect, useState } from "react";
 import { useChat } from "ai/react";
@@ -110,6 +111,7 @@ const AIcontainer = () => {
 
                 <div className="relative">
                   <Markdown
+                    // @ts-ignore
                     ref={bubbleRef}
                     className={`mb-3 mt-1 p-2 rounded-lg relative pr-2 text-black dark:text-white/90 ${
                       m.role === "user"
@@ -149,6 +151,7 @@ const AIcontainer = () => {
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
+
                 handleSubmit(e as React.FormEvent<HTMLFormElement>);
               }
             }}

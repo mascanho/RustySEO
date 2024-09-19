@@ -20,7 +20,6 @@ interface OnPageSeoState {
   seoRenderBlocking: Record<string, any> | null;
   seoContentQuality: Record<string, any> | null;
   seoMedia: Record<string, any> | null;
-  seoKeywords: string[] | null;
 
   setSeoLoading: (loading: boolean) => void;
   setFavicon: (favicon: string[] | null) => void;
@@ -40,7 +39,6 @@ interface OnPageSeoState {
   setSeoRenderBlocking: (seoRenderBlocking: Record<string, any> | null) => void;
   setSeoContentQuality: (seoContentQuality: Record<string, any> | null) => void;
   setSeoMedia: (seoMedia: Record<string, any> | null) => void;
-  setSeoKeywords: (seoKeywords: string[] | null) => void;
 }
 
 // Create the Zustand store with the defined interface
@@ -63,7 +61,6 @@ const useOnPageSeo = create<OnPageSeoState>((set) => ({
   seoRenderBlocking: null,
   seoContentQuality: null,
   seoMedia: null,
-  seoiKeywords: null,
 
   setSeoLoading: (loading) => set(() => ({ seoLoading: loading })),
   setFavicon: (favicon) => set(() => ({ favicon })),
@@ -85,7 +82,6 @@ const useOnPageSeo = create<OnPageSeoState>((set) => ({
   setSeoContentQuality: (seoContentQuality) =>
     set(() => ({ seoContentQuality })),
   setSeoMedia: (seoMedia) => set(() => ({ seoMedia })),
-  setSeoKeywords: (seoKeywords) => set(() => ({ seoKeywords })),
 }));
 
 export default useOnPageSeo;

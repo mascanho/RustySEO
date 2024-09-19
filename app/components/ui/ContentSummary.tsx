@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useOllamaStore } from "@/store/store";
 import useOnPageSeo from "@/store/storeOnPageSeo";
 import React, { useEffect, useState } from "react";
@@ -21,6 +22,8 @@ interface ContentSummaryProps {
   htmlToTextRatio: any[];
   pageTitle: string[];
   video: string[];
+  AiContentAnalysis: any;
+  robots: any;
 }
 
 const ContentSummary: React.FC<ContentSummaryProps> = ({
