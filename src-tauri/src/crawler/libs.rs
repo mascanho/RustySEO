@@ -17,6 +17,7 @@ use url::{ParseError, Url};
 use yup_oauth2 as oauth2;
 use yup_oauth2::{InstalledFlowAuthenticator, InstalledFlowReturnMethod};
 
+use reqwest::header::{HeaderMap, HeaderValue};
 use toml::de::Error as TomlError;
 
 use crate::crawler::db::{self, refresh_links_table};

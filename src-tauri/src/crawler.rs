@@ -27,7 +27,7 @@ use url::Url;
 
 use crate::crawler;
 
-mod content;
+pub mod content;
 pub mod db;
 pub mod libs;
 mod page_rank;

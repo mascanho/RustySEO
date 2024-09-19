@@ -219,9 +219,12 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
             </TableHeader>
             <TableBody>
               {sortedData.map((item) => (
-                <TableRow key={item.url}>
+                <TableRow key={item.url} className="py-0">
                   <TableCell className="font-medium text-xs">
-                    <div className="truncate max-w-[300px]" title={item.url}>
+                    <div
+                      className="truncate max-w-[300px] p-0 "
+                      title={item.url}
+                    >
                       {item.url}
                     </div>
                   </TableCell>

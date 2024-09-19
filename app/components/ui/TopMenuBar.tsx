@@ -56,6 +56,7 @@ import {
 
 import { useVisibilityStore } from "@/store/VisibilityStore";
 import KeywordSerp from "./TopMenuBar/KeywordSerp";
+import GoogleAnalyticsModal from "./GoogleAnalyticsModal/GoogleAnalyticsModal";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -101,6 +102,11 @@ const TopMenuBar = () => {
   const [
     openedSearchConsole,
     { open: openSearchConsole, close: closeSearchConsole },
+  ] = useDisclosure(false);
+
+  const [
+    openedGoogleAnalytics,
+    { open: openGoogleAnalytics, close: closeGoogleAnalytics },
   ] = useDisclosure(false);
 
   useEffect(() => {
@@ -321,6 +327,16 @@ const TopMenuBar = () => {
         {/* @ts-ignore */}
         <GoogleSearchConsoleModal close={closeSearchConsole} />
       </Modal>
+      {/* GOOGLE Analytics Modal */}
+      <Modal
+        opened={openedGoogleAnalytics}
+        onClose={closeGoogleAnalytics}
+        title="Google Analytics"
+        centered
+      >
+        {/* @ts-ignore */}
+        <GoogleAnalyticsModal close={closeGoogleAnalytics} />
+      </Modal>
       {/* Menubar */}
       <Menubar className="fixed w-full top-0 z-[1000] p-0 pl-0 dark:bg-brand-darker dark:text-white bg-white dark:border-b-brand-dark border-b pb-1">
         <section className="flex -ml-3 space-x-1">
@@ -421,6 +437,10 @@ const TopMenuBar = () => {
                 PageSpeed Insights
               </MenubarItem>
               <MenubarSeparator />
+              <MenubarItem onClick={openGoogleAnalytics}>
+                <FiZap className="mr-2" />
+                Google Analytics
+              </MenubarItem>{" "}
               <MenubarItem onClick={openSearchConsole}>
                 <FiZap className="mr-2" />
                 Search Console

@@ -12,24 +12,6 @@ import {
   FiImage,
 } from "react-icons/fi";
 import { PiVideo } from "react-icons/pi";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-import { GoGear } from "react-icons/go";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import ContentSheet from "./ContentSheet/ContentSheet";
 
 interface ContentSummaryProps {
   keywords: any[];

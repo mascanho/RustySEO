@@ -1,7 +1,10 @@
 use html2text::from_read;
 use regex::Regex;
 use reqwest;
+use reqwest::header::{HeaderMap, HeaderValue};
+use reqwest::Client;
 use scraper::{ElementRef, Html, Selector};
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
 
@@ -213,4 +216,171 @@ fn classify_reading_level(score: f64) -> String {
         0.0..=29.9 => "Very Confusing".to_string(),
         _ => "Unknown".to_string(),
     }
+}
+
+// ---------------- SCRAPPING GOOGLE FOR HEADINGS ----------------
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Page {
+    url: String,
+    position: usize,
+    headings: Vec<(String, String)>, // (heading tag, text)
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SERP {
+    query: String,
+    pages: Vec<Page>,
+    number: usize,
+}
+
+impl SERP {
+    fn new(query: &str, number: &usize) -> Self {
+        SERP {
+            query: query.replace(" ", "+"),
+            pages: Vec::new(),
+            number: *number,
+        }
+    }
+
+    async fn scrape_serp(
+        &mut self,
+        language: &str,
+        country: &str,
+        client: &Client,
+        number: &usize,
+    ) -> Result<(), Box<dyn Error>> {
+        let url = format!(
+            "https://www.google.com/search?hl={}&gl={}&q={}",
+            language, country, self.query
+        );
+
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "User-Agent",
+            HeaderValue::from_static(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.5845.97 Safari/537.36"
+            ),
+        );
+
+        let response = client.get(&url).headers(headers).send().await?;
+
+        if response.status().is_success() {
+            let body = response.text().await?;
+
+            if body.contains("Google has blocked your IP address") {
+                return Err("Google has blocked your IP address".into());
+            }
+
+            let document = Html::parse_document(&body);
+            let link_selector =
+                Selector::parse("div.g a").map_err(|e| format!("Invalid selector: {}", e))?;
+
+            let mut count = 0;
+
+            for link in document.select(&link_selector) {
+                if let Some(href) = link.value().attr("href") {
+                    if href.starts_with("http") {
+                        count += 1;
+                        let page = Page {
+                            url: href.to_string(),
+                            position: count,
+                            headings: Vec::new(),
+                        };
+                        self.pages.push(page);
+
+                        if count == *number {
+                            break;
+                        }
+                    }
+                }
+            }
+        } else {
+            println!("Failed to scrape SERP: {}", response.status());
+        }
+
+        Ok(())
+    }
+
+    async fn scrape_page_headings(
+        &mut self,
+        client: &Client,
+        heading_tags: &[&str],
+    ) -> Result<(), Box<dyn Error>> {
+        for page in &mut self.pages {
+            let response = client.get(&page.url).send().await?; // Get page URL correctly
+            let body = response.text().await?; // Await the text operation
+
+            if body.contains("Google has blocked your IP address") {
+                return Err("Google has blocked your IP address".into());
+            }
+
+            let document = Html::parse_document(&body);
+
+            for tag in heading_tags {
+                if let Ok(selector) = Selector::parse(tag) {
+                    for element in document.select(&selector) {
+                        let heading_text = element
+                            .text()
+                            .collect::<Vec<_>>()
+                            .join(" ")
+                            .trim()
+                            .to_string();
+                        if !heading_text.is_empty() {
+                            page.headings.push((tag.to_string(), heading_text));
+                        }
+                    }
+                } else {
+                    println!("Failed to parse selector for tag: {}", tag);
+                }
+            }
+        }
+
+        Ok(())
+    }
+}
+
+#[tauri::command]
+pub async fn scrape_google_headings_command(
+    keywords: Vec<String>,
+    number: usize,
+) -> Result<SERP, String> {
+    let results = scrape_google_headings(keywords, number).await;
+    match results {
+        Ok(result) => Ok(result),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+async fn scrape_google_headings(
+    keywords: Vec<String>,
+    number: usize,
+) -> Result<SERP, Box<dyn Error>> {
+    let keyword = keywords.join(" ");
+    let language = "en";
+    let country = "uk";
+    let heading_tags = vec!["h1", "h2", "h3", "h4", "h5", "h6"];
+
+    let client = Client::new();
+
+    let mut serp = SERP::new(&keyword, &number);
+    serp.scrape_serp(language, country, &client, &number)
+        .await?;
+
+    println!("Scraped SERP pages for keywords: {}", &keyword);
+    for page in &serp.pages {
+        println!("- {}", page.url);
+    }
+
+    serp.scrape_page_headings(&client, &heading_tags).await?;
+
+    println!("\nExtracted Headings:");
+    for page in &serp.pages {
+        println!("Page {}: {}", page.position, page.url);
+        for (tag, text) in &page.headings {
+            println!("  {}: {}", tag, text);
+        }
+    }
+
+    Ok(serp)
 }

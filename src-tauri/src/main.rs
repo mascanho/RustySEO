@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use crate::crawler::content::scrape_google_headings_command;
 use crawler::{
     CrawlResult, LinkResult, PageSpeedResponse, SEOLighthouseResponse, SeoPageSpeedResponse,
 };
@@ -12,6 +13,7 @@ use tokio;
 use toml;
 
 pub mod crawler;
+
 pub mod domain_crawler;
 pub mod downloads {
     pub mod csv;
@@ -164,6 +166,7 @@ async fn main() {
             globals::actions::get_search_console_credentials,
             globals::actions::check_ai_model,
             commands::get_google_analytics_command,
+            crawler::content::scrape_google_headings_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
