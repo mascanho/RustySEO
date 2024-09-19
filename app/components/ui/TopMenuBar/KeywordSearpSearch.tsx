@@ -156,6 +156,9 @@ export default function KeywordSearch() {
             <SelectItem value="5">5</SelectItem>
             <SelectItem value="10">10</SelectItem>
             <SelectItem value="15">15</SelectItem>
+            <SelectItem value="20">20</SelectItem>
+            <SelectItem value="25">25</SelectItem>
+            <SelectItem value="30">30</SelectItem>
           </SelectContent>
         </SelectShad>
       </div>
@@ -182,8 +185,8 @@ export default function KeywordSearch() {
                   <div className="flex items-center space-x-1">
                     <FaGlobe />
                     <h2 className="font-bold">
-                      {key.url.length > 76
-                        ? `${key.url.substring(0, 75)}...`
+                      {key.url.length > 69
+                        ? `${key.url.substring(0, 68)}...`
                         : key.url}
                     </h2>
                     <span className="text-brand-bright">({index + 1})</span>
