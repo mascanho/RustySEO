@@ -157,7 +157,7 @@ export default function KeywordSearch() {
 
   const url = serpResults?.pages?.map((result: any) => result.url);
   const query = serpResults?.pages?.map(
-    (result: any) => result?.headings[0][0],
+    (result: any) => result?.headings && result?.headings[0][0],
   );
 
   return (
@@ -165,7 +165,7 @@ export default function KeywordSearch() {
       className={`${visibility.serpKeywords ? "" : "hidden"} fixed bottom-9  transition-all ease-linear duration-75 w-[40rem] py-4 px-1 bg-white dark:bg-brand-darker text-black dark:text-white border-2 border-brand-bright h-[55rem] -ml-2 mb-0 rounded-md shadow-xl overflow-hidden z-[99999999999]`}
     >
       <IoClose
-        className="absolute top-4 right-4 text-gray-400 hover:text-gray-500 cursor-pointer hover:bg-gray-200 active:rounded-sm"
+        className="absolute top-4 right-4 text-gray-400  cursor-pointer hover:bg-gray-800 h-6 w-6"
         onClick={hideSerpKeywords}
       />
       <h1 className="text-2xl font-bold mb-2 pl-4">Google Crawler</h1>
@@ -250,13 +250,20 @@ export default function KeywordSearch() {
               </SelectContent>
             </SelectShad>
           </div>
-          <div className="w-full pr-6 mb-2">
+          <div className="w-full pr-6 mb-2 flex items-center">
             <button
               onClick={handleSerpHeadings}
               disabled={selectedKeywords.length === 0 || isLoading}
-              className="bg-red-500 text-white py-2 w-full  mx-2 text-primary-foreground  font-semibold rounded disabled:opacity-50 text-xs"
+              className="bg-red-500 text-white py-2 w-full mx-2 text-primary-foreground font-semibold rounded disabled:opacity-50 text-xs flex items-center justify-center"
             >
-              {isLoading ? "Crawling Google..." : "Crawl Google"}
+              {isLoading ? (
+                <>
+                  Crawling Google...
+                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white ml-2"></div>
+                </>
+              ) : (
+                "Crawl Google"
+              )}
             </button>
           </div>
           <ScrollArea className="h-[700px] mt-2 pr-4 pl-2 pb-2">
@@ -293,7 +300,7 @@ export default function KeywordSearch() {
                         >
                           <span className="relative group">
                             <span className="text-brand-bright uppercase font-bold text-base mr-2">
-                              {heading[0].length > 74
+                              {heading[0]?.length > 74
                                 ? `${heading[0].substring(0, 72)}...`
                                 : heading[0]}
                             </span>
@@ -376,13 +383,20 @@ export default function KeywordSearch() {
               </SelectContent>
             </SelectShad>
           </div>
-          <div className="w-full pr-6 mb-2">
+          <div className="w-full pr-6 mb-2 flex items-center">
             <button
               onClick={handleFetchSuggestions}
               disabled={!selectedSuggestionKeyword || isSuggestionLoading}
-              className="bg-red-500 text-white py-2 w-full  mx-2 text-primary-foreground  font-semibold rounded disabled:opacity-50 text-xs"
+              className="bg-red-500 text-white py-2 w-full mx-2 text-primary-foreground font-semibold rounded disabled:opacity-50 text-xs flex items-center justify-center"
             >
-              {isSuggestionLoading ? "Crawling Google..." : "Get Suggestions"}
+              {isSuggestionLoading ? (
+                <>
+                  Crawling Google...
+                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white ml-2"></div>
+                </>
+              ) : (
+                "Get Suggestions"
+              )}
             </button>
           </div>
           <ScrollArea className="h-[700px] mt-2 pr-4 pl-2 pb-2">
