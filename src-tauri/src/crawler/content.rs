@@ -415,7 +415,7 @@ async fn busqueda_individual(
     let mut preguntas = vec![];
     let mut busquedas = vec![];
 
-    let delay = 100;
+    let delay = 1;
     sleep(Duration::from_millis(delay)).await;
 
     let document = Html::parse_document(&body);
@@ -527,17 +527,19 @@ async fn busqueda_global<'a>(
 }
 
 #[tauri::command]
-pub async fn fetch_google_suggestions(keyword: String) -> Result<Vec<(String, String)>, String> {
-    let idioma = "en";
-    let pais = "uk";
+pub async fn fetch_google_suggestions(
+    keyword: String,
+    country: &str,
+    language: &str,
+) -> Result<Vec<(String, String)>, String> {
     let niveles_scrapeo = 2;
 
     let client = Client::new();
 
     let url_inicial = format!(
         "https://www.google.com/search?hl={}&gl={}&q={}",
-        idioma,
-        pais,
+        language,
+        country,
         urlencoding::encode(&keyword)
     );
 
@@ -547,8 +549,8 @@ pub async fn fetch_google_suggestions(keyword: String) -> Result<Vec<(String, St
         vec![(keyword.clone(), url_inicial)],
         0,
         niveles_scrapeo,
-        idioma,
-        pais,
+        language,
+        country,
         scrapeado,
     )
     .await

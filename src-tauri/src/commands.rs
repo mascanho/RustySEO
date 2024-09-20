@@ -128,11 +128,11 @@ pub fn call_gsc_match_url(url: String) -> Result<Vec<GscMatched>, String> {
 }
 
 #[tauri::command]
-pub async fn get_google_analytics_command() -> Result<(), String> {
+pub async fn get_google_analytics_command() -> Result<libs::AnalyticsData, String> {
     match libs::get_google_analytics().await {
-        Ok(_) => {
+        Ok(result) => {
             println!("Successfully called Google Analytics");
-            Ok(())
+            Ok(result)
         }
         Err(e) => {
             eprintln!("Failed to call Google Analytics: {}", e);

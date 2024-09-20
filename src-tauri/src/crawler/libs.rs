@@ -1,5 +1,6 @@
 use chrono::Utc;
 use directories::ProjectDirs;
+use google_sheets4::api::Response;
 use hyper::Client as HyperClient;
 use hyper_rustls::HttpsConnectorBuilder;
 use reqwest::Client;
@@ -658,7 +659,12 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
 
 // ------------ FUNCTION TO GET THE GOOGLE ANALYTICS DATA
 
-pub async fn get_google_analytics() -> Result<(), Box<dyn std::error::Error>> {
+#[derive(Serialize, Debug)]
+pub struct AnalyticsData {
+    pub response: Vec<Value>,
+}
+
+pub async fn get_google_analytics() -> Result<AnalyticsData, Box<dyn std::error::Error>> {
     // Set the directories for the client_secret.json file
     let config_dir =
         ProjectDirs::from("", "", "rustyseo").ok_or_else(|| "Failed to get project directories")?;
@@ -696,43 +702,15 @@ pub async fn get_google_analytics() -> Result<(), Box<dyn std::error::Error>> {
             }
         ],
         "dimensions": [
-            {
-                "name": "pageTitle",
-                "name": "medium",
-                "name": "source",
-                "name": "pagePath",
-                "name": "pageTitle",
-                "name": "medium",
-                "name": "source",
-                "name": "pagePath",
-                "name": "deviceCategory",
-                "name": "browser",
-                "name": "browserVersion",
-                "name": "operatingSystem",
-                "name": "operatingSystemVersion",
-                "name": "country",
-                "name": "city",
-                "name": "fullPageUrl",
-                "name": "isoWeek",
-                "name": "isoYear",
-                "name": "language",
-                "name": "operatingSystem",
-                "name": "pageReferrer",
+            {"name": "fullPageUrl"},
+            // {"name": "sourceMedium"},
 
-
-
-            }
         ],
         "metrics": [
-            {
-                "name": "activeUsers"
-            },
-            {
-                "name": "newUsers"
-            },
-            {
-                "name": "sessions"
-            }
+            {"name": "sessions"},
+            {"name": "newUsers"},
+            {"name": "totalUsers"},
+
         ]
     });
 
@@ -761,7 +739,14 @@ pub async fn get_google_analytics() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    println!("Analytics Data: {:#?}", response);
+    let mut vec_response = Vec::new();
+    vec_response.push(response);
 
-    Ok(())
+    let response_clone = AnalyticsData {
+        response: vec_response,
+    };
+
+    println!("Analytics Data: {:#?}", &response_clone);
+
+    Ok(response_clone)
 }

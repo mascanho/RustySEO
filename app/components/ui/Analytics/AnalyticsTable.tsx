@@ -23,6 +23,14 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 // This would typically come from an API or database
 const getAnalyticsData = () =>
   Array.from({ length: 50 }, (_, index) => ({
@@ -52,6 +60,7 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
     from: new Date(2022, 0, 20),
     to: addDays(new Date(2022, 0, 20), 20),
   });
+  const [selectedDimension, setSelectedDimension] = useState("medium");
 
   useEffect(() => {
     setAnalyticsData(getAnalyticsData());
@@ -128,6 +137,22 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
             />
           </PopoverContent>
         </Popover>
+        <Select value={selectedDimension} onValueChange={setSelectedDimension}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Select dimension" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="medium">Medium</SelectItem>
+            <SelectItem value="source">Source</SelectItem>
+            <SelectItem value="browser">Browser</SelectItem>
+            <SelectItem value="country">Country</SelectItem>
+            <SelectItem value="city">City</SelectItem>
+            <SelectItem value="language">Language</SelectItem>
+            <SelectItem value="operatingSystem">Operating System</SelectItem>
+            <SelectItem value="pageTitle">Page Title</SelectItem>
+            <SelectItem value="pagePath">Page Path</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       <div className="rounded-md w-full border dark:border-brand-dark  h-[calc(100vh-15rem)] overflow-y-hidden">
         <div className="h-full w-full overflow-auto">

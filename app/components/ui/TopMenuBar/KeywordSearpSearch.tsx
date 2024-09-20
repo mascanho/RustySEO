@@ -32,18 +32,32 @@ interface SerpResult {
   headings: string[][];
 }
 
+interface Suggestion {
+  suggestion: string[];
+}
+
 export default function KeywordSearch() {
   const [selectedKeywords, setSelectedKeywords] = useState<KeywordOption[]>([]);
+  const [selectedSuggestionKeyword, setSelectedSuggestionKeyword] =
+    useState<KeywordOption | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuggestionLoading, setIsSuggestionLoading] = useState(false);
   const [serpResults, setSerpResults] = useState<{
     pages: SerpResult[];
   } | null>(null);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const { visibility, hideSerpKeywords } = useVisibilityStore();
   const { keywords } = useContentStore();
   const [numberOfPages, setNumberOfPages] = useState<number>(5);
+  const [country, setCountry] = useState("uk");
+  const [language, setLanguage] = useState("en");
 
   const handleKeywordChange = (selected: MultiValue<KeywordOption>) => {
     setSelectedKeywords(selected as KeywordOption[]);
+  };
+
+  const handleSuggestionKeywordChange = (selected: KeywordOption | null) => {
+    setSelectedSuggestionKeyword(selected);
   };
 
   const copyToClipboard = (text: string) => {
@@ -61,12 +75,15 @@ export default function KeywordSearch() {
         {
           keywords: selectedKeywords.map((k) => k.value),
           number: numberOfPages,
+          country,
+          language,
         },
       );
       console.log(result);
       setSerpResults(result);
     } catch (error) {
       console.error("Error scraping SERP headings:", error);
+      toast.error("Failed to fetch SERP headings. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -80,14 +97,31 @@ export default function KeywordSearch() {
 
   // Fetch the suggestions from google
   const handleFetchSuggestions = async () => {
+    if (!selectedSuggestionKeyword) return;
+    setIsSuggestionLoading(true);
     try {
-      const result = await invoke("fetch_google_suggestions", {
-        keyword: "demand",
+      const result = await invoke<Suggestion[]>("fetch_google_suggestions", {
+        keyword: selectedSuggestionKeyword.value,
+        country,
+        language,
       });
       console.log(result);
-      // Handle the result as needed
+      setSuggestions(result);
     } catch (error) {
       console.error("Error fetching Google suggestions:", error);
+      toast.error("Failed to fetch suggestions. Please try again.");
+    } finally {
+      setIsSuggestionLoading(false);
+    }
+  };
+
+  const handleSuggestionKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (
+      event.key === "Enter" &&
+      !isSuggestionLoading &&
+      selectedSuggestionKeyword
+    ) {
+      handleFetchSuggestions();
     }
   };
 
@@ -128,7 +162,7 @@ export default function KeywordSearch() {
               onKeyDown={handleKeyDown}
             />
             <SelectShad
-              onValueChange={(value) => setNumberOfPages(parseInt(value))}
+              onValueChange={(value) => setCountry(value)}
               defaultValue="uk"
             >
               <SelectTrigger className="w-[90px] text-xs border border-brand-dark/25 ml-1 px-2 h-[38px]">
@@ -146,7 +180,7 @@ export default function KeywordSearch() {
               </SelectContent>
             </SelectShad>{" "}
             <SelectShad
-              onValueChange={(value) => setNumberOfPages(parseInt(value))}
+              onValueChange={(value) => setLanguage(value)}
               defaultValue="en"
             >
               <SelectTrigger className="w-[90px] text-xs border border-brand-dark/25 ml-1 px-2 h-[38px]">
@@ -245,12 +279,9 @@ export default function KeywordSearch() {
           </ScrollArea>
         </Tabs.Panel>
 
-        {/* Suggestions component */}
-
         <Tabs.Panel value="suggestions">
           <div className="mb-2 flex w-full items-center pr-4 mt-2">
             <Creatable<KeywordOption>
-              isMulti
               options={
                 keywords &&
                 keywords[0]?.map((keyword: string[]) => ({
@@ -258,16 +289,16 @@ export default function KeywordSearch() {
                   label: keyword[0],
                 }))
               }
-              value={selectedKeywords}
-              onChange={handleKeywordChange}
-              placeholder="Google search..."
-              className="basic-multi-select border-0 border-brand-dark w-11/12 text-xs pl-2 dark:bg-brand-darker dark:text-white  "
+              value={selectedSuggestionKeyword}
+              onChange={handleSuggestionKeywordChange}
+              placeholder="Enter a keyword..."
+              className="basic-multi-select border-0 border-brand-dark w-11/12 text-xs pl-2 dark:bg-brand-darker dark:text-white"
               classNamePrefix="select"
               formatCreateLabel={(inputValue) => `Add "${inputValue}"`}
-              onKeyDown={handleKeyDown}
+              onKeyDown={handleSuggestionKeyDown}
             />
             <SelectShad
-              onValueChange={(value) => setNumberOfPages(parseInt(value))}
+              onValueChange={(value) => setCountry(value)}
               defaultValue="uk"
             >
               <SelectTrigger className="w-[90px] text-xs border border-brand-dark/25 ml-1 px-2 h-[38px]">
@@ -285,7 +316,7 @@ export default function KeywordSearch() {
               </SelectContent>
             </SelectShad>{" "}
             <SelectShad
-              onValueChange={(value) => setNumberOfPages(parseInt(value))}
+              onValueChange={(value) => setLanguage(value)}
               defaultValue="en"
             >
               <SelectTrigger className="w-[90px] text-xs border border-brand-dark/25 ml-1 px-2 h-[38px]">
@@ -305,62 +336,37 @@ export default function KeywordSearch() {
           </div>
           <div className="w-full pr-6 mb-2">
             <button
-              onClick={handleSerpHeadings}
-              disabled={selectedKeywords.length === 0 || isLoading}
+              onClick={handleFetchSuggestions}
+              disabled={!selectedSuggestionKeyword || isSuggestionLoading}
               className="bg-red-500 text-white py-2 w-full  mx-2 text-primary-foreground  font-semibold rounded disabled:opacity-50 text-xs"
             >
-              {isLoading ? "Loading..." : "Crawl Google"}
+              {isSuggestionLoading ? "Loading..." : "Get Suggestions"}
             </button>
           </div>
           <ScrollArea className="h-[700px] mt-2 pr-4 pl-2 pb-2">
-            {isLoading
+            {isSuggestionLoading
               ? Array.from({ length: 8 }).map((_, index) => (
-                  <Skeleton key={index} className="w-full h-24 mb-2" />
+                  <Skeleton key={index} className="w-full h-8 mb-2" />
                 ))
-              : serpResults?.pages?.map((key, index) => (
-                  <section
+              : suggestions.map((suggestion, index) => (
+                  <div
                     key={index}
-                    className="mb-2 text-xs h-fit border rounded-md overflow-hidden w-full "
+                    className="mb-2 text-xs h-fit border rounded-md overflow-hidden w-full p-2 flex justify-between items-center"
                   >
-                    <CardContent className="p-4">
-                      <div className="flex items-center space-x-1">
-                        <FaGlobe />
-                        <h2 className="font-bold">
-                          {key.url.length > 69
-                            ? `${key.url.substring(0, 68)}...`
-                            : key.url}
-                        </h2>
-                        <span className="text-brand-bright">({index + 1})</span>
-                        <a
-                          href={key.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <FaExternalLinkAlt className="text-blue-500 hover:text-blue-700" />
-                        </a>
-                      </div>
-                      {key?.headings.map((heading, headingIndex) => (
-                        <div
-                          key={headingIndex}
-                          className="flex items-center ml-2 space-x-1 mt-1 group"
-                        >
-                          <span className="relative group">
-                            <span className="text-brand-bright uppercase font-bold text-base mr-2">
-                              {heading[0].length > 74
-                                ? `${heading[0].substring(0, 72)}...`
-                                : heading[0]}
-                            </span>
-
-                            {heading[1]}
-                            <FaCopy
-                              className="absolute right-[-20px] top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => copyToClipboard(heading[1])}
-                            />
-                          </span>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </section>
+                    <a
+                      href={suggestion && suggestion[1]}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:text-blue-700 mr-2"
+                    >
+                      <FaExternalLinkAlt />
+                    </a>{" "}
+                    <span>{suggestion && suggestion[0]}</span>
+                    <FaCopy
+                      className="text-gray-400 hover:text-gray-600 cursor-pointer"
+                      onClick={() => copyToClipboard(suggestion[0])}
+                    />
+                  </div>
                 ))}
           </ScrollArea>
         </Tabs.Panel>

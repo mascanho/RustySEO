@@ -4,7 +4,9 @@ import AnalyticsTable from "./AnalyticsTable";
 const Analytics = ({}) => {
   const handleGetGoogleAnalytics = async () => {
     try {
-      await invoke("get_google_analytics_command");
+      await invoke("get_google_analytics_command").then((result) => {
+        console.log(result, "analytics result");
+      });
     } catch (error) {
       console.error("Error fetching Google Analytics data:", error);
     }
