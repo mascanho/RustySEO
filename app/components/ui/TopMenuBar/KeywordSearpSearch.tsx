@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import React, { useState, KeyboardEvent } from "react";
+import React, { useState, KeyboardEvent, useEffect } from "react";
 import Creatable from "react-select/creatable";
 import { MultiValue } from "react-select";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,6 +21,19 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs } from "@mantine/core";
+import { BsMenuDown } from "react-icons/bs";
+import TopicsMenu from "../Sidebar/Topics/TopicsMenu";
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import TableFloatMenus from "../CrawlHistory/_components/TableFloatMenus";
+import RankingMenus from "../Sidebar/RankingInfo/RankingMenus";
 
 interface KeywordOption {
   value: string;
@@ -51,6 +64,7 @@ export default function KeywordSearch() {
   const [numberOfPages, setNumberOfPages] = useState<number>(5);
   const [country, setCountry] = useState("uk");
   const [language, setLanguage] = useState("en");
+  const [credentials, setCredentials] = useState<InstalledInfo | null>(null);
 
   const handleKeywordChange = (selected: MultiValue<KeywordOption>) => {
     setSelectedKeywords(selected as KeywordOption[]);
@@ -125,11 +139,30 @@ export default function KeywordSearch() {
     }
   };
 
+  // get search console credentials
+  useEffect(() => {
+    const getCredentials = async () => {
+      try {
+        const credentials = await invoke("get_search_console_credentials");
+        // @ts-ignore
+        setCredentials(credentials);
+      } catch (error) {
+        console.error("Error fetching credentials:", error);
+      }
+    };
+    getCredentials();
+  }, [serpResults, suggestions]);
+
   console.log(serpResults, numberOfPages);
+
+  const url = serpResults?.pages?.map((result: any) => result.url);
+  const query = serpResults?.pages?.map(
+    (result: any) => result?.headings[0][0],
+  );
 
   return (
     <div
-      className={`${visibility.serpKeywords ? "" : "hidden"} fixed bottom-9  transition-all ease-linear duration-75 w-[40rem] py-4 px-1 bg-white dark:bg-brand-darker text-black dark:text-white border-2 border-brand-bright h-[55rem] -ml-2 mb-0 rounded-md shadow-xl overflow-hidden`}
+      className={`${visibility.serpKeywords ? "" : "hidden"} fixed bottom-9  transition-all ease-linear duration-75 w-[40rem] py-4 px-1 bg-white dark:bg-brand-darker text-black dark:text-white border-2 border-brand-bright h-[55rem] -ml-2 mb-0 rounded-md shadow-xl overflow-hidden z-[99999999999]`}
     >
       <IoClose
         className="absolute top-4 right-4 text-gray-400 hover:text-gray-500 cursor-pointer hover:bg-gray-200 active:rounded-sm"
@@ -223,7 +256,7 @@ export default function KeywordSearch() {
               disabled={selectedKeywords.length === 0 || isLoading}
               className="bg-red-500 text-white py-2 w-full  mx-2 text-primary-foreground  font-semibold rounded disabled:opacity-50 text-xs"
             >
-              {isLoading ? "Loading..." : "Crawl Google"}
+              {isLoading ? "Crawling Google..." : "Crawl Google"}
             </button>
           </div>
           <ScrollArea className="h-[700px] mt-2 pr-4 pl-2 pb-2">
@@ -234,11 +267,11 @@ export default function KeywordSearch() {
               : serpResults?.pages?.map((key, index) => (
                   <section
                     key={index}
-                    className="mb-2 text-xs h-fit border rounded-md overflow-hidden w-full "
+                    className="mb-2 text-xs h-fit border dark:border-brand-dark rounded-md overflow-hidden w-full "
                   >
                     <CardContent className="p-4">
-                      <div className="flex items-center space-x-1">
-                        <FaGlobe />
+                      <div className="flex items-center space-x-2">
+                        <FaGlobe className="mb-[3px]" />
                         <h2 className="font-bold">
                           {key.url.length > 69
                             ? `${key.url.substring(0, 68)}...`
@@ -264,12 +297,21 @@ export default function KeywordSearch() {
                                 ? `${heading[0].substring(0, 72)}...`
                                 : heading[0]}
                             </span>
-
                             {heading[1]}
                             <FaCopy
                               className="absolute right-[-20px] top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
                               onClick={() => copyToClipboard(heading[1])}
                             />
+                            <RankingMenus
+                              url={url}
+                              query={heading[1]}
+                              credentials={credentials}
+                            >
+                              <BsMenuDown
+                                className="absolute right-[-35px] top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={() => copyToClipboard(heading[1])}
+                              />{" "}
+                            </RankingMenus>
                           </span>
                         </div>
                       ))}
@@ -278,7 +320,7 @@ export default function KeywordSearch() {
                 ))}
           </ScrollArea>
         </Tabs.Panel>
-
+        {/* Separator between components */}
         <Tabs.Panel value="suggestions">
           <div className="mb-2 flex w-full items-center pr-4 mt-2">
             <Creatable<KeywordOption>
@@ -340,18 +382,18 @@ export default function KeywordSearch() {
               disabled={!selectedSuggestionKeyword || isSuggestionLoading}
               className="bg-red-500 text-white py-2 w-full  mx-2 text-primary-foreground  font-semibold rounded disabled:opacity-50 text-xs"
             >
-              {isSuggestionLoading ? "Loading..." : "Get Suggestions"}
+              {isSuggestionLoading ? "Crawling Google..." : "Get Suggestions"}
             </button>
           </div>
           <ScrollArea className="h-[700px] mt-2 pr-4 pl-2 pb-2">
             {isSuggestionLoading
-              ? Array.from({ length: 8 }).map((_, index) => (
+              ? Array.from({ length: 20 }).map((_, index) => (
                   <Skeleton key={index} className="w-full h-8 mb-2" />
                 ))
               : suggestions.map((suggestion, index) => (
                   <div
                     key={index}
-                    className="mb-2 text-xs h-fit border rounded-md overflow-hidden w-full p-2 flex justify-between items-center"
+                    className="mb-2 text-xs h-fit border dark:border-brand-dark rounded-md overflow-hidden w-full p-2 flex justify-between items-center"
                   >
                     <a
                       href={suggestion && suggestion[1]}
@@ -362,10 +404,16 @@ export default function KeywordSearch() {
                       <FaExternalLinkAlt />
                     </a>{" "}
                     <span>{suggestion && suggestion[0]}</span>
-                    <FaCopy
-                      className="text-gray-400 hover:text-gray-600 cursor-pointer"
-                      onClick={() => copyToClipboard(suggestion[0])}
-                    />
+                    <RankingMenus
+                      url={url}
+                      query={suggestion[0]}
+                      credentials={credentials}
+                    >
+                      <BsMenuDown
+                        className="cursor-pointer text-blue-700"
+                        onClick={() => copyToClipboard(suggestion[0])}
+                      />
+                    </RankingMenus>
                   </div>
                 ))}
           </ScrollArea>

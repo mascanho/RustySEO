@@ -53,7 +53,7 @@ const RankingMenus = ({ children, url, query, credentials }: any) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>{children}</DropdownMenuTrigger>
-      <DropdownMenuContent className="w-40 bg-white dark:bg-brand-darker dark:border-brand-dark dark:text-white/50 text-xs">
+      <DropdownMenuContent className="w-40 bg-white dark:bg-brand-darker dark:border-brand-dark dark:text-white/50 text-xs z-[9999999]">
         <DropdownMenuItem
           className="hover:bg-brand-bright hover:text-white"
           onClick={() => handleCopy(url)}

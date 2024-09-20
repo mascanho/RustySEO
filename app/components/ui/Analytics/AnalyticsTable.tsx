@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { ArrowUpDown, Search } from "lucide-react";
+import { ArrowUpDown, Search, X } from "lucide-react";
 import { addDays, format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { DateRange } from "react-day-picker";
@@ -83,23 +83,29 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
     }
   };
 
+  const clearSearch = () => {
+    setSearch("");
+  };
+
   return (
-    <div className="mx-auto py-1 px-1  z-10 text-xs overflow-y-hidden ">
-      <h1
-        onClick={handleGetGoogleAnalytics}
-        className="text-xs font-bold mb-2 dark:text-white/50"
-      >
-        Google Analytics Dashboard
-      </h1>
-      <div className="mb-2 flex items-center space-x-4">
+    <div className="mx-auto py-1 z-10 text-xs overflow-y-hidden w-[calc(100vw-21rem)]">
+      <div className="mb-2 flex items-center space-x-4 mt-1.5">
         <div className="relative flex-grow  rounded-md dark:border-brand-dark dark:bg-brand-darker">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground dark:text-white" />
+          <Search className="absolute left-3 top-2.5 h-3 w-3 text-muted-foreground dark:text-white/50" />
           <Input
             placeholder="Search URLs..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 text-xs dark:bg-brand-darker w-full "
+            className="pl-9 pr-8 h-8 text-xs dark:bg-brand-darker w-full dark:text-white "
           />
+          {search && (
+            <button
+              onClick={clearSearch}
+              className="absolute right-2 top-2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
         <Popover>
           <PopoverTrigger asChild>
@@ -107,11 +113,11 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
               id="date"
               variant={"outline"}
               className={cn(
-                "w-[300px] justify-start text-left font-normal dark:text-white dark:bg-brand-darker border dark:border-brand-dark",
+                "w-[300px] justify-start text-left font-normal dark:text-white/50 dark:bg-brand-darker border dark:border-brand-dark text-xs h-8",
                 !date && "text-muted-foreground",
               )}
             >
-              <CalendarIcon className="mr-2 h-4 w-4 dark:text-white" />
+              <CalendarIcon className="mr-2 h-3 w-3 dark:text-white/50" />
               {date?.from ? (
                 date.to ? (
                   <>
@@ -126,8 +132,12 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 dark:text-white" align="start">
+          <PopoverContent
+            className="w-auto p-0 dark:text-white/50"
+            align="start"
+          >
             <Calendar
+              className="dark:text-white/50"
               initialFocus
               mode="range"
               defaultMonth={date?.from}
@@ -138,10 +148,10 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
           </PopoverContent>
         </Popover>
         <Select value={selectedDimension} onValueChange={setSelectedDimension}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px] text-xs h-8 dark:text-white/50">
             <SelectValue placeholder="Select dimension" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="dark:text-white text-xs ">
             <SelectItem value="medium">Medium</SelectItem>
             <SelectItem value="source">Source</SelectItem>
             <SelectItem value="browser">Browser</SelectItem>
@@ -154,7 +164,7 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
           </SelectContent>
         </Select>
       </div>
-      <div className="rounded-md w-full border dark:border-brand-dark  h-[calc(100vh-15rem)] overflow-y-hidden">
+      <div className="rounded-md w-full border dark:border-brand-dark  h-[calc(100vh-13rem)] overflow-y-hidden">
         <div className="h-full w-full overflow-auto">
           <Table className="relative w-full text-xs">
             <TableHeader className="sticky top-0 bg-white z-10 shadow">

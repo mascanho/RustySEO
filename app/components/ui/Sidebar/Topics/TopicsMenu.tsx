@@ -17,7 +17,7 @@ const TopicsMenu = ({ children, entry }: { children: any; entry: any }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>{children}</DropdownMenuTrigger>
-      <DropdownMenuContent className="bg-brand-darker border shadow shadow-lg  px-0.5 bg-white dark:bg-brand-darker  dark:border-brand-dark dark:text-white mt-1.5 mr-6 w-fit text-xs">
+      <DropdownMenuContent className="bg-brand-darker border shadow shadow-lg  px-0.5 bg-white dark:bg-brand-darker  dark:border-brand-dark dark:text-white mt-1.5 mr-6 w-fit text-xs z-[999999]">
         <DropdownMenuLabel className="font-semibold text-xs">
           Check Keyword
         </DropdownMenuLabel>
