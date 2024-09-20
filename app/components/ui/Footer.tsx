@@ -25,6 +25,8 @@ import { IoMdClose } from "react-icons/io";
 import { usePathname } from "next/navigation";
 import { LiaHeadingSolid } from "react-icons/lia";
 import { useVisibilityStore } from "@/store/VisibilityStore";
+import { GiPirateFlag } from "react-icons/gi";
+
 const date = new Date();
 const year = date.getFullYear();
 
@@ -169,13 +171,13 @@ const Footer = () => {
                   {tasks.length}
                 </span>
               </div>
-              <LiaHeadingSolid
+              <GiPirateFlag
                 onClick={() =>
                   visibility.serpKeywords
                     ? hideSerpKeywords()
                     : showSerpKeywords()
                 }
-                className="text-lg cursor-pointer active:scale-95 transition-all ease-linear duration-75"
+                className="text-base cursor-pointer active:scale-95 transition-all ease-linear duration-75"
               />
               <Drawer>
                 <DrawerTrigger className="flex items-center space-x-1">

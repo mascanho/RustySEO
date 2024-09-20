@@ -7,6 +7,13 @@ use scraper::{ElementRef, Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::error::Error;
+use std::future::Future;
+use std::pin::Pin;
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::Mutex;
+use tokio::time::sleep;
+use urlencoding;
 
 pub async fn fetch_url(url: &str) -> Result<String, Box<dyn Error>> {
     let response = reqwest::get(url).await?.text().await?;
@@ -383,4 +390,173 @@ async fn scrape_google_headings(
     }
 
     Ok(serp)
+}
+
+// ------------------------ Google Suggestions Crawler --------------------------
+
+async fn busqueda_individual(
+    client: &Client,
+    busqueda: &str,
+    url: &str,
+    idioma: &str,
+    pais: &str,
+    scrapeado: Arc<Mutex<HashSet<String>>>,
+) -> Result<Vec<(String, String)>, Box<dyn Error + Send + Sync>> {
+    let mut locked_scrapeado = scrapeado.lock().await;
+    if locked_scrapeado.contains(busqueda) {
+        return Ok(vec![]);
+    }
+
+    let response = client.get(url).send().await?;
+    let body = response.text().await?;
+    locked_scrapeado.insert(busqueda.to_string());
+    drop(locked_scrapeado);
+
+    let mut preguntas = vec![];
+    let mut busquedas = vec![];
+
+    let delay = 100;
+    sleep(Duration::from_millis(delay)).await;
+
+    let document = Html::parse_document(&body);
+    let pregunta_selector = Selector::parse(".xpc").expect("error");
+    let busqueda_selector = Selector::parse(".Q71vJc").expect("error");
+
+    for element in document.select(&pregunta_selector) {
+        let text = element.text().collect::<String>();
+        if let Some(href) = element.value().attr("href") {
+            if let Ok(full_url) = reqwest::Url::parse(url).and_then(|base| base.join(href)) {
+                preguntas.push((text, full_url.to_string()));
+            }
+        }
+    }
+
+    for element in document.select(&busqueda_selector) {
+        let text = element.text().collect::<String>();
+        if let Some(href) = element.value().attr("href") {
+            if let Ok(full_url) = reqwest::Url::parse(url).and_then(|base| base.join(href)) {
+                busquedas.push((text, full_url.to_string()));
+            }
+        }
+    }
+
+    let result = if !preguntas.is_empty() {
+        preguntas
+    } else {
+        busquedas
+    };
+
+    println!("Individual search results for '{}': {:?}", busqueda, result);
+
+    Ok(result)
+}
+
+fn busqueda_global_boxed<'a>(
+    client: &'a Client,
+    busquedas: Vec<(String, String)>,
+    nivel: u32,
+    niveles_scrapeo: u32,
+    idioma: &'a str,
+    pais: &'a str,
+    scrapeado: Arc<Mutex<HashSet<String>>>,
+) -> Pin<
+    Box<
+        dyn Future<Output = Result<Vec<(String, String)>, Box<dyn Error + Send + Sync>>>
+            + Send
+            + 'a,
+    >,
+> {
+    Box::pin(busqueda_global(
+        client,
+        busquedas,
+        nivel,
+        niveles_scrapeo,
+        idioma,
+        pais,
+        scrapeado,
+    ))
+}
+
+async fn busqueda_global<'a>(
+    client: &'a Client,
+    busquedas: Vec<(String, String)>,
+    nivel: u32,
+    niveles_scrapeo: u32,
+    idioma: &'a str,
+    pais: &'a str,
+    scrapeado: Arc<Mutex<HashSet<String>>>,
+) -> Result<Vec<(String, String)>, Box<dyn Error + Send + Sync>> {
+    if nivel > niveles_scrapeo {
+        return Ok(vec![]);
+    }
+
+    let mut all_results = vec![];
+    for (busqueda, url) in busquedas {
+        let nuevas_busquedas = busqueda_individual(
+            client,
+            &busqueda,
+            &url,
+            idioma,
+            pais,
+            Arc::clone(&scrapeado),
+        )
+        .await?;
+        all_results.extend(nuevas_busquedas.clone());
+
+        if !nuevas_busquedas.is_empty() {
+            let sub_results = busqueda_global_boxed(
+                client,
+                nuevas_busquedas,
+                nivel + 1,
+                niveles_scrapeo,
+                idioma,
+                pais,
+                Arc::clone(&scrapeado),
+            )
+            .await?;
+            all_results.extend(sub_results);
+        }
+    }
+
+    println!(
+        "Global search results at level {}: {:?}",
+        nivel, all_results
+    );
+
+    Ok(all_results)
+}
+
+#[tauri::command]
+pub async fn fetch_google_suggestions(keyword: String) -> Result<Vec<(String, String)>, String> {
+    let idioma = "en";
+    let pais = "uk";
+    let niveles_scrapeo = 2;
+
+    let client = Client::new();
+
+    let url_inicial = format!(
+        "https://www.google.com/search?hl={}&gl={}&q={}",
+        idioma,
+        pais,
+        urlencoding::encode(&keyword)
+    );
+
+    let scrapeado: Arc<Mutex<HashSet<String>>> = Arc::new(Mutex::new(HashSet::new()));
+    match busqueda_global(
+        &client,
+        vec![(keyword.clone(), url_inicial)],
+        0,
+        niveles_scrapeo,
+        idioma,
+        pais,
+        scrapeado,
+    )
+    .await
+    {
+        Ok(results) => {
+            println!("Final results for '{}': {:?}", keyword, results);
+            Ok(results)
+        }
+        Err(e) => Err(e.to_string()),
+    }
 }

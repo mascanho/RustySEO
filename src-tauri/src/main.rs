@@ -167,6 +167,7 @@ async fn main() {
             globals::actions::check_ai_model,
             commands::get_google_analytics_command,
             crawler::content::scrape_google_headings_command,
+            crawler::content::fetch_google_suggestions,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
