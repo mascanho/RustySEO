@@ -157,7 +157,7 @@ export default function KeywordSearch() {
 
   const url = serpResults?.pages?.map((result: any) => result.url);
   const query = serpResults?.pages?.map(
-    (result: any) => result?.headings && result?.headings[0][0],
+    (result: any) => result?.headings?.[0]?.[1] || "",
   );
 
   return (
@@ -165,7 +165,7 @@ export default function KeywordSearch() {
       className={`${visibility.serpKeywords ? "" : "hidden"} fixed bottom-9  transition-all ease-linear duration-75 w-[40rem] py-4 px-1 bg-white dark:bg-brand-darker text-black dark:text-white border-2 border-brand-bright h-[55rem] -ml-2 mb-0 rounded-md shadow-xl overflow-hidden z-[99999999999]`}
     >
       <IoClose
-        className="absolute top-4 right-4 text-gray-400  cursor-pointer hover:bg-gray-800 h-6 w-6"
+        className="absolute top-4 right-4 text-gray-400  cursor-pointer  h-6 w-6"
         onClick={hideSerpKeywords}
       />
       <h1 className="text-2xl font-bold mb-2 pl-4">Google Crawler</h1>
@@ -250,11 +250,11 @@ export default function KeywordSearch() {
               </SelectContent>
             </SelectShad>
           </div>
-          <div className="w-full pr-6 mb-2 flex items-center">
+          <div className="w-full mb-2 flex items-center">
             <button
               onClick={handleSerpHeadings}
               disabled={selectedKeywords.length === 0 || isLoading}
-              className="bg-red-500 text-white py-2 w-full mx-2 text-primary-foreground font-semibold rounded disabled:opacity-50 text-xs flex items-center justify-center"
+              className="bg-red-500 mx-2 text-white py-2 w-full  text-primary-foreground font-semibold rounded disabled:opacity-50 text-xs flex items-center justify-center mr-4 "
             >
               {isLoading ? (
                 <>
@@ -277,7 +277,7 @@ export default function KeywordSearch() {
                     className="mb-2 text-xs h-fit border dark:border-brand-dark rounded-md overflow-hidden w-full "
                   >
                     <CardContent className="p-4">
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 mb-2">
                         <FaGlobe className="mb-[3px]" />
                         <h2 className="font-bold">
                           {key.url.length > 69
@@ -293,20 +293,30 @@ export default function KeywordSearch() {
                           <FaExternalLinkAlt className="text-blue-500 hover:text-blue-700" />
                         </a>
                       </div>
-                      {key?.headings.map((heading, headingIndex) => (
-                        <div
-                          key={headingIndex}
-                          className="flex items-center ml-2 space-x-1 mt-1 group"
-                        >
-                          <span className="relative group">
-                            <span className="text-brand-bright uppercase font-bold text-base mr-2">
-                              {heading[0]?.length > 74
-                                ? `${heading[0].substring(0, 72)}...`
-                                : heading[0]}
+                      <div className="pl-4">
+                        {key?.headings.map((heading, headingIndex) => (
+                          <div
+                            key={headingIndex}
+                            className={`flex items-center space-x-1 group ${
+                              heading[0] === "h1"
+                                ? "font-bold text-xl"
+                                : heading[0] === "h2"
+                                  ? "font-semibold text-base ml-2"
+                                  : heading[0] === "h3"
+                                    ? "font-medium text-sm ml-4"
+                                    : heading[0] === "h4"
+                                      ? "font-normal text-sm ml-6"
+                                      : heading[0] === "h5"
+                                        ? "font-normal text-xs ml-8"
+                                        : "font-normal text-xs ml-10"
+                            }`}
+                          >
+                            <span className="text-brand-bright uppercase mr-2">
+                              {heading[0]}
                             </span>
-                            {heading[1]}
+                            <span className="flex-grow">{heading[1]}</span>
                             <FaCopy
-                              className="absolute right-[-20px] top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="text-gray-400 hover:text-gray-600 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
                               onClick={() => copyToClipboard(heading[1])}
                             />
                             <RankingMenus
@@ -314,14 +324,11 @@ export default function KeywordSearch() {
                               query={heading[1]}
                               credentials={credentials}
                             >
-                              <BsMenuDown
-                                className="absolute right-[-35px] top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
-                                onClick={() => copyToClipboard(heading[1])}
-                              />{" "}
+                              <BsMenuDown className="text-gray-400 hover:text-gray-600 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity" />
                             </RankingMenus>
-                          </span>
-                        </div>
-                      ))}
+                          </div>
+                        ))}
+                      </div>
                     </CardContent>
                   </section>
                 ))}
@@ -383,11 +390,11 @@ export default function KeywordSearch() {
               </SelectContent>
             </SelectShad>
           </div>
-          <div className="w-full pr-6 mb-2 flex items-center">
+          <div className="w-full  mb-2 flex items-center">
             <button
               onClick={handleFetchSuggestions}
               disabled={!selectedSuggestionKeyword || isSuggestionLoading}
-              className="bg-red-500 text-white py-2 w-full mx-2 text-primary-foreground font-semibold rounded disabled:opacity-50 text-xs flex items-center justify-center"
+              className="bg-red-500 mx-2 text-white py-2 w-full  text-primary-foreground font-semibold rounded disabled:opacity-50 text-xs flex items-center justify-center mr-4 "
             >
               {isSuggestionLoading ? (
                 <>
