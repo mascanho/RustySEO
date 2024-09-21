@@ -231,7 +231,8 @@ pub fn get_indexation_status(document: &Html) -> String {
 }
 
 // Define the synchronous function to load API keys
-pub async fn load_api_keys() -> Result<ApiKeys, Box<dyn Error>> {
+#[tauri::command]
+pub async fn load_api_keys() -> Result<ApiKeys, String> {
     let config_dir =
         ProjectDirs::from("", "", "rustyseo").ok_or_else(|| "Failed to get project directories")?;
     let config_file = config_dir.config_dir().join("api_keys.toml");
@@ -681,6 +682,7 @@ pub async fn set_google_analytics_id(id: String) -> Result<String, String> {
 }
 
 // ------ GET THE GOOGLE ANALYTICS ID
+#[tauri::command]
 pub async fn get_google_analytics_id() -> Result<String, String> {
     let config_dir = ProjectDirs::from("", "", "rustyseo")
         .ok_or_else(|| "Failed to get project directories".to_string())?;

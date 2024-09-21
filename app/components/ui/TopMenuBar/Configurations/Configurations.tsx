@@ -3,6 +3,7 @@
 import PageSpeedInsigthsApi from "@/app/components/PageSpeedInsigthsApi";
 import { Tabs } from "@mantine/core";
 import PagespeedInsightsApi from "./PagespeedInsigthsApi";
+import GoogleAnalyticsConf from "./GoogleAnalyticsConf";
 
 const Configurations = () => {
   return (
@@ -19,7 +20,9 @@ const Configurations = () => {
           <PagespeedInsightsApi />
         </Tabs.Panel>
 
-        <Tabs.Panel value="advanced">Advanced configuration content</Tabs.Panel>
+        <Tabs.Panel value="analytics">
+          <GoogleAnalyticsConf />
+        </Tabs.Panel>
       </Tabs>
     </div>
   );

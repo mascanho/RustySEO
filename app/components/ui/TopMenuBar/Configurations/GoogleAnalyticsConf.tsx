@@ -18,9 +18,9 @@ interface APIkey {
   result: string;
 }
 
-export default function PagespeedInsightsApi() {
+export default function GoogleAnalyticsConf() {
   const [isVisible, setIsVisible] = useState(false);
-  const [apiKey, setApiKey] = useState<string>("");
+  const [ga4ID, setGa4ID] = useState<string>("");
 
   const maskApiKey = (key: string) => {
     if (key.length <= 8) return "*".repeat(key.length);
@@ -33,53 +33,56 @@ export default function PagespeedInsightsApi() {
 
   // Call Backend to get the API key
   useEffect(() => {
-    invoke<APIkey>("load_api_keys")
+    invoke<APIkey>("get_google_analytics_id")
       .then((result) => {
-        console.log("API Key: ", result);
-        setApiKey(result.page_speed_key);
+        console.log("GA4 ID: ", result);
+        setGa4ID(result.page_speed_key);
       })
       .catch((error) => {
-        console.error("Error fetching API key:", error);
+        console.error("Error fetching GA4 ID:", error);
       });
   }, []);
 
   return (
     <Card className="w-full mt-8 mx-auto ml-0 dark:bg-brand-darker border-0 shadow-none">
       <CardHeader className="-ml-2">
-        <CardTitle>API Key</CardTitle>
-        <CardDescription>Your secret API key. Keep it safe!</CardDescription>
+        <CardTitle>Google Analytics ID</CardTitle>
+        <CardDescription>Your secret GA ID. Keep it safe!</CardDescription>
       </CardHeader>
       <CardContent>
-        {apiKey === "" ? (
+        {ga4ID === "" ? (
           <div className="bg-gray-100 dark:bg-brand-dark p-4 rounded-md font-mono text-sm break-all">
             <span className="text-gray-500 dark:text-gray-400">
-              No API key found. Please set one up in the connectors menu.
+              No GA4 ID found. Connect your Google Analytics account in the
+              connectors menu.
             </span>
           </div>
         ) : (
           <div className="bg-gray-100 dark:bg-brand-dark p-4 rounded-md font-mono text-sm break-all">
-            {isVisible ? apiKey : maskApiKey(apiKey)}
+            {isVisible ? ga4ID : maskApiKey(ga4ID)}
           </div>
         )}
       </CardContent>
       <CardFooter className="flex justify-end">
-        <Button
-          onClick={toggleVisibility}
-          variant="outline"
-          className="flex items-center space-x-2 dark:bg-brand-dark"
-        >
-          {isVisible ? (
-            <>
-              <EyeOffIcon className="h-4 w-4" />
-              <span>Hide API Key</span>
-            </>
-          ) : (
-            <>
-              <EyeIcon className="h-4 w-4" />
-              <span>Show API Key</span>
-            </>
-          )}
-        </Button>
+        {ga4ID !== "" && (
+          <Button
+            onClick={toggleVisibility}
+            variant="outline"
+            className="flex items-center space-x-2 dark:bg-brand-dark"
+          >
+            {isVisible ? (
+              <>
+                <EyeOffIcon className="h-4 w-4" />
+                <span>Hide API Key</span>
+              </>
+            ) : (
+              <>
+                <EyeIcon className="h-4 w-4" />
+                <span>Show API Key</span>
+              </>
+            )}
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );
