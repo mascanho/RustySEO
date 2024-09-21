@@ -38,13 +38,13 @@ const LongTasksTable = ({ pageSpeed }: { pageSpeed: any }) => {
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white  h-[calc(30rem - 3.5rem)] overflow-y-auto">
+          <tbody className="bg-white overflow-y-auto">
             {lt.map((item: any, index: number) => (
-              <tr key={item.url || index}>
-                <td className="px-2 text-[6px] text-gray-700 w-[90px] min-w-[70px] dark:text-white border-b border-r">
+              <tr key={item.url || index} className="h-8">
+                <td className="px-2 text-[6px] text-gray-700 max-h-10 w-[90px] min-w-[70px] dark:text-white border-b border-r">
                   {item?.duration.toFixed(0)} ms
                 </td>{" "}
-                <td className="px-4 text-xs text-blue-600 w-[100vw] flex-1  border-b max-w-[1900px]">
+                <td className="px-4 text-xs text-blue-600 w-[100vw] flex-1 border-b max-w-[1900px] truncate">
                   <span className="w-full">
                     {item?.url?.length > 80
                       ? item?.url?.slice(0, urlSize) + "..."

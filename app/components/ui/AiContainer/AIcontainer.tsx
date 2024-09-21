@@ -40,7 +40,7 @@ const AIcontainer = () => {
 
   // CHECK THE AI-PROVIDER
   useEffect(() => {
-    const model = localStorage.getItem("model");
+    const model = localStorage.getItem("AI-provider");
     if (model) {
       setSelectedModel(model);
     }
@@ -92,6 +92,7 @@ const AIcontainer = () => {
       case "ollama":
       case "mistral-nemo":
       case "llama3.1":
+      case "mistral":
         return (
           <>
             {messages.map((m) => (

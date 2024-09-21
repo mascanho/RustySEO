@@ -664,6 +664,14 @@ pub struct AnalyticsData {
     pub response: Vec<Value>,
 }
 
+pub fn set_goole_analytics_id(id: i32) -> String {
+    // set the directories
+    let config_dir =
+        ProjectDirs::from("", "", "rustyseo").ok_or_else(|| "Failed to get project directories")?;
+    let config_dir = config_dir.data_dir();
+    let secret_path = config_dir.join("client_secret.json");
+}
+
 pub async fn get_google_analytics() -> Result<AnalyticsData, Box<dyn std::error::Error>> {
     // Set the directories for the client_secret.json file
     let config_dir =

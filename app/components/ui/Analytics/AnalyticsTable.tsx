@@ -169,7 +169,13 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
           <Table className="relative w-full text-xs">
             <TableHeader className="sticky top-0 bg-white z-10 shadow">
               <TableRow>
-                <TableHead className="w-[300px] text-xs">URL</TableHead>
+                <TableHead
+                  onClick={handleGetGoogleAnalytics}
+                  className="w-[300px] text-xs"
+                >
+                  URL
+                </TableHead>
+
                 <TableHead>
                   <Button
                     variant="ghost"
