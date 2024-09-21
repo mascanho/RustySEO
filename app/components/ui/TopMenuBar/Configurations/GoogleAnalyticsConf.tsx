@@ -14,8 +14,7 @@ import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { invoke } from "@tauri-apps/api/tauri";
 
 interface APIkey {
-  page_speed_key: string;
-  result: string;
+  google_analytics_id: string;
 }
 
 export default function GoogleAnalyticsConf() {
@@ -23,8 +22,8 @@ export default function GoogleAnalyticsConf() {
   const [ga4ID, setGa4ID] = useState<string>("");
 
   const maskApiKey = (key: string) => {
-    if (key.length <= 8) return "*".repeat(key.length);
-    return key.slice(0, 4) + "*".repeat(key.length - 8) + key.slice(-4);
+    if (key?.length <= 8) return "*".repeat(key?.length);
+    return key?.slice(0, 4) + "*".repeat(key?.length - 8) + key?.slice(-4);
   };
 
   const toggleVisibility = () => {
@@ -34,9 +33,9 @@ export default function GoogleAnalyticsConf() {
   // Call Backend to get the API key
   useEffect(() => {
     invoke<APIkey>("get_google_analytics_id")
-      .then((result) => {
+      .then((result: any) => {
         console.log("GA4 ID: ", result);
-        setGa4ID(result.page_speed_key);
+        setGa4ID(result);
       })
       .catch((error) => {
         console.error("Error fetching GA4 ID:", error);
@@ -73,12 +72,12 @@ export default function GoogleAnalyticsConf() {
             {isVisible ? (
               <>
                 <EyeOffIcon className="h-4 w-4" />
-                <span>Hide API Key</span>
+                <span>Hide ID</span>
               </>
             ) : (
               <>
                 <EyeIcon className="h-4 w-4" />
-                <span>Show API Key</span>
+                <span>Show ID</span>
               </>
             )}
           </Button>

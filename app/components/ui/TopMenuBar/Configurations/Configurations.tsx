@@ -4,11 +4,12 @@ import PageSpeedInsigthsApi from "@/app/components/PageSpeedInsigthsApi";
 import { Tabs } from "@mantine/core";
 import PagespeedInsightsApi from "./PagespeedInsigthsApi";
 import GoogleAnalyticsConf from "./GoogleAnalyticsConf";
+import SearchConsoleConfs from "./SearchConsoleConfs";
 
 const Configurations = () => {
   return (
-    <div className="flex flex-col gap-2 p-2 h-[400px]">
-      <Tabs defaultValue="pagespeed">
+    <div className="flex flex-col gap-2 p-2 h-[430px]">
+      <Tabs defaultValue="pagespeed" className="-mt-4">
         <Tabs.List>
           <Tabs.Tab value="pagespeed">Page Speed Insights</Tabs.Tab>
           <Tabs.Tab value="analytics">Google Analytics</Tabs.Tab>
@@ -22,6 +23,10 @@ const Configurations = () => {
 
         <Tabs.Panel value="analytics">
           <GoogleAnalyticsConf />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="console">
+          <SearchConsoleConfs />
         </Tabs.Panel>
       </Tabs>
     </div>

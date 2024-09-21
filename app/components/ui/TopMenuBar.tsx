@@ -58,6 +58,7 @@ import { useVisibilityStore } from "@/store/VisibilityStore";
 import KeywordSerp from "./TopMenuBar/KeywordSerp";
 import GoogleAnalyticsModal from "./GoogleAnalyticsModal/GoogleAnalyticsModal";
 import Configurations from "./TopMenuBar/Configurations/Configurations";
+import { FaGear } from "react-icons/fa6";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -357,6 +358,10 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-4">File</MenubarTrigger>
             <MenubarContent>
+              <MenubarItem onClick={openConfs}>
+                <FiTool className="mr-2" />
+                Configurations
+              </MenubarItem>{" "}
               <MenubarItem onClick={onClose}>
                 <FiLogOut className="mr-2" />
                 Exit
@@ -367,10 +372,6 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-4">View</MenubarTrigger>
             <MenubarContent>
-              <MenubarItem onClick={openConfs}>
-                <FiEye className="mr-2" />
-                Configurations
-              </MenubarItem>{" "}
               <MenubarItem onClick={openPanes}>
                 <FiEye className="mr-2" />
                 Panels <MenubarShortcut>ctr + p</MenubarShortcut>
