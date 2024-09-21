@@ -40,7 +40,7 @@ const AIcontainer = () => {
 
   // CHECK THE AI-PROVIDER
   useEffect(() => {
-    const model = localStorage.getItem("AI-provider");
+    const model = localStorage.getItem("model");
     if (model) {
       setSelectedModel(model);
     }
@@ -87,10 +87,12 @@ const AIcontainer = () => {
       });
   };
 
-  return (
-    <div className="flex flex-col h-[70vh] max-w-8xl mx-auto bg-gray-100 dark:bg-brand-darker border border-gray-300 dark:border-brand-dark rounded-lg shadow-lg">
-      <div ref={containerRef} className="flex-1 p-4 overflow-y-auto">
-        {selectedModel === "ollama" || selectedModel === "gemini" ? (
+  const renderMessages = () => {
+    switch (selectedModel) {
+      case "ollama":
+      case "mistral-nemo":
+      case "llama3.1":
+        return (
           <>
             {messages.map((m) => (
               <div
@@ -132,7 +134,9 @@ const AIcontainer = () => {
             ))}
             <div ref={messagesEndRef} />
           </>
-        ) : (
+        );
+      default:
+        return (
           <div className="h-full flex flex-col items-center justify-center text-lg">
             <span>No AI model found.</span>
             <span className="block">
@@ -140,7 +144,14 @@ const AIcontainer = () => {
               <strong>Ollama</strong>
             </span>
           </div>
-        )}
+        );
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-[70vh] max-w-8xl mx-auto bg-gray-100 dark:bg-brand-darker border border-gray-300 dark:border-brand-dark rounded-lg shadow-lg">
+      <div ref={containerRef} className="flex-1 p-4 overflow-y-auto">
+        {renderMessages()}
       </div>
       <div className="flex items-center p-2 border-t border-gray-300 dark:border-brand-dark bg-white dark:bg-brand-darker">
         <form className="flex w-full" onSubmit={handleSubmit}>
