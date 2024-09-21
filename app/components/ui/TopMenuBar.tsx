@@ -57,6 +57,7 @@ import {
 import { useVisibilityStore } from "@/store/VisibilityStore";
 import KeywordSerp from "./TopMenuBar/KeywordSerp";
 import GoogleAnalyticsModal from "./GoogleAnalyticsModal/GoogleAnalyticsModal";
+import Configurations from "./TopMenuBar/Configurations/Configurations";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -109,6 +110,8 @@ const TopMenuBar = () => {
     { open: openGoogleAnalytics, close: closeGoogleAnalytics },
   ] = useDisclosure(false);
 
+  const [openedConfs, { open: openConfs, close: closeConfs }] =
+    useDisclosure(false);
   useEffect(() => {
     const fetchUrlFromSessionStorage = () => {
       const urlSession: any = window?.sessionStorage?.getItem("url");
@@ -338,6 +341,17 @@ const TopMenuBar = () => {
         <GoogleAnalyticsModal close={closeGoogleAnalytics} />
       </Modal>
       {/* Menubar */}
+      {/* Confs Modal */}
+      <Modal
+        size={"800px"}
+        opened={openedConfs}
+        onClose={closeConfs}
+        title="Configurations"
+        centered
+      >
+        {/* @ts-ignore */}
+        <Configurations close={closeConfs} />
+      </Modal>
       <Menubar className="fixed w-full top-0 z-[1000] p-0 pl-0 dark:bg-brand-darker dark:text-white bg-white dark:border-b-brand-dark border-b pb-1">
         <section className="flex -ml-3 space-x-1">
           <MenubarMenu>
@@ -353,6 +367,10 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-4">View</MenubarTrigger>
             <MenubarContent>
+              <MenubarItem onClick={openConfs}>
+                <FiEye className="mr-2" />
+                Configurations
+              </MenubarItem>{" "}
               <MenubarItem onClick={openPanes}>
                 <FiEye className="mr-2" />
                 Panels <MenubarShortcut>ctr + p</MenubarShortcut>

@@ -664,12 +664,37 @@ pub struct AnalyticsData {
     pub response: Vec<Value>,
 }
 
-pub fn set_goole_analytics_id(id: i32) -> String {
+#[tauri::command]
+pub async fn set_google_analytics_id(id: String) -> Result<String, String> {
     // set the directories
-    let config_dir =
-        ProjectDirs::from("", "", "rustyseo").ok_or_else(|| "Failed to get project directories")?;
+    let config_dir = ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
     let config_dir = config_dir.data_dir();
-    let secret_path = config_dir.join("client_secret.json");
+    let file_path = config_dir.join("ga_id.json");
+
+    // write the id to the file
+    if let Err(e) = fs::write(&file_path, id.to_string()).await {
+        return Err(format!("Failed to write Google Analytics ID: {}", e));
+    }
+
+    Ok(id.to_string())
+}
+
+// ------ GET THE GOOGLE ANALYTICS ID
+pub async fn get_google_analytics_id() -> Result<String, String> {
+    let config_dir = ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
+    let config_dir = config_dir.data_dir();
+    let file_path = config_dir.join("ga_id.json");
+
+    // read the file
+    let file_toml = fs::read_to_string(file_path)
+        .await
+        .expect("Could not read GA4 ID file");
+
+    println!("This is the content of the file {:#?}", file_toml);
+
+    Ok(file_toml)
 }
 
 pub async fn get_google_analytics() -> Result<AnalyticsData, Box<dyn std::error::Error>> {
@@ -722,7 +747,12 @@ pub async fn get_google_analytics() -> Result<AnalyticsData, Box<dyn std::error:
         ]
     });
 
-    let client_id = "423125701".to_string();
+    let id = get_google_analytics_id().await.unwrap();
+
+    println!("Using GA4 ID: {} to fetch Analytics data", id);
+
+    // let client_id = "423125701".to_string();
+    let client_id = id;
     let analytics_url = format!(
         "https://analyticsdata.googleapis.com/v1beta/properties/{}:runReport",
         client_id
