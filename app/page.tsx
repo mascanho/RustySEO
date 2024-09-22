@@ -140,6 +140,7 @@ const Home: React.FC<HomeProps> = () => {
   const handleChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setUrl(event.target.value);
+      sessionStorage.setItem("url", event.target.value);
     },
     [],
   );
@@ -158,7 +159,7 @@ const Home: React.FC<HomeProps> = () => {
     }
   }, [debouncedURL]);
 
-  const handleClick = (url: string, type: stryng) => {
+  const handleClick = (url: string) => {
     // Clear previous results before starting the new crawl
 
     // page speed loading
@@ -168,8 +169,9 @@ const Home: React.FC<HomeProps> = () => {
 
     // set the url beng searched in the session storage
     sessionStorage.setItem("url", url || "No URL");
-    const sessionUrl = sessionStorage.getItem("url");
-    setSessionUrl(sessionUrl);
+    const urlStored = sessionStorage.getItem("url");
+    setSessionUrl(urlStored);
+    setUrl(urlStored);
     window.dispatchEvent(new Event("sessionStorageUpdated"));
 
     setCrawlResult([]);
@@ -534,7 +536,7 @@ const Home: React.FC<HomeProps> = () => {
               <div className="relative flex items-center ml-2 flex-grow">
                 <CiGlobe className="absolute ml-3 text-gray-400" />
                 <input
-                  value={sessionUrl || url}
+                  value={url || "https://yourwebsite.com"}
                   type="url"
                   required
                   placeholder={sessionUrl || "https://yourwebsite.com"}
@@ -554,7 +556,7 @@ const Home: React.FC<HomeProps> = () => {
                 />
 
                 <button
-                  onClick={() => handleClick(url, "crawl")}
+                  onClick={() => handleClick(url)}
                   className="rounded w-[4rem] h-7 active:scale-95 text-sm relative inline-flex group py-[4px] items-center justify-center ml-3 cursor-pointer border-b-4 border-l-2 active:border-blue-600 active:shadow-none bg-gradient-to-tr from-brand-bright to-blue-500 border-blue-700 text-white transition-transform duration-200"
                 >
                   <span className="relative text-xs">
