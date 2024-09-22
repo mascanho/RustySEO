@@ -119,7 +119,7 @@ const TaskManagerContainerItem: React.FC<{ data: any }> = ({ data }) => {
               {["Todo", "Doing", "Completed"].map((status) => (
                 <DropdownMenuItem
                   key={status}
-                  className={`hover:dark:bg-white hover:bg-gray-100 hover:dark:text-brand-darker cursor-pointer ${
+                  className={`hover:dark:bg-white hover:bg-gray-100 hover:text-white hover:dark:text-brand-darker cursor-pointer ${
                     status === currentStatus
                       ? "bg-gray-200 dark:bg-gray-700"
                       : ""
@@ -131,7 +131,7 @@ const TaskManagerContainerItem: React.FC<{ data: any }> = ({ data }) => {
               ))}
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="hover:bg-red-100 dark:hover:bg-red-800 cursor-pointer text-red-600 dark:text-red-400"
+                className="hover:bg-red-100 hover:text-white dark:hover:bg-red-800 cursor-pointer text-red-600 dark:text-red-400"
                 onClick={handleDelete}
               >
                 Delete Task

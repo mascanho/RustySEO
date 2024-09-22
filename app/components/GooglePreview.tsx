@@ -58,7 +58,7 @@ const GooglePreview = ({
             {favicon_url[0] && (
               <div className="h-fit p-1.5 bg-white rounded-full border -mr-2 ">
                 <img
-                  src={favicon_url[0]}
+                  src={favicon_url[0] || favicon_url[1]}
                   alt="favicon"
                   className="rounded-full min-w-10 w-fullw-full max-w-10 max-h-10 object-contain"
                 />

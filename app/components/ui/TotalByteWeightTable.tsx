@@ -22,13 +22,13 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
             <tr>
               <th
                 align="left"
-                className="text-xs  w-[120px] border-r border-gray-300"
+                className="text-xs  w-[50px] border-r border-gray-300"
               >
                 <span className="-ml-1">Transfer Size</span>
               </th>
               <th
                 align="left"
-                className="text-xs w-1/5 border-r border-gray-300 dark:text-white"
+                className="text-xs w-[10px] border-r border-gray-300 dark:text-white"
               >
                 URL
               </th>
@@ -47,7 +47,7 @@ const TotalByteWeight = ({ pageSpeed }: { pageSpeed: any }) => {
             ) : (
               scripts.map((item: any, index: number) => (
                 <tr key={item.url || index}>
-                  <td className="px-2 text-[6px] text-gray-700 w-[200px] min-w-[95px] dark:text-white border-b border-r">
+                  <td className="px-2 text-[6px] text-gray-700 w-[91px] min-w-[95px] dark:text-white border-b border-r">
                     {(Math.floor(item?.totalBytes * 1000) / 1000).toFixed(0) +
                       " KiB"}
                   </td>{" "}

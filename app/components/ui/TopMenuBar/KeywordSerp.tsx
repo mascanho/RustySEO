@@ -1,15 +1,17 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import KeywordSearch from "./KeywordSearpSearch";
 
 const KeywordSerp = () => {
   const [visibility, setVisibility] = useState(true);
 
   return (
-    <section
-      className={`${visibility ? "block relative" : "hidden"} relative bottom-1 h-screen`}
+    <motion.section
+      drag
+      className={`${visibility ? "block relative" : "hidden"} absolute bottom-1 z-[99999999] h-screen`}
     >
       <KeywordSearch />
-    </section>
+    </motion.section>
   );
 };
 

@@ -15,7 +15,7 @@
   "tauri": {
     "allowlist": {
       "fs": {
-        "all": false,
+        "all": true,
         "copyFile": false,
         "createDir": false,
         "exists": false,

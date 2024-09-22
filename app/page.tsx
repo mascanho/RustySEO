@@ -158,7 +158,7 @@ const Home: React.FC<HomeProps> = () => {
     }
   }, [debouncedURL]);
 
-  const handleClick = (url: string) => {
+  const handleClick = (url: string, type: stryng) => {
     // Clear previous results before starting the new crawl
 
     // page speed loading
@@ -534,7 +534,7 @@ const Home: React.FC<HomeProps> = () => {
               <div className="relative flex items-center ml-2 flex-grow">
                 <CiGlobe className="absolute ml-3 text-gray-400" />
                 <input
-                  value={url}
+                  value={sessionUrl || url}
                   type="url"
                   required
                   placeholder={sessionUrl || "https://yourwebsite.com"}
@@ -554,7 +554,7 @@ const Home: React.FC<HomeProps> = () => {
                 />
 
                 <button
-                  onClick={() => handleClick(url)}
+                  onClick={() => handleClick(url, "crawl")}
                   className="rounded w-[4rem] h-7 active:scale-95 text-sm relative inline-flex group py-[4px] items-center justify-center ml-3 cursor-pointer border-b-4 border-l-2 active:border-blue-600 active:shadow-none bg-gradient-to-tr from-brand-bright to-blue-500 border-blue-700 text-white transition-transform duration-200"
                 >
                   <span className="relative text-xs">

@@ -91,7 +91,7 @@ const TodoItem = ({
               <DropdownMenuTrigger>
                 <BsThreeDotsVertical />
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="z-[10000] mr-32 bg-white">
+              <DropdownMenuContent className="z-[10000] mr-32 bg-white active:text-white">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

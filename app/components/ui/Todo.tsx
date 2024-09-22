@@ -21,7 +21,7 @@ type Task = {
   priority: string;
   url: string | null;
   date: string;
-  staus: any;
+  status: string;
   strategy: string;
 };
 
@@ -45,8 +45,9 @@ interface TodoProps {
 
 const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [tasksInitialized, setTasksInitialized] = useState(false); // New flag for initialization
+  const [tasksInitialized, setTasksInitialized] = useState(false);
   const [opened, { toggle }] = useDisclosure(false);
+  const [recrawlUrl, setRecrawlUrl] = useState<string | null>(null);
 
   const [newTask, setNewTask] = useState<Task>({
     id: Math.random() * 100000,
@@ -56,22 +57,24 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
     priority: "",
     url: url,
     date: new Date().toISOString(),
-    // @ts-ignore
     status: "Todo",
     strategy,
   });
 
-  // Load tasks from localStorage when the component mounts
+  useEffect(() => {
+    const recrawl = sessionStorage.getItem("url");
+    setRecrawlUrl(recrawl);
+  }, []);
+
   useEffect(() => {
     const storedTasks = localStorage.getItem("tasks");
     if (storedTasks) {
       console.log("Loading tasks from localStorage", JSON.parse(storedTasks));
       setTasks(JSON.parse(storedTasks));
     }
-    setTasksInitialized(true); // Set the initialization flag to true
+    setTasksInitialized(true);
   }, []);
 
-  // Save tasks to localStorage whenever they are updated
   useEffect(() => {
     if (tasksInitialized) {
       console.log("Saving tasks to localStorage", tasks);
@@ -91,16 +94,14 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
         priority: "",
         url: url,
         date: new Date().toISOString(),
-        // @ts-ignore
         status: "Todo",
         strategy,
       });
-      // Dispatch custom event
       const event = new Event("tasksUpdated");
       window.dispatchEvent(event);
       console.log("Task added", updatedTasks);
       updateTasks(updatedTasks);
-      closeModal(); // Ensure this is a function call
+      closeModal();
       toast("Task added");
     } else {
       toast.error("Please fill in all required fields");
@@ -113,7 +114,7 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
         offset={8}
         radius="md"
         opened={opened}
-        onClose={closeModal} // Use closeModal function
+        onClose={closeModal}
         title="Todo"
         size="sm"
         className="overflow-hidden"
@@ -194,8 +195,8 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
             <TextInput
               className="dark:text-white dark:placeholder:text-white"
               label="Page Url"
-              placeholder={!url ? "" : url}
-              value={url || "..."}
+              placeholder={!url && !recrawlUrl ? "" : url || recrawlUrl || ""}
+              value={url || recrawlUrl || "..."}
               readOnly
             />
             <Button className="mt-4 w-full" fullWidth onClick={handleAddTask}>

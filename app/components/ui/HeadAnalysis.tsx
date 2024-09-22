@@ -94,7 +94,7 @@ export const HeadAnalysis = ({
             <span className="flex ml-2 text-black text-lg font-black mr-3">
               {favicon_url.length > 0 && (
                 <img
-                  src={favicon_url[0]}
+                  src={favicon_url[1]}
                   alt="Favicon"
                   className="w-10 h-10 p-1 -mt-1 rounded-md"
                 />
@@ -235,9 +235,10 @@ export const HeadAnalysis = ({
           <div className="flex items-center mt-2 mt-0 sm:mt-0 xl:mt-4">
             <div
               className={`flex items-center justify-center rounded-full w-8 h-8 p-1.5 ${
-                openGraphDetails?.title?.length > 0 &&
-                openGraphDetails?.image !== null &&
-                "bg-green-500 text-white"
+                openGraphDetails?.title?.length > 0 ||
+                (openGraphDetails?.title === "" &&
+                  openGraphDetails?.image !== null &&
+                  "bg-green-500 text-white")
               } ${
                 openGraphDetails?.title?.length > 0 &&
                 openGraphDetails?.image === null &&
@@ -247,7 +248,7 @@ export const HeadAnalysis = ({
                 ${openGraphDetails?.title === null && openGraphDetails?.image === null && "bg-red-500 text-white"}
 ${openGraphDetails?.image === null && "bg-gray-200"} }
 ${openGraphDetails && "bg-gray-200"}
-`}
+ `}
             >
               <TagIcon />
             </div>

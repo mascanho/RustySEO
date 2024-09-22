@@ -35,12 +35,12 @@ const NetworkRequestsTable = ({ pageSpeed }: { pageSpeed: any }) => {
           </thead>
           <tbody className="bg-white  h-[calc(30rem - 3.5rem)] overflow-y-auto">
             {nr.map((item: any, index: number) => (
-              <tr key={item.url || index}>
+              <tr className="w-[1200px]" key={item.url || index}>
                 <td className="px-2 text-[6px] text-gray-700 w-[200px] min-w-[95px] dark:text-white border-b border-r">
                   {item?.mimeType}
                 </td>{" "}
-                <td className="px-4 text-xs text-blue-600 truncate border-b">
-                  <span className="max-w-[400px] ">
+                <td className="px-4 text-xs text-blue-600 truncate w-[60rem] dark:text-white border-b">
+                  <span className="w-full ">
                     {item?.url?.length > 50
                       ? item?.url?.slice(0, urlSize) + "..."
                       : item?.url}

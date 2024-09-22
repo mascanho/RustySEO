@@ -11,7 +11,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Modal } from "@mantine/core";
 import { useState, useCallback, useEffect } from "react";
-import { FaSearchengin } from "react-icons/fa";
+import { FaGoogle, FaSearchengin } from "react-icons/fa";
+
+import { AiFillGoogleCircle } from "react-icons/ai";
 
 import {
   FiRefreshCw,
@@ -28,10 +30,12 @@ import {
 import Todo from "../../Todo";
 
 import { useDisclosure } from "@mantine/hooks";
+import { toast } from "sonner";
 
 const TableFloatMenus = ({ children, data, crawl, url }: any) => {
   const handleCopy = useCallback((url: string) => {
     navigator?.clipboard.writeText(url);
+    toast("Copied to clipboard");
   }, []);
 
   const [todoStrategy, setTodoStrategy] = useState<string>("");
@@ -52,6 +56,15 @@ const TableFloatMenus = ({ children, data, crawl, url }: any) => {
       sessionStorage?.setItem("reCrawlUrl", data?.url);
     }
   }, [crawl]);
+
+  const handleReCrawl = async () => {
+    const url = sessionStorage?.getItem("reCrawlUrl");
+    if (url) {
+      await crawl(url);
+      sessionStorage?.removeItem("reCrawlUrl");
+    }
+    crawl(data?.url, "reCrawl");
+  };
 
   return (
     <>
@@ -104,7 +117,7 @@ const TableFloatMenus = ({ children, data, crawl, url }: any) => {
             }
             className="hover:bg-brand-bright hover:text-white"
           >
-            <FiCheckCircle className="mr-2 cursor-pointer" />
+            <FaGoogle className="mr-2 cursor-pointer" />
             Search Console
           </DropdownMenuItem>
           <DropdownMenuSub>
