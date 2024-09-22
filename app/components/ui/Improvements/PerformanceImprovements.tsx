@@ -223,7 +223,7 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
   }
 
   return (
-    <section className="bg-gray-300 w-full dark:bg-brand-darker py-6 px-1 pl-4 rounded-lg shadow max-w-7xl mx-auto mt-2 text-xs">
+    <section className="bg-gray-300 w-full dark:bg-brand-darker py-6 px-1 pl-4 rounded-lg shadow max-w-7xl mx-auto mt-1.5 text-xs">
       <div className="flex items-center justify-between pl-2 pr-6">
         <h2 className="text-2xl font-semibold mb-4  text-gray-800 dark:text-white">
           Technical Improvements
@@ -236,7 +236,7 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
             <Switch className="" />
           </div> */}
       </div>
-      <div className="space-y-3 overflow-auto custom-scrollbar max-h-[40rem] pl-2 py-2 pr-3 bg-trasnparent rounded-md dark:bg-brand-darker rounded-lg">
+      <div className="space-y-3 overflow-auto custom-scrollbar h-[calc(100vh-18.4rem)] pl-2 py-2 pr-3 bg-trasnparent rounded-md dark:bg-brand-darker rounded-lg">
         {dummyImprovements.map((item) => (
           <div
             key={item.id}

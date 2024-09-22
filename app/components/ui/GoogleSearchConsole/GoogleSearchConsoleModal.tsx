@@ -14,6 +14,7 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
     url: "",
     propertyType: "",
     range: "",
+    rows: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -31,6 +32,14 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
     { value: "6 months", label: "6 Months" },
     { value: "12 months", label: "12 Months" },
     { value: "24 months", label: "24 Months" },
+  ];
+
+  const rows = [
+    { value: "1000", label: "1000" },
+    { value: "5000", label: "5000" },
+    { value: "10000", label: "10000" },
+    { value: "20000", label: "20000" },
+    { value: "50000", label: "50000" },
   ];
 
   const handleChange = (e) => {
@@ -66,6 +75,11 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
     if (!formData.range) {
       newErrors.range = "Duration is required";
     }
+
+    if (!formData.rows) {
+      newErrors.rows = "Rows is required";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -245,7 +259,7 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
               <p className="text-red-500 text-sm mt-1">{errors.url}</p>
             )}
           </div>
-          <div className="mb-4 mt-8">
+          <div className="mb-4 mt-4">
             <label
               htmlFor="propertyType"
               className="block text-gray-700 font-bold mb-2 dark:text-white"
@@ -302,6 +316,33 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
             {errors.range && (
               <p className="text-red-500 text-sm mt-1">{errors.range}</p>
             )}
+
+            <div className="mb-4 mt-2">
+              <label
+                htmlFor="rows"
+                className="block text-gray-700 font-bold mb-2 dark:text-white"
+              >
+                Rows
+              </label>
+
+              <select
+                name="rows"
+                id="rows"
+                value={formData.rows}
+                onChange={handleChange}
+                className={`dark:text-white dark:bg-brand-darker w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-0 ${errors.rows ? "border-red-500 focus:ring-red-200" : "focus:ring-blue-200"}`}
+              >
+                <option value="">Select a rows</option>
+                {rows.map((rows) => (
+                  <option key={rows.value} value={rows.value}>
+                    {rows.label}
+                  </option>
+                ))}
+              </select>
+              {errors.rows && (
+                <p className="text-red-500 text-sm mt-1">{errors.rows}</p>
+              )}
+            </div>
           </div>
           <button
             type="submit"

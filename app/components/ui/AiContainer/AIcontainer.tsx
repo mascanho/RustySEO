@@ -90,9 +90,7 @@ const AIcontainer = () => {
   const renderMessages = () => {
     switch (selectedModel) {
       case "ollama":
-      case "mistral-nemo":
-      case "llama3.1":
-      case "mistral":
+      case "gemini":
         return (
           <>
             {messages.map((m) => (

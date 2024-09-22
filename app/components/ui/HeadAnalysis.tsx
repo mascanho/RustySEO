@@ -284,9 +284,7 @@ ${openGraphDetails && "bg-gray-200"}
             <span className="text-black/80 ml-2">
               {pageSchema.length > 0 && pageTitle?.length > 0 && (
                 <a href="#sd">
-                  <span className="text-green-500">
-                    This page has structured data
-                  </span>
+                  <span className="text-green-500">Structured data found</span>
                 </a>
               )}
               {!pageSchema[0] && pageTitle?.length > 0 && (

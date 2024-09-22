@@ -355,7 +355,7 @@ struct SearchAnalyticsQuery {
     end_date: String,
     dimensions: Vec<String>,
     #[serde(rename = "rowLimit")]
-    row_limit: u32,
+    row_limit: String,
     search_type: String,
 }
 
@@ -377,6 +377,7 @@ pub struct InstalledInfo {
     pub range: String,
     pub search_type: String,
     pub url: String,
+    pub rows: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -392,6 +393,7 @@ pub struct Credentials {
     pub url: String,
     pub propertyType: String,
     pub range: String,
+    rows: String,
 }
 
 // helper function to move credentials around
@@ -419,6 +421,7 @@ pub async fn read_credentials_file() -> Result<InstalledInfo, String> {
         range: secret.installed.range,
         search_type: secret.installed.search_type,
         url: secret.installed.url,
+        rows: secret.installed.rows,
     };
 
     println!("Search Console Config: {:?}", result);
@@ -433,6 +436,7 @@ pub async fn set_search_console_credentials(credentials: Credentials) -> Result<
     let credentials_url = credentials.url;
     let credentials_search_type = credentials.propertyType;
     let credentials_range = credentials.range;
+    let credentials_rows = credentials.rows;
 
     // Define the JSON structure
     let client_secret = ClientSecret {
@@ -453,6 +457,7 @@ pub async fn set_search_console_credentials(credentials: Credentials) -> Result<
             url: credentials_url.to_string(),
             search_type: credentials_search_type.to_string(),
             range: credentials_range.to_string(),
+            rows: credentials_rows.to_string(),
         },
     };
 
@@ -536,6 +541,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
     let credentials_client_id = gsc_settings_info.client_id;
     let credentials_client_secret = gsc_settings_info.client_secret;
     let credentials_range = gsc_settings_info.range;
+    let credentials_rows = gsc_settings_info.rows;
 
     // Initialize variables
     let mut domain = false;
@@ -602,7 +608,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
             "country".to_string(),
         ],
         search_type: "web".to_string(),
-        row_limit: 3000,
+        row_limit: credentials_rows,
     };
     let body = serde_json::to_string(&query)?;
 

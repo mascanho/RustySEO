@@ -294,7 +294,7 @@ const SEOImprovements = ({
   }
 
   return (
-    <section className="max-w-7xl mx-auto text-xs">
+    <section className="max-w-7xl mx-auto text-xs mt-1.5">
       <Tabs defaultValue="performance" className="w-full">
         <TabsList className="text-xs">
           <TabsTrigger value="performance" className="text-xs">
@@ -312,7 +312,7 @@ const SEOImprovements = ({
             <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">
               SEO Improvements
             </h2>
-            <div className="space-y-3 overflow-auto custom-scrollbar max-h-[40rem] py-2 pr-3 bg-transparent rounded-md dark:bg-brand-darker rounded-lg">
+            <div className="space-y-3 overflow-auto custom-scrollbar h-[calc(100vh-18.4rem)] py-2 pr-3 bg-transparent rounded-md dark:bg-brand-darker rounded-lg">
               {improvements.map((item) => (
                 <div
                   key={item.id}

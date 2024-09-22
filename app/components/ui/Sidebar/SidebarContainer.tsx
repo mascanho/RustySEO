@@ -83,7 +83,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
       <ResizablePanelGroup direction="vertical">
         <ResizablePanel defaultSize={220} className="h-[calc(100vh-1.5rem)] ">
           <Tabs defaultValue="summary" className="text-xs aside-tabs">
-            <Tabs.List justify="left" className="dark:text-white">
+            <Tabs.List grow justify="left" className="dark:text-white">
               <Tabs.Tab className="text-[8px]" value="summary">
                 General
               </Tabs.Tab>
@@ -131,6 +131,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
         <ResizablePanel defaultSize={200} className="h-[calc(100vh-90rem)]">
           <Tabs defaultValue="first" className="text-xs aside-tabs">
             <Tabs.List
+              grow
               justify="left"
               className="dark:text-white text-xs sidebar-tabs"
             >
