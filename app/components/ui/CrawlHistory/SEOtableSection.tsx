@@ -227,7 +227,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
             <DropdownMenuSeparator className="bg-black/20 dark:bg-white/20" />
             <DropdownMenuItem
               onClick={handleClearTable}
-              className="text-red-500  hover:text-red-500 dark:hover:bg-red-700 dark:hover:text-white cursor-pointer text-xs focus:bg-red-500 focus:text-red-500  focus:text-text-white "
+              className="text-red-500  hover:text-red-500 dark:hover:bg-red-700 dark:hover:text-white cursor-pointer text-xs focus:bg-red-500   focus:text-text-white focus:text-white"
             >
               Clear Table
             </DropdownMenuItem>

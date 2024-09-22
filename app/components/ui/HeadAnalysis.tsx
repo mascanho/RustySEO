@@ -33,6 +33,7 @@ export const HeadAnalysis = ({
   charset,
   crawl,
   sessionUrl,
+  strategy,
 }: any) => {
   // Mantine Collapse
   const [opened, { toggle }] = useDisclosure(false);
@@ -69,7 +70,12 @@ export const HeadAnalysis = ({
           <AiFillTag className="mr-1.5" /> Head
         </h2>
         <div className="absolute top-2.5 right-0">
-          <TableFloatMenus data={data} crawl={crawl} url={sessionUrl || url}>
+          <TableFloatMenus
+            data={data}
+            crawl={crawl}
+            url={sessionUrl || url}
+            strategy={strategy}
+          >
             <BsThreeDotsVertical className="dark:text-white mr-2 z-10" />
           </TableFloatMenus>
         </div>
@@ -94,7 +100,7 @@ export const HeadAnalysis = ({
             <span className="flex ml-2 text-black text-lg font-black mr-3">
               {favicon_url.length > 0 && (
                 <img
-                  src={favicon_url[1]}
+                  src={favicon_url[1] || favicon_url[0]}
                   alt="Favicon"
                   className="w-10 h-10 p-1 -mt-1 rounded-md"
                 />
@@ -235,20 +241,18 @@ export const HeadAnalysis = ({
           <div className="flex items-center mt-2 mt-0 sm:mt-0 xl:mt-4">
             <div
               className={`flex items-center justify-center rounded-full w-8 h-8 p-1.5 ${
-                openGraphDetails?.title?.length > 0 ||
-                (openGraphDetails?.title === "" &&
-                  openGraphDetails?.image !== null &&
-                  "bg-green-500 text-white")
-              } ${
-                openGraphDetails?.title?.length > 0 &&
-                openGraphDetails?.image === null &&
-                "bg-red-500 text-white"
-              }
-                ${openGraphDetails?.title?.length > 0 && openGraphDetails?.image === null && "bg-gray-200"}
-                ${openGraphDetails?.title === null && openGraphDetails?.image === null && "bg-red-500 text-white"}
-${openGraphDetails?.image === null && "bg-gray-200"} }
-${openGraphDetails && "bg-gray-200"}
- `}
+                pageTitle.length > 0
+                  ? openGraphDetails?.title?.length > 0 &&
+                    openGraphDetails?.image &&
+                    openGraphDetails?.description?.length > 0
+                    ? "bg-green-500 text-white"
+                    : openGraphDetails?.title?.length > 0 ||
+                        openGraphDetails?.image ||
+                        openGraphDetails?.description?.length > 0
+                      ? "bg-yellow-500 text-white"
+                      : "bg-red-500 text-white"
+                  : "bg-gray-200"
+              }`}
             >
               <TagIcon />
             </div>

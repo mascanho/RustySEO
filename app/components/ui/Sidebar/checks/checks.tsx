@@ -138,7 +138,7 @@ const useGetChecks = () => {
         seoDescription?.length <= 160 && seoDescription.length > 0,
       ),
       createCheck("18", "Canonical", seoCanonical !== "No canonical URL found"),
-      createCheck("19", "Hreflangs", seoHreflangs?.length > 1),
+      createCheck("19", "Hreflangs", seoHreflangs?.length > 0),
       createCheck("20", "OpenGraph", seoOpengraph?.image),
       createCheck("21", "Structured Data", seoSchema?.length > 0),
       createCheck("22", "Page Charset", seoCharset?.length > 0),

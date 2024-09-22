@@ -26,6 +26,7 @@ import { Switch } from "@/components/ui/switch";
 import { useDropzone } from "react-dropzone";
 import { invoke } from "@tauri-apps/api/tauri";
 import { UploadIcon } from "lucide-react";
+import Confetti from "react-confetti";
 
 export default function ImageOptimizer() {
   const [image, setImage] = useState(null);
@@ -43,6 +44,7 @@ export default function ImageOptimizer() {
   const [cropMode, setCropMode] = useState(false);
   const [optimizedImages, setOptimizedImages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   const onDrop = useCallback((acceptedFiles: any) => {
     const file = acceptedFiles[0];
@@ -50,9 +52,9 @@ export default function ImageOptimizer() {
     img.onload = () => {
       setOriginalDimensions({ width: img.width, height: img.height });
       setDimensions({ width: img.width, height: img.height });
+      setImage(Object.assign(file, { preview: URL.createObjectURL(file) }));
     };
     img.src = URL.createObjectURL(file);
-    setImage(Object.assign(file, { preview: URL.createObjectURL(file) }));
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -110,7 +112,7 @@ export default function ImageOptimizer() {
         const base64Image = reader.result.split(",")[1];
 
         try {
-          const formats = ["jpg", "png", "webp"];
+          const formats = ["jpg", "png", "webp", "jpeg"];
           const results = [];
 
           for (const fmt of formats) {
@@ -130,6 +132,8 @@ export default function ImageOptimizer() {
           }
 
           setOptimizedImages(results);
+          setShowConfetti(true);
+          setTimeout(() => setShowConfetti(false), 5000);
         } catch (invokeError) {
           console.error("Error invoking Tauri command:", invokeError);
         } finally {
@@ -159,6 +163,7 @@ export default function ImageOptimizer() {
     const binaryData = Uint8Array.from(atob(base64Data), (c) =>
       c.charCodeAt(0),
     );
+    console.log(binaryData, "Optimizing button");
 
     const fileName = `optimized_${img.format}.${img.format}`;
 
@@ -173,11 +178,18 @@ export default function ImageOptimizer() {
     }
   };
 
+  const handleReupload = () => {
+    setImage(null);
+    setOptimizedImages([]);
+    setIsProcessing(false);
+  };
+
   return (
-    <section className="w-full border-none rounded-none h-full p-10 dark:bg-brand-dark shadow-none">
-      <CardTitle>Advanced Image Optimizer</CardTitle>
+    <section className="w-full z-[0] border-none rounded-none h-full p-10 dark:bg-brand-dark shadow-none">
+      {showConfetti && <Confetti />}
+      <CardTitle className="ml-6">Rusty Multi-Image Optimizer</CardTitle>
       <CardHeader>
-        <CardDescription>
+        <CardDescription className="ml-0">
           Upload an image and customize its dimensions, format, quality, and
           more.
         </CardDescription>
@@ -201,9 +213,7 @@ export default function ImageOptimizer() {
             ) : (
               <>
                 <UploadIcon className="w-12 h-12 mb-4 text-gray-400" />
-                <p>
-                  Drag &apos;n&apos; drop an image here, or click to select one
-                </p>
+                <p>Click to add an image</p>
               </>
             )}
           </div>
@@ -302,20 +312,19 @@ export default function ImageOptimizer() {
             <Button onClick={handleOptimize} disabled={isProcessing}>
               {loading ? "Optimizing..." : "Optimize Image"}
             </Button>
+
+            {optimizedImages.length > 0 && (
+              <Button onClick={handleReupload}>Upload New Image</Button>
+            )}
           </div>
         </div>
 
         {optimizedImages.length > 0 && (
-          <div className="grid gap-4 sm:grid-cols-2 mt-6">
+          <div className="grid gap-4 sm:grid-cols-2 mt-10">
             {optimizedImages.map((img, index) => (
               <div key={index} className="flex flex-col items-center">
-                <img
-                  src={img.src}
-                  alt={`Optimized ${img.format}`}
-                  className="max-w-full max-h-64 object-contain"
-                />
                 <Button onClick={() => saveImage(img)} className="mt-2">
-                  Save {img.format.toUpperCase()}
+                  Download {img.format.toUpperCase()}
                 </Button>
               </div>
             ))}

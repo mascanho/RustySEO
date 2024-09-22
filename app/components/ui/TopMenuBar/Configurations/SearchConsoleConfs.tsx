@@ -10,6 +10,9 @@ import {
   FileText,
   Eye,
   EyeOff,
+  Table,
+  BarChart,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -40,7 +43,7 @@ export default function SearchConsoleConfs() {
 
   return (
     <Card className="w-full p-0 h-full shadow-none border-0 mt-4  mx-auto">
-      <CardContent className="space-y-4 h-full">
+      <CardContent className="space-y-2 h-full">
         <div className="flex items-center space-x-4">
           <Hash className="h-5 w-5 text-muted-foreground" />
           <div>
@@ -59,7 +62,7 @@ export default function SearchConsoleConfs() {
           <Key className="h-5 w-5 text-muted-foreground" />
           <div>
             <p className="text-sm font-medium">Client Secret</p>
-            <div className="flex items-center bg-red-500 w-[calc(50rem-7rem)] rounded-md p-1 text-sm text-white">
+            <div className="flex items-center bg-gray-100 w-[calc(50rem-7rem)] rounded-md p-2 text-sm text-black">
               <p className="text-sm text-muted-foreground w-full ">
                 {showSecret ? "actual-client-secret" : "••••••••••••"}
               </p>
@@ -131,6 +134,27 @@ export default function SearchConsoleConfs() {
                 />
               </PopoverContent>
             </Popover>
+          </div>
+        </div>
+        <div className="flex items-center space-x-4">
+          <Table className="h-5 w-5 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">Rows</p>
+            <p className="text-sm text-muted-foreground">10,000</p>
+          </div>
+        </div>
+        <div className="flex items-center space-x-4">
+          <BarChart className="h-5 w-5 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">Analytics Status</p>
+            <p className="text-sm text-muted-foreground">Active</p>
+          </div>
+        </div>
+        <div className="flex items-center space-x-4">
+          <Zap className="h-5 w-5 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-medium">Performance Score</p>
+            <p className="text-sm text-muted-foreground">92/100</p>
           </div>
         </div>
       </CardContent>

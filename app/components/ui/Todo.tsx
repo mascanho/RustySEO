@@ -58,7 +58,7 @@ const Todo: React.FC<TodoProps> = ({ strategy, url, close: closeModal }) => {
     url: url,
     date: new Date().toISOString(),
     status: "Todo",
-    strategy,
+    strategy: strategy || "DESKTOP",
   });
 
   useEffect(() => {

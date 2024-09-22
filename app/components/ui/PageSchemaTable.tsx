@@ -71,7 +71,7 @@ const PageSchemaTable = ({
                 onClick={() => openBrowserWindow(testURL)}
                 className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer"
               >
-                Rich Results Test
+                Schema Validator
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-gray-100 dark:bg-brand-dark" />
 

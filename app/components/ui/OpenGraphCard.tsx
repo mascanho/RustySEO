@@ -1,5 +1,5 @@
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
-import { FaLinkedin, FaFacebook, FaTwitter, FaInstagram } from "react-icons/fa";
+import { FaLinkedin, FaFacebook } from "react-icons/fa";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import { useEffect, useState } from "react";
 
@@ -18,14 +18,10 @@ export const OpenGraphCard = ({
   openGraphDetails,
   linkedInInspect,
   facebookInspect,
-  twitterInspect,
-  instagramInspect,
 }: {
   openGraphDetails: any;
   linkedInInspect: string | undefined;
   facebookInspect: string | undefined;
-  twitterInspect: string | undefined;
-  instagramInspect: string | undefined;
 }) => {
   const { Visible } = useStore();
   const [currentPreview, setCurrentPreview] = useState<string>("LinkedIn");
@@ -50,10 +46,6 @@ export const OpenGraphCard = ({
         return <FaLinkedin className="mr-1.5" />;
       case "Facebook":
         return <FaFacebook className="mr-1.5" />;
-      case "Twitter":
-        return <FaTwitter className="mr-1.5" />;
-      case "Instagram":
-        return <FaInstagram className="mr-1.5" />;
       default:
         return <FaLinkedin className="mr-1.5" />;
     }
@@ -64,11 +56,7 @@ export const OpenGraphCard = ({
       case "LinkedIn":
         return linkedInInspect;
       case "Facebook":
-        return facebookInspect;
-      case "Twitter":
-        return twitterInspect;
-      case "Instagram":
-        return instagramInspect;
+        return `https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(openGraphDetails.url)}`;
       default:
         return linkedInInspect;
     }
@@ -90,20 +78,18 @@ export const OpenGraphCard = ({
             <DropdownMenuContent className="bg-brand-darker border  dark:bg-brand-darker  dark:border-brand-dark dark:text-white mr-36 bg-white active:text-white">
               <DropdownMenuLabel>Social Previews</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {["LinkedIn", "Facebook", "Twitter", "Instagram"].map(
-                (platform) => (
-                  <DropdownMenuItem
-                    key={platform}
-                    onClick={() => {
-                      setCurrentPreview(platform);
-                      openBrowserWindow(getPreviewLink());
-                    }}
-                    className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer active:text-white"
-                  >
-                    {platform}
-                  </DropdownMenuItem>
-                ),
-              )}
+              {["LinkedIn", "Facebook"].map((platform) => (
+                <DropdownMenuItem
+                  key={platform}
+                  onClick={() => {
+                    setCurrentPreview(platform);
+                    openBrowserWindow(getPreviewLink());
+                  }}
+                  className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer active:text-white"
+                >
+                  {platform}
+                </DropdownMenuItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

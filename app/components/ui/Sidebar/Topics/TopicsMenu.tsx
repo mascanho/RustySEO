@@ -7,12 +7,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
-import { FaGoogle, FaYahoo, FaSearch } from "react-icons/fa";
+import { FaGoogle, FaYahoo, FaSearch, FaCopy } from "react-icons/fa";
 import { FiTrendingUp } from "react-icons/fi";
 import { SiMicrosoftbing, SiDuckduckgo } from "react-icons/si";
+import { toast } from "sonner";
 
 const TopicsMenu = ({ children, entry }: { children: any; entry: any }) => {
   const keyword = encodeURIComponent(entry?.keyword || "");
+
+  const copyKeyword = () => {
+    navigator.clipboard.writeText(decodeURIComponent(keyword));
+    toast.success("Keyword copied to clipboard");
+  };
 
   return (
     <DropdownMenu>
@@ -21,6 +27,15 @@ const TopicsMenu = ({ children, entry }: { children: any; entry: any }) => {
         <DropdownMenuLabel className="font-semibold text-xs">
           Check Keyword
         </DropdownMenuLabel>
+
+        <DropdownMenuItem
+          onClick={copyKeyword}
+          className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight text-xs cursor-pointer"
+        >
+          <FaCopy className="mr-2" /> Copy Keyword
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
 
         <DropdownMenuItem
           onClick={() =>

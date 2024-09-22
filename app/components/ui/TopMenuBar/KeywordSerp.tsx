@@ -8,7 +8,7 @@ const KeywordSerp = () => {
   return (
     <motion.section
       drag
-      className={`${visibility ? "block relative" : "hidden"} absolute bottom-1 z-[99999999] h-screen`}
+      className={`${visibility ? "block relative" : "hidden"} absolute bottom-1 z-[50] h-fit`}
     >
       <KeywordSearch />
     </motion.section>

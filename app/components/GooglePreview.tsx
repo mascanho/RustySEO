@@ -86,17 +86,19 @@ const GooglePreview = ({
               </div>
             )}
           </div>
-          <a
-            className="mt-10 text-blue-500 dark:text-blue-400"
-            style={{
-              textDecoration: "none",
-              fontSize: "18px",
-            }}
-          >
-            {pageTitle.length > 60
-              ? pageTitle.substring(0, 57) + "..."
-              : pageTitle}
-          </a>
+          <div className="flex items-center">
+            <a
+              className=" truncate text-blue-500 dark:text-blue-400 overflow-clip"
+              style={{
+                textDecoration: "none",
+                fontSize: "18px",
+              }}
+            >
+              {pageTitle.length > 60
+                ? pageTitle.substring(0, 57) + "..."
+                : pageTitle}
+            </a>
+          </div>
           <div style={{ fontSize: "14px" }} className="dark:text-white/60 mt-1">
             {pageDescription.length > 60
               ? pageDescription.substring(0, 57) + "..."

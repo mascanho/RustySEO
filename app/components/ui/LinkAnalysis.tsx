@@ -40,7 +40,7 @@ const LinkAnalysis = ({
             <table className="w-full">
               <thead className="text-xs text-left py-2">
                 <tr>
-                  <th className="w-1/3">Anchor</th>
+                  <th className="w-1/3 overflow-hidden">Anchor</th>
                   <th className="w-2/3">Link</th>
                 </tr>
               </thead>
@@ -51,7 +51,7 @@ const LinkAnalysis = ({
                   {linksTable.map((link: any, index: any) => (
                     <tr key={index} className="align-middle">
                       <td className="border-r border-b">
-                        <span className="block py-1 px-3 w-[180px]">
+                        <span className="block py-1 px-3 w-[180px] overflow-hidden mr-1">
                           {link[1] || link?.description}
                         </span>
                       </td>

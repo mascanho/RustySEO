@@ -705,6 +705,7 @@ const Home: React.FC<HomeProps> = () => {
                 crawl={handleClick}
                 url={url}
                 sessionUrl={sessionUrl}
+                strategy={strategy}
               />
 
               {/* CHARTS SECTION */}

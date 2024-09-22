@@ -57,8 +57,8 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [search, setSearch] = useState("");
   const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(2022, 0, 20),
-    to: addDays(new Date(2022, 0, 20), 20),
+    from: new Date(2024, 0, 1),
+    to: addDays(new Date(2024, 0, 1), 20),
   });
   const [selectedDimension, setSelectedDimension] = useState("medium");
 
