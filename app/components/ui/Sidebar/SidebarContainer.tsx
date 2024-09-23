@@ -38,6 +38,7 @@ interface SidebarContainerProps {
   favicon: string[];
   bodyElements: any;
   video: any;
+  urlLength: any;
 }
 
 const ollama = true;
@@ -58,6 +59,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
   favicon,
   bodyElements,
   video,
+  urlLength,
 }) => {
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
   const ollamaStatus = useOllamaStore();
@@ -146,6 +148,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
                 pageTitle={pageTitle}
                 loading={loading}
                 pageSpeed={pageSpeed}
+                urlLength={urlLength}
               />
             </Tabs.Panel>
 

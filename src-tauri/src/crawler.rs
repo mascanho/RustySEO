@@ -93,6 +93,7 @@ pub struct CrawlResult {
     pub page_rank: Vec<f32>,
     pub charset_arr: Vec<String>,
     pub video: Vec<String>,
+    pub url_length: Vec<usize>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -217,6 +218,10 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut body_elements = Vec::new();
     let mut charset_arr = Vec::new();
     let mut video = Vec::new();
+    let mut url_length = Vec::new();
+
+    // Set the URL length
+    url_length.push(url.len());
 
     if response.status().is_success() {
         let body = response
@@ -620,6 +625,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         page_rank,
         charset_arr,
         video,
+        url_length,
     })
 }
 

@@ -48,6 +48,7 @@ const useGetChecks = () => {
   const seoStatusCodes = useOnPageSeoState((state) => state.seostatusCodes);
   const seoheadings = useOnPageSeoState((state) => state.seoheadings);
   const seoOpenGraph = useOnPageSeoState((state) => state.seoOpenGraph);
+  const seoUrlLength = useOnPageSeoState((state) => state.seoUrlLength);
 
   // Extract the CONTENT from ZUSTAND
   const wordCount = useContentStoreState((state) => state.wordCount);
@@ -139,6 +140,7 @@ const useGetChecks = () => {
       ),
       createCheck("18", "Canonical", seoCanonical !== "No canonical URL found"),
       createCheck("19", "Hreflangs", seoHreflangs?.length > 0),
+      createCheck("201", "URL length", seoUrlLength.length > 200),
       createCheck("20", "OpenGraph", seoOpengraph?.image),
       createCheck("21", "Structured Data", seoSchema?.length > 0),
       createCheck("22", "Page Charset", seoCharset?.length > 0),

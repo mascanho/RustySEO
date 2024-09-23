@@ -67,9 +67,7 @@ export const OpenGraphCard = ({
       className={`opengraph shadow naked_table overflow-hidden ${Visible.opengraph ? "block" : "hidden"} `}
     >
       <div className="flex items-center justify-between">
-        <h2 className="flex items-center z-10">
-          {getPreviewIcon()} {currentPreview} Preview
-        </h2>
+        <h2 className="flex items-center z-10">Social Media Preview</h2>
         <div className="relative z-10">
           <DropdownMenu>
             <DropdownMenuTrigger>

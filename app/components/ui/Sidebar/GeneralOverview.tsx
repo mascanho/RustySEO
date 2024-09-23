@@ -16,10 +16,17 @@ export default function GeneralOverview({
   pageSpeed,
   loading,
   pageTitle,
+  urlLength,
 }: any) {
   const storePageSpeed = usePageSpeedStore();
   const { setChecksData } = usePageSpeedStore();
-  const { seoLoading, setSeoLoading } = useOnPageSeo();
+  const { seoLoading, setSeoLoading, setSeoUrlLength } = useOnPageSeo();
+
+  useEffect(() => {
+    if (pageTitle.length > 0) {
+      setSeoUrlLength(urlLength[0]);
+    }
+  }, [pageTitle]);
 
   // console.log("SEO is: :", seoLoading);
 

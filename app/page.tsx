@@ -111,6 +111,7 @@ const Home: React.FC<HomeProps> = () => {
   });
   const [linkStatusCodeStatus, setLinkStatusCodeStatus] = useState(false);
   const [video, setVideo] = useState<any[]>([]);
+  const [urlLength, setUrlLength] = useState<any[]>([]);
 
   const [open, { toggle }] = useDisclosure(false);
 
@@ -202,6 +203,7 @@ const Home: React.FC<HomeProps> = () => {
     setPageRank([]);
     setLinkStatusCodes([]);
     setVideo([]);
+    setUrlLength([]);
 
     invoke<{
       links: [];
@@ -228,6 +230,7 @@ const Home: React.FC<HomeProps> = () => {
       page_rank: any[];
       charset_arr: any[];
       video: any[];
+      url_length: any[];
     }>("crawl", { url })
       .then((result) => {
         handleLinkStatusCheck(url);
@@ -257,6 +260,7 @@ const Home: React.FC<HomeProps> = () => {
         setHtmlToTextRatio(result.ratio);
         setPageRank(result.page_rank);
         setVideo(result.video);
+        setUrlLengthrlLength(result.url_length);
       })
       .catch(console.error);
   };
@@ -809,6 +813,7 @@ const Home: React.FC<HomeProps> = () => {
         loading={loading}
         bodyElements={bodyElements}
         video={video}
+        urlLength={urlLength}
       />
     </section>
   );
