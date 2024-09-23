@@ -114,9 +114,9 @@ const useGetChecks = () => {
 
     return [
       createCheck("1", "Performance", performance >= 0.5),
-      createCheck("3", "First Contentful Paint", fcp >= 0.5),
-      createCheck("4", "Largest Contentful Paint", lcp >= 0.5),
-      createCheck("5", "Time to Interactive", tti >= 0.5),
+      createCheck("2", "First Contentful Paint", fcp >= 0.5),
+      createCheck("3", "Largest Contentful Paint", lcp >= 0.5),
+      createCheck("4", "Time to Interactive", tti >= 0.5),
       createCheck("5", "Total Blocking Time", tbt >= 0.5),
       createCheck("6", "Cumulative Layout Shift", cls >= 0.5),
       createCheck("7", "Speed Index", speedIndex >= 0.5),
@@ -127,6 +127,7 @@ const useGetChecks = () => {
       createCheck("12", "Long Tasks", longTasks <= 0),
       createCheck("13", "Render Blocking Resources", renderBlocking <= 0),
       createCheck("14", "Network Requests", networkRequests <= 0.5),
+      createCheck("27", "URL length", seoUrlLength < 200),
       createCheck("15", "Favicon", favicon?.length > 0),
       createCheck(
         "16",
@@ -140,7 +141,6 @@ const useGetChecks = () => {
       ),
       createCheck("18", "Canonical", seoCanonical !== "No canonical URL found"),
       createCheck("19", "Hreflangs", seoHreflangs?.length > 0),
-      createCheck("201", "URL length", seoUrlLength.length > 200),
       createCheck("20", "OpenGraph", seoOpengraph?.image),
       createCheck("21", "Structured Data", seoSchema?.length > 0),
       createCheck("22", "Page Charset", seoCharset?.length > 0),
@@ -156,15 +156,15 @@ const useGetChecks = () => {
       ),
       createCheck("25", "404 Links", seoStatusCodes?.length === 0),
       createCheck("26", "Repeated Headings", seoheadings?.length === 0),
-      createCheck("27", "Word Count", wordCount && wordCount[0] > 0),
-      createCheck("28", "Reading Time", readingTime && readingTime[2] < 10),
+      createCheck("28", "Word Count", wordCount && wordCount[0] > 0),
+      createCheck("29", "Reading Time", readingTime && readingTime[2] < 10),
       createCheck(
-        "29",
+        "30",
         "Keyword Density",
         keywords?.length > 0 && keywords[0]?.[0]?.[1] > 20,
       ),
       {
-        id: "30",
+        id: "31",
         name: readingLevelResults?.[0]?.[1] || "Reading Level",
         status: ["Very Easy", "Easy", "Fairly Easy", "Standard"].includes(
           readingLevelResults?.[0]?.[1],
@@ -172,8 +172,8 @@ const useGetChecks = () => {
           ? "Passed"
           : "Failed",
       },
-      createCheck("31", "Content Structure", contentStructure === "Neutral"),
-      createCheck("32", "Media / Video", video?.[0] === "Yes"),
+      createCheck("32", "Content Structure", contentStructure === "Neutral"),
+      createCheck("33", "Media / Video", video?.[0] === "Yes"),
     ];
   }, [
     performance,
@@ -209,6 +209,7 @@ const useGetChecks = () => {
     contentStructure,
     keywords,
     video,
+    seoUrlLength,
   ]);
 
   return checks;

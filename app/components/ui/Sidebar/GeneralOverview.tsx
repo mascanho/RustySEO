@@ -20,15 +20,16 @@ export default function GeneralOverview({
 }: any) {
   const storePageSpeed = usePageSpeedStore();
   const { setChecksData } = usePageSpeedStore();
-  const { seoLoading, setSeoLoading, setSeoUrlLength } = useOnPageSeo();
+  const { seoLoading, setSeoLoading } = useOnPageSeo();
+  const { setSeoUrlLength } = useOnPageSeo();
+
+  console.log(urlLength, "URL length");
 
   useEffect(() => {
     if (pageTitle.length > 0) {
       setSeoUrlLength(urlLength[0]);
     }
-  }, [pageTitle]);
-
-  // console.log("SEO is: :", seoLoading);
+  }, [pageTitle, urlLength]);
 
   // Get All the data from the stores (PageSpeed Performance & SEO)
   const checks = getChecks();
@@ -132,7 +133,7 @@ export default function GeneralOverview({
               <summary className="flex items-center pl-2 py-1 bg-transparent dark:text-slate-400 font-semibold dark:bg-brand-darker cursor-pointer">
                 SEO
               </summary>
-              {checks.slice(14, 25).map((check, index) => (
+              {checks.slice(14, 26).map((check, index) => (
                 <div
                   key={check.id}
                   className={`flex items-center justify-between px-4 py-1.5 border-b dark:border-b-white/10 ${
@@ -189,7 +190,7 @@ export default function GeneralOverview({
               <summary className="flex items-center pl-2 py-1 bg-transparent dark:text-slate-400 font-semibold dark:bg-brand-darker cursor-pointer">
                 Content
               </summary>
-              {checks.slice(25, checks.length).map((check, index) => (
+              {checks.slice(26, checks.length).map((check, index) => (
                 <div
                   key={check.id}
                   className={`flex items-center justify-between px-4 py-1.5 border-b dark:border-b-white/10 ${

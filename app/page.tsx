@@ -260,10 +260,12 @@ const Home: React.FC<HomeProps> = () => {
         setHtmlToTextRatio(result.ratio);
         setPageRank(result.page_rank);
         setVideo(result.video);
-        setUrlLengthrlLength(result.url_length);
+        setUrlLength(result.url_length);
       })
       .catch(console.error);
   };
+
+  console.log(urlLength, "URL length from the main page");
 
   // GET THE THEME AND SET IT
   useEffect(() => {

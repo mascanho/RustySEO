@@ -597,7 +597,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         }
     }
 
-    println!("Video: {:?}", video);
+    println!("Page URL length: {:?}", url_length);
 
     Ok(CrawlResult {
         links,
