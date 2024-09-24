@@ -64,7 +64,7 @@ export default function AnalyticsTable() {
       organic: {
         dateRanges: [
           {
-            startDate: "2024-01-01",
+            startDate: date?.from?.toISOString().split("T")[0],
             endDate: "today",
           },
         ],
@@ -170,6 +170,39 @@ export default function AnalyticsTable() {
     };
     fetchData();
   }, []);
+
+  useEffect(() => {
+    // This effect will run whenever sortKey or sortOrder changes
+    const sortData = () => {
+      setAnalyticsData((prevData) => {
+        if (prevData && prevData.response && prevData.response[0]?.rows) {
+          const newData = { ...prevData };
+          newData.response[0].rows = [...prevData.response[0].rows].sort(
+            (a, b) => {
+              if (sortKey === "fullPageUrl") {
+                const aValue = a.dimensionValues[0]?.value || "";
+                const bValue = b.dimensionValues[0]?.value || "";
+                return sortOrder === "asc"
+                  ? aValue.localeCompare(bValue)
+                  : bValue.localeCompare(aValue);
+              } else {
+                const aValue = parseFloat(
+                  a.metricValues.find((m) => m.name === sortKey)?.value || "0",
+                );
+                const bValue = parseFloat(
+                  b.metricValues.find((m) => m.name === sortKey)?.value || "0",
+                );
+                return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
+              }
+            },
+          );
+          return newData;
+        }
+        return prevData;
+      });
+    };
+    sortData();
+  }, [sortKey, sortOrder]);
 
   return (
     <div className="mx-auto py-1 z-10 text-xs overflow-y-hidden w-[calc(100vw-21rem)]">
@@ -290,7 +323,7 @@ export default function AnalyticsTable() {
                 <TableRow key={index} className="py-0">
                   <TableCell className="font-medium text-xs">
                     <div
-                      className="truncate max-w-[300px] p-0 "
+                      className="truncate max-w-[800px] p-0 "
                       title={row.dimensionValues[0]?.value}
                     >
                       {row.dimensionValues[0]?.value || "N/A"}
