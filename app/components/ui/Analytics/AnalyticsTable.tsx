@@ -33,29 +33,11 @@ import {
 } from "@/components/ui/select";
 import { invoke } from "@tauri-apps/api/tauri";
 
-// This would typically come from an API or database
-const getAnalyticsData = () =>
-  Array.from({ length: 50 }, (_, index) => ({
-    url: `https://www.algarvewonders.com/${["blog", "products", "about", "contact", "beaches", "jobs", "businesses", "locations"][Math.floor(Math.random() * 8)]}/${Math.random().toString(36).substring(7)}`,
-    pageVisits: Math.floor(Math.random() * 50000) + 1000,
-    impressions: Math.floor(Math.random() * 100000) + 5000,
-    clickThroughRate: Number((Math.random() * 10).toFixed(1)),
-    averageTimeOnPage: `${Math.floor(Math.random() * 5) + 1}m ${Math.floor(Math.random() * 60)}s`,
-    bounceRate: Number((Math.random() * 70 + 20).toFixed(1)),
-    country: ["US", "UK", "CA", "AU", "DE", "FR"][
-      Math.floor(Math.random() * 6)
-    ],
-    source: ["organic", "paid", "social"][Math.floor(Math.random() * 3)],
-    device: ["tablet", "mobile", "desktop"][Math.floor(Math.random() * 3)],
-  }));
-
-type SortKey = keyof ReturnType<typeof getAnalyticsData>[0];
-
 export default function AnalyticsTable() {
   const [analyticsData, setAnalyticsData] = useState<
     ReturnType<typeof getAnalyticsData>
   >([]);
-  const [sortKey, setSortKey] = useState<SortKey>("pageVisits");
+  const [sortKey, setSortKey] = useState<string>("sessions");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [search, setSearch] = useState("");
   const [date, setDate] = useState<DateRange | undefined>({
@@ -140,22 +122,36 @@ export default function AnalyticsTable() {
     }
   }, [date]);
 
-  console.log("Analytics Date Func: ", analyticsDate);
+  const sortedData =
+    analyticsData && analyticsData.response && analyticsData.response[0]?.rows
+      ? [...analyticsData.response[0].rows]
+          .sort((a, b) => {
+            if (sortKey === "fullPageUrl") {
+              const aValue = a.dimensionValues[0]?.value || "";
+              const bValue = b.dimensionValues[0]?.value || "";
+              return sortOrder === "asc"
+                ? aValue.localeCompare(bValue)
+                : bValue.localeCompare(aValue);
+            } else {
+              const aValue = parseFloat(
+                a.metricValues.find((m) => m.name === sortKey)?.value || "0",
+              );
+              const bValue = parseFloat(
+                b.metricValues.find((m) => m.name === sortKey)?.value || "0",
+              );
+              return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
+            }
+          })
+          .filter(
+            (item) =>
+              item.dimensionValues[0]?.value &&
+              item.dimensionValues[0].value
+                .toLowerCase()
+                .includes(search.toLowerCase()),
+          )
+      : [];
 
-  const sortedData = Array.isArray(analyticsData)
-    ? [...analyticsData]
-        .sort((a, b) => {
-          if (a[sortKey] < b[sortKey]) return sortOrder === "asc" ? -1 : 1;
-          if (a[sortKey] > b[sortKey]) return sortOrder === "asc" ? 1 : -1;
-          return 0;
-        })
-        .filter(
-          (item) =>
-            item.url && item.url.toLowerCase().includes(search.toLowerCase()),
-        )
-    : [];
-
-  const handleSort = (key: SortKey) => {
+  const handleSort = (key: string) => {
     if (key === sortKey) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
@@ -235,7 +231,7 @@ export default function AnalyticsTable() {
             />
           </PopoverContent>
         </Popover>
-        <Select onValueChange={handleFilteredAnalytics}>
+        <Select defaultValue="organic" onValueChange={handleFilteredAnalytics}>
           <SelectTrigger className="w-[180px] text-xs h-8 dark:text-white/50">
             <SelectValue placeholder="Select dimension" />
           </SelectTrigger>
@@ -290,25 +286,23 @@ export default function AnalyticsTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {analyticsData && analyticsData.response?.[0]?.rows
-                ? analyticsData.response[0].rows.map((row, index) => (
-                    <TableRow key={index} className="py-0">
-                      <TableCell className="font-medium text-xs">
-                        <div
-                          className="truncate max-w-[300px] p-0 "
-                          title={row.dimensionValues[0]?.value}
-                        >
-                          {row.dimensionValues[0]?.value || "N/A"}
-                        </div>
-                      </TableCell>
-                      {row.metricValues.map((metric, metricIndex) => (
-                        <TableCell key={metricIndex} className="text-xs">
-                          {metric.value}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                : null}
+              {sortedData.map((row, index) => (
+                <TableRow key={index} className="py-0">
+                  <TableCell className="font-medium text-xs">
+                    <div
+                      className="truncate max-w-[300px] p-0 "
+                      title={row.dimensionValues[0]?.value}
+                    >
+                      {row.dimensionValues[0]?.value || "N/A"}
+                    </div>
+                  </TableCell>
+                  {row.metricValues.map((metric, metricIndex) => (
+                    <TableCell key={metricIndex} className="text-xs">
+                      {metric.value}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
             </TableBody>
           </Table>
         </div>
