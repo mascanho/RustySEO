@@ -41,8 +41,8 @@ export default function AnalyticsTable() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [search, setSearch] = useState("");
   const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(2024, 0, 1),
-    to: addDays(new Date(2024, 0, 1), 20),
+    from: new Date(2022, 0, 1),
+    to: addDays(new Date(2024, 12, 1), 20),
   });
   const [selectedDimension, setSelectedDimension] = useState("medium");
   const [analyticsDate, setAnalyticsDate] = useState<DateRange | undefined>(
@@ -61,11 +61,31 @@ export default function AnalyticsTable() {
     let type = [];
 
     let params = {
-      organic: {
+      landings: {
         dateRanges: [
           {
             startDate: date?.from?.toISOString().split("T")[0],
-            endDate: "today",
+            endDate: date?.to?.toISOString().split("T")[0],
+          },
+        ],
+        dimensions: [
+          { name: "landingPagePlusQueryString" },
+          { name: "country" },
+        ],
+        metrics: [
+          { name: "sessions" },
+          { name: "organicGoogleSearchAveragePosition" },
+          { name: "engagementRate" },
+          { name: "sessionsPerUser" },
+          { name: "bounceRate" },
+        ],
+      },
+
+      general: {
+        dateRanges: [
+          {
+            startDate: date?.from?.toISOString().split("T")[0],
+            endDate: date?.to?.toISOString().split("T")[0],
           },
         ],
         dimensions: [{ name: "fullPageUrl" }],
@@ -77,26 +97,80 @@ export default function AnalyticsTable() {
           { name: "scrolledUsers" },
         ],
       },
+      country: {
+        dateRanges: [
+          {
+            startDate: date?.from?.toISOString().split("T")[0],
+            endDate: date?.to?.toISOString().split("T")[0],
+          },
+        ],
+        dimensions: [{ name: "country" }],
+        metrics: [
+          { name: "sessions" },
+          { name: "newUsers" },
+          { name: "totalUsers" },
+          { name: "bounceRate" },
+          { name: "scrolledUsers" },
+          { name: "sessionsPerUser" },
+        ],
+      },
+      city: {
+        dateRanges: [
+          {
+            startDate: date?.from?.toISOString().split("T")[0],
+            endDate: date?.to?.toISOString().split("T")[0],
+          },
+        ],
+        dimensions: [{ name: "city" }],
+        metrics: [
+          { name: "sessions" },
+          { name: "newUsers" },
+          { name: "totalUsers" },
+          { name: "sessionsPerUser" },
+          { name: "scrolledUsers" },
+          { name: "bounceRate" },
+        ],
+      },
+      device: {
+        dateRanges: [
+          {
+            startDate: date?.from?.toISOString().split("T")[0],
+            endDate: date?.to?.toISOString().split("T")[0],
+          },
+        ],
+        dimensions: [{ name: "deviceCategory" }],
+        metrics: [
+          { name: "sessions" },
+          { name: "newUsers" },
+          { name: "totalUsers" },
+          { name: "bounceRate" },
+          { name: "scrolledUsers" },
+          { name: "sessionsPerUser" },
+        ],
+      },
     };
 
     switch (value) {
-      case "organic":
-        type.push(params.organic);
+      case "general":
+        type.push(params.general);
         break;
-      case "newUsers":
-        params.metrics = [{ name: "newUsers" }];
+      case "landings":
+        type.push(params.landings);
         break;
-      case "totalUsers":
-        params.metrics = [{ name: "totalUsers" }];
+      case "sessions":
+        type.push(params.sessions);
         break;
-      case "bounceRate":
-        params.metrics = [{ name: "bounceRate" }];
+      case "country":
+        type.push(params.country);
         break;
-      case "scrolledUsers":
-        params.metrics = [{ name: "scrolledUsers" }];
+      case "city":
+        type.push(params.city);
+        break;
+      case "device":
+        type.push(params.device);
         break;
       default:
-        console.error("Invalid metric type");
+        type.push(params.general);
         return;
     }
 
@@ -264,20 +338,16 @@ export default function AnalyticsTable() {
             />
           </PopoverContent>
         </Popover>
-        <Select defaultValue="organic" onValueChange={handleFilteredAnalytics}>
+        <Select onValueChange={handleFilteredAnalytics}>
           <SelectTrigger className="w-[180px] text-xs h-8 dark:text-white/50">
-            <SelectValue placeholder="Select dimension" />
+            <SelectValue placeholder="general">Select dimension</SelectValue>
           </SelectTrigger>
           <SelectContent className="dark:text-white text-xs ">
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="organic">Organic</SelectItem>
-            <SelectItem value="browser">Browser</SelectItem>
+            <SelectItem value="general">General</SelectItem>
+            <SelectItem value="landings">Landings</SelectItem>
             <SelectItem value="country">Country</SelectItem>
             <SelectItem value="city">City</SelectItem>
-            <SelectItem value="language">Language</SelectItem>
-            <SelectItem value="operatingSystem">Operating System</SelectItem>
-            <SelectItem value="pageTitle">Page Title</SelectItem>
-            <SelectItem value="pagePath">Page Path</SelectItem>
+            <SelectItem value="device">Device</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -286,7 +356,7 @@ export default function AnalyticsTable() {
           <Table className="relative w-full text-xs">
             <TableHeader className="sticky top-0 bg-white z-10 shadow">
               <TableRow>
-                <TableHead>
+                <TableHead className="text-left">
                   <Button
                     variant="ghost"
                     onClick={() => handleSort("fullPageUrl")}
@@ -300,7 +370,7 @@ export default function AnalyticsTable() {
                   analyticsData.response &&
                   analyticsData.response[0]?.metricHeaders.map(
                     (header, index) => (
-                      <TableHead key={index}>
+                      <TableHead key={index} className="text-center">
                         <Button
                           variant="ghost"
                           onClick={() => handleSort(header.name)}
@@ -321,17 +391,22 @@ export default function AnalyticsTable() {
             <TableBody>
               {sortedData.map((row, index) => (
                 <TableRow key={index} className="py-0">
-                  <TableCell className="font-medium text-xs">
+                  <TableCell className="font-medium text-xs text-left">
                     <div
-                      className="truncate max-w-[800px] p-0 "
+                      className="truncate max-w-[400px] p-0 "
                       title={row.dimensionValues[0]?.value}
                     >
                       {row.dimensionValues[0]?.value || "N/A"}
                     </div>
                   </TableCell>
                   {row.metricValues.map((metric, metricIndex) => (
-                    <TableCell key={metricIndex} className="text-xs">
-                      {metric.value}
+                    <TableCell
+                      key={metricIndex}
+                      className="text-xs text-center"
+                    >
+                      {metric.name === "bounceRate"
+                        ? `${(parseFloat(metric.value) * 100).toFixed(2)}%`
+                        : parseFloat(metric.value).toFixed(1)}
                     </TableCell>
                   ))}
                 </TableRow>
