@@ -747,26 +747,28 @@ pub async fn get_google_analytics(
     let client = reqwest::Client::new();
 
     // Prepare the request body
-    let body = json!({
-        "dateRanges": [
-            {
-                "startDate": "2024-01-01",
-                "endDate": "today"
-            }
-        ],
-        "dimensions": [
-            {"name": "fullPageUrl"},
-            // {"name": "sourceMedium"},
+    // let body = json!({
+    //     "dateRanges": [
+    //         {
+    //             "startDate": "2024-01-01",
+    //             "endDate": "today"
+    //         }
+    //     ],
+    //     "dimensions": [
+    //         {"name": "fullPageUrl"},
+    //         // {"name": "sourceMedium"},
 
-        ],
-        "metrics": [
-            {"name": "sessions"},
-            {"name": "newUsers"},
-            {"name": "totalUsers"},
-            {"name": "bounceRate"},
-           {"name": "scrolledUsers"},
-        ]
-    });
+    //     ],
+    //     "metrics": [
+    //         {"name": "sessions"},
+    //         {"name": "newUsers"},
+    //         {"name": "totalUsers"},
+    //         {"name": "bounceRate"},
+    //        {"name": "scrolledUsers"},
+    //     ]
+    // });
+
+    let body = &search_type[0];
 
     let id = get_google_analytics_id().await.unwrap();
 
@@ -794,7 +796,7 @@ pub async fn get_google_analytics(
         for row in rows {
             let page = &row["dimensionValues"][0]["value"];
             let views = &row["metricValues"][0]["value"];
-            println!("Page: {}, Views: {}", page, views);
+            // println!("Page: {}, Views: {}", page, views);
         }
     }
 

@@ -51,11 +51,7 @@ const getAnalyticsData = () =>
 
 type SortKey = keyof ReturnType<typeof getAnalyticsData>[0];
 
-export default function AnalyticsTable({
-  handleGetGoogleAnalytics,
-}: {
-  handleGetGoogleAnalytics: () => void;
-}) {
+export default function AnalyticsTable() {
   const [analyticsData, setAnalyticsData] = useState<
     ReturnType<typeof getAnalyticsData>
   >([]);
@@ -71,52 +67,12 @@ export default function AnalyticsTable({
     undefined,
   );
 
-  useEffect(() => {
-    setAnalyticsData(getAnalyticsData());
-  }, []);
-
-  useEffect(() => {
-    if (date?.from && date?.to) {
-      console.log("Selected date range:", {
-        from: format(date.from, "yyyy-MM-dd"),
-        to: format(date.to, "yyyy-MM-dd"),
-      });
-    }
-  }, [date]);
-
-  console.log("Analytics Date Func: ", analyticsDate);
-
-  const sortedData = Array.isArray(analyticsData)
-    ? [...analyticsData]
-        .sort((a, b) => {
-          if (a[sortKey] < b[sortKey]) return sortOrder === "asc" ? -1 : 1;
-          if (a[sortKey] > b[sortKey]) return sortOrder === "asc" ? 1 : -1;
-          return 0;
-        })
-        .filter(
-          (item) =>
-            item.url && item.url.toLowerCase().includes(search.toLowerCase()),
-        )
-    : [];
-
-  const handleSort = (key: SortKey) => {
-    if (key === sortKey) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortKey(key);
-      setSortOrder("desc");
-    }
-  };
-
-  const clearSearch = () => {
-    setSearch("");
-  };
-
+  // Handle the fetching of analytics data
   const handleFilteredAnalytics = async (value: string) => {
     setAnalyticsDate([
       {
         start_date: date.from,
-        end_date: date.to,
+        end_date: date.to?.toISOString(),
       },
     ]);
 
@@ -169,10 +125,55 @@ export default function AnalyticsTable({
       });
       console.log("Result: ", result);
       setAnalyticsData(result);
+      return result;
     } catch (error) {
       console.error("Error fetching Google Analytics data:", error);
     }
   };
+
+  useEffect(() => {
+    if (date?.from && date?.to) {
+      console.log("Selected date range:", {
+        from: format(date.from, "yyyy-MM-dd"),
+        to: format(date.to, "yyyy-MM-dd"),
+      });
+    }
+  }, [date]);
+
+  console.log("Analytics Date Func: ", analyticsDate);
+
+  const sortedData = Array.isArray(analyticsData)
+    ? [...analyticsData]
+        .sort((a, b) => {
+          if (a[sortKey] < b[sortKey]) return sortOrder === "asc" ? -1 : 1;
+          if (a[sortKey] > b[sortKey]) return sortOrder === "asc" ? 1 : -1;
+          return 0;
+        })
+        .filter(
+          (item) =>
+            item.url && item.url.toLowerCase().includes(search.toLowerCase()),
+        )
+    : [];
+
+  const handleSort = (key: SortKey) => {
+    if (key === sortKey) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortOrder("desc");
+    }
+  };
+
+  const clearSearch = () => {
+    setSearch("");
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      await handleFilteredAnalytics("organic");
+    };
+    fetchData();
+  }, []);
 
   return (
     <div className="mx-auto py-1 z-10 text-xs overflow-y-hidden w-[calc(100vw-21rem)]">
