@@ -127,7 +127,7 @@ const useGetChecks = () => {
       createCheck("12", "Long Tasks", longTasks <= 0),
       createCheck("13", "Render Blocking Resources", renderBlocking <= 0),
       createCheck("14", "Network Requests", networkRequests <= 0.5),
-      createCheck("27", "URL length", seoUrlLength < 200),
+      createCheck("27", "URL length", seoUrlLength < 60),
       createCheck("15", "Favicon", favicon?.length > 0),
       createCheck(
         "16",
