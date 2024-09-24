@@ -705,7 +705,19 @@ pub async fn get_google_analytics_id() -> Result<String, String> {
     Ok(file_toml)
 }
 
-pub async fn get_google_analytics() -> Result<AnalyticsData, Box<dyn std::error::Error>> {
+#[derive(Serialize, Deserialize, Debug)]
+pub struct DateRange {
+    pub start_date: String,
+    pub end_date: String,
+}
+
+pub async fn get_google_analytics(
+    search_type: Vec<serde_json::Value>,
+    date_ranges: Vec<DateRange>,
+) -> Result<AnalyticsData, Box<dyn std::error::Error>> {
+    println!("Search Type: {:#?}", search_type);
+    println!("Date Ranges: {:#?}", date_ranges);
+
     // Set the directories for the client_secret.json file
     let config_dir =
         ProjectDirs::from("", "", "rustyseo").ok_or_else(|| "Failed to get project directories")?;
@@ -751,7 +763,8 @@ pub async fn get_google_analytics() -> Result<AnalyticsData, Box<dyn std::error:
             {"name": "sessions"},
             {"name": "newUsers"},
             {"name": "totalUsers"},
-
+            {"name": "bounceRate"},
+           {"name": "scrolledUsers"},
         ]
     });
 

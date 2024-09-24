@@ -3,9 +3,11 @@ use crate::crawler::db::GscMatched;
 use crate::crawler::libs;
 use crate::crawler::libs::ApiKeys;
 use crate::crawler::libs::Credentials;
+use crate::crawler::libs::DateRange;
 use crate::image_converter::converter;
 use serde::Deserialize;
 use serde::Serialize;
+use serde_json::Value;
 use std::collections::HashSet;
 use std::error::Error;
 use std::fs;
@@ -128,8 +130,11 @@ pub fn call_gsc_match_url(url: String) -> Result<Vec<GscMatched>, String> {
 }
 
 #[tauri::command]
-pub async fn get_google_analytics_command() -> Result<libs::AnalyticsData, String> {
-    match libs::get_google_analytics().await {
+pub async fn get_google_analytics_command(
+    search_type: Vec<serde_json::Value>,
+    date_ranges: Vec<DateRange>,
+) -> Result<libs::AnalyticsData, String> {
+    match libs::get_google_analytics(search_type, date_ranges).await {
         Ok(result) => {
             println!("Successfully called Google Analytics");
             Ok(result)

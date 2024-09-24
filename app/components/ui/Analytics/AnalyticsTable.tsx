@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import { useState, useEffect } from "react";
@@ -30,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { invoke } from "@tauri-apps/api/tauri";
 
 // This would typically come from an API or database
 const getAnalyticsData = () =>
@@ -61,10 +63,27 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
     to: addDays(new Date(2024, 0, 1), 20),
   });
   const [selectedDimension, setSelectedDimension] = useState("medium");
+  const [analyticsDate, setAnalyticsDate] = useState<DateRange | undefined>(
+    undefined,
+  );
 
   useEffect(() => {
     setAnalyticsData(getAnalyticsData());
   }, []);
+
+  useEffect(() => {
+    if (date?.from && date?.to) {
+      setAnalyticsDate({
+        from: date.from,
+        to: date.to,
+      });
+
+      console.log("Selected date range:", {
+        from: format(date.from, "yyyy-MM-dd"),
+        to: format(date.to, "yyyy-MM-dd"),
+      });
+    }
+  }, [date]);
 
   const sortedData = [...analyticsData]
     .sort((a, b) => {
@@ -85,6 +104,58 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
 
   const clearSearch = () => {
     setSearch("");
+  };
+
+  const handleFilteredAnalytics = async (value: string) => {
+    let params = {
+      dateRanges: [
+        {
+          startDate: "2024-01-01",
+          endDate: "today",
+        },
+      ],
+      dimensions: [{ name: "fullPageUrl" }],
+      metrics: [
+        { name: "sessions" },
+        { name: "newUsers" },
+        { name: "totalUsers" },
+        { name: "bounceRate" },
+        { name: "scrolledUsers" },
+      ],
+    };
+
+    switch (value) {
+      case "organic":
+        // No change needed for organic, as it uses all metrics
+        break;
+      case "newUsers":
+        params.metrics = [{ name: "newUsers" }];
+        break;
+      case "totalUsers":
+        params.metrics = [{ name: "totalUsers" }];
+        break;
+      case "bounceRate":
+        params.metrics = [{ name: "bounceRate" }];
+        break;
+      case "scrolledUsers":
+        params.metrics = [{ name: "scrolledUsers" }];
+        break;
+      default:
+        console.error("Invalid metric type");
+        return;
+    }
+
+    try {
+      const result: any = await invoke("get_google_analytics_command", {
+        searchType: value, // Passing the `value` as `searchType`
+        dateRanges: analyticsDate,
+        ...params, // Passing other parameters
+      });
+      console.log("Result: ", result);
+      setAnalyticsData(result);
+    } catch (error) {
+      console.error("Error fetching Google Analytics data:", error);
+    }
   };
 
   return (
@@ -119,7 +190,7 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
             >
               <CalendarIcon className="mr-2 h-3 w-3 dark:text-white/50" />
               {date?.from ? (
-                date.to ? (
+                date?.to ? (
                   <>
                     {format(date.from, "LLL dd, y")} -{" "}
                     {format(date.to, "LLL dd, y")}
@@ -147,13 +218,16 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
             />
           </PopoverContent>
         </Popover>
-        <Select value={selectedDimension} onValueChange={setSelectedDimension}>
+        <Select
+          value={selectedDimension}
+          onValueChange={handleFilteredAnalytics}
+        >
           <SelectTrigger className="w-[180px] text-xs h-8 dark:text-white/50">
             <SelectValue placeholder="Select dimension" />
           </SelectTrigger>
           <SelectContent className="dark:text-white text-xs ">
             <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="source">Source</SelectItem>
+            <SelectItem value="organic">Organic</SelectItem>
             <SelectItem value="browser">Browser</SelectItem>
             <SelectItem value="country">Country</SelectItem>
             <SelectItem value="city">City</SelectItem>
