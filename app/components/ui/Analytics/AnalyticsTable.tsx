@@ -36,7 +36,7 @@ import { invoke } from "@tauri-apps/api/tauri";
 // This would typically come from an API or database
 const getAnalyticsData = () =>
   Array.from({ length: 50 }, (_, index) => ({
-    url: `https://www/algarvewonders.com/${["blog", "products", "about", "contact", "beaches", "jobs", "businesses", "locations"][Math.floor(Math.random() * 4)]}/${Math.random().toString(36).substring(7)}`,
+    url: `https://www.algarvewonders.com/${["blog", "products", "about", "contact", "beaches", "jobs", "businesses", "locations"][Math.floor(Math.random() * 8)]}/${Math.random().toString(36).substring(7)}`,
     pageVisits: Math.floor(Math.random() * 50000) + 1000,
     impressions: Math.floor(Math.random() * 100000) + 5000,
     clickThroughRate: Number((Math.random() * 10).toFixed(1)),
@@ -51,7 +51,11 @@ const getAnalyticsData = () =>
 
 type SortKey = keyof ReturnType<typeof getAnalyticsData>[0];
 
-export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
+export default function AnalyticsTable({
+  handleGetGoogleAnalytics,
+}: {
+  handleGetGoogleAnalytics: () => void;
+}) {
   const [analyticsData, setAnalyticsData] = useState<
     ReturnType<typeof getAnalyticsData>
   >([]);
@@ -73,11 +77,6 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
 
   useEffect(() => {
     if (date?.from && date?.to) {
-      setAnalyticsDate({
-        from: date.from,
-        to: date.to,
-      });
-
       console.log("Selected date range:", {
         from: format(date.from, "yyyy-MM-dd"),
         to: format(date.to, "yyyy-MM-dd"),
@@ -85,13 +84,20 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
     }
   }, [date]);
 
-  const sortedData = [...analyticsData]
-    .sort((a, b) => {
-      if (a[sortKey] < b[sortKey]) return sortOrder === "asc" ? -1 : 1;
-      if (a[sortKey] > b[sortKey]) return sortOrder === "asc" ? 1 : -1;
-      return 0;
-    })
-    .filter((item) => item.url.toLowerCase().includes(search.toLowerCase()));
+  console.log("Analytics Date Func: ", analyticsDate);
+
+  const sortedData = Array.isArray(analyticsData)
+    ? [...analyticsData]
+        .sort((a, b) => {
+          if (a[sortKey] < b[sortKey]) return sortOrder === "asc" ? -1 : 1;
+          if (a[sortKey] > b[sortKey]) return sortOrder === "asc" ? 1 : -1;
+          return 0;
+        })
+        .filter(
+          (item) =>
+            item.url && item.url.toLowerCase().includes(search.toLowerCase()),
+        )
+    : [];
 
   const handleSort = (key: SortKey) => {
     if (key === sortKey) {
@@ -107,26 +113,37 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
   };
 
   const handleFilteredAnalytics = async (value: string) => {
+    setAnalyticsDate([
+      {
+        start_date: date.from,
+        end_date: date.to,
+      },
+    ]);
+
+    let type = [];
+
     let params = {
-      dateRanges: [
-        {
-          startDate: "2024-01-01",
-          endDate: "today",
-        },
-      ],
-      dimensions: [{ name: "fullPageUrl" }],
-      metrics: [
-        { name: "sessions" },
-        { name: "newUsers" },
-        { name: "totalUsers" },
-        { name: "bounceRate" },
-        { name: "scrolledUsers" },
-      ],
+      organic: {
+        dateRanges: [
+          {
+            startDate: "2024-01-01",
+            endDate: "today",
+          },
+        ],
+        dimensions: [{ name: "fullPageUrl" }],
+        metrics: [
+          { name: "sessions" },
+          { name: "newUsers" },
+          { name: "totalUsers" },
+          { name: "bounceRate" },
+          { name: "scrolledUsers" },
+        ],
+      },
     };
 
     switch (value) {
       case "organic":
-        // No change needed for organic, as it uses all metrics
+        type.push(params.organic);
         break;
       case "newUsers":
         params.metrics = [{ name: "newUsers" }];
@@ -147,9 +164,8 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
 
     try {
       const result: any = await invoke("get_google_analytics_command", {
-        searchType: value, // Passing the `value` as `searchType`
+        searchType: type,
         dateRanges: analyticsDate,
-        ...params, // Passing other parameters
       });
       console.log("Result: ", result);
       setAnalyticsData(result);
@@ -218,10 +234,7 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
             />
           </PopoverContent>
         </Popover>
-        <Select
-          value={selectedDimension}
-          onValueChange={handleFilteredAnalytics}
-        >
+        <Select onValueChange={handleFilteredAnalytics}>
           <SelectTrigger className="w-[180px] text-xs h-8 dark:text-white/50">
             <SelectValue placeholder="Select dimension" />
           </SelectTrigger>
@@ -243,126 +256,58 @@ export default function AnalyticsTable({ handleGetGoogleAnalytics }: any) {
           <Table className="relative w-full text-xs">
             <TableHeader className="sticky top-0 bg-white z-10 shadow">
               <TableRow>
-                <TableHead
-                  onClick={handleGetGoogleAnalytics}
-                  className="w-[300px] text-xs"
-                >
-                  URL
-                </TableHead>
-
                 <TableHead>
                   <Button
                     variant="ghost"
-                    onClick={() => handleSort("pageVisits")}
+                    onClick={() => handleSort("fullPageUrl")}
                     className="text-xs"
                   >
-                    Page Visits
+                    Full Page URL
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
                 </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort("impressions")}
-                    className="text-xs"
-                  >
-                    Impressions
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort("clickThroughRate")}
-                    className="text-xs"
-                  >
-                    CTR
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort("averageTimeOnPage")}
-                    className="text-xs"
-                  >
-                    Avg. Time
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort("bounceRate")}
-                    className="text-xs"
-                  >
-                    Bounce Rate
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort("country")}
-                    className="text-xs"
-                  >
-                    Country
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort("source")}
-                    className="text-xs"
-                  >
-                    Source
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </TableHead>
-                <TableHead>
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleSort("device")}
-                    className="text-xs"
-                  >
-                    Device
-                    <ArrowUpDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </TableHead>
+                {analyticsData &&
+                  analyticsData.response &&
+                  analyticsData.response[0]?.metricHeaders.map(
+                    (header, index) => (
+                      <TableHead key={index}>
+                        <Button
+                          variant="ghost"
+                          onClick={() => handleSort(header.name)}
+                          className="text-xs"
+                        >
+                          {header.name.charAt(0).toUpperCase() +
+                            header.name
+                              .slice(1)
+                              .replace(/([A-Z])/g, " $1")
+                              .trim()}
+                          <ArrowUpDown className="ml-2 h-4 w-4" />
+                        </Button>
+                      </TableHead>
+                    ),
+                  )}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedData.map((item) => (
-                <TableRow key={item.url} className="py-0">
-                  <TableCell className="font-medium text-xs">
-                    <div
-                      className="truncate max-w-[300px] p-0 "
-                      title={item.url}
-                    >
-                      {item.url}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    {item.pageVisits.toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    {item.impressions.toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    {item.clickThroughRate.toFixed(1)}%
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    {item.averageTimeOnPage}
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    {item.bounceRate.toFixed(1)}%
-                  </TableCell>
-                  <TableCell className="text-xs">{item.country}</TableCell>
-                  <TableCell className="text-xs">{item.source}</TableCell>
-                  <TableCell className="text-xs">{item.device}</TableCell>
-                </TableRow>
-              ))}
+              {analyticsData && analyticsData.response?.[0]?.rows
+                ? analyticsData.response[0].rows.map((row, index) => (
+                    <TableRow key={index} className="py-0">
+                      <TableCell className="font-medium text-xs">
+                        <div
+                          className="truncate max-w-[300px] p-0 "
+                          title={row.dimensionValues[0]?.value}
+                        >
+                          {row.dimensionValues[0]?.value || "N/A"}
+                        </div>
+                      </TableCell>
+                      {row.metricValues.map((metric, metricIndex) => (
+                        <TableCell key={metricIndex} className="text-xs">
+                          {metric.value}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                : null}
             </TableBody>
           </Table>
         </div>
