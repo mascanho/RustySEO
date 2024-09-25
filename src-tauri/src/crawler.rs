@@ -387,17 +387,38 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             video.push(String::from("No"));
         }
 
-        // Fetch headings
-        for level in 1..=6 {
-            let heading_selector = Selector::parse(&format!("h{}", level))
-                .map_err(|e| format!("Selector error: {}", e))?;
-            for element in document.select(&heading_selector) {
-                let text = element.text().collect::<Vec<_>>().join(" ");
-                // Use a different separator if colon causes issues
+        // Fetch all headings
+        let heading_selector = Selector::parse("h1, h2, h3, h4, h5, h6")
+            .map_err(|e| format!("Selector error: {}", e))?;
+
+        // Iterate through each heading found on the page
+        for element in document.select(&heading_selector) {
+            let tag_name = element.value().name().to_lowercase();
+
+            // Extract the heading level from the tag name (h1, h2, etc.)
+            let level = tag_name.chars().nth(1).unwrap().to_digit(10).unwrap();
+
+            // Collect the text content, ensuring we properly handle inner elements or text nodes
+            let text = element
+                .text()
+                .map(|t| t.trim()) // Trim each text node to avoid issues with whitespace
+                .filter(|t| !t.is_empty()) // Exclude any empty text nodes
+                .collect::<Vec<_>>()
+                .join(" "); // Join the text with spaces between parts
+
+            // If the heading contains non-empty text, add it to the headings list
+            if !text.is_empty() {
                 let heading_with_type = format!("h{}: {}", level, text);
                 headings.push(heading_with_type);
             }
         }
+
+        // Sort headings by their appearance in the document
+        headings.sort_by(|a, b| {
+            let a_level = a.chars().nth(1).unwrap().to_digit(10).unwrap();
+            let b_level = b.chars().nth(1).unwrap().to_digit(10).unwrap();
+            a_level.cmp(&b_level)
+        });
 
         // Fetch page Title
         let title_selector =

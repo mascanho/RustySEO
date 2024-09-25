@@ -25,7 +25,8 @@ import { IoMdClose } from "react-icons/io";
 import { usePathname } from "next/navigation";
 import { LiaHeadingSolid } from "react-icons/lia";
 import { useVisibilityStore } from "@/store/VisibilityStore";
-import { GiPirateFlag } from "react-icons/gi";
+import { GiPirateFlag, GiPirateHat } from "react-icons/gi";
+import { ImGoogle3 } from "react-icons/im";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -119,6 +120,9 @@ const Footer = () => {
     };
   }, []);
 
+  const iconClasses =
+    "cursor-pointer hover:scale-105 active:scale-95 transition-all ease-linear duration-75";
+
   return (
     <>
       <MantineDrawer
@@ -150,7 +154,7 @@ const Footer = () => {
               url && (
                 <div className="flex items-center space-x-1">
                   <a href={url} rel="noreferrer">
-                    <CgWebsite className="text-xl" />
+                    <CgWebsite className={`text-xl ${iconClasses}`} />
                   </a>
                   <span className="mt-[2px]">{url}</span>
                 </div>
@@ -163,25 +167,27 @@ const Footer = () => {
             <div className="flex items-center  text-xs mt-[2px] space-x-3">
               <div
                 onClick={() => (openedDrawer ? closeDrawer() : openDrawer())}
-                className="flex items-center cursor-pointer pt-[2px]"
+                className="flex items-center cursor-pointer"
               >
-                <LiaTasksSolid className="text-sm dark:text-white/50" />
+                <LiaTasksSolid
+                  className={`text-sm dark:text-white/50 ${iconClasses}`}
+                />
                 <span>Tasks:</span>
                 <span className="text-sky-dark dark:text-sky-dark ml-1">
                   {tasks.length}
                 </span>
               </div>
-              <GiPirateFlag
+              <ImGoogle3
                 onClick={() =>
                   visibility.serpKeywords
                     ? hideSerpKeywords()
                     : showSerpKeywords()
                 }
-                className="text-base cursor-pointer active:scale-95 transition-all ease-linear duration-75"
+                className={iconClasses}
               />
               <Drawer>
                 <DrawerTrigger className="flex items-center space-x-1">
-                  <FaRobot className="text-lg pb-[2px]" />
+                  <FaRobot className={`text-lg pb-[2px] ${iconClasses}`} />
                   {/* <span className="text-xs mt-[2px]">Oxide AI</span> */}
                 </DrawerTrigger>
                 <DrawerContent>
@@ -191,7 +197,7 @@ const Footer = () => {
                         onClick={() =>
                           openedDrawer ? closeDrawer() : openDrawer()
                         }
-                        className="text-2xl text-brand-highlight"
+                        className={`text-2xl text-brand-highlight ${iconClasses}`}
                       />
                       <span className="text-xl font-bold text-brand-highlight dark:text-white/40">
                         Rusty Chat
@@ -202,14 +208,16 @@ const Footer = () => {
                     </DrawerDescription>
                   </DrawerHeader>
                   <DrawerFooter>
-                    <DrawerClose className="dark:text-white text-gray-600 absolute right-4 top-6 dark:text-white/30">
+                    <DrawerClose
+                      className={`dark:text-white text-gray-600 absolute right-4 top-6 dark:text-white/30 ${iconClasses}`}
+                    >
                       <IoMdClose className="text-lg" />
                     </DrawerClose>
                   </DrawerFooter>
                 </DrawerContent>
               </Drawer>
               <BsLayoutSidebarInsetReverse
-                className="text-base hover:scale-105  transition-all ease-linear delay-75 cursor-pointer"
+                className={`text-base ${iconClasses}`}
                 onClick={() => {
                   // Toggle visibility based on current state
                   if (visibility.sidebar) {
