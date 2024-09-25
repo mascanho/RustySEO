@@ -172,7 +172,11 @@ export const HeadAnalysis = ({
             <span className="flex items-start ml-2 font-semibold text-black/60 dark:text-white/50">
               Canonical URL:
             </span>
-            <span className="ml-2 text-blue-600">{canonical || ""}</span>
+            <span
+              className={`ml-2 ${canonical[0] === "No canonical URL found" ? "text-red-500" : "text-blue-600"}`}
+            >
+              {canonical || ""}
+            </span>
           </div>
 
           <div className="flex items-center mt-2">
