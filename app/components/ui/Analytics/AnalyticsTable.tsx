@@ -193,34 +193,37 @@ export default function AnalyticsTable() {
     }
   }, [date]);
 
+  const sortData = (data: any[], key: string, order: "asc" | "desc") => {
+    return [...data].sort((a, b) => {
+      const aValue =
+        a.dimensionValues.find((d: any) => d.name === key)?.value ||
+        a.metricValues.find((m: any) => m.name === key)?.value ||
+        "";
+      const bValue =
+        b.dimensionValues.find((d: any) => d.name === key)?.value ||
+        b.metricValues.find((m: any) => m.name === key)?.value ||
+        "";
+
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return order === "asc"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      } else {
+        const aNum = parseFloat(aValue);
+        const bNum = parseFloat(bValue);
+        return order === "asc" ? aNum - bNum : bNum - aNum;
+      }
+    });
+  };
+
   const sortedData =
     analyticsData && analyticsData.response && analyticsData.response[0]?.rows
-      ? [...analyticsData.response[0].rows]
-          .sort((a, b) => {
-            const aValue =
-              a.dimensionValues.find((d) => d.name === sortKey)?.value ||
-              a.metricValues.find((m) => m.name === sortKey)?.value ||
-              "";
-            const bValue =
-              b.dimensionValues.find((d) => d.name === sortKey)?.value ||
-              b.metricValues.find((m) => m.name === sortKey)?.value ||
-              "";
-
-            if (typeof aValue === "string" && typeof bValue === "string") {
-              return sortOrder === "asc"
-                ? aValue.localeCompare(bValue)
-                : bValue.localeCompare(aValue);
-            } else {
-              const aNum = parseFloat(aValue);
-              const bNum = parseFloat(bValue);
-              return sortOrder === "asc" ? aNum - bNum : bNum - aNum;
-            }
-          })
-          .filter((item) =>
-            item.dimensionValues.some((d) =>
+      ? sortData(analyticsData.response[0].rows, sortKey, sortOrder).filter(
+          (item) =>
+            item.dimensionValues.some((d: any) =>
               d.value.toLowerCase().includes(search.toLowerCase()),
             ),
-          )
+        )
       : [];
 
   const handleSort = (key: string) => {
@@ -244,39 +247,21 @@ export default function AnalyticsTable() {
   }, []);
 
   useEffect(() => {
-    // This effect will run whenever sortKey or sortOrder changes
-    const sortData = () => {
-      setAnalyticsData((prevData) => {
-        if (prevData && prevData.response && prevData.response[0]?.rows) {
-          const newData = { ...prevData };
-          newData.response[0].rows = [...prevData.response[0].rows].sort(
-            (a, b) => {
-              const aValue =
-                a.dimensionValues.find((d) => d.name === sortKey)?.value ||
-                a.metricValues.find((m) => m.name === sortKey)?.value ||
-                "";
-              const bValue =
-                b.dimensionValues.find((d) => d.name === sortKey)?.value ||
-                b.metricValues.find((m) => m.name === sortKey)?.value ||
-                "";
-
-              if (typeof aValue === "string" && typeof bValue === "string") {
-                return sortOrder === "asc"
-                  ? aValue.localeCompare(bValue)
-                  : bValue.localeCompare(aValue);
-              } else {
-                const aNum = parseFloat(aValue);
-                const bNum = parseFloat(bValue);
-                return sortOrder === "asc" ? aNum - bNum : bNum - aNum;
-              }
-            },
-          );
-          return newData;
-        }
-        return prevData;
-      });
-    };
-    sortData();
+    if (
+      analyticsData &&
+      analyticsData.response &&
+      analyticsData.response[0]?.rows
+    ) {
+      const sortedRows = sortData(
+        analyticsData.response[0].rows,
+        sortKey,
+        sortOrder,
+      );
+      setAnalyticsData((prevData: any) => ({
+        ...prevData,
+        response: [{ ...prevData.response[0], rows: sortedRows }],
+      }));
+    }
   }, [sortKey, sortOrder]);
 
   return (
