@@ -165,22 +165,18 @@ pub struct Performance {
 }
 
 pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
-    // remove the "/" at the end of the url
-    // if url.ends_with("/") {
-    //     url.pop();
-    // }
-
     println!("Crawling: {}", &url);
 
-    // HANDLE DB CREATION AAND check
     let _create_table = db::create_results_table();
     let _create_links_table = db::create_links_table();
 
-    let client = Client::new();
+    let client = Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+        .build()
+        .map_err(|e| format!("Failed to create client: {}", e))?;
+
     let response = client
         .get(&url)
-        .header(USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-        .header(ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
         .send()
         .await
         .map_err(|e| format!("Request error: {}", e))?;
@@ -214,13 +210,11 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let mut google_tag_manager: Vec<String> = Vec::new();
     let mut tag_container = Vec::new();
     let mut ratio = Vec::new();
-    //let mut head_elements = Vec::new();
     let mut body_elements = Vec::new();
     let mut charset_arr = Vec::new();
     let mut video = Vec::new();
     let mut url_length = Vec::new();
 
-    // Set the URL length
     url_length.push(url.len());
 
     if response.status().is_success() {
@@ -230,18 +224,10 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             .map_err(|e| format!("Response error: {}", e))?;
         let document = Html::parse_document(&body);
 
-        // Fetch Links and each respective anchor text
-
-        // Function to clean and sanitize text
         fn clean_text(text: &str) -> String {
-            // Remove extra whitespace
             let cleaned = text.split_whitespace().collect::<Vec<_>>().join(" ");
-
-            // Remove any HTML tags that might have slipped through
             let re = Regex::new(r"<[^>]*>").unwrap();
             let cleaned = re.replace_all(&cleaned, "");
-
-            // Trim and limit the length
             cleaned.trim().chars().take(100).collect()
         }
 
@@ -250,7 +236,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             if let Some(href) = link.value().attr("href") {
                 let mut text = link.text().collect::<Vec<_>>().join(" ");
 
-                // If text is empty, try to get the alt text from an img child
                 if text.is_empty() {
                     if let Some(img) = link.select(&Selector::parse("img").unwrap()).next() {
                         if let Some(alt) = img.value().attr("alt") {
@@ -259,53 +244,29 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
                     }
                 }
 
-                // Clean and sanitize the text
                 let cleaned_text = clean_text(&text);
 
-                // Only add non-empty texts
                 if !cleaned_text.is_empty() {
                     links.push((href.to_string(), cleaned_text));
                 }
             }
         }
 
-        // ------------------------- Push the links Vector to the DB -------------------------
         db::refresh_links_table();
         db::store_links_in_db(links.clone());
 
-        // Clear the links Table before the crawl
-
-        // Get all the elements that exist inside <head>
-        //let head_selector = Selector::parse("head").unwrap();
-
-        //if let Some(head) = document.select(&head_selector).next() {
-        // println!("Found head element: {:?}", head.html());
-        //head_elements.push(head.html());
-
-        // Serialize the head element and output in JSON format
-        //let head_contents = serialize_element(&head);
-        //let json_head_contents = serde_json::to_string_pretty(&head_contents).unwrap();
-        // println!("Head contents: {}", json_head_contents);
-        //}
-
-        // Get all the elements that exist inside <body>
         let body_selector = Selector::parse("body").unwrap();
 
         if let Some(body) = document.select(&body_selector).next() {
-            // println!("Found head element: {:?}", body.html());
             body_elements.push(body.html());
-
-            // Serialize the head element and output in JSON format
             let body_contents = serialize_element(&body);
-            //let json_head_contents = serde_json::to_string_pretty(&body_contents).unwrap();
-            // println!("Head contents: {}", json_head_contents);
         }
-        // check for Google Tag Manager and Its content
+
         let gtm_selector = Selector::parse("script").unwrap_or_else(|_| {
             println!("Failed to parse script selector, GTM detection may be incomplete");
-            Selector::parse("invalid").unwrap() // This will never be used, but satisfies the type system
+            Selector::parse("invalid").unwrap()
         });
-        // Iterate over script tags and check for GTM
+
         for script in document.select(&gtm_selector) {
             if let Some(script_text) = script.text().next() {
                 if script_text.contains("googletagmanager.com") {
@@ -313,10 +274,9 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
                 }
             }
         }
-        // Process all found GTM scripts
+
         if !google_tag_manager.is_empty() {
             for script in google_tag_manager.iter() {
-                // grab the GTM container part of the script
                 let gtm_container = script
                     .split("googletagmanager.com")
                     .collect::<Vec<&str>>()
@@ -346,24 +306,17 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             println!("No Google Tag Manager scripts found.");
         }
 
-        // Get the text content from the URL
         let text_content = content::extract_text(&document);
 
-        // Calculate the reading level
-        // // Function to convert Html to string (Placeholder, adjust based on actual Html type)
         fn html_to_string(html: &str) -> String {
             html.to_string()
         }
         let reading_level = content::calculate_reading_level(&html_to_string(&text_content));
-        //println!("Reading Level: {:?}", reading_level);
         readings.push(reading_level);
 
-        // Get the top keywords from the content
         let top_keywords = content::get_top_keywords(&text_content, 10);
-        //println!("Top Keywords: {:?}", top_keywords);
         keywords.push(top_keywords);
 
-        // Fetch the charset
         let charset_selector = Selector::parse("meta[charset]").unwrap();
         for meta in document.select(&charset_selector) {
             if let Some(charset) = meta.value().attr("charset") {
@@ -371,12 +324,10 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             }
         }
 
-        // Fetch the video
         let video_selector = Selector::parse("video").unwrap();
         let iframe_selector = Selector::parse("iframe").unwrap();
         let embed_selector = Selector::parse("embed").unwrap();
 
-        // Check if they are present on the page
         let has_video = document.select(&video_selector).next().is_some()
             || document.select(&iframe_selector).next().is_some()
             || document.select(&embed_selector).next().is_some();
@@ -387,40 +338,31 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             video.push(String::from("No"));
         }
 
-        // Fetch all headings
         let heading_selector = Selector::parse("h1, h2, h3, h4, h5, h6")
             .map_err(|e| format!("Selector error: {}", e))?;
 
-        // Iterate through each heading found on the page
         for element in document.select(&heading_selector) {
             let tag_name = element.value().name().to_lowercase();
-
-            // Extract the heading level from the tag name (h1, h2, etc.)
             let level = tag_name.chars().nth(1).unwrap().to_digit(10).unwrap();
-
-            // Collect the text content, ensuring we properly handle inner elements or text nodes
             let text = element
                 .text()
-                .map(|t| t.trim()) // Trim each text node to avoid issues with whitespace
-                .filter(|t| !t.is_empty()) // Exclude any empty text nodes
+                .map(|t| t.trim())
+                .filter(|t| !t.is_empty())
                 .collect::<Vec<_>>()
-                .join(" "); // Join the text with spaces between parts
+                .join(" ");
 
-            // If the heading contains non-empty text, add it to the headings list
             if !text.is_empty() {
                 let heading_with_type = format!("h{}: {}", level, text);
                 headings.push(heading_with_type);
             }
         }
 
-        // Sort headings by their appearance in the document
         headings.sort_by(|a, b| {
             let a_level = a.chars().nth(1).unwrap().to_digit(10).unwrap();
             let b_level = b.chars().nth(1).unwrap().to_digit(10).unwrap();
             a_level.cmp(&b_level)
         });
 
-        // Fetch page Title
         let title_selector =
             Selector::parse("title").map_err(|e| format!("Selector error: {}", e))?;
         for element in document.select(&title_selector) {
@@ -428,7 +370,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             page_title.push(title)
         }
 
-        // Fetch Meta description
         let meta_selector = Selector::parse("meta[name=description]").unwrap();
         for meta in document.select(&meta_selector) {
             if let Some(description) = meta.value().attr("content") {
@@ -436,7 +377,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             }
         }
 
-        // Fetch canonical_url
         let canonical_selector = Selector::parse("link[rel=canonical]").unwrap();
         for canonical in document.select(&canonical_selector) {
             if let Some(canonical) = canonical.value().attr("href") {
@@ -448,7 +388,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             canonical_url.push(String::from("No canonical URL found"));
         }
 
-        // Fetch HrefLangs
         let hreflang_selector = Selector::parse("link[rel=alternate]").unwrap();
         for hreflang in document.select(&hreflang_selector) {
             if let (Some(lang), Some(href)) = (
@@ -469,13 +408,11 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             });
         }
 
-        // Fetch Indexation
         let indexation_type = libs::get_indexation_status(&document);
         println!("Indexation: {:?}", indexation_type);
 
         indexation.push(indexation_type);
 
-        // Fetch the favicon
         let favicon_selectors = [
             Selector::parse("link[rel='icon']").unwrap(),
             Selector::parse("link[rel='shortcut icon']").unwrap(),
@@ -498,7 +435,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         }
 
         if favicon_url.is_empty() {
-            // Check for favicon.ico in the root directory
             if let Ok(root_url) = Url::parse(&url) {
                 let favicon_ico_url = root_url
                     .join("/favicon.ico")
@@ -508,9 +444,8 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             }
         }
 
-        favicon_url.dedup(); // Remove any duplicates
+        favicon_url.dedup();
 
-        // Fetch The page Schema
         let schema_selector = Selector::parse("script[type='application/ld+json']").unwrap();
 
         for element in document.select(&schema_selector) {
@@ -518,8 +453,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
                 page_schema.push(schema.trim().to_string());
             }
         }
-
-        // Fetch the opengraph details
 
         let og_selector = Selector::parse("meta[property^='og:']").unwrap();
 
@@ -534,7 +467,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
                 );
 
                 if key == "logo" {
-                    // Only set the image key if it hasn't been set yet
                     if !og_details.contains_key(&key) {
                         og_details.insert(key, Some(content.to_string()));
                         println!("Inserting image: {}", content);
@@ -547,36 +479,23 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             }
         }
 
-        // Fetch the word count
         let (word_count, words) = content::count_words_accurately(&document);
-        //println!(
-        //    "This is the word count: {:#?} and the words are {:#?}",
-        //    word_count, words
-        //);
 
         let reading_time = content::calculate_reading_time(word_count, 250);
         words_arr.push((word_count, words, reading_time));
-        //println!("From the array: {:#?}", words_arr);
 
-        // CALCULATE HTML TO TEXT RATIO
         let html_to_text_ratio = content::html_to_text_ratio(&document);
         ratio.push(html_to_text_ratio);
     } else {
         return Err(format!("Failed to fetch the URL: {}", response.status()));
     }
 
-    // Fine tuning the word count given the GPT variance
-    // let words_adjusted = (words_amount as f64 * 2.9).round() as usize;
-
-    // SITEMAP FETCHING
     let sitemap_from_url = libs::get_sitemap(&url);
 
-    // Robots FETCHING
     let robots = libs::get_robots(&url).await;
 
     let images = fetch_image_info(&url).await.unwrap();
 
-    // Add the data to the DB
     let title = match page_title.len() {
         0 => String::from(""),
         _ => page_title[0].clone(),
@@ -597,16 +516,8 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         headings: headings.clone(),
     };
 
-    // println!("Keywords: {:?}", &words);
-    // println!("db_data: {:?}", &db_data);
-
-    //db_data.push(&canonical_url);
-    //db_data.push(&index_type);
-    //db_data.push(&page_schema);
-
     db::add_technical_data(db_data, &url).unwrap();
 
-    // Fetch the PAGERANK
     let mut page_rank = Vec::new();
     let page_score = page_rank::fetch_page_rank(&url).await;
     match page_score {
@@ -639,7 +550,6 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
         google_tag_manager,
         tag_container,
         images,
-        //head_elements,
         body_elements,
         robots,
         ratio,
