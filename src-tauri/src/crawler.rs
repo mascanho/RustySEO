@@ -3,13 +3,9 @@ use dotenv::dotenv;
 use html5ever::driver::parse_document;
 use html5ever::serialize::{serialize, SerializeOpts, TraversalScope};
 use html5ever::tendril::{ByteTendril, TendrilSink};
-use hyper::header::{CONNECTION, DNT, TE};
 use markup5ever_rcdom::{Handle, RcDom, SerializableHandle};
 use regex::Regex;
-
-use reqwest::header::{
-    HeaderMap, HeaderValue, ACCEPT, ACCEPT_ENCODING, ACCEPT_LANGUAGE, REFERER, USER_AGENT,
-};
+use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, USER_AGENT};
 use reqwest::Client;
 use rusqlite::Connection;
 use scraper::selectable::Selectable;
@@ -173,38 +169,17 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
 
     let _create_table = db::create_results_table();
     let _create_links_table = db::create_links_table();
-    let mut headers = HeaderMap::new();
-    headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"));
-    headers.insert(
-        ACCEPT,
-        HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"),
-    );
-    headers.insert(
-        ACCEPT_ENCODING,
-        HeaderValue::from_static("gzip, deflate, br"),
-    );
-    headers.insert(ACCEPT_LANGUAGE, HeaderValue::from_static("en-US,en;q=0.5"));
-    headers.insert(REFERER, HeaderValue::from_static("https://www.google.com"));
-    headers.insert(CONNECTION, HeaderValue::from_static("keep-alive"));
-    headers.insert(DNT, HeaderValue::from_static("1")); // Do Not Track
-    headers.insert(TE, HeaderValue::from_static("Trailers"));
+
     let client = Client::builder()
-        .default_headers(headers)
-        .timeout(std::time::Duration::from_secs(30))
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
         .build()
         .map_err(|e| format!("Failed to create client: {}", e))?;
 
-    dbg!(&client);
-
-    let response = client.get(&url).send().await.map_err(|e| {
-        if let Some(url) = e.url() {
-            println!("Error URL: {}", url);
-        }
-        if let Some(status) = e.status() {
-            println!("Response status: {:?}", status);
-        }
-        format!("Request error: {}", e)
-    })?;
+    let response = client
+        .get(&url)
+        .send()
+        .await
+        .map_err(|e| format!("Request error: {}", e))?;
 
     let page_speed_results = Vec::new();
     let mut links = Vec::new();
