@@ -171,6 +171,9 @@ async fn main() {
             crawler::libs::set_google_analytics_id,
             crawler::libs::load_api_keys,
             crawler::libs::get_google_analytics_id,
+            crawler::libs::read_credentials_file,
+            genai::get_ai_model,
+            actions::ai_model_selected,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

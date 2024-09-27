@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import {
   Calendar as CalendarIcon,
@@ -13,6 +13,7 @@ import {
   Table,
   BarChart,
   Zap,
+  User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { invoke } from "@tauri-apps/api/tauri";
 
 export default function SearchConsoleConfs() {
   const [date, setDate] = useState<{ from: Date; to: Date }>({
@@ -36,10 +38,37 @@ export default function SearchConsoleConfs() {
     to: new Date(new Date().setMonth(new Date().getMonth() + 1)),
   });
   const [showSecret, setShowSecret] = useState(false);
+  const [confs, setConfs] = useState<any>([]);
 
   const toggleSecretVisibility = () => {
     setShowSecret(!showSecret);
   };
+
+  // Get the confs from the BE
+  useEffect(() => {
+    invoke("read_credentials_file").then((result) => {
+      setConfs("");
+      console.log("The useEffect from Confs");
+    });
+  }, []);
+
+  console.log(confs);
+
+  if (!confs || Object.keys(confs).length === 0) {
+    return (
+      <Card className="w-full p-0 h-[24rem] flex items-center justify-center shadow-none border-0  my-auto">
+        <CardContent className="text-center">
+          <p className="text-lg text-muted-foreground mb-2">
+            No configurations available
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Go to Menu &gt; Connectors and Search Console to connect to your
+            Search Console
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full p-0 h-full shadow-none border-0 mt-4  mx-auto">
@@ -47,24 +76,26 @@ export default function SearchConsoleConfs() {
         <div className="flex items-center space-x-4">
           <Hash className="h-5 w-5 text-muted-foreground" />
           <div>
-            <p className="text-sm font-medium">Project ID</p>
-            <p className="text-sm text-muted-foreground">PRJ-123456</p>
+            <p className="text-sm font-bold">Project ID</p>
+            <p className="text-sm text-muted-foreground">{confs?.project_id}</p>
+          </div>
+        </div>
+        <div className="flex items-center space-x-4">
+          <User className="h-5 w-5 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-bold">Client ID</p>
+            <p className="text-sm text-muted-foreground">{confs?.client_id}</p>
           </div>
         </div>
         <div className="flex items-center space-x-4">
           <Key className="h-5 w-5 text-muted-foreground" />
           <div>
-            <p className="text-sm font-medium">Client ID</p>
-            <p className="text-sm text-muted-foreground">CLI-789012</p>
-          </div>
-        </div>
-        <div className="flex items-center space-x-4">
-          <Key className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium">Client Secret</p>
+            <p className="text-sm font-bold">Client Secret</p>
             <div className="flex items-center bg-gray-100 w-[calc(50rem-7rem)] rounded-md p-2 text-sm text-black">
               <p className="text-sm text-muted-foreground w-full ">
-                {showSecret ? "actual-client-secret" : "••••••••••••"}
+                {showSecret
+                  ? confs?.client_secret
+                  : "********************************************"}
               </p>
               <Button
                 variant="ghost"
@@ -84,77 +115,31 @@ export default function SearchConsoleConfs() {
         <div className="flex items-center space-x-4">
           <Link className="h-5 w-5 text-muted-foreground" />
           <div>
-            <p className="text-sm font-medium">URL</p>
-            <p className="text-sm text-muted-foreground">https://example.com</p>
+            <p className="text-sm font-bold">URL</p>
+            <p className="text-sm text-muted-foreground">{confs?.url}</p>
           </div>
         </div>
         <div className="flex items-center space-x-4">
           <Globe className="h-5 w-5 text-muted-foreground" />
           <div>
-            <p className="text-sm font-medium">Domain Type</p>
-            <p className="text-sm text-muted-foreground">Production</p>
+            <p className="text-sm font-bold">Search Type</p>
+            <p className="text-sm text-muted-foreground">
+              {confs?.search_type}
+            </p>
           </div>
         </div>
         <div className="flex items-center space-x-4">
           <FileText className="h-5 w-5 text-muted-foreground" />
           <div>
-            <p className="text-sm font-medium">Date Range</p>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={"outline"}
-                  className={cn(
-                    "w-[240px] justify-start text-left font-normal",
-                    !date && "text-muted-foreground",
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date?.from ? (
-                    date.to ? (
-                      <>
-                        {format(date.from, "LLL dd, y")} -{" "}
-                        {format(date.to, "LLL dd, y")}
-                      </>
-                    ) : (
-                      format(date.from, "LLL dd, y")
-                    )
-                  ) : (
-                    <span>Pick a date range</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  initialFocus
-                  mode="range"
-                  defaultMonth={date?.from}
-                  selected={date}
-                  onSelect={setDate}
-                  numberOfMonths={2}
-                />
-              </PopoverContent>
-            </Popover>
+            <p className="text-sm font-bold">Date Range</p>
+            <p className="text-sm">{confs?.range}</p>
           </div>
         </div>
         <div className="flex items-center space-x-4">
           <Table className="h-5 w-5 text-muted-foreground" />
           <div>
-            <p className="text-sm font-medium">Rows</p>
-            <p className="text-sm text-muted-foreground">10,000</p>
-          </div>
-        </div>
-        <div className="flex items-center space-x-4">
-          <BarChart className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium">Analytics Status</p>
-            <p className="text-sm text-muted-foreground">Active</p>
-          </div>
-        </div>
-        <div className="flex items-center space-x-4">
-          <Zap className="h-5 w-5 text-muted-foreground" />
-          <div>
-            <p className="text-sm font-medium">Performance Score</p>
-            <p className="text-sm text-muted-foreground">92/100</p>
+            <p className="text-sm font-bold">Rows</p>
+            <p className="text-sm text-muted-foreground">{confs?.rows}</p>
           </div>
         </div>
       </CardContent>

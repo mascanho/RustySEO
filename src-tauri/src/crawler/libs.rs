@@ -397,6 +397,7 @@ pub struct Credentials {
 }
 
 // helper function to move credentials around
+#[tauri::command]
 pub async fn read_credentials_file() -> Result<InstalledInfo, String> {
     let config_dirs =
         ProjectDirs::from("", "", "rustyseo").expect("Failed to get project directories");

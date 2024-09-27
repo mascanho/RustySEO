@@ -12,7 +12,7 @@ use crate::gemini;
 use crate::globals::actions;
 
 // ------- Page Summary ------------
-
+#[tauri::command]
 pub fn get_ai_model() -> String {
     // Check in the directories for the model being used and return it
     let project_dirs = ProjectDirs::from("", "", "rustyseo").unwrap();

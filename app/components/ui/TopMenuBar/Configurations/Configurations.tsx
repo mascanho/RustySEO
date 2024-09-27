@@ -5,6 +5,7 @@ import { Tabs } from "@mantine/core";
 import PagespeedInsightsApi from "./PagespeedInsigthsApi";
 import GoogleAnalyticsConf from "./GoogleAnalyticsConf";
 import SearchConsoleConfs from "./SearchConsoleConfs";
+import AIConfigurations from "./AIConfigurations";
 
 const Configurations = () => {
   return (
@@ -14,7 +15,7 @@ const Configurations = () => {
           <Tabs.Tab value="pagespeed">Page Speed Insights</Tabs.Tab>
           <Tabs.Tab value="analytics">Google Analytics</Tabs.Tab>
           <Tabs.Tab value="console">Google Search Console</Tabs.Tab>
-          <Tabs.Tab value="ollama">Ai Models</Tabs.Tab>
+          <Tabs.Tab value="ai">Ai Models</Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value="pagespeed">
@@ -27,6 +28,10 @@ const Configurations = () => {
 
         <Tabs.Panel value="console">
           <SearchConsoleConfs />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="ai">
+          <AIConfigurations />
         </Tabs.Panel>
       </Tabs>
     </div>
