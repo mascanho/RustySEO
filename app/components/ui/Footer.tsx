@@ -187,7 +187,7 @@ const Footer = () => {
               />
               <Drawer>
                 <DrawerTrigger className="flex items-center space-x-1">
-                  <FaRobot className={`text-lg pb-[2px] ${iconClasses}`} />
+                  <FaRobot className={`pb-[2px] text-base ${iconClasses}`} />
                   {/* <span className="text-xs mt-[2px]">Oxide AI</span> */}
                 </DrawerTrigger>
                 <DrawerContent>
@@ -217,7 +217,7 @@ const Footer = () => {
                 </DrawerContent>
               </Drawer>
               <BsLayoutSidebarInsetReverse
-                className={`text-base ${iconClasses}`}
+                className={`text-sm ${iconClasses}`}
                 onClick={() => {
                   // Toggle visibility based on current state
                   if (visibility.sidebar) {
