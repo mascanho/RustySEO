@@ -121,7 +121,7 @@ const Footer = () => {
   }, []);
 
   const iconClasses =
-    "cursor-pointer hover:scale-105 active:scale-95 transition-all ease-linear duration-75";
+    "cursor-pointer active:scale-95 transition-all ease-linear duration-75";
 
   return (
     <>

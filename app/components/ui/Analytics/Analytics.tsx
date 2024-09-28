@@ -13,7 +13,7 @@ const Analytics = ({}) => {
   };
   return (
     <div className="overflow-hidden h-[10rem)] w-full ">
-      <AnalyticsTable handleGetGoogleAnalytics={handleGetGoogleAnalytics} />
+      <AnalyticsTable />
     </div>
   );
 };
