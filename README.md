@@ -1,3 +1,6 @@
+![Logo](assets/logo.png)
+
+
 # RustySEO - A cross platform SEO toolkit
 
 RustySEO is an all-in-one, cross-platform toolkit designed for comprehensive SEO analysis. It enables users to crawl websites and gain actionable insights into their marketing and SEO strategies.
