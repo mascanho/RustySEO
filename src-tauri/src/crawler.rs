@@ -1,3 +1,4 @@
+// Import necessary modules and dependencies
 use directories::ProjectDirs;
 use dotenv::dotenv;
 use html5ever::driver::parse_document;
@@ -32,6 +33,7 @@ pub mod db;
 pub mod libs;
 mod page_rank;
 
+/// Struct representing data to be stored in the database
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DBData {
     title: String,
@@ -40,6 +42,7 @@ pub struct DBData {
     headings: Vec<String>,
 }
 
+/// Struct representing an HTML element
 #[derive(Serialize)]
 struct Element {
     tag_name: String,
@@ -48,6 +51,7 @@ struct Element {
     text: Option<String>,
 }
 
+/// Struct representing Open Graph details
 #[derive(Debug, Serialize, Deserialize)]
 struct OgDetails {
     title: Option<String>,
@@ -65,6 +69,7 @@ struct OgDetails {
     // Add other fields based on the JSON response structure
 }
 
+/// Struct representing the result of crawling a webpage
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CrawlResult {
     pub links: Vec<(String, String)>,
@@ -96,17 +101,20 @@ pub struct CrawlResult {
     pub url_length: Vec<usize>,
 }
 
+/// Struct representing hreflang information
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Hreflang {
     pub lang: String,
     pub href: String,
 }
 
+/// Struct representing the result of link extraction
 #[derive(Serialize, Deserialize, Debug)]
 pub struct LinkResult {
     pub links: Vec<String>,
 }
 
+/// Struct representing image information
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ImageInfo {
     alt_text: String,
@@ -114,6 +122,7 @@ pub struct ImageInfo {
     size_mb: f64,
 }
 
+/// Struct representing the SEO page speed response
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SeoPageSpeedResponse {
     id: String,
@@ -122,6 +131,7 @@ pub struct SeoPageSpeedResponse {
     // Add other fields based on the JSON response structure
 }
 
+/// Struct representing the SEO Lighthouse response
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SEOLighthouseResponse {
     audits: Option<serde_json::Value>,
@@ -129,6 +139,7 @@ pub struct SEOLighthouseResponse {
     // Add other fields based on the JSON response structure
 }
 
+/// Struct representing the page speed response
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PageSpeedResponse {
     id: String,
@@ -138,6 +149,7 @@ pub struct PageSpeedResponse {
     // Add other fields based on the JSON response structure
 }
 
+/// Struct representing the Lighthouse result
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LighthouseResult {
     pub categories: Categories,
@@ -147,23 +159,27 @@ pub struct LighthouseResult {
     // Add other fields based on the JSON response structure
 }
 
+/// Struct representing categories in the Lighthouse result
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Categories {
     pub performance: Performance,
     // Add other fields based on the JSON response structure
 }
 
+/// Struct representing audits
 #[derive(Debug, Deserialize, Serialize)]
 pub struct audits {
     category: Option<String>,
     score: Option<f64>,
 }
 
+/// Struct representing performance in the Lighthouse result
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Performance {
     score: Option<f64>,
 }
 
+/// Function to crawl a webpage and extract various information
 pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     println!("Crawling: {}", &url);
 
@@ -224,6 +240,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
             .map_err(|e| format!("Response error: {}", e))?;
         let document = Html::parse_document(&body);
 
+        /// Function to clean text by removing HTML tags and trimming whitespace
         fn clean_text(text: &str) -> String {
             let cleaned = text.split_whitespace().collect::<Vec<_>>().join(" ");
             let re = Regex::new(r"<[^>]*>").unwrap();
@@ -308,6 +325,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
 
         let text_content = content::extract_text(&document);
 
+        /// Function to convert HTML to string
         fn html_to_string(html: &str) -> String {
             html.to_string()
         }
@@ -560,7 +578,7 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     })
 }
 
-// Fetch the performance data from page spoeed insights
+/// Function to fetch performance data from Google PageSpeed Insights
 pub async fn get_page_speed_insights(
     url: String,
     strategy: Option<String>,
@@ -639,9 +657,17 @@ pub async fn get_page_speed_insights(
     Ok((general_page_speed_response, seo_page_speed_response))
 }
 
+/// Function to fetch image information from a webpage
 async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError + Send + Sync>> {
     let mut headers = HeaderMap::new();
     headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"));
+    headers.insert(
+        ACCEPT,
+        HeaderValue::from_static(
+            "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        ),
+    );
+    headers.insert(ACCEPT, HeaderValue::from_static("en-US,en;q=0.5"));
 
     let client = Client::builder().default_headers(headers).build()?;
 
@@ -691,6 +717,7 @@ async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError 
     Ok(image_data)
 }
 
+/// Function to extract attribute value from an HTML tag
 fn extract_attribute(tag: &str, attr: &str) -> Option<String> {
     regex::Regex::new(&format!(r#"{}="([^"]*)"#, attr))
         .ok()?
@@ -699,7 +726,7 @@ fn extract_attribute(tag: &str, attr: &str) -> Option<String> {
         .map(|m| m.as_str().to_string())
 }
 
-// Function to format HTML contents in a pretty way
+/// Function to format HTML contents in a pretty way
 fn serialize_element(element: &ElementRef) -> Element {
     let tag_name = element.value().name().to_string();
     let attributes = element

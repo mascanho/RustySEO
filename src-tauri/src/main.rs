@@ -8,6 +8,7 @@ use directories::ProjectDirs;
 use globals::actions;
 use serde::{Deserialize, Serialize};
 use std::io::Write;
+use std::time::Duration;
 use tauri::{api::path::config_dir, Manager, Window, WindowEvent};
 use tokio;
 use toml;
@@ -53,12 +54,23 @@ async fn fetch_page_speed(
     url: &str,
     strategy: &str,
 ) -> Result<(PageSpeedResponse, SeoPageSpeedResponse), String> {
-    let result =
-        crawler::get_page_speed_insights(url.to_string(), Some(strategy.to_string())).await;
+    let timeout = Duration::from_secs(30); // 30 seconds timeout
+
+    let result = tokio::time::timeout(
+        timeout,
+        crawler::get_page_speed_insights(url.to_string(), Some(strategy.to_string())),
+    )
+    .await;
 
     match result {
-        Ok((general_response, seo_response)) => Ok((general_response, seo_response)),
-        Err(err) => Err(err),
+        Ok(inner_result) => match inner_result {
+            Ok((general_response, seo_response)) => Ok((general_response, seo_response)),
+            Err(err) => Err(err),
+        },
+        Err(_) => {
+            println!("Fetch page speed timed out after {:?}", timeout);
+            Err("Request timed out".to_string())
+        }
     }
 }
 
