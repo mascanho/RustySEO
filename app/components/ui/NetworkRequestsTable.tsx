@@ -39,7 +39,7 @@ const NetworkRequestsTable = ({ pageSpeed }: { pageSpeed: any }) => {
                 <td className="px-2 text-[6px] text-gray-700 w-[200px] min-w-[95px] dark:text-white/50 border-b border-r">
                   {item?.mimeType}
                 </td>{" "}
-                <td className="px-4 text-xs text-blue-600 truncate w-[60rem] dark:text-white/50 border-b">
+                <td className="px-4 text-xs text-blue-600 truncate w-[60rem] dark:text-blue-600 border-b">
                   <span className="w-full ">
                     {item?.url?.length > 50
                       ? item?.url?.slice(0, urlSize) + "..."
