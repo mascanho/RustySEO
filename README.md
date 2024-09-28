@@ -1,4 +1,4 @@
-![Logo](assets/logo.png)
+![Logo](assets/hero.jpg)
 
 
 # RustySEO - A cross platform SEO toolkit
