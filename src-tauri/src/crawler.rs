@@ -187,7 +187,9 @@ pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
     let _create_links_table = db::create_links_table();
 
     let client = Client::builder()
-        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+        .user_agent(
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Firefox/91.0",
+        )
         .build()
         .map_err(|e| format!("Failed to create client: {}", e))?;
 
@@ -660,7 +662,7 @@ pub async fn get_page_speed_insights(
 /// Function to fetch image information from a webpage
 async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError + Send + Sync>> {
     let mut headers = HeaderMap::new();
-    headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"));
+    headers.insert(USER_AGENT, HeaderValue::from_static("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"));
     headers.insert(
         ACCEPT,
         HeaderValue::from_static(
