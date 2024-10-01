@@ -23,8 +23,8 @@ const GoogleAnalyticsModal = ({ onSubmit, close }) => {
 
   return (
     <section>
-      <div className="max-w-md mx-auto -mt-3 p-2 px-3 pb-5 bg-white dark:bg-brand-darker dark:text-white rounded-lg text-xs">
-        <p>Enter your Google Analytics 4 Property ID</p>
+      <div className="max-w-md mx-auto -mt-2 p-2 px-3 pb-5 bg-white dark:bg-brand-darker dark:text-white rounded-lg text-xs">
+        <p className="z-50">Enter your Google Analytics 4 Property ID</p>
         <div className="mb-4 relative mt-4">
           <label
             htmlFor="number"
