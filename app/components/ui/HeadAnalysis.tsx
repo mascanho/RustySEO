@@ -272,7 +272,7 @@ export const HeadAnalysis = ({
                 </a>
               )}
               {openGraphDetails.image !== null && pageTitle?.length > 0 && (
-                <span className="text-green-500">OpenGraph Found</span>
+                <span className="text-green-500">OG Found in your markup</span>
               )}
             </span>
           </div>
