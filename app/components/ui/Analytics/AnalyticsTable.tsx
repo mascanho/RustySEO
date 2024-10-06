@@ -32,6 +32,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { invoke } from "@tauri-apps/api/tauri";
+import { toast } from "sonner";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 export default function AnalyticsTable() {
   const [analyticsData, setAnalyticsData] = useState<
@@ -48,14 +50,16 @@ export default function AnalyticsTable() {
   const [analyticsDate, setAnalyticsDate] = useState<DateRange | undefined>(
     undefined,
   );
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 100;
 
   // Handle the fetching of analytics data
   const handleFilteredAnalytics = async (value: string) => {
     setSelectedDimension(value);
     setAnalyticsDate([
       {
-        start_date: date.from,
-        end_date: date.to?.toISOString(),
+        start_date: date?.from,
+        end_date: date?.to?.toISOString(),
       },
     ]);
 
@@ -65,8 +69,8 @@ export default function AnalyticsTable() {
       landings: {
         dateRanges: [
           {
-            startDate: date?.from?.toISOString().split("T")[0],
-            endDate: date?.to?.toISOString().split("T")[0],
+            startDate: date?.from?.toISOString()?.split("T")[0],
+            endDate: date?.to?.toISOString()?.split("T")[0],
           },
         ],
         dimensions: [
@@ -84,8 +88,8 @@ export default function AnalyticsTable() {
       general: {
         dateRanges: [
           {
-            startDate: date?.from?.toISOString().split("T")[0],
-            endDate: date?.to?.toISOString().split("T")[0],
+            startDate: date?.from?.toISOString()?.split("T")[0],
+            endDate: date?.to?.toISOString()?.split("T")[0],
           },
         ],
         dimensions: [{ name: "fullPageUrl" }],
@@ -100,8 +104,8 @@ export default function AnalyticsTable() {
       country: {
         dateRanges: [
           {
-            startDate: date?.from?.toISOString().split("T")[0],
-            endDate: date?.to?.toISOString().split("T")[0],
+            startDate: date?.from?.toISOString()?.split("T")[0],
+            endDate: date?.to?.toISOString()?.split("T")[0],
           },
         ],
         dimensions: [{ name: "country" }],
@@ -117,8 +121,8 @@ export default function AnalyticsTable() {
       city: {
         dateRanges: [
           {
-            startDate: date?.from?.toISOString().split("T")[0],
-            endDate: date?.to?.toISOString().split("T")[0],
+            startDate: date?.from?.toISOString()?.split("T")[0],
+            endDate: date?.to?.toISOString()?.split("T")[0],
           },
         ],
         dimensions: [{ name: "city" }],
@@ -134,8 +138,8 @@ export default function AnalyticsTable() {
       device: {
         dateRanges: [
           {
-            startDate: date?.from?.toISOString().split("T")[0],
-            endDate: date?.to?.toISOString().split("T")[0],
+            startDate: date?.from?.toISOString()?.split("T")[0],
+            endDate: date?.to?.toISOString()?.split("T")[0],
           },
         ],
         dimensions: [{ name: "deviceCategory" }],
@@ -176,8 +180,14 @@ export default function AnalyticsTable() {
         searchType: type,
         dateRanges: analyticsDate,
       });
+
+      if (result.response[0]?.error) {
+        toast(result.response[0]?.error.message);
+      }
+
       console.log("Result: ", result);
       setAnalyticsData(result);
+      setCurrentPage(1);
       return result;
     } catch (error) {
       console.error("Error fetching Google Analytics data:", error);
@@ -196,12 +206,12 @@ export default function AnalyticsTable() {
   const sortData = (data: any[], key: string, order: "asc" | "desc") => {
     return [...data].sort((a, b) => {
       const aValue =
-        a.dimensionValues.find((d: any) => d.name === key)?.value ||
-        a.metricValues.find((m: any) => m.name === key)?.value ||
+        a?.dimensionValues?.find((d: any) => d?.name === key)?.value ||
+        a?.metricValues?.find((m: any) => m?.name === key)?.value ||
         "";
       const bValue =
-        b.dimensionValues.find((d: any) => d.name === key)?.value ||
-        b.metricValues.find((m: any) => m.name === key)?.value ||
+        b?.dimensionValues?.find((d: any) => d?.name === key)?.value ||
+        b?.metricValues?.find((m: any) => m?.name === key)?.value ||
         "";
 
       if (typeof aValue === "string" && typeof bValue === "string") {
@@ -216,15 +226,21 @@ export default function AnalyticsTable() {
     });
   };
 
-  const sortedData =
-    analyticsData && analyticsData.response && analyticsData.response[0]?.rows
-      ? sortData(analyticsData.response[0].rows, sortKey, sortOrder).filter(
-          (item) =>
-            item.dimensionValues.some((d: any) =>
-              d.value.toLowerCase().includes(search.toLowerCase()),
-            ),
-        )
-      : [];
+  const sortedData = analyticsData?.response?.[0]?.rows
+    ? sortData(analyticsData.response[0].rows, sortKey, sortOrder).filter(
+        (item) =>
+          item?.dimensionValues?.some((d: any) =>
+            d?.value?.toLowerCase().includes(search.toLowerCase()),
+          ),
+      )
+    : [];
+
+  const paginatedData = sortedData.slice(
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage,
+  );
+
+  const totalPages = Math.ceil(sortedData.length / rowsPerPage);
 
   const handleSort = (key: string) => {
     if (key === sortKey) {
@@ -247,11 +263,7 @@ export default function AnalyticsTable() {
   }, []);
 
   useEffect(() => {
-    if (
-      analyticsData &&
-      analyticsData.response &&
-      analyticsData.response[0]?.rows
-    ) {
+    if (analyticsData?.response?.[0]?.rows) {
       const sortedRows = sortData(
         analyticsData.response[0].rows,
         sortKey,
@@ -339,78 +351,97 @@ export default function AnalyticsTable() {
             <SelectItem value="device">Device</SelectItem>
           </SelectContent>
         </Select>
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center ">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="mr-2 bg-brand-bright text-white p-1 rounded-md px-1"
+            >
+              <FaChevronLeft className="h-4 w-4" />
+            </button>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+              className="ml-2 bg-brand-bright text-white p-1 rounded-md px-1"
+            >
+              <FaChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        )}
       </div>
       <div className="rounded-md w-full border dark:border-brand-dark  h-[calc(100vh-13rem)] overflow-y-hidden">
         <div className="h-full w-full overflow-auto">
           <Table className="relative w-full text-xs">
             <TableHeader className="sticky top-0 bg-white z-10 shadow">
               <TableRow>
-                {analyticsData &&
-                  analyticsData.response &&
-                  analyticsData.response[0]?.dimensionHeaders.map(
-                    (header, index) => (
-                      <TableHead key={index} className="text-left">
-                        <Button
-                          variant="ghost"
-                          onClick={() => handleSort(header.name)}
-                          className="text-xs"
-                        >
-                          {header.name.charAt(0).toUpperCase() +
-                            header.name
-                              .slice(1)
-                              .replace(/([A-Z])/g, " $1")
-                              .trim()}
-                          <ArrowUpDown className="ml-2 h-4 w-4" />
-                        </Button>
-                      </TableHead>
-                    ),
-                  )}
-                {analyticsData &&
-                  analyticsData.response &&
-                  analyticsData.response[0]?.metricHeaders.map(
-                    (header, index) => (
-                      <TableHead key={index} className="text-center">
-                        <Button
-                          variant="ghost"
-                          onClick={() => handleSort(header.name)}
-                          className="text-xs"
-                        >
-                          {header.name.charAt(0).toUpperCase() +
-                            header.name
-                              .slice(1)
-                              .replace(/([A-Z])/g, " $1")
-                              .trim()}
-                          <ArrowUpDown className="ml-2 h-4 w-4" />
-                        </Button>
-                      </TableHead>
-                    ),
-                  )}
+                {analyticsData?.response?.[0]?.dimensionHeaders?.map(
+                  (header, index) => (
+                    <TableHead key={index} className="text-left">
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort(header.name)}
+                        className="text-xs"
+                      >
+                        {header.name.charAt(0).toUpperCase() +
+                          header.name
+                            .slice(1)
+                            .replace(/([A-Z])/g, " $1")
+                            .trim()}
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                      </Button>
+                    </TableHead>
+                  ),
+                )}
+                {analyticsData?.response?.[0]?.metricHeaders?.map(
+                  (header, index) => (
+                    <TableHead key={index} className="text-center">
+                      <Button
+                        variant="ghost"
+                        onClick={() => handleSort(header.name)}
+                        className="text-xs"
+                      >
+                        {header.name.charAt(0).toUpperCase() +
+                          header.name
+                            .slice(1)
+                            .replace(/([A-Z])/g, " $1")
+                            .trim()}
+                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                      </Button>
+                    </TableHead>
+                  ),
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedData.map((row, index) => (
+              {paginatedData.map((row, index) => (
                 <TableRow key={index} className="py-0">
-                  {row.dimensionValues.map((dimension, dimIndex) => (
+                  {row?.dimensionValues?.map((dimension, dimIndex) => (
                     <TableCell
                       key={dimIndex}
                       className="font-medium text-xs text-left"
                     >
                       <div
                         className="truncate max-w-[400px] p-0 "
-                        title={dimension.value}
+                        title={dimension?.value}
                       >
-                        {dimension.value || "N/A"}
+                        {dimension?.value || "N/A"}
                       </div>
                     </TableCell>
                   ))}
-                  {row.metricValues.map((metric, metricIndex) => (
+                  {row?.metricValues?.map((metric, metricIndex) => (
                     <TableCell
                       key={metricIndex}
                       className="text-xs text-center"
                     >
-                      {metric.name === "bounceRate"
-                        ? `${(parseFloat(metric.value) * 100).toFixed(2)}%`
-                        : parseFloat(metric.value).toFixed(1)}
+                      {metric?.name === "bounceRate"
+                        ? `${(parseFloat(metric?.value || "0") * 100).toFixed(2)}%`
+                        : parseFloat(metric?.value || "0").toFixed(1)}
                     </TableCell>
                   ))}
                 </TableRow>

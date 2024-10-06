@@ -180,14 +180,14 @@ pub struct Performance {
 }
 
 /// Function to crawl a webpage and extract various information
-pub async fn crawl(mut url: String) -> Result<CrawlResult, String> {
+pub async fn crawl(url: String) -> Result<CrawlResult, String> {
     println!("Crawling: {}", &url);
 
     let _create_table = db::create_results_table();
     let _create_links_table = db::create_links_table();
 
     let client = Client::builder()
-        .user_agent("Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)")
+        .user_agent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
         .build()
         .map_err(|e| format!("Failed to create client: {}", e))?;
 
@@ -667,7 +667,7 @@ async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError 
     headers.insert(
         USER_AGENT,
         HeaderValue::from_static(
-            "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
         ),
     );
     headers.insert(

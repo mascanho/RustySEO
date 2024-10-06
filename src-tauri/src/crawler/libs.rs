@@ -317,7 +317,7 @@ pub async fn check_links(url: String) -> Result<Vec<LinkStatus>, String> {
             .get(&absolute_url)
             .header(
                 "User-Agent",
-                "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
             )
             .send()
             .await
