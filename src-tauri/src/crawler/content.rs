@@ -266,7 +266,7 @@ impl SERP {
         headers.insert(
             "User-Agent",
             HeaderValue::from_static(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.5845.97 Safari/537.36"
+                "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
             ),
         );
 
