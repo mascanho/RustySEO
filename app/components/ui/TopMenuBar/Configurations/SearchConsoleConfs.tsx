@@ -46,15 +46,24 @@ export default function SearchConsoleConfs() {
 
   // Get the confs from the BE
   useEffect(() => {
-    invoke("read_credentials_file").then((result) => {
-      setConfs("");
-      console.log("The useEffect from Confs");
-    });
+    invoke("read_credentials_file")
+      .then((result) => {
+        console.log(result, "result from confs");
+        if (result) {
+          setConfs(result);
+        } else {
+          console.error("No data returned from read_credentials_file");
+        }
+        console.log("The useEffect from Confs");
+      })
+      .catch((error) => {
+        console.error("Error reading credentials file:", error);
+      });
   }, []);
 
-  console.log(confs);
+  console.log(confs, "confs from confs");
 
-  if (!confs || Object.keys(confs).length === 0) {
+  if (confs === "" || confs === undefined || Object.keys(confs).length === 0) {
     return (
       <Card className="w-full p-0 h-[24rem] flex items-center justify-center shadow-none border-0  my-auto">
         <CardContent className="text-center">
