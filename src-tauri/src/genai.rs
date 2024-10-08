@@ -15,12 +15,15 @@ use crate::globals::actions;
 #[tauri::command]
 pub fn get_ai_model() -> String {
     // Check in the directories for the model being used and return it
-    let project_dirs = ProjectDirs::from("", "", "rustyseo").unwrap();
-    let model_dir = project_dirs.data_dir().join("models");
-    let model_path = model_dir.join("ai.toml");
-    let ai_model = std::fs::read_to_string(model_path).unwrap();
-    let model = ai_model;
-    model
+    ProjectDirs::from("", "", "rustyseo")
+        .map(|project_dirs| project_dirs.data_dir().join("models").join("ai.toml"))
+        .and_then(|model_path| std::fs::read_to_string(model_path).ok())
+        .unwrap_or_else(|| {
+            eprintln!("Failed to read AI model file, using default model");
+            String::from("default_model")
+        })
+        .trim()
+        .to_string()
 }
 
 pub async fn genai(query: String) -> Result<ChatResponse, Box<dyn Error>> {
