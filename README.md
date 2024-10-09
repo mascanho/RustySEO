@@ -34,6 +34,7 @@ Our mission is to offer a robust, free alternative to the costly commercial SEO 
 
 ## Connectors / APIs (Get your keys, they are free 😉)
 - [Google Search Console](https://developers.google.com/webmaster-tools/v3/search-console/api-v3/reference/rest/)
+- [Google Cloud Platform](https://console.cloud.google.com/welcome)
 - [GA4](https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/reports/batchGet)
 - [Google Gemini](https://developers.google.com/search/docs/advanced/crawling/overview)
 - [ollama](https://ollama.ai/)
