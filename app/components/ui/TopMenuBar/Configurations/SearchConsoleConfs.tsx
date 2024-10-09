@@ -65,7 +65,7 @@ export default function SearchConsoleConfs() {
 
   if (confs === "" || confs === undefined || Object.keys(confs).length === 0) {
     return (
-      <Card className="w-full p-0 h-[24rem] flex items-center justify-center shadow-none border-0  my-auto">
+      <Card className="w-full p-0 h-[24rem] flex items-center justify-center shadow-none border-0  my-auto dark:bg-transparent">
         <CardContent className="text-center">
           <p className="text-lg text-muted-foreground mb-2">
             No configurations available

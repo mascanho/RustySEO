@@ -18,10 +18,10 @@ const AIConfigurations = () => {
   return (
     <div className="container mx-auto p-4">
       <div className="mb-4">
-        <label className="block mb-2">
+        <label className="block mb-4 dark:text-white/50">
           AI Model:
           <input
-            className="w-full p-2 border rounded bg-gray-100"
+            className="w-full mt-2 p-2 border rounded bg-gray-100 dark:bg-transparent dark:border-brand-dark"
             type="text"
             value={aiModel}
             readOnly
