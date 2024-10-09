@@ -24,18 +24,19 @@ Our mission is to offer a robust, free alternative to the costly commercial SEO 
 - Free API LLM (Google Gemini);
 - Built in AI chatbot;
 - Crawl history;
-- Integrations (Google Seach Console, GA)
+- Image conversion and optimization;
 
 ## Roadmap
 
-- Deep crawl (multiple pages);
+- Deep crawl (multiple pages concurrently);
 - More integrations;
+- Better reporting
 
 ## Connectors / APIs (Get your keys, they are free 😉)
 - [Google Search Console](https://developers.google.com/webmaster-tools/v3/search-console/api-v3/reference/rest/)
-- [GA](https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/reports/batchGet)
+- [GA4](https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/reports/batchGet)
 - [Google Gemini](https://developers.google.com/search/docs/advanced/crawling/overview)
-- [ollama](https://ollama.ai/docs/api)
+- [ollama](https://ollama.ai/)
 - [PageSpeed Insights](https://developers.google.com/speed/docs/insights/v5/reference/pagespeedapi/runpagespeed)
 
 ## Setting up Google Search Console
@@ -68,7 +69,7 @@ To setup Google Search Console, follow these steps:
    npm start
    ```
 
-## Usage
+## Mac OSX
 
 After installation, you can start using My Software. Here are some basic instructions:
 
@@ -94,7 +95,7 @@ After installation, you can start using My Software. Here are some basic instruc
 
    Follow the instructions on the screen to complete your task.
 
-## Screenshots
+## Linux
 
 Here are some screenshots of the application:
 
