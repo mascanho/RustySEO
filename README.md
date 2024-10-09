@@ -31,6 +31,14 @@ Our mission is to offer a robust, free alternative to the costly commercial SEO 
 - Deep crawl (multiple pages);
 - More integrations;
 
+## Connectors / APIs
+
+- [Google Search Console](https://developers.google.com/webmaster-tools/v3/search-console/api-v3/reference/rest/)
+- [GA](https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/reports/batchGet)
+- [Google Gemini](https://developers.google.com/search/docs/advanced/crawling/overview)
+- [ollama](https://ollama.ai/docs/api)
+- [PageSpeed Insights](https://developers.google.com/speed/docs/insights/v5/reference/pagespeedapi
+
 ## Setting up Google Search Console
 
 - [Windows](#windows)
