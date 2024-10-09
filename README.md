@@ -9,6 +9,22 @@ As an open-source project, RustySEO aims to enhance your SEO efforts. Please not
 
 Our mission is to offer a robust, free alternative to the costly commercial SEO tools currently on the market.
 
+## TLDR;
+
+We recommend you to use Google Gemini if you want the "Topics" feature.
+
+As of today, the smaller local LLMs are not working properly and are not recommended if you want to use the "Topics" feature.
+
+These LLMs might get deprecated in the future due to its lack of uniform performance across different models.
+
+Authentication currently takes place server side, as such it is slightly more cumbersome when integrating with Google OAuth 2.0.
+
+This authentication will be passed to the client side.
+
+Use at your own risk, this software is new and under development.
+
+Why join the Navy when you can be a SEO engineer?
+
 ## Features
 
 - Shallow crawl (single page);
@@ -30,14 +46,42 @@ Our mission is to offer a robust, free alternative to the costly commercial SEO 
 
 - Deep crawl (multiple pages concurrently);
 - More integrations;
-- Better reporting
+- Better reporting;
+- Password protection & encryption;
+
+
+## Installation
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/rustyseo/rustyseo.git
+   ```
+
+2. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+3. Run the software:
+
+   ```bash
+   npm start
+   ```
+
+4. Open your browser and go to `http://localhost:3000`.
+
+5. Login with your Google account.
+
+6
 
 ## Connectors / APIs (Get your keys, they are free 😉)
-- [Google Search Console](https://developers.google.com/webmaster-tools/v3/search-console/api-v3/reference/rest/)
+- [Google Search Console](https://search.google.com/search-console/about)
 - [Google Cloud Platform](https://console.cloud.google.com/welcome)
-- [GA4](https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/reports/batchGet)
-- [Google Gemini](https://developers.google.com/search/docs/advanced/crawling/overview)
-- [ollama](https://ollama.ai/)
+- [GA4](https://analytics.google.com/analytics/web/)
+- [Google Gemini](https://ai.google.dev/gemini-api/docs/api-key)
+- [Ollama](https://ollama.ai/)
 - [PageSpeed Insights](https://developers.google.com/speed/docs/insights/v5/reference/pagespeedapi/runpagespeed)
 
 ## Setting up Google Search Console
