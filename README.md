@@ -9,7 +9,7 @@ As an open-source project, RustySEO aims to enhance your SEO efforts. Please not
 
 Our mission is to offer a robust, free alternative to the costly commercial SEO tools currently on the market.
 
-## TLDR;
+## TL;DR
 
 We recommend you to use Google Gemini if you want the "Topics" feature.
 
