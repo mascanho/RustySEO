@@ -360,7 +360,7 @@ export default function AnalyticsTable() {
             >
               <FaChevronLeft className="h-4 w-4" />
             </button>
-            <span>
+            <span className="dark:text-white/50">
               Page {currentPage} of {totalPages}
             </span>
             <button

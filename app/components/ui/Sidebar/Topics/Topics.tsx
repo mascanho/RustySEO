@@ -27,7 +27,7 @@ export default function Component({ bodyElements }: any) {
     invoke("generate_ai_topics", { body: bodyElements[0] })
       .then((res: any) => {
         let topics = res;
-
+        console.log(topics, "topics");
         if (topics) {
           topics = topics?.replace(/^```|```$/g, ""); // Remove surrounding backticks
           topics = topics?.replace(/^["']|["']$/g, ""); // Remove surrounding quotes
@@ -67,6 +67,8 @@ export default function Component({ bodyElements }: any) {
       </div>
     );
   }
+
+  console.log(topicsJson, "topicsJson");
 
   if (!topicsJson || topicsJson.length === 0) {
     return (
