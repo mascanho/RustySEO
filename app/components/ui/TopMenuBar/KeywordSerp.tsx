@@ -6,12 +6,12 @@ const KeywordSerp = () => {
   const [visibility, setVisibility] = useState(true);
 
   return (
-    <motion.section
-      drag
+    <section
+      // drag
       className={`${visibility ? "block relative" : "hidden"} absolute bottom-1 z-[50] h-fit`}
     >
       <KeywordSearch />
-    </motion.section>
+    </section>
   );
 };
 

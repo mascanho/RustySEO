@@ -471,8 +471,6 @@ const Home: React.FC<HomeProps> = () => {
   const seoPageSpeed = pageSpeed && pageSpeed[1];
   pageSpeed = pageSpeed && pageSpeed[0];
 
-  console.log(pageSpeed, "PAGE SPEED");
-
   return (
     <section className="h-full overflow-y-clip flex">
       <div className="w-full">

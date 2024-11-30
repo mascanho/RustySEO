@@ -7,6 +7,8 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
   const { Visible } = useStore();
   const setRepeatedHeadings = useOnPageSeo((state) => state.setHeadings);
 
+  console.log(headings, "headings");
+
   const findDuplicates = (array: string[]) => {
     const count: Record<string, number> = {};
     const duplicates: string[] = [];
