@@ -26,7 +26,7 @@ interface TaskSectionProps {
 }
 
 export function TaskSection({ section }: TaskSectionProps) {
-  const completedTasks = section.tasks.filter((task) => task.completed).length;
+  const completedTasks = section?.tasks.filter((task) => task.completed).length;
   const progress = (completedTasks / section.tasks.length) * 100;
 
   return (
@@ -35,7 +35,7 @@ export function TaskSection({ section }: TaskSectionProps) {
         <CardTitle className="text-lg font-semibold">{section.title}</CardTitle>
         <div className="flex items-center space-x-4">
           <span className="text-sm text-muted-foreground">
-            {completedTasks} of {section.tasks.length} Tasks
+            {completedTasks} of {section?.tasks.length} Tasks
           </span>
           <ChevronDown className="h-4 w-4 text-muted-foreground" />
         </div>

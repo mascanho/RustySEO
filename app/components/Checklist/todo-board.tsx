@@ -3,7 +3,24 @@ import { Progress } from "@/components/ui/progress";
 import { TaskSection } from "./task-section";
 import { CalendarDays, Target } from "lucide-react";
 
-const sections = [
+// Define types for better structure
+type Task = {
+  id: string;
+  title: string;
+  completed: boolean;
+  inProgress?: boolean;
+  assignee: {
+    name: string;
+    avatar: string;
+  };
+};
+
+type Section = {
+  title: string;
+  tasks: Task[];
+};
+
+const sections: Section[] = [
   {
     title: "Technical",
     tasks: [
@@ -86,16 +103,23 @@ const sections = [
   },
 ];
 
+// Constants for project dates
+const START_DATE = "Nov 12";
+const END_DATE = "Dec 12";
+const DAYS_LEFT = 2;
+
 export default function TodoBoard() {
-  const totalTasks = sections.reduce(
-    (acc, section) => acc + section.tasks.length,
-    0,
+  const { totalTasks, completedTasks } = sections.reduce(
+    (acc, section) => {
+      acc.totalTasks += section?.tasks.length;
+      acc.completedTasks += section?.tasks.filter(
+        (task) => task.completed,
+      ).length;
+      return acc;
+    },
+    { totalTasks: 0, completedTasks: 0 },
   );
-  const completedTasks = sections.reduce(
-    (acc, section) =>
-      acc + section.tasks.filter((task) => task.completed).length,
-    0,
-  );
+
   const progress = (completedTasks / totalTasks) * 100;
 
   return (
@@ -110,23 +134,30 @@ export default function TodoBoard() {
               <p className="text-muted-foreground">Development Phase</p>
             </div>
             <div className="text-right">
-              <p className="text-2xl font-bold mb-1">
+              <p
+                className="text-2xl font-bold mb-1"
+                aria-label={`Progress: ${Math.round(progress)}%`}
+              >
                 {Math.round(progress)}% complete
               </p>
-              <p className="text-muted-foreground">2 days left</p>
+              <p className="text-muted-foreground">{DAYS_LEFT} days left</p>
             </div>
           </div>
-          <Progress value={progress} className="h-2" />
+          <Progress
+            value={progress}
+            className="h-2"
+            aria-label="Progress bar"
+          />
         </CardHeader>
         <CardContent>
           <div className="flex justify-between items-center text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <CalendarDays className="h-4 w-4" />
-              <span>Start: Nov 12</span>
+              <span>Start: {START_DATE}</span>
             </div>
             <div className="flex items-center gap-2">
               <Target className="h-4 w-4" />
-              <span>End: Dec 12</span>
+              <span>End: {END_DATE}</span>
             </div>
           </div>
         </CardContent>

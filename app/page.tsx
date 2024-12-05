@@ -71,6 +71,9 @@ import { FaChartBar } from "react-icons/fa6";
 
 import Analytics from "./components/ui/Analytics/Analytics";
 import LongTasksTable from "./components/ui/LongTasksTable";
+import { RiFireLine } from "react-icons/ri";
+import { TaskSection } from "./components/Checklist/task-section";
+import TodoBoard from "./components/Checklist/todo-board";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -611,9 +614,13 @@ const Home: React.FC<HomeProps> = () => {
                   Analytics
                 </Tabs.Tab>
                 <Tabs.Tab value="clarity">
-                  <FaFireAlt className="inline-block mr-2 mb-[2px] text-sm" />
+                  <RiFireLine className="inline-block mr-2 mb-[2px] text-sm" />
                   Clarity
-                </Tabs.Tab>{" "}
+                </Tabs.Tab>
+                <Tabs.Tab value="seo">
+                  <RiFireLine className="inline-block mr-2 mb-[2px] text-sm" />
+                  SEO Goals
+                </Tabs.Tab>
               </Tabs.List>
             </div>
 
@@ -805,6 +812,10 @@ const Home: React.FC<HomeProps> = () => {
 
             <Tabs.Panel value="analytics">
               <Analytics />
+            </Tabs.Panel>
+
+            <Tabs.Panel value="seo">
+              <TodoBoard />
             </Tabs.Panel>
           </Tabs>
         </section>

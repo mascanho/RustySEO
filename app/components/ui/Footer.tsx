@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { LiaTasksSolid } from "react-icons/lia";
+import { LiaListAlt, LiaTasksSolid } from "react-icons/lia";
 import { CgWebsite } from "react-icons/cg";
 import { FaRobot } from "react-icons/fa6";
 import { useChat } from "ai/react";
@@ -27,6 +27,8 @@ import { LiaHeadingSolid } from "react-icons/lia";
 import { useVisibilityStore } from "@/store/VisibilityStore";
 import { GiPirateFlag, GiPirateHat } from "react-icons/gi";
 import { ImGoogle3 } from "react-icons/im";
+import { AiFillX } from "react-icons/ai";
+import { FaShip } from "react-icons/fa";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -177,6 +179,11 @@ const Footer = () => {
                   {tasks.length}
                 </span>
               </div>
+              <div>
+                <FaShip
+                  className={`text-sm dark:text-white/50 ${iconClasses}`}
+                />
+              </div>{" "}
               <ImGoogle3
                 onClick={() =>
                   visibility.serpKeywords
