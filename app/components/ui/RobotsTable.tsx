@@ -7,7 +7,7 @@ const RobotsTable = ({ robots }: any) => {
     <section className="robots mx-auto pb-3  w-full overflow-auto bg-white/40 dark:bg-brand-darker relative">
       {robots?.length === 0 ? (
         <div className="h-[20rem] flex items-center overflow-hidden ">
-          <span className="text-black/50 darK:text-white/50 m-auto text-center translate-y-1/2 h-full">
+          <span className="text-black/50 dark:text-white/50 m-auto text-center translate-y-1/2 h-full">
             No page crawled
           </span>
         </div>

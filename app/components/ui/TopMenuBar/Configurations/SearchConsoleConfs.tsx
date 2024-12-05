@@ -65,7 +65,7 @@ export default function SearchConsoleConfs() {
 
   if (confs === "" || confs === undefined || Object.keys(confs).length === 0) {
     return (
-      <Card className="w-full p-0 h-[24rem] flex items-center justify-center shadow-none border-0  my-auto">
+      <Card className="w-full p-0 h-[24rem] flex items-center justify-center shadow-none border-0  my-auto dark:bg-transparent">
         <CardContent className="text-center">
           <p className="text-lg text-muted-foreground mb-2">
             No configurations available
@@ -80,7 +80,7 @@ export default function SearchConsoleConfs() {
   }
 
   return (
-    <Card className="w-full p-0 h-full shadow-none border-0 mt-4  mx-auto">
+    <Card className="w-full p-0 h-full shadow-none border-0 mt-4  mx-auto dark:bg-transparent">
       <CardContent className="space-y-2 h-full">
         <div className="flex items-center space-x-4">
           <Hash className="h-5 w-5 text-muted-foreground" />
@@ -97,11 +97,11 @@ export default function SearchConsoleConfs() {
           </div>
         </div>
         <div className="flex items-center space-x-4">
-          <Key className="h-5 w-5 text-muted-foreground" />
+          <Key className="h-5 w-5 text-muted-foreground pt-4" />
           <div>
-            <p className="text-sm font-bold">Client Secret</p>
-            <div className="flex items-center bg-gray-100 w-[calc(50rem-7rem)] rounded-md p-2 text-sm text-black">
-              <p className="text-sm text-muted-foreground w-full ">
+            <p className="text-sm font-bold mb-1">Client Secret</p>
+            <div className="flex items-center  w-[calc(50rem-7rem)] rounded-md px-2 text-sm text-black">
+              <p className="text-sm text-muted-foreground w-full pb-20 ">
                 {showSecret
                   ? confs?.client_secret
                   : "********************************************"}

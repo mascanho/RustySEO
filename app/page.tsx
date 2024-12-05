@@ -45,7 +45,13 @@ import SidebarContainer from "./components/ui/Sidebar/SidebarContainer";
 import MenuDrawer from "./components/ui/MenuDrawer";
 import PageRankChart from "./components/ui/ShadCharts/PageRankChart";
 import PerformanceEl from "./components/Performance";
-import { FaChevronDown, FaDesktop, FaMobile, FaTasks } from "react-icons/fa";
+import {
+  FaChevronDown,
+  FaDesktop,
+  FaFireAlt,
+  FaMobile,
+  FaTasks,
+} from "react-icons/fa";
 import { CgLayoutGrid } from "react-icons/cg";
 import { CiGlobe } from "react-icons/ci";
 import LinksCharts from "./components/ui/ShadCharts/LinksCharts";
@@ -62,6 +68,7 @@ import { GoTable } from "react-icons/go";
 import { CgPerformance } from "react-icons/cg";
 import { IoIosClose } from "react-icons/io";
 import { FaChartBar } from "react-icons/fa6";
+
 import Analytics from "./components/ui/Analytics/Analytics";
 import LongTasksTable from "./components/ui/LongTasksTable";
 
@@ -464,8 +471,6 @@ const Home: React.FC<HomeProps> = () => {
   const seoPageSpeed = pageSpeed && pageSpeed[1];
   pageSpeed = pageSpeed && pageSpeed[0];
 
-  console.log(pageSpeed, "PAGE SPEED");
-
   return (
     <section className="h-full overflow-y-clip flex">
       <div className="w-full">
@@ -605,6 +610,10 @@ const Home: React.FC<HomeProps> = () => {
                   <FaChartBar className="inline-block mr-2" />
                   Analytics
                 </Tabs.Tab>
+                <Tabs.Tab value="clarity">
+                  <FaFireAlt className="inline-block mr-2 mb-[2px] text-sm" />
+                  Clarity
+                </Tabs.Tab>{" "}
               </Tabs.List>
             </div>
 
