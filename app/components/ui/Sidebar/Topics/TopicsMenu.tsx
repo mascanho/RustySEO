@@ -9,8 +9,10 @@ import {
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import { FaGoogle, FaYahoo, FaSearch, FaCopy } from "react-icons/fa";
 import { FiTrendingUp } from "react-icons/fi";
-import { SiMicrosoftbing, SiDuckduckgo } from "react-icons/si";
+import { SiDuckduckgo } from "react-icons/si";
 import { toast } from "sonner";
+
+import { BiLogoBing } from "react-icons/bi";
 
 const TopicsMenu = ({ children, entry }: { children: any; entry: any }) => {
   const keyword = encodeURIComponent(entry?.keyword || "");
@@ -52,7 +54,7 @@ const TopicsMenu = ({ children, entry }: { children: any; entry: any }) => {
           }
           className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight text-xs cursor-pointer"
         >
-          <SiMicrosoftbing className="mr-2" /> Bing
+          <BiLogoBing className="mr-2" /> Bing
         </DropdownMenuItem>
 
         <DropdownMenuItem
