@@ -28,6 +28,7 @@ const TopicsMenu = ({ children, entry }: { children: any; entry: any }) => {
       <DropdownMenuContent className="bg-brand-darker border shadow shadow-lg  px-0.5 bg-white dark:bg-brand-darker  dark:border-brand-dark dark:text-white mt-1.5 mr-6 w-fit text-xs z-[999999]">
         <DropdownMenuLabel className="font-semibold text-xs">
           Check Keyword
+          <div className="absolute top-0 rotate-45 w-3 h-3 bg-white border-t border-l" />
         </DropdownMenuLabel>
 
         <DropdownMenuItem
