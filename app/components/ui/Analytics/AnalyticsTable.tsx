@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { ArrowUpDown, Search, X } from "lucide-react";
+import { ArrowUpDown, Search, X, ArrowUp, ArrowDown } from "lucide-react";
 import { addDays, format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { DateRange } from "react-day-picker";
@@ -200,29 +200,41 @@ export default function AnalyticsTable() {
         from: format(date.from, "yyyy-MM-dd"),
         to: format(date.to, "yyyy-MM-dd"),
       });
+      handleFilteredAnalytics(selectedDimension);
     }
   }, [date]);
 
   const sortData = (data: any[], key: string, order: "asc" | "desc") => {
     return [...data].sort((a, b) => {
-      const aValue =
-        a?.dimensionValues?.find((d: any) => d?.name === key)?.value ||
-        a?.metricValues?.find((m: any) => m?.name === key)?.value ||
-        "";
-      const bValue =
-        b?.dimensionValues?.find((d: any) => d?.name === key)?.value ||
-        b?.metricValues?.find((m: any) => m?.name === key)?.value ||
-        "";
+      let aValue = null;
+      let bValue = null;
 
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        return order === "asc"
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      } else {
-        const aNum = parseFloat(aValue);
-        const bNum = parseFloat(bValue);
+      // Find the value in either dimensionValues or metricValues
+      for (const values of ["dimensionValues", "metricValues"]) {
+        const aItem = a[values]?.find((item: any) => item.name === key);
+        const bItem = b[values]?.find((item: any) => item.name === key);
+        if (aItem && bItem) {
+          aValue = aItem.value;
+          bValue = bItem.value;
+          break;
+        }
+      }
+
+      // If no values found, return 0 to maintain current order
+      if (aValue === null || bValue === null) return 0;
+
+      // Convert to numbers for numeric comparison
+      const aNum = parseFloat(aValue);
+      const bNum = parseFloat(bValue);
+
+      if (!isNaN(aNum) && !isNaN(bNum)) {
         return order === "asc" ? aNum - bNum : bNum - aNum;
       }
+
+      // String comparison for non-numeric values
+      return order === "asc"
+        ? aValue.toString().localeCompare(bValue.toString())
+        : bValue.toString().localeCompare(aValue.toString());
     });
   };
 
@@ -248,6 +260,19 @@ export default function AnalyticsTable() {
     } else {
       setSortKey(key);
       setSortOrder("desc");
+    }
+
+    // Immediately sort the data when header is clicked
+    if (analyticsData?.response?.[0]?.rows) {
+      const newSortedRows = sortData(
+        analyticsData.response[0].rows,
+        key,
+        key === sortKey ? (sortOrder === "asc" ? "desc" : "asc") : "desc",
+      );
+      setAnalyticsData((prevData: any) => ({
+        ...prevData,
+        response: [{ ...prevData.response[0], rows: newSortedRows }],
+      }));
     }
   };
 
@@ -275,6 +300,17 @@ export default function AnalyticsTable() {
       }));
     }
   }, [sortKey, sortOrder]);
+
+  const getSortIcon = (headerName: string) => {
+    if (headerName === sortKey) {
+      return sortOrder === "asc" ? (
+        <ArrowUp className="ml-2 h-4 w-4" />
+      ) : (
+        <ArrowDown className="ml-2 h-4 w-4" />
+      );
+    }
+    return <ArrowUpDown className="ml-2 h-4 w-4" />;
+  };
 
   return (
     <div className="mx-auto py-1 z-10 text-xs overflow-y-hidden w-[calc(100vw-21rem)]">
@@ -393,7 +429,7 @@ export default function AnalyticsTable() {
                             .slice(1)
                             .replace(/([A-Z])/g, " $1")
                             .trim()}
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                        {getSortIcon(header.name)}
                       </Button>
                     </TableHead>
                   ),
@@ -411,7 +447,7 @@ export default function AnalyticsTable() {
                             .slice(1)
                             .replace(/([A-Z])/g, " $1")
                             .trim()}
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                        {getSortIcon(header.name)}
                       </Button>
                     </TableHead>
                   ),

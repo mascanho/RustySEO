@@ -63,7 +63,7 @@ import NetworkRequestsTable from "./components/ui/NetworkRequestsTable";
 import { MdOutlineHealthAndSafety } from "react-icons/md";
 import { AiOutlineRise } from "react-icons/ai";
 import { MdOutlineTaskAlt } from "react-icons/md";
-import { GoTable } from "react-icons/go";
+import { GoGoal, GoTable } from "react-icons/go";
 
 import { CgPerformance } from "react-icons/cg";
 import { IoIosClose } from "react-icons/io";
@@ -618,7 +618,7 @@ const Home: React.FC<HomeProps> = () => {
                   Clarity
                 </Tabs.Tab>
                 <Tabs.Tab value="seo">
-                  <RiFireLine className="inline-block mr-2 mb-[2px] text-sm" />
+                  <GoGoal className="inline-block mr-2 mb-[2px] text-sm" />
                   SEO Goals
                 </Tabs.Tab>
               </Tabs.List>
