@@ -25,8 +25,11 @@ const TopicsMenu = ({ children, entry }: { children: any; entry: any }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>{children}</DropdownMenuTrigger>
-      <DropdownMenuContent className="bg-brand-darker border shadow shadow-lg  px-0.5 bg-white dark:bg-brand-darker  dark:border-brand-dark dark:text-white mt-1.5 mr-6 w-fit text-xs z-[999999]">
-        <div className="absolute top-0 rotate-45 w-3 h-3 bg-white border-t border-l" />
+      <DropdownMenuContent className="relative bg-brand-darker border shadow-lg px-0.5 bg-white dark:bg-brand-darker dark:border-brand-dark dark:text-white mt-1.5 mr-6 w-fit text-xs z-[999999]">
+        <div
+          className="absolute -top-1.5 left-2  w-3 h-2 dark:bg-white bg-black/50 border-t border-l border-inherit"
+          style={{ transformOrigin: "center" }}
+        />
         <DropdownMenuLabel className="font-semibold text-xs">
           Check Keyword
         </DropdownMenuLabel>
@@ -97,6 +100,17 @@ const TopicsMenu = ({ children, entry }: { children: any; entry: any }) => {
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
+
+        <DropdownMenuItem
+          onClick={() =>
+            openBrowserWindow(
+              `https://search.google.com/search-console/performance/search-analytics&query=*${keyword}`,
+            )
+          }
+          className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight text-xs cursor-pointer"
+        >
+          <FaGoogle className="mr-2" /> Search Console
+        </DropdownMenuItem>
 
         <DropdownMenuItem
           onClick={() =>
