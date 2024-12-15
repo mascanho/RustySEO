@@ -41,7 +41,7 @@ const TopicsMenu = ({ children, entry }: { children: any; entry: any }) => {
           <FaCopy className="mr-2" /> Copy Keyword
         </DropdownMenuItem>
 
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="dark:bg-white/20 bg-black/20" />
 
         <DropdownMenuItem
           onClick={() =>
@@ -99,12 +99,12 @@ const TopicsMenu = ({ children, entry }: { children: any; entry: any }) => {
           <SiDuckduckgo className="mr-2" /> DuckDuckGo
         </DropdownMenuItem>
 
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="dark:bg-white/20 bg-black/20" />
 
         <DropdownMenuItem
           onClick={() =>
             openBrowserWindow(
-              `https://search.google.com/search-console/performance/search-analytics&query=*${keyword}`,
+              `https://search.google.com/search-console/performance/search-analytics?query=${keyword}`,
             )
           }
           className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight text-xs cursor-pointer"
