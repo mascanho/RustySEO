@@ -59,6 +59,7 @@ import KeywordSerp from "./TopMenuBar/KeywordSerp";
 import GoogleAnalyticsModal from "./GoogleAnalyticsModal/GoogleAnalyticsModal";
 import Configurations from "./TopMenuBar/Configurations/Configurations";
 import { FaGear } from "react-icons/fa6";
+import MSClarity from "./MSClarityModal/MSClarityModal";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -105,6 +106,9 @@ const TopMenuBar = () => {
     openedSearchConsole,
     { open: openSearchConsole, close: closeSearchConsole },
   ] = useDisclosure(false);
+
+  const [openedMSClarity, { open: openMSClarity, close: closeMSClarity }] =
+    useDisclosure(false);
 
   const [
     openedGoogleAnalytics,
@@ -248,6 +252,19 @@ const TopMenuBar = () => {
         // zIndex={"100000"}
       >
         <PageSpeedInsigthsApi close={closePageSpeed} />
+      </Modal>
+      {/* MS CLARITY MODAL  */}
+      <Modal
+        opened={openedMSClarity}
+        // overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
+        closeOnEscape
+        closeOnClickOutside
+        onClose={closeMSClarity}
+        title="Microsoft Clarity Connector "
+        centered
+        // zIndex={"100000"}
+      >
+        <MSClarity close={closeMSClarity} />
       </Modal>
       {/* Todo Modal */}
       <Modal
@@ -451,7 +468,7 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-3">Connectors</MenubarTrigger>
             <MenubarContent>
-              <MenubarItem onClick={openPageSpeed}>
+              <MenubarItem onClick={openMSClarity}>
                 <FiZap className="mr-2" />
                 Microsoft Clarity
               </MenubarItem>

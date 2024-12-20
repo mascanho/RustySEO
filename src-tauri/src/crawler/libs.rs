@@ -816,3 +816,115 @@ pub async fn get_google_analytics(
 
     Ok(response_clone)
 }
+
+// -------- FUNCTION TO SET THE MICROSOFTY CLARITY DATA
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ClarityData {
+    pub response: Vec<Value>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ClarityCredentials {
+    pub endpoint: String,
+    pub token: String,
+}
+
+pub async fn set_microsoft_clarity_credentials(
+    endpoint: String,
+    token: String,
+) -> Result<String, String> {
+    // set the directories
+    let config_dir = ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
+    let config_dir = config_dir.data_dir();
+    let file_path = config_dir.join("clarity.toml");
+
+    let credentials = ClarityCredentials { endpoint, token };
+
+    // Serialize to TOML string
+    let toml_str = toml::to_string(&credentials)
+        .map_err(|e| format!("Failed to serialize credentials: {}", e))?;
+
+    // write the TOML to the file
+    if let Err(e) = fs::write(&file_path, &toml_str).await {
+        return Err(format!("Failed to write Microsoft Clarity ID: {}", e));
+    }
+
+    Ok(toml_str)
+}
+
+// ------ GET THE MICROSOFTY CLARITY CREDENTIALS
+pub async fn get_microsoft_clarity_credentials() -> Result<String, String> {
+    let config_dir = ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
+    let config_dir = config_dir.data_dir();
+    let file_path = config_dir.join("clarity.toml");
+
+    // read the file
+    let file_toml = fs::read_to_string(file_path)
+        .await
+        .map_err(|e| format!("Failed to read Microsoft Clarity ID file: {}", e))?;
+
+    // Only log the content length for security
+    println!(
+        "Successfully read Clarity ID file of length: {}",
+        file_toml.len()
+    );
+
+    println!("File content: {:#?}", file_toml);
+
+    Ok(file_toml)
+}
+
+// ----- MAKE THE API CALL TO MICROSOFT CLARITY
+
+pub async fn get_microsoft_clarity_data() -> Result<Vec<Value>, String> {
+    let credentials_str = get_microsoft_clarity_credentials().await?;
+
+    let credentials: ClarityCredentials = toml::from_str(&credentials_str)
+        .map_err(|e| format!("Failed to parse credentials: {}", e))?;
+
+    println!("Credentials: {:?}", credentials);
+
+    let endpoint = credentials.endpoint.clone();
+    let token = credentials.token.clone();
+
+    println!("This is the end point: {:#?}", endpoint);
+    println!("This is the token: {:#?}", token);
+
+    let client = reqwest::Client::new();
+
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        "Authorization",
+        HeaderValue::from_str(&format!("Bearer {}", token))
+            .map_err(|e| format!("Invalid header value: {}", e))?,
+    );
+
+    // Make API request
+    let response = client
+        .get(&format!("https://{}", &endpoint))
+        .headers(headers)
+        .send()
+        .await
+        .map_err(|e| format!("Request failed: {}", e))?;
+
+    // Check if request was successful
+    if !response.status().is_success() {
+        return Err(format!("Request failed with status: {}", response.status()));
+    }
+
+    // Parse JSON response
+    let json_response: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse response: {}", e))?;
+
+    let mut response_data = Vec::new();
+
+    response_data.push(json_response);
+
+    println!("Response: {:#?}", response_data);
+
+    Ok(response_data)
+}

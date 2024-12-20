@@ -186,6 +186,9 @@ async fn main() {
             crawler::libs::read_credentials_file,
             genai::get_ai_model,
             actions::ai_model_selected,
+            commands::set_microsoft_clarity_command,
+            commands::get_microsoft_clarity_command,
+            commands::get_microsoft_clarity_data_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -623,7 +623,6 @@ const Home: React.FC<HomeProps> = () => {
                 </Tabs.Tab>
               </Tabs.List>
             </div>
-
             <Tabs.Panel value="first">
               {/* WIDGET SECTION */}
 
@@ -778,7 +777,6 @@ const Home: React.FC<HomeProps> = () => {
                 />
               </main>
             </Tabs.Panel>
-
             <Tabs.Panel value="third">
               <SEOImprovements
                 pageTitle={pageTitle}
@@ -797,11 +795,9 @@ const Home: React.FC<HomeProps> = () => {
                 linkStatusCodes={linkStatusCodes}
               />
             </Tabs.Panel>
-
             <Tabs.Panel value="fourth">
               <TaskManagerContainer strategy={strategy} />
             </Tabs.Panel>
-
             <Tabs.Panel value="fifth">
               <CrawlHistory
                 crawl={handleClick}
@@ -809,14 +805,27 @@ const Home: React.FC<HomeProps> = () => {
                 dbdata={DBDATA}
               />
             </Tabs.Panel>
-
             <Tabs.Panel value="analytics">
               <Analytics />
             </Tabs.Panel>
-
             <Tabs.Panel value="seo">
               <TodoBoard />
             </Tabs.Panel>
+            <Tabs.Panel value="clarity">
+              <button
+                onClick={() => {
+                  invoke("get_microsoft_clarity_data_command")
+                    .then((result) => {
+                      console.log(result);
+                    })
+                    .catch((err) => {
+                      console.error(err);
+                    });
+                }}
+              >
+                Fetch CLarity Data
+              </button>
+            </Tabs.Panel>{" "}
           </Tabs>
         </section>
       </div>

@@ -2,6 +2,7 @@ use crate::crawler::db;
 use crate::crawler::db::GscMatched;
 use crate::crawler::libs;
 use crate::crawler::libs::ApiKeys;
+use crate::crawler::libs::ClarityData;
 use crate::crawler::libs::Credentials;
 use crate::crawler::libs::DateRange;
 use crate::image_converter::converter;
@@ -143,5 +144,38 @@ pub async fn get_google_analytics_command(
             eprintln!("Failed to call Google Analytics: {}", e);
             Err(format!("Failed to call Google Analytics: {}", e))
         }
+    }
+}
+
+// ------- SET MICROSOFT CLARITY CREDENTIALS
+#[tauri::command]
+pub async fn set_microsoft_clarity_command(
+    endpoint: String,
+    token: String,
+) -> Result<String, String> {
+    let result = libs::set_microsoft_clarity_credentials(endpoint, token).await;
+    match result {
+        Ok(result) => Ok(result),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+// ------- GET MICROSOFT CLARITY CREDENTIALS
+#[tauri::command]
+pub async fn get_microsoft_clarity_command() -> Result<String, String> {
+    let result = libs::get_microsoft_clarity_credentials().await;
+    match result {
+        Ok(result) => Ok(result),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+// ------- Fetch the Microsoft Clarity Data
+#[tauri::command]
+pub async fn get_microsoft_clarity_data_command() -> Result<Vec<Value>, String> {
+    let result = libs::get_microsoft_clarity_data().await;
+    match result {
+        Ok(result) => Ok(result),
+        Err(e) => Err(e.to_string()),
     }
 }
