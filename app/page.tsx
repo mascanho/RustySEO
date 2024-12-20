@@ -74,6 +74,8 @@ import LongTasksTable from "./components/ui/LongTasksTable";
 import { RiFireLine } from "react-icons/ri";
 import { TaskSection } from "./components/Checklist/task-section";
 import TodoBoard from "./components/Checklist/todo-board";
+import ClarityDashboard from "./components/ui/MSClarityModal/MSCLarityTab";
+import ClarityContainer from "./components/ui/MSClarityModal/ClarityContainer";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -812,19 +814,7 @@ const Home: React.FC<HomeProps> = () => {
               <TodoBoard />
             </Tabs.Panel>
             <Tabs.Panel value="clarity">
-              <button
-                onClick={() => {
-                  invoke("get_microsoft_clarity_data_command")
-                    .then((result) => {
-                      console.log(result);
-                    })
-                    .catch((err) => {
-                      console.error(err);
-                    });
-                }}
-              >
-                Fetch CLarity Data
-              </button>
+              <ClarityContainer />
             </Tabs.Panel>{" "}
           </Tabs>
         </section>
