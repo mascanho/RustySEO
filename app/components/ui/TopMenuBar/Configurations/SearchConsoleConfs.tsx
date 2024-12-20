@@ -79,12 +79,14 @@ export default function SearchConsoleConfs() {
   }
 
   return (
-    <Card className="w-full p-0 h-full shadow-none border-0 mt-4 mx-auto dark:bg-transparent">
-      <CardContent className="space-y-6 h-full p-8">
+    <Card className="w-full p-0 h-full shadow-none border-0 mt-0 mx-auto dark:bg-transparent">
+      <CardContent className="space-y-4 h-full p-6">
         <div className="flex items-start space-x-6">
           <Hash className="h-5 w-5 text-muted-foreground mt-1" />
           <div>
-            <p className="text-sm font-bold dark:text-gray-100">Project ID</p>
+            <p className="text-sm font-extrabold text-blue-600 dark:text-blue-400">
+              Project ID
+            </p>
             <p className="text-sm text-muted-foreground mt-1">
               {confs?.project_id}
             </p>
@@ -93,7 +95,9 @@ export default function SearchConsoleConfs() {
         <div className="flex items-start space-x-6">
           <User className="h-5 w-5 text-muted-foreground mt-1" />
           <div>
-            <p className="text-sm font-bold dark:text-gray-100">Client ID</p>
+            <p className="text-sm font-extrabold text-green-600 dark:text-green-400">
+              Client ID
+            </p>
             <p className="text-sm text-muted-foreground mt-1">
               {confs?.client_id}
             </p>
@@ -102,7 +106,7 @@ export default function SearchConsoleConfs() {
         <div className="flex items-start space-x-6">
           <Key className="h-5 w-5 text-muted-foreground mt-1" />
           <div className="w-full">
-            <p className="text-sm font-bold dark:text-gray-100">
+            <p className="text-sm font-extrabold text-purple-600 dark:text-purple-400">
               Client Secret
             </p>
             <div className="flex items-center w-full rounded-md text-sm mt-1">
@@ -118,9 +122,15 @@ export default function SearchConsoleConfs() {
                 className="ml-2"
               >
                 {showSecret ? (
-                  <EyeOff className="h-4 w-4" />
+                  <>
+                    <EyeOff className="h-4 w-4" />
+                    <span className="ml-2">Hide secret</span>
+                  </>
                 ) : (
-                  <Eye className="h-4 w-4" />
+                  <>
+                    <Eye className="h-4 w-4" />
+                    <span className="ml-2">Show secret</span>
+                  </>
                 )}
               </Button>
             </div>
@@ -129,14 +139,18 @@ export default function SearchConsoleConfs() {
         <div className="flex items-start space-x-6">
           <Link className="h-5 w-5 text-muted-foreground mt-1" />
           <div>
-            <p className="text-sm font-bold dark:text-gray-100">URL</p>
+            <p className="text-sm font-extrabold text-red-600 dark:text-red-400">
+              URL
+            </p>
             <p className="text-sm text-muted-foreground mt-1">{confs?.url}</p>
           </div>
         </div>
         <div className="flex items-start space-x-6">
           <Globe className="h-5 w-5 text-muted-foreground mt-1" />
           <div>
-            <p className="text-sm font-bold dark:text-gray-100">Search Type</p>
+            <p className="text-sm font-extrabold text-orange-600 dark:text-orange-400">
+              Search Type
+            </p>
             <p className="text-sm text-muted-foreground mt-1">
               {confs?.search_type}
             </p>
@@ -145,14 +159,18 @@ export default function SearchConsoleConfs() {
         <div className="flex items-start space-x-6">
           <FileText className="h-5 w-5 text-muted-foreground mt-1" />
           <div>
-            <p className="text-sm font-bold dark:text-gray-100">Date Range</p>
+            <p className="text-sm font-extrabold text-teal-600 dark:text-teal-400">
+              Date Range
+            </p>
             <p className="text-sm text-muted-foreground mt-1">{confs?.range}</p>
           </div>
         </div>
         <div className="flex items-start space-x-6">
           <Table className="h-5 w-5 text-muted-foreground mt-1" />
           <div>
-            <p className="text-sm font-bold dark:text-gray-100">Rows</p>
+            <p className="text-sm font-extrabold text-indigo-600 dark:text-indigo-400">
+              Rows
+            </p>
             <p className="text-sm text-muted-foreground mt-1">{confs?.rows}</p>
           </div>
         </div>
