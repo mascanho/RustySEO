@@ -34,13 +34,15 @@ export async function POST(request: Request) {
     console.log("The model selected is: ", model);
 
     // Process the request with the fetched model
-    const result = await streamText({
+    const stream = await streamText({
+      // @ts-ignore
       model: ollama(model), // Use the fetched model string
       messages,
     });
 
     // Return the streaming response
-    return new StreamingTextResponse(result.toAIStream());
+    // @ts-ignore
+    return new StreamingTextResponse(stream);
   } catch (error) {
     console.error("Error processing request:", error);
     return new Response("Internal Server Error", { status: 500 });
