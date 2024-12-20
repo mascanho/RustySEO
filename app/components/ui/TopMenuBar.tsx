@@ -453,9 +453,14 @@ const TopMenuBar = () => {
             <MenubarContent>
               <MenubarItem onClick={openPageSpeed}>
                 <FiZap className="mr-2" />
-                PageSpeed Insights
+                Microsoft Clarity
               </MenubarItem>
               <MenubarSeparator />
+              <MenubarItem onClick={openPageSpeed}>
+                <FiZap className="mr-2" />
+                PageSpeed Insights
+                <MenubarSeparator />
+              </MenubarItem>
               <MenubarItem onClick={openGoogleAnalytics}>
                 <FiZap className="mr-2" />
                 Google Analytics
