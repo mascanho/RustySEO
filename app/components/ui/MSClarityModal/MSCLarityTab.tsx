@@ -164,24 +164,32 @@ export default function ClarityDashboard() {
                 Traffic Overview
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Sessions</p>
-                <p className="text-2xl font-bold">2,829</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Bot Sessions</p>
-                <p className="text-2xl font-bold">210</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Distinct Users</p>
-                <p className="text-2xl font-bold">2,908</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Pages Per Session
-                </p>
-                <p className="text-2xl font-bold">1.39</p>
+            <CardContent>
+              <div className="space-y-4 p-4 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 rounded-lg">
+                <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Total Sessions
+                  </p>
+                  <p className="text-3xl font-bold">2,829</p>
+                </div>
+                <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Bot Sessions
+                  </p>
+                  <p className="text-3xl font-bold">210</p>
+                </div>
+                <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Distinct Users
+                  </p>
+                  <p className="text-3xl font-bold">2,908</p>
+                </div>
+                <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Pages Per Session
+                  </p>
+                  <p className="text-3xl font-bold">1.39</p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -192,20 +200,26 @@ export default function ClarityDashboard() {
                 Engagement Time
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Time</p>
-                <p className="text-2xl font-bold">244s</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Active Time</p>
-                <p className="text-2xl font-bold">69s</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  Average Scroll Depth
-                </p>
-                <p className="text-2xl font-bold">41.43%</p>
+            <CardContent>
+              <div className="space-y-4 p-4 bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 rounded-lg">
+                <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Total Time
+                  </p>
+                  <p className="text-3xl font-bold">244s</p>
+                </div>
+                <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Active Time
+                  </p>
+                  <p className="text-3xl font-bold">69s</p>
+                </div>
+                <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Average Scroll Depth
+                  </p>
+                  <p className="text-3xl font-bold">41.43%</p>
+                </div>
               </div>
             </CardContent>
           </Card>
