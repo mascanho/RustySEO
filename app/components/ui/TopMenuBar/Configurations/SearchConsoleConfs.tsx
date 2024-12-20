@@ -44,7 +44,6 @@ export default function SearchConsoleConfs() {
     setShowSecret(!showSecret);
   };
 
-  // Get the confs from the BE
   useEffect(() => {
     invoke("read_credentials_file")
       .then((result) => {
@@ -65,7 +64,7 @@ export default function SearchConsoleConfs() {
 
   if (confs === "" || confs === undefined || Object.keys(confs).length === 0) {
     return (
-      <Card className="w-full p-0 h-[24rem] flex items-center justify-center shadow-none border-0  my-auto dark:bg-transparent">
+      <Card className="w-full p-0 h-[24rem] flex items-center justify-center shadow-none border-0 my-auto dark:bg-transparent">
         <CardContent className="text-center">
           <p className="text-lg text-muted-foreground mb-2">
             No configurations available
@@ -80,28 +79,34 @@ export default function SearchConsoleConfs() {
   }
 
   return (
-    <Card className="w-full p-0 h-full shadow-none border-0 mt-4  mx-auto dark:bg-transparent">
-      <CardContent className="space-y-2 h-full">
-        <div className="flex items-center space-x-4">
-          <Hash className="h-5 w-5 text-muted-foreground" />
+    <Card className="w-full p-0 h-full shadow-none border-0 mt-4 mx-auto dark:bg-transparent">
+      <CardContent className="space-y-6 h-full p-8">
+        <div className="flex items-start space-x-6">
+          <Hash className="h-5 w-5 text-muted-foreground mt-1" />
           <div>
-            <p className="text-sm font-bold">Project ID</p>
-            <p className="text-sm text-muted-foreground">{confs?.project_id}</p>
+            <p className="text-sm font-bold dark:text-gray-100">Project ID</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {confs?.project_id}
+            </p>
           </div>
         </div>
-        <div className="flex items-center space-x-4">
-          <User className="h-5 w-5 text-muted-foreground" />
+        <div className="flex items-start space-x-6">
+          <User className="h-5 w-5 text-muted-foreground mt-1" />
           <div>
-            <p className="text-sm font-bold">Client ID</p>
-            <p className="text-sm text-muted-foreground">{confs?.client_id}</p>
+            <p className="text-sm font-bold dark:text-gray-100">Client ID</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {confs?.client_id}
+            </p>
           </div>
         </div>
-        <div className="flex items-center space-x-4">
-          <Key className="h-5 w-5 text-muted-foreground pt-4" />
-          <div>
-            <p className="text-sm font-bold mb-1">Client Secret</p>
-            <div className="flex items-center  w-[calc(50rem-7rem)] rounded-md px-2 text-sm text-black">
-              <p className="text-sm text-muted-foreground w-full pb-20 ">
+        <div className="flex items-start space-x-6">
+          <Key className="h-5 w-5 text-muted-foreground mt-1" />
+          <div className="w-full">
+            <p className="text-sm font-bold dark:text-gray-100">
+              Client Secret
+            </p>
+            <div className="flex items-center w-full rounded-md text-sm mt-1">
+              <p className="text-sm text-muted-foreground flex-1">
                 {showSecret
                   ? confs?.client_secret
                   : "********************************************"}
@@ -121,34 +126,34 @@ export default function SearchConsoleConfs() {
             </div>
           </div>
         </div>
-        <div className="flex items-center space-x-4">
-          <Link className="h-5 w-5 text-muted-foreground" />
+        <div className="flex items-start space-x-6">
+          <Link className="h-5 w-5 text-muted-foreground mt-1" />
           <div>
-            <p className="text-sm font-bold">URL</p>
-            <p className="text-sm text-muted-foreground">{confs?.url}</p>
+            <p className="text-sm font-bold dark:text-gray-100">URL</p>
+            <p className="text-sm text-muted-foreground mt-1">{confs?.url}</p>
           </div>
         </div>
-        <div className="flex items-center space-x-4">
-          <Globe className="h-5 w-5 text-muted-foreground" />
+        <div className="flex items-start space-x-6">
+          <Globe className="h-5 w-5 text-muted-foreground mt-1" />
           <div>
-            <p className="text-sm font-bold">Search Type</p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm font-bold dark:text-gray-100">Search Type</p>
+            <p className="text-sm text-muted-foreground mt-1">
               {confs?.search_type}
             </p>
           </div>
         </div>
-        <div className="flex items-center space-x-4">
-          <FileText className="h-5 w-5 text-muted-foreground" />
+        <div className="flex items-start space-x-6">
+          <FileText className="h-5 w-5 text-muted-foreground mt-1" />
           <div>
-            <p className="text-sm font-bold">Date Range</p>
-            <p className="text-sm">{confs?.range}</p>
+            <p className="text-sm font-bold dark:text-gray-100">Date Range</p>
+            <p className="text-sm text-muted-foreground mt-1">{confs?.range}</p>
           </div>
         </div>
-        <div className="flex items-center space-x-4">
-          <Table className="h-5 w-5 text-muted-foreground" />
+        <div className="flex items-start space-x-6">
+          <Table className="h-5 w-5 text-muted-foreground mt-1" />
           <div>
-            <p className="text-sm font-bold">Rows</p>
-            <p className="text-sm text-muted-foreground">{confs?.rows}</p>
+            <p className="text-sm font-bold dark:text-gray-100">Rows</p>
+            <p className="text-sm text-muted-foreground mt-1">{confs?.rows}</p>
           </div>
         </div>
       </CardContent>
