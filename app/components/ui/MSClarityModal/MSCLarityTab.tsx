@@ -1,5 +1,11 @@
 import { invoke } from "@tauri-apps/api/tauri";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table,
@@ -158,68 +164,50 @@ export default function ClarityDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm">
-            <CardHeader className="space-y-0 pb-4">
-              <CardTitle className="text-lg font-medium">
-                Traffic Overview
-              </CardTitle>
+          <Card>
+            <CardHeader>
+              <CardTitle>Traffic Overview</CardTitle>
+              <CardDescription>Key session statistics</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4 p-4 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 rounded-lg">
-                <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Total Sessions
-                  </p>
-                  <p className="text-3xl font-bold">2,829</p>
-                </div>
-                <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Bot Sessions
-                  </p>
-                  <p className="text-3xl font-bold">210</p>
-                </div>
-                <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Distinct Users
-                  </p>
-                  <p className="text-3xl font-bold">2,908</p>
-                </div>
-                <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Pages Per Session
-                  </p>
-                  <p className="text-3xl font-bold">1.39</p>
-                </div>
+            <CardContent className="space-y-6">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Total Sessions</span>
+                <span className="text-2xl font-bold">2,829</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Bot Sessions</span>
+                <span className="text-2xl font-bold">210</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Distinct Users</span>
+                <span className="text-2xl font-bold">2,908</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Pages Per Session</span>
+                <span className="text-2xl font-bold">1.39</span>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm">
-            <CardHeader className="space-y-0 pb-4">
-              <CardTitle className="text-lg font-medium">
-                Engagement Time
-              </CardTitle>
+          <Card>
+            <CardHeader>
+              <CardTitle>Engagement Time</CardTitle>
+              <CardDescription>User interaction durations</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4 p-4 bg-gradient-to-br from-green-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 rounded-lg">
-                <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Total Time
-                  </p>
-                  <p className="text-3xl font-bold">244s</p>
-                </div>
-                <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Active Time
-                  </p>
-                  <p className="text-3xl font-bold">69s</p>
-                </div>
-                <div className="bg-white/80 dark:bg-gray-800/80 p-4 rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Average Scroll Depth
-                  </p>
-                  <p className="text-3xl font-bold">41.43%</p>
-                </div>
+            <CardContent className="space-y-6">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Total Time</span>
+                <span className="text-2xl font-bold">244s</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Active Time</span>
+                <span className="text-2xl font-bold">69s</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">
+                  Average Scroll Depth
+                </span>
+                <span className="text-2xl font-bold">41.43%</span>
               </div>
             </CardContent>
           </Card>

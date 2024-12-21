@@ -63,7 +63,6 @@ const Footer = () => {
   const shallow = pathname === "/";
   const deep = pathname === "/global";
 
-  // Function to update URL and loading state from session storage
   const updateSessionState = () => {
     const storedUrl = sessionStorage.getItem("url") || "";
     setUrl(storedUrl);
@@ -72,12 +71,11 @@ const Footer = () => {
     setLoading(storedLoading === "true");
   };
 
-  // Effect to handle initial data load and set up event listener
   useEffect(() => {
-    updateSessionState(); // Initial load
+    updateSessionState();
 
     const handleSessionStorageUpdate = () => {
-      updateSessionState(); // Update state when session storage changes
+      updateSessionState();
     };
 
     window.addEventListener(
@@ -85,7 +83,6 @@ const Footer = () => {
       handleSessionStorageUpdate,
     );
 
-    // Clean up event listener on unmount
     return () => {
       window.removeEventListener(
         "sessionStorageUpdated",
@@ -94,7 +91,6 @@ const Footer = () => {
     };
   }, []);
 
-  // Function to update tasks
   const updateTasks = () => {
     try {
       const storedTasks = JSON.parse(
@@ -107,7 +103,6 @@ const Footer = () => {
     }
   };
 
-  // Effect to update tasks and listen for the "tasksUpdated" event
   useEffect(() => {
     updateTasks();
 
@@ -139,12 +134,11 @@ const Footer = () => {
         style={{ paddingTop: "5rem" }}
         closeOnEscape
         closeOnClickOutside
-        // overlayProps={{ backgroundOpacity: 0.5 }}
       >
         <TodoItems url={url} strategy={""} />
       </MantineDrawer>
 
-      <footer className="w-full justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[1000000] border-t-2 pb-1.5 dark:border-t-brand-dark flex items-center py-1 overflow-hidden text-xs">
+      <footer className="w-full justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[1000000] border-t-2 pb-1.5 dark:border-t-brand-dark flex items-center py-1 text-xs">
         <section>
           <div className="flex items-center ml-2 space-x-1 w-full">
             {loading ? (
@@ -156,7 +150,12 @@ const Footer = () => {
               url && (
                 <div className="flex items-center space-x-1">
                   <a href={url} rel="noreferrer">
-                    <CgWebsite className={`text-xl ${iconClasses}`} />
+                    <div className="relative group hover:delay-1000">
+                      <CgWebsite className={`text-xl ${iconClasses}`} />
+                      <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000">
+                        Visit Current Website
+                      </div>
+                    </div>
                   </a>
                   <span className="mt-[2px]">{url}</span>
                 </div>
@@ -166,36 +165,54 @@ const Footer = () => {
         </section>
         <section className="flex items-center space-x-2">
           <div className="flex w-50 items-center justify-center pr-3">
-            <div className="flex items-center  text-xs mt-[2px] space-x-3">
+            <div className="flex items-center text-xs mt-[2px] space-x-3">
               <div
                 onClick={() => (openedDrawer ? closeDrawer() : openDrawer())}
-                className="flex items-center cursor-pointer"
+                className="flex items-center cursor-pointer relative group hover:delay-1000"
               >
                 <LiaTasksSolid
                   className={`text-sm dark:text-white/50 ${iconClasses}`}
                 />
+                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000">
+                  Task List
+                </div>
                 <span>Tasks:</span>
                 <span className="text-sky-dark dark:text-sky-dark ml-1">
                   {tasks.length}
                 </span>
               </div>
-              <div>
+
+              {/* <div className="relative group hover:delay-1000">
                 <FaShip
                   className={`text-sm dark:text-white/50 ${iconClasses}`}
                 />
-              </div>{" "}
-              <ImGoogle3
-                onClick={() =>
-                  visibility.serpKeywords
-                    ? hideSerpKeywords()
-                    : showSerpKeywords()
-                }
-                className={iconClasses}
-              />
+                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000">
+                  Navigation Status
+                </div>
+              </div> */}
+
+              <div className="relative group hover:delay-1000">
+                <ImGoogle3
+                  onClick={() =>
+                    visibility.serpKeywords
+                      ? hideSerpKeywords()
+                      : showSerpKeywords()
+                  }
+                  className={iconClasses}
+                />
+                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000">
+                  Google Crawler
+                </div>
+              </div>
+
               <Drawer>
                 <DrawerTrigger className="flex items-center space-x-1">
-                  <FaRobot className={`pb-[2px] text-base ${iconClasses}`} />
-                  {/* <span className="text-xs mt-[2px]">Oxide AI</span> */}
+                  <div className="relative group hover:delay-1000">
+                    <FaRobot className={`pb-[2px] text-base ${iconClasses}`} />
+                    <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000">
+                      Rusty Chat
+                    </div>
+                  </div>
                 </DrawerTrigger>
                 <DrawerContent>
                   <DrawerHeader>
@@ -218,22 +235,32 @@ const Footer = () => {
                     <DrawerClose
                       className={`dark:text-white text-gray-600 absolute right-4 top-6 dark:text-white/30 ${iconClasses}`}
                     >
-                      <IoMdClose className="text-lg" />
+                      <div className="relative group hover:delay-1000">
+                        <IoMdClose className="text-lg" />
+                        <div className="absolute bottom-[calc(100%+5px)] right-0 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000">
+                          Rusty Chat
+                        </div>
+                      </div>
                     </DrawerClose>
                   </DrawerFooter>
                 </DrawerContent>
               </Drawer>
-              <BsLayoutSidebarInsetReverse
-                className={`text-sm ${iconClasses}`}
-                onClick={() => {
-                  // Toggle visibility based on current state
-                  if (visibility.sidebar) {
-                    hideSidebar();
-                  } else {
-                    showSidebar();
-                  }
-                }}
-              />
+
+              <div className="relative group hover:delay-1000">
+                <BsLayoutSidebarInsetReverse
+                  className={`text-sm ${iconClasses}`}
+                  onClick={() => {
+                    if (visibility.sidebar) {
+                      hideSidebar();
+                    } else {
+                      showSidebar();
+                    }
+                  }}
+                />
+                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000">
+                  Toggle Sidebar
+                </div>
+              </div>
             </div>
           </div>
         </section>
