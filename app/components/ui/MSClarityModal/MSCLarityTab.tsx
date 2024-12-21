@@ -37,94 +37,211 @@ import {
   Smartphone,
   Tablet,
   RefreshCw,
+  Users,
+  MousePointer,
+  ArrowDownUp,
+  Clock,
+  ScrollText,
+  AlertCircle,
 } from "lucide-react";
 import { BrowserChart } from "./Charts/BrowserChart";
 import { DeviceDistributionChart } from "./Charts/DeviceDistributionChart";
 import { GeographicalDistributionChart } from "./Charts/GeographicalDistributionChart";
+import { useState, useEffect } from "react";
+
+interface TrafficMetric {
+  name: string;
+  value: string;
+  icon: React.ElementType;
+}
 
 export default function ClarityDashboard() {
-  const userBehaviorData = [
+  const [data, setData] = useState<any>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    invoke<any>("get_microsoft_clarity_data_command")
+      .then((result: any[]) => {
+        setData(result[0]);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error(error);
+        setIsLoading(false);
+      });
+  }, []);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  // Process user behavior data
+  const behaviorMetrics = [
+    "DeadClickCount",
+    "ExcessiveScroll",
+    "RageClickCount",
+    "QuickbackClick",
+    "ScriptErrorCount",
+    "ErrorClickCount",
+  ].map((metricName) => {
+    const metric = data.find((m: any) => m.metricName === metricName);
+    return {
+      name: metricName,
+      sessions: metric?.information[0].sessionsCount || "0",
+      percentage: metric?.information[0].sessionsWithMetricPercentage || 0,
+      pageViews: metric?.information[0].pagesViews || "0",
+      subtotal: metric?.information[0].subTotal || "0",
+    };
+  });
+
+  // Process traffic metrics
+  const trafficInfo =
+    data.find((m: any) => m.metricName === "Traffic")?.information[0] || {};
+  const trafficMetrics = [
     {
-      name: "Dead Clicks",
-      sessions: 294,
-      percentage: 10.4,
-      pageViews: 347,
-      subtotal: 1156,
+      name: "Total Sessions",
+      value: trafficInfo.totalSessionCount || "0",
+      icon: Users,
     },
     {
-      name: "Excessive Scrolling",
-      sessions: 0,
-      percentage: 0,
-      pageViews: 0,
-      subtotal: 0,
+      name: "Bot Sessions",
+      value: trafficInfo.totalBotSessionCount || "0",
+      icon: MousePointer,
     },
     {
-      name: "Rage Clicks",
-      sessions: 10,
-      percentage: 0.35,
-      pageViews: 10,
-      subtotal: 29,
+      name: "Distinct Users",
+      value: trafficInfo.distinctUserCount || "0",
+      icon: Users,
     },
     {
-      name: "Quick Back Clicks",
-      sessions: 76,
-      percentage: 2.69,
-      pageViews: 154,
-      subtotal: 0,
-    },
-    {
-      name: "Script Errors",
-      sessions: 44,
-      percentage: 1.56,
-      pageViews: 45,
-      subtotal: 0,
-    },
-    {
-      name: "Error Clicks",
-      sessions: 1,
-      percentage: 0.04,
-      pageViews: 1,
-      subtotal: 0,
+      name: "Pages Per Session",
+      value: trafficInfo.pagesPerSessionPercentage?.toFixed(2) || "0",
+      icon: ArrowDownUp,
     },
   ];
 
-  const browserData = [
-    { name: "Chrome", sessions: 1341, icon: <Chrome className="w-4 h-4" /> },
+  // Process browser data
+  const browserMetric = data.find((m: any) => m.metricName === "Browser");
+  const browserData =
+    browserMetric?.information?.map((b: any) => ({
+      name: b.name,
+      sessions: parseInt(b.sessionsCount),
+      icon: b.name.includes("Chrome")
+        ? Chrome
+        : b.name.includes("Safari")
+          ? Apple
+          : Globe,
+    })) || [];
+
+  // Process device data
+  const deviceMetric = data.find((m: any) => m.metricName === "Device");
+  const deviceData =
+    deviceMetric?.information?.map((d: any) => ({
+      name: d.name,
+      sessions: parseInt(d.sessionsCount),
+      icon:
+        d.name === "Mobile" ? Smartphone : d.name === "PC" ? Monitor : Tablet,
+    })) || [];
+
+  // Process geographical data
+  const geoMetric = data.find((m: any) => m.metricName === "Country");
+  const geoData =
+    geoMetric?.information?.map((g: any) => ({
+      name: g.name,
+      sessions: parseInt(g.sessionsCount),
+    })) || [];
+
+  // Process engagement metrics
+  const engagementData =
+    data.find((m: any) => m.metricName === "EngagementTime")?.information[0] ||
+    {};
+  const scrollData =
+    data.find((m: any) => m.metricName === "ScrollDepth")?.information[0] || {};
+  const engagementMetrics = [
     {
-      name: "Mobile Safari",
-      sessions: 568,
-      icon: <Apple className="w-4 h-4" />,
+      name: "Total Time",
+      value: `${engagementData.totalTime || 0}s`,
+      icon: Clock,
     },
-    { name: "Edge", sessions: 416, icon: <Globe className="w-4 h-4" /> },
-    { name: "Others", sessions: 504, icon: <Globe className="w-4 h-4" /> },
+    {
+      name: "Active Time",
+      value: `${engagementData.activeTime || 0}s`,
+      icon: Clock,
+    },
+    {
+      name: "Average Scroll Depth",
+      value: `${scrollData.averageScrollDepth?.toFixed(1) || 0}%`,
+      icon: ScrollText,
+    },
   ];
 
-  const deviceData = [
-    { name: "PC", sessions: 1874, icon: <Monitor className="w-4 h-4" /> },
-    { name: "Mobile", sessions: 779, icon: <Smartphone className="w-4 h-4" /> },
-    { name: "Tablet", sessions: 175, icon: <Tablet className="w-4 h-4" /> },
-  ];
+  // Process page titles
+  const pageTitles =
+    data
+      .find((m: any) => m.metricName === "PageTitle")
+      ?.information?.map((p: any) => ({
+        title: p.name || "Unknown",
+        sessions: p.sessionsCount,
+      })) || [];
 
-  const geoData = [
-    { name: "United States", sessions: 709 },
-    { name: "Netherlands", sessions: 512 },
-    { name: "Germany", sessions: 188 },
-    { name: "Others", sessions: 1420 },
-  ];
+  // Process referrers
+  const referrers =
+    data
+      .find((m: any) => m.metricName === "ReferrerUrl")
+      ?.information?.map((r: any) => ({
+        name: r.name || "Direct",
+        sessions: r.sessionsCount,
+      })) || [];
+
+  // Process popular pages
+  const popularPages =
+    data
+      .find((m: any) => m.metricName === "PopularPages")
+      ?.information?.map((p: any) => ({
+        url: p.url,
+        visits: p.visitsCount,
+      })) || [];
+
+  const browsers = browserMetric?.information || [];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="container mx-auto py-2 px-4 space-y-3">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            User Behavior Dashboard
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xs font-bold text-gray-900 dark:text-white">
+              User Behavior Dashboard
+            </h1>
+            <div className="relative group mt-1">
+              <button className="text-gray-500 hover:text-gray-700">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </button>
+              <div className="absolute left-0 top-full mt-2 w-48 p-2 bg-white dark:bg-gray-800 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <p className="text-xs text-gray-600 dark:text-gray-300">
+                  These metrics match your current clarity timeframe selection
+                </p>
+              </div>
+            </div>
+          </div>
           <button
             className="bg-brand-bright hover:bg-blue-700 text-white font-medium py-2 px-3 rounded text-xs flex items-center gap-2"
             onClick={() => {
               invoke<any>("get_microsoft_clarity_data_command")
                 .then((result: any) => {
-                  console.log(result);
+                  setData(result[0]);
                 })
                 .catch((err: Error) => {
                   console.error(err);
@@ -137,28 +254,33 @@ export default function ClarityDashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card className="shadow-sm">
-            <CardHeader className="space-y-0 pb-4">
-              <CardTitle className="text-lg font-medium">
+          <Card className="shadow-sm relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900/50" />
+            <CardHeader className="space-y-0 pb-4 relative">
+              <CardTitle className="text-xs font-medium">
                 User Behavior Metrics
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="relative">
               <ScrollArea className="h-[400px]">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Metric</TableHead>
-                      <TableHead>Sessions</TableHead>
-                      <TableHead>%</TableHead>
+                      <TableHead className="text-xs">Metric</TableHead>
+                      <TableHead className="text-xs">Sessions</TableHead>
+                      <TableHead className="text-xs">%</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {userBehaviorData.map((item) => (
+                    {behaviorMetrics.map((item) => (
                       <TableRow key={item.name}>
-                        <TableCell>{item.name}</TableCell>
-                        <TableCell>{item.sessions}</TableCell>
-                        <TableCell>{item.percentage}%</TableCell>
+                        <TableCell className="text-xs">{item.name}</TableCell>
+                        <TableCell className="text-xs">
+                          {item.sessions}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {item.percentage}%
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -167,159 +289,168 @@ export default function ClarityDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Traffic Overview</CardTitle>
-              <CardDescription>Key session statistics</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Total Sessions</span>
-                <span className="text-2xl font-bold">2,829</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Bot Sessions</span>
-                <span className="text-2xl font-bold">210</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Distinct Users</span>
-                <span className="text-2xl font-bold">2,908</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Pages Per Session</span>
-                <span className="text-2xl font-bold">1.39</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Engagement Time</CardTitle>
-              <CardDescription>User interaction durations</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Total Time</span>
-                <span className="text-2xl font-bold">244s</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Active Time</span>
-                <span className="text-2xl font-bold">69s</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">
-                  Average Scroll Depth
-                </span>
-                <span className="text-2xl font-bold">41.43%</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-sm col-span-full lg:col-span-1">
-            {/* <CardHeader className="space-y-0 pb-4">
-              <CardTitle className="text-lg font-medium">
-                Browser Usage
+          <Card className="relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900/50" />
+            <CardHeader className="relative">
+              <CardTitle className="text-xs font-semibold">
+                Traffic Metrics
               </CardTitle>
-            </CardHeader> */}
-            <CardContent>
+              <CardDescription className="text-xs">
+                Key traffic indicators
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6 px-6 relative">
+              {trafficMetrics.map((metric) => (
+                <div
+                  key={metric.name}
+                  className="flex items-center justify-between"
+                >
+                  <div className="flex items-center space-x-4">
+                    <metric.icon className="h-6 w-6 text-blue-500" />
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                      {metric.name}
+                    </p>
+                  </div>
+                  <p className="text-xs font-bold">{metric.value}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900/50" />
+            <CardHeader className="space-y-0 pb-4 relative">
+              <CardTitle className="text-xs font-medium">
+                Engagement Time
+              </CardTitle>
+              <CardDescription className="text-xs">
+                User interaction durations
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-6 relative">
+              <ScrollArea className="h-[400px] pt-4">
+                <div className="space-y-8">
+                  {engagementMetrics.map((metric) => (
+                    <div
+                      key={metric.name}
+                      className="flex justify-between items-center"
+                    >
+                      <div className="flex items-center gap-3">
+                        <metric.icon className="h-5 w-5 text-blue-500" />
+                        <span className="text-xs font-medium">
+                          {metric.name}
+                        </span>
+                      </div>
+                      <span className="text-xs font-bold">{metric.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm col-span-full lg:col-span-1 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900/50" />
+            <CardContent className="relative">
               <ScrollArea className="h-[400px]">
                 <ResponsiveContainer width="100%" height={350}>
-                  <BrowserChart />
+                  <BrowserChart data={browserData} browsers={browsers} />
                 </ResponsiveContainer>
               </ScrollArea>
             </CardContent>
           </Card>
 
-          <DeviceDistributionChart />
+          <DeviceDistributionChart data={deviceData} />
 
-          <GeographicalDistributionChart />
+          <GeographicalDistributionChart data={geoData} />
 
-          <Card className="shadow-sm">
-            <CardHeader className="space-y-0 pb-4">
-              <CardTitle className="text-lg font-medium">
+          <Card className="shadow-sm relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900/50" />
+            <CardHeader className="space-y-0 pb-4 relative">
+              <CardTitle className="text-xs font-medium">
                 Top Page Titles
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="relative">
               <ScrollArea className="h-[300px]">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Sessions</TableHead>
+                      <TableHead className="text-xs">Title</TableHead>
+                      <TableHead className="text-xs">Sessions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    <TableRow>
-                      <TableCell>Optimize your ERP with Slimstock</TableCell>
-                      <TableCell>575</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>
-                        Slimstock: AI-Powered Supply Chain Planning
-                      </TableCell>
-                      <TableCell>161</TableCell>
-                    </TableRow>
+                    {pageTitles.map((page: any) => (
+                      <TableRow key={page.title}>
+                        <TableCell className="text-xs">{page.title}</TableCell>
+                        <TableCell className="text-xs">
+                          {page.sessions}
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </ScrollArea>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm">
-            <CardHeader className="space-y-0 pb-4">
-              <CardTitle className="text-lg font-medium">
+          <Card className="shadow-sm relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900/50" />
+            <CardHeader className="space-y-0 pb-4 relative">
+              <CardTitle className="text-xs font-medium">
                 Top Referrer URLs
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="relative">
               <ScrollArea className="h-[300px]">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Referrer</TableHead>
-                      <TableHead>Sessions</TableHead>
+                      <TableHead className="text-xs">Referrer</TableHead>
+                      <TableHead className="text-xs">Sessions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    <TableRow>
-                      <TableCell>Google</TableCell>
-                      <TableCell>995</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Direct Traffic (Null)</TableCell>
-                      <TableCell>998</TableCell>
-                    </TableRow>
+                    {referrers.map((referrer: any) => (
+                      <TableRow key={referrer.name}>
+                        <TableCell className="text-xs">
+                          {referrer.name}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {referrer.sessions}
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </ScrollArea>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm">
-            <CardHeader className="space-y-0 pb-4">
-              <CardTitle className="text-lg font-medium">
+          <Card className="shadow-sm relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900/50" />
+            <CardHeader className="space-y-0 pb-4 relative">
+              <CardTitle className="text-xs font-medium">
                 Popular Pages
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="relative">
               <ScrollArea className="h-[300px]">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Page</TableHead>
-                      <TableHead>Visits</TableHead>
+                      <TableHead className="text-xs">Page</TableHead>
+                      <TableHead className="text-xs">Visits</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    <TableRow>
-                      <TableCell>Optimize your ERP with Slimstock</TableCell>
-                      <TableCell>581</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Slimstock Homepage</TableCell>
-                      <TableCell>186</TableCell>
-                    </TableRow>
+                    {popularPages.map((page: any) => (
+                      <TableRow key={page.url}>
+                        <TableCell className="text-xs">{page.url}</TableCell>
+                        <TableCell className="text-xs">{page.visits}</TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </ScrollArea>

@@ -18,17 +18,10 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-const chartData = [
-  { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
-  { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
-  { browser: "firefox", visitors: 287, fill: "var(--color-firefox)" },
-  { browser: "edge", visitors: 173, fill: "var(--color-edge)" },
-  { browser: "other", visitors: 190, fill: "var(--color-other)" },
-];
 
 const chartConfig = {
-  visitors: {
-    label: "Visitors",
+  sessions: {
+    label: "Sessions",
   },
   chrome: {
     label: "Chrome",
@@ -52,10 +45,29 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function BrowserChart() {
-  const totalVisitors = React.useMemo(() => {
-    return chartData.reduce((acc, curr) => acc + curr.visitors, 0);
-  }, []);
+interface BrowserChartProps {
+  data: Array<{
+    name: string;
+    sessions: number;
+    icon: React.ReactNode;
+  }>;
+}
+
+export function BrowserChart({ data }: BrowserChartProps) {
+  const totalSessions = React.useMemo(() => {
+    if (!data) return 0;
+    return data.reduce((acc, curr) => acc + curr.sessions, 0);
+  }, [data]);
+
+  const processedData = React.useMemo(() => {
+    return data.map((item) => ({
+      browser: item.name,
+      visitors: item.sessions,
+      fill:
+        chartConfig[item.name.toLowerCase() as keyof typeof chartConfig]
+          ?.color || chartConfig.other.color,
+    }));
+  }, [data]);
 
   return (
     <Card className="flex flex-col border-0 shadow-none">
@@ -74,7 +86,7 @@ export function BrowserChart() {
               content={<ChartTooltipContent hideLabel />}
             />
             <Pie
-              data={chartData}
+              data={processedData}
               dataKey="visitors"
               nameKey="browser"
               innerRadius={60}
@@ -95,14 +107,14 @@ export function BrowserChart() {
                           y={viewBox.cy}
                           className="fill-foreground text-3xl font-bold"
                         >
-                          {totalVisitors.toLocaleString()}
+                          {totalSessions.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
                           className="fill-muted-foreground"
                         >
-                          Visitors
+                          Sessions
                         </tspan>
                       </text>
                     );
@@ -118,7 +130,7 @@ export function BrowserChart() {
           Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
         </div>
         <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
+          Showing total sessions for the last 6 months
         </div>
       </CardFooter>
     </Card>
