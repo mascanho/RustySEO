@@ -120,7 +120,7 @@ export default function ClarityDashboard() {
             User Behavior Dashboard
           </h1>
           <button
-            className="bg-brand-bright hover:bg-blue-700 text-white font-medium py-2 px-4 rounded text-sm flex items-center gap-2"
+            className="bg-brand-bright hover:bg-blue-700 text-white font-medium py-2 px-3 rounded text-xs flex items-center gap-2"
             onClick={() => {
               invoke<any>("get_microsoft_clarity_data_command")
                 .then((result: any) => {
@@ -131,7 +131,7 @@ export default function ClarityDashboard() {
                 });
             }}
           >
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="w-3 h-3" />
             Refresh Data
           </button>
         </div>

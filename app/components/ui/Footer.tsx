@@ -152,8 +152,8 @@ const Footer = () => {
                   <a href={url} rel="noreferrer">
                     <div className="relative group hover:delay-1000">
                       <CgWebsite className={`text-xl ${iconClasses}`} />
-                      <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
-                        Visit Current Website
+                      <div className="absolute bottom-[calc(100%+5px)] left-6 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
+                        Visit URL
                       </div>
                     </div>
                   </a>
@@ -248,7 +248,7 @@ const Footer = () => {
                     }
                   }}
                 />
-                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
+                <div className="absolute bottom-[calc(100%+5px)] -right-2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
                   Toggle Sidebar
                 </div>
               </div>

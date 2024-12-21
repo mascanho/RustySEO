@@ -49,11 +49,11 @@ const chartConfig = {
 
 export function GeographicalDistributionChart() {
   return (
-    <Card className="px-2">
+    <Card>
       <CardHeader>
         <CardTitle>Geographical Distribution</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-6">
         <ChartContainer config={chartConfig}>
           <BarChart
             accessibilityLayer
