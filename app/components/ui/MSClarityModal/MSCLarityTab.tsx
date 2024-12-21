@@ -38,6 +38,9 @@ import {
   Tablet,
   RefreshCw,
 } from "lucide-react";
+import { BrowserChart } from "./Charts/BrowserChart";
+import { DeviceDistributionChart } from "./Charts/DeviceDistributionChart";
+import { GeographicalDistributionChart } from "./Charts/GeographicalDistributionChart";
 
 export default function ClarityDashboard() {
   const userBehaviorData = [
@@ -212,85 +215,24 @@ export default function ClarityDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm col-span-full lg:col-span-2">
-            <CardHeader className="space-y-0 pb-4">
+          <Card className="shadow-sm col-span-full lg:col-span-1">
+            {/* <CardHeader className="space-y-0 pb-4">
               <CardTitle className="text-lg font-medium">
                 Browser Usage
               </CardTitle>
-            </CardHeader>
+            </CardHeader> */}
             <CardContent>
               <ScrollArea className="h-[400px]">
                 <ResponsiveContainer width="100%" height={350}>
-                  <PieChart>
-                    <Pie
-                      data={browserData}
-                      dataKey="sessions"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={125}
-                      fill="#8884d8"
-                      label
-                    />
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
+                  <BrowserChart />
                 </ResponsiveContainer>
               </ScrollArea>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm">
-            <CardHeader className="space-y-0 pb-4">
-              <CardTitle className="text-lg font-medium">
-                Device Distribution
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[400px]">
-                <ResponsiveContainer width="100%" height={350}>
-                  <BarChart data={deviceData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar
-                      dataKey="sessions"
-                      fill="#8884d8"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+          <DeviceDistributionChart />
 
-          <Card className="shadow-sm col-span-full lg:col-span-2">
-            <CardHeader className="space-y-0 pb-4">
-              <CardTitle className="text-lg font-medium">
-                Geographical Distribution
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[400px]">
-                <ResponsiveContainer width="100%" height={350}>
-                  <BarChart data={geoData} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis dataKey="name" type="category" />
-                    <Tooltip />
-                    <Legend />
-                    <Bar
-                      dataKey="sessions"
-                      fill="#8884d8"
-                      radius={[0, 4, 4, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+          <GeographicalDistributionChart />
 
           <Card className="shadow-sm">
             <CardHeader className="space-y-0 pb-4">

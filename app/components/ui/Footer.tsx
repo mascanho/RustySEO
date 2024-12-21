@@ -152,7 +152,7 @@ const Footer = () => {
                   <a href={url} rel="noreferrer">
                     <div className="relative group hover:delay-1000">
                       <CgWebsite className={`text-xl ${iconClasses}`} />
-                      <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000">
+                      <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
                         Visit Current Website
                       </div>
                     </div>
@@ -173,7 +173,7 @@ const Footer = () => {
                 <LiaTasksSolid
                   className={`text-sm dark:text-white/50 ${iconClasses}`}
                 />
-                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000">
+                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
                   Task List
                 </div>
                 <span>Tasks:</span>
@@ -181,15 +181,6 @@ const Footer = () => {
                   {tasks.length}
                 </span>
               </div>
-
-              {/* <div className="relative group hover:delay-1000">
-                <FaShip
-                  className={`text-sm dark:text-white/50 ${iconClasses}`}
-                />
-                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000">
-                  Navigation Status
-                </div>
-              </div> */}
 
               <div className="relative group hover:delay-1000">
                 <ImGoogle3
@@ -200,7 +191,7 @@ const Footer = () => {
                   }
                   className={iconClasses}
                 />
-                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000">
+                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
                   Google Crawler
                 </div>
               </div>
@@ -209,7 +200,7 @@ const Footer = () => {
                 <DrawerTrigger className="flex items-center space-x-1">
                   <div className="relative group hover:delay-1000">
                     <FaRobot className={`pb-[2px] text-base ${iconClasses}`} />
-                    <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000">
+                    <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
                       Rusty Chat
                     </div>
                   </div>
@@ -237,7 +228,7 @@ const Footer = () => {
                     >
                       <div className="relative group hover:delay-1000">
                         <IoMdClose className="text-lg" />
-                        <div className="absolute bottom-[calc(100%+5px)] right-0 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000">
+                        <div className="absolute bottom-[calc(100%+5px)] right-0 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
                           Rusty Chat
                         </div>
                       </div>
@@ -257,7 +248,7 @@ const Footer = () => {
                     }
                   }}
                 />
-                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000">
+                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
                   Toggle Sidebar
                 </div>
               </div>
