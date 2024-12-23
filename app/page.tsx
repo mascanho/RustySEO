@@ -619,10 +619,10 @@ const Home: React.FC<HomeProps> = () => {
                   <RiFireLine className="inline-block mr-2 mb-[2px] text-sm" />
                   Clarity
                 </Tabs.Tab>
-                <Tabs.Tab value="seo">
+                {/* <Tabs.Tab value="seo">
                   <GoGoal className="inline-block mr-2 mb-[2px] text-sm" />
                   SEO Goals
-                </Tabs.Tab>
+                </Tabs.Tab> */}
               </Tabs.List>
             </div>
             <Tabs.Panel value="first">

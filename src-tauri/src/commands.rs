@@ -162,7 +162,7 @@ pub async fn set_microsoft_clarity_command(
 
 // ------- GET MICROSOFT CLARITY CREDENTIALS
 #[tauri::command]
-pub async fn get_microsoft_clarity_command() -> Result<String, String> {
+pub async fn get_microsoft_clarity_command() -> Result<Vec<String>, String> {
     let result = libs::get_microsoft_clarity_credentials().await;
     match result {
         Ok(result) => Ok(result),

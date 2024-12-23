@@ -6,6 +6,7 @@ import PagespeedInsightsApi from "./PagespeedInsigthsApi";
 import GoogleAnalyticsConf from "./GoogleAnalyticsConf";
 import SearchConsoleConfs from "./SearchConsoleConfs";
 import AIConfigurations from "./AIConfigurations";
+import ClarityConfs from "./ClarityConfs";
 
 const Configurations = () => {
   return (
@@ -15,21 +16,21 @@ const Configurations = () => {
           <Tabs.Tab value="pagespeed">Page Speed Insights</Tabs.Tab>
           <Tabs.Tab value="analytics">Google Analytics</Tabs.Tab>
           <Tabs.Tab value="console">Google Search Console</Tabs.Tab>
-          <Tabs.Tab value="ai">Ai Models</Tabs.Tab>
+          <Tabs.Tab value="clarity">MS Clarity</Tabs.Tab>
+          <Tabs.Tab value="ai">Ai Model</Tabs.Tab>
         </Tabs.List>
-
         <Tabs.Panel value="pagespeed">
           <PagespeedInsightsApi />
         </Tabs.Panel>
-
         <Tabs.Panel value="analytics">
           <GoogleAnalyticsConf />
         </Tabs.Panel>
-
         <Tabs.Panel value="console">
           <SearchConsoleConfs />
         </Tabs.Panel>
-
+        <Tabs.Panel value="clarity">
+          <ClarityConfs />
+        </Tabs.Panel>{" "}
         <Tabs.Panel value="ai">
           <AIConfigurations />
         </Tabs.Panel>

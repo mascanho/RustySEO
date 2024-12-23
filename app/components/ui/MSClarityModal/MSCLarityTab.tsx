@@ -47,7 +47,7 @@ import {
 import { BrowserChart } from "./Charts/BrowserChart";
 import { DeviceDistributionChart } from "./Charts/DeviceDistributionChart";
 import { GeographicalDistributionChart } from "./Charts/GeographicalDistributionChart";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface TrafficMetric {
   name: string;
@@ -57,23 +57,7 @@ interface TrafficMetric {
 
 export default function ClarityDashboard() {
   const [data, setData] = useState<any>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    invoke<any>("get_microsoft_clarity_data_command")
-      .then((result: any[]) => {
-        setData(result[0]);
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        console.error(error);
-        setIsLoading(false);
-      });
-  }, []);
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
+  const [isLoading, setIsLoading] = useState(false);
 
   // Process user behavior data
   const behaviorMetrics = [
@@ -229,7 +213,7 @@ export default function ClarityDashboard() {
                   />
                 </svg>
               </button>
-              <div className="absolute left-0 top-full mt-2 w-48 p-2 bg-white dark:bg-gray-800 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <div className="absolute left-0 top-full mt-0 z-10 w-48 p-2 bg-white dark:bg-gray-800 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                 <p className="text-xs text-gray-600 dark:text-gray-300">
                   These metrics match your current clarity timeframe selection
                 </p>
@@ -239,12 +223,15 @@ export default function ClarityDashboard() {
           <button
             className="bg-brand-bright hover:bg-blue-700 text-white font-medium py-2 px-3 rounded text-xs flex items-center gap-2"
             onClick={() => {
+              setIsLoading(true);
               invoke<any>("get_microsoft_clarity_data_command")
                 .then((result: any) => {
                   setData(result[0]);
+                  setIsLoading(false);
                 })
                 .catch((err: Error) => {
                   console.error(err);
+                  setIsLoading(false);
                 });
             }}
           >

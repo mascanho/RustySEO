@@ -825,8 +825,8 @@ pub struct ClarityData {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ClarityCredentials {
-    pub endpoint: String,
-    pub token: String,
+    pub endpoint: String, // API Endpoint
+    pub token: String,    // API Token
 }
 
 pub async fn set_microsoft_clarity_credentials(
@@ -854,7 +854,7 @@ pub async fn set_microsoft_clarity_credentials(
 }
 
 // ------ GET THE MICROSOFTY CLARITY CREDENTIALS
-pub async fn get_microsoft_clarity_credentials() -> Result<String, String> {
+pub async fn get_microsoft_clarity_credentials() -> Result<Vec<String>, String> {
     let config_dir = ProjectDirs::from("", "", "rustyseo")
         .ok_or_else(|| "Failed to get project directories".to_string())?;
     let config_dir = config_dir.data_dir();
@@ -865,15 +865,16 @@ pub async fn get_microsoft_clarity_credentials() -> Result<String, String> {
         .await
         .map_err(|e| format!("Failed to read Microsoft Clarity ID file: {}", e))?;
 
-    // Only log the content length for security
-    println!(
-        "Successfully read Clarity ID file of length: {}",
-        file_toml.len()
-    );
-
     println!("File content: {:#?}", file_toml);
 
-    Ok(file_toml)
+    let credentials: ClarityCredentials =
+        toml::from_str(&file_toml).map_err(|e| format!("Failed to parse credentials: {}", e))?;
+
+    let mut creds = Vec::new();
+    creds.push(credentials.endpoint);
+    creds.push(credentials.token);
+
+    Ok(creds)
 }
 
 // ----- MAKE THE API CALL TO MICROSOFT CLARITY
@@ -881,29 +882,25 @@ pub async fn get_microsoft_clarity_credentials() -> Result<String, String> {
 pub async fn get_microsoft_clarity_data() -> Result<Vec<Value>, String> {
     let credentials_str = get_microsoft_clarity_credentials().await?;
 
-    let credentials: ClarityCredentials = toml::from_str(&credentials_str)
-        .map_err(|e| format!("Failed to parse credentials: {}", e))?;
+    let endpoint = credentials_str[0].clone(); // Get endpoint from first element
+    let token = credentials_str[1].clone(); // Get token from second element
 
-    println!("Credentials: {:?}", credentials);
+    let credentials = ClarityCredentials { endpoint, token };
 
-    let endpoint = credentials.endpoint.clone();
-    let token = credentials.token.clone();
-
-    println!("This is the end point: {:#?}", endpoint);
-    println!("This is the token: {:#?}", token);
+    println!("Credentials: {:?}", &credentials);
 
     let client = reqwest::Client::new();
 
     let mut headers = HeaderMap::new();
     headers.insert(
         "Authorization",
-        HeaderValue::from_str(&format!("Bearer {}", token))
+        HeaderValue::from_str(&format!("Bearer {}", credentials.token))
             .map_err(|e| format!("Invalid header value: {}", e))?,
     );
 
     // Make API request
     let response = client
-        .get(&format!("https://{}", &endpoint))
+        .get(&format!("https://{}", credentials.endpoint))
         .headers(headers)
         .send()
         .await
