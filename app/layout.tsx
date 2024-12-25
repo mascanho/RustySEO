@@ -46,6 +46,7 @@ export default function RootLayout({
     <html lang="en" className="min-w-[600px]" suppressHydrationWarning>
       <body
         className={`relative overflow-hidden rounded-md bg-gray-100 dark:bg-brand-darker/95 ${roboto.className}`}
+        suppressHydrationWarning
       >
         <MantineProvider>
           {/* Fixed MenuDrawer */}
