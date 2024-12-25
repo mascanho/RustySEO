@@ -68,19 +68,25 @@ Why join the Navy when you can be a SEO engineer?
 
 To setup Google Search Console, follow these steps:
 
-1. Launch RustySEO;
+1. You need to setup a Google Console Account with Search Console API connected
+
+[Google Cloud Platform](https://console.cloud.google.com/)
+
+2. Launch RustySEO;
 
 ![RustySEO](./screenshots/rustyseo.png)
 
-2. Go to the menu **Connectors** 👉 **Search Console**
+3. Go to the menu **Connectors** 👉 **Search Console**
 
 ![RustySEO](./screenshots/rustyseo.png)
 
-3. Add your Google Search Console credentials and data
+4. Add your Google Search Console credentials
 
-![RustySEO](assets/gsc1.png)
+![RustySEO](assets/ss1.png)
 
-5. **Connect s**:
+4. 
+
+6. **Connect s**:
 
    ```bash
    npm install
