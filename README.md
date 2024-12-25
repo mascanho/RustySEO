@@ -68,7 +68,7 @@ Why join the Navy when you can be a SEO engineer?
 
 To setup Google Search Console, follow these steps:
 
-1. You need to setup a [Google Cloud Platform](https://console.cloud.google.com/) with Search Console API enabled
+1. You need to setup a [Google Cloud Console](https://console.cloud.google.com/) with Search Console API enabled
 
 2. Launch RustySEO;
 
@@ -86,11 +86,12 @@ You can find all the details in your Google Cloud console account with the excep
 
 6. Quit RustySEO
 
-7. Open your windows terminal and run the following command:
+7. Make sure you have ![WSL](https://learn.microsoft.com/en-us/windows/wsl/install) installed. Open your Windows Powershell and run the following command:
 
 ```bash
-Tee-object
+wsl --set-version ubuntu
 ```
+
 
 6. **Connect s**:
 
