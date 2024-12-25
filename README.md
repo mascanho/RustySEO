@@ -80,6 +80,10 @@ To setup Google Search Console, follow these steps:
 
 ![RustySEO](assets/ss1.png)
 
+You can find all the details in your Google Cloud console account with the exception of the "URL" and "Propery Type", which should match what you have in your Google Search console account.
+
+![RustySEO](assets/properties.png)
+
 5. Submit the credentials and your desired options
 
 6. Quit RustySEO
