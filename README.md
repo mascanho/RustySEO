@@ -74,17 +74,21 @@ To setup Google Search Console, follow these steps:
 
 2. Launch RustySEO;
 
-![RustySEO](./screenshots/rustyseo.png)
-
 3. Go to the menu **Connectors** 👉 **Search Console**
-
-![RustySEO](./screenshots/rustyseo.png)
 
 4. Add your Google Search Console credentials
 
 ![RustySEO](assets/ss1.png)
 
-4. 
+5. Submit the credentials and your desired options
+
+6. Quit RustySEO
+
+7. Open your windows terminal and run the following command:
+
+```bash
+Tee-object
+```
 
 6. **Connect s**:
 
