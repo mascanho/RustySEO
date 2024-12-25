@@ -76,7 +76,11 @@ To setup Google Search Console, follow these steps:
 
 ![RustySEO](./screenshots/rustyseo.png)
 
-3. **Install dependencies**:
+3. Add your Google Search Console credentials and data
+
+![RustySEO](assets/gsc1.png)
+
+5. **Connect s**:
 
    ```bash
    npm install
