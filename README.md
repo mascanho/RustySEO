@@ -49,33 +49,6 @@ Why join the Navy when you can be a SEO engineer?
 - Better reporting;
 - Password protection & encryption;
 
-
-## Installation
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/rustyseo/rustyseo.git
-   ```
-
-2. Install dependencies:
-
-   ```bash
-   npm install
-   ```
-
-3. Run the software:
-
-   ```bash
-   npm start
-   ```
-
-4. Open your browser and go to `http://localhost:3000`.
-
-5. Login with your Google account.
-
-6
-
 ## Connectors / APIs (Get your keys, they are free 😉)
 - [Google Search Console](https://search.google.com/search-console/about)
 - [Google Cloud Platform](https://console.cloud.google.com/welcome)
@@ -83,6 +56,7 @@ Why join the Navy when you can be a SEO engineer?
 - [Google Gemini](https://ai.google.dev/gemini-api/docs/api-key)
 - [Ollama](https://ollama.ai/)
 - [PageSpeed Insights](https://developers.google.com/speed/docs/insights/v5/reference/pagespeedapi/runpagespeed)
+- [Microsoft Clarity](https://clarity.microsoft.com/)
 
 ## Setting up Google Search Console
 
