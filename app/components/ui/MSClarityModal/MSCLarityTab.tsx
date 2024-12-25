@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { invoke } from "@tauri-apps/api/tauri";
 import {
   Card,

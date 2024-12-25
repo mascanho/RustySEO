@@ -18,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
 import TableFloatMenus from "./CrawlHistory/_components/TableFloatMenus";
+import Link from "next/link";
 
 export const HeadAnalysis = ({
   pageTitle,
@@ -225,12 +226,12 @@ export const HeadAnalysis = ({
                       className="flex ml-2 items-center space-x-2 text-black p-2  px-2   border-b border-white dark:border-b-white/5"
                       key={index}
                     >
-                      <a
+                      <Link
                         className="underline text-blue-500"
                         href={hreflang?.href}
                       >
                         {hreflang?.href}
-                      </a>
+                      </Link>
                       <span className="border px-2 py-1 text-xs text-white bg-black/50 dark:bg-brand-dark  rounded-md w-fit h-6 items-center flex justify-center">
                         {hreflang?.lang}
                       </span>
@@ -267,9 +268,9 @@ export const HeadAnalysis = ({
             </span>
             <span className="text-black ml-2">
               {openGraphDetails.image === null && (
-                <a href="/#og" className="text-red-500">
+                <Link href="/#og" className="text-red-500">
                   Not Found
-                </a>
+                </Link>
               )}
               {openGraphDetails.image !== null && pageTitle?.length > 0 && (
                 <span className="text-green-500">OG Found in your markup</span>
@@ -292,9 +293,9 @@ export const HeadAnalysis = ({
             </span>
             <span className="text-black/80 ml-2">
               {pageSchema.length > 0 && pageTitle?.length > 0 && (
-                <a href="#sd">
+                <Link href="#sd">
                   <span className="text-green-500">Structured data found</span>
-                </a>
+                </Link>
               )}
               {!pageSchema[0] && pageTitle?.length > 0 && (
                 <span className="text-red-500">Not Found</span>
@@ -317,11 +318,11 @@ export const HeadAnalysis = ({
             </span>
             <span className="text-black/80 ml-2">
               {tagManager.length > 0 && pageTitle?.length > 0 && (
-                <a href="#sd">
+                <Link href="#sd">
                   <span className="text-black text-xs font-black dark:text-white">
                     {tagManager}
                   </span>
-                </a>
+                </Link>
               )}
               {tagManager.length === 0 && pageTitle?.length > 0 && (
                 <span className="text-red-500">Missing container</span>
@@ -344,13 +345,13 @@ export const HeadAnalysis = ({
             </span>
             <span className="text-black/80 ml-2">
               {indexation.length > 0 && (
-                <a href="#sd">
+                <Link href="#sd">
                   <span
                     className={`text-black text-xs font-black ${charset[0] ? "text-green-500 " : "text-red-500"}`}
                   >
                     {charset && charset[0]}
                   </span>
-                </a>
+                </Link>
               )}
               {charset.length === 0 && pageTitle?.length > 0 && (
                 <span className="text-red-500">Not Found</span>
@@ -371,13 +372,13 @@ export const HeadAnalysis = ({
             </span>
             <span className="text-black/80 ml-2">
               {indexation.length > 0 && pageTitle?.length > 0 && (
-                <a href="#sd">
+                <Link href="#sd">
                   <span
                     className={`text-black text-xs font-black ${indexation[0] === "Indexable" ? "text-green-500 " : "text-red-500"}`}
                   >
                     {indexation[0]}
                   </span>
-                </a>
+                </Link>
               )}
               {indexation.length === 0 && pageTitle?.length > 0 && (
                 <span className="text-red-500">No container Found</span>

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,10 +41,8 @@ export default function ClarityConfs() {
       });
   }, []);
 
-
   return (
     <Card className="w-full mt-8 mx-auto ml-0 dark:bg-brand-darker border-0 shadow-none">
-
       <CardContent className="space-y-4">
         <div>
           <label className="text-sm font-medium">API Endpoint</label>
@@ -82,3 +79,4 @@ export default function ClarityConfs() {
       </CardFooter>
     </Card>
   );
+}
