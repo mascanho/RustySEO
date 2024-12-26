@@ -33,13 +33,15 @@ export default function ClarityConfs() {
   useEffect(() => {
     invoke<APIConfig>("get_microsoft_clarity_command")
       .then((result: any) => {
-        setApiEndpoint(result.endpoint);
-        setApiKey(result.token);
+        setApiEndpoint(result);
+        setApiKey(result);
       })
       .catch((error) => {
         console.error("Error fetching API config:", error);
       });
   }, []);
+
+  console.log(apiEndpoint, apiKey, "Clkarity stuff");
 
   return (
     <Card className="w-full mt-8 mx-auto ml-0 dark:bg-brand-darker border-0 shadow-none">
@@ -47,14 +49,14 @@ export default function ClarityConfs() {
         <div>
           <label className="text-sm font-medium">API Endpoint</label>
           <div className="bg-gray-100 dark:bg-brand-dark p-4 rounded-md font-mono text-sm break-all">
-            {apiEndpoint[0]}
+            {apiEndpoint && apiEndpoint[0]}
           </div>
         </div>
 
         <div>
           <label className="text-sm font-medium">API Key</label>
           <div className="bg-gray-100 dark:bg-brand-dark p-4 rounded-md font-mono text-sm break-all overflow-hidden">
-            {isVisible ? apiKey[1] : maskApiKey(apiKey[1])}
+            {isVisible ? apiKey && apiKey[1] : maskApiKey(apiKey && apiKey[1])}
           </div>
         </div>
       </CardContent>

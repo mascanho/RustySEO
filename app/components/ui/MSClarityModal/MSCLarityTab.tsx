@@ -338,9 +338,8 @@ export default function ClarityDashboard() {
           </Card>
 
           <Card className="shadow-sm col-span-full lg:col-span-1 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900/50" />
             <CardContent className="relative">
-              <ScrollArea className="h-[400px]">
+              <ScrollArea className="h-[300px]">
                 <ResponsiveContainer width="100%" height={350}>
                   <BrowserChart data={browserData} browsers={browsers} />
                 </ResponsiveContainer>

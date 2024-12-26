@@ -874,6 +874,8 @@ pub async fn get_microsoft_clarity_credentials() -> Result<Vec<String>, String> 
     creds.push(credentials.endpoint);
     creds.push(credentials.token);
 
+    println!("Clarity Credentials:{:#?}", creds);
+
     Ok(creds)
 }
 
@@ -887,7 +889,7 @@ pub async fn get_microsoft_clarity_data() -> Result<Vec<Value>, String> {
 
     let credentials = ClarityCredentials { endpoint, token };
 
-    println!("Credentials: {:?}", &credentials);
+    println!("Making the API call with credentials: {:?}", &credentials);
 
     let client = reqwest::Client::new();
 

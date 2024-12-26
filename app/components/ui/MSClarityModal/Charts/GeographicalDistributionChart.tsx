@@ -24,30 +24,18 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-const chartData = [
-  { month: "January", desktop: 186, mobile: 80 },
-  { month: "February", desktop: 305, mobile: 200 },
-  { month: "March", desktop: 237, mobile: 120 },
-  { month: "April", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "June", desktop: 214, mobile: 140 },
-];
 
 const chartConfig = {
-  desktop: {
-    label: "Desktop",
+  sessions: {
+    label: "Sessions",
     color: "hsl(var(--chart-1))",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "hsl(var(--chart-2))",
   },
   label: {
     color: "hsl(var(--background))",
   },
 } satisfies ChartConfig;
 
-export function GeographicalDistributionChart() {
+export function GeographicalDistributionChart({ data }: { data: any[] }) {
   return (
     <Card>
       <CardHeader>
@@ -57,7 +45,7 @@ export function GeographicalDistributionChart() {
         <ChartContainer config={chartConfig}>
           <BarChart
             accessibilityLayer
-            data={chartData}
+            data={data}
             layout="vertical"
             margin={{
               right: 16,
@@ -65,34 +53,33 @@ export function GeographicalDistributionChart() {
           >
             <CartesianGrid horizontal={false} />
             <YAxis
-              dataKey="month"
+              dataKey="name"
               type="category"
               tickLine={false}
               tickMargin={10}
               axisLine={false}
-              tickFormatter={(value) => value.slice(0, 3)}
               hide
             />
-            <XAxis dataKey="desktop" type="number" hide />
+            <XAxis dataKey="sessions" type="number" hide />
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent indicator="line" />}
             />
             <Bar
-              dataKey="desktop"
+              dataKey="sessions"
               layout="vertical"
-              fill="var(--color-desktop)"
+              fill="var(--color-sessions)"
               radius={4}
             >
               <LabelList
-                dataKey="month"
+                dataKey="name"
                 position="insideLeft"
                 offset={8}
                 className="fill-[--color-label]"
                 fontSize={12}
               />
               <LabelList
-                dataKey="desktop"
+                dataKey="sessions"
                 position="right"
                 offset={8}
                 className="fill-foreground"
