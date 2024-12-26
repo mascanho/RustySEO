@@ -55,7 +55,6 @@ pub async fn check_google_search_console() {
         .set_pkce_challenge(pkce_code_challenge)
         .url();
 
-
     // Prompt the user to enter the authorization code
     println!("Enter the authorization code:");
     let mut input = String::new();

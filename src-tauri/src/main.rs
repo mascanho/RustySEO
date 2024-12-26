@@ -9,7 +9,7 @@ use globals::actions;
 use serde::{Deserialize, Serialize};
 use std::io::Write;
 use std::time::Duration;
-use tauri::{api::path::config_dir, Manager, Window, WindowEvent};
+use tauri::{Manager, Window, WindowEvent};
 use tokio;
 use toml;
 
@@ -121,12 +121,15 @@ async fn main() {
 
     // Tauri setup
     tauri::Builder::default()
-        // Execute stuff on window exict/clise
-        .on_window_event(|event| {
-            if let WindowEvent::CloseRequested { .. } = event.event() {
-                println!("Window close requested");
-            }
-        })
+        .plugin(tauri_plugin_http::init())
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(LinkResult { links: vec![] })
         // .setup(|app| {
         //     let window = app.get_window("main").unwrap();

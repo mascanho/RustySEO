@@ -3,89 +3,50 @@
   "build": {
     "beforeBuildCommand": "npm run build",
     "beforeDevCommand": "npm run dev",
-    "devPath": "http://localhost:3000",
-    "distDir": "../out",
-    "withGlobalTauri": true
+    "frontendDist": "../out",
+    "devUrl": "http://localhost:3000"
   },
-
-  "package": {
-    "productName": "rustyseo",
-    "version": "0.1.0"
-  },
-  "tauri": {
-    "allowlist": {
-      "fs": {
-        "all": true,
-        "copyFile": false,
-        "createDir": false,
-        "exists": false,
-        "readDir": true,
-        "readFile": true,
-        "removeDir": false,
-        "removeFile": false,
-        "renameFile": false,
-        "writeFile": true,
-        "scope": ["**"]
-      },
-      "dialog": {
-        "all": true,
-        "ask": true,
-        "confirm": true,
-        "message": true,
-        "open": true,
-        "save": true
-      },
-      "window": {
-        "close": true
-      },
-      "shell": {
-        "all": false,
-        "execute": false,
-        "open": false,
-        "scope": [],
-        "sidecar": false
-      },
-      "all": true
+  "bundle": {
+    "active": true,
+    "category": "DeveloperTool",
+    "copyright": "",
+    "targets": "all",
+    "externalBin": [],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
     },
-    "bundle": {
-      "active": true,
-      "category": "DeveloperTool",
-      "copyright": "",
+    "longDescription": "",
+    "macOS": {
+      "entitlements": null,
+      "exceptionDomain": "",
+      "frameworks": [],
+      "providerShortName": null,
+      "signingIdentity": null
+    },
+    "resources": [],
+    "shortDescription": "",
+    "linux": {
       "deb": {
         "depends": []
-      },
-      "externalBin": [],
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ],
-      "identifier": "linux",
-      "longDescription": "",
-      "macOS": {
-        "entitlements": null,
-        "exceptionDomain": "",
-        "frameworks": [],
-        "providerShortName": null,
-        "signingIdentity": null
-      },
-      "resources": [],
-      "shortDescription": "",
-      "targets": "all",
-      "windows": {
-        "certificateThumbprint": null,
-        "digestAlgorithm": "sha256",
-        "timestampUrl": ""
       }
-    },
-    "security": {
-      "csp": null
-    },
-    "updater": {
-      "active": false
-    },
+    }
+  },
+  "productName": "rustyseo",
+  "mainBinaryName": "rustyseo",
+  "version": "0.1.0",
+  "identifier": "linux",
+  "plugins": {},
+  "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "fullscreen": false,
@@ -95,8 +56,12 @@
         "minHeight": 1000,
         "width": 1300,
         "height": 800,
-        "decorations": true
+        "decorations": true,
+        "useHttpsScheme": true
       }
-    ]
+    ],
+    "security": {
+      "csp": null
+    }
   }
 }

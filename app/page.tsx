@@ -3,7 +3,7 @@
 export const dynamic = "force-static";
 import Link from "next/link";
 import React, { useCallback, useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import replaceDoubleSlash from "./Hooks/DecodeURL";
 import SchemaTextEncoder from "./Hooks/SchemaTest";
 import OpenGraphCard from "./components/ui/OpenGraphCard";

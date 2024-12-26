@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useState } from "react";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import SitemapDisplay from "./_components/SyntaxHighlight";
 const Sitemap = () => {
   const [url, setUrl] = useState<string>("https://markwarrior.dev");

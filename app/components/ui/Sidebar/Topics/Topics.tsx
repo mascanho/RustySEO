@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { Card, CardContent } from "@/components/ui/card";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import { useEffect, useState } from "react";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 

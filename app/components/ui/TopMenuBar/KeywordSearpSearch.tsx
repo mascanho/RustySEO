@@ -11,7 +11,7 @@ import { IoClose } from "react-icons/io5";
 import useContentStore from "@/store/storeContent";
 import { FaGlobe, FaHeading, FaExternalLinkAlt, FaCopy } from "react-icons/fa";
 import { toast } from "sonner";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import {
   Select as SelectShad,
   SelectContent,

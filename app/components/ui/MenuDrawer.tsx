@@ -4,7 +4,7 @@ import { Drawer, Button, Group, Menu } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { usePathname, useRouter } from "next/navigation";
 import useStore from "../../../store/Panes";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import useModelStore from "@/store/AIModels";
 import KeywordSerp from "./TopMenuBar/KeywordSerp";
 

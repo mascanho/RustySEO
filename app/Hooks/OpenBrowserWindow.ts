@@ -1,5 +1,5 @@
 "use client";
-import { open } from "@tauri-apps/api/shell";
+import { open } from "@tauri-apps/plugin-shell";
 
 const openBrowserWindow = async (url: any): Promise<void> => {
   try {

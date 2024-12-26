@@ -1,3 +1,5 @@
+use crate::gemini;
+use crate::globals;
 use actix_web::{web, App, HttpServer, Responder};
 use directories::ProjectDirs;
 use reqwest::Client;
@@ -5,10 +7,6 @@ use serde::{Deserialize, Serialize};
 use std::f64::consts::E;
 use tokio::fs;
 use yup_oauth2::AccessToken;
-use crate::globals;
-use crate::gemini;
-
-
 
 //----------- Get the AI MODEL -------------
 // Read the file
@@ -74,7 +72,6 @@ struct GenerateResponse {
     response: String,
 }
 
-
 // ------------- RUSTY CHAT FUNCTION ------------
 #[tauri::command]
 pub async fn ask_rusty_command(prompt: String) -> Result<String, String> {
@@ -88,8 +85,10 @@ pub async fn ask_rusty_command(prompt: String) -> Result<String, String> {
 // ---- Check which provider to use
 pub async fn ask_rusty(prompt: String) -> Result<String, Box<dyn std::error::Error>> {
     let ai_model_selected = globals::actions::ai_model_read();
-    println!("AI Model Selected for Rusty Chat is : {:?}", ai_model_selected);
-
+    println!(
+        "AI Model Selected for Rusty Chat is : {:?}",
+        ai_model_selected
+    );
 
     match ai_model_selected.as_str() {
         "ollama" => {
@@ -98,14 +97,14 @@ pub async fn ask_rusty(prompt: String) -> Result<String, Box<dyn std::error::Err
                 Ok(response) => Ok(response),
                 Err(err) => Err(err),
             }
-        },
+        }
         "gemini" => {
             let result = ask_gemini(prompt).await;
             match result {
                 Ok(response) => Ok(response),
                 Err(err) => Err(err),
             }
-        },
+        }
         _ => {
             let result = ask_ollama(prompt).await;
             match result {
@@ -121,8 +120,12 @@ pub async fn ask_gemini(prompt: String) -> Result<String, Box<dyn std::error::Er
 
     // Gemini API endpoint
     // let api_key = "AIzaSyALVt4Dn2GjjOZDBHyglejbQEWHrOnq_sU".to_string();
-    let api_key = gemini::get_gemini_api_key().expect("Failed to get Gemini API key for the RUsty Chat Gemini");
-    let url = format!("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={}", api_key);
+    let api_key = gemini::get_gemini_api_key()
+        .expect("Failed to get Gemini API key for the RUsty Chat Gemini");
+    let url = format!(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={}",
+        api_key
+    );
 
     // Prepare request body for Gemini
     let request_body = serde_json::json!({
@@ -133,11 +136,7 @@ pub async fn ask_gemini(prompt: String) -> Result<String, Box<dyn std::error::Er
         }]
     });
 
-    let response = client
-        .post(&url)
-        .json(&request_body)
-        .send()
-        .await?;
+    let response = client.post(&url).json(&request_body).send().await?;
 
     let response_json: serde_json::Value = response.json().await?;
 

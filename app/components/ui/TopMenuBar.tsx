@@ -22,9 +22,9 @@ import { useRouter } from "next/navigation";
 import WindowToggler from "./Panes/WindowToggler";
 import GeminiSelector from "./GeminiSelector/GeminiSelector";
 import About from "./About/About";
-import { invoke } from "@tauri-apps/api/tauri";
-import { save } from "@tauri-apps/api/dialog";
-import { writeTextFile } from "@tauri-apps/api/fs";
+import { invoke } from "@tauri-apps/api/core";
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { LuPanelRight } from "react-icons/lu";
 import {
   FiFile,

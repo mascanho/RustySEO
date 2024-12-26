@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import React, { useState, useEffect } from "react";
 import RankingMenus from "./RankingInfo/RankingMenus";
 

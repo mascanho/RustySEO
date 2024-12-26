@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import AnalyticsTable from "./AnalyticsTable";
 
 const Analytics = ({}) => {

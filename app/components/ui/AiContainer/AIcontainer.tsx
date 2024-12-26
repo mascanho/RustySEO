@@ -6,7 +6,7 @@ import Markdown from "react-markdown";
 import { FaRobot } from "react-icons/fa";
 import { IoIosPerson } from "react-icons/io";
 import { useOllamaStore } from "@/store/store";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import useModelStore from "@/store/AIModels";
 import { FaRegCopy } from "react-icons/fa6";
 import { toast } from "sonner";

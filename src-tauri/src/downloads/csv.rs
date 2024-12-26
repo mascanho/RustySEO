@@ -195,6 +195,5 @@ pub fn generate_csv_command() -> Result<String, String> {
 
     // Generate the CSV file
 
-
     generate_csv(data_with_headers, &file_path)
 }

@@ -5,9 +5,9 @@ import "react-datepicker/dist/react-datepicker.css";
 import { FaDesktop, FaMobileAlt } from "react-icons/fa";
 import { FiDownload, FiCheckCircle } from "react-icons/fi";
 import { IoIosClose, IoIosSearch } from "react-icons/io";
-import { save } from "@tauri-apps/api/dialog";
-import { writeTextFile } from "@tauri-apps/api/fs";
-import { invoke } from "@tauri-apps/api/tauri";
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { invoke } from "@tauri-apps/api/core";
 import {
   DropdownMenu,
   DropdownMenuContent,

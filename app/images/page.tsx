@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import { writeBinaryFile, BaseDirectory } from "@tauri-apps/api/fs";
+import { writeBinaryFile, BaseDirectory } from "@tauri-apps/plugin-fs";
 import React, { useState, useCallback, useEffect } from "react";
 import {
   Card,
@@ -24,7 +24,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { useDropzone } from "react-dropzone";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import { UploadIcon } from "lucide-react";
 import Confetti from "react-confetti";
 

@@ -10,7 +10,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { invoke } from "@tauri-apps/api/tauri";
+import { invoke } from "@tauri-apps/api/core";
 import PerformanceImprovements from "./PerformanceImprovements";
 import useOnPageSeo from "@/store/storeOnPageSeo";
 
