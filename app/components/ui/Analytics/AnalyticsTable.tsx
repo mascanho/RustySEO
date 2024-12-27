@@ -51,10 +51,12 @@ export default function AnalyticsTable() {
     undefined,
   );
   const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
   const rowsPerPage = 100;
 
   // Handle the fetching of analytics data
   const handleFilteredAnalytics = async (value: string) => {
+    setIsLoading(true);
     setSelectedDimension(value);
     setAnalyticsDate([
       {
@@ -191,6 +193,8 @@ export default function AnalyticsTable() {
       return result;
     } catch (error) {
       console.error("Error fetching Google Analytics data:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -411,80 +415,86 @@ export default function AnalyticsTable() {
           </div>
         )}
       </div>
-      <div className="rounded-md w-full border dark:border-brand-dark  h-[calc(100vh-13rem)] overflow-y-hidden">
-        <div className="h-full w-full overflow-auto">
-          <Table className="relative w-full text-xs">
-            <TableHeader className="sticky top-0 bg-white z-10 shadow">
-              <TableRow>
-                {analyticsData?.response?.[0]?.dimensionHeaders?.map(
-                  (header, index) => (
-                    <TableHead key={index} className="text-left">
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleSort(header.name)}
-                        className="text-xs"
-                      >
-                        {header.name.charAt(0).toUpperCase() +
-                          header.name
-                            .slice(1)
-                            .replace(/([A-Z])/g, " $1")
-                            .trim()}
-                        {getSortIcon(header.name)}
-                      </Button>
-                    </TableHead>
-                  ),
-                )}
-                {analyticsData?.response?.[0]?.metricHeaders?.map(
-                  (header, index) => (
-                    <TableHead key={index} className="text-center">
-                      <Button
-                        variant="ghost"
-                        onClick={() => handleSort(header.name)}
-                        className="text-xs"
-                      >
-                        {header.name.charAt(0).toUpperCase() +
-                          header.name
-                            .slice(1)
-                            .replace(/([A-Z])/g, " $1")
-                            .trim()}
-                        {getSortIcon(header.name)}
-                      </Button>
-                    </TableHead>
-                  ),
-                )}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedData.map((row, index) => (
-                <TableRow key={index} className="py-0">
-                  {row?.dimensionValues?.map((dimension, dimIndex) => (
-                    <TableCell
-                      key={dimIndex}
-                      className="font-medium text-xs text-left"
-                    >
-                      <div
-                        className="truncate max-w-[400px] p-0 "
-                        title={dimension?.value}
-                      >
-                        {dimension?.value || "N/A"}
-                      </div>
-                    </TableCell>
-                  ))}
-                  {row?.metricValues?.map((metric, metricIndex) => (
-                    <TableCell
-                      key={metricIndex}
-                      className="text-xs text-center"
-                    >
-                      {metric?.name === "bounceRate"
-                        ? `${(parseFloat(metric?.value || "0") * 100).toFixed(2)}%`
-                        : parseFloat(metric?.value || "0").toFixed(1)}
-                    </TableCell>
-                  ))}
+      <div className="rounded-md w-full border dark:border-brand-dark h-[calc(100vh-13rem)] overflow-y-hidden">
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-bright"></div>
+          </div>
+        ) : (
+          <div className="h-full w-full overflow-auto">
+            <Table className="relative w-full text-xs">
+              <TableHeader className="sticky top-0 bg-white z-10 shadow">
+                <TableRow>
+                  {analyticsData?.response?.[0]?.dimensionHeaders?.map(
+                    (header, index) => (
+                      <TableHead key={index} className="text-left">
+                        <Button
+                          variant="ghost"
+                          onClick={() => handleSort(header.name)}
+                          className="text-xs"
+                        >
+                          {header.name.charAt(0).toUpperCase() +
+                            header.name
+                              .slice(1)
+                              .replace(/([A-Z])/g, " $1")
+                              .trim()}
+                          {getSortIcon(header.name)}
+                        </Button>
+                      </TableHead>
+                    ),
+                  )}
+                  {analyticsData?.response?.[0]?.metricHeaders?.map(
+                    (header, index) => (
+                      <TableHead key={index} className="text-center">
+                        <Button
+                          variant="ghost"
+                          onClick={() => handleSort(header.name)}
+                          className="text-xs"
+                        >
+                          {header.name.charAt(0).toUpperCase() +
+                            header.name
+                              .slice(1)
+                              .replace(/([A-Z])/g, " $1")
+                              .trim()}
+                          {getSortIcon(header.name)}
+                        </Button>
+                      </TableHead>
+                    ),
+                  )}
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {paginatedData.map((row, index) => (
+                  <TableRow key={index} className="py-0">
+                    {row?.dimensionValues?.map((dimension, dimIndex) => (
+                      <TableCell
+                        key={dimIndex}
+                        className="font-medium text-xs text-left"
+                      >
+                        <div
+                          className="truncate max-w-[400px] p-0 "
+                          title={dimension?.value}
+                        >
+                          {dimension?.value || "N/A"}
+                        </div>
+                      </TableCell>
+                    ))}
+                    {row?.metricValues?.map((metric, metricIndex) => (
+                      <TableCell
+                        key={metricIndex}
+                        className="text-xs text-center"
+                      >
+                        {metric?.name === "bounceRate"
+                          ? `${(parseFloat(metric?.value || "0") * 100).toFixed(2)}%`
+                          : parseFloat(metric?.value || "0").toFixed(1)}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </div>
     </div>
   );
