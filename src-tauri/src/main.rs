@@ -155,7 +155,6 @@ async fn main() {
         //     Ok(())
         // })
         .invoke_handler(tauri::generate_handler![
-            check_system,
             crawl,
             fetch_page_speed,
             fetch_google_search_console,
@@ -195,43 +194,6 @@ async fn main() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-}
-
-// -------------------- CHECK SYSTEM ---------------------
-#[tauri::command]
-async fn check_system() -> Result<String, String> {
-    let project_dirs = ProjectDirs::from("", "", "rustyseo").unwrap();
-    let data_dir = project_dirs.data_dir();
-    let cache_dir = project_dirs.cache_dir();
-    let config_dir = project_dirs.config_dir();
-    let log_dir = project_dirs.data_local_dir();
-    let temp_dir = project_dirs.data_local_dir();
-    let log_file = log_dir.join("rustyseo.log");
-
-    // Create directories if they don't exist
-    if !data_dir.exists() {
-        std::fs::create_dir_all(data_dir).unwrap();
-    }
-    if !cache_dir.exists() {
-        std::fs::create_dir_all(cache_dir).unwrap();
-    }
-    if !config_dir.exists() {
-        std::fs::create_dir_all(config_dir).unwrap();
-    }
-    if !log_dir.exists() {
-        std::fs::create_dir_all(log_dir).unwrap();
-    }
-    if !temp_dir.exists() {
-        std::fs::create_dir_all(temp_dir).unwrap();
-    }
-
-    // Check the config file and see it it has any keys inside
-    let config_file = config_dir.join("api_keys.toml");
-    if !config_file.exists() {
-        return Err("No API keys found".to_string());
-    }
-
-    Ok("System check completed".to_string())
 }
 
 #[tauri::command]

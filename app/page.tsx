@@ -344,21 +344,6 @@ const Home: React.FC<HomeProps> = () => {
   }, [Visible]);
 
   // clear session storage on page reload
-  // Check for the system settings
-  useEffect(() => {
-    sessionStorage?.clear();
-    const checkSystem = async () => {
-      try {
-        const result = await invoke<{}>("check_system");
-        console.log(result);
-        if (result === null) {
-        }
-      } catch (error) {
-        console.error("Error checking system", error);
-      }
-    };
-    checkSystem();
-  }, []);
 
   // CONNECT TO GOOGLE SEARCH console
   useEffect(() => {
