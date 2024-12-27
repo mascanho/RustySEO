@@ -58,7 +58,7 @@ Why join the Navy when you can be a SEO engineer?
 - [PageSpeed Insights](https://developers.google.com/speed/docs/insights/v5/reference/pagespeedapi/runpagespeed)
 - [Microsoft Clarity](https://clarity.microsoft.com/)
 
-## Setting up Google Search Console
+# Setting up Google Search Console
 
 - [Windows](#windows)
 - [Mac OS](#usage)
