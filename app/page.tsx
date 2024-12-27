@@ -361,27 +361,38 @@ const Home: React.FC<HomeProps> = () => {
   }, []);
 
   // CONNECT TO GOOGLE SEARCH console
-  // useEffect(() => {
-  //   try {
-  //     invoke<{}>("call_google_search_console")
-  //       .then((result) => {
-  //         console.log(result);
-  //       })
-  //       .catch((error) => {
-  //         if (error instanceof Error) {
-  //           console.error("Google Search Console API error:", error.message);
-  //         } else {
-  //           console.error("An unknown error occurred:", error);
-  //         }
-  //       });
-  //   } catch (error) {
-  //     if (error instanceof Error) {
-  //       console.error("Error invoking Google Search Console:", error.message);
-  //     } else {
-  //       console.error("An unexpected error occurred:", error);
-  //     }
-  //   }
-  // }, []);
+  useEffect(() => {
+    const sessionId = sessionStorage.getItem("sessionId");
+
+    const callSearchConsole = () => {
+      try {
+        invoke<{}>("call_google_search_console")
+          .then((result) => {
+            console.log(result);
+          })
+          .catch((error) => {
+            if (error instanceof Error) {
+              console.error("Google Search Console API error:", error.message);
+            } else {
+              console.error("An unknown error occurred:", error);
+            }
+          });
+      } catch (error) {
+        if (error instanceof Error) {
+          console.error("Error invoking Google Search Console:", error.message);
+        } else {
+          console.error("An unexpected error occurred:", error);
+        }
+      }
+    };
+
+    if (!sessionId) {
+      // Generate new session ID and save it
+      const newSessionId = Math.random().toString(36).substring(2, 15);
+      sessionStorage.setItem("sessionId", newSessionId);
+      callSearchConsole();
+    }
+  }, []);
 
   const handleLinkStatusCheck = (url: any) => {
     setLinkStatusCodeStatus(true);
