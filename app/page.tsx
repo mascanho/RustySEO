@@ -362,35 +362,28 @@ const Home: React.FC<HomeProps> = () => {
 
   // CONNECT TO GOOGLE SEARCH console
   useEffect(() => {
-    const sessionId = sessionStorage.getItem("sessionId");
+    const sessionId = sessionStorage?.getItem("sessionId");
 
-    const callSearchConsole = () => {
+    const callSearchConsole = async () => {
       try {
-        invoke<{}>("call_google_search_console")
-          .then((result) => {
-            console.log(result);
-          })
-          .catch((error) => {
-            if (error instanceof Error) {
-              console.error("Google Search Console API error:", error.message);
-            } else {
-              console.error("An unknown error occurred:", error);
-            }
-          });
-      } catch (error) {
-        if (error instanceof Error) {
-          console.error("Error invoking Google Search Console:", error.message);
-        } else {
-          console.error("An unexpected error occurred:", error);
+        if (typeof window !== "undefined") {
+          const result = await invoke<{}>("call_google_search_console");
+          console.log(result);
         }
+      } catch (error) {
+        // Gracefully handle errors in production
+        console.warn("Search console connection unavailable:", error);
       }
     };
 
-    if (!sessionId) {
-      // Generate new session ID and save it
-      const newSessionId = Math.random().toString(36).substring(2, 15);
-      sessionStorage.setItem("sessionId", newSessionId);
-      callSearchConsole();
+    if (!sessionId && typeof window !== "undefined") {
+      try {
+        const newSessionId = Math.random().toString(36).substring(2, 15);
+        sessionStorage?.setItem("sessionId", newSessionId);
+        callSearchConsole();
+      } catch (err) {
+        console.warn("Session storage not available:", err);
+      }
     }
   }, []);
 
