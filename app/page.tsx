@@ -353,7 +353,7 @@ const Home: React.FC<HomeProps> = () => {
       try {
         if (typeof window !== "undefined") {
           const result = await invoke<{}>("call_google_search_console");
-          console.log(result);
+          console.log("Calling Search Console From UseEffect", result);
         }
       } catch (error) {
         // Gracefully handle errors in production
