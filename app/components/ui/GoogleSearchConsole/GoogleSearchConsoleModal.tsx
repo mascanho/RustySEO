@@ -5,6 +5,7 @@ import { useFetch } from "@mantine/hooks";
 import { invoke } from "@tauri-apps/api/core";
 import React, { useCallback, useEffect, useId, useState } from "react";
 import { FaExternalLinkAlt } from "react-icons/fa";
+import { toast } from "sonner";
 
 const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
   const [formData, setFormData] = useState({
@@ -36,8 +37,7 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
     { value: "1000", label: "1000" },
     { value: "5000", label: "5000" },
     { value: "10000", label: "10000" },
-    { value: "20000", label: "20000" },
-    { value: "50000", label: "50000" },
+    { value: "25000", label: "Max" },
   ];
 
   const handleChange = (e) => {
@@ -77,6 +77,11 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleClose = async () => {
+    const { getCurrentWindow } = await import("@tauri-apps/api/window");
+    getCurrentWindow().close();
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
@@ -86,16 +91,14 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
           credentials: formData,
         }).then(() => {
           console.log("Credentials saved successfully");
+          toast.success("Credentials saved successfully");
+          close();
         });
       } catch (error) {
         console.error("Failed to save credentials:", error);
+        toast.error("Failed to save credentials");
       }
     }
-  };
-
-  const handleClose = async () => {
-    const { getCurrentWindow } = await import("@tauri-apps/api/window");
-    getCurrentWindow().close();
   };
 
   return (
@@ -299,7 +302,7 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
             type="submit"
             className="w-full active:scale-95  bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200"
           >
-            Submit
+            Confirm
           </button>
         </form>
       </div>
