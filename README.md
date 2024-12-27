@@ -68,7 +68,7 @@ Why join the Navy when you can be a SEO engineer?
 
 To setup Google Search Console, follow these steps:
 
-1. You need to setup a [Google Cloud Console](https://console.cloud.google.com/) with Search Console API enabled
+1. You need to set up [Google Cloud Console](https://console.cloud.google.com/) with Search Console API enabled and Service Account active. Make sure you have full ownership of your GSC property. 
 
 2. Launch RustySEO;
 
