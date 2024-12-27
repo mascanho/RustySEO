@@ -103,7 +103,7 @@ const RankingInfo = ({
             <th className="py-2 text-center text-[10px]">Clicks</th>
             <th className="py-2 text-right text-[10px]">Imp.</th>
             <th className="py-2 text-center text-[10px] bg-brand-dark !important">
-              Avg. Pos.
+              Pos.
             </th>
           </tr>
         </thead>
@@ -116,13 +116,13 @@ const RankingInfo = ({
               transition-colors duration-150
               `}
             >
-              <td className="py-2 pl-2 truncate text-[9px] ">
+              <td className="py-2 pl-2 truncate text-[9px] max-w-[130px] overflow-hidden text-ellipsis">
                 <RankingMenus
                   credentials={credentials}
                   url={sessionUrl}
                   query={item.query}
                 >
-                  <span className="pointer hover:underline hover:text-brand-bright text-[10px] ">
+                  <span className="pointer hover:underline hover:text-brand-bright text-[10px] overflow-hidden text-ellipsis">
                     {item.query}
                   </span>
                 </RankingMenus>
