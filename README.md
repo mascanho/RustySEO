@@ -48,6 +48,7 @@ Why join the Navy when you can be a SEO engineer?
 - More integrations;
 - Better reporting;
 - Password protection & encryption;
+- Client-side OAuth2 authentication 
 
 ## Connectors / APIs (Get your keys, they are free 😉)
 - [Google Search Console](https://search.google.com/search-console/about)
@@ -84,9 +85,9 @@ You can find all the details in your Google Cloud console account with the excep
 
 5. Submit the credentials and your desired options
 
-6. Quit RustySEO
+6. Restart RustySEO
 
-7. Make sure you have ![WSL](https://learn.microsoft.com/en-us/windows/wsl/install) installed. Open your Windows Powershell and run the following command:
+7. Since windows does not allow to output logs into the terminal by default, we just need to force it so that we can grab the link generated on the server to generate our token. Google keeps changing this but the goal is to have it done client-side (once I have the time).
 
 ```bash
 wsl --set-version ubuntu
