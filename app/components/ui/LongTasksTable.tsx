@@ -40,7 +40,7 @@ const LongTasksTable = ({ pageSpeed }: { pageSpeed: any }) => {
           </thead>
           <tbody className="bg-white overflow-y-auto">
             {lt.map((item: any, index: number) => (
-              <tr key={item.url || index} className="h-8">
+              <tr key={index} className="h-8">
                 <td className="px-2 text-[6px] text-gray-700 max-h-10 w-[90px] min-w-[70px] dark:text-white border-b border-r">
                   {item?.duration.toFixed(0)} ms
                 </td>{" "}
