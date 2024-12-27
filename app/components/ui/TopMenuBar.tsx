@@ -60,13 +60,10 @@ import GoogleAnalyticsModal from "./GoogleAnalyticsModal/GoogleAnalyticsModal";
 import Configurations from "./TopMenuBar/Configurations/Configurations";
 import { FaGear } from "react-icons/fa6";
 import MSClarity from "./MSClarityModal/MSClarityModal";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
-  const onClose = useCallback(async () => {
-    const { appWindow } = await import("@tauri-apps/api/window");
-    appWindow.close();
-  }, []);
 
   const { visibility, showSerpKeywords, hideSerpKeywords } =
     useVisibilityStore();
@@ -342,7 +339,7 @@ const TopMenuBar = () => {
       <Modal
         opened={openedSearchConsole}
         onClose={closeSearchConsole}
-        title="Search Console"
+        title="Google Search Console"
         centered
       >
         {/* @ts-ignore */}
@@ -379,7 +376,11 @@ const TopMenuBar = () => {
                 <FiTool className="mr-2" />
                 Configurations
               </MenubarItem>{" "}
-              <MenubarItem onClick={onClose}>
+              <MenubarItem
+                onClick={() => {
+                  getCurrentWindow().close();
+                }}
+              >
                 <FiLogOut className="mr-2" />
                 Exit
               </MenubarItem>

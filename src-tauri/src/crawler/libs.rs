@@ -660,7 +660,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
     // println!("Search Console Data: {:#?}", &data);
     let mut gsc_data = Vec::new();
 
-    // println!("Search Console Data: {:#?}", &data);
+    println!("Search Console Data: {:#?}", &data);
     // Add data to DB
     gsc_data.push(data);
     tokio::time::sleep(tokio::time::Duration::from_secs(15)).await;

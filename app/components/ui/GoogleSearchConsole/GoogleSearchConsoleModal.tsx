@@ -5,6 +5,7 @@ import { useFetch } from "@mantine/hooks";
 import { invoke } from "@tauri-apps/api/core";
 import React, { useCallback, useEffect, useId, useState } from "react";
 import { FaExternalLinkAlt } from "react-icons/fa";
+import { toast } from "sonner";
 
 const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
   const [formData, setFormData] = useState({
@@ -18,8 +19,6 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
   });
 
   const [errors, setErrors] = useState({});
-  const [isNextScreen, setNextScreen] = useState(false);
-  const [isSubmitedId, setSubmitedId] = useState("");
 
   const searchTypes = [
     { value: "domain", label: "Domain" },
@@ -38,8 +37,7 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
     { value: "1000", label: "1000" },
     { value: "5000", label: "5000" },
     { value: "10000", label: "10000" },
-    { value: "20000", label: "20000" },
-    { value: "50000", label: "50000" },
+    { value: "25000", label: "Max" },
   ];
 
   const handleChange = (e) => {
@@ -48,11 +46,6 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
       ...prevData,
       [name]: value,
     }));
-
-    if (name === "clientId") {
-      const submitedId = `https://accounts.google.com/o/oauth2/auth?scope=https://www.googleapis.com/auth/webmasters.readonly&access_type=offline&redirect_uri=http://127.0.0.1:63516&response_type=code&client_id=${value}`;
-      setSubmitedId(submitedId);
-    }
   };
 
   const validateForm = () => {
@@ -84,6 +77,11 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleClose = async () => {
+    const { getCurrentWindow } = await import("@tauri-apps/api/window");
+    getCurrentWindow().close();
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validateForm()) {
@@ -93,75 +91,31 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
           credentials: formData,
         }).then(() => {
           console.log("Credentials saved successfully");
-          setNextScreen(true);
+          toast.success("Credentials saved successfully");
+          close();
         });
       } catch (error) {
         console.error("Failed to save credentials:", error);
+        toast.error("Failed to save credentials");
       }
     }
   };
 
-  const handleClose = useCallback(async () => {
-    const { appWindow } = await import("@tauri-apps/api/window");
-    appWindow.close();
-  }, []);
-
   return (
     <section>
-      {/* SECONDARY SCREEN GOES HERE */}
-      <div
-        className={`${!isNextScreen && "hidden"} max-w-md mx-auto pl-4 pr-2  dark:bg-brand-darker dark:text-white rounded-lg `}
-      >
-        <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">
-          How to Log In
-        </h2>
-        <ol className="list-decimal list-inside space-y-3">
-          <li className="text-gray-700 dark:text-white">
-            <strong>Step 1:</strong> Close RustySEO
-          </li>
-          <li className="text-gray-700 dark:text-white">
-            <strong>Step 2:</strong> Open your system terminal
-          </li>
-          <li className="text-gray-700 dark:text-white">
-            <strong>Step 3:</strong> Launch RustySEO from your terminal with by
-            typping <strong>rustyseo</strong> in your terminal then{" "}
-            <strong>press enter</strong>
-          </li>
-          <li className="text-gray-700 dark:text-white">
-            <strong>Step 4:</strong> copy the link that appears in your terminal
-            and open it in your browser
-          </li>
-          <li className="text-gray-700 dark:text-white">
-            <strong>Step 5:</strong> After successful login, you will be
-            redirected to your dashboard.
-          </li>
-        </ol>
-        <div className="mt-6 text-sm text-gray-600 dark:text-white/50">
-          <p>
-            Need further assistance? Contact our support team at{" "}
-            <a
-              href="mailto:530rusty@gmail.com"
-              className="text-blue-500 hover:underline"
-            >
-              530rusty@gmail.com
-            </a>
-            .
-          </p>
+      <div className="max-w-md mx-auto -mt-3 p-2 px-3 pb-5 bg-white dark:bg-brand-darker dark:text-white rounded-lg text-xs">
+        <div className="flex items-center space-x-2">
+          <h2 className="text-lg font-semibold mb-5 ml-1">Enter Credentials</h2>
+          <span
+            onClick={() =>
+              openBrowserWindow("https://github.com/mascanho/RustySEO")
+            }
+            className="text-[10px] ml-1 pb-5  text-brand-bright underline cursor-pointer"
+          >
+            (Instructions)
+          </span>
         </div>
 
-        <button
-          onClick={handleClose}
-          className="w-full mt-5 active:scale-95  bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200"
-        >
-          Close RustySEO
-        </button>
-      </div>
-
-      {/* MAIN SCREEN GOES HERE */}
-      <div
-        className={`${isNextScreen && "hidden"} max-w-md mx-auto -mt-3 p-2 px-3 pb-5 bg-white dark:bg-brand-darker dark:text-white rounded-lg text-xs`}
-      >
-        <h2 className="text-lg font-semibold mb-4 ml-1">Enter Credentials</h2>
         <form onSubmit={handleSubmit} className="dark:bg-brand-darker">
           <div className="mb-4 relative">
             <label
@@ -348,7 +302,7 @@ const GoogleSearchConsoleModal = ({ onSubmit, close }) => {
             type="submit"
             className="w-full active:scale-95  bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-200"
           >
-            Submit
+            Confirm
           </button>
         </form>
       </div>
