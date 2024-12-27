@@ -52,7 +52,6 @@ export default function RootLayout({
         <MantineProvider>
           {/* Fixed MenuDrawer */}
           <section className="mb-[6.7rem]">
-            {/* Loader  */}
             <Loader />
             <TopMenuBar />
           </section>

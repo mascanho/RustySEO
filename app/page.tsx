@@ -76,6 +76,7 @@ import { TaskSection } from "./components/Checklist/task-section";
 import TodoBoard from "./components/Checklist/todo-board";
 import ClarityDashboard from "./components/ui/MSClarityModal/MSCLarityTab";
 import ClarityContainer from "./components/ui/MSClarityModal/ClarityContainer";
+import Loader from "@/components/Loader/Loader";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -467,6 +468,7 @@ const Home: React.FC<HomeProps> = () => {
 
   return (
     <section className="h-full overflow-y-clip flex">
+      <Loader />
       <div className="w-full">
         <Modal
           opened={openedModal}

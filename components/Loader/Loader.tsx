@@ -16,8 +16,11 @@ const Loader = () => {
   const [message, setMessage] = useState(loadingMessages[0]);
   const [messageIndex, setMessageIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(() => {
-    const hasLoaded = sessionStorage.getItem("hasInitiallyLoaded");
-    return !hasLoaded;
+    if (typeof window !== "undefined") {
+      const hasLoaded = sessionStorage.getItem("hasInitiallyLoaded");
+      return !hasLoaded;
+    }
+    return true;
   });
 
   useEffect(() => {
@@ -32,7 +35,9 @@ const Loader = () => {
       // Hide loader after 10 seconds
       const timeout = setTimeout(() => {
         setIsVisible(false);
-        sessionStorage.setItem("hasInitiallyLoaded", "true");
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("hasInitiallyLoaded", "true");
+        }
       }, 10000);
 
       return () => {
