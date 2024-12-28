@@ -56,7 +56,7 @@ const RankingMenus = ({ children, url, query, credentials }: any) => {
       <DropdownMenuContent className="w-40 bg-white dark:bg-brand-darker dark:border-brand-dark dark:text-white/50 text-xs z-[9999999]">
         <DropdownMenuItem
           className="hover:bg-brand-bright hover:text-white"
-          onClick={() => handleCopy(url)}
+          onClick={() => handleCopy(query)}
         >
           <FiClipboard className="mr-2 text-xs" /> Copy
         </DropdownMenuItem>

@@ -9,6 +9,7 @@ import TopMenuBar from "./components/ui/TopMenuBar";
 import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import Footer from "./components/ui/Footer";
+import Loader from "@/components/Loader/Loader";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -51,6 +52,7 @@ export default function RootLayout({
         <MantineProvider>
           {/* Fixed MenuDrawer */}
           <section className="mb-[6.7rem]">
+            <Loader />
             <TopMenuBar />
           </section>
           <main className="mt-10   rounded-md  ">

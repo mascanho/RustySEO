@@ -223,22 +223,26 @@ export const OpenGraphCard = ({
           </div>
         </div>
       ) : (
-        <section className="h-full w-full relative overflow-hidden rounded-lg  -z-1">
+        <section className="h-full w-full relative overflow-hidden rounded-lg -z-1">
           <div
-            className={`px-10 m-auto w-10/12  flex flex-col mt-2   items-start justify-start ${openGraphDetails.length === 0 ? "bg-white/40 h-full dark:bg-brand-darker" : "bg-white dark:bg-brand-darker h-full"}`}
+            className={`px-10 m-auto w-10/12 flex flex-col items-center justify-center h-full ${
+              openGraphDetails.length === 0
+                ? "bg-white/40 dark:bg-brand-darker"
+                : "bg-white dark:bg-brand-darker"
+            }`}
           >
             {openGraphDetails && openGraphDetails?.image?.length > 0 && (
-              <div className="flex flex-col flex-wrap justify-start items-start h-19/12">
+              <div className="flex items-center justify-center w-full">
                 <img
                   src={openGraphDetails?.image}
                   alt="OpenGraph Image"
-                  className="rounded-md w-full   object-cover ml-0 max-h-72"
+                  className="rounded-md w-full object-cover max-h-72"
                 />
               </div>
             )}
             <div
               onClick={() => openBrowserWindow(openGraphDetails.url)}
-              className="flex flex-col flex-wrap cursor-pointer py-2 justify-start ml-0 w-full"
+              className="flex flex-col flex-wrap cursor-pointer py-2 justify-start w-full"
             >
               <span className="font-bold dark:text-white/50 bg-red-5000 text-xs">
                 {openGraphDetails.title}
@@ -246,7 +250,7 @@ export const OpenGraphCard = ({
               <span className="w-11/12 break-words dark:text-white/50 text-xs">
                 {openGraphDetails.description}
               </span>
-              <span className="text-xs mt-1 text-apple-spaceGray/70">
+              <span className="text-xs mt-1 text-apple-spaceGray/70 dark:text-brand-bright">
                 {openGraphDetails.url}
               </span>
             </div>

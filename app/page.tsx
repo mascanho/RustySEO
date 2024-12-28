@@ -76,6 +76,7 @@ import { TaskSection } from "./components/Checklist/task-section";
 import TodoBoard from "./components/Checklist/todo-board";
 import ClarityDashboard from "./components/ui/MSClarityModal/MSCLarityTab";
 import ClarityContainer from "./components/ui/MSClarityModal/ClarityContainer";
+import Loader from "@/components/Loader/Loader";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -344,41 +345,30 @@ const Home: React.FC<HomeProps> = () => {
   }, [Visible]);
 
   // clear session storage on page reload
-  // Check for the system settings
-  useEffect(() => {
-    sessionStorage?.clear();
-    const checkSystem = async () => {
-      try {
-        const result = await invoke<{}>("check_system");
-        console.log(result);
-        if (result === null) {
-        }
-      } catch (error) {
-        console.error("Error checking system", error);
-      }
-    };
-    checkSystem();
-  }, []);
 
   // CONNECT TO GOOGLE SEARCH console
   useEffect(() => {
-    try {
-      invoke<{}>("call_google_search_console")
-        .then((result) => {
-          console.log(result);
-        })
-        .catch((error) => {
-          if (error instanceof Error) {
-            console.error("Google Search Console API error:", error.message);
-          } else {
-            console.error("An unknown error occurred:", error);
-          }
-        });
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error("Error invoking Google Search Console:", error.message);
-      } else {
-        console.error("An unexpected error occurred:", error);
+    const sessionId = sessionStorage?.getItem("sessionId");
+
+    const callSearchConsole = async () => {
+      try {
+        if (typeof window !== "undefined") {
+          const result = await invoke<{}>("call_google_search_console");
+          console.log("Calling Search Console From UseEffect", result);
+        }
+      } catch (error) {
+        // Gracefully handle errors in production
+        console.warn("Search console connection unavailable:", error);
+      }
+    };
+
+    if (!sessionId && typeof window !== "undefined") {
+      try {
+        const newSessionId = Math.random().toString(36).substring(2, 15);
+        sessionStorage?.setItem("sessionId", newSessionId);
+        callSearchConsole();
+      } catch (err) {
+        console.warn("Session storage not available:", err);
       }
     }
   }, []);
@@ -478,6 +468,7 @@ const Home: React.FC<HomeProps> = () => {
 
   return (
     <section className="h-full overflow-y-clip flex">
+      <Loader />
       <div className="w-full">
         <Modal
           opened={openedModal}
