@@ -696,3 +696,20 @@ button .mantine-Tabs-tabLabel {
 .css-13cymwt-control {
   @apply dark:border-brand-dark !important;
 }
+
+/* HEADINGS TABLE */
+.headings_table {
+  @apply dark:bg-brand-darker dark:text-white border-0  !important;
+  border-collapse: collapse !important;
+  width: 100%;
+  background-color: white !important;
+}
+
+.headings_table thead tr th {
+  @apply bg-white bg-opacity-50 dark:bg-brand-darker dark:bg-opacity-50 !important;
+}
+
+.headings_table tbody tr td {
+  @apply border-2 !important;
+  border-collapse: collapse;
+}

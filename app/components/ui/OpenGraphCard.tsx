@@ -38,8 +38,6 @@ export const OpenGraphCard = ({
     setSeoOpenGraph(openGraphDetails);
   }, []);
 
-  console.log(openGraphDetails, "This is the openGraphDetails");
-
   const getPreviewIcon = () => {
     switch (currentPreview) {
       case "LinkedIn":

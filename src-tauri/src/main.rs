@@ -170,6 +170,7 @@ async fn main() {
             commands::get_microsoft_clarity_command,
             commands::get_microsoft_clarity_data_command,
             version::version_check_command,
+            gemini::get_headings_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

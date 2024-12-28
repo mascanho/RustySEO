@@ -50,12 +50,16 @@ const About: React.FC = () => {
           <span>Version: </span>
           <h2 className="text-lg font-bold">{localVersion}</h2>
           <button onClick={checkForUpdates} className="text-xs">
-            <IoReload className="text-[9px]" />
+            <IoReload className="text-[9px] text-brand-bright" />
           </button>
         </div>
 
-        <div className="mt-2 h-3">
-          {isChecking && <span>Checking for updates...</span>}
+        <div className=" h-4">
+          {isChecking && (
+            <span className="dark:text-red-400 text-red-500">
+              Checking for updates...
+            </span>
+          )}
           {updateAvailable && (
             <div className="flex items-center justify-center gap-1">
               <span>🔴 Update available</span>
