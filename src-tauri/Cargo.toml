@@ -61,6 +61,7 @@ tauri-plugin-os = "2"
 tauri-plugin-shell = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-http = "2"
+semver = "1.0.17"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.

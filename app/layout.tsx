@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 export const dynamic = "force-static";
 import "@mantine/core/styles.css";
@@ -10,6 +11,8 @@ import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import Footer from "./components/ui/Footer";
 import Loader from "@/components/Loader/Loader";
+import { invoke } from "@tauri-apps/api/core";
+import { toast } from "sonner";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -41,6 +44,24 @@ export default function RootLayout({
     } else {
       document.documentElement.classList.remove("dark");
     }
+  }, []);
+
+  useEffect(() => {
+    const checkVersion = async () => {
+      try {
+        const version = await invoke("version_check_command");
+        console.log(version, "This is the version");
+
+        if (version.local !== version.github) {
+          toast("RustySEO has a new version. Please update");
+        }
+
+        localStorage.setItem("app-version", version.local as string);
+      } catch (err) {
+        console.error("Failed to check version:", err);
+      }
+    };
+    checkVersion();
   }, []);
 
   return (

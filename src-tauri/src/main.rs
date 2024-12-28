@@ -32,6 +32,7 @@ pub mod genai;
 pub mod gsc;
 mod image_converter;
 pub mod server;
+pub mod version;
 
 #[derive(Serialize, Debug, Deserialize)]
 struct Config {
@@ -168,6 +169,7 @@ async fn main() {
             commands::set_microsoft_clarity_command,
             commands::get_microsoft_clarity_command,
             commands::get_microsoft_clarity_data_command,
+            version::version_check_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
