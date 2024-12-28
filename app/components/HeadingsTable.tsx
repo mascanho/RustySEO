@@ -49,9 +49,7 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
         console.error("Failed to get AI headings:", error);
       }
     };
-
-    fetchAiHeadings();
-  }, []);
+  }, [headings]);
 
   console.log(viewAIHeadings, "VIEW AI HEADINGSSSSSS");
 
