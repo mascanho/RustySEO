@@ -205,3 +205,56 @@ pub async fn generate_topics(body: String) -> Result<String> {
 
     Ok(topics)
 }
+
+// ---------------- Ask Gemini for Headings of a page
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Headings {
+    pub new_headings: String,
+    pub content: String,
+}
+
+#[tauri::command]
+pub async fn get_headings_command(aiHeadings: String) -> Result<String, String> {
+    match generate_headings(aiHeadings).await {
+        Ok(response) => Ok(response),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+pub async fn generate_headings(headings: String) -> Result<String> {
+    let key = get_gemini_api_key().expect("Failed to read Gemini API key To generate SEO headings");
+
+    let client = reqwest::Client::new();
+
+    let prompt = format!(
+        "You are an amazing SEO expert, given the headings provided improve them and make them better to have better changes of ranking on search engines, and more importantly on google. Follow the latest SEO best practices and use the keywords wisely, output it the same format as submited, do not output anything else besides the headings, the headings are: {:#?}", headings
+    );
+
+    println!("Sending headings request to Gemini: {}", prompt);
+
+    let request = GeminiRequest::new(&prompt);
+
+    let response = client
+        .post(API_ENDPOINT)
+        .query(&[("key", key)])
+        .json(&request)
+        .send()
+        .await
+        .expect("Failed to generate headings");
+
+    if !response.status().is_success() {
+        return Err(anyhow!(
+            "Gemini API Request failed with status code: {}",
+            response.status()
+        ));
+    }
+
+    let gemini_response: GeminiResponse = response.json().await.unwrap();
+
+    let ai_headings = gemini_response.candidates[0].content.parts[0].text.clone();
+
+    println!("AI Headings: {:?}", ai_headings);
+
+    Ok(ai_headings)
+}

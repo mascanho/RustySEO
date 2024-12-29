@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 export const dynamic = "force-static";
 import "@mantine/core/styles.css";
@@ -9,6 +10,9 @@ import TopMenuBar from "./components/ui/TopMenuBar";
 import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import Footer from "./components/ui/Footer";
+import Loader from "@/components/Loader/Loader";
+import { invoke } from "@tauri-apps/api/core";
+import { toast } from "sonner";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -42,6 +46,24 @@ export default function RootLayout({
     }
   }, []);
 
+  useEffect(() => {
+    const checkVersion = async () => {
+      try {
+        const version = await invoke("version_check_command");
+        console.log(version, "This is the version");
+
+        if (version.local !== version.github) {
+          toast("RustySEO has a new version. Please update");
+        }
+
+        localStorage.setItem("app-version", version.local as string);
+      } catch (err) {
+        console.error("Failed to check version:", err);
+      }
+    };
+    checkVersion();
+  }, []);
+
   return (
     <html lang="en" className="min-w-[600px]" suppressHydrationWarning>
       <body
@@ -51,6 +73,7 @@ export default function RootLayout({
         <MantineProvider>
           {/* Fixed MenuDrawer */}
           <section className="mb-[6.7rem]">
+            <Loader />
             <TopMenuBar />
           </section>
           <main className="mt-10   rounded-md  ">

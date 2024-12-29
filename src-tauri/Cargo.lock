@@ -301,6 +301,7 @@ dependencies = [
  "rust_xlsxwriter",
  "scraper",
  "select",
+ "semver",
  "serde",
  "serde_json",
  "sysinfo",

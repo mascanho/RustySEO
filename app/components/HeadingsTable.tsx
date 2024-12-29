@@ -1,13 +1,59 @@
+// @ts-nocheck
+"use client";
 import useStore from "@/store/Panes";
+import { BsThreeDotsVertical } from "react-icons/bs";
 import useOnPageSeo from "@/store/storeOnPageSeo";
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { LiaHeadingSolid } from "react-icons/lia";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { invoke } from "@tauri-apps/api/core";
+import HeadingsTableAI from "./HeadingsTableAI";
 
 const HeadingsTable = ({ headings }: { headings: string[] }) => {
   const { Visible } = useStore();
   const setRepeatedHeadings = useOnPageSeo((state) => state.setHeadings);
+  const [viewAIHeadings, setViewAIHeadings] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
-  console.log(headings, "headings");
+  const aiHeadings = headings.toString();
+
+  useEffect(() => {
+    const fetchAiHeadings = async () => {
+      try {
+        const response: any = await invoke("get_headings_command", {
+          aiHeadings,
+        });
+        if (response) {
+          setViewAIHeadings(response);
+          console.log(response, "response headings AI GMEINI");
+        }
+      } catch (error) {
+        console.error("Failed to get AI headings:", error);
+      }
+    };
+
+    fetchAiHeadings();
+  }, [headings]);
+
+  console.log(viewAIHeadings, "VIEW AI HEADINGSSSSSS");
 
   const findDuplicates = (array: string[]) => {
     const count: Record<string, number> = {};
@@ -26,7 +72,6 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
     return duplicates;
   };
 
-  // Memoize the repeated headings to avoid unnecessary recalculations
   const repeated: any = useMemo(() => findDuplicates(headings), [headings]);
 
   useEffect(() => {
@@ -34,10 +79,8 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
   }, [repeated, setRepeatedHeadings]);
 
   function processLink(link: string) {
-    // Find the index of the first colon
     const firstColonIndex = link.indexOf(":");
 
-    // If there's no colon, handle the error or return default values
     if (firstColonIndex === -1) {
       return {
         headingType: "Unknown",
@@ -45,7 +88,6 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
       };
     }
 
-    // Extract heading type and the remaining part of the string
     const headingType = link.substring(0, firstColonIndex).trim();
     const headingText = link.substring(firstColonIndex + 1).trim();
 
@@ -57,12 +99,38 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
 
   return (
     <section
-      className={`table_container headings ${Visible.headings ? "block" : "hidden"} `}
+      className={`table_container relative headings ${Visible.headings ? "block" : "hidden"} `}
     >
       <h2 className="text-base text-left pl-1 pt-3 font-bold w-full text-black/60 flex items-center">
         <LiaHeadingSolid className="mr-1.5" /> Headings
       </h2>
-
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen} side="right">
+        <DropdownMenu>
+          <DropdownMenuTrigger className="absolute top-5 right-1">
+            <BsThreeDotsVertical className="dark:text-white mr-2 z-10 cursor-pointer" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="bg-brand-darker border dark:bg-brand-darker dark:border-brand-dark dark:text-white bg-white active:text-white p-0 text-center mr-32 mt-1">
+            <DropdownMenuLabel className="w-full text-center border-b">
+              Rusty Headings
+            </DropdownMenuLabel>
+            <SheetTrigger asChild>
+              <DropdownMenuItem className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer active:text-white mt-1">
+                AI Recommended
+              </DropdownMenuItem>
+            </SheetTrigger>
+            <DropdownMenuItem className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer active:text-white">
+              One more
+            </DropdownMenuItem>
+            <DropdownMenuItem className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer active:text-white">
+              Show All
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <SheetContent className="z-[99999999999] overflow-hidden h-[720px] my-auto mr-2 w-[900px] max-w-[1200px] px-0 rounded-md  border-1  dark:bg-brand-dark">
+          <HeadingsTableAI aiHeadings={viewAIHeadings} headings={headings} />
+        </SheetContent>
+      </Sheet>
       <section className="flex flex-col flex-grow">
         <table className="w-full">
           <thead className="text-xs text-left">

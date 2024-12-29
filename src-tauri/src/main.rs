@@ -32,6 +32,7 @@ pub mod genai;
 pub mod gsc;
 mod image_converter;
 pub mod server;
+pub mod version;
 
 #[derive(Serialize, Debug, Deserialize)]
 struct Config {
@@ -117,7 +118,7 @@ async fn main() {
     println!("UUID: {}", uuid);
 
     // Start the server
-    let _start_server = server::rusty_server().await;
+    // let _start_server = server::rusty_server().await;
 
     // Tauri setup
     tauri::Builder::default()
@@ -131,31 +132,7 @@ async fn main() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(LinkResult { links: vec![] })
-        // .setup(|app| {
-        //     let window = app.get_window("main").unwrap();
-        //     window.set_decorations(true).unwrap();
-        //     // Create and show splash screen
-        //     let splash = tauri::WindowBuilder::new(
-        //         app,
-        //         "splash",
-        //         tauri::WindowUrl::App("splashscreen.html".into()),
-        //     )
-        //     .decorations(false)
-        //     .always_on_top(true)
-        //     .center()
-        //     .build()
-        //     .expect("Failed to create splash window");
-        //     // Schedule splash screen removal
-        //     let main_window = window.clone();
-        //     tauri::async_runtime::spawn(async move {
-        //         std::thread::sleep(std::time::Duration::from_secs(3));
-        //         splash.close().unwrap();
-        //         main_window.show().unwrap();
-        //     });
-        //     Ok(())
-        // })
         .invoke_handler(tauri::generate_handler![
-            check_system,
             crawl,
             fetch_page_speed,
             fetch_google_search_console,
@@ -192,46 +169,11 @@ async fn main() {
             commands::set_microsoft_clarity_command,
             commands::get_microsoft_clarity_command,
             commands::get_microsoft_clarity_data_command,
+            version::version_check_command,
+            gemini::get_headings_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-}
-
-// -------------------- CHECK SYSTEM ---------------------
-#[tauri::command]
-async fn check_system() -> Result<String, String> {
-    let project_dirs = ProjectDirs::from("", "", "rustyseo").unwrap();
-    let data_dir = project_dirs.data_dir();
-    let cache_dir = project_dirs.cache_dir();
-    let config_dir = project_dirs.config_dir();
-    let log_dir = project_dirs.data_local_dir();
-    let temp_dir = project_dirs.data_local_dir();
-    let log_file = log_dir.join("rustyseo.log");
-
-    // Create directories if they don't exist
-    if !data_dir.exists() {
-        std::fs::create_dir_all(data_dir).unwrap();
-    }
-    if !cache_dir.exists() {
-        std::fs::create_dir_all(cache_dir).unwrap();
-    }
-    if !config_dir.exists() {
-        std::fs::create_dir_all(config_dir).unwrap();
-    }
-    if !log_dir.exists() {
-        std::fs::create_dir_all(log_dir).unwrap();
-    }
-    if !temp_dir.exists() {
-        std::fs::create_dir_all(temp_dir).unwrap();
-    }
-
-    // Check the config file and see it it has any keys inside
-    let config_file = config_dir.join("api_keys.toml");
-    if !config_file.exists() {
-        return Err("No API keys found".to_string());
-    }
-
-    Ok("System check completed".to_string())
 }
 
 #[tauri::command]
