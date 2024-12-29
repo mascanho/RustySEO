@@ -28,11 +28,10 @@ These LLMs might get deprecated due to their lack of uniform performance across 
 Authentication currently takes place server side, as such it is slightly more cumbersome when integrating with Google OAuth 2.0. This is particularly true 
 for Google Search Console (GSC) and Google Analytics 4 (GA4)
 
-This authentication will be passed to the client side.
+This authentication will be passed to the client-side in the future.
 
 Use at your own risk, this software is new and under development.
 
-Why join the Navy when you can be a SEO engineer?
 
 ## Features
 
@@ -47,7 +46,7 @@ Why join the Navy when you can be a SEO engineer?
 - Keyword generator;
 - Local LLM (ollama);
 - Free API LLM (Google Gemini);
-- Built in AI chatbot;
+- Built-in AI chatbot;
 - Crawl history;
 - Image conversion and optimization;
 
@@ -57,7 +56,8 @@ Why join the Navy when you can be a SEO engineer?
 - More integrations;
 - Better reporting;
 - Password protection & encryption;
-- Client-side OAuth2 authentication 
+- Client-side OAuth2 authentication
+- More AI automations
 
 ## Connectors / APIs (Get your keys, they are free 😉)
 - [Google Search Console](https://search.google.com/search-console/about)
@@ -88,7 +88,7 @@ To setup Google Search Console, follow these steps:
 
 ![RustySEO](assets/ss1.png)
 
-You can find all the details in your Google Cloud console account with the exception of the "URL" and "Propery Type", which should match what you have in your Google Search console account.
+You can find all the details in your Google Cloud console account with the exception of the "URL" and "Property Type", which should match what you have in your Google Search console account.
 
 ![RustySEO](assets/properties.png)
 
@@ -96,12 +96,12 @@ You can find all the details in your Google Cloud console account with the excep
 
 6. Restart RustySEO
 
-7. Since windows does not allow to output logs into the terminal by default, we just need to force it so that we can grab the link generated on the server to generate our token. Google keeps changing this but the goal is to have it done client-side (once I have the time).
+7. Since windows does not allow to output logs into the terminal by default, we just need to force it so that we can grab the link generated on the server to generate our token. Google keeps changing this but the goal is to have it done client-side (once I have the time). Launch RustySEO from Windows Powershell with the following command:
 
 ```bash
-wsl --set-version ubuntu
+C:\Users\[your user]\AppData\Local\rustyseo\rustyseo.exe | Tee-Object -Filepath "C:\Users\[your user]\Downloads\rusty.log" 
 ```
-
+This will output all the logs into powershell. You will see a link from Google Auth. Simply open it in your browser with the same account that you generated your GSC API. Accept.
 
 6. **Connect s**:
 
