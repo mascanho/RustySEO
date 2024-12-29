@@ -1,7 +1,7 @@
 ![Logo](assets/hero.jpg)
 
 
-# RustySEO - A cross platform SEO toolkit
+# RustySEO - A cross-platform SEO toolkit
 
 RustySEO is an all-in-one, cross-platform toolkit designed for comprehensive SEO analysis. It enables users to crawl websites and gain actionable insights into their marketing and SEO strategies.
 
@@ -9,15 +9,24 @@ As an open-source project, RustySEO aims to enhance your SEO efforts. Please not
 
 Our mission is to offer a robust, free alternative to the costly commercial SEO tools currently on the market.
 
-## TL;DR
+# TL;DR
 
-We recommend you to use Google Gemini if you want the "Topics" feature.
+For a better experience you need to get a [Google PageSpeed Insights](https://developers.google.com/speed/docs/insights/v5/get-started) API KEY. 
 
-As of today, the smaller local LLMs are not working properly and are not recommended if you want to use the "Topics" feature.
+Got to "Connectors" > "PageSpeed Insights" and add your key, for the time being you can try one I generated (It will expire over time):
 
-These LLMs might get deprecated in the future due to its lack of uniform performance across different models.
+``` bash
+AIzaSyAHsCM-Cs4cCqdGi798wh8af-bSnXbVUjw
+```
 
-Authentication currently takes place server side, as such it is slightly more cumbersome when integrating with Google OAuth 2.0.
+We recommend using Google Gemini if you want the best AI features.
+
+As of today, the smaller local LLMs are not working properly and are not recommended if you want to make the most of the AI features.
+
+These LLMs might get deprecated due to their lack of uniform performance across different models.
+
+Authentication currently takes place server side, as such it is slightly more cumbersome when integrating with Google OAuth 2.0. This is particularly true 
+for Google Search Console (GSC) and Google Analytics 4 (GA4)
 
 This authentication will be passed to the client side.
 
