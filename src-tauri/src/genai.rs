@@ -133,7 +133,7 @@ pub async fn generate_headings(headings: String) -> Result<ChatResponse, Box<dyn
     // Check the Global Model Selection
     let global_model_selected = actions::ai_model_read();
     println!(
-        "Global AI Model Selected for Topics : {:?}",
+        "Global AI Model Selected for Headings : {:?}",
         global_model_selected
     );
 

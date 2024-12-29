@@ -228,7 +228,7 @@ pub async fn generate_headings(headings: String) -> Result<String> {
     let client = reqwest::Client::new();
 
     let prompt = format!(
-        "You are an amazing SEO expert, given the headings provided improve them and make them better to have better changes of ranking. follow the best practices and use the keywords wisely, output it the same format as submited :{:#?}", headings
+        "You are an amazing SEO expert, given the headings provided improve them and make them better to have better changes of ranking on search engines, and more importantly on google. Follow the latest SEO best practices and use the keywords wisely, output it the same format as submited, do not output anything else besides the headings, the headings are: {:#?}", headings
     );
 
     println!("Sending headings request to Gemini: {}", prompt);

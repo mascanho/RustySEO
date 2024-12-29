@@ -127,7 +127,7 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
             <DropdownMenuSeparator />
           </DropdownMenuContent>
         </DropdownMenu>
-        <SheetContent className="z-[99999999999] overflow-hidden h-[700px] my-auto mr-2 w-[900px] max-w-[1200px] px-0 rounded-md  border-1  dark:bg-brand-dark">
+        <SheetContent className="z-[99999999999] overflow-hidden h-[720px] my-auto mr-2 w-[900px] max-w-[1200px] px-0 rounded-md  border-1  dark:bg-brand-dark">
           <HeadingsTableAI aiHeadings={viewAIHeadings} headings={headings} />
         </SheetContent>
       </Sheet>
