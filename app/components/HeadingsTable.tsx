@@ -50,8 +50,10 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
       }
     };
 
-    fetchAiHeadings();
-  }, [headings]);
+    if (headings.length > 0) {
+      fetchAiHeadings();
+    }
+  }, [headings, aiHeadings]);
 
   console.log(viewAIHeadings, "VIEW AI HEADINGSSSSSS");
 
@@ -110,24 +112,17 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
             <BsThreeDotsVertical className="dark:text-white mr-2 z-10 cursor-pointer" />
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-brand-darker border dark:bg-brand-darker dark:border-brand-dark dark:text-white bg-white active:text-white p-0 text-center mr-32 mt-1">
-            <DropdownMenuLabel className="w-full text-center border-b">
-              Rusty Headings
+            <DropdownMenuLabel className="w-full text-center border-b dark:border-b-white/20">
+              Headings
             </DropdownMenuLabel>
             <SheetTrigger asChild>
-              <DropdownMenuItem className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer active:text-white mt-1">
-                AI Recommended
+              <DropdownMenuItem className="dark:hover:bg-brand-bright hover:text-white hover:bg-brand-highlight cursor-pointer active:text-white mt-1 text-center mx-auto flex justify-center items-center">
+                Improve Headings
               </DropdownMenuItem>
             </SheetTrigger>
-            <DropdownMenuItem className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer active:text-white">
-              One more
-            </DropdownMenuItem>
-            <DropdownMenuItem className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer active:text-white">
-              Show All
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
           </DropdownMenuContent>
         </DropdownMenu>
-        <SheetContent className="z-[99999999999] overflow-hidden h-[720px] my-auto mr-2 w-[900px] max-w-[1200px] px-0 rounded-md  border-1  dark:bg-brand-dark">
+        <SheetContent className="z-[99999999999] overflow-hidden h-[720px] my-auto mr-2 w-[900px] max-w-[1200px] px-0 rounded-md  border-1  dark:bg-brand-darker">
           <HeadingsTableAI aiHeadings={viewAIHeadings} headings={headings} />
         </SheetContent>
       </Sheet>
@@ -145,7 +140,7 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
         <div className="flex-grow custom-scrollbar overflow-auto h-[23.5rem]">
           <table className="w-full">
             <tbody>
-              {headings.map((link, index) => {
+              {headings?.map((link, index) => {
                 const { headingType, headingText } = processLink(link);
                 return (
                   <tr key={index}>
@@ -165,13 +160,13 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
           <p className="text-xs">
             Headings Found:{" "}
             <span className="px-1 py-0.5 bg-gray-400 text-white rounded-md">
-              {headings.length}
+              {headings?.length}
             </span>
           </p>
           <p>
             Duplicates Found:{" "}
             <span className="px-1 py-0.5 bg-red-400 text-white rounded-md mr-2">
-              {repeated.length}
+              {repeated?.length}
             </span>
           </p>
         </footer>

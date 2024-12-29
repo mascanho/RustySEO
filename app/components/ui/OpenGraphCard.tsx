@@ -119,7 +119,7 @@ export const OpenGraphCard = ({
               {openGraphDetails?.title}
             </span>
           </div>
-          <div className="flex flex-col w-full bg-white dark:bg-gray-800 p-2 rounded-md">
+          <div className="flex flex-col w-full bg-white dark:bg-gray-800 p-2 rounded-md ">
             <span className="font-bold text-green-600 dark:text-green-400 text-xs mb-1 flex items-center">
               <svg
                 className="w-3 h-3 mr-1"
@@ -221,7 +221,7 @@ export const OpenGraphCard = ({
           </div>
         </div>
       ) : (
-        <section className="h-full w-full relative overflow-hidden rounded-lg -z-1">
+        <section className="h-full w-full relative overflow-hidden rounded-lg -z-1 -mt-10">
           <div
             className={`px-10 m-auto w-10/12 flex flex-col items-center justify-center h-full ${
               openGraphDetails.length === 0
@@ -234,7 +234,7 @@ export const OpenGraphCard = ({
                 <img
                   src={openGraphDetails?.image}
                   alt="OpenGraph Image"
-                  className="rounded-md w-full object-cover max-h-72"
+                  className="rounded-md w-full object-contain"
                 />
               </div>
             )}
