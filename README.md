@@ -103,17 +103,10 @@ C:\Users\[your user]\AppData\Local\rustyseo\rustyseo.exe | Tee-Object -Filepath 
 ```
 This will output all the logs into powershell. You will see a link from Google Auth. Simply open it in your browser with the same account that you generated your GSC API. Accept.
 
-6. **Connect s**:
+8. Restart RustySEO after the token has been generated
 
-   ```bash
-   npm install
-   ```
+9. You should now see your GSC data inside RustySEO 
 
-4. **Run the software**:
-
-   ```bash
-   npm start
-   ```
 
 ## Mac OSX
 
