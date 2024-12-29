@@ -590,14 +590,13 @@ pub async fn get_page_speed_insights(
     dotenv().ok();
 
     // ----- This loads the API key prompted from the user -----
-    //let api_key = libs::load_api_keys()
-    //    .await
-    //    .map_err(|e| format!("Failed to load API keys: {}", e))?
-    //    .page_speed_key;
-    //
+    let api_key = libs::load_api_keys()
+        .await
+        .map_err(|e| format!("Failed to load API keys: {}", e))?
+        .page_speed_key;
 
     // ------- BAKEDINS API KEY -------
-    let api_key = "AIzaSyADhimFwkVUWEcFhHWclTGCU56USITLn9k";
+    // let api_key = "AIzaSyADhimFwkVUWEcFhHWclTGCU56USITLn9k";
 
     let page_speed_url = "https://www.googleapis.com/pagespeedonline/v5/runPagespeed";
     let client = Client::new();

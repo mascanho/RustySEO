@@ -49,7 +49,7 @@ const About: React.FC = () => {
         <div className="flex items-center justify-center space-x-2">
           <span>Version: </span>
           <h2 className="text-lg font-bold">{localVersion}</h2>
-          <button onClick={checkForUpdates} className="text-xs">
+          <button onClick={checkForUpdates} className="text-xs cursor-pointer">
             <IoReload className="text-[9px] text-brand-bright" />
           </button>
         </div>
@@ -66,11 +66,11 @@ const About: React.FC = () => {
               <a
                 href="https://github.com/mascanho/RustySEO/releases/latest"
                 target="_blank"
-                className="hover:opacity-80"
+                className="hover:opacity-80 cursor-pointer"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4"
+                  className="h-4 w-4 cursor-pointer"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"

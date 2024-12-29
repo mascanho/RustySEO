@@ -439,8 +439,8 @@ const TopMenuBar = () => {
                 <FiBarChart2 className="mr-2" />
                 SEO History
               </MenubarItem>
-              <MenubarSeparator />
-              <MenubarItem>
+              {/* <MenubarSeparator /> */}
+              {/* <MenubarItem>
                 <AiOutlineShareAlt className="mr-2" />
                 Share
               </MenubarItem>
@@ -448,7 +448,7 @@ const TopMenuBar = () => {
               <MenubarItem>
                 <AiOutlinePrinter className="mr-2" />
                 Print
-              </MenubarItem>
+              </MenubarItem> */}
             </MenubarContent>
           </MenubarMenu>
 
@@ -509,10 +509,10 @@ const TopMenuBar = () => {
                 <GiRobotGrab className="mr-2" />
                 Page Crawler
               </MenubarItem>
-              <MenubarItem onClick={() => router.push("/global")}>
+              {/* <MenubarItem onClick={() => router.push("/global")}>
                 <GiRobotGrab className="mr-2" />
                 Global Crawler
-              </MenubarItem>
+              </MenubarItem> */}
             </MenubarContent>
           </MenubarMenu>
 

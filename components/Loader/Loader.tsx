@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 const Loader = () => {
   const loadingMessages = useMemo(
     () => [
-      "Grabbing a few bears...",
+      "Grabbing a few beers...",
       "Fetching some data...",
       "Wrangling pixels...",
       "Brewing coffee...",
@@ -32,13 +32,13 @@ const Loader = () => {
         );
       }, 2000);
 
-      // Hide loader after 10 seconds
+      // Hide loader after 15 seconds
       const timeout = setTimeout(() => {
         setIsVisible(false);
         if (typeof window !== "undefined") {
           sessionStorage.setItem("hasInitiallyLoaded", "true");
         }
-      }, 10000);
+      }, 15000);
 
       return () => {
         clearInterval(messageInterval);
