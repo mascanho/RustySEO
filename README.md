@@ -111,7 +111,6 @@ This will output all the logs into powershell. You will see a link from Google A
 
 9. You should now see your GSC data inside RustySEO 
 
-
 ## Mac OSX
 
 After installation, you can start using My Software. Here are some basic instructions:
@@ -141,7 +140,7 @@ You can find all the details in your Google Cloud console account with the excep
 ```bash
 /Applications/rustyseo.app/Contents/MacOS/rustyseo
 ```
-This will output all the logs into powershell. You will see a link from Google Auth. Simply open it in your browser with the same account that you generated your GSC API. Accept.
+This will output all the logs into your terminal. You will see a link from Google Auth. Open it in your browser with the same account that you generated your GSC API. Accept the following prompts.
 
 8. Restart RustySEO after the token has been generated
 
@@ -173,16 +172,3 @@ If you encounter any issues, check the following:
 
 If you need further assistance, feel free to open an issue on GitHub or contact support.
 
-## Contributing
-
-We welcome contributions! If you'd like to contribute to My Software, please follow these guidelines:
-
-1. Fork the repository.
-2. Create a new branch (`git checkout -b feature/your-feature`).
-3. Commit your changes (`git commit -am 'Add new feature'`).
-4. Push to the branch (`git push origin feature/your-feature`).
-5. Create a new Pull Request.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
