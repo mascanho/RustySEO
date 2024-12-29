@@ -392,7 +392,8 @@ const TopMenuBar = () => {
             <MenubarContent>
               <MenubarItem onClick={openPanes}>
                 <FiEye className="mr-2" />
-                Panels <MenubarShortcut>ctr + p</MenubarShortcut>
+                Panels
+                {/* <MenubarShortcut>ctr + p</MenubarShortcut> */}
               </MenubarItem>
               <MenubarSeparator />
               <MenubarItem onClick={toggleDarkMode}>

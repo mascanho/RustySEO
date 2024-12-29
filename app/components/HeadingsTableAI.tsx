@@ -81,7 +81,7 @@ const HeadingsTableAI = ({
       <table className="w-full border-collapse border-0">
         <thead className="sticky top-0 bg-white z-0 shadow-sm border-0 text-sm">
           <tr>
-            <th className="w-10 py-3 px-2 text-brand-bright font-semibold border-b border-l text-center">
+            <th className="w-10 py-3 px-2 text-brand-bright font-semibold border-b border-l text-center border-t">
               Type
             </th>
             <th className="w-1/2 py-3 px-4 font-semibold border-b text-left">
@@ -97,11 +97,11 @@ const HeadingsTableAI = ({
         </thead>
         <tbody>
           {(paddedOriginal || [])?.map((heading, index) => (
-            <tr key={index}>
-              <td className="w-10 py-3 px-2 border-b border font-semibold text-brand-bright text-center">
+            <tr key={index} className="border-t">
+              <td className="w-10 py-3 px-2 border-b border-r font-semibold text-brand-bright text-center">
                 {heading?.headingType || ""}
               </td>
-              <td className="w-1/2 py-3 px-4 border-b group relative">
+              <td className="w-1/2 py-3 px-4 border-b  group relative">
                 {heading?.headingText || ""}
                 {heading?.headingText && (
                   <button
