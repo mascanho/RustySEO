@@ -116,27 +116,36 @@ This will output all the logs into powershell. You will see a link from Google A
 
 After installation, you can start using My Software. Here are some basic instructions:
 
-1. **Open the application**:
+To setup Google Search Console, follow these steps:
 
-   Open your browser and go to `http://localhost:3000`.
+1. You need to set up [Google Cloud Console](https://console.cloud.google.com/) with Search Console API enabled and Service Account active. Make sure you have full ownership of your GSC property. 
 
-2. **Login**:
+2. Launch RustySEO;
 
-   ![Login Screen](./screenshots/login.png)
+3. Go to the menu **Connectors** 👉 **Search Console**
 
-   Enter your username and password, then click "Login."
+4. Add your Google Search Console credentials
 
-3. **Navigate the Dashboard**:
+![RustySEO](assets/ss1.png)
 
-   ![Dashboard](./screenshots/dashboard.png)
+You can find all the details in your Google Cloud console account with the exception of the "URL" and "Property Type", which should match what you have in your Google Search console account.
 
-   Use the menu on the left to navigate through different sections of the application.
+![RustySEO](assets/properties.png)
 
-4. **Perform a Task**:
+5. Submit the credentials and your desired options
 
-   ![Task Screen](./screenshots/task.png)
+6. Restart RustySEO
 
-   Follow the instructions on the screen to complete your task.
+7. Open your terminal and execute the following:
+
+```bash
+/Applications/rustyseo.app/Contents/MacOS/rustyseo
+```
+This will output all the logs into powershell. You will see a link from Google Auth. Simply open it in your browser with the same account that you generated your GSC API. Accept.
+
+8. Restart RustySEO after the token has been generated
+
+9. You should now see your GSC data inside RustySEO 
 
 ## Linux
 
