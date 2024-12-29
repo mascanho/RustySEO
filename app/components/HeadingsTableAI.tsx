@@ -60,7 +60,7 @@ const HeadingsTableAI = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {headings.map((heading, index) => {
+            {headings?.map((heading, index) => {
               const processedHeading = processLink(heading);
               return (
                 <TableRow key={index} className="h-1">
@@ -85,7 +85,7 @@ const HeadingsTableAI = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {headingsData.map((heading, index) => (
+            {headingsData?.map((heading, index) => (
               <TableRow key={index} className="h-1">
                 <TableCell className="font-medium py-0 max-w-1 border-0 text-brand-bright">
                   {heading.type}
