@@ -9,6 +9,10 @@ As an open-source project, RustySEO aims to enhance your SEO efforts. Please not
 
 Our mission is to offer a robust, free alternative to the costly commercial SEO tools currently on the market.
 
+Keep in mind that all the integrations are free to use (up to an extent). Its abuse will result in 404 or 503 by the providers.
+
+As long as you don't spam (many requests per second) you should be ok to use RustySEO as your daily driver for SEO. :)
+
 # TL;DR
 
 For a better experience you need to get a [Google PageSpeed Insights](https://developers.google.com/speed/docs/insights/v5/get-started) API KEY. 
