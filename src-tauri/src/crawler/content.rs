@@ -106,8 +106,8 @@ pub fn extract_text(html: &Html) -> String {
     for element in document.select(&selector) {
         text.push_str(&element.text().collect::<Vec<_>>().join(" "));
     }
-    println!("Extracted HTML: {}", document.html().len());
-    println!("Extracted text: {}", text.len());
+    // println!("Extracted HTML: {}", document.html().len());
+    // println!("Extracted text: {}", text.len());
     text
 }
 

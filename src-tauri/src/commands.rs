@@ -115,7 +115,7 @@ pub async fn call_google_search_console() -> Result<(), String> {
 // ------- CALL GSC MATCH URL FUNCTION
 #[tauri::command]
 pub fn call_gsc_match_url(url: String) -> Result<Vec<GscMatched>, String> {
-    println!("Calling Google Search Console");
+    // println!("Calling Google Search Console");
 
     // Assuming match_gsc_url does not require arguments and does not return a result
     // If it does return a result, make sure to handle it accordingly

@@ -764,6 +764,7 @@ const Home: React.FC<HomeProps> = () => {
                 <RenderBlockingResources pageSpeed={pageSpeed} />
                 <LongTasksTable pageSpeed={pageSpeed} />
                 <PageSchemaTable
+                  body={bodyElements}
                   pageSchema={pageSchema}
                   googleSchemaTestUrl={debouncedURL}
                   sessionUrl={sessionUrl || url || debouncedURL}

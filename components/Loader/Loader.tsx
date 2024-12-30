@@ -32,13 +32,13 @@ const Loader = () => {
         );
       }, 2000);
 
-      // Hide loader after 15 seconds
+      // Hide loader after 11 seconds
       const timeout = setTimeout(() => {
         setIsVisible(false);
         if (typeof window !== "undefined") {
           sessionStorage.setItem("hasInitiallyLoaded", "true");
         }
-      }, 15000);
+      }, 11000);
 
       return () => {
         clearInterval(messageInterval);

@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { BsFiletypeJson, BsThreeDotsVertical } from "react-icons/bs";
 import CodeBlock from "../CodeBlock";
 
@@ -11,18 +11,26 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import useStore from "@/store/Panes";
+import { invoke } from "@tauri-apps/api/core";
+import { newDate } from "react-datepicker/dist/date_utils";
 
 const PageSchemaTable = ({
   pageSchema = "",
   googleSchemaTestUrl,
   sessionUrl,
+  body,
 }: {
+  body: string;
   pageSchema?: string;
   googleSchemaTestUrl?: string;
 }) => {
   const { Visible } = useStore();
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [schema, setSchema] = useState("");
+  const [newAISchema, setNewAISchema] = useState("");
 
   // Function to format the schema to create a new line after each comma ","
   function formatSchema(schema: any) {
@@ -49,6 +57,31 @@ const PageSchemaTable = ({
 
   const testURL = convertToGoogleRichResultsURL(googleSchemaTestUrl);
 
+  // Invoke Tauri Function to send SCHEMA or BODY
+
+  const fetchAiJSONLD = async () => {
+    if (newSchema.trim().length === 0) {
+      setSchema(body);
+    } else {
+      setSchema(newSchema);
+    }
+
+    console.log(body, "This is the body from the schema");
+
+    try {
+      const response: any = await invoke("get_jsonld_command", {
+        jsonld: schema,
+      });
+      if (response) {
+        // setViewAIHeadings(response);
+        console.log(response, "AI GENERATED SCHEMA");
+        setNewAISchema(response);
+      }
+    } catch (error) {
+      console.error("Failed to get AI SCHEMA:", error);
+    }
+  };
+
   return (
     <section
       className={`schema naked_table ${Visible.schema ? "block" : "hidden"}`}
@@ -74,19 +107,36 @@ const PageSchemaTable = ({
                 Schema Validator
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-gray-100 dark:bg-brand-dark" />
-
+              <DropdownMenuItem
+                onClick={() => setSheetOpen(true)}
+                className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer"
+              >
+                Improve Schema
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => openBrowserWindow(testURL)}
                 className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer"
               >
                 Documentation
               </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => fetchAiJSONLD()}
+                className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer"
+              >
+                Fetch AI JSON-LD
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+            <SheetContent className="z-[99999999999] overflow-hidden h-[720px] my-auto mr-2 w-[900px] max-w-[1200px] px-0 rounded-md border-1 dark:bg-brand-darker">
+              {/* Schema improvement content would go here */}
+            </SheetContent>
+          </Sheet>
         </div>
       </section>
       <section className="mx-auto w-full schema custom-scrollbar rounded-md overflow-auto bg-white/40 dark:bg-brand-darker relative h-[29.2rem]">
-        {newSchema.trim().length === 0 ? ( // Use newSchema for checking empty state
+        {newSchema.trim().length === 0 ? (
           <div className="flex items-center justify-center h-[78%]">
             <p className="text-center m-auto text-sm text-black/50 pt-2 dark:text-white/50">
               No Schema Found

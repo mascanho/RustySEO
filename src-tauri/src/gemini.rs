@@ -178,7 +178,7 @@ pub async fn generate_topics(body: String) -> Result<String> {
         "Given the body of this page, generate a list of long tail keywords that can be derived from this page and other content that can be created based on it, generate the topics based on those keywords, a page title, a page description to create more content that is SEO friendly and complements this current page, , do not output backticks nor any strage characters! And do not mention anything else on your reply. The output should be {{keyword:, title: , description:}} give me 10 results only, make sure to pass the JSON details in the same language as the content/copy inside the body provided, the body of the page is :{}", body
     );
 
-    println!("Sending Topic request to Gemini: {}", prompt);
+    // println!("Sending Topic request to Gemini: {}", prompt);
 
     let request = GeminiRequest::new(&prompt);
 
@@ -201,7 +201,7 @@ pub async fn generate_topics(body: String) -> Result<String> {
 
     let topics = gemini_response.candidates[0].content.parts[0].text.clone();
 
-    println!("Topics: {:?}", topics);
+    // println!("Topics: {:?}", topics);
 
     Ok(topics)
 }
@@ -222,6 +222,7 @@ pub async fn get_headings_command(aiHeadings: String) -> Result<String, String> 
     }
 }
 
+// ---------------- Ask Gemini for Headings of a page
 pub async fn generate_headings(headings: String) -> Result<String> {
     let key = get_gemini_api_key().expect("Failed to read Gemini API key To generate SEO headings");
 
@@ -257,4 +258,51 @@ pub async fn generate_headings(headings: String) -> Result<String> {
     println!("AI Headings: {:?}", ai_headings);
 
     Ok(ai_headings)
+}
+
+// ---------------- THE COMMAND TO ASK GEMINI FOR JSON-LD
+#[tauri::command]
+pub async fn get_jsonld_command(jsonld: String) -> Result<String, String> {
+    match generate_jsonld(jsonld).await {
+        Ok(response) => Ok(response),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+// ---------------- Ask Gemini for JSON-LD of a page
+pub async fn generate_jsonld(jsonld: String) -> Result<String> {
+    let key = get_gemini_api_key().expect("Failed to read Gemini API key To generate SEO headings");
+
+    let client = reqwest::Client::new();
+
+    let prompt = format!(
+        "You are an amazing SEO expert, given the JSON-LD provided improve it and make it better to have better changes of ranking on search engines, and more importantly on google. Follow the latest SEO best practices and use the keywords wisely, output it the same format as submited, do not output anything else besides it. the json-ld (structured data) is: {:#?}", jsonld
+    );
+
+    println!("Sending JSON-LD request to Gemini: {}", prompt);
+
+    let request = GeminiRequest::new(&prompt);
+
+    let response = client
+        .post(API_ENDPOINT)
+        .query(&[("key", key)])
+        .json(&request)
+        .send()
+        .await
+        .expect("Failed to generate headings");
+
+    if !response.status().is_success() {
+        return Err(anyhow!(
+            "Gemini API Request failed with status code: {}",
+            response.status()
+        ));
+    }
+
+    let gemini_response: GeminiResponse = response.json().await.unwrap();
+
+    let ai_jsonld = gemini_response.candidates[0].content.parts[0].text.clone();
+
+    println!("JSOND-LD: {:?}", ai_jsonld);
+
+    Ok(ai_jsonld)
 }

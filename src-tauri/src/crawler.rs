@@ -592,8 +592,18 @@ pub async fn get_page_speed_insights(
     // ----- This loads the API key prompted from the user, if not set, it will use the default one -----
 
     let api_key = match libs::load_api_keys().await {
-        Ok(api_keys) => api_keys.page_speed_key,
-        Err(_) => String::from("AIzaSyADhimFwkVUWEcFhHWclTGCU56USITLn9k"),
+        Ok(api_keys) => {
+            if api_keys.page_speed_key.is_empty() {
+                println!("No API key found, using default key");
+                String::from("AIzaSyADhimFwkVUWEcFhHWclTGCU56USITLn9k")
+            } else {
+                api_keys.page_speed_key
+            }
+        }
+        Err(_) => {
+            println!("Failed to load API keys file, using default key");
+            String::from("AIzaSyADhimFwkVUWEcFhHWclTGCU56USITLn9k")
+        }
     };
 
     // let api_key = libs::load_api_keys()

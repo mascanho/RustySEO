@@ -177,3 +177,53 @@ pub async fn generate_headings(headings: String) -> Result<ChatResponse, Box<dyn
         Ok(chat_res)
     }
 }
+
+// ------------- GENERATE STRUCTURED DATA JSON-LD ---------------------
+pub async fn generate_jsonld(jsonld: String) -> Result<ChatResponse, Box<dyn Error>> {
+    // Check the Global Model Selection
+    let global_model_selected = actions::ai_model_read();
+    println!(
+        "Global AI Model Selected for Headings : {:?}",
+        global_model_selected
+    );
+
+    if global_model_selected == "gemini" {
+        let gemini_response = gemini::generate_headings(jsonld).await;
+
+        let gemini_response = ChatResponse {
+            content: Some(gemini_response.unwrap()),
+            ..Default::default()
+        };
+        println!("Gemini selected, not using Ollama");
+        Ok(gemini_response)
+    } else {
+        // get the Ollama model selection
+        let model_selection = get_ai_model().trim().to_string(); // Ensure it's a String
+
+        // Initialize the HTTP client
+        let client = Client::default();
+
+        // Create the chat request
+        let prompt = format!(
+              "You are an amazing SEO expert. Given the body of this page, generate a list of long tail keywords that can be derived from this page, generate the topics based on those keywords, a page title, a page description and a page H1 to create more content that is SEO friendly and complements this current page, , do not output backticks nor any strage characters! output in JSON format And do not mention anything else on your reply. The output should be {{keyword:, topic:, title: , description:, h1:}} give me 1 result only, the body of the page to be analysed by you is :{:#?} and you should output only the JSON format, do not say or add anything else to your reply.", jsonld
+          );
+        let chat_req = ChatRequest::new(vec![
+            // ChatMessage::system("Output a JSON format, do not add anything else to your reply if it is not inside the JSON format"),
+            ChatMessage::user(prompt),
+        ]);
+
+        // Retrieve and trim the model selection
+        let model = model_selection;
+        // println!("Using model: {}", model);
+
+        // Execute the chat request
+        let chat_res = client.exec_chat(&model, chat_req.clone(), None).await?;
+
+        // Print the response for debugging
+        println!("Ollama Topics: {:#?}", chat_res);
+        println!("{}", chat_res.content.as_deref().unwrap_or("NO ANSWER"));
+
+        // Return the response
+        Ok(chat_res)
+    }
+}

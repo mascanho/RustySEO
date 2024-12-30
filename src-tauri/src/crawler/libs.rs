@@ -237,6 +237,23 @@ pub async fn load_api_keys() -> Result<ApiKeys, String> {
         ProjectDirs::from("", "", "rustyseo").ok_or_else(|| "Failed to get project directories")?;
     let config_file = config_dir.config_dir().join("api_keys.toml");
 
+    // Create the config directory if it doesn't exist
+    fs::create_dir_all(config_dir.config_dir())
+        .await
+        .map_err(|e| format!("Failed to create config directory: {}", e))?;
+
+    // Check if file exists, create it with empty values if it doesn't
+    if !config_file.exists() {
+        let default_api_keys = ApiKeys {
+            page_speed_key: String::new(),
+        };
+        let default_content = toml::to_string(&default_api_keys)
+            .map_err(|e| format!("Failed to serialize default config: {}", e))?;
+        fs::write(&config_file, default_content)
+            .await
+            .map_err(|e| format!("Failed to write default config file: {}", e))?;
+    }
+
     let config_content = fs::read_to_string(&config_file).await.map_err(|e| {
         format!(
             "Failed to read config file '{}': {}",
@@ -505,7 +522,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
         .expect("Failed to get project directories")
         .data_dir()
         .join("client_secret.json");
-    println!("Secret path with error: {}", secret_path.display());
+    // println!("Secret path with error: {}", secret_path.display());
     let secret = yup_oauth2::read_application_secret(&secret_path).await?;
 
     // Create an authenticator
