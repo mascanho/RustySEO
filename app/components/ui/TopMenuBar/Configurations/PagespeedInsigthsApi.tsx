@@ -52,8 +52,9 @@ export default function PagespeedInsightsApi() {
       <CardContent>
         {apiKey === "" ? (
           <div className="bg-gray-100 dark:bg-brand-dark p-4 rounded-md font-mono text-sm break-all">
-            <span className="text-gray-500 dark:text-gray-400">
-              No API key found. Please set one up in the connectors menu.
+            <span className="text-gray-500 dark:text-gray-400 text-xs">
+              No API key found, falling back to default one. Please set one up
+              in the connectors menu.
             </span>
           </div>
         ) : (

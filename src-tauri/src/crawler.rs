@@ -589,11 +589,17 @@ pub async fn get_page_speed_insights(
 ) -> Result<(PageSpeedResponse, SeoPageSpeedResponse), String> {
     dotenv().ok();
 
-    // ----- This loads the API key prompted from the user -----
-    let api_key = libs::load_api_keys()
-        .await
-        .map_err(|e| format!("Failed to load API keys: {}", e))?
-        .page_speed_key;
+    // ----- This loads the API key prompted from the user, if not set, it will use the default one -----
+
+    let api_key = match libs::load_api_keys().await {
+        Ok(api_keys) => api_keys.page_speed_key,
+        Err(_) => String::from("AIzaSyADhimFwkVUWEcFhHWclTGCU56USITLn9k"),
+    };
+
+    // let api_key = libs::load_api_keys()
+    //     .await
+    //     .map_err(|e| format!("Failed to load API keys: {}", e))?
+    //     .page_speed_key;
 
     // ------- BAKEDINS API KEY -------
     // let api_key = "AIzaSyADhimFwkVUWEcFhHWclTGCU56USITLn9k";
