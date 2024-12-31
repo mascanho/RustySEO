@@ -1,16 +1,32 @@
-name: Clone
+name: Copy Files to RustySEO Release Repo
+
 on:
-  # Run every 12 hours
-  schedule:
-    - cron: "0 */12 * * *"
+  push:
+    branches:
+      - main  # Trigger on push to the 'main' branch
+
 jobs:
-  build:
+  copy-files:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Run action
-        uses: andrewthetechie/gha-clone-releases@v1.7.0
-        with:
-          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-          src_repo: some-account/private-or-internal-repo
-          dst_repo: mascanho/RustySEO/
-          copy_assets: true
+      # Step 1: Checkout the source repository
+      - name: Checkout Source Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Clone the destination repository
+      - name: Clone Destination Repository
+        run: |
+          git clone https://$GITHUB_ACTOR:${{ secrets.DESTINATION_PAT }}@github.com/<username>/<destination-repo>.git destination-repo
+          cd destination-repo
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      # Step 3: Copy files from the source to the destination repository
+      - name: Copy Files
+        run: |
+          cp -R ./<source-folder>/* ./destination-repo/<destination-folder>/
+          cd destination-repo
+          git add .
+          git commit -m "Copy files from source repository"
+          git push
