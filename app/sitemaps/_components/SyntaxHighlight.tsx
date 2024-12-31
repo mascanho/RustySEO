@@ -9,11 +9,11 @@ const SitemapDisplay: React.FC<SitemapDisplayProps> = ({ sitemapContent }) => {
   const lines = sitemapContent.split("\n");
 
   return (
-    <div className="h-[600px]   rounded-md  ">
+    <div className="h-[600px]  rounded-md  ">
       <pre>
         <code>
           {lines.map((line, index) => (
-            <div className="crawl-item" key={index}>
+            <div className="crawl-item " key={index}>
               {line}
             </div>
           ))}

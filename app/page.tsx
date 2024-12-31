@@ -275,10 +275,17 @@ const Home: React.FC<HomeProps> = () => {
         setVideo(result.video);
         setUrlLength(result.url_length);
       })
-      .catch(console.error);
-  };
+      .catch(console.error)
+      .finally(() => {
+        console.log("finished crawling");
+        // Add a + 1 to the number of crawels on the sessions storage
+        const crawlCount = Number(sessionStorage.getItem("crawlCount"));
+        sessionStorage.setItem("crawlCount", `${crawlCount + 1}`);
 
-  console.log(urlLength, "URL length from the main page");
+        // CALL GEMINI FOR THE HEADINGS
+        window.dispatchEvent(new Event("crawlFinished"));
+      });
+  };
 
   // GET THE THEME AND SET IT
   useEffect(() => {

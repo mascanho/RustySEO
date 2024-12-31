@@ -35,25 +35,25 @@ const HeadingsTable = ({ headings }: { headings: string[] }) => {
 
   const aiHeadings = headings.toString();
 
-  useEffect(() => {
-    const fetchAiHeadings = async () => {
-      try {
-        const response: any = await invoke("get_headings_command", {
-          aiHeadings,
-        });
-        if (response) {
-          setViewAIHeadings(response);
-          console.log(response, "response headings AI GMEINI");
-        }
-      } catch (error) {
-        console.error("Failed to get AI headings:", error);
-      }
-    };
+  const crawlCount = sessionStorage.getItem("crawlCount");
 
-    if (headings.length > 0) {
-      fetchAiHeadings();
+  const fetchAiHeadings = async () => {
+    try {
+      const response: any = await invoke("get_headings_command", {
+        aiHeadings,
+      });
+      if (response) {
+        setViewAIHeadings(response);
+        console.log(response, "response headings AI GMEINI");
+      }
+    } catch (error) {
+      console.error("Failed to get AI headings:", error);
     }
-  }, [headings, aiHeadings]);
+  };
+
+  useEffect(() => {
+    fetchAiHeadings();
+  }, [crawlCount]);
 
   console.log(viewAIHeadings, "VIEW AI HEADINGSSSSSS");
 

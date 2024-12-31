@@ -114,7 +114,7 @@ td {
 }
 
 pre:not([class*="robots"]) {
-  @apply dark:bg-brand-darker bg-gray-200/50 dark:text-white/50 border-0 !important;
+  @apply dark:bg-brand-dark bg-gray-200/50 dark:text-white/50 border-0 !important;
   overflow: scroll;
   padding: 6px;
   height: 34.4rem !important;
@@ -714,6 +714,7 @@ button .mantine-Tabs-tabLabel {
   border-collapse: collapse;
 }
 
-/* HEADINGS SHEETg */
-/* #radix-:r4eaav7mt7 {
-} */
+/* CHANGE THE CODE ELEMENT FOR AI SCHEMA */
+.aiSchema section div pre {
+  @apply h-[42rem] dark:border-brand-dark rounded-md  !important;
+}

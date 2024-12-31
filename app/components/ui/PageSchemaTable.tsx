@@ -16,6 +16,7 @@ import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import useStore from "@/store/Panes";
 import { invoke } from "@tauri-apps/api/core";
 import { newDate } from "react-datepicker/dist/date_utils";
+import PageSchemaAI from "./PageSchemaAI";
 
 const PageSchemaTable = ({
   pageSchema = "",
@@ -60,25 +61,25 @@ const PageSchemaTable = ({
   // Invoke Tauri Function to send SCHEMA or BODY
 
   const fetchAiJSONLD = async () => {
-    if (newSchema.trim().length === 0) {
-      setSchema(body);
-    } else {
-      setSchema(newSchema);
-    }
-
-    console.log(body, "This is the body from the schema");
-
     try {
-      const response: any = await invoke("get_jsonld_command", {
-        jsonld: schema,
+      // Set schema based on availability
+      const schemaToUse = newSchema.trim().length === 0 ? body[0] : newSchema;
+      setSchema(schemaToUse);
+
+      // Fetch AI-generated JSON-LD
+      const response = await invoke("get_jsonld_command", {
+        jsonld: schemaToUse,
       });
-      if (response) {
-        // setViewAIHeadings(response);
-        console.log(response, "AI GENERATED SCHEMA");
-        setNewAISchema(response);
+
+      if (!response) {
+        throw new Error("No response received from AI service");
       }
+
+      setNewAISchema(response);
+      return response;
     } catch (error) {
-      console.error("Failed to get AI SCHEMA:", error);
+      console.error("Failed to get AI-generated schema:", error);
+      throw error; // Re-throw to allow handling by caller if needed
     }
   };
 
@@ -129,8 +130,9 @@ const PageSchemaTable = ({
           </DropdownMenu>
 
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-            <SheetContent className="z-[99999999999] overflow-hidden h-[720px] my-auto mr-2 w-[900px] max-w-[1200px] px-0 rounded-md border-1 dark:bg-brand-darker">
+            <SheetContent className="z-[99999999999] overflow-hidden h-[720px] my-auto mr-2 w-[1100px] max-w-[1200px] px-0 rounded-md border-1 dark:bg-brand-darker">
               {/* Schema improvement content would go here */}
+              <PageSchemaAI AIschema={newAISchema} schema={newSchema} />
             </SheetContent>
           </Sheet>
         </div>
