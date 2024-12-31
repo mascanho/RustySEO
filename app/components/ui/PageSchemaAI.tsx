@@ -42,9 +42,8 @@ const PageSchemaAI = ({
   const formatFeedback = (feedback: string) => {
     if (!feedback) return null;
 
-    const firstSentence = "The original JSON-LD had several issues.";
-    const lastSentence =
-      "These are RustySEO's recommendations to improve the JSON-LD before publishing";
+    const firstSentence = "";
+    const lastSentence = "";
 
     // Extract the middle content for numbered points
     const mainContent = feedback
@@ -72,7 +71,7 @@ const PageSchemaAI = ({
   };
 
   return (
-    <section className="h-fit aiSchema overflow-hidden">
+    <section className="h-fit aiSchema overflow-hidden -mt-1">
       <section className="custom-scrollbar rounded-md h-full overflow-auto bg-white/40 dark:bg-brand-darker relative flex space-x-2  px-2 overflow-x-hidden">
         <div className="w-1/2 relative h-full flex items-center overflow-hidden m-auto">
           <div
@@ -80,7 +79,7 @@ const PageSchemaAI = ({
           >
             <span className="text-xs bg-white rounded-md px-2">Current</span>
             <button
-              onClick={() => copyToClipboard(schema, "current schema")}
+              onClick={() => copyToClipboard(schema, "CURRENT schema")}
               className="p-1 hover:bg-brand-bright rounded-md hover:text-white"
             >
               <FiCopy className="w-4 h-4 dark:text-white" />
@@ -104,7 +103,7 @@ const PageSchemaAI = ({
             </span>
             <button
               onClick={() =>
-                copyToClipboard(formattedAISchema, "improved schema")
+                copyToClipboard(formattedAISchema, "IMPROVED schema")
               }
               className="p-1 hover:bg-brand-bright rounded-md hover:text-white"
             >
