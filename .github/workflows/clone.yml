@@ -3,7 +3,7 @@ name: Copy Files to RustySEO Release Repo
 on:
   push:
     branches:
-      - main  # Trigger on push to the 'main' branch
+      - release  # Trigger on push to the 'main' branch
 
 jobs:
   copy-files:
@@ -17,7 +17,7 @@ jobs:
       # Step 2: Clone the destination repository
       - name: Clone Destination Repository
         run: |
-          git clone https://$GITHUB_ACTOR:${{ secrets.DESTINATION_PAT }}@github.com/<username>/<destination-repo>.git destination-repo
+          git clone https://$GITHUB_ACTOR:${{ secrets.DESTINATION_PAT }}@github.com/mascanho/rustyseo.git destination-repo
           cd destination-repo
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
@@ -25,7 +25,7 @@ jobs:
       # Step 3: Copy files from the source to the destination repository
       - name: Copy Files
         run: |
-          cp -R ./<source-folder>/* ./destination-repo/<destination-folder>/
+          cp -R ./rustyfrog/release/* ./rustyseo/releases/
           cd destination-repo
           git add .
           git commit -m "Copy files from source repository"
