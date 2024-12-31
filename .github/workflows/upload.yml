@@ -20,7 +20,7 @@ jobs:
           
           # Check if the release exists
           RELEASE=$(curl -s -H "Authorization: token ${{ secrets.DESTINATION_PAT }}" \
-            https://api.github.com/repos/mascanho/rustyseo/releases/tags/$RELEASE_TAG)
+            https://api.github.com/repos/RustyFrog/releases/tag/$RELEASE_TAG)
 
           if echo "$RELEASE" | grep -q '"id":'; then
             echo "Release exists."
@@ -30,7 +30,7 @@ jobs:
             RESPONSE=$(curl -s -X POST -H "Authorization: token ${{ secrets.DESTINATION_PAT }}" \
               -H "Content-Type: application/json" \
               -d '{"tag_name": "'"$RELEASE_TAG"'", "name": "'"$RELEASE_TAG"'", "draft": false, "prerelease": false}' \
-              https://api.github.com/repos/mascanho/rustyseo/releases)
+              https://api.github.com/repos/mascanho/RustyFrog/releases)
 
             echo "::set-output name=release_id::$(echo $RESPONSE | jq -r '.id')"
           fi
@@ -46,5 +46,5 @@ jobs:
             curl -s -X POST -H "Authorization: token ${{ secrets.DESTINATION_PAT }}" \
               -H "Content-Type: application/octet-stream" \
               --data-binary @"$file" \
-              "https://uploads.github.com/repos/mascanho/rustyseo/releases/$RELEASE_ID/assets?name=$FILENAME"
+              "https://uploads.github.com/repos/mascanho/RustySEO/releases/$RELEASE_ID/assets?name=$FILENAME"
           done
