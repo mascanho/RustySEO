@@ -1,0 +1,50 @@
+name: Upload Files to Another Repository Release
+
+on:
+  workflow_dispatch:  # Trigger manually for flexibility
+
+jobs:
+  upload-release-assets:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the source repository
+      - name: Checkout Source Repository
+        uses: actions/checkout@v3
+
+      # Step 2: Find or Create the Release
+      - name: Get or Create Release
+        id: create_release
+        run: |
+          RELEASE_TAG="v1.0.0"  # Replace with your desired release tag
+          
+          # Check if the release exists
+          RELEASE=$(curl -s -H "Authorization: token ${{ secrets.DESTINATION_PAT }}" \
+            https://api.github.com/repos/<username>/<destination-repo>/releases/tags/$RELEASE_TAG)
+
+          if echo "$RELEASE" | grep -q '"id":'; then
+            echo "Release exists."
+            echo "::set-output name=release_id::$(echo $RELEASE | jq -r '.id')"
+          else
+            echo "Creating release..."
+            RESPONSE=$(curl -s -X POST -H "Authorization: token ${{ secrets.DESTINATION_PAT }}" \
+              -H "Content-Type: application/json" \
+              -d '{"tag_name": "'"$RELEASE_TAG"'", "name": "'"$RELEASE_TAG"'", "draft": false, "prerelease": false}' \
+              https://api.github.com/repos/<username>/<destination-repo>/releases)
+
+            echo "::set-output name=release_id::$(echo $RESPONSE | jq -r '.id')"
+          fi
+
+      # Step 3: Upload Assets to the Release
+      - name: Upload Assets
+        run: |
+          RELEASE_ID=${{ steps.create_release.outputs.release_id }}
+
+          for file in $(find ./<source-folder> -type f); do
+            FILENAME=$(basename "$file")
+            echo "Uploading $FILENAME..."
+            curl -s -X POST -H "Authorization: token ${{ secrets.DESTINATION_PAT }}" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary @"$file" \
+              "https://uploads.github.com/repos/<username>/<destination-repo>/releases/$RELEASE_ID/assets?name=$FILENAME"
+          done
