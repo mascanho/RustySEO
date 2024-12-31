@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { MdOutlineInsertChart } from "react-icons/md";
+import { MdFilterListAlt, MdOutlineInsertChart } from "react-icons/md";
 import { BsMenuDown } from "react-icons/bs";
 import "react-datepicker/dist/react-datepicker.css";
 import { FaDesktop, FaMobileAlt } from "react-icons/fa";
@@ -207,20 +207,24 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
     });
   };
 
+  const filterUrl = (url: string) => {
+    setSearchQuery(url);
+  };
+
   return (
     <section>
       {/* Todo Modal */}
 
       <div className="relative mr-0 w-full mx-auto text-xs z-0">
         <div className=" -right-0  -z-10 flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10 -mt-7  w-full">
-          <div className="flex items-center space-x-2 relative z-0">
+          <div className="flex items-center space-x-2 relative z-0 w-2/3">
             <IoIosSearch className="w-3 h-3 absolute left-4 dark:text-white" />
             <input
               type="text"
               placeholder="Search by URL"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="border dark:text-white rounded-md  text-xs h-6 pl-6 pttt dark:border-brand-normal/20 dark:bg-brand-darker"
+              className="border dark:text-white rounded-md  text-xs h-6 pl-6 flex-1 flex dark:border-brand-normal/20 dark:bg-brand-darker"
             />
             <IoIosClose
               onClick={() => setSearchQuery("")}
@@ -333,11 +337,12 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
                     </td>
                     <td align="left" className="py-2 border relative group">
                       <div className="flex justify-between items-center">
-                        <TableMenus data={data} crawl={crawl}>
+                        {/* <TableMenus data={data} crawl={crawl}>
                           <span className="hover:text-blue-500 cursor-pointer">
                             {data.url}
                           </span>
-                        </TableMenus>
+                        </TableMenus> */}
+                        {data.url}
                         <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <TableFloatMenus data={data} crawl={crawl}>
                             <BsMenuDown className="text-purple-500" />
@@ -353,6 +358,9 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
                               <PopUpTable data={matchedUrlData} />
                             </PopoverContent>
                           </Popover>
+                          <div onClick={() => filterUrl(data.url)}>
+                            <MdFilterListAlt className="text-yellow-700 cursor-pointer" />
+                          </div>
                         </div>
                       </div>
                     </td>

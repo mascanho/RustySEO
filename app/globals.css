@@ -716,5 +716,5 @@ button .mantine-Tabs-tabLabel {
 
 /* CHANGE THE CODE ELEMENT FOR AI SCHEMA */
 .aiSchema section div pre {
-  @apply h-[42rem] dark:border-brand-dark rounded-md  !important;
+  @apply h-[42.4rem] dark:border-brand-dark rounded-md  !important;
 }

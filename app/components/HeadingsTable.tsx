@@ -1,9 +1,9 @@
 // @ts-nocheck
-"use client";
+// "use client";
 import useStore from "@/store/Panes";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import useOnPageSeo from "@/store/storeOnPageSeo";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { LiaHeadingSolid } from "react-icons/lia";
 import {
   DropdownMenu,
@@ -26,35 +26,48 @@ import {
 } from "@/components/ui/sheet";
 import { invoke } from "@tauri-apps/api/core";
 import HeadingsTableAI from "./HeadingsTableAI";
+import { Head } from "react-day-picker";
 
-const HeadingsTable = ({ headings }: { headings: string[] }) => {
+const HeadingsTable = ({ headings, sessionUrl }: { headings: string[] }) => {
   const { Visible } = useStore();
   const setRepeatedHeadings = useOnPageSeo((state) => state.setHeadings);
   const [viewAIHeadings, setViewAIHeadings] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
-
-  const aiHeadings = headings.toString();
-
-  const crawlCount = sessionStorage.getItem("crawlCount");
-
-  const fetchAiHeadings = async () => {
-    try {
-      const response: any = await invoke("get_headings_command", {
-        aiHeadings,
-      });
-      if (response) {
-        setViewAIHeadings(response);
-        console.log(response, "response headings AI GMEINI");
-      }
-    } catch (error) {
-      console.error("Failed to get AI headings:", error);
-    }
-  };
+  const previousHeadingsRef = useRef<string | null>(null);
 
   useEffect(() => {
-    fetchAiHeadings();
-  }, [crawlCount]);
+    let mounted = true;
 
+    const fetchAiHeadings = async () => {
+      try {
+        if (headings !== previousHeadingsRef.current) {
+          const aiHeadings = headings.toString();
+          const response: any = await invoke("get_headings_command", {
+            aiHeadings,
+          });
+          if (response && mounted) {
+            setViewAIHeadings(response);
+            console.log(response, "response headings AI GMEINI");
+          }
+          previousHeadingsRef.current = headings; // Update the ref
+        }
+      } catch (error) {
+        console.error("Failed to get AI headings:", error);
+      }
+    };
+
+    if (headings.length === 0) {
+      return;
+    } else {
+      fetchAiHeadings();
+    }
+
+    return () => {
+      mounted = false;
+    };
+  }, [headings]);
+
+  console.log(headings, "Vanilla headingas");
   console.log(viewAIHeadings, "VIEW AI HEADINGSSSSSS");
 
   const findDuplicates = (array: string[]) => {

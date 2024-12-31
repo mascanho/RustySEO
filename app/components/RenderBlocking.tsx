@@ -50,8 +50,8 @@ const RenderBlocking: React.FC<RenderBlockingProps> = ({
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
-          width={38}
-          height={38}
+          width={30}
+          height={30}
           color="#a6a5a2"
           fill="none"
         >

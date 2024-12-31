@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { BsFiletypeJson, BsThreeDotsVertical } from "react-icons/bs";
 import CodeBlock from "../CodeBlock";
 
@@ -32,6 +32,7 @@ const PageSchemaTable = ({
   const [sheetOpen, setSheetOpen] = useState(false);
   const [schema, setSchema] = useState("");
   const [newAISchema, setNewAISchema] = useState("");
+  const previousSchema = useRef<string | null>(null);
 
   // Function to format the schema to create a new line after each comma ","
   function formatSchema(schema: any) {
@@ -59,29 +60,39 @@ const PageSchemaTable = ({
   const testURL = convertToGoogleRichResultsURL(googleSchemaTestUrl);
 
   // Invoke Tauri Function to send SCHEMA or BODY
-
   const fetchAiJSONLD = async () => {
     try {
-      // Set schema based on availability
-      const schemaToUse = newSchema.trim().length === 0 ? body[0] : newSchema;
-      setSchema(schemaToUse);
+      if (newSchema !== previousSchema.current) {
+        // Set schema based on availability
+        const schemaToUse = newSchema.trim().length === 0 ? body[0] : newSchema;
+        setSchema(schemaToUse);
 
-      // Fetch AI-generated JSON-LD
-      const response = await invoke("get_jsonld_command", {
-        jsonld: schemaToUse,
-      });
+        // Fetch AI-generated JSON-LD
+        const response = await invoke("get_jsonld_command", {
+          jsonld: schemaToUse,
+        });
 
-      if (!response) {
-        throw new Error("No response received from AI service");
+        if (!response) {
+          throw new Error("No response received from AI service");
+        }
+
+        setNewAISchema(response);
+        return response;
       }
-
-      setNewAISchema(response);
-      return response;
+      return null;
     } catch (error) {
       console.error("Failed to get AI-generated schema:", error);
       throw error; // Re-throw to allow handling by caller if needed
     }
   };
+
+  useEffect(() => {
+    if (body.length === 0) {
+      return;
+    } else {
+      fetchAiJSONLD();
+    }
+  }, [body]);
 
   return (
     <section
@@ -99,8 +110,16 @@ const PageSchemaTable = ({
               <BsThreeDotsVertical className="dark:text-white mr-2 z-10" />
             </DropdownMenuTrigger>
             <DropdownMenuContent className="bg-brand-darker border bg-white dark:bg-brand-darker  dark:border-brand-dark dark:text-white mr-36">
-              <DropdownMenuLabel>Schema Validator</DropdownMenuLabel>
+              <DropdownMenuLabel>Page Schema</DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setSheetOpen(true)}
+                className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer"
+              >
+                {newSchema.trim().length === 0
+                  ? "Generate Schema"
+                  : "Improve Schema"}
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => openBrowserWindow(testURL)}
                 className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer"
@@ -108,29 +127,18 @@ const PageSchemaTable = ({
                 Schema Validator
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-gray-100 dark:bg-brand-dark" />
-              <DropdownMenuItem
-                onClick={() => setSheetOpen(true)}
-                className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer"
-              >
-                Improve Schema
-              </DropdownMenuItem>
+
               <DropdownMenuItem
                 onClick={() => openBrowserWindow(testURL)}
                 className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer"
               >
                 Documentation
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => fetchAiJSONLD()}
-                className="dark:hover:bg-brand-dark hover:text-white hover:bg-brand-highlight cursor-pointer"
-              >
-                Fetch AI JSON-LD
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-            <SheetContent className="z-[99999999999] overflow-hidden h-[720px] my-auto mr-2 w-[1100px] max-w-[1200px] px-0 rounded-md border-1 dark:bg-brand-darker">
+            <SheetContent className="z-[99999999999] overflow-hidden h-[740px] my-auto mr-2 w-[1100px] max-w-[1200px] px-0 rounded-md border-1 dark:bg-brand-darker py-10">
               {/* Schema improvement content would go here */}
               <PageSchemaAI AIschema={newAISchema} schema={newSchema} />
             </SheetContent>

@@ -64,8 +64,21 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
   const [todoUrl, setTodoUrl] = useState<string | null>(null);
   const [matchedUrlData, setMatchedUrlData] = useState([]);
 
-  // Effect to update data when dbdata changes
+  // Keywords chip colors
+  const chipColors = [
+    "bg-blue-100 text-blue-800",
+    "bg-green-100 text-green-800",
+    "bg-yellow-100 text-yellow-800",
+    "bg-red-100 text-red-800",
+    "bg-purple-100 text-purple-800",
+    "bg-pink-100 text-pink-800",
+    "bg-indigo-100 text-indigo-800",
+    "bg-orange-100 text-orange-800",
+    "bg-teal-100 text-teal-800",
+    "bg-cyan-100 text-cyan-800",
+  ];
 
+  // Effect to update data when dbdata changes
   useEffect(() => {
     if (Array.isArray(dbdata)) {
       setData([...dbdata]);
@@ -190,14 +203,14 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
       {/* Toolbar and Options */}
       <div className=" -right-0 w-full flex space-x-3 justify-end pb-1 dark:border-b-brand-normal/10 -z-10">
         {/* Search Bar */}
-        <div className="flex items-center space-x-2 relative z-0">
+        <div className="flex items-center space-x-2 relative w-2/3 z-0">
           <IoIosSearch className="w-3 h-3 absolute left-4 dark:text-white" />
           <input
             type="text"
             placeholder="Search by URL"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="border dark:text-white rounded-md  text-xs h-6 pl-6 pr-3 dark:border-brand-normal/20 dark:bg-brand-darker"
+            className="border dark:text-white rounded-md flex flex-1  text-xs h-6 pl-6 pr-3 dark:border-brand-normal/20 dark:bg-brand-darker"
           />
           <IoIosClose
             onClick={() => setSearchQuery("")}
@@ -349,7 +362,18 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
                       <div className="line-clamp-2">{secondHeading}</div>
                     </td>
                     <td align="left" className="border p-2">
-                      <div className="line-clamp-2">{kws.join(", ")}</div>
+                      <div className="flex flex-wrap gap-1">
+                        {kws.map((keyword: string, i: number) => (
+                          <span
+                            key={i}
+                            className={`px-2 py-1 rounded-full text-xs ${
+                              chipColors[i % chipColors.length]
+                            }`}
+                          >
+                            {keyword}
+                          </span>
+                        ))}
+                      </div>
                     </td>
                   </tr>
                 );
