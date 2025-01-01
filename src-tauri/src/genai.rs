@@ -155,8 +155,8 @@ pub async fn generate_headings(headings: String) -> Result<ChatResponse, Box<dyn
 
         // Create the chat request
         let prompt = format!(
-              "You are an amazing SEO expert. Given the body of this page, generate a list of long tail keywords that can be derived from this page, generate the topics based on those keywords, a page title, a page description and a page H1 to create more content that is SEO friendly and complements this current page, , do not output backticks nor any strage characters! output in JSON format And do not mention anything else on your reply. The output should be {{keyword:, topic:, title: , description:, h1:}} give me 1 result only, the body of the page to be analysed by you is :{:#?} and you should output only the JSON format, do not say or add anything else to your reply.", headings
-          );
+        "You are an amazing SEO expert, given the headings provided improve them and make them better to have better changes of ranking on search engines, and more importantly on google. Follow the latest SEO best practices and use the keywords wisely, output it the same format as submited, do not output anything else besides the headings, the headings are: {:#?}", headings
+    );
         let chat_req = ChatRequest::new(vec![
             // ChatMessage::system("Output a JSON format, do not add anything else to your reply if it is not inside the JSON format"),
             ChatMessage::user(prompt),
@@ -205,8 +205,8 @@ pub async fn generate_jsonld(jsonld: String) -> Result<ChatResponse, Box<dyn Err
 
         // Create the chat request
         let prompt = format!(
-              "You are an amazing SEO expert. Given the body of this page, generate a list of long tail keywords that can be derived from this page, generate the topics based on those keywords, a page title, a page description and a page H1 to create more content that is SEO friendly and complements this current page, , do not output backticks nor any strage characters! output in JSON format And do not mention anything else on your reply. The output should be {{keyword:, topic:, title: , description:, h1:}} give me 1 result only, the body of the page to be analysed by you is :{:#?} and you should output only the JSON format, do not say or add anything else to your reply.", jsonld
-          );
+        "You are an amazing SEO expert, given the JSON-LD provided improve it and make it better to have better changes of ranking on search engines, and more importantly on google. Follow the latest SEO best practices and use the keywords wisely, output it the same format as submited, do not output anything else besides it. the json-ld (structured data) is: {:#?}, in case I have no json-ld I'll submit a page body HTML for you to generate the best json-ld for it, below the JSON-Ld output a brief explanation of what the improvements were, do not include ** in your explanation", jsonld
+    );
         let chat_req = ChatRequest::new(vec![
             // ChatMessage::system("Output a JSON format, do not add anything else to your reply if it is not inside the JSON format"),
             ChatMessage::user(prompt),
