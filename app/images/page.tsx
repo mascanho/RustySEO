@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import { writeBinaryFile, BaseDirectory } from "@tauri-apps/plugin-fs";
+import { writeFile, BaseDirectory } from "@tauri-apps/plugin-fs";
 import React, { useState, useCallback, useEffect } from "react";
 import {
   Card,
@@ -168,7 +168,7 @@ export default function ImageOptimizer() {
     const fileName = `optimized_${img.format}.${img.format}`;
 
     try {
-      await writeBinaryFile(fileName, binaryData, {
+      await writeFile(fileName, binaryData, {
         dir: BaseDirectory.Download,
       });
       alert(`Image saved as ${fileName} in your Downloads folder.`);
