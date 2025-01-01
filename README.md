@@ -148,27 +148,4 @@ This will output all the logs into your terminal. You will see a link from Googl
 
 ## Linux
 
-Here are some screenshots of the application:
-
-- **Login Screen**:
-
-  ![Login Screen](./screenshots/login.png)
-
-- **Dashboard**:
-
-  ![Dashboard](./screenshots/dashboard.png)
-
-- **Task Screen**:
-
-  ![Task Screen](./screenshots/task.png)
-
-## Troubleshooting
-
-If you encounter any issues, check the following:
-
-- **Ensure dependencies are installed**: Run `npm install` again to make sure all dependencies are correctly installed.
-- **Check for errors**: Review the terminal output for any error messages.
-- **Consult the documentation**: Check the [docs](./docs) for more detailed information.
-
-If you need further assistance, feel free to open an issue on GitHub or contact support.
-
+in a few weeks...
