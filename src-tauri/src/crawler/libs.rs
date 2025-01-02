@@ -334,7 +334,7 @@ pub async fn check_links(url: String) -> Result<Vec<LinkStatus>, String> {
             .get(&absolute_url)
             .header(
                 "User-Agent",
-                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (X11; Marco x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
             )
             .send()
             .await
