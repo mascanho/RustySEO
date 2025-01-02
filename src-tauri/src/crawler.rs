@@ -186,10 +186,18 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
     let _create_table = db::create_results_table();
     let _create_links_table = db::create_links_table();
 
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        "User-Agent",
+        HeaderValue::from_static(
+            "Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0",
+        ),
+    );
+    headers.insert("Accept", HeaderValue::from_static("*/*"));
+    headers.insert("Host", HeaderValue::from_static("www.slimstock.com"));
+
     let client = Client::builder()
-        .user_agent(
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0",
-        )
+        .default_headers(headers)
         .build()
         .map_err(|e| format!("Failed to create client: {}", e))?;
 
