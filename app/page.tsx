@@ -359,13 +359,18 @@ const Home: React.FC<HomeProps> = () => {
 
     const callSearchConsole = async () => {
       try {
+        // Step 1: Check if window is defined
         if (typeof window !== "undefined") {
+          // Step 2: Call search console API
           const result = await invoke<{}>("call_google_search_console");
           console.log("Calling Search Console From UseEffect", result);
         }
       } catch (error) {
-        // Gracefully handle errors in production
+        // Step 3: Handle any errors
         console.warn("Search console connection unavailable:", error);
+      } finally {
+        // Step 4: Cleanup/final steps
+        console.log("Search console call completed");
       }
     };
 

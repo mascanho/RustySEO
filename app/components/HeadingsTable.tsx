@@ -33,14 +33,14 @@ const HeadingsTable = ({ headings, sessionUrl }: { headings: string[] }) => {
   const setRepeatedHeadings = useOnPageSeo((state) => state.setHeadings);
   const [viewAIHeadings, setViewAIHeadings] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const previousHeadingsRef = useRef<string | null>(null);
+  const previousHeadingsRef = useRef<string[]>(headings);
 
   useEffect(() => {
     let mounted = true;
 
     const fetchAiHeadings = async () => {
       try {
-        if (headings !== previousHeadingsRef.current) {
+        if (!arraysEqual(headings, previousHeadingsRef.current)) {
           const aiHeadings = headings.toString();
           const response: any = await invoke("get_headings_command", {
             aiHeadings,
@@ -49,18 +49,25 @@ const HeadingsTable = ({ headings, sessionUrl }: { headings: string[] }) => {
             setViewAIHeadings(response);
             console.log(response, "response headings AI GMEINI");
           }
-          previousHeadingsRef.current = headings; // Update the ref
+          previousHeadingsRef.current = headings;
         }
       } catch (error) {
         console.error("Failed to get AI headings:", error);
       }
     };
 
+    // Helper function to compare arrays
+    function arraysEqual(a: string[], b: string[]) {
+      if (a === b) return true;
+      if (a == null || b == null) return false;
+      if (a.length !== b.length) return false;
+      return a.every((val, index) => val === b[index]);
+    }
+
     if (headings.length === 0) {
       return;
-    } else {
-      fetchAiHeadings();
     }
+    fetchAiHeadings();
 
     return () => {
       mounted = false;
