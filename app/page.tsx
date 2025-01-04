@@ -277,13 +277,10 @@ const Home: React.FC<HomeProps> = () => {
       })
       .catch(console.error)
       .finally(() => {
-        console.log("finished crawling");
+        console.log("FINNALY IT FINISHED CRAAWLING");
         // Add a + 1 to the number of crawels on the sessions storage
         const crawlCount = Number(sessionStorage.getItem("crawlCount"));
         sessionStorage.setItem("crawlCount", `${crawlCount + 1}`);
-
-        // CALL GEMINI FOR THE HEADINGS
-        window.dispatchEvent(new Event("crawlFinished"));
       });
   };
 
