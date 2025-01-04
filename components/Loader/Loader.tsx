@@ -6,7 +6,7 @@ const Loader = () => {
     () => [
       "Grabbing a few beers...",
       "Fetching some data...",
-      "Wrangling pixels...",
+      "Seting up the database...",
       "Brewing coffee...",
       "Loading awesome stuff...",
     ],

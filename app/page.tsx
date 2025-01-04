@@ -277,13 +277,10 @@ const Home: React.FC<HomeProps> = () => {
       })
       .catch(console.error)
       .finally(() => {
-        console.log("finished crawling");
+        console.log("FINNALY IT FINISHED CRAAWLING");
         // Add a + 1 to the number of crawels on the sessions storage
         const crawlCount = Number(sessionStorage.getItem("crawlCount"));
         sessionStorage.setItem("crawlCount", `${crawlCount + 1}`);
-
-        // CALL GEMINI FOR THE HEADINGS
-        window.dispatchEvent(new Event("crawlFinished"));
       });
   };
 
@@ -359,13 +356,18 @@ const Home: React.FC<HomeProps> = () => {
 
     const callSearchConsole = async () => {
       try {
+        // Step 1: Check if window is defined
         if (typeof window !== "undefined") {
+          // Step 2: Call search console API
           const result = await invoke<{}>("call_google_search_console");
           console.log("Calling Search Console From UseEffect", result);
         }
       } catch (error) {
-        // Gracefully handle errors in production
+        // Step 3: Handle any errors
         console.warn("Search console connection unavailable:", error);
+      } finally {
+        // Step 4: Cleanup/final steps
+        console.log("Search console call completed");
       }
     };
 

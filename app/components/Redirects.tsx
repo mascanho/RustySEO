@@ -39,7 +39,7 @@ const Redirects = ({
     }[label] || "bg-gray-200 text-black";
 
   return (
-    <section className="widget border px-4 py-3 bg-white w-60 xl:w-52 rounded-md space-y-2 relative shadow overflow-hidden">
+    <section className="widget border px-4 py-3 bg-white w-60 xl:w-52 rounded-md space-y-2 relative shadow overflow-hidden @container">
       <span className="absolute right-5">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -169,9 +169,9 @@ const Redirects = ({
                 "No URL provided",
             )
           }
-          className="text-xs underline cursor-pointer"
+          className="text-xs underline cursor-pointer @hidden"
         >
-          View PageSpeed Insights
+          View PageSpeed
         </h2>
       </div>
     </section>

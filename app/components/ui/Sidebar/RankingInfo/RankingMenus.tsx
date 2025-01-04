@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useCallback } from "react";
 import { FaSearchengin } from "react-icons/fa";
+import { toast } from "sonner";
 
 import {
   FiPlusSquare,
@@ -24,6 +25,7 @@ import {
 const RankingMenus = ({ children, url, query, credentials }: any) => {
   const handleCopy = useCallback((url: string) => {
     navigator?.clipboard.writeText(url);
+    toast.success("Copied to clipboard");
   }, []);
 
   const openSearchConsoleUrl = (query: string) => {

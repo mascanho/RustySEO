@@ -91,7 +91,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
               </Tabs.Tab>
               <Tabs.Tab value="first">Content</Tabs.Tab>
               <Tabs.Tab value="topics">Topics</Tabs.Tab>
-              <Tabs.Tab value="third">Console</Tabs.Tab>
+              <Tabs.Tab value="third">Queries</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel
               value="first"

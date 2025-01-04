@@ -132,7 +132,18 @@ pub fn get_top_keywords(text: &str, top_n: usize) -> Vec<(String, usize)> {
         "each", "there", "their", "theirs", "the", "these", "those", "and", "but", "or", "yet",
         "it", "of", "be", "are", "am", "is", "was", "were", "been", "will", "shall", "could", "if",
         "will", "need", "https", "http", "www", "com", "org", "net", "co", "au", "uk", "us", "jpg",
-        "png",
+        "png", // German stop words
+        "der", "die", "das", "und", "in", "ich", "zu", "den", "ist", "sie", "mit", "für", "auf",
+        "ein", "eine", "sich", "von", "dem", "dass", "aber", "auch", "nach", "bei", "es", "im",
+        // Spanish stop words
+        "el", "la", "los", "las", "un", "una", "unos", "unas", "y", "en", "de", "para", "por",
+        "con", "su", "sus", "al", "del", "lo", "pero", "más", "qué", "cuando", "hay", "este",
+        // Italian stop words
+        "il", "lo", "la", "i", "gli", "le", "uno", "una", "del", "della", "dei", "degli", "delle",
+        "in", "con", "su", "per", "tra", "fra", "che", "ma", "perché", "come", "dove", "questo",
+        // Dutch stop words
+        "de", "het", "een", "en", "van", "is", "dat", "op", "te", "in", "aan", "met", "voor", "bij",
+        "of", "als", "door", "maar", "dan", "die", "dit", "niet", "om", "hebben", "zijn",
     ]
     .into_iter()
     .collect();
@@ -266,7 +277,7 @@ impl SERP {
         headers.insert(
             "User-Agent",
             HeaderValue::from_static(
-                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                "Mozilla/5.0 (X11; Windows x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
             ),
         );
 
