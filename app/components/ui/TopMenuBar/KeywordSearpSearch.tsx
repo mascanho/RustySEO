@@ -162,7 +162,7 @@ export default function KeywordSearch() {
 
   return (
     <div
-      className={`${visibility.serpKeywords ? "" : "hidden"} fixed bottom-9  transition-all ease-linear duration-75 w-[40rem] py-4 px-1 bg-white dark:bg-brand-darker text-black dark:text-white border-2 border-brand-bright h-[55rem] -ml-2 mb-0 rounded-md shadow-xl overflow-hidden z-[999999999999999999999999999]`}
+      className={`${visibility.serpKeywords ? "" : "hidden"} fixed bottom-9  transition-all ease-linear duration-75 w-[40rem] py-4 px-1 bg-white dark:bg-brand-darker text-black dark:text-white border-2 border-brand-bright h-[50rem] -ml-2 mb-0 rounded-md shadow-xl overflow-hidden z-[9999999999999999999999999999999999999]`}
     >
       <IoClose
         className="absolute top-4 right-4 text-gray-400  cursor-pointer  h-6 w-6"
@@ -266,7 +266,7 @@ export default function KeywordSearch() {
               )}
             </button>
           </div>
-          <ScrollArea className="h-[700px] mt-2 pr-4 pl-2 pb-2">
+          <ScrollArea className="h-[615px] mt-2 pr-4 pl-2 pb-2">
             {isLoading
               ? Array.from({ length: 8 }).map((_, index) => (
                   <Skeleton key={index} className="w-full h-24 mb-2" />
@@ -406,7 +406,7 @@ export default function KeywordSearch() {
               )}
             </button>
           </div>
-          <ScrollArea className="h-[700px] mt-2 pr-4 pl-2 pb-2">
+          <ScrollArea className="h-[615px] mt-2 pr-4 pl-2 pb-2">
             {isSuggestionLoading
               ? Array.from({ length: 20 }).map((_, index) => (
                   <Skeleton key={index} className="w-full h-8 mb-2" />
@@ -424,7 +424,9 @@ export default function KeywordSearch() {
                     >
                       <FaExternalLinkAlt />
                     </a>{" "}
-                    <span>{suggestion && suggestion[0]}</span>
+                    <span className="w-full text-left pl-4">
+                      {suggestion && suggestion[0]}
+                    </span>
                     <RankingMenus
                       url={url}
                       query={suggestion[0]}

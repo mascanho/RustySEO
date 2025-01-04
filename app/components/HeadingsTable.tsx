@@ -27,6 +27,7 @@ import {
 import { invoke } from "@tauri-apps/api/core";
 import HeadingsTableAI from "./HeadingsTableAI";
 import { Head } from "react-day-picker";
+import { v4 as uuidv4 } from "uuid";
 
 const HeadingsTable = ({ headings, sessionUrl }: { headings: string[] }) => {
   const { Visible } = useStore();
@@ -42,13 +43,26 @@ const HeadingsTable = ({ headings, sessionUrl }: { headings: string[] }) => {
       try {
         if (!arraysEqual(headings, previousHeadingsRef.current)) {
           const aiHeadings = headings.toString();
-          const response: any = await invoke("get_headings_command", {
-            aiHeadings,
-          });
-          if (response && mounted) {
-            setViewAIHeadings(response);
-            console.log(response, "response headings AI GMEINI");
+
+          // Generate hash of headings to use as uuid key
+          const headingsKey = aiHeadings;
+          const existingUuid = sessionStorage.getItem(headingsKey);
+
+          if (!existingUuid) {
+            const uuid = uuidv4();
+            sessionStorage.setItem(headingsKey, uuid);
+
+            const response: any = await invoke("get_headings_command", {
+              aiHeadings,
+            });
+            if (response && mounted) {
+              setViewAIHeadings(response);
+              console.log(response, "response headings AI GMEINI");
+            }
+          } else {
+            console.log("Skipping API call - already processed these headings");
           }
+
           previousHeadingsRef.current = headings;
         }
       } catch (error) {

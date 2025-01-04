@@ -472,7 +472,7 @@ export default function AnalyticsTable() {
                         className="font-medium text-xs text-left"
                       >
                         <div
-                          className="truncate max-w-[400px] p-0 "
+                          className="truncate max-w-[400px] p-0 pl-4 "
                           title={dimension?.value}
                         >
                           {dimension?.value || "N/A"}
