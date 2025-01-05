@@ -760,7 +760,11 @@ const Home: React.FC<HomeProps> = () => {
                   linkedInInspect={linkedInInspect}
                   openGraphDetails={openGraphDetails}
                 />
-                <HeadingsTable headings={headings} />
+                <HeadingsTable
+                  headings={headings}
+                  sessionUrl={sessionUrl}
+                  body={bodyElements}
+                />
                 <LinkAnalysis
                   links={linkStatusCodes}
                   visibleLinks={visibleLinks}

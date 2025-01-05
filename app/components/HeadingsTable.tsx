@@ -29,7 +29,15 @@ import HeadingsTableAI from "./HeadingsTableAI";
 import { Head } from "react-day-picker";
 import { v4 as uuidv4 } from "uuid";
 
-const HeadingsTable = ({ headings, sessionUrl }: { headings: string[] }) => {
+const HeadingsTable = ({
+  headings,
+  sessionUrl,
+  body,
+}: {
+  headings: string[];
+  body: string[];
+  sessionUrl: string;
+}) => {
   const { Visible } = useStore();
   const setRepeatedHeadings = useOnPageSeo((state) => state.setHeadings);
   const [viewAIHeadings, setViewAIHeadings] = useState(false);
@@ -41,55 +49,40 @@ const HeadingsTable = ({ headings, sessionUrl }: { headings: string[] }) => {
 
     const fetchAiHeadings = async () => {
       try {
-        if (!arraysEqual(headings, previousHeadingsRef.current)) {
-          const aiHeadings = headings.toString();
+        const aiHeadings = headings.toString();
+        const headingsKey = aiHeadings;
+        const existingUuid = localStorage.getItem(headingsKey);
+        const storedResponse =
+          existingUuid && localStorage.getItem(`${existingUuid}_response`);
 
-          // Generate hash of headings to use as uuid key
-          const headingsKey = aiHeadings;
-          const existingUuid = sessionStorage.getItem(headingsKey);
+        // If no stored response exists, fetch new headings
+        if (!storedResponse) {
+          const uuid = uuidv4();
+          localStorage.setItem(headingsKey, uuid);
 
-          if (!existingUuid) {
-            const uuid = uuidv4();
-            sessionStorage.setItem(headingsKey, uuid);
+          const response: any = await invoke("get_headings_command", {
+            aiHeadings,
+          });
 
-            const response: any = await invoke("get_headings_command", {
-              aiHeadings,
-            });
-            if (response && mounted) {
-              setViewAIHeadings(response);
-              console.log(response, "response headings AI GMEINI");
-            }
-          } else {
-            console.log("Skipping API call - already processed these headings");
+          if (response && mounted) {
+            setViewAIHeadings(response);
+            localStorage.setItem(`${uuid}_response`, JSON.stringify(response));
           }
-
-          previousHeadingsRef.current = headings;
+        } else {
+          // Use stored response
+          setViewAIHeadings(JSON.parse(storedResponse));
         }
       } catch (error) {
         console.error("Failed to get AI headings:", error);
       }
     };
 
-    // Helper function to compare arrays
-    function arraysEqual(a: string[], b: string[]) {
-      if (a === b) return true;
-      if (a == null || b == null) return false;
-      if (a.length !== b.length) return false;
-      return a.every((val, index) => val === b[index]);
-    }
-
-    if (headings.length === 0) {
-      return;
-    }
     fetchAiHeadings();
 
     return () => {
       mounted = false;
     };
   }, [headings]);
-
-  console.log(headings, "Vanilla headingas");
-  console.log(viewAIHeadings, "VIEW AI HEADINGSSSSSS");
 
   const findDuplicates = (array: string[]) => {
     const count: Record<string, number> = {};

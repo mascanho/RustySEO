@@ -181,20 +181,29 @@ pub struct Performance {
 
 /// Function to crawl a webpage and extract various information
 pub async fn crawl(url: String) -> Result<CrawlResult, String> {
-    println!("Crawling: {}", &url);
-
     let _create_table = db::create_results_table();
     let _create_links_table = db::create_links_table();
+
+    let url_clone = url.clone();
+    let host_value = HeaderValue::from_str(
+        &Url::parse(&url_clone)
+            .map_err(|e| format!("Failed to parse URL: {}", e))?
+            .host_str()
+            .ok_or("Failed to extract host")?,
+    )
+    .map_err(|e| format!("Failed to create header value: {}", e))?;
 
     let mut headers = HeaderMap::new();
     headers.insert(
         "User-Agent",
         HeaderValue::from_static(
-            "Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36",
         ),
     );
     headers.insert("Accept", HeaderValue::from_static("*/*"));
-    headers.insert("Host", HeaderValue::from_static("www.slimstock.com"));
+    // headers.insert("Host", host_value);
+
+    println!("host Value is: {:#?}", host_value);
 
     let client = Client::builder()
         .default_headers(headers)
@@ -692,7 +701,7 @@ async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError 
     headers.insert(
         USER_AGENT,
         HeaderValue::from_static(
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/117.0",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36",
         ),
     );
     headers.insert(
