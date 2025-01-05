@@ -230,11 +230,11 @@ export const OpenGraphCard = ({
             }`}
           >
             {openGraphDetails && openGraphDetails?.image?.length > 0 && (
-              <div className="flex items-center justify-center w-full">
+              <div className="flex items-center justify-center w-full max-h-[300px] overflow-hidden">
                 <img
                   src={openGraphDetails?.image}
                   alt="OpenGraph Image"
-                  className="rounded-md w-full object-contain"
+                  className="rounded-md w-full h-full object-cover"
                 />
               </div>
             )}
