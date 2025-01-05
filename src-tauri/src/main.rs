@@ -172,6 +172,9 @@ async fn main() {
             version::version_check_command,
             gemini::get_headings_command,
             gemini::get_jsonld_command,
+            commands::add_gsc_data_to_kw_tracking_command,
+            commands::fetch_tracked_keywords_command,
+            commands::delete_keyword_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

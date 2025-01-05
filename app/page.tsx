@@ -34,7 +34,7 @@ import { Modal, Tabs } from "@mantine/core";
 import KeywordChart from "./components/ui/ShadCharts/KeywordChart";
 import { useDebounce } from "use-debounce";
 import Todo from "./components/ui/Todo";
-import { IoSearchCircle } from "react-icons/io5";
+import { IoKey, IoSearchCircle } from "react-icons/io5";
 import TaskManagerContainer from "./components/ui/TaskManager/TaskManagerContainer";
 import CrawlHistory from "./components/ui/CrawlHistory/CrawlHistory";
 import HtmlToTextChart from "./components/ui/ShadCharts/HtmlToTextChart";
@@ -77,6 +77,8 @@ import TodoBoard from "./components/Checklist/todo-board";
 import ClarityDashboard from "./components/ui/MSClarityModal/MSCLarityTab";
 import ClarityContainer from "./components/ui/MSClarityModal/ClarityContainer";
 import Loader from "@/components/Loader/Loader";
+import { IconPokeball } from "@tabler/icons-react";
+import KeywordAnalytics from "./components/ui/KwTracking/KeywordAnalytics";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -611,6 +613,10 @@ const Home: React.FC<HomeProps> = () => {
                   <RiFireLine className="inline-block mr-2 mb-[2px] text-sm" />
                   Clarity
                 </Tabs.Tab>
+                <Tabs.Tab value="kws">
+                  <IoKey className="inline-block mr-2 mb-[2px] text-sm" />
+                  Kw Tracking
+                </Tabs.Tab>
                 {/* <Tabs.Tab value="seo">
                   <GoGoal className="inline-block mr-2 mb-[2px] text-sm" />
                   SEO Goals
@@ -812,6 +818,9 @@ const Home: React.FC<HomeProps> = () => {
             </Tabs.Panel>
             <Tabs.Panel value="clarity">
               <ClarityContainer />
+            </Tabs.Panel>{" "}
+            <Tabs.Panel value="kws">
+              <KeywordAnalytics />
             </Tabs.Panel>{" "}
           </Tabs>
         </section>

@@ -1,5 +1,6 @@
 use crate::crawler::db;
 use crate::crawler::db::GscMatched;
+use crate::crawler::db::KwTrackingData;
 use crate::crawler::libs;
 use crate::crawler::libs::ApiKeys;
 use crate::crawler::libs::ClarityData;
@@ -177,5 +178,38 @@ pub async fn get_microsoft_clarity_data_command() -> Result<Vec<Value>, String> 
     match result {
         Ok(result) => Ok(result),
         Err(e) => Err(e.to_string()),
+    }
+}
+
+// ---------- Add Keyword & ITS DATA TO THE KEYWORD TRACKING TABLE
+
+#[tauri::command]
+pub fn add_gsc_data_to_kw_tracking_command(data: db::KwTrackingData) -> Result<(), String> {
+    println!("Tracking KW data: {:#?}", data);
+    // Call database function to add Keyword Related data Call the database function to add the
+
+    match db::add_gsc_data_to_kw_tracking(&data) {
+        Ok(_) => Ok(()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+// ------- FETCH THE TRACKED KEYWORDS FROM THE DB
+#[tauri::command]
+pub fn fetch_tracked_keywords_command() -> Result<Vec<KwTrackingData>, String> {
+    let result = db::read_tracked_keywords_from_db();
+    match result {
+        Ok(result) => Ok(result),
+        Err(err) => Err(err.to_string()),
+    }
+}
+
+// ------- DELETE KEYWORD FROM THE DB
+#[tauri::command]
+pub fn delete_keyword_command(id: String) -> Result<(), String> {
+    let result = db::delete_keyword_from_db(&id);
+    match result {
+        Ok(_) => Ok(()),
+        Err(err) => Err(err.to_string()),
     }
 }

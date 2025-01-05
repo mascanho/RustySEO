@@ -121,6 +121,9 @@ const RankingInfo = ({
                   credentials={credentials}
                   url={sessionUrl}
                   query={item.query}
+                  impressions={item.impressions}
+                  clicks={item.clicks}
+                  position={item.position}
                 >
                   <span className="pointer hover:underline hover:text-brand-bright text-[10px] overflow-hidden text-ellipsis">
                     {item.query}

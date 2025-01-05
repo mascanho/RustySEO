@@ -12,7 +12,7 @@ fn export_db_to_excel() -> Result<()> {
     let db_path = "data.db";
 
     // Open the database connection
-    let conn = open_db_connection().expect("Failed to open database connection");
+    let conn = open_db_connection("crawl_results.db").expect("Failed to open database connection");
 
     // Connect to the database
 
