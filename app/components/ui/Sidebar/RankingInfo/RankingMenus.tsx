@@ -8,7 +8,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { FaSearchengin } from "react-icons/fa";
 import { toast } from "sonner";
 
@@ -23,6 +23,7 @@ import {
 } from "react-icons/fi";
 import { IoKey } from "react-icons/io5";
 import { invoke } from "@tauri-apps/api/core";
+import { emit, listen } from "@tauri-apps/api/event";
 
 const RankingMenus = ({
   children,
@@ -33,6 +34,16 @@ const RankingMenus = ({
   impressions,
   clicks,
 }: any) => {
+  useEffect(() => {
+    const unlisten = listen("keyword-tracked", (event) => {
+      console.log("Keyword tracked event received:", event);
+    });
+
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, []);
+
   const handleCopy = useCallback((url: string) => {
     navigator?.clipboard.writeText(url);
     toast.success("Copied to clipboard");
@@ -64,7 +75,7 @@ const RankingMenus = ({
 
   // Handle the tracking of the keyword
   const handleTrackKeyword = useCallback(
-    (
+    async (
       url: string,
       query: string,
       position: number,
@@ -82,16 +93,18 @@ const RankingMenus = ({
 
       console.log("Tracking KW data:", data);
 
-      invoke("add_gsc_data_to_kw_tracking_command", { data })
-        .then((result: any) => {
-          console.log("Passing Keyword data to the DB");
-          console.log("Result", result);
-          toast.success("Keyword added to tracking successfully");
-        })
-        .catch((error: Error) => {
-          console.error("Error tracking keyword:", error);
-          toast.error("Failed to add keyword to tracking");
+      try {
+        const result = await invoke("add_gsc_data_to_kw_tracking_command", {
+          data,
         });
+        console.log("Passing Keyword data to the DB");
+        console.log("Result", result);
+        toast.success("Keyword added to tracking successfully");
+        await emit("keyword-tracked", { data });
+      } catch (error) {
+        console.error("Error tracking keyword:", error);
+        toast.error("Failed to add keyword to tracking");
+      }
     },
     [],
   );

@@ -31,6 +31,7 @@ interface KeywordTableProps {
   removeKeyword: (id: string) => void;
   requestSort: (key: keyof Keyword) => void;
   sortConfig: SortConfig;
+  keywordIds: string[];
 }
 
 export default function KeywordTable({
@@ -38,6 +39,7 @@ export default function KeywordTable({
   removeKeyword,
   requestSort,
   sortConfig,
+  keywordIds,
 }: KeywordTableProps) {
   const columns: ColumnDef<Keyword>[] = [
     {
@@ -92,13 +94,17 @@ export default function KeywordTable({
     {
       accessorKey: "url",
       header: "URL",
+      cell: ({ row }) => (
+        <div className="max-w-[400px] truncate">{row.original.url}</div>
+      ),
     },
     {
       accessorKey: "currentPosition",
       header: "Position",
       cell: ({ row }) => {
-        const change =
-          row.original.initialPosition - row.original.currentPosition;
+        const position = Math.max(1, row.original.currentPosition);
+        const initialPosition = Math.max(1, row.original.initialPosition);
+        const change = initialPosition - position;
         const color =
           change > 0
             ? "text-green-600"
@@ -108,9 +114,9 @@ export default function KeywordTable({
         const arrow = change > 0 ? "↑" : change < 0 ? "↓" : "→";
         return (
           <span>
-            {row.original.currentPosition}{" "}
+            {position.toFixed(1)}{" "}
             <span className={`${color} ml-2`}>
-              ({arrow} {Math.abs(change)})
+              ({arrow} {Math.abs(change).toFixed(1)})
             </span>
           </span>
         );
@@ -129,46 +135,49 @@ export default function KeywordTable({
   });
 
   return (
-    <table className="min-w-full divide-y divide-gray-200">
-      <thead className="bg-gray-50">
-        {table.getHeaderGroups().map((headerGroup) => (
-          <tr key={headerGroup.id}>
-            {headerGroup.headers.map((header) => (
-              <th
-                key={header.id}
-                onClick={() => requestSort(header.column.id as keyof Keyword)}
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-              >
-                <div className="flex items-center">
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext(),
-                  )}
-                  {sortConfig?.key === header.column.id &&
-                    (sortConfig.direction === "asc" ? (
-                      <ChevronUp className="ml-1 h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="ml-1 h-4 w-4" />
-                    ))}
-                </div>
+    <div className="overflow-x-auto h-[calc(100vh-30rem)]">
+      <table className="divide-y divide-gray-200">
+        <thead className="bg-gray-50 sticky top-0">
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map((header) => (
+                <th
+                  key={header.id}
+                  onClick={() => requestSort(header.column.id as keyof Keyword)}
+                  className="px-6 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer whitespace-nowrap"
+                >
+                  <div className="flex items-center">
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext(),
+                    )}
+                    {sortConfig?.key === header.column.id &&
+                      (sortConfig.direction === "asc" ? (
+                        <ChevronUp className="ml-1 h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="ml-1 h-4 w-4" />
+                      ))}
+                  </div>
+                </th>
+              ))}
+              <th className="px-6 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                Actions
               </th>
-            ))}
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Actions
-            </th>
-          </tr>
-        ))}
-      </thead>
-      <tbody className="bg-white divide-y divide-gray-200">
-        {table.getRowModel().rows.map((row, index) => (
-          <KeywordRow
-            key={row.id}
-            row={row}
-            index={index}
-            removeKeyword={removeKeyword}
-          />
-        ))}
-      </tbody>
-    </table>
+            </tr>
+          ))}
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {table.getRowModel().rows.map((row, index) => (
+            <KeywordRow
+              key={row.id}
+              row={row}
+              index={index}
+              removeKeyword={removeKeyword}
+              keywordIds={keywordIds}
+            />
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

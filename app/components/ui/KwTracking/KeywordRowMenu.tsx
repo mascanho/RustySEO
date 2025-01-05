@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { MoreHorizontal, Edit, Trash2, BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,15 +9,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { invoke } from "@tauri-apps/api/core";
+import { emit } from "@tauri-apps/api/event";
+import { toast } from "sonner";
 
 interface KeywordRowMenuProps {
   keywordId: string;
   removeKeyword: (id: string) => void;
+  keywordIds: string[];
 }
 
 export default function KeywordRowMenu({
   keywordId,
   removeKeyword,
+  keywordIds,
 }: KeywordRowMenuProps) {
   return (
     <DropdownMenu>
@@ -43,7 +48,7 @@ export default function KeywordRowMenu({
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() => removeKeyword(keywordId)}
+          onClick={() => removeKeyword(keywordId.toString())}
           className="text-red-600"
         >
           <Trash2 className="mr-2 h-4 w-4" />
