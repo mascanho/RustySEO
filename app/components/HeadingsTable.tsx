@@ -44,12 +44,12 @@ const HeadingsTable = ({
   const [sheetOpen, setSheetOpen] = useState(false);
   const previousHeadingsRef = useRef<string[]>(headings);
 
-  useEffect(() => {
-    let mounted = true;
+  const aiHeadings = headings.toString();
+  let headingsLen = [];
 
+  useEffect(() => {
     const fetchAiHeadings = async () => {
       try {
-        const aiHeadings = headings.toString();
         const headingsKey = aiHeadings;
         const existingUuid = localStorage.getItem(headingsKey);
         const storedResponse =
@@ -79,9 +79,7 @@ const HeadingsTable = ({
 
     fetchAiHeadings();
 
-    return () => {
-      mounted = false;
-    };
+    return () => {};
   }, [headings]);
 
   const findDuplicates = (array: string[]) => {

@@ -248,7 +248,7 @@ const Home: React.FC<HomeProps> = () => {
       .then((result) => {
         handleLinkStatusCheck(url);
         showLinksSequentially(result.links); // Show links one by one
-        showHeadingsSequentially(result.headings);
+        setHeadings(result.headings);
         setPageTitle(result.page_title);
         // stop the loading of SEO
         seoIsLoading.setSeoLoading(false);
@@ -407,14 +407,6 @@ const Home: React.FC<HomeProps> = () => {
     links.forEach((link, index) => {
       setTimeout(() => {
         setVisibleLinks((prevVisibleLinks) => [...prevVisibleLinks, link]);
-      }, index * 50);
-    });
-  }, []);
-
-  const showHeadingsSequentially = useCallback((headings: string[]) => {
-    headings.forEach((heading, index) => {
-      setTimeout(() => {
-        setHeadings((prevHeadings) => [...prevHeadings, heading]);
       }, index * 50);
     });
   }, []);

@@ -294,6 +294,7 @@ dependencies = [
  "image 0.24.9",
  "markup5ever_rcdom 0.1.0",
  "oauth2",
+ "once_cell",
  "rand 0.8.5",
  "regex",
  "reqwest 0.11.27",
