@@ -6,7 +6,7 @@ import {
   ColumnDef,
 } from "@tanstack/react-table";
 import KeywordRow from "./KeywordRow";
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronUp, ChevronDown, Settings } from "lucide-react";
 
 interface Keyword {
   id: string;
@@ -45,6 +45,11 @@ export default function KeywordTable({
     {
       accessorKey: "keyword",
       header: "Keyword",
+      cell: ({ row }) => (
+        <span className="text-blue-600 font-semibold">
+          {row.original.keyword}
+        </span>
+      ),
     },
     {
       accessorKey: "currentImpressions",
@@ -95,7 +100,9 @@ export default function KeywordTable({
       accessorKey: "url",
       header: "URL",
       cell: ({ row }) => (
-        <div className="max-w-[400px] truncate">{row.original.url}</div>
+        <div className="max-w-[400px] truncate text-gray-500">
+          {row.original.url}
+        </div>
       ),
     },
     {
@@ -161,7 +168,7 @@ export default function KeywordTable({
                 </th>
               ))}
               <th className="px-6 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                Actions
+                <Settings className="h-4 w-4" />
               </th>
             </tr>
           ))}

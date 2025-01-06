@@ -615,7 +615,7 @@ const Home: React.FC<HomeProps> = () => {
                 </Tabs.Tab>
                 <Tabs.Tab value="kws">
                   <IoKey className="inline-block mr-2 mb-[2px] text-sm" />
-                  Kw Tracking
+                  Tracking
                 </Tabs.Tab>
                 {/* <Tabs.Tab value="seo">
                   <GoGoal className="inline-block mr-2 mb-[2px] text-sm" />

@@ -17,7 +17,7 @@ export default function KeywordRow({
   keywordIds,
 }: KeywordRowProps) {
   return (
-    <tr className="hover:bg-gray-100">
+    <tr>
       {row.getVisibleCells().map((cell) => (
         <td key={cell.id} className="px-6 py-1 whitespace-nowrap">
           {flexRender(cell.column.columnDef.cell, cell.getContext())}

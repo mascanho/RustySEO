@@ -91,15 +91,13 @@ const RankingMenus = ({
         clicks,
       };
 
-      console.log("Tracking KW data:", data);
-
       try {
         const result = await invoke("add_gsc_data_to_kw_tracking_command", {
           data,
         });
         console.log("Passing Keyword data to the DB");
         console.log("Result", result);
-        toast.success("Keyword added to tracking successfully");
+        toast.success("Keyword added to Tracking Dashboard");
         await emit("keyword-tracked", { data });
       } catch (error) {
         console.error("Error tracking keyword:", error);
@@ -132,7 +130,8 @@ const RankingMenus = ({
           }
           className="hover:bg-brand-bright hover:text-white"
         >
-          <IoKey /> Track Keyword
+          <IoKey className="mr-2" />
+          {""} Track Keyword
         </DropdownMenuItem>
         <DropdownMenuItem
           className="hover:bg-brand-bright hover:text-white"

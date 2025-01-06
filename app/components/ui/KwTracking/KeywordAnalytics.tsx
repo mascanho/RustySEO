@@ -132,7 +132,7 @@ export default function KeywordAnalytics() {
 
   return (
     <div className="pb-4 px-2 overflow-hidden dark:text-white/50">
-      <h1 className="text-2xl font-bold mb-2">Keyword Analytics</h1>
+      <h1 className="text-2xl font-bold mb-2">Tracking Dashboard</h1>
       <KeywordTable
         keywords={sortedKeywords}
         removeKeyword={removeKeyword}
