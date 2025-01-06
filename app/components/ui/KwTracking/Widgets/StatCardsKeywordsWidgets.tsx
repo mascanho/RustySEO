@@ -24,7 +24,7 @@ export function StatCard({
   const DifferentialIcon = isPositive ? ArrowUpIcon : ArrowDownIcon;
 
   return (
-    <Card>
+    <Card className="dark:bg-brand-darker dark:border-brand-dark">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
         <Icon className={`h-8 w-8 ${color}`} />

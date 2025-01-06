@@ -213,3 +213,23 @@ pub fn delete_keyword_command(id: String) -> Result<(), String> {
         Err(err) => Err(err.to_string()),
     }
 }
+
+// ------- MATCH KEYWORDS WITH GSC
+#[tauri::command]
+pub fn match_tracked_with_gsc_command() -> Result<(), String> {
+    let result = db::match_tracked_with_gsc();
+    match result {
+        Ok(_) => Ok(()),
+        Err(err) => Err(err.to_string()),
+    }
+}
+
+// READ KEYWORD TRACKING DATA FROM THE DB
+#[tauri::command]
+pub fn read_tracked_keywords_from_db_command() -> Result<Vec<KwTrackingData>, String> {
+    let result = db::read_tracked_keywords_from_db();
+    match result {
+        Ok(result) => Ok(result),
+        Err(err) => Err(err.to_string()),
+    }
+}

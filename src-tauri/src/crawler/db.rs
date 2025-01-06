@@ -588,3 +588,113 @@ pub fn delete_keyword_from_db(id: &str) -> Result<()> {
     conn.execute("DELETE FROM keywords WHERE id = ?", params![id])?;
     Ok(())
 }
+
+// ------ FIND THE KEYWORDS IN THE MAIN GSC_TABLE THAT MATCH THE EXISTING ONES IN KEYWORDS TABLE AND CREATE A NEW TABLE CALLED TRACKED_KW_GSC
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct TrackedKwGsc {
+    id: i64,
+    keyword: String,
+    initial_impressions: i64,
+    current_impressions: i64,
+    initial_clicks: i64,
+    current_clicks: i64,
+    url: String,
+    initial_position: i64,
+    current_position: i64,
+    date_added: String,
+}
+
+pub fn match_tracked_with_gsc() -> Result<()> {
+    let conn_tracked = open_db_connection("keyword_tracking.db")?;
+    let conn_gsc = open_db_connection("crawl_results.db")?;
+
+    // Create the matched keywords table if it does not exist
+    conn_tracked.execute(
+        "CREATE TABLE IF NOT EXISTS keywords_tracked_gsc (
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             tracked_url TEXT NOT NULL,
+             tracked_query TEXT NOT NULL,
+             tracked_clicks INTEGER,
+             tracked_impressions INTEGER,
+             tracked_position REAL,
+             tracked_date TEXT NOT NULL,
+             gsc_url TEXT NOT NULL,
+             gsc_query TEXT NOT NULL,
+             gsc_clicks INTEGER,
+             gsc_impressions INTEGER,
+             gsc_position REAL,
+             gsc_date TEXT NOT NULL
+         )",
+        [],
+    )?;
+
+    println!("RustySEO is matching your tracked KWs with GSC data...");
+
+    // Clear existing data
+    conn_tracked.execute("DELETE FROM keywords_tracked_gsc", [])?;
+
+    // Get tracked keywords
+    let mut stmt_tracked = conn_tracked
+        .prepare("SELECT id, url, query, clicks, impressions, position, date FROM keywords")?;
+    let tracked_keywords = stmt_tracked.query_map([], |row| {
+        Ok(KwTrackingData {
+            id: row.get(0)?,
+            url: row.get(1)?,
+            query: row.get(2)?,
+            clicks: row.get::<_, i64>(3)? as u32,
+            impressions: row.get::<_, i64>(4)? as u32,
+            position: row.get(5)?,
+            date: row.get(6)?,
+        })
+    })?;
+
+    // Get GSC data without original_id
+    let mut stmt_gsc =
+        conn_gsc.prepare("SELECT id, url, query, clicks, impressions, position FROM gsc_data")?;
+    let gsc_data = stmt_gsc.query_map([], |row| {
+        Ok((
+            row.get::<_, i64>(0)?,    // id
+            row.get::<_, String>(1)?, // url
+            row.get::<_, String>(2)?, // query
+            row.get::<_, i64>(3)?,    // clicks
+            row.get::<_, i64>(4)?,    // impressions
+            row.get::<_, f64>(5)?,    // position
+        ))
+    })?;
+
+    // Convert query results to vectors
+    let tracked = tracked_keywords.collect::<Result<Vec<_>, _>>()?;
+    let gsc = gsc_data.collect::<Result<Vec<_>, _>>()?;
+
+    // Match tracked keywords with GSC data
+    for tracked_kw in tracked {
+        for gsc_item in &gsc {
+            if tracked_kw.url == gsc_item.1 && tracked_kw.query == gsc_item.2 {
+                conn_tracked.execute(
+                    "INSERT INTO keywords_tracked_gsc (
+                        tracked_url, tracked_query, tracked_clicks, tracked_impressions,
+                        tracked_position, tracked_date, gsc_url, gsc_query, gsc_clicks,
+                        gsc_impressions, gsc_position, gsc_date
+                    ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
+                    params![
+                        tracked_kw.url,
+                        tracked_kw.query,
+                        tracked_kw.clicks as i64,
+                        tracked_kw.impressions as i64,
+                        tracked_kw.position,
+                        tracked_kw.date.to_string(),
+                        gsc_item.1,
+                        gsc_item.2,
+                        gsc_item.3,
+                        gsc_item.4,
+                        gsc_item.5,
+                        Utc::now().naive_utc().to_string(),
+                    ],
+                )?;
+            }
+        }
+    }
+
+    Ok(())
+}

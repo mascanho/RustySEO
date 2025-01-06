@@ -175,6 +175,8 @@ async fn main() {
             commands::add_gsc_data_to_kw_tracking_command,
             commands::fetch_tracked_keywords_command,
             commands::delete_keyword_command,
+            commands::match_tracked_with_gsc_command,
+            commands::read_tracked_keywords_from_db_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

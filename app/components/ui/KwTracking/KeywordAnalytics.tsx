@@ -21,6 +21,13 @@ interface Keyword {
   dateAdded: string;
 }
 
+const handleTrackingMatch = async (event: CustomEvent) => {
+  // tauri command here
+
+  const response = await invoke("match_tracked_with_gsc_command");
+  console.log("Keywords matched with GSC data:", response);
+};
+
 export default function KeywordAnalytics() {
   const [keywords, setKeywords] = useState<Keyword[]>([]);
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
@@ -133,7 +140,12 @@ export default function KeywordAnalytics() {
 
   return (
     <div className="px-2 h-[calc(100%-22rem)] overflow-hidden dark:text-white/50 ">
-      <h1 className="text-2xl font-bold mb-2">Tracking Dashboard</h1>
+      <h1
+        onClick={() => handleTrackingMatch()}
+        className="text-2xl font-bold mb-2"
+      >
+        Tracking Dashboard
+      </h1>
       <div className="space-y-6 h-fit">
         <StatsWidgets />
         <KeywordTable

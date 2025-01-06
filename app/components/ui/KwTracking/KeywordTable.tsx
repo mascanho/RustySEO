@@ -83,9 +83,9 @@ export default function KeywordTable({
         const change = row.original.currentClicks - row.original.initialClicks;
         const color =
           change > 0
-            ? "text-green-600"
+            ? "text-green-800"
             : change < 0
-              ? "text-red-600"
+              ? "text-red-800"
               : "text-gray-600";
         const arrow = change > 0 ? "↑" : change < 0 ? "↓" : "→";
         return (
