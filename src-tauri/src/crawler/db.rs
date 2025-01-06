@@ -635,9 +635,12 @@ pub fn match_tracked_with_gsc() -> Result<()> {
     conn_tracked.execute("DELETE FROM keywords_tracked_gsc", [])?;
 
     // Get tracked keywords
-    let mut stmt_tracked = conn_tracked
-        .prepare("SELECT id, url, query, clicks, impressions, position, date FROM keywords")?;
-    let tracked_keywords = stmt_tracked.query_map([], |row| {
+    let mut stmt = conn_tracked.prepare(
+        "SELECT k.id, k.url, k.query, k.clicks, k.impressions, k.position, k.date
+         FROM keywords k",
+    )?;
+
+    let tracked_keywords = stmt.query_map([], |row| {
         Ok(KwTrackingData {
             id: row.get(0)?,
             url: row.get(1)?,
@@ -649,50 +652,51 @@ pub fn match_tracked_with_gsc() -> Result<()> {
         })
     })?;
 
-    // Get GSC data without original_id
-    let mut stmt_gsc =
-        conn_gsc.prepare("SELECT id, url, query, clicks, impressions, position FROM gsc_data")?;
-    let gsc_data = stmt_gsc.query_map([], |row| {
-        Ok((
-            row.get::<_, i64>(0)?,    // id
-            row.get::<_, String>(1)?, // url
-            row.get::<_, String>(2)?, // query
-            row.get::<_, i64>(3)?,    // clicks
-            row.get::<_, i64>(4)?,    // impressions
-            row.get::<_, f64>(5)?,    // position
-        ))
-    })?;
+    // Get matching GSC data
+    for tracked_kw in tracked_keywords {
+        let tracked_kw = tracked_kw?;
 
-    // Convert query results to vectors
-    let tracked = tracked_keywords.collect::<Result<Vec<_>, _>>()?;
-    let gsc = gsc_data.collect::<Result<Vec<_>, _>>()?;
+        let mut stmt = conn_gsc.prepare(
+            "SELECT id, url, query, clicks, impressions, position
+             FROM gsc_data
+             WHERE LOWER(query) = LOWER(?1)",
+        )?;
 
-    // Match tracked keywords with GSC data
-    for tracked_kw in tracked {
-        for gsc_item in &gsc {
-            if tracked_kw.url == gsc_item.1 && tracked_kw.query == gsc_item.2 {
-                conn_tracked.execute(
-                    "INSERT INTO keywords_tracked_gsc (
-                        tracked_url, tracked_query, tracked_clicks, tracked_impressions,
-                        tracked_position, tracked_date, gsc_url, gsc_query, gsc_clicks,
-                        gsc_impressions, gsc_position, gsc_date
-                    ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
-                    params![
-                        tracked_kw.url,
-                        tracked_kw.query,
-                        tracked_kw.clicks as i64,
-                        tracked_kw.impressions as i64,
-                        tracked_kw.position,
-                        tracked_kw.date.to_string(),
-                        gsc_item.1,
-                        gsc_item.2,
-                        gsc_item.3,
-                        gsc_item.4,
-                        gsc_item.5,
-                        Utc::now().naive_utc().to_string(),
-                    ],
-                )?;
-            }
+        let gsc_matches = stmt.query_map([&tracked_kw.query], |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, i64>(3)?,
+                row.get::<_, i64>(4)?,
+                row.get::<_, f64>(5)?,
+            ))
+        })?;
+
+        for gsc_match in gsc_matches {
+            let gsc_data = gsc_match?;
+
+            conn_tracked.execute(
+                "INSERT INTO keywords_tracked_gsc (
+                    tracked_url, tracked_query, tracked_clicks, tracked_impressions,
+                    tracked_position, tracked_date, gsc_url, gsc_query, gsc_clicks,
+                    gsc_impressions, gsc_position, gsc_date
+                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
+                params![
+                    tracked_kw.url,
+                    tracked_kw.query,
+                    tracked_kw.clicks as i64,
+                    tracked_kw.impressions as i64,
+                    tracked_kw.position,
+                    tracked_kw.date,
+                    gsc_data.1,
+                    gsc_data.2,
+                    gsc_data.3,
+                    gsc_data.4,
+                    gsc_data.5,
+                    Utc::now().naive_utc().to_string(),
+                ],
+            )?;
         }
     }
 
