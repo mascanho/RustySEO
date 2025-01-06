@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React from "react";
 import { MoreHorizontal, Edit, Trash2, BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,29 +27,36 @@ export default function KeywordRowMenu({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p-0">
+        <Button variant="ghost" className="h-8 w-8 p-0 focus:ring-0">
           <span className="sr-only">Open menu</span>
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+      <DropdownMenuContent
+        align="end"
+        className="w-[200px] dark:bg-gray-900 bg-white"
+      >
+        <DropdownMenuLabel className="text-xs dark:text-gray-400">
+          Actions
+        </DropdownMenuLabel>
         <DropdownMenuItem
           onClick={() => console.log("Edit keyword", keywordId)}
+          className="focus:bg-blue-100 dark:focus:bg-blue-900 cursor-pointer"
         >
           <Edit className="mr-2 h-4 w-4" />
-          Edit
+          <span className="dark:text-gray-200">Edit</span>
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => console.log("View details", keywordId)}
+          className="focus:bg-blue-100 dark:focus:bg-blue-900 cursor-pointer"
         >
           <BarChart2 className="mr-2 h-4 w-4" />
-          View Details
+          <span className="dark:text-gray-200">View Details</span>
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="dark:bg-gray-800" />
         <DropdownMenuItem
           onClick={() => removeKeyword(keywordId.toString())}
-          className="text-red-600"
+          className="text-red-600 dark:text-red-400 focus:bg-blue-100 dark:focus:bg-blue-900 cursor-pointer"
         >
           <Trash2 className="mr-2 h-4 w-4" />
           Delete

@@ -6,6 +6,7 @@ import KeywordTable from "./KeywordTable";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, emit } from "@tauri-apps/api/event";
 import { toast } from "sonner";
+import { StatsWidgets } from "./Widgets/WidgetsKeywordsContainer";
 
 interface Keyword {
   id: string;
@@ -123,7 +124,7 @@ export default function KeywordAnalytics() {
       await invoke("delete_keyword_command", { id });
       setKeywords(keywords.filter((keyword) => keyword.id !== id));
       await emit("keyword-tracked", { action: "delete", id });
-      toast.success(`Keyword deleted: ${keywordToDelete?.keyword} (ID: ${id})`);
+      toast.success(`Keyword deleted: (ID: ${id})`);
     } catch (error) {
       console.error("Failed to remove keyword:", error);
       toast.error("Failed to delete keyword");
@@ -131,15 +132,18 @@ export default function KeywordAnalytics() {
   };
 
   return (
-    <div className="pb-4 px-2 overflow-hidden dark:text-white/50">
+    <div className="px-2 h-[calc(100%-22rem)] overflow-hidden dark:text-white/50 ">
       <h1 className="text-2xl font-bold mb-2">Tracking Dashboard</h1>
-      <KeywordTable
-        keywords={sortedKeywords}
-        removeKeyword={removeKeyword}
-        requestSort={requestSort}
-        sortConfig={sortConfig}
-        keywordIds={keywords.map((k) => k.id)}
-      />
+      <div className="space-y-6 h-fit">
+        <StatsWidgets />
+        <KeywordTable
+          keywords={sortedKeywords}
+          removeKeyword={removeKeyword}
+          requestSort={requestSort}
+          sortConfig={sortConfig}
+          keywordIds={keywords.map((k) => k.id)}
+        />
+      </div>
     </div>
   );
 }

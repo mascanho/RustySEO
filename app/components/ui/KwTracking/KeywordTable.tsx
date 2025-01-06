@@ -67,8 +67,10 @@ export default function KeywordTable({
         return (
           <span>
             {row.original.currentImpressions.toLocaleString()}{" "}
-            <span className={`${color} ml-2`}>
-              ({arrow} {Math.abs(change).toLocaleString()})
+            <span
+              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 ${color}`}
+            >
+              {arrow} {Math.abs(change).toLocaleString()}
             </span>
           </span>
         );
@@ -89,8 +91,10 @@ export default function KeywordTable({
         return (
           <span>
             {row.original.currentClicks.toLocaleString()}{" "}
-            <span className={`${color} ml-2`}>
-              ({arrow} {Math.abs(change).toLocaleString()})
+            <span
+              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 ${color}`}
+            >
+              {arrow} {Math.abs(change).toLocaleString()}
             </span>
           </span>
         );
@@ -98,7 +102,7 @@ export default function KeywordTable({
     },
     {
       accessorKey: "url",
-      header: "URL",
+      header: () => <div className="text-center">URL</div>,
       cell: ({ row }) => (
         <div className="max-w-[400px] truncate text-gray-500">
           {row.original.url}
@@ -122,8 +126,10 @@ export default function KeywordTable({
         return (
           <span>
             {position.toFixed(1)}{" "}
-            <span className={`${color} ml-2`}>
-              ({arrow} {Math.abs(change).toFixed(1)})
+            <span
+              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 ${color}`}
+            >
+              {arrow} {Math.abs(change).toFixed(1)}
             </span>
           </span>
         );
@@ -142,9 +148,9 @@ export default function KeywordTable({
   });
 
   return (
-    <div className="overflow-x-auto h-[calc(100vh-30rem)]">
-      <table className="divide-y divide-gray-200">
-        <thead className="bg-gray-50 sticky top-0">
+    <div className="overflow-x-auto h-[43rem] pb-6 bg-white dark:bg-brand-darker rounded-md dark:border-brand-dark border overflow-y-auto relative">
+      <table className="divide-y divide-gray-200 w-full">
+        <thead className="bg-gray-50 sticky top-0 z-10">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
@@ -173,7 +179,7 @@ export default function KeywordTable({
             </tr>
           ))}
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-white divide-y divide-gray-200 overflow-hidden">
           {table.getRowModel().rows.map((row, index) => (
             <KeywordRow
               key={row.id}
