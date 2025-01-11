@@ -61,7 +61,7 @@ pub fn open_db_connection(db_name: &str) -> Result<Connection> {
         .ok_or_else(|| rusqlite::Error::QueryReturnedNoRows)?;
 
     // Define the directory for the DB file
-    let db_dir = project_dirs.data_dir(); // Use data_dir() for application data
+    let db_dir = project_dirs.data_dir().join("db"); // Append /db to data dir
     let db_path = db_dir.join(db_name);
 
     println!("DB path: {:?}", db_path);
@@ -78,8 +78,7 @@ pub fn open_db_connection(db_name: &str) -> Result<Connection> {
 pub fn create_results_table() -> Result<()> {
     let conn = open_db_connection("crawl_results.db")?;
 
-    // Create the results table if it does not exist
-    conn.execute(
+    conn.execute_batch(
         "CREATE TABLE IF NOT EXISTS results (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             date TEXT,
@@ -96,18 +95,15 @@ pub fn create_results_table() -> Result<()> {
             server_response_time FLOAT,
             total_byte_weight FLOAT
         )",
-        [],
     )?;
-    println!("Results table created");
     Ok(())
 }
 
-pub fn create_technical_data_table() -> Result<()> {
-    let conn = open_db_connection("crawl_results.db")?;
+pub fn create_on_page_seo_table() -> Result<()> {
+    let conn = open_db_connection("on_page_seo.db")?;
 
-    // Create the technical_data table if it does not exists yet
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS technical_data (
+    conn.execute_batch(
+        "CREATE TABLE IF NOT EXISTS on_page_seo (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             date TEXT,
             url TEXT NOT NULL,
@@ -116,10 +112,8 @@ pub fn create_technical_data_table() -> Result<()> {
             keywords TEXT,
             headings TEXT
         )",
-        [],
-    )
-    .expect("Failed to create table");
-    println!("Technical data table created");
+    )?;
+
     Ok(())
 }
 
@@ -157,9 +151,9 @@ pub fn read_data_from_db() -> Result<Vec<ResultRecord>> {
 
 // ---------------- READ DATA FROM THE SEO ON PAGE DATA ----------------
 pub fn read_seo_data_from_db() -> Result<Vec<SEOResultRecord>> {
-    let conn = open_db_connection("crawl_results.db").expect("Failed to open database connection");
+    let conn = open_db_connection("on_page_seo.db").expect("Failed to open database connection");
     let mut stmt = conn
-        .prepare("SELECT * FROM technical_data")
+        .prepare("SELECT * FROM on_page_seo")
         .expect("Failed to prepare statement");
 
     let results = stmt
@@ -224,8 +218,8 @@ pub fn add_data_from_pagespeed(data: &str, strategy: &str, url: &str) -> Result<
 
 //----------- Function to add technical data to the database -----------
 pub fn add_technical_data(data: DBData, url: &str) -> Result<()> {
-    // Ensure the technical_data table exists
-    create_technical_data_table()?;
+    // Ensure the on_page_seo table exists
+    create_on_page_seo_table()?;
 
     let date = Utc::now().naive_utc().to_string();
     let (title, description, keywords, headings) =
@@ -233,16 +227,14 @@ pub fn add_technical_data(data: DBData, url: &str) -> Result<()> {
     let keywords = serde_json::to_string(&keywords).unwrap();
     let headings = serde_json::to_string(&headings).unwrap();
 
-    let conn = open_db_connection("crawl_results.db")?;
+    let conn = open_db_connection("on_page_seo.db")?;
 
-    // Insert new record into technical_data table
+    // Insert new record into on_page_seo table
     conn.execute(
-        "INSERT INTO technical_data (date, url, title, description, keywords, headings) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        "INSERT INTO on_page_seo (date, url, title, description, keywords, headings) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
         params![date, url, title, description, keywords, headings],
     )
-    .expect("Failed to insert data into technical_data table");
-
-    //println!("Data: {:#?}", data[0]);
+    .expect("Failed to insert data into on_page_seo table");
 
     Ok(())
 }
@@ -250,43 +242,40 @@ pub fn add_technical_data(data: DBData, url: &str) -> Result<()> {
 // ---------------- FUNCTION TO STORE THE LINKS IN THE DATABASE ----------------
 
 pub fn refresh_links_table() -> Result<()> {
-    let conn = open_db_connection("crawl_results.db")?;
+    let conn = open_db_connection("links_crawled.db")?;
     conn.execute("DELETE FROM links", [])?;
     Ok(())
 }
 
 pub fn create_links_table() -> Result<()> {
-    let conn = open_db_connection("crawl_results.db")?;
-
-    // Create the links table if it does not exist
-    conn.execute(
+    let conn = open_db_connection("links_crawled.db")?;
+    conn.execute_batch(
         "CREATE TABLE IF NOT EXISTS links (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             url TEXT NOT NULL,
             links TEXT
         )",
-        [],
-    )
-    .expect("Failed to create links table");
-
-    println!("Links table created successfully");
+    )?;
     Ok(())
 }
 
 pub fn store_links_in_db(links: Vec<(String, String)>) -> Result<()> {
-    // Open the database connection
-    let conn = open_db_connection("crawl_results.db")?;
-
-    // Ensure the links table exists
+    let mut conn = open_db_connection("links_crawled.db")?;
     create_links_table()?;
 
-    // Insert new record into links table
-    for (url, strategy) in links {
-        conn.execute(
-            "INSERT INTO links (url, links) VALUES (?1, ?2)",
-            params![url, strategy],
-        )?;
+    // Begin transaction
+    let tx = conn.transaction()?;
+
+    {
+        let mut stmt = tx.prepare("INSERT INTO links (url, links) VALUES (?1, ?2)")?;
+
+        for (url, strategy) in links {
+            stmt.execute(params![url, strategy])?;
+        }
     }
+
+    // Commit transaction
+    tx.commit()?;
 
     Ok(())
 }
@@ -294,32 +283,31 @@ pub fn store_links_in_db(links: Vec<(String, String)>) -> Result<()> {
 // --------------- FUNCTION TO FETCH THE LINKS FROM THE DATABASE ---------------
 
 pub fn read_links_from_db() -> Result<Vec<(String, String)>> {
-    let conn = open_db_connection("crawl_results.db")?;
-    let mut stmt = conn.prepare("SELECT * FROM links")?;
+    let conn = open_db_connection("links_crawled.db")?;
+    let mut stmt = conn.prepare("SELECT url, links FROM links")?;
 
-    let links = stmt.query_map([], |row| Ok((row.get(1)?, row.get(2)?)))?;
+    let links = stmt
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
+        .collect::<Result<Vec<_>, _>>()?;
 
-    let mut data = Vec::new();
-
-    for link in links {
-        data.push(link?);
-    }
-    //println!("Page SEO Data: {:#?}", data);
-    Ok(data)
+    Ok(links)
 }
 
 // --------- PUSH GOOGLE SEARCH CONSOLE DATA TO THE DATABASE ------------
 pub fn push_gsc_data_to_db(data: &Vec<serde_json::Value>) -> Result<()> {
-    let conn = open_db_connection("crawl_results.db").expect("Failed to open database connection");
+    let mut conn =
+        open_db_connection("crawl_results.db").expect("Failed to open database connection");
+
+    // Start transaction
+    let tx = conn.transaction()?;
 
     // Clear the existing gsc_data table
-    conn.execute("DROP TABLE IF EXISTS gsc_data", [])
-        .expect("Failed to drop gsc_data table");
+    tx.execute("DROP TABLE IF EXISTS gsc_data", [])?;
 
     println!("Existing gsc_data table cleared");
 
     // CREATE NEW TABLE ON DB
-    conn.execute(
+    tx.execute(
         "CREATE TABLE IF NOT EXISTS gsc_data (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             date TEXT,
@@ -331,27 +319,43 @@ pub fn push_gsc_data_to_db(data: &Vec<serde_json::Value>) -> Result<()> {
             position INTEGER
         )",
         [],
-    )
-    .expect("Failed to create table with data");
+    )?;
 
-    for item in data {
-        let objects = item["rows"].as_array().unwrap();
+    let date = Utc::now().naive_utc().to_string();
 
-        for object in objects {
-            // println!("Object: {:#?}", object);
-            let url = object["keys"][1].as_str().unwrap_or("");
-            let query = object["keys"][0].as_str().unwrap_or("");
-            let ctr = object["ctr"].as_f64().unwrap_or(0.0);
-            let clicks = object["clicks"].as_i64().unwrap_or(0);
-            let impressions = object["impressions"].as_i64().unwrap_or(0);
-            let position = object["position"].to_string();
-            let date = Utc::now().naive_utc().to_string();
-            conn.execute(
-                "INSERT INTO gsc_data (date, url, query, impressions, clicks, ctr, position) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-                params![date, url, query, impressions, clicks, ctr, position],
-            )?;
+    {
+        // Prepare the insert statement once
+        let mut stmt = tx.prepare(
+            "INSERT INTO gsc_data (date, url, query, impressions, clicks, ctr, position)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        )?;
+
+        for item in data {
+            let objects = item["rows"].as_array().unwrap();
+
+            for object in objects {
+                let url = object["keys"][1].as_str().unwrap_or("");
+                let query = object["keys"][0].as_str().unwrap_or("");
+                let ctr = object["ctr"].as_f64().unwrap_or(0.0);
+                let clicks = object["clicks"].as_i64().unwrap_or(0);
+                let impressions = object["impressions"].as_i64().unwrap_or(0);
+                let position = object["position"].to_string();
+
+                stmt.execute(params![
+                    date,
+                    url,
+                    query,
+                    impressions,
+                    clicks,
+                    ctr,
+                    position
+                ])?;
+            }
         }
     }
+
+    // Commit transaction
+    tx.commit()?;
 
     Ok(())
 }
@@ -408,9 +412,6 @@ pub fn match_gsc_url(url: &str) -> Result<(), Box<dyn std::error::Error>> {
 
     // Convert the query result into a vector
     let matched_urls: Vec<GscUrl> = matched_urls.collect::<Result<Vec<_>, _>>()?;
-
-    // Print matched URLs
-    //println!("Matched URLs: {:#?}", matched_urls);
 
     // Insert matched URLs into the 'gsc_matched' table
     insert_matched_urls(&conn, &matched_urls)?;

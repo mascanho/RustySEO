@@ -55,7 +55,7 @@ async fn fetch_page_speed(
     url: &str,
     strategy: &str,
 ) -> Result<(PageSpeedResponse, SeoPageSpeedResponse), String> {
-    let timeout = Duration::from_secs(60); // 30 seconds timeout
+    let timeout = Duration::from_secs(70); // 70 seconds timeout
 
     let result = tokio::time::timeout(
         timeout,

@@ -602,7 +602,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
                 .to_string();
             (start_date, end_date)
         }
-        "24 months" => {
+        "16 months" => {
             let end_date = Utc::now().format("%Y-%m-%d").to_string();
             let start_date = (Utc::now() - chrono::Duration::days(730))
                 .format("%Y-%m-%d")

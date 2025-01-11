@@ -353,36 +353,36 @@ const Home: React.FC<HomeProps> = () => {
   // clear session storage on page reload
 
   // CONNECT TO GOOGLE SEARCH console
-  useEffect(() => {
-    const sessionId = sessionStorage?.getItem("sessionId");
+  // useEffect(() => {
+  //   const sessionId = sessionStorage?.getItem("sessionId");
 
-    const callSearchConsole = async () => {
-      try {
-        // Step 1: Check if window is defined
-        if (typeof window !== "undefined") {
-          // Step 2: Call search console API
-          const result = await invoke<{}>("call_google_search_console");
-          console.log("Calling Search Console From UseEffect", result);
-        }
-      } catch (error) {
-        // Step 3: Handle any errors
-        console.warn("Search console connection unavailable:", error);
-      } finally {
-        // Step 4: Cleanup/final steps
-        console.log("Search console call completed");
-      }
-    };
+  //   const callSearchConsole = async () => {
+  //     try {
+  //       // Step 1: Check if window is defined
+  //       if (typeof window !== "undefined") {
+  //         // Step 2: Call search console API
+  //         const result = await invoke<{}>("call_google_search_console");
+  //         console.log("Calling Search Console From UseEffect", result);
+  //       }
+  //     } catch (error) {
+  //       // Step 3: Handle any errors
+  //       console.warn("Search console connection unavailable:", error);
+  //     } finally {
+  //       // Step 4: Cleanup/final steps
+  //       console.log("Search console call completed");
+  //     }
+  //   };
 
-    if (!sessionId && typeof window !== "undefined") {
-      try {
-        const newSessionId = Math.random().toString(36).substring(2, 15);
-        sessionStorage?.setItem("sessionId", newSessionId);
-        callSearchConsole();
-      } catch (err) {
-        console.warn("Session storage not available:", err);
-      }
-    }
-  }, []);
+  //   if (!sessionId && typeof window !== "undefined") {
+  //     try {
+  //       const newSessionId = Math.random().toString(36).substring(2, 15);
+  //       sessionStorage?.setItem("sessionId", newSessionId);
+  //       callSearchConsole();
+  //     } catch (err) {
+  //       console.warn("Session storage not available:", err);
+  //     }
+  //   }
+  // }, []);
 
   const handleLinkStatusCheck = (url: any) => {
     setLinkStatusCodeStatus(true);
