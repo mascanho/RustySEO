@@ -36,13 +36,6 @@ interface Keyword {
   dateAdded: string;
 }
 
-// Function to handle matching tracked keywords with GSC data
-const handleTrackingMatch = async () => {
-  const response = await invoke("match_tracked_with_gsc_command");
-  console.log("Keywords matched with GSC data:", response);
-  return response;
-};
-
 export default function KeywordAnalytics() {
   // State declarations for managing keyword data and UI
   const [keywords, setKeywords] = useState<Keyword[]>([]);
@@ -53,6 +46,8 @@ export default function KeywordAnalytics() {
     [],
   );
   const [keywordsSummary, setKeywordsSummary] = useState([]);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [needsUpdate, setNeedsUpdate] = useState(false);
 
   // Memoized handlers
   const handleKeywordsSummary = useCallback(async () => {
@@ -63,19 +58,6 @@ export default function KeywordAnalytics() {
       setKeywordsSummary(response);
     } catch (error) {
       console.error("Failed to fetch Keywords Summary:", error);
-    }
-  }, []);
-
-  const updateAllData = useCallback(async () => {
-    try {
-      await handleTrackingMatch();
-      await handleKeywordsSummary();
-      await handleFetchKeywords();
-      toast.success("Data refreshed successfully");
-      console.log("Updating all data");
-    } catch (error) {
-      toast.error("Failed to refresh data");
-      console.error("Error updating data:", error);
     }
   }, []);
 
@@ -90,7 +72,6 @@ export default function KeywordAnalytics() {
         const summaryMatch = summaryResponse.find(
           (s) => s.query === item.query,
         );
-
         return {
           id: item.id,
           keyword: item.query,
@@ -130,6 +111,30 @@ export default function KeywordAnalytics() {
     } catch (error) {
       console.error("Failed to fetch keywords:", error);
     }
+  }, []);
+
+  useEffect(() => {
+    if (needsUpdate && !isUpdating) {
+      const updateData = async () => {
+        setIsUpdating(true);
+        try {
+          await invoke("match_tracked_with_gsc_command");
+          await handleKeywordsSummary();
+          await handleFetchKeywords();
+        } catch (error) {
+          toast.error("Failed to refresh data");
+          console.error("Error updating data:", error);
+        } finally {
+          setIsUpdating(false);
+          setNeedsUpdate(false);
+        }
+      };
+      updateData();
+    }
+  }, [needsUpdate, isUpdating, handleKeywordsSummary, handleFetchKeywords]);
+
+  const updateAllData = useCallback(() => {
+    setNeedsUpdate(true);
   }, []);
 
   const handleMatchedTrackedKws = useCallback(async () => {
@@ -174,7 +179,6 @@ export default function KeywordAnalytics() {
     });
   }, []);
 
-  // Effect hook to initialize data and set up event listener
   useEffect(() => {
     const initData = async () => {
       await handleFetchKeywords();
@@ -185,8 +189,9 @@ export default function KeywordAnalytics() {
 
     const setupListener = async () => {
       try {
-        const unlisten = await listen("keyword-tracked", updateAllData);
-        return unlisten;
+        return await listen("keyword-tracked", () => {
+          setNeedsUpdate(true);
+        });
       } catch (err) {
         console.error("Error setting up event listener:", err);
         return null;
@@ -202,9 +207,8 @@ export default function KeywordAnalytics() {
         });
       }
     };
-  }, [updateAllData]);
+  }, []);
 
-  // Memoized sorting function for keywords
   const sortedKeywords = useMemo(() => {
     let sortableItems = [...keywords];
     if (sortConfig !== null) {
@@ -239,13 +243,16 @@ export default function KeywordAnalytics() {
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={updateAllData}
+              disabled={isUpdating}
               className="dark:text-white hover:text-white focus:text-white"
             >
-              <RefreshCw className="mr-2 h-4 w-4  dark:text-white hover:text-white focus:text-white" />{" "}
+              <RefreshCw
+                className={`mr-2 h-4 w-4 dark:text-white hover:text-white focus:text-white ${isUpdating ? "animate-spin" : ""}`}
+              />{" "}
               Refresh Data
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={handleTrackingMatch}
+              onClick={() => invoke("match_tracked_with_gsc_command")}
               className=" dark:text-white hover:text-white focus:text-white"
             >
               <Database className="mr-2 h-4 w-4 dark:text-white hover:text-white focus:text-white" />{" "}
