@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TypeIcon as type, LucideIcon } from "lucide-react";
 import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
+import { useEffect } from "react";
 
 interface StatCardProps {
   title: string;
@@ -24,6 +25,10 @@ export function StatCard({
   const isPositive = differential >= 0;
   const differentialColor = isPositive ? "text-green-600" : "text-red-600";
   const DifferentialIcon = isPositive ? ArrowUpIcon : ArrowDownIcon;
+
+  useEffect(() => {
+    // This effect will run whenever keywordsSummary changes
+  }, [keywordsSummary]);
 
   return (
     <Card className="dark:bg-brand-darker dark:border-brand-dark p-3">

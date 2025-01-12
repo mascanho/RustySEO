@@ -158,7 +158,7 @@ export default function KeywordTable({
   });
 
   return (
-    <div className="overflow-x-auto h-[calc(100vh-21rem)] pb-6 bg-white dark:bg-brand-darker rounded-md dark:border-brand-dark border overflow-y-scroll relative">
+    <div className="overflow-x-auto h-[calc(100vh-25rem)] pb-6 bg-white dark:bg-brand-darker rounded-md dark:border-brand-dark border overflow-y-scroll relative">
       <div className="sticky top-0 z-20 bg-white dark:bg-brand-darker p-2">
         <div className="flex items-center">
           <Search className="h-4 w-4 text-gray-400 text-xs" />

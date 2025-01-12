@@ -2,7 +2,7 @@
 "use client";
 
 // Import necessary dependencies
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import KeywordTable from "./KeywordTable";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, emit } from "@tauri-apps/api/event";
@@ -37,9 +37,10 @@ interface Keyword {
 }
 
 // Function to handle matching tracked keywords with GSC data
-const handleTrackingMatch = async (event: CustomEvent) => {
+const handleTrackingMatch = async () => {
   const response = await invoke("match_tracked_with_gsc_command");
   console.log("Keywords matched with GSC data:", response);
+  return response;
 };
 
 export default function KeywordAnalytics() {
@@ -47,38 +48,44 @@ export default function KeywordAnalytics() {
   const [keywords, setKeywords] = useState<Keyword[]>([]);
   const [sortConfig, setSortConfig] = useState<SortConfig>(null);
   const [initialData, setInitialData] = useState<Keyword[]>([]);
-  const [eventReceived, setEventReceived] = useState(false);
   const [gscData, setGscData] = useState<GscUrl[]>([]);
   const [matchedTrackedKws, setMatchedTrackedKws] = useState<KwTrackingData[]>(
     [],
   );
   const [keywordsSummary, setKeywordsSummary] = useState([]);
 
-  // FUNCTION TO FETCH KEYWORDS SUMMARIZED AND MATCHED WITH GSC DATA
-  const handleKeywordsSummary = async () => {
+  // Memoized handlers
+  const handleKeywordsSummary = useCallback(async () => {
     try {
       const response = await invoke(
         "fetch_keywords_summarized_matched_command",
       );
-      console.log("Keywords Summary fetched successfully:", response);
       setKeywordsSummary(response);
-      handleFetchKeywords(); // Refresh the table data with new summary
     } catch (error) {
       console.error("Failed to fetch Keywords Summary:", error);
     }
-  };
+  }, []);
 
-  // Function to fetch and transform keyword data
-  const handleFetchKeywords = async () => {
+  const updateAllData = useCallback(async () => {
+    try {
+      await handleTrackingMatch();
+      await handleKeywordsSummary();
+      await handleFetchKeywords();
+      toast.success("Data refreshed successfully");
+      console.log("Updating all data");
+    } catch (error) {
+      toast.error("Failed to refresh data");
+      console.error("Error updating data:", error);
+    }
+  }, []);
+
+  const handleFetchKeywords = useCallback(async () => {
     try {
       const response = await invoke("fetch_tracked_keywords_command");
-      console.log("Keywords fetched successfully:", response);
-
       const summaryResponse = await invoke(
         "fetch_keywords_summarized_matched_command",
       );
 
-      // Transform API response into required format with summary data
       const transformedData = response.map((item) => {
         const summaryMatch = summaryResponse.find(
           (s) => s.query === item.query,
@@ -116,7 +123,6 @@ export default function KeywordAnalytics() {
 
       setInitialData(transformedData);
       setKeywords(transformedData);
-      setKeywordsSummary(summaryResponse);
       sessionStorage.setItem(
         "keywordsLength",
         transformedData.length.toString(),
@@ -124,40 +130,62 @@ export default function KeywordAnalytics() {
     } catch (error) {
       console.error("Failed to fetch keywords:", error);
     }
-  };
+  }, []);
 
-  // Function to filter and extract keywords from initial data
-  function filterInitialDataKws(keywordsArray: Keyword[]) {
-    const filteredKws = keywordsArray.map((kw) => {
-      const filteredKw = Object.keys(kw).reduce((acc, key) => {
-        if (key !== "dateAdded") {
-          acc[key] = kw[key];
-        }
-        return acc;
-      }, {} as Keyword);
+  const handleMatchedTrackedKws = useCallback(async () => {
+    try {
+      const response = await invoke("read_matched_keywords_from_db_command");
+      setMatchedTrackedKws(response);
+    } catch (error) {
+      console.error("Failed to fetch Matched Tracked Keywords:", error);
+    }
+  }, []);
 
-      return filteredKw.keyword;
+  const handleGSCFetchData = useCallback(async () => {
+    try {
+      const response = await invoke("read_gsc_data_from_db_command");
+      setGscData(response);
+    } catch (error) {
+      console.error("Failed to fetch GSC data:", error);
+    }
+  }, []);
+
+  const removeKeyword = useCallback(async (id: string) => {
+    try {
+      await invoke("delete_keyword_command", { id });
+      setKeywords((prevKeywords) =>
+        prevKeywords.filter((keyword) => keyword.id !== id),
+      );
+      await emit("keyword-tracked", { action: "delete", id });
+      toast.success(`Keyword deleted: (ID: ${id})`);
+    } catch (error) {
+      console.error("Failed to remove keyword:", error);
+      toast.error("Failed to delete keyword");
+    }
+  }, []);
+
+  const requestSort = useCallback((key: keyof Keyword) => {
+    setSortConfig((prevConfig) => {
+      const direction =
+        prevConfig && prevConfig.key === key && prevConfig.direction === "asc"
+          ? "desc"
+          : "asc";
+      return { key, direction };
     });
-
-    return filteredKws;
-  }
-
-  // Type definition for sorting configuration
-  type SortConfig = {
-    key: keyof Keyword;
-    direction: "asc" | "desc";
-  } | null;
+  }, []);
 
   // Effect hook to initialize data and set up event listener
   useEffect(() => {
-    handleFetchKeywords();
+    const initData = async () => {
+      await handleFetchKeywords();
+      await handleKeywordsSummary();
+    };
+
+    initData();
 
     const setupListener = async () => {
       try {
-        const unlisten = await listen("keyword-tracked", (event) => {
-          console.log("Keyword tracked event received:", event);
-          handleFetchKeywords();
-        });
+        const unlisten = await listen("keyword-tracked", updateAllData);
         return unlisten;
       } catch (err) {
         console.error("Error setting up event listener:", err);
@@ -165,14 +193,16 @@ export default function KeywordAnalytics() {
       }
     };
 
-    setupListener();
+    const unsubscribe = setupListener();
 
     return () => {
-      setupListener().then((unlisten) => {
-        if (unlisten) unlisten();
-      });
+      if (unsubscribe) {
+        unsubscribe.then((unlisten) => {
+          if (unlisten) unlisten();
+        });
+      }
     };
-  }, []);
+  }, [updateAllData]);
 
   // Memoized sorting function for keywords
   const sortedKeywords = useMemo(() => {
@@ -191,100 +221,43 @@ export default function KeywordAnalytics() {
     return sortableItems;
   }, [keywords, sortConfig]);
 
-  // Function to handle sort requests
-  const requestSort = (key: keyof Keyword) => {
-    let direction: "asc" | "desc" = "asc";
-    if (
-      sortConfig &&
-      sortConfig.key === key &&
-      sortConfig.direction === "asc"
-    ) {
-      direction = "desc";
-    }
-    setSortConfig({ key, direction });
-  };
-
-  // Function to remove a keyword
-  const removeKeyword = async (id: string) => {
-    try {
-      const keywordToDelete = keywords.find((k) => k.id === id);
-      await invoke("delete_keyword_command", { id });
-      setKeywords(keywords.filter((keyword) => keyword.id !== id));
-      await emit("keyword-tracked", { action: "delete", id });
-      toast.success(`Keyword deleted: (ID: ${id})`);
-    } catch (error) {
-      console.error("Failed to remove keyword:", error);
-      toast.error("Failed to delete keyword");
-    }
-  };
-
-  // Function to fetch GSC data
-  const handleGSCFetchData = async () => {
-    try {
-      const response = await invoke("read_gsc_data_from_db_command");
-      console.log("GSC Data fetched successfully:", response);
-      setGscData(response);
-    } catch (error) {
-      console.error("Failed to fetch GSC data:", error);
-    } finally {
-      console.log("GSC Data fetched successfully:", gscData);
-    }
-  };
-
-  // Function to fetch matched tracked keywords
-  const handleMatchedTrackedKws = async () => {
-    try {
-      const response = await invoke("read_matched_keywords_from_db_command");
-      console.log("Matched Tracked Keywords fetched successfully:", response);
-      setMatchedTrackedKws(response);
-    } catch (error) {
-      console.error("Failed to fetch Matched Tracked Keywords:", error);
-    } finally {
-      console.log("Matched Tracked Keywords fetched successfully");
-    }
-  };
-
   return (
     <div className="px-2 h-[calc(100vh-10rem)]   overflow-x-hidden overflow-y-hidden dark:text-white/50 ">
       <div className="flex items-center gap-2 mb-2">
         <h1 className="text-2xl font-bold">Tracking Dashboard</h1>
         <DropdownMenu>
-          <DropdownMenuTrigger className="hover:bg-white dark:hover:bg-[#1F2937] p-1 rounded-md">
-            <Settings className="h-5 w-5 text-black dark:text-white hover:text-white" />
+          <DropdownMenuTrigger className="hover:bg-white hover:text-black  dark:hover:bg-[#1F2937] p-1 rounded-md">
+            <Settings className="h-5 w-5 text-black dark:text-white  hover:text-black" />
           </DropdownMenuTrigger>
           <DropdownMenuContent className="bg-white dark:bg-brand-darker border-brand-dark">
             <DropdownMenuItem
               onClick={handleGSCFetchData}
               className="text-black dark:text-white hover:text-white focus:text-white"
             >
-              <RefreshCw className="mr-2 h-4 w-4 text-black dark:text-white hover:text-white focus:text-white" />{" "}
+              <RefreshCw className="mr-2 h-4 w-4  dark:text-white hover:text-white focus:text-white" />{" "}
               Get GSC Data
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={handleFetchKeywords}
-              className="text-black dark:text-white hover:text-white focus:text-white"
+              onClick={updateAllData}
+              className="dark:text-white hover:text-white focus:text-white"
             >
-              <RefreshCw className="mr-2 h-4 w-4 text-black dark:text-white hover:text-white focus:text-white" />{" "}
+              <RefreshCw className="mr-2 h-4 w-4  dark:text-white hover:text-white focus:text-white" />{" "}
               Refresh Data
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={handleTrackingMatch}
-              className="text-black dark:text-white hover:text-white focus:text-white"
+              className=" dark:text-white hover:text-white focus:text-white"
             >
-              <Database className="mr-2 h-4 w-4 text-black dark:text-white hover:text-white focus:text-white" />{" "}
+              <Database className="mr-2 h-4 w-4 dark:text-white hover:text-white focus:text-white" />{" "}
               Match with GSC
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={handleMatchedTrackedKws}
-              className="text-black dark:text-white hover:text-white focus:text-white"
+              className="dark:text-white hover:text-white focus:text-white"
             >
-              <Database className="mr-2 h-4 w-4 text-black dark:text-white hover:text-white focus:text-white" />{" "}
+              <Database className="mr-2 h-4 w-4 dark:text-white hover:text-white focus:text-white" />{" "}
               Tracked Keywords with GSC
             </DropdownMenuItem>{" "}
-            <DropdownMenuItem className="text-black dark:text-white hover:text-white focus:text-white">
-              <Settings className="mr-2 h-4 w-4 text-black dark:text-white hover:text-white focus:text-white" />{" "}
-              Settings
-            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={handleKeywordsSummary}
               className="text-black dark:text-white hover:text-white focus:text-white"
@@ -296,7 +269,10 @@ export default function KeywordAnalytics() {
         </DropdownMenu>
       </div>
       <div className="space-y-6 h-fit">
-        <StatsWidgets keywordsSummary={keywordsSummary} />
+        <StatsWidgets
+          keywordsSummary={keywordsSummary}
+          fetchKeywordsSummary={handleKeywordsSummary}
+        />
         <KeywordTable
           keywords={sortedKeywords}
           removeKeyword={removeKeyword}
