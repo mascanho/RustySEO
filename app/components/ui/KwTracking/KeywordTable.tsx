@@ -95,7 +95,7 @@ export default function KeywordTable({
           change > 0
             ? "text-green-500"
             : change < 0
-              ? "text-red-800"
+              ? "text-red-500"
               : "text-gray-600";
         const arrow = change > 0 ? "↑" : change < 0 ? "↓" : "→";
         return (
@@ -128,9 +128,9 @@ export default function KeywordTable({
         const change = initialPosition - position;
         const color =
           change > 0
-            ? "text-green-600"
+            ? "text-green-500"
             : change < 0
-              ? "text-red-600"
+              ? "text-red-500"
               : "text-gray-600";
         const arrow = change > 0 ? "↑" : change < 0 ? "↓" : "→";
         return (
@@ -159,7 +159,7 @@ export default function KeywordTable({
 
   return (
     <div className="overflow-x-auto h-[calc(100vh-21rem)] pb-6 bg-white dark:bg-brand-darker rounded-md dark:border-brand-dark border overflow-y-scroll relative">
-      <div className="sticky top-0 z-20 bg-white p-2 border-b">
+      <div className="sticky top-0 z-20 bg-white dark:bg-brand-darker p-2">
         <div className="flex items-center">
           <Search className="h-4 w-4 text-gray-400 text-xs" />
           <input
@@ -167,7 +167,7 @@ export default function KeywordTable({
             placeholder="Search keywords..."
             value={urlSearch}
             onChange={(e) => setUrlSearch(e.target.value)}
-            className="ml-2 w-96 px-2 py-1 border rounded focus:outline-none focus:border-blue-500 text-xs"
+            className="ml-2 w-96 px-2 py-1 border dark:border-brand-dark rounded dark:bg-brand-darker focus:outline-none focus:border-blue-500 text-xs"
           />
           {urlSearch && (
             <X

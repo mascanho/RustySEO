@@ -54,6 +54,20 @@ export default function KeywordAnalytics() {
   );
   const [keywordsSummary, setKeywordsSummary] = useState([]);
 
+  // FUNCTION TO FETCH KEYWORDS SUMMARIZED AND MATCHED WITH GSC DATA
+  const handleKeywordsSummary = async () => {
+    try {
+      const response = await invoke(
+        "fetch_keywords_summarized_matched_command",
+      );
+      console.log("Keywords Summary fetched successfully:", response);
+      setKeywordsSummary(response);
+      handleFetchKeywords(); // Refresh the table data with new summary
+    } catch (error) {
+      console.error("Failed to fetch Keywords Summary:", error);
+    }
+  };
+
   // Function to fetch and transform keyword data
   const handleFetchKeywords = async () => {
     try {
@@ -127,10 +141,6 @@ export default function KeywordAnalytics() {
 
     return filteredKws;
   }
-
-  const initialKws = filterInitialDataKws(initialData);
-
-  console.log("initialKws", initialKws);
 
   // Type definition for sorting configuration
   type SortConfig = {
@@ -234,66 +244,52 @@ export default function KeywordAnalytics() {
     }
   };
 
-  // FUNCTION TO FETCH KEYWORDS SUMMARIZED AND MATCHED WITH GSC DATA
-  const handleKeywordsSummary = async () => {
-    try {
-      const response = await invoke(
-        "fetch_keywords_summarized_matched_command",
-      );
-      console.log("Keywords Summary fetched successfully:", response);
-      setKeywordsSummary(response);
-      handleFetchKeywords(); // Refresh the table data with new summary
-    } catch (error) {
-      console.error("Failed to fetch Keywords Summary:", error);
-    }
-  };
-
   return (
     <div className="px-2 h-[calc(100vh-10rem)]   overflow-x-hidden overflow-y-hidden dark:text-white/50 ">
       <div className="flex items-center gap-2 mb-2">
         <h1 className="text-2xl font-bold">Tracking Dashboard</h1>
         <DropdownMenu>
           <DropdownMenuTrigger className="hover:bg-white dark:hover:bg-[#1F2937] p-1 rounded-md">
-            <Settings className="h-5 w-5 text-black dark:text-white" />
+            <Settings className="h-5 w-5 text-black dark:text-white hover:text-white" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-white dark:bg-brand-darker">
+          <DropdownMenuContent className="bg-white dark:bg-brand-darker border-brand-dark">
             <DropdownMenuItem
               onClick={handleGSCFetchData}
-              className="focus:text-white hover:text-white"
+              className="text-black dark:text-white hover:text-white focus:text-white"
             >
-              <RefreshCw className="mr-2 h-4 w-4 text-black dark:text-white" />{" "}
+              <RefreshCw className="mr-2 h-4 w-4 text-black dark:text-white hover:text-white focus:text-white" />{" "}
               Get GSC Data
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={handleFetchKeywords}
-              className="focus:text-white hover:text-white"
+              className="text-black dark:text-white hover:text-white focus:text-white"
             >
-              <RefreshCw className="mr-2 h-4 w-4 text-black dark:text-white" />{" "}
+              <RefreshCw className="mr-2 h-4 w-4 text-black dark:text-white hover:text-white focus:text-white" />{" "}
               Refresh Data
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={handleTrackingMatch}
-              className="focus:text-white hover:text-white"
+              className="text-black dark:text-white hover:text-white focus:text-white"
             >
-              <Database className="mr-2 h-4 w-4 text-black dark:text-white" />{" "}
+              <Database className="mr-2 h-4 w-4 text-black dark:text-white hover:text-white focus:text-white" />{" "}
               Match with GSC
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={handleMatchedTrackedKws}
-              className="focus:text-white hover:text-white"
+              className="text-black dark:text-white hover:text-white focus:text-white"
             >
-              <Database className="mr-2 h-4 w-4 text-black dark:text-white" />{" "}
+              <Database className="mr-2 h-4 w-4 text-black dark:text-white hover:text-white focus:text-white" />{" "}
               Tracked Keywords with GSC
             </DropdownMenuItem>{" "}
-            <DropdownMenuItem className="focus:text-white hover:text-white">
-              <Settings className="mr-2 h-4 w-4 text-black dark:text-white" />{" "}
+            <DropdownMenuItem className="text-black dark:text-white hover:text-white focus:text-white">
+              <Settings className="mr-2 h-4 w-4 text-black dark:text-white hover:text-white focus:text-white" />{" "}
               Settings
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={handleKeywordsSummary}
-              className="focus:text-white hover:text-white"
+              className="text-black dark:text-white hover:text-white focus:text-white"
             >
-              <Settings className="mr-2 h-4 w-4 text-black dark:text-white" />{" "}
+              <Settings className="mr-2 h-4 w-4 text-black dark:text-white hover:text-white focus:text-white" />{" "}
               Summary Kws
             </DropdownMenuItem>{" "}
           </DropdownMenuContent>

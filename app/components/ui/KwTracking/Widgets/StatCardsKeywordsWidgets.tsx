@@ -26,20 +26,26 @@ export function StatCard({
   const DifferentialIcon = isPositive ? ArrowUpIcon : ArrowDownIcon;
 
   return (
-    <Card className="dark:bg-brand-darker dark:border-brand-dark">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className={`h-8 w-8 ${color}`} />
-      </CardHeader>
-      <CardContent className="px-6 pb-6">
-        <div className="flex items-center space-x-2">
-          <span className="text-2xl font-bold">{value}</span>
-          <DifferentialIcon className={`h-4 w-4 ${differentialColor}`} />
-          <span className={`text-sm font-medium ${differentialColor}`}>
+    <Card className="dark:bg-brand-darker dark:border-brand-dark p-3">
+      <CardHeader className="flex flex-row items-center justify-between p-0">
+        <div className="flex items-center gap-2">
+          <Icon className={`h-5 w-5 ${color}`} />
+          <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        </div>
+        <div className="flex items-center gap-1">
+          <DifferentialIcon className={`h-3 w-3 ${differentialColor}`} />
+          <span className={`text-xs font-medium ${differentialColor}`}>
             {Math.abs(differential)}%
           </span>
         </div>
-        <p className="text-xs text-muted-foreground mt-1">{description}</p>
+      </CardHeader>
+      <CardContent className="pt-2 px-0 pb-0">
+        <div className="flex items-baseline justify-between">
+          <span className="text-base font-bold">{value}</span>
+          <p className="text-xs text-muted-foreground text-brand-bright">
+            {description}
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

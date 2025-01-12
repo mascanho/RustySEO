@@ -139,7 +139,7 @@ export function StatsWidgets({
     {
       title: "Best Position",
       value: bestPosition?.query || "-",
-      description: `Position ${bestPosition?.current_position || 0}`,
+      description: `Position ${bestPosition?.current_position.toFixed(1) || 0}`,
       icon: Crown,
       color: "text-emerald-600",
       differential: 0,
@@ -147,10 +147,8 @@ export function StatsWidgets({
     },
   ];
 
-  console.log("Keywords Summary", keywordsSummary);
-
   return (
-    <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-5 lg:grid-cols-4">
       {stats.map((stat, index) => (
         <StatCard
           key={index}
