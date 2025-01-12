@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -6,7 +6,7 @@ import {
   ColumnDef,
 } from "@tanstack/react-table";
 import KeywordRow from "./KeywordRow";
-import { ChevronUp, ChevronDown, Settings } from "lucide-react";
+import { ChevronUp, ChevronDown, Settings, Search, X } from "lucide-react";
 
 interface Keyword {
   id: string;
@@ -41,6 +41,16 @@ export default function KeywordTable({
   sortConfig,
   keywordIds,
 }: KeywordTableProps) {
+  const [urlSearch, setUrlSearch] = useState("");
+
+  const clearSearch = () => {
+    setUrlSearch("");
+  };
+
+  const filteredKeywords = keywords.filter((keyword) =>
+    keyword.url.toLowerCase().includes(urlSearch.toLowerCase()),
+  );
+
   const columns: ColumnDef<Keyword>[] = [
     {
       accessorKey: "keyword",
@@ -142,15 +152,33 @@ export default function KeywordTable({
   ];
 
   const table = useReactTable({
-    data: keywords,
+    data: filteredKeywords,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
 
   return (
-    <div className="overflow-x-auto h-[calc(100vh-16rem)] pb-6 bg-white dark:bg-brand-darker rounded-md dark:border-brand-dark border overflow-y-scroll relative">
+    <div className="overflow-x-auto h-[calc(100vh-21rem)] pb-6 bg-white dark:bg-brand-darker rounded-md dark:border-brand-dark border overflow-y-scroll relative">
+      <div className="sticky top-0 z-20 bg-white p-2 border-b">
+        <div className="flex items-center">
+          <Search className="h-5 w-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search URLs..."
+            value={urlSearch}
+            onChange={(e) => setUrlSearch(e.target.value)}
+            className="ml-2 w-64 px-2 py-1 border rounded focus:outline-none focus:border-blue-500 text-xs"
+          />
+          {urlSearch && (
+            <X
+              className="h-4 w-4 text-gray-400 ml-2 cursor-pointer hover:text-gray-600"
+              onClick={clearSearch}
+            />
+          )}
+        </div>
+      </div>
       <table className="divide-y divide-gray-200 w-full">
-        <thead className="bg-gray-50 sticky top-0 z-10">
+        <thead className="bg-gray-50 sticky top-[40px] z-10">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (

@@ -248,10 +248,8 @@ export default function KeywordAnalytics() {
     }
   };
 
-  console.log(keywordsSummary, "KWS SUMMARYYYYYY");
-
   return (
-    <div className="px-2 h-[calc(100vh-10rem)] border  overflow-x-hidden overflow-y-hidden dark:text-white/50 ">
+    <div className="px-2 h-[calc(100vh-10rem)]   overflow-x-hidden overflow-y-hidden dark:text-white/50 ">
       <div className="flex items-center gap-2 mb-2">
         <h1 className="text-2xl font-bold">Tracking Dashboard</h1>
         <DropdownMenu>
