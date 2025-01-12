@@ -1,6 +1,8 @@
 use crate::crawler::db;
 use crate::crawler::db::GscMatched;
+use crate::crawler::db::KeywordsSummary;
 use crate::crawler::db::KwTrackingData;
+use crate::crawler::db::MatchedKeywordData;
 use crate::crawler::libs;
 use crate::crawler::libs::ApiKeys;
 use crate::crawler::libs::ClarityData;
@@ -228,6 +230,36 @@ pub fn match_tracked_with_gsc_command() -> Result<(), String> {
 #[tauri::command]
 pub fn read_tracked_keywords_from_db_command() -> Result<Vec<KwTrackingData>, String> {
     let result = db::read_tracked_keywords_from_db();
+    match result {
+        Ok(result) => Ok(result),
+        Err(err) => Err(err.to_string()),
+    }
+}
+
+// READ KEYWORDS FROM GSC TABLE ALL DATA
+#[tauri::command]
+pub fn read_gsc_data_from_db_command() -> Result<Vec<db::GscDataFromDB>, String> {
+    let result = db::read_gsc_data_from_db();
+    match result {
+        Ok(result) => Ok(result),
+        Err(err) => Err(err.to_string()),
+    }
+}
+
+// READ KEYWORD MATCHED DATA FROM THE DB
+#[tauri::command]
+pub fn read_matched_keywords_from_db_command() -> Result<Vec<MatchedKeywordData>, String> {
+    let result = db::read_matched_keywords_from_db();
+    match result {
+        Ok(result) => Ok(result),
+        Err(err) => Err(err.to_string()),
+    }
+}
+
+// FETCH THE KEYWORDS SUMMARIZED AND MATCHED WITH THE GSC DATA
+#[tauri::command]
+pub fn fetch_keywords_summarized_matched_command() -> Result<Vec<KeywordsSummary>, String> {
+    let result = db::fetch_keywords_summarized_matched();
     match result {
         Ok(result) => Ok(result),
         Err(err) => Err(err.to_string()),

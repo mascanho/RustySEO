@@ -59,7 +59,7 @@ export default function KeywordTable({
           row.original.currentImpressions - row.original.initialImpressions;
         const color =
           change > 0
-            ? "text-green-600"
+            ? "text-green-500"
             : change < 0
               ? "text-red-600"
               : "text-gray-600";
@@ -68,7 +68,7 @@ export default function KeywordTable({
           <span>
             {row.original.currentImpressions.toLocaleString()}{" "}
             <span
-              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 ${color}`}
+              className={`inline-flex items-center ml-2 py-0.5 text-xs font-medium ${color}`}
             >
               {arrow} {Math.abs(change).toLocaleString()}
             </span>
@@ -83,7 +83,7 @@ export default function KeywordTable({
         const change = row.original.currentClicks - row.original.initialClicks;
         const color =
           change > 0
-            ? "text-green-800"
+            ? "text-green-500"
             : change < 0
               ? "text-red-800"
               : "text-gray-600";
@@ -92,7 +92,7 @@ export default function KeywordTable({
           <span>
             {row.original.currentClicks.toLocaleString()}{" "}
             <span
-              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 ${color}`}
+              className={`inline-flex items-center py-0.5 text-xs pl-2 font-medium  ${color}`}
             >
               {arrow} {Math.abs(change).toLocaleString()}
             </span>
@@ -127,7 +127,7 @@ export default function KeywordTable({
           <span>
             {position.toFixed(1)}{" "}
             <span
-              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 ${color}`}
+              className={`inline-flex items-center py-0.5 text-xs font-medium ml-2 ${color}`}
             >
               {arrow} {Math.abs(change).toFixed(1)}
             </span>
@@ -148,7 +148,7 @@ export default function KeywordTable({
   });
 
   return (
-    <div className="overflow-x-auto h-[43rem] pb-6 bg-white dark:bg-brand-darker rounded-md dark:border-brand-dark border overflow-y-auto relative">
+    <div className="overflow-x-auto h-[calc(100vh-16rem)] pb-6 bg-white dark:bg-brand-darker rounded-md dark:border-brand-dark border overflow-y-scroll relative">
       <table className="divide-y divide-gray-200 w-full">
         <thead className="bg-gray-50 sticky top-0 z-10">
           {table.getHeaderGroups().map((headerGroup) => (

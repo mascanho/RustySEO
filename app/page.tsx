@@ -34,7 +34,7 @@ import { Modal, Tabs } from "@mantine/core";
 import KeywordChart from "./components/ui/ShadCharts/KeywordChart";
 import { useDebounce } from "use-debounce";
 import Todo from "./components/ui/Todo";
-import { IoKey, IoSearchCircle } from "react-icons/io5";
+import { IoKey, IoKeyOutline, IoSearchCircle } from "react-icons/io5";
 import TaskManagerContainer from "./components/ui/TaskManager/TaskManagerContainer";
 import CrawlHistory from "./components/ui/CrawlHistory/CrawlHistory";
 import HtmlToTextChart from "./components/ui/ShadCharts/HtmlToTextChart";
@@ -79,6 +79,10 @@ import ClarityContainer from "./components/ui/MSClarityModal/ClarityContainer";
 import Loader from "@/components/Loader/Loader";
 import { IconPokeball } from "@tabler/icons-react";
 import KeywordAnalytics from "./components/ui/KwTracking/KeywordAnalytics";
+import { SiGooglesearchconsole, SiSemrush } from "react-icons/si";
+import GscContainer from "./components/ui/GscContainer/GscContainer";
+import SemrushContainer from "./components/ui/SemrushContainer/SemrushContainer";
+import { SlSocialGoogle } from "react-icons/sl";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -585,7 +589,7 @@ const Home: React.FC<HomeProps> = () => {
           </section>
         </div>
         {/* TABS SECTION */}
-        <section className="mt-1 relative h-[calc(100vh-9.0rem)] overflow-x-hidden pt-0 px-1.5 side-scrollbar  ">
+        <section className="mt-1 relative h-[calc(100vh-9.0rem)] overflow-x-hidden pt-0 px-1.5 side-scrollbar">
           <Tabs defaultValue="first">
             <div className="transition-all   ease-in  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-1 top-[70px]  transform dark:bg-brand-darker  pb-0">
               <Tabs.List justify="center" className="dark:text-white">
@@ -607,20 +611,24 @@ const Home: React.FC<HomeProps> = () => {
                 </Tabs.Tab>
                 <Tabs.Tab value="analytics">
                   <FaChartBar className="inline-block mr-2" />
-                  Analytics
+                  GA4
                 </Tabs.Tab>
                 <Tabs.Tab value="clarity">
                   <RiFireLine className="inline-block mr-2 mb-[2px] text-sm" />
                   Clarity
                 </Tabs.Tab>
                 <Tabs.Tab value="kws">
-                  <IoKey className="inline-block mr-2 mb-[2px] text-sm" />
+                  <IoKeyOutline className="inline-block mr-2 mb-[2px] text-sm" />
                   Tracking
                 </Tabs.Tab>
-                {/* <Tabs.Tab value="seo">
-                  <GoGoal className="inline-block mr-2 mb-[2px] text-sm" />
-                  SEO Goals
-                </Tabs.Tab> */}
+                <Tabs.Tab value="gsc">
+                  <SlSocialGoogle className="inline-block mr-2 mb-[2px] text-sm" />
+                  Search Console
+                </Tabs.Tab>
+                <Tabs.Tab value="semrush">
+                  <SiSemrush className="inline-block mr-2 mb-[2px] text-sm" />
+                  SEMRush
+                </Tabs.Tab>
               </Tabs.List>
             </div>
             <Tabs.Panel value="first">
@@ -821,6 +829,12 @@ const Home: React.FC<HomeProps> = () => {
             </Tabs.Panel>{" "}
             <Tabs.Panel value="kws">
               <KeywordAnalytics />
+            </Tabs.Panel>{" "}
+            <Tabs.Panel value="gsc">
+              <GscContainer />
+            </Tabs.Panel>{" "}
+            <Tabs.Panel value="semrush">
+              <SemrushContainer />
             </Tabs.Panel>{" "}
           </Tabs>
         </section>

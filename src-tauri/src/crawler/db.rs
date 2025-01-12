@@ -360,6 +360,46 @@ pub fn push_gsc_data_to_db(data: &Vec<serde_json::Value>) -> Result<()> {
     Ok(())
 }
 
+// ------------- FUNCTION TO READ THE GOOGLE SEARCH CONSOLE DATA FROM THE DB
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GscDataFromDB {
+    id: i32,
+    date: String,
+    url: String,
+    query: String,
+    impressions: i64,
+    clicks: i64,
+    ctr: f64,
+    position: f64,
+}
+
+pub fn read_gsc_data_from_db() -> Result<Vec<GscDataFromDB>> {
+    let conn = open_db_connection("crawl_results.db")?;
+    let mut stmt = conn.prepare("SELECT * FROM gsc_data")?;
+
+    let gsc_data = stmt.query_map([], |row| {
+        Ok(GscDataFromDB {
+            id: row.get(0)?,
+            date: row.get(1)?,
+            url: row.get(2)?,
+            query: row.get(3)?,
+            impressions: row.get(4)?,
+            clicks: row.get(5)?,
+            ctr: row.get(6)?,
+            position: row.get(7)?,
+        })
+    })?;
+
+    let mut data = Vec::new();
+
+    for gsc in gsc_data {
+        data.push(gsc?);
+    }
+    //println!("Page SEO Data: {:#?}", data);
+    Ok(data)
+}
+
 // ------------ QUERY THE GSC DB AND ISOLATE THE QUERY URL AND ITS PROPERTIES ------------
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -591,7 +631,6 @@ pub fn delete_keyword_from_db(id: &str) -> Result<()> {
 }
 
 // ------ FIND THE KEYWORDS IN THE MAIN GSC_TABLE THAT MATCH THE EXISTING ONES IN KEYWORDS TABLE AND CREATE A NEW TABLE CALLED TRACKED_KW_GSC
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct TrackedKwGsc {
     id: i64,
@@ -609,6 +648,10 @@ struct TrackedKwGsc {
 pub fn match_tracked_with_gsc() -> Result<()> {
     let conn_tracked = open_db_connection("keyword_tracking.db")?;
     let conn_gsc = open_db_connection("crawl_results.db")?;
+
+    // delete the existing table if it exists
+    conn_tracked.execute("DROP TABLE IF EXISTS keywords_tracked_gsc", [])?;
+    println!("Existing keywords_tracked_gsc table cleared");
 
     // Create the matched keywords table if it does not exist
     conn_tracked.execute(
@@ -701,5 +744,117 @@ pub fn match_tracked_with_gsc() -> Result<()> {
         }
     }
 
+    // Create a new table with impressions aggregated, clicks aggregated and position averaged
+    conn_tracked.execute("DROP TABLE IF EXISTS summarized_data", [])?;
+
+    conn_tracked.execute(
+        "CREATE TABLE summarized_data AS
+        SELECT
+            MIN(tracked_url) as url,
+            MIN(tracked_query) as query,
+            SUM(DISTINCT tracked_clicks) as initial_clicks,
+            SUM(CASE WHEN tracked_url = gsc_url THEN gsc_clicks ELSE 0 END) as current_clicks,
+            SUM(DISTINCT tracked_impressions) as initial_impressions,
+            SUM(CASE WHEN tracked_url = gsc_url THEN gsc_impressions ELSE 0 END) as current_impressions,
+            MIN(tracked_position) as initial_position,
+            AVG(gsc_position) as current_position
+        FROM keywords_tracked_gsc
+        GROUP BY tracked_url, tracked_query",
+        [],
+    )?;
+
     Ok(())
+}
+
+// ----------- FUNCTION TO READ KEYWORD MATCHED DATA FROM THE DB KW_TRACKING
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MatchedKeywordData {
+    pub id: i64,
+    pub tracked_url: String,
+    pub tracked_query: String,
+    pub tracked_clicks: i64,
+    pub tracked_impressions: i64,
+    pub tracked_position: f64,
+    pub tracked_date: String,
+    pub gsc_url: String,
+    pub gsc_query: String,
+    pub gsc_clicks: i64,
+    pub gsc_impressions: i64,
+    pub gsc_position: f64,
+    pub gsc_date: String,
+}
+
+pub fn read_matched_keywords_from_db() -> Result<Vec<MatchedKeywordData>> {
+    let conn = open_db_connection("keyword_tracking.db")?;
+    let mut stmt = conn.prepare("SELECT * FROM keywords_tracked_gsc")?;
+
+    let keywords = stmt.query_map([], |row| {
+        Ok(MatchedKeywordData {
+            id: row.get(0)?,
+            tracked_url: row.get(1)?,
+            tracked_query: row.get(2)?,
+            tracked_clicks: row.get(3)?,
+            tracked_impressions: row.get(4)?,
+            tracked_position: row.get(5)?,
+            tracked_date: row.get(6)?,
+            gsc_url: row.get(7)?,
+            gsc_query: row.get(8)?,
+            gsc_clicks: row.get(9)?,
+            gsc_impressions: row.get(10)?,
+            gsc_position: row.get(11)?,
+            gsc_date: row.get(12)?,
+        })
+    })?;
+
+    let mut data = Vec::new();
+
+    for keyword in keywords {
+        data.push(keyword?);
+    }
+
+    Ok(data)
+}
+
+// FETCH THE KEYWORDS SUMMARIZED AND MATCHED WITH THE GSC DATA
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct KeywordsSummary {
+    pub url: String,
+    pub query: String,
+    pub initial_clicks: i64,
+    pub current_clicks: i64,
+    pub initial_impressions: i64,
+    pub current_impressions: i64,
+    pub initial_position: f64,
+    pub current_position: f64,
+}
+
+pub fn fetch_keywords_summarized_matched() -> Result<Vec<KeywordsSummary>> {
+    let conn_tracked = open_db_connection("keyword_tracking.db")?;
+
+    let mut stmt = conn_tracked.prepare(
+        "SELECT url, query, initial_clicks, current_clicks, initial_impressions, current_impressions, initial_position, current_position
+         FROM summarized_data",
+    )?;
+
+    let keywords_summarized_matched = stmt.query_map([], |row| {
+        Ok(KeywordsSummary {
+            url: row.get(0)?,
+            query: row.get(1)?,
+            initial_clicks: row.get(2)?,
+            current_clicks: row.get(3)?,
+            initial_impressions: row.get(4)?,
+            current_impressions: row.get(5)?,
+            initial_position: row.get(6)?,
+            current_position: row.get(7)?,
+        })
+    })?;
+
+    let mut data = Vec::new();
+
+    for keyword in keywords_summarized_matched {
+        data.push(keyword?);
+    }
+
+    Ok(data)
 }

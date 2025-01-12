@@ -9,6 +9,7 @@ interface StatCardProps {
   icon: LucideIcon;
   color: string;
   differential: number;
+  keywordsSummary: [];
 }
 
 export function StatCard({
@@ -18,6 +19,7 @@ export function StatCard({
   icon: Icon,
   color,
   differential,
+  keywordsSummary,
 }: StatCardProps) {
   const isPositive = differential >= 0;
   const differentialColor = isPositive ? "text-green-600" : "text-red-600";
