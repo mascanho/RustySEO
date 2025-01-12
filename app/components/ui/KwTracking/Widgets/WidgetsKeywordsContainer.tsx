@@ -1,4 +1,13 @@
-import { Eye, MousePointerClick, Percent, ArrowUpDown } from "lucide-react";
+import {
+  Eye,
+  MousePointerClick,
+  Percent,
+  ArrowUpDown,
+  KeySquare,
+  Trophy,
+  Medal,
+  Crown,
+} from "lucide-react";
 import { StatCard } from "./StatCardsKeywordsWidgets";
 
 interface KeywordSummary {
@@ -35,6 +44,33 @@ export function StatsWidgets({
           0,
         ) / keywordsSummary.length
       : 0;
+
+  const mostImpressions =
+    keywordsSummary?.length > 0
+      ? keywordsSummary.reduce((prev, current) =>
+          (prev?.current_impressions || 0) > (current?.current_impressions || 0)
+            ? prev
+            : current,
+        )
+      : null;
+
+  const mostClicks =
+    keywordsSummary?.length > 0
+      ? keywordsSummary.reduce((prev, current) =>
+          (prev?.current_clicks || 0) > (current?.current_clicks || 0)
+            ? prev
+            : current,
+        )
+      : null;
+
+  const bestPosition =
+    keywordsSummary?.length > 0
+      ? keywordsSummary.reduce((prev, current) =>
+          (prev?.current_position || 0) < (current?.current_position || 0)
+            ? prev
+            : current,
+        )
+      : null;
 
   const stats = [
     {
@@ -73,12 +109,48 @@ export function StatsWidgets({
       differential: 0.3,
       position: 4,
     },
+    {
+      title: "Keywords Tracked",
+      value: keywordsSummary?.length || 0,
+      description: "Total keywords tracked this month",
+      icon: KeySquare,
+      color: "text-orange-600",
+      differential: 0.3,
+      position: 5,
+    },
+    {
+      title: "Most Impressions",
+      value: mostImpressions?.query || "-",
+      description: `${mostImpressions?.current_impressions || 0} impressions`,
+      icon: Trophy,
+      color: "text-yellow-600",
+      differential: 0,
+      position: 6,
+    },
+    {
+      title: "Most Clicks",
+      value: mostClicks?.query || "-",
+      description: `${mostClicks?.current_clicks || 0} clicks`,
+      icon: Medal,
+      color: "text-red-600",
+      differential: 0,
+      position: 7,
+    },
+    {
+      title: "Best Position",
+      value: bestPosition?.query || "-",
+      description: `Position ${bestPosition?.current_position || 0}`,
+      icon: Crown,
+      color: "text-emerald-600",
+      differential: 0,
+      position: 8,
+    },
   ];
 
   console.log("Keywords Summary", keywordsSummary);
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-4 lg:grid-cols-4">
       {stats.map((stat, index) => (
         <StatCard
           key={index}

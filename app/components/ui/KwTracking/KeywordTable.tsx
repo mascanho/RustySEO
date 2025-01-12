@@ -56,7 +56,7 @@ export default function KeywordTable({
       accessorKey: "keyword",
       header: "Keyword",
       cell: ({ row }) => (
-        <span className="text-blue-600 font-semibold">
+        <span className="text-blue-600 font-semibold -ml-2">
           {row.original.keyword}
         </span>
       ),
@@ -161,13 +161,13 @@ export default function KeywordTable({
     <div className="overflow-x-auto h-[calc(100vh-21rem)] pb-6 bg-white dark:bg-brand-darker rounded-md dark:border-brand-dark border overflow-y-scroll relative">
       <div className="sticky top-0 z-20 bg-white p-2 border-b">
         <div className="flex items-center">
-          <Search className="h-5 w-5 text-gray-400" />
+          <Search className="h-4 w-4 text-gray-400 text-xs" />
           <input
             type="text"
-            placeholder="Search URLs..."
+            placeholder="Search keywords..."
             value={urlSearch}
             onChange={(e) => setUrlSearch(e.target.value)}
-            className="ml-2 w-64 px-2 py-1 border rounded focus:outline-none focus:border-blue-500 text-xs"
+            className="ml-2 w-96 px-2 py-1 border rounded focus:outline-none focus:border-blue-500 text-xs"
           />
           {urlSearch && (
             <X
