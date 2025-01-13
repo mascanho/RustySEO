@@ -77,7 +77,7 @@ export function StatsWidgets({
     {
       title: "Impressions",
       value: totalImpressions || 0,
-      description: "Total impressions this month",
+      description: "Total impressions",
       icon: Eye,
       color: "text-blue-600",
       differential: 12.5,
@@ -86,7 +86,7 @@ export function StatsWidgets({
     {
       title: "Clicks",
       value: totalClicks || 0,
-      description: "Total clicks this month",
+      description: "Total clicks",
       icon: MousePointerClick,
       color: "text-green-600",
       differential: -2.3,
@@ -95,7 +95,7 @@ export function StatsWidgets({
     {
       title: "CTR",
       value: (ctr || 0).toFixed(2) + "%",
-      description: "Click-through rate this month",
+      description: "Click-through rate",
       icon: Percent,
       color: "text-purple-600",
       differential: 0.8,
@@ -104,7 +104,7 @@ export function StatsWidgets({
     {
       title: "Average Position",
       value: (avgPosition || 0).toFixed(1),
-      description: "Average position this month",
+      description: "Average position",
       icon: ArrowUpDown,
       color: "text-orange-600",
       differential: 0.3,
@@ -113,7 +113,7 @@ export function StatsWidgets({
     {
       title: "Keywords Tracked",
       value: keywordsSummary?.length || 0,
-      description: "Total keywords tracked this month",
+      description: "Total keywords tracked",
       icon: KeySquare,
       color: "text-orange-600",
       differential: 0.3,

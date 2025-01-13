@@ -41,14 +41,14 @@ export default function KeywordTable({
   sortConfig,
   keywordIds,
 }: KeywordTableProps) {
-  const [urlSearch, setUrlSearch] = useState("");
+  const [keywordSearch, setKeywordSearch] = useState("");
 
   const clearSearch = () => {
-    setUrlSearch("");
+    setKeywordSearch("");
   };
 
   const filteredKeywords = keywords.filter((keyword) =>
-    keyword.url.toLowerCase().includes(urlSearch.toLowerCase()),
+    keyword.keyword.toLowerCase().includes(keywordSearch.toLowerCase()),
   );
 
   const columns: ColumnDef<Keyword>[] = [
@@ -165,11 +165,11 @@ export default function KeywordTable({
           <input
             type="text"
             placeholder="Search keywords..."
-            value={urlSearch}
-            onChange={(e) => setUrlSearch(e.target.value)}
+            value={keywordSearch}
+            onChange={(e) => setKeywordSearch(e.target.value)}
             className="ml-2 w-96 px-2 py-1 border dark:border-brand-dark rounded dark:bg-brand-darker focus:outline-none focus:border-blue-500 text-xs"
           />
-          {urlSearch && (
+          {keywordSearch && (
             <X
               className="h-4 w-4 text-gray-400 ml-2 cursor-pointer hover:text-gray-600"
               onClick={clearSearch}
