@@ -132,7 +132,7 @@ export default React.memo(
         };
         updateData();
       }
-    }, [handleFetchKeywords, handleKeywordsSummary, isUpdating, needsUpdate]);
+    }, [needsUpdate, isUpdating, handleKeywordsSummary, handleFetchKeywords]);
 
     const handleMatchedTrackedKws = useCallback(async () => {
       try {
@@ -159,7 +159,7 @@ export default React.memo(
           toast.error("Failed to delete keyword");
         }
       },
-      [handleFetchKeywords, handleKeywordsSummary],
+      [handleKeywordsSummary, handleFetchKeywords],
     );
 
     const requestSort = useCallback((key: keyof Keyword) => {
@@ -182,8 +182,13 @@ export default React.memo(
 
       const setupListener = async () => {
         try {
-          return await listen("keyword-tracked", () => {
-            setNeedsUpdate(true);
+          return await listen("keyword-tracked", (event) => {
+            if (
+              event.payload.action === "add" ||
+              event.payload.action === "delete"
+            ) {
+              setNeedsUpdate(true);
+            }
           });
         } catch (err) {
           console.error("Error setting up event listener:", err);
@@ -200,7 +205,7 @@ export default React.memo(
           });
         }
       };
-    }, []);
+    }, [handleFetchKeywords, handleKeywordsSummary]);
 
     const sortedKeywords = useMemo(() => {
       let sortableItems = [...keywords];

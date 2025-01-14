@@ -98,7 +98,7 @@ const RankingMenus = ({
         console.log("Passing Keyword data to the DB");
         console.log("Result", result);
         toast.success("Keyword added to Tracking Dashboard");
-        await emit("keyword-tracked", { data });
+        await emit("keyword-tracked", { action: "add", data });
       } catch (error) {
         console.error("Error tracking keyword:", error);
         toast.error("Failed to add keyword to tracking");
