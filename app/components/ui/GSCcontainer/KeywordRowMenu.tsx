@@ -39,7 +39,7 @@ export default function KeywordRowMenu({
         <DropdownMenuLabel className="text-xs dark:text-gray-400">
           Actions
         </DropdownMenuLabel>
-        {/* <DropdownMenuItem
+        <DropdownMenuItem
           onClick={() => console.log("Edit keyword", keywordId)}
           className="focus:bg-blue-100 dark:focus:bg-blue-900 cursor-pointer"
         >
@@ -52,7 +52,7 @@ export default function KeywordRowMenu({
         >
           <BarChart2 className="mr-2 h-4 w-4" />
           <span className="dark:text-gray-200">View Details</span>
-        </DropdownMenuItem> */}
+        </DropdownMenuItem>
         <DropdownMenuSeparator className="dark:bg-gray-800" />
         <DropdownMenuItem
           onClick={() => removeKeyword(keywordId.toString())}

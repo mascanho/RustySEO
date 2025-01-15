@@ -626,7 +626,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
         dimensions: vec![
             "query".to_string(),
             "page".to_string(),
-            "country".to_string(),
+            // "country".to_string(),
         ],
         search_type: "web".to_string(),
         row_limit: credentials_rows,

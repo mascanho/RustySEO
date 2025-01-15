@@ -83,6 +83,7 @@ import { SiGooglesearchconsole, SiSemrush } from "react-icons/si";
 import GscContainer from "./components/ui/GscContainer/GscContainer";
 import SemrushContainer from "./components/ui/SemrushContainer/SemrushContainer";
 import { SlSocialGoogle } from "react-icons/sl";
+import GSCcontainer from "./components/ui/GSCcontainer/GSCcontainer";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -831,7 +832,7 @@ const Home: React.FC<HomeProps> = () => {
               <KeywordAnalytics />
             </Tabs.Panel>{" "}
             <Tabs.Panel value="gsc">
-              <GscContainer />
+              <GSCcontainer />
             </Tabs.Panel>{" "}
             <Tabs.Panel value="semrush">
               <SemrushContainer />

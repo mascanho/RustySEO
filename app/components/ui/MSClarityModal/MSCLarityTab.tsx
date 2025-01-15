@@ -190,7 +190,7 @@ export default function ClarityDashboard() {
   const browsers = browserMetric?.information || [];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-brand-dark">
+    <div className="min-h-screen">
       <div className="container mx-auto py-2 px-4 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -242,14 +242,14 @@ export default function ClarityDashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card className="shadow-sm relative overflow-hidden">
+          <Card className="shadow-sm relative overflow-hidden dark:bg-brand-darker">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900/50" />
-            <CardHeader className="space-y-0 pb-4 relative">
+            <CardHeader className="space-y-0 pb-4 relative dark:bg-brand-darker">
               <CardTitle className="text-xs font-medium">
                 User Behavior Metrics
               </CardTitle>
             </CardHeader>
-            <CardContent className="relative">
+            <CardContent className="relative dark:bg-brand-darker">
               <ScrollArea className="h-[400px]">
                 <Table>
                   <TableHeader>
@@ -353,12 +353,12 @@ export default function ClarityDashboard() {
 
           <Card className="shadow-sm relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900/50" />
-            <CardHeader className="space-y-0 pb-4 relative">
+            <CardHeader className="space-y-0 pb-4 relative dark:bg-brand-darker">
               <CardTitle className="text-xs font-medium">
                 Top Page Titles
               </CardTitle>
             </CardHeader>
-            <CardContent className="relative">
+            <CardContent className="relative dark:bg-brand-darker">
               <ScrollArea className="h-[300px]">
                 <Table>
                   <TableHeader>
@@ -384,12 +384,12 @@ export default function ClarityDashboard() {
 
           <Card className="shadow-sm relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900/50" />
-            <CardHeader className="space-y-0 pb-4 relative">
+            <CardHeader className="space-y-0 pb-4 relative dark:bg-brand-darker">
               <CardTitle className="text-xs font-medium">
                 Top Referrer URLs
               </CardTitle>
             </CardHeader>
-            <CardContent className="relative">
+            <CardContent className="relative dark:bg-brand-darker">
               <ScrollArea className="h-[300px]">
                 <Table>
                   <TableHeader>
@@ -417,12 +417,12 @@ export default function ClarityDashboard() {
 
           <Card className="shadow-sm relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900/50" />
-            <CardHeader className="space-y-0 pb-4 relative">
+            <CardHeader className="space-y-0 pb-4 relative dark:bg-brand-darker">
               <CardTitle className="text-xs font-medium">
                 Popular Pages
               </CardTitle>
             </CardHeader>
-            <CardContent className="relative">
+            <CardContent className="relative dark:bg-brand-darker">
               <ScrollArea className="h-[300px]">
                 <Table>
                   <TableHeader>
