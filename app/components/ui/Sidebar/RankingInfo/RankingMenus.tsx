@@ -95,8 +95,6 @@ const RankingMenus = ({
         const result = await invoke("add_gsc_data_to_kw_tracking_command", {
           data,
         });
-        console.log("Passing Keyword data to the DB");
-        console.log("Result", result);
         toast.success("Keyword added to Tracking Dashboard");
         await emit("keyword-tracked", { action: "add", data });
       } catch (error) {
