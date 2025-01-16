@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ContentItem } from "../hooks/useContentItems";
+import { ContentItem } from "@/app/Hooks/useContentItems";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,7 +34,7 @@ export function ContentCard({
   };
 
   return (
-    <Card className="bg-white shadow-lg">
+    <div className="bg-white shadow-lg min-h-[550px] h-fit rounded-lg p-2">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium flex-grow">
           <Input
@@ -48,7 +48,7 @@ export function ContentCard({
           <GripVertical className="h-5 w-5 text-gray-500" />
         </div>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-2 h-full">
         <Input
           value={item.title}
           onChange={(e) => updateItem(item.id, { title: e.target.value })}
@@ -139,6 +139,6 @@ export function ContentCard({
           placeholder="Assignee"
         />
       </CardContent>
-    </Card>
+    </div>
   );
 }
