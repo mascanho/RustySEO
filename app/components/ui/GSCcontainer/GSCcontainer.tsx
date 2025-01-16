@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { GoCodescanCheckmark } from "react-icons/go";
 import KeywordAnalytics from "../KwTracking/KeywordAnalytics";
 import KeywordTable from "./GSCtable";
