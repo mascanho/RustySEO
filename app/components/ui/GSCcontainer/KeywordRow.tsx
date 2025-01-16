@@ -23,13 +23,13 @@ export default function KeywordRow({
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </td>
       ))}
-      <td className="px-2 py-1 whitespace-nowrap">
+      {/* <td className="px-2 py-1 whitespace-nowrap">
         <KeywordRowMenu
           keywordId={row.original.id}
           removeKeyword={removeKeyword}
           keywordIds={keywordIds}
         />
-      </td>
+      </td> */}
     </tr>
   );
 }

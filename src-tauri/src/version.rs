@@ -5,7 +5,7 @@ use std::error::Error;
 
 pub async fn get_version() -> Result<(Version, Version), Box<dyn Error>> {
     // Local software version (replace with actual version or fetch dynamically)
-    let local_version = Version::parse("0.1.0")?;
+    let local_version = Version::parse("0.1.1")?;
 
     // GitHub repository details
     let owner = "mascanho"; // Replace with the repo owner
