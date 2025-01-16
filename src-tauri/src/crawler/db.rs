@@ -12,13 +12,17 @@ mod models;
 
 pub struct DataBase {
     conn: Connection,
+    db_name: String,
 }
 
 // Need to check this
 impl DataBase {
-    pub fn new() -> Result<Self> {
-        let conn = open_db_connection()?;
-        Ok(Self { conn })
+    pub fn new(db_name: &str) -> Result<Self> {
+        let conn = open_db_connection(db_name)?;
+        Ok(Self {
+            conn,
+            db_name: db_name.to_string(),
+        })
     }
 }
 
@@ -51,14 +55,14 @@ pub struct SEOResultRecord {
     headings: String,
 }
 
-pub fn open_db_connection() -> Result<Connection> {
+pub fn open_db_connection(db_name: &str) -> Result<Connection> {
     // Retrieve the config directory for the application
     let project_dirs = ProjectDirs::from("", "", "rustyseo")
         .ok_or_else(|| rusqlite::Error::QueryReturnedNoRows)?;
 
     // Define the directory for the DB file
-    let db_dir = project_dirs.data_dir(); // Use data_dir() for application data
-    let db_path = db_dir.join("crawl_results.db");
+    let db_dir = project_dirs.data_dir().join("db"); // Append /db to data dir
+    let db_path = db_dir.join(db_name);
 
     println!("DB path: {:?}", db_path);
 
@@ -72,10 +76,9 @@ pub fn open_db_connection() -> Result<Connection> {
 }
 
 pub fn create_results_table() -> Result<()> {
-    let conn = open_db_connection()?;
+    let conn = open_db_connection("crawl_results.db")?;
 
-    // Create the results table if it does not exist
-    conn.execute(
+    conn.execute_batch(
         "CREATE TABLE IF NOT EXISTS results (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             date TEXT,
@@ -92,18 +95,15 @@ pub fn create_results_table() -> Result<()> {
             server_response_time FLOAT,
             total_byte_weight FLOAT
         )",
-        [],
     )?;
-    println!("Results table created");
     Ok(())
 }
 
-pub fn create_technical_data_table() -> Result<()> {
-    let conn = open_db_connection()?;
+pub fn create_on_page_seo_table() -> Result<()> {
+    let conn = open_db_connection("on_page_seo.db")?;
 
-    // Create the technical_data table if it does not exists yet
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS technical_data (
+    conn.execute_batch(
+        "CREATE TABLE IF NOT EXISTS on_page_seo (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             date TEXT,
             url TEXT NOT NULL,
@@ -112,16 +112,14 @@ pub fn create_technical_data_table() -> Result<()> {
             keywords TEXT,
             headings TEXT
         )",
-        [],
-    )
-    .expect("Failed to create table");
-    println!("Technical data table created");
+    )?;
+
     Ok(())
 }
 
 //----------- Function to read data from the database -----------
 pub fn read_data_from_db() -> Result<Vec<ResultRecord>> {
-    let conn = open_db_connection()?;
+    let conn = open_db_connection("crawl_results.db")?;
     let mut stmt = conn.prepare("SELECT * FROM results")?;
 
     let results = stmt.query_map([], |row| {
@@ -153,9 +151,9 @@ pub fn read_data_from_db() -> Result<Vec<ResultRecord>> {
 
 // ---------------- READ DATA FROM THE SEO ON PAGE DATA ----------------
 pub fn read_seo_data_from_db() -> Result<Vec<SEOResultRecord>> {
-    let conn = open_db_connection().expect("Failed to open database connection");
+    let conn = open_db_connection("on_page_seo.db").expect("Failed to open database connection");
     let mut stmt = conn
-        .prepare("SELECT * FROM technical_data")
+        .prepare("SELECT * FROM on_page_seo")
         .expect("Failed to prepare statement");
 
     let results = stmt
@@ -183,7 +181,7 @@ pub fn read_seo_data_from_db() -> Result<Vec<SEOResultRecord>> {
 //----------- Function to add page speed data to the database -----------
 pub fn add_data_from_pagespeed(data: &str, strategy: &str, url: &str) -> Result<()> {
     // Open the database connection
-    let conn = open_db_connection()?;
+    let conn = open_db_connection("crawl_results.db")?;
 
     // Attempt to parse the JSON data
     let parsed_data: models::PageSpeedResponse =
@@ -220,8 +218,8 @@ pub fn add_data_from_pagespeed(data: &str, strategy: &str, url: &str) -> Result<
 
 //----------- Function to add technical data to the database -----------
 pub fn add_technical_data(data: DBData, url: &str) -> Result<()> {
-    // Ensure the technical_data table exists
-    create_technical_data_table()?;
+    // Ensure the on_page_seo table exists
+    create_on_page_seo_table()?;
 
     let date = Utc::now().naive_utc().to_string();
     let (title, description, keywords, headings) =
@@ -229,16 +227,14 @@ pub fn add_technical_data(data: DBData, url: &str) -> Result<()> {
     let keywords = serde_json::to_string(&keywords).unwrap();
     let headings = serde_json::to_string(&headings).unwrap();
 
-    let conn = open_db_connection()?;
+    let conn = open_db_connection("on_page_seo.db")?;
 
-    // Insert new record into technical_data table
+    // Insert new record into on_page_seo table
     conn.execute(
-        "INSERT INTO technical_data (date, url, title, description, keywords, headings) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        "INSERT INTO on_page_seo (date, url, title, description, keywords, headings) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
         params![date, url, title, description, keywords, headings],
     )
-    .expect("Failed to insert data into technical_data table");
-
-    //println!("Data: {:#?}", data[0]);
+    .expect("Failed to insert data into on_page_seo table");
 
     Ok(())
 }
@@ -246,43 +242,40 @@ pub fn add_technical_data(data: DBData, url: &str) -> Result<()> {
 // ---------------- FUNCTION TO STORE THE LINKS IN THE DATABASE ----------------
 
 pub fn refresh_links_table() -> Result<()> {
-    let conn = open_db_connection()?;
+    let conn = open_db_connection("links_crawled.db")?;
     conn.execute("DELETE FROM links", [])?;
     Ok(())
 }
 
 pub fn create_links_table() -> Result<()> {
-    let conn = open_db_connection()?;
-
-    // Create the links table if it does not exist
-    conn.execute(
+    let conn = open_db_connection("links_crawled.db")?;
+    conn.execute_batch(
         "CREATE TABLE IF NOT EXISTS links (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             url TEXT NOT NULL,
             links TEXT
         )",
-        [],
-    )
-    .expect("Failed to create links table");
-
-    println!("Links table created successfully");
+    )?;
     Ok(())
 }
 
 pub fn store_links_in_db(links: Vec<(String, String)>) -> Result<()> {
-    // Open the database connection
-    let conn = open_db_connection()?;
-
-    // Ensure the links table exists
+    let mut conn = open_db_connection("links_crawled.db")?;
     create_links_table()?;
 
-    // Insert new record into links table
-    for (url, strategy) in links {
-        conn.execute(
-            "INSERT INTO links (url, links) VALUES (?1, ?2)",
-            params![url, strategy],
-        )?;
+    // Begin transaction
+    let tx = conn.transaction()?;
+
+    {
+        let mut stmt = tx.prepare("INSERT INTO links (url, links) VALUES (?1, ?2)")?;
+
+        for (url, strategy) in links {
+            stmt.execute(params![url, strategy])?;
+        }
     }
+
+    // Commit transaction
+    tx.commit()?;
 
     Ok(())
 }
@@ -290,32 +283,31 @@ pub fn store_links_in_db(links: Vec<(String, String)>) -> Result<()> {
 // --------------- FUNCTION TO FETCH THE LINKS FROM THE DATABASE ---------------
 
 pub fn read_links_from_db() -> Result<Vec<(String, String)>> {
-    let conn = open_db_connection()?;
-    let mut stmt = conn.prepare("SELECT * FROM links")?;
+    let conn = open_db_connection("links_crawled.db")?;
+    let mut stmt = conn.prepare("SELECT url, links FROM links")?;
 
-    let links = stmt.query_map([], |row| Ok((row.get(1)?, row.get(2)?)))?;
+    let links = stmt
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
+        .collect::<Result<Vec<_>, _>>()?;
 
-    let mut data = Vec::new();
-
-    for link in links {
-        data.push(link?);
-    }
-    //println!("Page SEO Data: {:#?}", data);
-    Ok(data)
+    Ok(links)
 }
 
 // --------- PUSH GOOGLE SEARCH CONSOLE DATA TO THE DATABASE ------------
 pub fn push_gsc_data_to_db(data: &Vec<serde_json::Value>) -> Result<()> {
-    let conn = open_db_connection().expect("Failed to open database connection");
+    let mut conn =
+        open_db_connection("crawl_results.db").expect("Failed to open database connection");
+
+    // Start transaction
+    let tx = conn.transaction()?;
 
     // Clear the existing gsc_data table
-    conn.execute("DROP TABLE IF EXISTS gsc_data", [])
-        .expect("Failed to drop gsc_data table");
+    tx.execute("DROP TABLE IF EXISTS gsc_data", [])?;
 
     println!("Existing gsc_data table cleared");
 
     // CREATE NEW TABLE ON DB
-    conn.execute(
+    tx.execute(
         "CREATE TABLE IF NOT EXISTS gsc_data (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             date TEXT,
@@ -327,29 +319,85 @@ pub fn push_gsc_data_to_db(data: &Vec<serde_json::Value>) -> Result<()> {
             position INTEGER
         )",
         [],
-    )
-    .expect("Failed to create table with data");
+    )?;
 
-    for item in data {
-        let objects = item["rows"].as_array().unwrap();
+    let date = Utc::now().naive_utc().to_string();
 
-        for object in objects {
-            // println!("Object: {:#?}", object);
-            let url = object["keys"][1].as_str().unwrap_or("");
-            let query = object["keys"][0].as_str().unwrap_or("");
-            let ctr = object["ctr"].as_f64().unwrap_or(0.0);
-            let clicks = object["clicks"].as_i64().unwrap_or(0);
-            let impressions = object["impressions"].as_i64().unwrap_or(0);
-            let position = object["position"].to_string();
-            let date = Utc::now().naive_utc().to_string();
-            conn.execute(
-                "INSERT INTO gsc_data (date, url, query, impressions, clicks, ctr, position) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-                params![date, url, query, impressions, clicks, ctr, position],
-            )?;
+    {
+        // Prepare the insert statement once
+        let mut stmt = tx.prepare(
+            "INSERT INTO gsc_data (date, url, query, impressions, clicks, ctr, position)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        )?;
+
+        for item in data {
+            let objects = item["rows"].as_array().unwrap();
+
+            for object in objects {
+                let url = object["keys"][1].as_str().unwrap_or("");
+                let query = object["keys"][0].as_str().unwrap_or("");
+                let ctr = object["ctr"].as_f64().unwrap_or(0.0);
+                let clicks = object["clicks"].as_i64().unwrap_or(0);
+                let impressions = object["impressions"].as_i64().unwrap_or(0);
+                let position = object["position"].to_string();
+
+                stmt.execute(params![
+                    date,
+                    url,
+                    query,
+                    impressions,
+                    clicks,
+                    ctr,
+                    position
+                ])?;
+            }
         }
     }
 
+    // Commit transaction
+    tx.commit()?;
+
     Ok(())
+}
+
+// ------------- FUNCTION TO READ THE GOOGLE SEARCH CONSOLE DATA FROM THE DB
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GscDataFromDB {
+    id: i32,
+    date: String,
+    url: String,
+    query: String,
+    impressions: i64,
+    clicks: i64,
+    ctr: f64,
+    position: f64,
+}
+
+pub fn read_gsc_data_from_db() -> Result<Vec<GscDataFromDB>> {
+    let conn = open_db_connection("crawl_results.db")?;
+    let mut stmt = conn.prepare("SELECT * FROM gsc_data")?;
+
+    let gsc_data = stmt.query_map([], |row| {
+        Ok(GscDataFromDB {
+            id: row.get(0)?,
+            date: row.get(1)?,
+            url: row.get(2)?,
+            query: row.get(3)?,
+            impressions: row.get(4)?,
+            clicks: row.get(5)?,
+            ctr: row.get(6)?,
+            position: row.get(7)?,
+        })
+    })?;
+
+    let mut data = Vec::new();
+
+    for gsc in gsc_data {
+        data.push(gsc?);
+    }
+    //println!("Page SEO Data: {:#?}", data);
+    Ok(data)
 }
 
 // ------------ QUERY THE GSC DB AND ISOLATE THE QUERY URL AND ITS PROPERTIES ------------
@@ -379,7 +427,7 @@ pub struct GscMatched {
 
 pub fn match_gsc_url(url: &str) -> Result<(), Box<dyn std::error::Error>> {
     // Connect to the database
-    let conn = open_db_connection()?;
+    let conn = open_db_connection("crawl_results.db")?;
 
     // URL to query
     let url_to_query = url.to_string();
@@ -404,9 +452,6 @@ pub fn match_gsc_url(url: &str) -> Result<(), Box<dyn std::error::Error>> {
 
     // Convert the query result into a vector
     let matched_urls: Vec<GscUrl> = matched_urls.collect::<Result<Vec<_>, _>>()?;
-
-    // Print matched URLs
-    //println!("Matched URLs: {:#?}", matched_urls);
 
     // Insert matched URLs into the 'gsc_matched' table
     insert_matched_urls(&conn, &matched_urls)?;
@@ -459,7 +504,7 @@ fn insert_matched_urls(conn: &Connection, matched_urls: &[GscUrl]) -> Result<()>
 }
 
 pub fn read_gsc_matched_from_db() -> Result<Vec<GscMatched>> {
-    let conn = open_db_connection()?;
+    let conn = open_db_connection("crawl_results.db")?;
     let mut stmt = conn.prepare("SELECT * FROM gsc_matched")?;
 
     let matched_urls = stmt.query_map([], |row| {
@@ -491,9 +536,325 @@ pub fn clear_table_command(table: &str) {
 }
 
 pub fn clear_table(table: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let conn = open_db_connection()?;
+    let conn = open_db_connection("crawl_results.db")?;
     let sql = format!("DELETE FROM {}", table);
     conn.execute(&sql, [])?;
     println!("Table {} has been cleared", table);
     Ok(())
+}
+
+// --------- FUNCTION TO ADD GSC DATA TO THE KW TRACKING TABLE ------------
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct KwTrackingData {
+    #[serde(default)]
+    pub id: i64, // Changed to i64 to match SQLite's INTEGER PRIMARY KEY
+    pub clicks: u32,      // Unsigned integer for clicks
+    pub impressions: u32, // Unsigned integer for impressions
+    pub position: f64,    // Floating point for position (since it has decimals)
+    pub query: String,    // Keep as String
+    pub url: String,      // Keep as String
+    #[serde(default)]
+    pub date: String,
+}
+
+pub fn add_gsc_data_to_kw_tracking(data: &KwTrackingData) -> Result<()> {
+    let conn = open_db_connection("keyword_tracking.db")?;
+
+    // create a timestamp with todays date in human readable format
+    let date = Utc::now().naive_utc().to_string();
+
+    // Create the keywords table if it does not exist
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS keywords (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            url TEXT NOT NULL,
+            query TEXT NOT NULL,
+            clicks INTEGER,
+            impressions INTEGER,
+            position REAL,
+            date TEXT
+        )",
+        [],
+    )?;
+
+    // Insert new record into keywords table
+    conn.execute(
+        "INSERT INTO keywords (url, query, clicks, impressions, position, date) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        params![
+            data.url,
+            data.query,
+            data.clicks,
+            data.impressions,
+            data.position,
+            date
+        ],
+    )?;
+
+    println!("Keyword tracking data inserted successfully");
+    println!("Data Inserted: {:#?}", data);
+
+    Ok(())
+}
+
+// ----------- FUNCTION TO READ KEYWORD TRACKING DATA FROM THE DB
+pub fn read_tracked_keywords_from_db() -> Result<Vec<KwTrackingData>> {
+    let conn = open_db_connection("keyword_tracking.db")?;
+    let mut stmt = conn.prepare("SELECT * FROM keywords")?;
+
+    let keywords = stmt.query_map([], |row| {
+        Ok(KwTrackingData {
+            id: row.get(0)?,
+            url: row.get(1)?,
+            query: row.get(2)?,
+            clicks: row.get::<_, i64>(3)? as u32,
+            impressions: row.get::<_, i64>(4)? as u32,
+            position: row.get(5)?,
+            date: row.get(6)?,
+        })
+    })?;
+
+    let mut data = Vec::new();
+
+    for keyword in keywords {
+        data.push(keyword?);
+    }
+    //println!("Page SEO Data: {:#?}", data);
+    Ok(data)
+}
+
+// ----------- FUNCTION TO DELETE KEYWORD TRACKING DATA FROM THE DB
+pub fn delete_keyword_from_db(id: &str) -> Result<()> {
+    let conn = open_db_connection("keyword_tracking.db")?;
+    conn.execute("DELETE FROM keywords WHERE id = ?", params![id])?;
+    Ok(())
+}
+
+// ------ FIND THE KEYWORDS IN THE MAIN GSC_TABLE THAT MATCH THE EXISTING ONES IN KEYWORDS TABLE AND CREATE A NEW TABLE CALLED TRACKED_KW_GSC
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct TrackedKwGsc {
+    id: i64,
+    keyword: String,
+    initial_impressions: i64,
+    current_impressions: i64,
+    initial_clicks: i64,
+    current_clicks: i64,
+    url: String,
+    initial_position: i64,
+    current_position: i64,
+    date_added: String,
+}
+
+pub fn match_tracked_with_gsc() -> Result<()> {
+    let conn_tracked = open_db_connection("keyword_tracking.db")?;
+    let conn_gsc = open_db_connection("crawl_results.db")?;
+
+    // delete the existing table if it exists
+    conn_tracked.execute("DROP TABLE IF EXISTS keywords_tracked_gsc", [])?;
+    println!("Existing keywords_tracked_gsc table cleared");
+
+    // Create the matched keywords table if it does not exist
+    conn_tracked.execute(
+        "CREATE TABLE IF NOT EXISTS keywords_tracked_gsc (
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             tracked_url TEXT NOT NULL,
+             tracked_query TEXT NOT NULL,
+             tracked_clicks INTEGER,
+             tracked_impressions INTEGER,
+             tracked_position REAL,
+             tracked_date TEXT NOT NULL,
+             gsc_url TEXT NOT NULL,
+             gsc_query TEXT NOT NULL,
+             gsc_clicks INTEGER,
+             gsc_impressions INTEGER,
+             gsc_position REAL,
+             gsc_date TEXT NOT NULL
+         )",
+        [],
+    )?;
+
+    println!("RustySEO is matching your tracked KWs with GSC data...");
+
+    // Clear existing data
+    conn_tracked.execute("DELETE FROM keywords_tracked_gsc", [])?;
+
+    // Get tracked keywords
+    let mut stmt = conn_tracked.prepare(
+        "SELECT k.id, k.url, k.query, k.clicks, k.impressions, k.position, k.date
+         FROM keywords k",
+    )?;
+
+    let tracked_keywords = stmt.query_map([], |row| {
+        Ok(KwTrackingData {
+            id: row.get(0)?,
+            url: row.get(1)?,
+            query: row.get(2)?,
+            clicks: row.get::<_, i64>(3)? as u32,
+            impressions: row.get::<_, i64>(4)? as u32,
+            position: row.get(5)?,
+            date: row.get(6)?,
+        })
+    })?;
+
+    // Get matching GSC data
+    for tracked_kw in tracked_keywords {
+        let tracked_kw = tracked_kw?;
+
+        let mut stmt = conn_gsc.prepare(
+            "SELECT id, url, query, clicks, impressions, position
+             FROM gsc_data
+             WHERE LOWER(query) = LOWER(?1)",
+        )?;
+
+        let gsc_matches = stmt.query_map([&tracked_kw.query], |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, i64>(3)?,
+                row.get::<_, i64>(4)?,
+                row.get::<_, f64>(5)?,
+            ))
+        })?;
+
+        for gsc_match in gsc_matches {
+            let gsc_data = gsc_match?;
+
+            conn_tracked.execute(
+                "INSERT INTO keywords_tracked_gsc (
+                    tracked_url, tracked_query, tracked_clicks, tracked_impressions,
+                    tracked_position, tracked_date, gsc_url, gsc_query, gsc_clicks,
+                    gsc_impressions, gsc_position, gsc_date
+                ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
+                params![
+                    tracked_kw.url,
+                    tracked_kw.query,
+                    tracked_kw.clicks as i64,
+                    tracked_kw.impressions as i64,
+                    tracked_kw.position,
+                    tracked_kw.date,
+                    gsc_data.1,
+                    gsc_data.2,
+                    gsc_data.3,
+                    gsc_data.4,
+                    gsc_data.5,
+                    Utc::now().naive_utc().to_string(),
+                ],
+            )?;
+        }
+    }
+
+    // Create a new table with impressions aggregated, clicks aggregated and position averaged
+    conn_tracked.execute("DROP TABLE IF EXISTS summarized_data", [])?;
+
+    conn_tracked.execute(
+        "CREATE TABLE summarized_data AS
+        SELECT
+            MIN(tracked_url) as url,
+            MIN(tracked_query) as query,
+            SUM(DISTINCT tracked_clicks) as initial_clicks,
+            SUM(CASE WHEN tracked_url = gsc_url THEN gsc_clicks ELSE 0 END) as current_clicks,
+            SUM(DISTINCT tracked_impressions) as initial_impressions,
+            SUM(CASE WHEN tracked_url = gsc_url THEN gsc_impressions ELSE 0 END) as current_impressions,
+            MIN(tracked_position) as initial_position,
+            AVG(gsc_position) as current_position
+        FROM keywords_tracked_gsc
+        GROUP BY tracked_url, tracked_query",
+        [],
+    )?;
+
+    Ok(())
+}
+
+// ----------- FUNCTION TO READ KEYWORD MATCHED DATA FROM THE DB KW_TRACKING
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MatchedKeywordData {
+    pub id: i64,
+    pub tracked_url: String,
+    pub tracked_query: String,
+    pub tracked_clicks: i64,
+    pub tracked_impressions: i64,
+    pub tracked_position: f64,
+    pub tracked_date: String,
+    pub gsc_url: String,
+    pub gsc_query: String,
+    pub gsc_clicks: i64,
+    pub gsc_impressions: i64,
+    pub gsc_position: f64,
+    pub gsc_date: String,
+}
+
+pub fn read_matched_keywords_from_db() -> Result<Vec<MatchedKeywordData>> {
+    let conn = open_db_connection("keyword_tracking.db")?;
+    let mut stmt = conn.prepare("SELECT * FROM keywords_tracked_gsc")?;
+
+    let keywords = stmt.query_map([], |row| {
+        Ok(MatchedKeywordData {
+            id: row.get(0)?,
+            tracked_url: row.get(1)?,
+            tracked_query: row.get(2)?,
+            tracked_clicks: row.get(3)?,
+            tracked_impressions: row.get(4)?,
+            tracked_position: row.get(5)?,
+            tracked_date: row.get(6)?,
+            gsc_url: row.get(7)?,
+            gsc_query: row.get(8)?,
+            gsc_clicks: row.get(9)?,
+            gsc_impressions: row.get(10)?,
+            gsc_position: row.get(11)?,
+            gsc_date: row.get(12)?,
+        })
+    })?;
+
+    let mut data = Vec::new();
+
+    for keyword in keywords {
+        data.push(keyword?);
+    }
+
+    Ok(data)
+}
+
+// FETCH THE KEYWORDS SUMMARIZED AND MATCHED WITH THE GSC DATA
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct KeywordsSummary {
+    pub url: String,
+    pub query: String,
+    pub initial_clicks: i64,
+    pub current_clicks: i64,
+    pub initial_impressions: i64,
+    pub current_impressions: i64,
+    pub initial_position: f64,
+    pub current_position: f64,
+}
+
+pub fn fetch_keywords_summarized_matched() -> Result<Vec<KeywordsSummary>> {
+    let conn_tracked = open_db_connection("keyword_tracking.db")?;
+
+    let mut stmt = conn_tracked.prepare(
+        "SELECT url, query, initial_clicks, current_clicks, initial_impressions, current_impressions, initial_position, current_position
+         FROM summarized_data",
+    )?;
+
+    let keywords_summarized_matched = stmt.query_map([], |row| {
+        Ok(KeywordsSummary {
+            url: row.get(0)?,
+            query: row.get(1)?,
+            initial_clicks: row.get(2)?,
+            current_clicks: row.get(3)?,
+            initial_impressions: row.get(4)?,
+            current_impressions: row.get(5)?,
+            initial_position: row.get(6)?,
+            current_position: row.get(7)?,
+        })
+    })?;
+
+    let mut data = Vec::new();
+
+    for keyword in keywords_summarized_matched {
+        data.push(keyword?);
+    }
+
+    Ok(data)
 }

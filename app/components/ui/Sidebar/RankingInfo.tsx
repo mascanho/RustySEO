@@ -93,7 +93,7 @@ const RankingInfo = ({
   }
 
   return (
-    <div className="w-full ranking-table max-w-full rounded-lg h-[28rem] overflow-auto bg-brand-bright/5 dark:bg-transparent shadow ">
+    <div className="w-full ranking-table max-w-full  h-[calc(50rem-260px)] overflow-auto bg-brand-bright/5 dark:bg-transparent ">
       <table className="w-full text-xs ">
         <thead className="bg-gray-100 dark:bg-gray-700 sticky top-0">
           <tr>
@@ -121,6 +121,9 @@ const RankingInfo = ({
                   credentials={credentials}
                   url={sessionUrl}
                   query={item.query}
+                  impressions={item.impressions}
+                  clicks={item.clicks}
+                  position={item.position}
                 >
                   <span className="pointer hover:underline hover:text-brand-bright text-[10px] overflow-hidden text-ellipsis">
                     {item.query}

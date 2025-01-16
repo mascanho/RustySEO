@@ -64,7 +64,7 @@ const HeadingsTable = ({
             aiHeadings,
           });
 
-          if (response && mounted) {
+          if (response) {
             setViewAIHeadings(response);
             localStorage.setItem(`${uuid}_response`, JSON.stringify(response));
           }

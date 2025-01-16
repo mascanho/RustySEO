@@ -93,7 +93,7 @@ const ContentSummary: React.FC<ContentSummaryProps> = ({
   }, [keywords, pageTitle]);
 
   return (
-    <section className="flex-wrap min-h-[calc(96rem - 2.5rem)] h-[28rem] space-y-1 dark:bg-slate-900 dark:text-white px-0.5 py-0.5 relative">
+    <section className="flex-wrap min-h-[calc(96rem - 2.5rem)] h-[calc(100vh-2.5rem)] space-y-1 dark:bg-slate-900 dark:text-white px-1 py-1 relative">
       <div className="px-2 py-1.5 grid gap-5 dark:text-white">
         <div className="grid gap-3">
           <div className="flex items-center justify-between">

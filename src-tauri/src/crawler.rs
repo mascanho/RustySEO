@@ -292,8 +292,7 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
             }
         }
 
-        db::refresh_links_table();
-        db::store_links_in_db(links.clone());
+        // db::refresh_links_table();
 
         let body_selector = Selector::parse("body").unwrap();
 
@@ -557,8 +556,6 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
         headings: headings.clone(),
     };
 
-    db::add_technical_data(db_data, &url).unwrap();
-
     let mut page_rank = Vec::new();
     let page_score = page_rank::fetch_page_rank(&url).await;
     match page_score {
@@ -571,6 +568,9 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
     }
 
     println!("Page URL length: {:?}", url_length);
+    db::refresh_links_table().expect("Failed to refresh links table");
+    db::store_links_in_db(links.clone()).expect("Failed to store link in the DB");
+    db::add_technical_data(db_data, &url).unwrap();
 
     Ok(CrawlResult {
         links,

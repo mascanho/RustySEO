@@ -52,9 +52,11 @@ export default function RootLayout({
         const version = await invoke("version_check_command");
         console.log(version, "This is the version");
 
-        if (version.local !== version.github) {
-          toast("RustySEO has a new version. Please update");
-        }
+        setTimeout(() => {
+          if (version.local !== version.github) {
+            toast("RustySEO has a new version. Please update");
+          }
+        }, 50000);
 
         localStorage.setItem("app-version", version.local as string);
       } catch (err) {

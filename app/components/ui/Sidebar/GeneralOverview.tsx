@@ -67,8 +67,8 @@ export default function GeneralOverview({
 
   return (
     <>
-      <section className="w-full h-[23.5rem]  overflow-auto relative mt-0.5 bg-transparent">
-        <div className="container mx-auto max-w-4xl h-fit">
+      <section className="w-full h-[calc(50vh-160px)]  overflow-auto relative mt-0.5 bg-transparent">
+        <div className="container mx-auto max-w-4xl h-2">
           <div className="grid h-full ">
             {/* CHECKS THE CORE WEB VITALS */}
             <details open className="h-fit">

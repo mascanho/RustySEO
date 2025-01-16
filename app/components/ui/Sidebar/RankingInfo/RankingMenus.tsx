@@ -8,7 +8,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { FaSearchengin } from "react-icons/fa";
 import { toast } from "sonner";
 
@@ -21,8 +21,29 @@ import {
   FiExternalLink,
   FiBarChart,
 } from "react-icons/fi";
+import { IoKey } from "react-icons/io5";
+import { invoke } from "@tauri-apps/api/core";
+import { emit, listen } from "@tauri-apps/api/event";
 
-const RankingMenus = ({ children, url, query, credentials }: any) => {
+const RankingMenus = ({
+  children,
+  url,
+  query,
+  credentials,
+  position,
+  impressions,
+  clicks,
+}: any) => {
+  useEffect(() => {
+    const unlisten = listen("keyword-tracked", (event) => {
+      console.log("Keyword tracked event received:", event);
+    });
+
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, []);
+
   const handleCopy = useCallback((url: string) => {
     navigator?.clipboard.writeText(url);
     toast.success("Copied to clipboard");
@@ -52,6 +73,38 @@ const RankingMenus = ({ children, url, query, credentials }: any) => {
     }
   };
 
+  // Handle the tracking of the keyword
+  const handleTrackKeyword = useCallback(
+    async (
+      url: string,
+      query: string,
+      position: number,
+      impressions: number,
+      clicks: number,
+      credentials: any,
+    ) => {
+      const data = {
+        url,
+        query,
+        position,
+        impressions,
+        clicks,
+      };
+
+      try {
+        const result = await invoke("add_gsc_data_to_kw_tracking_command", {
+          data,
+        });
+        toast.success("Keyword added to Tracking Dashboard");
+        await emit("keyword-tracked", { action: "add", data });
+      } catch (error) {
+        console.error("Error tracking keyword:", error);
+        toast.error("Failed to add keyword to tracking");
+      }
+    },
+    [],
+  );
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger>{children}</DropdownMenuTrigger>
@@ -61,6 +114,22 @@ const RankingMenus = ({ children, url, query, credentials }: any) => {
           onClick={() => handleCopy(query)}
         >
           <FiClipboard className="mr-2 text-xs" /> Copy
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() =>
+            handleTrackKeyword(
+              url,
+              query,
+              position,
+              impressions,
+              clicks,
+              credentials,
+            )
+          }
+          className="hover:bg-brand-bright hover:text-white"
+        >
+          <IoKey className="mr-2" />
+          {""} Track Keyword
         </DropdownMenuItem>
         <DropdownMenuItem
           className="hover:bg-brand-bright hover:text-white"
