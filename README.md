@@ -56,12 +56,15 @@ Use at your own risk, this software is new and under development.
 
 ## Roadmap
 
-- Deep crawl (multiple pages concurrently);
-- More integrations;
-- Better reporting;
-- Password protection & encryption;
-- Client-side OAuth2 authentication
-- More AI automations
+|  #  | Feature                                    | Status |
+| :-: | ------------------------------------------ | :----: |
+|  1  | Deep crawl (multiple pages concurrently)   |   ✅   |
+|  2  | More integrations                          |   ✅   |
+|  3  | Better reporting                           |   ✅   |
+|  4  | Password protection & encryption           |   ⚠️   |
+|  5  | Client-side OAuth2 authentication          |   ⚠️   |
+|  6  | More AI automations                        |   ❌   |
+
 
 ## Connectors / APIs (Get your keys, they are free 😉)
 - [Google Search Console](https://search.google.com/search-console/about)
