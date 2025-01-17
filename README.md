@@ -58,12 +58,15 @@ Use at your own risk, this software is new and under development.
 
 |  #  | Feature                                    | Status |
 | :-: | ------------------------------------------ | :----: |
-|  1  | Deep crawl (multiple pages concurrently)   |   ✅   |
+|  1  | Deep crawl (multiple pages concurrently)   |   ☠️   |
 |  2  | More integrations                          |   ✅   |
 |  3  | Better reporting                           |   ✅   |
 |  4  | Password protection & encryption           |   ⚠️   |
 |  5  | Client-side OAuth2 authentication          |   ⚠️   |
-|  6  | More AI automations                        |   ❌   |
+|  6  | Better local LLM support                   |   ❌   |
+|  7  | SEMrush Integration                        |   ⚠️   |
+|  8  | Topic / Content calendar view              |   ⚠️   |
+------------------------------------------------------------
 
 
 ## Connectors / APIs (Get your keys, they are free 😉)
