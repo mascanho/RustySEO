@@ -1,6 +1,5 @@
 ![Logo](assets/hero.jpg)
 
-
 # RustySEO - A cross-platform SEO toolkit
 
 RustySEO is an all-in-one, cross-platform toolkit designed for comprehensive SEO analysis. It enables users to crawl websites and gain actionable insights into their marketing and SEO strategies.
@@ -19,7 +18,7 @@ For a better experience you need to get a [Google PageSpeed Insights](https://de
 
 Got to "Connectors" > "PageSpeed Insights" and add your key, for the time being you can try one I generated (It will expire over time):
 
-``` bash
+```bash
 AIzaSyAHsCM-Cs4cCqdGi798wh8af-bSnXbVUjw
 ```
 
@@ -35,7 +34,6 @@ for Google Search Console (GSC) and Google Analytics 4 (GA4)
 This authentication will be passed to the client-side in the future.
 
 Use at your own risk, this software is new and under development.
-
 
 ## Features
 
@@ -56,22 +54,24 @@ Use at your own risk, this software is new and under development.
 
 ## Roadmap
 
-|  #  | Feature                                    | Status |
-| :-: | ------------------------------------------ | :----: |
-|  1  | Deep crawl (multiple pages concurrently)   |   ☠️   |
-|  2  | More integrations                          |   ✅   |
-|  3  | Better reporting                           |   ✅   |
-|  4  | Password protection & encryption           |   ⚠️   |
-|  5  | Client-side OAuth2 authentication          |   ⚠️   |
-|  6  | Better local LLM support                   |   ❌    |
-|  7  | SEMrush Integration                        |   ⚠️   |
-|  8  | Topic / Content calendar view              |   ⚠️   |
-|  9  | Topical / Content calendar view            |   ⚠️   |
-|  10 | Regression Analysis of GA4 data            |   ⚠️   |
-------------------------------------------------------------
+|  #  | Feature                                  | Status |
+| :-: | ---------------------------------------- | :----: |
+|  1  | Deep crawl (multiple pages concurrently) |   ☠️   |
+|  2  | More integrations                        |   ✅   |
+|  3  | Better reporting                         |   ✅   |
+|  4  | Password protection & encryption         |   ⚠️   |
+|  5  | Client-side OAuth2 authentication        |   ⚠️   |
+|  6  | Better local LLM support                 |   ❌   |
+|  7  | SEMrush Integration                      |   ⚠️   |
+|  8  | Topic / Content calendar view            |   ⚠️   |
+|  9  | Topical / Content calendar view          |   ⚠️   |
+| 10  | Regression Analysis of GA4 data          |   ⚠️   |
+| 11  | Chatbot LLM Crawl Context                |        |
 
+## | h1
 
 ## Connectors / APIs (Get your keys, they are free 😉)
+
 - [Google Search Console](https://search.google.com/search-console/about)
 - [Google Cloud Platform](https://console.cloud.google.com/welcome)
 - [GA4](https://analytics.google.com/analytics/web/)
@@ -113,6 +113,7 @@ You can find all the details in your Google Cloud console account with the excep
 ```bash
 C:\Users\[your user]\AppData\Local\rustyseo\rustyseo.exe | Tee-Object -Filepath "C:\Users\[your user]\Downloads\rusty.log"
 ```
+
 This will output all the logs into powershell. You will see a link from Google Auth. Simply open it in your browser with the same account that you generated your GSC API. Accept.
 
 8. Restart RustySEO after the token has been generated
@@ -148,6 +149,7 @@ You can find all the details in your Google Cloud console account with the excep
 ```bash
 /Applications/rustyseo.app/Contents/MacOS/rustyseo
 ```
+
 This will output all the logs into your terminal. You will see a link from Google Auth. Open it in your browser with the same account that you generated your GSC API. Accept the following prompts.
 
 8. Restart RustySEO after the token has been generated
