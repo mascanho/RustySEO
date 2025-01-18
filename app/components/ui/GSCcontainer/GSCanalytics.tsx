@@ -114,7 +114,13 @@ const GSCanalytics = () => {
         </button>
       </div>
       <div className="space-y-6 h-fit">
-        <GSCkeywordTable gscData={gscData} />
+        {gscData.length === 0 ? (
+          <div className="text-center text-gray-500">
+            No data available. Please try again in a few seconds.
+          </div>
+        ) : (
+          <GSCkeywordTable gscData={gscData} />
+        )}
       </div>
     </div>
   );

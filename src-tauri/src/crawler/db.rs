@@ -864,6 +864,9 @@ pub fn databases_start() -> Result<()> {
     create_on_page_seo_table()?;
     create_links_table()?;
     let conn = open_db_connection("keyword_tracking.db")?;
+    let conn_gsc = open_db_connection("crawl_results.db")?;
+
+    // CREATE TABLE IF NOT EXISTS
     conn.execute(
         "CREATE TABLE IF NOT EXISTS keywords (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -877,6 +880,7 @@ pub fn databases_start() -> Result<()> {
         [],
     )?;
 
+    // CREATE TABLE IF IT DOES NOT EXIST
     conn.execute(
         "CREATE TABLE IF NOT EXISTS summarized_data (
             url TEXT NOT NULL,
@@ -890,5 +894,21 @@ pub fn databases_start() -> Result<()> {
         )",
         [],
     )?;
+
+    // CREATE TABLE IF IT DOES NOT EXIST
+    conn_gsc.execute(
+        "CREATE TABLE IF NOT EXISTS gsc_data (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT,
+            url TEXT NOT NULL,
+            query TEXT NOT NULL,
+            impressions INTEGER,
+            clicks INTEGER,
+            ctr FLOAT,
+            position FLOAT
+        )",
+        [],
+    )?;
+
     Ok(())
 }
