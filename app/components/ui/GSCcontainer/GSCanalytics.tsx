@@ -110,13 +110,15 @@ const GSCanalytics = () => {
           className="hover:bg-white hover:text-black dark:hover:bg-[#1F2937] p-1 rounded-md"
           title="refresh search console data"
         >
-          <RefreshCw className="h-5 w-5 text-black dark:text-white hover:text-black" />
+          <RefreshCw className="h-5 w-5 text-black hover:rotate-180 dark:text-white hover:text-black" />
         </button>
       </div>
-      <div className="space-y-6 h-fit">
+      <div className="space-y-6 h-full flex flex-col ">
         {gscData.length === 0 ? (
-          <div className="text-center text-gray-500">
-            No data available. Please try again in a few seconds.
+          <div className="text-center text-gray-500 m-auto">
+            <p>No data found</p>
+            <p>Please make sure you have your Google Search API enabled.</p>
+            <p>Refresh the table to sync with the latest data.</p>
           </div>
         ) : (
           <GSCkeywordTable gscData={gscData} />
