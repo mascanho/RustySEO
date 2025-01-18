@@ -127,10 +127,10 @@ export default React.memo(
             console.error("Error updating data:", error);
           } finally {
             setIsUpdating(false);
-            setNeedsUpdate(false);
           }
         };
         updateData();
+        setNeedsUpdate(false);
       }
     }, [needsUpdate, isUpdating, handleKeywordsSummary, handleFetchKeywords]);
 
@@ -261,13 +261,19 @@ export default React.memo(
             keywordsSummary={keywordsSummary}
             fetchKeywordsSummary={handleKeywordsSummary}
           />
-          <KeywordTable
-            keywords={sortedKeywords}
-            removeKeyword={removeKeyword}
-            requestSort={requestSort}
-            sortConfig={sortConfig}
-            keywordIds={keywords.map((k) => k.id)}
-          />
+          {sortedKeywords.length > 0 ? (
+            <KeywordTable
+              keywords={sortedKeywords}
+              removeKeyword={removeKeyword}
+              requestSort={requestSort}
+              sortConfig={sortConfig}
+              keywordIds={keywords.map((k) => k.id)}
+            />
+          ) : (
+            <div className="text-center text-gray-500 dark:text-gray-400">
+              No keywords available. Please add some keywords to get started.
+            </div>
+          )}
         </div>
       </div>
     );

@@ -628,14 +628,14 @@ const Home: React.FC<HomeProps> = () => {
                   <SlSocialGoogle className="inline-block mr-2 mb-[2px] text-sm" />
                   Search Console
                 </Tabs.Tab>
-                <Tabs.Tab value="semrush">
+                {/* <Tabs.Tab value="semrush">
                   <SiSemrush className="inline-block mr-2 mb-[2px] text-sm" />
                   SEMRush
                 </Tabs.Tab>
                 <Tabs.Tab value="content">
                   <GrPlan className="inline-block mr-2 mb-[2px] text-sm" />
                   Content
-                </Tabs.Tab>
+                </Tabs.Tab> */}
               </Tabs.List>
             </div>
             <Tabs.Panel value="first">
@@ -840,12 +840,12 @@ const Home: React.FC<HomeProps> = () => {
             <Tabs.Panel value="gsc">
               <GSCcontainer />
             </Tabs.Panel>{" "}
-            <Tabs.Panel value="semrush">
+            {/* <Tabs.Panel value="semrush">
               <SemrushContainer />
-            </Tabs.Panel>{" "}
-            <Tabs.Panel value="content">
+            </Tabs.Panel>{" "} */}
+            {/* <Tabs.Panel value="content">
               <ContentPlannerContainer />
-            </Tabs.Panel>{" "}
+            </Tabs.Panel>{" "} */}
           </Tabs>
         </section>
       </div>

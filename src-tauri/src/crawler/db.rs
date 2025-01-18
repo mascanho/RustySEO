@@ -858,3 +858,37 @@ pub fn fetch_keywords_summarized_matched() -> Result<Vec<KeywordsSummary>> {
 
     Ok(data)
 }
+
+pub fn databases_start() -> Result<()> {
+    create_results_table()?;
+    create_on_page_seo_table()?;
+    create_links_table()?;
+    let conn = open_db_connection("keyword_tracking.db")?;
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS keywords (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            url TEXT NOT NULL,
+            query TEXT NOT NULL,
+            clicks INTEGER,
+            impressions INTEGER,
+            position REAL,
+            date TEXT
+        )",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS summarized_data (
+            url TEXT NOT NULL,
+            query TEXT NOT NULL,
+            initial_clicks INTEGER,
+            current_clicks INTEGER,
+            initial_impressions INTEGER,
+            current_impressions INTEGER,
+            initial_position REAL,
+            current_position REAL
+        )",
+        [],
+    )?;
+    Ok(())
+}

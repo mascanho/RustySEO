@@ -117,6 +117,9 @@ async fn main() {
     let uuid = globals::actions::uuid_creation_check();
     println!("UUID: {}", uuid);
 
+    // initialise the dbs
+    let _start_db = crawler::db::databases_start();
+
     // Start the server
     // let _start_server = server::rusty_server().await;
 
