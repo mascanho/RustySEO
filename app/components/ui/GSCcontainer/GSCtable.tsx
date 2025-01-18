@@ -50,7 +50,7 @@ export default function GSCkeywordTable({ gscData }: KeywordTableProps) {
       accessorKey: "query",
       header: "Keyword",
       cell: ({ row }) => (
-        <span className="text-blue-600 font-semibold truncate max-w-[150px] block">
+        <span className="text-blue-600 font-semibold truncate max-w-[350px] block">
           {row.original.query}
         </span>
       ),

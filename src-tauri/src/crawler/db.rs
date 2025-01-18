@@ -858,3 +858,57 @@ pub fn fetch_keywords_summarized_matched() -> Result<Vec<KeywordsSummary>> {
 
     Ok(data)
 }
+
+pub fn databases_start() -> Result<()> {
+    create_results_table()?;
+    create_on_page_seo_table()?;
+    create_links_table()?;
+    let conn = open_db_connection("keyword_tracking.db")?;
+    let conn_gsc = open_db_connection("crawl_results.db")?;
+
+    // CREATE TABLE IF NOT EXISTS
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS keywords (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            url TEXT NOT NULL,
+            query TEXT NOT NULL,
+            clicks INTEGER,
+            impressions INTEGER,
+            position REAL,
+            date TEXT
+        )",
+        [],
+    )?;
+
+    // CREATE TABLE IF IT DOES NOT EXIST
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS summarized_data (
+            url TEXT NOT NULL,
+            query TEXT NOT NULL,
+            initial_clicks INTEGER,
+            current_clicks INTEGER,
+            initial_impressions INTEGER,
+            current_impressions INTEGER,
+            initial_position REAL,
+            current_position REAL
+        )",
+        [],
+    )?;
+
+    // CREATE TABLE IF IT DOES NOT EXIST
+    conn_gsc.execute(
+        "CREATE TABLE IF NOT EXISTS gsc_data (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT,
+            url TEXT NOT NULL,
+            query TEXT NOT NULL,
+            impressions INTEGER,
+            clicks INTEGER,
+            ctr FLOAT,
+            position FLOAT
+        )",
+        [],
+    )?;
+
+    Ok(())
+}
