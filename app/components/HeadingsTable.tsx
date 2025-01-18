@@ -58,7 +58,7 @@ const HeadingsTable = ({
         // If no stored response exists, fetch new headings
         if (!storedResponse) {
           const uuid = uuidv4();
-          localStorage.setItem(headingsKey, uuid);
+          // localStorage.setItem(headingsKey, uuid);
 
           const response: any = await invoke("get_headings_command", {
             aiHeadings,
@@ -66,7 +66,7 @@ const HeadingsTable = ({
 
           if (response) {
             setViewAIHeadings(response);
-            localStorage.setItem(`${uuid}_response`, JSON.stringify(response));
+            // localStorage.setItem(`${uuid}_response`, JSON.stringify(response));
           }
         } else {
           // Use stored response

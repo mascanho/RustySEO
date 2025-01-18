@@ -19,7 +19,10 @@ interface Message {
 
 const AIcontainer = () => {
   const { handleInputChange } = useChat();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const savedMessages = localStorage.getItem("rustyChat");
+    return savedMessages ? JSON.parse(savedMessages) : [];
+  });
   const [input, setInput] = useState<string>("");
   const ollamaStatus = useOllamaStore();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -44,7 +47,7 @@ const AIcontainer = () => {
     if (model) {
       setSelectedModel(model);
     }
-  }, []);
+  }, [setSelectedModel]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -86,6 +89,12 @@ const AIcontainer = () => {
         console.error("Error copying text to clipboard:", error);
       });
   };
+
+  // set the messages in user session storage
+
+  useEffect(() => {
+    localStorage.setItem("rustyChat", JSON.stringify(messages));
+  }, [messages]);
 
   const renderMessages = () => {
     switch (selectedModel) {
