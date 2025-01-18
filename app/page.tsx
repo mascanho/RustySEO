@@ -146,7 +146,7 @@ const Home: React.FC<HomeProps> = () => {
   // Panes Store
   const { Visible } = useStore();
 
-  // Get the status from localstorage
+  // Get the status from localstorage.
 
   type DBDataCrawl = {
     url: string | null;
