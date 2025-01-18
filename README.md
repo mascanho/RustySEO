@@ -15,7 +15,7 @@ As long as you don't spam (many requests per second) you should be ok to use Rus
 
 # TL;DR
 
-For a better experience you need to get a [Google PageSpeed Insights](https://developers.google.com/speed/docs/insights/v5/get-started) API KEY. 
+For a better experience you need to get a [Google PageSpeed Insights](https://developers.google.com/speed/docs/insights/v5/get-started) API KEY.
 
 Got to "Connectors" > "PageSpeed Insights" and add your key, for the time being you can try one I generated (It will expire over time):
 
@@ -29,7 +29,7 @@ As of today, the smaller local LLMs are not working properly and are not recomme
 
 These LLMs might get deprecated due to their lack of uniform performance across different models.
 
-Authentication currently takes place server side, as such it is slightly more cumbersome when integrating with Google OAuth 2.0. This is particularly true 
+Authentication currently takes place server side, as such it is slightly more cumbersome when integrating with Google OAuth 2.0. This is particularly true
 for Google Search Console (GSC) and Google Analytics 4 (GA4)
 
 This authentication will be passed to the client-side in the future.
@@ -63,9 +63,11 @@ Use at your own risk, this software is new and under development.
 |  3  | Better reporting                           |   ✅   |
 |  4  | Password protection & encryption           |   ⚠️   |
 |  5  | Client-side OAuth2 authentication          |   ⚠️   |
-|  6  | Better local LLM support                   |   ❌   |
+|  6  | Better local LLM support                   |   ❌    |
 |  7  | SEMrush Integration                        |   ⚠️   |
 |  8  | Topic / Content calendar view              |   ⚠️   |
+|  9  | Topical / Content calendar view            |   ⚠️   |
+|  10 | Regression Analysis of GA4 data            |   ⚠️   |
 ------------------------------------------------------------
 
 
@@ -88,7 +90,7 @@ Use at your own risk, this software is new and under development.
 
 To setup Google Search Console, follow these steps:
 
-1. You need to set up [Google Cloud Console](https://console.cloud.google.com/) with Search Console API enabled and Service Account active. Make sure you have full ownership of your GSC property. 
+1. You need to set up [Google Cloud Console](https://console.cloud.google.com/) with Search Console API enabled and Service Account active. Make sure you have full ownership of your GSC property.
 
 2. Launch RustySEO;
 
@@ -109,13 +111,13 @@ You can find all the details in your Google Cloud console account with the excep
 7. Since windows does not allow to output logs into the terminal by default, we just need to force it so that we can grab the link generated on the server to generate our token. Google keeps changing this but the goal is to have it done client-side (once I have the time). Launch RustySEO from Windows Powershell with the following command:
 
 ```bash
-C:\Users\[your user]\AppData\Local\rustyseo\rustyseo.exe | Tee-Object -Filepath "C:\Users\[your user]\Downloads\rusty.log" 
+C:\Users\[your user]\AppData\Local\rustyseo\rustyseo.exe | Tee-Object -Filepath "C:\Users\[your user]\Downloads\rusty.log"
 ```
 This will output all the logs into powershell. You will see a link from Google Auth. Simply open it in your browser with the same account that you generated your GSC API. Accept.
 
 8. Restart RustySEO after the token has been generated
 
-9. You should now see your GSC data inside RustySEO 
+9. You should now see your GSC data inside RustySEO
 
 ## Mac OSX
 
@@ -123,7 +125,7 @@ After installation, you can start using My Software. Here are some basic instruc
 
 To setup Google Search Console, follow these steps:
 
-1. You need to set up [Google Cloud Console](https://console.cloud.google.com/) with Search Console API enabled and Service Account active. Make sure you have full ownership of your GSC property. 
+1. You need to set up [Google Cloud Console](https://console.cloud.google.com/) with Search Console API enabled and Service Account active. Make sure you have full ownership of your GSC property.
 
 2. Launch RustySEO;
 
@@ -150,7 +152,7 @@ This will output all the logs into your terminal. You will see a link from Googl
 
 8. Restart RustySEO after the token has been generated
 
-9. You should now see your GSC data inside RustySEO 
+9. You should now see your GSC data inside RustySEO
 
 ## Linux
 
