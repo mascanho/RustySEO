@@ -21,6 +21,7 @@ interface CrawlResult {
 const InputZone = () => {
   const { loaders, showLoader, hideLoader } = useLoaderStore();
   const [url, setUrl] = useState("");
+  const [page, setPage] = useState("");
   const { setCrawlData } = useGlobalCrawlStore();
 
   const handleDomainCrawl = async () => {
@@ -69,6 +70,16 @@ const InputZone = () => {
               className="w-full h-7 text-xs pl-8 rounded-l-md bg-slate-100 dark:bg-blue-900/5 dark:bg-brand-darker dark:border dark:border-white/20 dark:text-white placeholder:text-gray-500 border rounded-r-md lowercase"
               style={{ outline: "none", boxShadow: "none" }}
             />
+            <input
+              type="page"
+              required
+              placeholder="page_name"
+              value={page}
+              onChange={handleInputChange}
+              onKeyPress={handleKeyPress}
+              className="w-full h-7 text-xs pl-8 rounded-l-md bg-slate-100 dark:bg-blue-900/5 dark:bg-brand-darker dark:border dark:border-white/20 dark:text-white placeholder:text-gray-500 border rounded-r-md lowercase"
+              style={{ outline: "none", boxShadow: "none" }}
+            />{" "}
             <IoIosClose
               onClick={() => setUrl("")}
               className={`absolute cursor-pointer right-[5.5rem] z-[10000] bottom-1.5 text-red-500 inline-block ${url ? "block" : "hidden"}`}

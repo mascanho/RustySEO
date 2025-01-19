@@ -24,6 +24,7 @@ interface FileInfo {
 
 export default function TopicModeling() {
   const [urls, setUrls] = useState<string[]>([]);
+  const [pages, setPages] = useState<string[]>([]);
   const [stopWords, setStopWords] = useState<string[]>([]);
   const [results, setResults] = useState<{
     keywords: string[];
@@ -39,6 +40,7 @@ export default function TopicModeling() {
   const handleModelingClick = async () => {
     const modelingResults = await performTopicModeling(
       urls,
+      pages,
       stopWords,
       selectorType,
       selectors,
@@ -47,18 +49,17 @@ export default function TopicModeling() {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Topic Modeling Tool</h1>
+    <div className="container mx-auto px-4">
+      <h1 className="text-2xl font-bold mb-1">Topic Modeling Tool</h1>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <section className="lg:col-span-2 rounded-md bg-white h-full ">
-          <CardHeader>
-            <CardTitle>Input Form</CardTitle>
-          </CardHeader>
+        <section className="lg:col-span-2 rounded-md bg-white h-full p-4 ">
           <CardContent className="space-y-6">
             <URLInput
               urls={urls}
               setUrls={setUrls}
               setFileInfo={setUrlFileInfo}
+              pages={pages}
+              setPages={setPages}
             />
             <StopWordsInput
               stopWords={stopWords}
@@ -103,6 +104,7 @@ export default function TopicModeling() {
         <div className="lg:col-span-1">
           <SummarySidebar
             urls={urls}
+            pages={pages}
             stopWords={stopWords}
             selectorType={selectorType}
             selectors={selectors}

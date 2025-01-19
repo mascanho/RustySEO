@@ -1,5 +1,6 @@
 export async function performTopicModeling(
   urls: string[],
+  pages: string[],
   stopWords: string[],
   selectorType: string,
   selectors: string[],

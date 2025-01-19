@@ -10,19 +10,31 @@ interface URLInputProps {
   setFileInfo: React.Dispatch<
     React.SetStateAction<{ name: string; type: string } | null>
   >;
+  pages: string[];
+  setPages: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 export default function URLInput({
   urls,
   setUrls,
   setFileInfo,
+  pages,
+  setPages,
 }: URLInputProps) {
   const [newUrl, setNewUrl] = useState("");
+  const [newPage, setNewPages] = useState("");
 
   const handleAddUrl = () => {
     if (newUrl && !urls.includes(newUrl)) {
       setUrls([...urls, newUrl]);
       setNewUrl("");
+    }
+  };
+
+  const handleAddPage = () => {
+    if (newPage && !pages.includes(newUrl)) {
+      setPages([...pages, newPage]);
+      setNewPages("");
     }
   };
 
@@ -34,6 +46,7 @@ export default function URLInput({
         const content = e.target?.result as string;
         const newUrls = content.split("\n").filter((url) => url.trim() !== "");
         setUrls([...new Set([...urls, ...newUrls])]);
+        setPages([...new Set([...pages, ...newUrls])]);
         setFileInfo({ name: file.name, type: file.type });
       };
       reader.readAsText(file);
@@ -52,6 +65,14 @@ export default function URLInput({
           onChange={(e) => setNewUrl(e.target.value)}
         />
         <Button onClick={handleAddUrl}>Add</Button>
+        <Input
+          id="page-input"
+          type="page"
+          placeholder="Enter pages"
+          value={newPage}
+          onChange={(e) => setNewPages(e.target.value)}
+        />
+        <Button onClick={handleAddPage}>Add</Button>
       </div>
       <div>
         <Input type="file" accept=".txt" onChange={handleFileUpload} />

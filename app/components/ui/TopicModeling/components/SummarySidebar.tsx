@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 
 interface SummarySidebarProps {
   urls: string[];
+  pages: string[];
   stopWords: string[];
   selectorType: string;
   selectors: string[];
@@ -12,6 +13,7 @@ interface SummarySidebarProps {
 
 export default function SummarySidebar({
   urls,
+  pages,
   stopWords,
   selectorType,
   selectors,
@@ -34,6 +36,15 @@ export default function SummarySidebar({
                 </Badge>
               ))}
           </div>
+          <h3 className="mt-2 font-semibold mb-2">Pages</h3>
+          <div className="flex flex-wrap gap-2">
+            {pages &&
+              pages.map((page, index) => (
+                <Badge key={index} variant="secondary" className="text-xs">
+                  {page}
+                </Badge>
+              ))}
+          </div>{" "}
           {urlFileInfo && (
             <p className="text-sm mt-2">
               Uploaded file: {urlFileInfo.name} ({urlFileInfo.type})
