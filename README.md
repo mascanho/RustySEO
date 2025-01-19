@@ -68,7 +68,6 @@ Use at your own risk, this software is new and under development.
 | 10  | Regression Analysis of GA4 data          |   ⚠️   |
 | 11  | Chatbot LLM Crawl Context                |   ⚠️   |
 
-## | h1
 
 ## Connectors / APIs (Get your keys, they are free 😉)
 
