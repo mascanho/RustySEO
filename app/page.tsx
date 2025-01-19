@@ -638,10 +638,10 @@ const Home: React.FC<HomeProps> = () => {
                   <GrPlan className="inline-block mr-2 mb-[2px] text-sm" />
                   Content
                 </Tabs.Tab> */}
-                <Tabs.Tab value="topicModeling">
+                {/* <Tabs.Tab value="topicModeling">
                   <AiOutlineCluster className="inline-block mr-2 mb-[2px] text-sm" />
                   Topic Modeling
-                </Tabs.Tab>
+                </Tabs.Tab> */}
               </Tabs.List>
             </div>
             <Tabs.Panel value="first">
