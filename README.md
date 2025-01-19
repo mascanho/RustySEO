@@ -64,9 +64,8 @@ Use at your own risk, this software is new and under development.
 |  6  | Better local LLM support                 |   ❌   |
 |  7  | SEMrush Integration                      |   ⚠️   |
 |  8  | Topic / Content calendar view            |   ⚠️   |
-|  9  | Topical / Content calendar view          |   ⚠️   |
-| 10  | Regression Analysis of GA4 data          |   ⚠️   |
-| 11  | Topic Modeling                           |   ⚠️   |
+|  9  | Regression Analysis of GA4 data          |   ⚠️   |
+| 10  | Topic Modeling                           |   ⚠️   |
 | 11  | Chatbot LLM Crawl Context                |   ⚠️   |
 
 
