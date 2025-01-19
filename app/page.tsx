@@ -1,6 +1,7 @@
 // @ts-nocheck
 "use client";
 export const dynamic = "force-static";
+import { AiOutlineCluster } from "react-icons/ai";
 import Link from "next/link";
 import React, { useCallback, useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
@@ -68,7 +69,7 @@ import { GoGoal, GoTable } from "react-icons/go";
 
 import { CgPerformance } from "react-icons/cg";
 import { IoIosClose } from "react-icons/io";
-import { FaChartBar } from "react-icons/fa6";
+import { FaChartBar, FaHashtag } from "react-icons/fa6";
 
 import Analytics from "./components/ui/Analytics/Analytics";
 import LongTasksTable from "./components/ui/LongTasksTable";
@@ -86,6 +87,7 @@ import SemrushContainer from "./components/ui/SemrushContainer/SemrushContainer"
 import { SlSocialGoogle } from "react-icons/sl";
 import GSCcontainer from "./components/ui/GSCcontainer/GSCcontainer";
 import ContentPlannerContainer from "./components/ui/ContentPlanner/ContentPlannerContainer";
+import TopicModelingContainer from "./components/ui/TopicModeling/TopicModelingContainer";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -636,6 +638,10 @@ const Home: React.FC<HomeProps> = () => {
                   <GrPlan className="inline-block mr-2 mb-[2px] text-sm" />
                   Content
                 </Tabs.Tab> */}
+                <Tabs.Tab value="topicModeling">
+                  <AiOutlineCluster className="inline-block mr-2 mb-[2px] text-sm" />
+                  Topic Modeling
+                </Tabs.Tab>
               </Tabs.List>
             </div>
             <Tabs.Panel value="first">
@@ -846,6 +852,9 @@ const Home: React.FC<HomeProps> = () => {
             {/* <Tabs.Panel value="content">
               <ContentPlannerContainer />
             </Tabs.Panel>{" "} */}
+            <Tabs.Panel value="topicModeling">
+              <TopicModelingContainer />
+            </Tabs.Panel>{" "}
           </Tabs>
         </section>
       </div>

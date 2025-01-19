@@ -464,6 +464,10 @@ const TopMenuBar = () => {
                 <FiTool className="mr-2" />
                 Headings SERP
               </MenubarItem>{" "}
+              <MenubarItem onClick={() => router.push("/topicModeling/")}>
+                <FiTool className="mr-2" />
+                Topic Moldeling
+              </MenubarItem>{" "}
             </MenubarContent>
           </MenubarMenu>
 
