@@ -66,7 +66,7 @@ Use at your own risk, this software is new and under development.
 |  8  | Topic / Content calendar view            |   ⚠️   |
 |  9  | Topical / Content calendar view          |   ⚠️   |
 | 10  | Regression Analysis of GA4 data          |   ⚠️   |
-| 11  | Chatbot LLM Crawl Context                |        |
+| 11  | Chatbot LLM Crawl Context                |   ⚠️   |
 
 ## | h1
 
