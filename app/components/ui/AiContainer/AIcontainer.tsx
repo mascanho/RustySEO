@@ -26,10 +26,46 @@ const AIcontainer = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { selectedModel, setSelectedModel } = useModelStore();
   const bubbleRef = useRef<HTMLDivElement>(null);
+  const LOCAL_STORAGE_KEY = "chat_messages";
+  const [hasMounted, setHasMounted] = useState(false);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  // Load messages from local storage on component mount
+  useEffect(() => {
+    const loadMessages = () => {
+      const storedMessages = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (storedMessages) {
+        try {
+          const parsedMessages = JSON.parse(storedMessages);
+          if (Array.isArray(parsedMessages)) {
+            setMessages(parsedMessages);
+          } else {
+            console.error("Stored messages is not an array", parsedMessages);
+          }
+        } catch (e) {
+          console.error("Failed to parse stored messages", e);
+        }
+      }
+    };
+
+    loadMessages();
+    setHasMounted(true);
+  }, []);
+
+  // Clear chat history function
+  const clearChatHistory = () => {
+    try {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      setMessages([]);
+      toast("Chat history cleared");
+    } catch (e) {
+      console.error("Failed to clear chat history", e);
+      toast.error("Failed to clear chat history");
     }
   };
 
@@ -44,7 +80,7 @@ const AIcontainer = () => {
     if (model) {
       setSelectedModel(model);
     }
-  }, []);
+  }, [setSelectedModel]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -56,7 +92,8 @@ const AIcontainer = () => {
       content: input,
     };
 
-    setMessages((prevMessages) => [...prevMessages, userMessage]);
+    let updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInput("");
 
     try {
@@ -70,9 +107,19 @@ const AIcontainer = () => {
         content: response as string,
       };
 
-      setMessages((prevMessages) => [...prevMessages, assistantMessage]);
+      updatedMessages = [...updatedMessages, assistantMessage];
+      setMessages(updatedMessages);
+      try {
+        localStorage.setItem(
+          LOCAL_STORAGE_KEY,
+          JSON.stringify(updatedMessages),
+        );
+      } catch (e) {
+        console.error("Failed to save messages to local storage", e);
+      }
     } catch (error) {
       console.error("Error from Ollama:", error);
+      toast.error("Failed to get response from AI");
     }
   };
 
@@ -84,6 +131,7 @@ const AIcontainer = () => {
       })
       .catch((error) => {
         console.error("Error copying text to clipboard:", error);
+        toast.error("Failed to copy to clipboard");
       });
   };
 
@@ -93,6 +141,16 @@ const AIcontainer = () => {
       case "gemini":
         return (
           <>
+            <div className="flex justify-end -mb-4">
+              {messages.length > 0 && (
+                <button
+                  onClick={clearChatHistory}
+                  className="px-2 py-1 -mt-2 text-xs  text-gray-400 rounded "
+                >
+                  Clear chat history
+                </button>
+              )}
+            </div>
             {messages.map((m) => (
               <div
                 key={m.id}
@@ -161,7 +219,6 @@ const AIcontainer = () => {
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-
                 handleSubmit(e as React.FormEvent<HTMLFormElement>);
               }
             }}
