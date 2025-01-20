@@ -90,7 +90,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
                 General
               </Tabs.Tab>
               <Tabs.Tab value="first">Content</Tabs.Tab>
-              <Tabs.Tab value="topics">Topics</Tabs.Tab>
+              <Tabs.Tab value="suggestions">Suggestions</Tabs.Tab>
               <Tabs.Tab value="third">Queries</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel
@@ -116,7 +116,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
               <RankingInfo keywords={keywords} pageSpeed={pageSpeed} />
             </Tabs.Panel>
 
-            <Tabs.Panel value="topics" className="h-full w-full">
+            <Tabs.Panel value="suggestions" className="h-full w-full">
               <Topics bodyElements={bodyElements} />
             </Tabs.Panel>
 

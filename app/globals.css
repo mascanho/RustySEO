@@ -125,11 +125,15 @@ pre:not([class*="robots"]) {
 .mantine-Drawer-root,
 .mantine-Drawer-inner,
 .mantine-Drawer-content {
-  margin: 0.1em 0 36px 0.1rem;
+  margin: 2.5rem 0 36px 0.1rem;
   overflow: hidden !important ;
   padding: 0 !important;
   z-index: 9999999 !important;
-  height: calc(100vh - 36px) !important;
+  /* height: calc(90vh - 36px) !important; */
+}
+
+.mantine-Drawer-content {
+  @apply h-[calc(100%-45px)] !important;
 }
 
 .tabs-list {
