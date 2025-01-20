@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { LiaListAlt, LiaTasksSolid } from "react-icons/lia";
 import { CgWebsite } from "react-icons/cg";
 import { FaRobot } from "react-icons/fa6";
@@ -59,6 +59,8 @@ const Footer = () => {
     useDisclosure(false);
   const [hasOllama, setHasOllama] = useState("");
   const pathname = usePathname();
+  const [openedAiDrawer, { open: openAiDrawer, close: closeAiDrawer }] =
+    useDisclosure(false);
 
   const shallow = pathname === "/";
   const deep = pathname === "/global";
@@ -119,6 +121,35 @@ const Footer = () => {
 
   const iconClasses =
     "cursor-pointer active:scale-95 transition-all ease-linear duration-75";
+
+  const handleKeyDown = useCallback(
+    (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === "l") {
+        event.preventDefault();
+        openedDrawer ? closeDrawer() : openDrawer();
+      }
+      if (event.ctrlKey && event.key === "Enter") {
+        event.preventDefault();
+        openedAiDrawer ? closeAiDrawer() : openAiDrawer();
+      }
+    },
+    [
+      openDrawer,
+      closeDrawer,
+      openedDrawer,
+      openAiDrawer,
+      closeAiDrawer,
+      openedAiDrawer,
+    ],
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleKeyDown]);
 
   return (
     <>
@@ -196,7 +227,12 @@ const Footer = () => {
                 </div>
               </div>
 
-              <Drawer>
+              <Drawer
+                open={openedAiDrawer}
+                onOpenChange={(open) =>
+                  open ? openAiDrawer() : closeAiDrawer()
+                }
+              >
                 <DrawerTrigger className="flex items-center space-x-1">
                   <div className="relative group hover:delay-1000">
                     <FaRobot className={`pb-[2px] text-base ${iconClasses}`} />
@@ -209,9 +245,6 @@ const Footer = () => {
                   <DrawerHeader>
                     <div className="flex items-center space-x-2">
                       <FaRobot
-                        onClick={() =>
-                          openedDrawer ? closeDrawer() : openDrawer()
-                        }
                         className={`text-2xl text-brand-highlight ${iconClasses}`}
                       />
                       <span className="text-xl font-bold text-brand-highlight dark:text-white/40">
