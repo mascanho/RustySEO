@@ -132,6 +132,14 @@ const Footer = () => {
         event.preventDefault();
         openedAiDrawer ? closeAiDrawer() : openAiDrawer();
       }
+      if (event.ctrlKey && event.key === "h") {
+        event.preventDefault();
+        if (visibility.sidebar) {
+          hideSidebar();
+        } else {
+          showSidebar();
+        }
+      }
     },
     [
       openDrawer,
@@ -140,6 +148,9 @@ const Footer = () => {
       openAiDrawer,
       closeAiDrawer,
       openedAiDrawer,
+      visibility.sidebar,
+      hideSidebar,
+      showSidebar,
     ],
   );
 

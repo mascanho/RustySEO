@@ -51,14 +51,14 @@ const HeadingsTable = ({
     const fetchAiHeadings = async () => {
       try {
         const headingsKey = aiHeadings;
-        const existingUuid = localStorage.getItem(headingsKey);
+        const existingUuid = sessionStorage.getItem(headingsKey);
         const storedResponse =
-          existingUuid && localStorage.getItem(`${existingUuid}_response`);
+          existingUuid && sessionStorage.getItem(`${existingUuid}_response`);
 
         // If no stored response exists, fetch new headings
         if (!storedResponse) {
           const uuid = uuidv4();
-          // localStorage.setItem(headingsKey, uuid);
+          sessionStorage.setItem(headingsKey, uuid);
 
           const response: any = await invoke("get_headings_command", {
             aiHeadings,
@@ -66,7 +66,10 @@ const HeadingsTable = ({
 
           if (response) {
             setViewAIHeadings(response);
-            // localStorage.setItem(`${uuid}_response`, JSON.stringify(response));
+            sessionStorage.setItem(
+              `${uuid}_response`,
+              JSON.stringify(response),
+            );
           }
         } else {
           // Use stored response
@@ -80,7 +83,7 @@ const HeadingsTable = ({
     fetchAiHeadings();
 
     return () => {};
-  }, [headings]);
+  }, [headings, aiHeadings]);
 
   const findDuplicates = (array: string[]) => {
     const count: Record<string, number> = {};
