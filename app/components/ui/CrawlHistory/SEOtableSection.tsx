@@ -251,7 +251,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
             >
               Word Cloud
             </DropdownMenuItem>{" "}
-            <DropdownMenuSeparator className="dark:bg-brand-dark" />
+            <DropdownMenuSeparator className="dark:bg-brand-dark bg-brand-dark/20" />
             <DropdownMenuItem
               className="cursor-pointer hover:bg-gray-100 hover:text-white dark:hover:bg-gray-700 dark:hover:text-white text-xs"
               onClick={refreshTable}
@@ -287,7 +287,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
       </div>
 
       <Dialog open={openWordCloud} onOpenChange={setOpenWordCloud}>
-        <DialogContent className="sm:max-w-[800px] bg-white dark:bg-brand-darker">
+        <DialogContent className="sm:max-w-[800px] bg-white dark:bg-brand-darker dark:boverflow-hidden ">
           <DialogHeader>
             <DialogTitle>Word Cloud</DialogTitle>
             <DialogDescription>
