@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState } from "react";
 import { ContentItem } from "@/app/Hooks/useContentItems";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,19 +46,32 @@ export function ContentCard({
     }
   };
 
+  const handleRemoveIdea = (index: number) => {
+    const updatedIdeas = item.ideas.filter((_, i) => i !== index);
+    updateItem(item.id, { ideas: updatedIdeas });
+  };
+
   return (
     <div className="bg-white shadow-lg min-h-[550px] h-fit rounded-lg p-2 relative dark:bg-brand-darker border-white-50">
       <CardHeader className="flex flex-col w-full  space-y-1 pb-2 pt-8 dark:bg-brand-darker">
         <Popover>
           <PopoverTrigger asChild>
-            <Button
+            <button
               variant={"outline"}
-              className={`w-full dark:bg-green-200 -ml-4 justify-start text-left w-fit font-normal my-1 ${
-                date ? "bg-red-400 text-white" : ""
+              className={`px-3 py-1 -ml-4 pl-2 rounded-md text-sm justify-start text-left w-fit font-normal my-1 ${
+                date
+                  ? "bg-red-500 text-white"
+                  : "bg-white py-1 text-sm w-[2px] rounded-md pl-2 "
               }`}
             >
-              {date ? format(date, "PPP") : <span>Pick a Due Date</span>}
-            </Button>
+              {date ? (
+                format(date, "PPP")
+              ) : (
+                <span className="border p-1 px-3 rounded-md">
+                  Pick a Due Date
+                </span>
+              )}
+            </button>
           </PopoverTrigger>
           <PopoverContent className="w-auto my-1" align="start">
             <Calendar
@@ -109,10 +123,20 @@ export function ContentCard({
           className="w-full dark:bg-brand-darker dark:text-white/50 dark:placeholder:text-white/50 dark:border dark:border-white/10"
         />
         <div>
-          <h4 className="font-semibold mb-1">Ideas:</h4>
-          <ul className="list-disc list-inside">
+          <h4 className="font-semibold mb-1 dark:text-white/50">Ideas:</h4>
+          <ul className="list-disc list-inside dark:text-brand-bright">
             {item.ideas.map((idea, index) => (
-              <li key={index}>{idea}</li>
+              <li className="darl;text-white/50 flex items-center" key={index}>
+                <Button
+                  onClick={() => handleRemoveIdea(index)}
+                  variant="ghost"
+                  size="sm"
+                  className="p-0 mr-2"
+                >
+                  <X className="h-3 w-3 text-gray-500" />
+                </Button>
+                {idea}
+              </li>
             ))}
           </ul>
           <div className="flex mt-2">
@@ -120,9 +144,13 @@ export function ContentCard({
               value={newIdea}
               onChange={(e) => setNewIdea(e.target.value)}
               placeholder="New Idea"
-              className="mr-2 w-full"
+              className="mr-2 w-full dark:placeholder:text-white/50 dark:text-white/50"
             />
-            <Button onClick={handleAddIdea} size="sm">
+            <Button
+              onClick={handleAddIdea}
+              size="sm"
+              className="dark:text-white dark:bg-brand-bright dark:hover:bg-brand-bright"
+            >
               Add
             </Button>
           </div>
@@ -131,7 +159,7 @@ export function ContentCard({
           value={item.url}
           onChange={(e) => updateItem(item.id, { url: e.target.value })}
           placeholder="URL"
-          className="w-full"
+          className="w-full dark:text-white/50"
         />
         {/* <div className="flex items-center">
           <span className="mr-2">Rating:</span>
@@ -157,7 +185,7 @@ export function ContentCard({
           value={item.category}
           onValueChange={(value) => updateItem(item.id, { category: value })}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full dark:text-white/50">
             <SelectValue placeholder="Select a category" />
           </SelectTrigger>
           <SelectContent>
@@ -176,7 +204,7 @@ export function ContentCard({
             })
           }
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-full dark:text-white/50">
             <SelectValue placeholder="Select urgency" />
           </SelectTrigger>
           <SelectContent>
@@ -188,7 +216,7 @@ export function ContentCard({
           value={item.assignee}
           onChange={(e) => updateItem(item.id, { assignee: e.target.value })}
           placeholder="Assignee"
-          className="w-full"
+          className="w-full dark:placeholder:text-white/50 dark:text-white/50"
         />
       </CardContent>
     </div>

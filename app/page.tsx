@@ -165,7 +165,7 @@ const Home: React.FC<HomeProps> = () => {
   const handleChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setUrl(event.target.value);
-      sessionStorage.setItem("url", event.target.value);
+      sessionStorage?.setItem("url", event.target.value);
     },
     [],
   );
@@ -194,7 +194,7 @@ const Home: React.FC<HomeProps> = () => {
 
     // set the url beng searched in the session storage
     sessionStorage.setItem("url", url || "No URL");
-    const urlStored = sessionStorage.getItem("url");
+    const urlStored = sessionStorage?.getItem("url");
     setSessionUrl(urlStored);
     setUrl(urlStored);
     window.dispatchEvent(new Event("sessionStorageUpdated"));
@@ -298,7 +298,7 @@ const Home: React.FC<HomeProps> = () => {
   // GET THE THEME AND SET IT
   useEffect(() => {
     // On component mount, check local storage for dark mode preference
-    const darkMode = localStorage.getItem("dark-mode") === "true";
+    const darkMode = localStorage?.getItem("dark-mode") === "true";
     setIsDarkMode(darkMode);
 
     // Add or remove the dark class on the root element

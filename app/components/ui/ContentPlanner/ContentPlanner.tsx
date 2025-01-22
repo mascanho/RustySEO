@@ -31,7 +31,7 @@ export function ContentPlanner() {
             <div
               {...provided.droppableProps}
               ref={provided.innerRef}
-              className="grid xl:gap-6 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 h-full"
+              className="grid xl:gap-6 gap-6  md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 h-full  items-start"
             >
               {items.map((item, index) => (
                 <Draggable key={item.id} draggableId={item.id} index={index}>

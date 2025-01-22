@@ -245,12 +245,12 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
             <DropdownMenuLabel className="text-xs">
               Table options
             </DropdownMenuLabel>
-            <DropdownMenuItem
+            {/* <DropdownMenuItem
               className="cursor-pointer hover:bg-gray-100 hover:text-white dark:hover:bg-gray-700 dark:hover:text-white text-xs"
               onClick={handleOpenWordCloud}
             >
               Word Cloud
-            </DropdownMenuItem>{" "}
+            </DropdownMenuItem>{" "} */}
             <DropdownMenuSeparator className="dark:bg-brand-dark" />
             <DropdownMenuItem
               className="cursor-pointer hover:bg-gray-100 hover:text-white dark:hover:bg-gray-700 dark:hover:text-white text-xs"

@@ -99,7 +99,7 @@ const AIcontainer = () => {
   // Load messages from local storage on component mount
   useEffect(() => {
     const loadMessages = () => {
-      const storedMessages = localStorage.getItem(LOCAL_STORAGE_KEY);
+      const storedMessages = localStorage?.getItem(LOCAL_STORAGE_KEY);
       if (storedMessages) {
         try {
           const parsedMessages = JSON.parse(storedMessages);
@@ -124,7 +124,7 @@ const AIcontainer = () => {
   // Clear chat history function
   const clearChatHistory = () => {
     try {
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      localStorage?.removeItem(LOCAL_STORAGE_KEY);
       setMessages([]);
       toast("Chat history cleared");
     } catch (e) {
@@ -140,7 +140,7 @@ const AIcontainer = () => {
 
   // CHECK THE AI-PROVIDER
   useEffect(() => {
-    const model = localStorage.getItem("AI-provider");
+    const model = localStorage?.getItem("AI-provider");
     if (model) {
       setSelectedModel(model);
     }
@@ -233,7 +233,7 @@ const AIcontainer = () => {
       updatedMessages = [...updatedMessages, assistantMessage];
       setMessages(updatedMessages);
       try {
-        localStorage.setItem(
+        localStorage?.setItem(
           LOCAL_STORAGE_KEY,
           JSON.stringify(updatedMessages),
         );

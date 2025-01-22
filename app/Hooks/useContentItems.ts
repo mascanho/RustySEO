@@ -19,12 +19,17 @@ const LOCAL_STORAGE_KEY = "contentItems";
 
 export function useContentItems() {
   const [items, setItems] = useState<ContentItem[]>(() => {
-    const storedItems = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (typeof window === "undefined") {
+      return [];
+    }
+    const storedItems = localStorage?.getItem(LOCAL_STORAGE_KEY);
     return storedItems ? JSON.parse(storedItems) : [];
   });
 
   useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(items));
+    if (typeof window !== "undefined") {
+      localStorage?.setItem(LOCAL_STORAGE_KEY, JSON.stringify(items));
+    }
   }, [items]);
 
   const addItem = () => {

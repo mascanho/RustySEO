@@ -66,10 +66,10 @@ const Footer = () => {
   const deep = pathname === "/global";
 
   const updateSessionState = () => {
-    const storedUrl = sessionStorage.getItem("url") || "";
+    const storedUrl = sessionStorage?.getItem("url") || "";
     setUrl(storedUrl);
 
-    const storedLoading = sessionStorage.getItem("loading");
+    const storedLoading = sessionStorage?.getItem("loading");
     setLoading(storedLoading === "true");
   };
 
@@ -96,7 +96,7 @@ const Footer = () => {
   const updateTasks = () => {
     try {
       const storedTasks = JSON.parse(
-        localStorage.getItem("tasks") || "[]",
+        localStorage?.getItem("tasks") || "[]",
       ) as Task[];
       const filteredTasks = storedTasks.filter((task) => !task.completed);
       setTasks(filteredTasks);
