@@ -503,6 +503,15 @@ async fn busqueda_global<'a>(
 
     let mut all_results = vec![];
     for (busqueda, url) in busquedas {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "User-Agent",
+            HeaderValue::from_static(
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+            ),
+        );
+        let request = client.get(&url).headers(headers);
+
         let nuevas_busquedas = busqueda_individual(
             client,
             &busqueda,
