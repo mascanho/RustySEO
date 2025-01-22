@@ -283,7 +283,7 @@ const AIcontainer = () => {
               {messages.length > 0 && (
                 <button
                   onClick={clearChatHistory}
-                  className="px-2 py-1 -mt-2 text-xs  text-gray-400 rounded "
+                  className="px-2 py-1 -mt-10 right-4 text-xs  text-gray-400 rounded fixed top-[30px] hover:text-red-500"
                 >
                   Clear chat history
                 </button>

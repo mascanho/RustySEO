@@ -6,7 +6,8 @@ import { ContentCard } from "./ContentCard";
 import { useState, useEffect } from "react";
 
 export function ContentPlanner() {
-  const { items, addItem, updateItem, onDragEnd } = useContentItems();
+  const { items, addItem, updateItem, removeItem, onDragEnd } =
+    useContentItems();
   const [maxHeight, setMaxHeight] = useState(0);
 
   useEffect(() => {
@@ -18,16 +19,19 @@ export function ContentPlanner() {
 
   return (
     <div className="mx-auto p-4 h-full">
-      <Button onClick={addItem} className="mb-4">
+      <button
+        onClick={addItem}
+        className="mb-4 flex items-center py-2 bg-brand-bright text-white px-2 text-xs rounded-md"
+      >
         <PlusCircle className="mr-2 h-4 w-4" /> Add New Topic
-      </Button>
+      </button>
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="content-list">
           {(provided) => (
             <div
               {...provided.droppableProps}
               ref={provided.innerRef}
-              className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 h-full"
+              className="grid xl:gap-6 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 h-full"
             >
               {items.map((item, index) => (
                 <Draggable key={item.id} draggableId={item.id} index={index}>
@@ -40,6 +44,7 @@ export function ContentPlanner() {
                       <ContentCard
                         item={item}
                         updateItem={updateItem}
+                        removeItem={removeItem}
                         dragHandleProps={provided.dragHandleProps}
                       />
                     </div>
