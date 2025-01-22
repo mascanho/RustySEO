@@ -138,7 +138,7 @@ pub fn get_top_keywords(text: &str, top_n: usize) -> Vec<(String, usize)> {
         // Spanish stop words
         "el", "la", "los", "las", "un", "una", "unos", "unas", "y", "en", "de", "para", "por",
         "con", "su", "sus", "al", "del", "lo", "pero", "más", "qué", "cuando", "hay", "este", "se",
-        "no", "si", "que", // Italian stop words
+        "no", "si", "sin", "sobre", "que", // Italian stop words
         "il", "lo", "la", "i", "gli", "le", "uno", "una", "del", "della", "dei", "degli", "delle",
         "in", "con", "su", "per", "tra", "fra", "che", "ma", "perché", "come", "dove", "questo",
         // Dutch stop words
