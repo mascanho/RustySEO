@@ -52,22 +52,27 @@ export function ContentCard({
   };
 
   return (
-    <div className="bg-white shadow-lg min-h-[550px] h-fit rounded-lg p-2 relative dark:bg-brand-darker border-white-50">
+    <div
+      className={`bg-white shadow-lg min-h-[550px] h-fit rounded-lg p-2 relative dark:bg-brand-darker border-white-50 ${item.urgency === "Priority" ? "border border-red-500" : ""}`}
+    >
       <CardHeader className="flex flex-col w-full  space-y-1 pb-2 pt-8 dark:bg-brand-darker">
         <Popover>
           <PopoverTrigger asChild>
             <button
               variant={"outline"}
               className={`px-3 py-1 -ml-4 pl-2 rounded-md text-sm justify-start text-left w-fit font-normal my-1 ${
-                date
+                item.urgency === "Priority"
                   ? "bg-red-500 text-white"
-                  : "bg-white py-1 text-sm w-[2px] rounded-md pl-2 "
-              }`}
+                  : "text-black dark:bg-brand-darker border border-gray-300 dark:border-white/10 py-1 text-sm rounded-md pl-2 dark:text-white/50"
+              }
+              `}
             >
               {date ? (
                 format(date, "PPP")
               ) : (
-                <span className="border p-1 px-3 rounded-md">
+                <span
+                  className={`p-1 px-3 rounded-md ${item.urgency === "Priority" ? "bg-red-500" : "bg-transparent dark:text-white/50"}`}
+                >
                   Pick a Due Date
                 </span>
               )}

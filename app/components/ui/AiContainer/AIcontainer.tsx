@@ -30,7 +30,7 @@ const AIcontainer = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { selectedModel, setSelectedModel } = useModelStore();
   const bubbleRef = useRef<HTMLDivElement>(null);
-  const LOCAL_STORAGE_KEY = "chat_messages";
+  const SESSION_STORAGE_KEY = "chat_messages";
   const [hasMounted, setHasMounted] = useState(false);
   const pageSpeedStore = usePageSpeedStore();
   const onPageSEO = useOnPageSeo();
@@ -99,7 +99,7 @@ const AIcontainer = () => {
   // Load messages from local storage on component mount
   useEffect(() => {
     const loadMessages = () => {
-      const storedMessages = localStorage?.getItem(LOCAL_STORAGE_KEY);
+      const storedMessages = sessionStorage?.getItem(SESSION_STORAGE_KEY);
       if (storedMessages) {
         try {
           const parsedMessages = JSON.parse(storedMessages);
@@ -124,7 +124,7 @@ const AIcontainer = () => {
   // Clear chat history function
   const clearChatHistory = () => {
     try {
-      localStorage?.removeItem(LOCAL_STORAGE_KEY);
+      sessionStorage?.removeItem(SESSION_STORAGE_KEY);
       setMessages([]);
       toast("Chat history cleared");
     } catch (e) {
@@ -233,12 +233,12 @@ const AIcontainer = () => {
       updatedMessages = [...updatedMessages, assistantMessage];
       setMessages(updatedMessages);
       try {
-        localStorage?.setItem(
-          LOCAL_STORAGE_KEY,
+        sessionStorage?.setItem(
+          SESSION_STORAGE_KEY,
           JSON.stringify(updatedMessages),
         );
       } catch (e) {
-        console.error("Failed to save messages to local storage", e);
+        console.error("Failed to save messages to session storage", e);
       }
     } catch (error) {
       console.error("Error from Ollama:", error);
@@ -279,11 +279,11 @@ const AIcontainer = () => {
       case "gemini":
         return (
           <>
-            <div className="flex justify-end -mb-4">
+            <div className="flex justify-end ">
               {messages.length > 0 && (
                 <button
                   onClick={clearChatHistory}
-                  className="px-2 py-1 -mt-10 right-4 text-xs  text-gray-400 rounded fixed top-[30px] hover:text-red-500"
+                  className="px-2 py-1 mt-4 right-4 text-xs  text-gray-400 rounded fixed top-[30px] hover:text-red-500"
                 >
                   Clear chat history
                 </button>
