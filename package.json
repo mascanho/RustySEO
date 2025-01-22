@@ -94,7 +94,6 @@
     "use-debounce": "^10.0.1",
     "uuid": "^10.0.0",
     "vaul": "^0.9.1",
-    "wordcloud": "^1.2.3",
     "zustand": "^4.5.4"
   },
   "devDependencies": {

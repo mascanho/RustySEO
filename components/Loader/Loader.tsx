@@ -19,6 +19,7 @@ const Loader = () => {
   const [isVisible, setIsVisible] = useState(() => {
     if (typeof window !== "undefined") {
       const hasLoaded = sessionStorage.getItem("hasInitiallyLoaded");
+      return !hasLoaded;
     }
     return true;
   });

@@ -80,15 +80,10 @@ const HeadingsTable = ({
       }
     };
 
-    const loadStatus = sessionStorage.getItem("FirstLoad");
-    if (loadStatus !== "true") {
-      return;
-    } else {
-      fetchAiHeadings();
-    }
+    fetchAiHeadings();
 
     return () => {};
-  }, [aiHeadings.length]);
+  }, [headings, aiHeadings]);
 
   const findDuplicates = (array: string[]) => {
     const count: Record<string, number> = {};
