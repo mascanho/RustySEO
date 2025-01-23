@@ -18,6 +18,7 @@ pub mod crawler;
 pub mod machine_learning;
 
 pub mod domain_crawler;
+
 pub mod downloads {
     pub mod csv;
     pub mod excel;
