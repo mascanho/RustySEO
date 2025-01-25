@@ -165,7 +165,7 @@ const Home: React.FC<HomeProps> = () => {
   const handleChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       setUrl(event.target.value);
-      sessionStorage.setItem("url", event.target.value);
+      sessionStorage?.setItem("url", event.target.value);
     },
     [],
   );
@@ -194,7 +194,7 @@ const Home: React.FC<HomeProps> = () => {
 
     // set the url beng searched in the session storage
     sessionStorage.setItem("url", url || "No URL");
-    const urlStored = sessionStorage.getItem("url");
+    const urlStored = sessionStorage?.getItem("url");
     setSessionUrl(urlStored);
     setUrl(urlStored);
     window.dispatchEvent(new Event("sessionStorageUpdated"));
@@ -298,7 +298,7 @@ const Home: React.FC<HomeProps> = () => {
   // GET THE THEME AND SET IT
   useEffect(() => {
     // On component mount, check local storage for dark mode preference
-    const darkMode = localStorage.getItem("dark-mode") === "true";
+    const darkMode = localStorage?.getItem("dark-mode") === "true";
     setIsDarkMode(darkMode);
 
     // Add or remove the dark class on the root element
@@ -633,15 +633,15 @@ const Home: React.FC<HomeProps> = () => {
                 {/* <Tabs.Tab value="semrush">
                   <SiSemrush className="inline-block mr-2 mb-[2px] text-sm" />
                   SEMRush
-                </Tabs.Tab>
+                </Tabs.Tab> */}
                 <Tabs.Tab value="content">
                   <GrPlan className="inline-block mr-2 mb-[2px] text-sm" />
                   Content
-                </Tabs.Tab> */}
-                {/* <Tabs.Tab value="topicModeling">
+                </Tabs.Tab>
+                <Tabs.Tab value="topicModeling">
                   <AiOutlineCluster className="inline-block mr-2 mb-[2px] text-sm" />
                   Topic Modeling
-                </Tabs.Tab> */}
+                </Tabs.Tab>
               </Tabs.List>
             </div>
             <Tabs.Panel value="first">
@@ -846,12 +846,12 @@ const Home: React.FC<HomeProps> = () => {
             <Tabs.Panel value="gsc">
               <GSCcontainer />
             </Tabs.Panel>{" "}
-            {/* <Tabs.Panel value="semrush">
+            <Tabs.Panel value="semrush">
               <SemrushContainer />
-            </Tabs.Panel>{" "} */}
-            {/* <Tabs.Panel value="content">
+            </Tabs.Panel>{" "}
+            <Tabs.Panel value="content">
               <ContentPlannerContainer />
-            </Tabs.Panel>{" "} */}
+            </Tabs.Panel>{" "}
             <Tabs.Panel value="topicModeling">
               <TopicModelingContainer />
             </Tabs.Panel>{" "}

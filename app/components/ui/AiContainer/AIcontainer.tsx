@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import usePageSpeedStore from "@/store/StorePerformance";
 import useOnPageSeo from "@/store/storeOnPageSeo";
 import ChatLoading from "./chatLoading";
+import useContentStore from "@/store/storeContent";
 
 interface Message {
   id: number;
@@ -29,10 +30,12 @@ const AIcontainer = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { selectedModel, setSelectedModel } = useModelStore();
   const bubbleRef = useRef<HTMLDivElement>(null);
-  const LOCAL_STORAGE_KEY = "chat_messages";
+  const SESSION_STORAGE_KEY = "chat_messages";
   const [hasMounted, setHasMounted] = useState(false);
   const pageSpeedStore = usePageSpeedStore();
   const onPageSEO = useOnPageSeo();
+  const contentStore = useContentStore();
+
   const inputRef = useRef<HTMLInputElement>(null);
   const [isThinking, setIsThinking] = useState(false);
 
@@ -79,6 +82,14 @@ const AIcontainer = () => {
   const seoMedia = onPageSEO.seoMedia || "No page crawled yet";
   const seoUrlLength = onPageSEO.seoUrlLength || "No page crawled yet";
 
+  // CONTENT STORE
+  const readingTime = contentStore.readingTime || "No page crawled yet";
+  const wordCount = contentStore.wordCount || "No page crawled yet";
+  const readingLevel = contentStore.readingLevel || "No page crawled yet";
+  const textRatio = contentStore.textRatio || "No page crawled yet";
+  const contentKeywords = contentStore.keywords || "No page crawled yet";
+  const contentVideo = contentStore.video || "No page crawled yet";
+
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -88,7 +99,7 @@ const AIcontainer = () => {
   // Load messages from local storage on component mount
   useEffect(() => {
     const loadMessages = () => {
-      const storedMessages = localStorage.getItem(LOCAL_STORAGE_KEY);
+      const storedMessages = sessionStorage?.getItem(SESSION_STORAGE_KEY);
       if (storedMessages) {
         try {
           const parsedMessages = JSON.parse(storedMessages);
@@ -113,7 +124,7 @@ const AIcontainer = () => {
   // Clear chat history function
   const clearChatHistory = () => {
     try {
-      localStorage.removeItem(LOCAL_STORAGE_KEY);
+      sessionStorage?.removeItem(SESSION_STORAGE_KEY);
       setMessages([]);
       toast("Chat history cleared");
     } catch (e) {
@@ -129,7 +140,7 @@ const AIcontainer = () => {
 
   // CHECK THE AI-PROVIDER
   useEffect(() => {
-    const model = localStorage.getItem("AI-provider");
+    const model = localStorage?.getItem("AI-provider");
     if (model) {
       setSelectedModel(model);
     }
@@ -150,7 +161,60 @@ const AIcontainer = () => {
     setInput("");
     setIsThinking(true);
 
-    const myMessage = `Besides my prompt, here is a report of how a pge I crawled is performing with the metrics ->  performance metrics: page performance ${performance} FCP or first contentful paint: ${fcp}, LCP or largest contentful paint: ${lcp}, TTI or time to interactive: ${tti}, CLS or cumulative layout shift: ${cls}, Speed Index: ${speedIndex}, Server Response: ${serverResponse}, Largest Contentful Paint: ${largePayloads}, DOM Size: ${domSize} nodes, URL Redirects: ${urlRedirects}, Long Tasks: ${longTasks}, Render Blocking: ${renderBlocking}, Network Requests: ${netowrkRequests}, Passed Checks: ${passedChecks}, Failed Checks: ${failedChecks}, Global Performance Score: ${serverResponse}, Large Payloads: ${largePayloads}, DOM Size: ${domSize}, URL Redirects: ${urlRedirects}, Long Tasks: ${longTasks}, Render Blocking Resources: ${renderBlocking}, Network Requests: ${netowrkRequests}, Passed Checks: ${passedChecks}, Failed Checks: ${failedChecks}. And here is the SEO information:  SEO Loading: ${seoLoading}, Favicon: ${favicon}, Page Title: ${seopagetitle}, Description: ${seodescription}, Canonical URL: ${seocanonical}, Hreflangs: ${seohreflangs}, Open Graph: ${seoopengraph}, Schema: ${seoschema}, Charset: ${seocharset}, Indexability: ${seoindexability}, without Alt Tags: ${seoImages.length}, the number of images on the page is ${seoalttags.length}, with alt Tags is ${-(seoImages.length - seoalttags.length)}, Status Codes: ${seostatusCodes}, Headings: ${seoheadings}, Images: ${seoImages}, Open Graph: ${seoOpenGraph}, Render Blockimages without alt tags: ${seoImages} , Open Graph Data: ${seoOpenGraph}, Render Blocking Resources: ${seoRenderBlocking}, Content Quality: ${seoContentQuality}, Media: ${seoMedia}, URL Length: ${seoUrlLength}. My prompt is: ${input}`;
+    console.log(readingTime, "reading time");
+
+    const myMessage = `Besides my prompt, here is a report of how a page I crawled is performing.
+
+    **Performance Metrics:**
+    - **Overall Page Performance:** ${performance}. This is a general score indicating how well the page performs.
+    - **First Contentful Paint (FCP):** ${fcp}. This measures the time it takes for the first text or image to appear on the screen.
+    - **Largest Contentful Paint (LCP):** ${lcp}. This measures the time it takes for the largest content element to become visible.
+    - **Time To Interactive (TTI):** ${tti}. This measures how long it takes for the page to become fully interactive.
+    - **Cumulative Layout Shift (CLS):** ${cls}. This measures the visual stability of the page, quantifying how much elements move around unexpectedly.
+    - **Speed Index:** ${speedIndex}. This measures how quickly the content of a page is visually populated.
+    - **Server Response Time:** ${serverResponse}. This measures how long it takes for the server to respond to the initial request.
+    - **Large Payloads:** ${largePayloads}. Indicates if there are large files that are slowing down the page.
+    - **DOM Size:** ${domSize} nodes. The number of nodes in the Document Object Model, too many can affect performance.
+    - **URL Redirects:** ${urlRedirects}. Number of redirects that the page performs
+    - **Long Tasks:** ${longTasks}. Indicates tasks that take a long time to complete, blocking the main thread.
+    - **Render Blocking Resources:** ${renderBlocking}. Resources that prevent the page from rendering quickly.
+    - **Network Requests:** ${netowrkRequests}. The amount of network requests the page performs
+    - **Passed Checks:** ${passedChecks}. Number of performance checks that passed.
+    - **Failed Checks:** ${failedChecks}. Number of performance checks that failed.
+    - **Global Performance Score:** ${GlobalPerformanceScore}. Overall score of the website performance.
+
+    **SEO Information:**
+    - **SEO Loading:** ${seoLoading}. Indicates if the SEO data is loading correctly.
+    - **Favicon:** ${favicon}.  Indicates if the page has a favicon.
+    - **Page Title:** ${seopagetitle}. The title of the page, important for SEO.
+    - **Description:** ${seodescription}. The meta description, a brief summary of the page content.
+    - **Canonical URL:** ${seocanonical}. The preferred URL for the page, used to avoid duplicate content issues.
+    - **Hreflangs:** ${seohreflangs}. Used to indicate the language and geographic targeting of the page.
+    - **Open Graph:** ${seoopengraph}.  Data used by social media platforms to display shared content.
+    -  **Schema:** ${seoschema}. Indicates if the page has schema markup.
+    - **Charset:** ${seocharset}. The character encoding of the page.
+    - **Indexability:** ${seoindexability}. Indicates if the page is indexable by search engines.
+    - **Images without Alt Tags:** ${seoImages.length}. Number of images that lack alt text, which is important for accessibility and SEO.
+    -  **Total images:** ${seoalttags.length}. The total amount of images on the page.
+     - **Images with alt tags:** ${-(seoImages.length - seoalttags.length)}. The total number of images with a valid alt tag.
+    - **Status Codes:** ${seostatusCodes}. HTTP status codes of the page and its resources.
+    - **Headings:** ${seoheadings}. Structure of the headings in the page.
+    - **Images:** ${seoImages}. List of the images in the page.
+    - **Open Graph Data:** ${seoOpenGraph}. The open graph data of the page.
+    - **Render Blocking Resources:** ${seoRenderBlocking}. List of render blocking resources.
+    - **Content Quality:** ${seoContentQuality}. An assessment of the quality of the content on the page.
+     -   **Media:** ${seoMedia}. All the media files on the page.
+    -   **URL Length:** ${seoUrlLength}. The length of the URL of the page.
+
+    **Content Analysis:**
+    -   **Reading Time:** ${readingTime}. The estimated time it takes to read the content.
+    -   **Word Count:** ${wordCount}. The total number of words in the content.
+    -   **Reading Level:** ${readingLevel}. The reading level of the content.
+    -   **Text Ratio:** ${textRatio}. The ratio of text to HTML on the page.
+    - **Keywords:** ${contentKeywords}. The important keywords found in the content.
+    -   **Video:** ${contentVideo}. The video found on the page.
+
+     My prompt is: ${input}`;
 
     console.log(seoImages);
     console.log(seoalttags);
@@ -169,12 +233,12 @@ const AIcontainer = () => {
       updatedMessages = [...updatedMessages, assistantMessage];
       setMessages(updatedMessages);
       try {
-        localStorage.setItem(
-          LOCAL_STORAGE_KEY,
+        sessionStorage?.setItem(
+          SESSION_STORAGE_KEY,
           JSON.stringify(updatedMessages),
         );
       } catch (e) {
-        console.error("Failed to save messages to local storage", e);
+        console.error("Failed to save messages to session storage", e);
       }
     } catch (error) {
       console.error("Error from Ollama:", error);
@@ -215,11 +279,11 @@ const AIcontainer = () => {
       case "gemini":
         return (
           <>
-            <div className="flex justify-end -mb-4">
+            <div className="flex justify-end ">
               {messages.length > 0 && (
                 <button
                   onClick={clearChatHistory}
-                  className="px-2 py-1 -mt-2 text-xs  text-gray-400 rounded "
+                  className="px-2 py-1 mt-4 right-4 text-xs  text-gray-400 rounded fixed top-[30px] hover:text-red-500"
                 >
                   Clear chat history
                 </button>

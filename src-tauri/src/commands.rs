@@ -9,6 +9,7 @@ use crate::crawler::libs::ClarityData;
 use crate::crawler::libs::Credentials;
 use crate::crawler::libs::DateRange;
 use crate::image_converter::converter;
+use crate::machine_learning::keyword_frequency;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;

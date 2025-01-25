@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DropResult } from "react-beautiful-dnd";
 
 export interface ContentItem {
@@ -8,14 +8,29 @@ export interface ContentItem {
   description: string;
   ideas: string[];
   url: string;
-  rating: number;
   category: string;
   urgency: "Priority" | "Not Priority";
   assignee: string;
+  date: string;
+  dueDate?: string;
 }
 
+const LOCAL_STORAGE_KEY = "contentItems";
+
 export function useContentItems() {
-  const [items, setItems] = useState<ContentItem[]>([]);
+  const [items, setItems] = useState<ContentItem[]>(() => {
+    if (typeof window === "undefined") {
+      return [];
+    }
+    const storedItems = localStorage?.getItem(LOCAL_STORAGE_KEY);
+    return storedItems ? JSON.parse(storedItems) : [];
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage?.setItem(LOCAL_STORAGE_KEY, JSON.stringify(items));
+    }
+  }, [items]);
 
   const addItem = () => {
     const newItem: ContentItem = {
@@ -25,10 +40,10 @@ export function useContentItems() {
       description: "",
       ideas: [],
       url: "",
-      rating: 0,
       category: "",
       urgency: "Not Priority",
       assignee: "",
+      date: new Date().toLocaleDateString(),
     };
     setItems([...items, newItem]);
   };
@@ -49,5 +64,9 @@ export function useContentItems() {
     setItems(newItems);
   };
 
-  return { items, addItem, updateItem, onDragEnd };
+  const removeItem = (id: string) => {
+    setItems(items.filter((item) => item.id !== id));
+  };
+
+  return { items, addItem, updateItem, onDragEnd, removeItem };
 }

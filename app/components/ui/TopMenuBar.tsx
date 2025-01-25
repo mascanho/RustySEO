@@ -73,7 +73,7 @@ const TopMenuBar = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
-    const theme = localStorage.getItem("dark-mode");
+    const theme = localStorage?.getItem("dark-mode");
     if (theme === true) {
       setIsDarkMode(true);
     } else {
@@ -140,7 +140,7 @@ const TopMenuBar = () => {
     setIsDarkMode(newMode);
 
     // Update localStorage
-    localStorage.setItem("dark-mode", newMode);
+    localStorage?.setItem("dark-mode", newMode);
 
     // Toggle the dark mode class on the document
     if (newMode) {
@@ -152,7 +152,7 @@ const TopMenuBar = () => {
 
   useEffect(() => {
     // Retrieve the dark mode setting from localStorage
-    const savedMode = localStorage.getItem("dark-mode");
+    const savedMode = localStorage?.getItem("dark-mode");
 
     // If a saved mode exists, parse it and update the state
     if (savedMode !== null) {

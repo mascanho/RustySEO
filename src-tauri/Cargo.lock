@@ -170,7 +170,7 @@ dependencies = [
  "smallvec",
  "socket2",
  "time 0.3.36",
- "url 2.5.2",
+ "url 2.5.4",
 ]
 
 [[package]]
@@ -319,7 +319,7 @@ dependencies = [
  "tauri-plugin-shell",
  "tokio",
  "toml 0.7.8",
- "url 2.5.2",
+ "url 2.5.4",
  "urlencoding",
  "uuid",
  "xml-rs",
@@ -367,7 +367,7 @@ dependencies = [
  "serde",
  "serde_repr",
  "tokio",
- "url 2.5.2",
+ "url 2.5.4",
  "wayland-backend",
  "wayland-client",
  "wayland-protocols",
@@ -971,7 +971,7 @@ dependencies = [
  "serde_derive",
  "serde_json",
  "time 0.3.36",
- "url 2.5.2",
+ "url 2.5.4",
 ]
 
 [[package]]
@@ -2202,7 +2202,7 @@ dependencies = [
  "serde_with",
  "tokio",
  "tower-service",
- "url 2.5.2",
+ "url 2.5.4",
  "yup-oauth2 9.0.0",
 ]
 
@@ -2819,16 +2819,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "38f09e0f0b1fb55fdee1f17470ad800da77af5186a1a76c026b679358b7e844e"
 dependencies = [
  "matches",
- "unicode-bidi",
- "unicode-normalization",
-]
-
-[[package]]
-name = "idna"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "634d9b1461af396cad843f47fdba5597a4f9e6ddd4bfb6ff5d85028c25cb12f6"
-dependencies = [
  "unicode-bidi",
  "unicode-normalization",
 ]
@@ -3597,7 +3587,7 @@ dependencies = [
  "serde_path_to_error",
  "sha2",
  "thiserror 1.0.64",
- "url 2.5.2",
+ "url 2.5.4",
 ]
 
 [[package]]
@@ -4646,7 +4636,7 @@ dependencies = [
  "tokio-native-tls",
  "tokio-rustls 0.24.1",
  "tower-service",
- "url 2.5.2",
+ "url 2.5.4",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -4697,7 +4687,7 @@ dependencies = [
  "tokio-rustls 0.26.0",
  "tokio-util",
  "tower-service",
- "url 2.5.2",
+ "url 2.5.4",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-streams",
@@ -4978,7 +4968,7 @@ dependencies = [
  "schemars_derive",
  "serde",
  "serde_json",
- "url 2.5.2",
+ "url 2.5.4",
  "uuid",
 ]
 
@@ -5648,7 +5638,7 @@ dependencies = [
  "scopeguard",
  "tao-macros",
  "unicode-segmentation",
- "url 2.5.2",
+ "url 2.5.4",
  "windows 0.58.0",
  "windows-core 0.58.0",
  "windows-version",
@@ -5714,7 +5704,7 @@ dependencies = [
  "thiserror 2.0.9",
  "tokio",
  "tray-icon",
- "url 2.5.2",
+ "url 2.5.4",
  "urlpattern",
  "webkit2gtk",
  "webview2-com",
@@ -5766,7 +5756,7 @@ dependencies = [
  "tauri-utils",
  "thiserror 2.0.9",
  "time 0.3.36",
- "url 2.5.2",
+ "url 2.5.4",
  "uuid",
  "walkdir",
 ]
@@ -5832,7 +5822,7 @@ dependencies = [
  "tauri-plugin",
  "tauri-plugin-fs",
  "thiserror 2.0.9",
- "url 2.5.2",
+ "url 2.5.4",
 ]
 
 [[package]]
@@ -5854,7 +5844,7 @@ dependencies = [
  "tauri-utils",
  "thiserror 2.0.9",
  "toml 0.8.2",
- "url 2.5.2",
+ "url 2.5.4",
  "uuid",
 ]
 
@@ -5891,7 +5881,7 @@ dependencies = [
  "tauri-plugin-fs",
  "thiserror 2.0.9",
  "tokio",
- "url 2.5.2",
+ "url 2.5.4",
  "urlpattern",
 ]
 
@@ -5911,7 +5901,7 @@ dependencies = [
  "tauri-plugin",
  "thiserror 2.0.9",
  "time 0.3.36",
- "url 2.5.2",
+ "url 2.5.4",
 ]
 
 [[package]]
@@ -5978,7 +5968,7 @@ dependencies = [
  "serde_json",
  "tauri-utils",
  "thiserror 2.0.9",
- "url 2.5.2",
+ "url 2.5.4",
  "windows 0.58.0",
 ]
 
@@ -6001,7 +5991,7 @@ dependencies = [
  "tao",
  "tauri-runtime",
  "tauri-utils",
- "url 2.5.2",
+ "url 2.5.4",
  "webkit2gtk",
  "webview2-com",
  "windows 0.58.0",
@@ -6039,7 +6029,7 @@ dependencies = [
  "swift-rs",
  "thiserror 2.0.9",
  "toml 0.8.2",
- "url 2.5.2",
+ "url 2.5.4",
  "urlpattern",
  "uuid",
  "walkdir",
@@ -6569,12 +6559,12 @@ dependencies = [
 
 [[package]]
 name = "url"
-version = "2.5.2"
+version = "2.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22784dbdf76fdde8af1aeda5622b546b422b6fc585325248a2bf9f5e41e94d6c"
+checksum = "32f8b686cadd1473f4bd0117a5d28d36b1ade384ea9b5069a1c40aefed7fda60"
 dependencies = [
  "form_urlencoded",
- "idna 0.5.0",
+ "idna 1.0.3",
  "percent-encoding 2.3.1",
  "serde",
 ]
@@ -6594,7 +6584,7 @@ dependencies = [
  "regex",
  "serde",
  "unic-ucd-ident",
- "url 2.5.2",
+ "url 2.5.4",
 ]
 
 [[package]]
@@ -7449,7 +7439,7 @@ dependencies = [
  "soup3",
  "tao-macros",
  "thiserror 1.0.64",
- "url 2.5.2",
+ "url 2.5.4",
  "webkit2gtk",
  "webkit2gtk-sys",
  "webview2-com",
@@ -7584,7 +7574,7 @@ dependencies = [
  "time 0.3.36",
  "tokio",
  "tower-service",
- "url 2.5.2",
+ "url 2.5.4",
 ]
 
 [[package]]
@@ -7611,7 +7601,7 @@ dependencies = [
  "serde_json",
  "time 0.3.36",
  "tokio",
- "url 2.5.2",
+ "url 2.5.4",
 ]
 
 [[package]]
@@ -7896,7 +7886,7 @@ dependencies = [
  "enumflags2",
  "serde",
  "static_assertions",
- "url 2.5.2",
+ "url 2.5.4",
  "winnow 0.6.20",
  "zvariant_derive 5.1.0",
  "zvariant_utils 3.0.2",

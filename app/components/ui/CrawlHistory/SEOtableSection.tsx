@@ -28,6 +28,16 @@ import {
 } from "@/components/ui/popover";
 import PopUpTable from "./PopUpTable";
 import { IoIosClose } from "react-icons/io";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import WordCloud from "./WordCloud";
+import WordCloudWidget from "./WordCloud/WordCloudWidget";
 
 // Define TypeScript types
 interface PerformanceData {
@@ -63,6 +73,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
   const [sortColumn, setSortColumn] = useState<keyof PerformanceData>("date");
   const [todoUrl, setTodoUrl] = useState<string | null>(null);
   const [matchedUrlData, setMatchedUrlData] = useState([]);
+  const [openWordCloud, setOpenWordCloud] = useState(false);
 
   // Keywords chip colors
   const chipColors = [
@@ -95,7 +106,7 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
 
   useEffect(() => {
     fetchData();
-  }, [crawl]);
+  }, [crawl, fetchData]);
 
   // Filter and sort data
   const filteredData = (Array.isArray(data) ? data : [])
@@ -136,6 +147,10 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
     setStartDate(null);
     setEndDate(null);
   }, [dbdata]);
+
+  const handleOpenWordCloud = () => {
+    setOpenWordCloud(true);
+  };
 
   // Handle download
   const handleDownloadXLSX = async () => {
@@ -230,7 +245,13 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
             <DropdownMenuLabel className="text-xs">
               Table options
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
+            {/* <DropdownMenuItem
+              className="cursor-pointer hover:bg-gray-100 hover:text-white dark:hover:bg-gray-700 dark:hover:text-white text-xs"
+              onClick={handleOpenWordCloud}
+            >
+              Word Cloud
+            </DropdownMenuItem>{" "} */}
+            <DropdownMenuSeparator className="dark:bg-brand-dark" />
             <DropdownMenuItem
               className="cursor-pointer hover:bg-gray-100 hover:text-white dark:hover:bg-gray-700 dark:hover:text-white text-xs"
               onClick={refreshTable}
@@ -264,6 +285,19 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <Dialog open={openWordCloud} onOpenChange={setOpenWordCloud}>
+        <DialogContent className="sm:max-w-[800px] bg-white dark:bg-brand-darker">
+          <DialogHeader>
+            <DialogTitle>Word Cloud</DialogTitle>
+            <DialogDescription>
+              A visual representation of the most common words in the crawled
+              data.
+            </DialogDescription>
+          </DialogHeader>
+          <WordCloudWidget />
+        </DialogContent>
+      </Dialog>
 
       {/* Table Section */}
       <section className="rounded-md mt-1 overflow-x-auto shadow border dark:border-white/10 dark:bg-brand-darker">
