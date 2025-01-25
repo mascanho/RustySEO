@@ -50,8 +50,10 @@ export default function GSCkeywordTable({ gscData }: KeywordTableProps) {
       accessorKey: "query",
       header: "Keyword",
       cell: ({ row }) => (
-        <span className="text-blue-600 font-semibold truncate max-w-[350px] block">
-          {row.original.query}
+        <span className="text-blue-600 font-semibold  w-[100px] max-w-[150px] min-w-[200px] block">
+          {row.original.query.toString().length > 45
+            ? row.original.query.substring(0, 45) + "..."
+            : row.original.query}
         </span>
       ),
     },
@@ -80,8 +82,10 @@ export default function GSCkeywordTable({ gscData }: KeywordTableProps) {
       accessorKey: "url",
       header: () => <div className="text-center">URL</div>,
       cell: ({ row }) => (
-        <div className="max-w-[500px] truncate text-gray-500">
-          {row.original.url}
+        <div className="w-[400px]  min-w-[400px] text-gray-500">
+          {row.original.url.length > 80
+            ? row.original.url.substring(0, 86) + "..."
+            : row.original.url}
         </div>
       ),
     },
@@ -186,40 +190,40 @@ export default function GSCkeywordTable({ gscData }: KeywordTableProps) {
               </tr>
             ))}
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200 overflow-hidden">
+          <tbody className="bg-white  divide-y divide-gray-200 dark:divide-y-red-500 dark:divide-y  overflow-hidden">
             {table.getRowModel().rows.map((row, index) => (
               <KeywordRow key={row.id} row={row} index={index} />
             ))}
           </tbody>
         </table>
       </div>
-      <div className="flex items-center justify-between p-4 border-t bg-white dark:bg-brand-darker">
+      <div className="flex items-center justify-between p-4  bg-white dark:bg-brand-darker">
         <div className="flex items-center gap-2">
           <button
             onClick={() => table.setPageIndex(0)}
             disabled={!table.getCanPreviousPage()}
-            className="px-2 py-1 text-sm border rounded disabled:opacity-50"
+            className="px-2 py-1 text-sm border rounded disabled:opacity-50 dark:border-brand-dark"
           >
             {"<<"}
           </button>
           <button
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
-            className="px-2 py-1 text-sm border rounded disabled:opacity-50"
+            className="px-2 py-1 text-sm border rounded disabled:opacity-50 dark:border-brand-dark"
           >
             {"<"}
           </button>
           <button
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
-            className="px-2 py-1 text-sm border rounded disabled:opacity-50"
+            className="px-2 py-1 text-sm border rounded disabled:opacity-50 dark:border-brand-dark"
           >
             {">"}
           </button>
           <button
             onClick={() => table.setPageIndex(table.getPageCount() - 1)}
             disabled={!table.getCanNextPage()}
-            className="px-2 py-1 text-sm border rounded disabled:opacity-50"
+            className="px-2 py-1 text-sm border rounded disabled:opacity-50 dark:border-brand-dark"
           >
             {">>"}
           </button>
