@@ -100,6 +100,20 @@ export default function Page() {
   const allFilesEntries = data ? Object.entries(data.all_files) : [];
   const sortedAllFiles = sortData(allFilesEntries);
 
+  const handleDomainCrawl = async () => {
+    try {
+      showLoader("domainCrawl");
+      const result = await invoke("domain_crawl_command", {
+        domain: "https://slimstock.com",
+      });
+      console.log("Crawl Result:", result);
+      hideLoader("domainCrawl");
+    } catch (error) {
+      console.error("Failed to execute domain crawl command:", error);
+      hideLoader("domainCrawl");
+    }
+  };
+
   return (
     <main className="flex h-full w-full">
       <InputZone />
@@ -194,6 +208,12 @@ export default function Page() {
                 <h2 className="text-xs font-bold mt-8 mb-4 dark:text-white text-black">
                   All Files
                 </h2>
+                <button
+                  onClick={() => handleDomainCrawl()}
+                  className="text-white bg-red-500"
+                >
+                  Download All Files
+                </button>
                 <div className="h-96 overflow-auto border-0 rounded-md">
                   <table className="w-full text-xs text-black dark:text-white/50">
                     <thead>

@@ -1,6 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use crate::crawler::content::scrape_google_headings_command;
+use crate::domain_crawler::domain_commands;
+use crate::domain_crawler::helpers;
 use crawler::{
     CrawlResult, LinkResult, PageSpeedResponse, SEOLighthouseResponse, SeoPageSpeedResponse,
 };
@@ -15,9 +17,9 @@ use toml;
 
 pub mod crawler;
 
-pub mod machine_learning;
-
 pub mod domain_crawler;
+
+pub mod machine_learning;
 
 pub mod downloads {
     pub mod csv;
@@ -186,6 +188,7 @@ async fn main() {
             commands::read_gsc_data_from_db_command,
             commands::read_matched_keywords_from_db_command,
             commands::fetch_keywords_summarized_matched_command,
+            domain_commands::domain_crawl_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
