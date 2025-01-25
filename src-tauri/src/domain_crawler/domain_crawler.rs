@@ -15,7 +15,17 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<(String, String)>, String>
     let visited = Arc::new(Mutex::new(HashMap::new())); // Use HashMap to store URLs and titles
     let base_url = Url::parse(domain).map_err(|_| "Invalid domain")?;
 
-    crawl_page(client, base_url.clone(), visited, &base_url).await
+    // Start crawling from the base URL
+    crawl_page(client, base_url.clone(), visited.clone(), &base_url).await?;
+
+    // Convert the HashMap to a Vec of (URL, title) tuples
+    let visited_guard = visited.lock().map_err(|_| "Lock error")?;
+    let all_links: Vec<(String, String)> = visited_guard
+        .iter()
+        .map(|(url, title)| (url.clone(), title.clone()))
+        .collect();
+
+    Ok(all_links)
 }
 
 async fn crawl_page(
@@ -23,21 +33,23 @@ async fn crawl_page(
     url: Url,
     visited: Arc<Mutex<HashMap<String, String>>>, // Use HashMap to store URLs and titles
     base_url: &Url,
-) -> Result<Vec<(String, String)>, String> {
+) -> Result<(), String> {
     // Check if URL already visited
     {
         let mut visited_guard = visited.lock().map_err(|_| "Lock error")?;
         if visited_guard.contains_key(url.as_str()) {
-            return Ok(vec![]); // Return early if URL already visited
+            return Ok(()); // Return early if URL already visited
         }
     }
 
     // Fetch the page content
-    let response = client
-        .get(url.as_str())
-        .send()
-        .await
-        .map_err(|e| e.to_string())?;
+    let response = match client.get(url.as_str()).send().await {
+        Ok(response) => response,
+        Err(e) => {
+            eprintln!("Failed to fetch {}: {}", url, e);
+            return Ok(()); // Skip this URL and continue crawling
+        }
+    };
 
     // Check if the response is an HTML page
     let is_html = response
@@ -48,7 +60,13 @@ async fn crawl_page(
         .unwrap_or(false);
 
     // Consume the response body
-    let body = response.text().await.map_err(|e| e.to_string())?;
+    let body = match response.text().await {
+        Ok(body) => body,
+        Err(e) => {
+            eprintln!("Failed to read response body from {}: {}", url, e);
+            return Ok(()); // Skip this URL and continue crawling
+        }
+    };
 
     // Extract the title if it's an HTML page
     let title = if is_html {
@@ -63,12 +81,9 @@ async fn crawl_page(
         visited_guard.insert(url.to_string(), title.clone());
     }
 
-    // Collect the URL and title
-    let mut all_links = vec![(url.to_string(), title)];
-
     // If it's not an HTML page, don't extract links
     if !is_html {
-        return Ok(all_links);
+        return Ok(());
     }
 
     // Extract links using regex
@@ -89,7 +104,7 @@ async fn crawl_page(
     for next_url in links {
         let client = client.clone();
         let base_url = base_url.clone();
-        let visited = visited.clone();
+        let visited = visited.clone(); // Clone the Arc for each task
         futures.push(async move { crawl_page(client, next_url, visited, &base_url).await });
     }
 
@@ -102,12 +117,12 @@ async fn crawl_page(
     // Aggregate results
     for result in results {
         match result {
-            Ok(mut links) => all_links.append(&mut links),
+            Ok(_) => {} // Successfully crawled, no action needed
             Err(e) => eprintln!("Error crawling page: {}", e),
         }
     }
 
-    Ok(all_links)
+    Ok(())
 }
 
 /// Extracts the title from the HTML content

@@ -104,7 +104,7 @@ export default function Page() {
     try {
       showLoader("domainCrawl");
       const result = await invoke("domain_crawl_command", {
-        domain: "https://slimstock.com",
+        domain: "https://slimstock.com/blog/demand-planning/",
       });
       console.log("Crawl Result:", result);
       hideLoader("domainCrawl");
