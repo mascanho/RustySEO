@@ -1,7 +1,5 @@
 use futures::stream::{self, StreamExt};
-use regex::Regex;
 use reqwest::Client;
-use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::{Arc, Mutex};
@@ -78,13 +76,12 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                         }
                     };
 
-                    // Check if the response is an HTML page
-                    let is_html = response
+                    // Extract the content-type header before consuming the response
+                    let content_type = response
                         .headers()
                         .get("content-type")
                         .and_then(|header| header.to_str().ok())
-                        .map(|content_type| content_type.contains("text/html"))
-                        .unwrap_or(false);
+                        .map(|s| s.to_string());
 
                     // Consume the response body
                     let body = match response.text().await {
@@ -94,6 +91,9 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                             return Ok(());
                         }
                     };
+
+                    // Check if the response is an HTML page
+                    let is_html = is_html_page(&body, content_type.as_deref());
 
                     // Extract the title if it's an HTML page
                     let title = if is_html {
@@ -111,7 +111,7 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                         "Not an HTML page".to_string()
                     };
 
-                    // Extract the heaadings on the page
+                    // Extract the headings on the page
                     let headings = helpers::headings_selector::headings_selector(&body);
 
                     println!("These are the headings:{:?}", headings);
@@ -122,7 +122,6 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                         results_guard.push(DomainCrawlResults {
                             url: url.to_string(),
                             title: title.clone().to_string(),
-
                             description: description.clone().to_string(),
                             headings: headings.clone(),
                         });
@@ -138,6 +137,7 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                     if !is_html {
                         return Ok(());
                     }
+
                     // GET THE LINKS FROM THE PAGE AND CRAWL THEM
                     let links = helpers::links_selector::extract_links(&body, &base_url);
 
@@ -154,7 +154,7 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                     Ok(())
                 }
             })
-            .buffer_unordered(10); // Limit concurrency to 5
+            .buffer_unordered(10); // Limit concurrency to 10
 
         // Execute the stream for the current batch
         while let Some(result) = stream.next().await {
@@ -167,4 +167,23 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
     // Return the results
     let results_guard = results.lock().unwrap();
     Ok(results_guard.clone())
+}
+
+/// Checks if the response is an HTML page
+fn is_html_page(body: &str, content_type: Option<&str>) -> bool {
+    // Check the content-type header for HTML MIME types
+    let is_html_header = content_type
+        .map(|content_type| {
+            content_type.contains("text/html") || content_type.contains("application/xhtml+xml")
+        })
+        .unwrap_or(false);
+
+    // Check the response body for HTML-like content
+    let is_html_body = body.contains("<html")
+        || body.contains("<!DOCTYPE html")
+        || body.contains("<head")
+        || body.contains("<body");
+
+    // Consider the page HTML if either the header or body suggests it
+    is_html_header || is_html_body
 }
