@@ -110,7 +110,7 @@ export default function Page() {
           {/* Tabs Panel for Domain */}
           <Tabs.Panel
             value="first"
-            className="flex flex-col h-screen bg-gray-200 overflow-auto"
+            className="flex flex-col h-screen bg-white overflow-auto"
           >
             <TablesContainer />
           </Tabs.Panel>

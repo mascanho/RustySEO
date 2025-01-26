@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type React from "react";
 import { useState, useMemo, useCallback } from "react";
 import {
@@ -41,7 +40,7 @@ const Table: React.FC<TableProps> = ({
 
   const defaultColumn = useMemo(
     () => ({
-      minWidth: 60,
+      minWidth: 80,
       width: 150,
       maxWidth: 400,
     }),
@@ -101,24 +100,38 @@ const Table: React.FC<TableProps> = ({
         selectedCell?.rowIndex === rowIndex &&
         selectedCell?.columnId === cell.column.id;
       const isIdColumn = cell.column.id === "id";
+      const isBooleanColumn =
+        cell.column.id === "ssl" ||
+        cell.column.id === "mobileFriendly" ||
+        cell.column.id === "indexable";
 
       return (
         <ContextMenu key={key}>
           <ContextMenuTrigger>
             <div
               {...cellProps}
-              className={`flex items-center p-0.5 text-xs border-b border-r border-gray-200 truncate cursor-pointer hover:bg-gray-100 ${
+              className={`flex items-center p-1 text-xs border-b border-r border-gray-200 truncate cursor-pointer hover:bg-gray-100 ${
                 isSelected ? "bg-blue-200" : ""
               } ${isIdColumn ? "justify-center" : ""}`}
               style={{
-                width: isIdColumn ? "auto" : cell.column.width,
-                minWidth: isIdColumn ? 60 : cell.column.minWidth,
-                maxWidth: isIdColumn ? "none" : cell.column.maxWidth,
-                borderRight: "1px solid #e5e7eb",
+                ...cellProps.style,
+                width: cell.column.defaultWidth || cellProps.style.width,
               }}
               onClick={() => handleCellClick(rowIndex, cell.column.id)}
             >
-              {cell.render("Cell")}
+              {isBooleanColumn ? (
+                <span
+                  className={`px-2 py-1 rounded ${
+                    cell.value
+                      ? "bg-green-200 text-green-800"
+                      : "bg-red-200 text-red-800"
+                  }`}
+                >
+                  {cell.value ? "Yes" : "No"}
+                </span>
+              ) : (
+                cell.render("Cell")
+              )}
             </div>
           </ContextMenuTrigger>
           <ContextMenuContent>
@@ -135,7 +148,7 @@ const Table: React.FC<TableProps> = ({
   );
 
   return (
-    <div className="flex flex-col h-full text-sm bg-white">
+    <div className="flex flex-col h-full text-sm">
       <div className="flex justify-between items-center">
         <SearchInput value={globalFilter || ""} onChange={setGlobalFilter} />
         <ColumnSelector
@@ -144,7 +157,7 @@ const Table: React.FC<TableProps> = ({
           setVisibleColumns={setVisibleColumns}
         />
       </div>
-      <div className="flex-grow overflow-auto border border-gray-300 rounded-md">
+      <div className="flex-grow overflow-auto rounded-md">
         <div {...getTableProps()} className="inline-block min-w-full">
           <div className="sticky top-0 z-10 bg-gray-100">
             {headerGroups.map((headerGroup) => {
@@ -161,12 +174,11 @@ const Table: React.FC<TableProps> = ({
                         <div
                           key={key}
                           {...columnProps}
-                          className="font-semibold text-left p-0.5 text-xs border-b border-gray-200 relative bg-gray-100"
+                          className="font-semibold text-left p-1 text-xs border-b border-r border-gray-200 relative bg-gray-100"
                           style={{
-                            width: column.id === "id" ? "auto" : column.width,
-                            minWidth: column.id === "id" ? 60 : column.minWidth,
-                            maxWidth:
-                              column.id === "id" ? "none" : column.maxWidth,
+                            ...columnProps.style,
+                            width:
+                              column.defaultWidth || columnProps.style.width,
                           }}
                         >
                           <div
@@ -184,7 +196,7 @@ const Table: React.FC<TableProps> = ({
                           {column.id !== "id" && (
                             <div
                               {...column.getResizerProps()}
-                              className={`absolute right-0 top-0 h-full w-px bg-gray-300 cursor-col-resize hover:bg-blue-500 transition-colors duration-200 ${
+                              className={`absolute right-0 top-0 h-full w-1 bg-gray-300 cursor-col-resize hover:bg-blue-500 transition-colors duration-200 ${
                                 column.isResizing ? "bg-blue-500" : ""
                               }`}
                             />

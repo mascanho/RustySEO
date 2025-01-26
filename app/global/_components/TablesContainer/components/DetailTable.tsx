@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type React from "react";
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,7 +23,7 @@ const DetailTable: React.FC<DetailTableProps> = ({ data }) => {
   ];
 
   const relatedColumns: Column[] = [
-    { Header: "ID", accessor: "id", width: 60 },
+    { Header: "ID", accessor: "id" },
     { Header: "Name", accessor: "name" },
     { Header: "Relation", accessor: "relation" },
   ];
@@ -41,7 +40,7 @@ const DetailTable: React.FC<DetailTableProps> = ({ data }) => {
   const relatedData = data?.related || [];
 
   return (
-    <div className="w-full h-full flex flex-col m-0 text-xs ">
+    <div className="w-full h-full flex flex-col text-sm">
       <Tabs
         value={activeTab}
         onValueChange={setActiveTab}
@@ -49,7 +48,7 @@ const DetailTable: React.FC<DetailTableProps> = ({ data }) => {
       >
         <TabsContent
           value="details"
-          className="flex-grow text-xs overflow-hidden"
+          className="flex-grow overflow-scrollh-full h-2 "
         >
           <Table columns={detailsColumns} data={detailsData} />
         </TabsContent>
@@ -59,7 +58,7 @@ const DetailTable: React.FC<DetailTableProps> = ({ data }) => {
         <TabsContent value="related" className="flex-grow overflow-hidden">
           <Table columns={relatedColumns} data={relatedData} />
         </TabsContent>
-        <TabsList>
+        <TabsList className="mt-2">
           <TabsTrigger value="details" className="text-xs">
             Details
           </TabsTrigger>

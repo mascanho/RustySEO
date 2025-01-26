@@ -55,7 +55,7 @@ export default function Home() {
     >
       <div
         ref={containerRef}
-        className="border-gray-300 rounded-md"
+        className="bg-white rounded-md"
         style={{ height: `${containerHeight}px` }}
       >
         <div
@@ -63,17 +63,18 @@ export default function Home() {
             height: `${containerHeight - bottomTableHeight}px`,
             minHeight: "100px",
           }}
-          className="bg-gray-100"
         >
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
             className="h-full flex flex-col"
           >
-            <TabsList className="w-full justify-start -mb-2">
-              <TabsTrigger value="employees">Employees</TabsTrigger>
-              <TabsTrigger value="departments">Departments</TabsTrigger>
-              <TabsTrigger value="projects">Projects</TabsTrigger>
+            <TabsList className="w-full justify-start -mb-2 bg-gray-50 rounded-none">
+              <TabsTrigger value="crawledPages">Crawled Pages</TabsTrigger>
+              <TabsTrigger value="seoAnalysis">SEO Analysis</TabsTrigger>
+              <TabsTrigger value="technicalDetails">
+                Technical Details
+              </TabsTrigger>
             </TabsList>
             {(Object.keys(tabData) as Array<keyof typeof tabData>).map(
               (tab) => (
