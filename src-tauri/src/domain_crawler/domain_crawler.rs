@@ -4,6 +4,7 @@ use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::{Arc, Mutex};
+use tokio::time::{sleep, Duration};
 use url::Url;
 
 use crate::domain_crawler::helpers;
@@ -34,9 +35,6 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
     let queue = Arc::new(Mutex::new(VecDeque::new()));
     queue.lock().unwrap().push_back(base_url.clone());
 
-    // Store all crawled URLs in a separate variable
-    let all_urls = Arc::new(Mutex::new(Vec::new()));
-
     // Loop until the queue is empty
     while !queue.lock().unwrap().is_empty() {
         // Collect the current batch of URLs to crawl
@@ -53,7 +51,6 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                 let visited = visited.clone();
                 let results = results.clone();
                 let queue = queue.clone();
-                let all_urls = all_urls.clone();
 
                 async move {
                     // Skip if URL already visited
@@ -142,12 +139,6 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                         });
                     }
 
-                    // Store the URL in the all_urls list
-                    {
-                        let mut all_urls_guard = all_urls.lock().unwrap();
-                        all_urls_guard.push(url.to_string());
-                    }
-
                     // If it's not an HTML page, don't extract links
                     if !is_html {
                         return Ok(());
@@ -165,6 +156,9 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                             }
                         }
                     }
+
+                    // Add a delay to avoid overwhelming the server
+                    sleep(Duration::from_millis(500)).await;
 
                     Ok(())
                 }
@@ -189,29 +183,19 @@ fn is_html_page(body: &str, content_type: Option<&str>) -> bool {
     // Check the content-type header for HTML MIME types
     let is_html_header = content_type
         .map(|content_type| {
-            content_type.contains("text/html") || content_type.contains("application/xhtml+xml")
+            content_type.contains("text/html")
+                || content_type.contains("application/xhtml+xml")
+                || content_type.contains("application/xml")
+                || content_type.contains("application/rss+xml")
+                || content_type.contains("application/atom+xml")
         })
         .unwrap_or(false);
 
-    // Check the response body for HTML-like content
+    // Check the response body for HTML-like content using a lightweight HTML parser
     let is_html_body = {
-        // Check for common HTML tags or patterns
-        body.contains("<html")
-            || body.contains("<!DOCTYPE html")
-            || body.contains("<head")
-            || body.contains("<body")
-            || body.contains("<div") // Common HTML tags
-            || body.contains("<p")
-            || body.contains("<a")
-            || body.contains("<img")
-            || body.contains("<script")
-            || body.contains("<style")
-            || body.contains("<h1")
-            || body.contains("<h2")
-            || body.contains("<h3")
-            || body.contains("<h4")
-            || body.contains("<h5")
-            || body.contains("<h6")
+        let document = Html::parse_document(body);
+        let selector = Selector::parse("html, head, body").unwrap(); // Check for common HTML tags
+        document.select(&selector).next().is_some()
     };
 
     // Consider the page HTML if either the header or body suggests it
