@@ -108,6 +108,16 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                         "Not an HTML page".to_string()
                     };
 
+                    // Extract the heaadings on the page
+                    let headings = if is_html {
+                        helpers::headings_selector::headings_selector(&body)
+                            .unwrap_or_else(|| "No Headings".to_string())
+                    } else {
+                        "Not an HTML page".to_string()
+                    };
+
+                    println!("These are the headings:{:?}", headings);
+
                     // Store the result
                     {
                         let mut results_guard = results.lock().unwrap();
