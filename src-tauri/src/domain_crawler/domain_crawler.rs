@@ -1,5 +1,6 @@
 use futures::stream::{self, StreamExt};
 use reqwest::Client;
+use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::{Arc, Mutex};
@@ -178,11 +179,12 @@ fn is_html_page(body: &str, content_type: Option<&str>) -> bool {
         })
         .unwrap_or(false);
 
-    // Check the response body for HTML-like content
-    let is_html_body = body.contains("<html")
-        || body.contains("<!DOCTYPE html")
-        || body.contains("<head")
-        || body.contains("<body");
+    // Check the response body for HTML-like content using a lightweight HTML parser
+    let is_html_body = {
+        let document = Html::parse_document(body);
+        let selector = Selector::parse("*").unwrap(); // Select any element
+        document.select(&selector).next().is_some() // Check if any HTML element exists
+    };
 
     // Consider the page HTML if either the header or body suggests it
     is_html_header || is_html_body
