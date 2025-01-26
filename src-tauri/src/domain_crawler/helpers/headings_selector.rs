@@ -1,12 +1,26 @@
-use regex::Regex;
+use scraper::{Html, Selector};
+use std::collections::HashMap;
 
-pub fn headings_selector(html: &str) -> Option<String> {
-    let re = Regex::new(r#"<h\d>(.*?)</h\d>"#).unwrap();
+pub fn headings_selector(html: &str) -> HashMap<String, Vec<String>> {
+    let document = Html::parse_document(html);
+    // Create a selector for all headings from h1 to h6
+    let selector = Selector::parse("h1, h2, h3, h4, h5, h6").unwrap();
 
-    let headings = re
-        .captures(html)
-        .and_then(|cap| cap.get(1))
-        .map(|heading| heading.as_str().trim().to_string());
+    let mut headings_map: HashMap<String, Vec<String>> = HashMap::new();
 
-    headings
+    for heading in document.select(&selector) {
+        // Get the tag name of the heading (e.g., h1, h2, etc.)
+        let tag_name = heading.value().name(); // This is a &str, no Option involved.
+
+        // Get the text content of the heading
+        let text = heading.text().collect::<String>().trim().to_string();
+
+        // Insert into the map, grouping by the tag name
+        headings_map
+            .entry(tag_name.to_string())
+            .or_insert_with(Vec::new)
+            .push(text);
+    }
+
+    headings_map
 }

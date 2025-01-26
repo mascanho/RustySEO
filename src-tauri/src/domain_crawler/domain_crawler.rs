@@ -2,7 +2,7 @@ use futures::stream::{self, StreamExt};
 use regex::Regex;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::{Arc, Mutex};
 use url::Url;
 
@@ -13,6 +13,7 @@ pub struct DomainCrawlResults {
     pub url: String,
     pub title: String,
     pub description: String,
+    pub headings: HashMap<String, Vec<String>>,
 }
 
 pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, String> {
@@ -109,12 +110,7 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                     };
 
                     // Extract the heaadings on the page
-                    let headings = if is_html {
-                        helpers::headings_selector::headings_selector(&body)
-                            .unwrap_or_else(|| "No Headings".to_string())
-                    } else {
-                        "Not an HTML page".to_string()
-                    };
+                    let headings = helpers::headings_selector::headings_selector(&body);
 
                     println!("These are the headings:{:?}", headings);
 
@@ -124,7 +120,9 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                         results_guard.push(DomainCrawlResults {
                             url: url.to_string(),
                             title: title.clone().to_string(),
+
                             description: description.clone().to_string(),
+                            headings: headings.clone(),
                         });
                     }
 

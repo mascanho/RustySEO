@@ -18,28 +18,14 @@ interface CrawlResult {
   all_files: Record<string, { url: string; file_type: string }>;
 }
 
-const InputZone = () => {
+interface InputZoneProps {
+  handleeDomainCrawl: () => void;
+}
+
+const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
   const { loaders, showLoader, hideLoader } = useLoaderStore();
   const [url, setUrl] = useState("");
   const { setCrawlData } = useGlobalCrawlStore();
-
-  const handleDomainCrawl = async () => {
-    if (!url) return;
-
-    showLoader("globalCrawler");
-    try {
-      const result: CrawlResult = await invoke("crawl_domain", { url });
-      setCrawlData(result);
-      console.log(result, "Global crawl");
-
-      // set the data / result into the session storage
-      sessionStorage.setItem("GlobalCrawldata", JSON.stringify(result));
-    } catch (error) {
-      console.error("Error during crawl:", error);
-    } finally {
-      hideLoader("globalCrawler");
-    }
-  };
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(event.target.value.toLowerCase());

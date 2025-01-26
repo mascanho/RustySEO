@@ -56,7 +56,7 @@ export default function Page() {
     try {
       showLoader("domainCrawl");
       const result = await invoke("domain_crawl_command", {
-        domain: "https://www.algarvewonders.com/",
+        domain: "https://www.slimstock.com",
       });
       console.log("Crawl Result:", result);
       hideLoader("domainCrawl");
@@ -68,7 +68,7 @@ export default function Page() {
 
   return (
     <main className="flex h-full w-full">
-      <InputZone />
+      <InputZone handleDomainCrawl={handleDomainCrawl} />
       <section className="w-full border-none h-full  dark:bg-brand-dark shadow-none rounded-md">
         <div className="relative">
           <input

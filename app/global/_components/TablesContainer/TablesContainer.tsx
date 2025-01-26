@@ -15,7 +15,7 @@ export default function Home() {
   const [selectedCellData, setSelectedCellData] = useState<CellData | null>(
     null,
   );
-  const [activeTab, setActiveTab] = useState("employees");
+  const [activeTab, setActiveTab] = useState("crawledPages");
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
