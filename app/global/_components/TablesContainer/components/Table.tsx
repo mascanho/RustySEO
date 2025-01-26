@@ -134,7 +134,7 @@ const Table: React.FC<TableProps> = ({
 
   return (
     <div className="overflow-x-auto flex-1">
-      <div className="mb-4 flex justify-between items-center">
+      <div className="flex justify-end items-center">
         <SearchInput value={globalFilter || ""} onChange={setGlobalFilter} />
         <ColumnSelector
           columns={columns}
@@ -142,7 +142,7 @@ const Table: React.FC<TableProps> = ({
           setVisibleColumns={setVisibleColumns}
         />
       </div>
-      <div className="overflow-x-auto overflow-y-auto  border border-gray-300 rounded-md h-full min-h[800px]">
+      <div className="overflow-x-auto overflow-y-auto  border border-gray-300 rounded-md h-full min-h[800px] text-xs">
         <div {...getTableProps()} className="inline-block min-w-2">
           <div className="sticky top-0 bg-gray-100">
             {headerGroups.map((headerGroup) => {

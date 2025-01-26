@@ -45,9 +45,25 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-[200px] justify-between"
+          className="w-fit p-0 h-6 pl-2 border justify-end"
         >
-          Select columns
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-4 w-4 mr-2"
+          >
+            <path d="M3 3h7v7H3z" />
+            <path d="M14 3h7v7h-7z" />
+            <path d="M14 14h7v7h-7z" />
+            <path d="M3 14h7v7H3z" />
+          </svg>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>

@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useVisibilityStore } from "@/store/VisibilityStore";
 
 export default function TablesContainer() {
-  const [topTableHeight, setTopTableHeight] = useState(300);
+  const [topTableHeight, setTopTableHeight] = useState(35);
   const [selectedCellData, setSelectedCellData] = useState<CellData | null>(
     null,
   );
@@ -32,21 +32,21 @@ export default function TablesContainer() {
 
   return (
     <div
-      className={`mx-auto pt-6 flex flex-col h-screen flex-grow-0 ${visibility.sidebar ? "w-[calc(96.6vw-15rem)]" : "w-full"}`}
+      className={`mx-auto pt-8 flex flex-col h-screen bg-white -mr-4 flex-grow-0 ${visibility.sidebar ? "w-[calc(96.6vw-15rem)]" : "w-full"}`}
     >
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="w-full bg-gray-200"
+      >
+        <TabsList>
+          <TabsTrigger value="details">Details</TabsTrigger>
+          <TabsTrigger value="history">History</TabsTrigger>
+          <TabsTrigger value="related">Related</TabsTrigger>
+        </TabsList>
+      </Tabs>
       <div className=" rounded-md h-full min-h[calc(100vh-100px)] overflow-hidden">
-        <div style={{ height: `${topTableHeight}px`, overflow: "auto" }}>
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="w-full"
-          >
-            <TabsList>
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="history">History</TabsTrigger>
-              <TabsTrigger value="related">Related</TabsTrigger>
-            </TabsList>
-          </Tabs>
+        <div style={{ height: `${topTableHeight}rem`, overflow: "auto" }}>
           <Table
             columns={columns}
             data={data}
