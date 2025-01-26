@@ -96,6 +96,20 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                     // Check if the response is an HTML page
                     let is_html = is_html_page(&body, content_type.as_deref());
 
+                    // Debug log for pages incorrectly classified as non-HTML
+                    if !is_html {
+                        println!("Page classified as non-HTML: {}", url);
+                        println!("Content-Type: {:?}", content_type);
+
+                        // Log the first 100 characters of the body, or the entire body if it's shorter
+                        let body_snippet = if body.len() > 100 {
+                            &body[..100]
+                        } else {
+                            &body
+                        };
+                        println!("Body snippet: {}", body_snippet);
+                    }
+
                     // Extract the title if it's an HTML page
                     let title = if is_html {
                         helpers::title_selector::extract_title(&body)
@@ -179,11 +193,25 @@ fn is_html_page(body: &str, content_type: Option<&str>) -> bool {
         })
         .unwrap_or(false);
 
-    // Check the response body for HTML-like content using a lightweight HTML parser
+    // Check the response body for HTML-like content
     let is_html_body = {
-        let document = Html::parse_document(body);
-        let selector = Selector::parse("*").unwrap(); // Select any element
-        document.select(&selector).next().is_some() // Check if any HTML element exists
+        // Check for common HTML tags or patterns
+        body.contains("<html")
+            || body.contains("<!DOCTYPE html")
+            || body.contains("<head")
+            || body.contains("<body")
+            || body.contains("<div") // Common HTML tags
+            || body.contains("<p")
+            || body.contains("<a")
+            || body.contains("<img")
+            || body.contains("<script")
+            || body.contains("<style")
+            || body.contains("<h1")
+            || body.contains("<h2")
+            || body.contains("<h3")
+            || body.contains("<h4")
+            || body.contains("<h5")
+            || body.contains("<h6")
     };
 
     // Consider the page HTML if either the header or body suggests it
