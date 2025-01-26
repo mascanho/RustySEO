@@ -1,16 +1,21 @@
 use crate::domain_crawler::domain_crawler;
 
+use super::domain_crawler::DomainCrawlResults;
+
 #[tauri::command]
-pub async fn domain_crawl_command(domain: String) -> Result<Vec<(String, String)>, String> {
+pub async fn domain_crawl_command(domain: String) -> Result<Vec<DomainCrawlResults>, String> {
     // Call the crawl_domain function and handle its result
     match domain_crawler::crawl_domain(&domain).await {
-        Ok(links_with_titles) => {
+        Ok(links) => {
             println!("Discovered links with titles:");
-            for (url, title) in &links_with_titles {
-                println!("URL: {}, Title: {}", url, title);
+            for data in &links {
+                println!(
+                    "URL: {:?}, Title: {:?} Description: {:?}",
+                    data.url, data.title, data.description
+                );
             }
-            // Explicitly return the links with titles
-            Ok(links_with_titles)
+            // Explicitly return the data crawled
+            Ok(links)
         }
         Err(e) => {
             eprintln!("Error: {}", e);

@@ -1,10 +1,9 @@
-use scraper::{Html, Selector};
-
-pub fn extract_page_description(document: &Html) -> Option<String> {
-    let description_selector = Selector::parse("meta[name=description]").unwrap();
-    document
-        .select(&description_selector)
-        .next()
-        .and_then(|e| e.value().attr("content"))
-        .map(|s| s.to_string())
+pub fn extract_page_description(html: &str) -> Option<String> {
+    html.find("<meta name=\"description\" content=\"")
+        .map(|start| {
+            let start = start + "<meta name=\"description\" content=\"".len();
+            let end = html[start..].find('"');
+            end.map(|end| html[start..start + end].to_string())
+        })
+        .flatten()
 }

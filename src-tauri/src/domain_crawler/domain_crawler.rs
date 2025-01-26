@@ -1,11 +1,21 @@
 use futures::stream::{self, StreamExt};
 use regex::Regex;
 use reqwest::Client;
+use serde::{Deserialize, Serialize};
 use std::collections::{HashSet, VecDeque};
 use std::sync::{Arc, Mutex};
 use url::Url;
 
-pub async fn crawl_domain(domain: &str) -> Result<Vec<(String, String)>, String> {
+use crate::domain_crawler::helpers;
+
+#[derive(Serialize, Debug, Deserialize, Clone)]
+pub struct DomainCrawlResults {
+    pub url: String,
+    pub title: String,
+    pub description: String,
+}
+
+pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, String> {
     // Create a client with a trustworthy user-agent
     let client = Client::builder()
         .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
@@ -90,10 +100,22 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<(String, String)>, String>
                         "Not an HTML page".to_string()
                     };
 
+                    // Extract the page description if it's an HTML page
+                    let description = if is_html {
+                        helpers::page_description::extract_page_description(&body)
+                            .unwrap_or_else(|| "No Description".to_string())
+                    } else {
+                        "Not an HTML page".to_string()
+                    };
+
                     // Store the result
                     {
                         let mut results_guard = results.lock().unwrap();
-                        results_guard.push((url.to_string(), title.clone()));
+                        results_guard.push(DomainCrawlResults {
+                            url: url.to_string(),
+                            title: title.clone().to_string(),
+                            description: description.clone().to_string(),
+                        });
                     }
 
                     // Store the URL in the all_urls list

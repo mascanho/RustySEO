@@ -1,12 +1,8 @@
-use reqwest::blocking::Client;
-use scraper::{Html, Selector};
-use std::collections::HashSet;
-use url::{ParseError, Url};
+use regex::Regex;
 
-pub fn extract_title(document: &Html) -> Option<String> {
-    let title_selector = Selector::parse("title").unwrap();
-    document
-        .select(&title_selector)
-        .next()
-        .map(|e| e.inner_html())
+pub fn extract_title(html: &str) -> Option<String> {
+    let re = Regex::new(r"<title>(.*?)</title>").unwrap();
+    re.captures(html)
+        .and_then(|cap| cap.get(1))
+        .map(|title| title.as_str().trim().to_string())
 }

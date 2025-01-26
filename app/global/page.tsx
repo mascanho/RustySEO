@@ -17,6 +17,7 @@ import {
 import SidebarContainer from "./_components/Sidebar/SidebarContainer";
 import { useVisibilityStore } from "@/store/VisibilityStore";
 import TaskManagerContainer from "../components/ui/TaskManager/TaskManagerContainer";
+import TablesContainer from "./_components/TablesContainer/TablesContainer";
 
 // Define the expected type of the result from the `crawl_domain` function
 interface PageDetails {
@@ -50,55 +51,6 @@ export default function Page() {
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(event.target.value.toLowerCase());
   };
-
-  const handleSortChange = (field: "url" | "title" | "h1" | "file_type") => {
-    if (sortField === field) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortOrder("asc");
-    }
-  };
-
-  const filterData = (data: Record<string, PageDetails>) => {
-    return Object.entries(data).filter(([url, details]) => {
-      return (
-        url.toLowerCase().includes(search) ||
-        details.title.toLowerCase().includes(search) ||
-        details.h1.toLowerCase().includes(search)
-      );
-    });
-  };
-
-  const sortData = (data: [string, PageDetails][]) => {
-    return data.sort(([aUrl, aDetails], [bUrl, bDetails]) => {
-      let aValue, bValue;
-      if (sortField === "url") {
-        aValue = aUrl;
-        bValue = bUrl;
-      } else if (sortField === "title") {
-        aValue = aDetails.title;
-        bValue = bDetails.title;
-      } else if (sortField === "h1") {
-        aValue = aDetails.h1;
-        bValue = bDetails.h1;
-      } else {
-        // Handling file_type sort for the all_files table
-        aValue = aDetails.file_type;
-        bValue = bDetails.file_type;
-      }
-
-      if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
-      if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
-      return 0;
-    });
-  };
-
-  const visitedUrlsEntries = data ? filterData(data.visited_urls) : [];
-  const sortedVisitedUrls = sortData(visitedUrlsEntries);
-
-  const allFilesEntries = data ? Object.entries(data.all_files) : [];
-  const sortedAllFiles = sortData(allFilesEntries);
 
   const handleDomainCrawl = async () => {
     try {
@@ -160,94 +112,7 @@ export default function Page() {
             value="first"
             className="flex flex-col space-y-8 overflow-scroll"
           >
-            <section className="text-white h-[58.9rem] overflow-auto dark:bg-brand-darker mt-8">
-              <div className="h-full w-full">
-                {/* <h2 className="text-xl font-bold mb-4">Visited URLs</h2> */}
-                <div className="h-96 overflow-auto  w-full text-black dark:text-white/50">
-                  <table className="w-full text-xs">
-                    <thead>
-                      <tr>
-                        <th
-                          className="text-left cursor-pointer text-xs"
-                          onClick={() => handleSortChange("url")}
-                        >
-                          URL{" "}
-                          {sortField === "url" &&
-                            (sortOrder === "asc" ? "↑" : "↓")}
-                        </th>
-                        <th
-                          className="text-left cursor-pointer"
-                          onClick={() => handleSortChange("title")}
-                        >
-                          Title{" "}
-                          {sortField === "title" &&
-                            (sortOrder === "asc" ? "↑" : "↓")}
-                        </th>
-                        <th
-                          className="text-left cursor-pointer"
-                          onClick={() => handleSortChange("h1")}
-                        >
-                          H1{" "}
-                          {sortField === "h1" &&
-                            (sortOrder === "asc" ? "↑" : "↓")}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sortedVisitedUrls.map(([url, details]) => (
-                        <tr key={url} className="border-t">
-                          <td className="py-2">{url}</td>
-                          <td className="py-2">{details.title}</td>
-                          <td className="py-2">{details.h1}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <h2 className="text-xs font-bold mt-8 mb-4 dark:text-white text-black">
-                  All Files
-                </h2>
-                <button
-                  onClick={() => handleDomainCrawl()}
-                  className="text-white bg-red-500"
-                >
-                  Download All Files
-                </button>
-                <div className="h-96 overflow-auto border-0 rounded-md">
-                  <table className="w-full text-xs text-black dark:text-white/50">
-                    <thead>
-                      <tr>
-                        <th
-                          className="text-left cursor-pointer"
-                          onClick={() => handleSortChange("url")}
-                        >
-                          URL{" "}
-                          {sortField === "url" &&
-                            (sortOrder === "asc" ? "↑" : "↓")}
-                        </th>
-                        <th
-                          className="text-left cursor-pointer"
-                          onClick={() => handleSortChange("file_type")}
-                        >
-                          File Type{" "}
-                          {sortField === "file_type" &&
-                            (sortOrder === "asc" ? "↑" : "↓")}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sortedAllFiles.map(([url, details]) => (
-                        <tr key={url} className="border-t">
-                          <td className="py-2">{details.url}</td>
-                          <td className="py-2">{details.file_type}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </section>
+            <TablesContainer />
           </Tabs.Panel>
 
           <Tabs.Panel
@@ -261,7 +126,7 @@ export default function Page() {
         </Tabs>
       </section>
       <aside
-        className={`transition-all ease-linear delay-100  ${visibility.sidebar ? "w-[24.3rem]" : "w-0 "} h-[58.6rem]`}
+        className={`transition-all ease-linear delay-100  ${visibility.sidebar ? "w-[24.3rem] flex-grow" : "w-0 "} h-[58.6rem] `}
       >
         <SidebarContainer />
       </aside>
