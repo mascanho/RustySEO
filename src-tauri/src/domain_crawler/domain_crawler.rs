@@ -1,6 +1,7 @@
 use futures::stream::{self, StreamExt};
 use regex::Regex;
 use reqwest::Client;
+use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::{Arc, Mutex};
@@ -96,7 +97,8 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
 
                     // Extract the title if it's an HTML page
                     let title = if is_html {
-                        extract_title(&body).unwrap_or_else(|| "No Title".to_string())
+                        helpers::title_selector::extract_title(&body)
+                            .unwrap_or_else(|| "No Title".to_string())
                     } else {
                         "Not an HTML page".to_string()
                     };
@@ -136,17 +138,8 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                     if !is_html {
                         return Ok(());
                     }
-
-                    // Extract links using regex
-                    let re = Regex::new(r#"href="([^"]+)"#).unwrap();
-                    let links: Vec<Url> = re
-                        .captures_iter(&body)
-                        .filter_map(|cap| {
-                            let href = cap.get(1)?.as_str();
-                            build_full_url(&base_url, href).ok()
-                        })
-                        .filter(|next_url| next_url.domain() == base_url.domain()) // Filter by domain
-                        .collect();
+                    // GET THE LINKS FROM THE PAGE AND CRAWL THEM
+                    let links = helpers::links_selector::extract_links(&body, &base_url);
 
                     // Add new links to the queue
                     {
@@ -161,7 +154,7 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                     Ok(())
                 }
             })
-            .buffer_unordered(5); // Limit concurrency to 5
+            .buffer_unordered(10); // Limit concurrency to 5
 
         // Execute the stream for the current batch
         while let Some(result) = stream.next().await {
@@ -174,17 +167,4 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
     // Return the results
     let results_guard = results.lock().unwrap();
     Ok(results_guard.clone())
-}
-
-/// Extracts the title from the HTML content
-fn extract_title(html: &str) -> Option<String> {
-    let re = Regex::new(r"<title>(.*?)</title>").ok()?;
-    re.captures(html)
-        .and_then(|cap| cap.get(1))
-        .map(|title| title.as_str().trim().to_string())
-}
-
-/// Builds a full URL from a base URL and a relative or absolute href
-fn build_full_url(base_url: &Url, href: &str) -> Result<Url, url::ParseError> {
-    Url::options().base_url(Some(base_url)).parse(href)
 }
