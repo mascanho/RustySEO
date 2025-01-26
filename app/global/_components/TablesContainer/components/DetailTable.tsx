@@ -24,7 +24,7 @@ const DetailTable: React.FC<DetailTableProps> = ({ data }) => {
   ];
 
   const relatedColumns: Column[] = [
-    { Header: "ID", accessor: "id" },
+    { Header: "ID", accessor: "id", width: 60 },
     { Header: "Name", accessor: "name" },
     { Header: "Relation", accessor: "relation" },
   ];
@@ -41,30 +41,34 @@ const DetailTable: React.FC<DetailTableProps> = ({ data }) => {
   const relatedData = data?.related || [];
 
   return (
-    <div className="w-full">
-      <div className="mb-4">
-        <Table
-          columns={
-            activeTab === "details"
-              ? detailsColumns
-              : activeTab === "history"
-                ? historyColumns
-                : relatedColumns
-          }
-          data={
-            activeTab === "details"
-              ? detailsData
-              : activeTab === "history"
-                ? historyData
-                : relatedData
-          }
-        />
-      </div>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+    <div className="w-full h-full flex flex-col m-0 text-xs ">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="flex-grow flex flex-col"
+      >
+        <TabsContent
+          value="details"
+          className="flex-grow text-xs overflow-hidden"
+        >
+          <Table columns={detailsColumns} data={detailsData} />
+        </TabsContent>
+        <TabsContent value="history" className="flex-grow overflow-hidden">
+          <Table columns={historyColumns} data={historyData} />
+        </TabsContent>
+        <TabsContent value="related" className="flex-grow overflow-hidden">
+          <Table columns={relatedColumns} data={relatedData} />
+        </TabsContent>
         <TabsList>
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-          <TabsTrigger value="related">Related</TabsTrigger>
+          <TabsTrigger value="details" className="text-xs">
+            Details
+          </TabsTrigger>
+          <TabsTrigger value="history" className="text-xs">
+            History
+          </TabsTrigger>
+          <TabsTrigger value="related" className="text-xs">
+            Related
+          </TabsTrigger>
         </TabsList>
       </Tabs>
     </div>

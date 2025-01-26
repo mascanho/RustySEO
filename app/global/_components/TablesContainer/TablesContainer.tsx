@@ -1,66 +1,100 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Table from "./components/Table";
 import DetailTable from "./components/DetailTable";
 import ResizableDivider from "./components/ResizableDivider";
-import { columns, data, cellDetails } from "./data/SampleData";
+import { columns, data, cellDetails, tabData } from "./data/sampleData";
 import type { CellData } from "./types/table";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useVisibilityStore } from "@/store/VisibilityStore";
 
-export default function TablesContainer() {
-  const [topTableHeight, setTopTableHeight] = useState(35);
+export default function Home() {
+  const [containerHeight, setContainerHeight] = useState(600);
+  const [bottomTableHeight, setBottomTableHeight] = useState(200);
   const [selectedCellData, setSelectedCellData] = useState<CellData | null>(
     null,
   );
-  const [activeTab, setActiveTab] = useState("details");
+  const [activeTab, setActiveTab] = useState("employees");
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
 
-  const handleResize = (newHeight: number) => {
-    setTopTableHeight(newHeight);
-  };
+  useEffect(() => {
+    const updateHeight = () => {
+      const windowHeight = window.innerHeight;
+      const newContainerHeight = windowHeight - 144; // Adjust for padding and other elements
+      setContainerHeight(newContainerHeight);
+      setBottomTableHeight(Math.floor(newContainerHeight / 3));
+    };
 
-  const handleCellClick = (rowIndex: number, columnId: string) => {
+    updateHeight();
+    window.addEventListener("resize", updateHeight);
+    return () => window.removeEventListener("resize", updateHeight);
+  }, []);
+
+  const handleResize = useCallback((newBottomHeight: number) => {
+    setBottomTableHeight(newBottomHeight);
+  }, []);
+
+  const handleCellClick = useCallback((rowIndex: number, columnId: string) => {
     const cellKey = `${rowIndex}-${columnId}`;
     setSelectedCellData(cellDetails[cellKey] || null);
-  };
+  }, []);
 
-  const handleCellRightClick = (rowIndex: number, columnId: string) => {
-    handleCellClick(rowIndex, columnId);
-  };
+  const handleCellRightClick = useCallback(
+    (rowIndex: number, columnId: string) => {
+      handleCellClick(rowIndex, columnId);
+    },
+    [handleCellClick],
+  );
 
   return (
     <div
-      className={`mx-auto pt-8 flex flex-col h-screen bg-white -mr-4 flex-grow-0 ${visibility.sidebar ? "w-[calc(96.6vw-15rem)]" : "w-full"}`}
+      className={`mx-0 mt-8 h-screen ${visibility.sidebar ? "w-[calc(100vw-18rem)]" : ""}`}
     >
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="w-full bg-gray-200"
+      <div
+        ref={containerRef}
+        className="border-gray-300 rounded-md"
+        style={{ height: `${containerHeight}px` }}
       >
-        <TabsList>
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-          <TabsTrigger value="related">Related</TabsTrigger>
-        </TabsList>
-      </Tabs>
-      <div className=" rounded-md h-full min-h[calc(100vh-100px)] overflow-hidden">
-        <div style={{ height: `${topTableHeight}rem`, overflow: "auto" }}>
-          <Table
-            columns={columns}
-            data={data}
-            onCellClick={handleCellClick}
-            onCellRightClick={handleCellRightClick}
-          />
-        </div>
-        <ResizableDivider onResize={handleResize} />
         <div
           style={{
-            height: `calc(100vh - ${topTableHeight}px - 100px)`,
-            overflow: "auto",
+            height: `${containerHeight - bottomTableHeight}px`,
+            minHeight: "100px",
           }}
+          className="bg-gray-100"
         >
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="h-full flex flex-col"
+          >
+            <TabsList className="w-full justify-start -mb-2">
+              <TabsTrigger value="employees">Employees</TabsTrigger>
+              <TabsTrigger value="departments">Departments</TabsTrigger>
+              <TabsTrigger value="projects">Projects</TabsTrigger>
+            </TabsList>
+            {(Object.keys(tabData) as Array<keyof typeof tabData>).map(
+              (tab) => (
+                <TabsContent
+                  key={tab}
+                  value={tab}
+                  className="flex-grow overflow-hidden"
+                >
+                  <Table
+                    columns={tabData[tab].columns}
+                    data={tabData[tab].data}
+                    onCellClick={handleCellClick}
+                    onCellRightClick={handleCellRightClick}
+                  />
+                </TabsContent>
+              ),
+            )}
+          </Tabs>
+        </div>
+        <ResizableDivider onResize={handleResize} containerRef={containerRef} />
+        <div style={{ height: `${bottomTableHeight}px`, minHeight: "100px" }}>
           <DetailTable data={selectedCellData} />
         </div>
       </div>

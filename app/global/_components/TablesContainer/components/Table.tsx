@@ -17,7 +17,6 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface TableProps {
   columns: Column[];
@@ -42,7 +41,7 @@ const Table: React.FC<TableProps> = ({
 
   const defaultColumn = useMemo(
     () => ({
-      minWidth: 100,
+      minWidth: 60,
       width: 150,
       maxWidth: 400,
     }),
@@ -101,17 +100,20 @@ const Table: React.FC<TableProps> = ({
       const isSelected =
         selectedCell?.rowIndex === rowIndex &&
         selectedCell?.columnId === cell.column.id;
+      const isIdColumn = cell.column.id === "id";
 
       return (
         <ContextMenu key={key}>
           <ContextMenuTrigger>
             <div
               {...cellProps}
-              className={`flex items-center p-2 border-b border-r border-gray-200 truncate cursor-pointer hover:bg-gray-100 ${
+              className={`flex items-center p-0.5 text-xs border-b border-r border-gray-200 truncate cursor-pointer hover:bg-gray-100 ${
                 isSelected ? "bg-blue-200" : ""
-              }`}
+              } ${isIdColumn ? "justify-center" : ""}`}
               style={{
-                width: cell.column.width,
+                width: isIdColumn ? "auto" : cell.column.width,
+                minWidth: isIdColumn ? 60 : cell.column.minWidth,
+                maxWidth: isIdColumn ? "none" : cell.column.maxWidth,
                 borderRight: "1px solid #e5e7eb",
               }}
               onClick={() => handleCellClick(rowIndex, cell.column.id)}
@@ -133,8 +135,8 @@ const Table: React.FC<TableProps> = ({
   );
 
   return (
-    <div className="overflow-x-auto flex-1">
-      <div className="flex justify-end items-center">
+    <div className="flex flex-col h-full text-sm bg-white">
+      <div className="flex justify-between items-center">
         <SearchInput value={globalFilter || ""} onChange={setGlobalFilter} />
         <ColumnSelector
           columns={columns}
@@ -142,9 +144,9 @@ const Table: React.FC<TableProps> = ({
           setVisibleColumns={setVisibleColumns}
         />
       </div>
-      <div className="overflow-x-auto overflow-y-auto  border border-gray-300 rounded-md h-full min-h[800px] text-xs">
-        <div {...getTableProps()} className="inline-block min-w-2">
-          <div className="sticky top-0 bg-gray-100">
+      <div className="flex-grow overflow-auto border border-gray-300 rounded-md">
+        <div {...getTableProps()} className="inline-block min-w-full">
+          <div className="sticky top-0 z-10 bg-gray-100">
             {headerGroups.map((headerGroup) => {
               const { key, ...headerGroupProps } =
                 headerGroup.getHeaderGroupProps();
@@ -159,10 +161,17 @@ const Table: React.FC<TableProps> = ({
                         <div
                           key={key}
                           {...columnProps}
-                          className="font-semibold text-left p-2 border-b border-gray-200 relative bg-gray-100"
-                          style={{ width: column.width }}
+                          className="font-semibold text-left p-0.5 text-xs border-b border-gray-200 relative bg-gray-100"
+                          style={{
+                            width: column.id === "id" ? "auto" : column.width,
+                            minWidth: column.id === "id" ? 60 : column.minWidth,
+                            maxWidth:
+                              column.id === "id" ? "none" : column.maxWidth,
+                          }}
                         >
-                          <div className="flex items-center justify-between h-full">
+                          <div
+                            className={`flex items-center justify-between h-full ${column.id === "id" ? "justify-center" : ""}`}
+                          >
                             {column.render("Header")}
                             <span className="ml-2">
                               {column.isSorted
@@ -172,12 +181,14 @@ const Table: React.FC<TableProps> = ({
                                 : ""}
                             </span>
                           </div>
-                          <div
-                            {...column.getResizerProps()}
-                            className={`absolute right-0 top-0 h-full w-px bg-gray-300 cursor-col-resize hover:bg-blue-500 transition-colors duration-200 ${
-                              column.isResizing ? "bg-blue-500" : ""
-                            }`}
-                          />
+                          {column.id !== "id" && (
+                            <div
+                              {...column.getResizerProps()}
+                              className={`absolute right-0 top-0 h-full w-px bg-gray-300 cursor-col-resize hover:bg-blue-500 transition-colors duration-200 ${
+                                column.isResizing ? "bg-blue-500" : ""
+                              }`}
+                            />
+                          )}
                         </div>
                       );
                     },

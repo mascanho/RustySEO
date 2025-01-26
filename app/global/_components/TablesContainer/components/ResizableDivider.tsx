@@ -1,42 +1,70 @@
-import React, { useState, useCallback } from "react";
+import type React from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 
 interface ResizableDividerProps {
-  onResize: (newHeight: number) => void;
+  onResize: (newBottomHeight: number) => void;
+  containerRef: React.RefObject<HTMLDivElement>;
 }
 
-const ResizableDivider: React.FC<ResizableDividerProps> = ({ onResize }) => {
+const ResizableDivider: React.FC<ResizableDividerProps> = ({
+  onResize,
+  containerRef,
+}) => {
   const [isDragging, setIsDragging] = useState(false);
+  const startYRef = useRef<number | null>(null);
+  const startBottomHeightRef = useRef<number | null>(null);
 
-  const handleMouseDown = useCallback(() => {
-    setIsDragging(true);
-  }, []);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      setIsDragging(true);
+      startYRef.current = e.clientY;
+      startBottomHeightRef.current = containerRef.current
+        ? containerRef.current.getBoundingClientRect().bottom - e.clientY
+        : null;
+    },
+    [containerRef],
+  );
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (
+        isDragging &&
+        startYRef.current !== null &&
+        startBottomHeightRef.current !== null &&
+        containerRef.current
+      ) {
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const deltaY = e.clientY - startYRef.current;
+        const newBottomHeight = Math.max(
+          100,
+          startBottomHeightRef.current - deltaY,
+        );
+        const maxBottomHeight = containerRect.height - 100; // Ensure top section is at least 100px
+        onResize(Math.min(newBottomHeight, maxBottomHeight));
+      }
+    },
+    [isDragging, onResize, containerRef],
+  );
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
+    startYRef.current = null;
+    startBottomHeightRef.current = null;
   }, []);
 
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (isDragging) {
-        onResize(e.clientY);
-      }
-    },
-    [isDragging, onResize],
-  );
-
-  React.useEffect(() => {
+  useEffect(() => {
     if (isDragging) {
+      document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
-      document.addEventListener("mousemove", handleMouseMove as any);
     } else {
+      document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
-      document.removeEventListener("mousemove", handleMouseMove as any);
     }
     return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
-      document.removeEventListener("mousemove", handleMouseMove as any);
     };
-  }, [isDragging, handleMouseUp, handleMouseMove]);
+  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   return (
     <div
