@@ -1,6 +1,6 @@
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import React from "react";
-import Summary from "./DropDowns/Summary";
+import Summary from "./DropDowns/Summary/Summary";
 import PageTitles from "./DropDowns/PageTitles/PageTitles";
 
 const GeneralTopSideBarContainer = () => {
@@ -9,7 +9,7 @@ const GeneralTopSideBarContainer = () => {
   console.log(typeof domainCrawlData.crawlData);
 
   return (
-    <div className="text-sx w-full">
+    <div className="text-sx w-full space-y-1">
       <Summary />
       <PageTitles />
     </div>

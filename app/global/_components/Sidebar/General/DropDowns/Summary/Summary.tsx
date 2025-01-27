@@ -1,3 +1,4 @@
+// @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import React from "react";
 
@@ -8,11 +9,13 @@ const Summary = () => {
 
   return (
     <div className="text-sx w-full">
-      <details className="mx-2">
-        <summary className="text-xs">Summary</summary>
+      <details className="w-full">
+        <summary className="text-xs border-b pl-2 py-1">Summary</summary>
 
-        <section className="flex items-center text-xs ml-4 justify-between">
-          <span className="font-bold text-brand-bright">URLs crawled </span>
+        <section className="flex items-center text-xs w-full px-2 justify-between border-b">
+          <span className="font-bold text-brand-bright w-full pl-4 py-1">
+            URLs crawled{" "}
+          </span>
           <div>{domainCrawlData?.crawlData?.length} </div>
         </section>
       </details>
