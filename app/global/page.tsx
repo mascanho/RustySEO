@@ -40,6 +40,8 @@ export default function Page() {
   const { loaders, showLoader, hideLoader } = useLoaderStore();
   const { crawlData } = useGlobalCrawlStore();
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
+  const domainCrawlData = useGlobalCrawlStore();
+  const allData = domainCrawlData.crawlData;
 
   useEffect(() => {
     const sessionData = sessionStorage.getItem("GlobalCrawldata");
@@ -58,6 +60,7 @@ export default function Page() {
       const result = await invoke("domain_crawl_command", {
         domain: "https://www.algarvewonders.com/",
       });
+      domainCrawlData.setDomainCrawlData(result);
       console.log("Crawl Result:", result);
       hideLoader("domainCrawl");
     } catch (error) {

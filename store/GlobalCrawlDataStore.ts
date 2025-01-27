@@ -13,14 +13,14 @@ export interface CrawlResult {
 
 interface CrawlStore {
   crawlData: CrawlResult | null;
-  setCrawlData: (data: CrawlResult) => void;
-  clearCrawlData: () => void;
+  setDomainCrawlData: (data: CrawlResult) => void;
+  clearDomainCrawlData: () => void;
 }
 
 const useGlobalCrawlStore = create<CrawlStore>((set) => ({
   crawlData: null,
-  setCrawlData: (data) => set({ crawlData: data }),
-  clearCrawlData: () => set({ crawlData: null }),
+  setDomainCrawlData: (data) => set({ crawlData: data }),
+  clearDomainCrawlData: () => set({ crawlData: null }),
 }));
 
 export default useGlobalCrawlStore;
