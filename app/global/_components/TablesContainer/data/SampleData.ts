@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { Column, Data, CellData, TabData } from "../types/table";
 
 export const columns: Column[] = [

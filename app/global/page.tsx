@@ -56,7 +56,7 @@ export default function Page() {
     try {
       showLoader("domainCrawl");
       const result = await invoke("domain_crawl_command", {
-        domain: "https://www.slimstock.com/",
+        domain: "https://www.algarvewonders.com/",
       });
       console.log("Crawl Result:", result);
       hideLoader("domainCrawl");

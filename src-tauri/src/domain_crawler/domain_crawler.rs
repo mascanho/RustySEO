@@ -3,11 +3,14 @@ use reqwest::Client;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::io::Write;
 use std::sync::{Arc, Mutex};
 use tokio::time::{sleep, Duration};
-use url::Url;
+use url::Url; // Import the Write trait to use the flush method
 
 use crate::domain_crawler::helpers;
+
+use super::helpers::javascript_selector::JavaScript;
 
 #[derive(Serialize, Debug, Deserialize, Clone)]
 pub struct DomainCrawlResults {
@@ -15,6 +18,9 @@ pub struct DomainCrawlResults {
     pub title: String,
     pub description: String,
     pub headings: HashMap<String, Vec<String>>,
+    pub javascript: JavaScript,
+    pub images: Vec<String>,
+    pub status_code: u16,
 }
 
 pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, String> {
@@ -35,6 +41,10 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
     let queue = Arc::new(Mutex::new(VecDeque::new()));
     queue.lock().unwrap().push_back(base_url.clone());
 
+    // Track total URLs and crawled URLs for progress
+    let total_urls = Arc::new(Mutex::new(1)); // Start with 1 (the base URL)
+    let crawled_urls = Arc::new(Mutex::new(0));
+
     // Loop until the queue is empty
     while !queue.lock().unwrap().is_empty() {
         // Collect the current batch of URLs to crawl
@@ -51,6 +61,8 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                 let visited = visited.clone();
                 let results = results.clone();
                 let queue = queue.clone();
+                let total_urls = total_urls.clone();
+                let crawled_urls = crawled_urls.clone();
 
                 async move {
                     // Skip if URL already visited
@@ -63,7 +75,7 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                     }
 
                     // Output the URL being crawled
-                    println!("Crawling: {}", url);
+                    // println!("Crawling: {}", url);
 
                     // Fetch the page content
                     let response = match client.get(url.as_str()).send().await {
@@ -81,6 +93,9 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                         .and_then(|header| header.to_str().ok())
                         .map(|s| s.to_string());
 
+                    // CHECK THE STATUS CODE OF EACH URL REPONSE
+                    let status_code = response.status().as_u16();
+
                     // Consume the response body
                     let body = match response.text().await {
                         Ok(body) => body,
@@ -91,7 +106,8 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                     };
 
                     // Check if the response is an HTML page
-                    let is_html = is_html_page(&body, content_type.as_deref());
+                    let is_html =
+                        helpers::check_html_page::is_html_page(&body, content_type.as_deref());
 
                     // Debug log for pages incorrectly classified as non-HTML
                     if !is_html {
@@ -126,9 +142,13 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                     // Extract the headings on the page
                     let headings = helpers::headings_selector::headings_selector(&body);
 
-                    println!("These are the headings:{:?}", headings);
+                    // Extract the JavaScript on the page
+                    let javascript = helpers::javascript_selector::extract_javascript(&body);
 
-                    // Store the result
+                    // EXTRACT THE IMAGES FROM THE PAGE
+                    let images = helpers::images_selector::extract_images(&body);
+
+                    // STORE THE RESULTS
                     {
                         let mut results_guard = results.lock().unwrap();
                         results_guard.push(DomainCrawlResults {
@@ -136,7 +156,16 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                             title: title.clone().to_string(),
                             description: description.clone().to_string(),
                             headings: headings.clone(),
+                            javascript: javascript.clone(),
+                            images: images.clone(),
+                            status_code,
                         });
+                    }
+
+                    // Increment the crawled URLs counter
+                    {
+                        let mut crawled_urls_guard = crawled_urls.lock().unwrap();
+                        *crawled_urls_guard += 1;
                     }
 
                     // If it's not an HTML page, don't extract links
@@ -150,10 +179,31 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                     // Add new links to the queue
                     {
                         let mut queue_guard = queue.lock().unwrap();
+                        let mut visited_guard = visited.lock().unwrap();
+                        let mut total_urls_guard = total_urls.lock().unwrap();
+
                         for link in links {
-                            if !visited.lock().unwrap().contains(link.as_str()) {
-                                queue_guard.push_back(link);
+                            if !visited_guard.contains(link.as_str())
+                                && !queue_guard.contains(&link)
+                            {
+                                queue_guard.push_back(link.clone());
+                                *total_urls_guard += 1; // Update the total URLs count
                             }
+                        }
+                    }
+
+                    // Display progress
+                    {
+                        {
+                            let total_urls_guard = total_urls.lock().unwrap();
+                            let crawled_urls_guard = crawled_urls.lock().unwrap();
+                            let progress =
+                                (*crawled_urls_guard as f32 / *total_urls_guard as f32) * 100.0;
+                            print!(
+                                "\r\x1b[34mProgress: {:.2}%\x1b[0m ({} / {})",
+                                progress, crawled_urls_guard, total_urls_guard
+                            );
+                            std::io::stdout().flush().unwrap(); // Ensure the output is displayed immediately
                         }
                     }
 
@@ -173,31 +223,11 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
         }
     }
 
+    // Print a newline after the progress indicator
+    println!();
+
     // Return the results
     let results_guard = results.lock().unwrap();
+    println!("\x1b[32m{} Pages Crawled\x1b[0m", &results_guard.len());
     Ok(results_guard.clone())
-}
-
-/// Checks if the response is an HTML page
-fn is_html_page(body: &str, content_type: Option<&str>) -> bool {
-    // Check the content-type header for HTML MIME types
-    let is_html_header = content_type
-        .map(|content_type| {
-            content_type.contains("text/html")
-                || content_type.contains("application/xhtml+xml")
-                || content_type.contains("application/xml")
-                || content_type.contains("application/rss+xml")
-                || content_type.contains("application/atom+xml")
-        })
-        .unwrap_or(false);
-
-    // Check the response body for HTML-like content using a lightweight HTML parser
-    let is_html_body = {
-        let document = Html::parse_document(body);
-        let selector = Selector::parse("html, head, body").unwrap(); // Check for common HTML tags
-        document.select(&selector).next().is_some()
-    };
-
-    // Consider the page HTML if either the header or body suggests it
-    is_html_header || is_html_body
 }
