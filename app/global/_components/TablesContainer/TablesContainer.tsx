@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import Table from "./components/Table";
 import DetailTable from "./components/DetailTable";
 import ResizableDivider from "./components/ResizableDivider";
-import { columns, data, cellDetails, tabData } from "./data/sampleData";
+import { columns, data, cellDetails, tabData } from "./data/SampleData";
 import type { CellData } from "./types/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useVisibilityStore } from "@/store/VisibilityStore";
