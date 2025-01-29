@@ -23,7 +23,7 @@ const FooterLoader = () => {
     <div className="flex items-center justify-center w-full h-full">
       <div className="relative w-32 h-2 bg-gray-200 rounded-full">
         <div
-          className="absolute top-0 left-0 h-full bg-blue-500 rounded-full"
+          className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"
           style={{ width: `${percentageCrawled}%` }}
         />
       </div>

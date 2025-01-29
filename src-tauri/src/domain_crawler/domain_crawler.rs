@@ -1,11 +1,11 @@
 use futures::stream::{self, StreamExt};
+use rand::Rng;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashSet, VecDeque};
-use std::io::Write;
 use std::sync::Arc;
 use tauri::{Emitter, Manager};
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration};
 use url::Url;
 
@@ -16,7 +16,6 @@ use super::helpers::{
 };
 use super::models::DomainCrawlResults;
 
-// Define a struct to hold the progress data
 #[derive(Clone, Serialize)]
 struct ProgressData {
     total_urls: usize,
@@ -24,72 +23,114 @@ struct ProgressData {
     percentage: f32,
 }
 
+const MAX_RETRIES: usize = 5;
+const BASE_DELAY: u64 = 100; // Base delay in milliseconds
+const MAX_DELAY: u64 = 1000; // Maximum delay in milliseconds
+const CONCURRENT_REQUESTS: usize = 5;
+
 pub async fn crawl_domain(
     domain: &str,
     app_handle: tauri::AppHandle,
 ) -> Result<Vec<DomainCrawlResults>, String> {
-    // Create a client with a trustworthy user-agent
     let client = Client::builder()
         .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+        .timeout(Duration::from_secs(30))
+        .connect_timeout(Duration::from_secs(10))
+        .redirect(reqwest::redirect::Policy::limited(10))
         .build()
         .map_err(|e| e.to_string())?;
 
-    // Parse the base URL
     let base_url = Url::parse(domain).map_err(|_| "Invalid domain")?;
 
-    // Shared state using tokio::sync::Mutex for thread-safe access
-    let visited = Arc::new(Mutex::new(HashSet::new())); // Tracks visited URLs
-    let results = Arc::new(Mutex::new(Vec::new())); // Stores crawl results
-    let queue = Arc::new(Mutex::new(VecDeque::new())); // Queue of URLs to crawl
-    let total_urls = Arc::new(Mutex::new(1)); // Total URLs to crawl (starts with 1 for the base URL)
-    let crawled_urls = Arc::new(Mutex::new(0)); // Number of URLs crawled so far
+    let visited = Arc::new(Mutex::new(HashSet::new()));
+    let to_visit = Arc::new(Mutex::new(HashSet::new()));
+    let results = Arc::new(Mutex::new(Vec::new()));
+    let queue = Arc::new(Mutex::new(VecDeque::new()));
+    let total_urls = Arc::new(Mutex::new(1));
+    let crawled_urls = Arc::new(Mutex::new(0));
+    let semaphore = Arc::new(Semaphore::new(CONCURRENT_REQUESTS));
+    let last_request_time = Arc::new(Mutex::new(std::time::Instant::now()));
 
-    // Initialize the queue with the base URL
-    queue.lock().await.push_back(base_url.clone());
+    // Initialize with base URL
+    {
+        let mut to_visit_guard = to_visit.lock().await;
+        to_visit_guard.insert(base_url.to_string());
+        queue.lock().await.push_back(base_url.clone());
+    }
 
-    // Loop until the queue is empty
     while !queue.lock().await.is_empty() {
-        // Collect the current batch of URLs to crawl
         let current_batch: Vec<Url> = {
             let mut queue_guard = queue.lock().await;
-            queue_guard.drain(..).collect()
+            let batch_size = std::cmp::min(5, queue_guard.len());
+            queue_guard.drain(..batch_size).collect()
         };
 
         println!("Processing batch of {} URLs", current_batch.len());
 
-        // Concurrently crawl pages using a stream
         let mut stream = stream::iter(current_batch)
             .map(|url| {
                 let client = client.clone();
                 let base_url = base_url.clone();
                 let visited = visited.clone();
+                let to_visit = to_visit.clone();
                 let results = results.clone();
                 let queue = queue.clone();
                 let total_urls = total_urls.clone();
                 let crawled_urls = crawled_urls.clone();
                 let app_handle = app_handle.clone();
+                let semaphore = semaphore.clone();
+                let last_request_time = last_request_time.clone();
 
                 async move {
-                    // Skip if URL already visited
+                    let _permit = semaphore.acquire().await.unwrap();
+
+                    // Implement rate limiting
                     {
-                        let mut visited_guard = visited.lock().await;
+                        let mut last_time = last_request_time.lock().await;
+                        let now = std::time::Instant::now();
+                        let elapsed = now.duration_since(*last_time);
+
+                        if elapsed < Duration::from_millis(BASE_DELAY) {
+                            sleep(Duration::from_millis(BASE_DELAY) - elapsed).await;
+                        }
+
+                        // Add some random jitter to prevent synchronization
+                        let jitter = rand::thread_rng().gen_range(0..200);
+                        sleep(Duration::from_millis(jitter)).await;
+
+                        *last_time = std::time::Instant::now();
+                    }
+
+                    // Skip if already visited
+                    {
+                        let visited_guard = visited.lock().await;
                         if visited_guard.contains(url.as_str()) {
                             println!("Skipping already visited URL: {}", url);
                             return Ok::<(), String>(());
                         }
-                        visited_guard.insert(url.to_string());
                     }
 
                     println!("Fetching URL: {}", url);
 
-                    // Fetch the page content
-                    let response = match client.get(url.as_str()).send().await {
+                    // Mark as visited
+                    {
+                        let mut visited_guard = visited.lock().await;
+                        visited_guard.insert(url.to_string());
+                    }
+
+                    let response = match fetch_with_exponential_backoff(&client, url.as_str()).await
+                    {
                         Ok(response) => response,
                         Err(e) => {
-                            eprintln!("Failed to fetch {}: {}", url, e);
+                            eprintln!("Failed to fetch {} after retries: {}", url, e);
                             return Ok(());
                         }
                     };
+
+                    let final_url = response.url().clone();
+                    if final_url != url {
+                        println!("Redirected from {} to {}", url, final_url);
+                    }
 
                     let status_code = response.status().as_u16();
                     let content_type = response
@@ -97,6 +138,14 @@ pub async fn crawl_domain(
                         .get("content-type")
                         .and_then(|header| header.to_str().ok())
                         .map(|s| s.to_string());
+
+                    // Handle CDN responses
+                    if response.headers().contains_key("cf-ray")
+                        || response.headers().contains_key("x-cdn")
+                        || response.headers().contains_key("x-cache")
+                    {
+                        sleep(Duration::from_millis(2000)).await;
+                    }
 
                     let body = match response.text().await {
                         Ok(body) => body,
@@ -106,25 +155,15 @@ pub async fn crawl_domain(
                         }
                     };
 
-                    // Check if the page is HTML
                     let is_html =
                         check_html_page::is_html_page(&body, content_type.as_deref()).await;
 
                     if !is_html {
-                        println!("Page classified as non-HTML: {}", url);
-                        println!("Content-Type: {:?}", content_type);
-                        let body_snippet = if body.len() > 100 {
-                            &body[..100]
-                        } else {
-                            &body
-                        };
-                        println!("Body snippet: {}", body_snippet);
+                        println!("Skipping non-HTML page: {}", url);
                         return Ok(());
                     }
 
-                    println!("Processing HTML page: {}", url);
-
-                    // Process HTML content
+                    // Process page content
                     let title = title_selector::extract_title(&body).unwrap_or_else(|| vec![]);
                     let description = page_description::extract_page_description(&body)
                         .unwrap_or_else(|| "No Description".to_string());
@@ -140,7 +179,7 @@ pub async fn crawl_domain(
                     {
                         let mut results_guard = results.lock().await;
                         results_guard.push(DomainCrawlResults {
-                            url: url.to_string(),
+                            url: final_url.to_string(),
                             title: Some(title),
                             description,
                             headings,
@@ -154,31 +193,43 @@ pub async fn crawl_domain(
                         });
                     }
 
-                    // Update crawled URLs counter
+                    // Update crawled counter
                     {
                         let mut crawled_urls_guard = crawled_urls.lock().await;
                         *crawled_urls_guard += 1;
                     }
 
-                    // Extract and process new links
+                    // Process new links
                     let links = links_selector::extract_links(&body, &base_url);
                     {
-                        let mut queue_guard = queue.lock().await;
+                        let mut to_visit_guard = to_visit.lock().await;
                         let visited_guard = visited.lock().await;
+                        let mut queue_guard = queue.lock().await;
                         let mut total_urls_guard = total_urls.lock().await;
 
                         for link in links {
-                            if !visited_guard.contains(link.as_str())
-                                && !queue_guard.contains(&link)
+                            let link_str = link.as_str();
+                            if link_str.ends_with(".pdf")
+                                || link_str.ends_with(".jpg")
+                                || link_str.ends_with(".png")
+                                || link_str.contains("?") && link_str.contains("page=")
+                                || link_str.contains("#")
                             {
-                                println!("Adding new URL to queue: {}", link);
+                                continue;
+                            }
+
+                            if !visited_guard.contains(link_str)
+                                && !to_visit_guard.contains(link_str)
+                            {
+                                println!("Adding new URL to queue: {}", link_str);
+                                to_visit_guard.insert(link_str.to_string());
                                 queue_guard.push_back(link);
                                 *total_urls_guard += 1;
                             }
                         }
                     }
 
-                    // Calculate progress and emit it to the frontend
+                    // Update progress
                     {
                         let total_urls_guard = total_urls.lock().await;
                         let crawled_urls_guard = crawled_urls.lock().await;
@@ -200,11 +251,10 @@ pub async fn crawl_domain(
                         }
                     }
 
-                    sleep(Duration::from_millis(200)).await;
                     Ok(())
                 }
             })
-            .buffer_unordered(5);
+            .buffer_unordered(CONCURRENT_REQUESTS);
 
         while let Some(result) = stream.next().await {
             if let Err(e) = result {
@@ -213,8 +263,54 @@ pub async fn crawl_domain(
         }
     }
 
-    println!();
+    // Final verification
+    {
+        let visited_guard = visited.lock().await;
+        let to_visit_guard = to_visit.lock().await;
+        println!(
+            "Final count - Visited: {}, To Visit: {}",
+            visited_guard.len(),
+            to_visit_guard.len()
+        );
+        assert_eq!(
+            visited_guard.len(),
+            to_visit_guard.len(),
+            "Mismatch between visited and total URLs"
+        );
+    }
+
     let results_guard = results.lock().await;
     println!("\x1b[32m{} Pages Crawled\x1b[0m", results_guard.len());
     Ok(results_guard.clone())
+}
+
+async fn fetch_with_exponential_backoff(
+    client: &Client,
+    url: &str,
+) -> Result<reqwest::Response, reqwest::Error> {
+    let mut attempt = 0;
+    loop {
+        match client.get(url).send().await {
+            Ok(response) => {
+                if response.status() == reqwest::StatusCode::TOO_MANY_REQUESTS {
+                    if attempt >= MAX_RETRIES {
+                        return Ok(response);
+                    }
+                    let delay = std::cmp::min(MAX_DELAY, BASE_DELAY * 2u64.pow(attempt as u32));
+                    sleep(Duration::from_millis(delay)).await;
+                    attempt += 1;
+                    continue;
+                }
+                return Ok(response);
+            }
+            Err(e) => {
+                if attempt >= MAX_RETRIES {
+                    return Err(e);
+                }
+                let delay = std::cmp::min(MAX_DELAY, BASE_DELAY * 2u64.pow(attempt as u32));
+                sleep(Duration::from_millis(delay)).await;
+                attempt += 1;
+            }
+        }
+    }
 }
