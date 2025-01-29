@@ -1,6 +1,6 @@
 use crate::domain_crawler::domain_crawler;
 
-use super::domain_crawler::DomainCrawlResults;
+use super::models::DomainCrawlResults;
 
 #[tauri::command]
 pub async fn domain_crawl_command(domain: String) -> Result<Vec<DomainCrawlResults>, String> {

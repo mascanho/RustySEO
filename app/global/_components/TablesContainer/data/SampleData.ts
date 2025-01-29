@@ -2,7 +2,7 @@
 import type { Column, Data, CellData, TabData } from "../types/table";
 
 export const columns: Column[] = [
-  { Header: "ID", accessor: "id", width: 40 },
+  { Header: "ID", accessor: "id", width: 10 },
   { Header: "URL", accessor: "url", width: 200 },
   { Header: "Page Title", accessor: "pageTitle", width: 250 },
   { Header: "Title Length", accessor: "titleLength", width: 100 },

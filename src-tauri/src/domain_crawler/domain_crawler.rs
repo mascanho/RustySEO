@@ -1,27 +1,17 @@
 use futures::stream::{self, StreamExt};
 use reqwest::Client;
-use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::io::Write;
 use std::sync::Arc;
-use tokio::sync::{Mutex, MutexGuard};
+use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration};
 use url::Url;
 
 use super::helpers::javascript_selector::JavaScript;
+use super::helpers::title_selector::TitleDetails;
+use super::models::DomainCrawlResults;
 use crate::domain_crawler::helpers;
-
-#[derive(Serialize, Debug, Deserialize, Clone)]
-pub struct DomainCrawlResults {
-    pub url: String,
-    pub title: String,
-    pub description: String,
-    pub headings: HashMap<String, Vec<String>>,
-    pub javascript: JavaScript,
-    pub images: Vec<String>,
-    pub status_code: u16,
-}
 
 pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, String> {
     // Create a client with a trustworthy user-agent
@@ -111,13 +101,16 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                         println!("Body snippet: {}", body_snippet);
                     }
 
+                    // GET THE PAGE TITLES
                     let title = if is_html {
-                        helpers::title_selector::extract_title(&body)
-                            .unwrap_or_else(|| "No Title".to_string())
+                        Some(
+                            helpers::title_selector::extract_title(&body).unwrap_or_else(|| vec![]),
+                        )
                     } else {
-                        "Not an HTML page".to_string()
+                        None
                     };
 
+                    // GET THE DESCRIPTIONS
                     let description = if is_html {
                         helpers::page_description::extract_page_description(&body)
                             .unwrap_or_else(|| "No Description".to_string())
@@ -125,9 +118,22 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                         "Not an HTML page".to_string()
                     };
 
+                    // GET ALL THE HEADINGS
                     let headings = helpers::headings_selector::headings_selector(&body);
+
+                    // GET ALL THE JAVASCRIPT
                     let javascript = helpers::javascript_selector::extract_javascript(&body);
                     let images = helpers::images_selector::extract_images(&body);
+
+                    // GET ALL THE ANCHOR LINKS
+                    let anchor_links =
+                        helpers::anchor_links::extract_internal_external_links(&body);
+
+                    // GET THE INDEXABILITY
+                    let indexability = helpers::indexability::extract_indexability(&body);
+
+                    // GET THE ALT TAGS
+                    let alt_tags = helpers::alt_tags::get_alt_tags(&body);
 
                     // Store results
                     {
@@ -140,6 +146,9 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                             javascript,
                             images,
                             status_code,
+                            anchor_links,
+                            indexability,
+                            alt_tags,
                         });
                     }
 
@@ -187,6 +196,7 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                     Ok(())
                 }
             })
+            // Concurrently crawl pages using a stream
             .buffer_unordered(10);
 
         while let Some(result) = stream.next().await {
