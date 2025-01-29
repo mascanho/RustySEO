@@ -9,3 +9,4 @@ pub mod javascript_selector;
 pub mod links_selector;
 pub mod page_description;
 pub mod title_selector;
+pub mod schema_selector;

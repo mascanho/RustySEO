@@ -18,6 +18,13 @@ import SidebarContainer from "./_components/Sidebar/SidebarContainer";
 import { useVisibilityStore } from "@/store/VisibilityStore";
 import TaskManagerContainer from "../components/ui/TaskManager/TaskManagerContainer";
 import TablesContainer from "./_components/TablesContainer/TablesContainer";
+import { listen } from "@tauri-apps/api/event";
+
+// LISTEN TO THE PROGRESS UPDATE EVENT
+listen("progress_update", (event) => {
+  const progressData = event.payload;
+  // console.log("Progress Data:", progressData);
+});
 
 // Define the expected type of the result from the `crawl_domain` function
 interface PageDetails {
@@ -58,7 +65,7 @@ export default function Page() {
     try {
       showLoader("domainCrawl");
       const result = await invoke("domain_crawl_command", {
-        domain: "https://www.slimstock.com/",
+        domain: "https://www.algarvewonders.com",
       });
       domainCrawlData.setDomainCrawlData(result);
       console.log("Crawl Result:", result);

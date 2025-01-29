@@ -4,16 +4,28 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::io::Write;
 use std::sync::Arc;
+use tauri::{Emitter, Manager};
 use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration};
-use url::Url;
+use url::Url; // Import Tauri's Manager for event emission
 
 use super::helpers::javascript_selector::JavaScript;
 use super::helpers::title_selector::TitleDetails;
 use super::models::DomainCrawlResults;
 use crate::domain_crawler::helpers;
 
-pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, String> {
+// Define a struct to hold the progress data
+#[derive(Clone, Serialize)]
+struct ProgressData {
+    total_urls: usize,
+    crawled_urls: usize,
+    percentage: f32,
+}
+
+pub async fn crawl_domain(
+    domain: &str,
+    app_handle: tauri::AppHandle,
+) -> Result<Vec<DomainCrawlResults>, String> {
     // Create a client with a trustworthy user-agent
     let client = Client::builder()
         .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
@@ -23,12 +35,12 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
     // Parse the base URL
     let base_url = Url::parse(domain).map_err(|_| "Invalid domain")?;
 
-    // Shared state using tokio::sync::Mutex instead of std::sync::Mutex
-    let visited = Arc::new(Mutex::new(HashSet::new()));
-    let results = Arc::new(Mutex::new(Vec::new()));
-    let queue = Arc::new(Mutex::new(VecDeque::new()));
-    let total_urls = Arc::new(Mutex::new(1)); // Start with 1 (the base URL)
-    let crawled_urls = Arc::new(Mutex::new(0));
+    // Shared state using tokio::sync::Mutex for thread-safe access
+    let visited = Arc::new(Mutex::new(HashSet::new())); // Tracks visited URLs
+    let results = Arc::new(Mutex::new(Vec::new())); // Stores crawl results
+    let queue = Arc::new(Mutex::new(VecDeque::new())); // Queue of URLs to crawl
+    let total_urls = Arc::new(Mutex::new(1)); // Total URLs to crawl (starts with 1 for the base URL)
+    let crawled_urls = Arc::new(Mutex::new(0)); // Number of URLs crawled so far
 
     // Initialize the queue with the base URL
     queue.lock().await.push_back(base_url.clone());
@@ -51,6 +63,7 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                 let queue = queue.clone();
                 let total_urls = total_urls.clone();
                 let crawled_urls = crawled_urls.clone();
+                let app_handle = app_handle.clone(); // Clone the app handle for event emission
 
                 async move {
                     // Skip if URL already visited
@@ -135,6 +148,9 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                     // GET THE ALT TAGS
                     let alt_tags = helpers::alt_tags::get_alt_tags(&body);
 
+                    // GET THE SCHEMA
+                    let schema = helpers::schema_selector::get_schema(&body);
+
                     // Store results
                     {
                         let mut results_guard = results.lock().await;
@@ -149,6 +165,7 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                             anchor_links,
                             indexability,
                             alt_tags,
+                            schema,
                         });
                     }
 
@@ -179,12 +196,24 @@ pub async fn crawl_domain(domain: &str) -> Result<Vec<DomainCrawlResults>, Strin
                         }
                     }
 
-                    // Display progress with colors and immediate flush
+                    // Calculate progress and emit it to the frontend
                     {
                         let total_urls_guard = total_urls.lock().await;
                         let crawled_urls_guard = crawled_urls.lock().await;
                         let progress =
                             (*crawled_urls_guard as f32 / *total_urls_guard as f32) * 100.0;
+
+                        // Emit progress data to the frontend
+                        let progress_data = ProgressData {
+                            total_urls: *total_urls_guard,
+                            crawled_urls: *crawled_urls_guard,
+                            percentage: progress,
+                        };
+                        if let Err(err) = app_handle.emit("progress_update", progress_data) {
+                            eprintln!("Failed to emit progress update: {}", err);
+                        }
+
+                        // Display progress in the console
                         print!(
                             "\r\x1b[34mProgress: {:.2}%\x1b[0m ({} / {})",
                             progress, crawled_urls_guard, total_urls_guard

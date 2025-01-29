@@ -19,4 +19,5 @@ pub struct DomainCrawlResults {
     pub anchor_links: InternalExternalLinks,
     pub indexability: Indexability,
     pub alt_tags: AltTags,
+    pub schema: Option<String>,
 }

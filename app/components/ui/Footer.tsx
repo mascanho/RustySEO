@@ -29,6 +29,8 @@ import { GiPirateFlag, GiPirateHat } from "react-icons/gi";
 import { ImGoogle3 } from "react-icons/im";
 import { AiFillX } from "react-icons/ai";
 import { FaShip } from "react-icons/fa";
+import { listen } from "@tauri-apps/api/event";
+import FooterLoader from "./FooterLoader/FooterLoader";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -62,8 +64,8 @@ const Footer = () => {
   const [openedAiDrawer, { open: openAiDrawer, close: closeAiDrawer }] =
     useDisclosure(false);
 
-  const shallow = pathname === "/";
   const deep = pathname === "/global";
+  const shallow = pathname === "/";
 
   const updateSessionState = () => {
     const storedUrl = sessionStorage?.getItem("url") || "";
@@ -203,6 +205,7 @@ const Footer = () => {
                 </div>
               )
             )}
+            {deep ? <FooterLoader /> : null}
           </div>
         </section>
         <section className="flex items-center space-x-2">
