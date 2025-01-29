@@ -196,6 +196,10 @@ pub async fn crawl_domain(
                         }
                     }
 
+                    // DEBUG
+                    println!("Queue size: {}", queue.lock().await.len());
+                    println!("Visited URLs: {}", visited.lock().await.len());
+
                     // Calculate progress and emit it to the frontend
                     {
                         let total_urls_guard = total_urls.lock().await;
@@ -221,12 +225,12 @@ pub async fn crawl_domain(
                         std::io::stdout().flush().unwrap();
                     }
 
-                    sleep(Duration::from_millis(500)).await;
+                    sleep(Duration::from_millis(200)).await;
                     Ok(())
                 }
             })
             // Concurrently crawl pages using a stream
-            .buffer_unordered(10);
+            .buffer_unordered(5);
 
         while let Some(result) = stream.next().await {
             if let Err(e) = result {

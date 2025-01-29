@@ -14,7 +14,11 @@ pub fn extract_links(html: &str, base_url: &Url) -> Vec<Url> {
 
             // Build a full URL from the base URL and the href
             match build_full_url(base_url, href) {
-                Ok(url) => Some(url),
+                Ok(url) => {
+                    // Log the extracted URL for debugging
+                    println!("Extracted URL: {}", url);
+                    Some(url)
+                }
                 Err(e) => {
                     eprintln!("Failed to build URL from {}: {}", href, e);
                     None
@@ -25,7 +29,9 @@ pub fn extract_links(html: &str, base_url: &Url) -> Vec<Url> {
             // Filter by domain: ensure the link belongs to the same domain or subdomain
             let base_domain = base_url.domain().unwrap_or("");
             let next_domain = next_url.domain().unwrap_or("");
-            next_domain.ends_with(base_domain)
+
+            // Check if the next URL's domain matches the base domain or is a subdomain
+            next_domain == base_domain || next_domain.ends_with(&format!(".{}", base_domain))
         })
         .collect()
 }
