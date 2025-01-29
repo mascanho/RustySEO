@@ -1,18 +1,20 @@
 use futures::stream::{self, StreamExt};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashSet, VecDeque};
 use std::io::Write;
 use std::sync::Arc;
 use tauri::{Emitter, Manager};
 use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration};
-use url::Url; // Import Tauri's Manager for event emission
+use url::Url;
 
-use super::helpers::javascript_selector::JavaScript;
-use super::helpers::title_selector::TitleDetails;
+// Import your custom modules
+use super::helpers::{
+    alt_tags, anchor_links, check_html_page, headings_selector, images_selector, indexability,
+    javascript_selector, links_selector, page_description, schema_selector, title_selector,
+};
 use super::models::DomainCrawlResults;
-use crate::domain_crawler::helpers;
 
 // Define a struct to hold the progress data
 #[derive(Clone, Serialize)]
@@ -53,6 +55,8 @@ pub async fn crawl_domain(
             queue_guard.drain(..).collect()
         };
 
+        println!("Processing batch of {} URLs", current_batch.len());
+
         // Concurrently crawl pages using a stream
         let mut stream = stream::iter(current_batch)
             .map(|url| {
@@ -63,17 +67,20 @@ pub async fn crawl_domain(
                 let queue = queue.clone();
                 let total_urls = total_urls.clone();
                 let crawled_urls = crawled_urls.clone();
-                let app_handle = app_handle.clone(); // Clone the app handle for event emission
+                let app_handle = app_handle.clone();
 
                 async move {
                     // Skip if URL already visited
                     {
                         let mut visited_guard = visited.lock().await;
                         if visited_guard.contains(url.as_str()) {
+                            println!("Skipping already visited URL: {}", url);
                             return Ok::<(), String>(());
                         }
                         visited_guard.insert(url.to_string());
                     }
+
+                    println!("Fetching URL: {}", url);
 
                     // Fetch the page content
                     let response = match client.get(url.as_str()).send().await {
@@ -99,9 +106,9 @@ pub async fn crawl_domain(
                         }
                     };
 
+                    // Check if the page is HTML
                     let is_html =
-                        helpers::check_html_page::is_html_page(&body, content_type.as_deref())
-                            .await;
+                        check_html_page::is_html_page(&body, content_type.as_deref()).await;
 
                     if !is_html {
                         println!("Page classified as non-HTML: {}", url);
@@ -112,51 +119,29 @@ pub async fn crawl_domain(
                             &body
                         };
                         println!("Body snippet: {}", body_snippet);
+                        return Ok(());
                     }
 
-                    // GET THE PAGE TITLES
-                    let title = if is_html {
-                        Some(
-                            helpers::title_selector::extract_title(&body).unwrap_or_else(|| vec![]),
-                        )
-                    } else {
-                        None
-                    };
+                    println!("Processing HTML page: {}", url);
 
-                    // GET THE DESCRIPTIONS
-                    let description = if is_html {
-                        helpers::page_description::extract_page_description(&body)
-                            .unwrap_or_else(|| "No Description".to_string())
-                    } else {
-                        "Not an HTML page".to_string()
-                    };
-
-                    // GET ALL THE HEADINGS
-                    let headings = helpers::headings_selector::headings_selector(&body);
-
-                    // GET ALL THE JAVASCRIPT
-                    let javascript = helpers::javascript_selector::extract_javascript(&body);
-                    let images = helpers::images_selector::extract_images(&body);
-
-                    // GET ALL THE ANCHOR LINKS
-                    let anchor_links =
-                        helpers::anchor_links::extract_internal_external_links(&body);
-
-                    // GET THE INDEXABILITY
-                    let indexability = helpers::indexability::extract_indexability(&body);
-
-                    // GET THE ALT TAGS
-                    let alt_tags = helpers::alt_tags::get_alt_tags(&body);
-
-                    // GET THE SCHEMA
-                    let schema = helpers::schema_selector::get_schema(&body);
+                    // Process HTML content
+                    let title = title_selector::extract_title(&body).unwrap_or_else(|| vec![]);
+                    let description = page_description::extract_page_description(&body)
+                        .unwrap_or_else(|| "No Description".to_string());
+                    let headings = headings_selector::headings_selector(&body);
+                    let javascript = javascript_selector::extract_javascript(&body);
+                    let images = images_selector::extract_images(&body);
+                    let anchor_links = anchor_links::extract_internal_external_links(&body);
+                    let indexability = indexability::extract_indexability(&body);
+                    let alt_tags = alt_tags::get_alt_tags(&body);
+                    let schema = schema_selector::get_schema(&body);
 
                     // Store results
                     {
                         let mut results_guard = results.lock().await;
                         results_guard.push(DomainCrawlResults {
                             url: url.to_string(),
-                            title,
+                            title: Some(title),
                             description,
                             headings,
                             javascript,
@@ -175,12 +160,8 @@ pub async fn crawl_domain(
                         *crawled_urls_guard += 1;
                     }
 
-                    if !is_html {
-                        return Ok(());
-                    }
-
-                    // Process new links
-                    let links = helpers::links_selector::extract_links(&body, &base_url);
+                    // Extract and process new links
+                    let links = links_selector::extract_links(&body, &base_url);
                     {
                         let mut queue_guard = queue.lock().await;
                         let visited_guard = visited.lock().await;
@@ -190,15 +171,12 @@ pub async fn crawl_domain(
                             if !visited_guard.contains(link.as_str())
                                 && !queue_guard.contains(&link)
                             {
+                                println!("Adding new URL to queue: {}", link);
                                 queue_guard.push_back(link);
                                 *total_urls_guard += 1;
                             }
                         }
                     }
-
-                    // DEBUG
-                    println!("Queue size: {}", queue.lock().await.len());
-                    println!("Visited URLs: {}", visited.lock().await.len());
 
                     // Calculate progress and emit it to the frontend
                     {
@@ -207,7 +185,11 @@ pub async fn crawl_domain(
                         let progress =
                             (*crawled_urls_guard as f32 / *total_urls_guard as f32) * 100.0;
 
-                        // Emit progress data to the frontend
+                        println!(
+                            "\x1b[34mProgress: {:.2}%\x1b[0m (\x1b[32m{} / {}\x1b[0m)",
+                            progress, crawled_urls_guard, total_urls_guard
+                        );
+
                         let progress_data = ProgressData {
                             total_urls: *total_urls_guard,
                             crawled_urls: *crawled_urls_guard,
@@ -216,20 +198,12 @@ pub async fn crawl_domain(
                         if let Err(err) = app_handle.emit("progress_update", progress_data) {
                             eprintln!("Failed to emit progress update: {}", err);
                         }
-
-                        // Display progress in the console
-                        print!(
-                            "\r\x1b[34mProgress: {:.2}%\x1b[0m ({} / {})",
-                            progress, crawled_urls_guard, total_urls_guard
-                        );
-                        std::io::stdout().flush().unwrap();
                     }
 
                     sleep(Duration::from_millis(200)).await;
                     Ok(())
                 }
             })
-            // Concurrently crawl pages using a stream
             .buffer_unordered(5);
 
         while let Some(result) = stream.next().await {

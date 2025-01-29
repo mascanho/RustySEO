@@ -14,7 +14,15 @@ pub fn extract_links(html: &str, base_url: &Url) -> Vec<Url> {
 
             // Build a full URL from the base URL and the href
             match build_full_url(base_url, href) {
-                Ok(url) => Some(url),
+                Ok(url) => {
+                    // Validate and normalize the URL
+                    if let Some(valid_url) = validate_and_normalize_url(base_url, &url) {
+                        Some(valid_url)
+                    } else {
+                        eprintln!("Skipping invalid URL: {}", url);
+                        None
+                    }
+                }
                 Err(e) => {
                     eprintln!("Failed to build URL from {}: {}", href, e);
                     None
@@ -40,4 +48,25 @@ fn build_full_url(base_url: &Url, href: &str) -> Result<Url, url::ParseError> {
         // Parse absolute URLs directly
         Url::parse(href)
     }
+}
+
+/// Validates and normalizes a URL
+fn validate_and_normalize_url(base_url: &Url, url: &Url) -> Option<Url> {
+    // Ensure the URL has a valid domain
+    if url.domain().is_none() {
+        return None; // Skip URLs without a domain
+    }
+
+    // Ensure the URL belongs to the same domain or subdomain as the base URL
+    let base_domain = base_url.domain().unwrap_or("");
+    let url_domain = url.domain().unwrap_or("");
+    if !url_domain.ends_with(base_domain) {
+        return None; // Skip URLs from external domains
+    }
+
+    // Normalize the URL by removing trailing slashes
+    let mut normalized_url = url.clone();
+    normalized_url.set_path(url.path().trim_end_matches('/'));
+
+    Some(normalized_url)
 }
