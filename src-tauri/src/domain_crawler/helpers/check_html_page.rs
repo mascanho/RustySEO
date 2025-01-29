@@ -21,8 +21,8 @@ pub async fn is_html_page(body: &str, content_type: Option<&str>) -> bool {
     };
 
     // PERFORM AN ASYNC OPERATION (EXAMPLE: FETCHING ADDITIONAL DATA)
-    let client = Client::new();
-    let _response = client.get("https://example.com").send().await; // Example async operation
+    // let client = Client::new();
+    // let _response = client.get("https://example.com").send().await;
 
     // CONSIDER THE PAGE HTML IF EITHER THE HEADER OR BODY SUGGESTS IT
     is_html_header || is_html_body

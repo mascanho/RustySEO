@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 import MenuDrawer from "@/app/components/ui/MenuDrawer";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";

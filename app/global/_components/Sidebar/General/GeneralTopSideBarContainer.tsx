@@ -1,7 +1,7 @@
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import React from "react";
-import Summary from "./DropDowns/Summary/Summary";
-import PageTitles from "./DropDowns/PageTitles/PageTitles";
+import Summary from "./DropDowns/Summary";
+import PageTitles from "./DropDowns/PageTitles";
 
 const GeneralTopSideBarContainer = () => {
   const domainCrawlData = useGlobalCrawlStore();
