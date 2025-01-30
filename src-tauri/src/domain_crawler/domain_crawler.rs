@@ -34,9 +34,9 @@ struct CrawlResultData {
 }
 
 const MAX_RETRIES: usize = 5;
-const BASE_DELAY: u64 = 10; // Base delay in milliseconds
-const MAX_DELAY: u64 = 50; // Maximum delay in milliseconds
-const CONCURRENT_REQUESTS: usize = 30;
+const BASE_DELAY: u64 = 5; // Base delay in milliseconds
+const MAX_DELAY: u64 = 10; // Maximum delay in milliseconds
+const CONCURRENT_REQUESTS: usize = 50;
 
 pub async fn crawl_domain(
     domain: &str,
