@@ -4,10 +4,13 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashSet, VecDeque};
 use std::sync::Arc;
-use tauri::{Emitter, Manager};
+use tauri::{Emitter, Event, Manager};
 use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration};
 use url::Url;
+
+use crate::domain_crawler::helpers::css_selector::{self, extract_css};
+use crate::domain_crawler::helpers::iframe_selector;
 
 // Import your custom modules
 use super::helpers::{
@@ -23,10 +26,15 @@ struct ProgressData {
     percentage: f32,
 }
 
+#[derive(Clone, Serialize)]
+struct CrawlResultData {
+    result: DomainCrawlResults,
+}
+
 const MAX_RETRIES: usize = 5;
 const BASE_DELAY: u64 = 10; // Base delay in milliseconds
 const MAX_DELAY: u64 = 50; // Maximum delay in milliseconds
-const CONCURRENT_REQUESTS: usize = 20;
+const CONCURRENT_REQUESTS: usize = 30;
 
 pub async fn crawl_domain(
     domain: &str,
@@ -174,23 +182,38 @@ pub async fn crawl_domain(
                     let indexability = indexability::extract_indexability(&body);
                     let alt_tags = alt_tags::get_alt_tags(&body);
                     let schema = schema_selector::get_schema(&body);
+                    let css = css_selector::extract_css(&body);
+                    let iframe = iframe_selector::extract_iframe(&body);
+
+                    // Create the result object
+                    let result = DomainCrawlResults {
+                        url: final_url.to_string(),
+                        title: Some(title),
+                        description,
+                        headings,
+                        javascript,
+                        images,
+                        status_code,
+                        anchor_links,
+                        indexability,
+                        alt_tags,
+                        schema,
+                        css,
+                        iframe,
+                    };
+
+                    // Emit the result to the front end
+                    let result_data = CrawlResultData {
+                        result: result.clone(),
+                    };
+                    if let Err(err) = app_handle.emit("crawl_result", result_data) {
+                        eprintln!("Failed to emit crawl result: {}", err);
+                    }
 
                     // Store results
                     {
                         let mut results_guard = results.lock().await;
-                        results_guard.push(DomainCrawlResults {
-                            url: final_url.to_string(),
-                            title: Some(title),
-                            description,
-                            headings,
-                            javascript,
-                            images,
-                            status_code,
-                            anchor_links,
-                            indexability,
-                            alt_tags,
-                            schema,
-                        });
+                        results_guard.push(result);
                     }
 
                     // Update crawled counter
@@ -281,6 +304,12 @@ pub async fn crawl_domain(
 
     let results_guard = results.lock().await;
     println!("\x1b[32m{} Pages Crawled\x1b[0m", results_guard.len());
+
+    // Emit final completion event
+    if let Err(err) = app_handle.emit("crawl_complete", ()) {
+        eprintln!("Failed to emit crawl completion event: {}", err);
+    }
+
     Ok(results_guard.clone())
 }
 

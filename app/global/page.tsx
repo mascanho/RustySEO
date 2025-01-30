@@ -67,7 +67,7 @@ export default function Page() {
       const result = await invoke("domain_crawl_command", {
         domain: "https://www.markwarrior.dev/",
       });
-      domainCrawlData.setDomainCrawlData(result);
+      // domainCrawlData.setDomainCrawlData(result);
       console.log("Crawl Result:", result);
       hideLoader("domainCrawl");
     } catch (error) {
@@ -75,6 +75,22 @@ export default function Page() {
       hideLoader("domainCrawl");
     }
   };
+
+  listen("crawl_result", (event) => {
+    const result = event?.payload?.result;
+    // console.log(result, "This is the results");
+
+    // Validate the result
+    if (!result || typeof result !== "object") {
+      console.error("Invalid result format:", result);
+      return;
+    }
+
+    // Add the result to the Zustand store
+    domainCrawlData.addDomainCrawlResult(result);
+  });
+
+  console.log(domainCrawlData?.crawlData, "FIXED?");
 
   return (
     <main className="flex h-full w-full">

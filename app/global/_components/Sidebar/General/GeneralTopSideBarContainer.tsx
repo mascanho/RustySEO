@@ -6,6 +6,7 @@ import Images from "./DropDowns/Images";
 import Javascript from "./DropDowns/Javascript";
 import Schema from "./DropDowns/Schema";
 import Css from "./DropDowns/Css";
+import Iframes from "./DropDowns/Iframes";
 
 const GeneralTopSideBarContainer = () => {
   const domainCrawlData = useGlobalCrawlStore();
@@ -18,6 +19,7 @@ const GeneralTopSideBarContainer = () => {
       <PageTitles />
       <Images />
       <Css />
+      <Iframes />
       <Javascript />
       <Schema />
     </div>

@@ -2,33 +2,24 @@
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import React from "react";
 
-const Css = () => {
+const Iframes = () => {
   const domainCrawlData = useGlobalCrawlStore();
 
   const externalCss =
     domainCrawlData?.crawlData?.reduce((acc, item) => {
-      const externalCount = item?.css?.external?.length || 0;
+      const externalCount = item?.iframe?.length || 0;
       return acc + externalCount;
     }, 0) || 0;
 
-  const inlineCss =
-    domainCrawlData?.crawlData?.reduce((acc, item) => {
-      const inlineCount = item?.css?.inline?.length || 0;
-      return acc + inlineCount;
-    }, 0) || 0;
-
-  const scriptData = [
-    { label: "External CSS", count: externalCss },
-    { label: "Internal CSS", count: inlineCss },
-  ];
+  const iframeData = [{ label: "Iframes Found", count: externalCss }];
 
   return (
     <div className="text-sx w-full">
       <details className="w-full">
         <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 py-1 pb-1.5 cursor-pointer">
-          Css
+          Iframes
         </summary>
-        {scriptData.map((data, index) => (
+        {iframeData.map((data, index) => (
           <section
             key={index}
             className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark"
@@ -44,4 +35,4 @@ const Css = () => {
   );
 };
 
-export default Css;
+export default Iframes;

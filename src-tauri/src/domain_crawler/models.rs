@@ -3,8 +3,9 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 use super::helpers::{
-    alt_tags::AltTags, anchor_links::InternalExternalLinks, indexability::Indexability,
-    javascript_selector::JavaScript, title_selector::TitleDetails,
+    alt_tags::AltTags, anchor_links::InternalExternalLinks, css_selector::CSS,
+    iframe_selector::Iframe, indexability::Indexability, javascript_selector::JavaScript,
+    title_selector::TitleDetails,
 };
 
 #[derive(Serialize, Debug, Deserialize, Clone)]
@@ -20,4 +21,6 @@ pub struct DomainCrawlResults {
     pub indexability: Indexability,
     pub alt_tags: AltTags,
     pub schema: Option<String>,
+    pub css: CSS,
+    pub iframe: Option<Iframe>,
 }
