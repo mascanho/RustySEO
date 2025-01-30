@@ -1,4 +1,5 @@
 use futures::stream::{self, StreamExt};
+use hyper::body::HttpBody;
 use rand::Rng;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -10,6 +11,7 @@ use tokio::time::{sleep, Duration};
 use url::Url;
 
 use crate::domain_crawler::helpers::css_selector::{self, extract_css};
+use crate::domain_crawler::helpers::domain_checker::url_check;
 use crate::domain_crawler::helpers::iframe_selector;
 
 // Import your custom modules
@@ -48,7 +50,11 @@ pub async fn crawl_domain(
         .build()
         .map_err(|e| e.to_string())?;
 
-    let base_url = Url::parse(domain).map_err(|_| "Invalid domain")?;
+    // let mut base_url = Url::parse(domain).map_err(|_| "Invalid domain")?;
+
+    let url_checked = url_check(domain);
+
+    let base_url = Url::parse(&url_checked).map_err(|_| "Invalid URL")?;
 
     let visited = Arc::new(Mutex::new(HashSet::new()));
     let to_visit = Arc::new(Mutex::new(HashSet::new()));

@@ -61,36 +61,37 @@ export default function Page() {
     setSearch(event.target.value.toLowerCase());
   };
 
-  const handleDomainCrawl = async () => {
+  const handleDomainCrawl = async (url) => {
     try {
-      showLoader("domainCrawl");
+      console.log("Crawling domain...");
+
       const result = await invoke("domain_crawl_command", {
-        domain: "https://www.markwarrior.dev/",
+        domain: url,
       });
       // domainCrawlData.setDomainCrawlData(result);
       console.log("Crawl Result:", result);
-      hideLoader("domainCrawl");
     } catch (error) {
       console.error("Failed to execute domain crawl command:", error);
-      hideLoader("domainCrawl");
+      console.log("failed to crawl:", url);
     }
   };
 
-  listen("crawl_result", (event) => {
-    const result = event?.payload?.result;
-    // console.log(result, "This is the results");
+  useEffect(() => {
+    const unlisten = listen("crawl_result", (event) => {
+      const result = event?.payload?.result;
 
-    // Validate the result
-    if (!result || typeof result !== "object") {
-      console.error("Invalid result format:", result);
-      return;
-    }
+      if (!result || typeof result !== "object") {
+        console.error("Invalid result format:", result);
+        return;
+      }
 
-    // Add the result to the Zustand store
-    domainCrawlData.addDomainCrawlResult(result);
-  });
+      domainCrawlData.addDomainCrawlResult(result);
+    });
 
-  console.log(domainCrawlData?.crawlData, "FIXED?");
+    return () => {
+      unlisten.then((fn) => fn()); // Properly remove listener on unmount
+    };
+  }, []);
 
   return (
     <main className="flex h-full w-full">

@@ -3,6 +3,7 @@ pub mod anchor_links;
 pub mod blocked_robots;
 pub mod check_html_page;
 pub mod css_selector;
+pub mod domain_checker;
 pub mod headings_selector;
 pub mod iframe_selector;
 pub mod images_selector;
