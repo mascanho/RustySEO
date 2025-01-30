@@ -4,6 +4,8 @@ import Summary from "./DropDowns/Summary";
 import PageTitles from "./DropDowns/PageTitles";
 import Images from "./DropDowns/Images";
 import Javascript from "./DropDowns/Javascript";
+import Schema from "./DropDowns/Schema";
+import Css from "./DropDowns/Css";
 
 const GeneralTopSideBarContainer = () => {
   const domainCrawlData = useGlobalCrawlStore();
@@ -11,11 +13,13 @@ const GeneralTopSideBarContainer = () => {
   console.log(typeof domainCrawlData.crawlData);
 
   return (
-    <div className="text-sx w-full space-y-1">
+    <div className="text-xs w-full space-y-1 h-[28rem] overflow-y-auto">
       <Summary />
       <PageTitles />
       <Images />
+      <Css />
       <Javascript />
+      <Schema />
     </div>
   );
 };
