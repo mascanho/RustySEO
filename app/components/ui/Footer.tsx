@@ -201,7 +201,7 @@ const Footer = () => {
                       </div>
                     </div>
                   </a>
-                  <span className="mt-[2px]">{url}</span>
+                  {shallow ? <span className="mt-[2px]">{url}</span> : null}
                 </div>
               )
             )}

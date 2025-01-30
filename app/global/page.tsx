@@ -65,7 +65,7 @@ export default function Page() {
     try {
       showLoader("domainCrawl");
       const result = await invoke("domain_crawl_command", {
-        domain: "https://www.markwarrior.dev/",
+        domain: "https://www.relexsolutions.com/",
       });
       domainCrawlData.setDomainCrawlData(result);
       console.log("Crawl Result:", result);
