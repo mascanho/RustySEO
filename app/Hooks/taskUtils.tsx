@@ -8,6 +8,6 @@ type Task = {
 };
 
 export const updateTasks = (newTasks: Task[]) => {
-  localStorage.setItem("tasks", JSON.stringify(newTasks));
+  localStorage?.setItem("tasks", JSON.stringify(newTasks));
   window.dispatchEvent(new Event("tasksUpdated"));
 };

@@ -29,6 +29,8 @@ import { GiPirateFlag, GiPirateHat } from "react-icons/gi";
 import { ImGoogle3 } from "react-icons/im";
 import { AiFillX } from "react-icons/ai";
 import { FaShip } from "react-icons/fa";
+import { listen } from "@tauri-apps/api/event";
+import FooterLoader from "./FooterLoader/FooterLoader";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -62,14 +64,14 @@ const Footer = () => {
   const [openedAiDrawer, { open: openAiDrawer, close: closeAiDrawer }] =
     useDisclosure(false);
 
-  const shallow = pathname === "/";
   const deep = pathname === "/global";
+  const shallow = pathname === "/";
 
   const updateSessionState = () => {
-    const storedUrl = sessionStorage.getItem("url") || "";
+    const storedUrl = sessionStorage?.getItem("url") || "";
     setUrl(storedUrl);
 
-    const storedLoading = sessionStorage.getItem("loading");
+    const storedLoading = sessionStorage?.getItem("loading");
     setLoading(storedLoading === "true");
   };
 
@@ -96,7 +98,7 @@ const Footer = () => {
   const updateTasks = () => {
     try {
       const storedTasks = JSON.parse(
-        localStorage.getItem("tasks") || "[]",
+        localStorage?.getItem("tasks") || "[]",
       ) as Task[];
       const filteredTasks = storedTasks.filter((task) => !task.completed);
       setTasks(filteredTasks);
@@ -132,6 +134,14 @@ const Footer = () => {
         event.preventDefault();
         openedAiDrawer ? closeAiDrawer() : openAiDrawer();
       }
+      if (event.ctrlKey && event.key === "h") {
+        event.preventDefault();
+        if (visibility.sidebar) {
+          hideSidebar();
+        } else {
+          showSidebar();
+        }
+      }
     },
     [
       openDrawer,
@@ -140,6 +150,9 @@ const Footer = () => {
       openAiDrawer,
       closeAiDrawer,
       openedAiDrawer,
+      visibility.sidebar,
+      hideSidebar,
+      showSidebar,
     ],
   );
 
@@ -188,10 +201,11 @@ const Footer = () => {
                       </div>
                     </div>
                   </a>
-                  <span className="mt-[2px]">{url}</span>
+                  {shallow ? <span className="mt-[2px]">{url}</span> : null}
                 </div>
               )
             )}
+            {deep ? <FooterLoader /> : null}
           </div>
         </section>
         <section className="flex items-center space-x-2">

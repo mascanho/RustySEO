@@ -35,7 +35,7 @@ export default function RootLayout({
   // GET THE THEME AND SET IT
   useEffect(() => {
     // On component mount, check local storage for dark mode preference
-    const darkMode = localStorage.getItem("dark-mode") === "true";
+    const darkMode = localStorage?.getItem("dark-mode") === "true";
     setIsDarkMode(darkMode);
 
     // Add or remove the dark class on the root element

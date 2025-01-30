@@ -11,7 +11,7 @@ const About: React.FC = () => {
 
   useEffect(() => {
     // check localstorage for appVersion
-    const appVersion = localStorage.getItem("app-version");
+    const appVersion = localStorage?.getItem("app-version");
     setLocalVersion(appVersion);
   }, []);
 

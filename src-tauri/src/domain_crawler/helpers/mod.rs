@@ -1,0 +1,15 @@
+pub mod alt_tags;
+pub mod anchor_links;
+pub mod blocked_robots;
+pub mod check_html_page;
+pub mod css_selector;
+pub mod domain_checker;
+pub mod headings_selector;
+pub mod iframe_selector;
+pub mod images_selector;
+pub mod indexability;
+pub mod javascript_selector;
+pub mod links_selector;
+pub mod page_description;
+pub mod schema_selector;
+pub mod title_selector;

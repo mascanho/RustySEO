@@ -137,8 +137,8 @@ pub fn get_top_keywords(text: &str, top_n: usize) -> Vec<(String, usize)> {
         "ein", "eine", "sich", "von", "dem", "dass", "aber", "auch", "nach", "bei", "es", "im",
         // Spanish stop words
         "el", "la", "los", "las", "un", "una", "unos", "unas", "y", "en", "de", "para", "por",
-        "con", "su", "sus", "al", "del", "lo", "pero", "más", "qué", "cuando", "hay", "este",
-        // Italian stop words
+        "con", "su", "sus", "al", "del", "lo", "pero", "más", "qué", "cuando", "hay", "este", "se",
+        "no", "si", "sin", "sobre", "que", // Italian stop words
         "il", "lo", "la", "i", "gli", "le", "uno", "una", "del", "della", "dei", "degli", "delle",
         "in", "con", "su", "per", "tra", "fra", "che", "ma", "perché", "come", "dove", "questo",
         // Dutch stop words
@@ -503,6 +503,15 @@ async fn busqueda_global<'a>(
 
     let mut all_results = vec![];
     for (busqueda, url) in busquedas {
+        let mut headers = HeaderMap::new();
+        headers.insert(
+            "User-Agent",
+            HeaderValue::from_static(
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+            ),
+        );
+        let request = client.get(&url).headers(headers);
+
         let nuevas_busquedas = busqueda_individual(
             client,
             &busqueda,

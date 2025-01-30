@@ -438,7 +438,7 @@ export default function AnalyticsTable() {
                               .slice(1)
                               .replace(/([A-Z])/g, " $1")
                               .trim()}
-                          {getSortIcon(header.name)}
+                          {/* {getSortIcon(header.name)} */}
                         </Button>
                       </TableHead>
                     ),
@@ -446,8 +446,7 @@ export default function AnalyticsTable() {
                   {analyticsData?.response?.[0]?.metricHeaders?.map(
                     (header, index) => (
                       <TableHead key={index} className="text-center">
-                        <Button
-                          variant="ghost"
+                        <div
                           onClick={() => handleSort(header.name)}
                           className="text-xs"
                         >
@@ -456,8 +455,8 @@ export default function AnalyticsTable() {
                               .slice(1)
                               .replace(/([A-Z])/g, " $1")
                               .trim()}
-                          {getSortIcon(header.name)}
-                        </Button>
+                          {/* {getSortIcon(header.name)} */}
+                        </div>
                       </TableHead>
                     ),
                   )}
