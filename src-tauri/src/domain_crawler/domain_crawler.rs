@@ -24,9 +24,9 @@ struct ProgressData {
 }
 
 const MAX_RETRIES: usize = 5;
-const BASE_DELAY: u64 = 100; // Base delay in milliseconds
-const MAX_DELAY: u64 = 1000; // Maximum delay in milliseconds
-const CONCURRENT_REQUESTS: usize = 5;
+const BASE_DELAY: u64 = 10; // Base delay in milliseconds
+const MAX_DELAY: u64 = 50; // Maximum delay in milliseconds
+const CONCURRENT_REQUESTS: usize = 20;
 
 pub async fn crawl_domain(
     domain: &str,
