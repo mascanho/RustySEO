@@ -15,6 +15,11 @@ const GeneralTopSideBarContainer = () => {
 
   return (
     <div className="text-xs w-full space-y-1 h-[28rem] overflow-y-auto">
+      <section className="w-full flex justify-end bg-gray-100 font-bold sticky top-0 py-0.5 dark:bg-gray-900">
+        <div className="w-full"></div>
+        <div className="w-[6em]">Total</div>
+        <div className="w-[3em]">%</div>
+      </section>
       <Summary />
       <PageTitles />
       <Images />
