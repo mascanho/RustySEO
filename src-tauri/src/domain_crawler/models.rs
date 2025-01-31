@@ -25,4 +25,5 @@ pub struct DomainCrawlResults {
     pub iframe: Option<Iframe>,
     pub pdf_link: Option<PdfLinks>,
     pub word_count: usize,
+    pub response_time: Option<f64>, // Response time in seconds
 }
