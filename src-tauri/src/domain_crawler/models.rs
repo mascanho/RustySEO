@@ -24,4 +24,5 @@ pub struct DomainCrawlResults {
     pub css: CSS,
     pub iframe: Option<Iframe>,
     pub pdf_link: Option<PdfLinks>,
+    pub word_count: usize,
 }

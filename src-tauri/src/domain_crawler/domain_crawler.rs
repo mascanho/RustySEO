@@ -12,8 +12,9 @@ use url::Url;
 
 use crate::domain_crawler::helpers::css_selector::{self, extract_css};
 use crate::domain_crawler::helpers::domain_checker::url_check;
-use crate::domain_crawler::helpers::iframe_selector;
 use crate::domain_crawler::helpers::pdf_selector::extract_pdf_links;
+use crate::domain_crawler::helpers::word_count::get_word_count;
+use crate::domain_crawler::helpers::{iframe_selector, word_count};
 
 // Import your custom modules
 use super::helpers::{
@@ -192,6 +193,7 @@ pub async fn crawl_domain(
                     let css = css_selector::extract_css(&body);
                     let iframe = iframe_selector::extract_iframe(&body);
                     let pdf_link = extract_pdf_links(&body, &base_url);
+                    let word_count = get_word_count(&body);
 
                     // Create the result object
                     let result = DomainCrawlResults {
@@ -209,6 +211,7 @@ pub async fn crawl_domain(
                         css,
                         iframe,
                         pdf_link,
+                        word_count,
                     };
 
                     // Emit the result to the front end

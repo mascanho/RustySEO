@@ -16,7 +16,7 @@ const PageTitles = () => {
   };
 
   const sections = [
-    { label: "All", count: counts.all },
+    { label: "All", count: pageTitles.length },
     { label: "Over 60 Characters", count: counts.long },
     { label: "Missing Page Title", count: counts.empty },
     { label: "Below 30 Characters", count: counts.short },

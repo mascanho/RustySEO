@@ -14,3 +14,4 @@ pub mod page_description;
 pub mod pdf_selector;
 pub mod schema_selector;
 pub mod title_selector;
+pub mod word_count;

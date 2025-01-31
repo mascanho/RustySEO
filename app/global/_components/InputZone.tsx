@@ -59,7 +59,7 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
               <span className="relative text-xs">
                 {domainCrawlLoading ? (
                   <div
-                    className="top-0.5 right-4 z-[32423454] w-4 h-4 border-4 border-t-transparent border-white rounded-full animate-spin cursor-pointer"
+                    className="top-0.5 right-4 z-[32423454] w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin cursor-pointer"
                     role="status"
                     aria-label="loading"
                     // onClick={() => window.location.reload()}

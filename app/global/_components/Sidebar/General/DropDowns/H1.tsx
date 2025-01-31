@@ -7,8 +7,14 @@ const H1 = () => {
   const h1Headings =
     domainCrawlData?.crawlData?.map((item) => item?.headings?.h1) || [];
   const uniqueH1Headings = [...new Set(h1Headings.flat())];
+
+  const h1Exists = h1Headings
+    .flat()
+    .filter((heading) => heading && heading !== "");
+
   const counts = {
-    all: h1Headings.flat().length,
+    exists: h1Exists.length,
+    all: h1Headings.length,
     empty: h1Headings.flat().filter((heading) => !heading).length || 0,
     duplicate: h1Headings.flat().length - uniqueH1Headings.length,
     long:
@@ -21,15 +27,18 @@ const H1 = () => {
       ).length || 0,
   };
 
+  const totalPages = domainCrawlData?.crawlData?.length;
+  const missingH1Count = Math.abs(
+    totalPages - (counts.noH1Object + counts.empty),
+  );
+
   const sections = [
-    { label: "Total H1 Headings", count: counts.all },
-    { label: "Missing", count: counts.noH1Object },
+    { label: "Total", count: counts.exists },
+    { label: "Missing", count: missingH1Count },
     { label: "Duplicate H1 Headings", count: counts.duplicate },
     { label: "Over 155 Characters", count: counts.long },
     { label: "Below 70 Characters", count: counts.short },
   ];
-
-  const totalPages = domainCrawlData?.crawlData?.length;
 
   return (
     <div className="text-sx w-full">
@@ -48,7 +57,7 @@ const H1 = () => {
               <div className="w-1/6 text-center pl-2">
                 {totalPages
                   ? (
-                      ((label === "Missing" ? counts.noH1Object : count) /
+                      ((label === "Missing" ? missingH1Count : count) /
                         totalPages) *
                       100
                     ).toFixed(0) + "%"
