@@ -7,11 +7,12 @@ const PageTitles = () => {
 
   const pageTitles =
     domainCrawlData?.crawlData?.map((item) => item?.title?.[0]?.title) || [];
+  const uniquePageTitles = [...new Set(pageTitles)];
   const counts = {
-    all: domainCrawlData?.crawlData?.length ?? pageTitles?.length,
-    long: pageTitles?.filter((title) => title?.length > 60).length || 0,
-    empty: pageTitles?.filter((title) => !title).length || 0,
-    short: pageTitles?.filter((title) => title?.length < 30).length || 0,
+    all: uniquePageTitles.length,
+    long: uniquePageTitles.filter((title) => title?.length > 60).length || 0,
+    empty: uniquePageTitles.filter((title) => !title).length || 0,
+    short: uniquePageTitles.filter((title) => title?.length < 30).length || 0,
   };
 
   const sections = [

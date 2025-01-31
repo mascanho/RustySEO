@@ -19,23 +19,13 @@ import { useVisibilityStore } from "@/store/VisibilityStore";
 import TaskManagerContainer from "../components/ui/TaskManager/TaskManagerContainer";
 import TablesContainer from "./_components/TablesContainer/TablesContainer";
 import { listen } from "@tauri-apps/api/event";
+import { Domain } from "domain";
 
 // LISTEN TO THE PROGRESS UPDATE EVENT
 listen("progress_update", (event) => {
   const progressData = event.payload;
   // console.log("Progress Data:", progressData);
 });
-
-// Define the expected type of the result from the `crawl_domain` function
-interface PageDetails {
-  title: string;
-  h1: string;
-}
-
-interface CrawlResult {
-  visited_urls: Record<string, PageDetails>;
-  all_files: Record<string, { url: string; file_type: string }>;
-}
 
 export default function Page() {
   const [data, setData] = useState<CrawlResult | null>(null);
@@ -45,10 +35,14 @@ export default function Page() {
   >("url");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const { loaders, showLoader, hideLoader } = useLoaderStore();
-  const { crawlData } = useGlobalCrawlStore();
+  const {
+    crawlData,
+    setDomainCrawlLoading,
+    clearDomainCrawlData,
+    addDomainCrawlResult,
+  } = useGlobalCrawlStore();
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
-  const domainCrawlData = useGlobalCrawlStore();
-  const allData = domainCrawlData.crawlData;
+  const allData = crawlData;
 
   useEffect(() => {
     const sessionData = sessionStorage.getItem("GlobalCrawldata");
@@ -61,10 +55,15 @@ export default function Page() {
     setSearch(event.target.value.toLowerCase());
   };
 
+  console.log("domainCrawlLoading:", setDomainCrawlLoading.toString());
+
   const handleDomainCrawl = async (url) => {
     try {
+      // Set loading
+      setDomainCrawlLoading(true);
+      // Clear the store before crawling
+      clearDomainCrawlData();
       console.log("Crawling domain...");
-
       const result = await invoke("domain_crawl_command", {
         domain: url,
       });
@@ -73,6 +72,8 @@ export default function Page() {
     } catch (error) {
       console.error("Failed to execute domain crawl command:", error);
       console.log("failed to crawl:", url);
+    } finally {
+      setDomainCrawlLoading(false);
     }
   };
 
@@ -85,13 +86,13 @@ export default function Page() {
         return;
       }
 
-      domainCrawlData.addDomainCrawlResult(result);
+      addDomainCrawlResult(result);
     });
 
     return () => {
       unlisten.then((fn) => fn()); // Properly remove listener on unmount
     };
-  }, []);
+  }, [addDomainCrawlResult]);
 
   return (
     <main className="flex h-full w-full">

@@ -1,9 +1,10 @@
 // @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import React from "react";
+import React, { useState } from "react";
 
 const Images = () => {
   const domainCrawlData = useGlobalCrawlStore();
+  const [isOpen, setIsOpen] = useState(false); // State to track if details are open
 
   const imageCounts =
     domainCrawlData?.crawlData?.reduce((acc, item) => {
@@ -31,21 +32,33 @@ const Images = () => {
 
   return (
     <div className="text-sx w-full">
-      <details className="w-full">
-        <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 py-1 pb-1.5 cursor-pointer">
-          Images
+      <details
+        className="w-full"
+        onToggle={(e) => setIsOpen(e.currentTarget.open)} // Update state when details are toggled
+      >
+        <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 py-1 pb-1.5 cursor-pointer flex items-center ">
+          <span>Images</span>
         </summary>
-        {imageData.map((data, index) => (
-          <section
-            key={index}
-            className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark"
-          >
-            <span className="text-brand-bright w-full pl-2.5 py-1">
-              {data.label}
-            </span>
-            <div>{data.count}</div>
-          </section>
-        ))}
+        {/* Data Rows (inside details, only visible when open) */}
+        <div className="w-full">
+          {/* Data Rows */}
+          {imageData.map((data, index) => (
+            <div
+              key={index}
+              className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark"
+            >
+              <div className="w-2/3 pl-2.5 py-1 text-brand-bright">
+                {data?.label}
+              </div>
+              <div className="w-1/6 text-right pr-2">{data?.count}</div>
+              <div className="w-1/6 text-right pr-2">
+                {imageCounts > 0
+                  ? `${((data.count / imageCounts) * 100).toFixed(0)}%`
+                  : "0%"}
+              </div>
+            </div>
+          ))}
+        </div>
       </details>
     </div>
   );

@@ -13,6 +13,7 @@ use url::Url;
 use crate::domain_crawler::helpers::css_selector::{self, extract_css};
 use crate::domain_crawler::helpers::domain_checker::url_check;
 use crate::domain_crawler::helpers::iframe_selector;
+use crate::domain_crawler::helpers::pdf_selector::extract_pdf_links;
 
 // Import your custom modules
 use super::helpers::{
@@ -190,6 +191,7 @@ pub async fn crawl_domain(
                     let schema = schema_selector::get_schema(&body);
                     let css = css_selector::extract_css(&body);
                     let iframe = iframe_selector::extract_iframe(&body);
+                    let pdf_link = extract_pdf_links(&body, &base_url);
 
                     // Create the result object
                     let result = DomainCrawlResults {
@@ -206,6 +208,7 @@ pub async fn crawl_domain(
                         schema,
                         css,
                         iframe,
+                        pdf_link,
                     };
 
                     // Emit the result to the front end

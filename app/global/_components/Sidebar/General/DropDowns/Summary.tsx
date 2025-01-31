@@ -1,9 +1,10 @@
 // @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import React from "react";
+import React, { useState } from "react";
 
 const Summary = () => {
   const domainCrawlData = useGlobalCrawlStore();
+  const [isOpen, setIsOpen] = useState(false); // State to track if details are open
 
   const internalLinks =
     domainCrawlData?.crawlData?.reduce(
@@ -20,41 +21,84 @@ const Summary = () => {
     (item) => item.indexability.indexability === 1,
   ).length;
 
+  const totalPagesCrawled = domainCrawlData?.crawlData?.length || 0;
+  const totalInternalLinks = internalLinks.length || 0;
+  const totalExternalLinks = externalLinks.length || 0;
+  const totalLinksFound = totalInternalLinks + totalExternalLinks;
+  const totalIndexablePages = isInternalIndexable || 0;
+  const totalNotIndexablePages = totalPagesCrawled - totalIndexablePages;
+
   const summaryData = [
-    { label: "URLs crawled", value: domainCrawlData?.crawlData?.length || "0" },
-    { label: "Total Internal URLs", value: internalLinks?.length || "0" },
-    { label: "Total External URLs", value: externalLinks?.length || "0" },
     {
-      label: "Total Links Found",
-      value: internalLinks.length + externalLinks.length || "0",
+      label: "Pages crawled",
+      value: totalPagesCrawled,
+      percentage: totalPagesCrawled
+        ? `${((totalPagesCrawled / totalPagesCrawled) * 100).toFixed(0)}%`
+        : "0%",
     },
     {
-      label: "Total Indexeable Pages",
-      value: isInternalIndexable || "0",
+      label: "Total Links Found",
+      value: totalLinksFound,
+      percentage: totalLinksFound
+        ? `${((totalLinksFound / totalLinksFound) * 100).toFixed(0)}%`
+        : "0%",
+    },
+    {
+      label: "Total Internal Links",
+      value: totalInternalLinks,
+      percentage: totalLinksFound
+        ? `${((totalInternalLinks / totalLinksFound) * 100).toFixed(0)}%`
+        : "0%",
+    },
+    {
+      label: "Total External Links",
+      value: totalExternalLinks,
+      percentage: totalLinksFound
+        ? `${((totalExternalLinks / totalLinksFound) * 100).toFixed(0)}%`
+        : "0%",
+    },
+
+    {
+      label: "Total Indexable Pages",
+      value: totalIndexablePages,
+      percentage: totalPagesCrawled
+        ? `${((totalIndexablePages / totalPagesCrawled) * 100).toFixed(0)}%`
+        : "0%",
     },
     {
       label: "Total Not Indexable Pages",
-      value: domainCrawlData?.crawlData?.length - isInternalIndexable || "0",
+      value: totalNotIndexablePages,
+      percentage: totalPagesCrawled
+        ? `${((totalNotIndexablePages / totalPagesCrawled) * 100).toFixed(0)}%`
+        : "0%",
     },
   ];
 
   return (
     <div className="text-sx w-full">
-      <details className="w-full">
-        <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 py-1 pb-1.5 cursor-pointer">
-          Summary
+      <details
+        className="w-full"
+        onToggle={(e) => setIsOpen(e.currentTarget.open)} // Update state when details are toggled
+      >
+        <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 pb-1.5 cursor-pointer flex items-center ">
+          <span>Summary</span>
         </summary>
-        {summaryData.map((item, index) => (
-          <section
-            key={index}
-            className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark"
-          >
-            <span className="text-brand-bright w-full pl-2.5 py-1">
-              {item.label}{" "}
-            </span>
-            <div>{item.value}</div>
-          </section>
-        ))}
+        {/* Data Rows (inside details, only visible when open) */}
+        <div className="w-full">
+          {/* Data Rows */}
+          {summaryData.map((item, index) => (
+            <div
+              key={index}
+              className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark"
+            >
+              <div className="w-2/3 pl-2.5 py-1 text-brand-bright">
+                {item.label}
+              </div>
+              <div className="w-1/6 text-right pr-2">{item.value}</div>
+              <div className="w-1/6 text-right pr-2">{item.percentage}</div>
+            </div>
+          ))}
+        </div>
       </details>
     </div>
   );

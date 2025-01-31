@@ -7,6 +7,7 @@ export interface PageDetails {
   description: string;
   headings: Record<string, string[]>;
   javascript: { external: string[]; inline: string[] };
+  status_code: { response: { statusCode: number; statusText: string } }[];
 }
 
 // Define the Zustand store
@@ -15,6 +16,8 @@ interface CrawlStore {
   setDomainCrawlData: (data: PageDetails[]) => void; // Replace entire array
   addDomainCrawlResult: (result: PageDetails) => void; // Append to array
   clearDomainCrawlData: () => void; // Reset array
+  domainCrawlLoading: boolean; // Store loading state
+  setDomainCrawlLoading: (loading: boolean) => void; // Set loading state
 }
 
 const useGlobalCrawlStore = create<CrawlStore>((set) => ({
@@ -28,6 +31,10 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
     })),
 
   clearDomainCrawlData: () => set({ crawlData: [] }), // Clear all data
+
+  domainCrawlLoading: false, // Initialize loading state
+
+  setDomainCrawlLoading: (loading) => set({ domainCrawlLoading: loading }), // Set loading state
 }));
 
 export default useGlobalCrawlStore;
