@@ -16,10 +16,10 @@ export const columns: Column[] = [
   // { Header: "Javascript", accessor: "javascript", width: 70 },
   { Header: "Indexable", accessor: "indexable", width: 73 },
   { Header: "Mobile", accessor: "mobileFriendly", width: 60 },
+  // { Header: "Images", accessor: "images", width: 60 },
   // { Header: "Canonical URL", accessor: "canonicalUrl", width: 200 },
   // { Header: "Internal Links", accessor: "internalLinks", width: 100 },
   // { Header: "External Links", accessor: "externalLinks", width: 120 },
-  // { Header: "Images", accessor: "images", width: 100 },
   // { Header: "No Alt Tags", accessor: "altTagsMissing", width: 90 },
   // { Header: "Load Time (s)", accessor: "loadTime", width: 120 },
 ];

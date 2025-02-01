@@ -8,9 +8,10 @@ export interface PageDetails {
   headings: Record<string, string[]>;
   javascript: { external: string[]; inline: string[] };
   status_code: { response: { statusCode: number; statusText: string } }[];
-  indexability: { indexability: number; indexability_score: number };
+  indexability: { indexability: number; indexability_reason: string };
   mobile: { mobile: boolean; mobile_score: number };
   loading_time: { loadingTime: number; loadingTimeScore: number };
+  images: string[];
 }
 
 // Define the Zustand store

@@ -49,16 +49,15 @@ const Table: React.FC<TableProps> = ({
       wordCount: result?.word_count || 0,
       statusCode: result?.status_code || 0,
       responseTime: result?.response_time.toFixed(4) || 0,
+      indexable: result?.indexability?.indexability > 0.5 ? true : 0,
+      mobileFriendly: result?.mobile ? true : 0,
       // javascript:
       //   result?.javascript?.external?.length +
       //     result?.javascript?.inline?.length || 0,
       // canonicalUrl: result?.url || "",
-      indexable: result?.indexability?.indexability_score > 0.5 ? true : 0,
-      mobileFriendly: result?.mobile ? true : 0,
-      // indexabilityReason: result?.indexability?.indexability_reason || "",
+      // images: result?.images?.length || 0,
       // internalLinks: Object.keys(result?.anchor_links?.internal || {}).length,
       // externalLinks: Object.keys(result?.anchor_links?.external || {}).length,
-      // images: result?.images?.length || 0,
       // altTagsMissing: result?.alt_tags?.without_alt_tags?.length || 0,
       // loadTime: result?.response_time || 0,
     }));
