@@ -1,28 +1,38 @@
 // @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import React from "react";
+import React, { useMemo } from "react";
 
 const PageTitles = () => {
   const domainCrawlData = useGlobalCrawlStore();
 
-  const pageTitles =
-    domainCrawlData?.crawlData?.map((item) => item?.title?.[0]?.title) || [];
-  const uniquePageTitles = [...new Set(pageTitles)];
-  const counts = {
-    all: uniquePageTitles.length,
-    long: uniquePageTitles.filter((title) => title?.length > 60).length || 0,
-    empty: uniquePageTitles.filter((title) => !title).length || 0,
-    short: uniquePageTitles.filter((title) => title?.length < 30).length || 0,
-  };
+  // Memoize the crawlData to avoid recalculating on every render
+  const crawlData = domainCrawlData?.crawlData || [];
 
-  const sections = [
-    { label: "All", count: pageTitles.length },
-    { label: "Over 60 Characters", count: counts.long },
-    { label: "Missing Page Title", count: counts.empty },
-    { label: "Below 30 Characters", count: counts.short },
-  ];
+  // Memoize the page titles and their counts
+  const { pageTitles, uniquePageTitles, counts, totalPages } = useMemo(() => {
+    const pageTitles = crawlData.map((item) => item?.title?.[0]?.title) || [];
+    const uniquePageTitles = [...new Set(pageTitles)];
+    const counts = {
+      all: uniquePageTitles.length,
+      long: uniquePageTitles.filter((title) => title?.length > 60).length || 0,
+      empty: uniquePageTitles.filter((title) => !title).length || 0,
+      short: uniquePageTitles.filter((title) => title?.length < 30).length || 0,
+    };
+    const totalPages = crawlData.length;
 
-  const totalPages = domainCrawlData?.crawlData?.length;
+    return { pageTitles, uniquePageTitles, counts, totalPages };
+  }, [crawlData]);
+
+  // Memoize the sections to avoid recalculating on every render
+  const sections = useMemo(
+    () => [
+      { label: "All", count: pageTitles.length },
+      { label: "Over 60 Characters", count: counts.long },
+      { label: "Missing Page Title", count: counts.empty },
+      { label: "Below 30 Characters", count: counts.short },
+    ],
+    [pageTitles, counts],
+  );
 
   return (
     <div className="text-sx w-full">
@@ -40,7 +50,9 @@ const PageTitles = () => {
               <div className="w-2/3 pl-2.5 py-1 text-brand-bright">{label}</div>
               <div className="w-1/6 text-right pr-2">{count}</div>
               <div className="w-1/6 text-center pl-2">
-                {totalPages ? ((count / totalPages) * 100).toFixed(0) + "%" : 0}
+                {totalPages
+                  ? ((count / totalPages) * 100).toFixed(0) + "%"
+                  : "0%"}
               </div>
             </div>
           ))}

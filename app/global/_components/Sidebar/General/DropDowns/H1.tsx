@@ -1,44 +1,62 @@
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import React from "react";
+import React, { useMemo } from "react";
 
 const H1 = () => {
   const domainCrawlData = useGlobalCrawlStore();
 
-  const h1Headings =
-    domainCrawlData?.crawlData?.map((item) => item?.headings?.h1) || [];
-  const uniqueH1Headings = [...new Set(h1Headings.flat())];
+  // Memoize crawlData to avoid recalculating on every render
+  const crawlData = domainCrawlData?.crawlData || [];
 
-  const h1Exists = h1Headings
-    .flat()
-    .filter((heading) => heading && heading !== "");
+  // Memoize H1 headings and their counts
+  const { h1Headings, uniqueH1Headings, counts, totalPages, missingH1Count } =
+    useMemo(() => {
+      const h1Headings = crawlData
+        .map((item) => item?.headings?.h1 || [])
+        .flat();
+      const uniqueH1Headings = [...new Set(h1Headings)];
+      const h1Exists = h1Headings.filter(
+        (heading) => heading && heading !== "",
+      );
 
-  const counts = {
-    exists: h1Exists.length,
-    all: h1Headings.length,
-    empty: h1Headings.flat().filter((heading) => !heading).length || 0,
-    duplicate: h1Headings.flat().length - uniqueH1Headings.length,
-    long:
-      uniqueH1Headings.filter((heading) => heading?.length > 155).length || 0,
-    short:
-      uniqueH1Headings.filter((heading) => heading?.length < 70).length || 0,
-    noH1Object:
-      domainCrawlData?.crawlData?.filter(
-        (item) => !item?.headings?.h1 || item?.headings?.h1.length === 0,
-      ).length || 0,
-  };
+      const counts = {
+        exists: h1Exists.length,
+        all: h1Headings.length,
+        empty: h1Headings.filter((heading) => !heading).length,
+        duplicate: h1Headings.length - uniqueH1Headings.length,
+        long: uniqueH1Headings.filter((heading) => heading?.length > 155)
+          .length,
+        short: uniqueH1Headings.filter((heading) => heading?.length < 70)
+          .length,
+        noH1Object: crawlData.filter(
+          (item) => !item?.headings?.h1 || item?.headings?.h1.length === 0,
+        ).length,
+      };
 
-  const totalPages = domainCrawlData?.crawlData?.length;
-  const missingH1Count = Math.abs(
-    totalPages - (counts.noH1Object + counts.empty),
+      const totalPages = crawlData.length;
+      const missingH1Count = Math.abs(
+        totalPages - (counts.noH1Object + counts.empty),
+      );
+
+      return {
+        h1Headings,
+        uniqueH1Headings,
+        counts,
+        totalPages,
+        missingH1Count,
+      };
+    }, [crawlData]);
+
+  // Memoize sections to avoid recalculating on every render
+  const sections = useMemo(
+    () => [
+      { label: "Total", count: counts.exists },
+      { label: "Missing", count: missingH1Count },
+      { label: "Duplicate H1 Headings", count: counts.duplicate },
+      { label: "Over 155 Characters", count: counts.long },
+      { label: "Below 70 Characters", count: counts.short },
+    ],
+    [counts, missingH1Count],
   );
-
-  const sections = [
-    { label: "Total", count: counts.exists },
-    { label: "Missing", count: missingH1Count },
-    { label: "Duplicate H1 Headings", count: counts.duplicate },
-    { label: "Over 155 Characters", count: counts.long },
-    { label: "Below 70 Characters", count: counts.short },
-  ];
 
   return (
     <div className="text-sx w-full">
@@ -61,7 +79,7 @@ const H1 = () => {
                         totalPages) *
                       100
                     ).toFixed(0) + "%"
-                  : 0}
+                  : "0%"}
               </div>
             </div>
           ))}

@@ -19,13 +19,6 @@ import { useVisibilityStore } from "@/store/VisibilityStore";
 import TaskManagerContainer from "../components/ui/TaskManager/TaskManagerContainer";
 import TablesContainer from "./_components/TablesContainer/TablesContainer";
 import { listen } from "@tauri-apps/api/event";
-import { Domain } from "domain";
-
-// LISTEN TO THE PROGRESS UPDATE EVENT
-listen("progress_update", (event) => {
-  const progressData = event.payload;
-  // console.log("Progress Data:", progressData);
-});
 
 export default function Page() {
   const [data, setData] = useState<CrawlResult | null>(null);
@@ -55,8 +48,6 @@ export default function Page() {
     setSearch(event.target.value.toLowerCase());
   };
 
-  console.log("domainCrawlLoading:", setDomainCrawlLoading.toString());
-
   const handleDomainCrawl = async (url) => {
     try {
       // Set loading
@@ -67,7 +58,6 @@ export default function Page() {
       const result = await invoke("domain_crawl_command", {
         domain: url,
       });
-      // domainCrawlData.setDomainCrawlData(result);
       console.log("Crawl Result:", result);
     } catch (error) {
       console.error("Failed to execute domain crawl command:", error);
@@ -78,19 +68,30 @@ export default function Page() {
   };
 
   useEffect(() => {
-    const unlisten = listen("crawl_result", (event) => {
-      const result = event?.payload?.result;
+    let isMounted = true; // Flag to track if the component is mounted
 
-      if (!result || typeof result !== "object") {
-        console.error("Invalid result format:", result);
-        return;
-      }
+    const setupEventListener = async () => {
+      const unlisten = await listen("crawl_result", (event) => {
+        if (!isMounted) return; // Skip if component is unmounted
 
-      addDomainCrawlResult(result);
-    });
+        const result = event?.payload?.result;
+
+        if (!result || typeof result !== "object") {
+          console.error("Invalid result format:", result);
+          return;
+        }
+
+        addDomainCrawlResult(result);
+      });
+
+      return unlisten; // Return the cleanup function
+    };
+
+    const cleanupPromise = setupEventListener();
 
     return () => {
-      unlisten.then((fn) => fn()); // Properly remove listener on unmount
+      isMounted = false; // Set flag to false on unmount
+      cleanupPromise.then((unlisten) => unlisten()); // Cleanup the event listener
     };
   }, [addDomainCrawlResult]);
 

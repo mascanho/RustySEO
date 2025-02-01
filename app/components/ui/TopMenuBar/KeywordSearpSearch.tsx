@@ -153,8 +153,6 @@ export default function KeywordSearch() {
     getCredentials();
   }, [serpResults, suggestions]);
 
-  console.log(serpResults, numberOfPages);
-
   const url = serpResults?.pages?.map((result: any) => result.url);
   const query = serpResults?.pages?.map(
     (result: any) => result?.headings?.[0]?.[1] || "",

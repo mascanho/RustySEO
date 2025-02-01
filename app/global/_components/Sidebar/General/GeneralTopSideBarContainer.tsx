@@ -22,7 +22,7 @@ const GeneralTopSideBarContainer = () => {
         <div className="w-[3.5em]">%</div>
       </section>
       <div className="overflow-hidden">
-        <Summary />
+        {/* <Summary /> */}
         <PageTitles />
         <MetaDescriptions />
         <H1 />
@@ -30,8 +30,8 @@ const GeneralTopSideBarContainer = () => {
         <Css />
         <Iframes />
         <Javascript />
-        <Schema />
-        <StatusCodes />
+        {/* <Schema /> */}
+        {/* <StatusCodes /> */}
       </div>
     </div>
   );

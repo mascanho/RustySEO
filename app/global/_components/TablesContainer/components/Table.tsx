@@ -1,6 +1,4 @@
-// @ts-nocheck
-import type React from "react";
-import { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   useTable,
   useSortBy,
@@ -8,7 +6,7 @@ import {
   useBlockLayout,
   useResizeColumns,
 } from "react-table";
-import type { Column, Data, ResizableColumnInstance } from "../types/table";
+import type { Column, ResizableColumnInstance } from "../types/table";
 import SearchInput from "./SearchInput";
 import ColumnSelector from "./ColumnSelector";
 import {
@@ -17,17 +15,16 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 
 interface TableProps {
   columns: Column[];
-  data: Data[];
   onCellClick?: (rowIndex: number, columnId: string) => void;
   onCellRightClick?: (rowIndex: number, columnId: string) => void;
 }
 
 const Table: React.FC<TableProps> = ({
   columns,
-  data,
   onCellClick,
   onCellRightClick,
 }) => {
@@ -38,6 +35,33 @@ const Table: React.FC<TableProps> = ({
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
     columns.map((col) => col.accessor),
   );
+  const { crawlData } = useGlobalCrawlStore();
+
+  const data = useMemo(() => {
+    return crawlData?.map((result, index) => ({
+      id: index + 1,
+      url: result?.url || "",
+      pageTitle: result?.title?.[0]?.title || "",
+      titleLength: result?.title?.[0]?.title_len || 0,
+      metaDescription: result?.description || "",
+      metaDescriptionLength: result?.description?.length || 0,
+      h1: result?.headings?.h1?.[0] || "",
+      h2Count: result?.headings?.h2?.length || 0,
+      wordCount: result?.word_count || 0,
+      statusCode: result?.status_code || 0,
+      responseTime: result?.response_time || 0,
+      canonicalUrl: result?.url || "",
+      indexable: result?.indexability?.indexability > 0.5 || false,
+      indexabilityReason: result?.indexability?.indexability_reason || "",
+      internalLinks: Object.keys(result?.anchor_links?.internal || {}).length,
+      externalLinks: Object.keys(result?.anchor_links?.external || {}).length,
+      images: result?.images?.length || 0,
+      altTagsMissing: result?.alt_tags?.without_alt_tags?.length || 0,
+      loadTime: result?.response_time || 0,
+      ssl: result?.url?.startsWith("https") || false,
+      mobileFriendly: result?.mobile || false,
+    }));
+  }, [crawlData]);
 
   const defaultColumn = useMemo(
     () => ({
@@ -64,7 +88,7 @@ const Table: React.FC<TableProps> = ({
   } = useTable(
     {
       columns: filteredColumns,
-      data,
+      data: data || [],
       defaultColumn,
     },
     useBlockLayout,
@@ -179,7 +203,7 @@ const Table: React.FC<TableProps> = ({
                           style={{
                             ...columnProps.style,
                             width:
-                              column.defaultWidth || columnProps.style.width,
+                              column.defaultWidth || columnProps.style?.width,
                           }}
                         >
                           <div
