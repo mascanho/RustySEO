@@ -13,14 +13,15 @@ export const columns: Column[] = [
   { Header: "Word Count", accessor: "wordCount", width: 85 },
   { Header: "Status Code", accessor: "statusCode", width: 85 },
   { Header: "Response Time", accessor: "responseTime", width: 105 },
-  // { Header: "Canonical URL", accessor: "canonicalUrl", width: 200 },
+  // { Header: "Javascript", accessor: "javascript", width: 70 },
   { Header: "Indexable", accessor: "indexable", width: 73 },
-  { Header: "Internal Links", accessor: "internalLinks", width: 120 },
+  { Header: "Mobile", accessor: "mobileFriendly", width: 60 },
+  // { Header: "Canonical URL", accessor: "canonicalUrl", width: 200 },
+  // { Header: "Internal Links", accessor: "internalLinks", width: 100 },
   // { Header: "External Links", accessor: "externalLinks", width: 120 },
   // { Header: "Images", accessor: "images", width: 100 },
-  // { Header: "Alt Tags Missing", accessor: "altTagsMissing", width: 140 },
+  // { Header: "No Alt Tags", accessor: "altTagsMissing", width: 90 },
   // { Header: "Load Time (s)", accessor: "loadTime", width: 120 },
-  // { Header: "Mobile Friendly", accessor: "mobileFriendly", width: 130 },
 ];
 
 export const data: Data[] = [

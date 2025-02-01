@@ -41,7 +41,7 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
             <input
               type="url"
               required
-              placeholder="your website domain"
+              placeholder="www.yourwebsite.com"
               value={url}
               onChange={handleInputChange}
               onKeyDown={handleKeyPress} // Fixed deprecated onKeyPress
