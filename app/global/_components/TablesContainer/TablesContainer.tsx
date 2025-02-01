@@ -84,12 +84,12 @@ export default function Home() {
                   value={tab}
                   className="flex-grow overflow-hidden"
                 >
-                  {/* <Table
+                  <Table
                     columns={tabData[tab].columns}
                     data={tabData[tab].data}
                     onCellClick={handleCellClick}
                     onCellRightClick={handleCellRightClick}
-                  /> */}
+                  />
                 </TabsContent>
               ),
             )}
