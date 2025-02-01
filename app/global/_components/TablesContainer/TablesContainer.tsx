@@ -96,9 +96,12 @@ export default function Home() {
           </Tabs>
         </div>
         <ResizableDivider onResize={handleResize} containerRef={containerRef} />
-        {/* <div style={{ height: `${bottomTableHeight}px`, minHeight: "100px" }}>
+        <div
+          className="overflow-scroll h-auto"
+          style={{ height: `${bottomTableHeight}px`, minHeight: "100px" }}
+        >
           <DetailTable data={selectedCellData} />
-        </div> */}
+        </div>
       </div>
     </div>
   );

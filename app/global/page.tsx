@@ -115,23 +115,7 @@ export default function Page() {
             <Tabs.List justify="center" className="dark:text-white text-xs">
               <Tabs.Tab value="first">
                 <FaGlobe className="inline-block mr-2" />
-                Domain
-              </Tabs.Tab>
-              <Tabs.Tab value="third">
-                <FaTools className="inline-block mr-2" />
-                Improvements
-              </Tabs.Tab>
-              <Tabs.Tab value="tasks">
-                <FaTasks className="inline-block mr-2" />
-                Task Manager
-              </Tabs.Tab>
-              <Tabs.Tab value="fifth">
-                <FaHistory className="inline-block mr-2" />
-                Crawl History
-              </Tabs.Tab>
-              <Tabs.Tab value="analytics">
-                <FaChartBar className="inline-block mr-2" />
-                Analytics
+                Deep crawl
               </Tabs.Tab>
             </Tabs.List>
           </aside>

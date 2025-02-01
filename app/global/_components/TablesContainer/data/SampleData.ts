@@ -3,30 +3,24 @@ import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import type { Column, Data, CellData, TabData } from "../types/table";
 
 export const columns: Column[] = [
-  { Header: "ID", accessor: "id", width: 10 },
+  { Header: "ID", accessor: "id", width: 40 },
   { Header: "URL", accessor: "url", width: 200 },
   { Header: "Page Title", accessor: "pageTitle", width: 250 },
-  { Header: "Title Length", accessor: "titleLength", width: 100 },
+  { Header: "Title Length", accessor: "titleLength", width: 85 },
   { Header: "Meta Description", accessor: "metaDescription", width: 300 },
-  {
-    Header: "Meta Length",
-    accessor: "metaDescriptionLength",
-    width: 100,
-  },
+  { Header: "Meta Length", accessor: "metaDescriptionLength", width: 100 },
   { Header: "H1", accessor: "h1", width: 200 },
-  { Header: "H2 Count", accessor: "h2Count", width: 100 },
-  { Header: "Word Count", accessor: "wordCount", width: 120 },
-  { Header: "Status Code", accessor: "statusCode", width: 120 },
-  { Header: "Response Time (ms)", accessor: "responseTime", width: 150 },
-  { Header: "Canonical URL", accessor: "canonicalUrl", width: 200 },
-  { Header: "Indexable", accessor: "indexable", width: 100 },
+  { Header: "Word Count", accessor: "wordCount", width: 85 },
+  { Header: "Status Code", accessor: "statusCode", width: 85 },
+  { Header: "Response Time", accessor: "responseTime", width: 105 },
+  // { Header: "Canonical URL", accessor: "canonicalUrl", width: 200 },
+  { Header: "Indexable", accessor: "indexable", width: 73 },
   { Header: "Internal Links", accessor: "internalLinks", width: 120 },
-  { Header: "External Links", accessor: "externalLinks", width: 120 },
-  { Header: "Images", accessor: "images", width: 100 },
-  { Header: "Alt Tags Missing", accessor: "altTagsMissing", width: 140 },
-  { Header: "Load Time (s)", accessor: "loadTime", width: 120 },
-  { Header: "SSL", accessor: "ssl", width: 80 },
-  { Header: "Mobile Friendly", accessor: "mobileFriendly", width: 130 },
+  // { Header: "External Links", accessor: "externalLinks", width: 120 },
+  // { Header: "Images", accessor: "images", width: 100 },
+  // { Header: "Alt Tags Missing", accessor: "altTagsMissing", width: 140 },
+  // { Header: "Load Time (s)", accessor: "loadTime", width: 120 },
+  // { Header: "Mobile Friendly", accessor: "mobileFriendly", width: 130 },
 ];
 
 export const data: Data[] = [
