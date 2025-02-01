@@ -15,3 +15,4 @@ pub mod pdf_selector;
 pub mod schema_selector;
 pub mod title_selector;
 pub mod word_count;
+pub mod mobile_checker;

@@ -28,9 +28,11 @@ import { useVisibilityStore } from "@/store/VisibilityStore";
 import { GiPirateFlag, GiPirateHat } from "react-icons/gi";
 import { ImGoogle3 } from "react-icons/im";
 import { AiFillX } from "react-icons/ai";
-import { FaShip } from "react-icons/fa";
+import { FaShip, FaSpider } from "react-icons/fa";
 import { listen } from "@tauri-apps/api/event";
 import FooterLoader from "./FooterLoader/FooterLoader";
+import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import CrawlerType from "./Footer/CrawlerType";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -63,6 +65,7 @@ const Footer = () => {
   const pathname = usePathname();
   const [openedAiDrawer, { open: openAiDrawer, close: closeAiDrawer }] =
     useDisclosure(false);
+  const { crawlerType } = useGlobalCrawlStore();
 
   const deep = pathname === "/global";
   const shallow = pathname === "/";
@@ -191,7 +194,8 @@ const Footer = () => {
                 <span className="mt-[5px] text-orange-500">Fetching...</span>
               </>
             ) : (
-              url && (
+              url &&
+              shallow && (
                 <div className="flex items-center space-x-1">
                   <a href={url} rel="noreferrer">
                     <div className="relative group hover:delay-1000">
@@ -205,6 +209,7 @@ const Footer = () => {
                 </div>
               )
             )}
+            {deep && <CrawlerType />}
             {deep ? <FooterLoader /> : null}
           </div>
         </section>

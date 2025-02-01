@@ -8,12 +8,12 @@ const Summary = () => {
 
   const internalLinks =
     domainCrawlData?.crawlData?.reduce(
-      (acc, item) => acc.concat(item?.anchor_links?.internal_links || []),
+      (acc, item) => acc.concat(item?.anchor_links?.internal?.links || []),
       [],
     ) || [];
   const externalLinks =
     domainCrawlData?.crawlData?.reduce(
-      (acc, item) => acc.concat(item?.anchor_links?.external_links || []),
+      (acc, item) => acc.concat(item?.anchor_links?.external?.links || []),
       [],
     ) || [];
 

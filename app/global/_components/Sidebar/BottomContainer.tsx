@@ -5,7 +5,10 @@ const BottomContainer = () => {
   return (
     <div className="border-t">
       <Tabs defaultValue="first" className="overflow-auto">
-        <Tabs.List justify="center" className="dark:text-white text-xs">
+        <Tabs.List
+          justify="center"
+          className="dark:text-white text-xs font-bold"
+        >
           <Tabs.Tab value="first">Domain</Tabs.Tab>
           <Tabs.Tab value="third">Improv</Tabs.Tab>
           <Tabs.Tab value="fourth">Task</Tabs.Tab>

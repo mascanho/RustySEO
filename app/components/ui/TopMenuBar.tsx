@@ -18,7 +18,7 @@ import PageSpeedInsigthsApi from "../PageSpeedInsigthsApi";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import OllamaSelect from "./OllamaSelector/OllamaSelect";
 import GoogleSearchConsoleModal from "./GoogleSearchConsole/GoogleSearchConsoleModal";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import WindowToggler from "./Panes/WindowToggler";
 import GeminiSelector from "./GeminiSelector/GeminiSelector";
 import About from "./About/About";
@@ -64,6 +64,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
+  const pathname = usePathname();
 
   const { visibility, showSerpKeywords, hideSerpKeywords } =
     useVisibilityStore();
@@ -518,6 +519,22 @@ const TopMenuBar = () => {
                 <GiRobotGrab className="mr-2" />
                 Global Crawler
               </MenubarItem> */}
+            </MenubarContent>
+          </MenubarMenu>
+
+          <MenubarMenu>
+            <MenubarTrigger className="ml-3">Extractors</MenubarTrigger>
+            <MenubarContent>
+              <MenubarItem
+                className={`mr-2 ${pathname !== "/global" ? "text-gray-400 pointer-events-none" : ""}`}
+                onClick={() => router.push("/")}
+                disabled={pathname !== "/global"}
+              >
+                <GiRobotGrab
+                  className={`mr-2 ${pathname === "/global" ? "" : ""}`}
+                />
+                CSS Extractor
+              </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
 

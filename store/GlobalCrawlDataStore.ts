@@ -18,6 +18,8 @@ interface CrawlStore {
   clearDomainCrawlData: () => void; // Reset array
   domainCrawlLoading: boolean; // Store loading state
   setDomainCrawlLoading: (loading: boolean) => void; // Set loading state
+  crawlerType: string; // Store crawler type
+  setCrawlerType: (type: string) => void; // Set crawler type
 }
 
 const useGlobalCrawlStore = create<CrawlStore>((set) => ({
@@ -35,6 +37,10 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
   domainCrawlLoading: false, // Initialize loading state
 
   setDomainCrawlLoading: (loading) => set({ domainCrawlLoading: loading }), // Set loading state
+
+  crawlerType: "spider", // Initialize crawler type
+
+  setCrawlerType: (type) => set({ crawlerType: type }), // Set crawler type
 }));
 
 export default useGlobalCrawlStore;

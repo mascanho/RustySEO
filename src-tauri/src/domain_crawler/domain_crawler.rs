@@ -10,6 +10,7 @@ use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration};
 use url::Url;
 
+use super::helpers::mobile_checker::is_mobile;
 // Import custom modules for specific functionality
 use super::helpers::{
     alt_tags, anchor_links, check_html_page, headings_selector, images_selector, indexability,
@@ -237,6 +238,7 @@ pub async fn crawl_domain(
                         pdf_link: extract_pdf_links(&body, &base_url),
                         word_count: get_word_count(&body),
                         response_time: Some(response_time),
+                        mobile: is_mobile(&body),
                     };
 
                     // Emit result to frontend
