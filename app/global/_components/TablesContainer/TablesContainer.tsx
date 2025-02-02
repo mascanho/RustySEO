@@ -30,11 +30,17 @@ export default function Home() {
   const { crawlData } = useGlobalCrawlStore();
 
   const tableStructure = [
+    // {
+    //   Header: "ID",
+    //   accessor: "id",
+    //   width: 40,
+    //   getValue: (result: Result, index: number) => index + 1 || 0,
+    // },
     {
-      Header: "ID",
-      accessor: "id",
-      width: 40,
-      getValue: (result: Result, index: number) => index + 1 || 0,
+      Header: "URL",
+      accessor: "url",
+      width: 280,
+      getValue: (result: Result, index: number) => result.url || "",
     },
     // {
     //   Header: "Response Time",
@@ -221,7 +227,6 @@ export default function Home() {
         { Header: "External Links", accessor: "externalLinks", width: 120 },
         { Header: "Images", accessor: "images", width: 100 },
         { Header: "Alt Tags Missing", accessor: "altTagsMissing", width: 140 },
-        { Header: "SSL", accessor: "ssl", width: 80 },
         { Header: "Mobile Friendly", accessor: "mobileFriendly", width: 130 },
       ],
       data: data.map(
@@ -337,9 +342,9 @@ export default function Home() {
           <Tabs
             value={activeTab}
             onValueChange={setActiveTab}
-            className="h-full flex flex-col"
+            className="h-full flex dark:bg-brand-darker flex-col"
           >
-            <TabsList className="w-full justify-start -mb-2 bg-gray-50 rounded-none">
+            <TabsList className="w-full justify-start dark:bg-brand-dark -mb-2 bg-gray-50 rounded-none">
               <TabsTrigger value="crawledPages">Crawled Pages</TabsTrigger>
               <TabsTrigger value="seoAnalysis">SEO Analysis</TabsTrigger>
               <TabsTrigger value="technicalDetails">

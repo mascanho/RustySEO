@@ -28,14 +28,14 @@ const Table: React.FC<TableProps> = ({
   columns = [], // Default to an empty array if no columns are provided
   onCellClick,
   onCellRightClick,
-  data = [], // Default to an empty array if no data is provided
+  data = [], // Default to an empty array if no data are provided
 }) => {
   const [selectedCell, setSelectedCell] = useState<{
     rowIndex: number;
     columnId: string;
   } | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
-    columns.map((col) => col.accessor) || [], // Ensure visibleColumns is always an array
+    columns?.map((col) => col.accessor) || [], // Ensure visibleColumns is always an array
   );
 
   const defaultColumn = useMemo(
@@ -50,24 +50,28 @@ const Table: React.FC<TableProps> = ({
   // Ensure data is always an array and filter out null/undefined rows
   const sanitizedData = useMemo(() => {
     if (!Array.isArray(data)) {
-      console.error("Invalid data format. Expected an array.");
+      console.error("Invalid data format. Expected an array. Received:", data);
       return [];
     }
-    return data.filter((row) => row != null);
+    return data.filter((row) => row != null); // Filter out null/undefined rows
   }, [data]);
 
   // Filter columns based on visibleColumns
-  const filteredColumns = useMemo(
-    () =>
-      columns.filter((column) => visibleColumns.includes(column.accessor)) ||
-      [],
-    [columns, visibleColumns],
-  );
+  const filteredColumns = useMemo(() => {
+    if (!Array.isArray(columns)) {
+      console.error(
+        "Invalid columns format. Expected an array. Received:",
+        columns,
+      );
+      return [];
+    }
+    return columns.filter((column) => visibleColumns.includes(column.accessor));
+  }, [columns, visibleColumns]);
 
   // Log data and columns for debugging
   useEffect(() => {
-    console.log("Data received:", sanitizedData);
-    console.log("Columns:", filteredColumns);
+    console.log("Sanitized Data:", sanitizedData);
+    console.log("Filtered Columns:", filteredColumns);
   }, [sanitizedData, filteredColumns]);
 
   const {
@@ -113,7 +117,7 @@ const Table: React.FC<TableProps> = ({
 
   const renderCell = useCallback(
     (cell: any, rowIndex: number) => {
-      if (!cell) return null; // Safeguard against undefined cells
+      if (!cell || !cell.column) return null; // Safeguard against undefined cells or columns
 
       const { key, ...cellProps } = cell.getCellProps();
       const isSelected =
@@ -121,9 +125,8 @@ const Table: React.FC<TableProps> = ({
         selectedCell?.columnId === cell.column.id;
       const isIdColumn = cell.column.id === "id";
       const isBooleanColumn =
-        cell.column.id === "ssl" ||
-        cell.column.id === "mobileFriendly" ||
-        cell.column.id === "indexable";
+        cell.column.id === "mobileFriendly" || cell.column.id === "indexable";
+      const cellValue = cell.value ?? "N/A"; // Default to "N/A" if value is undefined or null
 
       return (
         <ContextMenu key={key}>
@@ -142,15 +145,15 @@ const Table: React.FC<TableProps> = ({
               {isBooleanColumn ? (
                 <span
                   className={`px-2 py-1 rounded ${
-                    cell.value
+                    cellValue
                       ? "bg-green-200 text-green-800"
                       : "bg-red-200 text-red-800"
                   }`}
                 >
-                  {cell.value ? "Yes" : "No"}
+                  {cellValue ? "Yes" : "No"}
                 </span>
               ) : (
-                cell.render("Cell")
+                cell.render("Cell", { value: cellValue })
               )}
             </div>
           </ContextMenuTrigger>
@@ -177,9 +180,9 @@ const Table: React.FC<TableProps> = ({
           setVisibleColumns={setVisibleColumns}
         />
       </div>
-      <div className="flex-grow overflow-auto rounded-md">
+      <div className="flex-grow overflow-auto rounded-md dark:bg-brand-darker dark:text-white/50">
         <div {...getTableProps()} className="inline-block min-w-full">
-          <div className="sticky top-0 z-10 bg-gray-100">
+          <div className="sticky top-0 z-10 bg-gray-100 dark:bg-brand-darker dark:text-white">
             {headerGroups.map((headerGroup) => {
               const { key, ...headerGroupProps } =
                 headerGroup.getHeaderGroupProps();
@@ -194,7 +197,7 @@ const Table: React.FC<TableProps> = ({
                         <div
                           key={key}
                           {...columnProps}
-                          className="font-semibold text-left p-1 text-xs border-b border-r border-gray-200 relative bg-gray-100"
+                          className="font-semibold dark:bg-brand-darker text-left p-1 text-xs border-b border-r border-gray-200 relative bg-gray-100"
                           style={{
                             ...columnProps.style,
                             width: column.width || columnProps.style?.width,
@@ -240,8 +243,13 @@ const Table: React.FC<TableProps> = ({
                     </div>
                   );
                 } catch (error) {
-                  console.error("Error preparing row:", error);
-                  return null;
+                  console.error(
+                    "Error preparing row:",
+                    error,
+                    "Row data:",
+                    row,
+                  );
+                  return null; // Skip rendering this row
                 }
               })
             ) : (

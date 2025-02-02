@@ -45,7 +45,7 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-fit p-0 h-6 pl-2 border justify-end"
+          className="w-fit p-0 h-6 pl-2 border justify-end dark:bg-brand-darker dark:text-white/50"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -67,7 +67,7 @@ const ColumnSelector: React.FC<ColumnSelectorProps> = ({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[200px] p-0">
+      <PopoverContent className="w-[200px] dark:bg-brand-darker dark:text-white/50 p-0">
         <Command>
           <CommandInput placeholder="Search columns..." />
           <CommandList>
