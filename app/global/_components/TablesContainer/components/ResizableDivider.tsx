@@ -67,10 +67,12 @@ const ResizableDivider: React.FC<ResizableDividerProps> = ({
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
   return (
-    <div
-      className="h-2 bg-gray-200 cursor-row-resize hover:bg-blue-300 transition-colors duration-200"
-      onMouseDown={handleMouseDown}
-    />
+    <>
+      <div
+        className="h-4 bg-gray-200 cursor-row-resize hover:bg-brand-bright dark:bg-brand-dark transition-colors duration-200"
+        onMouseDown={handleMouseDown}
+      />
+    </>
   );
 };
 

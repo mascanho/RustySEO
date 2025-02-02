@@ -4,7 +4,7 @@ import OverviewBottomSidePanel from "./BottomContainer/OverviewBottomSidePanel";
 
 const BottomContainer = () => {
   return (
-    <div className="border-t">
+    <div className="border-t dark:border-brand-dark">
       <Tabs defaultValue="overview" className="overflow-auto">
         <Tabs.List
           justify="center"

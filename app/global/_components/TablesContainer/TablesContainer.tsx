@@ -326,7 +326,7 @@ export default function Home() {
 
   return (
     <div
-      className={`mx-0 mt-8 h-screen ${visibility.sidebar ? "w-[calc(100vw-18rem)]" : ""}`}
+      className={`mx-0 mt-8 h-screen dark:bg-brand-darker ${visibility.sidebar ? "w-[calc(100vw-18rem)]" : ""}`}
     >
       <div
         ref={containerRef}
@@ -344,7 +344,7 @@ export default function Home() {
             onValueChange={setActiveTab}
             className="h-full flex dark:bg-brand-darker flex-col"
           >
-            <TabsList className="w-full justify-start dark:bg-brand-dark -mb-2 bg-gray-50 rounded-none">
+            <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark  border-t border-b   -mb-2 bg-gray-50 rounded-none">
               <TabsTrigger value="crawledPages">Crawled Pages</TabsTrigger>
               <TabsTrigger value="seoAnalysis">SEO Analysis</TabsTrigger>
               <TabsTrigger value="technicalDetails">
@@ -371,7 +371,7 @@ export default function Home() {
         </div>
         <ResizableDivider onResize={handleResize} containerRef={containerRef} />
         <div
-          className="overflow-scroll h-auto"
+          className="overflow-scroll dark:bg-brand-darker h-auto"
           style={{ height: `${bottomTableHeight}px`, minHeight: "100px" }}
         >
           <DetailTable data={selectedCellData} />
