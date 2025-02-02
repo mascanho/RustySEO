@@ -7,44 +7,40 @@ const H1 = () => {
   // Memoize crawlData to avoid recalculating on every render
   const crawlData = domainCrawlData?.crawlData || [];
 
-  // Memoize H1 headings and their counts
-  const { h1Headings, uniqueH1Headings, counts, totalPages, missingH1Count } =
-    useMemo(() => {
-      const h1Headings = crawlData
-        .map((item) => item?.headings?.h1 || [])
-        .flat();
-      const uniqueH1Headings = [...new Set(h1Headings)];
-      const h1Exists = h1Headings.filter(
-        (heading) => heading && heading !== "",
-      );
+  // Memoize H1 analysis
+  const { counts, totalPages, missingH1Count } = useMemo(() => {
+    // Extract all H1 headings from crawlData
+    const h1Headings = crawlData
+      ?.map((item) => item?.headings?.h1 || [])
+      .flat();
 
-      const counts = {
-        exists: h1Exists.length,
-        all: h1Headings.length,
-        empty: h1Headings.filter((heading) => !heading).length,
-        duplicate: h1Headings.length - uniqueH1Headings.length,
-        long: uniqueH1Headings.filter((heading) => heading?.length > 155)
-          .length,
-        short: uniqueH1Headings.filter((heading) => heading?.length < 70)
-          .length,
-        noH1Object: crawlData.filter(
-          (item) => !item?.headings?.h1 || item?.headings?.h1.length === 0,
-        ).length,
-      };
+    // Filter out empty or undefined H1 headings
+    const validH1Headings = h1Headings.filter((heading) => heading?.trim());
 
-      const totalPages = crawlData.length;
-      const missingH1Count = Math.abs(
-        totalPages - (counts.noH1Object + counts.empty),
-      );
+    // Get unique H1 headings
+    const uniqueH1Headings = [...new Set(validH1Headings)];
 
-      return {
-        h1Headings,
-        uniqueH1Headings,
-        counts,
-        totalPages,
-        missingH1Count,
-      };
-    }, [crawlData]);
+    // Calculate counts
+    const counts = {
+      exists: validH1Headings.length, // Number of valid H1 headings
+      all: h1Headings.length, // Total H1 headings (including empty/undefined)
+      empty: h1Headings.length - validH1Headings.length, // Empty/undefined H1 headings
+      duplicate: h1Headings.length - uniqueH1Headings.length, // Duplicate H1 headings
+      long: uniqueH1Headings.filter((heading) => heading.length > 155).length, // H1s over 155 characters
+      short: uniqueH1Headings.filter((heading) => heading.length < 70).length, // H1s under 70 characters
+      noH1Object: crawlData.filter((item) => !item?.headings?.h1?.length)
+        .length, // Pages without H1 headings
+    };
+
+    const totalPages = crawlData.length;
+    const missingH1Count = Math.abs(totalPages - counts.exists);
+
+    return {
+      counts,
+      totalPages,
+      missingH1Count,
+    };
+  }, [crawlData]);
 
   // Memoize sections to avoid recalculating on every render
   const sections = useMemo(

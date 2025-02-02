@@ -44,7 +44,7 @@ struct CrawlResultData {
 const MAX_RETRIES: usize = 5;
 const BASE_DELAY: u64 = 2;
 const MAX_DELAY: u64 = 5;
-const CONCURRENT_REQUESTS: usize = 60;
+const CONCURRENT_REQUESTS: usize = 100;
 
 /// Fetches a URL with exponential backoff retry logic
 async fn fetch_with_exponential_backoff(

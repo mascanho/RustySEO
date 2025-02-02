@@ -27,7 +27,7 @@ const Summary = () => {
   // Memoize indexable pages
   const totalIndexablePages = useMemo(
     () =>
-      crawlData.filter((item) => item?.indexability?.indexability === 1).length,
+      crawlData.filter((item) => item?.indexability?.indexability > 0.5).length,
     [crawlData],
   );
 

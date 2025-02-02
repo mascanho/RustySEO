@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useCallback } from "react";
+// @ts-nocheck
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   useTable,
   useSortBy,
@@ -15,53 +16,27 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 
 interface TableProps {
-  columns: Column[];
+  columns?: Column[]; // Make columns optional
   onCellClick?: (rowIndex: number, columnId: string) => void;
   onCellRightClick?: (rowIndex: number, columnId: string) => void;
+  data?: any[]; // Make data optional
 }
 
 const Table: React.FC<TableProps> = ({
-  columns,
+  columns = [], // Default to an empty array if no columns are provided
   onCellClick,
   onCellRightClick,
+  data = [], // Default to an empty array if no data is provided
 }) => {
   const [selectedCell, setSelectedCell] = useState<{
     rowIndex: number;
     columnId: string;
   } | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<string[]>(
-    columns.map((col) => col.accessor),
+    columns.map((col) => col.accessor) || [], // Ensure visibleColumns is always an array
   );
-  const { crawlData } = useGlobalCrawlStore();
-
-  const data = useMemo(() => {
-    return crawlData?.map((result, index) => ({
-      id: index + 1,
-      url: result?.url || "",
-      pageTitle: result?.title?.[0]?.title || "",
-      titleLength: result?.title?.[0]?.title.length || 0,
-      metaDescription: result?.description || "",
-      metaDescriptionLength: result?.description?.length || 0,
-      h1: result?.headings?.h1?.[0] || "",
-      wordCount: result?.word_count || 0,
-      statusCode: result?.status_code || 0,
-      responseTime: result?.response_time.toFixed(4) || 0,
-      indexable: result?.indexability?.indexability > 0.5 ? true : 0,
-      mobileFriendly: result?.mobile ? true : 0,
-      // javascript:
-      //   result?.javascript?.external?.length +
-      //     result?.javascript?.inline?.length || 0,
-      // canonicalUrl: result?.url || "",
-      // images: result?.images?.length || 0,
-      // internalLinks: Object.keys(result?.anchor_links?.internal || {}).length,
-      // externalLinks: Object.keys(result?.anchor_links?.external || {}).length,
-      // altTagsMissing: result?.alt_tags?.without_alt_tags?.length || 0,
-      // loadTime: result?.response_time || 0,
-    }));
-  }, [crawlData]);
 
   const defaultColumn = useMemo(
     () => ({
@@ -72,10 +47,28 @@ const Table: React.FC<TableProps> = ({
     [],
   );
 
+  // Ensure data is always an array and filter out null/undefined rows
+  const sanitizedData = useMemo(() => {
+    if (!Array.isArray(data)) {
+      console.error("Invalid data format. Expected an array.");
+      return [];
+    }
+    return data.filter((row) => row != null);
+  }, [data]);
+
+  // Filter columns based on visibleColumns
   const filteredColumns = useMemo(
-    () => columns.filter((column) => visibleColumns.includes(column.accessor)),
+    () =>
+      columns.filter((column) => visibleColumns.includes(column.accessor)) ||
+      [],
     [columns, visibleColumns],
   );
+
+  // Log data and columns for debugging
+  useEffect(() => {
+    console.log("Data received:", sanitizedData);
+    console.log("Columns:", filteredColumns);
+  }, [sanitizedData, filteredColumns]);
 
   const {
     getTableProps,
@@ -88,7 +81,7 @@ const Table: React.FC<TableProps> = ({
   } = useTable(
     {
       columns: filteredColumns,
-      data: data || [],
+      data: sanitizedData,
       defaultColumn,
     },
     useBlockLayout,
@@ -120,6 +113,8 @@ const Table: React.FC<TableProps> = ({
 
   const renderCell = useCallback(
     (cell: any, rowIndex: number) => {
+      if (!cell) return null; // Safeguard against undefined cells
+
       const { key, ...cellProps } = cell.getCellProps();
       const isSelected =
         selectedCell?.rowIndex === rowIndex &&
@@ -140,7 +135,7 @@ const Table: React.FC<TableProps> = ({
               } ${isIdColumn ? "justify-center" : ""}`}
               style={{
                 ...cellProps.style,
-                width: cell.column.defaultWidth || cellProps.style.width,
+                width: cell.column.width || cellProps.style.width,
               }}
               onClick={() => handleCellClick(rowIndex, cell.column.id)}
             >
@@ -202,8 +197,7 @@ const Table: React.FC<TableProps> = ({
                           className="font-semibold text-left p-1 text-xs border-b border-r border-gray-200 relative bg-gray-100"
                           style={{
                             ...columnProps.style,
-                            width:
-                              column.defaultWidth || columnProps.style?.width,
+                            width: column.width || columnProps.style?.width,
                           }}
                         >
                           <div
@@ -235,15 +229,26 @@ const Table: React.FC<TableProps> = ({
             })}
           </div>
           <div {...getTableBodyProps()}>
-            {rows.map((row, rowIndex) => {
-              prepareRow(row);
-              const { key, ...rowProps } = row.getRowProps();
-              return (
-                <div key={key} {...rowProps} className="flex w-full">
-                  {row.cells.map((cell) => renderCell(cell, rowIndex))}
-                </div>
-              );
-            })}
+            {rows.length > 0 ? (
+              rows.map((row, rowIndex) => {
+                try {
+                  prepareRow(row);
+                  const { key, ...rowProps } = row.getRowProps();
+                  return (
+                    <div key={key} {...rowProps} className="flex w-full">
+                      {row.cells.map((cell) => renderCell(cell, rowIndex))}
+                    </div>
+                  );
+                } catch (error) {
+                  console.error("Error preparing row:", error);
+                  return null;
+                }
+              })
+            ) : (
+              <div className="flex justify-center items-center p-4">
+                No data available
+              </div>
+            )}
           </div>
         </div>
       </div>
