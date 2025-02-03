@@ -722,3 +722,12 @@ button .mantine-Tabs-tabLabel {
 .aiSchema section div pre {
   @apply h-[42.4rem] dark:border-brand-dark rounded-md  !important;
 }
+
+/* CRAWL DOMAIN TABLE */
+.domainCrawlParent table thead th {
+  @apply border-b dark:border-white/20 shadow py-[3px] pl-[4px] !important;
+}
+
+.domainCrawlParent tr td {
+  @apply p-[5px] py-[4px] !important;
+}

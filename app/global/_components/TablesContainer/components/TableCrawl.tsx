@@ -1,48 +1,193 @@
+// @ts-nocheck
 import React, { useState, useRef, useEffect } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu"; // Import shadcn components
+import {
+  initialColumnWidths,
+  initialColumnAlignments,
+  headerTitles,
+} from "./tableLayout.ts";
 
-const TableCrawl = ({ rows }: { rows: any[] }) => {
-  const [columnWidths, setColumnWidths] = useState([
-    "90px", // ID
-    "600px", // URL
-    "600px", // Page Title
-    "90px", // Page title length
-    "500px", // H1
-    "90px", // Title title length
-    "100px", // Status Code
-    "150px", // Response Time 1
-    "150px", // Response Time 2
-    "150px", // Response Time 3
-  ]);
+// Reusable TruncatedCell Component
+const TruncatedCell = ({ text, maxLength = 90, width = "auto" }) => {
+  const truncatedText =
+    text && text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
 
-  const [columnAlignments, setColumnAlignments] = useState([
-    "center", // ID
-    "left", // URL
-    "left", // Page Title
-    "center", // Page Title Length
-    "left", // H1
-    "center", // H1 Length
-    "center", // Status Code
-    "center", // Response Time 1
-    "center", // Response Time 2
-    "center", // Response Time 3
-  ]);
+  return (
+    <div
+      style={{
+        width,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {truncatedText}
+    </div>
+  );
+};
 
-  const [isResizing, setIsResizing] = useState(null);
-  const startXRef = useRef(0);
+// Reusable ResizableDivider Component
+const ResizableDivider = ({ onMouseDown }) => {
+  return (
+    <div
+      onMouseDown={onMouseDown}
+      style={{
+        position: "absolute",
+        right: 0,
+        top: 0,
+        bottom: 0,
+        width: "5px",
+        cursor: "col-resize",
+        zIndex: 1,
+      }}
+    />
+  );
+};
 
-  const headerTitles = [
-    "ID",
-    "URL",
-    "Page Title",
-    "Title Size",
-    "H1",
-    "H1 Size",
-    "Status Code",
-    "Response Time 1 (ms)",
-    "Response Time 2 (ms)",
-    "Response Time 3 (ms)",
+// Reusable TableHeader Component
+const TableHeader = ({
+  headers,
+  columnWidths,
+  columnAlignments,
+  onResize,
+  onAlignToggle,
+  columnVisibility,
+}) => {
+  return (
+    <thead className="sticky top-0 z-10 domainCrawl border">
+      <tr>
+        {headers.map((header, index) =>
+          columnVisibility[index] ? (
+            <th
+              key={header}
+              style={{
+                width: columnWidths[index],
+                position: "relative",
+                border: "1px solid #ddd",
+                padding: "8px",
+                userSelect: "none",
+                minWidth: columnWidths[index],
+                textAlign: columnAlignments[index],
+              }}
+              onClick={() => onAlignToggle(index)}
+            >
+              {header}
+              <ResizableDivider onMouseDown={(e) => onResize(index, e)} />
+            </th>
+          ) : null,
+        )}
+      </tr>
+    </thead>
+  );
+};
+
+// Reusable TableRow Component
+const TableRow = ({
+  row,
+  index,
+  columnWidths,
+  columnAlignments,
+  columnVisibility,
+}) => {
+  const rowData = [
+    index + 1,
+    row?.url,
+    row?.title?.[0].title || "",
+    row?.title?.[0].title_len || "",
+    row?.headings?.h1 || "",
+    row?.headings?.h1?.[0].length || "",
+    row?.headings?.h2 || "",
+    row?.headings?.h2?.[0].length || "",
+    row?.status_code,
+    row?.word_count,
+    row?.mobile ? "Yes" : "No",
   ];
 
+  return (
+    <tr key={`row-${index}`}>
+      {rowData.map((cell, cellIndex) =>
+        columnVisibility[cellIndex] ? (
+          <td
+            key={`cell-${index}-${cellIndex}`}
+            style={{
+              width: columnWidths[cellIndex],
+              border: "1px solid #ddd",
+              padding: "8px",
+              textAlign: columnAlignments[cellIndex],
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              minWidth: columnWidths[cellIndex],
+            }}
+            className="dark:text-white/50"
+          >
+            <TruncatedCell
+              text={cell?.toString()}
+              width={columnWidths[cellIndex]}
+            />
+          </td>
+        ) : null,
+      )}
+    </tr>
+  );
+};
+
+// Column Picker Component (Dropdown using shadcn)
+const ColumnPicker = ({
+  columnVisibility,
+  setColumnVisibility,
+  headerTitles,
+}) => {
+  const handleToggle = (index) => {
+    setColumnVisibility((prev) => {
+      const newVisibility = [...prev];
+      newVisibility[index] = !newVisibility[index];
+      return newVisibility;
+    });
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button className="p-1 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded">
+          Columns
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-32 bg-white dark:bg-brand-darker border dark:border-brand-dark rounded shadow-lg z-20">
+        {headerTitles.map((header, index) => (
+          <DropdownMenuCheckboxItem
+            key={header}
+            checked={columnVisibility[index] ?? true}
+            onCheckedChange={() => handleToggle(index)}
+            className="p-2 hover:bg-gray-100 w-fit dark:hover:bg-brand-dark space-x-6 dark:text-white text-brand-bright"
+          >
+            <span className="ml-5 dark:text-brand-bright">{header}</span>
+          </DropdownMenuCheckboxItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+
+// Main TableCrawl Component
+const TableCrawl = ({ rows }) => {
+  const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
+  const [columnAlignments, setColumnAlignments] = useState(
+    initialColumnAlignments,
+  );
+  const [isResizing, setIsResizing] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [columnVisibility, setColumnVisibility] = useState(
+    headerTitles.map(() => true),
+  );
+  const startXRef = useRef(0);
+
+  // Handle column resizing
   const handleMouseDown = (index, event) => {
     setIsResizing(index);
     startXRef.current = event.clientX;
@@ -65,6 +210,7 @@ const TableCrawl = ({ rows }: { rows: any[] }) => {
     setIsResizing(null);
   };
 
+  // Toggle column alignment
   const toggleColumnAlignment = (index) => {
     setColumnAlignments((prev) => {
       const newAlignments = [...prev];
@@ -74,6 +220,7 @@ const TableCrawl = ({ rows }: { rows: any[] }) => {
     });
   };
 
+  // Add event listeners for resizing
   useEffect(() => {
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
@@ -83,83 +230,72 @@ const TableCrawl = ({ rows }: { rows: any[] }) => {
     };
   }, [isResizing]);
 
+  // Calculate total table width
   const totalWidth = columnWidths.reduce((acc, width) => {
-    // Convert width to pixels, handling both px and rem
     const numWidth = width.includes("rem")
-      ? parseFloat(width) * 16 // 1rem = 16px
+      ? parseFloat(width) * 16
       : parseFloat(width);
     return acc + numWidth;
   }, 0);
 
+  // Normalize text by removing hyphens and converting to lowercase
+  const normalizeText = (text) =>
+    text?.toString().toLowerCase().replace(/-/g, "") ?? "";
+
+  // Filter rows based on search term
+  const filteredRows = rows.filter((row) => {
+    return Object.values(row).some((value) =>
+      normalizeText(value).includes(normalizeText(searchTerm)),
+    );
+  });
+
   return (
-    <div className="w-full h-full overflow-auto">
-      <div style={{ minWidth: `${totalWidth}px` }}>
-        <table className="w-full text-xs border-collapse">
-          <thead className="sticky top-0 bg-white z-10">
-            <tr>
-              {headerTitles.map((header, index) => (
-                <th
-                  key={header}
-                  style={{
-                    width: columnWidths[index],
-                    position: "relative",
-                    border: "1px solid #ddd",
-                    padding: "8px",
-                    userSelect: "none",
-                    textAlign: columnAlignments[index],
-                  }}
-                  onClick={() => toggleColumnAlignment(index)}
-                >
-                  {header}
-                  <div
-                    onMouseDown={(e) => handleMouseDown(index, e)}
-                    style={{
-                      position: "absolute",
-                      right: 0,
-                      top: 0,
-                      bottom: 0,
-                      width: "5px",
-                      cursor: "col-resize",
-                      zIndex: 1,
-                    }}
-                  />
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows?.map((row, index) => (
-              <tr key={`row-${index}`}>
-                {[
-                  index + 1,
-                  row?.url,
-                  row?.title?.[0].title || "",
-                  row?.title?.[0].title_len || "",
-                  row?.headings?.h1 || "",
-                  row?.headings?.h1?.[0].length || "",
-                  row?.status_code,
-                  row?.responseTime,
-                  row?.responseTime,
-                  row?.responseTime,
-                ].map((cell, cellIndex) => (
-                  <td
-                    key={`cell-${index}-${cellIndex}`}
-                    style={{
-                      width: columnWidths[cellIndex],
-                      border: "1px solid #ddd",
-                      padding: "8px",
-                      textAlign: columnAlignments[cellIndex],
-                    }}
-                  >
-                    {cell}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <>
+      {/* Global Search Filter and Column Picker */}
+      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-2">
+        <input
+          type="text"
+          placeholder="Search..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full p-1 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
+        />
+        <ColumnPicker
+          columnVisibility={columnVisibility}
+          setColumnVisibility={setColumnVisibility}
+          headerTitles={headerTitles}
+        />
       </div>
-    </div>
+      <div className="w-full h-[calc(100%-28px)] overflow-auto relative">
+        <div
+          style={{ minWidth: `${totalWidth}px` }}
+          className="domainCrawlParent"
+        >
+          <table className="w-full text-xs border-collapse domainCrawlParent ">
+            <TableHeader
+              headers={headerTitles}
+              columnWidths={columnWidths}
+              columnAlignments={columnAlignments}
+              onResize={handleMouseDown}
+              onAlignToggle={toggleColumnAlignment}
+              columnVisibility={columnVisibility}
+            />
+            <tbody>
+              {filteredRows?.map((row, index) => (
+                <TableRow
+                  key={`row-${index}`}
+                  row={row}
+                  index={index}
+                  columnWidths={columnWidths}
+                  columnAlignments={columnAlignments}
+                  columnVisibility={columnVisibility}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </>
   );
 };
 

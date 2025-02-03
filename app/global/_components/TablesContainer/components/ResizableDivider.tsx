@@ -40,7 +40,12 @@ const ResizableDivider: React.FC<ResizableDividerProps> = ({
           startBottomHeightRef.current - deltaY,
         );
         const maxBottomHeight = containerRect.height - 100; // Ensure top section is at least 100px
-        onResize(Math.min(newBottomHeight, maxBottomHeight));
+        const clampedHeight = Math.min(newBottomHeight, maxBottomHeight);
+
+        // Only call onResize if the height has changed
+        if (clampedHeight !== startBottomHeightRef.current) {
+          onResize(clampedHeight);
+        }
       }
     },
     [isDragging, onResize, containerRef],
@@ -67,12 +72,10 @@ const ResizableDivider: React.FC<ResizableDividerProps> = ({
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
   return (
-    <>
-      <div
-        className="h-4 bg-gray-200 cursor-row-resize hover:bg-brand-bright dark:bg-brand-dark transition-colors duration-200"
-        onMouseDown={handleMouseDown}
-      />
-    </>
+    <div
+      className="h-4 bg-gray-200 cursor-row-resize hover:bg-brand-bright dark:bg-brand-dark transition-colors duration-200"
+      onMouseDown={handleMouseDown}
+    />
   );
 };
 
