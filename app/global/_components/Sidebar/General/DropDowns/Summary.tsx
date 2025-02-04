@@ -6,7 +6,7 @@ const Summary = () => {
   const domainCrawlData = useGlobalCrawlStore();
   const [isOpen, setIsOpen] = useState(false); // State to track if details are open
 
-  // Memoize the crawlData to avoid recalculating on every render
+  // Safely get crawlData or default to an empty array
   const crawlData = domainCrawlData?.crawlData || [];
 
   // Memoize internal and external links
@@ -27,8 +27,9 @@ const Summary = () => {
   // Memoize indexable pages
   const totalIndexablePages = useMemo(
     () =>
-      crawlData.filter((item) => item?.indexability?.indexability > 0.5).length,
-    [crawlData],
+      crawlData.filter((item) => (item?.indexability?.indexability || 0) > 0.5)
+        .length,
+    [crawlData], // Add crawlData as a dependency
   );
 
   // Memoize totals
@@ -39,9 +40,9 @@ const Summary = () => {
     totalLinksFound,
     totalNotIndexablePages,
   } = useMemo(() => {
-    const totalPagesCrawled = crawlData.length || 0;
-    const totalInternalLinks = internalLinks.length || 0;
-    const totalExternalLinks = externalLinks.length || 0;
+    const totalPagesCrawled = crawlData?.length || 0;
+    const totalInternalLinks = internalLinks?.length || 0;
+    const totalExternalLinks = externalLinks?.length || 0;
     const totalLinksFound = totalInternalLinks + totalExternalLinks;
     const totalNotIndexablePages = totalPagesCrawled - totalIndexablePages;
     return {
@@ -133,18 +134,23 @@ const Summary = () => {
         {/* Data Rows (inside details, only visible when open) */}
         {isOpen && (
           <div className="w-full">
-            {summaryData.map((item, index) => (
-              <div
-                key={index}
-                className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark"
-              >
-                <div className="w-2/3 pl-2.5 py-1 text-brand-bright">
-                  {item.label}
+            {summaryData?.map(
+              (
+                item,
+                index, // Safely map over summaryData
+              ) => (
+                <div
+                  key={index}
+                  className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark"
+                >
+                  <div className="w-2/3 pl-2.5 py-1 text-brand-bright">
+                    {item.label}
+                  </div>
+                  <div className="w-1/6 text-right pr-2">{item.value}</div>
+                  <div className="w-1/6 text-right pr-2">{item.percentage}</div>
                 </div>
-                <div className="w-1/6 text-right pr-2">{item.value}</div>
-                <div className="w-1/6 text-right pr-2">{item.percentage}</div>
-              </div>
-            ))}
+              ),
+            )}
           </div>
         )}
       </details>

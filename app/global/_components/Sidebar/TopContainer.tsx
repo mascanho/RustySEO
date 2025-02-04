@@ -11,7 +11,7 @@ const TopContainer = () => {
         >
           <Tabs.Tab value="first">General</Tabs.Tab>
           <Tabs.Tab value="third">Issues</Tabs.Tab>
-          <Tabs.Tab value="fourth">Structure</Tabs.Tab>
+          <Tabs.Tab value="fourth">Struct</Tabs.Tab>
           <Tabs.Tab value="fifth">Crawls</Tabs.Tab>
         </Tabs.List>
 
