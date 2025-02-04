@@ -4,17 +4,65 @@ import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu"; // Import shadcn components
 import {
   initialColumnWidths,
   initialColumnAlignments,
   headerTitles,
-} from "./tableLayout.ts";
+} from "./tableLayout";
+
+// Define TypeScript interfaces for props and state
+interface TableCrawlProps {
+  rows: Array<{
+    url?: string;
+    title?: Array<{ title?: string; title_len?: string }>;
+    headings?: { h1?: string[]; h2?: string[] };
+    status_code?: number;
+    word_count?: number;
+    mobile?: boolean;
+  }>;
+}
+
+interface TruncatedCellProps {
+  text: string;
+  maxLength?: number;
+  width?: string;
+}
+
+interface ResizableDividerProps {
+  onMouseDown: (e: React.MouseEvent) => void;
+}
+
+interface TableHeaderProps {
+  headers: string[];
+  columnWidths: string[];
+  columnAlignments: string[];
+  onResize: (index: number, e: React.MouseEvent) => void;
+  onAlignToggle: (index: number) => void;
+  columnVisibility: boolean[];
+}
+
+interface TableRowProps {
+  row: TableCrawlProps["rows"][number];
+  index: number;
+  columnWidths: string[];
+  columnAlignments: string[];
+  columnVisibility: boolean[];
+}
+
+interface ColumnPickerProps {
+  columnVisibility: boolean[];
+  setColumnVisibility: (visibility: boolean[]) => void;
+  headerTitles: string[];
+}
 
 // Reusable TruncatedCell Component
-const TruncatedCell = ({ text, maxLength = 90, width = "auto" }) => {
+const TruncatedCell = ({
+  text,
+  maxLength = 90,
+  width = "auto",
+}: TruncatedCellProps) => {
   const truncatedText =
     text && text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
 
@@ -33,7 +81,7 @@ const TruncatedCell = ({ text, maxLength = 90, width = "auto" }) => {
 };
 
 // Reusable ResizableDivider Component
-const ResizableDivider = ({ onMouseDown }) => {
+const ResizableDivider = ({ onMouseDown }: ResizableDividerProps) => {
   return (
     <div
       onMouseDown={onMouseDown}
@@ -58,7 +106,7 @@ const TableHeader = ({
   onResize,
   onAlignToggle,
   columnVisibility,
-}) => {
+}: TableHeaderProps) => {
   return (
     <thead className="sticky top-0 z-10 domainCrawl border">
       <tr>
@@ -94,18 +142,18 @@ const TableRow = ({
   columnWidths,
   columnAlignments,
   columnVisibility,
-}) => {
+}: TableRowProps) => {
   const rowData = [
     index + 1,
-    row?.url,
-    row?.title?.[0].title || "",
-    row?.title?.[0].title_len || "",
+    row?.url || "",
+    row?.title?.[0]?.title || "",
+    row?.title?.[0]?.title_len || "",
     row?.headings?.h1 || "",
-    row?.headings?.h1?.[0].length || "",
+    row?.headings?.h1?.[0]?.length || "",
     row?.headings?.h2 || "",
-    row?.headings?.h2?.[0].length || "",
-    row?.status_code,
-    row?.word_count,
+    row?.headings?.h2?.[0]?.length || "",
+    row?.status_code || "",
+    row?.word_count || "",
     row?.mobile ? "Yes" : "No",
   ];
 
@@ -142,8 +190,8 @@ const ColumnPicker = ({
   columnVisibility,
   setColumnVisibility,
   headerTitles,
-}) => {
-  const handleToggle = (index) => {
+}: ColumnPickerProps) => {
+  const handleToggle = (index: number) => {
     setColumnVisibility((prev) => {
       const newVisibility = [...prev];
       newVisibility[index] = !newVisibility[index];
@@ -175,12 +223,12 @@ const ColumnPicker = ({
 };
 
 // Main TableCrawl Component
-const TableCrawl = ({ rows }) => {
+const TableCrawl = ({ rows }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
   const [columnAlignments, setColumnAlignments] = useState(
     initialColumnAlignments,
   );
-  const [isResizing, setIsResizing] = useState(null);
+  const [isResizing, setIsResizing] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [columnVisibility, setColumnVisibility] = useState(
     headerTitles.map(() => true),
@@ -188,13 +236,13 @@ const TableCrawl = ({ rows }) => {
   const startXRef = useRef(0);
 
   // Handle column resizing
-  const handleMouseDown = (index, event) => {
+  const handleMouseDown = (index: number, event: React.MouseEvent) => {
     setIsResizing(index);
     startXRef.current = event.clientX;
     event.preventDefault();
   };
 
-  const handleMouseMove = (event) => {
+  const handleMouseMove = (event: MouseEvent) => {
     if (isResizing === null) return;
     const delta = event.clientX - startXRef.current;
     setColumnWidths((prevWidths) => {
@@ -211,7 +259,7 @@ const TableCrawl = ({ rows }) => {
   };
 
   // Toggle column alignment
-  const toggleColumnAlignment = (index) => {
+  const toggleColumnAlignment = (index: number) => {
     setColumnAlignments((prev) => {
       const newAlignments = [...prev];
       newAlignments[index] =
@@ -222,30 +270,42 @@ const TableCrawl = ({ rows }) => {
 
   // Add event listeners for resizing
   useEffect(() => {
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
+    const handleMouseMoveWrapper = (e: MouseEvent) => handleMouseMove(e);
+    const handleMouseUpWrapper = () => {
+      handleMouseUp();
+      setIsResizing(null); // Ensure resizing is reset
+    };
+
+    document.addEventListener("mousemove", handleMouseMoveWrapper);
+    document.addEventListener("mouseup", handleMouseUpWrapper);
+
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("mousemove", handleMouseMoveWrapper);
+      document.removeEventListener("mouseup", handleMouseUpWrapper);
     };
   }, [isResizing]);
 
   // Calculate total table width
   const totalWidth = columnWidths.reduce((acc, width) => {
-    const numWidth = width.includes("rem")
-      ? parseFloat(width) * 16
-      : parseFloat(width);
-    return acc + numWidth;
+    if (typeof width === "string") {
+      if (width.endsWith("px")) {
+        return acc + parseFloat(width);
+      } else if (width.endsWith("rem")) {
+        return acc + parseFloat(width) * 16;
+      }
+    }
+    return acc + 100; // Fallback width
   }, 0);
 
   // Normalize text by removing hyphens and converting to lowercase
-  const normalizeText = (text) =>
+  const normalizeText = (text: string) =>
     text?.toString().toLowerCase().replace(/-/g, "") ?? "";
 
   // Filter rows based on search term
   const filteredRows = rows.filter((row) => {
+    if (!row || typeof row !== "object") return false;
     return Object.values(row).some((value) =>
-      normalizeText(value).includes(normalizeText(searchTerm)),
+      normalizeText(value?.toString()).includes(normalizeText(searchTerm)),
     );
   });
 
@@ -271,7 +331,7 @@ const TableCrawl = ({ rows }) => {
           style={{ minWidth: `${totalWidth}px` }}
           className="domainCrawlParent"
         >
-          <table className="w-full text-xs border-collapse domainCrawlParent ">
+          <table className="w-full text-xs border-collapse domainCrawlParent">
             <TableHeader
               headers={headerTitles}
               columnWidths={columnWidths}
@@ -281,16 +341,27 @@ const TableCrawl = ({ rows }) => {
               columnVisibility={columnVisibility}
             />
             <tbody>
-              {filteredRows?.map((row, index) => (
-                <TableRow
-                  key={`row-${index}`}
-                  row={row}
-                  index={index}
-                  columnWidths={columnWidths}
-                  columnAlignments={columnAlignments}
-                  columnVisibility={columnVisibility}
-                />
-              ))}
+              {filteredRows.length > 0 ? (
+                filteredRows.map((row, index) => (
+                  <TableRow
+                    key={`row-${index}`}
+                    row={row}
+                    index={index}
+                    columnWidths={columnWidths}
+                    columnAlignments={columnAlignments}
+                    columnVisibility={columnVisibility}
+                  />
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan={headerTitles.length}
+                    className="text-center py-4"
+                  >
+                    No data available.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
