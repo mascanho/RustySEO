@@ -1,85 +1,52 @@
-use colored::*;
 use futures::stream::{self, StreamExt};
 use hyper::body::HttpBody;
 use rand::Rng;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashSet, VecDeque};
-use std::io::Write;
 use std::sync::Arc;
-use std::time::Instant;
-use tauri::{Emitter, Manager};
+use tauri::{Emitter, Event, Manager};
 use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration};
 use url::Url;
 
-// Import custom modules (keeping your original imports)
+use super::helpers::mobile_checker::is_mobile;
+// Import custom modules for specific functionality
 use super::helpers::{
-    alt_tags, anchor_links, check_html_page,
-    css_selector::{self, extract_css},
-    domain_checker::url_check,
-    headings_selector, iframe_selector, images_selector, indexability, javascript_selector,
-    links_selector,
-    mobile_checker::is_mobile,
-    page_description,
-    pdf_selector::extract_pdf_links,
-    schema_selector, title_selector,
-    word_count::{self, get_word_count},
+    alt_tags, anchor_links, check_html_page, headings_selector, images_selector, indexability,
+    javascript_selector, links_selector, page_description, schema_selector, title_selector,
 };
 
+// Import custom types and structs
 use super::models::DomainCrawlResults;
 
-// Constants for crawler behavior
-const MAX_RETRIES: usize = 5;
-const BASE_DELAY: u64 = 2;
-const MAX_DELAY: u64 = 5;
-const CONCURRENT_REQUESTS: usize = 50; // Reduced from 100
-const CRAWL_TIMEOUT: Duration = Duration::from_secs(3600); // 1 hour
-const STALL_DETECTION_THRESHOLD: Duration = Duration::from_secs(300); // 5 minutes
-const PROGRESS_CHECK_INTERVAL: Duration = Duration::from_secs(30);
-const BATCH_SIZE: usize = 3;
+use crate::domain_crawler::helpers::css_selector::{self, extract_css};
+use crate::domain_crawler::helpers::domain_checker::url_check;
+use crate::domain_crawler::helpers::pdf_selector::extract_pdf_links;
+use crate::domain_crawler::helpers::word_count::get_word_count;
+use crate::domain_crawler::helpers::{iframe_selector, word_count};
 
-// Progress tracking structure
+// Progress tracking structure for frontend updates
 #[derive(Clone, Serialize)]
 struct ProgressData {
     total_urls: usize,
     crawled_urls: usize,
     percentage: f32,
-    failed_urls: usize,
 }
 
-// Crawl result structure
+// Structure for sending crawl results to frontend
 #[derive(Clone, Serialize)]
 struct CrawlResultData {
     result: DomainCrawlResults,
 }
 
-// Structure to track crawler state
-struct CrawlerState {
-    visited: HashSet<String>,
-    to_visit: HashSet<String>,
-    failed_urls: HashSet<String>,
-    results: Vec<DomainCrawlResults>,
-    queue: VecDeque<Url>,
-    total_urls: usize,
-    crawled_urls: usize,
-}
+// Constants for request handling
+const MAX_RETRIES: usize = 5;
+const BASE_DELAY: u64 = 2;
+const MAX_DELAY: u64 = 5;
+const CONCURRENT_REQUESTS: usize = 100;
 
-impl CrawlerState {
-    fn new() -> Self {
-        CrawlerState {
-            visited: HashSet::new(),
-            to_visit: HashSet::new(),
-            failed_urls: HashSet::new(),
-            results: Vec::new(),
-            queue: VecDeque::new(),
-            total_urls: 1,
-            crawled_urls: 0,
-        }
-    }
-}
-
-// Fetch URL with exponential backoff
+/// Fetches a URL with exponential backoff retry logic
 async fn fetch_with_exponential_backoff(
     client: &Client,
     url: &str,
@@ -90,6 +57,7 @@ async fn fetch_with_exponential_backoff(
         match client.get(url).send().await {
             Ok(response) => {
                 let duration = start.elapsed().as_secs_f64();
+                // Handle rate limiting with exponential backoff
                 if response.status() == reqwest::StatusCode::TOO_MANY_REQUESTS {
                     if attempt >= MAX_RETRIES {
                         return Ok((response, duration));
@@ -105,6 +73,7 @@ async fn fetch_with_exponential_backoff(
                 if attempt >= MAX_RETRIES {
                     return Err(e);
                 }
+                // Exponential backoff for errors
                 let delay = std::cmp::min(MAX_DELAY, BASE_DELAY * 2u64.pow(attempt as u32));
                 sleep(Duration::from_millis(delay)).await;
                 attempt += 1;
@@ -113,152 +82,12 @@ async fn fetch_with_exponential_backoff(
     }
 }
 
-// Process single URL
-async fn process_url(
-    url: Url,
-    client: &Client,
-    base_url: &Url,
-    state: Arc<Mutex<CrawlerState>>,
-    app_handle: &tauri::AppHandle,
-) -> Result<(), String> {
-    let response_result = tokio::time::timeout(
-        Duration::from_secs(30),
-        fetch_with_exponential_backoff(client, url.as_str()),
-    )
-    .await;
-
-    let (response, response_time) = match response_result {
-        Ok(Ok((response, time))) => (response, time),
-        Ok(Err(e)) => {
-            let mut state = state.lock().await;
-            state.failed_urls.insert(url.to_string());
-            return Err(format!("Failed to fetch {}: {}", url, e));
-        }
-        Err(_) => {
-            let mut state = state.lock().await;
-            state.failed_urls.insert(url.to_string());
-            return Err(format!("Timeout fetching {}", url));
-        }
-    };
-
-    let final_url = response.url().clone();
-    let status_code = response.status().as_u16();
-    let content_type = response
-        .headers()
-        .get("content-type")
-        .and_then(|h| h.to_str().ok())
-        .map(String::from);
-
-    // Handle CDN rate limiting
-    if response.headers().contains_key("cf-ray")
-        || response.headers().contains_key("x-cdn")
-        || response.headers().contains_key("x-cache")
-    {
-        sleep(Duration::from_secs(2)).await;
-    }
-
-    let body = match response.text().await {
-        Ok(body) => body,
-        Err(e) => {
-            let mut state = state.lock().await;
-            state.failed_urls.insert(url.to_string());
-            return Err(format!("Failed to read response body: {}", e));
-        }
-    };
-
-    if !check_html_page::is_html_page(&body, content_type.as_deref()).await {
-        return Ok(());
-    }
-
-    // Create result object
-    let result = DomainCrawlResults {
-        url: final_url.to_string(),
-        title: title_selector::extract_title(&body),
-        description: page_description::extract_page_description(&body)
-            .unwrap_or_else(|| "No Description".to_string()),
-        headings: headings_selector::headings_selector(&body),
-        javascript: javascript_selector::extract_javascript(&body),
-        images: images_selector::extract_images(&body),
-        status_code,
-        anchor_links: anchor_links::extract_internal_external_links(&body),
-        indexability: indexability::extract_indexability(&body),
-        alt_tags: alt_tags::get_alt_tags(&body),
-        schema: schema_selector::get_schema(&body),
-        css: css_selector::extract_css(&body),
-        iframe: iframe_selector::extract_iframe(&body),
-        pdf_link: extract_pdf_links(&body, base_url),
-        word_count: get_word_count(&body),
-        response_time: Some(response_time),
-        mobile: is_mobile(&body),
-    };
-
-    // Update state and emit results
-    {
-        let mut state = state.lock().await;
-        state.results.push(result.clone());
-        state.crawled_urls += 1;
-
-        // Process new links
-        let links = links_selector::extract_links(&body, base_url);
-        for link in links {
-            let link_str = link.as_str();
-            if should_skip_url(link_str) {
-                continue;
-            }
-
-            if !state.visited.contains(link_str) && !state.to_visit.contains(link_str) {
-                state.to_visit.insert(link_str.to_string());
-                state.queue.push_back(link);
-                state.total_urls += 1;
-            }
-        }
-
-        // Emit progress
-        let progress = ProgressData {
-            total_urls: state.total_urls,
-            crawled_urls: state.crawled_urls,
-            percentage: (state.crawled_urls as f32 / state.total_urls as f32) * 100.0,
-            failed_urls: state.failed_urls.len(),
-        };
-
-        if let Err(err) = app_handle.emit("progress_update", progress) {
-            eprintln!("Failed to emit progress update: {}", err);
-        }
-
-        // Emit result
-        let result_data = CrawlResultData { result };
-        if let Err(err) = app_handle.emit("crawl_result", result_data) {
-            eprintln!("Failed to emit crawl result: {}", err);
-        }
-
-        // Print progress inline with color
-        let percentage = (state.crawled_urls as f32 / state.total_urls as f32) * 100.0;
-        print!(
-            "\r{}: {:.2}% {}",
-            "Progress".green().bold(),
-            percentage,
-            "complete".green().bold()
-        );
-        std::io::stdout().flush().unwrap();
-    }
-
-    Ok(())
-}
-
-fn should_skip_url(url: &str) -> bool {
-    url.ends_with(".pdf")
-        || url.ends_with(".jpg")
-        || url.ends_with(".png")
-        || (url.contains("?") && url.contains("page="))
-        || url.contains("#")
-}
-
-// Main crawling function
+/// Main crawling function that processes a domain
 pub async fn crawl_domain(
     domain: &str,
     app_handle: tauri::AppHandle,
 ) -> Result<Vec<DomainCrawlResults>, String> {
-    // Initialize client
+    // Initialize HTTP client with custom configuration
     let client = Client::builder()
         .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
         .timeout(Duration::from_secs(30))
@@ -267,109 +96,241 @@ pub async fn crawl_domain(
         .build()
         .map_err(|e| e.to_string())?;
 
-    // Initialize base URL
+    // Validate and parse the input URL
     let url_checked = url_check(domain);
     let base_url = Url::parse(&url_checked).map_err(|_| "Invalid URL")?;
 
-    // Initialize state
-    let state = Arc::new(Mutex::new(CrawlerState::new()));
+    // Initialize shared state with thread-safe containers
+    let visited = Arc::new(Mutex::new(HashSet::new()));
+    let to_visit = Arc::new(Mutex::new(HashSet::new()));
+    let results = Arc::new(Mutex::new(Vec::new()));
+    let queue = Arc::new(Mutex::new(VecDeque::new()));
+    let total_urls = Arc::new(Mutex::new(1));
+    let crawled_urls = Arc::new(Mutex::new(0));
+    let semaphore = Arc::new(Semaphore::new(CONCURRENT_REQUESTS));
+    let last_request_time = Arc::new(Mutex::new(std::time::Instant::now()));
+
+    // Initialize crawl with base URL
     {
-        let mut state = state.lock().await;
-        state.to_visit.insert(base_url.to_string());
-        state.queue.push_back(base_url.clone());
+        let mut to_visit_guard = to_visit.lock().await;
+        to_visit_guard.insert(base_url.to_string());
+        queue.lock().await.push_back(base_url.clone());
     }
 
-    let semaphore = Arc::new(Semaphore::new(CONCURRENT_REQUESTS));
-    let crawl_start_time = Instant::now();
-    let last_progress = Arc::new(Mutex::new((0, Instant::now())));
-
-    // Start progress monitor
-    let progress_monitor = {
-        let state = state.clone();
-        let last_progress = last_progress.clone();
-
-        tokio::spawn(async move {
-            loop {
-                sleep(PROGRESS_CHECK_INTERVAL).await;
-
-                let current_crawled = state.lock().await.crawled_urls;
-                let mut last_progress_guard = last_progress.lock().await;
-
-                if current_crawled == last_progress_guard.0 {
-                    if last_progress_guard.1.elapsed() > STALL_DETECTION_THRESHOLD {
-                        eprintln!("Crawler appears to be stalled. Initiating completion...");
-                        break;
-                    }
-                } else {
-                    *last_progress_guard = (current_crawled, Instant::now());
-                }
-
-                if crawl_start_time.elapsed() > CRAWL_TIMEOUT {
-                    eprintln!("Crawl timeout reached. Initiating completion...");
-                    break;
-                }
-            }
-        })
-    };
-
     // Main crawling loop
-    while !state.lock().await.queue.is_empty() {
-        // Get batch of URLs
+    while !queue.lock().await.is_empty() {
+        // Process URLs in batches
         let current_batch: Vec<Url> = {
-            let mut state = state.lock().await;
-            let batch_size = std::cmp::min(BATCH_SIZE, state.queue.len());
-            state.queue.drain(..batch_size).collect()
+            let mut queue_guard = queue.lock().await;
+            let batch_size = std::cmp::min(5, queue_guard.len());
+            queue_guard.drain(..batch_size).collect()
         };
 
+        // Create concurrent streams for processing URLs
         let mut stream = stream::iter(current_batch)
             .map(|url| {
+                // Clone necessary references for async closure
                 let client = client.clone();
                 let base_url = base_url.clone();
-                let state = state.clone();
+                let visited = visited.clone();
+                let to_visit = to_visit.clone();
+                let results = results.clone();
+                let queue = queue.clone();
+                let total_urls = total_urls.clone();
+                let crawled_urls = crawled_urls.clone();
                 let app_handle = app_handle.clone();
                 let semaphore = semaphore.clone();
+                let last_request_time = last_request_time.clone();
 
                 async move {
+                    // Limit concurrent requests
                     let _permit = semaphore.acquire().await.unwrap();
 
-                    // Add jitter to requests
-                    let jitter = rand::thread_rng().gen_range(0..200);
-                    sleep(Duration::from_millis(jitter)).await;
+                    // Implement rate limiting with jitter
+                    {
+                        let mut last_time = last_request_time.lock().await;
+                        let now = std::time::Instant::now();
+                        let elapsed = now.duration_since(*last_time);
 
-                    if let Err(e) = process_url(url, &client, &base_url, state, &app_handle).await {
-                        eprintln!("Error processing URL: {}", e);
+                        if elapsed < Duration::from_millis(BASE_DELAY) {
+                            sleep(Duration::from_millis(BASE_DELAY) - elapsed).await;
+                        }
+
+                        let jitter = rand::thread_rng().gen_range(0..200);
+                        sleep(Duration::from_millis(jitter)).await;
+
+                        *last_time = std::time::Instant::now();
                     }
 
-                    Ok::<(), String>(())
+                    // Skip already visited URLs
+                    {
+                        let visited_guard = visited.lock().await;
+                        if visited_guard.contains(url.as_str()) {
+                            return Ok::<(), String>(());
+                        }
+                    }
+
+                    // Mark URL as visited
+                    {
+                        let mut visited_guard = visited.lock().await;
+                        visited_guard.insert(url.to_string());
+                    }
+
+                    // Fetch page with response time tracking
+                    let (response, response_time) =
+                        match fetch_with_exponential_backoff(&client, url.as_str()).await {
+                            Ok((response, time)) => (response, time),
+                            Err(e) => {
+                                eprintln!("Failed to fetch {} after retries: {}", url, e);
+                                return Ok(());
+                            }
+                        };
+
+                    // Extract response details
+                    let final_url = response.url().clone();
+                    let status_code = response.status().as_u16();
+                    let content_type = response
+                        .headers()
+                        .get("content-type")
+                        .and_then(|header| header.to_str().ok())
+                        .map(|s| s.to_string());
+
+                    // Handle CDN responses with additional delay
+                    if response.headers().contains_key("cf-ray")
+                        || response.headers().contains_key("x-cdn")
+                        || response.headers().contains_key("x-cache")
+                    {
+                        sleep(Duration::from_millis(2000)).await;
+                    }
+
+                    // Get response body
+                    let body = match response.text().await {
+                        Ok(body) => body,
+                        Err(e) => {
+                            eprintln!("Failed to read response body from {}: {}", url, e);
+                            return Ok(());
+                        }
+                    };
+
+                    // Skip non-HTML pages
+                    let is_html =
+                        check_html_page::is_html_page(&body, content_type.as_deref()).await;
+                    if !is_html {
+                        return Ok(());
+                    }
+
+                    // Create result object with all extracted information
+                    let result = DomainCrawlResults {
+                        url: final_url.to_string(),
+                        title: title_selector::extract_title(&body),
+                        description: page_description::extract_page_description(&body)
+                            .unwrap_or_else(|| "No Description".to_string()),
+                        headings: headings_selector::headings_selector(&body),
+                        javascript: javascript_selector::extract_javascript(&body),
+                        images: images_selector::extract_images(&body),
+                        status_code,
+                        anchor_links: anchor_links::extract_internal_external_links(&body),
+                        indexability: indexability::extract_indexability(&body),
+                        alt_tags: alt_tags::get_alt_tags(&body),
+                        schema: schema_selector::get_schema(&body),
+                        css: css_selector::extract_css(&body),
+                        iframe: iframe_selector::extract_iframe(&body),
+                        pdf_link: extract_pdf_links(&body, &base_url),
+                        word_count: get_word_count(&body),
+                        response_time: Some(response_time),
+                        mobile: is_mobile(&body),
+                    };
+
+                    // Emit result to frontend
+                    let result_data = CrawlResultData {
+                        result: result.clone(),
+                    };
+                    if let Err(err) = app_handle.emit("crawl_result", result_data) {
+                        eprintln!("Failed to emit crawl result: {}", err);
+                    }
+
+                    // Store result
+                    {
+                        let mut results_guard = results.lock().await;
+                        results_guard.push(result);
+                    }
+
+                    // Update crawl progress
+                    {
+                        let mut crawled_urls_guard = crawled_urls.lock().await;
+                        *crawled_urls_guard += 1;
+                    }
+
+                    // Process discovered links
+                    let links = links_selector::extract_links(&body, &base_url);
+                    {
+                        let mut to_visit_guard = to_visit.lock().await;
+                        let visited_guard = visited.lock().await;
+                        let mut queue_guard = queue.lock().await;
+                        let mut total_urls_guard = total_urls.lock().await;
+
+                        // Filter and add new links to queue
+                        for link in links {
+                            let link_str = link.as_str();
+                            if link_str.ends_with(".pdf")
+                                || link_str.ends_with(".jpg")
+                                || link_str.ends_with(".png")
+                                || link_str.contains("?") && link_str.contains("page=")
+                                || link_str.contains("#")
+                            {
+                                continue;
+                            }
+
+                            if !visited_guard.contains(link_str)
+                                && !to_visit_guard.contains(link_str)
+                            {
+                                to_visit_guard.insert(link_str.to_string());
+                                queue_guard.push_back(link);
+                                *total_urls_guard += 1;
+                            }
+                        }
+                    }
+
+                    // Update and emit progress
+                    {
+                        let total_urls_guard = total_urls.lock().await;
+                        let crawled_urls_guard = crawled_urls.lock().await;
+                        let progress =
+                            (*crawled_urls_guard as f32 / *total_urls_guard as f32) * 100.0;
+
+                        let progress_data = ProgressData {
+                            total_urls: *total_urls_guard,
+                            crawled_urls: *crawled_urls_guard,
+                            percentage: progress,
+                        };
+
+                        println!(
+                            "\x1b[34mProgress: {:.2}%\x1b[0m (\x1b[32m{} / {}\x1b[0m)",
+                            progress, crawled_urls_guard, total_urls_guard
+                        );
+                        if let Err(err) = app_handle.emit("progress_update", progress_data) {
+                            eprintln!("Failed to emit progress update: {}", err);
+                        }
+                    }
+
+                    Ok(())
                 }
             })
             .buffer_unordered(CONCURRENT_REQUESTS);
 
+        // Process stream results
         while let Some(result) = stream.next().await {
             if let Err(e) = result {
-                eprintln!("Stream processing error: {}", e);
+                eprintln!("Error crawling page: {}", e);
             }
-        }
-
-        // Check if monitor detected stall or timeout
-        if progress_monitor.is_finished() {
-            println!("\nCrawler monitor triggered completion");
-            break;
         }
     }
 
-    // Final statistics
-    let state = state.lock().await;
-    println!("\nCrawl completed:");
-    println!("Total URLs found: {}", state.total_urls);
-    println!("URLs crawled: {}", state.crawled_urls);
-    println!("Failed URLs: {}", state.failed_urls.len());
-    println!("Total time: {:?}", crawl_start_time.elapsed());
-
-    // Emit completion event
+    // Emit completion event and return results
+    let results_guard = results.lock().await;
     if let Err(err) = app_handle.emit("crawl_complete", ()) {
         eprintln!("Failed to emit crawl completion event: {}", err);
     }
 
-    Ok(state.results.clone())
+    Ok(results_guard.clone())
 }
