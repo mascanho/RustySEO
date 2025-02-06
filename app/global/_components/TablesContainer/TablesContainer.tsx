@@ -94,7 +94,7 @@ export default function Home() {
               value="crawledPages"
               className="flex-grow overflow-hidden"
             >
-              {/* <TableCrawl rows={crawlData} /> */}
+              <TableCrawl rows={crawlData} />
             </TabsContent>
             <TabsContent
               value="seoAnalysis"
