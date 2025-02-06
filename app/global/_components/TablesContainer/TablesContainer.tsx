@@ -94,19 +94,31 @@ export default function Home() {
               value="crawledPages"
               className="flex-grow overflow-hidden"
             >
-              <TableCrawl rows={crawlData} />
+              {/* <TableCrawl rows={crawlData} /> */}
             </TabsContent>
             <TabsContent
               value="seoAnalysis"
               className="flex-grow overflow-hidden"
             >
-              <TableCrawl rows={crawlData} />
+              {/* <TableCrawl rows={crawlData} /> */}
             </TabsContent>
             <TabsContent
               value="technicalDetails"
               className="flex-grow overflow-hidden"
             >
-              <TableCrawl rows={crawlData} />
+              {/* <TableCrawl rows={crawlData} /> */}
+              <div className="overflow-y-scroll">
+                <ul className="h-96">
+                  {crawlData.map((item, index) => {
+                    return (
+                      <li key={item.url}>
+                        {index}
+                        <span className="ml-2">{item.url}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
             </TabsContent>
           </Tabs>
         </div>
