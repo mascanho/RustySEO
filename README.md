@@ -37,9 +37,9 @@ Use at your own risk, this software is new and under development.
 
 ## Features
 
-- Shallow crawl (single page);
-- Technical Diagnostics (core web vitals);
-- SEO insights (content analysis, Keyword density, etc...);
+- Shallow & deep crawl;
+- Technical Diagnostics (core web vitals, Page Speed Insights);
+- On-Page SEO Analysis (content analysis, Keyword density, etc...);
 - Improvements / Suggestions on page crawl;
 - Dashboards;
 - Task Manager / Tracker
@@ -63,12 +63,12 @@ Use at your own risk, this software is new and under development.
 |  5  | Client-side OAuth2 authentication        |   ⚠️   |
 |  6  | Better local LLM support                 |   ❌   |
 |  7  | SEMrush Integration                      |   ⚠️   |
-|  8  | Topic / Content calendar view            |   ⚠️   |
+|  8  | Topic / Content calendar view            |   ✅   |
 |  9  | Regression Analysis of GA4 data          |   ⚠️   |
 | 10  | Topic Modeling                           |   ⚠️   |
-| 11  | Chatbot LLM Crawl Context                |   ⚠️   |
+| 11  | Chatbot LLM Crawl Context                |   ✅   |
 | 12  | Extraction of HTML / JS / CSS fragments  |   ☠️   |
-| 13  | 
+| 13  | Schema Generator & Validator             |   ✅   |
 
 
 ## Connectors / APIs (Get your keys, they are free 😉)
