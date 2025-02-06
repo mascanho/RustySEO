@@ -83,8 +83,9 @@ Use at your own risk, this software is new and under development.
 
 ## ⌨️ Keymaps
 
-Ctrl + H 👉 Hide sidebar
-
+|    Keys    |               Result                  |                 
+| :--------: | ------------------------------------- | 
+|  CTRL + H  |              Toggle Sidebar           |  
 
 # Setting up Google Search Console
 
