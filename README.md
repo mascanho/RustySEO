@@ -12,7 +12,7 @@ Keep in mind that all the integrations are free to use (up to an extent). Its ab
 
 As long as you don't spam (many requests per second) you should be ok to use RustySEO as your daily driver for SEO. :)
 
-# TL;DR
+# 🔖 TL;DR
 
 For a better experience you need to get a [Google PageSpeed Insights](https://developers.google.com/speed/docs/insights/v5/get-started) API KEY.
 
@@ -35,7 +35,7 @@ This authentication will be passed to the client-side in the future.
 
 Use at your own risk, this software is new and under development.
 
-## Features
+## 🤘 Features
 
 - Shallow & deep crawl;
 - Technical Diagnostics (core web vitals, Page Speed Insights);
@@ -52,7 +52,7 @@ Use at your own risk, this software is new and under development.
 - Crawl history;
 - Image conversion and optimization;
 
-## Roadmap
+## 🗺️ Roadmap
 
 |  #  | Feature                                  | Status |
 | :-: | ---------------------------------------- | :----: |
@@ -71,7 +71,7 @@ Use at your own risk, this software is new and under development.
 | 13  | Schema Generator & Validator             |   ✅   |
 
 
-## Connectors / APIs (Get your keys, they are free 😉)
+## 🔌 Connectors / APIs (Get your keys, they are free 😉)
 
 - [Google Search Console](https://search.google.com/search-console/about)
 - [Google Cloud Platform](https://console.cloud.google.com/welcome)
@@ -80,6 +80,11 @@ Use at your own risk, this software is new and under development.
 - [Ollama](https://ollama.ai/)
 - [PageSpeed Insights](https://developers.google.com/speed/docs/insights/v5/reference/pagespeedapi/runpagespeed)
 - [Microsoft Clarity](https://clarity.microsoft.com/)
+
+## ⌨️ Keymaps
+
+Ctrl + H 👉 Hide sidebar
+
 
 # Setting up Google Search Console
 
