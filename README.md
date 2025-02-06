@@ -83,9 +83,13 @@ Use at your own risk, this software is new and under development.
 
 ## ⌨️ Keymaps
 
-|    Keys    |               Result                  |                 
-| :--------: | ------------------------------------- | 
-|  CTRL + H  |              Toggle Sidebar           |  
+|     Keys     |               Result                  |                 
+| :----------: | ------------------------------------- | 
+|  CTRL + H    |              Toggle Sidebar           |  
+|  CTRL + L    |        Toggle Side Task Manager       |
+|  CTRL + T    |            Create TODO/Task           |
+| CTRL + ENTER |         Toggle RustyChat / LLM        |
+
 
 # Setting up Google Search Console
 
