@@ -56,7 +56,7 @@ Use at your own risk, this software is new and under development.
 
 |  #  | Feature                                  | Status |
 | :-: | ---------------------------------------- | :----: |
-|  1  | Deep crawl (multiple pages concurrently) |   ☠️   |
+|  1  | Deep crawl (multiple pages concurrently) |   ✅   |
 |  2  | More integrations                        |   ✅   |
 |  3  | Better reporting                         |   ✅   |
 |  4  | Password protection & encryption         |   ⚠️   |
@@ -67,6 +67,8 @@ Use at your own risk, this software is new and under development.
 |  9  | Regression Analysis of GA4 data          |   ⚠️   |
 | 10  | Topic Modeling                           |   ⚠️   |
 | 11  | Chatbot LLM Crawl Context                |   ⚠️   |
+| 12  | Extraction of HTML / JS / CSS fragments  |   ☠️   |
+| 13  | 
 
 
 ## Connectors / APIs (Get your keys, they are free 😉)
