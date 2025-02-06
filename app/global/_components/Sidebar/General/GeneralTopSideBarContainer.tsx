@@ -20,16 +20,16 @@ const GeneralTopSideBarContainer = () => {
         <div className="w-[3.5em]">%</div>
       </section>
       <div className="overflow-hidden">
-        {/* <Summary /> */}
-        {/* <PageTitles /> */}
-        {/* <MetaDescriptions /> */}
-        {/* <H1 /> */}
-        {/* <Images /> */}
-        {/* <Css /> */}
-        {/* <Iframes /> */}
-        {/* <Javascript /> */}
-        {/* <Schema /> */}
-        {/* <StatusCodes /> */}
+        <Summary />
+        <PageTitles />
+        <MetaDescriptions />
+        <H1 />
+        <Images />
+        <Css />
+        <Iframes />
+        <Javascript />
+        <Schema />
+        <StatusCodes />
       </div>
     </div>
   );

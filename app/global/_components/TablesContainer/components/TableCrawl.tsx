@@ -220,7 +220,7 @@ const ColumnPicker = React.memo(
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="p-1 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded">
+          <button className="p-1 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded dark:text-white/50">
             Columns
           </button>
         </DropdownMenuTrigger>
@@ -377,17 +377,19 @@ const TableCrawl = ({
           type="text"
           placeholder="Search..."
           onChange={(e) => debouncedSearch(e.target.value)}
-          className="w-full p-1 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
+          className="w-full p-1 pl-2 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
         />
-        <ColumnPicker
-          columnVisibility={columnVisibility}
-          setColumnVisibility={setColumnVisibility}
-          headerTitles={headerTitles}
-        />
+        <div className="mr-1.5">
+          <ColumnPicker
+            columnVisibility={columnVisibility}
+            setColumnVisibility={setColumnVisibility}
+            headerTitles={headerTitles}
+          />
+        </div>
       </div>
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-28px)] overflow-auto relative"
+        className="w-full h-[calc(100%-18px)] overflow-auto relative"
       >
         <div
           ref={tableContainerRef}

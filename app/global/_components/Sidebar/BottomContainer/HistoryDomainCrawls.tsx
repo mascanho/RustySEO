@@ -1,4 +1,5 @@
 import React from "react";
+import { MdOutlineErrorOutline } from "react-icons/md";
 
 const HistoryDomainCrawls = () => {
   const [expandedRows, setExpandedRows] = React.useState<number[]>([]);
@@ -11,24 +12,7 @@ const HistoryDomainCrawls = () => {
       details: "Detail 1",
       newLinksFound: 30,
       avgResponseTime: "200ms",
-    },
-    {
-      date: "2023-10-02",
-      pagesCrawled: 150,
-      errors: 3,
-      website: "example2.com",
-      details: "Detail 2",
-      newLinksFound: 45,
-      avgResponseTime: "180ms",
-    },
-    {
-      date: "2023-10-03",
-      pagesCrawled: 130,
-      errors: 4,
-      website: "example3.com",
-      details: "Detail 3",
-      newLinksFound: 50,
-      avgResponseTime: "220ms",
+      totalJavascript: 700,
     },
   ];
 
@@ -46,29 +30,30 @@ const HistoryDomainCrawls = () => {
   return (
     <div className="text-xs px-">
       <div className="text-center">
-        <div className="text-xs bg-blue-100 to-white">
-          <div className="flex justify-center space-x-20 px-2 py-1 ">
-            <div>Date</div>
-            <div>URLs</div>
-            <div className="text-left">Errors</div>
-          </div>
-        </div>
         <div>
           {crawlHistory?.map((entry, index) => (
             <React.Fragment key={index}>
               <div
                 onClick={() => handleRowClick(index)}
-                className={`cursor-pointer px-2 flex py-1 justify-between ${index % 2 === 0 ? "bg-gray-100" : "bg-gray-200"}`}
+                className={`cursor-pointer px-2 flex mr-2 py-1 justify-between ${index % 2 === 0 ? "bg-gray-100 dark:bg-brand-dark" : "bg-gray-200 dark:bg-brand-darker"}`}
               >
                 <div>{entry.date}</div>
                 <div>{entry.pagesCrawled}</div>
-                <div>{entry.errors}</div>
+                <div className="flex items-center space-x-2">
+                  <span>
+                    <MdOutlineErrorOutline className="mr-1 text-red-500" />
+                  </span>
+                  {entry.errors}
+                </div>
               </div>
               {expandedRows.includes(index) && (
-                <div className="bg-brand-bright/20 text-black px-2 py-2">
+                <div className="bg-brand-bright/20 text-black dark:text-white/50 px-2 py-2">
                   <div className="text-left">
                     <p>
                       <strong>Website:</strong> {entry.website}
+                    </p>
+                    <p>
+                      <strong>Pages Crawled:</strong> {entry.pagesCrawled}
                     </p>
                     <p>
                       <strong>Details:</strong> {entry.details}
@@ -79,6 +64,11 @@ const HistoryDomainCrawls = () => {
                     <p>
                       <strong>Average Response Time:</strong>{" "}
                       {entry.avgResponseTime}
+                    </p>
+                    <p>
+                      <strong>Javascript:</strong>
+                      {""}
+                      {entry.totalJavascript}
                     </p>
                   </div>
                 </div>

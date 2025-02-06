@@ -107,18 +107,6 @@ export default function Home() {
               className="flex-grow overflow-hidden"
             >
               {/* <TableCrawl rows={crawlData} /> */}
-              <div className="overflow-y-scroll">
-                <ul className="h-96">
-                  {crawlData.map((item, index) => {
-                    return (
-                      <li key={item.url}>
-                        {index}
-                        <span className="ml-2">{item.url}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
             </TabsContent>
           </Tabs>
         </div>

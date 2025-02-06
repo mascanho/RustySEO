@@ -1,16 +1,16 @@
 // Column configurations
 export const initialColumnWidths = [
-  "50px", // ID
+  "40px", // ID
   "500px", // URL
   "300px", // Page Title
-  "60px", // Page title length
+  "70px", // Page title length
   "350px", // H1
-  "50px", // H1 Length
+  "70px", // H1 Length
   "350px", // H2
-  "50px", // H2 Length
+  "60px", // H2 Length
   "100px", // Status Code
   "100px", // Word Count
-  "50px", // Mobile Friendly
+  "60px", //  Mobile
 ];
 
 export const initialColumnAlignments = [

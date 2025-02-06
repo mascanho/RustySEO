@@ -19,6 +19,10 @@ import { useVisibilityStore } from "@/store/VisibilityStore";
 import TaskManagerContainer from "../components/ui/TaskManager/TaskManagerContainer";
 import TablesContainer from "./_components/TablesContainer/TablesContainer";
 import { listen } from "@tauri-apps/api/event";
+import { RiFireLine } from "react-icons/ri";
+import { IoKeyOutline } from "react-icons/io5";
+import { SlSocialGoogle } from "react-icons/sl";
+import { GrPlan } from "react-icons/gr";
 
 export default function Page() {
   const [data, setData] = useState<CrawlResult | null>(null);
@@ -112,10 +116,37 @@ export default function Page() {
         {/* Tabs Component */}
         <Tabs defaultValue="first" className="ovefflow-auto">
           <aside className="absolute top-11 pt-1 left-0 w-full dark:bg-brand-darker z-10 bg-white">
-            <Tabs.List justify="center" className="dark:text-white text-xs">
+            <Tabs.List
+              justify="center"
+              className="dark:text-white text-xs dark:border-brand-darker"
+            >
               <Tabs.Tab value="first">
                 <FaGlobe className="inline-block mr-2" />
                 Deep crawl
+              </Tabs.Tab>
+              <Tabs.Tab value="tasks">
+                <FaTasks className="inline-block mr-1 text-sm mb-[2px]" /> Task
+                Manager
+              </Tabs.Tab>
+              <Tabs.Tab value="analytics">
+                <FaChartBar className="inline-block mr-2" />
+                GA4
+              </Tabs.Tab>
+              <Tabs.Tab value="clarity">
+                <RiFireLine className="inline-block mr-2 mb-[2px] text-sm" />
+                Clarity
+              </Tabs.Tab>
+              <Tabs.Tab value="kws">
+                <IoKeyOutline className="inline-block mr-2 mb-[2px] text-sm" />
+                Tracking
+              </Tabs.Tab>
+              <Tabs.Tab value="gsc">
+                <SlSocialGoogle className="inline-block mr-2 mb-[2px] text-sm" />
+                Search Console
+              </Tabs.Tab>
+              <Tabs.Tab value="content">
+                <GrPlan className="inline-block mr-2 mb-[2px] text-sm" />
+                Content
               </Tabs.Tab>
             </Tabs.List>
           </aside>
@@ -123,7 +154,7 @@ export default function Page() {
           {/* Tabs Panel for Domain */}
           <Tabs.Panel
             value="first"
-            className="flex flex-col h-screen bg-white overflow-auto"
+            className="flex flex-col h-screen bg-white dark:bg-brand-darker overflow-auto"
           >
             <TablesContainer />
           </Tabs.Panel>
@@ -132,14 +163,14 @@ export default function Page() {
             value="tasks"
             className="flex flex-col space-y-8 overflow-scroll"
           >
-            <section className="mt-[5rem]">
+            <section className="mt-[3rem]">
               <TaskManagerContainer />
             </section>
           </Tabs.Panel>
         </Tabs>
       </section>
       <aside
-        className={`transition-all ease-linear delay-100  ${visibility.sidebar ? "w-[24.3rem] flex-grow" : "w-0 "} h-[58.6rem] `}
+        className={`transition-all ease-linear delay-100  ${visibility.sidebar ? "w-[22.3rem] flex-grow" : "w-0 "} h-[58.6rem] `}
       >
         <SidebarContainer />
       </aside>
