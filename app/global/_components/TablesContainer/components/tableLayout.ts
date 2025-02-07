@@ -11,7 +11,7 @@ export const initialColumnWidths = [
   "100px", // Status Code
   "100px", // Word Count
   "60px", //  Mobile
-  "110px", // Meta Robots
+  "90px", // Meta Robots
 ];
 
 export const initialColumnAlignments = [
