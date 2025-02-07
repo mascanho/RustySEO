@@ -389,7 +389,7 @@ const TableCrawl = ({
       </div>
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-18px)] overflow-auto relative"
+        className="w-full h-[calc(100%-1.8rem)] overflow-auto relative"
       >
         <div
           ref={tableContainerRef}
