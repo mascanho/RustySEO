@@ -513,12 +513,12 @@ const TopMenuBar = () => {
             <MenubarContent>
               <MenubarItem onClick={() => router.push("/")}>
                 <GiRobotGrab className="mr-2" />
-                Page Crawler
+                Shallow Crawler
               </MenubarItem>
-              {/* <MenubarItem onClick={() => router.push("/global")}>
+              <MenubarItem onClick={() => router.push("/global")}>
                 <GiRobotGrab className="mr-2" />
-                Global Crawler
-              </MenubarItem> */}
+                Deep Crawler
+              </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
 

@@ -83,7 +83,7 @@ export default function Home() {
             onValueChange={setActiveTab}
             className="h-full flex dark:bg-brand-darker flex-col"
           >
-            <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t border-b -mb-2 bg-gray-50 rounded-none">
+            <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t  -mb-2 bg-gray-50 rounded-none ">
               <TabsTrigger value="crawledPages">All</TabsTrigger>
               <TabsTrigger value="seoAnalysis">SEO Analysis</TabsTrigger>
               <TabsTrigger value="technicalDetails">
@@ -115,7 +115,7 @@ export default function Home() {
           className="overflow-scroll dark:bg-brand-darker h-auto"
           style={{ height: `${bottomTableHeight}px`, minHeight: "100px" }}
         >
-          <DetailTable data={selectedCellData} />
+          {/* <DetailTable data={selectedCellData} /> */}
         </div>
       </div>
     </div>

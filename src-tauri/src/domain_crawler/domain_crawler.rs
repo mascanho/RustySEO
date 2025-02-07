@@ -13,6 +13,8 @@ use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration};
 use url::Url;
 
+use crate::domain_crawler::helpers::state::set_state;
+
 use super::helpers::canonical_selector::get_canonical;
 use super::helpers::meta_robots_selector::get_meta_robots;
 // Import custom modules (keeping your original imports)
@@ -57,14 +59,14 @@ struct CrawlResultData {
 }
 
 // Structure to track crawler state
-struct CrawlerState {
-    visited: HashSet<String>,
-    to_visit: HashSet<String>,
-    failed_urls: HashSet<String>,
-    results: Vec<DomainCrawlResults>,
-    queue: VecDeque<Url>,
-    total_urls: usize,
-    crawled_urls: usize,
+pub struct CrawlerState {
+    pub visited: HashSet<String>,
+    pub to_visit: HashSet<String>,
+    pub failed_urls: HashSet<String>,
+    pub results: Vec<DomainCrawlResults>,
+    pub queue: VecDeque<Url>,
+    pub total_urls: usize,
+    pub crawled_urls: usize,
 }
 
 impl CrawlerState {

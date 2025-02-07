@@ -5,7 +5,6 @@ import React, {
   useEffect,
   useCallback,
   useMemo,
-  memo,
 } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import debounce from "lodash/debounce";
@@ -29,6 +28,7 @@ interface TableCrawlProps {
     status_code?: number;
     word_count?: number;
     mobile?: boolean;
+    meta_robots?: { meta_robots: string[] };
   }>;
   rowHeight?: number;
   overscan?: number;
@@ -59,6 +59,8 @@ interface TableRowProps {
   columnWidths: string[];
   columnAlignments: string[];
   columnVisibility: boolean[];
+  clickedCell: { row: number | null; cell: number | null };
+  handleCellClick: (rowIndex: number, cellIndex: number) => void;
 }
 
 interface ColumnPickerProps {
@@ -67,14 +69,18 @@ interface ColumnPickerProps {
   headerTitles: string[];
 }
 
-const TruncatedCell = memo(
-  ({ text, maxLength = 90, width = "auto" }: TruncatedCellProps) => {
-    const truncatedText = useMemo(() => {
-      if (!text) return "";
-      return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
-    }, [text, maxLength]);
+const TruncatedCell = ({
+  text,
+  maxLength = 90,
+  width = "auto",
+}: TruncatedCellProps) => {
+  const truncatedText = useMemo(() => {
+    if (!text) return "";
+    return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+  }, [text, maxLength]);
 
-    return (
+  return useMemo(
+    () => (
       <div
         style={{
           width,
@@ -85,37 +91,41 @@ const TruncatedCell = memo(
       >
         {truncatedText}
       </div>
-    );
-  },
-);
-
-const ResizableDivider = memo(({ onMouseDown }: ResizableDividerProps) => {
-  return (
-    <div
-      onMouseDown={onMouseDown}
-      style={{
-        position: "absolute",
-        right: 0,
-        top: 0,
-        bottom: 0,
-        width: "5px",
-        cursor: "col-resize",
-        zIndex: 1,
-      }}
-    />
+    ),
+    [width, truncatedText],
   );
-});
+};
 
-const TableHeader = memo(
-  ({
-    headers,
-    columnWidths,
-    columnAlignments,
-    onResize,
-    onAlignToggle,
-    columnVisibility,
-  }: TableHeaderProps) => {
-    return (
+const ResizableDivider = ({ onMouseDown }: ResizableDividerProps) => {
+  return useMemo(
+    () => (
+      <div
+        onMouseDown={onMouseDown}
+        style={{
+          position: "absolute",
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: "5px",
+          cursor: "col-resize",
+          zIndex: 1,
+        }}
+      />
+    ),
+    [onMouseDown],
+  );
+};
+
+const TableHeader = ({
+  headers,
+  columnWidths,
+  columnAlignments,
+  onResize,
+  onAlignToggle,
+  columnVisibility,
+}: TableHeaderProps) => {
+  return useMemo(
+    () => (
       <thead className="sticky top-0 z-10 domainCrawl border">
         <tr>
           {headers.map((header, index) =>
@@ -141,42 +151,53 @@ const TableHeader = memo(
           )}
         </tr>
       </thead>
-    );
-  },
-);
+    ),
+    [
+      headers,
+      columnWidths,
+      columnAlignments,
+      onResize,
+      onAlignToggle,
+      columnVisibility,
+    ],
+  );
+};
 
-const TableRow = memo(
-  ({
-    row,
-    index,
-    columnWidths,
-    columnAlignments,
-    columnVisibility,
-  }: TableRowProps) => {
-    const rowData = useMemo(
-      () => [
-        index + 1,
-        row?.url || "",
-        row?.title?.[0]?.title || "",
-        row?.title?.[0]?.title_len || "",
-        row?.headings?.h1?.[0] || "",
-        row?.headings?.h1?.[0]?.length || "",
-        row?.headings?.h2?.[0] || "",
-        row?.headings?.h2?.[0]?.length || "",
-        row?.status_code || "",
-        row?.word_count || "",
-        row?.mobile ? "Yes" : "No",
-        row?.meta_robots?.meta_robots[0] || "",
-      ],
-      [row, index],
-    );
+const TableRow = ({
+  row,
+  index,
+  columnWidths,
+  columnAlignments,
+  columnVisibility,
+  clickedCell,
+  handleCellClick,
+}: TableRowProps) => {
+  const rowData = useMemo(
+    () => [
+      index + 1,
+      row?.url || "",
+      row?.title?.[0]?.title || "",
+      row?.title?.[0]?.title_len || "",
+      row?.headings?.h1?.[0] || "",
+      row?.headings?.h1?.[0]?.length || "",
+      row?.headings?.h2?.[0] || "",
+      row?.headings?.h2?.[0]?.length || "",
+      row?.status_code || "",
+      row?.word_count || "",
+      row?.mobile ? "Yes" : "No",
+      row?.meta_robots?.meta_robots[0] || "",
+    ],
+    [row, index],
+  );
 
-    return (
+  return useMemo(
+    () => (
       <>
         {rowData.map((cell, cellIndex) =>
           columnVisibility[cellIndex] ? (
             <td
               key={`cell-${index}-${cellIndex}`}
+              onClick={() => handleCellClick(index, cellIndex, cell.toString())}
               style={{
                 width: columnWidths[cellIndex],
                 border: "1px solid #ddd",
@@ -185,8 +206,16 @@ const TableRow = memo(
                 overflow: "hidden",
                 whiteSpace: "nowrap",
                 minWidth: columnWidths[cellIndex],
+                backgroundColor:
+                  clickedCell.row === index && clickedCell.cell === cellIndex
+                    ? "blue"
+                    : "transparent",
+                color:
+                  clickedCell.row === index && clickedCell.cell === cellIndex
+                    ? "white"
+                    : "inherit",
               }}
-              className="dark:text-white/50"
+              className="dark:text-white/50 cursor-pointer"
             >
               <TruncatedCell
                 text={cell?.toString()}
@@ -196,28 +225,37 @@ const TableRow = memo(
           ) : null,
         )}
       </>
-    );
-  },
-);
+    ),
+    [
+      rowData,
+      columnWidths,
+      columnAlignments,
+      columnVisibility,
+      index,
+      clickedCell,
+      handleCellClick,
+    ],
+  );
+};
 
-const ColumnPicker = memo(
-  ({
-    columnVisibility,
-    setColumnVisibility,
-    headerTitles,
-  }: ColumnPickerProps) => {
-    const handleToggle = useCallback(
-      (index: number) => {
-        setColumnVisibility((prev) => {
-          const newVisibility = [...prev];
-          newVisibility[index] = !newVisibility[index];
-          return newVisibility;
-        });
-      },
-      [setColumnVisibility],
-    );
+const ColumnPicker = ({
+  columnVisibility,
+  setColumnVisibility,
+  headerTitles,
+}: ColumnPickerProps) => {
+  const handleToggle = useCallback(
+    (index: number) => {
+      setColumnVisibility((prev) => {
+        const newVisibility = [...prev];
+        newVisibility[index] = !newVisibility[index];
+        return newVisibility;
+      });
+    },
+    [setColumnVisibility],
+  );
 
-    return (
+  return useMemo(
+    () => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="p-1 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded dark:text-white/50">
@@ -237,9 +275,10 @@ const ColumnPicker = memo(
           ))}
         </DropdownMenuContent>
       </DropdownMenu>
-    );
-  },
-);
+    ),
+    [columnVisibility, handleToggle, headerTitles],
+  );
+};
 
 const TableCrawl = ({
   rows,
@@ -254,6 +293,40 @@ const TableCrawl = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [columnVisibility, setColumnVisibility] = useState(
     headerTitles.map(() => true),
+  );
+
+  // State to track the clicked cell (rowIndex, cellIndex)
+  const [clickedCell, setClickedCell] = useState<{
+    row: number | null;
+    cell: number | null;
+  }>({
+    row: null,
+    cell: null,
+  });
+
+  // Handle cell click
+  const handleCellClick = useCallback(
+    (rowIndex: number, cellIndex: number, cellContent: string) => {
+      setClickedCell((prevClickedCell) => {
+        if (
+          prevClickedCell.row === rowIndex &&
+          prevClickedCell.cell === cellIndex
+        ) {
+          // If the clicked cell is already highlighted, unhighlight it
+          return { row: null, cell: null };
+        } else {
+          // Otherwise, highlight the clicked cell
+          return { row: rowIndex, cell: cellIndex };
+        }
+      });
+
+      if (cellIndex === 1) {
+        console.log("This is the url");
+      }
+
+      console.log(cellContent, rowIndex, cellIndex);
+    },
+    [],
   );
 
   const startXRef = useRef(0);
@@ -421,6 +494,8 @@ const TableCrawl = ({
                         columnWidths={columnWidths}
                         columnAlignments={columnAlignments}
                         columnVisibility={columnVisibility}
+                        clickedCell={clickedCell}
+                        handleCellClick={handleCellClick}
                       />
                     </tr>
                   ))}
@@ -448,4 +523,4 @@ const TableCrawl = ({
   );
 };
 
-export default React.memo(TableCrawl);
+export default TableCrawl;
