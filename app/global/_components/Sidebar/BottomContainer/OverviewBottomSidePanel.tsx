@@ -15,15 +15,12 @@ const OverviewBottomSidePanel = () => {
           <OverviewChart />
         </div>
       </Tabs.Panel>
-      <Tabs.Panel value="chart2" className="h-full">
-        <OverviewChart />
-      </Tabs.Panel>
 
       {/* Tabs Section */}
-      <section className="flex text-xs justify-center fixed bottom-8 right-0   border-t w-[17.9rem] dark:border-brand-dark">
-        <Tabs.Tab value="chart1">Barchart</Tabs.Tab>
-        <Tabs.Tab value="chart2">Barchart2</Tabs.Tab>
-      </section>
+      {/* <section className="flex text-xs justify-center fixed bottom-10 pt-1 right-0 z-50   border-t w-[17.9rem] dark:border-brand-dark"> */}
+      {/*   <Tabs.Tab value="chart1">Barchart</Tabs.Tab> */}
+      {/*   <Tabs.Tab value="chart2">Barchart2</Tabs.Tab> */}
+      {/* </section> */}
     </Tabs>
   );
 };

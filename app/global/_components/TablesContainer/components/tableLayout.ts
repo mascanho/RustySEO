@@ -11,6 +11,7 @@ export const initialColumnWidths = [
   "100px", // Status Code
   "100px", // Word Count
   "60px", //  Mobile
+  "110px", // Meta Robots
 ];
 
 export const initialColumnAlignments = [
@@ -25,6 +26,7 @@ export const initialColumnAlignments = [
   "center", // Status Code
   "center", // Word Count
   "center", // Mobile Friendly
+  "left", // META ROBOTS
 ];
 
 export const headerTitles = [
@@ -39,4 +41,5 @@ export const headerTitles = [
   "Status Code",
   "Word Count",
   "Mobile",
+  "Meta Robots",
 ];

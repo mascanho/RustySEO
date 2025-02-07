@@ -1,26 +1,49 @@
-// @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback, memo } from "react";
 
-const Summary = () => {
+interface CrawlDataItem {
+  anchor_links?: {
+    internal?: { links?: string[] };
+    external?: { links?: string[] };
+  };
+  indexability?: {
+    indexability?: number;
+  };
+}
+
+interface SummaryItem {
+  label: string;
+  value: number;
+  percentage: string;
+}
+
+const SummaryItemRow: React.FC<SummaryItem> = memo(
+  ({ label, value, percentage }) => (
+    <div className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark">
+      <div className="w-2/3 pl-2.5 py-1 text-brand-bright">{label}</div>
+      <div className="w-1/6 text-right pr-2">{value}</div>
+      <div className="w-1/6 text-right pr-2">{percentage}</div>
+    </div>
+  ),
+);
+
+SummaryItemRow.displayName = "SummaryItemRow";
+
+const Summary: React.FC = () => {
   const domainCrawlData = useGlobalCrawlStore();
-  const [isOpen, setIsOpen] = useState(false); // State to track if details are open
+  const [isOpen, setIsOpen] = useState(false);
 
   // Safely get crawlData or default to an empty array
-  const crawlData = domainCrawlData?.crawlData || [];
+  const crawlData: CrawlDataItem[] = domainCrawlData?.crawlData || [];
 
   // Memoize internal and external links
   const { internalLinks, externalLinks } = useMemo(() => {
-    const internalLinks =
-      crawlData.reduce(
-        (acc, item) => acc.concat(item?.anchor_links?.internal?.links || []),
-        [],
-      ) || [];
-    const externalLinks =
-      crawlData.reduce(
-        (acc, item) => acc.concat(item?.anchor_links?.external?.links || []),
-        [],
-      ) || [];
+    const internalLinks = crawlData.flatMap(
+      (item) => item?.anchor_links?.internal?.links || [],
+    );
+    const externalLinks = crawlData.flatMap(
+      (item) => item?.anchor_links?.external?.links || [],
+    );
     return { internalLinks, externalLinks };
   }, [crawlData]);
 
@@ -29,7 +52,7 @@ const Summary = () => {
     () =>
       crawlData.filter((item) => (item?.indexability?.indexability || 0) > 0.5)
         .length,
-    [crawlData], // Add crawlData as a dependency
+    [crawlData],
   );
 
   // Memoize totals
@@ -40,9 +63,9 @@ const Summary = () => {
     totalLinksFound,
     totalNotIndexablePages,
   } = useMemo(() => {
-    const totalPagesCrawled = crawlData?.length || 0;
-    const totalInternalLinks = internalLinks?.length || 0;
-    const totalExternalLinks = externalLinks?.length || 0;
+    const totalPagesCrawled = crawlData.length;
+    const totalInternalLinks = internalLinks.length;
+    const totalExternalLinks = externalLinks.length;
     const totalLinksFound = totalInternalLinks + totalExternalLinks;
     const totalNotIndexablePages = totalPagesCrawled - totalIndexablePages;
     return {
@@ -55,17 +78,17 @@ const Summary = () => {
   }, [crawlData, internalLinks, externalLinks, totalIndexablePages]);
 
   // Memoize summary data
-  const summaryData = useMemo(
+  const summaryData: SummaryItem[] = useMemo(
     () => [
       {
         label: "Pages crawled",
         value: totalPagesCrawled,
-        percentage: "100%", // Always 100% since it's the total
+        percentage: "100%",
       },
       {
         label: "Total Links Found",
         value: totalLinksFound,
-        percentage: "100%", // Always 100% since it's the total
+        percentage: "100%",
       },
       {
         label: "Total Internal Links",
@@ -106,6 +129,14 @@ const Summary = () => {
     ],
   );
 
+  // Memoize the toggle handler
+  const handleToggle = useCallback(
+    (e: React.SyntheticEvent<HTMLDetailsElement>) => {
+      setIsOpen(e.currentTarget.open);
+    },
+    [],
+  );
+
   // Handle errors or missing data gracefully
   if (!crawlData || crawlData.length === 0) {
     return (
@@ -124,33 +155,15 @@ const Summary = () => {
 
   return (
     <div className="text-sx w-full">
-      <details
-        className="w-full"
-        onToggle={(e) => setIsOpen(e.currentTarget.open)} // Update state when details are toggled
-      >
+      <details className="w-full" onToggle={handleToggle}>
         <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 pb-1.5 cursor-pointer flex items-center">
           <span>Summary</span>
         </summary>
-        {/* Data Rows (inside details, only visible when open) */}
         {isOpen && (
           <div className="w-full">
-            {summaryData?.map(
-              (
-                item,
-                index, // Safely map over summaryData
-              ) => (
-                <div
-                  key={index}
-                  className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark"
-                >
-                  <div className="w-2/3 pl-2.5 py-1 text-brand-bright">
-                    {item.label}
-                  </div>
-                  <div className="w-1/6 text-right pr-2">{item.value}</div>
-                  <div className="w-1/6 text-right pr-2">{item.percentage}</div>
-                </div>
-              ),
-            )}
+            {summaryData.map((item, index) => (
+              <SummaryItemRow key={index} {...item} />
+            ))}
           </div>
         )}
       </details>
@@ -158,4 +171,4 @@ const Summary = () => {
   );
 };
 
-export default Summary;
+export default memo(Summary);

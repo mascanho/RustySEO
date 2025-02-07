@@ -13,6 +13,8 @@ use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration};
 use url::Url;
 
+use super::helpers::canonical_selector::get_canonical;
+use super::helpers::meta_robots_selector::get_meta_robots;
 // Import custom modules (keeping your original imports)
 use super::helpers::{
     alt_tags, anchor_links, check_html_page,
@@ -190,6 +192,8 @@ async fn process_url(
         word_count: get_word_count(&body),
         response_time: Some(response_time),
         mobile: is_mobile(&body),
+        canonicals: get_canonical(&body).map(|c| c.canonicals),
+        meta_robots: get_meta_robots(&body).unwrap(),
     };
 
     // Update state and emit results

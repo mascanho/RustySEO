@@ -7,16 +7,12 @@ pub fn get_word_count(body: &str) -> usize {
         "p",
         "h1",
         "span",
-        "div",
-        "a",
         "li",
         "td",
         "th",
         "tr",
         "caption",
         "blockquote",
-        "pre",
-        "code",
         "em",
         "strong",
         "b",
@@ -33,8 +29,6 @@ pub fn get_word_count(body: &str) -> usize {
         "h4",
         "h5",
         "h6",
-        "img",
-        "figcaption",
     ];
 
     let mut all_text = String::new();

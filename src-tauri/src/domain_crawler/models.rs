@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use super::helpers::{
     alt_tags::AltTags, anchor_links::InternalExternalLinks, css_selector::CSS,
     iframe_selector::Iframe, indexability::Indexability, javascript_selector::JavaScript,
-    pdf_selector::PdfLinks, title_selector::TitleDetails,
+    meta_robots_selector::MetaRobots, pdf_selector::PdfLinks, title_selector::TitleDetails,
 };
 
 #[derive(Serialize, Debug, Deserialize, Clone)]
@@ -27,4 +27,6 @@ pub struct DomainCrawlResults {
     pub word_count: usize,
     pub response_time: Option<f64>, // Response time in seconds
     pub mobile: bool,
+    pub canonicals: Option<Vec<String>>,
+    pub meta_robots: MetaRobots,
 }

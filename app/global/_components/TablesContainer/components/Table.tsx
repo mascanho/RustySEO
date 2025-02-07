@@ -68,12 +68,6 @@ const Table: React.FC<TableProps> = ({
     return columns.filter((column) => visibleColumns.includes(column.accessor));
   }, [columns, visibleColumns]);
 
-  // Log data and columns for debugging
-  useEffect(() => {
-    console.log("Sanitized Data:", sanitizedData);
-    console.log("Filtered Columns:", filteredColumns);
-  }, [sanitizedData, filteredColumns]);
-
   const {
     getTableProps,
     getTableBodyProps,

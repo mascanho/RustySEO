@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useCallback,
   useMemo,
+  memo,
 } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import debounce from "lodash/debounce";
@@ -66,7 +67,7 @@ interface ColumnPickerProps {
   headerTitles: string[];
 }
 
-const TruncatedCell = React.memo(
+const TruncatedCell = memo(
   ({ text, maxLength = 90, width = "auto" }: TruncatedCellProps) => {
     const truncatedText = useMemo(() => {
       if (!text) return "";
@@ -88,26 +89,24 @@ const TruncatedCell = React.memo(
   },
 );
 
-const ResizableDivider = React.memo(
-  ({ onMouseDown }: ResizableDividerProps) => {
-    return (
-      <div
-        onMouseDown={onMouseDown}
-        style={{
-          position: "absolute",
-          right: 0,
-          top: 0,
-          bottom: 0,
-          width: "5px",
-          cursor: "col-resize",
-          zIndex: 1,
-        }}
-      />
-    );
-  },
-);
+const ResizableDivider = memo(({ onMouseDown }: ResizableDividerProps) => {
+  return (
+    <div
+      onMouseDown={onMouseDown}
+      style={{
+        position: "absolute",
+        right: 0,
+        top: 0,
+        bottom: 0,
+        width: "5px",
+        cursor: "col-resize",
+        zIndex: 1,
+      }}
+    />
+  );
+});
 
-const TableHeader = React.memo(
+const TableHeader = memo(
   ({
     headers,
     columnWidths,
@@ -146,7 +145,7 @@ const TableHeader = React.memo(
   },
 );
 
-const TableRow = React.memo(
+const TableRow = memo(
   ({
     row,
     index,
@@ -167,6 +166,7 @@ const TableRow = React.memo(
         row?.status_code || "",
         row?.word_count || "",
         row?.mobile ? "Yes" : "No",
+        row?.meta_robots?.meta_robots[0] || "",
       ],
       [row, index],
     );
@@ -200,7 +200,7 @@ const TableRow = React.memo(
   },
 );
 
-const ColumnPicker = React.memo(
+const ColumnPicker = memo(
   ({
     columnVisibility,
     setColumnVisibility,
