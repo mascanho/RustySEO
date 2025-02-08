@@ -26,7 +26,7 @@ export default function Home() {
 
   const updateHeight = useCallback(() => {
     const windowHeight = window.innerHeight;
-    const newContainerHeight = windowHeight - 144; // Adjust for padding and other elements
+    const newContainerHeight = windowHeight - 300; // Adjust for padding and other elements
     if (newContainerHeight !== containerHeight) {
       setContainerHeight(newContainerHeight);
       setBottomTableHeight(Math.floor(newContainerHeight / 3));
@@ -34,7 +34,7 @@ export default function Home() {
   }, [containerHeight]);
 
   const debouncedUpdateHeight = useMemo(
-    () => debounce(updateHeight, 100),
+    () => debounce(updateHeight, 200),
     [updateHeight],
   );
 

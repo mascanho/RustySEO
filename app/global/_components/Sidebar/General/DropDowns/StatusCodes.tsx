@@ -1,5 +1,6 @@
+// @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 
 interface CrawlDataItem {
   status_code?: number;
@@ -14,6 +15,7 @@ interface StatusCodesData {
 
 const StatusCodes: React.FC = () => {
   const domainCrawlData = useGlobalCrawlStore();
+  const { setStatusCodes, statusCodes: codes } = useGlobalCrawlStore();
   const [isOpen, setIsOpen] = useState(false);
 
   // Safely get crawlData or default to an empty array
@@ -63,6 +65,12 @@ const StatusCodes: React.FC = () => {
     },
     [],
   );
+
+  useEffect(() => {
+    setStatusCodes(statusData);
+  }, [crawlData, statusData]);
+
+  console.log(codes, "CODES");
 
   // Handle errors or missing data gracefully
   // if (!crawlData || crawlData.length === 0) {

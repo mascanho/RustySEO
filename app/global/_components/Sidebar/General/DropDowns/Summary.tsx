@@ -138,20 +138,20 @@ const Summary: React.FC = () => {
   );
 
   // Handle errors or missing data gracefully
-  if (!crawlData || crawlData.length === 0) {
-    return (
-      <div className="text-sx w-full">
-        <details className="w-full">
-          <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 pb-1.5 cursor-pointer flex items-center">
-            <span>Summary</span>
-          </summary>
-          <div className="w-full text-xs text-brand-bright p-2">
-            No data available.
-          </div>
-        </details>
-      </div>
-    );
-  }
+  // if (!crawlData || crawlData.length === 0) {
+  //   return (
+  //     <div className="text-sx w-full">
+  //       <details className="w-full">
+  //         <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 pb-1.5 cursor-pointer flex items-center">
+  //           <span>Summary</span>
+  //         </summary>
+  //         <div className="w-full text-xs text-brand-bright p-2">
+  //           No data available.
+  //         </div>
+  //       </details>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="text-sx w-full">

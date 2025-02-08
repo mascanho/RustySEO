@@ -208,7 +208,7 @@ const TableRow = ({
                 minWidth: columnWidths[cellIndex],
                 backgroundColor:
                   clickedCell.row === index && clickedCell.cell === cellIndex
-                    ? "blue"
+                    ? "light-blue"
                     : "transparent",
                 color:
                   clickedCell.row === index && clickedCell.cell === cellIndex
@@ -460,10 +460,7 @@ const TableCrawl = ({
           />
         </div>
       </div>
-      <div
-        ref={parentRef}
-        className="w-full h-[calc(100%-1.8rem)] overflow-auto relative"
-      >
+      <div ref={parentRef} className="w-full h-full overflow-auto relative">
         <div
           ref={tableContainerRef}
           style={{ minWidth: `${totalWidth}px` }}

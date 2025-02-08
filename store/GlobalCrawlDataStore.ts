@@ -24,6 +24,10 @@ interface CrawlStore {
   setDomainCrawlLoading: (loading: boolean) => void; // Set loading state
   crawlerType: string; // Store crawler type
   setCrawlerType: (type: string) => void; // Set crawler type
+  issues: string[];
+  setIssues: (titles: string[]) => void;
+  statusCodes: string[];
+  setStatusCodes: (codes: string[]) => void;
 }
 
 const useGlobalCrawlStore = create<CrawlStore>((set) => ({
@@ -45,6 +49,13 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
   crawlerType: "spider", // Initialize crawler type
 
   setCrawlerType: (type) => set({ crawlerType: type }), // Set crawler type
+
+  issues: [],
+
+  setIssues: (issues) => set({ issues: issues }),
+
+  statusCodes: [],
+  setStatusCodes: (codes) => set({ statusCodes: codes }),
 }));
 
 export default useGlobalCrawlStore;

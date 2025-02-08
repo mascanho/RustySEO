@@ -16,6 +16,5 @@ pub mod mobile_checker;
 pub mod page_description;
 pub mod pdf_selector;
 pub mod schema_selector;
-pub mod state;
 pub mod title_selector;
 pub mod word_count;

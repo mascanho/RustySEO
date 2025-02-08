@@ -13,11 +13,8 @@ use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration};
 use url::Url;
 
-use crate::domain_crawler::helpers::state::set_state;
-
 use super::helpers::canonical_selector::get_canonical;
-use super::helpers::meta_robots_selector::get_meta_robots;
-// Import custom modules (keeping your original imports)
+use super::helpers::meta_robots_selector::{get_meta_robots, MetaRobots};
 use super::helpers::{
     alt_tags, anchor_links, check_html_page,
     css_selector::{self, extract_css},
@@ -195,7 +192,9 @@ async fn process_url(
         response_time: Some(response_time),
         mobile: is_mobile(&body),
         canonicals: get_canonical(&body).map(|c| c.canonicals),
-        meta_robots: get_meta_robots(&body).unwrap(),
+        meta_robots: get_meta_robots(&body).unwrap_or(MetaRobots {
+            meta_robots: Vec::new(),
+        }),
     };
 
     // Update state and emit results
