@@ -1,17 +1,18 @@
+// @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 
 const H1 = () => {
-  const domainCrawlData = useGlobalCrawlStore();
+  const { crawlData, setHeadingsH1, headingsH1 } = useGlobalCrawlStore();
 
-  // Memoize crawlData to avoid recalculating on every render
-  const crawlData = domainCrawlData?.crawlData || [];
+  // Ensure crawlData is always an array
+  const safeCrawlData = Array.isArray(crawlData) ? crawlData : [];
 
   // Memoize H1 analysis
   const { counts, totalPages, missingH1Count } = useMemo(() => {
     // Extract all H1 headings from crawlData
-    const h1Headings = crawlData
-      ?.map((item) => item?.headings?.h1 || [])
+    const h1Headings = safeCrawlData
+      .map((item) => item?.headings?.h1 || [])
       .flat();
 
     // Filter out empty or undefined H1 headings
@@ -28,11 +29,11 @@ const H1 = () => {
       duplicate: h1Headings.length - uniqueH1Headings.length, // Duplicate H1 headings
       long: uniqueH1Headings.filter((heading) => heading.length > 155).length, // H1s over 155 characters
       short: uniqueH1Headings.filter((heading) => heading.length < 70).length, // H1s under 70 characters
-      noH1Object: crawlData.filter((item) => !item?.headings?.h1?.length)
+      noH1Object: safeCrawlData.filter((item) => !item?.headings?.h1?.length)
         .length, // Pages without H1 headings
     };
 
-    const totalPages = crawlData.length;
+    const totalPages = safeCrawlData.length;
     const missingH1Count = Math.abs(totalPages - counts.exists);
 
     return {
@@ -40,7 +41,7 @@ const H1 = () => {
       totalPages,
       missingH1Count,
     };
-  }, [crawlData]);
+  }, [safeCrawlData]);
 
   // Memoize sections to avoid recalculating on every render
   const sections = useMemo(
@@ -53,6 +54,13 @@ const H1 = () => {
     ],
     [counts, missingH1Count],
   );
+
+  // Update headingsH1 state when sections change
+  useEffect(() => {
+    setHeadingsH1(sections);
+  }, [sections, setHeadingsH1]);
+
+  console.log(headingsH1);
 
   return (
     <div className="text-sx w-full">

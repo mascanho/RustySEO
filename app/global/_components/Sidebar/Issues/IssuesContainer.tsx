@@ -6,7 +6,8 @@ import useFindDuplicateDescriptions from "./libs/useDuplicatedDescriptions";
 import useResponseCodes from "./libs/useResponseCodes";
 
 const IssuesContainer = () => {
-  const { crawlData, setIssues, issues, statusCodes } = useGlobalCrawlStore();
+  const { crawlData, setIssues, issues, statusCodes, headingsH1 } =
+    useGlobalCrawlStore();
 
   // Find duplicates in `crawlData` based on a key (e.g., "title")
   const duplicateTitles = useFindDuplicateTitles(crawlData, "title");
@@ -55,12 +56,11 @@ const IssuesContainer = () => {
     },
     {
       name: "H1: Missing",
-      issueCount: statusCodes?.length > 0 ? statusCodes?.[3]?.count : 0,
+      issueCount: headingsH1?.length > 0 ? headingsH1?.[1]?.count : 0,
       priority: "High",
       percentage:
-        ((statusCodes?.[3]?.count / (crawlData?.length || 1)) * 100).toFixed(
-          1,
-        ) + "%",
+        ((headingsH1?.[1]?.count / (crawlData?.length || 1)) * 100).toFixed(1) +
+        "%",
     },
   ];
 
@@ -88,8 +88,10 @@ const IssuesContainer = () => {
               <span
                 className={`px-2 py-1 text-xs font-semibold rounded ${
                   item.priority === "High"
-                    ? "bg-red-100 text-red-800"
-                    : "bg-green-100 text-green-800"
+                    ? "bg-red-100 text-red-800" // High priority
+                    : item.priority === "Medium"
+                      ? "bg-yellow-100 text-yellow-800" // Medium priority
+                      : "bg-green-100 text-green-800" // Low priority (default)
                 }`}
               >
                 {item.priority}
