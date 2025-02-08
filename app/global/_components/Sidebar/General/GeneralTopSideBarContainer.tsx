@@ -10,6 +10,7 @@ import Iframes from "./DropDowns/Iframes";
 import StatusCodes from "./DropDowns/StatusCodes";
 import MetaDescriptions from "./DropDowns/MetaDescriptions";
 import H1 from "./DropDowns/H1";
+import H2 from "./DropDowns/H2";
 
 const GeneralTopSideBarContainer = () => {
   return (
@@ -24,6 +25,7 @@ const GeneralTopSideBarContainer = () => {
         <PageTitles />
         <MetaDescriptions />
         <H1 />
+        <H2 />
         <Images />
         <Css />
         <Iframes />

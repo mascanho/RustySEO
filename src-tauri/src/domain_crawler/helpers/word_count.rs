@@ -3,41 +3,38 @@ use scraper::{Html, Selector};
 pub fn get_word_count(body: &str) -> usize {
     let document = Html::parse_document(&body);
 
+    // More precise selectors (avoiding elements that shouldn't be counted)
     let selectors = vec![
         "p",
         "h1",
-        "span",
-        "li",
-        "td",
-        "th",
-        "tr",
-        "caption",
-        "blockquote",
-        "em",
-        "strong",
-        "b",
-        "i",
-        "u",
-        "strike",
-        "s",
-        "del",
-        "ins",
-        "sup",
-        "sub",
         "h2",
         "h3",
         "h4",
         "h5",
         "h6",
+        "li",         // List items are often content-bearing
+        "article",    // Articles often contain substantial content
+        "main",       // Main content area
+        "section",    // Sections of content
+        "blockquote", // For quoted text
     ];
 
-    let mut all_text = String::new();
-    for selector in selectors {
-        let selector = Selector::parse(selector).unwrap();
+    let mut word_count = 0;
+
+    for selector_str in selectors {
+        let selector = Selector::parse(selector_str).unwrap();
         for element in document.select(&selector) {
-            all_text.push_str(&element.text().collect::<String>());
-            all_text.push(' ');
+            let text = element.text(); // Get an iterator over the text segments
+
+            for word in text.collect::<String>().split_whitespace() {
+                // More precise word counting (e.g., handle hyphens, contractions)
+                let cleaned_word = word.trim_matches(|c: char| !c.is_alphanumeric());
+                if !cleaned_word.is_empty() {
+                    word_count += 1;
+                }
+            }
         }
     }
-    all_text.split_whitespace().count()
+
+    word_count
 }

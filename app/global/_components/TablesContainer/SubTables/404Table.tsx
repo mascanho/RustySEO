@@ -18,7 +18,7 @@ import {
   initialColumnWidths,
   initialColumnAlignments,
   headerTitles,
-} from "./tableLayout";
+} from "../components/tableLayout";
 
 interface TableCrawlProps {
   rows: Array<{
@@ -280,11 +280,7 @@ const ColumnPicker = ({
   );
 };
 
-const TableCrawl = ({
-  rows,
-  rowHeight = 41,
-  overscan = 10,
-}: TableCrawlProps) => {
+const Table404 = ({ rows, rowHeight = 41, overscan = 10 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
   const [columnAlignments, setColumnAlignments] = useState(
     initialColumnAlignments,
@@ -523,4 +519,4 @@ const TableCrawl = ({
   );
 };
 
-export default TableCrawl;
+export default Table404;

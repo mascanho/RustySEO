@@ -30,6 +30,10 @@ interface CrawlStore {
   setStatusCodes: (codes: string[]) => void;
   headingsH1: string[];
   setHeadingsH1: (headings: string[]) => void;
+  headingsH2: string[];
+  setHeadingsH2: (headings: string[]) => void;
+  issueRow: string[];
+  setIssueRow: (row: string[]) => void;
 }
 
 const useGlobalCrawlStore = create<CrawlStore>((set) => ({
@@ -61,6 +65,12 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
 
   headingsH1: [],
   setHeadingsH1: (headings) => set({ headingsH1: headings }),
+
+  headingsH2: [],
+  setHeadingsH2: (headings) => set({ headingsH2: headings }),
+
+  issueRow: [],
+  setIssueRow: (row) => set({ issueRow: row }),
 }));
 
 export default useGlobalCrawlStore;

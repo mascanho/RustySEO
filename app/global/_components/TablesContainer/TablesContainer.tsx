@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useVisibilityStore } from "@/store/VisibilityStore";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { debounce } from "lodash";
+import Table404 from "./SubTables/404Table";
 
 export default function Home() {
   const [containerHeight, setContainerHeight] = useState(600);
@@ -22,7 +23,7 @@ export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { visibility } = useVisibilityStore();
-  const { crawlData } = useGlobalCrawlStore();
+  const { crawlData, statusCodes, issues, issueRow } = useGlobalCrawlStore();
 
   const updateHeight = useCallback(() => {
     const windowHeight = window.innerHeight;
@@ -62,6 +63,8 @@ export default function Home() {
     },
     [handleCellClick],
   );
+
+  console.log(statusCodes, "statusCodes");
 
   return (
     <div
@@ -115,7 +118,7 @@ export default function Home() {
           className="overflow-scroll dark:bg-brand-darker h-auto"
           style={{ height: `${bottomTableHeight}px`, minHeight: "100px" }}
         >
-          <DetailTable data={selectedCellData} />
+          {issueRow === "404 Response" && <Table404 rows={issues[2]} />}
         </div>
       </div>
     </div>

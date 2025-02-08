@@ -70,7 +70,7 @@ input:focus {
   }
 }
 
-table {
+table:not(.issues) {
   @apply dark:bg-brand-darker dark:text-white border-0 !important;
   border-collapse: collapse;
   width: 100%;
@@ -85,7 +85,7 @@ tbody {
   @apply bg-white dark:bg-brand-darker dark:text-white border-0 !important;
 }
 
-th {
+th:not(.issues) {
   @apply pb-2 dark:bg-brand-darker dark:text-white/30 bg-white border-0 pl-3.5 text-black/50  !important;
   padding: 4px 0;
   position: sticky;
