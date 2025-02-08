@@ -53,6 +53,15 @@ const IssuesContainer = () => {
           1,
         ) + "%",
     },
+    {
+      name: "H1: Missing",
+      issueCount: statusCodes?.length > 0 ? statusCodes?.[3]?.count : 0,
+      priority: "High",
+      percentage:
+        ((statusCodes?.[3]?.count / (crawlData?.length || 1)) * 100).toFixed(
+          1,
+        ) + "%",
+    },
   ];
 
   return (

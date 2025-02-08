@@ -28,6 +28,8 @@ interface CrawlStore {
   setIssues: (titles: string[]) => void;
   statusCodes: string[];
   setStatusCodes: (codes: string[]) => void;
+  headingsH1: string[];
+  setHeadingsH1: (headings: string[]) => void;
 }
 
 const useGlobalCrawlStore = create<CrawlStore>((set) => ({
@@ -56,6 +58,9 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
 
   statusCodes: [],
   setStatusCodes: (codes) => set({ statusCodes: codes }),
+
+  headingsH1: [],
+  setHeadingsH1: (headings) => set({ headingsH1: headings }),
 }));
 
 export default useGlobalCrawlStore;
