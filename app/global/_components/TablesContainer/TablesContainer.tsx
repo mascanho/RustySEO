@@ -26,7 +26,7 @@ export default function Home() {
 
   const updateHeight = useCallback(() => {
     const windowHeight = window.innerHeight;
-    const newContainerHeight = windowHeight - 300; // Adjust for padding and other elements
+    const newContainerHeight = windowHeight - 144; // Adjust for padding and other elements
     if (newContainerHeight !== containerHeight) {
       setContainerHeight(newContainerHeight);
       setBottomTableHeight(Math.floor(newContainerHeight / 3));
@@ -34,7 +34,7 @@ export default function Home() {
   }, [containerHeight]);
 
   const debouncedUpdateHeight = useMemo(
-    () => debounce(updateHeight, 200),
+    () => debounce(updateHeight, 100),
     [updateHeight],
   );
 
@@ -115,7 +115,7 @@ export default function Home() {
           className="overflow-scroll dark:bg-brand-darker h-auto"
           style={{ height: `${bottomTableHeight}px`, minHeight: "100px" }}
         >
-          {/* <DetailTable data={selectedCellData} /> */}
+          <DetailTable data={selectedCellData} />
         </div>
       </div>
     </div>

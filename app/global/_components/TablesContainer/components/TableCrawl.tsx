@@ -283,7 +283,7 @@ const ColumnPicker = ({
 const TableCrawl = ({
   rows,
   rowHeight = 41,
-  overscan = 5,
+  overscan = 10,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
   const [columnAlignments, setColumnAlignments] = useState(
@@ -460,13 +460,16 @@ const TableCrawl = ({
           />
         </div>
       </div>
-      <div ref={parentRef} className="w-full h-full overflow-auto relative">
+      <div
+        ref={parentRef}
+        className="w-full h-[calc(100%-2rem)] overflow-auto relative"
+      >
         <div
           ref={tableContainerRef}
           style={{ minWidth: `${totalWidth}px` }}
           className="domainCrawlParent"
         >
-          <table className="w-full text-xs border-collapse domainCrawlParent">
+          <table className="w-full text-xs border-collapse domainCrawlParent h-full">
             <TableHeader
               headers={headerTitles}
               columnWidths={columnWidths}
@@ -498,9 +501,9 @@ const TableCrawl = ({
                   ))}
                   <tr
                     style={{
-                      height: `${rowVirtualizer.getTotalSize() - (virtualRows[virtualRows.length - 1]?.end || 0)}px`,
+                      height: `${Math.max(0, rowVirtualizer.getTotalSize() - (virtualRows[virtualRows.length - 1]?.end || 0))}px`,
                     }}
-                  />
+                  />{" "}
                 </>
               ) : (
                 <tr>
