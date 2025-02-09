@@ -69,10 +69,8 @@ const IssuesContainer = () => {
     },
   ];
 
-  const handleIssueClick = (issue) => {
-    console.log(issue);
-
-    setIssueRow(issue);
+  const handleIssueClick = (issueName) => {
+    setIssueRow(issueName);
   };
 
   return (
@@ -88,18 +86,24 @@ const IssuesContainer = () => {
       <tbody>
         {issuesArr?.map((item, index) => (
           <tr
-            onClick={() => handleIssueClick(item?.name)}
+            onClick={() => handleIssueClick(item.name)}
             key={index}
-            className=" cursor-pointer border p-2"
+            className="cursor-pointer border border-b p-1"
+            style={{
+              background: issueRow === item.name ? "#2B6CC4" : "white",
+              color: issueRow === item.name ? "white" : "black",
+            }}
           >
-            <td className="p-3 bg-white dark:bg-brand-darker">{item.name}</td>
-            <td className="p-2 bg-white dark:bg-brand-darker">
+            <td className="px-2 py-1 dark:bg-brand-darker border">
+              {item.name}
+            </td>
+            <td className="px-2 py-1 dark:bg-brand-darker border">
               {item.issueCount}
             </td>
-            <td className="p-2 bg-white dark:bg-brand-darker">
+            <td className="px-2 py-1 dark:bg-brand-darker border">
               {item.percentage}
             </td>
-            <td className="p-2 bg-white dark:bg-brand-darker">
+            <td className="px-2 py-1 dark:bg-brand-darker border">
               <span
                 className={`px-2 py-1 text-xs font-semibold rounded ${
                   item.priority === "High"

@@ -19,6 +19,8 @@ import {
   initialColumnAlignments,
   headerTitles,
 } from "./tableLayout";
+import SelectFilter from "./SelectFilter";
+import { TbColumns3 } from "react-icons/tb";
 
 interface TableCrawlProps {
   rows: Array<{
@@ -258,9 +260,9 @@ const ColumnPicker = ({
     () => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="p-1 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded dark:text-white/50">
-            Columns
-          </button>
+          <div className="border p-1 w-8  flex justify-center items-center rounded h-8">
+            <TbColumns3 className="w-5 h-5" />
+          </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-32 bg-white dark:bg-brand-darker border dark:border-brand-dark rounded shadow-lg z-20">
           {headerTitles.map((header, index) => (
@@ -452,6 +454,7 @@ const TableCrawl = ({
           onChange={(e) => debouncedSearch(e.target.value)}
           className="w-full p-1 pl-2 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
         />
+        <SelectFilter />
         <div className="mr-1.5">
           <ColumnPicker
             columnVisibility={columnVisibility}

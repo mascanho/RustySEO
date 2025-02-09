@@ -109,8 +109,14 @@ td {
   font-size: 0.8rem !important;
 }
 
-:is(tbody, table) > tr:nth-child(odd) {
-  background: #0001 !important;
+table:not(.issues),
+tbody:not(.issues) > tr:not(.issues):nth-child(odd) {
+  background: #0001;
+}
+
+table:is(.issues),
+tbody:is(.issues) {
+  @apply bg-transparent !important;
 }
 
 pre:not([class*="robots"]) {
@@ -730,4 +736,12 @@ button .mantine-Tabs-tabLabel {
 
 .domainCrawlParent tr td {
   @apply p-[5px] py-[4px] !important;
+}
+
+/* Reset table and its children */
+table:is(.issues),
+tbody.issues,
+td.issues {
+  all: unset !important;
+  background: red !important;
 }

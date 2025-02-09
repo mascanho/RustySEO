@@ -118,7 +118,19 @@ export default function Home() {
           className="overflow-scroll dark:bg-brand-darker h-auto"
           style={{ height: `${bottomTableHeight}px`, minHeight: "100px" }}
         >
-          {issueRow === "404 Response" && <Table404 rows={issues[2]} />}
+          <Tabs>
+            <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t  -mb-2 bg-gray-50 rounded-none ">
+              <TabsTrigger value="all">Details</TabsTrigger>
+              <TabsTrigger value="seoAnalysis">SEO Analysis</TabsTrigger>
+              <TabsTrigger value="technicalDetails">
+                Technical Details
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="all">
+              {issueRow === "404 Response" && <Table404 rows={issues[2]} />}
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>
