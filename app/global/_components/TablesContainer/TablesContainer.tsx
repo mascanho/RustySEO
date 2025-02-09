@@ -14,16 +14,21 @@ import { useVisibilityStore } from "@/store/VisibilityStore";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { debounce } from "lodash";
 import Table404 from "./SubTables/404Table";
+import LinksSubTable from "./SubTables/LinksSubtable/InlinksSubTable";
+import InlinksSubTable from "./SubTables/LinksSubtable/InlinksSubTable";
+import OutlinksSubTable from "./SubTables/LinksSubtable/OutlinksSubTable";
 
 export default function Home() {
   const [containerHeight, setContainerHeight] = useState(600);
   const [bottomTableHeight, setBottomTableHeight] = useState(200);
   const [selectedCellData, setSelectedCellData] = useState(null);
   const [activeTab, setActiveTab] = useState("crawledPages");
+  const [activeBottomTab, setActiveBottomTab] = useState("details");
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { visibility } = useVisibilityStore();
-  const { crawlData, statusCodes, issues, issueRow } = useGlobalCrawlStore();
+  const { crawlData, statusCodes, issues, issueRow, selectedTableURL } =
+    useGlobalCrawlStore();
 
   const updateHeight = useCallback(() => {
     const windowHeight = window.innerHeight;
@@ -109,27 +114,48 @@ export default function Home() {
               value="technicalDetails"
               className="flex-grow overflow-hidden"
             >
-              {/* <TableCrawl rows={crawlData} /> */}
+              {/* <TableCrawl rows={crawlData} /> */}a{" "}
             </TabsContent>
           </Tabs>
         </div>
         <ResizableDivider onResize={handleResize} containerRef={containerRef} />
         <div
-          className="overflow-scroll dark:bg-brand-darker h-auto"
+          className="overflow-hidden dark:bg-brand-darker h-auto relative"
           style={{ height: `${bottomTableHeight}px`, minHeight: "100px" }}
         >
-          <Tabs>
-            <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t  -mb-2 bg-gray-50 rounded-none ">
-              <TabsTrigger value="all">Details</TabsTrigger>
-              <TabsTrigger value="seoAnalysis">SEO Analysis</TabsTrigger>
-              <TabsTrigger value="technicalDetails">
-                Technical Details
-              </TabsTrigger>
+          <Tabs value={activeBottomTab} onValueChange={setActiveBottomTab}>
+            <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t  -mb-2 bg-gray-50 rounded-none sticky top-0 ">
+              <TabsTrigger value="details">Details</TabsTrigger>
+              <TabsTrigger value="inlinks">Inlinks</TabsTrigger>
+              <TabsTrigger value="outlinks">Outlinks</TabsTrigger>
             </TabsList>
-
-            <TabsContent value="all">
+            <TabsContent value="details">
               {issueRow === "404 Response" && <Table404 rows={issues[2]} />}
             </TabsContent>
+            <TabsContent value="inlinks">
+              <div
+                style={{
+                  height: `${bottomTableHeight - 50}px`,
+                  minHeight: "100px",
+                  overflowY: "auto",
+                  marginBottom: "80px",
+                }}
+              >
+                <InlinksSubTable data={selectedTableURL} />
+              </div>
+            </TabsContent>{" "}
+            <TabsContent value="outlinks">
+              <div
+                style={{
+                  height: `${bottomTableHeight - 50}px`,
+                  minHeight: "100px",
+                  overflowY: "auto",
+                  marginBottom: "80px",
+                }}
+              >
+                <OutlinksSubTable data={selectedTableURL} />
+              </div>
+            </TabsContent>{" "}
           </Tabs>
         </div>
       </div>

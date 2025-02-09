@@ -9,9 +9,11 @@ export const initialColumnWidths = [
   "350px", // H2
   "60px", // H2 Length
   "100px", // Status Code
-  "100px", // Word Count
+  "100px", // TEXT RATIO
+  "80px", // Word Count
   "60px", //  Mobile
   "90px", // Meta Robots
+  "120px", // CONTENT TYPE
 ];
 
 export const initialColumnAlignments = [
@@ -25,8 +27,10 @@ export const initialColumnAlignments = [
   "center", // H2 Length
   "center", // Status Code
   "center", // Word Count
+  "center", // Text Ratio
   "center", // Mobile Friendly
   "left", // META ROBOTS
+  "left", //  CONTENT TYPE
 ];
 
 export const headerTitles = [
@@ -40,6 +44,8 @@ export const headerTitles = [
   "H2 Size",
   "Status Code",
   "Word Count",
+  "Text Ratio",
   "Mobile",
   "Meta Robots",
+  "Content Type",
 ];

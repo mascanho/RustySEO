@@ -22,6 +22,8 @@ import {
 import SelectFilter from "./SelectFilter";
 import { TbColumns3 } from "react-icons/tb";
 import DownloadButton from "./DownloadButton";
+import useFilterTableURL from "@/app/Hooks/useFilterTableUrl";
+import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 
 interface TableCrawlProps {
   rows: Array<{
@@ -187,8 +189,10 @@ const TableRow = ({
       row?.headings?.h2?.[0]?.length || "",
       row?.status_code || "",
       row?.word_count || "",
+      (row?.text_ratio?.[0]?.text_ratio).toFixed(1) || "",
       row?.mobile ? "Yes" : "No",
       row?.meta_robots?.meta_robots[0] || "",
+      row?.content_type || "",
     ],
     [row, index],
   );
@@ -306,31 +310,35 @@ const TableCrawl = ({
     row: null,
     cell: null,
   });
+  const { setSelectedTableURL } = useGlobalCrawlStore();
 
   // Handle cell click
-  const handleCellClick = useCallback(
-    (rowIndex: number, cellIndex: number, cellContent: string) => {
-      setClickedCell((prevClickedCell) => {
-        if (
-          prevClickedCell.row === rowIndex &&
-          prevClickedCell.cell === cellIndex
-        ) {
-          // If the clicked cell is already highlighted, unhighlight it
-          return { row: null, cell: null };
-        } else {
-          // Otherwise, highlight the clicked cell
-          return { row: rowIndex, cell: cellIndex };
-        }
-      });
-
-      if (cellIndex === 1) {
-        console.log("This is the url");
+  const handleCellClick = (
+    rowIndex: number,
+    cellIndex: number,
+    cellContent: string,
+  ) => {
+    setClickedCell((prevClickedCell) => {
+      if (
+        prevClickedCell.row === rowIndex &&
+        prevClickedCell.cell === cellIndex
+      ) {
+        // If the clicked cell is already highlighted, unhighlight it
+        return { row: null, cell: null };
+      } else {
+        // Otherwise, highlight the clicked cell
+        return { row: rowIndex, cell: cellIndex };
       }
+    });
 
-      console.log(cellContent, rowIndex, cellIndex);
-    },
-    [],
-  );
+    if (cellIndex === 1) {
+      const urlData = useFilterTableURL(rows, cellContent);
+      setSelectedTableURL(urlData);
+      console.log(urlData);
+    }
+
+    console.log(cellContent, rowIndex, cellIndex);
+  };
 
   const startXRef = useRef(0);
   const parentRef = useRef<HTMLDivElement>(null);

@@ -3,52 +3,55 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct InternalExternalLinks {
-    pub internal: linksAnchors,
-    pub external: linksAnchors,
+    pub internal: LinksAnchors,
+    pub external: LinksAnchors,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct linksAnchors {
+pub struct LinksAnchors {
     pub links: Vec<String>,
     pub anchors: Vec<String>,
 }
 
-pub fn extract_internal_external_links(html: &str) -> InternalExternalLinks {
+pub fn extract_internal_external_links(html: &str) -> Option<InternalExternalLinks> {
     let document = Html::parse_document(html);
 
-    let internal_anchor_text = document
-        .select(&Selector::parse("a[href^='/']").unwrap())
-        .map(|element| element.text().collect::<Vec<_>>().join(" "))
-        .collect::<Vec<String>>();
+    // Selector for internal links (starting with '/')
+    let internal_selector = Selector::parse("a[href^='/']").ok()?;
+    // Selector for external links (starting with 'http' or 'https')
+    let external_selector = Selector::parse("a[href^='http']").ok()?;
 
-    let external_anchor_text = document
-        .select(&Selector::parse("a[href^='http']").unwrap())
-        .map(|element| element.text().collect::<Vec<_>>().join(" "))
-        .collect::<Vec<String>>();
-
-    let anchor_text = [internal_anchor_text.clone(), external_anchor_text.clone()].concat();
-
+    // Extract internal links and anchor texts
     let internal_links = document
-        .select(&Selector::parse("a[href^='/']").unwrap())
-        .map(|link| link.value().attr("href").unwrap().to_string())
+        .select(&internal_selector)
+        .filter_map(|element| element.value().attr("href").map(|href| href.to_string()))
         .collect::<Vec<String>>();
 
+    let internal_anchors = document
+        .select(&internal_selector)
+        .map(|element| element.text().collect::<String>())
+        .collect::<Vec<String>>();
+
+    // Extract external links and anchor texts
     let external_links = document
-        .select(&Selector::parse("a[href^='http']").unwrap())
-        .map(|link| link.value().attr("href").unwrap().to_string())
+        .select(&external_selector)
+        .filter_map(|element| element.value().attr("href").map(|href| href.to_string()))
         .collect::<Vec<String>>();
 
-    let internal = [internal_links.clone(), internal_anchor_text.clone()].concat();
-    let external = [external_links.clone(), external_anchor_text.clone()].concat();
+    let external_anchors = document
+        .select(&external_selector)
+        .map(|element| element.text().collect::<String>())
+        .collect::<Vec<String>>();
 
-    InternalExternalLinks {
-        internal: linksAnchors {
-            links: internal,
-            anchors: internal_anchor_text,
+    // Return the result regardless of whether internal or external links are empty
+    Some(InternalExternalLinks {
+        internal: LinksAnchors {
+            links: internal_links,
+            anchors: internal_anchors,
         },
-        external: linksAnchors {
-            links: external,
-            anchors: external_anchor_text,
+        external: LinksAnchors {
+            links: external_links,
+            anchors: external_anchors,
         },
-    }
+    })
 }

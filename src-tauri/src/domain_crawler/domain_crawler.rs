@@ -15,6 +15,7 @@ use url::Url;
 
 use super::helpers::canonical_selector::get_canonical;
 use super::helpers::meta_robots_selector::{get_meta_robots, MetaRobots};
+use super::helpers::text_ratio::{get_text_ratio, TextRatio};
 use super::helpers::{
     alt_tags, anchor_links, check_html_page,
     css_selector::{self, extract_css},
@@ -149,6 +150,16 @@ async fn process_url(
         .get("content-type")
         .and_then(|h| h.to_str().ok())
         .map(String::from);
+    let content_length = response
+        .headers()
+        .get("Content-Length")
+        .and_then(|h| h.to_str().ok())
+        .map(|s| s.parse::<usize>().unwrap_or(0));
+
+    let redirection = response
+        .headers()
+        .get("Location")
+        .and_then(|h| h.to_str().ok().map(String::from));
 
     // Handle CDN rate limiting
     if response.headers().contains_key("cf-ray")
@@ -195,6 +206,16 @@ async fn process_url(
         meta_robots: get_meta_robots(&body).unwrap_or(MetaRobots {
             meta_robots: Vec::new(),
         }),
+        content_type: content_type.unwrap_or("Unknown".to_string()),
+        content_length: content_length.unwrap_or(0),
+        text_ratio: Some(vec![get_text_ratio(&body)
+            .and_then(|mut v| v.pop())
+            .unwrap_or(TextRatio {
+                html_length: 0,
+                text_length: 0,
+                text_ratio: 0.0,
+            })]),
+        redirection,
     };
 
     // Update state and emit results
