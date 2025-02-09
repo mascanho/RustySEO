@@ -34,4 +34,5 @@ pub struct DomainCrawlResults {
     pub content_length: usize,
     pub text_ratio: Option<Vec<TextRatio>>,
     pub redirection: Option<String>,
+    pub keywords: Vec<(String, usize)>,
 }

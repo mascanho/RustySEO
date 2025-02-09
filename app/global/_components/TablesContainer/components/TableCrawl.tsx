@@ -265,8 +265,8 @@ const ColumnPicker = ({
     () => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <div className="border dark:border-white/20 p-1 w-8  flex justify-center items-center rounded h-8">
-            <TbColumns3 className="w-5 h-5 dark:text-white/50" />
+          <div className="border dark:border-white/20  w-8  flex justify-center items-center rounded h-6">
+            <TbColumns3 className="w-5 h-5 dark:text-white/50 p-1 " />
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-32 bg-white dark:bg-brand-darker border dark:border-brand-dark rounded shadow-lg z-20">
@@ -456,12 +456,12 @@ const TableCrawl = ({
 
   return (
     <>
-      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-2">
+      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1">
         <input
           type="text"
           placeholder="Search..."
           onChange={(e) => debouncedSearch(e.target.value)}
-          className="w-full p-1 pl-2 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
+          className="w-full p-1 pl-2 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
         />
         <SelectFilter />
         <DownloadButton />

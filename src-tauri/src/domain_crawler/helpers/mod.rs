@@ -1,4 +1,3 @@
-pub mod keyword_selector
 pub mod alt_tags;
 pub mod anchor_links;
 pub mod blocked_robots;
@@ -11,6 +10,7 @@ pub mod iframe_selector;
 pub mod images_selector;
 pub mod indexability;
 pub mod javascript_selector;
+pub mod keyword_selector;
 pub mod links_selector;
 pub mod meta_robots_selector;
 pub mod mobile_checker;

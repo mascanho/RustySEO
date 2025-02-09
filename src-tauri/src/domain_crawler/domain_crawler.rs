@@ -13,6 +13,8 @@ use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration};
 use url::Url;
 
+use crate::crawler::content::get_top_keywords;
+
 use super::helpers::canonical_selector::get_canonical;
 use super::helpers::meta_robots_selector::{get_meta_robots, MetaRobots};
 use super::helpers::text_ratio::{get_text_ratio, TextRatio};
@@ -216,6 +218,7 @@ async fn process_url(
                 text_ratio: 0.0,
             })]),
         redirection,
+        keywords: get_top_keywords(&body, 4),
     };
 
     // Update state and emit results

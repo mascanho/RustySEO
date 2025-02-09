@@ -129,6 +129,12 @@ const DetailsTable = ({ data }: { data: any }) => {
                   {(anchorItem?.text_ratio?.[0]?.text_ratio).toFixed(1) || ""}
                 </td>
               </tr>{" "}
+              <tr>
+                <td className="border pl-3">Keywords</td>
+                <td style={{ textAlign: "left" }} className="pl-3 border">
+                  {anchorItem?.keywords || ""}
+                </td>
+              </tr>{" "}
             </React.Fragment>
           );
         })}
