@@ -3,6 +3,8 @@ import React, { useEffect, useRef } from "react";
 const InlinksSubTable = ({ data }: { data: any }) => {
   console.log(data, "data");
 
+  const isDark = localStorage.getItem("dark-mode");
+
   // Function to make columns resizable
   const makeResizable = (tableRef: HTMLTableElement | null) => {
     if (!tableRef) return;
@@ -12,7 +14,7 @@ const InlinksSubTable = ({ data }: { data: any }) => {
       const resizer = document.createElement("div");
       resizer.style.width = "1px";
       resizer.style.height = "100%";
-      resizer.style.background = "#ccc";
+      resizer.style.background = "#39393a26";
       resizer.style.position = "absolute";
       resizer.style.right = "0";
       resizer.style.top = "0";
@@ -51,7 +53,7 @@ const InlinksSubTable = ({ data }: { data: any }) => {
   return (
     <table ref={tableRef} style={{ width: "100%", borderCollapse: "collapse" }}>
       <thead className="text-xs">
-        <tr>
+        <tr className="sticky top-0 shadow ">
           <th
             style={{ width: "10px", textAlign: "left", position: "relative" }}
           >

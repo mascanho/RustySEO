@@ -17,6 +17,7 @@ import Table404 from "./SubTables/404Table";
 import LinksSubTable from "./SubTables/LinksSubtable/InlinksSubTable";
 import InlinksSubTable from "./SubTables/LinksSubtable/InlinksSubTable";
 import OutlinksSubTable from "./SubTables/LinksSubtable/OutlinksSubTable";
+import DetailsTable from "./SubTables/DetailsTable/DetailsTable";
 
 export default function Home() {
   const [containerHeight, setContainerHeight] = useState(600);
@@ -130,7 +131,17 @@ export default function Home() {
               <TabsTrigger value="outlinks">Outlinks</TabsTrigger>
             </TabsList>
             <TabsContent value="details">
-              {issueRow === "404 Response" && <Table404 rows={issues[2]} />}
+              {/* {issueRow === "404 Response" && <Table404 rows={issues[2]} />} */}
+              <div
+                style={{
+                  height: `${bottomTableHeight - 50}px`,
+                  minHeight: "100px",
+                  overflowY: "auto",
+                  marginBottom: "80px",
+                }}
+              >
+                <DetailsTable data={selectedTableURL} />
+              </div>
             </TabsContent>
             <TabsContent value="inlinks">
               <div

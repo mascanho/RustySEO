@@ -1,3 +1,4 @@
+pub mod keyword_selector
 pub mod alt_tags;
 pub mod anchor_links;
 pub mod blocked_robots;
