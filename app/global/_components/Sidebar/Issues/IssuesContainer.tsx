@@ -1,6 +1,6 @@
 // @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import useFindDuplicateTitles from "./libs/useDuplicatedTitles";
 import useFindDuplicateDescriptions from "./libs/useDuplicatedDescriptions";
 import useResponseCodes from "./libs/useResponseCodes";
@@ -15,6 +15,7 @@ const IssuesContainer = () => {
     issueRow,
     setIssueRow,
   } = useGlobalCrawlStore();
+  const [isMode, setIsMode] = useState(null);
 
   // Find duplicates in `crawlData` based on a key (e.g., "title")
   const duplicateTitles = useFindDuplicateTitles(crawlData, "title");
@@ -23,6 +24,12 @@ const IssuesContainer = () => {
     "description",
   );
   const response404 = useResponseCodes(crawlData, 404);
+
+  useEffect(() => {
+    const mode = localStorage.getItem("dark-mode");
+    setIsMode(mode);
+  }, [issueRow]);
+  console.log(isMode);
 
   useEffect(() => {
     setIssues([duplicateTitles, duplicateDescriptions, response404]);
@@ -90,8 +97,11 @@ const IssuesContainer = () => {
             key={index}
             className="cursor-pointer border border-b p-1"
             style={{
-              background: issueRow === item.name ? "#2B6CC4" : "white",
-              color: issueRow === item.name ? "white" : "black",
+              background:
+                issueRow === item.name || isMode === "true"
+                  ? "#2B6CC4"
+                  : "white",
+              color: issueRow === item.name && "white",
             }}
           >
             <td className="px-2 py-1 dark:bg-brand-darker border">

@@ -112,6 +112,7 @@ td {
 table:not(.issues),
 tbody:not(.issues) > tr:not(.issues):nth-child(odd) {
   background: #0001;
+  @apply dark:bg-brand-dark/20;
 }
 
 table:is(.issues),

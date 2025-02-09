@@ -21,6 +21,7 @@ import {
 } from "./tableLayout";
 import SelectFilter from "./SelectFilter";
 import { TbColumns3 } from "react-icons/tb";
+import DownloadButton from "./DownloadButton";
 
 interface TableCrawlProps {
   rows: Array<{
@@ -260,8 +261,8 @@ const ColumnPicker = ({
     () => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <div className="border p-1 w-8  flex justify-center items-center rounded h-8">
-            <TbColumns3 className="w-5 h-5" />
+          <div className="border dark:border-white/20 p-1 w-8  flex justify-center items-center rounded h-8">
+            <TbColumns3 className="w-5 h-5 dark:text-white/50" />
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-32 bg-white dark:bg-brand-darker border dark:border-brand-dark rounded shadow-lg z-20">
@@ -455,6 +456,7 @@ const TableCrawl = ({
           className="w-full p-1 pl-2 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
         />
         <SelectFilter />
+        <DownloadButton />
         <div className="mr-1.5">
           <ColumnPicker
             columnVisibility={columnVisibility}

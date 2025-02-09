@@ -9,7 +9,7 @@ import {
 const SelectFilter = ({ options, value, onChange }: any) => {
   return (
     <Select>
-      <SelectTrigger className="w-[180px] dark:text-white/50 p-3 h-8 border border-gray-300 rounded-md dark:border-gray-700">
+      <SelectTrigger className="w-[180px] dark:text-white/50 p-3 h-8 border border-gray-300 rounded-md dark:border-white/20">
         <SelectValue placeholder="Theme" />
       </SelectTrigger>
       <SelectContent>
