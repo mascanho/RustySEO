@@ -53,7 +53,7 @@ const chartConfig = {
 
 const OverviewChart = () => {
   return (
-    <Card className="h-full m-auto dark:bg-brand-darker border-none">
+    <Card className="h-full m-auto dark:bg-brand-darker border-none mt-4">
       {/* <CardHeader> */}
       {/*   <CardTitle>Bar Chart - Mixed</CardTitle> */}
       {/*   <CardDescription>January - June 2024</CardDescription> */}

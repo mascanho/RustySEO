@@ -13,9 +13,8 @@ use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration};
 use url::Url;
 
-use crate::crawler::content::get_top_keywords;
-
 use super::helpers::canonical_selector::get_canonical;
+use super::helpers::keyword_selector::extract_keywords;
 use super::helpers::meta_robots_selector::{get_meta_robots, MetaRobots};
 use super::helpers::text_ratio::{get_text_ratio, TextRatio};
 use super::helpers::{
@@ -194,7 +193,7 @@ async fn process_url(
         javascript: javascript_selector::extract_javascript(&body),
         images: images_selector::extract_images(&body),
         status_code,
-        anchor_links: anchor_links::extract_internal_external_links(&body),
+        anchor_links: anchor_links::extract_internal_external_links(&body, base_url),
         indexability: indexability::extract_indexability(&body),
         alt_tags: alt_tags::get_alt_tags(&body),
         schema: schema_selector::get_schema(&body),
@@ -218,7 +217,7 @@ async fn process_url(
                 text_ratio: 0.0,
             })]),
         redirection,
-        keywords: get_top_keywords(&body, 4),
+        keywords: extract_keywords(&body),
     };
 
     // Update state and emit results

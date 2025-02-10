@@ -58,7 +58,7 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
             ID
           </th>
           <th
-            style={{ textAlign: "left", position: "relative", width: "300px" }}
+            style={{ textAlign: "left", position: "relative", width: "100px" }}
           >
             Anchor Links
           </th>
@@ -75,10 +75,14 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
             const linkItem = data?.[0]?.anchor_links?.external?.links?.[index];
             return (
               <tr key={index}>
-                <td style={{ textAlign: "left" }} className="pl-4 border">
+                <td style={{ textAlign: "left" }} className="pl-4 border w-2">
                   {index + 1}
                 </td>
-                <td style={{ textAlign: "left" }} className="pl-3 border">
+                <td
+                  width="100px"
+                  style={{ textAlign: "left" }}
+                  className="pl-3 border"
+                >
                   {anchorItem}
                 </td>
                 <td style={{ textAlign: "left" }} className="pl-3 border">

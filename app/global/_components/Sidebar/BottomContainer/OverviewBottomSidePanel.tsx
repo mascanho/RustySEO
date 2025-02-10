@@ -11,9 +11,7 @@ const OverviewBottomSidePanel = () => {
     >
       {/* Chart Section */}
       <Tabs.Panel value="chart1" className="h-full">
-        <div className="h-full my-auto pt-[3.5em] dark:bg-brand-darker">
-          <OverviewChart />
-        </div>
+        <OverviewChart />
       </Tabs.Panel>
 
       {/* Tabs Section */}

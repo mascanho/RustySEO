@@ -1,8 +1,11 @@
+import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import React from "react";
 import { MdOutlineErrorOutline } from "react-icons/md";
 
 const HistoryDomainCrawls = () => {
   const [expandedRows, setExpandedRows] = React.useState<number[]>([]);
+  const { crawlData } = useGlobalCrawlStore();
+
   const crawlHistory = [
     {
       date: "2023-10-01",

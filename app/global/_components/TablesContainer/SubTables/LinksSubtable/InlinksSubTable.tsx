@@ -55,12 +55,12 @@ const InlinksSubTable = ({ data }: { data: any }) => {
       <thead className="text-xs">
         <tr className="sticky top-0 shadow ">
           <th
-            style={{ width: "10px", textAlign: "left", position: "relative" }}
+            style={{ width: "20px", textAlign: "left", position: "relative" }}
           >
             ID
           </th>
           <th
-            style={{ textAlign: "left", position: "relative", width: "300px" }}
+            style={{ textAlign: "left", position: "relative", width: "100px" }}
           >
             Anchor Links
           </th>

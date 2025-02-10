@@ -23,6 +23,11 @@ import { RiFireLine } from "react-icons/ri";
 import { IoKeyOutline } from "react-icons/io5";
 import { SlSocialGoogle } from "react-icons/sl";
 import { GrPlan } from "react-icons/gr";
+import Analytics from "../components/ui/Analytics/Analytics";
+import ClarityContainer from "../components/ui/MSClarityModal/ClarityContainer";
+import KeywordAnalytics from "../components/ui/KwTracking/KeywordAnalytics";
+import GSCcontainer from "../components/ui/GscContainer/GscContainer";
+import ContentPlannerContainer from "../components/ui/ContentPlanner/ContentPlannerContainer";
 
 export default function Page() {
   const [data, setData] = useState<CrawlResult | null>(null);
@@ -37,6 +42,7 @@ export default function Page() {
     setDomainCrawlLoading,
     clearDomainCrawlData,
     addDomainCrawlResult,
+    setSelectedTableURL,
   } = useGlobalCrawlStore();
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
   const allData = crawlData;
@@ -55,6 +61,7 @@ export default function Page() {
   const handleDomainCrawl = async (url) => {
     try {
       // Set loading
+      setSelectedTableURL([]);
       setDomainCrawlLoading(true);
       // Clear the store before crawling
       clearDomainCrawlData();
@@ -150,7 +157,6 @@ export default function Page() {
               </Tabs.Tab>
             </Tabs.List>
           </aside>
-
           {/* Tabs Panel for Domain */}
           <Tabs.Panel
             value="first"
@@ -158,7 +164,6 @@ export default function Page() {
           >
             <TablesContainer />
           </Tabs.Panel>
-
           <Tabs.Panel
             value="tasks"
             className="flex flex-col space-y-8 overflow-scroll"
@@ -167,6 +172,21 @@ export default function Page() {
               <TaskManagerContainer />
             </section>
           </Tabs.Panel>
+          <Tabs.Panel value="analytics mt-10">
+            <Analytics />
+          </Tabs.Panel>
+          <Tabs.Panel value="clarity">
+            <ClarityContainer />
+          </Tabs.Panel>{" "}
+          <Tabs.Panel value="kws">
+            <KeywordAnalytics />
+          </Tabs.Panel>{" "}
+          {/* <Tabs.Panel value="gsc">
+            <GSCcontainer />
+          </Tabs.Panel>{" "} */}
+          <Tabs.Panel value="content" className="mt-8 h-screen">
+            <ContentPlannerContainer />
+          </Tabs.Panel>{" "}
         </Tabs>
       </section>
       <aside

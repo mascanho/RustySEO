@@ -2,7 +2,7 @@ use regex::Regex;
 use scraper::{Html, Selector};
 use std::collections::{HashMap, HashSet};
 
-fn extract_keywords(html: &str) -> Vec<(String, usize)> {
+pub fn extract_keywords(html: &str) -> Vec<(String, usize)> {
     // Define stop words as a HashSet for efficient lookups
     let stop_words: HashSet<&str> = vec![
         "the", "and", "is", "in", "it", "to", "of", "for", "on", "with", "as", "at", "by", "an",
@@ -17,98 +17,18 @@ fn extract_keywords(html: &str) -> Vec<(String, usize)> {
     .into_iter()
     .collect();
 
-    // Define a blacklist of HTML tags, attributes, and properties
-    let html_blacklist: HashSet<&str> = vec![
-        "div",
-        "span",
-        "class",
-        "id",
-        "href",
-        "src",
-        "alt",
-        "title",
-        "style",
-        "script",
-        "meta",
-        "link",
-        "img",
-        "svg",
-        "path",
-        "a",
-        "ul",
-        "li",
-        "ol",
-        "table",
-        "tr",
-        "td",
-        "th",
-        "form",
-        "input",
-        "button",
-        "header",
-        "footer",
-        "nav",
-        "section",
-        "article",
-        "aside",
-        "main",
-        "figure",
-        "figcaption",
-        "iframe",
-        "video",
-        "audio",
-        "canvas",
-        "source",
-        "embed",
-        "object",
-        "param",
-        "track",
-        "map",
-        "area",
-        "col",
-        "colgroup",
-        "fieldset",
-        "legend",
-        "label",
-        "select",
-        "option",
-        "textarea",
-        "output",
-        "progress",
-        "meter",
-        "details",
-        "summary",
-        "menu",
-        "menuitem",
-        "dialog",
-        "slot",
-        "template",
-        "picture",
-        "slot",
-        "noscript",
-        "base",
-        "head",
-        "body",
-        "html",
-    ]
-    .into_iter()
-    .collect();
-
     // Parse the HTML document
     let document = Html::parse_document(html);
 
-    // Define selectors for <p> and heading tags
-    let p_selector = Selector::parse("p").unwrap();
-    let h_selector = Selector::parse("h1, h2, h3, h4, h5, h6").unwrap();
+    // Define selectors for elements that typically contain visible text
+    let text_selectors =
+        Selector::parse("p, h1, h2, h3, h4, h5, h6, span, a, li, td, th, div").unwrap();
 
-    // Extract text from <p> and heading tags
+    // Extract text from all selected elements
     let mut text = String::new();
-    for element in document
-        .select(&p_selector)
-        .chain(document.select(&h_selector))
-    {
+    for element in document.select(&text_selectors) {
         // Extract text content, including text from nested elements
-        let element_text = element.text().collect::<String>();
+        let element_text = element.text().collect::<Vec<_>>().join(" ");
         text.push_str(&element_text);
         text.push(' '); // Add space between elements
     }
@@ -131,14 +51,10 @@ fn extract_keywords(html: &str) -> Vec<(String, usize)> {
             // 2. Not a stop word
             // 3. Contains at least one letter
             // 4. Not purely numeric
-            // 5. Not in the HTML blacklist
-            // 6. Does not contain numbers (e.g., "class569")
             word.len() >= 3
                 && !stop_words.contains(word.as_str())
                 && word.chars().any(|c| c.is_alphabetic())
                 && !word.chars().all(|c| c.is_numeric())
-                && !html_blacklist.contains(word.as_str())
-                && !word.chars().any(|c| c.is_numeric()) // Exclude words with numbers
         })
     {
         *word_counts.entry(word).or_insert(0) += 1;

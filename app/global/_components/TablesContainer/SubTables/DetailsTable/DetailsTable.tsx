@@ -94,6 +94,30 @@ const DetailsTable = ({ data }: { data: any }) => {
                 </td>
               </tr>{" "}
               <tr>
+                <td className="border pl-3">Meta Description</td>
+                <td style={{ textAlign: "left" }} className="pl-3 border">
+                  {anchorItem?.description || ""}
+                </td>
+              </tr>{" "}
+              <tr>
+                <td className="border pl-3">Meta Description Length</td>
+                <td style={{ textAlign: "left" }} className="pl-3 border">
+                  {anchorItem?.description?.length || ""}
+                </td>
+              </tr>{" "}
+              <tr>
+                <td className="border pl-3">Heading H1</td>
+                <td style={{ textAlign: "left" }} className="pl-3 border">
+                  {anchorItem?.headings?.h1 || ""}
+                </td>
+              </tr>{" "}
+              <tr>
+                <td className="border pl-3">Heading H1 Length</td>
+                <td style={{ textAlign: "left" }} className="pl-3 border">
+                  {anchorItem?.headings?.h1?.[0]?.length || ""}
+                </td>
+              </tr>{" "}
+              <tr>
                 <td className="border pl-3">Response Code</td>
                 <td style={{ textAlign: "left" }} className="pl-3 border">
                   {anchorItem?.status_code || ""}
@@ -102,7 +126,11 @@ const DetailsTable = ({ data }: { data: any }) => {
               <tr>
                 <td className="border pl-3">Mobile Optimized</td>
                 <td style={{ textAlign: "left" }} className="pl-3 border">
-                  {anchorItem?.mobile ? "Yes" : "No"}
+                  <span
+                    className={`${anchorItem?.mobile ? "px-2 rounded bg-green-500 text-white" : "text-red-500"}`}
+                  >
+                    {anchorItem?.mobile ? "Yes" : "No"}
+                  </span>
                 </td>
               </tr>{" "}
               <tr>
@@ -130,9 +158,35 @@ const DetailsTable = ({ data }: { data: any }) => {
                 </td>
               </tr>{" "}
               <tr>
-                <td className="border pl-3">Keywords</td>
+                <td className="border pl-3">Top 10 Keywords</td>
                 <td style={{ textAlign: "left" }} className="pl-3 border">
-                  {anchorItem?.keywords || ""}
+                  {anchorItem?.keywords?.slice(0, 10)?.map((item: any) => (
+                    <span
+                      className=" pr-2 flex space-x-2 border px-1 pl-2 border-brand-dark/50 rounded "
+                      key={item[0]}
+                      style={{
+                        display: "inline-block",
+                        margin: "4px",
+                      }}
+                    >
+                      {item[0]}{" "}
+                      <span className="bg-brand-bright text-[10px] rounded-full px-1 text-white">
+                        {item[1]}
+                      </span>
+                    </span>
+                  )) || ""}
+                </td>
+              </tr>{" "}
+              <tr>
+                <td className="border pl-3">Internal Links</td>
+                <td style={{ textAlign: "left" }} className="pl-3 border">
+                  {anchorItem?.anchor_links?.internal?.links?.length || ""}
+                </td>
+              </tr>{" "}
+              <tr>
+                <td className="border pl-3">External Links</td>
+                <td style={{ textAlign: "left" }} className="pl-3 border">
+                  {anchorItem?.anchor_links?.external?.links?.length || ""}
                 </td>
               </tr>{" "}
             </React.Fragment>
