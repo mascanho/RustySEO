@@ -91,13 +91,23 @@ function OverviewChart() {
     const crawledPages = JSON.parse(sessionStorage.getItem("CrawledLinks"));
 
     setTotalCrawlPages(crawledPages);
-  }, [domainCrawlLoading]);
+  }, [domainCrawlLoading, crawlData]);
 
   console.log("Total crawl pages", totalCrawlPages);
 
-  const totalPagesCrawledInSession = totalCrawlPages?.reduce((acc, item) => {
-    return acc + item;
-  }, 0);
+  const totalPagesCrawledInSession = (() => {
+    try {
+      return (
+        crawlData &&
+        totalCrawlPages?.reduce((acc, item) => {
+          return acc + item;
+        }, 0)
+      );
+    } catch (error) {
+      console.error("Error calculating total pages crawled in session:", error);
+      return 0;
+    }
+  })();
 
   return (
     <Card className="flex flex-col dark:bg-brand-darker bg-white border-0 shadow-none">
@@ -164,7 +174,7 @@ function OverviewChart() {
           {sessionCrawls ? sessionCrawls : 0} crawls.
         </div>
         <div className="flex items-center gap-3 font-medium leading-none">
-          With a total of {totalPagesCrawledInSession} pages analyzed
+          With a total of {totalPagesCrawledInSession || 0} pages analyzed
           <TrendingUp className="h-5 w-4" />
         </div>
       </CardFooter>
