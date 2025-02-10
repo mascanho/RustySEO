@@ -36,6 +36,10 @@ interface CrawlStore {
   setIssueRow: (row: string[]) => void;
   selectedTableURL: string[];
   setSelectedTableURL: (row: string[]) => void;
+  javascript: string[];
+  setJavascript: (row: string[]) => void;
+  css: string[];
+  setCss: (row: string[]) => void;
 }
 
 const useGlobalCrawlStore = create<CrawlStore>((set) => ({
@@ -76,6 +80,12 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
 
   selectedTableURL: [],
   setSelectedTableURL: (row) => set({ selectedTableURL: row }),
+
+  javascript: [],
+  setJavascript: (row) => set({ javascript: row }),
+
+  css: [],
+  setCss: (row) => set({ css: row }),
 }));
 
 export default useGlobalCrawlStore;

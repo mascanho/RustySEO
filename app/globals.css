@@ -746,3 +746,8 @@ td.issues {
   all: unset !important;
   background: red !important;
 }
+
+/* GLOBAL OVERVIEW CHART */
+.chart tspan {
+  @apply hidden;
+}

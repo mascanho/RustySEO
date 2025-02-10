@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 
 const Javascript: React.FC = () => {
   const domainCrawlData = useGlobalCrawlStore();
   const [isOpen, setIsOpen] = useState(false); // State to track if details are open
+  const { javascript, setJavascript, crawlData, domainCrawlLoading } =
+    useGlobalCrawlStore();
 
   // Calculate external and inline scripts
   const { externalScripts, inlineScripts } = domainCrawlData?.crawlData?.reduce(
@@ -16,6 +18,14 @@ const Javascript: React.FC = () => {
   ) || { externalScripts: 0, inlineScripts: 0 };
 
   const totalScripts = externalScripts + inlineScripts;
+
+  useEffect(() => {
+    setJavascript({
+      inline: inlineScripts,
+      external: externalScripts,
+      total: totalScripts,
+    });
+  }, [crawlData]);
 
   // Data to display
   const scriptData = [

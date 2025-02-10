@@ -14,7 +14,7 @@ import H2 from "./DropDowns/H2";
 
 const GeneralTopSideBarContainer = () => {
   return (
-    <div className="text-xs w-full space-y-1 min-h-[28rem] h-[35rem] overflow-y-scroll overflow-x-hidden relative">
+    <div className="text-xs w-full space-y-1 min-h-[28rem] h-[calc(100vh-38rem)] overflow-y-auto overflow-x-hidden relative">
       <section className="w-full flex justify-end  bg-gradient-to-r from-gray-100 to-white font-bold sticky top-0 py-0.5 dark:bg-gradient-to-l dark:from-brand-darker dark:to-blue-950/50 shadow dark:text-blue-600">
         <div className="w-full"></div>
         <div className="w-[7em]">Total</div>

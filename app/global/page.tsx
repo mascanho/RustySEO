@@ -61,6 +61,16 @@ export default function Page() {
   const handleDomainCrawl = async (url) => {
     try {
       // Set loading
+
+      if (sessionStorage.getItem("crawlNumber")) {
+        sessionStorage.setItem(
+          "crawlNumber",
+          Number(sessionStorage.getItem("crawlNumber")) + 1,
+        );
+      } else {
+        sessionStorage.setItem("crawlNumber", "1");
+      }
+
       setSelectedTableURL([]);
       setDomainCrawlLoading(true);
       // Clear the store before crawling
@@ -75,6 +85,18 @@ export default function Page() {
       console.log("failed to crawl:", url);
     } finally {
       setDomainCrawlLoading(false);
+
+      // Retrieve the existing crawled links from sessionStorage or initialize an empty array
+      const crawledLinks =
+        JSON.parse(sessionStorage.getItem("CrawledLinks")) || [];
+
+      // Add the length of the new crawlData (if it exists) to the crawledLinks array
+      if (crawlData?.length) {
+        crawledLinks.push(crawlData.length);
+      }
+
+      // Save the updated crawledLinks array back to sessionStorage
+      sessionStorage.setItem("CrawledLinks", JSON.stringify(crawledLinks));
     }
   };
 

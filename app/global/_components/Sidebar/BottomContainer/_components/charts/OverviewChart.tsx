@@ -1,7 +1,9 @@
+// @ts-nocheck
 "use client";
-
+import * as React from "react";
+import { useEffect, useState } from "react";
 import { TrendingUp } from "lucide-react";
-import { Bar, BarChart, XAxis, YAxis } from "recharts";
+import { Label, Pie, PieChart } from "recharts";
 
 import {
   Card,
@@ -17,20 +19,14 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-const chartData = [
-  { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
-  { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
-  { browser: "firefox", visitors: 187, fill: "var(--color-firefox)" },
-  { browser: "edge", visitors: 173, fill: "var(--color-edge)" },
-  { browser: "other", visitors: 90, fill: "var(--color-other)" },
-];
+import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 
 const chartConfig = {
   visitors: {
     label: "Visitors",
   },
   chrome: {
-    label: "Chrome",
+    label: "HTML",
     color: "hsl(var(--chart-1))",
   },
   safari: {
@@ -51,52 +47,128 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-const OverviewChart = () => {
+function OverviewChart() {
+  const { crawlData, javascript, css, domainCrawlLoading } =
+    useGlobalCrawlStore();
+  const [sessionCrawls, setSessionCrawls] = useState<number[]>([]);
+  const [totalCrawlPages, setTotalCrawlPages] = useState<number>(0);
+
+  const totalPages = crawlData?.length;
+  const inlineJs = javascript?.inline;
+  const externalJs = javascript?.external;
+  const inlineCss = css?.inline;
+  const externalCss = css?.external;
+
+  const chartData = [
+    { browser: "HTML", visitors: totalPages, fill: "var(--color-chrome)" },
+    {
+      browser: "Inline JS",
+      visitors: inlineJs || 100,
+      fill: "var(--color-safari)",
+    },
+    {
+      browser: "External JS",
+      visitors: externalJs || 100,
+      fill: "hsl(610, 100%, 50%)",
+    },
+    {
+      browser: "Inline CSS",
+      visitors: inlineCss || 100,
+      fill: "var(--color-firefox)",
+    },
+    {
+      browser: "External CSS",
+      visitors: externalCss || 100,
+      fill: "hsl(210, 100%, 50%)",
+    },
+  ];
+
+  useEffect(() => {
+    const crawls = sessionStorage.getItem("crawlNumber");
+    console.log("Crawls", crawls);
+    setSessionCrawls(crawls);
+
+    const crawledPages = JSON.parse(sessionStorage.getItem("CrawledLinks"));
+
+    setTotalCrawlPages(crawledPages);
+  }, [domainCrawlLoading]);
+
+  console.log("Total crawl pages", totalCrawlPages);
+
+  const totalPagesCrawledInSession = totalCrawlPages?.reduce((acc, item) => {
+    return acc + item;
+  }, 0);
+
   return (
-    <Card className="h-full m-auto dark:bg-brand-darker border-none mt-4">
-      {/* <CardHeader> */}
-      {/*   <CardTitle>Bar Chart - Mixed</CardTitle> */}
-      {/*   <CardDescription>January - June 2024</CardDescription> */}
-      {/* </CardHeader> */}
-      <CardContent>
-        <ChartContainer config={chartConfig}>
-          <BarChart
-            accessibilityLayer
-            data={chartData}
-            layout="vertical"
-            margin={{
-              left: 0,
-            }}
-          >
-            <YAxis
-              dataKey="browser"
-              type="category"
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-              tickFormatter={(value) =>
-                chartConfig[value as keyof typeof chartConfig]?.label
-              }
-            />
-            <XAxis dataKey="visitors" type="number" hide />
+    <Card className="flex flex-col dark:bg-brand-darker bg-white border-0 shadow-none">
+      <CardHeader className="items-center pb-0">
+        <CardTitle>Latest Crawl</CardTitle>
+        <CardDescription>{`${new Date().toLocaleString("default", { month: "long", day: "numeric" })} ${new Date().getFullYear()}`}</CardDescription>
+      </CardHeader>
+      <CardContent className="flex-1 pb-0">
+        <ChartContainer
+          config={chartConfig}
+          className="mx-auto aspect-square max-h-[250px]"
+        >
+          <PieChart>
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent hideLabel />}
             />
-            <Bar dataKey="visitors" layout="vertical" radius={5} />
-          </BarChart>
+            <Pie
+              data={chartData}
+              dataKey="visitors"
+              nameKey="browser"
+              innerRadius={60}
+              strokeWidth={5}
+              className="text-white"
+            >
+              <Label
+                content={({ viewBox }) => {
+                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                    return (
+                      <text
+                        x={viewBox.cx}
+                        y={viewBox.cy}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        className="dark:text-white"
+                      >
+                        <tspan
+                          x={viewBox.cx}
+                          y={viewBox.cy}
+                          style={{ color: "white" }}
+                          className="text-3xl dark:fill-white text-white font-bold dark:text-white"
+                        >
+                          {totalPages.toLocaleString()}
+                        </tspan>
+                        <tspan
+                          x={viewBox.cx}
+                          y={(viewBox.cy || 0) + 24}
+                          className="fill-muted-foreground dark:fill-white/50 dark:text-white"
+                        >
+                          Pages
+                        </tspan>
+                      </text>
+                    );
+                  }
+                }}
+              />
+            </Pie>
+          </PieChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className="flex-col items-start gap-2 text-xs mt-4">
-        <div className="flex gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
+      <CardFooter className="flex-col gap-2 text-xs dark:text-white/50">
         <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
+          This session has recorded {""}
+          {sessionCrawls ? sessionCrawls : 0} crawls.
+        </div>
+        <div className="flex items-center gap-3 font-medium leading-none">
+          With a total of {totalPagesCrawledInSession} pages analyzed
+          <TrendingUp className="h-5 w-4" />
         </div>
       </CardFooter>
     </Card>
   );
-};
-
+}
 export default OverviewChart;

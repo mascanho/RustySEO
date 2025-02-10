@@ -60,7 +60,7 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
           <th
             style={{ textAlign: "left", position: "relative", width: "100px" }}
           >
-            Anchor Links
+            Anchor Text
           </th>
           <th
             style={{ textAlign: "left", position: "relative", width: "300px" }}

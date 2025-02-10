@@ -1,10 +1,11 @@
 // @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 const Css = () => {
   const domainCrawlData = useGlobalCrawlStore();
   const [isOpen, setIsOpen] = useState(false); // State to track if details are open
+  const { setCss, domainCrawlLoading, crawlData } = useGlobalCrawlStore();
 
   const externalCss =
     domainCrawlData?.crawlData?.reduce((acc, item) => {
@@ -24,6 +25,14 @@ const Css = () => {
     { label: "External CSS", count: externalCss },
     { label: "Internal CSS", count: inlineCss },
   ];
+
+  useEffect(() => {
+    setCss({
+      inline: inlineCss,
+      external: externalCss,
+      total: totalCss,
+    });
+  }, [crawlData]);
 
   return (
     <div className="text-sx w-full">

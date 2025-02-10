@@ -9,7 +9,7 @@ function SidebarContainer() {
       <div className="h-full">
         <TopContainer />
       </div>
-      <div className="h-full">
+      <div className="h-full flex-1">
         <BottomContainer />
       </div>
     </div>
