@@ -21,12 +21,19 @@ pub fn extract_keywords(html: &str) -> Vec<(String, usize)> {
     let document = Html::parse_document(html);
 
     // Define selectors for elements that typically contain visible text
-    let text_selectors =
-        Selector::parse("p, h1, h2, h3, h4, h5, h6, span, a, li, td, th, div").unwrap();
+    let text_selectors = Selector::parse("p, h1, h2, h3, h4, h5, h6, span, a, li, td, th").unwrap();
 
-    // Extract text from all selected elements
+    // Exclude non-content elements (e.g., scripts, styles)
+    let excluded_selectors = Selector::parse("script, style, noscript, code, pre").unwrap();
+
+    // Extract text from all selected elements, excluding non-content elements
     let mut text = String::new();
     for element in document.select(&text_selectors) {
+        // Skip elements that match excluded selectors
+        if element.select(&excluded_selectors).next().is_some() {
+            continue;
+        }
+
         // Extract text content, including text from nested elements
         let element_text = element.text().collect::<Vec<_>>().join(" ");
         text.push_str(&element_text);
@@ -34,10 +41,10 @@ pub fn extract_keywords(html: &str) -> Vec<(String, usize)> {
     }
 
     // Debug: Print the extracted text
-    println!("Extracted Text: {}", text);
+    // println!("Extracted Text: {}", text);
 
     // Clean and tokenize the text
-    let re = Regex::new(r"[^\w\s]").unwrap(); // Remove punctuation
+    let re = Regex::new(r"[^\w\s'-]").unwrap(); // Keep apostrophes and hyphens in words
     let cleaned_text = re.replace_all(&text, " ").to_string();
 
     // Split into words, filter, and count frequencies
@@ -59,6 +66,10 @@ pub fn extract_keywords(html: &str) -> Vec<(String, usize)> {
     {
         *word_counts.entry(word).or_insert(0) += 1;
     }
+
+    // Normalize word counts by ignoring words that appear too frequently (e.g., > 5 times)
+    let max_word_count = 1555;
+    word_counts.retain(|_, count| *count <= max_word_count);
 
     // Sort words by frequency in descending order
     let mut sorted_words: Vec<_> = word_counts.into_iter().collect();

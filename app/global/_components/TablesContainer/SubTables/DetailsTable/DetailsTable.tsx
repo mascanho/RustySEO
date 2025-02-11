@@ -333,6 +333,54 @@ const DetailsTable = ({ data }: { data: any }) => {
                   {anchorItem?.anchor_links?.external?.links?.length || ""}
                 </td>
               </tr>{" "}
+              <tr>
+                <td className="border pl-3">Page Length</td>
+                <td
+                  style={{
+                    textAlign: "left",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                  className="pl-3 border"
+                >
+                  {anchorItem?.page_size?.[0]?.length
+                    ? anchorItem.page_size[0].length + " bytes"
+                    : "N/A"}
+                </td>
+              </tr>{" "}
+              <tr>
+                <td className="border pl-3">Page Size</td>
+                <td
+                  style={{
+                    textAlign: "left",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                  className="pl-3 border"
+                >
+                  {anchorItem?.page_size?.[0]?.kb
+                    ? anchorItem.page_size[0].kb + " KB"
+                    : "N/A"}
+                </td>
+              </tr>{" "}
+              <tr>
+                <td className="border pl-3">Response Time</td>
+                <td
+                  style={{
+                    textAlign: "left",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                  className="pl-3 border"
+                >
+                  {anchorItem?.response_time
+                    ? anchorItem.response_time + " ms"
+                    : "N/A"}
+                </td>
+              </tr>{" "}
             </React.Fragment>
           );
         })}

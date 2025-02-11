@@ -6,6 +6,7 @@ pub mod check_html_page;
 pub mod css_selector;
 pub mod domain_checker;
 pub mod headings_selector;
+pub mod html_size_calculator;
 pub mod iframe_selector;
 pub mod images_selector;
 pub mod indexability;

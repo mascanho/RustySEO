@@ -1,5 +1,6 @@
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JavaScript {
@@ -7,7 +8,7 @@ pub struct JavaScript {
     pub inline: Vec<String>,   // Content of inline scripts
 }
 
-pub fn extract_javascript(body: &str) -> JavaScript {
+pub fn extract_javascript(body: &str, base_url: &Url) -> JavaScript {
     let document = Html::parse_document(body);
     let script_selector = Selector::parse("script").unwrap();
     let mut javascript = JavaScript {
@@ -18,6 +19,8 @@ pub fn extract_javascript(body: &str) -> JavaScript {
     for element in document.select(&script_selector) {
         if let Some(src) = element.value().attr("src") {
             // External script: add the URL
+            //concatenate the base URL with the relative URL
+            let src = base_url.join(&src).unwrap().to_string();
             javascript.external.push(src.to_string());
         } else {
             // Inline script: add the text content

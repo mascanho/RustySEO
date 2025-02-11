@@ -60,26 +60,26 @@ function OverviewChart() {
   const externalCss = css?.external;
 
   const chartData = [
-    { browser: "HTML", visitors: totalPages, fill: "var(--color-chrome)" },
+    { browser: "HTML", visitors: totalPages, fill: "hsl(210, 100%, 50%)" },
     {
       browser: "Inline JS",
       visitors: inlineJs || 100,
-      fill: "var(--color-safari)",
+      fill: "hsl(210, 100%, 60%)",
     },
     {
       browser: "External JS",
       visitors: externalJs || 100,
-      fill: "hsl(610, 100%, 50%)",
+      fill: "hsl(210, 100%, 70%)",
     },
     {
       browser: "Inline CSS",
       visitors: inlineCss || 100,
-      fill: "var(--color-firefox)",
+      fill: "hsl(210, 100%, 80%)",
     },
     {
       browser: "External CSS",
       visitors: externalCss || 100,
-      fill: "hsl(210, 100%, 50%)",
+      fill: "hsl(210, 100%, 90%)",
     },
   ];
 

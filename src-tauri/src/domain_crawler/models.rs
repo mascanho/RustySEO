@@ -4,9 +4,9 @@ use serde::{Deserialize, Serialize};
 
 use super::helpers::{
     alt_tags::AltTags, anchor_links::InternalExternalLinks, css_selector::CSS,
-    iframe_selector::Iframe, indexability::Indexability, javascript_selector::JavaScript,
-    meta_robots_selector::MetaRobots, pdf_selector::PdfLinks, text_ratio::TextRatio,
-    title_selector::TitleDetails,
+    html_size_calculator::Sizes, iframe_selector::Iframe, indexability::Indexability,
+    javascript_selector::JavaScript, meta_robots_selector::MetaRobots, pdf_selector::PdfLinks,
+    text_ratio::TextRatio, title_selector::TitleDetails,
 };
 
 #[derive(Serialize, Debug, Deserialize, Clone)]
@@ -35,4 +35,5 @@ pub struct DomainCrawlResults {
     pub text_ratio: Option<Vec<TextRatio>>,
     pub redirection: Option<String>,
     pub keywords: Vec<(String, usize)>,
+    pub page_size: Vec<Sizes>,
 }

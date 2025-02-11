@@ -18,6 +18,9 @@ import LinksSubTable from "./SubTables/LinksSubtable/InlinksSubTable";
 import InlinksSubTable from "./SubTables/LinksSubtable/InlinksSubTable";
 import OutlinksSubTable from "./SubTables/LinksSubtable/OutlinksSubTable";
 import DetailsTable from "./SubTables/DetailsTable/DetailsTable";
+import JsTableCrawl from "./JavascriptTable/JsTableCrawl";
+import { Filter } from "lucide-react";
+import TableCrawlJs from "./JavascriptTable/TableCrawlJs";
 
 export default function Home() {
   const [containerHeight, setContainerHeight] = useState(600);
@@ -70,7 +73,29 @@ export default function Home() {
     [handleCellClick],
   );
 
-  console.log(statusCodes, "statusCodes");
+  // FILTER THE JAVASCRIPT LINKS
+  const filteredJavascript = (arr) => {
+    const jsSet = new Set();
+
+    arr.forEach((item) => {
+      // Add external JavaScript links to the Set
+      if (item.javascript?.external) {
+        item.javascript.external.forEach((link, index) => jsSet.add(link));
+      }
+    });
+
+    // Convert the Set to an array
+    const jsArr = Array.from(jsSet);
+
+    // MAP the array into an array of objects with the URL and title
+    const mappedJsArr = jsArr.map((url, index) => ({ index: index + 1, url }));
+
+    // Return the mapped array
+    return mappedJsArr;
+  };
+
+  const filteredJsArr = filteredJavascript(crawlData);
+  console.log(filteredJsArr, "filtered Js");
 
   return (
     <div
@@ -94,7 +119,7 @@ export default function Home() {
           >
             <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t  -mb-2 bg-gray-50 rounded-none ">
               <TabsTrigger value="crawledPages">All</TabsTrigger>
-              <TabsTrigger value="seoAnalysis">SEO Analysis</TabsTrigger>
+              <TabsTrigger value="javascript">Javascript</TabsTrigger>
               <TabsTrigger value="technicalDetails">
                 Technical Details
               </TabsTrigger>
@@ -112,10 +137,17 @@ export default function Home() {
               {/* <TableCrawl rows={crawlData} /> */}
             </TabsContent>
             <TabsContent
+              value="javascript"
+              className="flex-grow overflow-hidden"
+            >
+              {/* <JsTableCrawl rows={filteredJsArr} /> */}
+              <TableCrawlJs rows={filteredJsArr} />
+            </TabsContent>
+            <TabsContent
               value="technicalDetails"
               className="flex-grow overflow-hidden"
             >
-              {/* <TableCrawl rows={crawlData} /> */}a{" "}
+              {/* <TableCrawl rows={crawlData} /> */}{" "}
             </TabsContent>
           </Tabs>
         </div>

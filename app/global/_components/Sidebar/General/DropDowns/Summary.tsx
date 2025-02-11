@@ -34,17 +34,29 @@ const Summary: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   // Safely get crawlData or default to an empty array
-  const crawlData: CrawlDataItem[] = domainCrawlData?.crawlData || [];
+  const crawlData: CrawlDataItem[] = useMemo(
+    () => domainCrawlData?.crawlData || [],
+    [domainCrawlData],
+  );
 
-  // Memoize internal and external links
+  // Memoize internal and external links using sets to prevent duplication
   const { internalLinks, externalLinks } = useMemo(() => {
-    const internalLinks = crawlData.flatMap(
-      (item) => item?.anchor_links?.internal?.links || [],
-    );
-    const externalLinks = crawlData.flatMap(
-      (item) => item?.anchor_links?.external?.links || [],
-    );
-    return { internalLinks, externalLinks };
+    const internalLinksSet = new Set<string>();
+    const externalLinksSet = new Set<string>();
+
+    crawlData.forEach((item) => {
+      item?.anchor_links?.internal?.links?.forEach((link) =>
+        internalLinksSet.add(link),
+      );
+      item?.anchor_links?.external?.links?.forEach((link) =>
+        externalLinksSet.add(link),
+      );
+    });
+
+    return {
+      internalLinks: Array.from(internalLinksSet),
+      externalLinks: Array.from(externalLinksSet),
+    };
   }, [crawlData]);
 
   // Memoize indexable pages

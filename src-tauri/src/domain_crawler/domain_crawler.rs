@@ -14,6 +14,7 @@ use tokio::time::{sleep, Duration};
 use url::Url;
 
 use super::helpers::canonical_selector::get_canonical;
+use super::helpers::html_size_calculator::calculate_html_size;
 use super::helpers::keyword_selector::extract_keywords;
 use super::helpers::meta_robots_selector::{get_meta_robots, MetaRobots};
 use super::helpers::text_ratio::{get_text_ratio, TextRatio};
@@ -157,6 +158,8 @@ async fn process_url(
         .and_then(|h| h.to_str().ok())
         .map(|s| s.parse::<usize>().unwrap_or(0));
 
+    let content_len = content_length.clone();
+
     let redirection = response
         .headers()
         .get("Location")
@@ -190,7 +193,7 @@ async fn process_url(
         description: page_description::extract_page_description(&body)
             .unwrap_or_else(|| "No Description".to_string()),
         headings: headings_selector::headings_selector(&body),
-        javascript: javascript_selector::extract_javascript(&body),
+        javascript: javascript_selector::extract_javascript(&body, &base_url),
         images: images_selector::extract_images(&body),
         status_code,
         anchor_links: anchor_links::extract_internal_external_links(&body, base_url),
@@ -218,6 +221,7 @@ async fn process_url(
             })]),
         redirection,
         keywords: extract_keywords(&body),
+        page_size: calculate_html_size(content_len),
     };
 
     // Update state and emit results

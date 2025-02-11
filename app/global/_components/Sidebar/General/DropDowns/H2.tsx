@@ -1,9 +1,9 @@
 // @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo } from "react";
 
 const H2 = () => {
-  const { crawlData, setHeadingsH2, headingsH2 } = useGlobalCrawlStore();
+  const { crawlData } = useGlobalCrawlStore();
 
   // Ensure crawlData is always an array
   const safeCrawlData = Array.isArray(crawlData) ? crawlData : [];
@@ -43,24 +43,20 @@ const H2 = () => {
     };
   }, [safeCrawlData]);
 
-  // Memoize sections to avoid recalculating on every render
-  const sections = useMemo(
-    () => [
-      { label: "Total", count: counts.exists },
-      { label: "Missing", count: missingH2Count },
-      { label: "Duplicate H2 Headings", count: counts.duplicate },
-      { label: "Over 155 Characters", count: counts.long },
-      { label: "Below 70 Characters", count: counts.short },
-    ],
-    [counts, missingH2Count],
-  );
+  // Sections to display
+  const sections = [
+    { label: "Total", count: counts.exists },
+    { label: "Missing", count: missingH2Count },
+    { label: "Duplicate H2 Headings", count: counts.duplicate },
+    { label: "Over 155 Characters", count: counts.long },
+    { label: "Below 70 Characters", count: counts.short },
+  ];
 
-  // Update headingsH2 state when sections change
-  useEffect(() => {
-    setHeadingsH2(sections);
-  }, [sections, setHeadingsH2]);
-
-  console.log(headingsH2);
+  // Helper function to calculate percentage
+  const calculatePercentage = (count: number, total: number): string => {
+    if (!total) return "0%";
+    return `${Math.min(((count / total) * 100).toFixed(0), 100)}%`;
+  };
 
   return (
     <div className="text-sx w-full">
@@ -77,13 +73,14 @@ const H2 = () => {
               <div className="w-2/3 pl-2.5 py-1 text-brand-bright">{label}</div>
               <div className="w-1/6 text-right pr-2">{count}</div>
               <div className="w-1/6 text-center pl-2">
-                {totalPages
-                  ? (
-                      ((label === "Missing" ? missingH2Count : count) /
-                        totalPages) *
-                      100
-                    ).toFixed(0) + "%"
-                  : "0%"}
+                {calculatePercentage(
+                  label === "Missing"
+                    ? missingH2Count
+                    : label === "Below 70 Characters"
+                      ? counts.short
+                      : count,
+                  label === "Total" ? totalPages : counts.all,
+                )}
               </div>
             </div>
           ))}

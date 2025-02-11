@@ -1,31 +1,29 @@
-// @ts-nocheck
-import React, { useEffect, useState } from "react";
+import React, { useMemo } from "react";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 
 const Javascript: React.FC = () => {
-  const domainCrawlData = useGlobalCrawlStore();
-  const [isOpen, setIsOpen] = useState(false); // State to track if details are open
-  const { javascript, setJavascript, crawlData, domainCrawlLoading } =
-    useGlobalCrawlStore();
+  const { crawlData } = useGlobalCrawlStore();
+  const [isOpen, setIsOpen] = React.useState(false); // State to track if details are open
 
-  // Calculate external and inline scripts
-  const { externalScripts, inlineScripts } = domainCrawlData?.crawlData?.reduce(
-    (acc, item) => {
-      acc.externalScripts += item?.javascript?.external?.length || 0;
-      acc.inlineScripts += item?.javascript?.inline?.length || 0;
-      return acc;
-    },
-    { externalScripts: 0, inlineScripts: 0 },
-  ) || { externalScripts: 0, inlineScripts: 0 };
+  // Calculate external and inline scripts using Sets to avoid duplicates
+  const { externalScripts, inlineScripts, totalScripts } = useMemo(() => {
+    const externalSet = new Set<string>();
+    const inlineSet = new Set<string>();
 
-  const totalScripts = externalScripts + inlineScripts;
-
-  useEffect(() => {
-    setJavascript({
-      inline: inlineScripts,
-      external: externalScripts,
-      total: totalScripts,
+    crawlData?.forEach((item) => {
+      item?.javascript?.external?.forEach((script: string) =>
+        externalSet.add(script),
+      );
+      item?.javascript?.inline?.forEach((script: string) =>
+        inlineSet.add(script),
+      );
     });
+
+    const externalScripts = externalSet.size;
+    const inlineScripts = inlineSet.size;
+    const totalScripts = externalScripts + inlineScripts;
+
+    return { externalScripts, inlineScripts, totalScripts };
   }, [crawlData]);
 
   // Data to display
@@ -44,33 +42,35 @@ const Javascript: React.FC = () => {
           <span>Javascript</span>
         </summary>
         {/* Data Rows (inside details, only visible when open) */}
-        <div className="w-full">
-          {/* Header Row */}
-          <div className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark">
-            <div className="w-2/3 pl-2.5 py-1 text-brand-bright">
-              Total Javascript
-            </div>
-            <div className="w-1/6 text-right pr-2">{totalScripts}</div>
-            <div className="w-1/6 text-right pr-2">100%</div>
-          </div>
-          {/* Data Rows */}
-          {scriptData.map((data, index) => (
-            <div
-              key={index}
-              className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark"
-            >
+        {isOpen && (
+          <div className="w-full">
+            {/* Header Row */}
+            <div className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark">
               <div className="w-2/3 pl-2.5 py-1 text-brand-bright">
-                {data.label}
+                Total Javascript
               </div>
-              <div className="w-1/6 text-right pr-2">{data.count}</div>
-              <div className="w-1/6 text-right pr-2">
-                {totalScripts > 0
-                  ? `${((data.count / totalScripts) * 100).toFixed(0)}%`
-                  : "0%"}
-              </div>
+              <div className="w-1/6 text-right pr-2">{totalScripts}</div>
+              <div className="w-1/6 text-right pr-2">100%</div>
             </div>
-          ))}
-        </div>
+            {/* Data Rows */}
+            {scriptData.map((data, index) => (
+              <div
+                key={index}
+                className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark"
+              >
+                <div className="w-2/3 pl-2.5 py-1 text-brand-bright">
+                  {data.label}
+                </div>
+                <div className="w-1/6 text-right pr-2">{data.count}</div>
+                <div className="w-1/6 text-right pr-2">
+                  {totalScripts > 0
+                    ? `${((data.count / totalScripts) * 100).toFixed(0)}%`
+                    : "0%"}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </details>
     </div>
   );
