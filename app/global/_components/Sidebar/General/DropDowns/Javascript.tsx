@@ -1,9 +1,10 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 
 const Javascript: React.FC = () => {
   const { crawlData } = useGlobalCrawlStore();
   const [isOpen, setIsOpen] = React.useState(false); // State to track if details are open
+  const { setJavascript } = useGlobalCrawlStore();
 
   // Calculate external and inline scripts using Sets to avoid duplicates
   const { externalScripts, inlineScripts, totalScripts } = useMemo(() => {
@@ -25,6 +26,13 @@ const Javascript: React.FC = () => {
 
     return { externalScripts, inlineScripts, totalScripts };
   }, [crawlData]);
+
+  useEffect(() => {
+    setJavascript({
+      external: externalScripts,
+      inline: inlineScripts,
+    });
+  }, [externalScripts, inlineScripts]);
 
   // Data to display
   const scriptData = [

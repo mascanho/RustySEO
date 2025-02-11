@@ -59,6 +59,8 @@ function OverviewChart() {
   const inlineCss = css?.inline;
   const externalCss = css?.external;
 
+  console.log(inlineJs, externalJs, inlineCss, externalCss, "multiple data");
+
   const chartData = [
     { browser: "HTML", visitors: totalPages, fill: "hsl(210, 100%, 50%)" },
     {
