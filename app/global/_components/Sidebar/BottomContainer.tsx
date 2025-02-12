@@ -5,14 +5,11 @@ import OverviewBottomSidePanel from "./BottomContainer/OverviewBottomSidePanel";
 const BottomContainer = () => {
   return (
     <div className="border-t dark:border-brand-dark relative h-[38rem] min-h-[28rem] flex flex-col flex-1">
-      <Tabs defaultValue="overview" className="overflow-hidden h-full">
-        <Tabs.List
-          justify="center"
-          className="dark:text-white text-xs font-bold"
-        >
+      <Tabs defaultValue="overview" className="overflow-hidden h-full w-full">
+        <Tabs.List justify="center" className="dark:text-white text-xs ">
           <Tabs.Tab value="overview">Overview</Tabs.Tab>
-          <Tabs.Tab value="third">Improv</Tabs.Tab>
-          <Tabs.Tab value="fourth">Task</Tabs.Tab>
+          <Tabs.Tab value="third">Robots</Tabs.Tab>
+          <Tabs.Tab value="fourth">Sitemaps</Tabs.Tab>
           <Tabs.Tab value="fifth">History</Tabs.Tab>
         </Tabs.List>
 

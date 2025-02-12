@@ -21,3 +21,4 @@ pub mod schema_selector;
 pub mod text_ratio;
 pub mod title_selector;
 pub mod word_count;
+pub mod robots

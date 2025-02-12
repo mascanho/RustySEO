@@ -21,7 +21,7 @@ const FooterLoader = () => {
   }, []);
   return (
     <div className="flex items-center justify-center w-full h-full">
-      <div className="relative w-32 h-2 bg-gray-200 dark:bg-transparent rounded-full dark:divide-brand-dark">
+      <div className="relative w-32 h-2 bg-gray-200 dark:bg-transparent rounded-full dark:divide-brand-dark dark:border-brand-dark dark:border">
         <div
           className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"
           style={{ width: `${percentageCrawled}%` }}
