@@ -12,6 +12,7 @@ export interface PageDetails {
   mobile: { mobile: boolean; mobile_score: number };
   loading_time: { loadingTime: number; loadingTimeScore: number };
   images: string[];
+  robots: string[];
 }
 
 // Define the Zustand store
@@ -40,6 +41,8 @@ interface CrawlStore {
   setJavascript: (row: string[]) => void;
   css: string[];
   setCss: (row: string[]) => void;
+  robots: string[];
+  setRobots: (row: string[]) => void;
 }
 
 const useGlobalCrawlStore = create<CrawlStore>((set) => ({
@@ -86,6 +89,9 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
 
   css: [],
   setCss: (row) => set({ css: row }),
+
+  robots: [],
+  setRobots: (row) => set({ robots: row }),
 }));
 
 export default useGlobalCrawlStore;

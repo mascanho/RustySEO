@@ -17,8 +17,8 @@ pub mod meta_robots_selector;
 pub mod mobile_checker;
 pub mod page_description;
 pub mod pdf_selector;
+pub mod robots;
 pub mod schema_selector;
 pub mod text_ratio;
 pub mod title_selector;
 pub mod word_count;
-pub mod robots

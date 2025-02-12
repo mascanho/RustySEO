@@ -36,4 +36,5 @@ pub struct DomainCrawlResults {
     pub redirection: Option<String>,
     pub keywords: Vec<(String, usize)>,
     pub page_size: Vec<Sizes>,
+    pub robots: Option<Vec<String>>,
 }

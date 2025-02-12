@@ -6,10 +6,7 @@ const TopContainer = () => {
   return (
     <div className="h-full">
       <Tabs defaultValue="first" className="overflow-auto">
-        <Tabs.List
-          justify="center"
-          className="dark:text-white text-xs font-bold"
-        >
+        <Tabs.List justify="center" grow className="dark:text-white text-xs ">
           <Tabs.Tab value="first">General</Tabs.Tab>
           <Tabs.Tab value="issues">Issues</Tabs.Tab>
           <Tabs.Tab value="fourth">Struct</Tabs.Tab>

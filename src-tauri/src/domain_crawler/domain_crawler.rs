@@ -17,6 +17,7 @@ use super::helpers::canonical_selector::get_canonical;
 use super::helpers::html_size_calculator::calculate_html_size;
 use super::helpers::keyword_selector::extract_keywords;
 use super::helpers::meta_robots_selector::{get_meta_robots, MetaRobots};
+use super::helpers::robots::get_domain_robots;
 use super::helpers::text_ratio::{get_text_ratio, TextRatio};
 use super::helpers::{
     alt_tags, anchor_links, check_html_page,
@@ -222,6 +223,7 @@ async fn process_url(
         redirection,
         keywords: extract_keywords(&body),
         page_size: calculate_html_size(content_len),
+        robots: get_domain_robots(&base_url).await,
     };
 
     // Update state and emit results
