@@ -29,7 +29,6 @@ const IssuesContainer = () => {
     const mode = localStorage.getItem("dark-mode");
     setIsMode(mode);
   }, [issueRow]);
-  console.log(isMode);
 
   useEffect(() => {
     setIssues([duplicateTitles, duplicateDescriptions, response404]);

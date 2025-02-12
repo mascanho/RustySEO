@@ -95,7 +95,6 @@ export default function Home() {
   };
 
   const filteredJsArr = filteredJavascript(crawlData);
-  console.log(filteredJsArr, "filtered Js");
 
   return (
     <div

@@ -60,8 +60,6 @@ const H1 = () => {
     setHeadingsH1(sections);
   }, [sections, setHeadingsH1]);
 
-  console.log(headingsH1);
-
   return (
     <div className="text-sx w-full">
       <details className="w-full">

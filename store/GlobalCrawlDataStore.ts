@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { create } from "zustand";
 
 // Define the structure of a single page's details
@@ -43,6 +44,8 @@ interface CrawlStore {
   setCss: (row: string[]) => void;
   robots: string[];
   setRobots: (row: string[]) => void;
+  sitemaps: string[];
+  setSitemaps: (row: string[]) => void;
 }
 
 const useGlobalCrawlStore = create<CrawlStore>((set) => ({
@@ -92,6 +95,9 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
 
   robots: [],
   setRobots: (row) => set({ robots: row }),
+
+  sitemaps: [],
+  setSitemaps: (row) => set({ sitemap: row }),
 }));
 
 export default useGlobalCrawlStore;

@@ -2,6 +2,7 @@ import { Tabs } from "@mantine/core";
 import HistoryDomainCrawls from "./BottomContainer/HistoryDomainCrawls";
 import OverviewBottomSidePanel from "./BottomContainer/OverviewBottomSidePanel";
 import RobotsDomain from "./BottomContainer/RobotsDomain";
+import SitemapDomain from "./BottomContainer/SitemapDomain";
 
 const BottomContainer = () => {
   return (
@@ -23,6 +24,10 @@ const BottomContainer = () => {
 
         <Tabs.Panel value="robotsTab" className="h-[28rem] overflow-auto">
           <RobotsDomain />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="sitemaps" className="h-[28rem]">
+          <SitemapDomain />
         </Tabs.Panel>
 
         <Tabs.Panel value="history">

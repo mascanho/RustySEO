@@ -70,8 +70,6 @@ const StatusCodes: React.FC = () => {
     setStatusCodes(statusData);
   }, [crawlData, statusData]);
 
-  console.log(codes, "CODES");
-
   // Handle errors or missing data gracefully
   // if (!crawlData || crawlData.length === 0) {
   //   return (

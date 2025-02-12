@@ -2,8 +2,6 @@ import { Anchor } from "lucide-react";
 import React, { useEffect, useRef } from "react";
 
 const DetailsTable = ({ data }: { data: any }) => {
-  console.log(data, "data");
-
   // Function to make columns resizable
   const makeResizable = (tableRef: HTMLTableElement | null) => {
     if (!tableRef) return;

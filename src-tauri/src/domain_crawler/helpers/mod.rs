@@ -19,6 +19,7 @@ pub mod page_description;
 pub mod pdf_selector;
 pub mod robots;
 pub mod schema_selector;
+pub mod sitemap;
 pub mod text_ratio;
 pub mod title_selector;
 pub mod word_count;

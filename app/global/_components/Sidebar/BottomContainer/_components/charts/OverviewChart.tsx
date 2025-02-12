@@ -59,8 +59,6 @@ function OverviewChart() {
   const inlineCss = css?.inline;
   const externalCss = css?.external;
 
-  console.log(inlineJs, externalJs, inlineCss, externalCss, "multiple data");
-
   const chartData = [
     { browser: "HTML", visitors: totalPages, fill: "hsl(210, 100%, 50%)" },
     {
@@ -87,15 +85,12 @@ function OverviewChart() {
 
   useEffect(() => {
     const crawls = sessionStorage.getItem("crawlNumber");
-    console.log("Crawls", crawls);
     setSessionCrawls(crawls);
 
     const crawledPages = JSON.parse(sessionStorage.getItem("CrawledLinks"));
 
     setTotalCrawlPages(crawledPages);
   }, [domainCrawlLoading, crawlData]);
-
-  console.log("Total crawl pages", totalCrawlPages);
 
   const totalPagesCrawledInSession = (() => {
     try {

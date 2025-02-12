@@ -751,3 +751,17 @@ td.issues {
 .chart tspan {
   @apply hidden;
 }
+
+/* ROBOTS DOMAIN TABLE */
+div:is(.robotsDomain) {
+  pre {
+    @apply bg-transparent dark:bg-gray-900 dark:text-white !important;
+  }
+}
+
+/* SITEMAP DOMAIN TABLE */
+div:is(.sitemapsDomain) {
+  pre {
+    @apply bg-transparent dark:bg-gray-900 dark:text-white h-[26rem] !important;
+  }
+}

@@ -13,6 +13,8 @@ use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration};
 use url::Url;
 
+use crate::domain_crawler::helpers::sitemap::get_sitemap;
+
 use super::helpers::canonical_selector::get_canonical;
 use super::helpers::html_size_calculator::calculate_html_size;
 use super::helpers::keyword_selector::extract_keywords;
@@ -223,7 +225,6 @@ async fn process_url(
         redirection,
         keywords: extract_keywords(&body),
         page_size: calculate_html_size(content_len),
-        robots: get_domain_robots(&base_url).await,
     };
 
     // Update state and emit results
@@ -304,6 +305,29 @@ pub async fn crawl_domain(
     // Initialize base URL
     let url_checked = url_check(domain);
     let base_url = Url::parse(&url_checked).map_err(|_| "Invalid URL")?;
+
+    // GET THE ROBOTS FROM THE DOMAIN
+    let robots_txt = get_domain_robots(&base_url).await;
+
+    // emit the robots_txt event
+    if robots_txt.is_some() {
+        app_handle.emit("robots_txt", robots_txt).unwrap();
+    } else {
+        app_handle
+            .emit("robots_txt", "No robots Found".to_string())
+            .unwrap();
+    }
+
+    // GET SITEMAPS FROM THE DOMAIN
+    let sitemaps = get_sitemap(&base_url).await;
+
+    if sitemaps.is_ok() {
+        app_handle.emit("sitemaps", sitemaps).unwrap();
+    } else {
+        app_handle
+            .emit("sitemaps", "No Sitemap Found".to_string())
+            .unwrap();
+    }
 
     // Initialize state
     let state = Arc::new(Mutex::new(CrawlerState::new()));
