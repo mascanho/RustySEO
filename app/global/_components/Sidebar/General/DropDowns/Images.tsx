@@ -6,24 +6,32 @@ const Images = () => {
   const domainCrawlData = useGlobalCrawlStore();
   const [isOpen, setIsOpen] = useState(false); // State to track if details are open
 
+  // Calculate total number of images
   const imageCounts =
     domainCrawlData?.crawlData?.reduce((acc, item) => {
-      const imageCount = item?.images?.length || 0;
+      const imageCount = item?.images?.Ok?.length || 0;
       return acc + imageCount;
     }, 0) || 0;
 
+  // Calculate number of images with alt tags
   const hasAltTags =
     domainCrawlData?.crawlData?.reduce((acc, item) => {
-      const hasaltTags = item?.alt_tags?.with_alt_tags?.length || 0;
-      return acc + hasaltTags;
+      const imagesWithAltTags =
+        item?.images?.Ok?.filter((image) => image[1] && image[1].trim() !== "")
+          .length || 0;
+      return acc + imagesWithAltTags;
     }, 0) || 0;
 
+  // Calculate number of images without alt tags
   const hasNoAltTags =
     domainCrawlData?.crawlData?.reduce((acc, item) => {
-      const hasaltTags = item?.alt_tags?.without_alt_tags?.length || 0;
-      return acc + hasaltTags;
+      const imagesWithoutAltTags =
+        item?.images?.Ok?.filter((image) => !image[1] || image[1].trim() === "")
+          .length || 0;
+      return acc + imagesWithoutAltTags;
     }, 0) || 0;
 
+  // Prepare data for display
   const imageData = [
     { label: "Total Images", count: imageCounts },
     { label: "Images with Alt Tags", count: hasAltTags },

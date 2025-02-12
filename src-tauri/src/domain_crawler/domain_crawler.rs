@@ -197,7 +197,7 @@ async fn process_url(
             .unwrap_or_else(|| "No Description".to_string()),
         headings: headings_selector::headings_selector(&body),
         javascript: javascript_selector::extract_javascript(&body, &base_url),
-        images: images_selector::extract_images(&body),
+        images: images_selector::extract_images_with_sizes_and_alts(&body, &base_url).await,
         status_code,
         anchor_links: anchor_links::extract_internal_external_links(&body, base_url),
         indexability: indexability::extract_indexability(&body),
@@ -306,29 +306,6 @@ pub async fn crawl_domain(
     let url_checked = url_check(domain);
     let base_url = Url::parse(&url_checked).map_err(|_| "Invalid URL")?;
 
-    // GET THE ROBOTS FROM THE DOMAIN
-    let robots_txt = get_domain_robots(&base_url).await;
-
-    // emit the robots_txt event
-    if robots_txt.is_some() {
-        app_handle.emit("robots_txt", robots_txt).unwrap();
-    } else {
-        app_handle
-            .emit("robots_txt", "No robots Found".to_string())
-            .unwrap();
-    }
-
-    // GET SITEMAPS FROM THE DOMAIN
-    let sitemaps = get_sitemap(&base_url).await;
-
-    if sitemaps.is_ok() {
-        app_handle.emit("sitemaps", sitemaps).unwrap();
-    } else {
-        app_handle
-            .emit("sitemaps", "No Sitemap Found".to_string())
-            .unwrap();
-    }
-
     // Initialize state
     let state = Arc::new(Mutex::new(CrawlerState::new()));
     {
@@ -423,6 +400,29 @@ pub async fn crawl_domain(
     println!("URLs crawled: {}", state.crawled_urls);
     println!("Failed URLs: {}", state.failed_urls.len());
     println!("Total time: {:?}", crawl_start_time.elapsed());
+
+    // GET THE ROBOTS FROM THE DOMAIN
+    let robots_txt = get_domain_robots(&base_url).await;
+
+    // emit the robots_txt event
+    if robots_txt.is_some() {
+        app_handle.emit("robots_txt", robots_txt).unwrap();
+    } else {
+        app_handle
+            .emit("robots_txt", "No robots Found".to_string())
+            .unwrap();
+    }
+
+    // GET SITEMAPS FROM THE DOMAIN
+    let sitemaps = get_sitemap(&base_url).await;
+
+    if sitemaps.is_ok() {
+        app_handle.emit("sitemaps", sitemaps).unwrap();
+    } else {
+        app_handle
+            .emit("sitemaps", "No Sitemap Found".to_string())
+            .unwrap();
+    }
 
     // Emit completion event
     if let Err(err) = app_handle.emit("crawl_complete", ()) {
