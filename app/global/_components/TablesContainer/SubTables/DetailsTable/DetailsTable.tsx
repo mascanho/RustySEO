@@ -332,6 +332,22 @@ const DetailsTable = ({ data }: { data: any }) => {
                 </td>
               </tr>{" "}
               <tr>
+                <td className="border pl-3">Images</td>
+                <td
+                  style={{
+                    textAlign: "left",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                  className="pl-3 border"
+                >
+                  {anchorItem?.images?.Ok
+                    ? anchorItem?.images?.Ok?.length
+                    : "N/A"}
+                </td>
+              </tr>{" "}
+              <tr>
                 <td className="border pl-3">Page Length</td>
                 <td
                   style={{
