@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState } from "react";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 
@@ -18,7 +19,11 @@ const ImagesTable = () => {
 
   // Fallback if no images are found
   if (!selectedTableURL?.[0]?.images?.Ok) {
-    return <div>No images found.</div>;
+    return (
+      <div className="text-xs h-full flex justify-center items-center  m-auto w-full dark:text-white/50">
+        <span>No images found</span>
+      </div>
+    );
   }
 
   // Handle table row click
@@ -60,7 +65,7 @@ const ImagesTable = () => {
                 (image: [string, string, number, string], index: number) => (
                   <tr
                     key={index}
-                    className={`cursor-pointer hover:bg-gray-50 ${
+                    className={`cursor-pointer  ${
                       selectedRowIndex === index ? "bg-blue-100" : ""
                     }`}
                     onClick={() => handleRowClick(image, index)}
@@ -97,11 +102,11 @@ const ImagesTable = () => {
               <img
                 src={selectedImage[0]} // URL of the image
                 alt={selectedImage[1]} // Alt text for the image
-                className="rounded-lg object-contain h-[300px] w-auto"
+                className="rounded-lg object-contain h-[300px] w-auto shadow-md"
               />
             </div>
           ) : (
-            <div className="text-center text-gray-500">
+            <div className="text-center text-gray-500 text-xs">
               Click on a table row to display an image.
             </div>
           )}

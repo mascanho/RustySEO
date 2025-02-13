@@ -15,6 +15,7 @@ rust-version = "1.78"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
+rust_xlsxwriter = "*"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "2", features = [] }
@@ -49,7 +50,6 @@ image = "0.24.1"
 actix-web = "4.0"
 google-sheets4 = "*"
 async-trait = "*"
-rust_xlsxwriter = "0.75.0"
 futures = "*"
 google-analytics3 = "*"
 rand = "*"

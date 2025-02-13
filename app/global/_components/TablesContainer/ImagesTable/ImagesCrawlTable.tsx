@@ -24,55 +24,7 @@ import { TbColumns3 } from "react-icons/tb";
 import DownloadButton from "../components/DownloadButton";
 import useFilterTableURL from "@/app/Hooks/useFilterTableUrl";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-
-interface TableCrawlProps {
-  rows: Array<{
-    url?: string;
-    title?: Array<{ title?: string; title_len?: string }>;
-    headings?: { h1?: string[]; h2?: string[] };
-    status_code?: number;
-    word_count?: number;
-    mobile?: boolean;
-    meta_robots?: { meta_robots: string[] };
-  }>;
-  rowHeight?: number;
-  overscan?: number;
-}
-
-interface TruncatedCellProps {
-  text: string;
-  maxLength?: number;
-  width?: string;
-}
-
-interface ResizableDividerProps {
-  onMouseDown: (e: React.MouseEvent) => void;
-}
-
-interface TableHeaderProps {
-  headers: string[];
-  columnWidths: string[];
-  columnAlignments: string[];
-  onResize: (index: number, e: React.MouseEvent) => void;
-  onAlignToggle: (index: number) => void;
-  columnVisibility: boolean[];
-}
-
-interface TableRowProps {
-  row: TableCrawlProps["rows"][number];
-  index: number;
-  columnWidths: string[];
-  columnAlignments: string[];
-  columnVisibility: boolean[];
-  clickedCell: { row: number | null; cell: number | null };
-  handleCellClick: (rowIndex: number, cellIndex: number) => void;
-}
-
-interface ColumnPickerProps {
-  columnVisibility: boolean[];
-  setColumnVisibility: (visibility: boolean[]) => void;
-  headerTitles: string[];
-}
+import { invoke } from "@tauri-apps/api/core";
 
 const TruncatedCell = ({
   text,
@@ -293,6 +245,27 @@ const ImagesCrawlTable = ({
   const [columnVisibility, setColumnVisibility] = useState(
     headerTitles.map(() => true),
   );
+  const [data, setData] = useState([
+    {
+      id: 1,
+      name: "John",
+      age: 30,
+      email: "john@example.com",
+    },
+    {
+      id: 2,
+      name: "Jane",
+      age: 25,
+      email: "jane@example.com",
+    },
+  ]);
+
+  const exportData = () => {
+    invoke("export_to_excel", {
+      data: data,
+      fileName: "data.xlsx",
+    });
+  };
 
   // State to track the clicked cell (rowIndex, cellIndex)
   const [clickedCell, setClickedCell] = useState<{
