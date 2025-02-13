@@ -102,6 +102,7 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.1.0",
+    "@types/lodash": "^4.17.15",
     "@types/node": "^20",
     "@types/react": "19.0.2",
     "@types/react-beautiful-dnd": "^13.1.8",

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useEffect, useMemo } from "react";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 

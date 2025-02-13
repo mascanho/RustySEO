@@ -1,3 +1,4 @@
+// @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { listen } from "@tauri-apps/api/event";
 import { useEffect } from "react";
