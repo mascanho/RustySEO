@@ -21,6 +21,8 @@ import DetailsTable from "./SubTables/DetailsTable/DetailsTable";
 import JsTableCrawl from "./JavascriptTable/JsTableCrawl";
 import { Filter } from "lucide-react";
 import TableCrawlJs from "./JavascriptTable/TableCrawlJs";
+import ImagesCrawlTable from "./ImagesTable/ImagesCrawlTable";
+import ImagesTable from "./SubTables/ImagesTable/ImagesTable";
 
 export default function Home() {
   const [containerHeight, setContainerHeight] = useState(600);
@@ -96,9 +98,23 @@ export default function Home() {
 
   const filteredJsArr = filteredJavascript(crawlData);
 
+  // FILTER THE IMAGES ARR FROM EACH PAGE AND MAP IT TO A NEW ARRAY
+  const filteredImages = (arr) => {
+    const imagesArr = arr.map((page) => page?.images?.Ok).flat();
+
+    const uniqueImages = imagesArr.filter(
+      (image, index) => imagesArr.indexOf(image) === index,
+    );
+
+    return uniqueImages;
+  };
+
+  const filteredImagesArr = filteredImages(crawlData);
+  console.log(filteredImagesArr, "filteredImagesArr");
+
   return (
     <div
-      className={`mx-0 mt-8 h-screen dark:bg-brand-darker ${visibility.sidebar ? "w-[calc(100vw-21rem)]" : ""}`}
+      className={`mx-0 mt-8 h-screen dark:bg-brand-darker ${visibility.sidebar ? "w-[calc(100vw-20rem)]" : ""}`}
     >
       <div
         ref={containerRef}
@@ -119,9 +135,7 @@ export default function Home() {
             <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t  -mb-2 bg-gray-50 rounded-none ">
               <TabsTrigger value="crawledPages">All</TabsTrigger>
               <TabsTrigger value="javascript">Javascript</TabsTrigger>
-              <TabsTrigger value="technicalDetails">
-                Technical Details
-              </TabsTrigger>
+              <TabsTrigger value="images">Images</TabsTrigger>
             </TabsList>
             <TabsContent
               value="crawledPages"
@@ -142,11 +156,8 @@ export default function Home() {
               {/* <JsTableCrawl rows={filteredJsArr} /> */}
               <TableCrawlJs rows={filteredJsArr} />
             </TabsContent>
-            <TabsContent
-              value="technicalDetails"
-              className="flex-grow overflow-hidden"
-            >
-              {/* <TableCrawl rows={crawlData} /> */}{" "}
+            <TabsContent value="images" className="flex-grow overflow-hidden">
+              <ImagesCrawlTable rows={filteredImagesArr} />
             </TabsContent>
           </Tabs>
         </div>
@@ -160,6 +171,7 @@ export default function Home() {
               <TabsTrigger value="details">Details</TabsTrigger>
               <TabsTrigger value="inlinks">Inlinks</TabsTrigger>
               <TabsTrigger value="outlinks">Outlinks</TabsTrigger>
+              <TabsTrigger value="images">Images</TabsTrigger>
             </TabsList>
             <TabsContent value="details">
               {/* {issueRow === "404 Response" && <Table404 rows={issues[2]} />} */}
@@ -196,6 +208,19 @@ export default function Home() {
                 }}
               >
                 <OutlinksSubTable data={selectedTableURL} />
+              </div>
+            </TabsContent>{" "}
+            {/* IMAGES SUBTABLE */}
+            <TabsContent value="images" className="dark:bg-brand-darker">
+              <div
+                style={{
+                  height: `${bottomTableHeight - 50}px`,
+                  minHeight: "100px",
+                  overflowY: "auto",
+                  marginBottom: "80px",
+                }}
+              >
+                <ImagesTable />
               </div>
             </TabsContent>{" "}
           </Tabs>

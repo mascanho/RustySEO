@@ -1,4 +1,3 @@
-import { Anchor } from "lucide-react";
 import React, { useEffect, useRef } from "react";
 
 const DetailsTable = ({ data }: { data: any }) => {
@@ -48,14 +47,24 @@ const DetailsTable = ({ data }: { data: any }) => {
   }, []);
 
   return (
-    <table ref={tableRef} style={{ width: "100%", borderCollapse: "collapse" }}>
+    <table
+      ref={tableRef}
+      style={{
+        width: "100%",
+        borderCollapse: "collapse",
+        tableLayout: "fixed",
+      }}
+    >
       <thead className="text-xs">
-        <tr className="sticky top-0 shadow ">
+        <tr className="sticky top-0 shadow">
           <th
             style={{
               textAlign: "left",
               position: "relative",
               width: "300px",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
             }}
           >
             Name
@@ -64,7 +73,10 @@ const DetailsTable = ({ data }: { data: any }) => {
             style={{
               textAlign: "left",
               position: "relative",
-              width: "calc(100% - 100px)",
+              width: "calc(100% - 300px)",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
             }}
           >
             Value
@@ -76,7 +88,16 @@ const DetailsTable = ({ data }: { data: any }) => {
           return (
             <React.Fragment key={index}>
               <tr>
-                <td className="border pl-3">URL</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  URL
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -90,7 +111,16 @@ const DetailsTable = ({ data }: { data: any }) => {
                 </td>
               </tr>
               <tr>
-                <td className="border pl-3">Canonical</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Canonical
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -102,9 +132,18 @@ const DetailsTable = ({ data }: { data: any }) => {
                 >
                   {anchorItem?.canonical || ""}
                 </td>
-              </tr>{" "}
+              </tr>
               <tr>
-                <td className="border pl-3">Title</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Title
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -118,7 +157,16 @@ const DetailsTable = ({ data }: { data: any }) => {
                 </td>
               </tr>
               <tr>
-                <td className="border pl-3">Title length</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Title length
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -130,9 +178,18 @@ const DetailsTable = ({ data }: { data: any }) => {
                 >
                   {anchorItem?.title?.[0]?.title.length || ""}
                 </td>
-              </tr>{" "}
+              </tr>
               <tr>
-                <td className="border pl-3">Meta Description</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Meta Description
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -144,9 +201,18 @@ const DetailsTable = ({ data }: { data: any }) => {
                 >
                   {anchorItem?.description || ""}
                 </td>
-              </tr>{" "}
+              </tr>
               <tr>
-                <td className="border pl-3">Meta Description Length</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Meta Description Length
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -158,9 +224,18 @@ const DetailsTable = ({ data }: { data: any }) => {
                 >
                   {anchorItem?.description?.length || ""}
                 </td>
-              </tr>{" "}
+              </tr>
               <tr>
-                <td className="border pl-3">Heading H1</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Heading H1
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -172,9 +247,18 @@ const DetailsTable = ({ data }: { data: any }) => {
                 >
                   {anchorItem?.headings?.h1 || ""}
                 </td>
-              </tr>{" "}
+              </tr>
               <tr>
-                <td className="border pl-3">Heading H1 Length</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Heading H1 Length
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -186,9 +270,18 @@ const DetailsTable = ({ data }: { data: any }) => {
                 >
                   {anchorItem?.headings?.h1?.[0]?.length || ""}
                 </td>
-              </tr>{" "}
+              </tr>
               <tr>
-                <td className="border pl-3">Response Code</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Response Code
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -202,7 +295,16 @@ const DetailsTable = ({ data }: { data: any }) => {
                 </td>
               </tr>
               <tr>
-                <td className="border pl-3">Mobile Optimized</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Mobile Optimized
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -213,14 +315,27 @@ const DetailsTable = ({ data }: { data: any }) => {
                   className="pl-3 border"
                 >
                   <span
-                    className={`${anchorItem?.mobile ? "px-2 rounded bg-green-500 text-white" : "text-red-500"}`}
+                    className={`${
+                      anchorItem?.mobile
+                        ? "px-2 rounded bg-green-500 text-white"
+                        : "text-red-500"
+                    }`}
                   >
                     {anchorItem?.mobile ? "Yes" : "No"}
                   </span>
                 </td>
-              </tr>{" "}
+              </tr>
               <tr>
-                <td className="border pl-3">Indexable</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Indexable
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -232,9 +347,18 @@ const DetailsTable = ({ data }: { data: any }) => {
                 >
                   {anchorItem?.indexability?.indexability > 0.5 ? "Yes" : "No"}
                 </td>
-              </tr>{" "}
+              </tr>
               <tr>
-                <td className="border pl-3">Content Type</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Content Type
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -246,9 +370,18 @@ const DetailsTable = ({ data }: { data: any }) => {
                 >
                   {anchorItem?.content_type || ""}
                 </td>
-              </tr>{" "}
+              </tr>
               <tr>
-                <td className="border pl-3">Word Count</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Word Count
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -260,9 +393,18 @@ const DetailsTable = ({ data }: { data: any }) => {
                 >
                   {anchorItem?.word_count || ""}
                 </td>
-              </tr>{" "}
+              </tr>
               <tr>
-                <td className="border pl-3">Text Ratio</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Text Ratio
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -274,9 +416,18 @@ const DetailsTable = ({ data }: { data: any }) => {
                 >
                   {(anchorItem?.text_ratio?.[0]?.text_ratio).toFixed(1) || ""}
                 </td>
-              </tr>{" "}
+              </tr>
               <tr>
-                <td className="border pl-3">Top 10 Keywords</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Top 10 Keywords
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -288,7 +439,7 @@ const DetailsTable = ({ data }: { data: any }) => {
                 >
                   {anchorItem?.keywords?.slice(0, 10)?.map((item: any) => (
                     <span
-                      className=" pr-2 flex border px-1 pl-2 border-brand-dark/50 rounded my-1 "
+                      className="pr-2 flex border px-1 pl-2 border-brand-dark/50 rounded my-1"
                       key={item[0]}
                       style={{
                         display: "inline-block",
@@ -302,9 +453,18 @@ const DetailsTable = ({ data }: { data: any }) => {
                     </span>
                   )) || ""}
                 </td>
-              </tr>{" "}
+              </tr>
               <tr>
-                <td className="border pl-3">Internal Links</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Internal Links
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -316,9 +476,18 @@ const DetailsTable = ({ data }: { data: any }) => {
                 >
                   {anchorItem?.anchor_links?.internal?.links?.length || ""}
                 </td>
-              </tr>{" "}
+              </tr>
               <tr>
-                <td className="border pl-3">External Links</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  External Links
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -330,9 +499,18 @@ const DetailsTable = ({ data }: { data: any }) => {
                 >
                   {anchorItem?.anchor_links?.external?.links?.length || ""}
                 </td>
-              </tr>{" "}
+              </tr>
               <tr>
-                <td className="border pl-3">Images</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Images
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -346,9 +524,18 @@ const DetailsTable = ({ data }: { data: any }) => {
                     ? anchorItem?.images?.Ok?.length
                     : "N/A"}
                 </td>
-              </tr>{" "}
+              </tr>
               <tr>
-                <td className="border pl-3">Page Length</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Page Length
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -362,9 +549,18 @@ const DetailsTable = ({ data }: { data: any }) => {
                     ? anchorItem.page_size[0].length + " bytes"
                     : "N/A"}
                 </td>
-              </tr>{" "}
+              </tr>
               <tr>
-                <td className="border pl-3">Page Size</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Page Size
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -378,9 +574,18 @@ const DetailsTable = ({ data }: { data: any }) => {
                     ? anchorItem.page_size[0].kb + " KB"
                     : "N/A"}
                 </td>
-              </tr>{" "}
+              </tr>
               <tr>
-                <td className="border pl-3">Response Time</td>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Response Time
+                </td>
                 <td
                   style={{
                     textAlign: "left",
@@ -394,7 +599,7 @@ const DetailsTable = ({ data }: { data: any }) => {
                     ? anchorItem.response_time + " ms"
                     : "N/A"}
                 </td>
-              </tr>{" "}
+              </tr>
             </React.Fragment>
           );
         })}

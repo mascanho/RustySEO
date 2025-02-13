@@ -1,6 +1,17 @@
 import React, { useEffect, useRef } from "react";
 
-const InlinksSubTable = ({ data }: { data: any }) => {
+interface InlinksSubTableProps {
+  data: {
+    anchor_links: {
+      internal: {
+        anchors: string[];
+        links: string[];
+      };
+    };
+  }[];
+}
+
+const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data }) => {
   console.log(data, "data");
 
   const isDark = localStorage.getItem("dark-mode");
@@ -53,7 +64,7 @@ const InlinksSubTable = ({ data }: { data: any }) => {
   return (
     <table ref={tableRef} style={{ width: "100%", borderCollapse: "collapse" }}>
       <thead className="text-xs">
-        <tr className="sticky top-0 shadow ">
+        <tr className="sticky top-0 shadow">
           <th
             style={{ width: "20px", textAlign: "left", position: "relative" }}
           >
@@ -73,7 +84,7 @@ const InlinksSubTable = ({ data }: { data: any }) => {
       </thead>
       <tbody>
         {data?.[0]?.anchor_links?.internal?.anchors?.map(
-          (anchorItem: any, index: number) => {
+          (anchorItem: string, index: number) => {
             const linkItem = data?.[0]?.anchor_links?.internal?.links?.[index];
             return (
               <tr key={index}>

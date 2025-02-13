@@ -21,7 +21,7 @@ const RobotsDomain = () => {
   }, [crawlData]);
 
   return (
-    <div className="h-96  w-[20.9rem]  bg-trasnparent dark:bg-brand-darker text-black robotsDomain">
+    <div className="h-96  w-[20rem]  bg-trasnparent dark:bg-brand-darker text-black robotsDomain">
       {robots.length > 0 && (
         <SyntaxHighlighter language="text" style={brownPaper}>
           {robots}

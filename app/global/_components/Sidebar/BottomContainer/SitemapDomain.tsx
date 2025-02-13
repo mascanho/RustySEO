@@ -23,7 +23,7 @@ const SitemapDomain = () => {
   }, [crawlData]);
 
   return (
-    <div className="w-[20.8rem] h-[28rem] overflow-clip sitemapsDomain">
+    <div className="w-[20rem] h-[28rem] overflow-clip sitemapsDomain">
       <SyntaxHighlighter language="text" style={darkula}>
         {sitemapState?.Ok[0]}
       </SyntaxHighlighter>

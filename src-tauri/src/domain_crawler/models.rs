@@ -16,7 +16,7 @@ pub struct DomainCrawlResults {
     pub description: String,
     pub headings: HashMap<String, Vec<String>>,
     pub javascript: JavaScript,
-    pub images: Result<Vec<(String, String, u64)>, String>,
+    pub images: Result<Vec<(String, String, u64, String)>, String>,
     pub status_code: u16,
     pub anchor_links: Option<InternalExternalLinks>,
     pub indexability: Indexability,
