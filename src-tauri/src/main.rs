@@ -189,6 +189,7 @@ async fn main() {
             commands::read_matched_keywords_from_db_command,
             commands::fetch_keywords_summarized_matched_command,
             domain_commands::domain_crawl_command,
+            domain_commands::create_excel
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

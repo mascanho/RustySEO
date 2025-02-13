@@ -260,10 +260,13 @@ const ImagesCrawlTable = ({
     },
   ]);
 
-  const exportData = () => {
-    invoke("export_to_excel", {
-      data: data,
-      fileName: "data.xlsx",
+  const handleExportData = () => {
+    console.log("Exporting data...");
+    const datas = invoke("create_excel", {
+      data,
+      filename: "data.xlsx",
+    }).then((data) => {
+      console.log(data);
     });
   };
 
@@ -436,7 +439,7 @@ const ImagesCrawlTable = ({
           onChange={(e) => debouncedSearch(e.target.value)}
           className="w-full p-1 pl-2 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
         />
-        <DownloadButton />
+        <DownloadButton download={handleExportData} />
         <div className="mr-1.5">
           <ColumnPicker
             columnVisibility={columnVisibility}
