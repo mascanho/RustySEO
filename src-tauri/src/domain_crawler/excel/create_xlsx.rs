@@ -1,9 +1,11 @@
 use rust_xlsxwriter::{Format, FormatAlign, FormatBorder, Workbook, XlsxError};
 use std::path::Path;
 
-pub fn generate_xlsx() -> Result<(), String> {
+pub fn generate_xlsx(data: Vec<String>) -> Result<(), String> {
     // Create a new workbook
     let mut workbook = Workbook::new();
+
+    println!("This is the data: {:?}", &data);
 
     // Add a worksheet
     let worksheet = workbook.add_worksheet();

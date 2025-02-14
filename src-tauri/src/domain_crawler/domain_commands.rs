@@ -32,9 +32,9 @@ pub async fn domain_crawl_command(
 }
 
 #[tauri::command]
-pub async fn create_excel() -> Result<(), String> {
+pub async fn create_excel(data: Vec<String>) -> Result<(), String> {
     // Call the export_to_excel function and handle its result
-    match generate_xlsx() {
+    match generate_xlsx(data) {
         Ok(_) => Ok(()),
         Err(e) => {
             eprintln!("Error: {}", e);
