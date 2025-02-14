@@ -25,6 +25,10 @@ import DownloadButton from "../components/DownloadButton";
 import useFilterTableURL from "@/app/Hooks/useFilterTableUrl";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { invoke } from "@tauri-apps/api/core";
+import { writeFileXLSX, utils } from "xlsx";
+
+import { writeBinaryFile } from "@tauri-apps/api/fs";
+import { create, BaseDirectory } from "@tauri-apps/plugin-fs";
 
 const TruncatedCell = ({
   text,
@@ -245,29 +249,42 @@ const ImagesCrawlTable = ({
   const [columnVisibility, setColumnVisibility] = useState(
     headerTitles.map(() => true),
   );
-  const [data, setData] = useState([
-    {
-      id: 1,
-      name: "John",
-      age: 30,
-      email: "john@example.com",
-    },
-    {
-      id: 2,
-      name: "Jane",
-      age: 25,
-      email: "jane@example.com",
-    },
-  ]);
 
-  const handleExportData = () => {
-    console.log("Exporting data...");
-    const datas = invoke("create_excel", {
-      data,
-      filename: "data.xlsx",
-    }).then((data) => {
-      console.log(data);
+  const dummyData = [
+    ["Name", "Age", "City"],
+    ["Alice", 30, "New York"],
+    ["Bob", 25, "Los Angeles"],
+    ["Charlie", 35, "Chicago"],
+  ];
+
+  const exportToExcel = async () => {
+    console.log("Exporting to Excel...");
+
+    // Create a worksheet from the dummy data
+    const worksheet = utils.aoa_to_sheet(dummyData);
+    console.log("Worksheet created:", worksheet);
+
+    // Create a new workbook and add the worksheet
+    const workbook = utils.book_new();
+    utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    console.log("Workbook created:", workbook);
+
+    // Convert the workbook to a binary array
+    const xlsxData = writeFileXLSX(workbook, { type: "array" });
+    console.log("Workbook converted to binary data");
+
+    // Open a save dialog to choose the file location
+    const filePath = await save({
+      filters: [{ name: "Excel Files", extensions: ["xlsx"] }],
     });
+
+    if (filePath) {
+      // Write the binary data to the selected file
+      await writeBinaryFile(filePath, new Uint8Array(xlsxData));
+      console.log("Excel file saved successfully at:", filePath);
+    } else {
+      console.log("Save dialog canceled");
+    }
   };
 
   // State to track the clicked cell (rowIndex, cellIndex)
@@ -439,7 +456,7 @@ const ImagesCrawlTable = ({
           onChange={(e) => debouncedSearch(e.target.value)}
           className="w-full p-1 pl-2 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
         />
-        <DownloadButton download={handleExportData} />
+        <DownloadButton download={exportToExcel} />
         <div className="mr-1.5">
           <ColumnPicker
             columnVisibility={columnVisibility}
