@@ -38,4 +38,5 @@ pub struct DomainCrawlResults {
     pub page_size: Vec<Sizes>,
     pub hreflangs: Option<Vec<HreflangObject>>,
     pub language: Option<String>,
+    pub flesch: Result<(f64, String), String>,
 }

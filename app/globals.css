@@ -765,3 +765,7 @@ div:is(.sitemapsDomain) {
     @apply bg-transparent dark:bg-gray-900 dark:text-white h-[26rem] !important;
   }
 }
+
+.crawlSchema {
+  display: none !important;
+}

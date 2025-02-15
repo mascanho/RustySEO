@@ -10,6 +10,8 @@ export const initialColumnWidths = [
   "60px", // H2 Length
   "100px", // Status Code
   "100px", // TEXT RATIO
+  "100px", // Flesch score
+  "100px", // Flesch grade
   "80px", // Word Count
   "60px", //  Mobile
   "90px", // Meta Robots
@@ -30,6 +32,8 @@ export const initialColumnAlignments = [
   "center", // Status Code
   "center", // Word Count
   "center", // Text Ratio
+  "center", // Text Ratio
+  "center", // Text Ratio
   "center", // Mobile Friendly
   "left", // META ROBOTS
   "left", //  CONTENT TYPE
@@ -49,6 +53,8 @@ export const headerTitles = [
   "Status Code",
   "Word Count",
   "Text Ratio",
+  "Flesch Score",
+  "Flesch Grade",
   "Mobile",
   "Meta Robots",
   "Content Type",

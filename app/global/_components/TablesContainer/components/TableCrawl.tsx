@@ -190,6 +190,8 @@ const TableRow = ({
       row?.status_code || "",
       row?.word_count || "",
       (row?.text_ratio?.[0]?.text_ratio).toFixed(1) || "",
+      row?.flesch?.Ok?.[0].toFixed(1) || "",
+      row?.flesch?.Ok?.[1] || "",
       row?.mobile ? "Yes" : "No",
       row?.meta_robots?.meta_robots[0] || "",
       row?.content_type || "",

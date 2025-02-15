@@ -547,7 +547,7 @@ const DetailsTable = ({ data }: { data: any }) => {
                   className="pl-3 border"
                 >
                   {anchorItem?.page_size?.[0]?.length
-                    ? anchorItem.page_size[0].length + " bytes"
+                    ? anchorItem?.page_size[0].length + " bytes"
                     : "N/A"}
                 </td>
               </tr>
@@ -572,7 +572,7 @@ const DetailsTable = ({ data }: { data: any }) => {
                   className="pl-3 border"
                 >
                   {anchorItem?.page_size?.[0]?.kb
-                    ? anchorItem.page_size[0].kb + " KB"
+                    ? anchorItem?.page_size[0].kb + " KB"
                     : "N/A"}
                 </td>
               </tr>
@@ -597,7 +597,7 @@ const DetailsTable = ({ data }: { data: any }) => {
                   className="pl-3 border"
                 >
                   {anchorItem?.response_time
-                    ? anchorItem.response_time + " ms"
+                    ? anchorItem?.response_time + " ms"
                     : "N/A"}
                 </td>
               </tr>
@@ -611,7 +611,7 @@ const DetailsTable = ({ data }: { data: any }) => {
                       textOverflow: "ellipsis",
                     }}
                   >
-                    {"Hreflang " + lang.code.toUpperCase()}
+                    {"Hreflang " + lang?.code?.toUpperCase()}
                   </td>
                   <td
                     style={{
@@ -622,7 +622,7 @@ const DetailsTable = ({ data }: { data: any }) => {
                     }}
                     className="pl-3 border"
                   >
-                    {lang.url}
+                    {lang?.url}
                   </td>
                 </tr>
               ))}

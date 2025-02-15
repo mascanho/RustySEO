@@ -16,6 +16,7 @@ use url::Url;
 use crate::domain_crawler::helpers::sitemap::get_sitemap;
 
 use super::helpers::canonical_selector::get_canonical;
+use super::helpers::flesch_reader::get_flesch_score;
 use super::helpers::hreflang_selector::select_hreflang;
 use super::helpers::html_size_calculator::calculate_html_size;
 use super::helpers::keyword_selector::extract_keywords;
@@ -229,6 +230,7 @@ async fn process_url(
         page_size: calculate_html_size(content_len),
         hreflangs: select_hreflang(&body),
         language: detect_language(&body),
+        flesch: get_flesch_score(&body),
     };
 
     // Update state and emit results

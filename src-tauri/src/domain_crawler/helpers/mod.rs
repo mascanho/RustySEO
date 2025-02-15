@@ -5,6 +5,7 @@ pub mod canonical_selector;
 pub mod check_html_page;
 pub mod css_selector;
 pub mod domain_checker;
+pub mod flesch_reader;
 pub mod headings_selector;
 pub mod hreflang_selector;
 pub mod html_size_calculator;

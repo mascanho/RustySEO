@@ -50,56 +50,62 @@ const chartConfig = {
 function OverviewChart() {
   const { crawlData, javascript, css, domainCrawlLoading } =
     useGlobalCrawlStore();
-  const [sessionCrawls, setSessionCrawls] = useState<number[]>([]);
-  const [totalCrawlPages, setTotalCrawlPages] = useState<number>(0);
+  const [sessionCrawls, setSessionCrawls] = useState<number>(0);
+  const [totalCrawlPages, setTotalCrawlPages] = useState<number[]>([]);
 
-  const totalPages = crawlData?.length;
-  const inlineJs = javascript?.inline;
-  const externalJs = javascript?.external;
-  const inlineCss = css?.inline;
-  const externalCss = css?.external;
+  // Default values for optional data
+  const totalPages = crawlData?.length || 0;
+  const inlineJs = javascript?.inline || 0;
+  const externalJs = javascript?.external || 0;
+  const inlineCss = css?.inline || 0;
+  const externalCss = css?.external || 0;
 
   const chartData = [
     { browser: "HTML", visitors: totalPages, fill: "hsl(210, 100%, 50%)" },
     {
       browser: "Inline JS",
-      visitors: inlineJs || 100,
+      visitors: inlineJs,
       fill: "hsl(210, 100%, 60%)",
     },
     {
       browser: "External JS",
-      visitors: externalJs || 100,
+      visitors: externalJs,
       fill: "hsl(210, 100%, 70%)",
     },
     {
       browser: "Inline CSS",
-      visitors: inlineCss || 100,
+      visitors: inlineCss,
       fill: "hsl(210, 100%, 80%)",
     },
     {
       browser: "External CSS",
-      visitors: externalCss || 100,
+      visitors: externalCss,
       fill: "hsl(210, 100%, 90%)",
     },
   ];
 
   useEffect(() => {
-    const crawls = sessionStorage.getItem("crawlNumber");
-    setSessionCrawls(crawls);
+    try {
+      // Safely read from sessionStorage
+      const crawls = sessionStorage.getItem("crawlNumber");
+      setSessionCrawls(crawls ? parseInt(crawls, 10) : 0);
 
-    const crawledPages = JSON.parse(sessionStorage.getItem("CrawledLinks"));
-
-    setTotalCrawlPages(crawledPages);
+      const crawledPages = JSON.parse(
+        sessionStorage.getItem("CrawledLinks") || "[]",
+      );
+      setTotalCrawlPages(Array.isArray(crawledPages) ? crawledPages : []);
+    } catch (error) {
+      console.error("Error reading sessionStorage:", error);
+      setSessionCrawls(0);
+      setTotalCrawlPages([]);
+    }
   }, [domainCrawlLoading, crawlData]);
 
   const totalPagesCrawledInSession = (() => {
     try {
-      return (
-        crawlData &&
-        totalCrawlPages?.reduce((acc, item) => {
-          return acc + item;
-        }, 0)
-      );
+      return Array.isArray(totalCrawlPages)
+        ? totalCrawlPages.reduce((acc, item) => acc + (item || 0), 0)
+        : 0;
     } catch (error) {
       console.error("Error calculating total pages crawled in session:", error);
       return 0;
@@ -110,7 +116,10 @@ function OverviewChart() {
     <Card className="flex flex-col dark:bg-brand-darker bg-white border-0 shadow-none">
       <CardHeader className="items-center pb-0">
         <CardTitle>Latest Crawl</CardTitle>
-        <CardDescription>{`${new Date().toLocaleString("default", { month: "long", day: "numeric" })} ${new Date().getFullYear()}`}</CardDescription>
+        <CardDescription>{`${new Date().toLocaleString("default", {
+          month: "long",
+          day: "numeric",
+        })} ${new Date().getFullYear()}`}</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
@@ -140,6 +149,8 @@ function OverviewChart() {
                         textAnchor="middle"
                         dominantBaseline="middle"
                         className="dark:text-white"
+                        aria-label="Total Pages"
+                        role="text"
                       >
                         <tspan
                           x={viewBox.cx}
@@ -159,6 +170,7 @@ function OverviewChart() {
                       </text>
                     );
                   }
+                  return null;
                 }}
               />
             </Pie>
@@ -167,15 +179,15 @@ function OverviewChart() {
       </CardContent>
       <CardFooter className="flex-col gap-2 text-xs dark:text-white/50">
         <div className="leading-none text-muted-foreground">
-          This session has recorded {""}
-          {sessionCrawls ? sessionCrawls : 0} crawls.
+          This session has recorded {sessionCrawls || 0} crawls.
         </div>
         <div className="flex items-center gap-3 font-medium leading-none">
           With a total of {totalPagesCrawledInSession || 0} pages analyzed
-          <TrendingUp className="h-5 w-4" />
+          <TrendingUp className="h-5 w-4" aria-hidden="true" />
         </div>
       </CardFooter>
     </Card>
   );
 }
+
 export default OverviewChart;

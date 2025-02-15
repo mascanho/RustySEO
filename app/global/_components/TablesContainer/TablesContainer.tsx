@@ -23,6 +23,7 @@ import { Filter } from "lucide-react";
 import TableCrawlJs from "./JavascriptTable/TableCrawlJs";
 import ImagesCrawlTable from "./ImagesTable/ImagesCrawlTable";
 import ImagesTable from "./SubTables/ImagesTable/ImagesTable";
+import SchemaSubTable from "./SubTables/SchemaSubTable/SchemaSubTable";
 
 export default function Home() {
   const [containerHeight, setContainerHeight] = useState(600);
@@ -171,6 +172,7 @@ export default function Home() {
               <TabsTrigger value="inlinks">Inlinks</TabsTrigger>
               <TabsTrigger value="outlinks">Outlinks</TabsTrigger>
               <TabsTrigger value="images">Images</TabsTrigger>
+              <TabsTrigger value="schema">Schema</TabsTrigger>
             </TabsList>
             <TabsContent value="details">
               {/* {issueRow === "404 Response" && <Table404 rows={issues[2]} />} */}
@@ -221,6 +223,9 @@ export default function Home() {
               >
                 <ImagesTable />
               </div>
+            </TabsContent>{" "}
+            <TabsContent value="schema">
+              <SchemaSubTable height={bottomTableHeight - 50} />
             </TabsContent>{" "}
           </Tabs>
         </div>
