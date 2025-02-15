@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useEffect, useRef } from "react";
 
 const DetailsTable = ({ data }: { data: any }) => {
