@@ -16,8 +16,10 @@ use url::Url;
 use crate::domain_crawler::helpers::sitemap::get_sitemap;
 
 use super::helpers::canonical_selector::get_canonical;
+use super::helpers::hreflang_selector::select_hreflang;
 use super::helpers::html_size_calculator::calculate_html_size;
 use super::helpers::keyword_selector::extract_keywords;
+use super::helpers::language_selector::detect_language;
 use super::helpers::meta_robots_selector::{get_meta_robots, MetaRobots};
 use super::helpers::robots::get_domain_robots;
 use super::helpers::text_ratio::{get_text_ratio, TextRatio};
@@ -225,6 +227,8 @@ async fn process_url(
         redirection,
         keywords: extract_keywords(&body),
         page_size: calculate_html_size(content_len),
+        hreflangs: select_hreflang(&body),
+        language: detect_language(&body),
     };
 
     // Update state and emit results

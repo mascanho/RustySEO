@@ -14,6 +14,8 @@ export const initialColumnWidths = [
   "60px", //  Mobile
   "90px", // Meta Robots
   "120px", // CONTENT TYPE
+  "100px", //  Indexability
+  "50px", //  Language
 ];
 
 export const initialColumnAlignments = [
@@ -31,6 +33,8 @@ export const initialColumnAlignments = [
   "center", // Mobile Friendly
   "left", // META ROBOTS
   "left", //  CONTENT TYPE
+  "left", //  Indexability
+  "center", //  Language
 ];
 
 export const headerTitles = [
@@ -48,4 +52,6 @@ export const headerTitles = [
   "Mobile",
   "Meta Robots",
   "Content Type",
+  "Indexability",
+  "Language",
 ];

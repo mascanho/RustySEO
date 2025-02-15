@@ -130,7 +130,7 @@ const DetailsTable = ({ data }: { data: any }) => {
                   }}
                   className="pl-3 border"
                 >
-                  {anchorItem?.canonical || ""}
+                  {anchorItem?.canonicals || ""}
                 </td>
               </tr>
               <tr>
@@ -600,6 +600,54 @@ const DetailsTable = ({ data }: { data: any }) => {
                     : "N/A"}
                 </td>
               </tr>
+              {anchorItem?.hreflangs?.map((lang) => (
+                <tr key={lang.id}>
+                  <td
+                    className="border pl-3"
+                    style={{
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {"Hreflang " + lang.code.toUpperCase()}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: "left",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                    className="pl-3 border"
+                  >
+                    {lang.url}
+                  </td>
+                </tr>
+              ))}
+              <tr>
+                <td
+                  className="border pl-3"
+                  style={{
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Language
+                </td>
+                <td
+                  style={{
+                    textAlign: "left",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                  className="pl-3 border"
+                >
+                  {anchorItem?.language || ""}
+                </td>
+              </tr>{" "}
             </React.Fragment>
           );
         })}

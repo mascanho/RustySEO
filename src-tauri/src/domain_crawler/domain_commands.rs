@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use rust_xlsxwriter::XlsxError;
 use serde_json::Value;
 
@@ -32,10 +34,10 @@ pub async fn domain_crawl_command(
 }
 
 #[tauri::command]
-pub async fn create_excel(data: Vec<String>) -> Result<(), String> {
+pub async fn create_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
     // Call the export_to_excel function and handle its result
     match generate_xlsx(data) {
-        Ok(_) => Ok(()),
+        Ok(file) => Ok(file),
         Err(e) => {
             eprintln!("Error: {}", e);
             // Explicitly return the error

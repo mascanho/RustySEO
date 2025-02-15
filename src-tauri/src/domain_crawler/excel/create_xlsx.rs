@@ -1,49 +1,55 @@
-use rust_xlsxwriter::{Format, FormatAlign, FormatBorder, Workbook, XlsxError};
-use std::path::Path;
+use rust_xlsxwriter::{Format, FormatAlign, FormatBorder, Workbook};
+use serde_json::Value;
 
-pub fn generate_xlsx(data: Vec<String>) -> Result<(), String> {
-    // Create a new workbook
+#[tauri::command]
+pub fn generate_xlsx(data: Vec<Value>) -> Result<Vec<u8>, String> {
+    println!("Received Data: {:?}", data);
+
+    if data.is_empty() {
+        return Err("Invalid JSON structure: expected a non-empty array of arrays".to_string());
+    }
+
+    // Define headers (since the data is an array of arrays, we need predefined headers)
+    let headers = vec!["URL", "Description", "Size", "Type"];
+
     let mut workbook = Workbook::new();
-
-    println!("This is the data: {:?}", &data);
-
-    // Add a worksheet
     let worksheet = workbook.add_worksheet();
 
-    // Define a format for headers
+    // Define header format
     let header_format = Format::new()
         .set_bold()
         .set_border(FormatBorder::Thin)
         .set_align(FormatAlign::Center);
 
-    // Generate dummy data
-    let dummy_data = vec![
-        vec!["Name", "Age", "City"],
-        vec!["Alice", "30", "New York"],
-        vec!["Bob", "25", "Los Angeles"],
-        vec!["Charlie", "35", "Chicago"],
-    ];
-
-    // Write headers with formatting
-    for (col_idx, header) in dummy_data[0].iter().enumerate() {
+    // Write headers
+    for (col_idx, header) in headers.iter().enumerate() {
         worksheet
             .write_with_format(0, col_idx as u16, *header, &header_format)
             .map_err(|e| e.to_string())?;
     }
 
     // Write data rows
-    for (row_idx, row) in dummy_data.iter().skip(1).enumerate() {
-        for (col_idx, cell_value) in row.iter().enumerate() {
-            worksheet
-                .write((row_idx + 1) as u32, col_idx as u16, *cell_value)
-                .map_err(|e| e.to_string())?;
+    for (row_idx, array) in data.iter().enumerate() {
+        if let Value::Array(arr) = array {
+            for (col_idx, value) in arr.iter().enumerate() {
+                let cell_value = match value {
+                    Value::String(s) => s.clone(),
+                    Value::Number(n) => n.to_string(),
+                    Value::Bool(b) => b.to_string(),
+                    _ => "".to_string(),
+                };
+                worksheet
+                    .write((row_idx + 1) as u32, col_idx as u16, cell_value)
+                    .map_err(|e| e.to_string())?;
+            }
+        } else {
+            return Err("Invalid JSON structure: expected an array of arrays".to_string());
         }
     }
 
-    // Save the workbook to a file
-    workbook
-        .save("marco_rust.xlsx")
-        .map_err(|e| e.to_string())?;
+    // Save workbook to an in-memory buffer
+    let buffer = workbook.save_to_buffer().map_err(|e| e.to_string())?;
 
-    Ok(())
+    println!("Excel file successfully created in memory!");
+    Ok(buffer)
 }

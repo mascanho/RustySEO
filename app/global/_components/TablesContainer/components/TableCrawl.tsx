@@ -193,6 +193,10 @@ const TableRow = ({
       row?.mobile ? "Yes" : "No",
       row?.meta_robots?.meta_robots[0] || "",
       row?.content_type || "",
+      row?.indexability?.indexability > 0.5
+        ? "Indexable"
+        : "Not Indexable" || "",
+      row?.language || "",
     ],
     [row, index],
   );

@@ -21,14 +21,15 @@ import {
 } from "./tableLayout";
 import SelectFilter from "../components/SelectFilter";
 import { TbColumns3 } from "react-icons/tb";
-import DownloadButton from "../components/DownloadButton";
+import DownloadButton from "./DownloadButton";
 import useFilterTableURL from "@/app/Hooks/useFilterTableUrl";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { invoke } from "@tauri-apps/api/core";
 import { writeFileXLSX, utils } from "xlsx";
 
-import { writeBinaryFile } from "@tauri-apps/api/fs";
-import { create, BaseDirectory } from "@tauri-apps/plugin-fs";
+import { ask } from "@tauri-apps/plugin-dialog";
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeFile, BaseDirectory } from "@tauri-apps/plugin-fs";
 
 const TruncatedCell = ({
   text,
@@ -213,17 +214,17 @@ const ColumnPicker = ({
     () => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <div className="border dark:border-white/20  w-8  flex justify-center items-center rounded h-6">
+          <div className="border dark:border-white/20  w-8  flex justify-center items-center rounded h-6 hover:border-brand-bright cursor-pointer active:bg-brand-bright active:text-white">
             <TbColumns3 className="w-5 h-5 dark:text-white/50 p-1 " />
           </div>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-32 bg-white dark:bg-brand-darker border dark:border-brand-dark rounded shadow-lg z-20">
+        <DropdownMenuContent className="w-32 bg-white text-black active:text-white dark:bg-brand-darker border dark:border-brand-dark rounded shadow-lg z-20">
           {headerTitles.map((header, index) => (
             <DropdownMenuCheckboxItem
               key={header}
               checked={columnVisibility[index] ?? true}
               onCheckedChange={() => handleToggle(index)}
-              className="p-2 hover:bg-gray-100 w-fit dark:hover:bg-brand-dark space-x-6 dark:text-white text-brand-bright"
+              className="p-2 hover:bg-gray-100  dark:hover:bg-brand-dark space-x-6 dark:text-white text-black active:text-white hover:text-white w-full "
             >
               <span className="ml-5 dark:text-brand-bright">{header}</span>
             </DropdownMenuCheckboxItem>
@@ -250,18 +251,32 @@ const ImagesCrawlTable = ({
     headerTitles.map(() => true),
   );
 
-  const handleDownload = () => {
-    console.log("Download clicked");
-    invoke("create_excel", { data: dummyData.toString() });
-    console.log("Generating xlsx file from:", dummyData);
-  };
+  const handleDownload = async () => {
+    try {
+      // Call the backend command to generate the Excel file
+      const fileBuffer = await invoke("create_excel", { data: rows });
 
-  const dummyData = [
-    ["Name", "Age", "City"],
-    ["Alice", 30, "New York"],
-    ["Bob", 25, "Los Angeles"],
-    ["Charlie", 35, "Chicago"],
-  ];
+      // Prompt the user to choose a file path to save the Excel file
+      const filePath = await save({
+        filters: [
+          {
+            name: "Excel File",
+            extensions: ["xlsx"],
+          },
+        ],
+        defaultPath: "ImagesTableRustySEO.xlsx", // Default file name
+      });
+
+      if (filePath) {
+        // Convert the Uint8Array to a binary file and save it
+        await writeFile(filePath, new Uint8Array(fileBuffer));
+      } else {
+        console.log("User canceled the save dialog.");
+      }
+    } catch (error) {
+      console.error("Error generating or saving Excel file:", error);
+    }
+  };
 
   // State to track the clicked cell (rowIndex, cellIndex)
   const [clickedCell, setClickedCell] = useState<{

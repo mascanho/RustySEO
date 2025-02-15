@@ -110,7 +110,6 @@ export default function Home() {
   };
 
   const filteredImagesArr = filteredImages(crawlData);
-  console.log(filteredImagesArr, "filteredImagesArr");
 
   return (
     <div

@@ -17,6 +17,7 @@
     "os:default",
     "shell:default",
     "dialog:default",
-    "http:default"
+    "http:default",
+    "dialog:default"
   ]
 }
