@@ -766,6 +766,6 @@ div:is(.sitemapsDomain) {
   }
 }
 
-.crawlSchema {
-  display: none !important;
+.crawlSchema pre {
+  @apply h-[20rem] overflow-auto !important;
 }

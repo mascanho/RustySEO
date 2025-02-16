@@ -1,7 +1,7 @@
 import React from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { dark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import { darkula } from "react-syntax-highlighter/dist/cjs/styles/hljs";
 
 const SchemaSubTable = ({ height }) => {
   const { selectedTableURL } = useGlobalCrawlStore();
@@ -23,18 +23,30 @@ const SchemaSubTable = ({ height }) => {
   }
 
   return (
-    <div className="-mt-4 h-screen overflow-y-auto crawlSchema">
+    <div
+      className={`-mt-4 ${height ? `h-[${height}px]` : "h-screen"} overflow-y-auto crawlSchema`}
+    >
       {schemaData ? (
         <SyntaxHighlighter
           language="json" // Specify the language as JSON
-          style={dark} // Use the dark theme (or choose another theme)
+          style={darkula} // Use the dark theme (or choose another theme)
           showLineNumbers // Optional: Show line numbers
           wrapLines // Optional: Wrap long lines
+          customStyle={{
+            fontSize: "14px", // Adjust font size for clarity
+            lineHeight: "1.5", // Adjust line height for better readability
+            backgroundColor: "transparent", // Ensure background is transparent
+          }}
         >
           {formattedSchema}
         </SyntaxHighlighter>
       ) : (
-        <p>No schema data available.</p>
+        <div
+          className="w-full"
+          style={{ height: `${height + 2}px`, display: "flex" }}
+        >
+          <p className="m-auto">No schema data available.</p>
+        </div>
       )}
     </div>
   );
