@@ -5,7 +5,7 @@ export const initialColumnWidths = [
   "300px", // Page Title
   "70px", // Page title length
   "300px", // Page Description
-  "100px", // Page Description Length
+  "60px", // Page Description Length
   "350px", // H1
   "70px", // H1 Length
   "350px", // H2
@@ -29,7 +29,7 @@ export const initialColumnAlignments = [
   "left", // Page Title
   "center", // Page Title Length
   "left", // Page Description
-  "left", // Page Description Length
+  "center", // Page Description Length
   "left", // H1
   "center", // H1 Length
   "left", // H2
