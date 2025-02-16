@@ -19,7 +19,7 @@ pub fn extract_links(html: &str, base_url: &Url) -> Vec<Url> {
                     if let Some(valid_url) = validate_and_normalize_url(base_url, &url) {
                         Some(valid_url)
                     } else {
-                        eprintln!("Skipping invalid URL: {}", url);
+                        // eprintln!("Skipping invalid URL: {}", url);
                         None
                     }
                 }

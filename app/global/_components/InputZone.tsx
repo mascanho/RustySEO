@@ -14,7 +14,7 @@ interface InputZoneProps {
 const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
   const { loaders, showLoader, hideLoader } = useLoaderStore();
   const [url, setUrl] = useState("");
-  const { setCrawlData } = useGlobalCrawlStore();
+  const { setCrawlData, domainCrawlLoading } = useGlobalCrawlStore();
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(event.target.value.toLowerCase());
@@ -41,7 +41,7 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
             <input
               type="url"
               required
-              placeholder="your website domain"
+              placeholder="www.yourwebsite.com"
               value={url}
               onChange={handleInputChange}
               onKeyDown={handleKeyPress} // Fixed deprecated onKeyPress
@@ -57,12 +57,12 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
               className="rounded w-20 active:scale-95 text-sm relative inline-flex group py-[3px] items-center justify-center ml-3 cursor-pointer border-b-4 border-l-2 active:border-blue-600 active:shadow-none bg-gradient-to-tr from-brand-bright to-blue-500 border-blue-700 text-white"
             >
               <span className="relative text-xs">
-                {loaders?.globalCrawler ? (
+                {domainCrawlLoading ? (
                   <div
-                    className="top-0.5 right-4 z-[32423454] w-4 h-4 border-4 border-t-transparent border-white rounded-full animate-spin cursor-pointer"
+                    className="top-0.5 right-4 z-[32423454] w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin cursor-pointer"
                     role="status"
                     aria-label="loading"
-                    onClick={() => window.location.reload()}
+                    // onClick={() => window.location.reload()}
                   />
                 ) : (
                   "Crawl"

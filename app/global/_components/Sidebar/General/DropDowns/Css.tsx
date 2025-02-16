@@ -1,9 +1,11 @@
 // @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 const Css = () => {
   const domainCrawlData = useGlobalCrawlStore();
+  const [isOpen, setIsOpen] = useState(false); // State to track if details are open
+  const { setCss, domainCrawlLoading, crawlData } = useGlobalCrawlStore();
 
   const externalCss =
     domainCrawlData?.crawlData?.reduce((acc, item) => {
@@ -17,28 +19,51 @@ const Css = () => {
       return acc + inlineCount;
     }, 0) || 0;
 
+  const totalCss = externalCss + inlineCss;
+
   const scriptData = [
     { label: "External CSS", count: externalCss },
     { label: "Internal CSS", count: inlineCss },
   ];
 
+  useEffect(() => {
+    setCss({
+      inline: inlineCss,
+      external: externalCss,
+      total: totalCss,
+    });
+  }, [crawlData]);
+
   return (
     <div className="text-sx w-full">
-      <details className="w-full">
-        <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 py-1 pb-1.5 cursor-pointer">
-          Css
+      <details
+        className="w-full"
+        onToggle={(e) => setIsOpen(e.currentTarget.open)} // Update state when details are toggled
+      >
+        <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 py-1 pb-1.5 cursor-pointer flex items-center">
+          <span>CSS</span>
         </summary>
-        {scriptData.map((data, index) => (
-          <section
-            key={index}
-            className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark"
-          >
-            <span className="text-brand-bright w-full pl-2.5 py-1">
-              {data?.label}
-            </span>
-            <div>{data?.count}</div>
-          </section>
-        ))}
+        {/* Data Rows (inside details, only visible when open) */}
+        <div className="w-full">
+          {/* Header Row */}
+          {/* Data Rows */}
+          {scriptData.map((data, index) => (
+            <div
+              key={index}
+              className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark"
+            >
+              <div className="w-2/3 pl-2.5 py-1 text-brand-bright">
+                {data?.label}
+              </div>
+              <div className="w-1/6 text-right pr-2">{data?.count}</div>
+              <div className="w-1/6 text-right pr-2">
+                {totalCss > 0
+                  ? `${((data.count / totalCss) * 100).toFixed(0)}%`
+                  : "0%"}
+              </div>
+            </div>
+          ))}
+        </div>
       </details>
     </div>
   );

@@ -70,7 +70,7 @@ input:focus {
   }
 }
 
-table {
+table:not(.issues) {
   @apply dark:bg-brand-darker dark:text-white border-0 !important;
   border-collapse: collapse;
   width: 100%;
@@ -85,7 +85,7 @@ tbody {
   @apply bg-white dark:bg-brand-darker dark:text-white border-0 !important;
 }
 
-th {
+th:not(.issues) {
   @apply pb-2 dark:bg-brand-darker dark:text-white/30 bg-white border-0 pl-3.5 text-black/50  !important;
   padding: 4px 0;
   position: sticky;
@@ -109,8 +109,15 @@ td {
   font-size: 0.8rem !important;
 }
 
-:is(tbody, table) > tr:nth-child(odd) {
-  background: #0001 !important;
+table:not(.issues),
+tbody:not(.issues) > tr:not(.issues):nth-child(odd) {
+  background: #0001;
+  @apply dark:bg-brand-dark/20;
+}
+
+table:is(.issues),
+tbody:is(.issues) {
+  @apply bg-transparent !important;
 }
 
 pre:not([class*="robots"]) {
@@ -721,4 +728,44 @@ button .mantine-Tabs-tabLabel {
 /* CHANGE THE CODE ELEMENT FOR AI SCHEMA */
 .aiSchema section div pre {
   @apply h-[42.4rem] dark:border-brand-dark rounded-md  !important;
+}
+
+/* CRAWL DOMAIN TABLE */
+.domainCrawlParent table thead th {
+  @apply border-b dark:border-white/20 shadow py-[3px] pl-[4px] !important;
+}
+
+.domainCrawlParent tr td {
+  @apply p-[5px] py-[4px] !important;
+}
+
+/* Reset table and its children */
+table:is(.issues),
+tbody.issues,
+td.issues {
+  all: unset !important;
+  background: red !important;
+}
+
+/* GLOBAL OVERVIEW CHART */
+.chart tspan {
+  @apply hidden;
+}
+
+/* ROBOTS DOMAIN TABLE */
+div:is(.robotsDomain) {
+  pre {
+    @apply bg-transparent dark:bg-gray-900 dark:text-white !important;
+  }
+}
+
+/* SITEMAP DOMAIN TABLE */
+div:is(.sitemapsDomain) {
+  pre {
+    @apply bg-transparent dark:bg-gray-900 dark:text-white h-[26rem] !important;
+  }
+}
+
+.crawlSchema pre {
+  @apply h-[20rem] overflow-auto !important;
 }

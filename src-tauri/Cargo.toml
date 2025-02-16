@@ -15,7 +15,8 @@ rust-version = "1.78"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-serde_json = "1.0"
+rust_xlsxwriter = "0.84.0"
+serde_json = "*"
 serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "2", features = [] }
 reqwest = { version = "0.12.12", features = ["blocking", "json"] }
@@ -49,7 +50,6 @@ image = "0.24.1"
 actix-web = "4.0"
 google-sheets4 = "*"
 async-trait = "*"
-rust_xlsxwriter = "0.75.0"
 futures = "*"
 google-analytics3 = "*"
 rand = "*"
@@ -64,6 +64,7 @@ tauri-plugin-http = "2"
 semver = "1.0.17"
 once_cell = "1.17.1"
 isahc = "1.7.2"
+colored = "3.0.0"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem and the built-in dev server is disabled.

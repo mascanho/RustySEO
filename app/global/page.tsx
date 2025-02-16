@@ -19,23 +19,15 @@ import { useVisibilityStore } from "@/store/VisibilityStore";
 import TaskManagerContainer from "../components/ui/TaskManager/TaskManagerContainer";
 import TablesContainer from "./_components/TablesContainer/TablesContainer";
 import { listen } from "@tauri-apps/api/event";
-
-// LISTEN TO THE PROGRESS UPDATE EVENT
-listen("progress_update", (event) => {
-  const progressData = event.payload;
-  // console.log("Progress Data:", progressData);
-});
-
-// Define the expected type of the result from the `crawl_domain` function
-interface PageDetails {
-  title: string;
-  h1: string;
-}
-
-interface CrawlResult {
-  visited_urls: Record<string, PageDetails>;
-  all_files: Record<string, { url: string; file_type: string }>;
-}
+import { RiFireLine } from "react-icons/ri";
+import { IoKeyOutline } from "react-icons/io5";
+import { SlSocialGoogle } from "react-icons/sl";
+import { GrPlan } from "react-icons/gr";
+import Analytics from "../components/ui/Analytics/Analytics";
+import ClarityContainer from "../components/ui/MSClarityModal/ClarityContainer";
+import KeywordAnalytics from "../components/ui/KwTracking/KeywordAnalytics";
+import GSCcontainer from "../components/ui/GscContainer/GSCcontainer";
+import ContentPlannerContainer from "../components/ui/ContentPlanner/ContentPlannerContainer";
 
 export default function Page() {
   const [data, setData] = useState<CrawlResult | null>(null);
@@ -45,10 +37,15 @@ export default function Page() {
   >("url");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const { loaders, showLoader, hideLoader } = useLoaderStore();
-  const { crawlData } = useGlobalCrawlStore();
+  const {
+    crawlData,
+    setDomainCrawlLoading,
+    clearDomainCrawlData,
+    addDomainCrawlResult,
+    setSelectedTableURL,
+  } = useGlobalCrawlStore();
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
-  const domainCrawlData = useGlobalCrawlStore();
-  const allData = domainCrawlData.crawlData;
+  const allData = crawlData;
 
   useEffect(() => {
     const sessionData = sessionStorage.getItem("GlobalCrawldata");
@@ -63,35 +60,73 @@ export default function Page() {
 
   const handleDomainCrawl = async (url) => {
     try {
-      console.log("Crawling domain...");
+      // Set loading
 
+      if (sessionStorage.getItem("crawlNumber")) {
+        sessionStorage.setItem(
+          "crawlNumber",
+          Number(sessionStorage.getItem("crawlNumber")) + 1,
+        );
+      } else {
+        sessionStorage.setItem("crawlNumber", "1");
+      }
+
+      setSelectedTableURL([]);
+      setDomainCrawlLoading(true);
+      // Clear the store before crawling
+      clearDomainCrawlData();
+      console.log("Crawling domain...");
       const result = await invoke("domain_crawl_command", {
         domain: url,
       });
-      // domainCrawlData.setDomainCrawlData(result);
       console.log("Crawl Result:", result);
     } catch (error) {
       console.error("Failed to execute domain crawl command:", error);
       console.log("failed to crawl:", url);
+    } finally {
+      setDomainCrawlLoading(false);
+
+      // Retrieve the existing crawled links from sessionStorage or initialize an empty array
+      const crawledLinks =
+        JSON.parse(sessionStorage.getItem("CrawledLinks")) || [];
+
+      // Add the length of the new crawlData (if it exists) to the crawledLinks array
+      if (crawlData?.length) {
+        crawledLinks.push(crawlData.length);
+      }
+
+      // Save the updated crawledLinks array back to sessionStorage
+      sessionStorage.setItem("CrawledLinks", JSON.stringify(crawledLinks));
     }
   };
 
   useEffect(() => {
-    const unlisten = listen("crawl_result", (event) => {
-      const result = event?.payload?.result;
+    let isMounted = true; // Flag to track if the component is mounted
 
-      if (!result || typeof result !== "object") {
-        console.error("Invalid result format:", result);
-        return;
-      }
+    const setupEventListener = async () => {
+      const unlisten = await listen("crawl_result", (event) => {
+        if (!isMounted) return; // Skip if component is unmounted
 
-      domainCrawlData.addDomainCrawlResult(result);
-    });
+        const result = event?.payload?.result;
+
+        if (!result || typeof result !== "object") {
+          console.error("Invalid result format:", result);
+          return;
+        }
+
+        addDomainCrawlResult(result);
+      });
+
+      return unlisten; // Return the cleanup function
+    };
+
+    const cleanupPromise = setupEventListener();
 
     return () => {
-      unlisten.then((fn) => fn()); // Properly remove listener on unmount
+      isMounted = false; // Set flag to false on unmount
+      cleanupPromise.then((unlisten) => unlisten()); // Cleanup the event listener
     };
-  }, []);
+  }, [addDomainCrawlResult]);
 
   return (
     <main className="flex h-full w-full">
@@ -110,50 +145,77 @@ export default function Page() {
         {/* Tabs Component */}
         <Tabs defaultValue="first" className="ovefflow-auto">
           <aside className="absolute top-11 pt-1 left-0 w-full dark:bg-brand-darker z-10 bg-white">
-            <Tabs.List justify="center" className="dark:text-white text-xs">
+            <Tabs.List
+              justify="center"
+              className="dark:text-white text-xs dark:border-brand-darker"
+            >
               <Tabs.Tab value="first">
                 <FaGlobe className="inline-block mr-2" />
-                Domain
-              </Tabs.Tab>
-              <Tabs.Tab value="third">
-                <FaTools className="inline-block mr-2" />
-                Improvements
+                Deep crawl
               </Tabs.Tab>
               <Tabs.Tab value="tasks">
-                <FaTasks className="inline-block mr-2" />
-                Task Manager
-              </Tabs.Tab>
-              <Tabs.Tab value="fifth">
-                <FaHistory className="inline-block mr-2" />
-                Crawl History
+                <FaTasks className="inline-block mr-1 text-sm mb-[2px]" /> Task
+                Manager
               </Tabs.Tab>
               <Tabs.Tab value="analytics">
                 <FaChartBar className="inline-block mr-2" />
-                Analytics
+                GA4
+              </Tabs.Tab>
+              <Tabs.Tab value="clarity">
+                <RiFireLine className="inline-block mr-2 mb-[2px] text-sm" />
+                Clarity
+              </Tabs.Tab>
+              <Tabs.Tab value="kws">
+                <IoKeyOutline className="inline-block mr-2 mb-[2px] text-sm" />
+                Tracking
+              </Tabs.Tab>
+              <Tabs.Tab value="gsc">
+                <SlSocialGoogle className="inline-block mr-2 mb-[2px] text-sm" />
+                Search Console
+              </Tabs.Tab>
+              <Tabs.Tab value="content">
+                <GrPlan className="inline-block mr-2 mb-[2px] text-sm" />
+                Content
               </Tabs.Tab>
             </Tabs.List>
           </aside>
-
           {/* Tabs Panel for Domain */}
           <Tabs.Panel
             value="first"
-            className="flex flex-col h-screen bg-white overflow-auto"
+            className="flex flex-col h-screen bg-white dark:bg-brand-darker overflow-auto"
           >
             <TablesContainer />
           </Tabs.Panel>
-
           <Tabs.Panel
             value="tasks"
             className="flex flex-col space-y-8 overflow-scroll"
           >
-            <section className="mt-[5rem]">
+            <section className="mt-[3rem]">
               <TaskManagerContainer />
             </section>
           </Tabs.Panel>
+          <Tabs.Panel value="analytics mt-10">
+            <Analytics />
+          </Tabs.Panel>
+          <Tabs.Panel
+            value="clarity"
+            className="h-[calc(100vh-8.8rem)] mt-8 overflow-auto"
+          >
+            <ClarityContainer />
+          </Tabs.Panel>{" "}
+          <Tabs.Panel value="kws" className="h-[calc(100vh-8.8rem)] mt-9">
+            <KeywordAnalytics />
+          </Tabs.Panel>{" "}
+          <Tabs.Panel value="gsc" ls>
+            <GSCcontainer />
+          </Tabs.Panel>{" "}
+          <Tabs.Panel value="content" className="mt-9 h-screen">
+            <ContentPlannerContainer />
+          </Tabs.Panel>{" "}
         </Tabs>
       </section>
       <aside
-        className={`transition-all ease-linear delay-100  ${visibility.sidebar ? "w-[24.3rem] flex-grow" : "w-0 "} h-[58.6rem] `}
+        className={`transition-all ease-linear delay-100  ${visibility.sidebar ? "w-full max-w-[20.4rem] flex-grow" : "w-0 "} h-screen `}
       >
         <SidebarContainer />
       </aside>

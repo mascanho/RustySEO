@@ -1,17 +1,18 @@
 // @ts-nocheck
-import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import React from "react";
+import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 
-const Iframes = () => {
+const Iframes: React.FC = () => {
   const domainCrawlData = useGlobalCrawlStore();
 
-  const externalCss =
+  // Calculate the total number of iframes
+  const totalIframes =
     domainCrawlData?.crawlData?.reduce((acc, item) => {
-      const externalCount = item?.iframe?.length || 0;
-      return acc + externalCount;
+      return acc + (item?.iframe?.length || 0);
     }, 0) || 0;
 
-  const iframeData = [{ label: "Iframes Found", count: externalCss }];
+  // Data to display
+  const iframeData = [{ label: "Iframes Found", count: totalIframes }];
 
   return (
     <div className="text-sx w-full">
@@ -25,9 +26,9 @@ const Iframes = () => {
             className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark"
           >
             <span className="text-brand-bright w-full pl-2.5 py-1">
-              {data?.label}
+              {data.label}
             </span>
-            <div>{data?.count}</div>
+            <div>{data.count}</div>
           </section>
         ))}
       </details>

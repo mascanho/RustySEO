@@ -49,17 +49,23 @@ const DetailTable: React.FC<DetailTableProps> = ({ data }) => {
       >
         <TabsContent
           value="details"
-          className="flex-grow overflow-scrollh-full h-2 "
+          className="flex-grow overflow-scroll  h-2 "
         >
           <Table columns={detailsColumns} data={detailsData} />
         </TabsContent>
-        <TabsContent value="history" className="flex-grow overflow-hidden">
+        <TabsContent
+          value="history"
+          className="flex-grow overflow-scroll  h-2 "
+        >
           <Table columns={historyColumns} data={historyData} />
         </TabsContent>
-        <TabsContent value="related" className="flex-grow overflow-hidden">
+        <TabsContent
+          value="related"
+          className="flex-grow overflow-scroll  h-2 "
+        >
           <Table columns={relatedColumns} data={relatedData} />
         </TabsContent>
-        <TabsList className="mt-2">
+        <TabsList className="mt-2 bottom-10">
           <TabsTrigger value="details" className="text-xs">
             Details
           </TabsTrigger>

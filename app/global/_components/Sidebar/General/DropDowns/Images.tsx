@@ -1,28 +1,37 @@
 // @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import React from "react";
+import React, { useState } from "react";
 
 const Images = () => {
   const domainCrawlData = useGlobalCrawlStore();
+  const [isOpen, setIsOpen] = useState(false); // State to track if details are open
 
+  // Calculate total number of images
   const imageCounts =
     domainCrawlData?.crawlData?.reduce((acc, item) => {
-      const imageCount = item?.images?.length || 0;
+      const imageCount = item?.images?.Ok?.length || 0;
       return acc + imageCount;
     }, 0) || 0;
 
+  // Calculate number of images with alt tags
   const hasAltTags =
     domainCrawlData?.crawlData?.reduce((acc, item) => {
-      const hasaltTags = item?.alt_tags?.with_alt_tags?.length || 0;
-      return acc + hasaltTags;
+      const imagesWithAltTags =
+        item?.images?.Ok?.filter((image) => image[1] && image[1].trim() !== "")
+          .length || 0;
+      return acc + imagesWithAltTags;
     }, 0) || 0;
 
+  // Calculate number of images without alt tags
   const hasNoAltTags =
     domainCrawlData?.crawlData?.reduce((acc, item) => {
-      const hasaltTags = item?.alt_tags?.without_alt_tags?.length || 0;
-      return acc + hasaltTags;
+      const imagesWithoutAltTags =
+        item?.images?.Ok?.filter((image) => !image[1] || image[1].trim() === "")
+          .length || 0;
+      return acc + imagesWithoutAltTags;
     }, 0) || 0;
 
+  // Prepare data for display
   const imageData = [
     { label: "Total Images", count: imageCounts },
     { label: "Images with Alt Tags", count: hasAltTags },
@@ -31,21 +40,33 @@ const Images = () => {
 
   return (
     <div className="text-sx w-full">
-      <details className="w-full">
-        <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 py-1 pb-1.5 cursor-pointer">
-          Images
+      <details
+        className="w-full"
+        onToggle={(e) => setIsOpen(e.currentTarget.open)} // Update state when details are toggled
+      >
+        <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 py-1 pb-1.5 cursor-pointer flex items-center ">
+          <span>Images</span>
         </summary>
-        {imageData.map((data, index) => (
-          <section
-            key={index}
-            className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark"
-          >
-            <span className="text-brand-bright w-full pl-2.5 py-1">
-              {data.label}
-            </span>
-            <div>{data.count}</div>
-          </section>
-        ))}
+        {/* Data Rows (inside details, only visible when open) */}
+        <div className="w-full">
+          {/* Data Rows */}
+          {imageData.map((data, index) => (
+            <div
+              key={index}
+              className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark"
+            >
+              <div className="w-2/3 pl-2.5 py-1 text-brand-bright">
+                {data?.label}
+              </div>
+              <div className="w-1/6 text-right pr-2">{data?.count}</div>
+              <div className="w-1/6 text-right pr-2">
+                {imageCounts > 0
+                  ? `${((data.count / imageCounts) * 100).toFixed(0)}%`
+                  : "0%"}
+              </div>
+            </div>
+          ))}
+        </div>
       </details>
     </div>
   );
