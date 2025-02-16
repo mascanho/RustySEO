@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { isIP } from "net";
 import { create } from "zustand";
 
 // Define the structure of a single page's details
@@ -14,6 +15,7 @@ export interface PageDetails {
   loading_time: { loadingTime: number; loadingTimeScore: number };
   images: string[];
   robots: string[];
+  isGeneratingExcel: boolean;
 }
 
 // Define the Zustand store
@@ -46,6 +48,8 @@ interface CrawlStore {
   setRobots: (row: string[]) => void;
   sitemaps: string[];
   setSitemaps: (row: string[]) => void;
+  isGeneratingExcel: boolean;
+  setIsGeneratingExcel: (isGenerating: boolean) => void;
 }
 
 const useGlobalCrawlStore = create<CrawlStore>((set) => ({
@@ -98,6 +102,10 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
 
   sitemaps: [],
   setSitemaps: (row) => set({ sitemap: row }),
+
+  isGeneratingExcel: false,
+  setIsGeneratingExcel: (isGenerating) =>
+    set({ isGeneratingExcel: isGenerating }),
 }));
 
 export default useGlobalCrawlStore;

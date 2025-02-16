@@ -28,6 +28,7 @@ import { Handle } from "vaul";
 import { invoke } from "@tauri-apps/api/core";
 import { save } from "@tauri-apps/plugin-dialog";
 import { writeFile } from "@tauri-apps/plugin-fs";
+import { toast } from "sonner";
 
 interface TableCrawlProps {
   rows: Array<{
@@ -276,8 +277,8 @@ const ColumnPicker = ({
     () => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <div className="border dark:border-white/20   flex justify-center items-center rounded h-6 w-full">
-            <TbColumns3 className="w-5 h-5 dark:text-white/50 p-1 " />
+          <div className="border dark:border-white/20   flex justify-center items-center rounded h-6 w-full hover:border hover:border-brand-bright cursor-pointer active:bg-brand-bright active:text-white">
+            <TbColumns3 className="w-5 h-5 dark:text-white/50 p-1 active:text-white" />
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-32 bg-white dark:bg-brand-darker border dark:border-brand-dark rounded shadow-lg z-20 hover:text-white">
@@ -312,13 +313,20 @@ const TableCrawl = ({
   const [columnVisibility, setColumnVisibility] = useState(
     headerTitles.map(() => true),
   );
+  const { isGeneratingExcel, setIsGeneratingExcel } = useGlobalCrawlStore();
 
   // SET THE TAURI STUFF FOR THE DOWNLOAD
   const handleDownload = async () => {
+    // Set the loader state to true
+    setIsGeneratingExcel(true);
     try {
       // Call the backend command to generate the Excel file
       const fileBuffer = await invoke("create_excel_main_table", {
         data: rows,
+      }).then(() => {
+        console.log("Generated Excel");
+        // Set the loader state to false
+        setIsGeneratingExcel(false);
       });
 
       // Prompt the user to choose a file path to save the Excel file
@@ -335,6 +343,7 @@ const TableCrawl = ({
       if (filePath) {
         // Convert the Uint8Array to a binary file and save it
         await writeFile(filePath, new Uint8Array(fileBuffer));
+        toast.success("Excel file saved successfully!");
       } else {
         console.log("User canceled the save dialog.");
       }
@@ -510,7 +519,12 @@ const TableCrawl = ({
           className="w-full p-1 pl-2 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
         />
         {/* <SelectFilter /> */}
-        <DownloadButton data={"data"} download={handleDownload} />
+        <DownloadButton
+          data={"data"}
+          download={handleDownload}
+          loading={isGeneratingExcel}
+          setLoading={setIsGeneratingExcel}
+        />
         <div className="mr-1.5">
           <ColumnPicker
             columnVisibility={columnVisibility}
