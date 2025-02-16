@@ -75,6 +75,7 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
         "H2 Length",
         "Status Code",
         "Word Count",
+        "Indexability",
     ];
 
     // Create a new workbook and worksheet
@@ -208,6 +209,21 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
         worksheet
             .write((row_idx + 1) as u32, 8, &word_count)
             .map_err(|e| format!("Failed to write word count at row {}: {}", row_idx + 1, e))?;
+
+        // INDEXABILITY
+        let indexability = match obj.get("indexability") {
+            Some(Value::Object(indexability_obj)) => {
+                // Extract the indexability reason if it exists
+                match indexability_obj.get("indexability_reason") {
+                    Some(Value::String(reason)) => reason.clone(),
+                    _ => "Unknown".to_string(), // Default value if reason is missing or not a string
+                }
+            }
+            _ => "Unknown".to_string(), // Default value if indexability is missing or not an object
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 9, &indexability)
+            .map_err(|e| format!("Failed to write indexability at row {}: {}", row_idx + 1, e))?;
     }
 
     // Save workbook to an in-memory buffer
