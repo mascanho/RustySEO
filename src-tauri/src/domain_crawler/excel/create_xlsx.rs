@@ -53,3 +53,59 @@ pub fn generate_xlsx(data: Vec<Value>) -> Result<Vec<u8>, String> {
     println!("Excel file successfully created in memory!");
     Ok(buffer)
 }
+
+// Generate EXCEL FILE WITH THE DATA FROM THE MAIN TABLE
+
+pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
+    println!("Generating Excel with: {:?}", &data);
+
+    if data.is_empty() {
+        return Err("No data to generate Excel".to_string());
+    }
+
+    // DEFINE THE HEADERS NEEDED FOR THE TABLE
+    let headers = vec!["URL"];
+
+    let mut workbook = Workbook::new();
+    let worksheet = workbook.add_worksheet();
+
+    // DEFINE THE HEADER FORMAT
+    let header_format = Format::new()
+        .set_bold()
+        .set_border(FormatBorder::Thin)
+        .set_align(FormatAlign::Center);
+
+    // WRITE THE HEADERS
+    for (col_idx, header) in headers.iter().enumerate() {
+        worksheet
+            .write_with_format(0, col_idx as u16, *header, &header_format)
+            .map_err(|e| e.to_string())?;
+    }
+
+    // Write data rows
+    for (row_idx, array) in data.iter().enumerate() {
+        if let Value::Object(obj) = array {
+            // Extract the "url" field from the object
+            if let Some(url_value) = obj.get("url") {
+                let url = match url_value {
+                    Value::String(s) => s.clone(),
+                    _ => return Err("Invalid URL format: expected a string".to_string()),
+                };
+
+                // Write the URL to the worksheet
+                worksheet
+                    .write((row_idx + 1) as u32, 0, url)
+                    .map_err(|e| e.to_string())?;
+            } else {
+                return Err("Missing 'url' field in JSON object".to_string());
+            }
+        } else {
+            return Err("Invalid JSON structure: expected an array of objects".to_string());
+        }
+    }
+
+    // Save workbook to an in-memory buffer
+    let buffer = workbook.save_to_buffer().map_err(|e| e.to_string())?;
+
+    Ok(buffer)
+}

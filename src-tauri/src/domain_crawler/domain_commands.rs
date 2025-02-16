@@ -5,7 +5,10 @@ use serde_json::Value;
 
 use crate::domain_crawler::domain_crawler;
 
-use super::{excel::create_xlsx::generate_xlsx, models::DomainCrawlResults};
+use super::{
+    excel::create_xlsx::{generate_excel_main_table, generate_xlsx},
+    models::DomainCrawlResults,
+};
 
 #[tauri::command]
 pub async fn domain_crawl_command(
@@ -37,6 +40,18 @@ pub async fn domain_crawl_command(
 pub async fn create_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
     // Call the export_to_excel function and handle its result
     match generate_xlsx(data) {
+        Ok(file) => Ok(file),
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            // Explicitly return the error
+            Err(e)
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn create_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
+    match generate_excel_main_table(data) {
         Ok(file) => Ok(file),
         Err(e) => {
             eprintln!("Error: {}", e);

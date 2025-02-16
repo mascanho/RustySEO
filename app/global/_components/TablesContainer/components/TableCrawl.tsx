@@ -24,6 +24,10 @@ import { TbColumns3 } from "react-icons/tb";
 import DownloadButton from "./DownloadButton";
 import useFilterTableURL from "@/app/Hooks/useFilterTableUrl";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import { Handle } from "vaul";
+import { invoke } from "@tauri-apps/api/core";
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeFile } from "@tauri-apps/plugin-fs";
 
 interface TableCrawlProps {
   rows: Array<{
@@ -199,6 +203,7 @@ const TableRow = ({
         ? "Indexable"
         : "Not Indexable" || "",
       row?.language || "",
+      row?.schema ? "Yes" : "No",
     ],
     [row, index],
   );
@@ -271,17 +276,17 @@ const ColumnPicker = ({
     () => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <div className="border dark:border-white/20  w-8  flex justify-center items-center rounded h-6">
+          <div className="border dark:border-white/20   flex justify-center items-center rounded h-6 w-full">
             <TbColumns3 className="w-5 h-5 dark:text-white/50 p-1 " />
           </div>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-32 bg-white dark:bg-brand-darker border dark:border-brand-dark rounded shadow-lg z-20">
+        <DropdownMenuContent className="w-32 bg-white dark:bg-brand-darker border dark:border-brand-dark rounded shadow-lg z-20 hover:text-white">
           {headerTitles.map((header, index) => (
             <DropdownMenuCheckboxItem
               key={header}
               checked={columnVisibility[index] ?? true}
               onCheckedChange={() => handleToggle(index)}
-              className="p-2 hover:bg-gray-100 w-fit dark:hover:bg-brand-dark space-x-6 dark:text-white text-brand-bright"
+              className="p-2 hover:bg-gray-100 w-full dark:hover:bg-brand-dark space-x-6 dark:text-white text-brand-bright hover:text-white"
             >
               <span className="ml-5 dark:text-brand-bright">{header}</span>
             </DropdownMenuCheckboxItem>
@@ -307,6 +312,36 @@ const TableCrawl = ({
   const [columnVisibility, setColumnVisibility] = useState(
     headerTitles.map(() => true),
   );
+
+  // SET THE TAURI STUFF FOR THE DOWNLOAD
+  const handleDownload = async () => {
+    try {
+      // Call the backend command to generate the Excel file
+      const fileBuffer = await invoke("create_excel_main_table", {
+        data: rows,
+      });
+
+      // Prompt the user to choose a file path to save the Excel file
+      const filePath = await save({
+        filters: [
+          {
+            name: "Excel File",
+            extensions: ["xlsx"],
+          },
+        ],
+        defaultPath: "RustySEO-AllData.xlsx", // Default file name
+      });
+
+      if (filePath) {
+        // Convert the Uint8Array to a binary file and save it
+        await writeFile(filePath, new Uint8Array(fileBuffer));
+      } else {
+        console.log("User canceled the save dialog.");
+      }
+    } catch (error) {
+      console.error("Error generating or saving Excel file:", error);
+    }
+  };
 
   // State to track the clicked cell (rowIndex, cellIndex)
   const [clickedCell, setClickedCell] = useState<{
@@ -474,8 +509,8 @@ const TableCrawl = ({
           onChange={(e) => debouncedSearch(e.target.value)}
           className="w-full p-1 pl-2 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
         />
-        <SelectFilter />
-        <DownloadButton />
+        {/* <SelectFilter /> */}
+        <DownloadButton data={"data"} download={handleDownload} />
         <div className="mr-1.5">
           <ColumnPicker
             columnVisibility={columnVisibility}

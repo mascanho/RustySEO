@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useEffect, useRef } from "react";
 
-const DetailsTable = ({ data }: { data: any }) => {
+const DetailsTable = ({ data, height }: { data: any; height: number }) => {
   // Function to make columns resizable
   const makeResizable = (tableRef: HTMLTableElement | null) => {
     if (!tableRef) return;
@@ -46,6 +46,26 @@ const DetailsTable = ({ data }: { data: any }) => {
   useEffect(() => {
     makeResizable(tableRef.current);
   }, []);
+
+  if (data.length === 0) {
+    return (
+      <div
+        className="w-full"
+        style={{
+          height: `${height - 50}px`,
+          // height: "200px",
+          display: "flex",
+          alignItems: "center",
+          width: "100%",
+          justifyContent: "center",
+        }}
+      >
+        <p className="text-black/50 dark:text-white/50">
+          Select a row to view details
+        </p>
+      </div>
+    );
+  }
 
   return (
     <table

@@ -45,7 +45,9 @@ const SchemaSubTable = ({ height }) => {
           className="w-full"
           style={{ height: `${height + 2}px`, display: "flex" }}
         >
-          <p className="m-auto">No schema data available.</p>
+          <p className="m-auto dark:text-white/50 text-black/50">
+            No schema data available.
+          </p>
         </div>
       )}
     </div>

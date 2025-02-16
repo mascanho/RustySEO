@@ -30,6 +30,7 @@ import { writeFileXLSX, utils } from "xlsx";
 import { ask } from "@tauri-apps/plugin-dialog";
 import { save } from "@tauri-apps/plugin-dialog";
 import { writeFile, BaseDirectory } from "@tauri-apps/plugin-fs";
+import { toast } from "sonner";
 
 const TruncatedCell = ({
   text,
@@ -254,6 +255,12 @@ const ImagesCrawlTable = ({
   const handleDownload = async () => {
     try {
       // Call the backend command to generate the Excel file
+
+      if (!rows.length) {
+        toast.error("No data to download, crawl something first");
+        return;
+      }
+
       const fileBuffer = await invoke("create_excel", { data: rows });
 
       // Prompt the user to choose a file path to save the Excel file

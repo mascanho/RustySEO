@@ -18,6 +18,7 @@ export const initialColumnWidths = [
   "120px", // CONTENT TYPE
   "100px", //  Indexability
   "50px", //  Language
+  "50px", //  Schema
 ];
 
 export const initialColumnAlignments = [
@@ -39,6 +40,7 @@ export const initialColumnAlignments = [
   "left", //  CONTENT TYPE
   "left", //  Indexability
   "center", //  Language
+  "center", //  Schema
 ];
 
 export const headerTitles = [
@@ -60,4 +62,5 @@ export const headerTitles = [
   "Content Type",
   "Indexability",
   "Language",
+  "Schema",
 ];

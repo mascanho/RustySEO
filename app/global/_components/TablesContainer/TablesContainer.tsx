@@ -114,7 +114,7 @@ export default function Home() {
 
   return (
     <div
-      className={`mx-0 mt-8 h-screen dark:bg-brand-darker ${visibility.sidebar ? "w-[calc(100vw-20rem)]" : ""}`}
+      className={`mx-0 mt-8 h-screen dark:bg-brand-darker ${visibility.sidebar ? "w-[calc(100vw-21rem)]" : ""}`}
     >
       <div
         ref={containerRef}
@@ -184,7 +184,10 @@ export default function Home() {
                   marginBottom: "80px",
                 }}
               >
-                <DetailsTable data={selectedTableURL} />
+                <DetailsTable
+                  data={selectedTableURL}
+                  height={bottomTableHeight}
+                />
               </div>
             </TabsContent>
             <TabsContent value="inlinks">

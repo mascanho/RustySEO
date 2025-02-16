@@ -26,7 +26,7 @@ import { GrPlan } from "react-icons/gr";
 import Analytics from "../components/ui/Analytics/Analytics";
 import ClarityContainer from "../components/ui/MSClarityModal/ClarityContainer";
 import KeywordAnalytics from "../components/ui/KwTracking/KeywordAnalytics";
-import GSCcontainer from "../components/ui/GscContainer/GscContainer";
+import GSCcontainer from "../components/ui/GscContainer/GSCcontainer";
 import ContentPlannerContainer from "../components/ui/ContentPlanner/ContentPlannerContainer";
 
 export default function Page() {
@@ -197,16 +197,19 @@ export default function Page() {
           <Tabs.Panel value="analytics mt-10">
             <Analytics />
           </Tabs.Panel>
-          <Tabs.Panel value="clarity">
+          <Tabs.Panel
+            value="clarity"
+            className="h-[calc(100vh-8.8rem)] mt-8 overflow-auto"
+          >
             <ClarityContainer />
           </Tabs.Panel>{" "}
-          <Tabs.Panel value="kws">
+          <Tabs.Panel value="kws" className="h-[calc(100vh-8.8rem)] mt-9">
             <KeywordAnalytics />
           </Tabs.Panel>{" "}
-          {/* <Tabs.Panel value="gsc">
+          <Tabs.Panel value="gsc" ls>
             <GSCcontainer />
-          </Tabs.Panel>{" "} */}
-          <Tabs.Panel value="content" className="mt-8 h-screen">
+          </Tabs.Panel>{" "}
+          <Tabs.Panel value="content" className="mt-9 h-screen">
             <ContentPlannerContainer />
           </Tabs.Panel>{" "}
         </Tabs>
