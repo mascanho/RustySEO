@@ -26,7 +26,7 @@ import { GrPlan } from "react-icons/gr";
 import Analytics from "../components/ui/Analytics/Analytics";
 import ClarityContainer from "../components/ui/MSClarityModal/ClarityContainer";
 import KeywordAnalytics from "../components/ui/KwTracking/KeywordAnalytics";
-import GSCcontainer from "../components/ui/GscContainer/GSCcontainer";
+import GSCcontainer from "../components/ui/GSCcontainer/GSCcontainer";
 import ContentPlannerContainer from "../components/ui/ContentPlanner/ContentPlannerContainer";
 
 export default function Page() {
