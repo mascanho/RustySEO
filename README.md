@@ -71,6 +71,8 @@ Use at your own risk, this software is new and under development.
 | 13  | Schema Generator & Validator             |   ✅   |
 | 14  | Keyword Clustering                       |   ✅   |
 | 15  | Machine Learning                         |   ✅   |
+| 16  | Collaboration                            |   ⏳   |
+| 17  | API / Streaming                          |   ⏳   |
 
 
 ## 🔌 Connectors / APIs (Get your keys, they are free 😉)
