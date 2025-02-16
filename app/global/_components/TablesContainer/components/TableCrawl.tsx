@@ -28,7 +28,7 @@ import { Handle } from "vaul";
 import { invoke } from "@tauri-apps/api/core";
 import { save } from "@tauri-apps/plugin-dialog";
 import { writeFile } from "@tauri-apps/plugin-fs";
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
 
 interface TableCrawlProps {
   rows: Array<{
@@ -317,16 +317,16 @@ const TableCrawl = ({
 
   // SET THE TAURI STUFF FOR THE DOWNLOAD
   const handleDownload = async () => {
+    if (!rows.length) {
+      toast.error("No data to download");
+      return;
+    }
+
     // Set the loader state to true
-    setIsGeneratingExcel(true);
     try {
       // Call the backend command to generate the Excel file
       const fileBuffer = await invoke("create_excel_main_table", {
         data: rows,
-      }).then(() => {
-        console.log("Generated Excel");
-        // Set the loader state to false
-        setIsGeneratingExcel(false);
       });
 
       // Prompt the user to choose a file path to save the Excel file
