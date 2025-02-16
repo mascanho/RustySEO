@@ -69,6 +69,8 @@ Use at your own risk, this software is new and under development.
 | 11  | Chatbot LLM Crawl Context                |   ✅   |
 | 12  | Extraction of HTML / JS / CSS fragments  |   ☠️   |
 | 13  | Schema Generator & Validator             |   ✅   |
+| 14  | Keyword Clustering                       |   ✅   |
+| 15  | Machine Learning                         |   ✅   |
 
 
 ## 🔌 Connectors / APIs (Get your keys, they are free 😉)
