@@ -114,7 +114,7 @@ export default function Home() {
 
   return (
     <div
-      className={`mx-0 mt-8 h-screen dark:bg-brand-darker ${visibility.sidebar ? "w-[calc(100vw-20.5rem)]" : ""}`}
+      className={`mx-0 mt-8 h-screen dark:bg-brand-darker ${visibility.sidebar ? "w-[calc(100vw-20.4rem)]" : ""}`}
     >
       <div
         ref={containerRef}

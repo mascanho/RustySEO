@@ -69,6 +69,8 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
         "URL",
         "Page Title",
         "Page Title Length",
+        "Description",        // New column for description
+        "Description Length", // New column for description length
         "H1",
         "H1 Length",
         "H2",
@@ -76,6 +78,17 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
         "Status Code",
         "Word Count",
         "Indexability",
+        "Schema",
+        "Canonicals",
+        "Flesch Score",
+        "Flesch Readability",
+        "Keywords",
+        "Language",
+        "Meta Robots",
+        "Mobile",
+        "Page Size (KB)",
+        "Response Time (s)",
+        "Text Ratio (%)",
     ];
 
     // Create a new workbook and worksheet
@@ -138,6 +151,27 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
             .write((row_idx + 1) as u32, 2, title_length)
             .map_err(|e| format!("Failed to write title length at row {}: {}", row_idx + 1, e))?;
 
+        // Extract and write the description
+        let description = match obj.get("description") {
+            Some(Value::String(s)) => s.clone(),
+            _ => String::new(), // If description is missing or not a string, write a blank cell
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 3, &description)
+            .map_err(|e| format!("Failed to write description at row {}: {}", row_idx + 1, e))?;
+
+        // Calculate and write the description length
+        let description_length = description.len() as u32;
+        worksheet
+            .write((row_idx + 1) as u32, 4, description_length)
+            .map_err(|e| {
+                format!(
+                    "Failed to write description length at row {}: {}",
+                    row_idx + 1,
+                    e
+                )
+            })?;
+
         // Extract and write the H1
         let h1 = match obj.get("headings").and_then(|headings| headings.get("h1")) {
             Some(Value::Array(arr)) if !arr.is_empty() => {
@@ -149,7 +183,7 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
             _ => String::new(), // If H1 is missing or empty, write a blank cell
         };
         worksheet
-            .write((row_idx + 1) as u32, 3, &h1)
+            .write((row_idx + 1) as u32, 5, &h1)
             .map_err(|e| format!("Failed to write H1 at row {}: {}", row_idx + 1, e))?;
 
         // Calculate and write the H1 length
@@ -159,7 +193,7 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
             h1.len().to_string() // Length of H1 as a string
         };
         worksheet
-            .write((row_idx + 1) as u32, 4, h1_length)
+            .write((row_idx + 1) as u32, 6, h1_length)
             .map_err(|e| format!("Failed to write H1 length at row {}: {}", row_idx + 1, e))?;
 
         // Extract and write the H2
@@ -173,7 +207,7 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
             _ => String::new(), // If H2 is missing or empty, write a blank cell
         };
         worksheet
-            .write((row_idx + 1) as u32, 5, &h2)
+            .write((row_idx + 1) as u32, 7, &h2)
             .map_err(|e| format!("Failed to write H2 at row {}: {}", row_idx + 1, e))?;
 
         // Calculate and write the H2 length
@@ -183,7 +217,7 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
             h2.len().to_string() // Length of H2 as a string
         };
         worksheet
-            .write((row_idx + 1) as u32, 6, h2_length)
+            .write((row_idx + 1) as u32, 8, h2_length)
             .map_err(|e| format!("Failed to write H2 length at row {}: {}", row_idx + 1, e))?;
 
         // Extract and write the status code
@@ -195,7 +229,7 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
             _ => return Err("Invalid status code format: expected a number".to_string()),
         };
         worksheet
-            .write((row_idx + 1) as u32, 7, &status_code)
+            .write((row_idx + 1) as u32, 9, &status_code)
             .map_err(|e| format!("Failed to write status code at row {}: {}", row_idx + 1, e))?;
 
         // Extract and write the word count
@@ -207,7 +241,7 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
             _ => return Err("Invalid word count format: expected a number".to_string()),
         };
         worksheet
-            .write((row_idx + 1) as u32, 8, &word_count)
+            .write((row_idx + 1) as u32, 10, &word_count)
             .map_err(|e| format!("Failed to write word count at row {}: {}", row_idx + 1, e))?;
 
         // INDEXABILITY
@@ -222,8 +256,172 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
             _ => "Unknown".to_string(), // Default value if indexability is missing or not an object
         };
         worksheet
-            .write((row_idx + 1) as u32, 9, &indexability)
+            .write((row_idx + 1) as u32, 11, &indexability)
             .map_err(|e| format!("Failed to write indexability at row {}: {}", row_idx + 1, e))?;
+
+        // SCHEMA
+        let schema = match obj.get("schema") {
+            Some(Value::Null) => "no".to_string(), // If schema is null, write "no"
+            Some(_) => "yes".to_string(),          // If schema is not null, write "yes"
+            None => "no".to_string(),              // If schema is missing, write "no"
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 12, &schema)
+            .map_err(|e| format!("Failed to write schema at row {}: {}", row_idx + 1, e))?;
+
+        // CANONICALS
+        let canonicals = match obj.get("canonicals") {
+            Some(Value::Array(arr)) if !arr.is_empty() => arr
+                .iter()
+                .filter_map(|v| match v {
+                    Value::String(s) => Some(s.clone()),
+                    _ => None,
+                })
+                .collect::<Vec<String>>()
+                .join(", "),
+            _ => String::new(), // If canonicals is missing or empty, write a blank cell
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 13, &canonicals)
+            .map_err(|e| format!("Failed to write canonicals at row {}: {}", row_idx + 1, e))?;
+
+        // FLESCH SCORE
+        let flesch_score = match obj.get("flesch") {
+            Some(Value::Object(flesch_obj)) => match flesch_obj.get("Ok") {
+                Some(Value::Array(arr)) if arr.len() >= 1 => match &arr[0] {
+                    // Borrow the value here
+                    Value::Number(n) => n.to_string(),
+                    _ => String::new(), // If Flesch score is not a number, write a blank cell
+                },
+                _ => String::new(), // If Flesch score is missing or invalid, write a blank cell
+            },
+            _ => String::new(), // If Flesch object is missing, write a blank cell
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 14, &flesch_score)
+            .map_err(|e| format!("Failed to write Flesch score at row {}: {}", row_idx + 1, e))?;
+
+        // FLESCH READABILITY
+        let flesch_readability = match obj.get("flesch") {
+            Some(Value::Object(flesch_obj)) => match flesch_obj.get("Ok") {
+                Some(Value::Array(arr)) if arr.len() >= 2 => match &arr[1] {
+                    Value::String(s) => s.clone(),
+                    _ => String::new(), // If Flesch readability is not a string, write a blank cell
+                },
+                _ => String::new(), // If Flesch readability is missing or invalid, write a blank cell
+            },
+            _ => String::new(), // If Flesch object is missing, write a blank cell
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 15, &flesch_readability)
+            .map_err(|e| {
+                format!(
+                    "Failed to write Flesch readability at row {}: {}",
+                    row_idx + 1,
+                    e
+                )
+            })?;
+
+        // KEYWORDS
+        let keywords = match obj.get("keywords") {
+            Some(Value::Array(arr)) => arr
+                .iter()
+                .filter_map(|v| match v {
+                    Value::Array(kw_arr) if kw_arr.len() >= 1 => match &kw_arr[0] {
+                        Value::String(s) => Some(s.clone()),
+                        _ => None,
+                    },
+                    _ => None,
+                })
+                .collect::<Vec<String>>()
+                .join(", "),
+            _ => String::new(), // If keywords is missing or invalid, write a blank cell
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 16, &keywords)
+            .map_err(|e| format!("Failed to write keywords at row {}: {}", row_idx + 1, e))?;
+
+        // LANGUAGE
+        let language = match obj.get("language") {
+            Some(Value::String(s)) => s.clone(),
+            _ => String::new(), // If language is missing or not a string, write a blank cell
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 17, &language)
+            .map_err(|e| format!("Failed to write language at row {}: {}", row_idx + 1, e))?;
+
+        // META ROBOTS
+        let meta_robots = match obj.get("meta_robots") {
+            Some(Value::Object(meta_robots_obj)) => match meta_robots_obj.get("meta_robots") {
+                Some(Value::Array(arr)) => arr
+                    .iter()
+                    .filter_map(|v| match v {
+                        Value::String(s) => Some(s.clone()),
+                        _ => None,
+                    })
+                    .collect::<Vec<String>>()
+                    .join(", "),
+                _ => String::new(), // If meta_robots is missing or invalid, write a blank cell
+            },
+            _ => String::new(), // If meta_robots object is missing, write a blank cell
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 18, &meta_robots)
+            .map_err(|e| format!("Failed to write meta robots at row {}: {}", row_idx + 1, e))?;
+
+        // MOBILE
+        let mobile = match obj.get("mobile") {
+            Some(Value::Bool(b)) => b.to_string(),
+            _ => String::new(), // If mobile is missing or not a boolean, write a blank cell
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 19, &mobile)
+            .map_err(|e| format!("Failed to write mobile at row {}: {}", row_idx + 1, e))?;
+
+        // PAGE SIZE (KB)
+        let page_size_kb = match obj.get("page_size") {
+            Some(Value::Array(arr)) if !arr.is_empty() => match &arr[0] {
+                Value::Object(page_size_obj) => match page_size_obj.get("kb") {
+                    Some(Value::Number(n)) => n.to_string(),
+                    _ => String::new(), // If page size is missing or invalid, write a blank cell
+                },
+                _ => String::new(), // If page size object is missing, write a blank cell
+            },
+            _ => String::new(), // If page size array is missing, write a blank cell
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 20, &page_size_kb)
+            .map_err(|e| format!("Failed to write page size at row {}: {}", row_idx + 1, e))?;
+
+        // RESPONSE TIME (s)
+        let response_time = match obj.get("response_time") {
+            Some(Value::Number(n)) => n.to_string(),
+            _ => String::new(), // If response time is missing or not a number, write a blank cell
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 21, &response_time)
+            .map_err(|e| {
+                format!(
+                    "Failed to write response time at row {}: {}",
+                    row_idx + 1,
+                    e
+                )
+            })?;
+
+        // TEXT RATIO (%)
+        let text_ratio = match obj.get("text_ratio") {
+            Some(Value::Array(arr)) if !arr.is_empty() => match &arr[0] {
+                Value::Object(text_ratio_obj) => match text_ratio_obj.get("text_ratio") {
+                    Some(Value::Number(n)) => n.to_string(),
+                    _ => String::new(), // If text ratio is missing or invalid, write a blank cell
+                },
+                _ => String::new(), // If text ratio object is missing, write a blank cell
+            },
+            _ => String::new(), // If text ratio array is missing, write a blank cell
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 22, &text_ratio)
+            .map_err(|e| format!("Failed to write text ratio at row {}: {}", row_idx + 1, e))?;
     }
 
     // Save workbook to an in-memory buffer

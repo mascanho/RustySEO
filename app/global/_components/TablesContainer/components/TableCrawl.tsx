@@ -188,6 +188,8 @@ const TableRow = ({
       row?.url || "",
       row?.title?.[0]?.title || "",
       row?.title?.[0]?.title_len || "",
+      row?.description || "",
+      row?.description?.length || "",
       row?.headings?.h1?.[0] || "",
       row?.headings?.h1?.[0]?.length || "",
       row?.headings?.h2?.[0] || "",
@@ -323,12 +325,15 @@ const TableCrawl = ({
     }
 
     // Set the loader state to true
+    setIsGeneratingExcel(true);
     try {
       // Call the backend command to generate the Excel file
+
       const fileBuffer = await invoke("create_excel_main_table", {
         data: rows,
       });
 
+      setIsGeneratingExcel(false);
       // Prompt the user to choose a file path to save the Excel file
       const filePath = await save({
         filters: [

@@ -215,7 +215,7 @@ export default function Page() {
         </Tabs>
       </section>
       <aside
-        className={`transition-all ease-linear delay-100  ${visibility.sidebar ? "w-[25.3rem] flex-grow" : "w-0 "} h-screen `}
+        className={`transition-all ease-linear delay-100  ${visibility.sidebar ? "w-full max-w-[20.4rem] flex-grow" : "w-0 "} h-screen `}
       >
         <SidebarContainer />
       </aside>
