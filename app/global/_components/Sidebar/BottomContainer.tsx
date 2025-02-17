@@ -8,7 +8,11 @@ const BottomContainer = () => {
   return (
     <div className="border-t dark:border-brand-dark relative h-[38rem] min-h-[30rem] flex flex-col">
       <Tabs defaultValue="overview" className="overflow-hidden h-full w-full">
-        <Tabs.List justify="center" grow className="dark:text-white text-xs ">
+        <Tabs.List
+          justify="center"
+          grow
+          className="dark:text-white text-xs bg-slate-100 dark:bg-gray-900"
+        >
           <Tabs.Tab value="overview">Overview</Tabs.Tab>
           <Tabs.Tab value="robotsTab">Robots</Tabs.Tab>
           <Tabs.Tab value="sitemaps">Sitemaps</Tabs.Tab>
@@ -17,7 +21,7 @@ const BottomContainer = () => {
 
         <Tabs.Panel
           value="overview"
-          className="overflow-auto flex flex-col justify-between relative"
+          className="overflow-auto flex flex-col justify-between relative dark:bg-gray-900"
         >
           <OverviewBottomSidePanel />
         </Tabs.Panel>

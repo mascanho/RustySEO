@@ -2,7 +2,7 @@
 import React from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import { darkula } from "react-syntax-highlighter/dist/cjs/styles/hljs";
+import { darcula } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 const SchemaSubTable = ({ height }) => {
   const { selectedTableURL } = useGlobalCrawlStore();
@@ -30,7 +30,7 @@ const SchemaSubTable = ({ height }) => {
       {schemaData ? (
         <SyntaxHighlighter
           language="json" // Specify the language as JSON
-          style={darkula} // Use the dark theme (or choose another theme)
+          style={darcula} // Use the dark theme (or choose another theme)
           showLineNumbers // Optional: Show line numbers
           wrapLines // Optional: Wrap long lines
           customStyle={{

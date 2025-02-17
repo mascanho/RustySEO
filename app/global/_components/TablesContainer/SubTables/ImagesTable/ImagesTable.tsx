@@ -20,7 +20,7 @@ const ImagesTable = () => {
   // Fallback if no images are found
   if (!selectedTableURL?.[0]?.images?.Ok) {
     return (
-      <div className="text-xs h-full flex justify-center items-center  m-auto w-full dark:text-white/50">
+      <div className="text-base text-black/50 dark:text-white/50 h-full flex justify-center items-center  m-auto w-full dark:text-white/50">
         <span>No images found</span>
       </div>
     );
@@ -46,7 +46,7 @@ const ImagesTable = () => {
     <div className="flex h-full w-full">
       {/* Table Section */}
       <section className="flex-1 overflow-hidden w-full">
-        <div className="max-h-[30vh] overflow-y-auto">
+        <div className="max-h-[30vh] overflow-y-auto imagesSubTable ">
           <table className="w-full border-collapse border border-gray-200 text-xs table-fixed">
             <thead>
               <tr className="sticky top-0 bg-white">
@@ -66,7 +66,9 @@ const ImagesTable = () => {
                   <tr
                     key={index}
                     className={`cursor-pointer  ${
-                      selectedRowIndex === index ? "bg-blue-100" : ""
+                      selectedRowIndex === index
+                        ? "bg-brand-bright text-white"
+                        : ""
                     }`}
                     onClick={() => handleRowClick(image, index)}
                   >

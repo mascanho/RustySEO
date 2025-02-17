@@ -110,7 +110,10 @@ td {
 }
 
 table:not(.issues),
-tbody:not(.issues) > tr:not(.issues):nth-child(odd) {
+tbody:not(.issues)
+  > tr:not(.issues):nth-child(odd)
+  tbody:not(.issues)
+  > tr:not(.issues):nth-child(odd) {
   background: #0001;
   @apply dark:bg-brand-dark/20;
 }
@@ -768,4 +771,10 @@ div:is(.sitemapsDomain) {
 
 .crawlSchema pre {
   @apply h-[20rem] overflow-auto !important;
+}
+
+/* IMAGES SUB TABLE */
+.imagesSubTable table td {
+  /* all: unset !important; */
+  background: transparent !important;
 }

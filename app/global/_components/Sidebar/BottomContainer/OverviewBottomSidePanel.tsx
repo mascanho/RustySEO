@@ -10,7 +10,7 @@ const OverviewBottomSidePanel = () => {
       className="h-full flex flex-col justify-between "
     >
       {/* Chart Section */}
-      <Tabs.Panel value="chart1" className="h-full">
+      <Tabs.Panel value="chart1" className="h-full dark:bg-gray-900">
         <OverviewChart />
       </Tabs.Panel>
 
