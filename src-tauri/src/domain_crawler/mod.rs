@@ -1,3 +1,4 @@
+pub mod db;
 pub mod domain_commands;
 pub mod domain_crawler;
 pub mod excel;
