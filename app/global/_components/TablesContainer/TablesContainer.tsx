@@ -24,6 +24,7 @@ import TableCrawlJs from "./JavascriptTable/TableCrawlJs";
 import ImagesCrawlTable from "./ImagesTable/ImagesCrawlTable";
 import ImagesTable from "./SubTables/ImagesTable/ImagesTable";
 import SchemaSubTable from "./SubTables/SchemaSubTable/SchemaSubTable";
+import useCrawlStore from "@/store/GlobalCrawlDataStore";
 
 export default function Home() {
   const [containerHeight, setContainerHeight] = useState(600);
@@ -34,8 +35,10 @@ export default function Home() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { visibility } = useVisibilityStore();
-  const { crawlData, statusCodes, issues, issueRow, selectedTableURL } =
+  const { statusCodes, issues, issueRow, selectedTableURL } =
     useGlobalCrawlStore();
+
+  const { crawlData } = useCrawlStore();
 
   const updateHeight = useCallback(() => {
     const windowHeight = window.innerHeight;
