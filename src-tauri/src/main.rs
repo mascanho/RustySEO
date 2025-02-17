@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use crate::crawler::content::scrape_google_headings_command;
+use crate::domain_crawler::db_deep::db;
 use crate::domain_crawler::domain_commands;
 use crate::domain_crawler::helpers;
 use crawler::{
@@ -190,7 +191,11 @@ async fn main() {
             commands::fetch_keywords_summarized_matched_command,
             domain_commands::domain_crawl_command,
             domain_commands::create_excel,
-            domain_commands::create_excel_main_table
+            domain_commands::create_excel_main_table,
+            // DEEP CRAWL DATABASE STUFF
+            db::create_domain_results_table,
+            db::read_domain_results_history_table,
+            db::create_domain_results_history,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

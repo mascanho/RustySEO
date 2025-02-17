@@ -1,21 +1,46 @@
+// @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import React from "react";
+import { invoke } from "@tauri-apps/api/core";
+import React, { useEffect } from "react";
 import { MdOutlineErrorOutline } from "react-icons/md";
 
 const HistoryDomainCrawls = () => {
   const [expandedRows, setExpandedRows] = React.useState<number[]>([]);
-  const { crawlData } = useGlobalCrawlStore();
+  const { crawlData, domainCrawlLoading } = useGlobalCrawlStore();
+
+  useEffect(() => {
+    try {
+      // Ensure the table exists (idempotent operation)
+      invoke("create_domain_results_table");
+      console.log("Table created or already exists");
+    } catch (error) {
+      console.error("Error creating table:", error);
+    }
+  }, []); // runs once when the component mounts
+
+  useEffect(() => {
+    // Fetch data from the database
+    const fetchData = async () => {
+      try {
+        // Read data from the table
+        const result = await invoke("read_domain_results_history_table");
+        console.log("Data fetched successfully:", result);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, []); // needs to run everytime the crawl finishes
 
   const crawlHistory = [
     {
-      date: "2023-10-01",
-      pagesCrawled: 120,
+      id: 1,
+      domain: crawlData?.[0]?.url || "",
+      date: new Date().toISOString().split("T")[0],
+      pages: crawlData?.length,
       errors: 5,
-      website: "example1.com",
-      details: "Detail 1",
-      newLinksFound: 30,
-      avgResponseTime: "200ms",
-      totalJavascript: 700,
+      status: "completed",
     },
   ];
 
@@ -29,6 +54,26 @@ const HistoryDomainCrawls = () => {
     }
     setExpandedRows(currentExpandedRows);
   };
+
+  // ADD THE DATA TO THE DB
+  useEffect(() => {
+    const createHistory = async () => {
+      try {
+        const result = await invoke("create_domain_results_history", {
+          data: crawlHistory,
+        });
+        console.log(result);
+      } catch (error) {
+        console.error("Error creating domain results history:", error);
+      }
+    };
+
+    if (crawlData.length === 0) {
+      return;
+    } else {
+      createHistory();
+    }
+  }, [domainCrawlLoading]);
 
   return (
     <div className="text-xs px-">

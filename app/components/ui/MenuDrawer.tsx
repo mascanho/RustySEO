@@ -7,6 +7,7 @@ import useStore from "../../../store/Panes";
 import { invoke } from "@tauri-apps/api/core";
 import useModelStore from "@/store/AIModels";
 import KeywordSerp from "./TopMenuBar/KeywordSerp";
+import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 
 function MenuDrawer() {
   const [opened, setOpened] = useState(false);
@@ -134,21 +135,11 @@ function MenuDrawer() {
   return (
     <>
       <KeywordSerp />
-      <div className="items-center hidden md:flex  z-[10] absolute top-[1px] left-2">
-        <div className="flex items-center flex bg-transparent rounded-md">
-          <img
-            src="icon.png"
-            alt=""
-            className="w-8 h-auto py-1 object-cover mr-2 hidden dark:flex"
-          />
-          <img
-            src="icon-light.png"
-            alt=""
-            className="w-8 h-auto py-1 object-cover mr-2  dark:hidden"
-          />
+      <div className="items-center hidden md:flex  z-[10] absolute top-[9px] left-2">
+        <div className="flex items-center flex bg-transparent rounded-full">
           <Menu>
             <Menu.Target>
-              <Button className="text-xs bg-brand-dark px-3 h-7  rounded-full text-white">
+              <Button className="text-xs bg-gradient-to-r from-brand-bright to-purple-900 px-2 h-6 rounded-full text-white">
                 {badge}
               </Button>
             </Menu.Target>
@@ -166,6 +157,27 @@ function MenuDrawer() {
           </Menu>
         </div>
       </div>
+      <a
+        href="https://www.rustyseo.com"
+        target="_blank"
+        className="absolute right-3 flex cursor-pointer"
+      >
+        <img
+          src="icon.png"
+          alt=""
+          className="w-6 h-auto py-1 object-cover mr-2 hidden dark:flex"
+        />
+        <img
+          src="icon-light.png"
+          alt=""
+          className="w-6 h-auto py-1 object-cover mr-2  dark:hidden"
+        />
+        <img
+          src="rustyLight.png"
+          className="object-contain w-auto h-6 mt-1 -ml-1.5"
+          alt=""
+        />
+      </a>
     </>
   );
 }
