@@ -1,11 +1,14 @@
 // @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { invoke } from "@tauri-apps/api/core";
-import React, { useEffect } from "react";
+import { listen } from "@tauri-apps/api/event";
+import React, { useEffect, useState } from "react";
 import { MdOutlineErrorOutline } from "react-icons/md";
+import { RiPagesLine, RiCalendarLine } from "react-icons/ri"; // Import icons
 
 const HistoryDomainCrawls = () => {
-  const [expandedRows, setExpandedRows] = React.useState<number[]>([]);
+  const [expandedRows, setExpandedRows] = useState<number[]>([]);
+  const [crawlHistory, setCrawlHistory] = useState([]);
   const { crawlData, domainCrawlLoading } = useGlobalCrawlStore();
 
   useEffect(() => {
@@ -19,30 +22,57 @@ const HistoryDomainCrawls = () => {
   }, []); // runs once when the component mounts
 
   useEffect(() => {
-    // Fetch data from the database
-    const fetchData = async () => {
-      try {
-        // Read data from the table
-        const result = await invoke("read_domain_results_history_table");
-        console.log("Data fetched successfully:", result);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      }
+    // Listen for the `crawl_complete` event from the backend
+    const unlisten = listen("crawl_complete", async () => {
+      console.log("Crawl complete event received");
+
+      // Step 1: Add the new crawl data to the database
+      await addDataToDatabase();
+
+      // Step 2: Fetch the updated data from the database
+      await fetchData();
+    });
+
+    // Cleanup the event listener when the component unmounts
+    return () => {
+      unlisten.then((fn) => fn());
     };
+  }, [crawlData]); // Re-run if `crawlData` changes
 
-    fetchData();
-  }, []); // needs to run everytime the crawl finishes
+  // Fetch data from the database
+  const fetchData = async () => {
+    try {
+      // Read data from the table
+      const result = await invoke("read_domain_results_history_table");
+      console.log("Data fetched successfully:", result);
+      setCrawlHistory(result); // Update the crawlHistory state with the fetched data
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
 
-  const crawlHistory = [
-    {
+  // Add new crawl data to the database
+  const addDataToDatabase = async () => {
+    if (crawlData.length === 0) return; // Don't add empty data
+
+    const newEntry = {
       id: 1,
       domain: crawlData?.[0]?.url || "",
       date: new Date().toISOString().split("T")[0],
       pages: crawlData?.length,
       errors: 5,
       status: "completed",
-    },
-  ];
+    };
+
+    try {
+      const result = await invoke("create_domain_results_history", {
+        data: [newEntry],
+      });
+      console.log("Data added to database:", result);
+    } catch (error) {
+      console.error("Error adding data to database:", error);
+    }
+  };
 
   const handleRowClick = (index: number) => {
     const currentExpandedRows = [...expandedRows];
@@ -55,39 +85,26 @@ const HistoryDomainCrawls = () => {
     setExpandedRows(currentExpandedRows);
   };
 
-  // ADD THE DATA TO THE DB
-  useEffect(() => {
-    const createHistory = async () => {
-      try {
-        const result = await invoke("create_domain_results_history", {
-          data: crawlHistory,
-        });
-        console.log(result);
-      } catch (error) {
-        console.error("Error creating domain results history:", error);
-      }
-    };
-
-    if (crawlData.length === 0) {
-      return;
-    } else {
-      createHistory();
-    }
-  }, [domainCrawlLoading]);
-
   return (
-    <div className="text-xs px-">
+    <div className="text-xs h-[calc(28rem-2rem)] overflow-auto">
       <div className="text-center">
         <div>
           {crawlHistory?.map((entry, index) => (
             <React.Fragment key={index}>
               <div
                 onClick={() => handleRowClick(index)}
-                className={`cursor-pointer px-2 flex mr-2 py-1 justify-between ${index % 2 === 0 ? "bg-gray-100 dark:bg-brand-dark" : "bg-gray-200 dark:bg-brand-darker"}`}
+                className={`cursor-pointer px-2 flex mr-2 py-1 justify-between ${index % 2 === 0 ? "bg-gray-100 dark:bg-brand-darker" : "bg-gray-200 dark:bg-brand-darker"}`}
               >
-                <div>{entry.date}</div>
-                <div>{entry.pagesCrawled}</div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-1 flex-1">
+                  <RiCalendarLine className="text-gray-500" />{" "}
+                  {/* Calendar icon */}
+                  <span>{entry.date}</span>
+                </div>
+                <div className="flex items-center space-x-1 justify-end flex-1">
+                  <span className="text-right">{entry.pages}</span>
+                  <RiPagesLine className="text-gray-500" /> {/* Pages icon */}
+                </div>
+                <div className="flex items-center space-x-2 flex-1 justify-end">
                   <span>
                     <MdOutlineErrorOutline className="mr-1 text-red-500" />
                   </span>
@@ -98,10 +115,10 @@ const HistoryDomainCrawls = () => {
                 <div className="bg-brand-bright/20 text-black dark:text-white/50 px-2 py-2">
                   <div className="text-left">
                     <p>
-                      <strong>Website:</strong> {entry.website}
+                      <strong>Website:</strong> {entry.domain}
                     </p>
                     <p>
-                      <strong>Pages Crawled:</strong> {entry.pagesCrawled}
+                      <strong>Pages Crawled:</strong> {entry.pages}
                     </p>
                     <p>
                       <strong>Details:</strong> {entry.details}
