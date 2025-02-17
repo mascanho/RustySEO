@@ -6,48 +6,51 @@ import React, {
   useMemo,
   useEffect,
 } from "react";
+import { debounce } from "lodash";
 import TableCrawl from "./components/TableCrawl";
-import DetailTable from "./components/DetailTable";
+import TableCrawlJs from "./JavascriptTable/TableCrawlJs";
+import ImagesCrawlTable from "./ImagesTable/ImagesCrawlTable";
+import DetailsTable from "./SubTables/DetailsTable/DetailsTable";
+import InlinksSubTable from "./SubTables/LinksSubtable/InlinksSubTable";
+import OutlinksSubTable from "./SubTables/LinksSubtable/OutlinksSubTable";
+import ImagesTable from "./SubTables/ImagesTable/ImagesTable";
+import SchemaSubTable from "./SubTables/SchemaSubTable/SchemaSubTable";
 import ResizableDivider from "./components/ResizableDivider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useVisibilityStore } from "@/store/VisibilityStore";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import { debounce } from "lodash";
-import Table404 from "./SubTables/404Table";
-import LinksSubTable from "./SubTables/LinksSubtable/InlinksSubTable";
-import InlinksSubTable from "./SubTables/LinksSubtable/InlinksSubTable";
-import OutlinksSubTable from "./SubTables/LinksSubtable/OutlinksSubTable";
-import DetailsTable from "./SubTables/DetailsTable/DetailsTable";
-import JsTableCrawl from "./JavascriptTable/JsTableCrawl";
-import { Filter } from "lucide-react";
-import TableCrawlJs from "./JavascriptTable/TableCrawlJs";
-import ImagesCrawlTable from "./ImagesTable/ImagesCrawlTable";
-import ImagesTable from "./SubTables/ImagesTable/ImagesTable";
-import SchemaSubTable from "./SubTables/SchemaSubTable/SchemaSubTable";
 import useCrawlStore from "@/store/GlobalCrawlDataStore";
+
+const BottomTableContent = ({ children, height }) => (
+  <div
+    style={{
+      height: `${height - 50}px`,
+      minHeight: "100px",
+      overflowY: "auto",
+      marginBottom: "80px",
+    }}
+  >
+    {children}
+  </div>
+);
 
 export default function Home() {
   const [containerHeight, setContainerHeight] = useState(600);
   const [bottomTableHeight, setBottomTableHeight] = useState(200);
-  const [selectedCellData, setSelectedCellData] = useState(null);
   const [activeTab, setActiveTab] = useState("crawledPages");
   const [activeBottomTab, setActiveBottomTab] = useState("details");
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { visibility } = useVisibilityStore();
-  const { statusCodes, issues, issueRow, selectedTableURL } =
-    useGlobalCrawlStore();
-
+  const { selectedTableURL } = useGlobalCrawlStore();
   const { crawlData } = useCrawlStore();
 
   const updateHeight = useCallback(() => {
     const windowHeight = window.innerHeight;
-    const newContainerHeight = windowHeight - 144; // Adjust for padding and other elements
-    if (newContainerHeight !== containerHeight) {
-      setContainerHeight(newContainerHeight);
-      setBottomTableHeight(Math.floor(newContainerHeight / 3));
-    }
-  }, [containerHeight]);
+    const newContainerHeight = windowHeight - 144;
+    setContainerHeight(newContainerHeight);
+    setBottomTableHeight(Math.floor(newContainerHeight / 3));
+  }, []);
 
   const debouncedUpdateHeight = useMemo(
     () => debounce(updateHeight, 100),
@@ -67,53 +70,22 @@ export default function Home() {
     setBottomTableHeight(newBottomHeight);
   }, []);
 
-  const handleCellClick = useCallback((rowIndex: number, columnId: string) => {
-    const cellKey = `${rowIndex}-${columnId}`;
-    setSelectedCellData(cellDetails[cellKey] || null);
-  }, []);
-
-  const handleCellRightClick = useCallback(
-    (rowIndex: number, columnId: string) => {
-      handleCellClick(rowIndex, columnId);
-    },
-    [handleCellClick],
-  );
-
-  // FILTER THE JAVASCRIPT LINKS
-  const filteredJavascript = (arr) => {
-    const jsSet = new Set();
-
-    arr.forEach((item) => {
-      // Add external JavaScript links to the Set
+  const filteredJsArr = useMemo(() => {
+    const jsSet = new Set<string>();
+    crawlData.forEach((item) => {
       if (item.javascript?.external) {
-        item.javascript.external.forEach((link, index) => jsSet.add(link));
+        item.javascript.external.forEach((link) => jsSet.add(link));
       }
     });
+    return Array.from(jsSet).map((url, index) => ({ index: index + 1, url }));
+  }, [crawlData]);
 
-    // Convert the Set to an array
-    const jsArr = Array.from(jsSet);
-
-    // MAP the array into an array of objects with the URL and title
-    const mappedJsArr = jsArr.map((url, index) => ({ index: index + 1, url }));
-
-    // Return the mapped array
-    return mappedJsArr;
-  };
-
-  const filteredJsArr = filteredJavascript(crawlData);
-
-  // FILTER THE IMAGES ARR FROM EACH PAGE AND MAP IT TO A NEW ARRAY
-  const filteredImages = (arr) => {
-    const imagesArr = arr.map((page) => page?.images?.Ok).flat();
-
-    const uniqueImages = imagesArr.filter(
+  const filteredImagesArr = useMemo(() => {
+    const imagesArr = crawlData.map((page) => page?.images?.Ok).flat();
+    return imagesArr.filter(
       (image, index) => imagesArr.indexOf(image) === index,
     );
-
-    return uniqueImages;
-  };
-
-  const filteredImagesArr = filteredImages(crawlData);
+  }, [crawlData]);
 
   return (
     <div
@@ -135,7 +107,7 @@ export default function Home() {
             onValueChange={setActiveTab}
             className="h-full flex dark:bg-brand-darker flex-col"
           >
-            <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t  -mb-2 bg-gray-50 rounded-none ">
+            <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t -mb-2 bg-gray-50 rounded-none">
               <TabsTrigger value="crawledPages">All</TabsTrigger>
               <TabsTrigger value="javascript">Javascript</TabsTrigger>
               <TabsTrigger value="images">Images</TabsTrigger>
@@ -147,16 +119,9 @@ export default function Home() {
               <TableCrawl rows={crawlData} />
             </TabsContent>
             <TabsContent
-              value="seoAnalysis"
-              className="flex-grow overflow-hidden"
-            >
-              {/* <TableCrawl rows={crawlData} /> */}
-            </TabsContent>
-            <TabsContent
               value="javascript"
               className="flex-grow overflow-hidden"
             >
-              {/* <JsTableCrawl rows={filteredJsArr} /> */}
               <TableCrawlJs rows={filteredJsArr} />
             </TabsContent>
             <TabsContent value="images" className="flex-grow overflow-hidden">
@@ -170,7 +135,7 @@ export default function Home() {
           style={{ height: `${bottomTableHeight}px`, minHeight: "100px" }}
         >
           <Tabs value={activeBottomTab} onValueChange={setActiveBottomTab}>
-            <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t  -mb-2 bg-gray-50 rounded-none sticky top-0 ">
+            <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t -mb-2 bg-gray-50 rounded-none sticky top-0">
               <TabsTrigger value="details">Details</TabsTrigger>
               <TabsTrigger value="inlinks">Inlinks</TabsTrigger>
               <TabsTrigger value="outlinks">Outlinks</TabsTrigger>
@@ -178,61 +143,31 @@ export default function Home() {
               <TabsTrigger value="schema">Schema</TabsTrigger>
             </TabsList>
             <TabsContent value="details">
-              {/* {issueRow === "404 Response" && <Table404 rows={issues[2]} />} */}
-              <div
-                style={{
-                  height: `${bottomTableHeight - 50}px`,
-                  minHeight: "100px",
-                  overflowY: "auto",
-                  marginBottom: "80px",
-                }}
-              >
+              <BottomTableContent height={bottomTableHeight}>
                 <DetailsTable
                   data={selectedTableURL}
                   height={bottomTableHeight}
                 />
-              </div>
+              </BottomTableContent>
             </TabsContent>
             <TabsContent value="inlinks">
-              <div
-                style={{
-                  height: `${bottomTableHeight - 50}px`,
-                  minHeight: "100px",
-                  overflowY: "auto",
-                  marginBottom: "80px",
-                }}
-              >
+              <BottomTableContent height={bottomTableHeight}>
                 <InlinksSubTable data={selectedTableURL} />
-              </div>
-            </TabsContent>{" "}
+              </BottomTableContent>
+            </TabsContent>
             <TabsContent value="outlinks">
-              <div
-                style={{
-                  height: `${bottomTableHeight - 50}px`,
-                  minHeight: "100px",
-                  overflowY: "auto",
-                  marginBottom: "80px",
-                }}
-              >
+              <BottomTableContent height={bottomTableHeight}>
                 <OutlinksSubTable data={selectedTableURL} />
-              </div>
-            </TabsContent>{" "}
-            {/* IMAGES SUBTABLE */}
-            <TabsContent value="images" className="dark:bg-brand-darker">
-              <div
-                style={{
-                  height: `${bottomTableHeight - 50}px`,
-                  minHeight: "100px",
-                  overflowY: "auto",
-                  marginBottom: "80px",
-                }}
-              >
+              </BottomTableContent>
+            </TabsContent>
+            <TabsContent value="images">
+              <BottomTableContent height={bottomTableHeight}>
                 <ImagesTable />
-              </div>
-            </TabsContent>{" "}
+              </BottomTableContent>
+            </TabsContent>
             <TabsContent value="schema">
               <SchemaSubTable height={bottomTableHeight - 50} />
-            </TabsContent>{" "}
+            </TabsContent>
           </Tabs>
         </div>
       </div>
