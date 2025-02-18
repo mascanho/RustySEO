@@ -70,22 +70,32 @@ export default function Home() {
     setBottomTableHeight(newBottomHeight);
   }, []);
 
+  const [debouncedCrawlData, setDebouncedCrawlData] = useState(crawlData);
+
+  useEffect(() => {
+    const debounceTimeout = setTimeout(() => {
+      setDebouncedCrawlData(crawlData);
+    }, 1000); // Adjust the debounce delay as needed
+
+    return () => clearTimeout(debounceTimeout);
+  }, [crawlData]);
+
   const filteredJsArr = useMemo(() => {
     const jsSet = new Set<string>();
-    crawlData.forEach((item) => {
+    debouncedCrawlData.forEach((item) => {
       if (item.javascript?.external) {
         item.javascript.external.forEach((link) => jsSet.add(link));
       }
     });
     return Array.from(jsSet).map((url, index) => ({ index: index + 1, url }));
-  }, [crawlData]);
+  }, [debouncedCrawlData]);
 
   const filteredImagesArr = useMemo(() => {
     const imagesArr = crawlData.map((page) => page?.images?.Ok).flat();
     return imagesArr.filter(
       (image, index) => imagesArr.indexOf(image) === index,
     );
-  }, [crawlData]);
+  }, [debouncedCrawlData]);
 
   return (
     <div
