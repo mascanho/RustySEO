@@ -174,7 +174,7 @@ function MenuDrawer() {
         />
         <img
           src="rustyLight.png"
-          className="object-contain w-auto h-6 mt-1 -ml-1.5"
+          className="object-contain h-auto  -ml-1.5"
           alt=""
         />
       </a>
