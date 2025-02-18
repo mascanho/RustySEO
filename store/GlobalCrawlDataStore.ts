@@ -15,6 +15,7 @@ export interface PageDetails {
   images: string[];
   robots: string[];
   isGeneratingExcel: boolean;
+  setSummary: () => void;
 }
 
 // Define the Zustand store
@@ -49,6 +50,8 @@ interface CrawlStore {
   setSitemaps: (row: string[]) => void;
   isGeneratingExcel: boolean;
   setIsGeneratingExcel: (isGenerating: boolean) => void;
+  summary: string[];
+  setSummary: (summary: string[]) => void;
 }
 
 const useGlobalCrawlStore = create<CrawlStore>((set) => ({
@@ -84,6 +87,9 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
   isGeneratingExcel: false,
   setIsGeneratingExcel: (isGenerating) =>
     set({ isGeneratingExcel: isGenerating }),
+
+  summary: [],
+  setSummary: (summary) => set({ summary }),
 }));
 
 // Custom hook to use selectors

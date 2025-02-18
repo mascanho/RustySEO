@@ -30,10 +30,6 @@ const IssuesContainer = () => {
     setIsMode(mode);
   }, [issueRow]);
 
-  useEffect(() => {
-    setIssues([duplicateTitles, duplicateDescriptions, response404]);
-  }, [crawlData]);
-
   // Prepare issues data
   const issuesArr = [
     {
@@ -74,6 +70,14 @@ const IssuesContainer = () => {
         "%",
     },
   ];
+
+  // useEffect(() => {
+  //   setIssues([duplicateTitles, duplicateDescriptions, response404]);
+  // }, [crawlData]);
+
+  useEffect(() => {
+    setIssues(issuesArr);
+  }, [crawlData]);
 
   const handleIssueClick = (issueName) => {
     setIssueRow(issueName);

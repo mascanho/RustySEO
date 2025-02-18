@@ -48,7 +48,12 @@ pub fn create_domain_results_table() -> Result<(), String> {
             date TEXT NOT NULL,
             pages INTEGER NOT NULL,
             errors INTEGER NOT NULL,
-            status TEXT NOT NULL
+            status TEXT NOT NULL,
+            total_links INTEGER NOT NULL,
+            total_internal_links INTEGER NOT NULL,
+            total_external_links INTEGER NOT NULL,
+            indexable_pages INTEGER NOT NULL,
+            not_indexable_pages INTEGER NOT NULL
         )",
         [],
     )
@@ -65,6 +70,11 @@ pub struct DeepCrawlHistory {
     pub pages: i32,
     pub errors: i32,
     pub status: String,
+    pub total_links: i32,
+    pub total_internal_links: i32,
+    pub total_external_links: i32,
+    pub indexable_pages: i32,
+    pub not_indexable_pages: i32,
 }
 
 #[tauri::command]
@@ -74,7 +84,10 @@ pub fn read_domain_results_history_table() -> Result<Vec<DeepCrawlHistory>, Stri
 
     // Prepare the SQL query to read data
     let mut stmt = conn
-        .prepare("SELECT id, domain, date, pages, errors, status FROM deep_crawls_history")
+        .prepare(
+            "SELECT id, domain, date, pages, errors, status, total_links, total_internal_links, total_external_links, indexable_pages, not_indexable_pages 
+             FROM deep_crawls_history",
+        )
         .map_err(|e| e.to_string())?;
 
     // Execute the query and map the results to the `DeepCrawlHistory` struct
@@ -87,6 +100,11 @@ pub fn read_domain_results_history_table() -> Result<Vec<DeepCrawlHistory>, Stri
                 pages: row.get(3)?,
                 errors: row.get(4)?,
                 status: row.get(5)?,
+                total_links: row.get(6)?,
+                total_internal_links: row.get(7)?,
+                total_external_links: row.get(8)?,
+                indexable_pages: row.get(9)?,
+                not_indexable_pages: row.get(10)?,
             })
         })
         .map_err(|e| e.to_string())?;
@@ -112,13 +130,20 @@ pub fn create_domain_results_history(data: Vec<DeepCrawlHistory>) -> Result<Stri
     // Write each object in the array to the database
     for item in &data {
         conn.execute(
-            "INSERT INTO deep_crawls_history (domain, date, pages, errors, status) VALUES (?1, ?2, ?3, ?4, ?5)",
+            "INSERT INTO deep_crawls_history (
+                domain, date, pages, errors, status, total_links, total_internal_links, total_external_links, indexable_pages, not_indexable_pages
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
             [
                 &item.domain,
                 &item.date,
                 &item.pages.to_string(),
                 &item.errors.to_string(),
                 &item.status,
+                &item.total_links.to_string(),
+                &item.total_internal_links.to_string(),
+                &item.total_external_links.to_string(),
+                &item.indexable_pages.to_string(),
+                &item.not_indexable_pages.to_string(),
             ],
         )
         .map_err(|e| e.to_string())?;

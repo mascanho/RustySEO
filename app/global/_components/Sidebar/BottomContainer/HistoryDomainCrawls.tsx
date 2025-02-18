@@ -9,7 +9,8 @@ import { RiPagesLine, RiCalendarLine } from "react-icons/ri"; // Import icons
 const HistoryDomainCrawls = () => {
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [crawlHistory, setCrawlHistory] = useState([]);
-  const { crawlData, domainCrawlLoading } = useGlobalCrawlStore();
+  const { crawlData, domainCrawlLoading, issues, summary } =
+    useGlobalCrawlStore();
 
   useEffect(() => {
     try {
@@ -51,17 +52,37 @@ const HistoryDomainCrawls = () => {
     }
   };
 
-  // Add new crawl data to the database
+  console.log(issues, summary, "From the History COmp");
+
+  // SUM the issues
+  const totalIssueCount = issues.reduce((sum, item) => {
+    return sum + item.issueCount;
+  }, 0); // Add new crawl data to the database
+
   const addDataToDatabase = async () => {
     if (crawlData.length === 0) return; // Don't add empty data
 
     const newEntry = {
       id: 1,
-      domain: crawlData?.[0]?.url || "",
-      date: new Date().toISOString().split("T")[0],
-      pages: crawlData?.length,
-      errors: 5,
-      status: "completed",
+      domain: crawlData?.[0]?.url || "", // Use the first URL in crawlData or fallback to an empty string
+      date: new Date().toISOString().split("T")[0], // Get the current date in YYYY-MM-DD format
+      pages: crawlData?.length || 0, // Total pages, default to 0 if crawlData is empty
+      errors: crawlData?.length > 0 ? totalIssueCount || 0 : 0, // Total errors, default to 0 if crawlData is empty or totalIssueCount is null/undefined
+      status: "completed", // Required field
+      total_links: crawlData?.length > 0 ? summary?.totalLinksFound || 0 : 0, // Total links, default to 0 if crawlData is empty or summary is null/undefined
+      total_internal_links:
+        crawlData?.length > 0 ? summary?.totalInternalLinks || 0 : 0, // Total internal links, default to 0 if crawlData is empty or summary is null/undefined
+      total_external_links:
+        crawlData?.length > 0 ? summary?.totalExternalLinks || 0 : 0, // Total external links, default to 0 if crawlData is empty or summary is null/undefined
+      total_javascript:
+        crawlData?.length > 0 ? summary?.totalJavascript || 0 : 0, // Total JavaScript files, default to 0 if crawlData is empty or summary is null/undefined
+      indexable_pages:
+        crawlData?.length > 0
+          ? (summary?.totalIndexablePages || 0) -
+            (summary?.totalNotIndexablePages || 0)
+          : 0, // Indexable pages, default to 0 if crawlData is empty or summary is null/undefined
+      not_indexable_pages:
+        crawlData?.length > 0 ? summary?.totalNotIndexablePages || 0 : 0, // Non-indexable pages, default to 0 if crawlData is empty or summary is null/undefined
     };
 
     try {
@@ -115,25 +136,30 @@ const HistoryDomainCrawls = () => {
                 <div className="bg-brand-bright/20 text-black dark:text-white/50 px-2 py-2">
                   <div className="text-left">
                     <p>
-                      <strong>Website:</strong> {entry.domain}
+                      <strong>Domain:</strong> {entry.domain}
                     </p>
                     <p>
                       <strong>Pages Crawled:</strong> {entry.pages}
                     </p>
                     <p>
-                      <strong>Details:</strong> {entry.details}
+                      <strong>Total Links:</strong> {entry.newLinksFound}
                     </p>
                     <p>
-                      <strong>New Links Found:</strong> {entry.newLinksFound}
+                      <strong>Total Internal Links:</strong>{" "}
+                      {entry.totalInternalLinks}
                     </p>
                     <p>
-                      <strong>Average Response Time:</strong>{" "}
-                      {entry.avgResponseTime}
+                      <strong>Total External Links:</strong>{" "}
+                      {entry.totalExternalLinks}
                     </p>
                     <p>
-                      <strong>Javascript:</strong>
-                      {""}
-                      {entry.totalJavascript}
+                      <strong>Indexable Pages:</strong> {entry.indexablePages}
+                    </p>
+                    <p>
+                      <strong>Not Indexable:</strong> {entry.notIndexablePages}
+                    </p>
+                    <p>
+                      <strong>Issues:</strong> {entry.errors}
                     </p>
                   </div>
                 </div>

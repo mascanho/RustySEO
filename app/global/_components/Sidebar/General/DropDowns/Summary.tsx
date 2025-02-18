@@ -1,5 +1,6 @@
+// @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import React, { useMemo, useState, useCallback, memo } from "react";
+import React, { useMemo, useState, useCallback, memo, useEffect } from "react";
 
 interface CrawlDataItem {
   anchor_links?: {
@@ -32,6 +33,7 @@ SummaryItemRow.displayName = "SummaryItemRow";
 const Summary: React.FC = () => {
   const domainCrawlData = useGlobalCrawlStore();
   const [isOpen, setIsOpen] = useState(false);
+  const { setSummary } = useGlobalCrawlStore();
 
   // Safely get crawlData or default to an empty array
   const crawlData: CrawlDataItem[] = useMemo(
@@ -80,6 +82,7 @@ const Summary: React.FC = () => {
     const totalExternalLinks = externalLinks.length;
     const totalLinksFound = totalInternalLinks + totalExternalLinks;
     const totalNotIndexablePages = totalPagesCrawled - totalIndexablePages;
+
     return {
       totalPagesCrawled,
       totalInternalLinks,
@@ -88,6 +91,24 @@ const Summary: React.FC = () => {
       totalNotIndexablePages,
     };
   }, [crawlData, internalLinks, externalLinks, totalIndexablePages]);
+
+  // Update the summary state using useEffect
+  useEffect(() => {
+    setSummary({
+      totalPagesCrawled,
+      totalInternalLinks,
+      totalExternalLinks,
+      totalLinksFound,
+      totalNotIndexablePages,
+    });
+  }, [
+    totalPagesCrawled,
+    totalInternalLinks,
+    totalExternalLinks,
+    totalLinksFound,
+    totalNotIndexablePages,
+    setSummary,
+  ]);
 
   // Memoize summary data
   const summaryData: SummaryItem[] = useMemo(
@@ -148,22 +169,6 @@ const Summary: React.FC = () => {
     },
     [],
   );
-
-  // Handle errors or missing data gracefully
-  // if (!crawlData || crawlData.length === 0) {
-  //   return (
-  //     <div className="text-sx w-full">
-  //       <details className="w-full">
-  //         <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 pb-1.5 cursor-pointer flex items-center">
-  //           <span>Summary</span>
-  //         </summary>
-  //         <div className="w-full text-xs text-brand-bright p-2">
-  //           No data available.
-  //         </div>
-  //       </details>
-  //     </div>
-  //   );
-  // }
 
   return (
     <div className="text-sx w-full">
