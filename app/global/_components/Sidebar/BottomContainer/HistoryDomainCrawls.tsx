@@ -78,9 +78,8 @@ const HistoryDomainCrawls = () => {
         crawlData?.length > 0 ? summary?.totalJavascript || 0 : 0, // Total JavaScript files, default to 0 if crawlData is empty or summary is null/undefined
       indexable_pages:
         crawlData?.length > 0
-          ? (summary?.totalIndexablePages || 0) -
-            (summary?.totalNotIndexablePages || 0)
-          : 0, // Indexable pages, default to 0 if crawlData is empty or summary is null/undefined
+          ? crawlData?.length - summary?.totalNotIndexablePages
+          : 0 || 0, // Indexable pages, default to 0 if crawlData is empty or summary is null/undefined
       not_indexable_pages:
         crawlData?.length > 0 ? summary?.totalNotIndexablePages || 0 : 0, // Non-indexable pages, default to 0 if crawlData is empty or summary is null/undefined
     };
@@ -105,6 +104,8 @@ const HistoryDomainCrawls = () => {
     }
     setExpandedRows(currentExpandedRows);
   };
+
+  console.log(crawlHistory);
 
   return (
     <div className="text-xs h-[calc(28rem-2rem)] overflow-auto">
@@ -142,21 +143,23 @@ const HistoryDomainCrawls = () => {
                       <strong>Pages Crawled:</strong> {entry.pages}
                     </p>
                     <p>
-                      <strong>Total Links:</strong> {entry.newLinksFound}
+                      <strong>Total Links:</strong> {entry.total_links}
                     </p>
                     <p>
                       <strong>Total Internal Links:</strong>{" "}
-                      {entry.totalInternalLinks}
+                      {entry.total_internal_links}
                     </p>
                     <p>
                       <strong>Total External Links:</strong>{" "}
-                      {entry.totalExternalLinks}
+                      {entry.total_external_links}
                     </p>
                     <p>
-                      <strong>Indexable Pages:</strong> {entry.indexablePages}
+                      <strong>Indexable Pages:</strong>{" "}
+                      {Math.abs(entry.indexable_pages)}
                     </p>
                     <p>
-                      <strong>Not Indexable:</strong> {entry.notIndexablePages}
+                      <strong>Not Indexable:</strong>{" "}
+                      {entry.not_indexable_pages}
                     </p>
                     <p>
                       <strong>Issues:</strong> {entry.errors}
