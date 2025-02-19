@@ -17,6 +17,7 @@ const HistoryDomainCrawls = () => {
       // Ensure the table exists (idempotent operation)
       invoke("create_domain_results_table");
       console.log("Table created or already exists");
+      await fetchData();
     } catch (error) {
       console.error("Error creating table:", error);
     }

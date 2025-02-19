@@ -56,6 +56,11 @@ const IssuesContainer = () => {
     return !page?.headings?.hasOwnProperty("h2");
   });
 
+  // MISSING SCHEMA
+  const missingSchema = crawlData?.filter((page) => {
+    return page?.schema?.length === 0;
+  });
+
   useEffect(() => {
     const mode = localStorage.getItem("dark-mode");
     setIsMode(mode);
@@ -161,6 +166,15 @@ const IssuesContainer = () => {
         ((lowContentPages?.length / (crawlData?.length || 1)) * 100).toFixed(
           1,
         ) + "%",
+    },
+    {
+      id: 9,
+      name: "Missing Schema",
+      issueCount: missingSchema?.length > 0 ? missingSchema.length : 0 || 0,
+      priority: "Low",
+      percentage:
+        ((missingSchema?.length / (crawlData?.length || 1)) * 100).toFixed(1) +
+        "%",
     },
   ];
 
