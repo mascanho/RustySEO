@@ -57,9 +57,8 @@ interface CrawlStore {
 
   issuesView: string;
   setIssuesView: (view: string) => void;
-
-  ISSUESduplicatedTitles: string[];
-  setISSUESduplicatedTitles: (titles: string[]) => void;
+  issuesData: string[];
+  setIssuesData: (data: string[]) => void;
 }
 
 const useGlobalCrawlStore = create<CrawlStore>((set) => ({
@@ -102,9 +101,8 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
   issuesView: "",
   setIssuesView: (view) => set({ issuesView: view }),
 
-  ISSUESduplicatedTitles: [],
-  setISSUESduplicatedTitles: (titles) =>
-    set({ ISSUESduplicatedTitles: titles }),
+  issuesData: [],
+  setIssuesData: (data) => set({ issuesData: data }),
 }));
 
 // Custom hook to use selectors

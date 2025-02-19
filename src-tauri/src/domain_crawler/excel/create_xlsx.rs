@@ -10,7 +10,7 @@ pub fn generate_xlsx(data: Vec<Value>) -> Result<Vec<u8>, String> {
     }
 
     // Define headers (since the data is an array of arrays, we need predefined headers)
-    let headers = vec!["URL", "Description", "Size", "Type"];
+    let headers = vec!["URL", "Alt Text", "Size", "Type", "Status Code"];
 
     let mut workbook = Workbook::new();
     let worksheet = workbook.add_worksheet();

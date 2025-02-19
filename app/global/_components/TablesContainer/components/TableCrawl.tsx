@@ -279,7 +279,7 @@ const ColumnPicker = ({
     () => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <div className="border dark:border-white/20   flex justify-center items-center rounded h-6 w-full hover:border hover:border-brand-bright cursor-pointer active:bg-brand-bright active:text-white">
+          <div className="border dark:border-white/20 w-8  flex justify-center items-center rounded h-6  hover:border hover:border-brand-bright cursor-pointer active:bg-brand-bright active:text-white">
             <TbColumns3 className="w-5 h-5 dark:text-white/50 p-1 active:text-white" />
           </div>
         </DropdownMenuTrigger>

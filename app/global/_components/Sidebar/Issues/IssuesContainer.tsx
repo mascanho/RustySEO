@@ -14,10 +14,11 @@ const IssuesContainer = () => {
     headingsH1,
     issueRow,
     setIssueRow,
-    setISSUESduplicatedTitles,
+    setIssuesData,
     setIssuesView,
   } = useGlobalCrawlStore();
   const [isMode, setIsMode] = useState(null);
+
   // Find duplicates in `crawlData` based on the "title" key
   const duplicateTitles = useFindDuplicateTitles(crawlData, "title");
 
@@ -29,7 +30,7 @@ const IssuesContainer = () => {
 
   // Descriptions > 160 characters
   const descriptionsAbove160Chars = crawlData?.filter(
-    (page) => page.description && page.description.length > 160,
+    (page) => page?.description?.length > 160,
   );
 
   // Find pages with a 404 response code in `crawlData`
@@ -37,12 +38,22 @@ const IssuesContainer = () => {
 
   // Find pages with titles shorter than 30 characters in `crawlData`
   const pagetitleBelow30Chars = crawlData?.filter((page) =>
-    page.title?.every((obj) => obj.title.length < 30),
+    page.title?.every((obj) => obj?.title.length < 30),
   );
 
   // Find pages with titles longer than 60 characters in `crawlData`
   const pageTitlesAbove60Chars = crawlData?.filter((page) => {
-    page?.[0]?.title?.every((obj) => obj.title.length > 60);
+    page?.title?.every((obj) => obj?.title.length > 60);
+  });
+
+  // LOW CONTENT PAGES. WHERE TEXT RATIO IS BELOW 50
+  const lowContentPages = crawlData?.filter((page) => {
+    return page?.text_ratio?.every((obj) => obj.text_ratio < 50);
+  });
+
+  // MISSING H2 on the page
+  const missingH2 = crawlData?.filter((page) => {
+    return !page?.headings?.hasOwnProperty("h2");
   });
 
   useEffect(() => {
@@ -131,6 +142,26 @@ const IssuesContainer = () => {
         ((headingsH1?.[1]?.count / (crawlData?.length || 1)) * 100).toFixed(1) +
         "%",
     },
+
+    {
+      id: 9,
+      name: "H2 Missing",
+      issueCount: missingH2?.length > 0 ? missingH2.length : 0,
+      priority: "Low",
+      percentage:
+        ((missingH2.length / (crawlData?.length || 1)) * 100).toFixed(1) + "%",
+    },
+    {
+      id: 8,
+      name: "Low Content",
+      issueCount:
+        lowContentPages?.length > 0 ? lowContentPages?.length : 0 || 0,
+      priority: "Low",
+      percentage:
+        ((lowContentPages?.length / (crawlData?.length || 1)) * 100).toFixed(
+          1,
+        ) + "%",
+    },
   ];
 
   // useEffect(() => {
@@ -149,9 +180,65 @@ const IssuesContainer = () => {
 
   // Hnadle click on the rows
   const handleIssueClick = (issueName, index) => {
-    setIssueRow(issueName);
-    console.log(issueName);
-    setIssuesView(issueName);
+    setIssueRow(issueName); // Set the active issue row
+    console.log(issueName); // Log the clicked issue name
+    setIssuesView(issueName); // Set the issues view
+
+    // Dynamically handle the issue based on the issueName
+    issuesArr.forEach((issue) => {
+      if (issue.name === issueName) {
+        console.log(`Handling ${issue.name}`);
+        // Add specific logic for each issue here
+        switch (issue.name) {
+          case "Duplicated Titles":
+            setIssuesData(duplicateTitles); // Example: Set issues data for Duplicated Titles
+            console.log(duplicateTitles);
+            break;
+          case "Page Title > 60 Chars":
+            // Handle Page Title > 60 Chars
+            setIssuesData(pageTitlesAbove60Chars);
+            console.log(pageTitlesAbove60Chars);
+            break;
+          case "Page Title < 30 Chars":
+            // Handle Page Title < 30 Chars
+            setIssuesData(pagetitleBelow30Chars);
+            console.log(pagetitleBelow30Chars);
+            break;
+          case "Duplicated Descriptions":
+            // Handle Duplicated Descriptions
+            setIssuesData(duplicateDescriptions);
+            console.log(duplicateDescriptions);
+            break;
+          case "Descriptions > 160 Chars":
+            // Handle Descriptions > 160 Chars
+            setIssuesData(descriptionsAbove160Chars);
+            console.log(descriptionsAbove160Chars);
+            break;
+          case "404 Response":
+            // Handle 404 Response
+            setIssuesData(response404);
+            console.log(response404);
+            break;
+          case "H1 Missing":
+            // Handle H1 Missing
+            setIssuesData(headingsH1);
+            console.log(headingsH1);
+            break;
+          case "H2 Missing":
+            // Handle H2 Missing
+            setIssuesData(missingH2);
+            console.log(missingH2);
+            break;
+          case "Low Content":
+            // Handle Low Content
+            setIssuesData(lowContentPages);
+            console.log(lowContentPages);
+            break;
+          default:
+            console.log("Unknown issue");
+        }
+      }
+    });
   };
 
   if (crawlData.length === 0) {
@@ -170,8 +257,8 @@ const IssuesContainer = () => {
         <thead>
           <tr className="text-xs bg-gray-100 ">
             <th className="p-2 text-left border border-bl">Problem</th>
-            <th className="p-2 text-center">Urls</th>
-            <th className="p-2 text-left">%</th>
+            <th className="p-2 text-left">Urls</th>
+            <th className="p-2 text-center ">%</th>
             <th className="p-2 text-left">Priority</th>
           </tr>
         </thead>

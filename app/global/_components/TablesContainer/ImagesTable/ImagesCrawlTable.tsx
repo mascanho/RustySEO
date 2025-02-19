@@ -34,7 +34,7 @@ import { toast } from "sonner";
 
 const TruncatedCell = ({
   text,
-  maxLength = 4000,
+  maxLength = 140,
   width = "auto",
 }: TruncatedCellProps) => {
   const truncatedText = useMemo(() => {
@@ -155,7 +155,7 @@ const TableRow = ({
               key={`cell-${index}-${cellIndex}`}
               onClick={() => handleCellClick(index, cellIndex, cell.toString())}
               style={{
-                width: cellIndex === 0 ? "40px" : columnWidths[cellIndex],
+                width: cellIndex === 0 ? "30px" : columnWidths[cellIndex],
                 border: "1px solid #ddd",
                 padding: "8px",
                 paddingLeft: cellIndex === 0 ? "20px" : "0px",

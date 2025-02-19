@@ -14,9 +14,6 @@ const ImagesTable = () => {
     setSelectedRowIndex(null);
   }, [selectedTableURL]);
 
-  // Debugging: Log the data
-  console.log(selectedTableURL?.[0]?.images?.Ok, "selectedTableURL");
-
   // Fallback if no images are found
   if (!selectedTableURL?.[0]?.images?.Ok) {
     return (

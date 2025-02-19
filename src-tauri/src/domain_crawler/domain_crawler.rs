@@ -47,7 +47,7 @@ const CONCURRENT_REQUESTS: usize = 70; // Reduced from 100
 const CRAWL_TIMEOUT: Duration = Duration::from_secs(7200); // 2 hour
 const STALL_DETECTION_THRESHOLD: Duration = Duration::from_secs(300); // 5 minutes
 const PROGRESS_CHECK_INTERVAL: Duration = Duration::from_secs(30);
-const BATCH_SIZE: usize = 5;
+const BATCH_SIZE: usize = 10;
 
 // Progress tracking structure
 #[derive(Clone, Serialize)]

@@ -17,7 +17,7 @@ export const initialColumnAlignments = [
 
 export const headerTitles = [
   "ID",
-  "Anchor Text",
+  "Alt Text",
   "Anchor Link",
   "Image Size",
   "Image Type",

@@ -76,7 +76,7 @@ interface ColumnPickerProps {
 
 const TruncatedCell = ({
   text,
-  maxLength = 90,
+  maxLength = 140,
   width = "auto",
 }: TruncatedCellProps) => {
   const truncatedText = useMemo(() => {
