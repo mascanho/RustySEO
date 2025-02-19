@@ -52,8 +52,6 @@ const HistoryDomainCrawls = () => {
     }
   };
 
-  console.log(issues, summary, "From the History COmp");
-
   // SUM the issues
   const totalIssueCount = issues.reduce((sum, item) => {
     return sum + item.issueCount;
@@ -65,7 +63,7 @@ const HistoryDomainCrawls = () => {
     const newEntry = {
       id: 1,
       domain: crawlData?.[0]?.url || "", // Use the first URL in crawlData or fallback to an empty string
-      date: new Date().toISOString().split("T")[0], // Get the current date in YYYY-MM-DD format
+      date: new Date().toISOString(), // Get the current date in YYYY-MM-DD format
       pages: crawlData?.length || 0, // Total pages, default to 0 if crawlData is empty
       errors: crawlData?.length > 0 ? totalIssueCount || 0 : 0, // Total errors, default to 0 if crawlData is empty or totalIssueCount is null/undefined
       status: "completed", // Required field
@@ -105,70 +103,75 @@ const HistoryDomainCrawls = () => {
     setExpandedRows(currentExpandedRows);
   };
 
-  console.log(crawlHistory);
-
   return (
     <div className="text-xs h-[calc(28rem-2rem)] overflow-auto">
       <div className="text-center">
         <div>
-          {crawlHistory?.map((entry, index) => (
-            <React.Fragment key={index}>
-              <div
-                onClick={() => handleRowClick(index)}
-                className={`cursor-pointer px-2 flex mr-2 py-1 justify-between ${index % 2 === 0 ? "bg-gray-100 dark:bg-brand-darker" : "bg-gray-200 dark:bg-brand-darker"}`}
-              >
-                <div className="flex items-center space-x-1 flex-1">
-                  <RiCalendarLine className="text-gray-500" />{" "}
-                  {/* Calendar icon */}
-                  <span>{entry.date}</span>
-                </div>
-                <div className="flex items-center space-x-1 justify-end flex-1">
-                  <span className="text-right">{entry.pages}</span>
-                  <RiPagesLine className="text-gray-500" /> {/* Pages icon */}
-                </div>
-                <div className="flex items-center space-x-2 flex-1 justify-end">
-                  <span>
-                    <MdOutlineErrorOutline className="mr-1 text-red-500" />
-                  </span>
-                  {entry.errors}
-                </div>
-              </div>
-              {expandedRows.includes(index) && (
-                <div className="bg-brand-bright/20 text-black dark:text-white/50 px-2 py-2">
-                  <div className="text-left">
-                    <p>
-                      <strong>Domain:</strong> {entry.domain}
-                    </p>
-                    <p>
-                      <strong>Pages Crawled:</strong> {entry.pages}
-                    </p>
-                    <p>
-                      <strong>Total Links:</strong> {entry.total_links}
-                    </p>
-                    <p>
-                      <strong>Total Internal Links:</strong>{" "}
-                      {entry.total_internal_links}
-                    </p>
-                    <p>
-                      <strong>Total External Links:</strong>{" "}
-                      {entry.total_external_links}
-                    </p>
-                    <p>
-                      <strong>Indexable Pages:</strong>{" "}
-                      {Math.abs(entry.indexable_pages)}
-                    </p>
-                    <p>
-                      <strong>Not Indexable:</strong>{" "}
-                      {entry.not_indexable_pages}
-                    </p>
-                    <p>
-                      <strong>Issues:</strong> {entry.errors}
-                    </p>
+          {crawlHistory
+            ?.sort(
+              (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+            ) // Sort by date descending (latest first)
+            .map((entry, index) => (
+              <React.Fragment key={index}>
+                <div
+                  onClick={() => handleRowClick(index)}
+                  className={`cursor-pointer px-2 flex mr-2 py-1 justify-between ${
+                    index % 2 === 0
+                      ? "bg-gray-100 dark:bg-brand-darker"
+                      : "bg-gray-200 dark:bg-brand-darker"
+                  }`}
+                >
+                  <div className="flex items-center space-x-1 flex-1">
+                    <RiCalendarLine className="text-gray-500" />
+                    <span>{entry.date.split("T")[0]}</span>
+                  </div>
+                  <div className="flex items-center space-x-1 justify-end flex-1">
+                    <span className="text-right">{entry.pages}</span>
+                    <RiPagesLine className="text-gray-500" />
+                  </div>
+                  <div className="flex items-center space-x-2 flex-1 justify-end">
+                    <span>
+                      <MdOutlineErrorOutline className="mr-1 text-red-500" />
+                    </span>
+                    {entry.errors}
                   </div>
                 </div>
-              )}
-            </React.Fragment>
-          ))}
+                {expandedRows.includes(index) && (
+                  <div className="bg-brand-bright/20 text-black dark:text-white/50 px-2 py-2">
+                    <div className="text-left">
+                      <p>
+                        <strong>Domain:</strong> {entry.domain}
+                      </p>
+                      <p>
+                        <strong>Pages Crawled:</strong> {entry.pages}
+                      </p>
+                      <p>
+                        <strong>Total Links:</strong> {entry.total_links}
+                      </p>
+                      <p>
+                        <strong>Total Internal Links:</strong>{" "}
+                        {entry.total_internal_links}
+                      </p>
+                      <p>
+                        <strong>Total External Links:</strong>{" "}
+                        {entry.total_external_links}
+                      </p>
+                      <p>
+                        <strong>Indexable Pages:</strong>{" "}
+                        {Math.abs(entry.indexable_pages)}
+                      </p>
+                      <p>
+                        <strong>Not Indexable:</strong>{" "}
+                        {entry.not_indexable_pages}
+                      </p>
+                      <p>
+                        <strong>Issues:</strong> {entry.errors}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </React.Fragment>
+            ))}
         </div>
       </div>
     </div>

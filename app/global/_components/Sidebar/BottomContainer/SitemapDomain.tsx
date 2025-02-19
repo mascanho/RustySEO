@@ -25,7 +25,7 @@ const SitemapDomain = () => {
   return (
     <div className="w-[20rem] h-[28rem] overflow-clip sitemapsDomain">
       <SyntaxHighlighter language="text" style={darkula}>
-        {sitemapState?.Ok[0]}
+        {sitemapState?.Ok?.[0]}
       </SyntaxHighlighter>
     </div>
   );

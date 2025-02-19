@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, {
   useState,
   useRef,
@@ -37,13 +36,20 @@ const BottomTableContent = ({ children, height }) => (
 export default function Home() {
   const [containerHeight, setContainerHeight] = useState(600);
   const [bottomTableHeight, setBottomTableHeight] = useState(200);
-  const [activeTab, setActiveTab] = useState("crawledPages");
   const [activeBottomTab, setActiveBottomTab] = useState("details");
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { visibility } = useVisibilityStore();
   const { selectedTableURL } = useGlobalCrawlStore();
-  const { crawlData } = useCrawlStore();
+  const { crawlData, issuesView, setIssuesView } = useCrawlStore();
+  const [activeTab, setActiveTab] = useState("crawledPages"); // Default to "crawledPages"
+
+  // Sync `activeTab` with `issuesView` when `issuesView` changes
+  useEffect(() => {
+    if (issuesView) {
+      setActiveTab(issuesView);
+    }
+  }, [issuesView]);
 
   const updateHeight = useCallback(() => {
     const windowHeight = window.innerHeight;
@@ -97,6 +103,26 @@ export default function Home() {
     );
   }, [debouncedCrawlData]);
 
+  const renderIssuesViewContent = () => {
+    switch (issuesView) {
+      case "Duplicated Titles":
+        return <div>Content for Duplicated Titles</div>;
+      case "404 response":
+        return <div>Content for 404 response</div>;
+      // Add more cases as needed
+      default:
+        return <div>Default Content</div>;
+    }
+  };
+
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+    if (value === issuesView) {
+      // If the tab is the issuesView tab, ensure issuesView is updated
+      setIssuesView(value);
+    }
+  };
+
   return (
     <div
       className={`mx-0 mt-8 h-screen dark:bg-brand-darker ${visibility.sidebar ? "w-[calc(100vw-20.4rem)]" : ""}`}
@@ -114,13 +140,16 @@ export default function Home() {
         >
           <Tabs
             value={activeTab}
-            onValueChange={setActiveTab}
+            onValueChange={handleTabChange}
             className="h-full flex dark:bg-brand-darker flex-col"
           >
             <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t -mb-2 bg-gray-50 rounded-none">
               <TabsTrigger value="crawledPages">All</TabsTrigger>
               <TabsTrigger value="javascript">Javascript</TabsTrigger>
               <TabsTrigger value="images">Images</TabsTrigger>
+              {issuesView && (
+                <TabsTrigger value={issuesView}>{issuesView}</TabsTrigger>
+              )}
             </TabsList>
             <TabsContent
               value="crawledPages"
@@ -137,6 +166,16 @@ export default function Home() {
             <TabsContent value="images" className="flex-grow overflow-hidden">
               <ImagesCrawlTable rows={filteredImagesArr} />
             </TabsContent>
+
+            {/* DYNAMIC TABS */}
+            {issuesView && (
+              <TabsContent
+                value={issuesView}
+                className="flex-grow overflow-hidden"
+              >
+                {renderIssuesViewContent()}
+              </TabsContent>
+            )}
           </Tabs>
         </div>
         <ResizableDivider onResize={handleResize} containerRef={containerRef} />

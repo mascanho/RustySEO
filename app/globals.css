@@ -742,14 +742,6 @@ button .mantine-Tabs-tabLabel {
   @apply p-[5px] py-[4px] !important;
 }
 
-/* Reset table and its children */
-table:is(.issues),
-tbody.issues,
-td.issues {
-  all: unset !important;
-  background: red !important;
-}
-
 /* GLOBAL OVERVIEW CHART */
 .chart tspan {
   @apply hidden;

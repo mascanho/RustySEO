@@ -52,6 +52,14 @@ interface CrawlStore {
   setIsGeneratingExcel: (isGenerating: boolean) => void;
   summary: string[];
   setSummary: (summary: string[]) => void;
+
+  // ISSUES BLOCK TOP SIDEBAR
+
+  issuesView: string;
+  setIssuesView: (view: string) => void;
+
+  ISSUESduplicatedTitles: string[];
+  setISSUESduplicatedTitles: (titles: string[]) => void;
 }
 
 const useGlobalCrawlStore = create<CrawlStore>((set) => ({
@@ -90,6 +98,13 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
 
   summary: [],
   setSummary: (summary) => set({ summary }),
+
+  issuesView: "",
+  setIssuesView: (view) => set({ issuesView: view }),
+
+  ISSUESduplicatedTitles: [],
+  setISSUESduplicatedTitles: (titles) =>
+    set({ ISSUESduplicatedTitles: titles }),
 }));
 
 // Custom hook to use selectors
