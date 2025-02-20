@@ -12,7 +12,7 @@ const OverviewBottomSidePanel = () => {
   return (
     <Tabs
       defaultValue="chart1"
-      className="h-full flex flex-col justify-between"
+      className="h-full flex flex-col justify-between pt-4"
     >
       {/* Chart Section */}
       <Tabs.Panel value="chart1" className="h-full dark:bg-gray-900">
