@@ -316,7 +316,8 @@ const TableCrawl = ({
   const [columnVisibility, setColumnVisibility] = useState(
     headerTitles.map(() => true),
   );
-  const { isGeneratingExcel, setIsGeneratingExcel } = useGlobalCrawlStore();
+  const { isGeneratingExcel, setIsGeneratingExcel, setIssuesView } =
+    useGlobalCrawlStore();
 
   // SET THE TAURI STUFF FOR THE DOWNLOAD
   const handleDownload = async () => {

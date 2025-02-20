@@ -160,7 +160,7 @@ function MenuDrawer() {
       <a
         href="https://www.rustyseo.com"
         target="_blank"
-        className="absolute right-6 flex cursor-pointer"
+        className="absolute right-4 flex cursor-pointer"
       >
         <img
           src="icon.png"

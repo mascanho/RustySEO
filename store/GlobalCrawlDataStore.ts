@@ -53,6 +53,9 @@ interface CrawlStore {
   summary: string[];
   setSummary: (summary: string[]) => void;
 
+  genericChart: string;
+  setGenericChart: (chart: string) => void;
+
   // ISSUES BLOCK TOP SIDEBAR
 
   issuesView: string;
@@ -103,6 +106,9 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
 
   issuesData: [],
   setIssuesData: (data) => set({ issuesData: data }),
+
+  genericChart: "",
+  setGenericChart: (chart) => set({ genericChart: chart }),
 }));
 
 // Custom hook to use selectors

@@ -13,9 +13,6 @@ pub fn get_word_count(body: &str) -> usize {
         "h5",
         "h6",
         "li",         // List items are often content-bearing
-        "article",    // Articles often contain substantial content
-        "main",       // Main content area
-        "section",    // Sections of content
         "blockquote", // For quoted text
     ];
 

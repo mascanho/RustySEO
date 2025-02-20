@@ -16,6 +16,8 @@ const IssuesContainer = () => {
     setIssueRow,
     setIssuesData,
     setIssuesView,
+    issuesView,
+    setGenericChart,
   } = useGlobalCrawlStore();
   const [isMode, setIsMode] = useState(null);
 
@@ -51,6 +53,10 @@ const IssuesContainer = () => {
     return page?.text_ratio?.every((obj) => obj.text_ratio < 50);
   });
 
+  const missingH1 = crawlData?.filter((page) => {
+    return !page?.headings?.hasOwnProperty("h1");
+  });
+
   // MISSING H2 on the page
   const missingH2 = crawlData?.filter((page) => {
     return !page?.headings?.hasOwnProperty("h2");
@@ -60,6 +66,17 @@ const IssuesContainer = () => {
   const missingSchema = crawlData?.filter((page) => {
     return !page?.schema;
   });
+
+  // IMAGES BIGGER THAN 100KB
+  const imagesAbove100KB = crawlData?.filter((page) => {
+    // Check if the page has images and the images are in the `Ok` array
+    return page?.images?.Ok?.some((image) => {
+      // Check if the image size (third element in the array) is greater than 100 KB (100,000 bytes)
+      return image[2] > 100;
+    });
+  });
+
+  console.log(imagesAbove100KB, "Images above 100KB");
 
   useEffect(() => {
     const mode = localStorage.getItem("dark-mode");
@@ -141,7 +158,7 @@ const IssuesContainer = () => {
     {
       id: 7,
       name: "H1 Missing",
-      issueCount: headingsH1?.length > 0 ? headingsH1?.[1]?.count : 0,
+      issueCount: missingH1?.length > 0 ? missingH1.length : 0 || 0,
       priority: "High",
       percentage:
         ((headingsH1?.[1]?.count / (crawlData?.length || 1)) * 100).toFixed(1) +
@@ -197,6 +214,7 @@ const IssuesContainer = () => {
     setIssueRow(issueName); // Set the active issue row
     console.log(issueName); // Log the clicked issue name
     setIssuesView(issueName); // Set the issues view
+    setGenericChart(""); // Set the generic chart data
 
     // Dynamically handle the issue based on the issueName
     issuesArr.forEach((issue) => {
@@ -235,8 +253,8 @@ const IssuesContainer = () => {
             break;
           case "H1 Missing":
             // Handle H1 Missing
-            setIssuesData(headingsH1);
-            console.log(headingsH1);
+            setIssuesData(missingH1);
+            console.log(missingH1);
             break;
           case "H2 Missing":
             // Handle H2 Missing
@@ -288,11 +306,8 @@ const IssuesContainer = () => {
               key={item.id}
               className="cursor-pointer border border-b p-1 text-[9px]"
               style={{
-                background:
-                  issueRow === item.name || isMode === "true"
-                    ? "#2B6CC4"
-                    : "white",
-                color: issueRow === item.name && "white",
+                color: issuesView !== item.name ? "#f5f5f5" : "",
+                color: issueRow === item.name ? "#2B6CC4" : "",
               }}
             >
               <td className="px-2 py-1 dark:bg-brand-darker border text-[9px]">
@@ -307,7 +322,7 @@ const IssuesContainer = () => {
               <td
                 className={`px-2 py-1 dark:bg-brand-darker border text-xs font-semibold  text-center ${
                   item.priority === "High"
-                    ? "bg-red-400 text-white dark:bg-red-400" // High priority
+                    ? "bg-[hsl(710,100%,60%)] text-white dark:bg-[hsl(710,100%,60%)]" // High priority
                     : item.priority === "Medium"
                       ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-100" // Medium priority
                       : "bg-green-100 text-green-800 dark:bg-green-100" // Low priority (default)

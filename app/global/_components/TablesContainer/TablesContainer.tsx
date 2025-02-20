@@ -42,7 +42,8 @@ export default function Home() {
 
   const { visibility } = useVisibilityStore();
   const { selectedTableURL } = useGlobalCrawlStore();
-  const { crawlData, issuesView, setIssuesView, issuesData } = useCrawlStore();
+  const { crawlData, issuesView, setIssuesView, issuesData, setGenericChart } =
+    useCrawlStore();
   const [activeTab, setActiveTab] = useState("crawledPages"); // Default to "crawledPages"
 
   // Sync `activeTab` with `issuesView` when `issuesView` changes
@@ -51,6 +52,20 @@ export default function Home() {
       setActiveTab(issuesView);
     }
   }, [issuesView]);
+
+  useEffect(() => {
+    if (activeTab === "crawledPages") {
+      setGenericChart("general");
+    }
+
+    if (activeTab === "Duplicated Titles") {
+      setGenericChart("");
+    }
+
+    if (activeTab === "404 Response") {
+      setGenericChart("");
+    }
+  }, [activeTab, issuesView]);
 
   const updateHeight = useCallback(() => {
     const windowHeight = window.innerHeight;

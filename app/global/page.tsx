@@ -43,6 +43,7 @@ export default function Page() {
     clearDomainCrawlData,
     addDomainCrawlResult,
     setSelectedTableURL,
+    setIssuesData,
   } = useGlobalCrawlStore();
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
   const allData = crawlData;
@@ -73,6 +74,7 @@ export default function Page() {
 
       setSelectedTableURL([]);
       setDomainCrawlLoading(true);
+      setIssuesData([]);
       // Clear the store before crawling
       clearDomainCrawlData();
       console.log("Crawling domain...");
