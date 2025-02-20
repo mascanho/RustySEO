@@ -42,7 +42,7 @@ export default function Home() {
 
   const { visibility } = useVisibilityStore();
   const { selectedTableURL } = useGlobalCrawlStore();
-  const { crawlData, issuesView, setIssuesView } = useCrawlStore();
+  const { crawlData, issuesView, setIssuesView, issuesData } = useCrawlStore();
   const [activeTab, setActiveTab] = useState("crawledPages"); // Default to "crawledPages"
 
   // Sync `activeTab` with `issuesView` when `issuesView` changes
@@ -156,7 +156,7 @@ export default function Home() {
               value="crawledPages"
               className="flex-grow overflow-hidden"
             >
-              <TableCrawl rows={crawlData} />
+              <TableCrawl tabName={"AllData"} rows={crawlData} />
             </TabsContent>
             <TabsContent
               value="javascript"
@@ -174,7 +174,8 @@ export default function Home() {
                 value={issuesView}
                 className="flex-grow overflow-hidden"
               >
-                {renderIssuesViewContent()}
+                {/* {renderIssuesViewContent()} */}
+                <TableCrawl tabName={issuesView} rows={issuesData} />
               </TabsContent>
             )}
           </Tabs>

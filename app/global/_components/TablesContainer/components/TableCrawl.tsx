@@ -196,7 +196,7 @@ const TableRow = ({
       row?.headings?.h2?.[0]?.length || "",
       row?.status_code || "",
       row?.word_count || "",
-      (row?.text_ratio?.[0]?.text_ratio).toFixed(1) || "",
+      row?.text_ratio?.[0]?.text_ratio?.toFixed(1) || "",
       row?.flesch?.Ok?.[0].toFixed(1) || "",
       row?.flesch?.Ok?.[1] || "",
       row?.mobile ? "Yes" : "No",
@@ -279,7 +279,7 @@ const ColumnPicker = ({
     () => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <div className="border dark:border-white/20 w-8  flex justify-center items-center rounded h-6  hover:border hover:border-brand-bright cursor-pointer active:bg-brand-bright active:text-white">
+          <div className="border dark:border-white/20 w-8  flex justify-center items-center rounded h-6 w-full hover:border hover:border-brand-bright cursor-pointer active:bg-brand-bright active:text-white">
             <TbColumns3 className="w-5 h-5 dark:text-white/50 p-1 active:text-white" />
           </div>
         </DropdownMenuTrigger>
@@ -302,6 +302,7 @@ const ColumnPicker = ({
 };
 
 const TableCrawl = ({
+  tabName,
   rows,
   rowHeight = 41,
   overscan = 10,
@@ -342,7 +343,7 @@ const TableCrawl = ({
             extensions: ["xlsx"],
           },
         ],
-        defaultPath: "RustySEO-AllData.xlsx", // Default file name
+        defaultPath: `RustySEO-${tabName}.xlsx`, // Default file name
       });
 
       if (filePath) {

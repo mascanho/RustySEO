@@ -58,7 +58,7 @@ const IssuesContainer = () => {
 
   // MISSING SCHEMA
   const missingSchema = crawlData?.filter((page) => {
-    return page?.schema?.length === 0;
+    return !page?.schema;
   });
 
   useEffect(() => {
@@ -168,10 +168,10 @@ const IssuesContainer = () => {
         ) + "%",
     },
     {
-      id: 9,
+      id: 10,
       name: "Missing Schema",
       issueCount: missingSchema?.length > 0 ? missingSchema.length : 0 || 0,
-      priority: "Low",
+      priority: "Medium",
       percentage:
         ((missingSchema?.length / (crawlData?.length || 1)) * 100).toFixed(1) +
         "%",
@@ -247,6 +247,11 @@ const IssuesContainer = () => {
             // Handle Low Content
             setIssuesData(lowContentPages);
             console.log(lowContentPages);
+            break;
+          case "Missing Schema":
+            // Handle Missing Schema
+            setIssuesData(missingSchema);
+            console.log(missingSchema);
             break;
           default:
             console.log("Unknown issue");

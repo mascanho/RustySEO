@@ -197,7 +197,7 @@ async fn process_url(
         url: final_url.to_string(),
         title: title_selector::extract_title(&body),
         description: page_description::extract_page_description(&body)
-            .unwrap_or_else(|| "No Description".to_string()),
+            .unwrap_or_else(|| "".to_string()),
         headings: headings_selector::headings_selector(&body),
         javascript: javascript_selector::extract_javascript(&body, &base_url),
         images: images_selector::extract_images_with_sizes_and_alts(&body, &base_url).await,
