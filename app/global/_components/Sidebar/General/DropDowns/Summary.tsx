@@ -172,7 +172,11 @@ const Summary: React.FC = () => {
 
   return (
     <div className="text-sx w-full">
-      <details className="w-full" onToggle={handleToggle}>
+      <details
+        className="w-full"
+        onClick={(e) => console.log(e.target.innerText)}
+        onToggle={handleToggle}
+      >
         <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 pb-1.5 cursor-pointer flex items-center">
           <span>Summary</span>
         </summary>

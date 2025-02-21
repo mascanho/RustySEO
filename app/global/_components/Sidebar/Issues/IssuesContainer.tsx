@@ -193,6 +193,17 @@ const IssuesContainer = () => {
         ((missingSchema?.length / (crawlData?.length || 1)) * 100).toFixed(1) +
         "%",
     },
+    {
+      id: 11,
+      name: "Large Images",
+      issueCount:
+        imagesAbove100KB?.length > 0 ? imagesAbove100KB.length : 0 || 0,
+      priority: "Medium",
+      percentage:
+        ((imagesAbove100KB?.length / (crawlData?.length || 1)) * 100).toFixed(
+          1,
+        ) + "%",
+    },
   ];
 
   // useEffect(() => {
@@ -224,32 +235,38 @@ const IssuesContainer = () => {
         switch (issue.name) {
           case "Duplicated Titles":
             setIssuesData(duplicateTitles); // Example: Set issues data for Duplicated Titles
+            setGenericChart("");
             console.log(duplicateTitles);
             break;
           case "Page Title > 60 Chars":
             // Handle Page Title > 60 Chars
             setIssuesData(pageTitlesAbove60Chars);
             console.log(pageTitlesAbove60Chars);
+            setGenericChart("");
             break;
           case "Page Title < 30 Chars":
             // Handle Page Title < 30 Chars
             setIssuesData(pagetitleBelow30Chars);
             console.log(pagetitleBelow30Chars);
+            setGenericChart("");
             break;
           case "Duplicated Descriptions":
             // Handle Duplicated Descriptions
             setIssuesData(duplicateDescriptions);
             console.log(duplicateDescriptions);
+            setGenericChart("");
             break;
           case "Descriptions > 160 Chars":
             // Handle Descriptions > 160 Chars
             setIssuesData(descriptionsAbove160Chars);
             console.log(descriptionsAbove160Chars);
+            setGenericChart("");
             break;
           case "404 Response":
             // Handle 404 Response
             setIssuesData(response404);
             console.log(response404);
+            setGenericChart("");
             break;
           case "H1 Missing":
             // Handle H1 Missing
@@ -260,16 +277,25 @@ const IssuesContainer = () => {
             // Handle H2 Missing
             setIssuesData(missingH2);
             console.log(missingH2);
+            setGenericChart("");
             break;
           case "Low Content":
             // Handle Low Content
             setIssuesData(lowContentPages);
             console.log(lowContentPages);
+            setGenericChart("");
             break;
           case "Missing Schema":
             // Handle Missing Schema
             setIssuesData(missingSchema);
             console.log(missingSchema);
+            setGenericChart("");
+            break;
+          case "Large Images":
+            // Handle Images > 100KB
+            setIssuesData(imagesAbove100KB);
+            console.log(imagesAbove100KB);
+            setGenericChart("");
             break;
           default:
             console.log("Unknown issue");
@@ -322,7 +348,7 @@ const IssuesContainer = () => {
               <td
                 className={`px-2 py-1 dark:bg-brand-darker border text-xs font-semibold  text-center ${
                   item.priority === "High"
-                    ? "bg-[hsl(710,100%,60%)] text-white dark:bg-[hsl(710,100%,60%)]" // High priority
+                    ? "bg-[hsl(710,100%,60%)] text-white dark:bg-red-500  "
                     : item.priority === "Medium"
                       ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-100" // Medium priority
                       : "bg-green-100 text-green-800 dark:bg-green-100" // Low priority (default)

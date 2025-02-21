@@ -5,6 +5,16 @@ import { Tabs, TabsList } from "@mantine/core";
 import useCrawlStore from "@/store/GlobalCrawlDataStore";
 import { BiDuplicate } from "react-icons/bi";
 import DuplicatedTitlesChart from "./_components/charts/DuplicatedTitlesChart";
+import PageTitleTooLargeChart from "./_components/charts/PageTitleTooLargeChart";
+import PageTitleTooShortChart from "./_components/charts/PageTitleTooShortChart";
+import Response404 from "./_components/charts/Response404Chart";
+import DuplicatedDescriptionsChart from "./_components/charts/DuplicatedDescriptionsChart";
+import DescriptionsTooLongChart from "./_components/charts/DescriptionsTooLongChart";
+import H1MissingChart from "./_components/charts/H1MissingChart";
+import H2MissingChart from "./_components/charts/H2MissingChart";
+import LowContentChart from "./_components/charts/LowContentChart";
+import MissingSchemaChart from "./_components/charts/MissingSchemaChart";
+import ImagesTooBigChart from "./_components/charts/ImagesTooBitChart.tsx";
 
 const OverviewBottomSidePanel = () => {
   const { issuesView, genericChart } = useCrawlStore();
@@ -19,9 +29,32 @@ const OverviewBottomSidePanel = () => {
         {issuesView === "Duplicated Titles" && genericChart !== "general" && (
           <DuplicatedTitlesChart />
         )}
-
-        {issuesView === "404 Response" && genericChart !== "general" && "hello"}
-
+        {issuesView === "Page Title > 60 Chars" &&
+          genericChart !== "general" && <PageTitleTooLargeChart />}
+        {issuesView === "Page Title < 30 Chars" &&
+          genericChart !== "general" && <PageTitleTooShortChart />}
+        {issuesView === "Duplicated Descriptions" &&
+          genericChart !== "general" && <DuplicatedDescriptionsChart />}
+        {issuesView === "Descriptions > 160 Chars" &&
+          genericChart !== "general" && <DescriptionsTooLongChart />}
+        {issuesView === "404 Response" && genericChart !== "general" && (
+          <Response404 />
+        )}
+        {issuesView === "H1 Missing" && genericChart !== "general" && (
+          <H1MissingChart />
+        )}
+        {issuesView === "H2 Missing" && genericChart !== "general" && (
+          <H2MissingChart />
+        )}{" "}
+        {issuesView === "Low Content" && genericChart !== "general" && (
+          <LowContentChart />
+        )}{" "}
+        {issuesView === "Missing Schema" && genericChart !== "general" && (
+          <MissingSchemaChart />
+        )}{" "}
+        {issuesView === "Large Images" && genericChart !== "general" && (
+          <ImagesTooBigChart />
+        )}{" "}
         {genericChart === "general" && <OverviewChart />}
       </Tabs.Panel>
     </Tabs>

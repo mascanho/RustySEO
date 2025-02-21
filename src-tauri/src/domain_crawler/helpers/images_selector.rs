@@ -4,15 +4,15 @@ use scraper::{Html, Selector};
 use tokio::time::{timeout, Duration};
 use url::Url;
 
-/// Extracts image URLs and alt tags from the HTML content.
+/// Extracts image URLs, alt tags, and a boolean indicating if width or height is not specified.
 ///
 /// # Arguments
 /// * `html` - The HTML content as a string.
 /// * `base_url` - The base URL used to resolve relative image URLs.
 ///
 /// # Returns
-/// A vector of tuples containing the image URL and its alt text.
-pub fn extract_image_urls_and_alts(html: &str, base_url: &Url) -> Vec<(Url, String)> {
+/// A vector of tuples containing the image URL, alt text, and a boolean indicating if width or height is not specified.
+pub fn extract_image_urls_and_alts(html: &str, base_url: &Url) -> Vec<(Url, String, bool)> {
     // Parse the HTML document
     let document = Html::parse_document(html);
 
@@ -35,8 +35,12 @@ pub fn extract_image_urls_and_alts(html: &str, base_url: &Url) -> Vec<(Url, Stri
             // Get the `alt` attribute or use an empty string if it doesn't exist
             let alt = element.value().attr("alt").unwrap_or("").to_string();
 
-            // Return a tuple of the image URL and alt text
-            Some((url, alt))
+            // Check if width or height is not specified
+            let is_size_not_specified =
+                element.value().attr("width").is_none() || element.value().attr("height").is_none();
+
+            // Return a tuple of the image URL, alt text, and the boolean
+            Some((url, alt, is_size_not_specified))
         })
         .collect() // Collect all results into a vector
 }
@@ -99,40 +103,48 @@ async fn fetch_image_size(url: &Url) -> Result<(u64, String, u16), String> {
     Ok((size_kb, content_type, status_code_int))
 }
 
-/// Extracts image URLs, alt tags, sizes, content types, and status codes from HTML.
+/// Extracts image URLs, alt tags, sizes, content types, status codes, and a boolean indicating if width or height is not specified.
 ///
 /// # Arguments
 /// * `html` - The HTML content as a string.
 /// * `base_url` - The base URL used to resolve relative image URLs.
 ///
 /// # Returns
-/// A vector of tuples containing the image URL, alt text, size in KB, content type, and status code as u16.
+/// A vector of tuples containing the image URL, alt text, size in KB, content type, status code as u16, and a boolean indicating if width or height is not specified.
 pub async fn extract_images_with_sizes_and_alts(
     html: &str,
     base_url: &Url,
-) -> Result<Vec<(String, String, u64, String, u16)>, String> {
-    // Extract image URLs and alt tags from the HTML
+) -> Result<Vec<(String, String, u64, String, u16, bool)>, String> {
+    // Extract image URLs, alt tags, and the boolean indicating if width or height is not specified
     let image_urls_and_alts = extract_image_urls_and_alts(html, base_url);
 
     // Create a list of futures to fetch image sizes, content types, and status codes in parallel
-    let fetch_futures = image_urls_and_alts
-        .into_iter()
-        .map(|(image_url, alt)| async move {
-            // Always return image URL and alt text, even if fetch fails
-            let url_string = image_url.to_string();
+    let fetch_futures =
+        image_urls_and_alts
+            .into_iter()
+            .map(|(image_url, alt, is_size_not_specified)| async move {
+                // Always return image URL and alt text, even if fetch fails
+                let url_string = image_url.to_string();
 
-            match fetch_image_size(&image_url).await {
-                Ok((size, content_type, status_code)) => {
-                    // If successful, return a tuple with the image details
-                    (url_string, alt, size, content_type, status_code)
+                match fetch_image_size(&image_url).await {
+                    Ok((size, content_type, status_code)) => {
+                        // If successful, return a tuple with the image details and the boolean
+                        (
+                            url_string,
+                            alt,
+                            size,
+                            content_type,
+                            status_code,
+                            is_size_not_specified,
+                        )
+                    }
+                    Err(e) => {
+                        // If there's an error, log it and return with default values and error code 0
+                        eprintln!("{}", e);
+                        (url_string, alt, 0, String::new(), 0, is_size_not_specified)
+                    }
                 }
-                Err(e) => {
-                    // If there's an error, log it and return with default values and error code 0
-                    eprintln!("{}", e);
-                    (url_string, alt, 0, String::new(), 0)
-                }
-            }
-        });
+            });
 
     // Execute all futures concurrently and wait for them to complete
     let results = join_all(fetch_futures).await;

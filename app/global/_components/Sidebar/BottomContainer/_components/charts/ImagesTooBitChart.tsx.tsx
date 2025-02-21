@@ -47,51 +47,42 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-function DuplicatedTitlesChart() {
-  const { crawlData, javascript, css, domainCrawlLoading, issuesData } =
-    useGlobalCrawlStore();
+function ImagesTooBigChart() {
+  const {
+    crawlData,
+    javascript,
+    css,
+    domainCrawlLoading,
+    issuesData,
+    issuesView,
+  } = useGlobalCrawlStore();
   const [sessionCrawls, setSessionCrawls] = useState<number>(0);
   const [totalCrawlPages, setTotalCrawlPages] = useState<number[]>([]);
 
   // Default values for optional data
   const totalPages = crawlData?.length || 0;
-  const inlineJs = javascript?.inline || 0;
-  const externalJs = javascript?.external || 0;
-  const inlineCss = css?.inline || 0;
-  const externalCss = css?.external || 0;
 
-  const duplicatedTitles = issuesData?.length;
+  const imagesTooBig = issuesData?.length;
 
   const chartData = [
     // { browser: "HTML", visitors: totalPages, fill: "hsl(210, 100%, 50%)" },
     {
-      browser: "Duplicated",
-      visitors: duplicatedTitles || 0,
+      browser: "Too Large",
+      visitors: imagesTooBig || 0,
       fill: "hsl(710, 100%, 60%)",
     },
     {
       browser: "Normal",
-      visitors: totalPages - duplicatedTitles || 0,
+      visitors: totalPages - imagesTooBig || 0,
       fill: "hsl(210, 100%, 70%)",
     },
   ];
-
-  const totalPagesCrawledInSession = (() => {
-    try {
-      return Array.isArray(totalCrawlPages)
-        ? totalCrawlPages.reduce((acc, item) => acc + (item || 0), 0)
-        : 0;
-    } catch (error) {
-      console.error("Error calculating total pages crawled in session:", error);
-      return 0;
-    }
-  })();
 
   return (
     <Card className="flex flex-col dark:bg-gray-900 bg-slate-100 border-0 shadow-none">
       <CardHeader className="items-center pb-0">
         <CardTitle>Issues Found</CardTitle>
-        <CardDescription>Duplicated Page Titles</CardDescription>
+        <CardDescription>{issuesView}</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
@@ -130,14 +121,14 @@ function DuplicatedTitlesChart() {
                           style={{ color: "white" }}
                           className="text-3xl dark:fill-white text-white font-bold dark:text-white"
                         >
-                          {duplicatedTitles.toLocaleString()}
+                          {imagesTooBig?.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
                           className="fill-muted-foreground dark:fill-white/50 dark:text-white"
                         >
-                          Duplicated Titles
+                          Large Images
                         </tspan>
                       </text>
                     );
@@ -151,9 +142,8 @@ function DuplicatedTitlesChart() {
       </CardContent>
       <CardFooter className="flex-col gap-2 text-xs dark:text-white/50">
         <div className="leading-none text-muted-foreground">
-          RustySEO found{" "}
-          <span className="text-red-500">{duplicatedTitles || 0}</span>{" "}
-          duplicated Titles.
+          Found <span className="text-red-500">{imagesTooBig || 0}</span> images
+          bigger than 100KB
         </div>
         <div className="flex items-center gap-3 font-medium leading-none">
           From a total of {totalPages || 0} pages analyzed
@@ -163,4 +153,4 @@ function DuplicatedTitlesChart() {
   );
 }
 
-export default DuplicatedTitlesChart;
+export default ImagesTooBigChart;
