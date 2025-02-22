@@ -1,6 +1,5 @@
 use colored::*;
 use futures::stream::{self, StreamExt};
-use hyper::body::HttpBody;
 use rand::Rng;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -40,11 +39,11 @@ use super::helpers::{
 use super::models::DomainCrawlResults;
 
 // Constants for crawler behavior
-const MAX_RETRIES: usize = 5;
-const BASE_DELAY: u64 = 2;
-const MAX_DELAY: u64 = 5;
-const CONCURRENT_REQUESTS: usize = 70; // Reduced from 100
-const CRAWL_TIMEOUT: Duration = Duration::from_secs(7200); // 2 hour
+const MAX_RETRIES: usize = 5; // Increased retries for robustness
+const BASE_DELAY: u64 = 500; // Base delay for exponential backoff in milliseconds
+const MAX_DELAY: u64 = 8000; // Maximum delay for exponential backoff in milliseconds
+const CONCURRENT_REQUESTS: usize = 50; // Reduced concurrency to avoid overwhelming servers
+const CRAWL_TIMEOUT: Duration = Duration::from_secs(7200); // 2 hours
 const STALL_DETECTION_THRESHOLD: Duration = Duration::from_secs(300); // 5 minutes
 const PROGRESS_CHECK_INTERVAL: Duration = Duration::from_secs(30);
 const BATCH_SIZE: usize = 10;
@@ -132,7 +131,7 @@ async fn process_url(
     app_handle: &tauri::AppHandle,
 ) -> Result<(), String> {
     let response_result = tokio::time::timeout(
-        Duration::from_secs(30),
+        Duration::from_secs(60), // Increased timeout for slower websites
         fetch_with_exponential_backoff(client, url.as_str()),
     )
     .await;
@@ -302,8 +301,8 @@ pub async fn crawl_domain(
     // Initialize client
     let client = Client::builder()
         .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-        .timeout(Duration::from_secs(30))
-        .connect_timeout(Duration::from_secs(10))
+        .timeout(Duration::from_secs(60)) // Increased timeout
+        .connect_timeout(Duration::from_secs(15)) // Increased connect timeout
         .redirect(reqwest::redirect::Policy::limited(10))
         .build()
         .map_err(|e| e.to_string())?;
@@ -374,11 +373,21 @@ pub async fn crawl_domain(
                     let _permit = semaphore.acquire().await.unwrap();
 
                     // Add jitter to requests
-                    let jitter = rand::thread_rng().gen_range(0..200);
+                    let jitter = rand::thread_rng().gen_range(500..2000); // Increased jitter range
                     sleep(Duration::from_millis(jitter)).await;
 
-                    if let Err(e) = process_url(url, &client, &base_url, state, &app_handle).await {
-                        eprintln!("Error processing URL: {}", e);
+                    let mut retries = 0;
+                    while retries < MAX_RETRIES {
+                        if let Err(e) =
+                            process_url(url.clone(), &client, &base_url, state.clone(), &app_handle)
+                                .await
+                        {
+                            eprintln!("Error processing URL (retry {}): {}", retries + 1, e);
+                            retries += 1;
+                            sleep(Duration::from_secs(1)).await;
+                        } else {
+                            break;
+                        }
                     }
 
                     Ok::<(), String>(())

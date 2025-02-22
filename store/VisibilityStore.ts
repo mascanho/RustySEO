@@ -4,6 +4,7 @@ import create from "zustand";
 interface VisibilityState {
   sidebar: boolean;
   serpKeywords: boolean;
+  seotoolkit: boolean; // Added seotoolkit
 }
 
 interface BearState {
@@ -12,6 +13,8 @@ interface BearState {
   hideSidebar: () => void;
   showSerpKeywords: () => void;
   hideSerpKeywords: () => void;
+  showSeoToolkit: () => void;
+  hideSeoToolkit: () => void;
 }
 
 // Create the Zustand store with proper types
@@ -19,6 +22,7 @@ export const useVisibilityStore = create<BearState>((set) => ({
   visibility: {
     sidebar: true,
     serpKeywords: false,
+    seotoolkit: true, // Ensure this is included
   },
 
   // Action to hide the sidebar
@@ -43,5 +47,17 @@ export const useVisibilityStore = create<BearState>((set) => ({
   showSerpKeywords: () =>
     set((state) => ({
       visibility: { ...state.visibility, serpKeywords: true },
+    })),
+
+  // Action to hide the SEO Toolkit
+  hideSeoToolkit: () =>
+    set((state) => ({
+      visibility: { ...state.visibility, seotoolkit: false },
+    })),
+
+  // Action to show the SEO Toolkit
+  showSeoToolkit: () =>
+    set((state) => ({
+      visibility: { ...state.visibility, seotoolkit: true },
     })),
 }));

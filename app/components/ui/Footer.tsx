@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { LiaListAlt, LiaTasksSolid } from "react-icons/lia";
 import { CgWebsite } from "react-icons/cg";
-import { FaRobot } from "react-icons/fa6";
+import { FaRobot, FaSkullCrossbones } from "react-icons/fa6";
 import { useChat } from "ai/react";
 import { BsLayoutSidebarInsetReverse } from "react-icons/bs";
 import {
@@ -21,11 +21,11 @@ import { useDisclosure } from "@mantine/hooks";
 import Todo from "./Todo";
 import TodoItems from "./TodoItems";
 import { Drawer as MantineDrawer } from "@mantine/core";
-import { IoMdClose } from "react-icons/io";
+import { IoIosHelpBuoy, IoMdClose } from "react-icons/io";
 import { usePathname } from "next/navigation";
 import { LiaHeadingSolid } from "react-icons/lia";
 import { useVisibilityStore } from "@/store/VisibilityStore";
-import { GiPirateFlag, GiPirateHat } from "react-icons/gi";
+import { GiPirateFlag, GiPirateHat, GiSurprisedSkull } from "react-icons/gi";
 import { ImGoogle3 } from "react-icons/im";
 import { AiFillX } from "react-icons/ai";
 import { FaShip, FaSpider } from "react-icons/fa";
@@ -33,6 +33,8 @@ import { listen } from "@tauri-apps/api/event";
 import FooterLoader from "./FooterLoader/FooterLoader";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import CrawlerType from "./Footer/CrawlerType";
+import { TbHelpSquareRoundedFilled, TbSeo } from "react-icons/tb";
+import SeoToolkit from "./Footer/SeoToolkit/SeoToolkit";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -58,6 +60,8 @@ const Footer = () => {
     hideSidebar,
     showSerpKeywords,
     hideSerpKeywords,
+    showSeoToolkit,
+    hideSeoToolkit,
   } = useVisibilityStore();
   const [openedDrawer, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
@@ -246,6 +250,20 @@ const Footer = () => {
                 </div>
               </div>
 
+              {/* SEO HELPKIT */}
+              <div className="relative group hover:delay-1000">
+                <GiSurprisedSkull
+                  onClick={() =>
+                    visibility.seotoolkit ? hideSeoToolkit() : showSeoToolkit()
+                  }
+                  className={iconClasses}
+                  style={{ fontSize: "14px" }}
+                />
+                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
+                  SEO Resources
+                </div>
+              </div>
+
               <Drawer
                 open={openedAiDrawer}
                 onOpenChange={(open) =>
@@ -307,6 +325,13 @@ const Footer = () => {
             </div>
           </div>
         </section>
+        {/* SEO TOOLKIT MODAL */}
+        {visibility.seotoolkit && (
+          <SeoToolkit
+            hideSeoToolkit={hideSeoToolkit}
+            showSeoToolkit={showSeoToolkit}
+          />
+        )}{" "}
       </footer>
     </>
   );
