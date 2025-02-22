@@ -222,7 +222,7 @@ const TableRow = ({
               style={{
                 width: columnWidths[cellIndex],
                 border: "1px solid #ddd",
-                padding: "8px",
+                padding: "6px 8px",
                 textAlign: columnAlignments[cellIndex],
                 overflow: "hidden",
                 whiteSpace: "nowrap",

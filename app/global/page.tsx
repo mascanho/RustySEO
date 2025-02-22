@@ -210,7 +210,7 @@ export default function Page() {
           </Tabs.Panel>{" "}
           <Tabs.Panel
             value="gsc"
-            className="h-calc(100vh-8.8rem)] mt-8 pt-1 dark:bg-brand-darker"
+            className="h-calc(100vh-8.8rem)] mt-8 pt-2 dark:bg-brand-darker"
           >
             <GSCcontainer />
           </Tabs.Panel>{" "}

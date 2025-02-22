@@ -19,7 +19,10 @@ export default function KeywordRow({
   return (
     <tr className="overflow-hidden">
       {row.getVisibleCells().map((cell) => (
-        <td key={cell.id} className="px-6 py-1 whitespace-nowrap">
+        <td
+          key={cell.id}
+          className="px-6 py-1 whitespace-nowrap dark:border dark:border-b-red-500"
+        >
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </td>
       ))}

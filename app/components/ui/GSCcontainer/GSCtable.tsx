@@ -164,7 +164,7 @@ export default function GSCkeywordTable({ gscData }: KeywordTableProps) {
             )}
           </div>
         </div>
-        <table className="divide-y divide-gray-200 w-full">
+        <table className="divide-y divide-gray-200 dark:divide-red-500 w-full">
           <thead className="bg-gray-50 sticky top-[40px] z-10">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
@@ -190,7 +190,7 @@ export default function GSCkeywordTable({ gscData }: KeywordTableProps) {
               </tr>
             ))}
           </thead>
-          <tbody className="bg-white  divide-y divide-gray-200 dark:divide-y-red-500 dark:divide-y  overflow-hidden">
+          <tbody className="bg-white  divide-y divide-gray-200 dark:divide-y-blue-500 dark:divide-y  overflow-hidden">
             {table.getRowModel().rows.map((row, index) => (
               <KeywordRow key={row.id} row={row} index={index} />
             ))}
