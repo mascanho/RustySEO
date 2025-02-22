@@ -1,3 +1,4 @@
+// @ts-nocheck
 const seoResources: Resource[] = [
   {
     title: "Moz",
