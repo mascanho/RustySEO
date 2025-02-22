@@ -182,7 +182,8 @@ function OverviewChart() {
           This session has recorded {sessionCrawls || 0} crawls.
         </div>
         <div className="flex items-center gap-3 font-medium leading-none">
-          With a total of {totalPagesCrawledInSession || 0} pages analyzed
+          With a total of {[totalPagesCrawledInSession + crawlData.length] || 0}{" "}
+          pages analyzed
           <TrendingUp className="h-5 w-4" aria-hidden="true" />
         </div>
       </CardFooter>

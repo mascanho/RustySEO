@@ -257,7 +257,7 @@ const Footer = () => {
                     visibility.seotoolkit ? hideSeoToolkit() : showSeoToolkit()
                   }
                   className={iconClasses}
-                  style={{ fontSize: "14px" }}
+                  style={{ fontSize: "15px", marginBottom: "0.5px" }}
                 />
                 <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
                   SEO Resources

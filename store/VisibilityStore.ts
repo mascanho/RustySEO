@@ -22,7 +22,7 @@ export const useVisibilityStore = create<BearState>((set) => ({
   visibility: {
     sidebar: true,
     serpKeywords: false,
-    seotoolkit: true, // Ensure this is included
+    seotoolkit: false, // Ensure this is included
   },
 
   // Action to hide the sidebar
