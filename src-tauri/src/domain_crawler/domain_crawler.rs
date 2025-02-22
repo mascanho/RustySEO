@@ -42,9 +42,9 @@ use super::models::DomainCrawlResults;
 const MAX_RETRIES: usize = 5; // Increased retries for robustness
 const BASE_DELAY: u64 = 500; // Base delay for exponential backoff in milliseconds
 const MAX_DELAY: u64 = 8000; // Maximum delay for exponential backoff in milliseconds
-const CONCURRENT_REQUESTS: usize = 50; // Reduced concurrency to avoid overwhelming servers
-const CRAWL_TIMEOUT: Duration = Duration::from_secs(7200); // 2 hours
-const STALL_DETECTION_THRESHOLD: Duration = Duration::from_secs(300); // 5 minutes
+const CONCURRENT_REQUESTS: usize = 100;
+const CRAWL_TIMEOUT: Duration = Duration::from_secs(10000); // 2 hours
+const STALL_DETECTION_THRESHOLD: Duration = Duration::from_secs(600); // 5 minutes
 const PROGRESS_CHECK_INTERVAL: Duration = Duration::from_secs(30);
 const BATCH_SIZE: usize = 10;
 
@@ -291,6 +291,7 @@ fn should_skip_url(url: &str) -> bool {
         || url.ends_with(".png")
         || (url.contains("?") && url.contains("page="))
         || url.contains("#")
+        || url.contains("login")
 }
 
 // Main crawling function

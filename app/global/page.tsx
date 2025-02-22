@@ -149,7 +149,7 @@ export default function Page() {
           <aside className="absolute top-11 pt-1 left-0 w-full dark:bg-brand-darker z-10 bg-white">
             <Tabs.List
               justify="center"
-              className="dark:text-white text-xs dark:border-brand-darker"
+              className="dark:text-white text-xs dark:border-b-brand-dark dark:border-b"
             >
               <Tabs.Tab value="first">
                 <FaGlobe className="inline-block mr-2" />
@@ -208,7 +208,10 @@ export default function Page() {
           <Tabs.Panel value="kws" className="h-[calc(100vh-8.8rem)] mt-9">
             <KeywordAnalytics />
           </Tabs.Panel>{" "}
-          <Tabs.Panel value="gsc" ls>
+          <Tabs.Panel
+            value="gsc"
+            className="h-calc(100vh-8.8rem)] mt-8 pt-1 dark:bg-brand-darker"
+          >
             <GSCcontainer />
           </Tabs.Panel>{" "}
           <Tabs.Panel value="content" className="mt-9 h-screen">

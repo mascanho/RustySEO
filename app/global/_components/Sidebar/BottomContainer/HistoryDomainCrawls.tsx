@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import React, { useEffect, useState } from "react";
 import { MdOutlineErrorOutline } from "react-icons/md";
-import { RiPagesLine, RiCalendarLine } from "react-icons/ri"; // Import icons
+import { RiPagesLine, RiCalendarLine } from "react-icons/ri";
 
 const HistoryDomainCrawls = () => {
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
@@ -12,39 +12,9 @@ const HistoryDomainCrawls = () => {
   const { crawlData, domainCrawlLoading, issues, summary } =
     useGlobalCrawlStore();
 
-  useEffect(() => {
-    try {
-      // Ensure the table exists (idempotent operation)
-      invoke("create_domain_results_table");
-      console.log("Table created or already exists");
-      // await fetchData();
-    } catch (error) {
-      console.error("Error creating table:", error);
-    }
-  }, []); // runs once when the component mounts
-
-  useEffect(() => {
-    // Listen for the `crawl_complete` event from the backend
-    const unlisten = listen("crawl_complete", async () => {
-      console.log("Crawl complete event received");
-
-      // Step 1: Add the new crawl data to the database
-      await addDataToDatabase();
-
-      // Step 2: Fetch the updated data from the database
-      await fetchData();
-    });
-
-    // Cleanup the event listener when the component unmounts
-    return () => {
-      unlisten.then((fn) => fn());
-    };
-  }, [crawlData]); // Re-run if `crawlData` changes
-
   // Fetch data from the database
   const fetchData = async () => {
     try {
-      // Read data from the table
       const result = await invoke("read_domain_results_history_table");
       console.log("Data fetched successfully:", result);
       setCrawlHistory(result); // Update the crawlHistory state with the fetched data
@@ -53,34 +23,32 @@ const HistoryDomainCrawls = () => {
     }
   };
 
-  // SUM the issues
-  const totalIssueCount = issues.reduce((sum, item) => {
-    return sum + item.issueCount;
-  }, 0); // Add new crawl data to the database
-
+  // Add new crawl data to the database
   const addDataToDatabase = async () => {
     if (crawlData.length === 0) return; // Don't add empty data
 
+    // Calculate total issues
+    const totalIssueCount = issues.reduce(
+      (sum, item) => sum + item.issueCount,
+      0,
+    );
+
+    // Create a new entry without specifying `id` (let the database handle it)
     const newEntry = {
-      id: 1,
-      domain: crawlData?.[0]?.url || "", // Use the first URL in crawlData or fallback to an empty string
-      date: new Date().toISOString(), // Get the current date in YYYY-MM-DD format
-      pages: crawlData?.length || 0, // Total pages, default to 0 if crawlData is empty
-      errors: crawlData?.length > 0 ? totalIssueCount || 0 : 0, // Total errors, default to 0 if crawlData is empty or totalIssueCount is null/undefined
-      status: "completed", // Required field
-      total_links: crawlData?.length > 0 ? summary?.totalLinksFound || 0 : 0, // Total links, default to 0 if crawlData is empty or summary is null/undefined
-      total_internal_links:
-        crawlData?.length > 0 ? summary?.totalInternalLinks || 0 : 0, // Total internal links, default to 0 if crawlData is empty or summary is null/undefined
-      total_external_links:
-        crawlData?.length > 0 ? summary?.totalExternalLinks || 0 : 0, // Total external links, default to 0 if crawlData is empty or summary is null/undefined
-      total_javascript:
-        crawlData?.length > 0 ? summary?.totalJavascript || 0 : 0, // Total JavaScript files, default to 0 if crawlData is empty or summary is null/undefined
-      indexable_pages:
-        crawlData?.length > 0
-          ? crawlData?.length - summary?.totalNotIndexablePages
-          : 0 || 0, // Indexable pages, default to 0 if crawlData is empty or summary is null/undefined
-      not_indexable_pages:
-        crawlData?.length > 0 ? summary?.totalNotIndexablePages || 0 : 0, // Non-indexable pages, default to 0 if crawlData is empty or summary is null/undefined
+      domain: crawlData?.[0]?.url || "",
+      date: new Date().toISOString(),
+      pages: crawlData?.length || 0,
+      errors: totalIssueCount || 0,
+      status: "completed",
+      total_links: summary?.totalLinksFound || 0,
+      total_internal_links: summary?.totalInternalLinks || 0,
+      total_external_links: summary?.totalExternalLinks || 0,
+      total_javascript: summary?.totalJavascript || 0,
+      indexable_pages: Math.max(
+        0,
+        (crawlData?.length || 0) - (summary?.totalNotIndexablePages || 0),
+      ),
+      not_indexable_pages: summary?.totalNotIndexablePages || 0,
     };
 
     try {
@@ -92,6 +60,31 @@ const HistoryDomainCrawls = () => {
       console.error("Error adding data to database:", error);
     }
   };
+
+  // Set up the event listener for `crawl_complete` only once
+  useEffect(() => {
+    const unlisten = listen("crawl_complete", async () => {
+      console.log("Crawl complete event received");
+      await addDataToDatabase();
+      await fetchData();
+    });
+
+    // Cleanup the event listener when the component unmounts
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, []); // Empty dependency array to run only once
+
+  // Fetch initial data when the component mounts
+  useEffect(() => {
+    try {
+      invoke("create_domain_results_table");
+      console.log("Table created or already exists");
+      fetchData(); // Fetch initial data
+    } catch (error) {
+      console.error("Error creating table:", error);
+    }
+  }, []);
 
   const handleRowClick = (index: number) => {
     const currentExpandedRows = [...expandedRows];
@@ -113,7 +106,9 @@ const HistoryDomainCrawls = () => {
               (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
             ) // Sort by date descending (latest first)
             .map((entry, index) => (
-              <React.Fragment key={index}>
+              <React.Fragment key={entry.id || index}>
+                {" "}
+                {/* Use unique id if available */}
                 <div
                   onClick={() => handleRowClick(index)}
                   className={`cursor-pointer px-2 flex mr-2 py-1 justify-between ${
@@ -159,7 +154,7 @@ const HistoryDomainCrawls = () => {
                       </p>
                       <p>
                         <strong>Indexable Pages:</strong>{" "}
-                        {Math.abs(entry.indexable_pages)}
+                        {entry.indexable_pages}
                       </p>
                       <p>
                         <strong>Not Indexable:</strong>{" "}
