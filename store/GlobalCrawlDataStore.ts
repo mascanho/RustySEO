@@ -16,6 +16,8 @@ export interface PageDetails {
   robots: string[];
   isGeneratingExcel: boolean;
   setSummary: () => void;
+  isFinishedDeepCrawl: string;
+  setFinishedDeepCrawl: () => void;
 }
 
 // Define the Zustand store
@@ -52,6 +54,9 @@ interface CrawlStore {
   setIsGeneratingExcel: (isGenerating: boolean) => void;
   summary: string[];
   setSummary: (summary: string[]) => void;
+
+  isFinishedDeepCrawl: boolean;
+  setFinishedDeepCrawl: (isFinished: boolean) => void;
 
   genericChart: string;
   setGenericChart: (chart: string) => void;
@@ -109,6 +114,10 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
 
   genericChart: "",
   setGenericChart: (chart) => set({ genericChart: chart }),
+
+  isFinishedDeepCrawl: false,
+  setFinishedDeepCrawl: (isFinished) =>
+    set({ isfinishedDeepCrawl: isFinished }),
 }));
 
 // Custom hook to use selectors

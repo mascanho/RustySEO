@@ -44,6 +44,7 @@ export default function Page() {
     addDomainCrawlResult,
     setSelectedTableURL,
     setIssuesData,
+    setFinishedDeepCrawl,
   } = useGlobalCrawlStore();
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
   const allData = crawlData;
@@ -117,6 +118,7 @@ export default function Page() {
         }
 
         addDomainCrawlResult(result);
+        setFinishedDeepCrawl(true);
       });
 
       return unlisten; // Return the cleanup function
