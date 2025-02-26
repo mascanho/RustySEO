@@ -445,5 +445,26 @@ pub async fn crawl_domain(
         eprintln!("Failed to emit crawl completion event: {}", err);
     }
 
+    // DEBUG IF THERE ARE UNPROCESSED URLS
+    if state.crawled_urls < state.total_urls {
+        println!("\nWARNING: Incomplete crawl detected!");
+        println!("URLs in queue but not processed: {}", state.queue.len());
+        println!(
+            "URLs in to_visit but not in queue: {}",
+            state.to_visit.len() - state.queue.len()
+        );
+
+        // Print a sample of unprocessed URLs (first 10)
+        println!("\nSample of unprocessed URLs:");
+        let mut count = 0;
+        for url in &state.queue {
+            if count >= 10 {
+                break;
+            }
+            println!("  - {}", url);
+            count += 1;
+        }
+    }
+
     Ok(state.results.clone())
 }
