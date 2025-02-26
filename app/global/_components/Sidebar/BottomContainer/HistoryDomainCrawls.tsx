@@ -92,7 +92,7 @@ const HistoryDomainCrawls = () => {
       unlistenFn = await listen("crawl_complete", async () => {
         console.log("Crawl complete event received");
         console.log("Current crawlData:", crawlData); // Debug crawlData state
-        await addDataToDatabase();
+        // await addDataToDatabase();
         await fetchData();
       });
     };
@@ -107,7 +107,22 @@ const HistoryDomainCrawls = () => {
         unlistenFn();
       }
     };
-  }, []); // Empty dependency array to run only once
+  }, [crawlData]); // Empty dependency array to run only once
+
+  // Listen for changes in localStorage CrawledLinks
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "CrawledLinks") {
+        handleAddToDB();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
 
   // Fetch initial data and create table when the component mounts
   useEffect(() => {
@@ -138,6 +153,10 @@ const HistoryDomainCrawls = () => {
     setExpandedRows(currentExpandedRows);
   };
 
+  const handleAddToDB = () => {
+    addDataToDatabase();
+  };
+
   return (
     <div className="text-xs h-[calc(28rem-2rem)] overflow-auto">
       {error && (
@@ -146,6 +165,8 @@ const HistoryDomainCrawls = () => {
         </div>
       )}
       <div className="text-center">
+        <button onClick={() => addDataToDatabase()}>Add to DB</button>
+
         <div>
           {crawlHistory.length === 0 && !error && (
             <p className="text-gray-500">No crawl history available.</p>
