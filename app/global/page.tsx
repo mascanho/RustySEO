@@ -45,6 +45,7 @@ export default function Page() {
     setSelectedTableURL,
     setIssuesData,
     setFinishedDeepCrawl,
+    setCrawlSessionTotalArray,
   } = useGlobalCrawlStore();
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
   const allData = crawlData;
@@ -96,6 +97,7 @@ export default function Page() {
       // Add the length of the new crawlData (if it exists) to the crawledLinks array
       if (crawlData?.length) {
         crawledLinks.push(crawlData.length);
+        setCrawlSessionTotalArray(crawledLinks);
       }
 
       // Save the updated crawledLinks array back to sessionStorage

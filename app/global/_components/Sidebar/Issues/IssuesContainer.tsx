@@ -76,8 +76,6 @@ const IssuesContainer = () => {
     });
   });
 
-  console.log(imagesAbove100KB, "Images above 100KB");
-
   useEffect(() => {
     const mode = localStorage.getItem("dark-mode");
     setIsMode(mode);

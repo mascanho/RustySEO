@@ -18,6 +18,8 @@ export interface PageDetails {
   setSummary: () => void;
   isFinishedDeepCrawl: string;
   setFinishedDeepCrawl: () => void;
+  crawlSessionTotalArray: string[];
+  setCrawlSessionTotalArray: () => void;
 }
 
 // Define the Zustand store
@@ -54,19 +56,16 @@ interface CrawlStore {
   setIsGeneratingExcel: (isGenerating: boolean) => void;
   summary: string[];
   setSummary: (summary: string[]) => void;
-
   isFinishedDeepCrawl: boolean;
   setFinishedDeepCrawl: (isFinished: boolean) => void;
-
   genericChart: string;
   setGenericChart: (chart: string) => void;
-
-  // ISSUES BLOCK TOP SIDEBAR
-
   issuesView: string;
   setIssuesView: (view: string) => void;
   issuesData: string[];
   setIssuesData: (data: string[]) => void;
+  crawlSessionTotalArray: string[];
+  setCrawlSessionTotalArray: (data: string[]) => void;
 }
 
 const useGlobalCrawlStore = create<CrawlStore>((set) => ({
@@ -102,25 +101,22 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
   isGeneratingExcel: false,
   setIsGeneratingExcel: (isGenerating) =>
     set({ isGeneratingExcel: isGenerating }),
-
   summary: [],
   setSummary: (summary) => set({ summary }),
-
   issuesView: "",
   setIssuesView: (view) => set({ issuesView: view }),
-
   issuesData: [],
   setIssuesData: (data) => set({ issuesData: data }),
-
   genericChart: "",
   setGenericChart: (chart) => set({ genericChart: chart }),
-
   isFinishedDeepCrawl: false,
   setFinishedDeepCrawl: (isFinished) =>
-    set({ isfinishedDeepCrawl: isFinished }),
+    set({ isFinishedDeepCrawl: isFinished }),
+  crawlSessionTotalArray: [],
+  setCrawlSessionTotalArray: (data: string[]) =>
+    set({ crawlSessionTotalArray: data }),
 }));
 
-// Custom hook to use selectors
 const useCrawlStore = () => {
   return useGlobalCrawlStore((state) => state, shallow);
 };
