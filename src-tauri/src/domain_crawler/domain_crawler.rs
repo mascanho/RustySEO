@@ -42,11 +42,9 @@ use super::models::DomainCrawlResults;
 const MAX_RETRIES: usize = 5; // Increased retries for robustness
 const BASE_DELAY: u64 = 500; // Base delay for exponential backoff in milliseconds
 const MAX_DELAY: u64 = 8000; // Maximum delay for exponential backoff in milliseconds
-const CONCURRENT_REQUESTS: usize = 100;
-const CRAWL_TIMEOUT: Duration = Duration::from_secs(10000); // 2 hours
-const STALL_DETECTION_THRESHOLD: Duration = Duration::from_secs(600); // 5 minutes
-const PROGRESS_CHECK_INTERVAL: Duration = Duration::from_secs(30);
-const BATCH_SIZE: usize = 10;
+const CONCURRENT_REQUESTS: usize = 100; // Number of concurrent requests
+const CRAWL_TIMEOUT: Duration = Duration::from_secs(14400); // 4 hours
+const BATCH_SIZE: usize = 10; // Number of URLs to process in each batch
 
 // Progress tracking structure
 #[derive(Clone, Serialize)]
@@ -66,7 +64,6 @@ struct CrawlResultData {
 // Structure to track crawler state
 pub struct CrawlerState {
     pub visited: HashSet<String>,
-    pub to_visit: HashSet<String>,
     pub failed_urls: HashSet<String>,
     pub results: Vec<DomainCrawlResults>,
     pub queue: VecDeque<Url>,
@@ -78,11 +75,10 @@ impl CrawlerState {
     fn new() -> Self {
         CrawlerState {
             visited: HashSet::new(),
-            to_visit: HashSet::new(),
             failed_urls: HashSet::new(),
             results: Vec::new(),
             queue: VecDeque::new(),
-            total_urls: 1,
+            total_urls: 0, // Initialize to 0; will increment with first URL
             crawled_urls: 0,
         }
     }
@@ -188,7 +184,7 @@ async fn process_url(
     };
 
     if !check_html_page::is_html_page(&body, content_type.as_deref()).await {
-        return Ok(());
+        return Ok(()); // Non-HTML pages don't count toward crawlable URLs
     }
 
     // Create result object
@@ -198,8 +194,8 @@ async fn process_url(
         description: page_description::extract_page_description(&body)
             .unwrap_or_else(|| "".to_string()),
         headings: headings_selector::headings_selector(&body),
-        javascript: javascript_selector::extract_javascript(&body, &base_url),
-        images: images_selector::extract_images_with_sizes_and_alts(&body, &base_url).await,
+        javascript: javascript_selector::extract_javascript(&body, base_url),
+        images: images_selector::extract_images_with_sizes_and_alts(&body, base_url).await,
         status_code,
         anchor_links: anchor_links::extract_internal_external_links(&body, base_url),
         indexability: indexability::extract_indexability(&body),
@@ -237,19 +233,19 @@ async fn process_url(
         let mut state = state.lock().await;
         state.results.push(result.clone());
         state.crawled_urls += 1;
+        state.visited.insert(url.to_string());
 
         // Process new links
         let links = links_selector::extract_links(&body, base_url);
         for link in links {
             let link_str = link.as_str();
             if should_skip_url(link_str) {
-                continue;
+                continue; // Skip non-crawlable URLs
             }
 
-            if !state.visited.contains(link_str) && !state.to_visit.contains(link_str) {
-                state.to_visit.insert(link_str.to_string());
+            if !state.visited.contains(link_str) && !state.queue.contains(&link) {
                 state.queue.push_back(link);
-                state.total_urls += 1;
+                state.total_urls += 1; // Only increment for crawlable URLs
             }
         }
 
@@ -289,8 +285,8 @@ fn should_skip_url(url: &str) -> bool {
     url.ends_with(".pdf")
         || url.ends_with(".jpg")
         || url.ends_with(".png")
-        || (url.contains("?") && url.contains("page="))
-        || url.contains("#")
+        || (url.contains('?') && url.contains("page="))
+        || url.contains('#')
         || url.contains("login")
 }
 
@@ -299,12 +295,17 @@ pub async fn crawl_domain(
     domain: &str,
     app_handle: tauri::AppHandle,
 ) -> Result<Vec<DomainCrawlResults>, String> {
-    // Initialize client
+    // Initialize client with rotating user-agent
+    let user_agents = vec![
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15",
+    ];
+
     let client = Client::builder()
-        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-        .timeout(Duration::from_secs(60)) // Increased timeout
-        .connect_timeout(Duration::from_secs(15)) // Increased connect timeout
-        .redirect(reqwest::redirect::Policy::limited(10))
+        .user_agent(user_agents[rand::thread_rng().gen_range(0..user_agents.len())])
+        .timeout(Duration::from_secs(60))
+        .connect_timeout(Duration::from_secs(15))
+        .redirect(reqwest::redirect::Policy::limited(5))
         .build()
         .map_err(|e| e.to_string())?;
 
@@ -316,154 +317,97 @@ pub async fn crawl_domain(
     let state = Arc::new(Mutex::new(CrawlerState::new()));
     {
         let mut state = state.lock().await;
-        state.to_visit.insert(base_url.to_string());
         state.queue.push_back(base_url.clone());
+        state.total_urls = 1; // Start with the base URL as the first crawlable URL
     }
 
     let semaphore = Arc::new(Semaphore::new(CONCURRENT_REQUESTS));
     let crawl_start_time = Instant::now();
-    let last_progress = Arc::new(Mutex::new((0, Instant::now())));
 
-    // Start progress monitor
-    let progress_monitor = {
-        let state = state.clone();
-        let last_progress = last_progress.clone();
-
-        tokio::spawn(async move {
-            loop {
-                sleep(PROGRESS_CHECK_INTERVAL).await;
-
-                let current_crawled = state.lock().await.crawled_urls;
-                let mut last_progress_guard = last_progress.lock().await;
-
-                if current_crawled == last_progress_guard.0 {
-                    if last_progress_guard.1.elapsed() > STALL_DETECTION_THRESHOLD {
-                        eprintln!("Crawler appears to be stalled. Initiating completion...");
-                        break;
-                    }
+    // Main crawling loop
+    loop {
+        // Get current batch of URLs to process
+        let current_batch: Vec<Url> = {
+            let mut state = state.lock().await;
+            if state.queue.is_empty() {
+                // No more URLs to crawl; check if we're done
+                if state.crawled_urls >= state.total_urls {
+                    break; // All crawlable URLs processed
                 } else {
-                    *last_progress_guard = (current_crawled, Instant::now());
-                }
-
-                if crawl_start_time.elapsed() > CRAWL_TIMEOUT {
-                    eprintln!("Crawl timeout reached. Initiating completion...");
+                    println!(
+                        "\nWARNING: Queue empty but only {}/{} URLs crawled",
+                        state.crawled_urls, state.total_urls
+                    );
                     break;
                 }
             }
-        })
-    };
-
-    // Main crawling loop
-    while !state.lock().await.queue.is_empty() {
-        // Get batch of URLs
-        let current_batch: Vec<Url> = {
-            let mut state = state.lock().await;
             let batch_size = std::cmp::min(BATCH_SIZE, state.queue.len());
             state.queue.drain(..batch_size).collect()
         };
 
-        let mut stream = stream::iter(current_batch)
-            .map(|url| {
-                let client = client.clone();
-                let base_url = base_url.clone();
-                let state = state.clone();
-                let app_handle = app_handle.clone();
-                let semaphore = semaphore.clone();
+        let mut handles = vec![];
+        for url in current_batch {
+            let client = client.clone();
+            let base_url = base_url.clone();
+            let state = state.clone();
+            let app_handle = app_handle.clone();
+            let semaphore = semaphore.clone();
 
-                async move {
-                    let _permit = semaphore.acquire().await.unwrap();
+            let handle = tokio::spawn(async move {
+                let _permit = semaphore.acquire().await.unwrap();
+                let jitter = rand::thread_rng().gen_range(500..2000);
+                sleep(Duration::from_millis(jitter)).await;
 
-                    // Add jitter to requests
-                    let jitter = rand::thread_rng().gen_range(500..2000); // Increased jitter range
-                    sleep(Duration::from_millis(jitter)).await;
-
-                    let mut retries = 0;
-                    while retries < MAX_RETRIES {
-                        if let Err(e) =
-                            process_url(url.clone(), &client, &base_url, state.clone(), &app_handle)
-                                .await
-                        {
+                let mut retries = 0;
+                while retries < MAX_RETRIES {
+                    match process_url(url.clone(), &client, &base_url, state.clone(), &app_handle)
+                        .await
+                    {
+                        Ok(_) => break,
+                        Err(e) => {
                             eprintln!("Error processing URL (retry {}): {}", retries + 1, e);
                             retries += 1;
                             sleep(Duration::from_secs(1)).await;
-                        } else {
-                            break;
                         }
                     }
-
-                    Ok::<(), String>(())
                 }
-            })
-            .buffer_unordered(CONCURRENT_REQUESTS);
+            });
 
-        while let Some(result) = stream.next().await {
-            if let Err(e) = result {
-                eprintln!("Stream processing error: {}", e);
+            handles.push(handle);
+        }
+
+        // Wait for all tasks in the batch to complete
+        for handle in handles {
+            if let Err(e) = handle.await {
+                eprintln!("Task failed: {:?}", e);
             }
         }
 
-        // Check if monitor detected stall or timeout
-        if progress_monitor.is_finished() {
-            println!("\nCrawler monitor triggered completion");
+        // Check for timeout
+        if crawl_start_time.elapsed() > CRAWL_TIMEOUT {
+            println!("\nCrawl timeout reached. Stopping...");
             break;
         }
     }
 
-    // Final statistics
+    // Finalize and return
     let state = state.lock().await;
     println!("\nCrawl completed:");
-    println!("Total URLs found: {}", state.total_urls);
+    println!("Total crawlable URLs found: {}", state.total_urls);
     println!("URLs crawled: {}", state.crawled_urls);
     println!("Failed URLs: {}", state.failed_urls.len());
     println!("Total time: {:?}", crawl_start_time.elapsed());
 
-    // GET THE ROBOTS FROM THE DOMAIN
-    let robots_txt = get_domain_robots(&base_url).await;
-
-    // emit the robots_txt event
-    if robots_txt.is_some() {
-        app_handle.emit("robots_txt", robots_txt).unwrap();
-    } else {
-        app_handle
-            .emit("robots_txt", "No robots Found".to_string())
-            .unwrap();
-    }
-
-    // GET SITEMAPS FROM THE DOMAIN
-    let sitemaps = get_sitemap(&base_url).await;
-
-    if sitemaps.is_ok() {
-        app_handle.emit("sitemaps", sitemaps).unwrap();
-    } else {
-        app_handle
-            .emit("sitemaps", "No Sitemap Found".to_string())
-            .unwrap();
+    if state.crawled_urls < state.total_urls {
+        println!("\nWARNING: Incomplete crawl! Some URLs may have failed or been skipped:");
+        for url in &state.failed_urls {
+            println!("  - Failed: {}", url);
+        }
     }
 
     // Emit completion event
     if let Err(err) = app_handle.emit("crawl_complete", ()) {
         eprintln!("Failed to emit crawl completion event: {}", err);
-    }
-
-    // DEBUG IF THERE ARE UNPROCESSED URLS
-    if state.crawled_urls < state.total_urls {
-        println!("\nWARNING: Incomplete crawl detected!");
-        println!("URLs in queue but not processed: {}", state.queue.len());
-        println!(
-            "URLs in to_visit but not in queue: {}",
-            state.to_visit.len() - state.queue.len()
-        );
-
-        // Print a sample of unprocessed URLs (first 10)
-        println!("\nSample of unprocessed URLs:");
-        let mut count = 0;
-        for url in &state.queue {
-            if count >= 10 {
-                break;
-            }
-            println!("  - {}", url);
-            count += 1;
-        }
     }
 
     Ok(state.results.clone())

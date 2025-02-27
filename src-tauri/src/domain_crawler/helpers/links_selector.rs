@@ -1,5 +1,4 @@
 use scraper::{Html, Selector};
-use std::collections::BTreeMap;
 use url::Url;
 
 /// Extracts links from the HTML content using the `scraper` crate
@@ -20,7 +19,7 @@ pub fn extract_links(html: &str, base_url: &Url) -> Vec<Url> {
                     if let Some(valid_url) = validate_and_normalize_url(base_url, &url) {
                         Some(valid_url)
                     } else {
-                        eprintln!("Skipping invalid URL: {}", url);
+                        // eprintln!("Skipping invalid URL: {}", url);
                         None
                     }
                 }
@@ -30,30 +29,23 @@ pub fn extract_links(html: &str, base_url: &Url) -> Vec<Url> {
                 }
             }
         })
-        .filter(|next_url| {
+        .filter(|next_url: &Url| {
             // Filter by domain: ensure the link belongs to the same domain or subdomain
             let base_domain = base_url.domain().unwrap_or("");
             let next_domain = next_url.domain().unwrap_or("");
-            if !next_domain.ends_with(base_domain) {
-                eprintln!("Skipping external URL: {}", next_url);
-                false
-            } else {
-                true
-            }
+            next_domain.ends_with(base_domain)
         })
         .collect()
 }
 
 /// Builds a full URL from a base URL and a relative or absolute href
 fn build_full_url(base_url: &Url, href: &str) -> Result<Url, url::ParseError> {
-    // Handle relative URLs (e.g., "/about", "about", "../page", "./about")
-    if href.starts_with('/')
-        || href.starts_with("./")
-        || href.starts_with("../")
-        || !href.contains("://")
-    {
+    // Handle relative URLs (e.g., "/about", "about", "../page")
+    if href.starts_with('/') || !href.contains("://") {
+        // Resolve relative URLs using the base URL
         base_url.join(href)
     } else {
+        // Parse absolute URLs directly
         Url::parse(href)
     }
 }
@@ -72,22 +64,10 @@ fn validate_and_normalize_url(base_url: &Url, url: &Url) -> Option<Url> {
         return None; // Skip URLs from external domains
     }
 
-    // Normalize the URL by removing trailing slashes, fragment identifiers, and normalizing query parameters
+    // Normalize the URL by removing trailing slashes and fragment identifiers
     let mut normalized_url = url.clone();
     normalized_url.set_path(url.path().trim_end_matches('/'));
     normalized_url.set_fragment(None); // Remove fragment identifier
-    normalize_query_params(&mut normalized_url); // Normalize query parameters
 
     Some(normalized_url)
-}
-
-/// Normalizes query parameters by sorting and deduplicating them
-fn normalize_query_params(url: &mut Url) {
-    let query_pairs: BTreeMap<String, String> = url.query_pairs().into_owned().collect();
-    let query: String = query_pairs
-        .iter()
-        .map(|(k, v)| format!("{}={}", k, v))
-        .collect::<Vec<_>>()
-        .join("&");
-    url.set_query(Some(&query));
 }

@@ -98,6 +98,9 @@ export default function Page() {
       if (crawlData?.length) {
         crawledLinks.push(crawlData.length);
         setCrawlSessionTotalArray(crawledLinks);
+      } else {
+        crawledLinks.push(0);
+        setCrawlSessionTotalArray(crawledLinks);
       }
 
       // Save the updated crawledLinks array back to sessionStorage
