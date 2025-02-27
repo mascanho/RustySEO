@@ -140,13 +140,13 @@ async fn process_url(
         Ok(Err(e)) => {
             let mut state = state.lock().await;
             state.failed_urls.insert(url.to_string());
-            state.pending_urls.remove(url.as_str());
+            println!("Failed to fetch URL: {}", url);
             return Err(format!("Failed to fetch {}: {}", url, e));
         }
         Err(_) => {
             let mut state = state.lock().await;
             state.failed_urls.insert(url.to_string());
-            state.pending_urls.remove(url.as_str());
+            println!("Timeout fetching URL: {}", url);
             return Err(format!("Timeout fetching {}", url));
         }
     };
@@ -183,15 +183,13 @@ async fn process_url(
         Err(e) => {
             let mut state = state.lock().await;
             state.failed_urls.insert(url.to_string());
-            state.pending_urls.remove(url.as_str());
+            println!("Failed to read body for URL: {}", url);
             return Err(format!("Failed to read response body: {}", e));
         }
     };
 
     if !check_html_page::is_html_page(&body, content_type.as_deref()).await {
         println!("Skipping non-HTML URL: {}", url);
-        let mut state = state.lock().await;
-        state.pending_urls.remove(url.as_str());
         return Ok(());
     }
 
@@ -241,6 +239,7 @@ async fn process_url(
         state.crawled_urls += 1;
         state.visited.insert(url.to_string());
         state.pending_urls.remove(url.as_str());
+        println!("Crawled URL: {}", url);
 
         let links = links_selector::extract_links(&body, base_url);
         for link in links {
@@ -356,7 +355,8 @@ pub async fn crawl_domain(
         };
 
         let mut handles = Vec::with_capacity(current_batch.len());
-        for url in current_batch {
+        for url in current_batch.clone() {
+            // Clone to keep URLs for re-queueing if needed
             let client = client.clone();
             let base_url = base_url.clone();
             let state = state.clone();
@@ -369,7 +369,8 @@ pub async fn crawl_domain(
                 sleep(Duration::from_millis(jitter)).await;
 
                 let mut retries = 0;
-                let result = loop {
+                let result: Result<(), String> = loop {
+                    // Explicit type annotation
                     match process_url(url.clone(), &client, &base_url, state.clone(), &app_handle)
                         .await
                     {
@@ -378,8 +379,8 @@ pub async fn crawl_domain(
                             if retries >= MAX_RETRIES {
                                 let mut state = state.lock().await;
                                 state.failed_urls.insert(url.to_string());
-                                state.pending_urls.remove(url.as_str());
-                                break Err(e);
+                                println!("Marked as failed after retries: {}", url);
+                                break Ok(()); // Treat as processed to avoid re-queueing
                             }
                             eprintln!("Error processing URL (retry {}): {}", retries + 1, e);
                             retries += 1;
@@ -387,7 +388,7 @@ pub async fn crawl_domain(
                         }
                     }
                 };
-                result
+                (url, result) // Return URL with result for tracking
             });
 
             handles.push(handle);
@@ -395,10 +396,20 @@ pub async fn crawl_domain(
 
         for handle in handles {
             match handle.await {
-                Ok(Ok(())) => (),
-                Ok(Err(e)) => eprintln!("Task completed with error: {}", e),
+                Ok((url, Ok(()))) => (), // Successfully processed or failed (marked)
+                Ok((url, Err(e))) => {
+                    eprintln!("Task completed with unexpected error for {}: {}", url, e);
+                    let mut state = state.lock().await;
+                    if !state.failed_urls.contains(url.as_str())
+                        && !state.visited.contains(url.as_str())
+                    {
+                        state.queue.push_back(url.clone()); // Re-queue if not marked
+                        println!("Re-queued URL due to error: {}", url);
+                    }
+                }
                 Err(e) => {
                     eprintln!("Task panicked or was cancelled: {:?}", e);
+                    // URL isn’t available here; rely on pending_urls to catch
                 }
             }
         }
