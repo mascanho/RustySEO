@@ -61,6 +61,7 @@ import Configurations from "./TopMenuBar/Configurations/Configurations";
 import { FaGear } from "react-icons/fa6";
 import MSClarity from "./MSClarityModal/MSClarityModal";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import ExtractorSelector from "./Extractors/ExtractorSelector";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -115,6 +116,10 @@ const TopMenuBar = () => {
 
   const [openedConfs, { open: openConfs, close: closeConfs }] =
     useDisclosure(false);
+
+  const [openedExtractors, { open: openExtractors, close: closeExtractors }] =
+    useDisclosure(false);
+
   useEffect(() => {
     const fetchUrlFromSessionStorage = () => {
       const urlSession: any = window?.sessionStorage?.getItem("url");
@@ -368,6 +373,16 @@ const TopMenuBar = () => {
         {/* @ts-ignore */}
         <Configurations close={closeConfs} />
       </Modal>
+      <Modal
+        size={"800px"}
+        opened={openedExtractors}
+        onClose={closeExtractors}
+        title="Extractors"
+        centered
+      >
+        {/* @ts-ignore */}
+        <ExtractorSelector close={closeExtractors} />
+      </Modal>
       <Menubar className="fixed w-full top-0 z-[1000] p-0 pl-0 dark:bg-brand-darker dark:text-white bg-white dark:border-b-brand-dark border-b pb-1">
         <section className="flex -ml-3 space-x-1">
           <MenubarMenu>
@@ -527,7 +542,7 @@ const TopMenuBar = () => {
             <MenubarContent>
               <MenubarItem
                 className={`mr-2 ${pathname !== "/global" ? "text-gray-400 pointer-events-none" : ""}`}
-                onClick={() => router.push("/")}
+                onClick={openExtractors}
                 disabled={pathname !== "/global"}
               >
                 <GiRobotGrab

@@ -218,7 +218,9 @@ const TableRow = ({
           columnVisibility[cellIndex] ? (
             <td
               key={`cell-${index}-${cellIndex}`}
-              onClick={() => handleCellClick(index, cellIndex, cell.toString())}
+              onClick={() =>
+                handleCellClick(index, cellIndex, cell.toString(), row)
+              }
               style={{
                 width: columnWidths[cellIndex],
                 border: "1px solid #ddd",
@@ -228,13 +230,8 @@ const TableRow = ({
                 whiteSpace: "nowrap",
                 minWidth: columnWidths[cellIndex],
                 backgroundColor:
-                  clickedCell.row === index && clickedCell.cell === cellIndex
-                    ? "#2B6CC4"
-                    : "transparent",
-                color:
-                  clickedCell.row === index && clickedCell.cell === cellIndex
-                    ? "white"
-                    : "inherit",
+                  clickedCell.row === index ? "#2B6CC4" : "transparent",
+                color: clickedCell.row === index ? "white" : "inherit",
               }}
               className="dark:text-white/50 cursor-pointer"
             >
@@ -255,6 +252,7 @@ const TableRow = ({
       index,
       clickedCell,
       handleCellClick,
+      row,
     ],
   );
 };
@@ -369,8 +367,13 @@ const TableCrawl = ({
   });
   const { setSelectedTableURL } = useGlobalCrawlStore();
 
-  const filterTableURL = (arr: { url: string }[], url: string) => {
+  const filterTableURL = (
+    arr: { url: string }[],
+    url: string,
+    rowIndex: number,
+  ) => {
     if (!arr || arr.length === 0) return [];
+
     return arr.filter((item) => item.url === url);
   };
 
@@ -394,12 +397,12 @@ const TableCrawl = ({
     });
 
     if (cellIndex === 1) {
-      const urlData = filterTableURL(rows, cellContent);
+      const urlData = filterTableURL(rows, cellContent, rowIndex);
       setSelectedTableURL(urlData);
       console.log(urlData);
     }
 
-    console.log(cellContent, rowIndex, cellIndex);
+    console.log(cellContent, rowIndex, cellIndex, rows);
   };
 
   const startXRef = useRef(0);
