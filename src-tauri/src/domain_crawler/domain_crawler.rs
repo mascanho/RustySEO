@@ -188,8 +188,13 @@ async fn process_url(
         }
     };
 
+    // Skip non-HTML content but still mark it as processed
     if !check_html_page::is_html_page(&body, content_type.as_deref()).await {
         println!("Skipping non-HTML URL: {}", url);
+        let mut state = state.lock().await;
+        state.crawled_urls += 1;
+        state.visited.insert(url.to_string());
+        state.pending_urls.remove(url.as_str());
         return Ok(());
     }
 
@@ -289,12 +294,8 @@ async fn process_url(
 }
 
 fn should_skip_url(url: &str) -> bool {
-    url.ends_with(".pdf")
-        || url.ends_with(".jpg")
-        || url.ends_with(".png")
-        || (url.contains('?') && url.contains("page="))
-        || url.contains('#')
-        || url.contains("login")
+    // Only skip URLs with fragments or login pages
+    url.contains('#') || url.contains("login")
 }
 
 // Main crawling function
