@@ -1,12 +1,14 @@
 import create from "zustand";
 
-// Define the types for the state and actions
+// Define the types for the state
 interface VisibilityState {
   sidebar: boolean;
   serpKeywords: boolean;
-  seotoolkit: boolean; // Added seotoolkit
+  seotoolkit: boolean;
+  extractor: boolean; // Added extractor to match the actions
 }
 
+// Define the interface for the store
 interface BearState {
   visibility: VisibilityState;
   showSidebar: () => void;
@@ -15,6 +17,8 @@ interface BearState {
   hideSerpKeywords: () => void;
   showSeoToolkit: () => void;
   hideSeoToolkit: () => void;
+  showExtractor: () => void;
+  hideExtractor: () => void;
 }
 
 // Create the Zustand store with proper types
@@ -22,42 +26,47 @@ export const useVisibilityStore = create<BearState>((set) => ({
   visibility: {
     sidebar: true,
     serpKeywords: false,
-    seotoolkit: false, // Ensure this is included
+    seotoolkit: false,
+    extractor: false, // Added extractor to initial state
   },
 
-  // Action to hide the sidebar
+  // Sidebar actions
+  showSidebar: () =>
+    set((state) => ({
+      visibility: { ...state.visibility, sidebar: true },
+    })),
   hideSidebar: () =>
     set((state) => ({
       visibility: { ...state.visibility, sidebar: false },
     })),
 
-  // Action to show the sidebar
-  showSidebar: () =>
+  // SERP Keywords actions
+  showSerpKeywords: () =>
     set((state) => ({
-      visibility: { ...state.visibility, sidebar: true },
+      visibility: { ...state.visibility, serpKeywords: true },
     })),
-
-  // Action to hide the SERP keywords
   hideSerpKeywords: () =>
     set((state) => ({
       visibility: { ...state.visibility, serpKeywords: false },
     })),
 
-  // Action to show the SERP keywords
-  showSerpKeywords: () =>
+  // SEO Toolkit actions
+  showSeoToolkit: () =>
     set((state) => ({
-      visibility: { ...state.visibility, serpKeywords: true },
+      visibility: { ...state.visibility, seotoolkit: true },
     })),
-
-  // Action to hide the SEO Toolkit
   hideSeoToolkit: () =>
     set((state) => ({
       visibility: { ...state.visibility, seotoolkit: false },
     })),
 
-  // Action to show the SEO Toolkit
-  showSeoToolkit: () =>
+  // Extractor actions
+  showExtractor: () =>
     set((state) => ({
-      visibility: { ...state.visibility, seotoolkit: true },
+      visibility: { ...state.visibility, extractor: true },
+    })),
+  hideExtractor: () =>
+    set((state) => ({
+      visibility: { ...state.visibility, extractor: false },
     })),
 }));

@@ -38,7 +38,6 @@ import {
   FiGlobe,
   FiSearch,
 } from "react-icons/fi";
-
 import { GiRobotGrab } from "react-icons/gi";
 import { FaRegLightbulb, FaRegMoon } from "react-icons/fa";
 import { AiOutlineShareAlt, AiOutlinePrinter } from "react-icons/ai";
@@ -53,7 +52,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-
 import { useVisibilityStore } from "@/store/VisibilityStore";
 import KeywordSerp from "./TopMenuBar/KeywordSerp";
 import GoogleAnalyticsModal from "./GoogleAnalyticsModal/GoogleAnalyticsModal";
@@ -67,8 +65,13 @@ const TopMenuBar = () => {
   const [download, setDownload] = useState("");
   const pathname = usePathname();
 
-  const { visibility, showSerpKeywords, hideSerpKeywords } =
-    useVisibilityStore();
+  const {
+    visibility,
+    showSerpKeywords,
+    hideSerpKeywords,
+    showExtractor,
+    hideExtractor,
+  } = useVisibilityStore();
 
   const router = useRouter();
   // Theme
@@ -76,7 +79,8 @@ const TopMenuBar = () => {
 
   useEffect(() => {
     const theme = localStorage?.getItem("dark-mode");
-    if (theme === true) {
+    if (theme === "true") {
+      // Changed to string comparison
       setIsDarkMode(true);
     } else {
       setIsDarkMode(false);
@@ -117,38 +121,26 @@ const TopMenuBar = () => {
   const [openedConfs, { open: openConfs, close: closeConfs }] =
     useDisclosure(false);
 
-  const [openedExtractors, { open: openExtractors, close: closeExtractors }] =
-    useDisclosure(false);
-
   useEffect(() => {
     const fetchUrlFromSessionStorage = () => {
       const urlSession: any = window?.sessionStorage?.getItem("url");
       const strategySession: any = window?.sessionStorage?.getItem("strategy");
-      setUrl(urlSession || ""); // Handle empty URL case
+      setUrl(urlSession || "");
       setStrategy(strategySession || "DESKTOP");
     };
 
     fetchUrlFromSessionStorage();
 
-    // Optional cleanup
     return () => {
       // Cleanup logic if needed
     };
   }, [openModal, openedModal, url, strategy]);
 
   // CHANGE THEME
-
   const toggleDarkMode = () => {
-    // Get the current mode
     const newMode = !isDarkMode;
-
-    // Update the state
     setIsDarkMode(newMode);
-
-    // Update localStorage
-    localStorage?.setItem("dark-mode", newMode);
-
-    // Toggle the dark mode class on the document
+    localStorage?.setItem("dark-mode", newMode.toString());
     if (newMode) {
       document.documentElement.classList.add("dark");
     } else {
@@ -157,15 +149,10 @@ const TopMenuBar = () => {
   };
 
   useEffect(() => {
-    // Retrieve the dark mode setting from localStorage
     const savedMode = localStorage?.getItem("dark-mode");
-
-    // If a saved mode exists, parse it and update the state
     if (savedMode !== null) {
-      const parsedMode = JSON.parse(savedMode);
+      const parsedMode = savedMode === "true";
       setIsDarkMode(parsedMode);
-
-      // Update the class on the document
       if (parsedMode) {
         document.documentElement.classList.add("dark");
       } else {
@@ -184,12 +171,7 @@ const TopMenuBar = () => {
 
     path = await save({
       defaultPath: "seo.csv",
-      filters: [
-        {
-          name: "CSV Files",
-          extensions: ["csv"],
-        },
-      ],
+      filters: [{ name: "CSV Files", extensions: ["csv"] }],
     });
     if (path) {
       await writeTextFile(path, download);
@@ -197,7 +179,6 @@ const TopMenuBar = () => {
     }
   };
 
-  // Handle download
   const handleDownloadPerformance = async () => {
     let path;
     invoke("generate_csv_command").then((result) => {
@@ -208,12 +189,7 @@ const TopMenuBar = () => {
 
     path = await save({
       defaultPath: "performance.csv",
-      filters: [
-        {
-          name: "CSV Files",
-          extensions: ["csv"],
-        },
-      ],
+      filters: [{ name: "CSV Files", extensions: ["csv"] }],
     });
     if (path) {
       await writeTextFile(path, download);
@@ -221,10 +197,9 @@ const TopMenuBar = () => {
     }
   };
 
-  // Handle adding to-do
   const handleAddTodo = (url: string, strategy: string) => {
-    setTodoStrategy(strategy);
-    setTodoUrl(url);
+    setUrl(url); // Changed from setTodoUrl
+    setStrategy(strategy); // Changed from setTodoStrategy
     openModal();
   };
 
@@ -233,97 +208,90 @@ const TopMenuBar = () => {
       {/* Panes Insights Modal */}
       <Modal
         opened={openedPanes}
-        // overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
         closeOnEscape
         closeOnClickOutside
         onClose={closePanes}
         title="Toggle Panels"
         centered
-        // zIndex={"100000"}
       >
         <WindowToggler />
       </Modal>
+
       {/* PageSpeed Insights Modal */}
       <Modal
         opened={openedPageSpeed}
-        // overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
         closeOnEscape
         closeOnClickOutside
         onClose={closePageSpeed}
         title="Page Speed Insights API key"
         centered
-        // zIndex={"100000"}
       >
         <PageSpeedInsigthsApi close={closePageSpeed} />
       </Modal>
-      {/* MS CLARITY MODAL  */}
+
+      {/* MS CLARITY MODAL */}
       <Modal
         opened={openedMSClarity}
-        // overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
         closeOnEscape
         closeOnClickOutside
         onClose={closeMSClarity}
-        title="Microsoft Clarity Connector "
+        title="Microsoft Clarity Connector"
         centered
-        // zIndex={"100000"}
       >
         <MSClarity close={closeMSClarity} />
       </Modal>
+
       {/* Todo Modal */}
       <Modal
         opened={openedModal}
-        // overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
         closeOnEscape
         closeOnClickOutside
         onClose={closeModal}
         title=""
         centered
-        // zIndex={"100000"}
       >
         <Todo url={url} close={closeModal} strategy={strategy} />
       </Modal>
+
       {/* Ollama Model */}
       <Modal
         opened={openedOllama}
-        // overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
         closeOnEscape
         closeOnClickOutside
         onClose={closeOllama}
         title="Ollama Model Selector"
         centered
         size={"500px"}
-        // zIndex={"100000"}
       >
         <OllamaSelect closeOllama={closeOllama} />
       </Modal>
+
       {/* Gemini Model */}
       <Modal
         opened={openedGemini}
-        // overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
         closeOnEscape
         closeOnClickOutside
         onClose={closeGemini}
         title="Google Gemini"
         centered
         size={"500px"}
-        // zIndex={"100000"}
       >
         <GeminiSelector closeGemini={closeGemini} />
       </Modal>
+
       {/* About Section */}
       <Modal
         opened={openedAbout}
-        // overlayProps={{ backgroundOpacity: 0.5, blur: 4 }}
         closeOnEscape
         closeOnClickOutside
         onClose={closeAbout}
         title="About RustySEO"
         centered
         size={"500px"}
-        // zIndex={"100000"}
       >
         <About closeGemini={closeAbout} />
       </Modal>
+
       {/* Drawer */}
       <Drawer
         offset={8}
@@ -337,20 +305,20 @@ const TopMenuBar = () => {
         style={{ paddingTop: "5rem" }}
         closeOnEscape
         closeOnClickOutside
-        // overlayProps={{ backgroundOpacity: 0.5 }}
       >
         <TodoItems url={url} strategy={strategy} />
       </Drawer>
-      {/* GOOGLE SEACH CONSOLE MODAL */}
+
+      {/* GOOGLE SEARCH CONSOLE MODAL */}
       <Modal
         opened={openedSearchConsole}
         onClose={closeSearchConsole}
         title="Google Search Console"
         centered
       >
-        {/* @ts-ignore */}
         <GoogleSearchConsoleModal close={closeSearchConsole} />
       </Modal>
+
       {/* GOOGLE Analytics Modal */}
       <Modal
         opened={openedGoogleAnalytics}
@@ -358,11 +326,10 @@ const TopMenuBar = () => {
         title="Google Analytics"
         centered
       >
-        {/* @ts-ignore */}
         <GoogleAnalyticsModal close={closeGoogleAnalytics} />
       </Modal>
-      {/* Menubar */}
-      {/* Confs Modal */}
+
+      {/* Configurations Modal */}
       <Modal
         size={"800px"}
         opened={openedConfs}
@@ -370,19 +337,12 @@ const TopMenuBar = () => {
         title="Configurations"
         centered
       >
-        {/* @ts-ignore */}
         <Configurations close={closeConfs} />
       </Modal>
-      <Modal
-        size={"800px"}
-        opened={openedExtractors}
-        onClose={closeExtractors}
-        title="Extractors"
-        centered
-      >
-        {/* @ts-ignore */}
-        <ExtractorSelector close={closeExtractors} />
-      </Modal>
+
+      {/* Extractor Component - Now controlled by global store */}
+      {visibility.extractor && <ExtractorSelector close={hideExtractor} />}
+
       <Menubar className="fixed w-full top-0 z-[1000] p-0 pl-0 dark:bg-brand-darker dark:text-white bg-white dark:border-b-brand-dark border-b pb-1">
         <section className="flex -ml-3 space-x-1">
           <MenubarMenu>
@@ -391,12 +351,8 @@ const TopMenuBar = () => {
               <MenubarItem onClick={openConfs}>
                 <FiTool className="mr-2" />
                 Configurations
-              </MenubarItem>{" "}
-              <MenubarItem
-                onClick={() => {
-                  getCurrentWindow().close();
-                }}
-              >
+              </MenubarItem>
+              <MenubarItem onClick={() => getCurrentWindow().close()}>
                 <FiLogOut className="mr-2" />
                 Exit
               </MenubarItem>
@@ -409,7 +365,6 @@ const TopMenuBar = () => {
               <MenubarItem onClick={openPanes}>
                 <FiEye className="mr-2" />
                 Panels
-                {/* <MenubarShortcut>ctr + p</MenubarShortcut> */}
               </MenubarItem>
               <MenubarSeparator />
               <MenubarItem onClick={toggleDarkMode}>
@@ -456,16 +411,6 @@ const TopMenuBar = () => {
                 <FiBarChart2 className="mr-2" />
                 SEO History
               </MenubarItem>
-              {/* <MenubarSeparator /> */}
-              {/* <MenubarItem>
-                <AiOutlineShareAlt className="mr-2" />
-                Share
-              </MenubarItem>
-              <MenubarSeparator />
-              <MenubarItem>
-                <AiOutlinePrinter className="mr-2" />
-                Print
-              </MenubarItem> */}
             </MenubarContent>
           </MenubarMenu>
 
@@ -479,11 +424,11 @@ const TopMenuBar = () => {
               <MenubarItem onClick={showSerpKeywords}>
                 <FiTool className="mr-2" />
                 Headings SERP
-              </MenubarItem>{" "}
+              </MenubarItem>
               <MenubarItem onClick={() => router.push("/topicModeling/")}>
                 <FiTool className="mr-2" />
-                Topic Moldeling
-              </MenubarItem>{" "}
+                Topic Modeling
+              </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
 
@@ -498,12 +443,11 @@ const TopMenuBar = () => {
               <MenubarItem onClick={openPageSpeed}>
                 <FiZap className="mr-2" />
                 PageSpeed Insights
-                <MenubarSeparator />
               </MenubarItem>
               <MenubarItem onClick={openGoogleAnalytics}>
                 <FiZap className="mr-2" />
                 Google Analytics
-              </MenubarItem>{" "}
+              </MenubarItem>
               <MenubarItem onClick={openSearchConsole}>
                 <FiZap className="mr-2" />
                 Search Console
@@ -542,13 +486,11 @@ const TopMenuBar = () => {
             <MenubarContent>
               <MenubarItem
                 className={`mr-2 ${pathname !== "/global" ? "text-gray-400 pointer-events-none" : ""}`}
-                onClick={openExtractors}
+                onClick={showExtractor}
                 disabled={pathname !== "/global"}
               >
-                <GiRobotGrab
-                  className={`mr-2 ${pathname === "/global" ? "" : ""}`}
-                />
-                CSS Extractor
+                <GiRobotGrab className="mr-2" />
+                Extractor
               </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
@@ -563,7 +505,7 @@ const TopMenuBar = () => {
             </MenubarContent>
           </MenubarMenu>
         </section>
-      </Menubar>{" "}
+      </Menubar>
     </>
   );
 };
