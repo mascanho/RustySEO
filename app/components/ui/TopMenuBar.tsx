@@ -344,7 +344,7 @@ const TopMenuBar = () => {
       {visibility.extractor && <ExtractorSelector close={hideExtractor} />}
 
       <Menubar className="fixed w-full top-0 z-[1000] p-0 pl-0 dark:bg-brand-darker dark:text-white bg-white dark:border-b-brand-dark border-b pb-1">
-        <section className="flex -ml-3 space-x-1">
+        <section className="flex -ml-3 space-x-1 cursor-pointer">
           <MenubarMenu>
             <MenubarTrigger className="ml-4">File</MenubarTrigger>
             <MenubarContent>
@@ -485,7 +485,7 @@ const TopMenuBar = () => {
             <MenubarTrigger className="ml-3">Extractors</MenubarTrigger>
             <MenubarContent>
               <MenubarItem
-                className={`mr-2 ${pathname !== "/global" ? "text-gray-400 pointer-events-none" : ""}`}
+                className={`mr-2 ${pathname !== "/global" ? "text-gray-400 pointer-events-none w-full" : "w-full"}`}
                 onClick={showExtractor}
                 disabled={pathname !== "/global"}
               >

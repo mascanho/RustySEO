@@ -44,7 +44,7 @@ export default function ExtractorSelector({ close }) {
   };
 
   return (
-    <div className="w-[800px] h-[380px] mt-96  absolute z-50 inset-0 m-auto bg-gray-100 border border-gray-300 rounded-md shadow-lg font-sans flex flex-col">
+    <div className="w-[800px] h-[380px] mt-72  absolute z-50 inset-0 m-auto bg-gray-100 border border-gray-300 rounded-md shadow-lg font-sans flex flex-col">
       {/* Window-like Title Bar */}
       <div className="flex items-center justify-between px-2 py-1 bg-gray-200 border-b border-gray-300">
         <span className="text-sm font-medium">Data Extractor</span>

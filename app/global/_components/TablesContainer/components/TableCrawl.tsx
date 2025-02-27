@@ -277,17 +277,17 @@ const ColumnPicker = ({
     () => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <div className="border dark:border-white/20 w-8  flex justify-center items-center rounded h-6 w-full hover:border hover:border-brand-bright cursor-pointer active:bg-brand-bright active:text-white">
-            <TbColumns3 className="w-5 h-5 dark:text-white/50 p-1 active:text-white" />
+          <div className="border dark:border-white/20  w-8  flex justify-center items-center rounded h-6">
+            <TbColumns3 className="w-5 h-5 dark:text-white/50 p-1 " />
           </div>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-32 bg-white dark:bg-brand-darker border dark:border-brand-dark rounded shadow-lg z-20 hover:text-white">
+        <DropdownMenuContent className="w-32 bg-white dark:bg-brand-darker border dark:border-brand-dark rounded shadow-lg z-20">
           {headerTitles.map((header, index) => (
             <DropdownMenuCheckboxItem
               key={header}
               checked={columnVisibility[index] ?? true}
               onCheckedChange={() => handleToggle(index)}
-              className="p-2 hover:bg-gray-100 w-full dark:hover:bg-brand-dark space-x-6 dark:text-white text-brand-bright hover:text-white"
+              className="p-2 hover:bg-gray-100 w-fit dark:hover:bg-brand-dark space-x-6 dark:text-white text-brand-bright"
             >
               <span className="ml-5 dark:text-brand-bright">{header}</span>
             </DropdownMenuCheckboxItem>
