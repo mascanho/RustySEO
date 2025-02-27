@@ -44,7 +44,7 @@ export default function ExtractorSelector({ close }) {
   };
 
   return (
-    <div className="w-[800px] h-[380px] mt-72  absolute z-50 inset-0 m-auto bg-gray-100 border border-gray-300 rounded-md shadow-lg font-sans flex flex-col">
+    <div className="w-[800px] h-[380px] mt-72  absolute z-50 inset-0 m-auto bg-gray-100 dark:bg-brand-darker  border border-gray-300 rounded-md shadow-lg font-sans flex flex-col">
       {/* Window-like Title Bar */}
       <div className="flex items-center justify-between px-2 py-1 bg-gray-200 border-b border-gray-300">
         <span className="text-sm font-medium">Data Extractor</span>
@@ -62,10 +62,10 @@ export default function ExtractorSelector({ close }) {
 
       {/* Main Content (Collapsible) */}
       {!isMinimized && (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full dark:text-white">
           <div className="p-3 space-y-4 flex-grow overflow-auto">
             {/* Tab-like Toolbar */}
-            <div className="flex gap-1 bg-gray-200 p-1 rounded">
+            <div className="flex gap-1 bg-gray-200 p-1 rounded dark:bg-brand-dark">
               {[
                 { id: "css", icon: Hash, label: "CSS" },
                 { id: "html", icon: FileType2, label: "HTML" },
@@ -76,6 +76,10 @@ export default function ExtractorSelector({ close }) {
                   variant={activeTab === tab.id ? "default" : "outline"}
                   size="sm"
                   className="flex-1 flex items-center gap-1 text-xs"
+                  style={{
+                    background: activeTab === tab.id ? "#2B6CC4" : "#f3f4f6",
+                    color: activeTab === tab.id ? "white" : "#4b5563",
+                  }}
                   onClick={() => setActiveTab(tab.id)}
                 >
                   <tab.icon className="h-3 w-3" />
@@ -262,8 +266,11 @@ export default function ExtractorSelector({ close }) {
           </div>
 
           {/* Footer - Always at the bottom */}
-          <div className="p-3 pt-0 border-t mt-auto">
-            <Button onClick={handleApply} className="w-full h-8 text-sm">
+          <div className="p-3 pt-0 border-t dark:border-0 mt-auto">
+            <Button
+              onClick={handleApply}
+              className="w-full h-8 text-sm bg-brand-bright  dark:text-white hover:bg-brand-bright hover:text-white dark:bg-brand-bright dark:hover:text-white"
+            >
               Apply
             </Button>
           </div>
