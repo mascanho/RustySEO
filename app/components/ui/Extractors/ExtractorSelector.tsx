@@ -37,9 +37,28 @@ export default function ExtractorSelector({ close }) {
     });
   };
 
+  const validateFields = () => {
+    switch (activeTab) {
+      case "css":
+        return extractorConfig.css.selector.trim() !== "";
+      case "html":
+        return (
+          extractorConfig.html.tag.trim() !== "" &&
+          extractorConfig.html.attributeName.trim() !== "" &&
+          extractorConfig.html.attributeValue.trim() !== ""
+        );
+      case "regex":
+        return extractorConfig.regex.pattern.trim() !== "";
+      default:
+        return false;
+    }
+  };
+
   const handleApply = () => {
+    if (!validateFields()) return;
     const config = { type: activeTab, config: extractorConfig[activeTab] };
     console.log("Extractor configuration:", config);
+    close();
     // Desktop apps might trigger a native action here (e.g., save to file)
   };
 
@@ -77,8 +96,8 @@ export default function ExtractorSelector({ close }) {
                   size="sm"
                   className="flex-1 flex items-center gap-1 text-xs"
                   style={{
-                    background: activeTab === tab.id ? "#2B6CC4" : "#f3f4f6",
-                    color: activeTab === tab.id ? "white" : "#4b5563",
+                    background: activeTab === tab.id ? "#2B6CC4" : "#ccc",
+                    color: activeTab === tab.id ? "white" : "black",
                   }}
                   onClick={() => setActiveTab(tab.id)}
                 >
@@ -269,7 +288,8 @@ export default function ExtractorSelector({ close }) {
           <div className="p-3 pt-0 border-t dark:border-0 mt-auto">
             <Button
               onClick={handleApply}
-              className="w-full h-8 text-sm bg-brand-bright  dark:text-white hover:bg-brand-bright hover:text-white dark:bg-brand-bright dark:hover:text-white"
+              disabled={!validateFields()}
+              className="w-full h-8 text-sm bg-brand-bright   dark:text-white hover:bg-brand-bright dark:hover:bg-brand-bright hover:text-white dark:bg-brand-dark dark:hover:text-white"
             >
               Apply
             </Button>

@@ -132,7 +132,7 @@ const HistoryDomainCrawls = () => {
           {error}
         </div>
       )}
-      <div className="text-center">
+      <div className="text-center dark:bg-gray-900">
         <div>
           {crawlHistory.length === 0 && !error && (
             <p className="text-gray-500">No crawl history available.</p>
@@ -145,10 +145,10 @@ const HistoryDomainCrawls = () => {
               <React.Fragment key={entry.id || index}>
                 <div
                   onClick={() => handleRowClick(index)}
-                  className={`cursor-pointer px-2 flex mr-2 py-1 justify-between ${
+                  className={`cursor-pointer px-2 flex pr-2 py-1 justify-between border-b dark:border-brand-dark/50 ${
                     index % 2 === 0
-                      ? "bg-gray-100 dark:bg-brand-darker"
-                      : "bg-gray-200 dark:bg-brand-darker"
+                      ? "bg-gray-100 dark:bg-gray-800"
+                      : "bg-gray-200 dark:bg-gray-900"
                   }`}
                 >
                   <div className="flex items-center space-x-1 flex-1">
@@ -159,11 +159,11 @@ const HistoryDomainCrawls = () => {
                     <span className="text-right">{entry.pages}</span>
                     <RiPagesLine className="text-gray-500" />
                   </div>
-                  <div className="flex items-center space-x-2 flex-1 justify-end">
-                    <span>
-                      <MdOutlineErrorOutline className="mr-1 text-red-500" />
-                    </span>
+                  <div className="flex items-center  flex-1 justify-end divide-y-2">
                     {entry.errors}
+                    <span>
+                      <MdOutlineErrorOutline className="ml-1 text-red-500" />
+                    </span>
                   </div>
                 </div>
                 {expandedRows.includes(index) && (

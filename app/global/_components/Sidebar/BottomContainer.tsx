@@ -38,7 +38,7 @@ const BottomContainer = () => {
         </Tabs.Panel>
 
         <Tabs.Panel value="history">
-          <div className="flex flex-col gap-y-2">
+          <div className="flex flex-col gap-y-2 dark:bg-gray-900">
             <HistoryDomainCrawls />
           </div>
         </Tabs.Panel>
