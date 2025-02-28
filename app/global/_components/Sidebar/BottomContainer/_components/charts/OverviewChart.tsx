@@ -20,6 +20,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import { listen } from "@tauri-apps/api/event";
 
 const chartConfig = {
   visitors: {
@@ -59,6 +60,27 @@ function OverviewChart() {
   const externalJs = javascript?.external || 0;
   const inlineCss = css?.inline || 0;
   const externalCss = css?.external || 0;
+
+  // UPDATE THE CRAWLED PAGES IN REALTIME
+
+  const [crawledPages, setCrawledPages] = useState<number>(0);
+  const [percentageCrawled, setPercentageCrawled] = useState<number>(0);
+  const [crawledPagesCount, setCrawledPagesCount] = useState<number>(0);
+  useEffect(() => {
+    const unlisten = listen("progress_update", (event) => {
+      const progressData = event.payload as {
+        crawled_urls: number;
+        percentage: number;
+        total_urls: number;
+      };
+      setCrawledPages(progressData.crawled_urls);
+      setPercentageCrawled(progressData.percentage);
+      setCrawledPagesCount(progressData.total_urls);
+    });
+    return () => {
+      unlisten.then((f) => f());
+    };
+  }, []);
 
   const chartData = [
     { browser: "HTML", visitors: totalPages, fill: "hsl(210, 100%, 50%)" },
@@ -158,7 +180,7 @@ function OverviewChart() {
                           style={{ color: "white" }}
                           className="text-3xl dark:fill-white text-white font-bold dark:text-white"
                         >
-                          {totalPages.toLocaleString()}
+                          {crawledPagesCount.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
