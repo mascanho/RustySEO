@@ -153,10 +153,10 @@ export default function Page() {
 
         {/* Tabs Component */}
         <Tabs defaultValue="first" className="ovefflow-auto">
-          <aside className="absolute top-11 pt-1 left-0 w-full dark:bg-brand-darker z-10 bg-white">
+          <aside className="absolute top-13 border-b dark:border-b-brand-dark  pt-1 left-0 w-full dark:bg-brand-darker z-10 bg-white ">
             <Tabs.List
               justify="center"
-              className="dark:text-white text-xs dark:border-b-brand-dark dark:border-b active:text-white"
+              className="dark:text-white text-xs  active:text-white h-7 "
             >
               <Tabs.Tab value="first">
                 <FaGlobe className="inline-block mr-2" />

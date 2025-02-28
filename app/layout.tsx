@@ -74,11 +74,11 @@ export default function RootLayout({
       >
         <MantineProvider>
           {/* Fixed MenuDrawer */}
-          <section className="mb-[6.7rem]">
+          <section className="mb-[6.3rem]">
             <Loader />
             <TopMenuBar />
           </section>
-          <main className="mt-10   rounded-md  ">
+          <main className="mt-9   rounded-md  ">
             {children}
             <Toaster />
           </main>

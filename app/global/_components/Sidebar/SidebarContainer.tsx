@@ -4,7 +4,7 @@ import TopContainer from "./TopContainer";
 function SidebarContainer() {
   return (
     <div
-      className={`mt-[5rem] w-full flex-1  bg-white dark:bg-brand-darker h-full border-t border-l  flex flex-col dark:text-white justify-between dark:border-brand-dark  `}
+      className={`pt-[5.3rem] w-full flex-1  bg-white dark:bg-brand-darker h-full border-t border-l  flex flex-col dark:text-white justify-between dark:border-brand-dark  `}
     >
       <div className="h-auto">
         <TopContainer />
