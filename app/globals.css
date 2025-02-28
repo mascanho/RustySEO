@@ -770,3 +770,28 @@ div:is(.sitemapsDomain) {
   /* all: unset !important; */
   background: transparent !important;
 }
+
+/* MANTINE TABS  */
+
+.m_539e827b:is(.dark *) {
+  @apply h-3 py-3;
+}
+.m_539e827b:where([data-active]):is(.dark *) {
+  @apply dark:bg-brand-bright h-2 !important;
+}
+
+.m_539e827b {
+  @apply h-3 py-3;
+}
+
+.m_539e827b:where([data-active]) {
+  @apply h-3 bg-brand-bright active:text-red-500 !important;
+}
+
+.button:where([data-active]) {
+  @apply text-red-500 !important;
+}
+
+.tabs-list button .mantine-Tabs-tabLabel {
+  @apply text-red-500 !important;
+}
