@@ -172,7 +172,7 @@ pub struct InnerConfig {
 }
 
 #[tauri::command]
-pub fn store_html_extraction(data: Vec<ExtractorConfig>) -> Result<(), String> {
+pub fn store_custom_search(data: Vec<ExtractorConfig>) -> Result<(), String> {
     // Open the connection
     let conn = open_domain_db_connection("deep_crawl.db").map_err(|e| e.to_string())?;
 

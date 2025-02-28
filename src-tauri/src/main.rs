@@ -196,7 +196,7 @@ async fn main() {
             db::create_domain_results_table,
             db::read_domain_results_history_table,
             db::create_domain_results_history,
-            db::store_html_extraction,
+            db::store_custom_search,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

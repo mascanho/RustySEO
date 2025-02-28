@@ -5,7 +5,7 @@ interface VisibilityState {
   sidebar: boolean;
   serpKeywords: boolean;
   seotoolkit: boolean;
-  extractor: boolean; // Added extractor to match the actions
+  customSearch: boolean; // Ensure this matches the actions
 }
 
 // Define the interface for the store
@@ -17,8 +17,8 @@ interface BearState {
   hideSerpKeywords: () => void;
   showSeoToolkit: () => void;
   hideSeoToolkit: () => void;
-  showExtractor: () => void;
-  hideExtractor: () => void;
+  showCustomSearch: () => void;
+  hideCustomSearch: () => void;
 }
 
 // Create the Zustand store with proper types
@@ -27,7 +27,7 @@ export const useVisibilityStore = create<BearState>((set) => ({
     sidebar: true,
     serpKeywords: false,
     seotoolkit: false,
-    extractor: false, // Added extractor to initial state
+    customSearch: false, // Ensure this matches the initial state
   },
 
   // Sidebar actions
@@ -60,13 +60,13 @@ export const useVisibilityStore = create<BearState>((set) => ({
       visibility: { ...state.visibility, seotoolkit: false },
     })),
 
-  // Extractor actions
-  showExtractor: () =>
+  // Custom Search actions
+  showCustomSearch: () =>
     set((state) => ({
-      visibility: { ...state.visibility, extractor: true },
+      visibility: { ...state.visibility, customSearch: true },
     })),
-  hideExtractor: () =>
+  hideCustomSearch: () =>
     set((state) => ({
-      visibility: { ...state.visibility, extractor: false },
+      visibility: { ...state.visibility, customSearch: false },
     })),
 }));

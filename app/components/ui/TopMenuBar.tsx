@@ -59,7 +59,7 @@ import Configurations from "./TopMenuBar/Configurations/Configurations";
 import { FaGear } from "react-icons/fa6";
 import MSClarity from "./MSClarityModal/MSClarityModal";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import ExtractorSelector from "./Extractors/ExtractorSelector";
+import CustomSearchSelector from "./Extractors/CustomSearchSelector";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -69,8 +69,8 @@ const TopMenuBar = () => {
     visibility,
     showSerpKeywords,
     hideSerpKeywords,
-    showExtractor,
-    hideExtractor,
+    showCustomSearch,
+    hideCustomSearch,
   } = useVisibilityStore();
 
   const router = useRouter();
@@ -341,7 +341,9 @@ const TopMenuBar = () => {
       </Modal>
 
       {/* Extractor Component - Now controlled by global store */}
-      {visibility.extractor && <ExtractorSelector close={hideExtractor} />}
+      {visibility.customSearch && (
+        <CustomSearchSelector close={hideCustomSearch} />
+      )}
 
       <Menubar className="fixed w-full top-0 z-[1000] p-0 pl-0 dark:bg-brand-darker dark:text-white bg-white dark:border-b-brand-dark border-b pb-1">
         <section className="flex -ml-3 space-x-1 cursor-pointer">
@@ -486,11 +488,11 @@ const TopMenuBar = () => {
             <MenubarContent>
               <MenubarItem
                 className={`mr-2 ${pathname !== "/global" ? "text-gray-400 pointer-events-none w-full" : "w-full"}`}
-                onClick={showExtractor}
+                onClick={showCustomSearch}
                 disabled={pathname !== "/global"}
               >
                 <GiRobotGrab className="mr-2" />
-                Extractor
+                Custom Search
               </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
