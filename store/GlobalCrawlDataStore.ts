@@ -20,6 +20,9 @@ export interface PageDetails {
   setFinishedDeepCrawl: () => void;
   crawlSessionTotalArray: string[];
   setCrawlSessionTotalArray: () => void;
+
+  isExtracting: () => void;
+  setIsExtracting: () => void;
 }
 
 // Define the Zustand store
@@ -66,6 +69,9 @@ interface CrawlStore {
   setIssuesData: (data: string[]) => void;
   crawlSessionTotalArray: string[];
   setCrawlSessionTotalArray: (data: string[]) => void;
+
+  isExtracting: boolean;
+  setIsExtracting: (isExtracting: boolean) => void;
 }
 
 const useGlobalCrawlStore = create<CrawlStore>((set) => ({
@@ -115,6 +121,9 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
   crawlSessionTotalArray: [],
   setCrawlSessionTotalArray: (data: string[]) =>
     set({ crawlSessionTotalArray: data }),
+
+  isExtracting: false,
+  setIsExtracting: (data: boolean) => set({ isExtracting: data }),
 }));
 
 const useCrawlStore = () => {

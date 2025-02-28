@@ -12,7 +12,9 @@ use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration};
 use url::Url;
 
+use crate::domain_crawler::extractors::html::extract_html;
 use crate::domain_crawler::helpers::sitemap::get_sitemap;
+use crate::domain_crawler::models::Extractor;
 
 use super::helpers::canonical_selector::get_canonical;
 use super::helpers::flesch_reader::get_flesch_score;
@@ -236,6 +238,11 @@ async fn process_url(
         hreflangs: select_hreflang(&body),
         language: detect_language(&body),
         flesch: get_flesch_score(&body),
+        extractor: Extractor {
+            html: extract_html(&body),
+            css: String::from("Not Configured"),
+            regex: String::from("Not Configured"),
+        },
     };
 
     {

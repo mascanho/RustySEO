@@ -1,5 +1,5 @@
 use directories::ProjectDirs;
-use rusqlite::{Connection, Result};
+use rusqlite::{params, Connection, Result};
 use serde::{Deserialize, Serialize};
 
 pub struct DomainDataBase {
@@ -153,4 +153,59 @@ pub fn create_domain_results_history(data: Vec<DeepCrawlHistory>) -> Result<Stri
 
     // Return a success message
     Ok("Data inserted successfully".to_string())
+}
+
+// HANDLE THE EXTRACTORS
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ExtractorConfig {
+    #[serde(rename = "type")]
+    config_type: String,
+    config: InnerConfig,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct InnerConfig {
+    #[serde(rename = "type")]
+    inner_type: Option<String>, // Optional nested type field
+    selector: String,
+    attribute: String,
+}
+
+#[tauri::command]
+pub fn store_html_extraction(data: Vec<ExtractorConfig>) -> Result<(), String> {
+    // Open the connection
+    let conn = open_domain_db_connection("deep_crawl.db").map_err(|e| e.to_string())?;
+
+    // Create the table if it doesn't exist
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS extractor (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            type TEXT NOT NULL,
+            selector TEXT NOT NULL,
+            search_text TEXT NOT NULL
+        );",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+
+    // Delete the first row if it exists
+    conn.execute("DELETE FROM extractor WHERE id = 1", [])
+        .map_err(|e| e.to_string())?;
+
+    // Insert a new row
+    for item in &data {
+        conn.execute(
+            "INSERT INTO extractor (id, type, selector, search_text) VALUES (1, ?, ?, ?)",
+            params![
+                &item.config_type,
+                &item.config.selector,
+                &item.config.attribute
+            ],
+        )
+        .map_err(|e| e.to_string())?;
+    }
+
+    println!("Replacing data in the DB: {:#?}", data);
+
+    Ok(())
 }

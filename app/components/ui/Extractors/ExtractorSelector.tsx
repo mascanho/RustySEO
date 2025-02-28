@@ -15,8 +15,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { htmlElements } from "./HtmlElements";
+import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import { toast } from "sonner";
+import { invoke } from "@tauri-apps/api/core";
 
 export default function ExtractorSelector({ close }) {
+  const { setCrawlerType } = useGlobalCrawlStore();
   const [activeTab, setActiveTab] = useState("css");
   const [isMinimized, setIsMinimized] = useState(false);
   const [extractorConfig, setExtractorConfig] = useState({
@@ -25,7 +30,6 @@ export default function ExtractorSelector({ close }) {
       tag: "div",
       attributeName: "",
       attributeValue: "",
-      multiple: false,
     },
     regex: { pattern: "", flags: "g", group: 0 },
   });
@@ -44,7 +48,7 @@ export default function ExtractorSelector({ close }) {
       case "html":
         return (
           extractorConfig.html.tag.trim() !== "" &&
-          extractorConfig.html.attributeName.trim() !== "" &&
+          // extractorConfig.html.attributeName.trim() !== "" &&
           extractorConfig.html.attributeValue.trim() !== ""
         );
       case "regex":
@@ -56,10 +60,58 @@ export default function ExtractorSelector({ close }) {
 
   const handleApply = () => {
     if (!validateFields()) return;
-    const config = { type: activeTab, config: extractorConfig[activeTab] };
+
+    // Construct the config object based on the active tab
+    let config;
+    switch (activeTab) {
+      case "css":
+        config = {
+          type: "css",
+          config: {
+            type: "css",
+            selector: extractorConfig.css.selector,
+            attribute: extractorConfig.css.attribute,
+          },
+        };
+        break;
+      case "html":
+        config = {
+          type: "html",
+          config: {
+            type: "html",
+            selector: extractorConfig.html.tag,
+            attribute: extractorConfig.html.attributeValue,
+          },
+        };
+        break;
+      case "regex":
+        config = {
+          type: "regex",
+          config: {
+            type: "regex",
+            selector: extractorConfig.regex.pattern,
+            attribute: extractorConfig.regex.flags,
+          },
+        };
+        break;
+      default:
+        console.error("Unknown tab type");
+        return;
+    }
+
     console.log("Extractor configuration:", config);
+    setCrawlerType("extractor");
+
+    try {
+      invoke("store_html_extraction", { data: [config] }).then((result) => {
+        console.log("Sending data to Rust DB");
+      });
+    } catch (err) {
+      console.log(err);
+    }
+
+    toast.success("RustySEO is now in extract mode");
     close();
-    // Desktop apps might trigger a native action here (e.g., save to file)
   };
 
   return (
@@ -143,18 +195,6 @@ export default function ExtractorSelector({ close }) {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="css-multi"
-                    checked={extractorConfig.css.multiple}
-                    onCheckedChange={(checked) =>
-                      handleChange("css", "multiple", checked)
-                    }
-                  />
-                  <Label htmlFor="css-multi" className="text-xs">
-                    Multiple Elements
-                  </Label>
-                </div>
               </div>
             )}
 
@@ -173,28 +213,15 @@ export default function ExtractorSelector({ close }) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {["div", "span", "p", "a", "img", "h1", "h2", "h3"].map(
-                        (tag) => (
-                          <SelectItem key={tag} value={tag} className="text-sm">
-                            {tag}
-                          </SelectItem>
-                        ),
-                      )}
+                      {htmlElements.map((tag) => (
+                        <SelectItem key={tag} value={tag} className="text-sm">
+                          {tag}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label className="text-xs">Attribute</Label>
-                    <Input
-                      placeholder="class"
-                      value={extractorConfig.html.attributeName}
-                      onChange={(e) =>
-                        handleChange("html", "attributeName", e.target.value)
-                      }
-                      className="text-sm h-8"
-                    />
-                  </div>
+                <div className="grid grid-cols-1 gap-2">
                   <div>
                     <Label className="text-xs">Value</Label>
                     <Input
@@ -206,18 +233,6 @@ export default function ExtractorSelector({ close }) {
                       className="text-sm h-8"
                     />
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="html-multi"
-                    checked={extractorConfig.html.multiple}
-                    onCheckedChange={(checked) =>
-                      handleChange("html", "multiple", checked)
-                    }
-                  />
-                  <Label htmlFor="html-multi" className="text-xs">
-                    Multiple Elements
-                  </Label>
                 </div>
               </div>
             )}

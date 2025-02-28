@@ -10,6 +10,13 @@ use super::helpers::{
     pdf_selector::PdfLinks, text_ratio::TextRatio, title_selector::TitleDetails,
 };
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Extractor {
+    pub html: String,
+    pub css: String,
+    pub regex: String,
+}
+
 #[derive(Serialize, Debug, Deserialize, Clone)]
 pub struct DomainCrawlResults {
     pub url: String,
@@ -40,4 +47,5 @@ pub struct DomainCrawlResults {
     pub hreflangs: Option<Vec<HreflangObject>>,
     pub language: Option<String>,
     pub flesch: Result<(f64, String), String>,
+    pub extractor: Extractor,
 }
