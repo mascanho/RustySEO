@@ -180,7 +180,7 @@ function OverviewChart() {
                           style={{ color: "white" }}
                           className="text-3xl dark:fill-white text-white font-bold dark:text-white"
                         >
-                          {crawledPagesCount.toLocaleString()}
+                          {crawledPages?.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}

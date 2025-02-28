@@ -47,7 +47,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-function Response404() {
+function Response5XXChart() {
   const {
     crawlData,
     javascript,
@@ -63,23 +63,23 @@ function Response404() {
   const totalPages = crawlData?.length || 0;
   const inlineJs = javascript?.inline || 0;
 
-  const error404 = issuesData?.length;
+  const error5XX = issuesData?.length;
 
   const chartData = [
     // { browser: "HTML", visitors: totalPages, fill: "hsl(210, 100%, 50%)" },
     {
-      browser: "404",
-      visitors: error404 || 0,
+      browser: "5XX",
+      visitors: error5XX || 0,
       fill: "hsl(710, 100%, 60%)",
     },
     {
       browser: "200",
-      visitors: totalPages - error404 || 0,
+      visitors: totalPages - error5XX || 0,
       fill: "hsl(210, 100%, 70%)",
     },
   ];
 
-  const Response404 = (() => {
+  const response5XXChart = (() => {
     try {
       return Array.isArray(totalCrawlPages)
         ? totalCrawlPages.reduce((acc, item) => acc + (item || 0), 0)
@@ -133,14 +133,14 @@ function Response404() {
                           style={{ color: "white" }}
                           className="text-3xl dark:fill-white text-white font-bold dark:text-white"
                         >
-                          {error404?.toLocaleString()}
+                          {error5XX?.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
                           className="fill-muted-foreground dark:fill-white/50 dark:text-white"
                         >
-                          404 Pages
+                          5XX Pages
                         </tspan>
                       </text>
                     );
@@ -154,14 +154,14 @@ function Response404() {
       </CardContent>
       <CardFooter className="flex-col gap-2 text-xs dark:text-white/50">
         <div className="leading-none text-muted-foreground">
-          RustySEO found {error404 || 0} pages with a 404 Response.
+          RustySEO found {error5XX || 0} pages with a 5XX Response.
         </div>
         <div className="flex items-center gap-3 font-medium leading-none">
-          From a total of {totalPages || 0} pages analyzed
+          From a total of {totalPages || 0} pages analyzed.
         </div>
       </CardFooter>
     </Card>
   );
 }
 
-export default Response404;
+export default Response5XXChart;

@@ -15,6 +15,7 @@ import H2MissingChart from "./_components/charts/H2MissingChart";
 import LowContentChart from "./_components/charts/LowContentChart";
 import MissingSchemaChart from "./_components/charts/MissingSchemaChart";
 import ImagesTooBigChart from "./_components/charts/ImagesTooBitChart.tsx";
+import Response5XXChart from "./_components/charts/Response5XXChart";
 
 const OverviewBottomSidePanel = () => {
   const { issuesView, genericChart } = useCrawlStore();
@@ -39,6 +40,9 @@ const OverviewBottomSidePanel = () => {
           genericChart !== "general" && <DescriptionsTooLongChart />}
         {issuesView === "404 Response" && genericChart !== "general" && (
           <Response404 />
+        )}
+        {issuesView === "5XX Response" && genericChart !== "general" && (
+          <Response5XXChart />
         )}
         {issuesView === "H1 Missing" && genericChart !== "general" && (
           <H1MissingChart />

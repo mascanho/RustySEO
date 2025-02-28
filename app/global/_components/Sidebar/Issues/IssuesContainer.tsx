@@ -38,6 +38,9 @@ const IssuesContainer = () => {
   // Find pages with a 404 response code in `crawlData`
   const response404 = useResponseCodes(crawlData, 404);
 
+  // PAGES WITH RESPONSE 5XX
+  const response5xx = useResponseCodes(crawlData, 500);
+
   // Find pages with titles shorter than 30 characters in `crawlData`
   const pagetitleBelow30Chars = crawlData?.filter((page) =>
     page.title?.every((obj) => obj?.title.length < 30),
@@ -154,6 +157,15 @@ const IssuesContainer = () => {
         ) + "%",
     },
     {
+      id: 66,
+      name: "5XX Response",
+      issueCount: response5xx?.length > 0 ? response5xx?.length : 0,
+      priority: "High",
+      percentage:
+        ((response5xx?.length / (crawlData?.length || 1)) * 100).toFixed(1) +
+        "%",
+    },
+    {
       id: 7,
       name: "H1 Missing",
       issueCount: missingH1?.length > 0 ? missingH1.length : 0 || 0,
@@ -264,6 +276,12 @@ const IssuesContainer = () => {
             // Handle 404 Response
             setIssuesData(response404);
             console.log(response404);
+            setGenericChart("");
+            break;
+          case "5XX Response":
+            // Handle 5XX Response
+            setIssuesData(response5xx);
+            console.log(response5xx);
             setGenericChart("");
             break;
           case "H1 Missing":
