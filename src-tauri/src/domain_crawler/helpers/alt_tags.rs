@@ -1,7 +1,7 @@
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct AltTags {
     pub with_alt_tags: Vec<String>,
     pub without_alt_tags: Vec<String>,

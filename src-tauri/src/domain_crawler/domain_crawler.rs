@@ -129,7 +129,7 @@ async fn process_url(
     base_url: &Url,
     state: Arc<Mutex<CrawlerState>>,
     app_handle: &tauri::AppHandle,
-) -> Result<(), String> {
+) -> Result<DomainCrawlResults, String> {
     println!("Processing URL: {}", url);
     let response_result = tokio::time::timeout(
         Duration::from_secs(60),
@@ -197,7 +197,11 @@ async fn process_url(
         state.crawled_urls += 1;
         state.visited.insert(url.to_string());
         state.pending_urls.remove(url.as_str());
-        return Ok(());
+        return Ok(DomainCrawlResults {
+            url: final_url.to_string(),
+            status_code,
+            ..Default::default()
+        });
     }
 
     let result = DomainCrawlResults {
@@ -282,7 +286,9 @@ async fn process_url(
             eprintln!("Failed to emit progress update: {}", err);
         }
 
-        let result_data = CrawlResultData { result };
+        let result_data = CrawlResultData {
+            result: result.clone(),
+        };
         if let Err(err) = app_handle.emit("crawl_result", result_data) {
             eprintln!("Failed to emit crawl result: {}", err);
         }
@@ -297,7 +303,7 @@ async fn process_url(
         std::io::stdout().flush().unwrap();
     }
 
-    Ok(())
+    Ok(result)
 }
 
 fn should_skip_url(url: &str) -> bool {
@@ -377,18 +383,22 @@ pub async fn crawl_domain(
                 sleep(Duration::from_millis(jitter)).await;
 
                 let mut retries = 0;
-                let result: Result<(), String> = loop {
+                let result: Result<DomainCrawlResults, String> = loop {
                     // Explicit type annotation
                     match process_url(url.clone(), &client, &base_url, state.clone(), &app_handle)
                         .await
                     {
-                        Ok(()) => break Ok(()),
+                        Ok(result) => break Ok(result),
                         Err(e) => {
                             if retries >= MAX_RETRIES {
                                 let mut state = state.lock().await;
                                 state.failed_urls.insert(url.to_string());
                                 println!("Marked as failed after retries: {}", url);
-                                break Ok(()); // Treat as processed to avoid re-queueing
+                                break Ok(DomainCrawlResults {
+                                    url: url.to_string(),
+                                    status_code: 0, // Indicates failure
+                                    ..Default::default()
+                                });
                             }
                             eprintln!("Error processing URL (retry {}): {}", retries + 1, e);
                             retries += 1;
@@ -404,7 +414,12 @@ pub async fn crawl_domain(
 
         for handle in handles {
             match handle.await {
-                Ok((url, Ok(()))) => (), // Successfully processed or failed (marked)
+                Ok((url, Ok(result))) => {
+                    let mut state = state.lock().await;
+                    if !state.visited.contains(&url.to_string()) {
+                        state.results.push(result);
+                    }
+                }
                 Ok((url, Err(e))) => {
                     eprintln!("Task completed with unexpected error for {}: {}", url, e);
                     let mut state = state.lock().await;
@@ -447,5 +462,14 @@ pub async fn crawl_domain(
         eprintln!("Failed to emit crawl completion event: {}", err);
     }
 
-    Ok(state.results.clone())
+    // Remove duplicates from the results
+    let mut unique_results = Vec::new();
+    let mut seen_urls = HashSet::new();
+    for result in state.results.clone() {
+        if seen_urls.insert(result.url.clone()) {
+            unique_results.push(result);
+        }
+    }
+
+    Ok(unique_results)
 }

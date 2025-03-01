@@ -17,6 +17,17 @@ pub struct Extractor {
     pub regex: String,
 }
 
+// Implement Default for Extractor
+impl Default for Extractor {
+    fn default() -> Self {
+        Self {
+            html: String::new(),
+            css: String::from("Not Configured"),
+            regex: String::from("Not Configured"),
+        }
+    }
+}
+
 #[derive(Serialize, Debug, Deserialize, Clone)]
 pub struct DomainCrawlResults {
     pub url: String,
@@ -48,4 +59,41 @@ pub struct DomainCrawlResults {
     pub language: Option<String>,
     pub flesch: Result<(f64, String), String>,
     pub extractor: Extractor,
+}
+
+// Implement Default for DomainCrawlResults
+impl Default for DomainCrawlResults {
+    fn default() -> Self {
+        Self {
+            url: String::new(),
+            title: None,
+            description: String::new(),
+            headings: HashMap::new(),
+            javascript: JavaScript::default(),
+            images: Ok(Vec::new()),
+            status_code: 0, // Default to 0 for failed URLs
+            anchor_links: None,
+            indexability: Indexability::default(),
+            alt_tags: AltTags::default(),
+            schema: None,
+            css: CSS::default(),
+            iframe: None,
+            pdf_link: None,
+            word_count: 0,
+            response_time: None,
+            mobile: false,
+            canonicals: None,
+            meta_robots: MetaRobots::default(),
+            content_type: String::new(),
+            content_length: 0,
+            text_ratio: None,
+            redirection: None,
+            keywords: Vec::new(),
+            page_size: Vec::new(),
+            hreflangs: None,
+            language: None,
+            flesch: Ok((0.0, String::new())),
+            extractor: Extractor::default(),
+        }
+    }
 }

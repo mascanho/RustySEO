@@ -2,7 +2,7 @@ use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct JavaScript {
     pub external: Vec<String>, // URLs of external scripts
     pub inline: Vec<String>,   // Content of inline scripts

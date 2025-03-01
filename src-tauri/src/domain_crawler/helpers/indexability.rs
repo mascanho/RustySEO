@@ -1,7 +1,7 @@
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Indexability {
     pub indexability: f32,
     pub indexability_reason: String,

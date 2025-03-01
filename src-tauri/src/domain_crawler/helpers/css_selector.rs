@@ -1,7 +1,7 @@
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct CSS {
     pub external: Vec<String>, // URLs of external stylesheets
     pub inline: Vec<String>,   // Content of inline styles
