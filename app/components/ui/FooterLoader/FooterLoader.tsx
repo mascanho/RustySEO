@@ -1,9 +1,13 @@
+import useCrawlStore from "@/store/GlobalCrawlDataStore";
 import { listen } from "@tauri-apps/api/event";
 import { useState, useEffect } from "react";
+import { PiTote } from "react-icons/pi";
 const FooterLoader = () => {
   const [crawledPages, setCrawledPages] = useState<number>(0);
   const [percentageCrawled, setPercentageCrawled] = useState<number>(0);
   const [crawledPagesCount, setCrawledPagesCount] = useState<number>(0);
+  const { setTotalUrlsCrawled, totalUrlsCrawled } = useCrawlStore();
+
   useEffect(() => {
     const unlisten = listen("progress_update", (event) => {
       const progressData = event.payload as {

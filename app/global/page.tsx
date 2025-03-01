@@ -203,11 +203,13 @@ export default function Page() {
               <TaskManagerContainer />
             </section>
           </Tabs.Panel>
-          <Tabs.Panel value="analytics mt-10">
+          <Tabs.Panel value="analytics pt-20">
             <Analytics />
           </Tabs.Panel>
-          <Tabs.Panel value="clarity">
-            <ClarityContainer />
+          <Tabs.Panel value="clarity" className="pt-8 ">
+            <section className="h-[calc(100vh-8rem)] overflow-auto">
+              <ClarityContainer />
+            </section>
           </Tabs.Panel>{" "}
           <Tabs.Panel value="kws" className="h-[calc(100vh-8.8rem)] pt-9">
             <KeywordAnalytics />

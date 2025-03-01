@@ -32,6 +32,25 @@ const HistoryDomainCrawls = () => {
     summary,
     crawlSessionTotalArray,
   } = useGlobalCrawlStore();
+  const [crawledPages, setCrawledPages] = useState<number>(0);
+  const [percentageCrawled, setPercentageCrawled] = useState<number>(0);
+  const [crawledPagesCount, setCrawledPagesCount] = useState<number>(0);
+
+  useEffect(() => {
+    const unlisten = listen("progress_update", (event) => {
+      const progressData = event.payload as {
+        crawled_urls: number;
+        percentage: number;
+        total_urls: number;
+      };
+      setCrawledPages(progressData.crawled_urls);
+      setPercentageCrawled(progressData.percentage);
+      setCrawledPagesCount(progressData.total_urls);
+    });
+    return () => {
+      unlisten.then((f) => f());
+    };
+  }, []);
 
   const sessionArr = crawlSessionTotalArray;
 
@@ -65,7 +84,7 @@ const HistoryDomainCrawls = () => {
       id: Math.floor(Math.random() * 1000),
       domain: crawlData[0]?.url || "",
       date: new Date().toISOString(),
-      pages: crawlData.length || 0,
+      pages: crawledPagesCount || 0,
       errors: totalIssueCount || 0,
       status: "completed",
       total_links: summary?.totalLinksFound || 0,

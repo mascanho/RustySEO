@@ -55,11 +55,11 @@ function OverviewChart() {
   const [totalCrawlPages, setTotalCrawlPages] = useState<number[]>([]);
 
   // Default values for optional data
-  const totalPages = crawlData?.length || 0;
-  const inlineJs = javascript?.inline || 0;
-  const externalJs = javascript?.external || 0;
-  const inlineCss = css?.inline || 0;
-  const externalCss = css?.external || 0;
+  const totalPages = crawlData?.length || 100;
+  const inlineJs = javascript?.inline || 100;
+  const externalJs = javascript?.external || 100;
+  const inlineCss = css?.inline || 100;
+  const externalCss = css?.external || 100;
 
   // UPDATE THE CRAWLED PAGES IN REALTIME
 
