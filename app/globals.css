@@ -781,7 +781,7 @@ div:is(.sitemapsDomain) {
 }
 
 .m_539e827b {
-  @apply h-5 pb-3 pt-3 dark:hover:border-white hover:border-b-2 hover:border-transparent hover:border-transparent;
+  @apply h-5 pb-3 pt-3 dark:hover:border-white hover:border-b-[0px];
 }
 
 /* SETS THE TABS BACKGROUND */
