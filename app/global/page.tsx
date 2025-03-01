@@ -218,7 +218,10 @@ export default function Page() {
           >
             <GSCcontainer />
           </Tabs.Panel>{" "}
-          <Tabs.Panel value="content" className="pt-9 h-screen">
+          <Tabs.Panel
+            value="content"
+            className="pt-9 h-[calc(100vh-6rem)] overflow-auto"
+          >
             <ContentPlannerContainer />
           </Tabs.Panel>{" "}
         </Tabs>

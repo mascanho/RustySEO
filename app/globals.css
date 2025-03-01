@@ -781,16 +781,12 @@ div:is(.sitemapsDomain) {
 }
 
 .m_539e827b {
-  @apply h-5 pb-3 pt-3;
-}
-
-.m_539e827b:hover {
-  @apply border-0;
+  @apply h-5 pb-3 pt-3 dark:hover:border-white hover:border-b-2 hover:border-transparent hover:border-transparent;
 }
 
 /* SETS THE TABS BACKGROUND */
 .m_539e827b:is([data-active]) {
-  @apply h-3 bg-brand-bright rounded-t-lg !important;
+  @apply h-3 bg-brand-bright rounded-t-lg hover:border-b-2  !important;
 }
 
 /* SETS THE TABS TEXT */
