@@ -153,7 +153,7 @@ export default function Page() {
 
         {/* Tabs Component */}
         <Tabs defaultValue="first" className="ovefflow-auto">
-          <aside className="absolute top-13 border-b dark:border-b-brand-dark  pt-1 left-0 w-full dark:bg-brand-darker z-10 bg-white ">
+          <aside className="absolute top-13  dark:border-b-brand-dark  pt-1 left-0 w-full dark:bg-brand-darker z-10 bg-white ">
             <Tabs.List
               justify="center"
               className="dark:text-white text-xs  active:text-white h-7 "
@@ -206,22 +206,19 @@ export default function Page() {
           <Tabs.Panel value="analytics mt-10">
             <Analytics />
           </Tabs.Panel>
-          <Tabs.Panel
-            value="clarity"
-            className="h-[calc(100vh-8.8rem)] mt-8 overflow-auto"
-          >
+          <Tabs.Panel value="clarity">
             <ClarityContainer />
           </Tabs.Panel>{" "}
-          <Tabs.Panel value="kws" className="h-[calc(100vh-8.8rem)] mt-9">
+          <Tabs.Panel value="kws" className="h-[calc(100vh-8.8rem)] pt-9">
             <KeywordAnalytics />
           </Tabs.Panel>{" "}
           <Tabs.Panel
             value="gsc"
-            className="h-calc(100vh-8.8rem)] mt-8 pt-2 dark:bg-brand-darker"
+            className="h-calc(100vh-8.8rem)] pt-9 dark:bg-brand-darker"
           >
             <GSCcontainer />
           </Tabs.Panel>{" "}
-          <Tabs.Panel value="content" className="mt-9 h-screen">
+          <Tabs.Panel value="content" className="pt-9 h-screen">
             <ContentPlannerContainer />
           </Tabs.Panel>{" "}
         </Tabs>
