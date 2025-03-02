@@ -239,8 +239,8 @@ const ColumnPicker = ({
 
 const ImagesCrawlTable = ({
   rows,
-  rowHeight = 41,
-  overscan = 10,
+  rowHeight = 31,
+  overscan = 30,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
   const [columnAlignments, setColumnAlignments] = useState(
@@ -470,7 +470,7 @@ const ImagesCrawlTable = ({
         <div
           ref={tableContainerRef}
           style={{ minWidth: `${totalWidth}px` }}
-          className="domainCrawlParent"
+          className="domainCrawlParent sticky top-0"
         >
           <table className="w-full text-xs border-collapse domainCrawlParent h-full">
             <TableHeader
