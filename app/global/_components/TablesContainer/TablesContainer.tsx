@@ -24,7 +24,7 @@ import useCrawlStore from "@/store/GlobalCrawlDataStore";
 const BottomTableContent = ({ children, height }) => (
   <div
     style={{
-      height: `${height - 50}px`,
+      height: `${height - 40}px`,
       minHeight: "100px",
       overflowY: "auto",
       marginBottom: "80px",

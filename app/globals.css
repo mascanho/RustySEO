@@ -793,3 +793,23 @@ div:is(.sitemapsDomain) {
 .m_539e827b:is([data-active]) span {
   @apply h-3  text-white !important;
 }
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.sticky {
+  position: -webkit-sticky; /* For Safari */
+  position: sticky;
+  top: 0;
+}
+
+th {
+  background-color: #f87171; /* Ensure the background color matches the header */
+  z-index: 1;
+}
