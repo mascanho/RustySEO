@@ -123,7 +123,7 @@ pub async fn ask_gemini(prompt: String) -> Result<String, Box<dyn std::error::Er
     let api_key = gemini::get_gemini_api_key()
         .expect("Failed to get Gemini API key for the RUsty Chat Gemini");
     let url = format!(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={}",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent?key={}",
         api_key
     );
 
