@@ -14,7 +14,7 @@ const BottomContainer = () => {
           className="dark:text-white text-xs bg-slate-100 dark:bg-gray-900"
         >
           <Tabs.Tab value="overview">Overview</Tabs.Tab>
-          <Tabs.Tab value="robotsTab">Fixes</Tabs.Tab>
+          {/* <Tabs.Tab value="robotsTab">Fixes</Tabs.Tab> */}
           {/* <Tabs.Tab value="sitemaps">Sitemaps</Tabs.Tab> */}
           <Tabs.Tab value="history">History</Tabs.Tab>
         </Tabs.List>
