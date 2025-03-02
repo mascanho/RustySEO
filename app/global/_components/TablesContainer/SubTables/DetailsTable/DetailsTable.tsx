@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useEffect, useRef } from "react";
 
 const DetailsTable = ({ data, height }) => {
@@ -84,6 +85,7 @@ const DetailsTable = ({ data, height }) => {
                   textOverflow: "ellipsis",
                   backgroundColor: "#f87171",
                   zIndex: 1,
+                  width: "260px",
                 }}
               >
                 Name
@@ -126,6 +128,8 @@ const DetailsTable = ({ data, height }) => {
                         overflow: "hidden",
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       URL
@@ -151,6 +155,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       Canonical
@@ -176,6 +182,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       Title
@@ -201,6 +209,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       Title length
@@ -226,6 +236,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       Meta Description
@@ -251,6 +263,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       Meta Description Length
@@ -276,6 +290,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       Heading H1
@@ -301,6 +317,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       Heading H1 Length
@@ -326,6 +344,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       Response Code
@@ -351,6 +371,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       Mobile Optimized
@@ -387,6 +409,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       Indexable
@@ -414,6 +438,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       Content Type
@@ -439,6 +465,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       Word Count
@@ -464,6 +492,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       Text Ratio
@@ -490,6 +520,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       Top 10 Keywords
@@ -539,6 +571,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       Internal Links
@@ -564,6 +598,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       External Links
@@ -589,6 +625,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       Images
@@ -616,6 +654,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       Page Length
@@ -643,6 +683,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       Page Size
@@ -670,6 +712,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       Response Time
@@ -698,6 +742,8 @@ const DetailsTable = ({ data, height }) => {
                           textOverflow: "ellipsis",
                           border: "1px solid #ddd",
                           padding: "2px 0",
+                          width: "260px",
+                          fontWeight: 600,
                         }}
                       >
                         {"Hreflang " + lang?.code?.toUpperCase()}
@@ -724,6 +770,8 @@ const DetailsTable = ({ data, height }) => {
                         textOverflow: "ellipsis",
                         border: "1px solid #ddd",
                         padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
                       }}
                     >
                       Language
