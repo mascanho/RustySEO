@@ -209,12 +209,10 @@ export default function Home() {
               <TabsTrigger value="schema">Schema</TabsTrigger>
             </TabsList>
             <TabsContent value="details">
-              <BottomTableContent height={bottomTableHeight}>
-                <DetailsTable
-                  data={selectedTableURL}
-                  height={bottomTableHeight}
-                />
-              </BottomTableContent>
+              <DetailsTable
+                data={selectedTableURL}
+                height={bottomTableHeight}
+              />
             </TabsContent>
             <TabsContent value="inlinks">
               <BottomTableContent height={bottomTableHeight}>
