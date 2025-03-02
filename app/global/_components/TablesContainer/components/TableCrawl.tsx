@@ -303,7 +303,7 @@ const TableCrawl = ({
   tabName,
   rows,
   rowHeight = 41,
-  overscan = 10,
+  overscan = 50,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
   const [columnAlignments, setColumnAlignments] = useState(
@@ -521,7 +521,7 @@ const TableCrawl = ({
 
   return (
     <>
-      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1">
+      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1 ">
         <input
           type="text"
           placeholder="Search..."
@@ -545,12 +545,12 @@ const TableCrawl = ({
       </div>
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-2rem)] overflow-auto relative"
+        className="w-full h-[calc(100%-2rem)] overflow-auto relative "
       >
         <div
           ref={tableContainerRef}
           style={{ minWidth: `${totalWidth}px` }}
-          className="domainCrawlParent"
+          className="domainCrawlParent sticky top-0"
         >
           <table className="w-full text-xs border-collapse domainCrawlParent h-full">
             <TableHeader
