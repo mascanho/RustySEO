@@ -107,7 +107,7 @@ const DetailsTable = ({ data, height }) => {
         </table>
       </div>
       <div
-        style={{ overflow: "auto", height: `calc(100% - 40px)`, width: "100%" }}
+        style={{ overflow: "auto", height: `calc(100% - 33px)`, width: "100%" }}
         ref={tableBodyRef}
       >
         <table
@@ -542,7 +542,8 @@ const DetailsTable = ({ data, height }) => {
                           style={{
                             display: "inline-block",
                             marginRight: "8px",
-                            border: "1px solid #ddd",
+                            marginLeft: "-8px",
+                            // border: "1px solid #ddd",
                             padding: "1px 8px",
                             borderRadius: "4px",
                           }}
