@@ -813,3 +813,16 @@ th {
   background-color: #f87171; /* Ensure the background color matches the header */
   z-index: 1;
 }
+
+/* DIALOG STYLING */
+dialog {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
