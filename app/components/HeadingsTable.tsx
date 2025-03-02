@@ -153,9 +153,9 @@ const HeadingsTable = ({
 
       {/* Custom Dropdown Menu */}
       {dropdownOpen && (
-        <div className="custom-dropdown absolute right-4 mt-2 w-[7rem] bg-white z-10 dark:bg-brand-darker border border-gray-300 dark:border-brand-dark shadow">
+        <div className="custom-dropdown absolute right-4 mt-2 w-[8rem] bg-white z-10 dark:bg-brand-darker border border-gray-300 dark:border-brand-dark shadow">
           <div className="p-1">
-            <p className="text-sm font-semibold text-gray-700 dark:text-white px-2 py-1 border-b dark:border-b-white/20">
+            <p className="text-xs font-semibold text-gray-700 dark:text-white px-2 py-1 border-b dark:border-b-white/20">
               Headings
             </p>
             <button
@@ -163,7 +163,7 @@ const HeadingsTable = ({
                 setDialogOpen(true);
                 setDropdownOpen(false);
               }}
-              className="w-full text-left px-2 py-1 text-sm text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-brand-dark cursor-pointer rounded-sm"
+              className="w-full text-left px-2 py-1 text-xs text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-brand-dark cursor-pointer rounded-sm"
             >
               Improve Headings
             </button>
