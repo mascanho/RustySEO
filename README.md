@@ -1,5 +1,3 @@
-![Avatar](assets/icon.png)
-
 ![Logo](assets/hero.jpg)
 
 # RustySEO - A cross-platform SEO toolkit
