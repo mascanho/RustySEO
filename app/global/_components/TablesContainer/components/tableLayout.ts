@@ -5,7 +5,7 @@ export const initialColumnWidths = [
   "300px", // Page Title
   "70px", // Page title length
   "300px", // Page Description
-  "60px", // Page Description Length
+  "70px", // Page Description Length
   "350px", // H1
   "70px", // H1 Length
   "350px", // H2
@@ -13,8 +13,8 @@ export const initialColumnWidths = [
   "100px", // Status Code
   "100px", // TEXT RATIO
   "100px", // Flesch score
-  "100px", // Flesch grade
-  "80px", // Word Count
+  "120px", // Flesch grade
+  "100px", // Word Count
   "60px", //  Mobile
   "90px", // Meta Robots
   "120px", // CONTENT TYPE

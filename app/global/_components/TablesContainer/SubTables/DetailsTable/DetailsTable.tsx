@@ -42,7 +42,7 @@ const DetailsTable = ({ data, height }) => {
           width: "100%",
         }}
       >
-        <p style={{ color: "rgba(0, 0, 0, 0.5)" }}>
+        <p className="dark:text-white/50 text-black/50">
           Select a row to view details
         </p>
       </div>

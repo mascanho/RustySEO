@@ -739,7 +739,11 @@ button .mantine-Tabs-tabLabel {
 }
 
 .domainCrawlParent tr td {
-  @apply px-[5px] py-[2px] !important;
+  @apply px-[5px] py-[2px] border  !important;
+}
+
+.domainCrawlParent tbody {
+  @apply dark:border-white/20 !important;
 }
 
 /* GLOBAL OVERVIEW CHART */

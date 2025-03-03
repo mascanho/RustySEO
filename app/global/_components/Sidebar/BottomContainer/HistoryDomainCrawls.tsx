@@ -154,7 +154,11 @@ const HistoryDomainCrawls = () => {
       <div className="text-center dark:bg-gray-900">
         <div>
           {crawlHistory.length === 0 && !error && (
-            <p className="text-gray-500">No crawl history available.</p>
+            <div className="h-[calc(28rem-1.2rem)] flex items-center">
+              <p className="text-gray-500 m-auto">
+                No crawl history available.
+              </p>
+            </div>
           )}
           {crawlHistory
             .sort(

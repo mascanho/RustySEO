@@ -85,7 +85,7 @@ pub fn read_domain_results_history_table() -> Result<Vec<DeepCrawlHistory>, Stri
     // Prepare the SQL query to read data
     let mut stmt = conn
         .prepare(
-            "SELECT id, domain, date, pages, errors, status, total_links, total_internal_links, total_external_links, indexable_pages, not_indexable_pages 
+            "SELECT id, domain, date, pages, errors, status, total_links, total_internal_links, total_external_links, indexable_pages, not_indexable_pages
              FROM deep_crawls_history",
         )
         .map_err(|e| e.to_string())?;
@@ -178,7 +178,7 @@ pub fn store_custom_search(data: Vec<ExtractorConfig>) -> Result<(), String> {
 
     // Create the table if it doesn't exist
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS extractor (
+        "CREATE TABLE IF NOT EXISTS custom_search (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             type TEXT NOT NULL,
             selector TEXT NOT NULL,
@@ -189,13 +189,13 @@ pub fn store_custom_search(data: Vec<ExtractorConfig>) -> Result<(), String> {
     .map_err(|e| e.to_string())?;
 
     // Delete the first row if it exists
-    conn.execute("DELETE FROM extractor WHERE id = 1", [])
+    conn.execute("DELETE FROM custom_search WHERE id = 1", [])
         .map_err(|e| e.to_string())?;
 
     // Insert a new row
     for item in &data {
         conn.execute(
-            "INSERT INTO extractor (id, type, selector, search_text) VALUES (1, ?, ?, ?)",
+            "INSERT INTO custom_search (id, type, selector, search_text) VALUES (1, ?, ?, ?)",
             params![
                 &item.config_type,
                 &item.config.selector,
@@ -206,6 +206,19 @@ pub fn store_custom_search(data: Vec<ExtractorConfig>) -> Result<(), String> {
     }
 
     println!("Replacing data in the DB: {:#?}", data);
+
+    Ok(())
+}
+
+// ENSURE THE THE DATA IS DELETED ON APP LAUNCH
+#[tauri::command]
+pub fn clear_custom_search() -> Result<(), String> {
+    // Open the connection
+    let conn = open_domain_db_connection("deep_crawl.db").map_err(|e| e.to_string())?; // Use ? to propagate the error
+
+    // Delete the first row if it exists
+    conn.execute("DELETE FROM custom_search WHERE id = 1", [])
+        .map_err(|e| e.to_string())?; // Use ? to propagate the error
 
     Ok(())
 }

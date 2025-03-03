@@ -102,7 +102,7 @@ export default function CustomSearchSelector({ close }) {
     setCrawlerType("extractor");
 
     try {
-      invoke("store_html_extraction", { data: [config] }).then((result) => {
+      invoke("store_custom_search", { data: [config] }).then((result) => {
         console.log("Sending data to Rust DB");
       });
     } catch (err) {

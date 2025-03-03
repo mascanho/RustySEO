@@ -120,8 +120,12 @@ async fn generate_ai_topics(body: String) -> Result<String, String> {
 #[tokio::main]
 async fn main() {
     // Execute the ID check
-    let uuid = globals::actions::uuid_creation_check();
-    println!("UUID: {}", uuid);
+    // let uuid = globals::actions::uuid_creation_check();
+    // clear the custom_search DB entry
+    match db::clear_custom_search() {
+        Ok(_) => println!("Custom search entry cleared successfully"),
+        Err(err) => eprintln!("Error clearing custom search entry: {}", err),
+    }
 
     // initialise the dbs
     let _start_db = crawler::db::databases_start();
