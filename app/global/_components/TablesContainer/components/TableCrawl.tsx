@@ -223,8 +223,8 @@ const TableRow = ({
               }
               style={{
                 width: columnWidths[cellIndex],
-                // padding: "6px 8px",
-                border: "1px solid #ccc",
+                border: "1px solid #ddd",
+                padding: "6px 8px",
                 textAlign: columnAlignments[cellIndex],
                 overflow: "hidden",
                 whiteSpace: "nowrap",
@@ -552,7 +552,7 @@ const TableCrawl = ({
           style={{ minWidth: `${totalWidth}px` }}
           className="domainCrawlParent sticky top-0"
         >
-          <table className="w-full text-xs border-collapse  h-full border">
+          <table className="w-full text-xs border-collapse domainCrawlParent h-full">
             <TableHeader
               headers={headerTitles}
               columnWidths={columnWidths}
@@ -561,7 +561,7 @@ const TableCrawl = ({
               onAlignToggle={toggleColumnAlignment}
               columnVisibility={columnVisibility}
             />
-            <tbody className="border">
+            <tbody>
               {filteredRows.length > 0 ? (
                 <>
                   <tr
