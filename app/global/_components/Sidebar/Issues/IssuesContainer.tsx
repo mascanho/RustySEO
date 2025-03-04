@@ -333,7 +333,7 @@ const IssuesContainer = () => {
   return (
     <section className="text-xs w-full space-y-1 min-h-[10rem] h-[calc(100vh-39rem)] overflow-y-auto overflow-x-hidden relative">
       <table className="w-full border-collapse issues pt-2">
-        <thead>
+        <thead className="sticky top-0 ">
           <tr className="text-xs bg-gray-100 ">
             <th className="p-2 text-left border border-bl">Problem</th>
             <th className="p-2 text-left">Urls</th>

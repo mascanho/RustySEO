@@ -830,3 +830,16 @@ dialog {
 dialog::backdrop {
   background: rgba(0, 0, 0, 0.5);
 }
+
+/* TABLE ROWS COLOURS */
+.domainCrawlParent tbody {
+  @apply dark:border-white/20 !important;
+}
+
+.domainCrawlParent tbody tr:nth-child(odd) {
+  @apply bg-gray-50 dark:bg-brand-dark/10 border !important;
+}
+
+.domainCrawlParent tbody tr:nth-child(even) {
+  @apply bg-white dark:bg-brand-darker border !important;
+}

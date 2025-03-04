@@ -3,6 +3,7 @@ import HistoryDomainCrawls from "./BottomContainer/HistoryDomainCrawls";
 import OverviewBottomSidePanel from "./BottomContainer/OverviewBottomSidePanel";
 import RobotsDomain from "./BottomContainer/RobotsDomain";
 import SitemapDomain from "./BottomContainer/SitemapDomain";
+import FixesContainer from "./BottomContainer/Fixes/FixesContainer";
 
 const BottomContainer = () => {
   return (
@@ -16,6 +17,7 @@ const BottomContainer = () => {
           <Tabs.Tab value="overview">Overview</Tabs.Tab>
           {/* <Tabs.Tab value="robotsTab">Fixes</Tabs.Tab> */}
           {/* <Tabs.Tab value="sitemaps">Sitemaps</Tabs.Tab> */}
+          <Tabs.Tab value="fixes">Fixes</Tabs.Tab>
           <Tabs.Tab value="history">History</Tabs.Tab>
         </Tabs.List>
 
@@ -37,6 +39,11 @@ const BottomContainer = () => {
           <SitemapDomain />
         </Tabs.Panel>
 
+        <Tabs.Panel value="fixes">
+          <div className="flex flex-col gap-y-2 dark:bg-gray-900">
+            <FixesContainer />
+          </div>
+        </Tabs.Panel>
         <Tabs.Panel value="history">
           <div className="flex flex-col gap-y-2 dark:bg-gray-900">
             <HistoryDomainCrawls />

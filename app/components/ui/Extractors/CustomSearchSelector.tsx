@@ -135,7 +135,7 @@ export default function CustomSearchSelector({ close }) {
         <div className="flex flex-col h-full dark:text-white">
           <div className="p-3 space-y-4 flex-grow overflow-auto">
             {/* Tab-like Toolbar */}
-            <div className="flex gap-1 bg-gray-200 p-1 rounded dark:bg-brand-dark">
+            <div className="flex gap-1 bg-gray-200 p-1  dark:bg-brand-dark text-xs">
               {[
                 { id: "css", icon: Hash, label: "CSS" },
                 { id: "html", icon: FileType2, label: "HTML" },
@@ -145,9 +145,11 @@ export default function CustomSearchSelector({ close }) {
                   key={tab.id}
                   variant={activeTab === tab.id ? "default" : "outline"}
                   size="sm"
-                  className="flex-1 flex items-center gap-1 text-xs"
+                  className="flex-1 flex items-center gap-1 text-xs h-6 text-xs"
                   style={{
                     background: activeTab === tab.id ? "#2B6CC4" : "#ccc",
+                    borderRadius: "0px",
+                    fontSize: "10px",
                     color: activeTab === tab.id ? "white" : "black",
                   }}
                   onClick={() => setActiveTab(tab.id)}
@@ -303,7 +305,7 @@ export default function CustomSearchSelector({ close }) {
             <Button
               onClick={handleApply}
               disabled={!validateFields()}
-              className="w-full h-8 text-sm bg-brand-bright   dark:text-white hover:bg-brand-bright dark:hover:bg-brand-bright hover:text-white dark:bg-brand-dark dark:hover:text-white"
+              className="w-full h-8 text-sm bg-brand-bright  rounded-none dark:text-white hover:bg-brand-bright dark:hover:bg-brand-bright hover:text-white dark:bg-brand-dark dark:hover:text-white"
             >
               Apply
             </Button>

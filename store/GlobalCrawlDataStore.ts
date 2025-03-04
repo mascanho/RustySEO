@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { create } from "zustand";
 import { shallow } from "zustand/shallow";
 
@@ -75,6 +76,11 @@ interface CrawlStore {
 
   totalUrlsCrawled: number;
   setTotalUrlsCrawled: (total: number) => void;
+
+  streamedCrawledPages: number;
+  setStreamedCrawledPages: (pages: number) => void;
+  streamedTotalPages: number;
+  setStreamedTotalPages: (pages: number) => void;
 }
 
 const useGlobalCrawlStore = create<CrawlStore>((set) => ({
@@ -130,6 +136,12 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
 
   totalUrlsCrawled: 0,
   setTotalUrlsCrawled: (total: number) => set({ totalUrlsCrawled: total }),
+
+  streamedCrawledPages: 0,
+  setStreamedCrawledPages: (pages: number) =>
+    set({ streamedCrawledPages: pages }),
+  streamedTotalPages: 0,
+  setStreamedTotalPages: (pages: number) => set({ streamedTotalPages: pages }),
 }));
 
 const useCrawlStore = () => {

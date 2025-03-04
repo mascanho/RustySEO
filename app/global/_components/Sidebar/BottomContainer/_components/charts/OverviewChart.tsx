@@ -49,8 +49,16 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 function OverviewChart() {
-  const { crawlData, javascript, css, domainCrawlLoading } =
-    useGlobalCrawlStore();
+  const {
+    crawlData,
+    javascript,
+    css,
+    domainCrawlLoading,
+    setStreamedTotalPages,
+    setStreamedCrawledPages,
+    streamedTotalPages,
+    streamedCrawledPages,
+  } = useGlobalCrawlStore();
   const [sessionCrawls, setSessionCrawls] = useState<number>(0);
   const [totalCrawlPages, setTotalCrawlPages] = useState<number[]>([]);
 
@@ -76,6 +84,10 @@ function OverviewChart() {
       setCrawledPages(progressData.crawled_urls);
       setPercentageCrawled(progressData.percentage);
       setCrawledPagesCount(progressData.total_urls);
+
+      // Update the GLOBAL crawled pages in real-time
+      setStreamedCrawledPages(progressData.crawled_urls);
+      setStreamedTotalPages(progressData.total_urls);
     });
     return () => {
       unlisten.then((f) => f());
@@ -134,6 +146,10 @@ function OverviewChart() {
     }
   })();
 
+  useEffect(() => {
+    console.log(crawlData, crawledPages);
+  }, [domainCrawlLoading, crawlData]);
+
   return (
     <Card className="flex flex-col dark:bg-gray-900 bg-slate-100 border-0 shadow-none">
       <CardHeader className="items-center pb-0">
@@ -180,7 +196,7 @@ function OverviewChart() {
                           style={{ color: "white" }}
                           className="text-3xl dark:fill-white text-white font-bold dark:text-white"
                         >
-                          {crawlData?.length?.toLocaleString()}
+                          {streamedCrawledPages?.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
