@@ -59,6 +59,7 @@ pub struct DomainCrawlResults {
     pub language: Option<String>,
     pub flesch: Result<(f64, String), String>,
     pub extractor: Extractor,
+    pub headers: Vec<(String, String)>,
 }
 
 // Implement Default for DomainCrawlResults
@@ -94,6 +95,7 @@ impl Default for DomainCrawlResults {
             language: None,
             flesch: Ok((0.0, String::new())),
             extractor: Extractor::default(),
+            headers: Vec::new(),
         }
     }
 }

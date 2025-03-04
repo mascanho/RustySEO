@@ -146,10 +146,6 @@ function OverviewChart() {
     }
   })();
 
-  useEffect(() => {
-    console.log(crawlData, crawledPages);
-  }, [domainCrawlLoading, crawlData]);
-
   return (
     <Card className="flex flex-col dark:bg-gray-900 bg-slate-100 border-0 shadow-none">
       <CardHeader className="items-center pb-0">

@@ -173,6 +173,13 @@ async fn process_url(
         .get("Location")
         .and_then(|h| h.to_str().ok().map(String::from));
 
+    // GET ALL THE HEADERS RESPONSE
+    let headers = response
+        .headers()
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or("").to_string()))
+        .collect::<Vec<_>>();
+
     if response.headers().contains_key("cf-ray")
         || response.headers().contains_key("x-cdn")
         || response.headers().contains_key("x-cache")
@@ -247,6 +254,7 @@ async fn process_url(
             css: String::from("Not Configured"),
             regex: String::from("Not Configured"),
         },
+        headers,
     };
 
     {
