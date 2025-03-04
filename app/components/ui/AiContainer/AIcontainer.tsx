@@ -14,6 +14,7 @@ import usePageSpeedStore from "@/store/StorePerformance";
 import useOnPageSeo from "@/store/storeOnPageSeo";
 import ChatLoading from "./chatLoading";
 import useContentStore from "@/store/storeContent";
+import { usePathname } from "next/navigation";
 
 interface Message {
   id: number;
@@ -90,6 +91,11 @@ const AIcontainer = () => {
   const contentKeywords = contentStore.keywords || "No page crawled yet";
   const contentVideo = contentStore.video || "No page crawled yet";
 
+  // MANAGE PATHS AND RUSTY CHAT MESSAGES ACCORDINGLY
+  const [myMessage, setMyMessage] = useState<string>("");
+
+  const pathname = usePathname();
+
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -161,9 +167,7 @@ const AIcontainer = () => {
     setInput("");
     setIsThinking(true);
 
-    console.log(readingTime, "reading time");
-
-    const myMessage = `Besides my prompt, here is a report of how a page I crawled is performing.
+    const shallowRusty = `You are RustySEO, a SEO and GEO marketing toolkit. Besides my prompt, here is a report of how a page I crawled is performing.
 
     **Performance Metrics:**
     - **Overall Page Performance:** ${performance}. This is a general score indicating how well the page performs.
@@ -216,8 +220,13 @@ const AIcontainer = () => {
 
      My prompt is: ${input}`;
 
-    console.log(seoImages);
-    console.log(seoalttags);
+    const deepRusty = "You are Marco";
+
+    if (pathname === "/") {
+      setMyMessage(shallowrusty);
+    } else {
+      setMyMessage(deepRusty);
+    }
 
     try {
       const response = await invoke("ask_rusty_command", {
