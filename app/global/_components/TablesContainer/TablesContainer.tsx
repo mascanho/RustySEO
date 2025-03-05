@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useVisibilityStore } from "@/store/VisibilityStore";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import useCrawlStore from "@/store/GlobalCrawlDataStore";
+import ResponseHeaders from "./SubTables/Headers/ResponseHeaders";
 
 const BottomTableContent = ({ children, height }) => (
   <div
@@ -207,6 +208,7 @@ export default function Home() {
               <TabsTrigger value="outlinks">Outlinks</TabsTrigger>
               <TabsTrigger value="images">Images</TabsTrigger>
               <TabsTrigger value="schema">Schema</TabsTrigger>
+              <TabsTrigger value="headers">Headers</TabsTrigger>
             </TabsList>
             <TabsContent value="details">
               <DetailsTable
@@ -231,6 +233,19 @@ export default function Home() {
             </TabsContent>
             <TabsContent value="schema">
               <SchemaSubTable height={bottomTableHeight - 50} />
+            </TabsContent>
+
+            <TabsContent
+              value="headers"
+              style={{
+                height: `${bottomTableHeight - 35}px`,
+                overflowY: "auto",
+              }}
+            >
+              <ResponseHeaders
+                data={selectedTableURL}
+                height={bottomTableHeight}
+              />
             </TabsContent>
           </Tabs>
         </div>
