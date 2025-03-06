@@ -164,6 +164,7 @@ export default function Home() {
               <TabsTrigger value="crawledPages">All</TabsTrigger>
               <TabsTrigger value="javascript">Javascript</TabsTrigger>
               <TabsTrigger value="images">Images</TabsTrigger>
+              <TabsTrigger value="search">Custom Search</TabsTrigger>
               {issuesView && (
                 <TabsTrigger value={issuesView}>{issuesView}</TabsTrigger>
               )}
@@ -183,6 +184,8 @@ export default function Home() {
             <TabsContent value="images" className="flex-grow overflow-hidden">
               <ImagesCrawlTable rows={filteredImagesArr} />
             </TabsContent>
+
+            {/* CUSTOM SEARCH */}
 
             {/* DYNAMIC TABS */}
             {issuesView && (
