@@ -12,18 +12,18 @@ use super::helpers::{
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Extractor {
-    pub html: String,
-    pub css: String,
-    pub regex: String,
+    pub html: bool,
+    pub css: bool,
+    pub regex: bool,
 }
 
 // Implement Default for Extractor
 impl Default for Extractor {
     fn default() -> Self {
         Self {
-            html: String::new(),
-            css: String::from("Not Configured"),
-            regex: String::from("Not Configured"),
+            html: false,
+            css: false,
+            regex: false,
         }
     }
 }

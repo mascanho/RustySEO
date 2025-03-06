@@ -250,9 +250,9 @@ async fn process_url(
         language: detect_language(&body),
         flesch: get_flesch_score(&body),
         extractor: Extractor {
-            html: extract_html(&body),
-            css: String::from("Not Configured"),
-            regex: String::from("Not Configured"),
+            html: extract_html(&body).await,
+            css: false,
+            regex: false,
         },
         headers,
     };

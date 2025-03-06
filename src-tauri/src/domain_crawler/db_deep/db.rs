@@ -1,6 +1,10 @@
 use directories::ProjectDirs;
+use r2d2::Pool;
+use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{params, Connection, Result};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use tokio::task;
 
 pub struct DomainDataBase {
     conn: Connection,
@@ -156,19 +160,19 @@ pub fn create_domain_results_history(data: Vec<DeepCrawlHistory>) -> Result<Stri
 }
 
 // HANDLE THE EXTRACTORS
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct ExtractorConfig {
     #[serde(rename = "type")]
-    config_type: String,
-    config: InnerConfig,
+    pub config_type: String,
+    pub config: InnerConfig,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct InnerConfig {
     #[serde(rename = "type")]
-    inner_type: Option<String>, // Optional nested type field
-    selector: String,
-    attribute: String,
+    pub inner_type: Option<String>, // Optional nested type field
+    pub selector: String,
+    pub attribute: String,
 }
 
 #[tauri::command]
@@ -208,6 +212,57 @@ pub fn store_custom_search(data: Vec<ExtractorConfig>) -> Result<(), String> {
     println!("Replacing data in the DB: {:#?}", data);
 
     Ok(())
+}
+
+// GET THE RESULTS STORED IN THE DB
+pub async fn fetch_custom_search() -> Result<Vec<ExtractorConfig>, String> {
+    // Get the project directories
+    let project_dirs =
+        ProjectDirs::from("", "", "rustyseo").expect("Failed to get project directories");
+
+    // Define the directory of the domain db file
+    let db_dir = project_dirs.data_dir().join("db"); // appends /db to the data dir
+    let db_path = db_dir.join("deep_crawl.db");
+
+    // Ensure the directory exists
+    if !db_dir.exists() {
+        std::fs::create_dir_all(&db_dir).expect("Failed to create directory");
+    }
+
+    println!("Using database file at: {:?}", db_path);
+
+    // Initialize the connection pool with the correct path
+    let manager = SqliteConnectionManager::file(db_path);
+    let pool = Arc::new(Pool::new(manager).map_err(|e| e.to_string())?);
+
+    // Rest of the function remains the same
+    let conn = pool.get().map_err(|e| e.to_string())?;
+
+    let configs = task::spawn_blocking(move || {
+        let mut stmt = conn
+            .prepare("SELECT type, selector, search_text FROM custom_search")
+            .map_err(|e| e.to_string())?;
+
+        let config_iter = stmt
+            .query_map(params![], |row| {
+                Ok(ExtractorConfig {
+                    config_type: row.get(0)?,
+                    config: InnerConfig {
+                        inner_type: None,
+                        selector: row.get(1)?,
+                        attribute: row.get(2)?,
+                    },
+                })
+            })
+            .map_err(|e| e.to_string())?;
+
+        let configs: Result<Vec<_>, _> = config_iter.collect();
+        configs.map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())??;
+
+    Ok(configs)
 }
 
 // ENSURE THE THE DATA IS DELETED ON APP LAUNCH
