@@ -11,6 +11,7 @@ import StatusCodes from "./DropDowns/StatusCodes";
 import MetaDescriptions from "./DropDowns/MetaDescriptions";
 import H1 from "./DropDowns/H1";
 import H2 from "./DropDowns/H2";
+import CustomSearch from "./DropDowns/CustomSearch";
 
 const GeneralTopSideBarContainer = () => {
   return (
@@ -32,6 +33,7 @@ const GeneralTopSideBarContainer = () => {
         <Javascript />
         <Schema />
         <StatusCodes />
+        <CustomSearch />
       </div>
     </div>
   );
