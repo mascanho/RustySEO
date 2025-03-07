@@ -145,7 +145,7 @@ const HistoryDomainCrawls = () => {
   }, [crawlSessionTotalArray.length]);
 
   return (
-    <div className="text-xs h-[calc(28rem-1.2rem)] overflow-auto">
+    <div className="text-xs h-[calc(28rem-0.4rem)] overflow-auto">
       {error && (
         <div className="text-red-500 p-2 bg-red-100 dark:bg-red-900 mb-2">
           {error}
