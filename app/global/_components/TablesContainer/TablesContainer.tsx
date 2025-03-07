@@ -120,6 +120,20 @@ export default function Home() {
     );
   }, [debouncedCrawlData]);
 
+  const filteredCustomSearch = useMemo(() => {
+    // Early return if no crawlData
+    if (!crawlData) {
+      return [];
+    }
+
+    const customSearch = crawlData.filter(
+      (search) => search.extractor.html === true,
+    );
+    return customSearch;
+  }, [debouncedCrawlData]);
+
+  console.log(filteredCustomSearch);
+
   const renderIssuesViewContent = () => {
     switch (issuesView) {
       case "Duplicated Titles":
@@ -186,6 +200,12 @@ export default function Home() {
             </TabsContent>
 
             {/* CUSTOM SEARCH */}
+            <TabsContent value="search" className="h-screen overflow-auto">
+              <TableCrawl
+                rows={filteredCustomSearch}
+                tabName={"Custom Search"}
+              />
+            </TabsContent>
 
             {/* DYNAMIC TABS */}
             {issuesView && (
