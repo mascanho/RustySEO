@@ -17,9 +17,6 @@ const LinkAnalysis = ({
   );
   const linksMissingAnchor = visibleLinks.filter((link: any) => !link[1]);
 
-  console.log(links, "Links");
-  console.log(visibleLinks, "Visible Links");
-
   useEffect(() => {
     setLinksTable(visibleLinks);
   }, [visibleLinks]);

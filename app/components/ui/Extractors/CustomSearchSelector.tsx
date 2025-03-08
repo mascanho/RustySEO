@@ -101,7 +101,7 @@ export default function CustomSearchSelector({ close }) {
     }
 
     console.log("Extractor configuration:", config);
-    setCrawlerType("extractor");
+    setCrawlerType("Custom Search");
     setCrawler("Custom Search");
 
     try {

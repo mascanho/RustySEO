@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -22,13 +23,15 @@ const generateLogs = (
   isFinishedDeepCrawl: boolean,
   tasks: number,
   aiModelLog: string,
+  pageSpeedKeys: string[],
+  ga4ID: string,
 ): LogEntry[] => {
   const logs: LogEntry[] = [
     {
-      id: Date.now(),
+      id: Date.now() + 1,
       timestamp: new Date(),
-      level: crawler === "Spider" ? "info" : "warning",
-      message: `Mode: ${crawler}`,
+      level: crawler === "Spider" ? "success" : "warning",
+      message: `Crawler Mode: ${crawler}`,
     },
     {
       id: Date.now() + 2,
@@ -40,7 +43,25 @@ const generateLogs = (
           : "No AI model configured ",
     },
     {
-      id: Date.now() + 1,
+      id: Date.now() + 3,
+      timestamp: new Date(),
+      level: pageSpeedKeys?.page_speed_key?.length > 0 ? "success" : "error",
+      message:
+        pageSpeedKeys?.page_speed_key?.length > 0
+          ? "Page Speed Insights: Enabled"
+          : "No Page Speed Keys configured",
+    },
+    {
+      id: Date.now() + 4,
+      timestamp: new Date(),
+      level: ga4ID !== "" ? "success" : "error",
+      message:
+        ga4ID !== ""
+          ? "Google Analytics: Enabled"
+          : "No Google Analytics ID configured",
+    },
+    {
+      id: Date.now() + 5,
       timestamp: new Date(),
       level: isGlobalCrawling
         ? "info"
@@ -50,14 +71,14 @@ const generateLogs = (
       message: isGlobalCrawling
         ? "Crawling..."
         : isFinishedDeepCrawl
-          ? "Crawl Complete"
+          ? "Crawl Complete!"
           : "RustySEO is idle...",
     },
     {
-      id: Date.now() + 3,
+      id: Date.now() + 6,
       timestamp: new Date(),
       level: tasks === 0 ? "success" : "warning",
-      message: `TODO: ${tasks}`,
+      message: tasks === 0 ? "No tasks pending" : `${tasks} tasks remaining`,
     },
   ];
 
@@ -103,13 +124,24 @@ export default function ConsoleLog() {
     aiModelLog,
     setAiModelLog,
   } = useGlobalConsoleStore();
+  const [pageSpeedKeys, setPageSpeedKeys] = useState<string[]>([]);
+  const [ga4ID, setGa4ID] = useState<string | null>(null);
 
+  // GET THE STUFF FROM THE BACKEND
   useEffect(() => {
     invoke("get_ai_model").then((result: any) => {
       setAiModelLog(result);
     });
     invoke("check_ai_model").then((result: any) => {
       setAiModelLog(result);
+    });
+    // PAGESPEED API
+    invoke("load_api_keys").then((result: any) => {
+      setPageSpeedKeys(result);
+    });
+
+    invoke("get_google_analytics_id").then((result: any) => {
+      setGa4ID(result);
     });
   }, []);
 
@@ -122,10 +154,20 @@ export default function ConsoleLog() {
         isFinishedDeepCrawl,
         tasks,
         aiModelLog,
+        pageSpeedKeys,
+        ga4ID,
       ); // Generate logs based on the current state
       setLogs((prev) => newLogs); // Append the new logs
     }
-  }, [crawler, isGlobalCrawling, isFinishedDeepCrawl, tasks, aiModelLog]);
+  }, [
+    crawler,
+    isGlobalCrawling,
+    isFinishedDeepCrawl,
+    tasks,
+    aiModelLog,
+    pageSpeedKeys,
+    ga4ID,
+  ]);
 
   // Auto-scroll to bottom when new logs appear
   useEffect(() => {
@@ -162,9 +204,9 @@ export default function ConsoleLog() {
         return (
           <Badge
             variant="outline"
-            className="bg-green-500/10 text-green-500 border-green-500/20 flex-shrink-0"
+            className="bg-green-500/10 text-green-500 border-green-500/20 flex-shrink-0 rounded-sm"
           >
-            SUCCESS
+            OK
           </Badge>
         );
       case "error":
@@ -180,7 +222,7 @@ export default function ConsoleLog() {
         return (
           <Badge
             variant="outline"
-            className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 flex-shrink-0"
+            className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 flex-shrink-0 rounded-sm"
           >
             WARNING
           </Badge>
@@ -189,7 +231,7 @@ export default function ConsoleLog() {
         return (
           <Badge
             variant="outline"
-            className="bg-blue-500/10 text-blue-500 border-blue-500/20 flex-shrink-0"
+            className="bg-blue-500/10 text-blue-500 border-blue-500/20 flex-shrink-0 rounded-sm"
           >
             INFO
           </Badge>
@@ -198,7 +240,7 @@ export default function ConsoleLog() {
         return (
           <Badge
             variant="outline"
-            className="bg-gray-500/10 text-gray-400 border-gray-500/20 flex-shrink-0"
+            className="bg-gray-500/10 text-gray-400 border-gray-500/20 flex-shrink-0 rounded-sm"
           >
             DEBUG
           </Badge>
@@ -213,9 +255,14 @@ export default function ConsoleLog() {
   return (
     <div className="w-full max-w-[600px] overflow-hidden bg-gray-50 dark:bg-zinc-900 font-mono text-xs h-[calc(100vh-39rem)]">
       <ScrollArea className="h-[calc(100vh-41rem)]" ref={scrollAreaRef}>
-        <div className="p-2 space-y-2">
-          {logs.map((log) => (
-            <div key={log.id} className="space-y-1">
+        <div className="p-2 space-y-2 ">
+          {logs.map((log, index) => (
+            <div
+              key={log.id}
+              className={`space-y-1  ${
+                index % 2 === 0 ? "bg-transparent" : "bg-transparent"
+              }`}
+            >
               <div className="flex items-center gap-2">
                 {getLevelIcon(log.level)}
                 {getLevelBadge(log.level)}
@@ -242,7 +289,7 @@ export default function ConsoleLog() {
       </ScrollArea>
 
       <div className="flex items-center text-xs justify-between px-4 py-2 bg-zinc-100 dark:bg-zinc-800 border-t dark:border-zinc-700">
-        <UptimeTimer /> {/* Use the extracted UptimeTimer component */}
+        <UptimeTimer />
         <div className="text-zinc-400 text-xs">PID: 12345</div>
       </div>
     </div>

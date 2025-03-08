@@ -1,8 +1,6 @@
 import { useEffect, useRef } from "react";
 
 const OutlinksSubTable = ({ data }: { data: any }) => {
-  console.log(data, "data");
-
   // Function to make columns resizable
   const makeResizable = (tableRef: HTMLTableElement | null) => {
     if (!tableRef) return;

@@ -132,6 +132,30 @@ function MenuDrawer() {
     checkModel();
   }, []);
 
+  // USE KEYBINDINGS TO SEND CHANGE PAGES
+
+  useEffect(() => {
+    // Function to handle the keydown event
+    const handleKeyDown = (event) => {
+      // Check if Ctrl (or Cmd on Mac) and D are pressed
+      if (event.ctrlKey && event.key === "d") {
+        router.push("global/"); // Navigate to the /deepcrawl page
+      }
+      // Check if Ctrl (or Cmd on Mac) and S are pressed
+      if (event.ctrlKey && event.key === "s") {
+        router.push("/"); // Navigate to home page
+      }
+    };
+
+    // Add the event listener
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Clean up the event listener on unmount
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [router]); // Add router to the dependency array
+
   return (
     <>
       <KeywordSerp />

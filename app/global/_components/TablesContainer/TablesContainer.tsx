@@ -132,8 +132,6 @@ export default function Home() {
     return customSearch;
   }, [debouncedCrawlData]);
 
-  console.log(filteredCustomSearch);
-
   const renderIssuesViewContent = () => {
     switch (issuesView) {
       case "Duplicated Titles":
