@@ -29,6 +29,7 @@ import KeywordAnalytics from "../components/ui/KwTracking/KeywordAnalytics";
 import GSCcontainer from "../components/ui/GSCcontainer/GSCcontainer";
 import ContentPlannerContainer from "../components/ui/ContentPlanner/ContentPlannerContainer";
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
+import GlobalSettings from "../components/ui/GeneralSettings/GeneralSettings";
 
 export default function Page() {
   const [data, setData] = useState<CrawlResult | null>(null);
@@ -191,6 +192,8 @@ export default function Page() {
                 <GrPlan className="inline-block mr-2 mb-[2px] text-sm" />
                 Content
               </Tabs.Tab>
+
+              <Tabs.Tab value="settings">Testing</Tabs.Tab>
             </Tabs.List>
           </aside>
           {/* Tabs Panel for Domain */}
@@ -237,6 +240,9 @@ export default function Page() {
           >
             <ContentPlannerContainer />
           </Tabs.Panel>{" "}
+          <Tabs.Panel value="settings">
+            <GlobalSettings />
+          </Tabs.Panel>
         </Tabs>
       </section>
       <aside

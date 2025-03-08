@@ -25,6 +25,7 @@ const generateLogs = (
   aiModelLog: string,
   pageSpeedKeys: string[],
   ga4ID: string,
+  gscCredentials: [],
 ): LogEntry[] => {
   const logs: LogEntry[] = [
     {
@@ -63,6 +64,15 @@ const generateLogs = (
     {
       id: Date.now() + 5,
       timestamp: new Date(),
+      level: gscCredentials !== "" ? "success" : "error",
+      message:
+        gscCredentials !== ""
+          ? "Google Search Console: Enabled"
+          : "Google Search Console not configured",
+    },
+    {
+      id: Date.now() + 6,
+      timestamp: new Date(),
       level: isGlobalCrawling
         ? "info"
         : isFinishedDeepCrawl
@@ -75,7 +85,7 @@ const generateLogs = (
           : "RustySEO is idle...",
     },
     {
-      id: Date.now() + 6,
+      id: Date.now() + 7,
       timestamp: new Date(),
       level: tasks === 0 ? "success" : "warning",
       message: tasks === 0 ? "No tasks pending" : `${tasks} tasks remaining`,
@@ -161,6 +171,7 @@ export default function ConsoleLog() {
         aiModelLog,
         pageSpeedKeys,
         ga4ID,
+        gscCredentials,
       ); // Generate logs based on the current state
       setLogs((prev) => newLogs); // Append the new logs
     }
@@ -172,6 +183,7 @@ export default function ConsoleLog() {
     aiModelLog,
     pageSpeedKeys,
     ga4ID,
+    gscCredentials,
   ]);
 
   // Auto-scroll to bottom when new logs appear

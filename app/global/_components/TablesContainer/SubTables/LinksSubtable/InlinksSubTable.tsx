@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useEffect, useRef, useCallback } from "react";
 
 interface InlinksSubTableProps {

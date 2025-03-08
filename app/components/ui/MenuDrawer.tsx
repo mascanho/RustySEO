@@ -136,7 +136,7 @@ function MenuDrawer() {
 
   useEffect(() => {
     // Function to handle the keydown event
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (event: any) => {
       // Check if Ctrl (or Cmd on Mac) and D are pressed
       if (event.ctrlKey && event.key === "d") {
         router.push("global/"); // Navigate to the /deepcrawl page
@@ -144,6 +144,10 @@ function MenuDrawer() {
       // Check if Ctrl (or Cmd on Mac) and S are pressed
       if (event.ctrlKey && event.key === "s") {
         router.push("/"); // Navigate to home page
+      }
+
+      if (event.ctrlKey && event.key === "r") {
+        router.refresh();
       }
     };
 
