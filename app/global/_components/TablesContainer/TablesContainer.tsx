@@ -248,7 +248,7 @@ export default function Home() {
         >
           <Tabs value={activeBottomTab} onValueChange={setActiveBottomTab}>
             <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t -mb-2 bg-gray-50 rounded-none sticky top-0">
-              <TabsTrigger value="details" className="rounded-t-full">
+              <TabsTrigger value="details" className="rounded-t-md">
                 Details
               </TabsTrigger>
               <TabsTrigger value="inlinks" className="rounded-t-md">
