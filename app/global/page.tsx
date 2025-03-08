@@ -28,6 +28,7 @@ import ClarityContainer from "../components/ui/MSClarityModal/ClarityContainer";
 import KeywordAnalytics from "../components/ui/KwTracking/KeywordAnalytics";
 import GSCcontainer from "../components/ui/GSCcontainer/GSCcontainer";
 import ContentPlannerContainer from "../components/ui/ContentPlanner/ContentPlannerContainer";
+import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 
 export default function Page() {
   const [data, setData] = useState<CrawlResult | null>(null);
@@ -47,6 +48,8 @@ export default function Page() {
     setFinishedDeepCrawl,
     setCrawlSessionTotalArray,
   } = useGlobalCrawlStore();
+  const { setIsGlobalCrawling, setIsFinishedDeepCrawl } =
+    useGlobalConsoleStore();
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
   const allData = crawlData;
 
@@ -79,7 +82,7 @@ export default function Page() {
       setIssuesData([]);
       // Clear the store before crawling
       clearDomainCrawlData();
-      console.log("Crawling domain...");
+      setIsGlobalCrawling(true);
       const result = await invoke("domain_crawl_command", {
         domain: url,
       });
@@ -89,6 +92,8 @@ export default function Page() {
       console.log("failed to crawl:", url);
     } finally {
       setDomainCrawlLoading(false);
+      setIsFinishedDeepCrawl(true);
+      setIsGlobalCrawling(false);
 
       // Retrieve the existing crawled links from sessionStorage or initialize an empty array
       const crawledLinks =

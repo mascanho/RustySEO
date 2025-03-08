@@ -35,6 +35,7 @@ import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import CrawlerType from "./Footer/CrawlerType";
 import { TbHelpSquareRoundedFilled, TbSeo } from "react-icons/tb";
 import SeoToolkit from "./Footer/SeoToolkit/SeoToolkit";
+import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -70,6 +71,7 @@ const Footer = () => {
   const [openedAiDrawer, { open: openAiDrawer, close: closeAiDrawer }] =
     useDisclosure(false);
   const { crawlerType } = useGlobalCrawlStore();
+  const { crawler, setCrawler } = useGlobalConsoleStore();
 
   const deep = pathname === "/global";
   const shallow = pathname === "/";

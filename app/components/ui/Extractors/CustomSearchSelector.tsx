@@ -19,9 +19,11 @@ import { htmlElements } from "./HtmlElements";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { toast } from "sonner";
 import { invoke } from "@tauri-apps/api/core";
+import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 
 export default function CustomSearchSelector({ close }) {
   const { setCrawlerType } = useGlobalCrawlStore();
+  const { setCrawler } = useGlobalConsoleStore();
   const [activeTab, setActiveTab] = useState("css");
   const [isMinimized, setIsMinimized] = useState(false);
   const [extractorConfig, setExtractorConfig] = useState({
@@ -100,6 +102,7 @@ export default function CustomSearchSelector({ close }) {
 
     console.log("Extractor configuration:", config);
     setCrawlerType("extractor");
+    setCrawler("Custom Search");
 
     try {
       invoke("store_custom_search", { data: [config] }).then((result) => {

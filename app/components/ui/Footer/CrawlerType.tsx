@@ -1,19 +1,22 @@
 import useCrawlStore from "@/store/GlobalCrawlDataStore";
 import { FaSpider } from "react-icons/fa6";
 import { useState } from "react";
+import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 
 const CrawlerType = () => {
   const { crawlerType, setCrawlerType } = useCrawlStore();
+  const { setCrawler } = useGlobalConsoleStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const toggleCrawlerType = () => {
-    const newType = crawlerType === "spider" ? "extractor" : "spider";
+    const newType = crawlerType === "Spider" ? "Custom Search" : "Spider";
     setCrawlerType(newType);
+    setCrawler(newType);
   };
 
   // Determine icon color based on crawlerType
   const iconColorClass =
-    crawlerType === "extractor"
+    crawlerType === "Custom Search"
       ? "text-red-500 dark:text-red-500/50"
       : "text-black dark:text-white/50";
 
@@ -33,7 +36,7 @@ const CrawlerType = () => {
         <div className="fixed inset-0 flex items-center justify-center z-50">
           {/* Overlay */}
           <div
-            className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/20 "
             onClick={() => setIsModalOpen(false)}
           ></div>
 
@@ -60,7 +63,7 @@ const CrawlerType = () => {
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={crawlerType === "extractor"}
+                  checked={crawlerType === "Custom Search"}
                   onChange={toggleCrawlerType}
                   className="sr-only peer"
                 />

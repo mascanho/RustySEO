@@ -1,9 +1,8 @@
-"use client";
-
 import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle, XCircle, AlertCircle, Info, Clock } from "lucide-react";
+import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 
 type LogLevel = "success" | "error" | "warning" | "info" | "debug";
 
@@ -15,127 +14,65 @@ interface LogEntry {
   details?: string;
 }
 
+// Log generator function
+const generateLogs = (
+  crawler: string,
+  isGlobalCrawling: boolean,
+  isFinishedDeepCrawl: boolean,
+): LogEntry[] => {
+  const logs: LogEntry[] = [
+    {
+      id: Date.now(),
+      timestamp: new Date(),
+      level: crawler === "Spider" ? "info" : "warning",
+      message: `Mode: ${crawler}`,
+    },
+    {
+      id: Date.now() + 1,
+      timestamp: new Date(),
+      level: isGlobalCrawling
+        ? "info"
+        : isFinishedDeepCrawl
+          ? "success"
+          : "info",
+      message: isGlobalCrawling
+        ? "Crawling..."
+        : isFinishedDeepCrawl
+          ? "Crawl Complete"
+          : "Idle...",
+    },
+
+    // Add more logs here as needed
+    // Example:
+    // {
+    //   id: Date.now() + 1,
+    //   timestamp: new Date(),
+    //   level: "debug",
+    //   message: "Debugging crawler performance",
+    //   details: "Additional details about the debug log",
+    // },
+  ];
+
+  return logs;
+};
+
 export default function ConsoleLog() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { crawler, isGlobalCrawling, isFinishedDeepCrawl } =
+    useGlobalConsoleStore();
 
-  // Generate sample logs on component mount
+  // Update logs whenever `crawler` changes
   useEffect(() => {
-    const sampleLogs: LogEntry[] = [
-      {
-        id: 1,
-        timestamp: new Date(Date.now() - 5000),
-        level: "info",
-        message: "Application starting...",
-      },
-      {
-        id: 2,
-        timestamp: new Date(Date.now() - 4800),
-        level: "debug",
-        message: "Loading configuration from /etc/app/config.json",
-      },
-      {
-        id: 3,
-        timestamp: new Date(Date.now() - 4600),
-        level: "success",
-        message: "Configuration loaded successfully",
-      },
-      {
-        id: 4,
-        timestamp: new Date(Date.now() - 4400),
-        level: "info",
-        message: "Connecting to database at db.example.com:5432",
-      },
-      {
-        id: 5,
-        timestamp: new Date(Date.now() - 4200),
-        level: "error",
-        message: "Failed to connect to database",
-        details: "Connection timeout after 5000ms",
-      },
-      {
-        id: 6,
-        timestamp: new Date(Date.now() - 4000),
-        level: "warning",
-        message: "Retrying database connection (1/3)",
-      },
-      {
-        id: 7,
-        timestamp: new Date(Date.now() - 3800),
-        level: "success",
-        message: "Connected to database successfully",
-      },
-      {
-        id: 8,
-        timestamp: new Date(Date.now() - 3600),
-        level: "info",
-        message: "Initializing API endpoints",
-      },
-      {
-        id: 9,
-        timestamp: new Date(Date.now() - 3400),
-        level: "success",
-        message: "API endpoints initialized",
-      },
-      {
-        id: 10,
-        timestamp: new Date(Date.now() - 3200),
-        level: "info",
-        message: "Starting server on port 3000",
-      },
-      {
-        id: 11,
-        timestamp: new Date(Date.now() - 3000),
-        level: "success",
-        message: "Server started successfully",
-      },
-      {
-        id: 12,
-        timestamp: new Date(Date.now() - 2800),
-        level: "info",
-        message: "Checking system resources",
-      },
-      {
-        id: 13,
-        timestamp: new Date(Date.now() - 2600),
-        level: "warning",
-        message: "Low memory available",
-        details: "Only 512MB free of 8GB total",
-      },
-      {
-        id: 14,
-        timestamp: new Date(Date.now() - 2400),
-        level: "info",
-        message: "Running garbage collection",
-      },
-      {
-        id: 15,
-        timestamp: new Date(Date.now() - 2200),
-        level: "success",
-        message: "Garbage collection complete",
-        details: "Freed 256MB of memory",
-      },
-      {
-        id: 16,
-        timestamp: new Date(Date.now() - 2000),
-        level: "info",
-        message: "Application ready",
-      },
-    ];
-
-    // Simulate logs appearing over time
-    let index = 0;
-    const interval = setInterval(() => {
-      if (index < sampleLogs.length) {
-        setLogs((prev) => [...prev, sampleLogs[index]]);
-        index++;
-      } else {
-        clearInterval(interval);
-      }
-    }, 300);
-
-    return () => clearInterval(interval);
-  }, []);
+    if (crawler) {
+      const newLogs = generateLogs(
+        crawler,
+        isGlobalCrawling,
+        isFinishedDeepCrawl,
+      ); // Generate logs based on the current state
+      setLogs((prev) => newLogs); // Append the new logs
+    }
+  }, [crawler, isGlobalCrawling, isFinishedDeepCrawl]);
 
   // Auto-scroll to bottom when new logs appear
   useEffect(() => {
@@ -152,15 +89,17 @@ export default function ConsoleLog() {
   const getLevelIcon = (level: LogLevel) => {
     switch (level) {
       case "success":
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
+        return <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />;
       case "error":
-        return <XCircle className="w-4 h-4 text-red-500" />;
+        return <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />;
       case "warning":
-        return <AlertCircle className="w-4 h-4 text-yellow-500" />;
+        return (
+          <AlertCircle className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+        );
       case "info":
-        return <Info className="w-4 h-4 text-blue-500" />;
+        return <Info className="w-4 h-4 text-blue-500 flex-shrink-0" />;
       case "debug":
-        return <Clock className="w-4 h-4 text-gray-400" />;
+        return <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />;
     }
   };
 
@@ -170,7 +109,7 @@ export default function ConsoleLog() {
         return (
           <Badge
             variant="outline"
-            className="bg-green-500/10 text-green-500 border-green-500/20"
+            className="bg-green-500/10 text-green-500 border-green-500/20 flex-shrink-0"
           >
             SUCCESS
           </Badge>
@@ -179,7 +118,7 @@ export default function ConsoleLog() {
         return (
           <Badge
             variant="outline"
-            className="bg-red-500/10 text-red-500 border-red-500/20"
+            className="bg-red-500/10 text-red-500 border-red-500/20 flex-shrink-0"
           >
             ERROR
           </Badge>
@@ -188,7 +127,7 @@ export default function ConsoleLog() {
         return (
           <Badge
             variant="outline"
-            className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+            className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 flex-shrink-0"
           >
             WARNING
           </Badge>
@@ -197,7 +136,7 @@ export default function ConsoleLog() {
         return (
           <Badge
             variant="outline"
-            className="bg-blue-500/10 text-blue-500 border-blue-500/20"
+            className="bg-blue-500/10 text-blue-500 border-blue-500/20 flex-shrink-0"
           >
             INFO
           </Badge>
@@ -206,7 +145,7 @@ export default function ConsoleLog() {
         return (
           <Badge
             variant="outline"
-            className="bg-gray-500/10 text-gray-400 border-gray-500/20"
+            className="bg-gray-500/10 text-gray-400 border-gray-500/20 flex-shrink-0"
           >
             DEBUG
           </Badge>
@@ -219,20 +158,13 @@ export default function ConsoleLog() {
   };
 
   return (
-    <div className="w-full max-w-[600px] overflow-hidden bg-gray-50 dark:bg-zinc-900  font-mono text-xs h-[calc(100vh-39rem)]">
-      {/* <div className="flex items-center justify-between px-4 py-2 bg-zinc-100 dark:bg-zinc-800 border-b dark:border-zinc-700 ">
-        <div className="text-zinc-500 text-xs">{logs.length} entries</div>
-      </div> */}
-
+    <div className="w-full max-w-[600px] overflow-hidden bg-gray-50 dark:bg-zinc-900 font-mono text-xs h-[calc(100vh-39rem)]">
       <ScrollArea className="h-[calc(100vh-41rem)]" ref={scrollAreaRef}>
         <div className="p-4 space-y-2">
           {logs.map((log) => (
             <div key={log.id} className="space-y-1">
               <div className="flex items-center gap-2">
                 {getLevelIcon(log.level)}
-                {/* <span className="text-zinc-400">
-                  [{formatTimestamp(log.timestamp)}]
-                </span> */}
                 {getLevelBadge(log.level)}
                 <span
                   className={`
@@ -257,7 +189,7 @@ export default function ConsoleLog() {
       </ScrollArea>
 
       <div className="flex items-center text-xs justify-between px-4 py-2 bg-zinc-100 dark:bg-zinc-800 border-t dark:border-zinc-700">
-        <div className="text-zinc-400 text-xs">Process: app.main</div>
+        <div className="text-zinc-400 text-xs">Uptime: app.main</div>
         <div className="text-zinc-400 text-xs">PID: 12345</div>
       </div>
     </div>
