@@ -27,6 +27,8 @@ const generateLogs = (
   ga4ID: string,
   gscCredentials: [],
 ): LogEntry[] => {
+  console.log(ga4ID, "GA4 ID");
+
   const logs: LogEntry[] = [
     {
       id: Date.now() + 1,
@@ -55,20 +57,19 @@ const generateLogs = (
     {
       id: Date.now() + 4,
       timestamp: new Date(),
-      level: ga4ID !== "" ? "success" : "error",
+      level: ga4ID === null ? "error" : "success",
       message:
-        ga4ID !== ""
-          ? "Google Analytics: Enabled"
-          : "No Google Analytics ID configured",
+        ga4ID !== "" ? "No GA4 ID configured" : "Google Analytics: Enabled",
     },
     {
       id: Date.now() + 5,
       timestamp: new Date(),
-      level: gscCredentials !== "" ? "success" : "error",
+      level:
+        gscCredentials && Object?.keys(gscCredentials) ? "success" : "error",
       message:
-        gscCredentials !== ""
+        gscCredentials && Object?.keys(gscCredentials) !== null
           ? "Google Search Console: Enabled"
-          : "Google Search Console not configured",
+          : "GSC is not configured",
     },
     {
       id: Date.now() + 6,
@@ -201,7 +202,7 @@ export default function ConsoleLog() {
   const getLevelIcon = (level: LogLevel) => {
     switch (level) {
       case "success":
-        return <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />;
+        return <CheckCircle className="w-4 h-4 text-green-700 flex-shrink-0" />;
       case "error":
         return <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />;
       case "warning":
@@ -221,7 +222,7 @@ export default function ConsoleLog() {
         return (
           <Badge
             variant="outline"
-            className="bg-green-500/10 text-green-500 border-green-500/20 flex-shrink-0 rounded-sm"
+            className="bg-green-700/10 text-green-700 border-green-700/20 flex-shrink-0 rounded-sm"
           >
             OK
           </Badge>
@@ -230,7 +231,7 @@ export default function ConsoleLog() {
         return (
           <Badge
             variant="outline"
-            className="bg-red-500/10 text-red-500 border-red-500/20 flex-shrink-0"
+            className="bg-red-500/10 text-red-500 border-red-500/20 flex-shrink-0 rounded-sm"
           >
             ERROR
           </Badge>
@@ -285,7 +286,7 @@ export default function ConsoleLog() {
                 {getLevelBadge(log.level)}
                 <span
                   className={`
-                  ${log.level === "success" ? "text-green-400" : ""}
+                  ${log.level === "success" ? "text-green-700" : ""}
                   ${log.level === "error" ? "text-red-400" : ""}
                   ${log.level === "warning" ? "text-yellow-400" : ""}
                   ${log.level === "info" ? "text-blue-400" : ""}

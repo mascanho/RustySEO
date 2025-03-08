@@ -44,9 +44,9 @@ use super::models::DomainCrawlResults;
 const MAX_RETRIES: usize = 5;
 const BASE_DELAY: u64 = 500;
 const MAX_DELAY: u64 = 8000;
-const CONCURRENT_REQUESTS: usize = 100;
+const CONCURRENT_REQUESTS: usize = 120;
 const CRAWL_TIMEOUT: Duration = Duration::from_secs(14400); // 4 hours
-const BATCH_SIZE: usize = 10;
+const BATCH_SIZE: usize = 15;
 
 // Progress tracking structure
 #[derive(Clone, Serialize)]
