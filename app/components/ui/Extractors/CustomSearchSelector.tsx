@@ -24,7 +24,7 @@ import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 export default function CustomSearchSelector({ close }) {
   const { setCrawlerType } = useGlobalCrawlStore();
   const { setCrawler } = useGlobalConsoleStore();
-  const [activeTab, setActiveTab] = useState("css");
+  const [activeTab, setActiveTab] = useState("html");
   const [isMinimized, setIsMinimized] = useState(false);
   const [extractorConfig, setExtractorConfig] = useState({
     css: { selector: "", attribute: "text", multiple: false },
@@ -112,7 +112,7 @@ export default function CustomSearchSelector({ close }) {
       console.log(err);
     }
 
-    toast.success("RustySEO is now in extract mode");
+    toast.success("RustySEO is now in custom search mode");
     close();
   };
 
@@ -164,7 +164,7 @@ export default function CustomSearchSelector({ close }) {
             </div>
 
             {/* CSS Panel */}
-            {activeTab === "css" && (
+            {/* {activeTab === "css" && (
               <div className="space-y-3">
                 <div>
                   <Label className="text-xs">Selector</Label>
@@ -200,7 +200,7 @@ export default function CustomSearchSelector({ close }) {
                   </Select>
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* HTML Panel */}
             {activeTab === "html" && (

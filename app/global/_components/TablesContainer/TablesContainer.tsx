@@ -43,8 +43,14 @@ export default function Home() {
 
   const { visibility } = useVisibilityStore();
   const { selectedTableURL } = useGlobalCrawlStore();
-  const { crawlData, issuesView, setIssuesView, issuesData, setGenericChart } =
-    useCrawlStore();
+  const {
+    crawlData,
+    issuesView,
+    setIssuesView,
+    issuesData,
+    setGenericChart,
+    setDeepCrawlTab,
+  } = useCrawlStore();
   const [activeTab, setActiveTab] = useState("crawledPages"); // Default to "crawledPages"
 
   // Sync `activeTab` with `issuesView` when `issuesView` changes
@@ -146,10 +152,12 @@ export default function Home() {
 
   const handleTabChange = (value) => {
     setActiveTab(value);
+    setDeepCrawlTab(value);
     if (value === issuesView) {
       // If the tab is the issuesView tab, ensure issuesView is updated
       setIssuesView(value);
     }
+    console.log(value, "TABS");
   };
 
   return (

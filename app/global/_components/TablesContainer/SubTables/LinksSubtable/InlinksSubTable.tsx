@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useCallback } from "react";
 
 interface InlinksSubTableProps {
   data: {
@@ -12,12 +12,12 @@ interface InlinksSubTableProps {
 }
 
 const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data }) => {
-  console.log(data, "data");
+  const tableRef = useRef<HTMLTableElement>(null);
 
-  const isDark = localStorage.getItem("dark-mode");
+  console.log(data);
 
-  // Function to make columns resizable
-  const makeResizable = (tableRef: HTMLTableElement | null) => {
+  // Memoize the makeResizable function
+  const makeResizable = useCallback((tableRef: HTMLTableElement | null) => {
     if (!tableRef) return;
 
     const cols = tableRef.querySelectorAll("th");
@@ -32,33 +32,55 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data }) => {
       resizer.style.cursor = "col-resize";
       resizer.style.userSelect = "none";
 
-      resizer.addEventListener("mousedown", (e) => {
+      const onMouseMove = (e: MouseEvent) => {
+        const newWidth = col.offsetWidth + (e.pageX - startX);
+        col.style.width = `${newWidth}px`;
+      };
+
+      const onMouseUp = () => {
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+      };
+
+      let startX: number;
+
+      const onMouseDown = (e: MouseEvent) => {
         e.preventDefault();
-        const startX = e.pageX;
-        const colWidth = col.offsetWidth;
-
-        const onMouseMove = (e: MouseEvent) => {
-          const newWidth = colWidth + (e.pageX - startX);
-          col.style.width = `${newWidth}px`;
-        };
-
-        const onMouseUp = () => {
-          document.removeEventListener("mousemove", onMouseMove);
-          document.removeEventListener("mouseup", onMouseUp);
-        };
-
+        startX = e.pageX;
         document.addEventListener("mousemove", onMouseMove);
         document.addEventListener("mouseup", onMouseUp);
-      });
+      };
+
+      resizer.addEventListener("mousedown", onMouseDown);
 
       col.appendChild(resizer);
-    });
-  };
 
-  const tableRef = useRef<HTMLTableElement>(null);
+      // Cleanup function for each resizer
+      return () => {
+        resizer.removeEventListener("mousedown", onMouseDown);
+        col.removeChild(resizer);
+      };
+    });
+  }, []);
 
   useEffect(() => {
-    makeResizable(tableRef.current);
+    const table = tableRef.current;
+    if (table) {
+      const cleanupResizers = makeResizable(table);
+
+      // Cleanup function for the entire table
+      return () => {
+        if (cleanupResizers) {
+          cleanupResizers();
+        }
+      };
+    }
+  }, [makeResizable]);
+
+  // Move localStorage access into useEffect to avoid re-renders
+  useEffect(() => {
+    const isDark = localStorage.getItem("dark-mode");
+    console.log("Dark mode:", isDark); // Example usage
   }, []);
 
   return (
@@ -106,4 +128,4 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data }) => {
   );
 };
 
-export default InlinksSubTable;
+export default React.memo(InlinksSubTable);

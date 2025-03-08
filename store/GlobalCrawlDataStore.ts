@@ -24,6 +24,9 @@ export interface PageDetails {
 
   totalUrlsCrawled: string[];
   setTotalUrlsCrawled: (total: string[]) => void;
+
+  deepCrawlTab: string;
+  setDeepCrawlTab: (tab: string) => void;
 }
 
 // Define the Zustand store
@@ -81,6 +84,9 @@ interface CrawlStore {
   setStreamedCrawledPages: (pages: number) => void;
   streamedTotalPages: number;
   setStreamedTotalPages: (pages: number) => void;
+
+  deepCrawlTab: string;
+  setDeepCrawlTab: (tab: string) => void;
 }
 
 const useGlobalCrawlStore = create<CrawlStore>((set) => ({
@@ -142,6 +148,9 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
     set({ streamedCrawledPages: pages }),
   streamedTotalPages: 0,
   setStreamedTotalPages: (pages: number) => set({ streamedTotalPages: pages }),
+
+  deepCrawlTab: "",
+  setDeepCrawlTab: (tab: string) => set({ deepCrawlTab: tab }),
 }));
 
 const useCrawlStore = () => {
