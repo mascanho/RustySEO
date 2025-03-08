@@ -89,6 +89,8 @@ Use at your own risk, this software is new and under development.
 
 |     Keys     |               Result                  |                 
 | :----------: | ------------------------------------- | 
+|  CTRL + D    |                Deep Crawl             |
+|  CTRL + S    |               Shalow Crawl            |
 |  CTRL + H    |              Toggle Sidebar           |  
 |  CTRL + L    |        Toggle Side Task Manager       |
 |  CTRL + T    |            Create TODO/Task           |
