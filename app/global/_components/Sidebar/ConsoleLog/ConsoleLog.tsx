@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle, XCircle, AlertCircle, Info, Clock } from "lucide-react";
@@ -41,20 +41,38 @@ const generateLogs = (
           ? "Crawl Complete"
           : "Idle...",
     },
-
-    // Add more logs here as needed
-    // Example:
-    // {
-    //   id: Date.now() + 1,
-    //   timestamp: new Date(),
-    //   level: "debug",
-    //   message: "Debugging crawler performance",
-    //   details: "Additional details about the debug log",
-    // },
   ];
 
   return logs;
 };
+
+// Uptime Timer Component (Extracted for performance optimization)
+function UptimeTimer() {
+  const [uptime, setUptime] = useState("00:00:00");
+
+  useEffect(() => {
+    const startTime = Date.now();
+
+    const interval = setInterval(() => {
+      const elapsedTime = Date.now() - startTime;
+      const hours = Math.floor(elapsedTime / (1000 * 60 * 60))
+        .toString()
+        .padStart(2, "0");
+      const minutes = Math.floor((elapsedTime / (1000 * 60)) % 60)
+        .toString()
+        .padStart(2, "0");
+      const seconds = Math.floor((elapsedTime / 1000) % 60)
+        .toString()
+        .padStart(2, "0");
+
+      setUptime(`${hours}:${minutes}:${seconds}`);
+    }, 1000); // Update every second
+
+    return () => clearInterval(interval); // Cleanup interval on unmount
+  }, []);
+
+  return <div className="text-zinc-400 text-xs">Uptime: {uptime}</div>;
+}
 
 export default function ConsoleLog() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -62,7 +80,7 @@ export default function ConsoleLog() {
   const { crawler, isGlobalCrawling, isFinishedDeepCrawl } =
     useGlobalConsoleStore();
 
-  // Update logs whenever `crawler` changes
+  // Update logs whenever `crawler`, `isGlobalCrawling`, or `isFinishedDeepCrawl` changes
   useEffect(() => {
     if (crawler) {
       const newLogs = generateLogs(
@@ -189,7 +207,7 @@ export default function ConsoleLog() {
       </ScrollArea>
 
       <div className="flex items-center text-xs justify-between px-4 py-2 bg-zinc-100 dark:bg-zinc-800 border-t dark:border-zinc-700">
-        <div className="text-zinc-400 text-xs">Uptime: app.main</div>
+        <UptimeTimer /> {/* Use the extracted UptimeTimer component */}
         <div className="text-zinc-400 text-xs">PID: 12345</div>
       </div>
     </div>

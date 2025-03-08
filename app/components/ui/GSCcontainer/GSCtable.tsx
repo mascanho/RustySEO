@@ -154,7 +154,7 @@ export default function GSCkeywordTable({ gscData }: KeywordTableProps) {
               placeholder="Search keywords or URL..."
               value={keywordSearch}
               onChange={(e) => setKeywordSearch(e.target.value)}
-              className="ml-2 w-96 px-2 py-1 border dark:border-brand-dark rounded dark:bg-brand-darker focus:outline-none focus:border-blue-500 text-xs"
+              className="ml-2 w-96 px-2 py-1 border h-6  dark:border-brand-dark rounded dark:bg-brand-darker focus:outline-none focus:border-blue-500 text-xs sticky top-0 z-0"
             />
             {keywordSearch && (
               <X
@@ -164,8 +164,8 @@ export default function GSCkeywordTable({ gscData }: KeywordTableProps) {
             )}
           </div>
         </div>
-        <table className="divide-y divide-gray-200 dark:divide-red-500 w-full">
-          <thead className="bg-gray-50 sticky top-[40px] z-10">
+        <table className="divide-y divide-gray-200 dark:divide-red-500 w-full z-10  relative">
+          <thead className="bg-gray-50  z-10 sticky top-0">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
