@@ -415,7 +415,7 @@ export default function AnalyticsTable() {
           </div>
         )}
       </div>
-      <div className="rounded-md w-full border dark:border-brand-dark h-[calc(100vh-13rem)] overflow-y-hidden">
+      <div className="rounded-md w-full border dark:border-brand-dark h-[calc(100vh-12.4rem)] overflow-y-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-bright"></div>

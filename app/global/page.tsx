@@ -208,7 +208,10 @@ export default function Page() {
               <TaskManagerContainer />
             </section>
           </Tabs.Panel>
-          <Tabs.Panel value="analytics pt-20">
+          <Tabs.Panel
+            value="analytics"
+            className="pt-9 dark:bg-brand-darker mb-0"
+          >
             <Analytics />
           </Tabs.Panel>
           <Tabs.Panel value="clarity" className="pt-8 ">
@@ -216,7 +219,10 @@ export default function Page() {
               <ClarityContainer />
             </section>
           </Tabs.Panel>{" "}
-          <Tabs.Panel value="kws" className="h-[calc(100vh-8.8rem)] pt-9">
+          <Tabs.Panel
+            value="kws"
+            className="h-[calc(100vh-4rem)] pt-9 dark:bg-brand-darker "
+          >
             <KeywordAnalytics />
           </Tabs.Panel>{" "}
           <Tabs.Panel
