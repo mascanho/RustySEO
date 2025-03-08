@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -30,6 +30,7 @@ export default function GSCkeywordTable({ gscData }: KeywordTableProps) {
   const [pageSize, setPageSize] = useState(100);
   const [pageIndex, setPageIndex] = useState(0);
   const [filteredData, setFilteredData] = useState<GSCData[]>([]);
+  const searchBarRef = useRef<HTMLDivElement>(null); // Ref to measure search bar height
 
   useEffect(() => {
     setFilteredData(
@@ -105,10 +106,6 @@ export default function GSCkeywordTable({ gscData }: KeywordTableProps) {
         return <span className={colorClass}>{position.toFixed(1)}</span>;
       },
     },
-    // {
-    //   accessorKey: "date",
-    //   header: "Date Added",
-    // },
   ];
 
   const table = useReactTable({
@@ -146,7 +143,11 @@ export default function GSCkeywordTable({ gscData }: KeywordTableProps) {
   return (
     <div className="flex flex-col h-[calc(100vh-12rem)]">
       <div className="overflow-x-auto flex-1 bg-white dark:bg-brand-darker rounded-md dark:border-brand-dark border overflow-y-scroll relative">
-        <div className="sticky top-0 z-20 bg-white dark:bg-brand-darker p-2">
+        {/* Search Bar */}
+        <div
+          ref={searchBarRef}
+          className="sticky top-0 z-20 bg-white dark:bg-brand-darker p-2"
+        >
           <div className="flex items-center relative">
             <Search className="h-4 w-4 text-gray-400 text-xs" />
             <input
@@ -164,8 +165,17 @@ export default function GSCkeywordTable({ gscData }: KeywordTableProps) {
             )}
           </div>
         </div>
-        <table className="divide-y divide-gray-200 dark:divide-red-500 w-full z-10  relative">
-          <thead className="bg-gray-50  z-10 sticky top-0">
+
+        {/* Table */}
+        <table className="divide-y divide-gray-200 dark:divide-red-500 w-full z-10 relative">
+          <thead
+            className="bg-gray-50 z-10 sticky"
+            style={{
+              top: searchBarRef.current
+                ? `${searchBarRef.current.offsetHeight}px`
+                : "0",
+            }}
+          >
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
@@ -181,23 +191,19 @@ export default function GSCkeywordTable({ gscData }: KeywordTableProps) {
                     </div>
                   </th>
                 ))}
-                {/* <th className="px-6 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                  <RefreshCw
-                    className="h-4 w-4 cursor-pointer"
-                    onClick={refreshKeywords}
-                  />
-                </th> */}
               </tr>
             ))}
           </thead>
-          <tbody className="bg-white  divide-y divide-gray-200 dark:divide-y-blue-500 dark:divide-y  overflow-hidden">
+          <tbody className="bg-white divide-y divide-gray-200 dark:divide-y-blue-500 dark:divide-y overflow-hidden">
             {table.getRowModel().rows.map((row, index) => (
               <KeywordRow key={row.id} row={row} index={index} />
             ))}
           </tbody>
         </table>
       </div>
-      <div className="flex items-center justify-between p-4  bg-white dark:bg-brand-darker">
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between p-4 bg-white dark:bg-brand-darker">
         <div className="flex items-center gap-2">
           <button
             onClick={() => table.setPageIndex(0)}

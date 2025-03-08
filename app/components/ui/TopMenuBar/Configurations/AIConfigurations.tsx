@@ -1,4 +1,5 @@
 "use client";
+import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 import { invoke } from "@tauri-apps/api/core";
 import { useState, useEffect } from "react";
 

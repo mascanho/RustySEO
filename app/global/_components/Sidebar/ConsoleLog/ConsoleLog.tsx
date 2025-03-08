@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle, XCircle, AlertCircle, Info, Clock } from "lucide-react";
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
+import { invoke } from "@tauri-apps/api/core";
 
 type LogLevel = "success" | "error" | "warning" | "info" | "debug";
 
@@ -19,6 +20,8 @@ const generateLogs = (
   crawler: string,
   isGlobalCrawling: boolean,
   isFinishedDeepCrawl: boolean,
+  tasks: number,
+  aiModelLog: string,
 ): LogEntry[] => {
   const logs: LogEntry[] = [
     {
@@ -26,6 +29,15 @@ const generateLogs = (
       timestamp: new Date(),
       level: crawler === "Spider" ? "info" : "warning",
       message: `Mode: ${crawler}`,
+    },
+    {
+      id: Date.now() + 2,
+      timestamp: new Date(),
+      level: aiModelLog === "gemini" ? "success" : "error",
+      message:
+        aiModelLog === "gemini"
+          ? "AI Model: Gemini"
+          : "No AI model configured ",
     },
     {
       id: Date.now() + 1,
@@ -39,7 +51,13 @@ const generateLogs = (
         ? "Crawling..."
         : isFinishedDeepCrawl
           ? "Crawl Complete"
-          : "Idle...",
+          : "RustySEO is idle...",
+    },
+    {
+      id: Date.now() + 3,
+      timestamp: new Date(),
+      level: tasks === 0 ? "success" : "warning",
+      message: `TODO: ${tasks}`,
     },
   ];
 
@@ -77,8 +95,23 @@ function UptimeTimer() {
 export default function ConsoleLog() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const { crawler, isGlobalCrawling, isFinishedDeepCrawl } =
-    useGlobalConsoleStore();
+  const {
+    crawler,
+    isGlobalCrawling,
+    isFinishedDeepCrawl,
+    tasks,
+    aiModelLog,
+    setAiModelLog,
+  } = useGlobalConsoleStore();
+
+  useEffect(() => {
+    invoke("get_ai_model").then((result: any) => {
+      setAiModelLog(result);
+    });
+    invoke("check_ai_model").then((result: any) => {
+      setAiModelLog(result);
+    });
+  }, []);
 
   // Update logs whenever `crawler`, `isGlobalCrawling`, or `isFinishedDeepCrawl` changes
   useEffect(() => {
@@ -87,10 +120,12 @@ export default function ConsoleLog() {
         crawler,
         isGlobalCrawling,
         isFinishedDeepCrawl,
+        tasks,
+        aiModelLog,
       ); // Generate logs based on the current state
       setLogs((prev) => newLogs); // Append the new logs
     }
-  }, [crawler, isGlobalCrawling, isFinishedDeepCrawl]);
+  }, [crawler, isGlobalCrawling, isFinishedDeepCrawl, tasks, aiModelLog]);
 
   // Auto-scroll to bottom when new logs appear
   useEffect(() => {
@@ -178,7 +213,7 @@ export default function ConsoleLog() {
   return (
     <div className="w-full max-w-[600px] overflow-hidden bg-gray-50 dark:bg-zinc-900 font-mono text-xs h-[calc(100vh-39rem)]">
       <ScrollArea className="h-[calc(100vh-41rem)]" ref={scrollAreaRef}>
-        <div className="p-4 space-y-2">
+        <div className="p-2 space-y-2">
           {logs.map((log) => (
             <div key={log.id} className="space-y-1">
               <div className="flex items-center gap-2">

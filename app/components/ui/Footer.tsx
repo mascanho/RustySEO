@@ -71,7 +71,7 @@ const Footer = () => {
   const [openedAiDrawer, { open: openAiDrawer, close: closeAiDrawer }] =
     useDisclosure(false);
   const { crawlerType } = useGlobalCrawlStore();
-  const { crawler, setCrawler } = useGlobalConsoleStore();
+  const { setTasksNumber } = useGlobalConsoleStore();
 
   const deep = pathname === "/global";
   const shallow = pathname === "/";
@@ -111,6 +111,7 @@ const Footer = () => {
       ) as Task[];
       const filteredTasks = storedTasks.filter((task) => !task.completed);
       setTasks(filteredTasks);
+      setTasksNumber(filteredTasks.length);
     } catch (error) {
       console.error("Error parsing tasks:", error);
     }
