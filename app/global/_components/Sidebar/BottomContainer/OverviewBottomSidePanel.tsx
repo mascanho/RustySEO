@@ -16,6 +16,8 @@ import LowContentChart from "./_components/charts/LowContentChart";
 import MissingSchemaChart from "./_components/charts/MissingSchemaChart";
 import ImagesTooBigChart from "./_components/charts/ImagesTooBitChart.tsx";
 import Response5XXChart from "./_components/charts/Response5XXChart";
+import MissingTitlesChart from "./_components/charts/MissingTitlesChart";
+import MissingDescriptionsChart from "./_components/charts/MissingDescriptionsChart";
 
 const OverviewBottomSidePanel = () => {
   const { issuesView, genericChart } = useCrawlStore();
@@ -27,6 +29,9 @@ const OverviewBottomSidePanel = () => {
     >
       {/* Chart Section */}
       <Tabs.Panel value="chart1" className="h-full dark:bg-gray-900">
+        {issuesView === "Missing Page Title" && genericChart !== "general" && (
+          <MissingTitlesChart />
+        )}
         {issuesView === "Duplicated Titles" && genericChart !== "general" && (
           <DuplicatedTitlesChart />
         )}
@@ -34,6 +39,9 @@ const OverviewBottomSidePanel = () => {
           genericChart !== "general" && <PageTitleTooLargeChart />}
         {issuesView === "Page Title < 30 Chars" &&
           genericChart !== "general" && <PageTitleTooShortChart />}
+        {issuesView === "Missing Description" && genericChart !== "general" && (
+          <MissingDescriptionsChart />
+        )}
         {issuesView === "Duplicated Descriptions" &&
           genericChart !== "general" && <DuplicatedDescriptionsChart />}
         {issuesView === "Descriptions > 160 Chars" &&

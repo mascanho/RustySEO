@@ -16,7 +16,7 @@ const ClsEl = ({
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
   return (
-    <section className="widget border px-4 py-3  shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative overflow-hidden">
+    <section className="widget  border px-4 py-3  shadow bg-white w-60 xl:w-52 rounded-md space-y-2 relative overflow-hidden">
       <span className="absolute right-5">
         <svg
           xmlns="http://www.w3.org/2000/svg"

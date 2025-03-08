@@ -21,6 +21,14 @@ const IssuesContainer = () => {
   } = useGlobalCrawlStore();
   const [isMode, setIsMode] = useState(null);
 
+  // Find pages with missing titles
+  const missingTitles = crawlData?.filter((page) => page?.title === "");
+
+  // Find pages with missing descriptions
+  const missingDescriptions = crawlData?.filter(
+    (page) => page?.description === "",
+  );
+
   // Find duplicates in `crawlData` based on the "title" key
   const duplicateTitles = useFindDuplicateTitles(crawlData, "title");
 
@@ -47,37 +55,31 @@ const IssuesContainer = () => {
   );
 
   // Find pages with titles longer than 60 characters in `crawlData`
-  const pageTitlesAbove60Chars = crawlData?.filter((page) => {
-    page?.title?.every((obj) => obj?.title.length > 60);
-  });
+  const pageTitlesAbove60Chars = crawlData?.filter((page) =>
+    page?.title?.every((obj) => obj?.title.length > 60),
+  );
 
   // LOW CONTENT PAGES. WHERE TEXT RATIO IS BELOW 50
-  const lowContentPages = crawlData?.filter((page) => {
-    return page?.text_ratio?.every((obj) => obj.text_ratio < 50);
-  });
+  const lowContentPages = crawlData?.filter((page) =>
+    page?.text_ratio?.every((obj) => obj.text_ratio < 50),
+  );
 
-  const missingH1 = crawlData?.filter((page) => {
-    return !page?.headings?.hasOwnProperty("h1");
-  });
+  const missingH1 = crawlData?.filter(
+    (page) => !page?.headings?.hasOwnProperty("h1"),
+  );
 
   // MISSING H2 on the page
-  const missingH2 = crawlData?.filter((page) => {
-    return !page?.headings?.hasOwnProperty("h2");
-  });
+  const missingH2 = crawlData?.filter(
+    (page) => !page?.headings?.hasOwnProperty("h2"),
+  );
 
   // MISSING SCHEMA
-  const missingSchema = crawlData?.filter((page) => {
-    return !page?.schema;
-  });
+  const missingSchema = crawlData?.filter((page) => !page?.schema);
 
   // IMAGES BIGGER THAN 100KB
-  const imagesAbove100KB = crawlData?.filter((page) => {
-    // Check if the page has images and the images are in the `Ok` array
-    return page?.images?.Ok?.some((image) => {
-      // Check if the image size (third element in the array) is greater than 100 KB (100,000 bytes)
-      return image[2] > 100;
-    });
-  });
+  const imagesAbove100KB = crawlData?.filter((page) =>
+    page?.images?.Ok?.some((image) => image[2] > 100),
+  );
 
   useEffect(() => {
     const mode = localStorage.getItem("dark-mode");
@@ -88,19 +90,27 @@ const IssuesContainer = () => {
   const issuesArr = [
     {
       id: 1,
+      name: "Missing Page Title",
+      issueCount: missingTitles?.length || 0,
+      priority: "High",
+      percentage:
+        ((missingTitles?.length / (crawlData?.length || 1)) * 100).toFixed(1) +
+        "%",
+    },
+
+    {
+      id: 3,
       name: "Duplicated Titles",
-      issueCount: duplicateTitles?.length > 0 ? duplicateTitles.length : 0,
+      issueCount: duplicateTitles?.length || 0,
       priority: "High",
       percentage:
         ((duplicateTitles.length / (crawlData?.length || 1)) * 100).toFixed(1) +
         "%",
     },
     {
-      id: 2,
+      id: 4,
       name: "Page Title > 60 Chars",
-      issueCount: pageTitlesAbove60Chars
-        ? pageTitlesAbove60Chars?.length
-        : 0 || 0,
+      issueCount: pageTitlesAbove60Chars?.length || 0,
       priority: "Medium",
       percentage:
         (
@@ -109,11 +119,9 @@ const IssuesContainer = () => {
         ).toFixed(1) + "%",
     },
     {
-      id: 3,
+      id: 5,
       name: "Page Title < 30 Chars",
-      issueCount: pagetitleBelow30Chars
-        ? pagetitleBelow30Chars?.length
-        : 0 || 0,
+      issueCount: pagetitleBelow30Chars?.length || 0,
       priority: "Medium",
       percentage:
         (
@@ -122,10 +130,20 @@ const IssuesContainer = () => {
         ).toFixed(1) + "%",
     },
     {
-      id: 4,
+      id: 2,
+      name: "Missing Description",
+      issueCount: missingDescriptions?.length || 0,
+      priority: "High",
+      percentage:
+        (
+          (missingDescriptions?.length / (crawlData?.length || 1)) *
+          100
+        ).toFixed(1) + "%",
+    },
+    {
+      id: 6,
       name: "Duplicated Descriptions",
-      issueCount:
-        duplicateDescriptions?.length > 0 ? duplicateDescriptions.length : 0,
+      issueCount: duplicateDescriptions?.length || 0,
       priority: "Medium",
       percentage:
         (
@@ -134,11 +152,9 @@ const IssuesContainer = () => {
         ).toFixed(1) + "%",
     },
     {
-      id: 5,
+      id: 7,
       name: "Descriptions > 160 Chars",
-      issueCount: descriptionsAbove160Chars
-        ? descriptionsAbove160Chars?.length
-        : 0 || 0,
+      issueCount: descriptionsAbove160Chars?.length || 0,
       priority: "Medium",
       percentage:
         (
@@ -147,9 +163,9 @@ const IssuesContainer = () => {
         ).toFixed(1) + "%",
     },
     {
-      id: 6,
+      id: 8,
       name: "404 Response",
-      issueCount: statusCodes?.length > 0 ? statusCodes?.[3]?.count : 0,
+      issueCount: statusCodes?.[3]?.count || 0,
       priority: "High",
       percentage:
         ((statusCodes?.[3]?.count / (crawlData?.length || 1)) * 100).toFixed(
@@ -157,37 +173,35 @@ const IssuesContainer = () => {
         ) + "%",
     },
     {
-      id: 66,
+      id: 9,
       name: "5XX Response",
-      issueCount: response5xx?.length > 0 ? response5xx?.length : 0,
+      issueCount: response5xx?.length || 0,
       priority: "High",
       percentage:
         ((response5xx?.length / (crawlData?.length || 1)) * 100).toFixed(1) +
         "%",
     },
     {
-      id: 7,
+      id: 10,
       name: "H1 Missing",
-      issueCount: missingH1?.length > 0 ? missingH1.length : 0 || 0,
+      issueCount: missingH1?.length || 0,
       priority: "High",
       percentage:
         ((headingsH1?.[1]?.count / (crawlData?.length || 1)) * 100).toFixed(1) +
         "%",
     },
-
     {
-      id: 9,
+      id: 11,
       name: "H2 Missing",
-      issueCount: missingH2?.length > 0 ? missingH2.length : 0,
+      issueCount: missingH2?.length || 0,
       priority: "Low",
       percentage:
         ((missingH2.length / (crawlData?.length || 1)) * 100).toFixed(1) + "%",
     },
     {
-      id: 8,
+      id: 12,
       name: "Low Content",
-      issueCount:
-        lowContentPages?.length > 0 ? lowContentPages?.length : 0 || 0,
+      issueCount: lowContentPages?.length || 0,
       priority: "Low",
       percentage:
         ((lowContentPages?.length / (crawlData?.length || 1)) * 100).toFixed(
@@ -195,19 +209,18 @@ const IssuesContainer = () => {
         ) + "%",
     },
     {
-      id: 10,
+      id: 13,
       name: "Missing Schema",
-      issueCount: missingSchema?.length > 0 ? missingSchema.length : 0 || 0,
+      issueCount: missingSchema?.length || 0,
       priority: "Medium",
       percentage:
         ((missingSchema?.length / (crawlData?.length || 1)) * 100).toFixed(1) +
         "%",
     },
     {
-      id: 11,
+      id: 14,
       name: "Large Images",
-      issueCount:
-        imagesAbove100KB?.length > 0 ? imagesAbove100KB.length : 0 || 0,
+      issueCount: imagesAbove100KB?.length || 0,
       priority: "Medium",
       percentage:
         ((imagesAbove100KB?.length / (crawlData?.length || 1)) * 100).toFixed(
@@ -215,10 +228,6 @@ const IssuesContainer = () => {
         ) + "%",
     },
   ];
-
-  // useEffect(() => {
-  //   setIssues([duplicateTitles, duplicateDescriptions, response404]);
-  // }, [crawlData]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -228,99 +237,35 @@ const IssuesContainer = () => {
     return () => {
       clearTimeout(handler);
     };
-  }, [crawlData]);
+  }, [crawlData, issuesArr]); // Add dependencies to prevent unnecessary re-renders
 
-  // Hnadle click on the rows
-  const handleIssueClick = (issueName, index) => {
-    setIssueRow(issueName); // Set the active issue row
-    console.log(issueName); // Log the clicked issue name
-    setIssuesView(issueName); // Set the issues view
-    setGenericChart(""); // Set the generic chart data
+  // Handle click on the rows
+  const handleIssueClick = (issueName) => {
+    setIssueRow(issueName);
+    setIssuesView(issueName);
+    setGenericChart("");
 
-    // Dynamically handle the issue based on the issueName
-    issuesArr.forEach((issue) => {
-      if (issue.name === issueName) {
-        console.log(`Handling ${issue.name}`);
-        // Add specific logic for each issue here
-        switch (issue.name) {
-          case "Duplicated Titles":
-            setIssuesData(duplicateTitles); // Example: Set issues data for Duplicated Titles
-            setGenericChart("");
-            console.log(duplicateTitles);
-            break;
-          case "Page Title > 60 Chars":
-            // Handle Page Title > 60 Chars
-            setIssuesData(pageTitlesAbove60Chars);
-            console.log(pageTitlesAbove60Chars);
-            setGenericChart("");
-            break;
-          case "Page Title < 30 Chars":
-            // Handle Page Title < 30 Chars
-            setIssuesData(pagetitleBelow30Chars);
-            console.log(pagetitleBelow30Chars);
-            setGenericChart("");
-            break;
-          case "Duplicated Descriptions":
-            // Handle Duplicated Descriptions
-            setIssuesData(duplicateDescriptions);
-            console.log(duplicateDescriptions);
-            setGenericChart("");
-            break;
-          case "Descriptions > 160 Chars":
-            // Handle Descriptions > 160 Chars
-            setIssuesData(descriptionsAbove160Chars);
-            console.log(descriptionsAbove160Chars);
-            setGenericChart("");
-            break;
-          case "404 Response":
-            // Handle 404 Response
-            setIssuesData(response404);
-            console.log(response404);
-            setGenericChart("");
-            break;
-          case "5XX Response":
-            // Handle 5XX Response
-            setIssuesData(response5xx);
-            console.log(response5xx);
-            setGenericChart("");
-            break;
-          case "H1 Missing":
-            // Handle H1 Missing
-            setIssuesData(missingH1);
-            console.log(missingH1);
-            break;
-          case "H2 Missing":
-            // Handle H2 Missing
-            setIssuesData(missingH2);
-            console.log(missingH2);
-            setGenericChart("");
-            break;
-          case "Low Content":
-            // Handle Low Content
-            setIssuesData(lowContentPages);
-            console.log(lowContentPages);
-            setGenericChart("");
-            break;
-          case "Missing Schema":
-            // Handle Missing Schema
-            setIssuesData(missingSchema);
-            console.log(missingSchema);
-            setGenericChart("");
-            break;
-          case "Large Images":
-            // Handle Images > 100KB
-            setIssuesData(imagesAbove100KB);
-            console.log(imagesAbove100KB);
-            setGenericChart("");
-            break;
-          default:
-            console.log("Unknown issue");
-        }
-      }
-    });
+    const issueDataMap = {
+      "Missing Page Title": missingTitles,
+      "Duplicated Titles": duplicateTitles,
+      "Page Title > 60 Chars": pageTitlesAbove60Chars,
+      "Page Title < 30 Chars": pagetitleBelow30Chars,
+      "Missing Description": missingDescriptions,
+      "Duplicated Descriptions": duplicateDescriptions,
+      "Descriptions > 160 Chars": descriptionsAbove160Chars,
+      "404 Response": response404,
+      "5XX Response": response5xx,
+      "H1 Missing": missingH1,
+      "H2 Missing": missingH2,
+      "Low Content": lowContentPages,
+      "Missing Schema": missingSchema,
+      "Large Images": imagesAbove100KB,
+    };
+
+    setIssuesData(issueDataMap[issueName] || []);
   };
 
-  if (crawlData.length === 0) {
+  if (!crawlData || crawlData.length === 0) {
     return (
       <section className="text-xs w-full space-y-1 min-h-[10rem] h-[calc(100vh-39rem)] overflow-y-auto overflow-x-hidden relative flex items-center justify-center">
         <span className="text-xs text-black/50 dark:text-white/50">
@@ -333,19 +278,27 @@ const IssuesContainer = () => {
   return (
     <section className="text-xs w-full space-y-1 min-h-[10rem] h-[calc(100vh-39rem)] overflow-y-auto overflow-x-hidden relative">
       <table className="w-full border-collapse issues pt-2">
-        <thead className="sticky top-0 ">
-          <tr className="text-xs bg-gray-100 ">
-            <th className="p-2 text-left border border-bl">Problem</th>
-            <th className="p-2 text-left">Urls</th>
-            <th className="p-2 text-center ">%</th>
-            <th className="p-2 text-left">Priority</th>
+        <thead className="sticky top-0">
+          <tr className="text-xs bg-gray-100">
+            <th scope="col" className="p-2 text-left border border-bl">
+              Problem
+            </th>
+            <th scope="col" className="p-2 text-left">
+              Urls
+            </th>
+            <th scope="col" className="p-2 text-center">
+              %
+            </th>
+            <th scope="col" className="p-2 text-left">
+              Priority
+            </th>
           </tr>
         </thead>
         <tbody className="w-full">
           {issuesArr?.map((item, index) => (
             <tr
-              onClick={() => handleIssueClick(item.name, index)}
               key={item.id}
+              onClick={() => handleIssueClick(item.name)}
               className="cursor-pointer border border-b p-1 text-[9px]"
               style={{
                 color: issuesView !== item.name ? "#f5f5f5" : "",
@@ -362,12 +315,12 @@ const IssuesContainer = () => {
                 {item.percentage}
               </td>
               <td
-                className={`px-2 py-1 dark:bg-brand-darker border text-xs font-semibold  text-center ${
+                className={`px-2 py-1 dark:bg-brand-darker border text-xs font-semibold text-center ${
                   item.priority === "High"
-                    ? "bg-[hsl(710,100%,60%)] text-white dark:bg-red-500  "
+                    ? "bg-[hsl(710,100%,60%)] text-white dark:bg-red-500"
                     : item.priority === "Medium"
-                      ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-100" // Medium priority
-                      : "bg-green-100 text-green-800 dark:bg-green-100" // Low priority (default)
+                      ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-100"
+                      : "bg-green-100 text-green-800 dark:bg-green-100"
                 }`}
               >
                 {item.priority}

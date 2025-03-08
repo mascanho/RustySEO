@@ -140,9 +140,9 @@ export default function CustomSearchSelector({ close }) {
             {/* Tab-like Toolbar */}
             <div className="flex gap-1 bg-gray-200 p-1  dark:bg-brand-dark text-xs">
               {[
-                { id: "css", icon: Hash, label: "CSS" },
+                // { id: "css", icon: Hash, label: "CSS" },
                 { id: "html", icon: FileType2, label: "HTML" },
-                { id: "regex", icon: Code, label: "Regex" },
+                // { id: "regex", icon: Code, label: "Regex" },
               ].map((tab) => (
                 <Button
                   key={tab.id}
