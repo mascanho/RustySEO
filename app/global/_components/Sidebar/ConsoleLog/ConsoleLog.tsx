@@ -126,6 +126,7 @@ export default function ConsoleLog() {
   } = useGlobalConsoleStore();
   const [pageSpeedKeys, setPageSpeedKeys] = useState<string[]>([]);
   const [ga4ID, setGa4ID] = useState<string | null>(null);
+  const [gscCredentials, setGscCredentials] = useState(null);
 
   // GET THE STUFF FROM THE BACKEND
   useEffect(() => {
@@ -142,6 +143,10 @@ export default function ConsoleLog() {
 
     invoke("get_google_analytics_id").then((result: any) => {
       setGa4ID(result);
+    });
+
+    invoke("read_credentials_file").then((result) => {
+      setGscCredentials(result);
     });
   }, []);
 

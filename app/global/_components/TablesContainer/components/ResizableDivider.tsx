@@ -16,7 +16,6 @@ const ResizableDivider: React.FC<ResizableDividerProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const startYRef = useRef<number | null>(null);
   const startBottomHeightRef = useRef<number | null>(null);
-  const { crawlData } = useCrawlStore();
   const { deepCrawlTab } = useCrawlStore();
 
   const handleMouseDown = useCallback(
@@ -78,15 +77,9 @@ const ResizableDivider: React.FC<ResizableDividerProps> = ({
 
   return (
     <div
-      className="h-5 relative bg-gray-200 cursor-row-resize hover:bg-brand-bright dark:bg-brand-dark transition-colors duration-200 -mt-[5px] flex items-center justify-end"
+      className="h-3 relative bg-gray-200 cursor-row-resize hover:bg-brand-bright dark:bg-brand-dark transition-colors duration-200 -mt-[5px] flex items-center justify-end"
       onMouseDown={handleMouseDown}
-    >
-      <span className="text-[10px] text-black/30 dark:text-white/50 pr-2">
-        {deepCrawlTab === "HTML"
-          ? `HTML Elements: ${crawlData.length}`
-          : `Pages: ${crawlData.length}`}
-      </span>
-    </div>
+    />
   );
 };
 
