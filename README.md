@@ -1,3 +1,9 @@
+<div align="center">
+## RustySEO
+
+  ![Logo](assets/logo.jpg)
+</div>
+
 ![Logo](assets/hero.jpg)
 
 # RustySEO - A cross-platform SEO toolkit
