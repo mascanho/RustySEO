@@ -21,6 +21,7 @@ import { useVisibilityStore } from "@/store/VisibilityStore";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import useCrawlStore from "@/store/GlobalCrawlDataStore";
 import ResponseHeaders from "./SubTables/Headers/ResponseHeaders";
+import TableCrawlCSS from "../Sidebar/CSSTable/TableCrawlCSS";
 
 const BottomTableContent = ({ children, height }) => (
   <div
@@ -119,6 +120,14 @@ export default function Home() {
     return Array.from(jsSet).map((url, index) => ({ index: index + 1, url }));
   }, [debouncedCrawlData]);
 
+  const filteredCssArr = useMemo(() => {
+    const cssSet = new Set<string>();
+    debouncedCrawlData?.forEach((item) => {
+      item?.css?.external?.forEach((link) => cssSet.add(link));
+    });
+    return Array.from(cssSet).map((url, index) => ({ index: index + 1, url }));
+  }, [debouncedCrawlData]);
+
   const filteredImagesArr = useMemo(() => {
     const imagesArr = crawlData.map((page) => page?.images?.Ok).flat();
     return imagesArr.filter(
@@ -211,6 +220,11 @@ export default function Home() {
             >
               <TableCrawl tabName={"AllData"} rows={crawlData} />
             </TabsContent>
+
+            <TabsContent value="css">
+              <TableCrawlCSS rows={filteredCssArr} tabname={"css"} />
+            </TabsContent>
+
             <TabsContent
               value="javascript"
               className="flex-grow overflow-hidden"

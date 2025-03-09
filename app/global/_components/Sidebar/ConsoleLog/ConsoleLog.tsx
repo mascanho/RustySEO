@@ -65,9 +65,9 @@ const generateLogs = (
     {
       id: Date.now() + 5,
       timestamp: new Date(),
-      level: clarityApi !== null ? "success" : "error",
+      level: clarityApi !== "" ? "success" : "error",
       message:
-        clarityApi === ""
+        clarityApi !== ""
           ? "MS Clarity is not configured"
           : "MS Clarity: Enabled",
     },
@@ -293,7 +293,7 @@ export default function ConsoleLog() {
 
   return (
     <div className="w-full max-w-[600px] overflow-hidden bg-gray-50 dark:bg-zinc-900 font-mono text-xs h-[calc(100vh-39rem)]">
-      <ScrollArea className="h-[calc(100vh-41rem)]" ref={scrollAreaRef}>
+      <ScrollArea className="h-[calc(100vh-40.6rem)]" ref={scrollAreaRef}>
         <div className="p-2 space-y-2 ">
           {logs.map((log, index) => (
             <div
@@ -327,7 +327,7 @@ export default function ConsoleLog() {
         </div>
       </ScrollArea>
 
-      <div className="flex items-center text-xs justify-between px-4 py-2 bg-zinc-100 dark:bg-zinc-800 border-t dark:border-zinc-700">
+      <div className="flex items-center text-xs justify-between px-4 py-1 bg-zinc-100 dark:bg-zinc-800 border-t dark:border-zinc-700">
         <UptimeTimer />
         <div className="text-zinc-400 text-xs">PID: 12345</div>
       </div>
