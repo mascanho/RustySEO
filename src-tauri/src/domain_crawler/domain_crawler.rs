@@ -224,7 +224,7 @@ async fn process_url(
         indexability: indexability::extract_indexability(&body),
         alt_tags: alt_tags::get_alt_tags(&body),
         schema: schema_selector::get_schema(&body),
-        css: css_selector::extract_css(&body),
+        css: css_selector::extract_css(&body, base_url.clone()),
         iframe: iframe_selector::extract_iframe(&body),
         pdf_link: extract_pdf_links(&body, base_url),
         word_count: get_word_count(&body),
