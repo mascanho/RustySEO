@@ -26,6 +26,7 @@ const generateLogs = (
   pageSpeedKeys: string[],
   ga4ID: string,
   gscCredentials: [],
+  clarityApi: "",
 ): LogEntry[] => {
   console.log(ga4ID, "GA4 ID");
 
@@ -64,6 +65,15 @@ const generateLogs = (
     {
       id: Date.now() + 5,
       timestamp: new Date(),
+      level: clarityApi !== null ? "success" : "error",
+      message:
+        clarityApi === ""
+          ? "MS Clarity is not configured"
+          : "MS Clarity: Enabled",
+    },
+    {
+      id: Date.now() + 6,
+      timestamp: new Date(),
       level:
         gscCredentials && Object?.keys(gscCredentials) ? "success" : "error",
       message:
@@ -72,7 +82,7 @@ const generateLogs = (
           : "GSC is not configured",
     },
     {
-      id: Date.now() + 6,
+      id: Date.now() + 7,
       timestamp: new Date(),
       level: isGlobalCrawling
         ? "info"
@@ -86,7 +96,7 @@ const generateLogs = (
           : "RustySEO is idle...",
     },
     {
-      id: Date.now() + 7,
+      id: Date.now() + 8,
       timestamp: new Date(),
       level: tasks === 0 ? "success" : "warning",
       message: tasks === 0 ? "No tasks pending" : `${tasks} tasks remaining`,
@@ -138,27 +148,36 @@ export default function ConsoleLog() {
   const [pageSpeedKeys, setPageSpeedKeys] = useState<string[]>([]);
   const [ga4ID, setGa4ID] = useState<string | null>(null);
   const [gscCredentials, setGscCredentials] = useState(null);
+  const [clarityApi, setClarityApi] = useState<string>("");
 
   // GET THE STUFF FROM THE BACKEND
   useEffect(() => {
-    invoke("get_ai_model").then((result: any) => {
-      setAiModelLog(result);
-    });
-    invoke("check_ai_model").then((result: any) => {
-      setAiModelLog(result);
-    });
-    // PAGESPEED API
-    invoke("load_api_keys").then((result: any) => {
-      setPageSpeedKeys(result);
-    });
+    try {
+      invoke("get_ai_model").then((result: any) => {
+        setAiModelLog(result);
+      });
+      invoke("check_ai_model").then((result: any) => {
+        setAiModelLog(result);
+      });
+      // PAGESPEED API
+      invoke("load_api_keys").then((result: any) => {
+        setPageSpeedKeys(result);
+      });
 
-    invoke("get_google_analytics_id").then((result: any) => {
-      setGa4ID(result);
-    });
+      invoke("get_google_analytics_id").then((result: any) => {
+        setGa4ID(result);
+      });
 
-    invoke("read_credentials_file").then((result) => {
-      setGscCredentials(result);
-    });
+      invoke("read_credentials_file").then((result) => {
+        setGscCredentials(result);
+      });
+
+      invoke("get_microsoft_clarity_command").then((result: any) => {
+        setClarityApi(result);
+      });
+    } catch (err) {
+      console.error("Error fetching API config:", err);
+    }
   }, []);
 
   // Update logs whenever `crawler`, `isGlobalCrawling`, or `isFinishedDeepCrawl` changes
@@ -173,6 +192,7 @@ export default function ConsoleLog() {
         pageSpeedKeys,
         ga4ID,
         gscCredentials,
+        clarityApi,
       ); // Generate logs based on the current state
       setLogs((prev) => newLogs); // Append the new logs
     }
@@ -185,6 +205,7 @@ export default function ConsoleLog() {
     pageSpeedKeys,
     ga4ID,
     gscCredentials,
+    clarityApi,
   ]);
 
   // Auto-scroll to bottom when new logs appear

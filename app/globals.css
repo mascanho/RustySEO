@@ -78,7 +78,7 @@ table:not(.issues) {
 }
 
 thead {
-  @apply z-20 overflow-clip border-none border-b-2 dark:border-b-white/10 dark:bg-brand-darker dark:text-white/20 !important;
+  @apply z-20 overflow-clip border-none border-b-2  dark:bg-brand-darker dark:text-white/20 !important;
 }
 
 tbody {

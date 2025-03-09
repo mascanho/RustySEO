@@ -45,8 +45,8 @@ const MAX_RETRIES: usize = 5;
 const BASE_DELAY: u64 = 500;
 const MAX_DELAY: u64 = 8000;
 const CONCURRENT_REQUESTS: usize = 120;
-const CRAWL_TIMEOUT: Duration = Duration::from_secs(14400); // 4 hours
-const BATCH_SIZE: usize = 15;
+const CRAWL_TIMEOUT: Duration = Duration::from_secs(28800); // 4 hours
+const BATCH_SIZE: usize = 20;
 
 // Progress tracking structure
 #[derive(Clone, Serialize)]
@@ -447,6 +447,9 @@ pub async fn crawl_domain(
 
         if crawl_start_time.elapsed() > CRAWL_TIMEOUT {
             println!("\nCrawl timeout reached. Stopping...");
+            if let Err(err) = app_handle.emit("crawl_interrupted", ()) {
+                eprintln!("Failed to emit crawl interruption event: {}", err);
+            }
             break;
         }
     }
