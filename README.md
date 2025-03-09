@@ -1,12 +1,22 @@
-<div align="center">
-## RustySEO
 
-  ![Logo](assets/logo.jpg)
+<div align="center">
+
+<h1>RustySEO</h1>
+
+##### A modern SEO/GEO toolkit
+[![Rust](https://img.shields.io/badge/Rust-red.svg?style=for-the-badge&logo=rust)](https://www.rust-lang.org/)
+
+
+  ![Logo](assets/icon.png)
 </div>
+
+-------------------------
 
 ![Logo](assets/hero.jpg)
 
-# RustySEO - A cross-platform SEO toolkit
+------------------------
+
+## RustySEO - A cross-platform SEO toolkit
 
 RustySEO is an all-in-one, cross-platform Marketing toolkit, designed for comprehensive SEO & GEO analysis. It enables users to crawl websites and gain actionable insights into their marketing and SEO strategies.
 
@@ -18,7 +28,7 @@ Keep in mind that all the integrations are free to use (up to an extent). Its ab
 
 As long as you don't spam (many requests per second) you should be ok to use RustySEO as your daily driver for SEO. :)
 
-# 🔖 TL;DR
+## 🔖 TL;DR
 
 For a better experience you need to get a [Google PageSpeed Insights](https://developers.google.com/speed/docs/insights/v5/get-started) API KEY.
 
