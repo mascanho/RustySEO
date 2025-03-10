@@ -35,7 +35,7 @@ const DetailsTable = ({ data, height }) => {
     return (
       <div
         style={{
-          height: `${height - 20}px`,
+          height: `${height - 10}px`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -54,7 +54,7 @@ const DetailsTable = ({ data, height }) => {
       className="domainCrawlParent -mt-2  "
       style={{
         position: "relative",
-        height: `${height}px `,
+        height: `${height + 80}px `,
         width: "100%",
       }}
     >
@@ -107,7 +107,12 @@ const DetailsTable = ({ data, height }) => {
         </table>
       </div>
       <div
-        style={{ overflow: "auto", height: `calc(100% - 33px)`, width: "100%" }}
+        style={{
+          overflow: "auto",
+          height: `calc(100% - 125px)`,
+          width: "100%",
+          padding: "0 0 3px 0",
+        }}
         ref={tableBodyRef}
       >
         <table
