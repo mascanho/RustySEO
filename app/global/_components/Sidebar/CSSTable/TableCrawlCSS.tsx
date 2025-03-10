@@ -454,7 +454,12 @@ const TableCrawlCSS = ({
           onChange={(e) => debouncedSearch(e.target.value)}
           className="w-full p-1 pl-2 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
         />
-        <DownloadButton />
+        <DownloadButton
+          data={"data"}
+          download={""}
+          loading={""}
+          setLoading={""}
+        />
         <div className="mr-1.5">
           <ColumnPicker
             columnVisibility={columnVisibility}
