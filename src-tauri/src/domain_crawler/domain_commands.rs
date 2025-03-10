@@ -6,7 +6,7 @@ use serde_json::Value;
 use crate::domain_crawler::domain_crawler;
 
 use super::{
-    excel::create_xlsx::{generate_excel_main_table, generate_xlsx},
+    excel::create_xlsx::{generate_excel_main_table, generate_excel_two_cols, generate_xlsx},
     models::DomainCrawlResults,
 };
 
@@ -56,6 +56,17 @@ pub async fn create_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String
         Err(e) => {
             eprintln!("Error: {}", e);
             // Explicitly return the error
+            Err(e)
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn create_excel_two_cols(data: Vec<Value>) -> Result<Vec<u8>, String> {
+    match generate_excel_two_cols(data) {
+        Ok(file) => Ok(file),
+        Err(e) => {
+            eprintln!("Error: {}", e);
             Err(e)
         }
     }

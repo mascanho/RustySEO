@@ -110,6 +110,7 @@ export default function Home() {
     return () => clearTimeout(debounceTimeout);
   }, [crawlData]);
 
+  // Filteres all the JS
   const filteredJsArr = useMemo(() => {
     const jsSet = new Set<string>();
     debouncedCrawlData.forEach((item) => {
@@ -120,6 +121,7 @@ export default function Home() {
     return Array.from(jsSet).map((url, index) => ({ index: index + 1, url }));
   }, [debouncedCrawlData]);
 
+  // Filters all the CSS
   const filteredCssArr = useMemo(() => {
     const cssSet = new Set<string>();
     debouncedCrawlData?.forEach((item) => {
@@ -128,11 +130,31 @@ export default function Home() {
     return Array.from(cssSet).map((url, index) => ({ index: index + 1, url }));
   }, [debouncedCrawlData]);
 
+  // Filters all the images
   const filteredImagesArr = useMemo(() => {
     const imagesArr = crawlData.map((page) => page?.images?.Ok).flat();
     return imagesArr.filter(
       (image, index) => imagesArr.indexOf(image) === index,
     );
+  }, [debouncedCrawlData]);
+
+  // Filter All the links and merge external and inteernal
+  const filteredLinks = useMemo(() => {
+    const linksSet = new Set<string>();
+
+    debouncedCrawlData.forEach((item) => {
+      // Add external links
+      item?.anchor_links?.external?.links?.forEach((link) => {
+        if (link) linksSet.add(link);
+      });
+
+      // Add internal links
+      item?.anchor_links?.internal?.links?.forEach((link) => {
+        if (link) linksSet.add(link);
+      });
+    });
+
+    return Array.from(linksSet); // Convert the Set to an array
   }, [debouncedCrawlData]);
 
   const filteredCustomSearch = useMemo(() => {
@@ -166,7 +188,6 @@ export default function Home() {
       // If the tab is the issuesView tab, ensure issuesView is updated
       setIssuesView(value);
     }
-    console.log(value, "TABS");
   };
 
   return (
@@ -231,6 +252,11 @@ export default function Home() {
             >
               <TableCrawlJs rows={filteredJsArr} />
             </TabsContent>
+
+            <TabsContent value="links" className="flex-grow overflow-hidden">
+              <TableCrawlJs rows={filteredLinks} />
+            </TabsContent>
+
             <TabsContent value="images" className="flex-grow overflow-hidden">
               <ImagesCrawlTable rows={filteredImagesArr} />
             </TabsContent>

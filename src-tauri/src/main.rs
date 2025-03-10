@@ -201,6 +201,7 @@ async fn main() {
             db::read_domain_results_history_table,
             db::create_domain_results_history,
             db::store_custom_search,
+            domain_commands::create_excel_two_cols
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

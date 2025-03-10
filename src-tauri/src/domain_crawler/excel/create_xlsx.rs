@@ -429,3 +429,54 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
 
     Ok(buffer)
 }
+
+// Create the XLXS FILE FROM THE DATA (TWO COLUMNS TABLE: CSS, JAVASCRIPT, LINKS)
+pub fn generate_excel_two_cols(data: Vec<Value>) -> Result<Vec<u8>, String> {
+    println!("Generating Excel with: {:?}", &data);
+
+    // CHECK IF THE DATA IS EMPTY
+    if data.is_empty() {
+        return Err("No data to generate Excel".to_string());
+    }
+
+    // DEFINE THEW HEADERS FOR THE SHEET
+    let headers = ["URL"];
+
+    // CREATE A NEW WORKBOOK AND SHEET
+    let mut workbook = Workbook::new();
+    let worksheet = workbook.add_worksheet();
+
+    // DEFINE THE HEADER FORMAT
+    let header_format = Format::new()
+        .set_bold()
+        .set_border(FormatBorder::Thin)
+        .set_align(FormatAlign::Center);
+
+    // WRITE THE HEADERS TO THE SHEET
+    for (col_idx, header) in headers.iter().enumerate() {
+        worksheet
+            .write_with_format(0, col_idx as u16, *header, &header_format)
+            .map_err(|e| format!("Failed to write header '{}': {}", header, e))?;
+    }
+
+    // WRITE THE DATA ROWS
+    for (row_idx, array) in data.iter().enumerate() {
+        let obj = match array {
+            Value::Object(obj) => obj,
+            _ => return Err("Invalid JSON structure: expected an array of objects".to_string()),
+        };
+
+        // Extract and write the URL
+        let url = match obj.get("url").ok_or("Missing 'url' field in JSON object")? {
+            Value::String(s) => s.clone(),
+            _ => return Err("Invalid URL format: expected a string".to_string()),
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 0, &url)
+            .map_err(|e| format!("Failed to write URL at row {}: {}", row_idx + 1, e))?;
+    }
+
+    let buffer = workbook.save_to_buffer().map_err(|e| e.to_string())?;
+
+    Ok(buffer)
+}

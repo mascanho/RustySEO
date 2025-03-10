@@ -18,10 +18,10 @@ export function ContentPlanner() {
   }, [items]);
 
   return (
-    <div className="mx-auto p-4 h-full">
+    <div className="mx-auto py-4 px-2 h-full relative">
       <button
         onClick={addItem}
-        className="mb-4 flex items-center py-2 bg-brand-bright text-white px-2 text-xs rounded-md"
+        className="mb-4 flex items-center py-2 fixed top-[6.8rem] left-2 z-50 bg-brand-bright text-white px-2 text-xs rounded-md"
       >
         <PlusCircle className="mr-2 h-4 w-4" /> Add New Topic
       </button>
@@ -31,7 +31,7 @@ export function ContentPlanner() {
             <div
               {...provided.droppableProps}
               ref={provided.innerRef}
-              className="grid xl:gap-6 gap-6  md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 h-full  items-start"
+              className="grid xl:gap-4 gap-6  md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 h-full mt-10  items-start"
             >
               {items.map((item, index) => (
                 <Draggable key={item.id} draggableId={item.id} index={index}>

@@ -21,7 +21,7 @@ import {
 } from "./tableLayout";
 import SelectFilter from "../components/SelectFilter";
 import { TbColumns3 } from "react-icons/tb";
-import DownloadButton from "../components/DownloadButton";
+import DownloadButton from "./DownloadButton";
 import useFilterTableURL from "@/app/Hooks/useFilterTableUrl";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 
@@ -177,7 +177,10 @@ const TableRow = ({
   clickedCell,
   handleCellClick,
 }: TableRowProps) => {
-  const rowData = useMemo(() => [index + 1, row?.url || ""], [row, index]);
+  const rowData = useMemo(
+    () => [index + 1, row?.url || row || ""],
+    [row, index],
+  );
 
   return useMemo(
     () => (
