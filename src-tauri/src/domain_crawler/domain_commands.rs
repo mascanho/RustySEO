@@ -63,6 +63,9 @@ pub async fn create_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String
 
 #[tauri::command]
 pub async fn create_excel_two_cols(data: Vec<Value>) -> Result<Vec<u8>, String> {
+    println!("Data: {:?}", data);
+    println!("Why are you not printing????");
+
     match generate_excel_two_cols(data) {
         Ok(file) => Ok(file),
         Err(e) => {

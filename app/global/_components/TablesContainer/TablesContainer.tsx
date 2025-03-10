@@ -250,7 +250,7 @@ export default function Home() {
               value="javascript"
               className="flex-grow overflow-hidden"
             >
-              <TableCrawlJs rows={filteredJsArr} />
+              <TableCrawlJs tabName={"Javascript"} rows={filteredJsArr} />
             </TabsContent>
 
             <TabsContent value="links" className="flex-grow overflow-hidden">
