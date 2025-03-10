@@ -26,7 +26,10 @@ const generateLogs = (
   pageSpeedKeys: string[],
   ga4ID: string,
   gscCredentials: [],
+  clarityApi: "",
 ): LogEntry[] => {
+  console.log(ga4ID, "GA4 ID");
+
   const logs: LogEntry[] = [
     {
       id: Date.now() + 1,
@@ -55,23 +58,31 @@ const generateLogs = (
     {
       id: Date.now() + 4,
       timestamp: new Date(),
-      level: ga4ID !== "" ? "success" : "error",
+      level: ga4ID === null ? "error" : "success",
       message:
-        ga4ID !== ""
-          ? "Google Analytics: Enabled"
-          : "No Google Analytics ID configured",
+        ga4ID !== "" ? "No GA4 ID configured" : "Google Analytics: Enabled",
     },
     {
       id: Date.now() + 5,
       timestamp: new Date(),
-      level: gscCredentials !== "" ? "success" : "error",
+      level: clarityApi !== "" ? "success" : "error",
       message:
-        gscCredentials !== ""
-          ? "Google Search Console: Enabled"
-          : "Google Search Console not configured",
+        clarityApi !== ""
+          ? "MS Clarity is not configured"
+          : "MS Clarity: Enabled",
     },
     {
       id: Date.now() + 6,
+      timestamp: new Date(),
+      level:
+        gscCredentials && Object?.keys(gscCredentials) ? "success" : "error",
+      message:
+        gscCredentials && Object?.keys(gscCredentials) !== null
+          ? "Google Search Console: Enabled"
+          : "GSC is not configured",
+    },
+    {
+      id: Date.now() + 7,
       timestamp: new Date(),
       level: isGlobalCrawling
         ? "info"
@@ -85,7 +96,7 @@ const generateLogs = (
           : "RustySEO is idle...",
     },
     {
-      id: Date.now() + 7,
+      id: Date.now() + 8,
       timestamp: new Date(),
       level: tasks === 0 ? "success" : "warning",
       message: tasks === 0 ? "No tasks pending" : `${tasks} tasks remaining`,
@@ -137,27 +148,36 @@ export default function ConsoleLog() {
   const [pageSpeedKeys, setPageSpeedKeys] = useState<string[]>([]);
   const [ga4ID, setGa4ID] = useState<string | null>(null);
   const [gscCredentials, setGscCredentials] = useState(null);
+  const [clarityApi, setClarityApi] = useState<string>("");
 
   // GET THE STUFF FROM THE BACKEND
   useEffect(() => {
-    invoke("get_ai_model").then((result: any) => {
-      setAiModelLog(result);
-    });
-    invoke("check_ai_model").then((result: any) => {
-      setAiModelLog(result);
-    });
-    // PAGESPEED API
-    invoke("load_api_keys").then((result: any) => {
-      setPageSpeedKeys(result);
-    });
+    try {
+      invoke("get_ai_model").then((result: any) => {
+        setAiModelLog(result);
+      });
+      invoke("check_ai_model").then((result: any) => {
+        setAiModelLog(result);
+      });
+      // PAGESPEED API
+      invoke("load_api_keys").then((result: any) => {
+        setPageSpeedKeys(result);
+      });
 
-    invoke("get_google_analytics_id").then((result: any) => {
-      setGa4ID(result);
-    });
+      invoke("get_google_analytics_id").then((result: any) => {
+        setGa4ID(result);
+      });
 
-    invoke("read_credentials_file").then((result) => {
-      setGscCredentials(result);
-    });
+      invoke("read_credentials_file").then((result) => {
+        setGscCredentials(result);
+      });
+
+      invoke("get_microsoft_clarity_command").then((result: any) => {
+        setClarityApi(result);
+      });
+    } catch (err) {
+      console.error("Error fetching API config:", err);
+    }
   }, []);
 
   // Update logs whenever `crawler`, `isGlobalCrawling`, or `isFinishedDeepCrawl` changes
@@ -172,6 +192,7 @@ export default function ConsoleLog() {
         pageSpeedKeys,
         ga4ID,
         gscCredentials,
+        clarityApi,
       ); // Generate logs based on the current state
       setLogs((prev) => newLogs); // Append the new logs
     }
@@ -184,6 +205,7 @@ export default function ConsoleLog() {
     pageSpeedKeys,
     ga4ID,
     gscCredentials,
+    clarityApi,
   ]);
 
   // Auto-scroll to bottom when new logs appear
@@ -201,7 +223,7 @@ export default function ConsoleLog() {
   const getLevelIcon = (level: LogLevel) => {
     switch (level) {
       case "success":
-        return <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />;
+        return <CheckCircle className="w-4 h-4 text-green-700 flex-shrink-0" />;
       case "error":
         return <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />;
       case "warning":
@@ -221,7 +243,7 @@ export default function ConsoleLog() {
         return (
           <Badge
             variant="outline"
-            className="bg-green-500/10 text-green-500 border-green-500/20 flex-shrink-0 rounded-sm"
+            className="bg-green-700/10 text-green-700 border-green-700/20 flex-shrink-0 rounded-sm"
           >
             OK
           </Badge>
@@ -230,7 +252,7 @@ export default function ConsoleLog() {
         return (
           <Badge
             variant="outline"
-            className="bg-red-500/10 text-red-500 border-red-500/20 flex-shrink-0"
+            className="bg-red-500/10 text-red-500 border-red-500/20 flex-shrink-0 rounded-sm"
           >
             ERROR
           </Badge>
@@ -271,7 +293,7 @@ export default function ConsoleLog() {
 
   return (
     <div className="w-full max-w-[600px] overflow-hidden bg-gray-50 dark:bg-zinc-900 font-mono text-xs h-[calc(100vh-39rem)]">
-      <ScrollArea className="h-[calc(100vh-41rem)]" ref={scrollAreaRef}>
+      <ScrollArea className="h-[calc(100vh-40.6rem)]" ref={scrollAreaRef}>
         <div className="p-2 space-y-2 ">
           {logs.map((log, index) => (
             <div
@@ -285,7 +307,7 @@ export default function ConsoleLog() {
                 {getLevelBadge(log.level)}
                 <span
                   className={`
-                  ${log.level === "success" ? "text-green-400" : ""}
+                  ${log.level === "success" ? "text-green-700" : ""}
                   ${log.level === "error" ? "text-red-400" : ""}
                   ${log.level === "warning" ? "text-yellow-400" : ""}
                   ${log.level === "info" ? "text-blue-400" : ""}
@@ -305,7 +327,7 @@ export default function ConsoleLog() {
         </div>
       </ScrollArea>
 
-      <div className="flex items-center text-xs justify-between px-4 py-2 bg-zinc-100 dark:bg-zinc-800 border-t dark:border-zinc-700">
+      <div className="flex items-center text-xs justify-between px-4 py-1 bg-zinc-100 dark:bg-zinc-800 border-t dark:border-zinc-700">
         <UptimeTimer />
         <div className="text-zinc-400 text-xs">PID: 12345</div>
       </div>

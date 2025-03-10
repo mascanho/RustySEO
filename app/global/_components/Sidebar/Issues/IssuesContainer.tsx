@@ -276,17 +276,20 @@ const IssuesContainer = () => {
   }
 
   return (
-    <section className="text-xs w-full space-y-1 min-h-[10rem] h-[calc(100vh-39rem)] overflow-y-auto overflow-x-hidden relative">
-      <table className="w-full border-collapse issues pt-2">
-        <thead className="sticky top-0">
+    <section className="text-xs w-full space-y-1 min-h-[10rem]  h-[calc(100vh-39rem)] overflow-y-auto overflow-x-hidden relative">
+      <table className="w-full border-collapse issues pt-2 ">
+        <thead className="sticky top-0 dark:bg-brand-darker ">
           <tr className="text-xs bg-gray-100">
-            <th scope="col" className="p-2 text-left border border-bl">
+            <th
+              scope="col"
+              className="p-2 text-left border dark:border-black border-bl"
+            >
               Problem
             </th>
-            <th scope="col" className="p-2 text-left">
+            <th align="left" className="p-2 text-left">
               Urls
             </th>
-            <th scope="col" className="p-2 text-center">
+            <th scope="col" className="p-2 text-center dark:border-black">
               %
             </th>
             <th scope="col" className="p-2 text-left">

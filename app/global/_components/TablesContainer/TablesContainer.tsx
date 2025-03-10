@@ -21,6 +21,7 @@ import { useVisibilityStore } from "@/store/VisibilityStore";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import useCrawlStore from "@/store/GlobalCrawlDataStore";
 import ResponseHeaders from "./SubTables/Headers/ResponseHeaders";
+import TableCrawlCSS from "../Sidebar/CSSTable/TableCrawlCSS";
 
 const BottomTableContent = ({ children, height }) => (
   <div
@@ -119,6 +120,14 @@ export default function Home() {
     return Array.from(jsSet).map((url, index) => ({ index: index + 1, url }));
   }, [debouncedCrawlData]);
 
+  const filteredCssArr = useMemo(() => {
+    const cssSet = new Set<string>();
+    debouncedCrawlData?.forEach((item) => {
+      item?.css?.external?.forEach((link) => cssSet.add(link));
+    });
+    return Array.from(cssSet).map((url, index) => ({ index: index + 1, url }));
+  }, [debouncedCrawlData]);
+
   const filteredImagesArr = useMemo(() => {
     const imagesArr = crawlData.map((page) => page?.images?.Ok).flat();
     return imagesArr.filter(
@@ -181,12 +190,28 @@ export default function Home() {
             className="h-full flex dark:bg-brand-darker flex-col"
           >
             <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t-0 -mb-2 bg-gray-50 rounded-none">
-              <TabsTrigger value="crawledPages">HTML</TabsTrigger>
-              <TabsTrigger value="javascript">Javascript</TabsTrigger>
-              <TabsTrigger value="images">Images</TabsTrigger>
-              <TabsTrigger value="search">Custom Search</TabsTrigger>
+              <TabsTrigger value="crawledPages" className="rounded-t-md">
+                HTML
+              </TabsTrigger>
+              <TabsTrigger value="css" className="rounded-t-md">
+                CSS
+              </TabsTrigger>
+              <TabsTrigger value="javascript" className="rounded-t-md">
+                Javascript
+              </TabsTrigger>
+              <TabsTrigger value="links" className="rounded-t-md">
+                Links
+              </TabsTrigger>
+              <TabsTrigger value="images" className="rounded-t-md">
+                Images
+              </TabsTrigger>
+              <TabsTrigger value="search" className="rounded-t-md">
+                Custom Search
+              </TabsTrigger>
               {issuesView && (
-                <TabsTrigger value={issuesView}>{issuesView}</TabsTrigger>
+                <TabsTrigger value={issuesView} className="rounded-t-md">
+                  {issuesView}
+                </TabsTrigger>
               )}
             </TabsList>
             <TabsContent
@@ -195,6 +220,11 @@ export default function Home() {
             >
               <TableCrawl tabName={"AllData"} rows={crawlData} />
             </TabsContent>
+
+            <TabsContent value="css">
+              <TableCrawlCSS rows={filteredCssArr} tabname={"css"} />
+            </TabsContent>
+
             <TabsContent
               value="javascript"
               className="flex-grow overflow-hidden"
@@ -232,12 +262,24 @@ export default function Home() {
         >
           <Tabs value={activeBottomTab} onValueChange={setActiveBottomTab}>
             <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t -mb-2 bg-gray-50 rounded-none sticky top-0">
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="inlinks">Inlinks</TabsTrigger>
-              <TabsTrigger value="outlinks">Outlinks</TabsTrigger>
-              <TabsTrigger value="images">Images</TabsTrigger>
-              <TabsTrigger value="schema">Schema</TabsTrigger>
-              <TabsTrigger value="headers">Headers</TabsTrigger>
+              <TabsTrigger value="details" className="rounded-t-md">
+                Details
+              </TabsTrigger>
+              <TabsTrigger value="inlinks" className="rounded-t-md">
+                Inlinks
+              </TabsTrigger>
+              <TabsTrigger value="outlinks" className="rounded-t-md">
+                Outlinks
+              </TabsTrigger>
+              <TabsTrigger value="images" className="rounded-t-md">
+                Images
+              </TabsTrigger>
+              <TabsTrigger value="schema" className="rounded-t-md">
+                Schema
+              </TabsTrigger>
+              <TabsTrigger value="headers" className="rounded-t-md">
+                Headers
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="details">
               <DetailsTable

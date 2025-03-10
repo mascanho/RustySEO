@@ -21,7 +21,7 @@ import {
 } from "./tableLayout";
 import SelectFilter from "../components/SelectFilter";
 import { TbColumns3 } from "react-icons/tb";
-import DownloadButton from "../components/DownloadButton";
+import DownloadButton from "../../../_components/TablesContainer/components/DownloadButton.tsx";
 import useFilterTableURL from "@/app/Hooks/useFilterTableUrl";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 
@@ -270,7 +270,7 @@ const ColumnPicker = ({
   );
 };
 
-const TableCrawlJs = ({
+const TableCrawlCSS = ({
   rows,
   rowHeight = 41,
   overscan = 30,
@@ -470,14 +470,14 @@ const TableCrawlJs = ({
       </div>
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-2rem)] overflow-auto relative"
+        className="w-full h-[30.8rem] overflow-auto relative"
       >
         <div
           ref={tableContainerRef}
           style={{ minWidth: `${totalWidth}px` }}
           className="domainCrawlParent sticky top-0"
         >
-          <table className="w-full text-xs border-collapse domainCrawlParent h-full">
+          <table className="w-full text-xs border-collapse domainCrawlParent ">
             <TableHeader
               headers={headerTitles}
               columnWidths={columnWidths}
@@ -531,4 +531,4 @@ const TableCrawlJs = ({
   );
 };
 
-export default TableCrawlJs;
+export default TableCrawlCSS;
