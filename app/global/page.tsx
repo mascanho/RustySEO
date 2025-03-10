@@ -208,7 +208,7 @@ export default function Page() {
             className="flex flex-col space-y-8 overflow-scroll"
           >
             <section className="mt-[3rem]">
-              {/* <TaskManagerContainer /> */}
+              <TaskManagerContainer />
             </section>
           </Tabs.Panel>
           <Tabs.Panel
@@ -238,7 +238,7 @@ export default function Page() {
             value="content"
             className="pt-6 h-[calc(100vh-3rem)] overflow-auto"
           >
-            {/* <ContentPlannerContainer /> */}
+            <ContentPlannerContainer />
           </Tabs.Panel>{" "}
           <Tabs.Panel value="settings">
             <GlobalSettings />
