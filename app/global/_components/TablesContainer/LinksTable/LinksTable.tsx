@@ -306,7 +306,7 @@ const LinksTable = ({
     setIsGeneratingExcel(true);
     try {
       // Call the backend command to generate the Excel file
-      const fileBuffer = await invoke("create_excel_two_cols", {
+      const fileBuffer = await invoke("create_links_excel", {
         data: rows,
       });
 
