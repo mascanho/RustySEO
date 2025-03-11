@@ -241,6 +241,7 @@ const ImagesCrawlTable = ({
   rows,
   rowHeight = 31,
   overscan = 30,
+  tabName,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
   const [columnAlignments, setColumnAlignments] = useState(
@@ -271,7 +272,7 @@ const ImagesCrawlTable = ({
             extensions: ["xlsx"],
           },
         ],
-        defaultPath: "ImagesTableRustySEO.xlsx", // Default file name
+        defaultPath: `RustySEO-${tabName}`, // Default file name
       });
 
       if (filePath) {

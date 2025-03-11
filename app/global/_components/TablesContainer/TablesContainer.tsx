@@ -142,11 +142,14 @@ export default function Home() {
   // Filter All the links and merge external and inteernal
   const filteredLinks = useMemo(() => {
     const linksWithAnchors = [];
+    const uniqueLinks = new Set(); // Track unique links
 
     debouncedCrawlData.forEach((item) => {
       // Add external links with anchors
       item?.anchor_links?.external?.links?.forEach((link, index) => {
-        if (link) {
+        if (link && !uniqueLinks.has(link)) {
+          // Check if the link is unique
+          uniqueLinks.add(link); // Add the link to the Set
           linksWithAnchors.push({
             link: link,
             anchor: item?.anchor_links?.external?.anchors?.[index] || "",
@@ -156,7 +159,9 @@ export default function Home() {
 
       // Add internal links with anchors
       item?.anchor_links?.internal?.links?.forEach((link, index) => {
-        if (link) {
+        if (link && !uniqueLinks.has(link)) {
+          // Check if the link is unique
+          uniqueLinks.add(link); // Add the link to the Set
           linksWithAnchors.push({
             link: link,
             anchor: item?.anchor_links?.internal?.anchors?.[index] || "",
@@ -165,8 +170,10 @@ export default function Home() {
       });
     });
 
-    return linksWithAnchors; // Return the array of objects containing links and anchors
+    return linksWithAnchors; // Return the array of objects containing unique links and anchors
   }, [debouncedCrawlData]);
+
+  console.log(filteredCssArr, "CSS");
 
   const filteredCustomSearch = useMemo(() => {
     // Early return if no crawlData
@@ -254,7 +261,7 @@ export default function Home() {
             </TabsContent>
 
             <TabsContent value="css">
-              <TableCrawlCSS rows={filteredCssArr} tabname={"css"} />
+              <TableCrawlCSS rows={filteredCssArr} tabName={"All CSS "} />
             </TabsContent>
 
             <TabsContent
@@ -265,11 +272,14 @@ export default function Home() {
             </TabsContent>
 
             <TabsContent value="links" className="flex-grow overflow-hidden">
-              <LinksTable rows={filteredLinks} />
+              <LinksTable tabName={"All Links"} rows={filteredLinks} />
             </TabsContent>
 
             <TabsContent value="images" className="flex-grow overflow-hidden">
-              <ImagesCrawlTable rows={filteredImagesArr} />
+              <ImagesCrawlTable
+                tabName={"All Images"}
+                rows={filteredImagesArr}
+              />
             </TabsContent>
 
             {/* CUSTOM SEARCH */}

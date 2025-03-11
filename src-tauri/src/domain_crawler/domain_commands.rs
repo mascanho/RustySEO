@@ -6,7 +6,9 @@ use serde_json::Value;
 use crate::domain_crawler::domain_crawler;
 
 use super::{
-    excel::create_xlsx::{generate_excel_main_table, generate_excel_two_cols, generate_xlsx},
+    excel::create_xlsx::{
+        generate_css_table, generate_excel_main_table, generate_excel_two_cols, generate_xlsx,
+    },
     models::DomainCrawlResults,
 };
 
@@ -49,6 +51,7 @@ pub async fn create_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
     }
 }
 
+// GENERATE THE EXCEL FROM THE MAIN TABLE
 #[tauri::command]
 pub async fn create_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
     match generate_excel_main_table(data) {
@@ -61,12 +64,22 @@ pub async fn create_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String
     }
 }
 
+// CREATE THE EXCEL FROM THE LINKS TABLE
 #[tauri::command]
 pub async fn create_excel_two_cols(data: Vec<Value>) -> Result<Vec<u8>, String> {
-    println!("Data: {:?}", data);
-    println!("Why are you not printing????");
-
     match generate_excel_two_cols(data) {
+        Ok(file) => Ok(file),
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            Err(e)
+        }
+    }
+}
+
+// CREATE THE CSS EXCEL FROM THE TABLE
+#[tauri::command]
+pub async fn create_css_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
+    match generate_css_table(data) {
         Ok(file) => Ok(file),
         Err(e) => {
             eprintln!("Error: {}", e);
