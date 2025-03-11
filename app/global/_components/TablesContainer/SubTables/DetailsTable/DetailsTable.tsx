@@ -107,7 +107,7 @@ const DetailsTable = ({ data, height }) => {
         </table>
       </div>
       <div
-        style={{ overflow: "auto", height: `calc(100% - 33px)`, width: "100%" }}
+        style={{ overflow: "auto", height: `calc(100% - 43px)`, width: "100%" }}
         ref={tableBodyRef}
       >
         <table

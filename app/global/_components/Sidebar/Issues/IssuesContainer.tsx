@@ -229,15 +229,15 @@ const IssuesContainer = () => {
     },
   ];
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setIssues(issuesArr);
-    }, 300);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [crawlData, issuesArr]); // Add dependencies to prevent unnecessary re-renders
+  // useEffect(() => {
+  //   const handler = setTimeout(() => {
+  //     setIssues(issuesArr);
+  //   }, 300);
+  //
+  //   return () => {
+  //     clearTimeout(handler);
+  //   };
+  // }, [crawlData, issuesArr]); // Add dependencies to prevent unnecessary re-renders
 
   // Handle click on the rows
   const handleIssueClick = (issueName) => {
