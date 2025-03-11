@@ -9,14 +9,14 @@ const FixesContainer = () => {
 
   return (
     <section>
-      <div className="w-full text-black flex justify-center items-center space-y-6 pt-6 flex-col">
+      <div className="w-full text-black flex justify-center items-center space-y-6 pt-14 flex-col">
         <span className="text-xs text-black font-bold dark:text-white underline">
           {globalFix}
         </span>
 
         {filteredFixes?.length > 0 && (
           <>
-            <span className="text-xs text-black dark:text-white px-6 ">
+            <span className="text-xs text-black dark:text-white px-6 pt-4  ">
               {filteredFixes[0].description}
             </span>
             <div className="flex  gap-2 pt-6">

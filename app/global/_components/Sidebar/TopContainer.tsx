@@ -10,6 +10,7 @@ const TopContainer = () => {
         <Tabs.List justify="center" grow className="dark:text-white text-xs ">
           <Tabs.Tab value="first">General</Tabs.Tab>
           <Tabs.Tab value="issues">Issues</Tabs.Tab>
+          <Tabs.Tab value="gsc">GSC</Tabs.Tab>
           <Tabs.Tab value="status">Status</Tabs.Tab>
           {/* <Tabs.Tab value="fourth">Struct</Tabs.Tab>
           <Tabs.Tab value="fifth">Crawls</Tabs.Tab> */}
