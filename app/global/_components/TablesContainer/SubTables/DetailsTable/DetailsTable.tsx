@@ -543,7 +543,7 @@ const DetailsTable = ({ data, height }) => {
                     >
                       {anchorItem?.keywords?.slice(0, 10)?.map((item) => (
                         <span
-                          className="border dark:border-brand-bright my-1"
+                          className="border dark:border-brand-bright/80 my-1"
                           key={item[0]}
                           style={{
                             display: "inline-block",
@@ -559,7 +559,7 @@ const DetailsTable = ({ data, height }) => {
                             className="bg-brand-bright"
                             style={{
                               color: "#fff",
-                              borderRadius: "9999px",
+                              borderRadius: "6px",
                               padding: "2px 8px",
                               fontSize: "10px",
                             }}
