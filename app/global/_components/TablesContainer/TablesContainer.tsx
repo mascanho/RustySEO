@@ -22,6 +22,7 @@ import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import useCrawlStore from "@/store/GlobalCrawlDataStore";
 import ResponseHeaders from "./SubTables/Headers/ResponseHeaders";
 import TableCrawlCSS from "../Sidebar/CSSTable/TableCrawlCSS";
+import LinksTable from "./LinksTable/LinksTable";
 
 const BottomTableContent = ({ children, height }) => (
   <div
@@ -140,21 +141,31 @@ export default function Home() {
 
   // Filter All the links and merge external and inteernal
   const filteredLinks = useMemo(() => {
-    const linksSet = new Set<string>();
+    const linksWithAnchors = [];
 
     debouncedCrawlData.forEach((item) => {
-      // Add external links
-      item?.anchor_links?.external?.links?.forEach((link) => {
-        if (link) linksSet.add(link);
+      // Add external links with anchors
+      item?.anchor_links?.external?.links?.forEach((link, index) => {
+        if (link) {
+          linksWithAnchors.push({
+            link: link,
+            anchor: item?.anchor_links?.external?.anchors?.[index] || "",
+          });
+        }
       });
 
-      // Add internal links
-      item?.anchor_links?.internal?.links?.forEach((link) => {
-        if (link) linksSet.add(link);
+      // Add internal links with anchors
+      item?.anchor_links?.internal?.links?.forEach((link, index) => {
+        if (link) {
+          linksWithAnchors.push({
+            link: link,
+            anchor: item?.anchor_links?.internal?.anchors?.[index] || "",
+          });
+        }
       });
     });
 
-    return Array.from(linksSet); // Convert the Set to an array
+    return linksWithAnchors; // Return the array of objects containing links and anchors
   }, [debouncedCrawlData]);
 
   const filteredCustomSearch = useMemo(() => {
@@ -254,7 +265,7 @@ export default function Home() {
             </TabsContent>
 
             <TabsContent value="links" className="flex-grow overflow-hidden">
-              <TableCrawlJs rows={filteredLinks} />
+              <LinksTable rows={filteredLinks} />
             </TabsContent>
 
             <TabsContent value="images" className="flex-grow overflow-hidden">
