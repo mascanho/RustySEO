@@ -1,5 +1,6 @@
 "use client";
 import { invoke } from "@tauri-apps/api/core";
+import { usePathname } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 
 const Loader = () => {
@@ -23,6 +24,7 @@ const Loader = () => {
     }
     return true;
   });
+  const pathname = usePathname();
 
   // FETCH DATA FROM GOGLE SEARCH CONSOLE
   useEffect(() => {
@@ -85,6 +87,10 @@ const Loader = () => {
   }, [messageIndex, loadingMessages]);
 
   if (!isVisible) return null;
+
+  if (pathname === "/global") {
+    return;
+  }
 
   return (
     <div className="fixed bg-black inset-0 flex items-center justify-center z-50 h-screen">

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import useFindDuplicateTitles from "./libs/useDuplicatedTitles";
 import useFindDuplicateDescriptions from "./libs/useDuplicatedDescriptions";
 import useResponseCodes from "./libs/useResponseCodes";
+import { useFixesStore } from "@/store/FixesStore";
 
 const IssuesContainer = () => {
   const {
@@ -19,6 +20,7 @@ const IssuesContainer = () => {
     issuesView,
     setGenericChart,
   } = useGlobalCrawlStore();
+  const { fix, setFix } = useFixesStore();
   const [isMode, setIsMode] = useState(null);
 
   // Find pages with missing titles
@@ -261,7 +263,7 @@ const IssuesContainer = () => {
       "Missing Schema": missingSchema,
       "Large Images": imagesAbove100KB,
     };
-
+    setFix(issueName);
     setIssuesData(issueDataMap[issueName] || []);
   };
 

@@ -1,34 +1,39 @@
+import { useFixesStore } from "@/store/FixesStore";
 import { FixesData } from "./FixesData";
-import { useState } from "react";
 
 const FixesContainer = () => {
-  // Dummy global state value for now
-  const globalFix = "Missing Meta Descriptions";
+  const { fix } = useFixesStore();
 
-  const filteredFixes = FixesData?.filter((fix) => fix?.title === globalFix);
+  // Find the matching fix object
+  const filteredFixes = FixesData.filter((item) => item.title === fix);
 
   return (
     <section>
-      <div className="w-full text-black flex justify-center items-center space-y-6 pt-14 flex-col">
-        <span className="text-xs text-black font-bold dark:text-white underline">
-          {globalFix}
+      <div className="w-full text-black flex justify-center items-center space-y-6 pt-10 flex-col">
+        <span className="text-sm text-black font-bold dark:text-white ">
+          {fix}
         </span>
 
-        {filteredFixes?.length > 0 && (
+        {filteredFixes.length > 0 && (
           <>
-            <span className="text-xs text-black dark:text-white px-6 pt-4  ">
+            <span className="text-xs text-black dark:text-white px-6">
               {filteredFixes[0].description}
             </span>
-            <div className="flex  gap-2 pt-6">
+
+            <span className="text-xs text-black dark:text-white px-6 pt-1">
+              {filteredFixes[0].fixes}
+            </span>
+
+            <div className="flex gap-8 pt-6">
               {filteredFixes[0].links.map((link, index) => (
                 <a
                   key={index}
                   href={link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 text-xs underline"
+                  className="text-xs text-blue-500 hover:underline"
                 >
-                  Reference {index + 1}
+                  Link {index + 1}
                 </a>
               ))}
             </div>

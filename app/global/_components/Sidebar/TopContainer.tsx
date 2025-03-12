@@ -2,6 +2,7 @@ import { Tabs } from "@mantine/core";
 import GeneralTopSideBarContainer from "./General/GeneralTopSideBarContainer";
 import IssuesContainer from "./Issues/IssuesContainer";
 import ConsoleLog from "./ConsoleLog/ConsoleLog";
+import RankingInfo from "@/app/global/_components/Sidebar/GSCRankingInfo/RankingInfo";
 
 const TopContainer = () => {
   return (
@@ -22,6 +23,12 @@ const TopContainer = () => {
 
         <Tabs.Panel value="issues" className="h-full">
           <IssuesContainer />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="gsc">
+          <section className="h-[23.1rem] overflow-auto">
+            <RankingInfo />
+          </section>
         </Tabs.Panel>
 
         <Tabs.Panel value="status">
