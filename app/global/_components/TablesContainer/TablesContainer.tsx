@@ -22,6 +22,7 @@ import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import useCrawlStore from "@/store/GlobalCrawlDataStore";
 import ResponseHeaders from "./SubTables/Headers/ResponseHeaders";
 import TableCrawlCSS from "../Sidebar/CSSTable/TableCrawlCSS";
+import LinksTable from "./LinksTable/LinksTable";
 
 const BottomTableContent = ({ children, height }) => (
   <div
@@ -110,6 +111,7 @@ export default function Home() {
     return () => clearTimeout(debounceTimeout);
   }, [crawlData]);
 
+  // Filteres all the JS
   const filteredJsArr = useMemo(() => {
     const jsSet = new Set<string>();
     debouncedCrawlData.forEach((item) => {
@@ -120,6 +122,7 @@ export default function Home() {
     return Array.from(jsSet).map((url, index) => ({ index: index + 1, url }));
   }, [debouncedCrawlData]);
 
+  // Filters all the CSS
   const filteredCssArr = useMemo(() => {
     const cssSet = new Set<string>();
     debouncedCrawlData?.forEach((item) => {
@@ -128,12 +131,49 @@ export default function Home() {
     return Array.from(cssSet).map((url, index) => ({ index: index + 1, url }));
   }, [debouncedCrawlData]);
 
+  // Filters all the images
   const filteredImagesArr = useMemo(() => {
     const imagesArr = crawlData.map((page) => page?.images?.Ok).flat();
     return imagesArr.filter(
       (image, index) => imagesArr.indexOf(image) === index,
     );
   }, [debouncedCrawlData]);
+
+  // Filter All the links and merge external and inteernal
+  const filteredLinks = useMemo(() => {
+    const linksWithAnchors = [];
+    const uniqueLinks = new Set(); // Track unique links
+
+    debouncedCrawlData.forEach((item) => {
+      // Add external links with anchors
+      item?.anchor_links?.external?.links?.forEach((link, index) => {
+        if (link && !uniqueLinks.has(link)) {
+          // Check if the link is unique
+          uniqueLinks.add(link); // Add the link to the Set
+          linksWithAnchors.push({
+            link: link,
+            anchor: item?.anchor_links?.external?.anchors?.[index] || "",
+          });
+        }
+      });
+
+      // Add internal links with anchors
+      item?.anchor_links?.internal?.links?.forEach((link, index) => {
+        if (link && !uniqueLinks.has(link)) {
+          // Check if the link is unique
+          uniqueLinks.add(link); // Add the link to the Set
+          linksWithAnchors.push({
+            link: link,
+            anchor: item?.anchor_links?.internal?.anchors?.[index] || "",
+          });
+        }
+      });
+    });
+
+    return linksWithAnchors; // Return the array of objects containing unique links and anchors
+  }, [debouncedCrawlData]);
+
+  console.log(filteredCssArr, "CSS");
 
   const filteredCustomSearch = useMemo(() => {
     // Early return if no crawlData
@@ -166,7 +206,6 @@ export default function Home() {
       // If the tab is the issuesView tab, ensure issuesView is updated
       setIssuesView(value);
     }
-    console.log(value, "TABS");
   };
 
   return (
@@ -222,17 +261,25 @@ export default function Home() {
             </TabsContent>
 
             <TabsContent value="css">
-              <TableCrawlCSS rows={filteredCssArr} tabname={"css"} />
+              <TableCrawlCSS rows={filteredCssArr} tabName={"All CSS "} />
             </TabsContent>
 
             <TabsContent
               value="javascript"
               className="flex-grow overflow-hidden"
             >
-              <TableCrawlJs rows={filteredJsArr} />
+              <TableCrawlJs tabName={"Javascript"} rows={filteredJsArr} />
             </TabsContent>
+
+            <TabsContent value="links" className="flex-grow overflow-hidden">
+              <LinksTable tabName={"All Links"} rows={filteredLinks} />
+            </TabsContent>
+
             <TabsContent value="images" className="flex-grow overflow-hidden">
-              <ImagesCrawlTable rows={filteredImagesArr} />
+              <ImagesCrawlTable
+                tabName={"All Images"}
+                rows={filteredImagesArr}
+              />
             </TabsContent>
 
             {/* CUSTOM SEARCH */}

@@ -35,7 +35,7 @@ const DetailsTable = ({ data, height }) => {
     return (
       <div
         style={{
-          height: `${height - 20}px`,
+          height: `${height - 10}px`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -54,7 +54,7 @@ const DetailsTable = ({ data, height }) => {
       className="domainCrawlParent -mt-2  "
       style={{
         position: "relative",
-        height: `${height}px `,
+        height: `${height + 80}px `,
         width: "100%",
       }}
     >
@@ -107,7 +107,12 @@ const DetailsTable = ({ data, height }) => {
         </table>
       </div>
       <div
-        style={{ overflow: "auto", height: `calc(100% - 43px)`, width: "100%" }}
+        style={{
+          overflow: "auto",
+          height: `calc(100% - 125px)`,
+          width: "100%",
+          padding: "0 0 3px 0",
+        }}
         ref={tableBodyRef}
       >
         <table
@@ -538,11 +543,12 @@ const DetailsTable = ({ data, height }) => {
                     >
                       {anchorItem?.keywords?.slice(0, 10)?.map((item) => (
                         <span
+                          className="border dark:border-brand-bright/80 my-1"
                           key={item[0]}
                           style={{
                             display: "inline-block",
-                            marginRight: "8px",
-                            marginLeft: "-8px",
+                            marginRight: "6px",
+                            marginLeft: "2px",
                             // border: "1px solid #ddd",
                             padding: "1px 8px",
                             borderRadius: "4px",
@@ -553,7 +559,7 @@ const DetailsTable = ({ data, height }) => {
                             className="bg-brand-bright"
                             style={{
                               color: "#fff",
-                              borderRadius: "9999px",
+                              borderRadius: "6px",
                               padding: "2px 8px",
                               fontSize: "10px",
                             }}

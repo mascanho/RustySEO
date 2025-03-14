@@ -21,12 +21,13 @@ import {
 } from "./tableLayout";
 import SelectFilter from "../components/SelectFilter";
 import { TbColumns3 } from "react-icons/tb";
-import DownloadButton from "./DownloadButton.tsx";
+import DownloadButton from "./DownloadButton";
 import useFilterTableURL from "@/app/Hooks/useFilterTableUrl";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import { toast } from "sonner";
+import { writeFile } from "@tauri-apps/plugin-fs";
 import { save } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
-import { writeFile } from "@tauri-apps/plugin-fs";
 
 interface TableCrawlProps {
   rows: Array<{
@@ -79,8 +80,8 @@ interface ColumnPickerProps {
 
 const TruncatedCell = ({
   text,
-  maxLength = 140,
-  width = "auto",
+  maxLength = 100,
+  width = "100%",
 }: TruncatedCellProps) => {
   const truncatedText = useMemo(() => {
     if (!text) return "";
@@ -91,7 +92,7 @@ const TruncatedCell = ({
     () => (
       <div
         style={{
-          width,
+          width: "100%", // Use 100% to fill the available space
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
@@ -100,7 +101,7 @@ const TruncatedCell = ({
         {truncatedText}
       </div>
     ),
-    [width, truncatedText],
+    [truncatedText],
   );
 };
 
@@ -141,12 +142,12 @@ const TableHeader = ({
               <th
                 key={header}
                 style={{
-                  width: index === 0 ? "20px" : columnWidths[index],
+                  width: columnWidths[index],
                   position: "relative",
                   border: "1px solid #ddd",
                   padding: "8px",
                   userSelect: "none",
-                  minWidth: index === 0 ? "20px" : columnWidths[index],
+                  minWidth: columnWidths[index],
                   textAlign: columnAlignments[index],
                   backgroundColor: "var(--background, white)",
                 }}
@@ -180,7 +181,10 @@ const TableRow = ({
   clickedCell,
   handleCellClick,
 }: TableRowProps) => {
-  const rowData = useMemo(() => [index + 1, row?.url || ""], [row, index]);
+  const rowData = useMemo(
+    () => [index + 1, row?.anchor, row?.link || ""],
+    [row, index],
+  );
 
   return useMemo(
     () => (
@@ -191,14 +195,14 @@ const TableRow = ({
               key={`cell-${index}-${cellIndex}`}
               onClick={() => handleCellClick(index, cellIndex, cell.toString())}
               style={{
-                width: cellIndex === 0 ? "40px" : columnWidths[cellIndex],
+                width: columnWidths[cellIndex], // Use the column width
                 border: "1px solid #ddd",
                 padding: "8px",
                 paddingLeft: cellIndex === 0 ? "20px" : "0px",
                 textAlign: columnAlignments[cellIndex],
                 overflow: "hidden",
                 whiteSpace: "nowrap",
-                minWidth: cellIndex === 0 ? "30px" : columnWidths[cellIndex],
+                minWidth: columnWidths[cellIndex], // Ensure minimum width
                 backgroundColor:
                   clickedCell.row === index && clickedCell.cell === cellIndex
                     ? "#2B6CC4"
@@ -212,7 +216,7 @@ const TableRow = ({
             >
               <TruncatedCell
                 text={cell?.toString()}
-                width={cellIndex === 0 ? "30px" : columnWidths[cellIndex]}
+                width={columnWidths[cellIndex]} // Pass the column width
               />
             </td>
           ) : null,
@@ -273,7 +277,7 @@ const ColumnPicker = ({
   );
 };
 
-const TableCrawlCSS = ({
+const LinksTable = ({
   rows,
   rowHeight = 41,
   overscan = 30,
@@ -288,20 +292,10 @@ const TableCrawlCSS = ({
   const [columnVisibility, setColumnVisibility] = useState(
     headerTitles.map(() => true),
   );
-
-  // State to track the clicked cell (rowIndex, cellIndex)
-  const [clickedCell, setClickedCell] = useState<{
-    row: number | null;
-    cell: number | null;
-  }>({
-    row: null,
-    cell: null,
-  });
-  const { setSelectedTableURL } = useGlobalCrawlStore();
   const { isGeneratingExcel, setIsGeneratingExcel, setIssuesView } =
     useGlobalCrawlStore();
 
-  // SET THE TAURI STUFF FOR THE DOWNLOAD
+  // Define the handleDownload function
   const handleDownload = async () => {
     if (!rows.length) {
       toast.error("No data to download");
@@ -312,12 +306,12 @@ const TableCrawlCSS = ({
     setIsGeneratingExcel(true);
     try {
       // Call the backend command to generate the Excel file
-
-      const fileBuffer = await invoke("create_css_excel", {
+      const fileBuffer = await invoke("create_links_excel", {
         data: rows,
       });
 
       setIsGeneratingExcel(false);
+
       // Prompt the user to choose a file path to save the Excel file
       const filePath = await save({
         filters: [
@@ -338,89 +332,16 @@ const TableCrawlCSS = ({
       }
     } catch (error) {
       console.error("Error generating or saving Excel file:", error);
+      toast.error("Failed to generate or save Excel file.");
+    } finally {
+      setIsGeneratingExcel(false);
     }
   };
 
-  const filterTableURL = (arr: { url: string }[], url: string) => {
-    if (!arr || arr.length === 0) return [];
-    return arr.filter((item) => item.url === url);
-  };
-
-  // Handle cell click
-  const handleCellClick = (
-    rowIndex: number,
-    cellIndex: number,
-    cellContent: string,
-  ) => {
-    setClickedCell((prevClickedCell) => {
-      if (
-        prevClickedCell.row === rowIndex &&
-        prevClickedCell.cell === cellIndex
-      ) {
-        // If the clicked cell is already highlighted, unhighlight it
-        return { row: null, cell: null };
-      } else {
-        // Otherwise, highlight the clicked cell
-        return { row: rowIndex, cell: cellIndex };
-      }
-    });
-
-    if (cellIndex === 1) {
-      // const urlData = filterTableURL(rows, cellContent);
-      // setSelectedTableURL(urlData);
-      // console.log(urlData);
-    }
-
-    console.log(cellContent, rowIndex, cellIndex);
-  };
-
-  const startXRef = useRef(0);
-  const parentRef = useRef<HTMLDivElement>(null);
-  const tableContainerRef = useRef<HTMLDivElement>(null);
-
-  // Memoize filtered rows
-  const filteredRows = useMemo(() => {
-    if (!rows || !Array.isArray(rows)) return [];
-
-    const normalizeText = (text: string) =>
-      text?.toString().toLowerCase().replace(/-/g, "") ?? "";
-
-    const searchTermNormalized = normalizeText(searchTerm);
-
-    return searchTerm
-      ? rows.filter((row) => {
-          if (!row || typeof row !== "object") return false;
-          return Object.values(row).some((value) =>
-            normalizeText(value?.toString()).includes(searchTermNormalized),
-          );
-        })
-      : rows;
-  }, [rows, searchTerm]);
-
-  // Initialize virtualizer
-  const rowVirtualizer = useVirtualizer({
-    count: filteredRows.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: useCallback(() => rowHeight, [rowHeight]),
-    overscan,
-  });
-
-  // Debounced search handler
-  const debouncedSearch = useMemo(
-    () => debounce((value: string) => setSearchTerm(value), 300),
-    [],
-  );
-
-  // Cleanup
-  useEffect(() => {
-    return () => {
-      debouncedSearch.cancel();
-    };
-  }, [debouncedSearch]);
-
-  // Column resizing handlers
+  // Handle column resizing
   const handleMouseDown = useCallback(
     (index: number, event: React.MouseEvent) => {
+      if (index === 1) return; // Prevent resizing for the anchor column
       setIsResizing(index);
       startXRef.current = event.clientX;
       event.preventDefault();
@@ -489,7 +410,84 @@ const TableCrawlCSS = ({
     });
   }, []);
 
+  // State to track the clicked cell (rowIndex, cellIndex)
+  const [clickedCell, setClickedCell] = useState<{
+    row: number | null;
+    cell: number | null;
+  }>({
+    row: null,
+    cell: null,
+  });
+
+  // Handle cell click
+  const handleCellClick = (
+    rowIndex: number,
+    cellIndex: number,
+    cellContent: string,
+  ) => {
+    setClickedCell((prevClickedCell) => {
+      if (
+        prevClickedCell.row === rowIndex &&
+        prevClickedCell.cell === cellIndex
+      ) {
+        // If the clicked cell is already highlighted, unhighlight it
+        return { row: null, cell: null };
+      } else {
+        // Otherwise, highlight the clicked cell
+        return { row: rowIndex, cell: cellIndex };
+      }
+    });
+
+    if (cellIndex === 1) {
+      // Handle anchor column click if needed
+    }
+
+    console.log(cellContent, rowIndex, cellIndex);
+  };
+
+  // Memoize filtered rows
+  const filteredRows = useMemo(() => {
+    if (!rows || !Array.isArray(rows)) return [];
+
+    const normalizeText = (text: string) =>
+      text?.toString().toLowerCase().replace(/-/g, "") ?? "";
+
+    const searchTermNormalized = normalizeText(searchTerm);
+
+    return searchTerm
+      ? rows.filter((row) => {
+          if (!row || typeof row !== "object") return false;
+          return Object.values(row).some((value) =>
+            normalizeText(value?.toString()).includes(searchTermNormalized),
+          );
+        })
+      : rows;
+  }, [rows, searchTerm]);
+
+  // Initialize virtualizer
+  const rowVirtualizer = useVirtualizer({
+    count: filteredRows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: useCallback(() => rowHeight, [rowHeight]),
+    overscan,
+  });
+
+  // Debounced search handler
+  const debouncedSearch = useMemo(
+    () => debounce((value: string) => setSearchTerm(value), 300),
+    [],
+  );
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
   const virtualRows = rowVirtualizer.getVirtualItems();
+  const parentRef = useRef<HTMLDivElement>(null);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   return (
     <>
@@ -501,8 +499,7 @@ const TableCrawlCSS = ({
           className="w-full p-1 pl-2 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
         />
         <DownloadButton
-          data={"data"}
-          download={handleDownload}
+          download={handleDownload} // Pass the handleDownload function
           loading={isGeneratingExcel}
           setLoading={setIsGeneratingExcel}
         />
@@ -516,14 +513,14 @@ const TableCrawlCSS = ({
       </div>
       <div
         ref={parentRef}
-        className="w-full h-[30.8rem] overflow-auto relative"
+        className="w-full h-[calc(100%-2rem)] overflow-auto relative"
       >
         <div
           ref={tableContainerRef}
           style={{ minWidth: `${totalWidth}px` }}
           className="domainCrawlParent sticky top-0"
         >
-          <table className="w-full text-xs border-collapse domainCrawlParent ">
+          <table className="w-full text-xs border-collapse domainCrawlParent h-full">
             <TableHeader
               headers={headerTitles}
               columnWidths={columnWidths}
@@ -557,7 +554,7 @@ const TableCrawlCSS = ({
                     style={{
                       height: `${Math.max(0, rowVirtualizer.getTotalSize() - (virtualRows[virtualRows.length - 1]?.end || 0))}px`,
                     }}
-                  />{" "}
+                  />
                 </>
               ) : (
                 <tr>
@@ -577,4 +574,4 @@ const TableCrawlCSS = ({
   );
 };
 
-export default TableCrawlCSS;
+export default LinksTable;

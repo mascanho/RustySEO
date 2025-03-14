@@ -1,119 +1,119 @@
 export const FixesData = [
   {
     id: 1,
-    title: "Missing Meta Descriptions",
+    title: "Missing Page Title",
     description:
-      "Meta descriptions are HTML attributes that provide concise summaries of web pages. They appear in search engine results below the title tag and influence click-through rates. Missing or poorly written meta descriptions can lead to lower organic traffic, as search engines may generate irrelevant snippets, reducing the likelihood of users clicking on your page.",
+      "Page titles are critical for SEO as they help search engines understand the content of your page. A missing title can lead to poor rankings and reduced visibility in search results. Without a title, your page may appear generic or irrelevant to users.",
     fixes:
-      "Write unique, descriptive meta descriptions under 160 characters, include primary keywords naturally, and use action-oriented language to encourage clicks.",
+      "Add a unique and descriptive title tag to every page. Ensure the title includes primary keywords, is under 60 characters, and accurately reflects the page's content. Use tools like Google Search Console to identify pages without titles.",
+    links: [
+      "https://developers.google.com/search/docs/appearance/title-link",
+      "https://moz.com/learn/seo/title-tag",
+    ],
+  },
+  {
+    id: 2,
+    title: "Duplicated Titles",
+    description:
+      "Duplicate page titles can confuse search engines, making it harder for them to determine which page is most relevant for a query. This can lead to lower rankings and missed opportunities for traffic.",
+    fixes:
+      "Audit your site for duplicate titles using tools like Screaming Frog or Google Search Console. Update each title to be unique, descriptive, and keyword-rich. Use canonical tags to indicate the preferred version of a page if necessary.",
+    links: [
+      "https://developers.google.com/search/docs/advanced/crawling/duplicate-titles",
+      "https://moz.com/blog/duplicate-content-issues",
+    ],
+  },
+  {
+    id: 3,
+    title: "Page Title > 60 Chars",
+    description:
+      "Titles longer than 60 characters may be truncated in search engine results, making them less effective. Users may not see the full context, which can reduce click-through rates.",
+    fixes:
+      "Shorten your page titles to under 60 characters while keeping them descriptive and keyword-rich. Focus on the most important information and place primary keywords at the beginning.",
+    links: [
+      "https://developers.google.com/search/docs/appearance/title-link",
+      "https://moz.com/learn/seo/title-tag",
+    ],
+  },
+  {
+    id: 4,
+    title: "Page Title < 30 Chars",
+    description:
+      "Titles shorter than 30 characters may not provide enough context for users or search engines. This can make your page appear less relevant and reduce its chances of ranking well.",
+    fixes:
+      "Expand your page titles to at least 30 characters. Ensure they are descriptive, include primary keywords, and accurately summarize the page's content.",
+    links: [
+      "https://developers.google.com/search/docs/appearance/title-link",
+      "https://moz.com/learn/seo/title-tag",
+    ],
+  },
+  {
+    id: 5,
+    title: "Missing Description",
+    description:
+      "Meta descriptions provide a summary of your page's content in search results. Missing descriptions can lead to lower click-through rates, as search engines may generate irrelevant snippets.",
+    fixes:
+      "Write unique and compelling meta descriptions for every page. Keep them under 160 characters, include primary keywords naturally, and use action-oriented language to encourage clicks.",
     links: [
       "https://developers.google.com/search/docs/appearance/snippet",
       "https://moz.com/learn/seo/meta-description",
     ],
   },
   {
-    id: 2,
-    title: "Broken Internal Links",
+    id: 6,
+    title: "Duplicated Descriptions",
     description:
-      "Broken internal links are links on your website that lead to non-existent pages (404 errors). These can harm user experience, reduce crawl efficiency, and dilute link equity. Broken links often occur due to page deletions, URL changes, or typos in the linking structure.",
+      "Duplicate meta descriptions can confuse search engines and reduce the effectiveness of your snippets. This can lead to lower click-through rates and missed opportunities for traffic.",
     fixes:
-      "Use tools like Screaming Frog or Ahrefs to identify broken links, update or remove them, and implement 301 redirects for permanently moved pages.",
+      "Audit your site for duplicate meta descriptions using tools like Screaming Frog or Google Search Console. Update each description to be unique, descriptive, and engaging.",
+    links: [
+      "https://developers.google.com/search/docs/advanced/crawling/duplicate-descriptions",
+      "https://moz.com/blog/duplicate-content-issues",
+    ],
+  },
+  {
+    id: 7,
+    title: "Descriptions > 160 Chars",
+    description:
+      "Meta descriptions longer than 160 characters may be truncated in search results, making them less effective. Users may not see the full context, which can reduce click-through rates.",
+    fixes:
+      "Shorten your meta descriptions to under 160 characters. Focus on the most important information, include primary keywords, and use action-oriented language.",
+    links: [
+      "https://developers.google.com/search/docs/appearance/snippet",
+      "https://moz.com/learn/seo/meta-description",
+    ],
+  },
+  {
+    id: 8,
+    title: "404 Response",
+    description:
+      "404 errors occur when a page cannot be found. These errors can harm user experience and SEO, as search engines cannot index the page. Broken links can also dilute your site's authority.",
+    fixes:
+      "Identify broken links using tools like Screaming Frog or Google Search Console. Update or remove broken links, and implement 301 redirects for permanently moved pages.",
     links: [
       "https://developers.google.com/search/docs/crawling-indexing/fix-broken-links",
       "https://ahrefs.com/blog/find-and-fix-broken-links/",
     ],
   },
   {
-    id: 3,
-    title: "Duplicate Content",
-    description:
-      "Duplicate content refers to identical or substantially similar content appearing on multiple pages, either within your site or across different domains. This can confuse search engines, leading to split ranking signals and lower visibility in search results. Common causes include URL variations, printer-friendly pages, or copied content.",
-    fixes:
-      "Use canonical tags to indicate the preferred version of a page, merge similar pages, and add noindex tags to low-value duplicate pages.",
-    links: [
-      "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls",
-      "https://moz.com/learn/seo/duplicate-content",
-    ],
-  },
-  {
-    id: 4,
-    title: "Slow Page Speed",
-    description:
-      "Page speed refers to how quickly your website loads for users. Slow-loading pages can lead to higher bounce rates, lower user engagement, and reduced rankings, especially on mobile devices. Factors like large image files, unoptimized code, and server issues can contribute to slow page speed.",
-    fixes:
-      "Compress images, enable browser caching, minify CSS/JS/HTML files, and use a Content Delivery Network (CDN) to improve load times.",
-    links: [
-      "https://developers.google.com/speed/docs/insights/OptimizeCSSDelivery",
-      "https://pagespeed.web.dev/",
-    ],
-  },
-  {
-    id: 5,
-    title: "Unoptimized Images",
-    description:
-      "Unoptimized images can significantly slow down your website and negatively impact user experience. Large image files increase page load times, while missing alt text can hinder accessibility and SEO. Properly optimized images improve performance and help search engines understand your content.",
-    fixes:
-      "Use next-gen formats like WebP, add descriptive alt text, specify image dimensions, and lazy load images below the fold.",
-    links: [
-      "https://developers.google.com/search/docs/appearance/google-images",
-      "https://web.dev/use-srcset-to-automatically-choose-the-right-image/",
-    ],
-  },
-  {
-    id: 6,
-    title: "Missing or Improper Structured Data",
-    description:
-      "Structured data is a standardized format used to provide information about a page and classify its content. Without proper structured data, search engines may struggle to understand your content, reducing the chances of rich results like featured snippets, carousels, or knowledge panels.",
-    fixes:
-      "Use JSON-LD format for structured data, test markup with Google’s Rich Results Test, and add relevant schema types (e.g., Article, Product, FAQ).",
-    links: [
-      "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data",
-      "https://schema.org/",
-    ],
-  },
-  {
-    id: 7,
-    title: "Thin Content",
-    description:
-      "Thin content refers to pages with little or no substantive value, such as pages with minimal text, auto-generated content, or copied material. These pages can harm your site’s credibility and rankings, as search engines prioritize high-quality, original content.",
-    fixes:
-      "Expand content to cover topics comprehensively, add original research or multimedia, and avoid keyword stuffing.",
-    links: [
-      "https://developers.google.com/search/docs/essentials/creating-helpful-content",
-      "https://moz.com/blog/thin-content-how-to-find-it-and-fix-it",
-    ],
-  },
-  {
-    id: 8,
-    title: "Poor Mobile Usability",
-    description:
-      "Mobile usability refers to how well your website functions on mobile devices. With the majority of web traffic coming from mobile devices, poor mobile usability can lead to higher bounce rates, lower engagement, and reduced rankings. Common issues include small tap targets, unreadable text, and intrusive interstitials.",
-    fixes:
-      "Use responsive design, avoid intrusive interstitials, ensure buttons are tappable, and test your site with Google’s Mobile-Friendly Test.",
-    links: [
-      "https://developers.google.com/search/docs/essentials/mobile-friendly",
-      "https://search.google.com/test/mobile-friendly",
-    ],
-  },
-  {
     id: 9,
-    title: "Unoptimized URLs",
+    title: "5XX Response",
     description:
-      "URLs are the addresses of your web pages and play a crucial role in SEO. Unoptimized URLs can be difficult for users and search engines to understand, reducing crawl efficiency and click-through rates. Common issues include long, dynamic, or keyword-stuffed URLs.",
+      "5XX errors indicate server-side issues, which can prevent users and search engines from accessing your site. These errors can harm your site's credibility and rankings.",
     fixes:
-      "Include primary keywords in URLs, use hyphens to separate words, avoid dynamic parameters, and keep URLs short and descriptive.",
+      "Check your server logs to identify the cause of 5XX errors. Contact your hosting provider or developer to resolve server issues. Monitor your site regularly to prevent future errors.",
     links: [
-      "https://developers.google.com/search/docs/advanced/guidelines/url-structure",
-      "https://moz.com/learn/seo/url",
+      "https://developers.google.com/search/docs/advanced/crawling/5xx-errors",
+      "https://moz.com/blog/5xx-errors",
     ],
   },
   {
     id: 10,
-    title: "Missing or Improper Heading Tags",
+    title: "H1 Missing",
     description:
-      "Heading tags (H1, H2, H3, etc.) are used to structure content and make it easier for users and search engines to understand. Missing or improperly used heading tags can lead to poor readability, reduced accessibility, and lower rankings.",
+      "H1 tags are the main heading of a page and are critical for SEO. Missing H1 tags can make it harder for search engines to understand the structure and content of your page.",
     fixes:
-      "Use one H1 tag per page, organize headings hierarchically, include keywords naturally, and ensure headings reflect the content below them.",
+      "Add a single, descriptive H1 tag to every page. Ensure it includes primary keywords and accurately reflects the page's content. Avoid using multiple H1 tags on a single page.",
     links: [
       "https://developers.google.com/search/docs/advanced/guidelines/webmaster-guidelines",
       "https://moz.com/learn/seo/headings",
@@ -121,74 +121,50 @@ export const FixesData = [
   },
   {
     id: 11,
-    title: "Lack of Backlinks",
+    title: "H2 Missing",
     description:
-      "Backlinks are links from other websites to your site and are a key factor in SEO. A lack of high-quality backlinks can limit your site’s authority and visibility in search results. Building backlinks requires creating valuable content and earning links from reputable sources.",
+      "H2 tags are subheadings that help structure your content. Missing H2 tags can reduce readability and make it harder for search engines to understand your content.",
     fixes:
-      "Create shareable content, reach out to influencers, submit your site to directories, and use broken link building to attract backlinks.",
+      "Use H2 tags to organize your content hierarchically. Include relevant keywords and ensure each H2 tag provides context for the section it introduces.",
     links: [
-      "https://developers.google.com/search/docs/advanced/guidelines/links",
-      "https://ahrefs.com/blog/link-building-strategies/",
+      "https://developers.google.com/search/docs/advanced/guidelines/webmaster-guidelines",
+      "https://moz.com/learn/seo/headings",
     ],
   },
   {
     id: 12,
-    title: "Unoptimized Title Tags",
+    title: "Low Content",
     description:
-      "Title tags are HTML elements that define the title of a web page and appear in search engine results. Unoptimized title tags can reduce click-through rates and rankings, as they fail to accurately describe the page’s content or include relevant keywords.",
+      "Pages with low content may not provide enough value to users or search engines. This can lead to lower rankings and reduced traffic.",
     fixes:
-      "Keep title tags under 60 characters, place primary keywords at the beginning, include brand names when relevant, and avoid duplicate titles.",
+      "Expand your content to cover topics comprehensively. Add original research, multimedia, or examples to increase the depth and value of your pages. Avoid keyword stuffing.",
     links: [
-      "https://developers.google.com/search/docs/appearance/title-link",
-      "https://moz.com/learn/seo/title-tag",
+      "https://developers.google.com/search/docs/essentials/creating-helpful-content",
+      "https://moz.com/blog/thin-content-how-to-find-it-and-fix-it",
     ],
   },
   {
     id: 13,
-    title: "No SSL Certificate",
+    title: "Missing Schema",
     description:
-      "An SSL certificate encrypts data transmitted between a user’s browser and your website, ensuring secure communication. Without an SSL certificate, your site will be marked as 'Not Secure' in browsers, which can deter users and harm rankings.",
+      "Schema markup helps search engines understand your content and can lead to rich results like featured snippets, carousels, or knowledge panels. Missing schema can reduce your visibility in search results.",
     fixes:
-      "Install an SSL certificate, update internal links to use HTTPS, set up 301 redirects from HTTP to HTTPS, and ensure all resources are served over HTTPS.",
+      "Add structured data to your pages using JSON-LD format. Test your markup with Google’s Rich Results Test and include relevant schema types (e.g., Article, Product, FAQ).",
     links: [
-      "https://developers.google.com/search/docs/advanced/security/https",
-      "https://web.dev/why-https-matters/",
+      "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data",
+      "https://schema.org/",
     ],
   },
   {
     id: 14,
-    title: "Lack of Social Media Integration",
+    title: "Large Images",
     description:
-      "Social media integration allows users to share your content and engage with your brand on social platforms. A lack of integration can limit your content’s reach and reduce opportunities for traffic and backlinks.",
+      "Large images can slow down your website, leading to poor user experience and lower rankings. Slow-loading pages can increase bounce rates and reduce conversions.",
     fixes:
-      "Add social sharing buttons, embed social media feeds, promote content on social platforms, and use Open Graph tags for better sharing.",
+      "Compress images to reduce file size without sacrificing quality. Use next-gen formats like WebP, specify image dimensions, and lazy load images below the fold.",
     links: [
-      "https://developers.google.com/search/docs/appearance/social-tags",
-      "https://moz.com/blog/social-media-seo",
-    ],
-  },
-  {
-    id: 15,
-    title: "Unoptimized Robots.txt",
-    description:
-      "The robots.txt file tells search engine crawlers which pages or files to access or ignore on your site. An unoptimized robots.txt file can block important pages from being indexed or allow low-value pages to be crawled, harming your SEO efforts.",
-    fixes:
-      "Ensure important pages are accessible, disallow crawling of low-value pages, and test your robots.txt file with Google Search Console.",
-    links: [
-      "https://developers.google.com/search/docs/advanced/robots/intro",
-      "https://moz.com/learn/seo/robots-txt",
-    ],
-  },
-  {
-    id: 16,
-    title: "Missing or Improper XML Sitemap",
-    description:
-      "An XML sitemap is a file that lists the URLs of your site, helping search engines discover and index your pages. A missing or improperly configured sitemap can lead to slower indexing and missed opportunities for ranking.",
-    fixes:
-      "Create an XML sitemap, submit it to Google Search Console, and ensure it includes all important pages while excluding low-value or duplicate URLs.",
-    links: [
-      "https://developers.google.com/search/docs/advanced/sitemaps/overview",
-      "https://moz.com/learn/seo/xml-sitemaps",
+      "https://developers.google.com/search/docs/appearance/google-images",
+      "https://web.dev/use-srcset-to-automatically-choose-the-right-image/",
     ],
   },
 ];

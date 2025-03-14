@@ -32,7 +32,6 @@ const InputZone = () => {
     try {
       const result: CrawlResult = await invoke("crawl_domain", { url });
       setCrawlData(result);
-      console.log(result, "Global crawl");
 
       // set the data / result into the session storage
       sessionStorage.setItem("GlobalCrawldata", JSON.stringify(result));

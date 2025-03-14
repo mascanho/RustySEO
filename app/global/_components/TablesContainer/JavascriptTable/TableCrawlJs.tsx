@@ -21,9 +21,13 @@ import {
 } from "./tableLayout";
 import SelectFilter from "../components/SelectFilter";
 import { TbColumns3 } from "react-icons/tb";
-import DownloadButton from "../components/DownloadButton";
+import DownloadButton from "./DownloadButton";
 import useFilterTableURL from "@/app/Hooks/useFilterTableUrl";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import { toast } from "sonner";
+import { writeFile } from "@tauri-apps/plugin-fs";
+import { save } from "@tauri-apps/plugin-dialog";
+import { invoke } from "@tauri-apps/api/core";
 
 interface TableCrawlProps {
   rows: Array<{
@@ -177,7 +181,10 @@ const TableRow = ({
   clickedCell,
   handleCellClick,
 }: TableRowProps) => {
-  const rowData = useMemo(() => [index + 1, row?.url || ""], [row, index]);
+  const rowData = useMemo(
+    () => [index + 1, row?.url || row || ""],
+    [row, index],
+  );
 
   return useMemo(
     () => (
@@ -274,6 +281,7 @@ const TableCrawlJs = ({
   rows,
   rowHeight = 41,
   overscan = 30,
+  tabName,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
   const [columnAlignments, setColumnAlignments] = useState(
@@ -284,6 +292,48 @@ const TableCrawlJs = ({
   const [columnVisibility, setColumnVisibility] = useState(
     headerTitles.map(() => true),
   );
+  const { isGeneratingExcel, setIsGeneratingExcel, setIssuesView } =
+    useGlobalCrawlStore();
+
+  // SET THE TAURI STUFF FOR THE DOWNLOAD
+  const handleDownload = async () => {
+    if (!rows.length) {
+      toast.error("No data to download");
+      return;
+    }
+
+    // Set the loader state to true
+    setIsGeneratingExcel(true);
+    try {
+      // Call the backend command to generate the Excel file
+
+      const fileBuffer = await invoke("create_excel_two_cols", {
+        data: rows,
+      });
+
+      setIsGeneratingExcel(false);
+      // Prompt the user to choose a file path to save the Excel file
+      const filePath = await save({
+        filters: [
+          {
+            name: "Excel File",
+            extensions: ["xlsx"],
+          },
+        ],
+        defaultPath: `RustySEO-${tabName}.xlsx`, // Default file name
+      });
+
+      if (filePath) {
+        // Convert the Uint8Array to a binary file and save it
+        await writeFile(filePath, new Uint8Array(fileBuffer));
+        toast.success("Excel file saved successfully!");
+      } else {
+        console.log("User canceled the save dialog.");
+      }
+    } catch (error) {
+      console.error("Error generating or saving Excel file:", error);
+    }
+  };
 
   // State to track the clicked cell (rowIndex, cellIndex)
   const [clickedCell, setClickedCell] = useState<{
@@ -455,10 +505,9 @@ const TableCrawlJs = ({
           className="w-full p-1 pl-2 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
         />
         <DownloadButton
-          data={"data"}
-          download={""}
-          loading={""}
-          setLoading={""}
+          download={handleDownload}
+          loading={isGeneratingExcel}
+          setLoading={setIsGeneratingExcel}
         />
         <div className="mr-1.5">
           <ColumnPicker

@@ -115,7 +115,7 @@ const GSCanalytics = () => {
       </div>
       <div className="space-y-6 h-full flex flex-col ">
         {gscData.length === 0 ? (
-          <div className="text-center text-gray-500 m-auto">
+          <div className="text-center h-[calc(100vh-15rem)] text-gray-500 flex flex-col justify-center items-center">
             <p>No data found</p>
             <p>Please make sure you have your Google Search API enabled.</p>
             <p>Refresh the table to sync with the latest data.</p>
