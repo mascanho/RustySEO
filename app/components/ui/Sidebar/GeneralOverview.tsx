@@ -67,7 +67,7 @@ export default function GeneralOverview({
 
   return (
     <>
-      <section className="w-full h-[calc(50vh-160px)]  overflow-auto relative mt-0.5 bg-transparent">
+      <section className="w-full h-[calc(52vh-160px)]  overflow-auto relative mt-0.5 bg-transparent">
         <div className="container mx-auto max-w-4xl h-2">
           <div className="grid h-full ">
             {/* CHECKS THE CORE WEB VITALS */}

@@ -68,8 +68,8 @@ const generateLogs = (
       level: clarityApi !== "" ? "success" : "error",
       message:
         clarityApi !== ""
-          ? "MS Clarity is not configured"
-          : "MS Clarity: Enabled",
+          ? "MS Clarity: Enabled"
+          : "MS Clarity is not configured",
     },
     {
       id: Date.now() + 6,

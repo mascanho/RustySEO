@@ -93,7 +93,7 @@ const RankingInfo = ({
   }
 
   return (
-    <div className="w-full ranking-table max-w-full  h-[calc(50rem-260px)] overflow-auto bg-brand-bright/5 dark:bg-transparent ">
+    <div className="w-full ranking-table max-w-full bg-gray-50  h-[calc(50rem-250px)] overflow-auto bg-brand-bright/5 dark:bg-transparent ">
       <table className="w-full text-xs ">
         <thead className="bg-gray-100 dark:bg-gray-700 sticky top-0">
           <tr>

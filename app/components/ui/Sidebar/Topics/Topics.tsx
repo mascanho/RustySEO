@@ -85,7 +85,7 @@ export default function Component({ bodyElements }: ComponentProps) {
   console.log(topicsJson, "topicsJson");
 
   return (
-    <div className="w-full dark:bg-brand-darker overflow-y-auto h-[28rem] overflow-x-hidden">
+    <div className="w-full dark:bg-brand-darker overflow-y-auto h-[31rem] overflow-x-hidden">
       {loadingTopics && (
         <div className="flex items-center justify-center h-full">
           <p className="text-gray-600 text-sm">Loading topics...</p>

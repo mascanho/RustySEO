@@ -234,7 +234,7 @@ export const OpenGraphCard = ({
                 <img
                   src={openGraphDetails?.image}
                   alt="OpenGraph Image"
-                  className="rounded-md w-full h-full object-cover"
+                  className="rounded-md w-full h-full max-h-64 object-cover"
                 />
               </div>
             )}

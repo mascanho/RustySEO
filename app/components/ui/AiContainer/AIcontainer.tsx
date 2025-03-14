@@ -91,9 +91,6 @@ const AIcontainer = () => {
   const contentKeywords = contentStore.keywords || "No page crawled yet";
   const contentVideo = contentStore.video || "No page crawled yet";
 
-  // MANAGE PATHS AND RUSTY CHAT MESSAGES ACCORDINGLY
-  const [myMessage, setMyMessage] = useState<string>("");
-
   const pathname = usePathname();
 
   const scrollToBottom = () => {
@@ -223,15 +220,11 @@ const AIcontainer = () => {
     const deepRusty =
       "You are RustySEO, a SEO/GEO marketing toolkit. You have the knowledge of the greatest SEOs and have been developed by google to help improve websites";
 
-    if (pathname === "/") {
-      setMyMessage(shallowrusty);
-    } else {
-      setMyMessage(deepRusty);
-    }
+    const prompt = pathname === "/" ? shallowRusty : deepRusty;
 
     try {
       const response = await invoke("ask_rusty_command", {
-        prompt: myMessage,
+        prompt: prompt,
       });
 
       const assistantMessage: Message = {
@@ -283,6 +276,7 @@ const AIcontainer = () => {
       </div>
     );
   };
+
   const renderMessages = () => {
     switch (selectedModel) {
       case "ollama":
