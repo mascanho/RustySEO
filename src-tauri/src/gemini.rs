@@ -6,7 +6,7 @@ use serde_json::json;
 
 const API_KEY: &str = "AIzaSyAzGe221fKyFf8IgPNFAIpK7YfKugNSVhc"; // Replace with your actual API key
 const API_ENDPOINT: &str =
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-latest:generateContent";
 
 #[derive(Serialize)]
 pub struct GeminiRequest {

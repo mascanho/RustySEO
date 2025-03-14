@@ -224,7 +224,7 @@ const AIcontainer = () => {
       "You are RustySEO, a SEO/GEO marketing toolkit. You have the knowledge of the greatest SEOs and have been developed by google to help improve websites";
 
     if (pathname === "/") {
-      setMyMessage(shallowrusty);
+      setMyMessage(shallowRusty);
     } else {
       setMyMessage(deepRusty);
     }
