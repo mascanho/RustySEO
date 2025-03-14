@@ -843,7 +843,10 @@ const Home: React.FC<HomeProps> = () => {
             <Tabs.Panel value="kws">
               <KeywordAnalytics />
             </Tabs.Panel>{" "}
-            <Tabs.Panel value="gsc">
+            <Tabs.Panel
+              value="gsc"
+              className="h-[calc(100vh-12vh)] overflow-hidden"
+            >
               <GSCcontainer />
             </Tabs.Panel>{" "}
             <Tabs.Panel value="semrush">
