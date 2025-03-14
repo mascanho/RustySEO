@@ -193,7 +193,7 @@ export default function Page() {
                 Content
               </Tabs.Tab>
 
-              <Tabs.Tab value="settings">Testing</Tabs.Tab>
+              {/* <Tabs.Tab value="settings">Testing</Tabs.Tab> */}
             </Tabs.List>
           </aside>
           {/* Tabs Panel for Domain */}
