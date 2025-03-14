@@ -364,7 +364,10 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-4">View</MenubarTrigger>
             <MenubarContent>
-              <MenubarItem onClick={openPanes}>
+              <MenubarItem
+                disabled={pathname === "/global"}
+                onClick={openPanes}
+              >
                 <FiEye className="mr-2" />
                 Panels
               </MenubarItem>
@@ -427,10 +430,11 @@ const TopMenuBar = () => {
                 <FiTool className="mr-2" />
                 Headings SERP
               </MenubarItem>
-              <MenubarItem onClick={() => router.push("/topicModeling/")}>
-                <FiTool className="mr-2" />
-                Topic Modeling
-              </MenubarItem>
+              {/* TODO: FIX THE TOPIC MODELING PART */}
+              {/* <MenubarItem onClick={() => router.push("/topicModeling/")}> */}
+              {/*   <FiTool className="mr-2" /> */}
+              {/*   Topic Modeling */}
+              {/* </MenubarItem> */}
             </MenubarContent>
           </MenubarMenu>
 

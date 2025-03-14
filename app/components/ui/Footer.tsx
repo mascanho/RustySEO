@@ -239,19 +239,20 @@ const Footer = () => {
                 </span>
               </div>
 
-              <div className="relative group hover:delay-1000">
-                <ImGoogle3
-                  onClick={() =>
-                    visibility.serpKeywords
-                      ? hideSerpKeywords()
-                      : showSerpKeywords()
-                  }
-                  className={iconClasses}
-                />
-                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
-                  Google Crawler
-                </div>
-              </div>
+              {/* TODO: FIX THE GOOGLE CRAWL ISSUE  */}
+              {/* <div className="relative group hover:delay-1000"> */}
+              {/*   <ImGoogle3 */}
+              {/*     onClick={() => */}
+              {/*       visibility.serpKeywords */}
+              {/*         ? hideSerpKeywords() */}
+              {/*         : showSerpKeywords() */}
+              {/*     } */}
+              {/*     className={iconClasses} */}
+              {/*   /> */}
+              {/*   <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap"> */}
+              {/*     Google Crawler */}
+              {/*   </div> */}
+              {/* </div> */}
 
               {/* SEO HELPKIT */}
               <div className="relative group hover:delay-1000">
