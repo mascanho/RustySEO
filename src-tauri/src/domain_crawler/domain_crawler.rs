@@ -130,7 +130,7 @@ async fn process_url(
     state: Arc<Mutex<CrawlerState>>,
     app_handle: &tauri::AppHandle,
 ) -> Result<DomainCrawlResults, String> {
-    println!("Processing URL: {}", url);
+    // println!("Processing URL: {}", url);
     let response_result = tokio::time::timeout(
         Duration::from_secs(60),
         fetch_with_exponential_backoff(client, url.as_str()),
@@ -263,7 +263,7 @@ async fn process_url(
         state.crawled_urls += 1;
         state.visited.insert(url.to_string());
         state.pending_urls.remove(url.as_str());
-        println!("Crawled URL: {}", url);
+        // println!("Crawled URL: {}", url);
 
         let links = links_selector::extract_links(&body, base_url);
         for link in links {
@@ -279,7 +279,7 @@ async fn process_url(
                 state.queue.push_back(link.clone());
                 state.total_urls += 1;
                 state.pending_urls.insert(link_str.to_string());
-                println!("Added to queue: {}", link);
+                // println!("Added to queue: {}", link);
             }
         }
 
@@ -372,7 +372,7 @@ pub async fn crawl_domain(
             }
             let batch_size = std::cmp::min(BATCH_SIZE, state.queue.len());
             let batch: Vec<Url> = state.queue.drain(..batch_size).collect();
-            println!("Processing batch of {} URLs", batch.len());
+            // println!("Processing batch of {} URLs", batch.len());
             batch
         };
 
@@ -401,7 +401,7 @@ pub async fn crawl_domain(
                             if retries >= MAX_RETRIES {
                                 let mut state = state.lock().await;
                                 state.failed_urls.insert(url.to_string());
-                                println!("Marked as failed after retries: {}", url);
+                                // println!("Marked as failed after retries: {}", url);
                                 break Ok(DomainCrawlResults {
                                     url: url.to_string(),
                                     status_code: 0, // Indicates failure
@@ -435,11 +435,11 @@ pub async fn crawl_domain(
                         && !state.visited.contains(url.as_str())
                     {
                         state.queue.push_back(url.clone()); // Re-queue if not marked
-                        println!("Re-queued URL due to error: {}", url);
+                                                            // println!("Re-queued URL due to error: {}", url);
                     }
                 }
                 Err(e) => {
-                    eprintln!("Task panicked or was cancelled: {:?}", e);
+                    // eprintln!("Task panicked or was cancelled: {:?}", e);
                     // URL isn’t available here; rely on pending_urls to catch
                 }
             }

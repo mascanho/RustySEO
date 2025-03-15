@@ -27,7 +27,7 @@ async fn fetch_and_update_cache() -> Result<(), String> {
     // Compare new data with cached data
     if let Some(cached_data) = &*cache_lock {
         if *cached_data == new_data {
-            println!("Data is the same, keeping the cache.");
+            // println!("Data is the same, keeping the cache.");
             return Ok(());
         }
     }
@@ -41,7 +41,7 @@ async fn fetch_and_update_cache() -> Result<(), String> {
 pub async fn extract_html(body: &str) -> bool {
     // Fetch and update the cache if necessary
     if let Err(e) = fetch_and_update_cache().await {
-        eprintln!("Error updating cache: {}", e);
+        // eprintln!("Error updating cache: {}", e);
         return false;
     }
 
@@ -59,11 +59,11 @@ pub async fn extract_html(body: &str) -> bool {
         None => return false,
     };
 
-    println!("text: {:#?}", text_value);
+    // println!("text: {:#?}", text_value);
 
     // Early exit if text_value is empty string
     if text_value.is_empty() {
-        println!("No custom searched has been configured");
+        // println!("No custom searched has been configured");
         return false;
     } else {
         // Parse the HTML document

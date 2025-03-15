@@ -87,7 +87,7 @@ export default function Page() {
       const result = await invoke("domain_crawl_command", {
         domain: url,
       });
-      console.log("Crawl Result:", result);
+      console.log("%cCrawl Result:", "color: red;", result);
     } catch (error) {
       console.error("Failed to execute domain crawl command:", error);
       console.log("failed to crawl:", url);
