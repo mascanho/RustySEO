@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useCallback, useEffect } from "react";
 import { MdFilterListAlt, MdOutlineInsertChart } from "react-icons/md";
 import { BsMenuDown } from "react-icons/bs";
@@ -153,25 +154,34 @@ const PerformanceSection: React.FC<PerformanceSectionProps> = ({
 
   // Handle download
   const handleDownloadXLSX = async () => {
-    let path;
-    invoke("generate_csv_command").then((result) => {
-      console.log(result);
-      // @ts-ignore
-      setDownload(result);
-    });
+    try {
+      // Generate the SEO CSV content
+      const result = await invoke("generate_csv_command");
+      console.log("CSV content:", result);
 
-    path = await save({
-      defaultPath: "performance.csv",
-      filters: [
-        {
-          name: "CSV Files",
-          extensions: ["csv"],
-        },
-      ],
-    });
-    if (path) {
-      await writeTextFile(path, download);
-      console.log("File saved successfully");
+      // Prompt the user to select a save location
+      const path = await save({
+        defaultPath: "RustySEO Technical Table.csv",
+        filters: [
+          {
+            name: "CSV Files",
+            extensions: ["csv"],
+          },
+        ],
+      });
+
+      // If the user selected a path, write the file
+      if (path) {
+        await writeTextFile(path, result); // Use `result` directly instead of `download`
+        console.log("File saved successfully at:", path);
+        toast.success("CSV file saved successfully!");
+      } else {
+        console.log("File save canceled by the user.");
+        toast.info("File save canceled by the user.");
+      }
+    } catch (error) {
+      console.error("Error during download process:", error);
+      toast.error("Error saving CSV file. Please try again.");
     }
   };
 

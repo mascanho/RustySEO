@@ -1,11 +1,10 @@
 use csv::Writer;
-use directories::{ProjectDirs, UserDirs};
+use directories::ProjectDirs;
 use rusqlite::{Connection, Result as SqlResult};
 use std::{error::Error, fs, path::Path};
 use tauri::command;
 
-// Define the ResultRecord struct if needed
-
+// Define the ResultRecord struct
 pub struct ResultRecord {
     pub id: Option<i64>,                   // For INTEGER PRIMARY KEY AUTOINCREMENT
     pub date: String,                      // For TEXT (assuming ISO 8601 format for date)
@@ -23,6 +22,7 @@ pub struct ResultRecord {
     pub total_byte_weight: Option<f64>,    // For FLOAT
 }
 
+// Define the OnPageResults struct
 pub struct OnPageResults {
     pub url: String,
     pub title: String,
@@ -36,7 +36,7 @@ pub fn generate_csv(data: Vec<Vec<String>>, file_path: &Path) -> Result<String, 
     // Create a new CSV writer that writes to the specified file path
     let mut wtr = Writer::from_path(file_path).map_err(|e| e.to_string())?;
 
-    //Write each row of data
+    // Write each row of data
     for row in data.clone() {
         wtr.write_record(&row).map_err(|e| e.to_string())?;
     }
@@ -53,6 +53,55 @@ pub fn generate_csv(data: Vec<Vec<String>>, file_path: &Path) -> Result<String, 
     Ok(csv_data)
 }
 
+// Initialize the database and create the `technical_data` table if it doesn't exist
+fn initialize_db(db_path: &Path) -> Result<(), String> {
+    // Ensure the directory exists
+    if let Some(parent) = db_path.parent() {
+        fs::create_dir_all(parent).map_err(|e| e.to_string())?;
+    }
+
+    // Create a new SQLite database connection
+    let conn = Connection::open(db_path).map_err(|e| e.to_string())?;
+
+    // Create the `technical_data` table if it doesn't exist
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS technical_data (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            url TEXT NOT NULL,
+            title TEXT,
+            description TEXT,
+            keywords TEXT,
+            headings TEXT
+        )",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+
+    // Create the `results` table if it doesn't exist
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS results (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            url TEXT NOT NULL,
+            strategy TEXT,
+            performance REAL,
+            fcp REAL,
+            lcp REAL,
+            tti REAL,
+            tbt REAL,
+            cls REAL,
+            dom_size REAL,
+            speed_index REAL,
+            server_response_time REAL,
+            total_byte_weight REAL
+        )",
+        [],
+    )
+    .map_err(|e| e.to_string())?;
+
+    Ok(())
+}
+
 // Fetch SEO ONPAGE data from the database and generate a CSV file
 #[command]
 pub fn generate_seo_csv() -> Result<String, String> {
@@ -63,6 +112,9 @@ pub fn generate_seo_csv() -> Result<String, String> {
     // Define the directory for the DB file
     let db_dir = project_dirs.data_dir();
     let db_path = db_dir.join("crawl_results.db");
+
+    // Initialize the database (create tables if they don't exist)
+    initialize_db(&db_path)?;
 
     // Create a new SQLite database connection
     let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
@@ -75,11 +127,11 @@ pub fn generate_seo_csv() -> Result<String, String> {
     let data_iter = stmt
         .query_map([], |row| {
             Ok(vec![
-                row.get::<_, String>(0)?,
-                row.get::<_, String>(1)?,
-                row.get::<_, String>(2)?,
-                row.get::<_, String>(3)?,
-                row.get::<_, String>(4)?,
+                row.get::<_, String>(0)?, // URL
+                row.get::<_, String>(1)?, // Title
+                row.get::<_, String>(2)?, // Description
+                row.get::<_, String>(3)?, // Keywords
+                row.get::<_, String>(4)?, // Headings
             ])
         })
         .map_err(|e| e.to_string())?;
@@ -117,10 +169,8 @@ pub fn generate_csv_command() -> Result<String, String> {
     let db_dir = project_dirs.data_dir(); // Use data_dir() for application data
     let db_path = db_dir.join("crawl_results.db");
 
-    // Ensure the directory exists
-    if !db_dir.exists() {
-        fs::create_dir_all(db_dir).map_err(|e| e.to_string())?;
-    }
+    // Initialize the database (create tables if they don't exist)
+    initialize_db(&db_path)?;
 
     // Create a new SQLite database connection
     let conn = Connection::open(&db_path).map_err(|e| e.to_string())?;
@@ -168,10 +218,6 @@ pub fn generate_csv_command() -> Result<String, String> {
         .collect::<Result<_, _>>()?;
 
     // Define the file path for the CSV file
-    let download_dir = project_dirs.data_local_dir();
-
-    println!("Download directory: {:?}", download_dir);
-
     let file_path = project_dirs.data_dir().join("Performance.csv");
 
     // Add headers
@@ -194,6 +240,5 @@ pub fn generate_csv_command() -> Result<String, String> {
     data_with_headers.extend(data);
 
     // Generate the CSV file
-
     generate_csv(data_with_headers, &file_path)
 }
