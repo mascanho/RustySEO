@@ -58,11 +58,11 @@ const HistoryDomainCrawls = () => {
   const fetchData = async () => {
     try {
       const result = await invoke("read_domain_results_history_table");
-      console.log("Data fetched successfully:", result);
+      // console.log("Data fetched successfully:", result);
       setCrawlHistory(Array.isArray(result) ? result : []); // Ensure result is an array
       setError(null); // Clear any previous error
     } catch (error) {
-      console.error("Error fetching data:", error);
+      // console.error("Error fetching data:", error);
       setError("Failed to fetch crawl history. Check the console for details.");
     }
   };
@@ -70,7 +70,7 @@ const HistoryDomainCrawls = () => {
   // Add new crawl data to the database
   const addDataToDatabase = async () => {
     if (crawlData.length === 0) {
-      console.warn("No crawl data available to add to database");
+      // console.warn("No crawl data available to add to database");
       return;
     }
 
@@ -101,11 +101,11 @@ const HistoryDomainCrawls = () => {
       const result = await invoke("create_domain_results_history", {
         data: [newEntry],
       });
-      console.log("Data added to database:", result);
+      // console.log("Data added to database:", result);
       setError(null);
       await fetchData(); // Refresh the data after adding a new entry
     } catch (error) {
-      console.error("Error adding data to database:", error);
+      // console.error("Error adding data to database:", error);
       setError(
         "Failed to add crawl data to database. Check the console for details.",
       );
@@ -117,10 +117,10 @@ const HistoryDomainCrawls = () => {
     const initialize = async () => {
       try {
         await invoke("create_domain_results_table");
-        console.log("Table created or already exists");
+        // console.log("Table created or already exists");
         await fetchData(); // Fetch initial data
       } catch (error) {
-        console.error("Error initializing:", error);
+        // console.error("Error initializing:", error);
         setError(
           "Failed to initialize crawl history. Check the console for details.",
         );
@@ -140,7 +140,7 @@ const HistoryDomainCrawls = () => {
   };
 
   useEffect(() => {
-    console.log(crawlSessionTotalArray, "This is the arr from useEffect");
+    // console.log(crawlSessionTotalArray, "This is the arr from useEffect");
     addDataToDatabase();
   }, [crawlSessionTotalArray.length]);
 

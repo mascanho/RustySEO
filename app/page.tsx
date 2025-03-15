@@ -597,8 +597,8 @@ const Home: React.FC<HomeProps> = () => {
         <section className="mt-1 relative h-[calc(100vh-8.6rem)] overflow-x-hidden pt-0 px-1.5 side-scrollbar">
           <Tabs defaultValue="first">
             <div className="transition-all   ease-in  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-1 top-[70px]  transform dark:bg-brand-darker  pb-0">
-              <Tabs.List justify="center" className="dark:text-white">
-                <Tabs.Tab value="first">
+              <Tabs.List justify="center" className="dark:text-white pb-[2px]">
+                <Tabs.Tab value="first" className="pb-2">
                   <CgPerformance className="inline-block text-sm mr-1 mb-[1px]" />{" "}
                   Diagnostics
                 </Tabs.Tab>
@@ -845,7 +845,7 @@ const Home: React.FC<HomeProps> = () => {
             </Tabs.Panel>{" "}
             <Tabs.Panel
               value="gsc"
-              className="h-[calc(100vh-12vh)] overflow-hidden"
+              className="overflow-hidden h-[calc(100vh-140px)] "
             >
               <GSCcontainer />
             </Tabs.Panel>{" "}

@@ -102,8 +102,8 @@ const GSCanalytics = () => {
   }, [keywords, sortConfig]);
 
   return (
-    <div className="px-2 h-[calc(100vh-80px)]   overflow-x-hidden overflow-y-hidden dark:text-white/50 ">
-      <div className="flex items-center gap-2 mb-2">
+    <div className="px-2 h-[calc(100vh-90px)]   overflow-x-hidden overflow-y-hidden dark:text-white/50 ">
+      <div className="flex items-center gap-2 mb-2 ">
         <h1 className="text-2xl font-bold">Google Search Console</h1>
         <button
           onClick={handleFetchGSCdataFromDB}

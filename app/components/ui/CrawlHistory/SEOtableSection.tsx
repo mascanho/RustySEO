@@ -154,24 +154,34 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
 
   // Handle download
   const handleDownloadXLSX = async () => {
-    let path;
-    invoke("generate_seo_csv").then((result) => {
-      console.log(result);
-      setDownload(result);
-    });
+    try {
+      // Generate the SEO CSV content
+      const result = await invoke("generate_seo_csv");
+      console.log("CSV content:", result);
 
-    path = await save({
-      defaultPath: "seo.csv",
-      filters: [
-        {
-          name: "CSV Files",
-          extensions: ["csv"],
-        },
-      ],
-    });
-    if (path) {
-      await writeTextFile(path, download);
-      console.log("File saved successfully");
+      // Prompt the user to select a save location
+      const path = await save({
+        defaultPath: "seo.csv",
+        filters: [
+          {
+            name: "CSV Files",
+            extensions: ["csv"],
+          },
+        ],
+      });
+
+      // If the user selected a path, write the file
+      if (path) {
+        await writeTextFile(path, result); // Use `result` directly instead of `download`
+        console.log("File saved successfully at:", path);
+        toast.success("CSV file saved successfully!");
+      } else {
+        console.log("File save canceled by the user.");
+        toast.info("File save canceled by the user.");
+      }
+    } catch (error) {
+      console.error("Error during download process:", error);
+      toast.error("Error saving CSV file. Please try again.");
     }
   };
 

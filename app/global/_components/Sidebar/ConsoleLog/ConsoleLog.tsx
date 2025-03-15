@@ -28,7 +28,7 @@ const generateLogs = (
   gscCredentials: [],
   clarityApi: "",
 ): LogEntry[] => {
-  console.log(ga4ID, "GA4 ID");
+  // console.log(ga4ID, "GA4 ID");
 
   const logs: LogEntry[] = [
     {

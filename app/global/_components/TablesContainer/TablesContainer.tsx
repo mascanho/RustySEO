@@ -173,8 +173,6 @@ export default function Home() {
     return linksWithAnchors; // Return the array of objects containing unique links and anchors
   }, [debouncedCrawlData]);
 
-  console.log(filteredCssArr, "CSS");
-
   const filteredCustomSearch = useMemo(() => {
     // Early return if no crawlData
     if (!crawlData) {
