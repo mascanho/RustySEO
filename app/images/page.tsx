@@ -158,6 +158,7 @@ export default function ImageOptimizer() {
     setFileSize(estimatedSize);
   }, [dimensions, quality]);
 
+  // DOWNLOAD THE IMAGE
   const saveImage = async (img) => {
     const base64Data = img.src.split(",")[1];
     const binaryData = Uint8Array.from(atob(base64Data), (c) =>
@@ -167,15 +168,30 @@ export default function ImageOptimizer() {
 
     const fileName = `optimized_${img.format}.${img.format}`;
 
-    try {
-      await writeFile(fileName, binaryData, {
-        dir: BaseDirectory.Download,
-      });
-      alert(`Image saved as ${fileName} in your Downloads folder.`);
-    } catch (error) {
-      console.error("Failed to save the file:", error);
-      alert("Failed to save the file. Please try again.");
+    // Prompt the user to confirm before saving the image
+    const userConfirmed = window.confirm(
+      `Do you want to save the image as ${fileName}?`,
+    );
+
+    if (userConfirmed) {
+      try {
+        await writeFile(fileName, binaryData, {
+          dir: BaseDirectory.Download,
+        });
+        alert(`Image saved as ${fileName} in your Downloads folder.`);
+      } catch (error) {
+        console.error("Failed to save the file:", error);
+        alert("Failed to save the file. Please try again.");
+      }
+    } else {
+      alert("Save operation cancelled.");
     }
+  };
+
+  const handleReupload = () => {
+    setImage(null);
+    setOptimizedImages([]);
+    setIsProcessing(false);
   };
 
   const handleReupload = () => {
