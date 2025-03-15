@@ -119,7 +119,7 @@ const PageSchemaAI = ({
               </TooltipTrigger>
               <TooltipContent
                 side="left"
-                className="p-2 max-w-md h-[300px] overflow-y-auto custom-scrollbar mb-20"
+                className="p-2 max-w-md h-[300px] overflow-y-auto custom-scrollbar mb-36"
               >
                 {formatFeedback(geminiFeedback)}
               </TooltipContent>
