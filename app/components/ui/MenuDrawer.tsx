@@ -163,7 +163,9 @@ function MenuDrawer() {
   return (
     <>
       <KeywordSerp />
-      <div className="items-center hidden md:flex  z-[10] absolute top-[9px] left-2">
+      <div
+        className={`items-center hidden md:flex  z-[10] absolute top-[9px] ${pathname === "/images" ? "pt-1" : ""} left-2`}
+      >
         <div className="flex items-center flex bg-transparent rounded-full">
           <Menu>
             <Menu.Target>

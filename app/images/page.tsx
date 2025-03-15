@@ -1,7 +1,11 @@
 // @ts-nocheck
 "use client";
 
-import { writeFile, BaseDirectory } from "@tauri-apps/plugin-fs";
+import {
+  writeFile,
+  BaseDirectory,
+  writeBinaryFile,
+} from "@tauri-apps/plugin-fs";
 import React, { useState, useCallback, useEffect } from "react";
 import {
   Card,
@@ -27,6 +31,8 @@ import { useDropzone } from "react-dropzone";
 import { invoke } from "@tauri-apps/api/core";
 import { UploadIcon } from "lucide-react";
 import Confetti from "react-confetti";
+import { save } from "@tauri-apps/plugin-dialog";
+import { toast } from "sonner";
 
 export default function ImageOptimizer() {
   const [image, setImage] = useState(null);
@@ -158,40 +164,41 @@ export default function ImageOptimizer() {
     setFileSize(estimatedSize);
   }, [dimensions, quality]);
 
-  // DOWNLOAD THE IMAGE
   const saveImage = async (img) => {
-    const base64Data = img.src.split(",")[1];
-    const binaryData = Uint8Array.from(atob(base64Data), (c) =>
-      c.charCodeAt(0),
-    );
-    console.log(binaryData, "Optimizing button");
+    try {
+      // Extract the base64 data from the image source
+      const base64Data = img.src.split(",")[1];
+      const binaryData = Uint8Array.from(atob(base64Data), (c) =>
+        c.charCodeAt(0),
+      );
 
-    const fileName = `optimized_${img.format}.${img.format}`;
+      // Define the default file name
+      const fileName = `optimized_${img.format}.${img.format}`;
 
-    // Prompt the user to confirm before saving the image
-    const userConfirmed = window.confirm(
-      `Do you want to save the image as ${fileName}?`,
-    );
+      // Prompt the user to select a save location
+      const path = await save({
+        defaultPath: fileName,
+        filters: [
+          {
+            name: "Image Files",
+            extensions: [img.format], // e.g., ['png', 'jpg', 'jpeg']
+          },
+        ],
+      });
 
-    if (userConfirmed) {
-      try {
-        await writeFile(fileName, binaryData, {
-          dir: BaseDirectory.Download,
-        });
-        alert(`Image saved as ${fileName} in your Downloads folder.`);
-      } catch (error) {
-        console.error("Failed to save the file:", error);
-        alert("Failed to save the file. Please try again.");
+      // If the user selected a path, write the file
+      if (path) {
+        await writeFile(path, binaryData);
+        console.log("Image saved successfully at:", path);
+        toast.success("Image saved successfully!");
+      } else {
+        console.log("Image save canceled by the user.");
+        toast.info("Image save canceled by the user.");
       }
-    } else {
-      alert("Save operation cancelled.");
+    } catch (error) {
+      console.error("Error during save process:", error);
+      toast.error("Error saving image. Please try again.");
     }
-  };
-
-  const handleReupload = () => {
-    setImage(null);
-    setOptimizedImages([]);
-    setIsProcessing(false);
   };
 
   const handleReupload = () => {
