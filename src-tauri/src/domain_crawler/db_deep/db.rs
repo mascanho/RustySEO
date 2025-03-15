@@ -229,7 +229,7 @@ pub async fn fetch_custom_search() -> Result<Vec<ExtractorConfig>, String> {
         std::fs::create_dir_all(&db_dir).expect("Failed to create directory");
     }
 
-    println!("Using database file at: {:?}", db_path);
+    // println!("Using database file at: {:?}", db_path);
 
     // Initialize the connection pool with the correct path
     let manager = SqliteConnectionManager::file(db_path);
