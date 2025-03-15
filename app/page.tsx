@@ -845,7 +845,7 @@ const Home: React.FC<HomeProps> = () => {
             </Tabs.Panel>{" "}
             <Tabs.Panel
               value="gsc"
-              className="h-[calc(100vh-12vh)] overflow-hidden"
+              className="overflow-hidden h-[calc(100vh-140px)] "
             >
               <GSCcontainer />
             </Tabs.Panel>{" "}
