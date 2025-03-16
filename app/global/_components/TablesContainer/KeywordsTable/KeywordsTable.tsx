@@ -197,7 +197,7 @@ const TableRow = ({
     const keywordsDisplay = keywordStrings.join(", ");
 
     // Return the row data
-    return [index + 1, keywordsDisplay, row?.url || "N/A"];
+    return [index + 1, row?.url || "N/A", keywordsDisplay || "N/A"];
   }, [row, index]);
 
   return useMemo(

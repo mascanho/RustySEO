@@ -11,4 +11,4 @@ export const initialColumnAlignments = [
   "left", // URL
 ];
 
-export const headerTitles = ["ID", "Anchor", "URL"];
+export const headerTitles = ["ID", "URL", "Keywords"];
