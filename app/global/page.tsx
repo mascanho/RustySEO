@@ -129,7 +129,6 @@ export default function Page() {
       }
 
       addDomainCrawlResult(result);
-      console.log("Streamed: ", result);
       setFinishedDeepCrawl(true);
     };
 
@@ -252,7 +251,7 @@ export default function Page() {
               value="content"
               className="pt-6 h-[calc(100vh-3rem)] overflow-auto"
             >
-              {/* <ContentPlannerContainer /> */}
+              <ContentPlannerContainer />
             </Tabs.Panel>
           )}
 
@@ -267,7 +266,7 @@ export default function Page() {
       <aside
         className={`transition-all ease-linear delay-100 ${visibility.sidebar ? "w-full max-w-[20.4rem] flex-grow" : "w-0"} h-screen`}
       >
-        <SidebarContainer />
+        {/* <SidebarContainer /> */}
       </aside>
     </main>
   );
