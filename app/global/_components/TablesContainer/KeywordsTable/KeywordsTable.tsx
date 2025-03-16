@@ -14,15 +14,8 @@ import {
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
-import {
-  initialColumnWidths,
-  initialColumnAlignments,
-  headerTitles,
-} from "./tableLayout";
-import SelectFilter from "../components/SelectFilter";
 import { TbColumns3 } from "react-icons/tb";
 import DownloadButton from "./DownloadButton";
-import useFilterTableURL from "@/app/Hooks/useFilterTableUrl";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { toast } from "sonner";
 import { writeFile } from "@tauri-apps/plugin-fs";
@@ -32,15 +25,11 @@ import { invoke } from "@tauri-apps/api/core";
 interface TableCrawlProps {
   rows: Array<{
     url?: string;
-    title?: Array<{ title?: string; title_len?: string }>;
-    headings?: { h1?: string[]; h2?: string[] };
-    status_code?: number;
-    word_count?: number;
-    mobile?: boolean;
-    meta_robots?: { meta_robots: string[] };
+    keywords?: Array<[string, number]>; // Array of [keyword, count]
   }>;
   rowHeight?: number;
   overscan?: number;
+  tabName: string;
 }
 
 interface TruncatedCellProps {
@@ -68,8 +57,9 @@ interface TableRowProps {
   columnWidths: string[];
   columnAlignments: string[];
   columnVisibility: boolean[];
-  clickedCell: { row: number | null; cell: number | null };
-  handleCellClick: (rowIndex: number, cellIndex: number) => void;
+  clickedRow: number | null;
+  handleRowClick: (rowIndex: number) => void;
+  keywordColumns: string[]; // List of keyword columns
 }
 
 interface ColumnPickerProps {
@@ -178,73 +168,104 @@ const TableRow = ({
   columnWidths,
   columnAlignments,
   columnVisibility,
-  clickedCell,
-  handleCellClick,
+  clickedRow,
+  handleRowClick,
+  keywordColumns,
 }: TableRowProps) => {
-  const rowData = useMemo(() => {
-    // Ensure `row` is an object and has the `keywords` property
-    if (!row || !Array.isArray(row.keywords) || row.keywords.length === 0) {
-      console.error("Invalid or missing keywords in row:", row);
-      return [index + 1, "N/A", row?.url || "N/A"];
-    }
-
-    // Map all keywords into an array of strings (e.g., "mark (4)", "projects (4)")
-    const keywordStrings = row.keywords.map(
-      ([keyword, count]) => `${keyword} (${count})`,
-    );
-
-    // Join all keyword strings into a single string separated by commas
-    const keywordsDisplay = keywordStrings.join(", ");
-
-    // Return the row data
-    return [index + 1, row?.url || "N/A", keywordsDisplay || "N/A"];
-  }, [row, index]);
+  const isRowClicked = clickedRow === index;
 
   return useMemo(
     () => (
-      <>
-        {rowData.map((cell, cellIndex) =>
-          columnVisibility[cellIndex] ? (
+      <tr
+        onClick={() => handleRowClick(index)}
+        className={` ${
+          isRowClicked
+            ? "bg-[#2B6CC4] text-black dark:text-white" // Blue background for clicked row
+            : " dark:text-white/50"
+        }`}
+      >
+        {/* ID Column */}
+        <td
+          key={`cell-${index}-id`}
+          style={{
+            width: columnWidths[0],
+            minWidth: columnWidths[0],
+          }}
+          className={`p-2 pl-5 border border-gray-300 dark:border-gray-700 ${
+            columnAlignments[0] === "center" ? "text-center" : "text-left"
+          }`}
+        >
+          <TruncatedCell
+            text={(index + 1).toString()}
+            width={columnWidths[0]}
+          />
+        </td>
+
+        {/* URL Column */}
+        <td
+          key={`cell-${index}-url`}
+          style={{
+            width: columnWidths[1],
+            minWidth: columnWidths[1],
+          }}
+          className={`p-2 pl-5 border border-gray-300 dark:border-gray-700 ${
+            columnAlignments[1] === "center" ? "text-center" : "text-left"
+          }`}
+        >
+          <TruncatedCell text={row.url || ""} width={columnWidths[1]} />
+        </td>
+
+        {/* Keyword Columns */}
+        {keywordColumns.map((_, cellIndex) => {
+          const keywordData = row.keywords?.[cellIndex];
+          const keyword = keywordData?.[0] || "";
+          const count = keywordData?.[1] || 0;
+
+          return columnVisibility[cellIndex + 2] ? (
             <td
               key={`cell-${index}-${cellIndex}`}
-              onClick={() => handleCellClick(index, cellIndex, cell.toString())}
               style={{
-                width: columnWidths[cellIndex], // Use the column width
-                border: "1px solid #ddd",
-                padding: "8px",
-                paddingLeft: cellIndex === 0 ? "20px" : "0px",
-                textAlign: columnAlignments[cellIndex],
-                overflow: "hidden",
-                whiteSpace: "nowrap",
-                minWidth: columnWidths[cellIndex], // Ensure minimum width
-                backgroundColor:
-                  clickedCell.row === index && clickedCell.cell === cellIndex
-                    ? "#2B6CC4"
-                    : "transparent",
-                color:
-                  clickedCell.row === index && clickedCell.cell === cellIndex
-                    ? "white"
-                    : "inherit",
+                width: columnWidths[cellIndex + 2],
+                minWidth: columnWidths[cellIndex + 2],
               }}
-              className="dark:text-white/50 cursor-pointer"
+              className={`p-2 border border-gray-300 dark:border-gray-700 ${
+                columnAlignments[cellIndex + 2] === "center"
+                  ? "text-center"
+                  : "text-left"
+              }`}
             >
               <TruncatedCell
-                text={cell?.toString()}
-                width={columnWidths[cellIndex]} // Pass the column width
+                text={
+                  <>
+                    {keyword}{" "}
+                    <span
+                      className={
+                        isRowClicked
+                          ? "text-brand-bright" // Gold color for clicked row
+                          : "text-brand-bright" // Orange color for non-clicked row
+                      }
+                    >
+                      ({count})
+                    </span>
+                  </>
+                }
+                width={columnWidths[cellIndex + 2]}
               />
             </td>
-          ) : null,
-        )}
-      </>
+          ) : null;
+        })}
+      </tr>
     ),
     [
-      rowData,
+      row,
+      index,
       columnWidths,
       columnAlignments,
       columnVisibility,
-      index,
-      clickedCell,
-      handleCellClick,
+      clickedRow,
+      handleRowClick,
+      keywordColumns,
+      isRowClicked,
     ],
   );
 };
@@ -297,67 +318,45 @@ const KeywordsTable = ({
   overscan = 30,
   tabName,
 }: TableCrawlProps) => {
-  const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
-  const [columnAlignments, setColumnAlignments] = useState(
-    initialColumnAlignments,
-  );
+  const [columnWidths, setColumnWidths] = useState<string[]>([]);
+  const [columnAlignments, setColumnAlignments] = useState<string[]>([]);
   const [isResizing, setIsResizing] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [columnVisibility, setColumnVisibility] = useState(
-    headerTitles.map(() => true),
-  );
-  const { isGeneratingExcel, setIsGeneratingExcel, setIssuesView } =
-    useGlobalCrawlStore();
+  const [columnVisibility, setColumnVisibility] = useState<boolean[]>([]);
+  const { isGeneratingExcel, setIsGeneratingExcel } = useGlobalCrawlStore();
 
-  console.log(rows, "KEYWORDS");
+  // Determine the maximum number of keywords across all URLs
+  const maxKeywords = useMemo(() => {
+    return Math.max(...rows.map((row) => row.keywords?.length || 0));
+  }, [rows]);
 
-  // Define the handleDownload function
-  const handleDownload = async () => {
-    if (!rows.length) {
-      toast.error("No data to download");
-      return;
-    }
+  // Generate column headers ("Top 1", "Top 2", etc.)
+  const keywordColumns = useMemo(() => {
+    return Array.from({ length: maxKeywords }, (_, i) => `Top ${i + 1}`);
+  }, [maxKeywords]);
 
-    // Set the loader state to true
-    setIsGeneratingExcel(true);
-    try {
-      // Call the backend command to generate the Excel file
-      const fileBuffer = await invoke("create_links_excel", {
-        data: rows,
-      });
+  // Initialize column widths and alignments
+  useEffect(() => {
+    const initialWidths = [
+      "50px",
+      "200px",
+      ...keywordColumns.map(() => "150px"),
+    ];
+    const initialAlignments = [
+      "center",
+      "left",
+      ...keywordColumns.map(() => "center"),
+    ];
+    const initialVisibility = [true, true, ...keywordColumns.map(() => true)];
 
-      setIsGeneratingExcel(false);
-
-      // Prompt the user to choose a file path to save the Excel file
-      const filePath = await save({
-        filters: [
-          {
-            name: "Excel File",
-            extensions: ["xlsx"],
-          },
-        ],
-        defaultPath: `RustySEO-${tabName}.xlsx`, // Default file name
-      });
-
-      if (filePath) {
-        // Convert the Uint8Array to a binary file and save it
-        await writeFile(filePath, new Uint8Array(fileBuffer));
-        toast.success("Excel file saved successfully!");
-      } else {
-        console.log("User canceled the save dialog.");
-      }
-    } catch (error) {
-      console.error("Error generating or saving Excel file:", error);
-      toast.error("Failed to generate or save Excel file.");
-    } finally {
-      setIsGeneratingExcel(false);
-    }
-  };
+    setColumnWidths(initialWidths);
+    setColumnAlignments(initialAlignments);
+    setColumnVisibility(initialVisibility);
+  }, [keywordColumns]);
 
   // Handle column resizing
   const handleMouseDown = useCallback(
     (index: number, event: React.MouseEvent) => {
-      if (index === 1) return; // Prevent resizing for the anchor column
       setIsResizing(index);
       startXRef.current = event.clientX;
       event.preventDefault();
@@ -373,10 +372,7 @@ const KeywordsTable = ({
       setColumnWidths((prevWidths) => {
         const newWidths = [...prevWidths];
         const currentWidth = parseInt(newWidths[isResizing]);
-        newWidths[isResizing] = `${Math.max(
-          isResizing === 0 ? 40 : 50,
-          currentWidth + delta,
-        )}px`;
+        newWidths[isResizing] = `${Math.max(50, currentWidth + delta)}px`;
         return newWidths;
       });
       startXRef.current = event.clientX;
@@ -404,7 +400,7 @@ const KeywordsTable = ({
   // Calculate total table width
   const totalWidth = useMemo(
     () =>
-      columnWidths.reduce((acc, width, index) => {
+      columnWidths.reduce((acc, width) => {
         if (typeof width === "string") {
           if (width.endsWith("px")) {
             return acc + parseFloat(width);
@@ -412,7 +408,7 @@ const KeywordsTable = ({
             return acc + parseFloat(width) * 16;
           }
         }
-        return acc + (index === 0 ? 40 : 100);
+        return acc + 100;
       }, 0),
     [columnWidths],
   );
@@ -426,39 +422,20 @@ const KeywordsTable = ({
     });
   }, []);
 
-  // State to track the clicked cell (rowIndex, cellIndex)
-  const [clickedCell, setClickedCell] = useState<{
-    row: number | null;
-    cell: number | null;
-  }>({
-    row: null,
-    cell: null,
-  });
+  // State to track the clicked row
+  const [clickedRow, setClickedRow] = useState<number | null>(null);
 
-  // Handle cell click
-  const handleCellClick = (
-    rowIndex: number,
-    cellIndex: number,
-    cellContent: string,
-  ) => {
-    setClickedCell((prevClickedCell) => {
-      if (
-        prevClickedCell.row === rowIndex &&
-        prevClickedCell.cell === cellIndex
-      ) {
-        // If the clicked cell is already highlighted, unhighlight it
-        return { row: null, cell: null };
+  // Handle row click
+  const handleRowClick = (rowIndex: number) => {
+    setClickedRow((prevClickedRow) => {
+      if (prevClickedRow === rowIndex) {
+        // If the clicked row is already highlighted, unhighlight it
+        return null;
       } else {
-        // Otherwise, highlight the clicked cell
-        return { row: rowIndex, cell: cellIndex };
+        // Otherwise, highlight the clicked row
+        return rowIndex;
       }
     });
-
-    if (cellIndex === 1) {
-      // Handle anchor column click if needed
-    }
-
-    console.log(cellContent, rowIndex, cellIndex);
   };
 
   // Memoize filtered rows
@@ -505,6 +482,49 @@ const KeywordsTable = ({
   const parentRef = useRef<HTMLDivElement>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
+  // Define the handleDownload function
+  const handleDownload = async () => {
+    if (!rows.length) {
+      toast.error("No data to download");
+      return;
+    }
+
+    // Set the loader state to true
+    setIsGeneratingExcel(true);
+    try {
+      // Call the backend command to generate the Excel file
+      const fileBuffer = await invoke("create_links_excel", {
+        data: rows,
+      });
+
+      setIsGeneratingExcel(false);
+
+      // Prompt the user to choose a file path to save the Excel file
+      const filePath = await save({
+        filters: [
+          {
+            name: "Excel File",
+            extensions: ["xlsx"],
+          },
+        ],
+        defaultPath: `RustySEO-${tabName}.xlsx`, // Default file name
+      });
+
+      if (filePath) {
+        // Convert the Uint8Array to a binary file and save it
+        await writeFile(filePath, new Uint8Array(fileBuffer));
+        toast.success("Excel file saved successfully!");
+      } else {
+        console.log("User canceled the save dialog.");
+      }
+    } catch (error) {
+      console.error("Error generating or saving Excel file:", error);
+      toast.error("Failed to generate or save Excel file.");
+    } finally {
+      setIsGeneratingExcel(false);
+    }
+  };
+
   return (
     <>
       <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1">
@@ -523,7 +543,7 @@ const KeywordsTable = ({
           <ColumnPicker
             columnVisibility={columnVisibility}
             setColumnVisibility={setColumnVisibility}
-            headerTitles={headerTitles}
+            headerTitles={["ID", "URL", ...keywordColumns]} // Add keyword columns to headers
           />
         </div>
       </div>
@@ -538,7 +558,7 @@ const KeywordsTable = ({
         >
           <table className="w-full text-xs border-collapse domainCrawlParent h-full">
             <TableHeader
-              headers={headerTitles}
+              headers={["ID", "URL", ...keywordColumns]} // Add keyword columns to headers
               columnWidths={columnWidths}
               columnAlignments={columnAlignments}
               onResize={handleMouseDown}
@@ -554,17 +574,17 @@ const KeywordsTable = ({
                     }}
                   />
                   {virtualRows.map((virtualRow) => (
-                    <tr key={virtualRow.key}>
-                      <TableRow
-                        row={filteredRows[virtualRow.index]}
-                        index={virtualRow.index}
-                        columnWidths={columnWidths}
-                        columnAlignments={columnAlignments}
-                        columnVisibility={columnVisibility}
-                        clickedCell={clickedCell}
-                        handleCellClick={handleCellClick}
-                      />
-                    </tr>
+                    <TableRow
+                      key={virtualRow.key}
+                      row={filteredRows[virtualRow.index]}
+                      index={virtualRow.index}
+                      columnWidths={columnWidths}
+                      columnAlignments={columnAlignments}
+                      columnVisibility={columnVisibility}
+                      clickedRow={clickedRow}
+                      handleRowClick={handleRowClick}
+                      keywordColumns={keywordColumns}
+                    />
                   ))}
                   <tr
                     style={{
@@ -575,7 +595,7 @@ const KeywordsTable = ({
               ) : (
                 <tr>
                   <td
-                    colSpan={headerTitles.length}
+                    colSpan={keywordColumns.length + 2} // +2 for ID and URL columns
                     className="text-center py-4"
                   >
                     No data available.

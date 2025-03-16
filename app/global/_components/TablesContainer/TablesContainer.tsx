@@ -261,11 +261,11 @@ export default function Home() {
               <TabsTrigger value="images" className="rounded-t-md">
                 Images
               </TabsTrigger>
-              <TabsTrigger value="search" className="rounded-t-md">
-                Custom Search
-              </TabsTrigger>
               <TabsTrigger value="keywords" className="rounded-t-md">
                 Keywords
+              </TabsTrigger>
+              <TabsTrigger value="search" className="rounded-t-md">
+                Custom Search
               </TabsTrigger>
               {issuesView && (
                 <TabsTrigger value={issuesView} className="rounded-t-md">
