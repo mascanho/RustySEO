@@ -22,7 +22,7 @@ const RobotsDomain = () => {
 
   return (
     <div className="h-96  w-[20rem]  bg-trasnparent dark:bg-brand-darker text-black robotsDomain">
-      {robots.length > 0 && (
+      {robots?.length > 0 && (
         <SyntaxHighlighter language="text" style={brownPaper}>
           {robots}
         </SyntaxHighlighter>

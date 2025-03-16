@@ -281,12 +281,12 @@ export default function Home() {
             </TabsContent>
 
             {/* CUSTOM SEARCH */}
-            <TabsContent value="search" className="h-screen overflow-auto">
-              <TableCrawl
-                rows={filteredCustomSearch}
-                tabName={"Custom Search"}
-              />
-            </TabsContent>
+            {/* <TabsContent value="search" className="h-screen overflow-auto"> */}
+            {/*   <TableCrawl */}
+            {/*     rows={filteredCustomSearch} */}
+            {/*     tabName={"Custom Search"} */}
+            {/*   /> */}
+            {/* </TabsContent> */}
 
             {/* DYNAMIC TABS */}
             {issuesView && (
@@ -295,7 +295,7 @@ export default function Home() {
                 className="flex-grow overflow-hidden"
               >
                 {/* {renderIssuesViewContent()} */}
-                <TableCrawl tabName={issuesView} rows={issuesData} />
+                {/* <TableCrawl tabName={issuesView} rows={issuesData} /> */}
               </TabsContent>
             )}
           </Tabs>
@@ -334,21 +334,21 @@ export default function Home() {
             </TabsContent>
             <TabsContent value="inlinks">
               <BottomTableContent height={bottomTableHeight}>
-                <InlinksSubTable data={selectedTableURL} />
+                {/* <InlinksSubTable data={selectedTableURL} /> */}
               </BottomTableContent>
             </TabsContent>
             <TabsContent value="outlinks">
               <BottomTableContent height={bottomTableHeight}>
-                <OutlinksSubTable data={selectedTableURL} />
+                {/* <OutlinksSubTable data={selectedTableURL} /> */}
               </BottomTableContent>
             </TabsContent>
             <TabsContent value="images">
               <BottomTableContent height={bottomTableHeight}>
-                <ImagesTable />
+                {/* <ImagesTable /> */}
               </BottomTableContent>
             </TabsContent>
             <TabsContent value="schema">
-              <SchemaSubTable height={bottomTableHeight - 50} />
+              {/* <SchemaSubTable height={bottomTableHeight - 50} /> */}
             </TabsContent>
 
             <TabsContent
@@ -358,10 +358,10 @@ export default function Home() {
                 overflowY: "auto",
               }}
             >
-              <ResponseHeaders
-                data={selectedTableURL}
-                height={bottomTableHeight}
-              />
+              {/* <ResponseHeaders */}
+              {/*   data={selectedTableURL} */}
+              {/*   height={bottomTableHeight} */}
+              {/* /> */}
             </TabsContent>
           </Tabs>
         </div>

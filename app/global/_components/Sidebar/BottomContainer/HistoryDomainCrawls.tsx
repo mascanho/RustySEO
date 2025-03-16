@@ -142,7 +142,7 @@ const HistoryDomainCrawls = () => {
   useEffect(() => {
     // console.log(crawlSessionTotalArray, "This is the arr from useEffect");
     addDataToDatabase();
-  }, [crawlSessionTotalArray.length]);
+  }, [crawlSessionTotalArray?.length]);
 
   return (
     <div className="text-xs h-[calc(28rem-0.4rem)] overflow-auto">

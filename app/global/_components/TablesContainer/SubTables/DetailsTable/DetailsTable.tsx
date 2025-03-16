@@ -31,7 +31,7 @@ const DetailsTable = ({ data, height }) => {
     };
   }, []);
 
-  if (data.length === 0) {
+  if (data?.length === 0) {
     return (
       <div
         style={{

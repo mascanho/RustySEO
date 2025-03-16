@@ -37,6 +37,7 @@ use super::helpers::{
     schema_selector, title_selector,
     word_count::{self, get_word_count},
 };
+use super::helpers::{pdf_checker, pdf_selector};
 
 use super::models::DomainCrawlResults;
 
@@ -199,7 +200,8 @@ async fn process_url(
 
     // Skip non-HTML content but still mark it as processed
     if !check_html_page::is_html_page(&body, content_type.as_deref()).await {
-        // println!("Skipping non-HTML URL: {}", url);
+        println!("Skipping non-HTML URL: {}", url);
+        pdf_checker::check_url_pdf(&url).unwrap();
         let mut state = state.lock().await;
         state.crawled_urls += 1;
         state.visited.insert(url.to_string());

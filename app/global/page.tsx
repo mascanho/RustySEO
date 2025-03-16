@@ -252,7 +252,7 @@ export default function Page() {
               value="content"
               className="pt-6 h-[calc(100vh-3rem)] overflow-auto"
             >
-              <ContentPlannerContainer />
+              {/* <ContentPlannerContainer /> */}
             </Tabs.Panel>
           )}
 

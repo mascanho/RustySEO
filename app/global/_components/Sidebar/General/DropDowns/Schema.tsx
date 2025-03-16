@@ -9,7 +9,7 @@ const Schema = () => {
   const totalPages = domainCrawlData?.crawlData?.length || 0;
 
   const hasPageSchema =
-    domainCrawlData?.crawlData?.filter((item) => item.schema)?.length || 0;
+    domainCrawlData?.crawlData?.filter((item) => item?.schema)?.length || 0;
 
   const missingPageSchema = totalPages - hasPageSchema;
 

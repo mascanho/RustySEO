@@ -1,6 +1,5 @@
-// @ts-nocheck
+import React, { useMemo, memo, useCallback } from "react";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import React, { useMemo, useState, useCallback, memo, useEffect } from "react";
 
 interface CrawlDataItem {
   anchor_links?: {
@@ -32,8 +31,6 @@ SummaryItemRow.displayName = "SummaryItemRow";
 
 const Summary: React.FC = () => {
   const domainCrawlData = useGlobalCrawlStore();
-  const [isOpen, setIsOpen] = useState(false);
-  const { setSummary } = useGlobalCrawlStore();
 
   // Safely get crawlData or default to an empty array
   const crawlData: CrawlDataItem[] = useMemo(
@@ -92,24 +89,6 @@ const Summary: React.FC = () => {
     };
   }, [crawlData, internalLinks, externalLinks, totalIndexablePages]);
 
-  // Update the summary state using useEffect
-  useEffect(() => {
-    setSummary({
-      totalPagesCrawled,
-      totalInternalLinks,
-      totalExternalLinks,
-      totalLinksFound,
-      totalNotIndexablePages,
-    });
-  }, [
-    totalPagesCrawled,
-    totalInternalLinks,
-    totalExternalLinks,
-    totalLinksFound,
-    totalNotIndexablePages,
-    setSummary,
-  ]);
-
   // Memoize summary data
   const summaryData: SummaryItem[] = useMemo(
     () => [
@@ -162,31 +141,22 @@ const Summary: React.FC = () => {
     ],
   );
 
-  // Memoize the toggle handler
-  const handleToggle = useCallback(
-    (e: React.SyntheticEvent<HTMLDetailsElement>) => {
-      setIsOpen(e.currentTarget.open);
-    },
-    [],
-  );
+  // Memoize the click handler
+  const handleClick = useCallback((e: React.MouseEvent<HTMLDetailsElement>) => {
+    console.log(e.currentTarget.innerText);
+  }, []);
 
   return (
     <div className="text-sx w-full">
-      <details
-        className="w-full"
-        onClick={(e) => console.log(e.target.innerText)}
-        onToggle={handleToggle}
-      >
+      <details className="w-full" onClick={handleClick}>
         <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 pb-1.5 cursor-pointer flex items-center">
           <span>Summary</span>
         </summary>
-        {isOpen && (
-          <div className="w-full">
-            {summaryData.map((item, index) => (
-              <SummaryItemRow key={index} {...item} />
-            ))}
-          </div>
-        )}
+        <div className="w-full">
+          {summaryData.map((item, index) => (
+            <SummaryItemRow key={index} {...item} />
+          ))}
+        </div>
       </details>
     </div>
   );
