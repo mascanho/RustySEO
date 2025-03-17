@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { create } from "zustand";
 import { shallow } from "zustand/shallow";
-import debounce from "lodash.debounce";
 
 // Define the structure of a single page's details
 export interface PageDetails {
@@ -82,13 +81,6 @@ const createSetter =
   (value: T) =>
     useGlobalCrawlStore.setState({ [key]: value });
 
-// Debounced function to add crawl results
-const debouncedAddDomainCrawlResult = debounce((result: PageDetails) => {
-  useGlobalCrawlStore.setState((state) => ({
-    crawlData: [...state.crawlData, result],
-  }));
-}, 300); // 300ms debounce delay
-
 const useGlobalCrawlStore = create<CrawlStore>((set) => ({
   // State
   crawlData: [],
@@ -119,7 +111,8 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
 
   // Actions
   setDomainCrawlData: createSetter<PageDetails[]>("crawlData"),
-  addDomainCrawlResult: (result) => debouncedAddDomainCrawlResult(result),
+  addDomainCrawlResult: (result) =>
+    set((state) => ({ crawlData: [...state.crawlData, result] })),
   clearDomainCrawlData: () => set({ crawlData: [] }),
   setDomainCrawlLoading: createSetter<boolean>("domainCrawlLoading"),
   setCrawlerType: createSetter<string>("crawlerType"),

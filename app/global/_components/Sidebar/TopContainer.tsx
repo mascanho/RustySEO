@@ -28,7 +28,7 @@ const TopContainer = () => {
         {/* Wrap each panel in Suspense with a fallback */}
         <Suspense fallback={<div>Loading...</div>}>
           <Tabs.Panel value="first">
-            {/* <GeneralTopSideBarContainer /> */}
+            <GeneralTopSideBarContainer />
           </Tabs.Panel>
         </Suspense>
 
