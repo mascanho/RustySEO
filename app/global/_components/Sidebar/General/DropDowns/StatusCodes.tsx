@@ -1,6 +1,6 @@
 // @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import React, { useMemo, useState, useCallback, useEffect } from "react";
+import React, { useMemo, useState, useCallback, useEffect, memo } from "react";
 
 interface CrawlDataItem {
   status_code?: number;
@@ -13,13 +13,18 @@ interface StatusCodesData {
   "5xx": number;
 }
 
+interface StatusDataItem {
+  label: string;
+  count: number;
+  percentage: string;
+}
+
 const StatusCodes: React.FC = () => {
-  const domainCrawlData = useGlobalCrawlStore();
-  const { setStatusCodes, statusCodes: codes } = useGlobalCrawlStore();
+  const { crawlData: domainCrawlData, setStatusCodes } = useGlobalCrawlStore();
   const [isOpen, setIsOpen] = useState(false);
 
   // Safely get crawlData or default to an empty array
-  const crawlData: CrawlDataItem[] = domainCrawlData?.crawlData || [];
+  const crawlData: CrawlDataItem[] = domainCrawlData || [];
 
   // Memoize status codes calculation
   const statusCodes: StatusCodesData = useMemo(() => {
@@ -46,17 +51,32 @@ const StatusCodes: React.FC = () => {
     [statusCodes],
   );
 
-  // Memoize status data
-  const statusData = useMemo(
-    () => [
-      { label: "Total", count: totalStatusCodes },
-      { label: "2xx Success", count: statusCodes["2xx"] },
-      { label: "3xx Redirection", count: statusCodes["3xx"] },
-      { label: "4xx Client Error", count: statusCodes["4xx"] },
-      { label: "5xx Server Error", count: statusCodes["5xx"] },
-    ],
-    [statusCodes, totalStatusCodes],
-  );
+  // Memoize status data with percentages
+  const statusData: StatusDataItem[] = useMemo(() => {
+    return [
+      { label: "Total", count: totalStatusCodes, percentage: "100%" },
+      {
+        label: "2xx Success",
+        count: statusCodes["2xx"],
+        percentage: `${((statusCodes["2xx"] / totalStatusCodes) * 100).toFixed(0)}%`,
+      },
+      {
+        label: "3xx Redirection",
+        count: statusCodes["3xx"],
+        percentage: `${((statusCodes["3xx"] / totalStatusCodes) * 100).toFixed(0)}%`,
+      },
+      {
+        label: "4xx Client Error",
+        count: statusCodes["4xx"],
+        percentage: `${((statusCodes["4xx"] / totalStatusCodes) * 100).toFixed(0)}%`,
+      },
+      {
+        label: "5xx Server Error",
+        count: statusCodes["5xx"],
+        percentage: `${((statusCodes["5xx"] / totalStatusCodes) * 100).toFixed(0)}%`,
+      },
+    ];
+  }, [statusCodes, totalStatusCodes]);
 
   // Memoize the toggle handler
   const handleToggle = useCallback(
@@ -66,26 +86,13 @@ const StatusCodes: React.FC = () => {
     [],
   );
 
+  // Update status codes only when statusData changes
   useEffect(() => {
-    setStatusCodes(statusData);
-  }, [crawlData, statusData]);
+    if (typeof setStatusCodes === "function") {
+      setStatusCodes(statusData);
+    }
+  }, [statusData, setStatusCodes]);
 
-  // Handle errors or missing data gracefully
-  // if (!crawlData || crawlData.length === 0) {
-  //   return (
-  //     <div className="text-sx w-full">
-  //       <details className="w-full">
-  //         <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 py-1 pb-1.5 cursor-pointer flex items-center">
-  //           <span>Status Codes</span>
-  //         </summary>
-  //         <div className="w-full text-xs text-brand-bright p-2">
-  //           No data available.
-  //         </div>
-  //       </details>
-  //     </div>
-  //   );
-  // }
-  //
   return (
     <div className="text-sx w-full">
       <details className="w-full" onToggle={handleToggle}>
@@ -102,13 +109,7 @@ const StatusCodes: React.FC = () => {
                 {data.label}
               </div>
               <div className="w-1/6 text-right pr-2">{data.count}</div>
-              <div className="w-1/6 text-right pr-2">
-                {totalStatusCodes > 0 && data.label !== "Total"
-                  ? `${((data.count / totalStatusCodes) * 100).toFixed(0)}%`
-                  : data.label === "Total"
-                    ? "100%"
-                    : "0%"}
-              </div>
+              <div className="w-1/6 text-right pr-2">{data.percentage}</div>
             </div>
           ))}
         </div>
@@ -117,4 +118,4 @@ const StatusCodes: React.FC = () => {
   );
 };
 
-export default StatusCodes;
+export default memo(StatusCodes);

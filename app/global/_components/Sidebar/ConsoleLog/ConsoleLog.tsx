@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle, XCircle, AlertCircle, Info, Clock } from "lucide-react";
@@ -26,11 +26,9 @@ const generateLogs = (
   pageSpeedKeys: string[],
   ga4ID: string,
   gscCredentials: [],
-  clarityApi: "",
+  clarityApi: string,
 ): LogEntry[] => {
-  // console.log(ga4ID, "GA4 ID");
-
-  const logs: LogEntry[] = [
+  return [
     {
       id: Date.now() + 1,
       timestamp: new Date(),
@@ -42,9 +40,7 @@ const generateLogs = (
       timestamp: new Date(),
       level: aiModelLog === "gemini" ? "success" : "error",
       message:
-        aiModelLog === "gemini"
-          ? "AI Model: Gemini"
-          : "No AI model configured ",
+        aiModelLog === "gemini" ? "AI Model: Gemini" : "No AI model configured",
     },
     {
       id: Date.now() + 3,
@@ -102,8 +98,6 @@ const generateLogs = (
       message: tasks === 0 ? "No tasks pending" : `${tasks} tasks remaining`,
     },
   ];
-
-  return logs;
 };
 
 // Uptime Timer Component (Extracted for performance optimization)
@@ -150,52 +144,19 @@ export default function ConsoleLog() {
   const [gscCredentials, setGscCredentials] = useState(null);
   const [clarityApi, setClarityApi] = useState<string>("");
 
-  // GET THE STUFF FROM THE BACKEND
-  useEffect(() => {
-    try {
-      invoke("get_ai_model").then((result: any) => {
-        setAiModelLog(result);
-      });
-      invoke("check_ai_model").then((result: any) => {
-        setAiModelLog(result);
-      });
-      // PAGESPEED API
-      invoke("load_api_keys").then((result: any) => {
-        setPageSpeedKeys(result);
-      });
-
-      invoke("get_google_analytics_id").then((result: any) => {
-        setGa4ID(result);
-      });
-
-      invoke("read_credentials_file").then((result) => {
-        setGscCredentials(result);
-      });
-
-      invoke("get_microsoft_clarity_command").then((result: any) => {
-        setClarityApi(result);
-      });
-    } catch (err) {
-      console.error("Error fetching API config:", err);
-    }
-  }, []);
-
-  // Update logs whenever `crawler`, `isGlobalCrawling`, or `isFinishedDeepCrawl` changes
-  useEffect(() => {
-    if (crawler) {
-      const newLogs = generateLogs(
-        crawler,
-        isGlobalCrawling,
-        isFinishedDeepCrawl,
-        tasks,
-        aiModelLog,
-        pageSpeedKeys,
-        ga4ID,
-        gscCredentials,
-        clarityApi,
-      ); // Generate logs based on the current state
-      setLogs((prev) => newLogs); // Append the new logs
-    }
+  // Memoize logs to avoid recalculating on every render
+  const memoizedLogs = useMemo(() => {
+    return generateLogs(
+      crawler,
+      isGlobalCrawling,
+      isFinishedDeepCrawl,
+      tasks,
+      aiModelLog,
+      pageSpeedKeys,
+      ga4ID,
+      gscCredentials,
+      clarityApi,
+    );
   }, [
     crawler,
     isGlobalCrawling,
@@ -207,6 +168,11 @@ export default function ConsoleLog() {
     gscCredentials,
     clarityApi,
   ]);
+
+  // Update logs whenever dependencies change
+  useEffect(() => {
+    setLogs(memoizedLogs);
+  }, [memoizedLogs]);
 
   // Auto-scroll to bottom when new logs appear
   useEffect(() => {
@@ -220,7 +186,37 @@ export default function ConsoleLog() {
     }
   }, [logs]);
 
-  const getLevelIcon = (level: LogLevel) => {
+  // GET THE STUFF FROM THE BACKEND
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const aiModelResult = await invoke("get_ai_model");
+        setAiModelLog(aiModelResult);
+
+        const aiModelCheckResult = await invoke("check_ai_model");
+        setAiModelLog(aiModelCheckResult);
+
+        const pageSpeedResult = await invoke("load_api_keys");
+        setPageSpeedKeys(pageSpeedResult);
+
+        const ga4Result = await invoke("get_google_analytics_id");
+        setGa4ID(ga4Result);
+
+        const gscResult = await invoke("read_credentials_file");
+        setGscCredentials(gscResult);
+
+        const clarityResult = await invoke("get_microsoft_clarity_command");
+        setClarityApi(clarityResult);
+      } catch (err) {
+        console.error("Error fetching API config:", err);
+      }
+    };
+
+    fetchData();
+  }, [setAiModelLog]);
+
+  // Memoize getLevelIcon to avoid recreating functions on every render
+  const getLevelIcon = useCallback((level: LogLevel) => {
     switch (level) {
       case "success":
         return <CheckCircle className="w-4 h-4 text-green-700 flex-shrink-0" />;
@@ -235,9 +231,10 @@ export default function ConsoleLog() {
       case "debug":
         return <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />;
     }
-  };
+  }, []);
 
-  const getLevelBadge = (level: LogLevel) => {
+  // Memoize getLevelBadge to avoid recreating functions on every render
+  const getLevelBadge = useCallback((level: LogLevel) => {
     switch (level) {
       case "success":
         return (
@@ -285,20 +282,21 @@ export default function ConsoleLog() {
           </Badge>
         );
     }
-  };
+  }, []);
 
-  const formatTimestamp = (date: Date) => {
+  // Memoize formatTimestamp to avoid recreating functions on every render
+  const formatTimestamp = useCallback((date: Date) => {
     return date.toISOString().split("T")[1].slice(0, 12);
-  };
+  }, []);
 
   return (
     <div className="w-full max-w-[600px] overflow-hidden bg-gray-50 dark:bg-zinc-900 font-mono text-xs h-[calc(100vh-39rem)]">
       <ScrollArea className="h-[calc(100vh-40.6rem)]" ref={scrollAreaRef}>
-        <div className="p-2 space-y-2 ">
+        <div className="p-2 space-y-2">
           {logs.map((log, index) => (
             <div
               key={log.id}
-              className={`space-y-1  ${
+              className={`space-y-1 ${
                 index % 2 === 0 ? "bg-transparent" : "bg-transparent"
               }`}
             >

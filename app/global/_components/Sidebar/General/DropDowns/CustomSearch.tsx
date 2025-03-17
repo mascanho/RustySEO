@@ -16,15 +16,23 @@ interface ExtractorData {
   regex: number;
 }
 
+interface ExtractorDisplayData {
+  label: string;
+  count: number;
+  percentage: string;
+}
+
 const CustomSearch: React.FC = () => {
   const { crawlData: domainCrawlData, setCustomSearch } = useGlobalCrawlStore();
   const [isOpen, setIsOpen] = useState(false);
 
+  // Memoize crawlData to prevent recalculations unless domainCrawlData changes
   const crawlData: CrawlDataItem[] = useMemo(
     () => domainCrawlData || [],
     [domainCrawlData],
   );
 
+  // Memoize extractors calculation
   const extractors: ExtractorData = useMemo(() => {
     return crawlData.reduce(
       (acc, item) => {
@@ -37,21 +45,35 @@ const CustomSearch: React.FC = () => {
     );
   }, [crawlData]);
 
+  // Memoize totalExtractors calculation
   const totalExtractors = useMemo(
     () => extractors.html + extractors.css + extractors.regex,
     [extractors],
   );
 
-  const extractorData = useMemo(
-    () => [
-      { label: "Total", count: totalExtractors },
-      { label: "HTML Search", count: extractors.html },
-      { label: "CSS Search", count: extractors.css },
-      { label: "Regex Search", count: extractors.regex },
-    ],
-    [extractors, totalExtractors],
-  );
+  // Memoize extractorData to prevent recalculations unless extractors or totalExtractors change
+  const extractorData: ExtractorDisplayData[] = useMemo(() => {
+    return [
+      { label: "Total", count: totalExtractors, percentage: "100%" },
+      {
+        label: "HTML Search",
+        count: extractors.html,
+        percentage: `${((extractors.html / crawlData.length) * 100).toFixed(0)}%`,
+      },
+      {
+        label: "CSS Search",
+        count: extractors.css,
+        percentage: `${((extractors.css / crawlData.length) * 100).toFixed(0)}%`,
+      },
+      {
+        label: "Regex Search",
+        count: extractors.regex,
+        percentage: `${((extractors.regex / crawlData.length) * 100).toFixed(0)}%`,
+      },
+    ];
+  }, [extractors, totalExtractors, crawlData.length]);
 
+  // Memoize handleToggle to prevent unnecessary re-creations
   const handleToggle = useCallback(
     (e: React.SyntheticEvent<HTMLDetailsElement>) => {
       setIsOpen(e.currentTarget.open);
@@ -59,6 +81,7 @@ const CustomSearch: React.FC = () => {
     [],
   );
 
+  // Update custom search data only when extractorData changes
   useEffect(() => {
     if (typeof setCustomSearch === "function") {
       setCustomSearch(extractorData);
@@ -81,13 +104,7 @@ const CustomSearch: React.FC = () => {
                 {data.label}
               </div>
               <div className="w-1/6 text-right pr-2">{data.count}</div>
-              <div className="w-1/6 text-right pr-2">
-                {totalExtractors > 0 && data.label !== "Total"
-                  ? `${((data.count / crawlData.length) * 100).toFixed(0)}%`
-                  : data.label === "Total"
-                    ? "100%"
-                    : "0%"}
-              </div>
+              <div className="w-1/6 text-right pr-2">{data.percentage}</div>
             </div>
           ))}
         </div>
