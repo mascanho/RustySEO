@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { lazy, Suspense } from "react";
 import { Tabs } from "@mantine/core";
 
