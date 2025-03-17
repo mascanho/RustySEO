@@ -198,10 +198,12 @@ async fn process_url(
         }
     };
 
-    // Skip non-HTML content but still mark it as processed
+    // Skip non-HTML content but still mark it as processed and store URLS with PDFs
+    let mut pdf_files: Vec<&String> = Vec::new();
+
     if !check_html_page::is_html_page(&body, content_type.as_deref()).await {
-        println!("Skipping non-HTML URL: {}", url);
-        pdf_checker::check_url_pdf(&url).unwrap();
+        pdf_files.push(&url.to_string());
+
         let mut state = state.lock().await;
         state.crawled_urls += 1;
         state.visited.insert(url.to_string());
@@ -228,7 +230,6 @@ async fn process_url(
         schema: schema_selector::get_schema(&body),
         css: css_selector::extract_css(&body, base_url.clone()),
         iframe: iframe_selector::extract_iframe(&body),
-        pdf_link: extract_pdf_links(&body, base_url),
         word_count: get_word_count(&body),
         response_time: Some(response_time),
         mobile: is_mobile(&body),
@@ -257,6 +258,7 @@ async fn process_url(
             regex: false,
         },
         headers,
+        pdf_files: pdf_files.iter().map(|s| s.to_string()).collect(),
     };
 
     {

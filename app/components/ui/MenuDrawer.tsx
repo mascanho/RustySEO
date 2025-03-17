@@ -202,11 +202,7 @@ function MenuDrawer() {
           alt=""
           className="w-6 h-auto py-1 object-cover mr-2  dark:hidden"
         />
-        <img
-          src="rustyLight.png"
-          className="object-contain h-auto  -ml-1.5"
-          alt=""
-        />
+        <img src="rustyLight.png" className=" w-40  -ml-1" alt="" />
       </a>
     </>
   );
