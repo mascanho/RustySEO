@@ -307,7 +307,7 @@ export default function Home() {
             </TabsContent>
 
             {/* CUSTOM SEARCH */}
-            <TabsContent value="search" className="h-screen overflow-auto">
+            <TabsContent value="search" className="flex-grow overflow-auto">
               <TableCrawl
                 rows={filteredCustomSearch}
                 tabName={"Custom Search"}
