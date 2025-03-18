@@ -117,10 +117,12 @@ export default function CustomSearchSelector({ close }) {
   };
 
   return (
-    <div className="w-[800px] h-[380px] mt-72  absolute z-50 inset-0 m-auto bg-gray-100 dark:bg-brand-darker  border border-gray-300 rounded-md shadow-lg font-sans flex flex-col">
+    <div className="w-[800px] h-[380px] mt-72  absolute z-50 inset-0 m-auto bg-gray-100 dark:bg-brand-darker  border border-gray-300 dark:border-brand-dark rounded-md shadow-lg font-sans flex flex-col">
       {/* Window-like Title Bar */}
-      <div className="flex items-center justify-between px-2 py-1 bg-gray-200 border-b border-gray-300">
-        <span className="text-sm font-medium">Custom Search</span>
+      <div className="flex items-center justify-between px-2 py-1 dark:bg-brand-dark bg-gray-200 border-b border-gray-300 dark:border-b-brand-dark">
+        <span className="text-sm font-medium dark:text-white/90">
+          Custom Search
+        </span>
         <div className="flex gap-1">
           <Button
             onClick={close}
@@ -128,7 +130,7 @@ export default function CustomSearchSelector({ close }) {
             size="sm"
             className="p-1 h-6 w-6"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4 dark:text-white" />
           </Button>
         </div>
       </div>
