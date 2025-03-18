@@ -493,7 +493,7 @@ const KeywordsTable = ({
     setIsGeneratingExcel(true);
     try {
       // Call the backend command to generate the Excel file
-      const fileBuffer = await invoke("create_links_excel", {
+      const fileBuffer = await invoke("create_keywords_excel_command", {
         data: rows,
       });
 
@@ -549,7 +549,7 @@ const KeywordsTable = ({
       </div>
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-2rem)] overflow-auto relative"
+        className="w-full h-[30.8rem] overflow-auto relative"
       >
         <div
           ref={tableContainerRef}

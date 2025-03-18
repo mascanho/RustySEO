@@ -600,3 +600,122 @@ pub fn generate_links_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
 
     Ok(buffer)
 }
+
+// EXTRACT AND PRINT THE DATA FROM THE KEYWORDS TABLE
+pub fn generate_keywords_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
+    println!("Generating Excel with: {:?}", &data);
+
+    // CHECK IF THE DATA IS EMPTY
+    if data.is_empty() {
+        return Err("No data to generate Excel".to_string());
+    }
+
+    // CREATE A NEW WORKBOOK AND SHEET
+    let mut workbook = Workbook::new();
+    let worksheet = workbook.add_worksheet();
+
+    // DEFINE THE HEADER FORMAT
+    let header_format = Format::new()
+        .set_bold()
+        .set_border(FormatBorder::Thin)
+        .set_align(FormatAlign::Center);
+
+    // WRITE THE HEADERS TO THE SHEET
+    let headers = [
+        "URL",
+        "Keyword 1",
+        "Frequency 1",
+        "Keyword 2",
+        "Frequency 2",
+        "Keyword 3",
+        "Frequency 3",
+        "Keyword 4",
+        "Frequency 4",
+        "Keyword 5",
+        "Frequency 5",
+        "Keyword 6",
+        "Frequency 6",
+        "Keyword 7",
+        "Frequency 7",
+        "Keyword 8",
+        "Frequency 8",
+        "Keyword 9",
+        "Frequency 9",
+        "Keyword 10",
+        "Frequency 10",
+    ];
+    for (col_idx, header) in headers.iter().enumerate() {
+        worksheet
+            .write_with_format(0, col_idx as u16, *header, &header_format)
+            .map_err(|e| format!("Failed to write header '{}': {}", header, e))?;
+    }
+
+    // WRITE THE DATA ROWS
+    let mut row_idx = 1; // Start from row 1 (after headers)
+    for array in data.iter() {
+        let obj = match array {
+            Value::Object(obj) => obj,
+            _ => return Err("Invalid JSON structure: expected an array of objects".to_string()),
+        };
+
+        // Extract the URL
+        let url = match obj.get("url").ok_or("Missing 'url' field in JSON object")? {
+            Value::String(s) => s.clone(),
+            _ => return Err("Invalid URL format: expected a string".to_string()),
+        };
+
+        // Extract the keywords array
+        let keywords = match obj
+            .get("keywords")
+            .ok_or("Missing 'keywords' field in JSON object")?
+        {
+            Value::Array(arr) => arr,
+            _ => return Err("Invalid keywords format: expected an array".to_string()),
+        };
+
+        // Write the URL in the first column
+        worksheet
+            .write(row_idx as u32, 0, &url)
+            .map_err(|e| format!("Failed to write URL at row {}: {}", row_idx, e))?;
+
+        // Write the top 10 keywords and their frequencies in subsequent columns
+        let mut col_idx = 1; // Start from column 1 (after URL)
+        for (i, keyword_pair) in keywords.iter().take(10).enumerate() {
+            let keyword_array = match keyword_pair {
+                Value::Array(arr) => arr,
+                _ => return Err("Invalid keyword pair format: expected an array".to_string()),
+            };
+
+            if keyword_array.len() != 2 {
+                return Err("Invalid keyword pair: expected [keyword, frequency]".to_string());
+            }
+
+            let keyword = match &keyword_array[0] {
+                Value::String(s) => s.clone(),
+                _ => return Err("Invalid keyword format: expected a string".to_string()),
+            };
+
+            let frequency = match &keyword_array[1] {
+                Value::Number(n) => n.as_u64().ok_or("Invalid frequency: expected a number")?,
+                _ => return Err("Invalid frequency format: expected a number".to_string()),
+            };
+
+            // Write the keyword and frequency in the appropriate columns
+            worksheet
+                .write(row_idx as u32, col_idx as u16, &keyword)
+                .map_err(|e| format!("Failed to write keyword at row {}: {}", row_idx, e))?;
+            worksheet
+                .write(row_idx as u32, (col_idx + 1) as u16, frequency as f64)
+                .map_err(|e| format!("Failed to write frequency at row {}: {}", row_idx, e))?;
+
+            col_idx += 2; // Move to the next keyword-frequency pair columns
+        }
+
+        row_idx += 1; // Move to the next row
+    }
+
+    // Save the workbook to a buffer
+    let buffer = workbook.save_to_buffer().map_err(|e| e.to_string())?;
+
+    Ok(buffer)
+}

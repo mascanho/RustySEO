@@ -277,8 +277,3 @@ pub fn clear_custom_search() -> Result<(), String> {
 
     Ok(())
 }
-
-// GET THE KEYWORDS STORED IN THE DB
-pub async fn fetch_keywords(data: Vec<String>) -> Result<(), String> {
-    Ok(())
-}
