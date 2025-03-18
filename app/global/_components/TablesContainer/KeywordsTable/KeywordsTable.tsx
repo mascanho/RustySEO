@@ -181,7 +181,7 @@ const TableRow = ({
         className={` ${
           isRowClicked
             ? "bg-[#2B6CC4] text-black dark:text-white" // Blue background for clicked row
-            : " dark:text-white/50"
+            : " dark:text-white"
         }`}
       >
         {/* ID Column */}

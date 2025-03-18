@@ -1,4 +1,13 @@
-import React, { useMemo, memo, useCallback } from "react";
+// @ts-nocheck
+import React, {
+  useMemo,
+  memo,
+  useCallback,
+  useEffect,
+  useReducer,
+  useRef,
+} from "react";
+import debounce from "lodash.debounce";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 
 interface CrawlDataItem {
@@ -29,6 +38,53 @@ const SummaryItemRow: React.FC<SummaryItem> = memo(
 
 SummaryItemRow.displayName = "SummaryItemRow";
 
+// Reducer to manage derived data
+type State = {
+  internalLinks: string[];
+  externalLinks: string[];
+  totalIndexablePages: number;
+};
+
+type Action = {
+  type: "UPDATE_DATA";
+  payload: CrawlDataItem[];
+};
+
+const initialState: State = {
+  internalLinks: [],
+  externalLinks: [],
+  totalIndexablePages: 0,
+};
+
+const reducer = (state: State, action: Action): State => {
+  switch (action.type) {
+    case "UPDATE_DATA":
+      const internalLinksSet = new Set<string>();
+      const externalLinksSet = new Set<string>();
+      let totalIndexablePages = 0;
+
+      for (const item of action.payload) {
+        item?.anchor_links?.internal?.links?.forEach((link) =>
+          internalLinksSet.add(link),
+        );
+        item?.anchor_links?.external?.links?.forEach((link) =>
+          externalLinksSet.add(link),
+        );
+        if ((item?.indexability?.indexability || 0) > 0.5) {
+          totalIndexablePages++;
+        }
+      }
+
+      return {
+        internalLinks: Array.from(internalLinksSet),
+        externalLinks: Array.from(externalLinksSet),
+        totalIndexablePages,
+      };
+    default:
+      return state;
+  }
+};
+
 const Summary: React.FC = () => {
   const domainCrawlData = useGlobalCrawlStore();
 
@@ -38,33 +94,8 @@ const Summary: React.FC = () => {
     [domainCrawlData],
   );
 
-  // Memoize internal and external links using sets to prevent duplication
-  const { internalLinks, externalLinks } = useMemo(() => {
-    const internalLinksSet = new Set<string>();
-    const externalLinksSet = new Set<string>();
-
-    crawlData.forEach((item) => {
-      item?.anchor_links?.internal?.links?.forEach((link) =>
-        internalLinksSet.add(link),
-      );
-      item?.anchor_links?.external?.links?.forEach((link) =>
-        externalLinksSet.add(link),
-      );
-    });
-
-    return {
-      internalLinks: Array.from(internalLinksSet),
-      externalLinks: Array.from(externalLinksSet),
-    };
-  }, [crawlData]);
-
-  // Memoize indexable pages
-  const totalIndexablePages = useMemo(
-    () =>
-      crawlData.filter((item) => (item?.indexability?.indexability || 0) > 0.5)
-        .length,
-    [crawlData],
-  );
+  // Use reducer to manage derived data
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   // Memoize totals
   const {
@@ -75,10 +106,11 @@ const Summary: React.FC = () => {
     totalNotIndexablePages,
   } = useMemo(() => {
     const totalPagesCrawled = crawlData.length;
-    const totalInternalLinks = internalLinks.length;
-    const totalExternalLinks = externalLinks.length;
+    const totalInternalLinks = state.internalLinks.length;
+    const totalExternalLinks = state.externalLinks.length;
     const totalLinksFound = totalInternalLinks + totalExternalLinks;
-    const totalNotIndexablePages = totalPagesCrawled - totalIndexablePages;
+    const totalNotIndexablePages =
+      totalPagesCrawled - state.totalIndexablePages;
 
     return {
       totalPagesCrawled,
@@ -87,7 +119,7 @@ const Summary: React.FC = () => {
       totalLinksFound,
       totalNotIndexablePages,
     };
-  }, [crawlData, internalLinks, externalLinks, totalIndexablePages]);
+  }, [crawlData, state]);
 
   // Memoize summary data
   const summaryData: SummaryItem[] = useMemo(
@@ -118,9 +150,9 @@ const Summary: React.FC = () => {
       },
       {
         label: "Total Indexable Pages",
-        value: totalIndexablePages,
+        value: state.totalIndexablePages,
         percentage: totalPagesCrawled
-          ? `${((totalIndexablePages / totalPagesCrawled) * 100).toFixed(0)}%`
+          ? `${((state.totalIndexablePages / totalPagesCrawled) * 100).toFixed(0)}%`
           : "0%",
       },
       {
@@ -136,7 +168,7 @@ const Summary: React.FC = () => {
       totalLinksFound,
       totalInternalLinks,
       totalExternalLinks,
-      totalIndexablePages,
+      state.totalIndexablePages,
       totalNotIndexablePages,
     ],
   );
@@ -145,6 +177,25 @@ const Summary: React.FC = () => {
   const handleClick = useCallback((e: React.MouseEvent<HTMLDetailsElement>) => {
     console.log(e.currentTarget.innerText);
   }, []);
+
+  // Debounced update function using useRef
+  const debouncedUpdate = useRef(
+    debounce((data: CrawlDataItem[]) => {
+      dispatch({ type: "UPDATE_DATA", payload: data });
+    }, 300), // 300ms debounce delay
+  ).current;
+
+  // Trigger debounced update when crawlData changes
+  useEffect(() => {
+    debouncedUpdate(crawlData);
+  }, [crawlData, debouncedUpdate]);
+
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => {
+      debouncedUpdate.cancel();
+    };
+  }, [debouncedUpdate]);
 
   return (
     <div className="text-sx w-full">
