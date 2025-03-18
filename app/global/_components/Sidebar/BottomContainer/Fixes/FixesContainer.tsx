@@ -7,6 +7,18 @@ const FixesContainer = () => {
   // Find the matching fix object
   const filteredFixes = FixesData.filter((item) => item.title === fix);
 
+  {
+    if (!fix) {
+      return (
+        <div className="h-[28rem]  flex justify-center text-center items-center w-full text-xs">
+          <span className="m-auto text-center px-8 text-black/50 dark:text-white/50">
+            Select from the Issues tab to view how to improve your website
+          </span>
+        </div>
+      );
+    }
+  }
+
   return (
     <section>
       <div className="w-full text-black flex justify-center items-center space-y-6 pt-10 flex-col">
