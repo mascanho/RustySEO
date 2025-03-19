@@ -1,6 +1,7 @@
 // @ts-nocheck
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useRef, useState } from "react";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import { debounce } from "lodash";
 
 interface CrawlDataItem {
   title?: { title: string; title_len: number }[];
@@ -8,29 +9,39 @@ interface CrawlDataItem {
 
 const PageTitles: React.FC = () => {
   const domainCrawlData = useGlobalCrawlStore();
+  const [counts, setCounts] = useState({ all: 0, long: 0, empty: 0, short: 0 });
+  const [totalPages, setTotalPages] = useState(0);
+  const crawlDataRef = useRef<CrawlDataItem[]>([]);
 
-  // Memoize the crawlData to avoid recalculating on every render
-  const crawlData: CrawlDataItem[] = useMemo(
-    () => domainCrawlData?.crawlData || [],
-    [domainCrawlData],
+  // Update the ref with the latest data whenever domainCrawlData changes
+  useEffect(() => {
+    crawlDataRef.current = domainCrawlData?.crawlData || [];
+    processDataDebounced();
+  }, [domainCrawlData]);
+
+  // Debounce the processing logic
+  const processDataDebounced = useMemo(
+    () =>
+      debounce(() => {
+        const crawlData = crawlDataRef.current;
+        const pageTitles =
+          crawlData.map((item) => item?.title?.[0]?.title) || [];
+        const uniquePageTitles = [...new Set(pageTitles)];
+
+        const newCounts = {
+          all: pageTitles?.length,
+          long: uniquePageTitles.filter((title) => title?.length > 60).length,
+          empty: uniquePageTitles.filter((title) => !title).length,
+          short: uniquePageTitles.filter((title) => title?.length < 30).length,
+        };
+
+        const newTotalPages = crawlData.length;
+
+        setCounts(newCounts);
+        setTotalPages(newTotalPages);
+      }, 300), // Adjust the debounce delay as needed
+    [],
   );
-
-  // Memoize the page titles and their counts
-  const { counts, totalPages } = useMemo(() => {
-    const pageTitles = crawlData.map((item) => item?.title?.[0]?.title) || [];
-    const uniquePageTitles = [...new Set(pageTitles)];
-
-    const counts = {
-      all: uniquePageTitles.length,
-      long: uniquePageTitles.filter((title) => title?.length > 60).length,
-      empty: uniquePageTitles.filter((title) => !title).length,
-      short: uniquePageTitles.filter((title) => title?.length < 30).length,
-    };
-
-    const totalPages = crawlData.length;
-
-    return { counts, totalPages };
-  }, [crawlData]);
 
   // Memoize the sections to avoid recalculating on every render
   const sections = useMemo(

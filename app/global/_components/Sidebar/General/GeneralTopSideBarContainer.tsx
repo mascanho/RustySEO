@@ -29,7 +29,7 @@ const GeneralTopSideBarContainer = () => {
         <H2 />
         <Images />
         <Css />
-        {/* <Iframes /> */}
+        <Iframes />
         <Javascript />
         <Schema />
         <StatusCodes />

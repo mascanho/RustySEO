@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/chart";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { listen } from "@tauri-apps/api/event";
+import { debounce } from "lodash";
 
 const chartConfig = {
   visitors: {
@@ -67,7 +68,16 @@ function OverviewChart() {
   const inlineCss = css?.inline || 100;
   const externalCss = css?.external || 100;
 
-  // Update the crawled pages in real-time
+  // Debounced update function
+  const debouncedUpdate = useCallback(
+    debounce((crawled_urls, total_urls) => {
+      setStreamedCrawledPages(crawled_urls);
+      setStreamedTotalPages(total_urls);
+    }, 300),
+    [setStreamedCrawledPages, setStreamedTotalPages],
+  );
+
+  // Update the crawled pages in real-time with debounce
   useEffect(() => {
     const unlisten = listen("progress_update", (event) => {
       const progressData = event.payload as {
@@ -75,13 +85,12 @@ function OverviewChart() {
         percentage: number;
         total_urls: number;
       };
-      setStreamedCrawledPages(progressData.crawled_urls);
-      setStreamedTotalPages(progressData.total_urls);
+      debouncedUpdate(progressData.crawled_urls, progressData.total_urls);
     });
     return () => {
       unlisten.then((f) => f());
     };
-  }, [setStreamedCrawledPages, setStreamedTotalPages]);
+  }, [debouncedUpdate]);
 
   // Memoized chart data
   const chartData = useMemo(

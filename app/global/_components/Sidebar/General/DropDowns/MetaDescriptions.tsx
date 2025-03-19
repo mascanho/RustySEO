@@ -1,6 +1,7 @@
 // @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import React, { useMemo, memo } from "react";
+import React, { useMemo, memo, useEffect, useRef, useState } from "react";
+import { debounce } from "lodash";
 
 interface DescriptionCounts {
   all: number; // Total unique descriptions
@@ -18,27 +19,49 @@ interface Section {
 
 const MetaDescription = () => {
   const { crawlData } = useGlobalCrawlStore();
+  const [counts, setCounts] = useState<DescriptionCounts>({
+    all: 0,
+    empty: 0,
+    duplicate: 0,
+    long: 0,
+    short: 0,
+  });
+  const [totalPages, setTotalPages] = useState(0);
+  const crawlDataRef = useRef(crawlData);
 
-  // Memoize descriptions and counts to avoid recalculating on every render
-  const { counts, totalPages } = useMemo(() => {
-    const descriptions = crawlData?.map((item) => item?.description) || [];
-    const uniqueDescriptions = [...new Set(descriptions)];
-
-    const counts: DescriptionCounts = {
-      all: uniqueDescriptions.length,
-      empty: uniqueDescriptions.filter((desc) => !desc).length || 0,
-      duplicate: descriptions.length - uniqueDescriptions.length,
-      long: uniqueDescriptions.filter((desc) => desc?.length > 155).length || 0,
-      short: uniqueDescriptions.filter((desc) => desc?.length < 70).length || 0,
-    };
-
-    const totalPages = crawlData?.length || 0;
-
-    return {
-      counts,
-      totalPages,
-    };
+  // Update the ref with the latest data whenever crawlData changes
+  useEffect(() => {
+    crawlDataRef.current = crawlData;
+    processDataDebounced();
   }, [crawlData]);
+
+  // Debounce the processing logic
+  const processDataDebounced = useMemo(
+    () =>
+      debounce(() => {
+        const descriptions =
+          crawlDataRef.current?.map((item) => item?.description) || [];
+        const uniqueDescriptions = [...new Set(descriptions)];
+
+        const newCounts: DescriptionCounts = {
+          all: crawlData?.length,
+          empty:
+            uniqueDescriptions.filter((desc) => !desc || desc === "").length ||
+            0,
+          duplicate: descriptions.length - uniqueDescriptions.length,
+          long:
+            uniqueDescriptions.filter((desc) => desc?.length > 155).length || 0,
+          short:
+            uniqueDescriptions.filter((desc) => desc?.length < 70).length || 0,
+        };
+
+        const newTotalPages = crawlDataRef.current?.length || 0;
+
+        setCounts(newCounts);
+        setTotalPages(newTotalPages);
+      }, 300), // Adjust the debounce delay as needed
+    [crawlData],
+  );
 
   // Memoize sections to avoid recalculating on every render
   const sections: Section[] = useMemo(() => {

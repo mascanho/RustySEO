@@ -1,6 +1,6 @@
 // @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import React, { useMemo, useState, useCallback, useEffect, memo } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 
 interface CrawlDataItem {
   status_code?: number;
@@ -20,11 +20,13 @@ interface StatusDataItem {
 }
 
 const StatusCodes: React.FC = () => {
-  const { crawlData: domainCrawlData, setStatusCodes } = useGlobalCrawlStore();
-  const [isOpen, setIsOpen] = useState(false);
+  // Use a single selector to access Zustand store
+  const { crawlData, setStatusCodes } = useGlobalCrawlStore((state) => ({
+    crawlData: state.crawlData || [],
+    setStatusCodes: state.setStatusCodes,
+  }));
 
-  // Safely get crawlData or default to an empty array
-  const crawlData: CrawlDataItem[] = domainCrawlData || [];
+  const [isOpen, setIsOpen] = useState(false);
 
   // Memoize status codes calculation
   const statusCodes: StatusCodesData = useMemo(() => {
@@ -58,25 +60,42 @@ const StatusCodes: React.FC = () => {
       {
         label: "2xx Success",
         count: statusCodes["2xx"],
-        percentage: `${((statusCodes["2xx"] / totalStatusCodes) * 100).toFixed(0)}%`,
+        percentage:
+          totalStatusCodes > 0
+            ? `${((statusCodes["2xx"] / totalStatusCodes) * 100).toFixed(0)}%`
+            : "0%",
       },
       {
         label: "3xx Redirection",
         count: statusCodes["3xx"],
-        percentage: `${((statusCodes["3xx"] / totalStatusCodes) * 100).toFixed(0)}%`,
+        percentage:
+          totalStatusCodes > 0
+            ? `${((statusCodes["3xx"] / totalStatusCodes) * 100).toFixed(0)}%`
+            : "0%",
       },
       {
         label: "4xx Client Error",
         count: statusCodes["4xx"],
-        percentage: `${((statusCodes["4xx"] / totalStatusCodes) * 100).toFixed(0)}%`,
+        percentage:
+          totalStatusCodes > 0
+            ? `${((statusCodes["4xx"] / totalStatusCodes) * 100).toFixed(0)}%`
+            : "0%",
       },
       {
         label: "5xx Server Error",
         count: statusCodes["5xx"],
-        percentage: `${((statusCodes["5xx"] / totalStatusCodes) * 100).toFixed(0)}%`,
+        percentage:
+          totalStatusCodes > 0
+            ? `${((statusCodes["5xx"] / totalStatusCodes) * 100).toFixed(0)}%`
+            : "0%",
       },
     ];
   }, [statusCodes, totalStatusCodes]);
+
+  // Update status codes only when `statusData` changes
+  useEffect(() => {
+    setStatusCodes(statusData);
+  }, [statusData, setStatusCodes]);
 
   // Memoize the toggle handler
   const handleToggle = useCallback(
@@ -85,13 +104,6 @@ const StatusCodes: React.FC = () => {
     },
     [],
   );
-
-  // Update status codes only when statusData changes
-  useEffect(() => {
-    if (typeof setStatusCodes === "function") {
-      setStatusCodes(statusData);
-    }
-  }, [statusData, setStatusCodes]);
 
   return (
     <div className="text-sx w-full">
@@ -118,4 +130,4 @@ const StatusCodes: React.FC = () => {
   );
 };
 
-export default memo(StatusCodes);
+export default React.memo(StatusCodes);

@@ -202,7 +202,7 @@ async fn process_url(
     let mut pdf_files: Vec<&String> = Vec::new();
 
     if !check_html_page::is_html_page(&body, content_type.as_deref()).await {
-        pdf_files.push(&url.to_string());
+        pdf_files.push(&url.to_string()); // Push the urls that are not .HTML;
 
         let mut state = state.lock().await;
         state.crawled_urls += 1;
