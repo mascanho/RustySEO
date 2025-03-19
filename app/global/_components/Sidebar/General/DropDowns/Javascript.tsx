@@ -1,11 +1,11 @@
 // @ts-nocheck
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useCallback } from "react";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import { debounce } from "lodash";
 
-const Javascript: React.FC = () => {
-  const { crawlData } = useGlobalCrawlStore();
+const Javascript: React.FC = React.memo(() => {
+  const { crawlData, setJavascript } = useGlobalCrawlStore();
   const [isOpen, setIsOpen] = React.useState(false); // State to track if details are open
-  const { setJavascript } = useGlobalCrawlStore();
 
   // Calculate external and inline scripts using Sets to avoid duplicates
   const { externalScripts, inlineScripts, totalScripts } = useMemo(() => {
@@ -28,18 +28,34 @@ const Javascript: React.FC = () => {
     return { externalScripts, inlineScripts, totalScripts };
   }, [crawlData]);
 
+  // Debounced function to update `setJavascript`
+  const debouncedSetJavascript = useCallback(
+    debounce((external: number, inline: number) => {
+      setJavascript({ external, inline });
+    }, 300), // Adjust the debounce delay as needed
+    [setJavascript],
+  );
+
+  // Update `setJavascript` only when `externalScripts` or `inlineScripts` change
   useEffect(() => {
-    setJavascript({
-      external: externalScripts,
-      inline: inlineScripts,
-    });
-  }, [externalScripts, inlineScripts]);
+    debouncedSetJavascript(externalScripts, inlineScripts);
+  }, [externalScripts, inlineScripts, debouncedSetJavascript]);
+
+  // Cleanup the debounced function on unmount
+  useEffect(() => {
+    return () => {
+      debouncedSetJavascript.cancel();
+    };
+  }, [debouncedSetJavascript]);
 
   // Data to display
-  const scriptData = [
-    { label: "External Scripts", count: externalScripts },
-    { label: "Inline Scripts", count: inlineScripts },
-  ];
+  const scriptData = useMemo(
+    () => [
+      { label: "External Scripts", count: externalScripts },
+      { label: "Inline Scripts", count: inlineScripts },
+    ],
+    [externalScripts, inlineScripts],
+  );
 
   return (
     <div className="text-sx w-full">
@@ -83,6 +99,8 @@ const Javascript: React.FC = () => {
       </details>
     </div>
   );
-};
+});
+
+Javascript.displayName = "Javascript";
 
 export default Javascript;
