@@ -73,6 +73,7 @@ pub struct CrawlerState {
     pub queue: VecDeque<Url>,
     pub total_urls: usize,
     pub crawled_urls: usize,
+    pub batched_results: Vec<DomainCrawlResults>, // New field to track results for batching
 }
 
 impl CrawlerState {
@@ -85,6 +86,7 @@ impl CrawlerState {
             queue: VecDeque::new(),
             total_urls: 0,
             crawled_urls: 0,
+            batched_results: Vec::new(), // Initialize the new field
         }
     }
 }
@@ -267,6 +269,21 @@ async fn process_url(
         state.crawled_urls += 1;
         state.visited.insert(url.to_string());
         state.pending_urls.remove(url.as_str());
+
+        // Add the result to the batched_results list
+        state.batched_results.push(result.clone());
+
+        // If the batched_results list reaches 100, batch them into the database
+        if state.batched_results.len() >= 100 {
+            let results_to_batch = state.batched_results.clone();
+            state.batched_results.clear();
+            tokio::spawn(async move {
+                if let Err(e) = batch_results_into_database(results_to_batch).await {
+                    eprintln!("Failed to batch results into database: {}", e);
+                }
+            });
+        }
+
         // println!("Crawled URL: {}", url);
 
         let links = links_selector::extract_links(&body, base_url);
@@ -321,6 +338,16 @@ async fn process_url(
 fn should_skip_url(url: &str) -> bool {
     // Only skip URLs with fragments or login pages
     url.contains('#') || url.contains("login")
+}
+
+async fn batch_results_into_database(results: Vec<DomainCrawlResults>) -> Result<(), String> {
+    // Implement the logic to batch the results into the database
+    // This is a placeholder implementation
+    for result in results {
+        println!("Batching result into database: {}", result.url);
+        // Add your database insertion logic here
+    }
+    Ok(())
 }
 
 // Main crawling function
@@ -458,12 +485,23 @@ pub async fn crawl_domain(
         }
     }
 
-    let state = state.lock().await;
+    let mut state = state.lock().await;
     println!("\nCrawl completed:");
     println!("Total crawlable URLs found: {}", state.total_urls);
     println!("URLs crawled: {}", state.crawled_urls);
     println!("Failed URLs: {}", state.failed_urls.len());
     println!("Total time: {:?}", crawl_start_time.elapsed());
+
+    // Batch any remaining results into the database
+    if !state.batched_results.is_empty() {
+        let results_to_batch = state.batched_results.clone();
+        state.batched_results.clear();
+        tokio::spawn(async move {
+            if let Err(e) = batch_results_into_database(results_to_batch).await {
+                eprintln!("Failed to batch remaining results into database: {}", e);
+            }
+        });
+    }
 
     if state.crawled_urls + state.failed_urls.len() < state.total_urls {
         println!("\nWARNING: Incomplete crawl! Some URLs may have been lost:");
