@@ -128,7 +128,7 @@ async fn main() {
     }
 
     // Set the configurations
-    let _onfigs = settings::settings::create_config_file().expect("Failed to create config file");
+    let _confs = settings::settings::start_settings().expect("Failed to create config file");
 
     // initialise the dbs
     let _start_db = crawler::db::databases_start();

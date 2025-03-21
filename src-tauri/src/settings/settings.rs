@@ -1,3 +1,4 @@
+use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use std::fs;
 
@@ -9,8 +10,10 @@ pub struct Settings {
     pub concurrent_requests: u32,
     pub crawl_timeout: u32,
     pub batch_size: u32,
+    pub user_agent: String,
 }
 
+// CREATE AND INSTATIATE SETTINGS
 pub fn create_config_file() -> Result<(), String> {
     let project_dirs = directories::ProjectDirs::from("", "", "rustyseo")
         .ok_or("Failed to determine configuration directory")?;
@@ -18,7 +21,7 @@ pub fn create_config_file() -> Result<(), String> {
     std::fs::create_dir_all(config_dir).map_err(|e| e.to_string())?;
     let file_path = config_dir.join("configs.toml");
 
-    // Create a Settings struct
+    // Create a Settings struct with the default configuration
     let settings = Settings {
         max_retries: 3,
         base_delay: 5,
@@ -26,6 +29,7 @@ pub fn create_config_file() -> Result<(), String> {
         concurrent_requests: 10,
         crawl_timeout: 60,
         batch_size: 100,
+        user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3".to_string(),
     };
 
     // Serialize the struct to a TOML string
@@ -38,5 +42,10 @@ pub fn create_config_file() -> Result<(), String> {
         eprintln!("Settings file already exist... continuing rustySEO...");
     }
 
+    Ok(())
+}
+
+pub fn start_settings() -> Result<(), String> {
+    create_config_file().map_err(|e| e.to_string())?;
     Ok(())
 }
