@@ -1,6 +1,4 @@
 use crate::domain_crawler::db_deep::db::{fetch_custom_search, ExtractorConfig};
-use r2d2::Pool;
-use r2d2_sqlite::SqliteConnectionManager;
 use scraper::{Html, Selector};
 use std::sync::{Arc, Mutex};
 use tokio::sync::OnceCell;

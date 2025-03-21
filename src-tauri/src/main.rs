@@ -17,8 +17,8 @@ use tokio;
 use toml;
 
 pub mod crawler;
-
 pub mod domain_crawler;
+pub mod settings;
 
 pub mod machine_learning;
 
@@ -126,6 +126,9 @@ async fn main() {
         Ok(_) => println!("Custom search entry cleared successfully"),
         Err(err) => eprintln!("Error clearing custom search entry: {}", err),
     }
+
+    // Set the configurations
+    let _onfigs = settings::settings::create_config_file().expect("Failed to create config file");
 
     // initialise the dbs
     let _start_db = crawler::db::databases_start();

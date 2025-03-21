@@ -317,6 +317,7 @@ dependencies = [
  "tauri-plugin-shell",
  "tokio",
  "toml 0.7.8",
+ "toml_edit 0.19.15",
  "url 2.5.4",
  "urlencoding",
  "uuid",
