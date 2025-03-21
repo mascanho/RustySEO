@@ -133,6 +133,7 @@ async fn process_url(
     state: Arc<Mutex<CrawlerState>>,
     app_handle: &tauri::AppHandle,
 ) -> Result<DomainCrawlResults, String> {
+    // println!("Processing URL: {}", url);
     let response_result = tokio::time::timeout(
         Duration::from_secs(60),
         fetch_with_exponential_backoff(client, url.as_str()),
@@ -272,15 +273,18 @@ async fn process_url(
         // Add the result to the batched_results list
         state.batched_results.push(result.clone());
 
-        // If the batched_results list reaches BATCH_SIZE, batch them into the database
-        if state.batched_results.len() >= BATCH_SIZE {
-            let results_to_batch = state.batched_results.drain(..).collect::<Vec<_>>();
+        // If the batched_results list reaches 100, batch them into the database
+        if state.batched_results.len() >= 100 {
+            let results_to_batch = state.batched_results.clone();
+            state.batched_results.clear();
             tokio::spawn(async move {
                 if let Err(e) = batch_results_into_database(results_to_batch).await {
                     eprintln!("Failed to batch results into database: {}", e);
                 }
             });
         }
+
+        // println!("Crawled URL: {}", url);
 
         let links = links_selector::extract_links(&body, base_url);
         for link in links {
@@ -296,6 +300,7 @@ async fn process_url(
                 state.queue.push_back(link.clone());
                 state.total_urls += 1;
                 state.pending_urls.insert(link_str.to_string());
+                // println!("Added to queue: {}", link);
             }
         }
 
@@ -398,11 +403,13 @@ pub async fn crawl_domain(
             }
             let batch_size = std::cmp::min(BATCH_SIZE, state.queue.len());
             let batch: Vec<Url> = state.queue.drain(..batch_size).collect();
+            // println!("Processing batch of {} URLs", batch.len());
             batch
         };
 
         let mut handles = Vec::with_capacity(current_batch.len());
         for url in current_batch.clone() {
+            // Clone to keep URLs for re-queueing if needed
             let client = client.clone();
             let base_url = base_url.clone();
             let state = state.clone();
@@ -416,6 +423,7 @@ pub async fn crawl_domain(
 
                 let mut retries = 0;
                 let result: Result<DomainCrawlResults, String> = loop {
+                    // Explicit type annotation
                     match process_url(url.clone(), &client, &base_url, state.clone(), &app_handle)
                         .await
                     {
@@ -424,6 +432,7 @@ pub async fn crawl_domain(
                             if retries >= MAX_RETRIES {
                                 let mut state = state.lock().await;
                                 state.failed_urls.insert(url.to_string());
+                                // println!("Marked as failed after retries: {}", url);
                                 break Ok(DomainCrawlResults {
                                     url: url.to_string(),
                                     status_code: 0, // Indicates failure
@@ -436,7 +445,7 @@ pub async fn crawl_domain(
                         }
                     }
                 };
-                (url, result)
+                (url, result) // Return URL with result for tracking
             });
 
             handles.push(handle);
@@ -456,11 +465,13 @@ pub async fn crawl_domain(
                     if !state.failed_urls.contains(url.as_str())
                         && !state.visited.contains(url.as_str())
                     {
-                        state.queue.push_back(url.clone());
+                        state.queue.push_back(url.clone()); // Re-queue if not marked
+                                                            // println!("Re-queued URL due to error: {}", url);
                     }
                 }
                 Err(e) => {
-                    eprintln!("Task panicked or was cancelled: {:?}", e);
+                    // eprintln!("Task panicked or was cancelled: {:?}", e);
+                    // URL isn’t available here; rely on pending_urls to catch
                 }
             }
         }
@@ -483,7 +494,8 @@ pub async fn crawl_domain(
 
     // Batch any remaining results into the database
     if !state.batched_results.is_empty() {
-        let results_to_batch = state.batched_results.drain(..).collect::<Vec<_>>();
+        let results_to_batch = state.batched_results.clone();
+        state.batched_results.clear();
         tokio::spawn(async move {
             if let Err(e) = batch_results_into_database(results_to_batch).await {
                 eprintln!("Failed to batch remaining results into database: {}", e);
