@@ -1,4 +1,4 @@
-pub mod databse;
+pub mod database;
 pub mod db_deep;
 pub mod domain_commands;
 pub mod domain_crawler;
