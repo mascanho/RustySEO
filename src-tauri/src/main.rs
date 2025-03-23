@@ -132,6 +132,7 @@ async fn main() {
 
     // initialise the dbs
     let _start_db = crawler::db::databases_start();
+    // let _domain_results_db = domain_crawler::database::add_data().await;
 
     // Start the server
     // let _start_server = server::rusty_server().await;
