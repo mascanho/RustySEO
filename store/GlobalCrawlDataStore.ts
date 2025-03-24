@@ -113,7 +113,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
   setDomainCrawlData: createSetter<PageDetails[]>("crawlData"),
   addDomainCrawlResult: (result) =>
     set((state) => ({ crawlData: [...state.crawlData, result] })),
-  clearDomainCrawlData: () => set({ crawlData: [] }),
+  clearDomainCrawlData: () => set({ crawlData: [] }, false),
   setDomainCrawlLoading: createSetter<boolean>("domainCrawlLoading"),
   setCrawlerType: createSetter<string>("crawlerType"),
   setIssues: createSetter<string[]>("issues"),

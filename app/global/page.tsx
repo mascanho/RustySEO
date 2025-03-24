@@ -268,7 +268,7 @@ export default function Page() {
       <aside
         className={`transition-all ease-linear delay-100 ${visibility.sidebar ? "w-full max-w-[20.4rem] flex-grow" : "w-0"} h-screen`}
       >
-        <SidebarContainer />
+        {/* <SidebarContainer /> */}
       </aside>
     </main>
   );
