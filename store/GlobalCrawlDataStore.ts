@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { create } from "zustand";
 import { shallow } from "zustand/shallow";
 
@@ -17,7 +16,7 @@ export interface PageDetails {
   robots: string[];
 }
 
-// Define the Zustand store
+// Define the Zustand store state and actions
 interface CrawlStore {
   crawlData: PageDetails[];
   domainCrawlLoading: boolean;
@@ -73,6 +72,13 @@ interface CrawlStore {
   setStreamedCrawledPages: (pages: number) => void;
   setStreamedTotalPages: (pages: number) => void;
   setDeepCrawlTab: (tab: string) => void;
+
+  // Batch update for streaming
+  updateStreamingData: (
+    result: PageDetails,
+    crawledPages: number,
+    totalPages: number,
+  ) => void;
 }
 
 // Utility function to create setters dynamically
@@ -81,8 +87,9 @@ const createSetter =
   (value: T) =>
     useGlobalCrawlStore.setState({ [key]: value });
 
-const useGlobalCrawlStore = create<CrawlStore>((set) => ({
-  // State
+// Create the Zustand store
+const useGlobalCrawlStore = create<CrawlStore>((set, get) => ({
+  // Initial State
   crawlData: [],
   domainCrawlLoading: false,
   crawlerType: "spider",
@@ -112,7 +119,13 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
   // Actions
   setDomainCrawlData: createSetter<PageDetails[]>("crawlData"),
   addDomainCrawlResult: (result) =>
-    set((state) => ({ crawlData: [...state.crawlData, result] })),
+    set((state) => {
+      // Avoid duplicates based on URL (optional optimization)
+      if (state.crawlData.some((item) => item.url === result.url)) {
+        return state; // No update if already exists
+      }
+      return { crawlData: [...state.crawlData, result] };
+    }, false),
   clearDomainCrawlData: () => set({ crawlData: [] }, false),
   setDomainCrawlLoading: createSetter<boolean>("domainCrawlLoading"),
   setCrawlerType: createSetter<string>("crawlerType"),
@@ -138,11 +151,33 @@ const useGlobalCrawlStore = create<CrawlStore>((set) => ({
   setStreamedCrawledPages: createSetter<number>("streamedCrawledPages"),
   setStreamedTotalPages: createSetter<number>("streamedTotalPages"),
   setDeepCrawlTab: createSetter<string>("deepCrawlTab"),
+
+  // Batch streaming updates
+  updateStreamingData: (result, crawledPages, totalPages) =>
+    set((state) => ({
+      crawlData: state.crawlData.some((item) => item.url === result.url)
+        ? state.crawlData
+        : [...state.crawlData, result],
+      streamedCrawledPages: crawledPages,
+      streamedTotalPages: totalPages,
+    })),
 }));
 
-// Custom hook to access the store with shallow comparison
-const useCrawlStore = () => {
-  return useGlobalCrawlStore((state) => state, shallow);
-};
+// Custom hooks for selective subscriptions
+export const useCrawlData = () =>
+  useGlobalCrawlStore((state) => state.crawlData, shallow);
+export const useCrawlLoading = () =>
+  useGlobalCrawlStore((state) => state.domainCrawlLoading);
+export const useStreamingProgress = () =>
+  useGlobalCrawlStore(
+    (state) => ({
+      crawledPages: state.streamedCrawledPages,
+      totalPages: state.streamedTotalPages,
+    }),
+    shallow,
+  );
+export const useCrawlSummary = () =>
+  useGlobalCrawlStore((state) => state.summary, shallow);
 
-export default useCrawlStore;
+// Default export for backward compatibility
+export default useGlobalCrawlStore;
