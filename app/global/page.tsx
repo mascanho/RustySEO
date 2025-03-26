@@ -140,7 +140,18 @@ export default function Page() {
     };
   }, [addDomainCrawlResult, setFinishedDeepCrawl]);
 
-  // Comment
+  // TODO: Keep an eye on the crawl size and warn the user if it is too big
+  // useEffect(() => {
+  //   if (crawlData.length === 10) {
+  //     alert(
+  //       "You have crawled more than 13.000 URLs. RustySEO has not been configured for large website crawls",
+  //     );
+  //   }
+  //
+  //   if (crawlData.length === 15000) {
+  //     window.location.reload();
+  //   }
+  // }, [crawlData]);
 
   return (
     <main className="flex h-full w-full">
@@ -268,7 +279,7 @@ export default function Page() {
       <aside
         className={`transition-all ease-linear delay-100 ${visibility.sidebar ? "w-full max-w-[20.4rem] flex-grow" : "w-0"} h-screen`}
       >
-        {/* <SidebarContainer /> */}
+        <SidebarContainer />
       </aside>
     </main>
   );
