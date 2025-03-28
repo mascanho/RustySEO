@@ -91,10 +91,10 @@ Use at your own risk, this software is new and under development.
 |  8  | Topic / Content calendar view            |   ✅   |
 |  9  | Regression Analysis of GA4 data          |   ⚠️   |
 | 10  | Topic Modeling                           |   ⚠️   |
-| 11  | Chatbot LLM Crawl Context                |   ✅   |
+| 11  | Chatbot Crawl Context                    |   ✅   |
 | 12  | Extraction of HTML / JS / CSS fragments  |   ☠️   |
 | 13  | Schema Generator & Validator             |   ✅   |
-| 14  | Keyword Clustering                       |   ✅   |
+| 14  | Keyword Clustering                       |   ⏳   |
 | 15  | Machine Learning                         |   ✅   |
 | 16  | Collaboration                            |   ⏳   |
 | 17  | API / Streaming                          |   ⏳   |
