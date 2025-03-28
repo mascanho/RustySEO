@@ -98,6 +98,7 @@ Use at your own risk, this software is new and under development.
 | 15  | Machine Learning                         |   ✅   |
 | 16  | Collaboration                            |   ⏳   |
 | 17  | API / Streaming                          |   ⏳   |
+| 18  | Very Large website support (> 100K URLs) |   🏋🏻   |
 
 
 ## 🔌 Connectors / APIs (Get your keys, they are free 😉)
