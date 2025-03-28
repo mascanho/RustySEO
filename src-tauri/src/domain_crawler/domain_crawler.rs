@@ -15,7 +15,6 @@ use url::Url;
 use crate::domain_crawler::extractors::html::extract_html;
 use crate::domain_crawler::helpers::sitemap::get_sitemap;
 use crate::domain_crawler::models::Extractor;
-use crate::settings::settings;
 
 use super::helpers::canonical_selector::get_canonical;
 use super::helpers::flesch_reader::get_flesch_score;
@@ -96,7 +95,6 @@ async fn fetch_with_exponential_backoff(
     url: &str,
 ) -> Result<(reqwest::Response, f64), reqwest::Error> {
     let mut attempt = 0;
-
     loop {
         let start = Instant::now();
         match client.get(url).send().await {

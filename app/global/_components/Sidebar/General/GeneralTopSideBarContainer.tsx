@@ -23,17 +23,17 @@ const GeneralTopSideBarContainer = () => {
       </section>
       <div className="overflow-hidden">
         <Summary />
-        {/* <PageTitles /> */}
-        {/* <MetaDescriptions /> */}
-        {/* <H1 /> */}
-        {/* <H2 /> */}
-        {/* <Images /> */}
-        {/* <Css /> */}
+        <PageTitles />
+        <MetaDescriptions />
+        <H1 />
+        <H2 />
+        <Images />
+        <Css />
         {/* <Iframes /> */}
-        {/* <Javascript /> */}
-        {/* <Schema /> */}
-        {/* <StatusCodes /> */}
-        {/* <CustomSearch /> */}
+        <Javascript />
+        <Schema />
+        <StatusCodes />
+        <CustomSearch />
       </div>
     </div>
   );
