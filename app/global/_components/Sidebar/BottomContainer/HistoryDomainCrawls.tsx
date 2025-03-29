@@ -92,9 +92,10 @@ const HistoryDomainCrawls = () => {
       total_external_links: summary?.totalExternalLinks || 0,
       indexable_pages: Math.max(
         0,
-        (crawlData.length || 0) - (summary?.totalNotIndexablePages || 0),
+        (crawlData.length || 0) - (summary?.notIndexablePages || 0),
       ),
-      not_indexable_pages: summary?.totalNotIndexablePages || 0,
+      not_indexable_pages: summary?.notIndexablePages || 0,
+      issues: issues?.length,
     };
 
     try {

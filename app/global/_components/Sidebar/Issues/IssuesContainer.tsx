@@ -5,6 +5,7 @@ import useFindDuplicateTitles from "./libs/useDuplicatedTitles";
 import useFindDuplicateDescriptions from "./libs/useDuplicatedDescriptions";
 import useResponseCodes from "./libs/useResponseCodes";
 import { useFixesStore } from "@/store/FixesStore";
+import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 
 const IssuesContainer = () => {
   const {
@@ -22,6 +23,9 @@ const IssuesContainer = () => {
   } = useGlobalCrawlStore();
   const { fix, setFix } = useFixesStore();
   const [isMode, setIsMode] = useState(null);
+
+  // Handle the Finished Crawl
+  const { isFinishedDeepCrawl } = useGlobalConsoleStore();
 
   // Find pages with missing titles
   const missingTitles = crawlData?.filter((page) => page?.title === "");
@@ -266,6 +270,25 @@ const IssuesContainer = () => {
     setFix(issueName);
     setIssuesData(issueDataMap[issueName] || []);
   };
+
+  const sumIssueCounts = (arr) => {
+    // Initialize sum to 0
+    let totalIssues = 0;
+
+    // Loop through each issue object in the array
+    for (const issue of arr) {
+      // Add the issueCount to the total (using || 0 in case issueCount is missing/undefined)
+      totalIssues += issue.issueCount || 0;
+    }
+
+    return totalIssues;
+  };
+
+  const sumIssues = sumIssueCounts(issuesArr);
+
+  useEffect(() => {
+    setIssues(sumIssues);
+  }, [isFinishedDeepCrawl]);
 
   if (!crawlData || crawlData.length === 0) {
     return (
