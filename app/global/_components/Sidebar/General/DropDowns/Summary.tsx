@@ -5,7 +5,6 @@ import React, {
   useCallback,
   useEffect,
   useReducer,
-  useRef,
 } from "react";
 import debounce from "lodash.debounce";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
@@ -38,11 +37,11 @@ const SummaryItemRow: React.FC<SummaryItem> = memo(
 
 SummaryItemRow.displayName = "SummaryItemRow";
 
-// Reducer to manage derived data
 type State = {
   internalLinks: string[];
   externalLinks: string[];
   totalIndexablePages: number;
+  isProcessing: boolean;
 };
 
 type Action = {
@@ -54,13 +53,14 @@ const initialState: State = {
   internalLinks: [],
   externalLinks: [],
   totalIndexablePages: 0,
+  isProcessing: false,
 };
 
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "UPDATE_DATA":
-      const internalLinksSet = new Set<string>();
-      const externalLinksSet = new Set<string>();
+      const internalLinksSet = new Set(state.internalLinks);
+      const externalLinksSet = new Set(state.externalLinks);
       let totalIndexablePages = 0;
 
       for (const item of action.payload) {
@@ -79,6 +79,7 @@ const reducer = (state: State, action: Action): State => {
         internalLinks: Array.from(internalLinksSet),
         externalLinks: Array.from(externalLinksSet),
         totalIndexablePages,
+        isProcessing: false,
       };
     default:
       return state;
@@ -86,51 +87,50 @@ const reducer = (state: State, action: Action): State => {
 };
 
 const Summary: React.FC = () => {
-  const domainCrawlData = useGlobalCrawlStore();
-  const { setSummary } = useGlobalCrawlStore();
-
-  // Safely get crawlData or default to an empty array
-  const crawlData: CrawlDataItem[] = useMemo(
-    () => domainCrawlData?.crawlData || [],
-    [domainCrawlData],
-  );
-
-  // Use reducer to manage derived data
+  const { crawlData, setSummary } = useGlobalCrawlStore();
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  // Memoize totals
-  const {
-    totalPagesCrawled,
-    totalInternalLinks,
-    totalExternalLinks,
-    totalLinksFound,
-    totalNotIndexablePages,
-  } = useMemo(() => {
-    const totalPagesCrawled = crawlData.length;
-    const totalInternalLinks = state.internalLinks.length;
-    const totalExternalLinks = state.externalLinks.length;
-    const totalLinksFound = totalInternalLinks + totalExternalLinks;
-    const totalNotIndexablePages =
-      totalPagesCrawled - state.totalIndexablePages;
+  // Memoize crawlData to prevent unnecessary recalculations
+  const stableCrawlData = useMemo(() => crawlData || [], [crawlData]);
 
-    setSummary({
-      totaPagesCrawled: crawlData.length,
-      totalInternalLinks: state.internalLinks.length,
-      totalExternalLinks: state.externalLinks.length,
-      totalLinksFound:
-        state?.externalLinks.length + state?.internalLinks.length,
-      notIndexablePages: totalNotIndexablePages,
-      indexablePages: crawlData?.length - totalNotIndexablePages,
-    });
+  // Stable debounced update function
+  const debouncedUpdate = useCallback(
+    debounce((data: CrawlDataItem[]) => {
+      dispatch({ type: "UPDATE_DATA", payload: data });
+    }, 300),
+    [],
+  );
 
-    return {
-      totalPagesCrawled,
-      totalInternalLinks,
-      totalExternalLinks,
-      totalLinksFound,
-      totalNotIndexablePages,
-    };
-  }, [crawlData, state]);
+  // Update global summary only when processing is complete
+  useEffect(() => {
+    if (!state.isProcessing) {
+      setSummary({
+        totaPagesCrawled: stableCrawlData.length,
+        totalInternalLinks: state.internalLinks.length,
+        totalExternalLinks: state.externalLinks.length,
+        totalLinksFound:
+          state.internalLinks.length + state.externalLinks.length,
+        notIndexablePages: stableCrawlData.length - state.totalIndexablePages,
+        indexablePages: state.totalIndexablePages,
+      });
+    }
+  }, [state, stableCrawlData, setSummary]);
+
+  // Trigger debounced update when crawlData changes
+  useEffect(() => {
+    debouncedUpdate(stableCrawlData);
+    return () => debouncedUpdate.cancel();
+  }, [stableCrawlData, debouncedUpdate]);
+
+  // Memoize derived values
+  const { totalPagesCrawled, totalNotIndexablePages } = useMemo(
+    () => ({
+      totalPagesCrawled: stableCrawlData.length,
+      totalNotIndexablePages:
+        stableCrawlData.length - state.totalIndexablePages,
+    }),
+    [stableCrawlData, state.totalIndexablePages],
+  );
 
   // Memoize summary data
   const summaryData: SummaryItem[] = useMemo(
@@ -142,22 +142,24 @@ const Summary: React.FC = () => {
       },
       {
         label: "Total Links Found",
-        value: totalLinksFound,
+        value: state.internalLinks.length + state.externalLinks.length,
         percentage: "100%",
       },
       {
         label: "Total Internal Links",
-        value: totalInternalLinks,
-        percentage: totalLinksFound
-          ? `${((totalInternalLinks / totalLinksFound) * 100).toFixed(0)}%`
-          : "0%",
+        value: state.internalLinks.length,
+        percentage:
+          state.internalLinks.length + state.externalLinks.length
+            ? `${((state.internalLinks.length / (state.internalLinks.length + state.externalLinks.length)) * 100).toFixed(0)}%`
+            : "0%",
       },
       {
         label: "Total External Links",
-        value: totalExternalLinks,
-        percentage: totalLinksFound
-          ? `${((totalExternalLinks / totalLinksFound) * 100).toFixed(0)}%`
-          : "0%",
+        value: state.externalLinks.length,
+        percentage:
+          state.internalLinks.length + state.externalLinks.length
+            ? `${((state.externalLinks.length / (state.internalLinks.length + state.externalLinks.length)) * 100).toFixed(0)}%`
+            : "0%",
       },
       {
         label: "Total Indexable Pages",
@@ -174,45 +176,20 @@ const Summary: React.FC = () => {
           : "0%",
       },
     ],
-    [
-      totalPagesCrawled,
-      totalLinksFound,
-      totalInternalLinks,
-      totalExternalLinks,
-      state.totalIndexablePages,
-      totalNotIndexablePages,
-    ],
+    [state, totalPagesCrawled, totalNotIndexablePages],
   );
-
-  // Memoize the click handler
-  const handleClick = useCallback((e: React.MouseEvent<HTMLDetailsElement>) => {
-    console.log(e.currentTarget.innerText);
-  }, []);
-
-  // Debounced update function using useRef
-  const debouncedUpdate = useRef(
-    debounce((data: CrawlDataItem[]) => {
-      dispatch({ type: "UPDATE_DATA", payload: data });
-    }, 300), // 300ms debounce delay
-  ).current;
-
-  // Trigger debounced update when crawlData changes
-  useEffect(() => {
-    debouncedUpdate(crawlData);
-  }, [crawlData, debouncedUpdate]);
-
-  // Cleanup debounce on unmount
-  useEffect(() => {
-    return () => {
-      debouncedUpdate.cancel();
-    };
-  }, [debouncedUpdate]);
 
   return (
     <div className="text-sx w-full">
-      <details className="w-full" onClick={handleClick}>
+      <details
+        className="w-full"
+        onClick={(e) => console.log(e.currentTarget.innerText)}
+      >
         <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 pb-1.5 cursor-pointer flex items-center">
           <span>Summary</span>
+          {state.isProcessing && (
+            <span className="ml-2 text-xs text-gray-500">Processing...</span>
+          )}
         </summary>
         <div className="w-full">
           {summaryData.map((item, index) => (

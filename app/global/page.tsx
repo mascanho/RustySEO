@@ -141,17 +141,19 @@ export default function Page() {
   }, [addDomainCrawlResult, setFinishedDeepCrawl]);
 
   // TODO: Keep an eye on the crawl size and warn the user if it is too big
-  // useEffect(() => {
-  //   if (crawlData.length === 10) {
-  //     alert(
-  //       "You have crawled more than 13.000 URLs. RustySEO has not been configured for large website crawls",
-  //     );
-  //   }
-  //
-  //   if (crawlData.length === 15000) {
-  //     window.location.reload();
-  //   }
-  // }, [crawlData]);
+  // const crawlDataLength = crawlData.length;
+
+  useEffect(() => {
+    if (crawlDataLength === 10) {
+      console.warn(
+        "You have crawled more than 13,000 URLs. RustySEO has not been configured for large website crawls.",
+      );
+    }
+
+    if (crawlDataLength === 20) {
+      console.warn("You have crawled more than 26,000 URLs.");
+    }
+  }, [crawlDataLength]);
 
   return (
     <main className="flex h-full w-full">

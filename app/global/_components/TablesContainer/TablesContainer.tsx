@@ -101,16 +101,17 @@ export default function Home() {
   const handleResize = useCallback((newBottomHeight: number) => {
     setBottomTableHeight(newBottomHeight);
   }, []);
-
   const [debouncedCrawlData, setDebouncedCrawlData] = useState(crawlData);
 
-  useEffect(() => {
-    const debounceTimeout = setTimeout(() => {
-      setDebouncedCrawlData(crawlData);
-    }, 1000); // Adjust the debounce delay as needed
+  const debouncedUpdate = useMemo(() => {
+    const baseDelay = crawlData.length > 5000 ? 2000 : 500;
+    return debounce(setDebouncedCrawlData, baseDelay);
+  }, [crawlData.length]); // Recreate only when length changes
 
-    return () => clearTimeout(debounceTimeout);
-  }, [crawlData]);
+  useEffect(() => {
+    debouncedUpdate(crawlData);
+    return () => debouncedUpdate.cancel();
+  }, [crawlData, debouncedUpdate]);
 
   // Filteres all the JS
   const filteredJsArr = useMemo(() => {
