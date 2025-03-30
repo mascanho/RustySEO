@@ -46,7 +46,9 @@ jobs:
       - name: Install Windows dependencies
         if: matrix.platform == 'windows-latest'
         run: |
-          npm install --global windows-build-tools
+          choco install visualstudio2022buildtools -y --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional --quiet"
+          choco install python --version=3.10.0 -y
+          refreshenv
 
       - name: Install frontend dependencies with legacy peer deps
         run: |
