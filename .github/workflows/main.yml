@@ -5,8 +5,6 @@ on:
     branches:
       - release
 
-# This workflow will trigger on each push to the `release` branch to create or update a GitHub release, build your app, and upload the artifacts to the release.
-
 jobs:
   publish-tauri:
     permissions:
@@ -15,11 +13,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: 'macos-latest' # for Arm based macs (M1 and above).
+          - platform: 'macos-latest'
             args: '--target aarch64-apple-darwin'
-          - platform: 'macos-latest' # for Intel based macs.
+          - platform: 'macos-latest'
             args: '--target x86_64-apple-darwin'
-          - platform: 'ubuntu-22.04' # for Tauri v1 you could replace this with ubuntu-20.04.
+          - platform: 'ubuntu-22.04'
             args: ''
           - platform: 'windows-latest'
             args: ''
@@ -28,33 +26,47 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: setup node
+      - name: Setup Node.js (LTS)
         uses: actions/setup-node@v4
         with:
-          node-version: 23.10.0
+          node-version: '20' # Using LTS version for better compatibility
 
-      - name: install Rust stable
+      - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
-      - name: install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-        # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
-        # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
+          sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev \
+              libappindicator3-dev librsvg2-dev patchelf libgtk-3-dev libssl-dev
 
-      - name: install frontend dependencies
-        run: npm install --force # change this to npm, pnpm or bun depending on which one you use.
+      - name: Install Windows dependencies
+        if: matrix.platform == 'windows-latest'
+        run: |
+          npm install --global windows-build-tools
 
-      - uses: tauri-apps/tauri-action@v0
+      - name: Install frontend dependencies
+        run: |
+          npm install
+          npm install @tauri-apps/cli@latest @tauri-apps/api@latest --save-dev
+
+      - name: Explicitly install platform-specific Tauri CLI
+        run: |
+          if [[ "${{ matrix.platform }}" == "windows-latest" ]]; then
+            npm install @tauri-apps/cli-win32-x64-msvc --save-dev
+          elif [[ "${{ matrix.platform }}" == "ubuntu-22.04" ]]; then
+            npm install @tauri-apps/cli-linux-x64-gnu --save-dev
+          fi
+
+      - name: Build and release with Tauri
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
+          tagName: app-v__VERSION__
           releaseName: 'App v__VERSION__'
           releaseBody: 'See the assets to download this version and install.'
           releaseDraft: true
