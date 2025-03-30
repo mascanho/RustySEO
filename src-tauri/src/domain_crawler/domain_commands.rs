@@ -6,7 +6,6 @@ use serde_json::Value;
 use crate::domain_crawler::domain_crawler;
 
 use super::{
-    database,
     excel::create_xlsx::{
         generate_css_table, generate_excel_main_table, generate_excel_two_cols,
         generate_keywords_excel, generate_links_excel, generate_xlsx,
@@ -19,51 +18,22 @@ pub async fn domain_crawl_command(
     domain: String,
     app_handle: tauri::AppHandle,
 ) -> Result<Vec<DomainCrawlResults>, String> {
-    // Create and initialize the database
-    let mut db = match database::Database::new("deep_crawl_batches.db") {
-        Ok(db) => db,
-        Err(e) => {
-            let error_msg = format!("Failed to create database: {}", e);
-            eprintln!("{}", error_msg);
-            return Err(error_msg);
-        }
-    };
-
-    // Initialize the database (create tables)
-    if let Err(e) = db.initialize().await {
-        let error_msg = format!("Failed to initialize database: {}", e);
-        eprintln!("{}", error_msg);
-        return Err(error_msg);
-    }
-
-    // Clear existing data from the database
-    if let Err(e) = db.clear().await {
-        let error_msg = format!("Failed to clear database: {}", e);
-        eprintln!("{}", error_msg);
-        return Err(error_msg);
-    }
-
-    // Call the crawl_domain function with a clone of the database
-    match domain_crawler::crawl_domain(&domain, app_handle, Ok(db.clone())).await {
+    // Call the crawl_domain function and handle its result
+    match domain_crawler::crawl_domain(&domain, app_handle).await {
         Ok(links) => {
-            println!("Discovered {} links", links.len());
+            // println!("Discovered links with titles:");
             for data in &links {
-                println!(
-                    "URL: {:?}, Title: {:?}, Description: {:?}",
-                    data.url, data.title, data.description
-                );
+                // println!(
+                //     "URL: {:?}, Title: {:?} Description: {:?}",
+                //     data.url, data.title, data.description
+                // );
             }
-
-            // Verify database contents using the original db
-            match db.count_rows().await {
-                Ok(count) => println!("Database contains {} rows after crawl", count),
-                Err(e) => eprintln!("Failed to count rows: {}", e),
-            }
-
+            // Explicitly return the data crawled
             Ok(links)
         }
         Err(e) => {
-            eprintln!("Crawl error: {}", e);
+            eprintln!("Error: {}", e);
+            // Explicitly return the error
             Err(e)
         }
     }

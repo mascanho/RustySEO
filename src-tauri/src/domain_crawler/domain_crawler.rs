@@ -12,12 +12,10 @@ use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration};
 use url::Url;
 
-use crate::domain_crawler::database::{Database, DatabaseResults};
 use crate::domain_crawler::extractors::html::extract_html;
 use crate::domain_crawler::helpers::sitemap::get_sitemap;
 use crate::domain_crawler::models::Extractor;
 
-use super::database::{self, DatabaseError};
 use super::helpers::canonical_selector::get_canonical;
 use super::helpers::flesch_reader::get_flesch_score;
 use super::helpers::hreflang_selector::select_hreflang;
@@ -40,6 +38,7 @@ use super::helpers::{
     word_count::{self, get_word_count},
 };
 use super::helpers::{pdf_checker, pdf_selector};
+
 use super::models::DomainCrawlResults;
 
 // Constants for crawler behavior
@@ -47,9 +46,8 @@ const MAX_RETRIES: usize = 5;
 const BASE_DELAY: u64 = 500;
 const MAX_DELAY: u64 = 8000;
 const CONCURRENT_REQUESTS: usize = 120;
-const CRAWL_TIMEOUT: Duration = Duration::from_secs(28800); // 8 hours
+const CRAWL_TIMEOUT: Duration = Duration::from_secs(28800); // 4 hours
 const BATCH_SIZE: usize = 20;
-const DB_BATCH_SIZE: usize = 10; // Reduced to ensure more frequent writes for testing
 
 // Progress tracking structure
 #[derive(Clone, Serialize)]
@@ -75,11 +73,10 @@ pub struct CrawlerState {
     pub queue: VecDeque<Url>,
     pub total_urls: usize,
     pub crawled_urls: usize,
-    pub db: Option<Database>,
 }
 
 impl CrawlerState {
-    fn new(db: Option<Database>) -> Self {
+    fn new() -> Self {
         CrawlerState {
             visited: HashSet::new(),
             failed_urls: HashSet::new(),
@@ -88,16 +85,7 @@ impl CrawlerState {
             queue: VecDeque::new(),
             total_urls: 0,
             crawled_urls: 0,
-            db,
         }
-    }
-}
-
-// Helper to convert crawl results to database format
-fn to_database_results(result: &DomainCrawlResults) -> DatabaseResults {
-    DatabaseResults {
-        url: result.url.clone(),
-        data: serde_json::to_value(result).expect("Failed to serialize crawl results"),
     }
 }
 
@@ -143,6 +131,7 @@ async fn process_url(
     state: Arc<Mutex<CrawlerState>>,
     app_handle: &tauri::AppHandle,
 ) -> Result<DomainCrawlResults, String> {
+    // println!("Processing URL: {}", url);
     let response_result = tokio::time::timeout(
         Duration::from_secs(60),
         fetch_with_exponential_backoff(client, url.as_str()),
@@ -154,11 +143,13 @@ async fn process_url(
         Ok(Err(e)) => {
             let mut state = state.lock().await;
             state.failed_urls.insert(url.to_string());
+            println!("Failed to fetch URL: {}", url);
             return Err(format!("Failed to fetch {}: {}", url, e));
         }
         Err(_) => {
             let mut state = state.lock().await;
             state.failed_urls.insert(url.to_string());
+            println!("Timeout fetching URL: {}", url);
             return Err(format!("Timeout fetching {}", url));
         }
     };
@@ -177,11 +168,13 @@ async fn process_url(
         .map(|s| s.parse::<usize>().unwrap_or(0));
 
     let content_len = content_length.clone();
+
     let redirection = response
         .headers()
         .get("Location")
         .and_then(|h| h.to_str().ok().map(String::from));
 
+    // GET ALL THE HEADERS RESPONSE
     let headers = response
         .headers()
         .iter()
@@ -200,13 +193,16 @@ async fn process_url(
         Err(e) => {
             let mut state = state.lock().await;
             state.failed_urls.insert(url.to_string());
+            println!("Failed to read body for URL: {}", url);
             return Err(format!("Failed to read response body: {}", e));
         }
     };
 
-    let mut pdf_files: Vec<String> = Vec::new();
+    // Skip non-HTML content but still mark it as processed and store URLS with PDFs
+    let mut pdf_files: Vec<&String> = Vec::new();
+
     if !check_html_page::is_html_page(&body, content_type.as_deref()).await {
-        pdf_files.push(url.to_string());
+        pdf_files.push(&url.to_string()); // Push the urls that are not .HTML;
 
         let mut state = state.lock().await;
         state.crawled_urls += 1;
@@ -215,7 +211,6 @@ async fn process_url(
         return Ok(DomainCrawlResults {
             url: final_url.to_string(),
             status_code,
-            pdf_files,
             ..Default::default()
         });
     }
@@ -263,7 +258,7 @@ async fn process_url(
             regex: false,
         },
         headers,
-        pdf_files,
+        pdf_files: pdf_files.iter().map(|s| s.to_string()).collect(),
     };
 
     {
@@ -272,6 +267,7 @@ async fn process_url(
         state.crawled_urls += 1;
         state.visited.insert(url.to_string());
         state.pending_urls.remove(url.as_str());
+        // println!("Crawled URL: {}", url);
 
         let links = links_selector::extract_links(&body, base_url);
         for link in links {
@@ -287,6 +283,7 @@ async fn process_url(
                 state.queue.push_back(link.clone());
                 state.total_urls += 1;
                 state.pending_urls.insert(link_str.to_string());
+                // println!("Added to queue: {}", link);
             }
         }
 
@@ -322,13 +319,14 @@ async fn process_url(
 }
 
 fn should_skip_url(url: &str) -> bool {
+    // Only skip URLs with fragments or login pages
     url.contains('#') || url.contains("login")
 }
 
+// Main crawling function
 pub async fn crawl_domain(
     domain: &str,
     app_handle: tauri::AppHandle,
-    db: Result<Database, DatabaseError>,
 ) -> Result<Vec<DomainCrawlResults>, String> {
     let user_agents = vec![
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
@@ -346,41 +344,45 @@ pub async fn crawl_domain(
     let url_checked = url_check(domain);
     let base_url = Url::parse(&url_checked).map_err(|_| "Invalid URL")?;
 
-    let db_option = match db {
-        Ok(database) => Some(database),
-        Err(e) => {
-            eprintln!("Database connection failed: {}", e);
-            None
-        }
-    };
-
-    let state = Arc::new(Mutex::new(CrawlerState::new(db_option)));
+    let state = Arc::new(Mutex::new(CrawlerState::new()));
     {
         let mut state = state.lock().await;
         state.queue.push_back(base_url.clone());
         state.total_urls = 1;
         state.pending_urls.insert(base_url.to_string());
+        println!("Starting crawl with: {}", base_url);
     }
 
     let semaphore = Arc::new(Semaphore::new(CONCURRENT_REQUESTS));
     let crawl_start_time = Instant::now();
-    let mut batch_counter = 0;
 
     loop {
         let current_batch: Vec<Url> = {
             let mut state = state.lock().await;
             if state.queue.is_empty() {
                 if state.crawled_urls + state.failed_urls.len() >= state.total_urls {
+                    println!("\nAll crawlable URLs processed.");
+                    break;
+                } else {
+                    println!(
+                        "\nWARNING: Queue empty but only {}/{} URLs accounted for (crawled: {}, failed: {})",
+                        state.crawled_urls + state.failed_urls.len(),
+                        state.total_urls,
+                        state.crawled_urls,
+                        state.failed_urls.len()
+                    );
                     break;
                 }
-                break;
             }
             let batch_size = std::cmp::min(BATCH_SIZE, state.queue.len());
-            state.queue.drain(..batch_size).collect()
+            let batch: Vec<Url> = state.queue.drain(..batch_size).collect();
+            // println!("Processing batch of {} URLs", batch.len());
+            batch
         };
 
         let mut handles = Vec::with_capacity(current_batch.len());
         for url in current_batch.clone() {
+            // Clone to keep URLs for re-queueing if needed
             let client = client.clone();
             let base_url = base_url.clone();
             let state = state.clone();
@@ -394,6 +396,7 @@ pub async fn crawl_domain(
 
                 let mut retries = 0;
                 let result: Result<DomainCrawlResults, String> = loop {
+                    // Explicit type annotation
                     match process_url(url.clone(), &client, &base_url, state.clone(), &app_handle)
                         .await
                     {
@@ -402,18 +405,20 @@ pub async fn crawl_domain(
                             if retries >= MAX_RETRIES {
                                 let mut state = state.lock().await;
                                 state.failed_urls.insert(url.to_string());
+                                // println!("Marked as failed after retries: {}", url);
                                 break Ok(DomainCrawlResults {
                                     url: url.to_string(),
-                                    status_code: 0,
+                                    status_code: 0, // Indicates failure
                                     ..Default::default()
                                 });
                             }
+                            eprintln!("Error processing URL (retry {}): {}", retries + 1, e);
                             retries += 1;
                             sleep(Duration::from_secs(1)).await;
                         }
                     }
                 };
-                (url, result)
+                (url, result) // Return URL with result for tracking
             });
 
             handles.push(handle);
@@ -424,48 +429,28 @@ pub async fn crawl_domain(
                 Ok((url, Ok(result))) => {
                     let mut state = state.lock().await;
                     if !state.visited.contains(&url.to_string()) {
-                        state.results.push(result.clone());
-
-                        // Handle database insertion
-                        if let Some(db) = &state.db {
-                            batch_counter += 1;
-
-                            let batch_start = state.results.len().saturating_sub(batch_counter);
-                            let recent_results = &state.results[batch_start..];
-                            let db_results = recent_results
-                                .iter()
-                                .map(to_database_results)
-                                .collect::<Vec<_>>();
-
-                            // Insert every DB_BATCH_SIZE or if we have any results
-                            if batch_counter >= DB_BATCH_SIZE || !recent_results.is_empty() {
-                                match database::insert_bulk_crawl_data(db.get_pool(), db_results)
-                                    .await
-                                {
-                                    Ok(()) => println!(
-                                        "Successfully inserted batch of {} results",
-                                        recent_results.len()
-                                    ),
-                                    Err(e) => eprintln!("Failed to batch insert results: {}", e),
-                                }
-                                batch_counter = 0;
-                            }
-                        }
+                        state.results.push(result);
                     }
                 }
                 Ok((url, Err(e))) => {
+                    eprintln!("Task completed with unexpected error for {}: {}", url, e);
                     let mut state = state.lock().await;
                     if !state.failed_urls.contains(url.as_str())
                         && !state.visited.contains(url.as_str())
                     {
-                        state.queue.push_back(url.clone());
+                        state.queue.push_back(url.clone()); // Re-queue if not marked
+                                                            // println!("Re-queued URL due to error: {}", url);
                     }
                 }
-                Err(e) => eprintln!("Task failed: {:?}", e),
+                Err(e) => {
+                    // eprintln!("Task panicked or was cancelled: {:?}", e);
+                    // URL isn’t available here; rely on pending_urls to catch
+                }
             }
         }
 
         if crawl_start_time.elapsed() > CRAWL_TIMEOUT {
+            println!("\nCrawl timeout reached. Stopping...");
             if let Err(err) = app_handle.emit("crawl_interrupted", ()) {
                 eprintln!("Failed to emit crawl interruption event: {}", err);
             }
@@ -473,32 +458,18 @@ pub async fn crawl_domain(
         }
     }
 
-    // Insert any remaining results
-    let final_state = state.lock().await;
-    if let Some(db) = &final_state.db {
-        if !final_state.results.is_empty() {
-            let db_results = final_state
-                .results
-                .iter()
-                .map(to_database_results)
-                .collect::<Vec<_>>();
+    let state = state.lock().await;
+    println!("\nCrawl completed:");
+    println!("Total crawlable URLs found: {}", state.total_urls);
+    println!("URLs crawled: {}", state.crawled_urls);
+    println!("Failed URLs: {}", state.failed_urls.len());
+    println!("Total time: {:?}", crawl_start_time.elapsed());
 
-            match database::insert_bulk_crawl_data(db.get_pool(), db_results).await {
-                Ok(()) => println!(
-                    "Successfully inserted final batch of {} results",
-                    final_state.results.len()
-                ),
-                Err(e) => eprintln!("Failed to insert final batch: {}", e),
-            }
-        }
-    }
-
-    // Remove duplicates from the results
-    let mut unique_results = Vec::new();
-    let mut seen_urls = HashSet::new();
-    for result in final_state.results.clone() {
-        if seen_urls.insert(result.url.clone()) {
-            unique_results.push(result);
+    if state.crawled_urls + state.failed_urls.len() < state.total_urls {
+        println!("\nWARNING: Incomplete crawl! Some URLs may have been lost:");
+        println!("Pending URLs remaining: {}", state.pending_urls.len());
+        for url in &state.pending_urls {
+            println!("  - Unprocessed: {}", url);
         }
     }
 
@@ -506,9 +477,14 @@ pub async fn crawl_domain(
         eprintln!("Failed to emit crawl completion event: {}", err);
     }
 
-    println!(
-        "Crawl completed with {} unique results",
-        unique_results.len()
-    );
+    // Remove duplicates from the results
+    let mut unique_results = Vec::new();
+    let mut seen_urls = HashSet::new();
+    for result in state.results.clone() {
+        if seen_urls.insert(result.url.clone()) {
+            unique_results.push(result);
+        }
+    }
+
     Ok(unique_results)
 }
