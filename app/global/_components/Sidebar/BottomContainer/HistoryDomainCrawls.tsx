@@ -157,7 +157,8 @@ const HistoryDomainCrawls = () => {
           {crawlHistory.length === 0 && !error && (
             <div className="h-[calc(28rem-1.2rem)] flex items-center">
               <p className="text-gray-500 m-auto">
-                No crawl history available.
+                No crawl history available. <br />
+                Crawl some websites to see your crawl history here.
               </p>
             </div>
           )}

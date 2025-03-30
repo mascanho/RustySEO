@@ -100,7 +100,7 @@ const StatusCodes: React.FC = () => {
   // Memoize the toggle handler
   const handleToggle = useCallback(
     (e: React.SyntheticEvent<HTMLDetailsElement>) => {
-      setIsOpen(e.currentTarget.open);
+      setIsOpen(e?.currentTarget?.open);
     },
     [],
   );
@@ -118,10 +118,10 @@ const StatusCodes: React.FC = () => {
               className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark"
             >
               <div className="w-2/3 pl-2.5 py-1 text-brand-bright">
-                {data.label}
+                {data?.label}
               </div>
-              <div className="w-1/6 text-right pr-2">{data.count}</div>
-              <div className="w-1/6 text-right pr-2">{data.percentage}</div>
+              <div className="w-1/6 text-right pr-2">{data?.count}</div>
+              <div className="w-1/6 text-right pr-2">{data?.percentage}</div>
             </div>
           ))}
         </div>
