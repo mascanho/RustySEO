@@ -35,14 +35,14 @@ const DetailsTable = ({ data, height }) => {
     return (
       <div
         style={{
-          height: `${height - 15}px`,
+          height: `${height - 10}px`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           width: "100%",
         }}
       >
-        <p className="dark:text-white/50 text-black/50 text-xs">
+        <p className="dark:text-white/50 text-black/50">
           Select a URL from the table to view details
         </p>
       </div>
