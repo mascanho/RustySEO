@@ -29,7 +29,7 @@ jobs:
       - name: Setup Node.js (LTS)
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Using LTS version for better compatibility
+          node-version: '20'
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -48,17 +48,17 @@ jobs:
         run: |
           npm install --global windows-build-tools
 
-      - name: Install frontend dependencies
+      - name: Install frontend dependencies with legacy peer deps
         run: |
-          npm install
-          npm install @tauri-apps/cli@latest @tauri-apps/api@latest --save-dev
+          npm install --legacy-peer-deps
+          npm install @tauri-apps/cli@latest @tauri-apps/api@latest --save-dev --force
 
       - name: Explicitly install platform-specific Tauri CLI
         run: |
           if [[ "${{ matrix.platform }}" == "windows-latest" ]]; then
-            npm install @tauri-apps/cli-win32-x64-msvc --save-dev
+            npm install @tauri-apps/cli-win32-x64-msvc --save-dev --force
           elif [[ "${{ matrix.platform }}" == "ubuntu-22.04" ]]; then
-            npm install @tauri-apps/cli-linux-x64-gnu --save-dev
+            npm install @tauri-apps/cli-linux-x64-gnu --save-dev --force
           fi
 
       - name: Build and release with Tauri
