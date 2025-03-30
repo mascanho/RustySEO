@@ -141,7 +141,7 @@ export default function Page() {
   }, [addDomainCrawlResult, setFinishedDeepCrawl]);
 
   // TODO: Keep an eye on the crawl size and warn the user if it is too big
-  // const crawlDataLength = crawlData.length;
+  const crawlDataLength = crawlData.length;
 
   useEffect(() => {
     if (crawlDataLength === 10) {
