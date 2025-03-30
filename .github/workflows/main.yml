@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
-          cache: 'npm' # Cache npm dependencies to speed up builds
+          cache: 'npm'
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -43,11 +43,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
+      - name: Clear npm cache
+        run: npm cache clean --force
+
       - name: Install frontend dependencies
         run: npm install --force
 
-      - name: Install Tauri CLI globally
-        run: npm install -g @tauri-apps/cli # Install CLI globally to ensure binaries are available
+      - name: Install Tauri CLI locally
+        run: npm install --save-dev @tauri-apps/cli
+
+      - name: Verify Tauri CLI
+        run: npx tauri --version
 
       - name: Build and publish Tauri app
         uses: tauri-apps/tauri-action@v0
