@@ -13,11 +13,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: 'macos-latest'
+          - platform: 'macos-latest' # for Arm based macs (M1 and above).
             args: '--target aarch64-apple-darwin'
-          - platform: 'macos-latest'
+          - platform: 'macos-latest' # for Intel based macs.
             args: '--target x86_64-apple-darwin'
-          - platform: 'ubuntu-22.04'
+          - platform: 'ubuntu-22.04' # for Tauri v1 you could replace this with ubuntu-20.04.
             args: ''
           - platform: 'windows-latest'
             args: ''
@@ -26,42 +26,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js (LTS)
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20' # Using LTS version for better compatibility
+          node-version: 'lts/*'
+          cache: 'npm'
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
-      - name: Install Linux dependencies
+      - name: Install dependencies (Ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev \
-              libappindicator3-dev librsvg2-dev patchelf libgtk-3-dev libssl-dev
-
-      - name: Install Windows dependencies
-        if: matrix.platform == 'windows-latest'
-        run: |
-          npm install --global windows-build-tools
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - name: Clear npm cache
+        run: npm cache clean --force
 
       - name: Install frontend dependencies
-        run: |
-          npm install
-          npm install @tauri-apps/cli@latest @tauri-apps/api@latest --save-dev
+        run: npm install --force
 
-      - name: Explicitly install platform-specific Tauri CLI
-        run: |
-          if [[ "${{ matrix.platform }}" == "windows-latest" ]]; then
-            npm install @tauri-apps/cli-win32-x64-msvc --save-dev
-          elif [[ "${{ matrix.platform }}" == "ubuntu-22.04" ]]; then
-            npm install @tauri-apps/cli-linux-x64-gnu --save-dev
-          fi
+      - name: Install Tauri CLI locally
+        run: npm install --save-dev @tauri-apps/cli --force
 
-      - name: Build and release with Tauri
+      - name: Verify Tauri CLI
+        run: npx tauri --version
+
+      - name: Build and publish Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
