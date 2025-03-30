@@ -43,7 +43,6 @@ pub struct DomainCrawlResults {
     pub schema: Option<String>,
     pub css: CSS,
     pub iframe: Option<Iframe>,
-    pub pdf_link: Option<PdfLinks>,
     pub word_count: usize,
     pub response_time: Option<f64>, // Response time in seconds
     pub mobile: bool,
@@ -60,6 +59,7 @@ pub struct DomainCrawlResults {
     pub flesch: Result<(f64, String), String>,
     pub extractor: Extractor,
     pub headers: Vec<(String, String)>,
+    pub pdf_files: Vec<String>,
 }
 
 // Implement Default for DomainCrawlResults
@@ -79,7 +79,6 @@ impl Default for DomainCrawlResults {
             schema: None,
             css: CSS::default(),
             iframe: None,
-            pdf_link: None,
             word_count: 0,
             response_time: None,
             mobile: false,
@@ -96,6 +95,7 @@ impl Default for DomainCrawlResults {
             flesch: Ok((0.0, String::new())),
             extractor: Extractor::default(),
             headers: Vec::new(),
+            pdf_files: Vec::new(),
         }
     }
 }

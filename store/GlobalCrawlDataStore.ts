@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { create } from "zustand";
 import { shallow } from "zustand/shallow";
 
@@ -15,146 +14,170 @@ export interface PageDetails {
   loading_time: { loadingTime: number; loadingTimeScore: number };
   images: string[];
   robots: string[];
-  isGeneratingExcel: boolean;
-  setSummary: () => void;
-  isFinishedDeepCrawl: string;
-  setFinishedDeepCrawl: () => void;
-  crawlSessionTotalArray: string[];
-  setCrawlSessionTotalArray: () => void;
-
-  totalUrlsCrawled: string[];
-  setTotalUrlsCrawled: (total: string[]) => void;
-
-  deepCrawlTab: string;
-  setDeepCrawlTab: (tab: string) => void;
 }
 
-// Define the Zustand store
+// Define the Zustand store state and actions
 interface CrawlStore {
   crawlData: PageDetails[];
+  domainCrawlLoading: boolean;
+  crawlerType: string;
+  issues: string[];
+  statusCodes: string[];
+  headingsH1: string[];
+  headingsH2: string[];
+  issueRow: string[];
+  selectedTableURL: string[];
+  javascript: string[];
+  css: string[];
+  robots: string[];
+  sitemaps: string[];
+  isGeneratingExcel: boolean;
+  summary: string[];
+  isFinishedDeepCrawl: boolean;
+  genericChart: string;
+  issuesView: string;
+  issuesData: string[];
+  crawlSessionTotalArray: string[];
+  isExtracting: boolean;
+  totalUrlsCrawled: number;
+  streamedCrawledPages: number;
+  streamedTotalPages: number;
+  deepCrawlTab: string;
+
+  // Actions
   setDomainCrawlData: (data: PageDetails[]) => void;
   addDomainCrawlResult: (result: PageDetails) => void;
   clearDomainCrawlData: () => void;
-  domainCrawlLoading: boolean;
   setDomainCrawlLoading: (loading: boolean) => void;
-  crawlerType: string;
   setCrawlerType: (type: string) => void;
-  issues: string[];
   setIssues: (issues: string[]) => void;
-  statusCodes: string[];
   setStatusCodes: (codes: string[]) => void;
-  headingsH1: string[];
   setHeadingsH1: (headings: string[]) => void;
-  headingsH2: string[];
   setHeadingsH2: (headings: string[]) => void;
-  issueRow: string[];
   setIssueRow: (row: string[]) => void;
-  selectedTableURL: string[];
   setSelectedTableURL: (row: string[]) => void;
-  javascript: string[];
   setJavascript: (row: string[]) => void;
-  css: string[];
   setCss: (row: string[]) => void;
-  robots: string[];
   setRobots: (row: string[]) => void;
-  sitemaps: string[];
   setSitemaps: (row: string[]) => void;
-  isGeneratingExcel: boolean;
   setIsGeneratingExcel: (isGenerating: boolean) => void;
-  summary: string[];
   setSummary: (summary: string[]) => void;
-  isFinishedDeepCrawl: boolean;
   setFinishedDeepCrawl: (isFinished: boolean) => void;
-  genericChart: string;
   setGenericChart: (chart: string) => void;
-  issuesView: string;
   setIssuesView: (view: string) => void;
-  issuesData: string[];
   setIssuesData: (data: string[]) => void;
-  crawlSessionTotalArray: string[];
   setCrawlSessionTotalArray: (data: string[]) => void;
-
-  isExtracting: boolean;
   setIsExtracting: (isExtracting: boolean) => void;
-
-  totalUrlsCrawled: number;
   setTotalUrlsCrawled: (total: number) => void;
-
-  streamedCrawledPages: number;
   setStreamedCrawledPages: (pages: number) => void;
-  streamedTotalPages: number;
   setStreamedTotalPages: (pages: number) => void;
-
-  deepCrawlTab: string;
   setDeepCrawlTab: (tab: string) => void;
+
+  // Batch update for streaming
+  updateStreamingData: (
+    result: PageDetails,
+    crawledPages: number,
+    totalPages: number,
+  ) => void;
 }
 
-const useGlobalCrawlStore = create<CrawlStore>((set) => ({
+// Utility function to create setters dynamically
+const createSetter =
+  <T>(key: keyof CrawlStore) =>
+  (value: T) =>
+    useGlobalCrawlStore.setState({ [key]: value });
+
+// Create the Zustand store
+const useGlobalCrawlStore = create<CrawlStore>((set, get) => ({
+  // Initial State
   crawlData: [],
-  setDomainCrawlData: (data) => set({ crawlData: data }),
-  addDomainCrawlResult: (result) =>
-    set((state) => ({ crawlData: [...state.crawlData, result] })),
-  clearDomainCrawlData: () => set({ crawlData: [] }),
   domainCrawlLoading: false,
-  setDomainCrawlLoading: (loading) => set({ domainCrawlLoading: loading }),
   crawlerType: "spider",
-  setCrawlerType: (type) => set({ crawlerType: type }),
   issues: [],
-  setIssues: (issues) => set({ issues }),
   statusCodes: [],
-  setStatusCodes: (codes) => set({ statusCodes: codes }),
   headingsH1: [],
-  setHeadingsH1: (headings) => set({ headingsH1: headings }),
   headingsH2: [],
-  setHeadingsH2: (headings) => set({ headingsH2: headings }),
   issueRow: [],
-  setIssueRow: (row) => set({ issueRow: row }),
   selectedTableURL: [],
-  setSelectedTableURL: (row) => set({ selectedTableURL: row }),
   javascript: [],
-  setJavascript: (row) => set({ javascript: row }),
   css: [],
-  setCss: (row) => set({ css: row }),
   robots: [],
-  setRobots: (row) => set({ robots: row }),
   sitemaps: [],
-  setSitemaps: (row) => set({ sitemaps: row }),
   isGeneratingExcel: false,
-  setIsGeneratingExcel: (isGenerating) =>
-    set({ isGeneratingExcel: isGenerating }),
   summary: [],
-  setSummary: (summary) => set({ summary }),
-  issuesView: "",
-  setIssuesView: (view) => set({ issuesView: view }),
-  issuesData: [],
-  setIssuesData: (data) => set({ issuesData: data }),
-  genericChart: "",
-  setGenericChart: (chart) => set({ genericChart: chart }),
   isFinishedDeepCrawl: false,
-  setFinishedDeepCrawl: (isFinished) =>
-    set({ isFinishedDeepCrawl: isFinished }),
+  genericChart: "",
+  issuesView: "",
+  issuesData: [],
   crawlSessionTotalArray: [],
-  setCrawlSessionTotalArray: (data: string[]) =>
-    set({ crawlSessionTotalArray: data }),
-
   isExtracting: false,
-  setIsExtracting: (data: boolean) => set({ isExtracting: data }),
-
   totalUrlsCrawled: 0,
-  setTotalUrlsCrawled: (total: number) => set({ totalUrlsCrawled: total }),
-
   streamedCrawledPages: 0,
-  setStreamedCrawledPages: (pages: number) =>
-    set({ streamedCrawledPages: pages }),
   streamedTotalPages: 0,
-  setStreamedTotalPages: (pages: number) => set({ streamedTotalPages: pages }),
-
   deepCrawlTab: "",
-  setDeepCrawlTab: (tab: string) => set({ deepCrawlTab: tab }),
+
+  // Actions
+  setDomainCrawlData: createSetter<PageDetails[]>("crawlData"),
+  addDomainCrawlResult: (result) =>
+    set((state) => {
+      // Avoid duplicates based on URL (optional optimization)
+      if (state.crawlData.some((item) => item.url === result.url)) {
+        return state; // No update if already exists
+      }
+      return { crawlData: [...state.crawlData, result] };
+    }, false),
+  clearDomainCrawlData: () => set({ crawlData: [] }, false),
+  setDomainCrawlLoading: createSetter<boolean>("domainCrawlLoading"),
+  setCrawlerType: createSetter<string>("crawlerType"),
+  setIssues: createSetter<string[]>("issues"),
+  setStatusCodes: createSetter<string[]>("statusCodes"),
+  setHeadingsH1: createSetter<string[]>("headingsH1"),
+  setHeadingsH2: createSetter<string[]>("headingsH2"),
+  setIssueRow: createSetter<string[]>("issueRow"),
+  setSelectedTableURL: createSetter<string[]>("selectedTableURL"),
+  setJavascript: createSetter<string[]>("javascript"),
+  setCss: createSetter<string[]>("css"),
+  setRobots: createSetter<string[]>("robots"),
+  setSitemaps: createSetter<string[]>("sitemaps"),
+  setIsGeneratingExcel: createSetter<boolean>("isGeneratingExcel"),
+  setSummary: createSetter<string[]>("summary"),
+  setFinishedDeepCrawl: createSetter<boolean>("isFinishedDeepCrawl"),
+  setGenericChart: createSetter<string>("genericChart"),
+  setIssuesView: createSetter<string>("issuesView"),
+  setIssuesData: createSetter<string[]>("issuesData"),
+  setCrawlSessionTotalArray: createSetter<string[]>("crawlSessionTotalArray"),
+  setIsExtracting: createSetter<boolean>("isExtracting"),
+  setTotalUrlsCrawled: createSetter<number>("totalUrlsCrawled"),
+  setStreamedCrawledPages: createSetter<number>("streamedCrawledPages"),
+  setStreamedTotalPages: createSetter<number>("streamedTotalPages"),
+  setDeepCrawlTab: createSetter<string>("deepCrawlTab"),
+
+  // Batch streaming updates
+  updateStreamingData: (result, crawledPages, totalPages) =>
+    set((state) => ({
+      crawlData: state.crawlData.some((item) => item.url === result.url)
+        ? state.crawlData
+        : [...state.crawlData, result],
+      streamedCrawledPages: crawledPages,
+      streamedTotalPages: totalPages,
+    })),
 }));
 
-const useCrawlStore = () => {
-  return useGlobalCrawlStore((state) => state, shallow);
-};
+// Custom hooks for selective subscriptions
+export const useCrawlData = () =>
+  useGlobalCrawlStore((state) => state.crawlData, shallow);
+export const useCrawlLoading = () =>
+  useGlobalCrawlStore((state) => state.domainCrawlLoading);
+export const useStreamingProgress = () =>
+  useGlobalCrawlStore(
+    (state) => ({
+      crawledPages: state.streamedCrawledPages,
+      totalPages: state.streamedTotalPages,
+    }),
+    shallow,
+  );
+export const useCrawlSummary = () =>
+  useGlobalCrawlStore((state) => state.summary, shallow);
 
-export default useCrawlStore;
+// Default export for backward compatibility
+export default useGlobalCrawlStore;

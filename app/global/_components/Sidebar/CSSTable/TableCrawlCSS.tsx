@@ -493,7 +493,7 @@ const TableCrawlCSS = ({
 
   return (
     <>
-      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1">
+      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1 ">
         <input
           type="text"
           placeholder="Search..."
@@ -516,12 +516,12 @@ const TableCrawlCSS = ({
       </div>
       <div
         ref={parentRef}
-        className="w-full h-[30.8rem] overflow-auto relative"
+        className="w-full h-[]   flex-grow  overflow-scroll relative"
       >
         <div
           ref={tableContainerRef}
           style={{ minWidth: `${totalWidth}px` }}
-          className="domainCrawlParent sticky top-0"
+          className="domainCrawlParent sticky top-0 "
         >
           <table className="w-full text-xs border-collapse domainCrawlParent ">
             <TableHeader

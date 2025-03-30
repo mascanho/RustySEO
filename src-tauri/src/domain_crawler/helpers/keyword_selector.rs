@@ -21,7 +21,7 @@ pub fn extract_keywords(html: &str) -> Vec<(String, usize)> {
     let document = Html::parse_document(html);
 
     // Define selectors for elements that typically contain visible text
-    let text_selectors = Selector::parse("p, h1, h2, h3, h4, h5, h6, span, a, li, td, th").unwrap();
+    let text_selectors = Selector::parse("p, h1, h2, h3, h4, h5, h6, a").unwrap();
 
     // Exclude non-content elements (e.g., scripts, styles)
     let excluded_selectors = Selector::parse("script, style, noscript, code, pre").unwrap();
@@ -39,9 +39,6 @@ pub fn extract_keywords(html: &str) -> Vec<(String, usize)> {
         text.push_str(&element_text);
         text.push(' '); // Add space between elements
     }
-
-    // Debug: Print the extracted text
-    // println!("Extracted Text: {}", text);
 
     // Clean and tokenize the text
     let re = Regex::new(r"[^\w\s'-]").unwrap(); // Keep apostrophes and hyphens in words
@@ -64,7 +61,9 @@ pub fn extract_keywords(html: &str) -> Vec<(String, usize)> {
                 && !word.chars().all(|c| c.is_numeric())
         })
     {
-        *word_counts.entry(word).or_insert(0) += 1;
+        // Normalize the word (e.g., remove pluralization or common suffixes)
+        let normalized_word = normalize_word(&word);
+        *word_counts.entry(normalized_word).or_insert(0) += 1;
     }
 
     // Normalize word counts by ignoring words that appear too frequently (e.g., > 5 times)
@@ -86,4 +85,23 @@ pub fn extract_keywords(html: &str) -> Vec<(String, usize)> {
 
     // Return the top 10 keywords (or fewer if there aren't enough)
     sorted_words.into_iter().take(10).collect()
+}
+
+/// Normalizes a word by removing common suffixes or pluralization.
+fn normalize_word(word: &str) -> String {
+    // Remove common suffixes (e.g., "ing", "ed", "s", "es")
+    let word = if word.ends_with("ing") {
+        &word[..word.len() - 3]
+    } else if word.ends_with("ed") {
+        &word[..word.len() - 2]
+    } else if word.ends_with("s") {
+        &word[..word.len() - 1]
+    } else if word.ends_with("es") {
+        &word[..word.len() - 2]
+    } else {
+        word
+    };
+
+    // Convert to lowercase to ensure consistency
+    word.to_lowercase()
 }

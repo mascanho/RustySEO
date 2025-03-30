@@ -31,19 +31,19 @@ const DetailsTable = ({ data, height }) => {
     };
   }, []);
 
-  if (data.length === 0) {
+  if (data?.length === 0) {
     return (
       <div
         style={{
-          height: `${height - 10}px`,
+          height: `${height - 15}px`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           width: "100%",
         }}
       >
-        <p className="dark:text-white/50 text-black/50">
-          Select a row to view details
+        <p className="dark:text-white/50 text-black/50 text-xs">
+          Select a URL from the table to view details
         </p>
       </div>
     );

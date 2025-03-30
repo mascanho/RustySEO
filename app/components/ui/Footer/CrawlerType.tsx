@@ -27,8 +27,8 @@ const CrawlerType = () => {
   // Determine icon color based on crawlerType
   const iconColorClass =
     crawlerType === CRAWLER_TYPES.CUSTOM_SEARCH
-      ? "text-red-500 dark:text-red-500/50"
-      : "text-black dark:text-white/50";
+      ? "text-red-500 dark:text-red-500/50 mt-[2px]"
+      : "text-black dark:text-white/50 mt-[2px]";
 
   return (
     <div className="relative">

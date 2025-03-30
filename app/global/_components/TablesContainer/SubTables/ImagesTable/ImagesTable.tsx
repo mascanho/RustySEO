@@ -49,7 +49,7 @@ const ImagesTable = () => {
               <tr className="sticky top-0 bg-white">
                 <th className="border border-gray-200 py-0 px-2 w-10">ID</th>
                 <th className="border border-gray-200 py-0 px-2 w-40">
-                  Anchor
+                  Alt Text
                 </th>
                 <th className="border border-gray-200 py-0 px-2 w-80">Link</th>
                 <th className="border border-gray-200 py-0 px-2 w-20">

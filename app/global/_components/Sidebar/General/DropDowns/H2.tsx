@@ -1,12 +1,31 @@
 // @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import React, { useMemo } from "react";
+import React, { useMemo, memo } from "react";
+
+interface H2Counts {
+  exists: number; // Number of valid H2 headings
+  all: number; // Total H2 headings (including empty/undefined)
+  empty: number; // Empty/undefined H2 headings
+  duplicate: number; // Duplicate H2 headings
+  long: number; // H2s over 155 characters
+  short: number; // H2s under 70 characters
+  noH2Object: number; // Pages without H2 headings
+}
+
+interface Section {
+  label: string;
+  count: number;
+  percentage: string;
+}
 
 const H2 = () => {
   const { crawlData } = useGlobalCrawlStore();
 
   // Ensure crawlData is always an array
-  const safeCrawlData = Array.isArray(crawlData) ? crawlData : [];
+  const safeCrawlData = useMemo(
+    () => (Array.isArray(crawlData) ? crawlData : []),
+    [crawlData],
+  );
 
   // Memoize H2 analysis
   const { counts, totalPages, missingH2Count } = useMemo(() => {
@@ -22,7 +41,7 @@ const H2 = () => {
     const uniqueH2Headings = [...new Set(validH2Headings)];
 
     // Calculate counts
-    const counts = {
+    const counts: H2Counts = {
       exists: validH2Headings.length, // Number of valid H2 headings
       all: h2Headings.length, // Total H2 headings (including empty/undefined)
       empty: h2Headings.length - validH2Headings.length, // Empty/undefined H2 headings
@@ -43,20 +62,41 @@ const H2 = () => {
     };
   }, [safeCrawlData]);
 
-  // Sections to display
-  const sections = [
-    { label: "Total", count: counts.exists },
-    { label: "Missing", count: missingH2Count },
-    { label: "Duplicate H2 Headings", count: counts.duplicate },
-    { label: "Over 155 Characters", count: counts.long },
-    { label: "Below 70 Characters", count: counts.short },
-  ];
+  // Memoize sections to avoid recalculating on every render
+  const sections: Section[] = useMemo(() => {
+    const calculatePercentage = (count: number, total: number): string => {
+      if (!total) return "0%";
+      return `${Math.min(((count / total) * 100).toFixed(0), 100)}%`;
+    };
 
-  // Helper function to calculate percentage
-  const calculatePercentage = (count: number, total: number): string => {
-    if (!total) return "0%";
-    return `${Math.min(((count / total) * 100).toFixed(0), 100)}%`;
-  };
+    return [
+      {
+        label: "Total",
+        count: counts.exists,
+        percentage: calculatePercentage(counts.exists, totalPages),
+      },
+      {
+        label: "Missing",
+        count: missingH2Count,
+        percentage: calculatePercentage(missingH2Count, totalPages),
+      },
+      {
+        label: "Duplicate H2 Headings",
+        count: counts.duplicate,
+        percentage: calculatePercentage(counts.duplicate, counts.all),
+      },
+      {
+        label: "Over 155 Characters",
+        count: counts.long,
+        percentage: calculatePercentage(counts.long, counts.all),
+      },
+      {
+        label: "Below 70 Characters",
+        count: counts.short,
+        percentage: calculatePercentage(counts.short, counts.all),
+      },
+    ];
+  }, [counts, totalPages, missingH2Count]);
 
   return (
     <div className="text-sx w-full">
@@ -65,23 +105,14 @@ const H2 = () => {
           <span>H2</span>
         </summary>
         <div className="w-full">
-          {sections.map(({ label, count }) => (
+          {sections.map(({ label, count, percentage }) => (
             <div
               key={label}
               className="flex items-center text-xs w-full px-2 justify-between border-b dark:border-b-brand-dark"
             >
               <div className="w-2/3 pl-2.5 py-1 text-brand-bright">{label}</div>
               <div className="w-1/6 text-right pr-2">{count}</div>
-              <div className="w-1/6 text-center pl-2">
-                {calculatePercentage(
-                  label === "Missing"
-                    ? missingH2Count
-                    : label === "Below 70 Characters"
-                      ? counts.short
-                      : count,
-                  label === "Total" ? totalPages : counts.all,
-                )}
-              </div>
+              <div className="w-1/6 text-center pl-2">{percentage}</div>
             </div>
           ))}
         </div>
@@ -90,4 +121,4 @@ const H2 = () => {
   );
 };
 
-export default H2;
+export default memo(H2);

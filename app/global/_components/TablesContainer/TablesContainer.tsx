@@ -23,6 +23,7 @@ import useCrawlStore from "@/store/GlobalCrawlDataStore";
 import ResponseHeaders from "./SubTables/Headers/ResponseHeaders";
 import TableCrawlCSS from "../Sidebar/CSSTable/TableCrawlCSS";
 import LinksTable from "./LinksTable/LinksTable";
+import KeywordsTable from "./KeywordsTable/KeywordsTable";
 
 const BottomTableContent = ({ children, height }) => (
   <div
@@ -100,16 +101,17 @@ export default function Home() {
   const handleResize = useCallback((newBottomHeight: number) => {
     setBottomTableHeight(newBottomHeight);
   }, []);
-
   const [debouncedCrawlData, setDebouncedCrawlData] = useState(crawlData);
 
-  useEffect(() => {
-    const debounceTimeout = setTimeout(() => {
-      setDebouncedCrawlData(crawlData);
-    }, 1000); // Adjust the debounce delay as needed
+  const debouncedUpdate = useMemo(() => {
+    const baseDelay = crawlData.length > 5000 ? 2000 : 500;
+    return debounce(setDebouncedCrawlData, baseDelay);
+  }, [crawlData.length]); // Recreate only when length changes
 
-    return () => clearTimeout(debounceTimeout);
-  }, [crawlData]);
+  useEffect(() => {
+    debouncedUpdate(crawlData);
+    return () => debouncedUpdate.cancel();
+  }, [crawlData, debouncedUpdate]);
 
   // Filteres all the JS
   const filteredJsArr = useMemo(() => {
@@ -171,6 +173,24 @@ export default function Home() {
     });
 
     return linksWithAnchors; // Return the array of objects containing unique links and anchors
+  }, [debouncedCrawlData]);
+
+  // FILTER THE KEYWORDS, make them as value and the url as key
+  const filteredKeywords = useMemo(() => {
+    const urlKeywordsArray = []; // Array to store objects with URLs and keywords
+
+    debouncedCrawlData?.forEach((url) => {
+      const urlString = url?.url; // Extract the URL
+      const keywords = url?.keywords || []; // Extract keywords for the current URL
+
+      // Add an object with the URL and its keywords to the array
+      urlKeywordsArray.push({
+        url: urlString,
+        keywords: keywords,
+      });
+    });
+
+    return urlKeywordsArray; // Return the array
   }, [debouncedCrawlData]);
 
   const filteredCustomSearch = useMemo(() => {
@@ -242,6 +262,9 @@ export default function Home() {
               <TabsTrigger value="images" className="rounded-t-md">
                 Images
               </TabsTrigger>
+              <TabsTrigger value="keywords" className="rounded-t-md">
+                Keywords
+              </TabsTrigger>
               <TabsTrigger value="search" className="rounded-t-md">
                 Custom Search
               </TabsTrigger>
@@ -280,8 +303,12 @@ export default function Home() {
               />
             </TabsContent>
 
+            <TabsContent value="keywords" className="flex-grow overflow-hidden">
+              <KeywordsTable rows={filteredKeywords} tabName="All Keywords" />
+            </TabsContent>
+
             {/* CUSTOM SEARCH */}
-            <TabsContent value="search" className="h-screen overflow-auto">
+            <TabsContent value="search" className="flex-grow overflow-hidden">
               <TableCrawl
                 rows={filteredCustomSearch}
                 tabName={"Custom Search"}

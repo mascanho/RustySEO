@@ -1,10 +1,9 @@
 // @ts-nocheck
 "use client";
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { TrendingUp } from "lucide-react";
 import { Label, Pie, PieChart } from "recharts";
-
 import {
   Card,
   CardContent,
@@ -21,6 +20,7 @@ import {
 } from "@/components/ui/chart";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { listen } from "@tauri-apps/api/event";
+import { debounce } from "lodash";
 
 const chartConfig = {
   visitors: {
@@ -56,7 +56,6 @@ function OverviewChart() {
     domainCrawlLoading,
     setStreamedTotalPages,
     setStreamedCrawledPages,
-    streamedTotalPages,
     streamedCrawledPages,
   } = useGlobalCrawlStore();
   const [sessionCrawls, setSessionCrawls] = useState<number>(0);
@@ -69,11 +68,16 @@ function OverviewChart() {
   const inlineCss = css?.inline || 100;
   const externalCss = css?.external || 100;
 
-  // UPDATE THE CRAWLED PAGES IN REALTIME
+  // Debounced update function
+  const debouncedUpdate = useCallback(
+    debounce((crawled_urls, total_urls) => {
+      setStreamedCrawledPages(crawled_urls);
+      setStreamedTotalPages(total_urls);
+    }, 300),
+    [setStreamedCrawledPages, setStreamedTotalPages],
+  );
 
-  const [crawledPages, setCrawledPages] = useState<number>(0);
-  const [percentageCrawled, setPercentageCrawled] = useState<number>(0);
-  const [crawledPagesCount, setCrawledPagesCount] = useState<number>(0);
+  // Update the crawled pages in real-time with debounce
   useEffect(() => {
     const unlisten = listen("progress_update", (event) => {
       const progressData = event.payload as {
@@ -81,46 +85,52 @@ function OverviewChart() {
         percentage: number;
         total_urls: number;
       };
-      setCrawledPages(progressData.crawled_urls);
-      setPercentageCrawled(progressData.percentage);
-      setCrawledPagesCount(progressData.total_urls);
-
-      // Update the GLOBAL crawled pages in real-time
-      setStreamedCrawledPages(progressData.crawled_urls);
-      setStreamedTotalPages(progressData.total_urls);
+      debouncedUpdate(progressData.crawled_urls, progressData.total_urls);
     });
     return () => {
       unlisten.then((f) => f());
     };
-  }, []);
+  }, [debouncedUpdate]);
 
-  const chartData = [
-    { browser: "HTML", visitors: totalPages, fill: "hsl(210, 100%, 50%)" },
-    {
-      browser: "Inline JS",
-      visitors: inlineJs,
-      fill: "hsl(210, 100%, 60%)",
-    },
-    {
-      browser: "External JS",
-      visitors: externalJs,
-      fill: "hsl(210, 100%, 70%)",
-    },
-    {
-      browser: "Inline CSS",
-      visitors: inlineCss,
-      fill: "hsl(210, 100%, 80%)",
-    },
-    {
-      browser: "External CSS",
-      visitors: externalCss,
-      fill: "hsl(210, 100%, 90%)",
-    },
-  ];
+  // Memoized chart data
+  const chartData = useMemo(
+    () => [
+      { browser: "HTML", visitors: totalPages, fill: "hsl(210, 100%, 50%)" },
+      { browser: "Inline JS", visitors: inlineJs, fill: "hsl(210, 100%, 60%)" },
+      {
+        browser: "External JS",
+        visitors: externalJs,
+        fill: "hsl(210, 100%, 70%)",
+      },
+      {
+        browser: "Inline CSS",
+        visitors: inlineCss,
+        fill: "hsl(210, 100%, 80%)",
+      },
+      {
+        browser: "External CSS",
+        visitors: externalCss,
+        fill: "hsl(210, 100%, 90%)",
+      },
+    ],
+    [totalPages, inlineJs, externalJs, inlineCss, externalCss],
+  );
 
+  // Memoized total pages crawled in session
+  const totalPagesCrawledInSession = useMemo(() => {
+    try {
+      return Array.isArray(totalCrawlPages)
+        ? totalCrawlPages.reduce((acc, item) => acc + (item || 0), 0)
+        : 0;
+    } catch (error) {
+      console.error("Error calculating total pages crawled in session:", error);
+      return 0;
+    }
+  }, [totalCrawlPages]);
+
+  // Read sessionStorage data
   useEffect(() => {
     try {
-      // Safely read from sessionStorage
       const crawls = sessionStorage.getItem("crawlNumber");
       setSessionCrawls(crawls ? parseInt(crawls, 10) : 0);
 
@@ -135,16 +145,42 @@ function OverviewChart() {
     }
   }, [domainCrawlLoading, crawlData]);
 
-  const totalPagesCrawledInSession = (() => {
-    try {
-      return Array.isArray(totalCrawlPages)
-        ? totalCrawlPages.reduce((acc, item) => acc + (item || 0), 0)
-        : 0;
-    } catch (error) {
-      console.error("Error calculating total pages crawled in session:", error);
-      return 0;
-    }
-  })();
+  // Memoized label renderer
+  const renderLabel = useCallback(
+    ({ viewBox }) => {
+      if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+        return (
+          <text
+            x={viewBox.cx}
+            y={viewBox.cy}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            className="dark:text-white"
+            aria-label="Total Pages"
+            role="text"
+          >
+            <tspan
+              x={viewBox.cx}
+              y={viewBox.cy}
+              style={{ color: "white" }}
+              className="text-3xl dark:fill-white text-white font-bold dark:text-white"
+            >
+              {streamedCrawledPages?.toLocaleString()}
+            </tspan>
+            <tspan
+              x={viewBox.cx}
+              y={(viewBox.cy || 0) + 24}
+              className="fill-muted-foreground dark:fill-white/50 dark:text-white"
+            >
+              Pages
+            </tspan>
+          </text>
+        );
+      }
+      return null;
+    },
+    [streamedCrawledPages],
+  );
 
   return (
     <Card className="flex flex-col dark:bg-gray-900 bg-slate-100 border-0 shadow-none">
@@ -173,40 +209,7 @@ function OverviewChart() {
               strokeWidth={5}
               className="text-white"
             >
-              <Label
-                content={({ viewBox }) => {
-                  if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                    return (
-                      <text
-                        x={viewBox.cx}
-                        y={viewBox.cy}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        className="dark:text-white"
-                        aria-label="Total Pages"
-                        role="text"
-                      >
-                        <tspan
-                          x={viewBox.cx}
-                          y={viewBox.cy}
-                          style={{ color: "white" }}
-                          className="text-3xl dark:fill-white text-white font-bold dark:text-white"
-                        >
-                          {streamedCrawledPages?.toLocaleString()}
-                        </tspan>
-                        <tspan
-                          x={viewBox.cx}
-                          y={(viewBox.cy || 0) + 24}
-                          className="fill-muted-foreground dark:fill-white/50 dark:text-white"
-                        >
-                          Pages
-                        </tspan>
-                      </text>
-                    );
-                  }
-                  return null;
-                }}
-              />
+              <Label content={renderLabel} />
             </Pie>
           </PieChart>
         </ChartContainer>

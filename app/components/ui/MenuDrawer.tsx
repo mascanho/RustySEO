@@ -164,12 +164,12 @@ function MenuDrawer() {
     <>
       <KeywordSerp />
       <div
-        className={`items-center hidden md:flex  z-[10] absolute top-[9px] ${pathname === "/images" ? "pt-1" : ""} left-2`}
+        className={`items-center hidden md:flex  z-[50] absolute top-[9px] ${pathname === "/images" ? "pt-1" : ""} left-2`}
       >
-        <div className="flex items-center flex bg-transparent rounded-full">
+        <div className=" items-center flex bg-transparent rounded-tr-lg">
           <Menu>
             <Menu.Target>
-              <Button className="text-xs bg-gradient-to-r from-brand-bright to-purple-900 px-2 h-6 rounded-full text-white">
+              <Button className="text-xs bg-gradient-to-r from-brand-bright to-purple-900 px-3 h-6 rounded-tr-2xl text-white">
                 {badge}
               </Button>
             </Menu.Target>
@@ -204,7 +204,7 @@ function MenuDrawer() {
         />
         <img
           src="rustyLight.png"
-          className="object-contain h-auto  -ml-1.5"
+          className="object-contain h-auto  -ml-1"
           alt=""
         />
       </a>

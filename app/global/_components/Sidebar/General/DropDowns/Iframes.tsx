@@ -1,18 +1,37 @@
 // @ts-nocheck
-import React from "react";
+import React, { useMemo } from "react";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 
+interface CrawlDataItem {
+  iframe?: Array<unknown>; // Replace `unknown` with the actual type of iframe data if known
+}
+
+interface IframeData {
+  label: string;
+  count: number;
+}
+
 const Iframes: React.FC = () => {
-  const domainCrawlData = useGlobalCrawlStore();
+  // Use a selector to only subscribe to `crawlData` changes
+  const crawlData = useGlobalCrawlStore((state) => state.crawlData);
 
-  // Calculate the total number of iframes
-  const totalIframes =
-    domainCrawlData?.crawlData?.reduce((acc, item) => {
+  // Memoize the calculation of total iframes
+  const totalIframes = useMemo(() => {
+    if (!Array.isArray(crawlData)) {
+      console.error("crawlData is not an array:", crawlData);
+      return 0;
+    }
+
+    return crawlData.reduce((acc, item: CrawlDataItem) => {
       return acc + (item?.iframe?.length || 0);
-    }, 0) || 0;
+    }, 0);
+  }, [crawlData]);
 
-  // Data to display
-  const iframeData = [{ label: "Iframes Found", count: totalIframes }];
+  // Memoize the data to display
+  const iframeData = useMemo<IframeData[]>(
+    () => [{ label: "Iframes Found", count: totalIframes }],
+    [totalIframes],
+  );
 
   return (
     <div className="text-sx w-full">
@@ -36,4 +55,4 @@ const Iframes: React.FC = () => {
   );
 };
 
-export default Iframes;
+export default React.memo(Iframes);

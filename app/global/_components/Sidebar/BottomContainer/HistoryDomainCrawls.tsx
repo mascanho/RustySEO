@@ -92,9 +92,10 @@ const HistoryDomainCrawls = () => {
       total_external_links: summary?.totalExternalLinks || 0,
       indexable_pages: Math.max(
         0,
-        (crawlData.length || 0) - (summary?.totalNotIndexablePages || 0),
+        (crawlData.length || 0) - (summary?.notIndexablePages || 0),
       ),
-      not_indexable_pages: summary?.totalNotIndexablePages || 0,
+      not_indexable_pages: summary?.notIndexablePages || 0,
+      issues: issues?.length,
     };
 
     try {
@@ -142,7 +143,7 @@ const HistoryDomainCrawls = () => {
   useEffect(() => {
     // console.log(crawlSessionTotalArray, "This is the arr from useEffect");
     addDataToDatabase();
-  }, [crawlSessionTotalArray.length]);
+  }, [crawlSessionTotalArray?.length]);
 
   return (
     <div className="text-xs h-[calc(28rem-0.4rem)] overflow-auto">
@@ -156,7 +157,8 @@ const HistoryDomainCrawls = () => {
           {crawlHistory.length === 0 && !error && (
             <div className="h-[calc(28rem-1.2rem)] flex items-center">
               <p className="text-gray-500 m-auto">
-                No crawl history available.
+                No crawl history available. <br />
+                Crawl some websites to see your crawl history here.
               </p>
             </div>
           )}

@@ -17,8 +17,8 @@ use tokio;
 use toml;
 
 pub mod crawler;
-
 pub mod domain_crawler;
+pub mod settings;
 
 pub mod machine_learning;
 
@@ -127,8 +127,12 @@ async fn main() {
         Err(err) => eprintln!("Error clearing custom search entry: {}", err),
     }
 
+    // Set the configurations
+    let _settings = settings::settings::init_settings();
+
     // initialise the dbs
     let _start_db = crawler::db::databases_start();
+    // let _domain_results_db = domain_crawler::database::add_data().await;
 
     // Start the server
     // let _start_server = server::rusty_server().await;
@@ -203,7 +207,8 @@ async fn main() {
             db::store_custom_search,
             domain_commands::create_excel_two_cols,
             domain_commands::create_css_excel,
-            domain_commands::create_links_excel
+            domain_commands::create_links_excel,
+            domain_commands::create_keywords_excel_command
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

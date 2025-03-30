@@ -1,42 +1,89 @@
-import useCrawlStore from "@/store/GlobalCrawlDataStore";
+// @ts-nocheck
+import { useEffect, useState, useCallback, memo } from "react";
 import { listen } from "@tauri-apps/api/event";
-import { useState, useEffect } from "react";
-import { PiTote } from "react-icons/pi";
+import useCrawlStore from "@/store/GlobalCrawlDataStore";
+
+// Debounce utility function
+const debounce = (func, delay) => {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      func.apply(this, args);
+    }, delay);
+  };
+};
+
 const FooterLoader = () => {
-  const [crawledPages, setCrawledPages] = useState<number>(0);
-  const [percentageCrawled, setPercentageCrawled] = useState<number>(0);
-  const [crawledPagesCount, setCrawledPagesCount] = useState<number>(0);
-  const { setTotalUrlsCrawled, totalUrlsCrawled } = useCrawlStore();
+  const [progress, setProgress] = useState({
+    crawledPages: 0,
+    percentageCrawled: 0,
+    crawledPagesCount: 0,
+  });
+
+  const { setTotalUrlsCrawled } = useCrawlStore();
+
+  // Memoize the event handler to avoid recreating it on every render
+  const handleProgressUpdate = useCallback(
+    (event: {
+      payload: { crawled_urls: number; percentage: number; total_urls: number };
+    }) => {
+      const { crawled_urls, percentage, total_urls } = event.payload;
+
+      // Only update state if the values have changed
+      setProgress((prev) => {
+        if (
+          prev.crawledPages === crawled_urls &&
+          prev.percentageCrawled === percentage &&
+          prev.crawledPagesCount === total_urls
+        ) {
+          return prev; // No change, return previous state
+        }
+        return {
+          crawledPages: crawled_urls,
+          percentageCrawled: percentage,
+          crawledPagesCount: total_urls,
+        };
+      });
+
+      // Update global state only if the total URLs have changed
+      setTotalUrlsCrawled((prev) => (prev === total_urls ? prev : total_urls));
+    },
+    [setTotalUrlsCrawled],
+  );
+
+  // Debounce the event handler with a delay of 300ms
+  const debouncedHandleProgressUpdate = debounce(handleProgressUpdate, 300);
 
   useEffect(() => {
-    const unlisten = listen("progress_update", (event) => {
-      const progressData = event.payload as {
-        crawled_urls: number;
-        percentage: number;
-        total_urls: number;
-      };
-      setCrawledPages(progressData.crawled_urls);
-      setPercentageCrawled(progressData.percentage);
-      setCrawledPagesCount(progressData.total_urls);
-    });
+    // Set up the event listener with the debounced handler
+    const unlistenPromise = listen(
+      "progress_update",
+      debouncedHandleProgressUpdate,
+    );
+
+    // Cleanup the event listener on unmount
     return () => {
-      unlisten.then((f) => f());
+      unlistenPromise.then((unlisten) => unlisten());
     };
-  }, []);
+  }, [debouncedHandleProgressUpdate]);
+
   return (
     <div className="flex items-center justify-center w-full h-full">
       <div className="relative w-32 h-2 bg-gray-200 dark:bg-transparent rounded-full dark:divide-brand-dark dark:border-brand-dark dark:border">
         <div
           className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"
-          style={{ width: `${percentageCrawled}%` }}
+          style={{ width: `${progress.percentageCrawled}%` }}
         />
       </div>
-      <span className="ml-2 ">
-        {crawledPages} of {crawledPagesCount} pages crawled (
-        {percentageCrawled.toFixed(0)}
+      <span className="ml-2">
+        {progress.crawledPages} of {progress.crawledPagesCount} pages crawled (
+        {progress.percentageCrawled.toFixed(0)}
         %)
       </span>
     </div>
   );
 };
-export default FooterLoader;
+
+// Memoize the component to prevent re-renders if props/state haven't changed
+export default memo(FooterLoader);

@@ -1,28 +1,22 @@
 // @ts-nocheck
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { Tabs } from "@mantine/core";
+import { FaGlobe, FaTasks, FaChartBar } from "react-icons/fa";
+import { RiFireLine } from "react-icons/ri";
+import { IoKeyOutline } from "react-icons/io5";
+import { SlSocialGoogle } from "react-icons/sl";
+import { GrPlan } from "react-icons/gr";
+import { debounce } from "lodash";
 import useLoaderStore from "@/store/loadersStore";
 import InputZone from "./_components/InputZone";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import { Tabs } from "@mantine/core";
-import { IoIosClose } from "react-icons/io";
-import {
-  FaGlobe,
-  FaTools,
-  FaTasks,
-  FaHistory,
-  FaChartBar,
-} from "react-icons/fa"; // Import relevant icons
 import SidebarContainer from "./_components/Sidebar/SidebarContainer";
 import { useVisibilityStore } from "@/store/VisibilityStore";
 import TaskManagerContainer from "../components/ui/TaskManager/TaskManagerContainer";
 import TablesContainer from "./_components/TablesContainer/TablesContainer";
 import { listen } from "@tauri-apps/api/event";
-import { RiFireLine } from "react-icons/ri";
-import { IoKeyOutline } from "react-icons/io5";
-import { SlSocialGoogle } from "react-icons/sl";
-import { GrPlan } from "react-icons/gr";
 import Analytics from "../components/ui/Analytics/Analytics";
 import ClarityContainer from "../components/ui/MSClarityModal/ClarityContainer";
 import KeywordAnalytics from "../components/ui/KwTracking/KeywordAnalytics";
@@ -31,13 +25,18 @@ import ContentPlannerContainer from "../components/ui/ContentPlanner/ContentPlan
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 import GlobalSettings from "../components/ui/GeneralSettings/GeneralSettings";
 
+interface CrawlResult {
+  url: string;
+  title: string;
+  h1: string;
+  file_type: string;
+}
+
 export default function Page() {
   const [data, setData] = useState<CrawlResult | null>(null);
-  const [search, setSearch] = useState(""); // Search filter
-  const [sortField, setSortField] = useState<
-    "url" | "title" | "h1" | "file_type"
-  >("url");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("first");
+
   const { loaders, showLoader, hideLoader } = useLoaderStore();
   const {
     crawlData,
@@ -52,23 +51,33 @@ export default function Page() {
   const { setIsGlobalCrawling, setIsFinishedDeepCrawl } =
     useGlobalConsoleStore();
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
-  const allData = crawlData;
 
+  const allData = useMemo(() => crawlData, [crawlData]);
+
+  // Load data from sessionStorage on mount
   useEffect(() => {
     const sessionData = sessionStorage.getItem("GlobalCrawldata");
-    if (sessionData) {
+    if (sessionData && JSON.parse(sessionData) !== data) {
       setData(JSON.parse(sessionData));
     }
   }, [crawlData]);
 
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(event.target.value.toLowerCase());
-  };
+  // Debounced search handler
+  const handleSearchChange = useCallback(
+    debounce((event: React.ChangeEvent<HTMLInputElement>) => {
+      setSearch(event.target.value.toLowerCase());
+    }, 300),
+    [],
+  );
 
-  const handleDomainCrawl = async (url) => {
+  // Cleanup debounce on unmount
+  useEffect(() => {
+    return () => handleSearchChange.cancel();
+  }, [handleSearchChange]);
+
+  // Handle domain crawl
+  const handleDomainCrawl = async (url: string) => {
     try {
-      // Set loading
-
       if (sessionStorage.getItem("crawlNumber")) {
         sessionStorage.setItem(
           "crawlNumber",
@@ -81,26 +90,20 @@ export default function Page() {
       setSelectedTableURL([]);
       setDomainCrawlLoading(true);
       setIssuesData([]);
-      // Clear the store before crawling
       clearDomainCrawlData();
       setIsGlobalCrawling(true);
-      const result = await invoke("domain_crawl_command", {
-        domain: url,
-      });
+
+      const result = await invoke("domain_crawl_command", { domain: url });
       console.log("%cCrawl Result:", "color: red;", result);
     } catch (error) {
       console.error("Failed to execute domain crawl command:", error);
-      console.log("failed to crawl:", url);
     } finally {
       setDomainCrawlLoading(false);
       setIsFinishedDeepCrawl(true);
       setIsGlobalCrawling(false);
 
-      // Retrieve the existing crawled links from sessionStorage or initialize an empty array
       const crawledLinks =
         JSON.parse(sessionStorage.getItem("CrawledLinks")) || [];
-
-      // Add the length of the new crawlData (if it exists) to the crawledLinks array
       if (crawlData?.length) {
         crawledLinks.push(crawlData.length);
         setCrawlSessionTotalArray(crawledLinks);
@@ -108,45 +111,54 @@ export default function Page() {
         crawledLinks.push(0);
         setCrawlSessionTotalArray(crawledLinks);
       }
-
-      // Save the updated crawledLinks array back to sessionStorage
       sessionStorage.setItem("CrawledLinks", JSON.stringify(crawledLinks));
     }
   };
 
+  // Event listener for crawl results
   useEffect(() => {
-    let isMounted = true; // Flag to track if the component is mounted
+    let isMounted = true;
 
-    const setupEventListener = async () => {
-      const unlisten = await listen("crawl_result", (event) => {
-        if (!isMounted) return; // Skip if component is unmounted
+    const handleCrawlResult = (event) => {
+      if (!isMounted) return;
 
-        const result = event?.payload?.result;
+      const result = event?.payload?.result;
+      if (!result || typeof result !== "object") {
+        console.error("Invalid result format:", result);
+        return;
+      }
 
-        if (!result || typeof result !== "object") {
-          console.error("Invalid result format:", result);
-          return;
-        }
-
-        addDomainCrawlResult(result);
-        setFinishedDeepCrawl(true);
-      });
-
-      return unlisten; // Return the cleanup function
+      addDomainCrawlResult(result);
+      setFinishedDeepCrawl(true);
     };
 
-    const cleanupPromise = setupEventListener();
+    const unlistenPromise = listen("crawl_result", handleCrawlResult);
 
     return () => {
-      isMounted = false; // Set flag to false on unmount
-      cleanupPromise.then((unlisten) => unlisten()); // Cleanup the event listener
+      isMounted = false;
+      unlistenPromise.then((unlisten) => unlisten());
     };
-  }, [addDomainCrawlResult]);
+  }, [addDomainCrawlResult, setFinishedDeepCrawl]);
+
+  // TODO: Keep an eye on the crawl size and warn the user if it is too big
+  const crawlDataLength = crawlData.length;
+
+  useEffect(() => {
+    if (crawlDataLength === 10) {
+      console.warn(
+        "You have crawled more than 13,000 URLs. RustySEO has not been configured for large website crawls.",
+      );
+    }
+
+    if (crawlDataLength === 20) {
+      console.warn("You have crawled more than 26,000 URLs.");
+    }
+  }, [crawlDataLength]);
 
   return (
     <main className="flex h-full w-full">
       <InputZone handleDomainCrawl={handleDomainCrawl} />
-      <section className="w-full border-none h-full  dark:bg-brand-dark shadow-none rounded-md">
+      <section className="w-full border-none h-full dark:bg-brand-dark shadow-none rounded-md">
         <div className="relative">
           <input
             type="text"
@@ -157,16 +169,15 @@ export default function Page() {
           />
         </div>
 
-        {/* Tabs Component */}
-        <Tabs defaultValue="first" className="ovefflow-auto">
-          <aside className="absolute top-13    pt-1 left-0 w-full dark:bg-brand-darker z-10 bg-white ">
+        <Tabs value={activeTab} onChange={setActiveTab}>
+          <aside className="absolute top-13 pt-1 left-0 w-full dark:bg-brand-darker z-10 bg-white">
             <Tabs.List
               justify="center"
-              className="dark:text-white text-xs border-b dark:border-b-brand-dark  active:text-white h-7 "
+              className="dark:text-white text-xs border-b dark:border-b-brand-dark h-7"
             >
               <Tabs.Tab value="first">
                 <FaGlobe className="inline-block mr-2" />
-                Deep crawl
+                Deep Crawl
               </Tabs.Tab>
               <Tabs.Tab value="tasks">
                 <FaTasks className="inline-block mr-1 text-sm mb-[2px]" /> Task
@@ -192,61 +203,83 @@ export default function Page() {
                 <GrPlan className="inline-block mr-2 mb-[2px] text-sm" />
                 Content
               </Tabs.Tab>
-
-              {/* <Tabs.Tab value="settings">Testing</Tabs.Tab> */}
             </Tabs.List>
           </aside>
-          {/* Tabs Panel for Domain */}
-          <Tabs.Panel
-            value="first"
-            className="flex flex-col h-screen bg-white dark:bg-brand-darker overflow-auto"
-          >
-            <TablesContainer />
-          </Tabs.Panel>
-          <Tabs.Panel
-            value="tasks"
-            className="flex flex-col space-y-8 overflow-scroll"
-          >
-            <section className="mt-[3rem]">
-              <TaskManagerContainer />
-            </section>
-          </Tabs.Panel>
-          <Tabs.Panel
-            value="analytics"
-            className="pt-9 dark:bg-brand-darker mb-0"
-          >
-            <Analytics />
-          </Tabs.Panel>
-          <Tabs.Panel value="clarity" className="pt-8 ">
-            <section className="h-[calc(100vh-8rem)] overflow-auto">
-              <ClarityContainer />
-            </section>
-          </Tabs.Panel>{" "}
-          <Tabs.Panel
-            value="kws"
-            className="h-[calc(100vh-4rem)] pt-9 dark:bg-brand-darker "
-          >
-            <KeywordAnalytics />
-          </Tabs.Panel>{" "}
-          <Tabs.Panel
-            value="gsc"
-            className="h-calc(100vh-8.8rem)] pt-9 dark:bg-brand-darker"
-          >
-            <GSCcontainer />
-          </Tabs.Panel>{" "}
-          <Tabs.Panel
-            value="content"
-            className="pt-6 h-[calc(100vh-3rem)] overflow-auto"
-          >
-            <ContentPlannerContainer />
-          </Tabs.Panel>{" "}
-          <Tabs.Panel value="settings">
-            <GlobalSettings />
-          </Tabs.Panel>
+
+          {activeTab === "first" && (
+            <Tabs.Panel
+              value="first"
+              className="flex flex-col h-screen bg-white dark:bg-brand-darker overflow-auto"
+            >
+              <TablesContainer />
+            </Tabs.Panel>
+          )}
+
+          {activeTab === "tasks" && (
+            <Tabs.Panel
+              value="tasks"
+              className="flex flex-col space-y-8 overflow-scroll"
+            >
+              <section className="mt-[3rem]">
+                <TaskManagerContainer />
+              </section>
+            </Tabs.Panel>
+          )}
+
+          {activeTab === "analytics" && (
+            <Tabs.Panel
+              value="analytics"
+              className="pt-9 dark:bg-brand-darker mb-0"
+            >
+              <Analytics />
+            </Tabs.Panel>
+          )}
+
+          {activeTab === "clarity" && (
+            <Tabs.Panel value="clarity" className="pt-8">
+              <section className="h-[calc(100vh-8rem)] overflow-auto">
+                <ClarityContainer />
+              </section>
+            </Tabs.Panel>
+          )}
+
+          {activeTab === "kws" && (
+            <Tabs.Panel
+              value="kws"
+              className="h-[calc(100vh-4rem)] pt-9 dark:bg-brand-darker"
+            >
+              <KeywordAnalytics />
+            </Tabs.Panel>
+          )}
+
+          {activeTab === "gsc" && (
+            <Tabs.Panel
+              value="gsc"
+              className="h-calc(100vh-8.8rem)] pt-9 dark:bg-brand-darker"
+            >
+              <GSCcontainer />
+            </Tabs.Panel>
+          )}
+
+          {activeTab === "content" && (
+            <Tabs.Panel
+              value="content"
+              className="pt-6 h-[calc(100vh-3rem)] overflow-auto "
+            >
+              <ContentPlannerContainer />
+            </Tabs.Panel>
+          )}
+
+          {activeTab === "settings" && (
+            <Tabs.Panel value="settings">
+              <GlobalSettings />
+            </Tabs.Panel>
+          )}
         </Tabs>
       </section>
+
       <aside
-        className={`transition-all ease-linear delay-100  ${visibility.sidebar ? "w-full max-w-[20.4rem] flex-grow" : "w-0 "} h-screen `}
+        className={`transition-all ease-linear delay-100 ${visibility.sidebar ? "w-full max-w-[20.4rem] flex-grow" : "w-0"} h-screen`}
       >
         <SidebarContainer />
       </aside>
