@@ -50,7 +50,7 @@ jobs:
         run: npm install --force
 
       - name: Install Tauri CLI locally
-        run: npm install --save-dev @tauri-apps/cli
+        run: npm install --save-dev @tauri-apps/cli --force
 
       - name: Verify Tauri CLI
         run: npx tauri --version
