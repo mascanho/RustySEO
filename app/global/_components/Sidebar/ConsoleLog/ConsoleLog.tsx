@@ -16,7 +16,71 @@ interface LogEntry {
   details?: string;
 }
 
-// Log generator function
+// Predefined log level configurations to avoid repetitive JSX creation
+const LEVEL_CONFIGS = {
+  success: {
+    icon: <CheckCircle className="w-4 h-4 text-green-700 flex-shrink-0" />,
+    badge: (
+      <Badge
+        variant="outline"
+        className="bg-green-700/10 text-green-700 border-green-700/20 flex-shrink-0 rounded-sm"
+      >
+        OK
+      </Badge>
+    ),
+    textClass: "text-green-700",
+  },
+  error: {
+    icon: <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />,
+    badge: (
+      <Badge
+        variant="outline"
+        className="bg-red-500/10 text-red-500 border-red-500/20 flex-shrink-0 rounded-sm"
+      >
+        ERROR
+      </Badge>
+    ),
+    textClass: "text-red-400",
+  },
+  warning: {
+    icon: <AlertCircle className="w-4 h-4 text-yellow-500 flex-shrink-0" />,
+    badge: (
+      <Badge
+        variant="outline"
+        className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 flex-shrink-0 rounded-sm"
+      >
+        WARNING
+      </Badge>
+    ),
+    textClass: "text-yellow-400",
+  },
+  info: {
+    icon: <Info className="w-4 h-4 text-blue-500 flex-shrink-0" />,
+    badge: (
+      <Badge
+        variant="outline"
+        className="bg-blue-500/10 text-blue-500 border-blue-500/20 flex-shrink-0 rounded-sm"
+      >
+        INFO
+      </Badge>
+    ),
+    textClass: "text-blue-400",
+  },
+  debug: {
+    icon: <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />,
+    badge: (
+      <Badge
+        variant="outline"
+        className="bg-gray-500/10 text-gray-400 border-gray-500/20 flex-shrink-0 rounded-sm"
+      >
+        DEBUG
+      </Badge>
+    ),
+    textClass: "text-zinc-400",
+  },
+} as const;
+
+// Optimized log generator with minimal object creation
 const generateLogs = (
   crawler: string,
   isGlobalCrawling: boolean,
@@ -24,43 +88,47 @@ const generateLogs = (
   tasks: number,
   aiModelLog: string,
   pageSpeedKeys: string[],
-  ga4ID: string,
-  gscCredentials: [],
+  ga4ID: string | null,
+  gscCredentials: any,
   clarityApi: string,
 ): LogEntry[] => {
+  const now = Date.now();
+  const timestamp = new Date();
   return [
     {
-      id: Date.now() + 1,
-      timestamp: new Date(),
+      id: now + 1,
+      timestamp,
       level: crawler === "Spider" ? "success" : "warning",
       message: `Crawler Mode: ${crawler}`,
     },
     {
-      id: Date.now() + 2,
-      timestamp: new Date(),
+      id: now + 2,
+      timestamp,
       level: aiModelLog === "gemini" ? "success" : "error",
       message:
         aiModelLog === "gemini" ? "AI Model: Gemini" : "No AI model configured",
     },
     {
-      id: Date.now() + 3,
-      timestamp: new Date(),
-      level: pageSpeedKeys?.page_speed_key?.length > 0 ? "success" : "error",
+      id: now + 3,
+      timestamp,
+      level: pageSpeedKeys?.length > 0 ? "success" : "error",
       message:
-        pageSpeedKeys?.page_speed_key?.length > 0
+        pageSpeedKeys?.length > 0
           ? "Page Speed Insights: Enabled"
           : "No Page Speed Keys configured",
     },
     {
-      id: Date.now() + 4,
-      timestamp: new Date(),
-      level: ga4ID === null ? "error" : "success",
+      id: now + 4,
+      timestamp,
+      level: ga4ID === null || ga4ID === "" ? "error" : "success",
       message:
-        ga4ID !== "" ? "No GA4 ID configured" : "Google Analytics: Enabled",
+        ga4ID === null || ga4ID === ""
+          ? "No GA4 ID configured"
+          : "Google Analytics: Enabled",
     },
     {
-      id: Date.now() + 5,
-      timestamp: new Date(),
+      id: now + 5,
+      timestamp,
       level: clarityApi !== "" ? "success" : "error",
       message:
         clarityApi !== ""
@@ -68,18 +136,20 @@ const generateLogs = (
           : "MS Clarity is not configured",
     },
     {
-      id: Date.now() + 6,
-      timestamp: new Date(),
+      id: now + 6,
+      timestamp,
       level:
-        gscCredentials && Object?.keys(gscCredentials) ? "success" : "error",
+        gscCredentials && Object.keys(gscCredentials).length > 0
+          ? "success"
+          : "error",
       message:
-        gscCredentials && Object?.keys(gscCredentials) !== null
+        gscCredentials && Object.keys(gscCredentials).length > 0
           ? "Google Search Console: Enabled"
           : "GSC is not configured",
     },
     {
-      id: Date.now() + 7,
-      timestamp: new Date(),
+      id: now + 7,
+      timestamp,
       level: isGlobalCrawling
         ? "info"
         : isFinishedDeepCrawl
@@ -92,37 +162,34 @@ const generateLogs = (
           : "RustySEO is idle...",
     },
     {
-      id: Date.now() + 8,
-      timestamp: new Date(),
+      id: now + 8,
+      timestamp,
       level: tasks === 0 ? "success" : "warning",
       message: tasks === 0 ? "No tasks pending" : `${tasks} tasks remaining`,
     },
   ];
 };
 
-// Uptime Timer Component (Extracted for performance optimization)
+// Optimized UptimeTimer with useRef for start time
 function UptimeTimer() {
   const [uptime, setUptime] = useState("00:00:00");
+  const startTimeRef = useRef(Date.now());
 
   useEffect(() => {
-    const startTime = Date.now();
-
     const interval = setInterval(() => {
-      const elapsedTime = Date.now() - startTime;
-      const hours = Math.floor(elapsedTime / (1000 * 60 * 60))
+      const elapsed = Date.now() - startTimeRef.current;
+      const hours = Math.floor(elapsed / 3600000)
         .toString()
         .padStart(2, "0");
-      const minutes = Math.floor((elapsedTime / (1000 * 60)) % 60)
+      const minutes = Math.floor((elapsed % 3600000) / 60000)
         .toString()
         .padStart(2, "0");
-      const seconds = Math.floor((elapsedTime / 1000) % 60)
+      const seconds = Math.floor((elapsed % 60000) / 1000)
         .toString()
         .padStart(2, "0");
-
       setUptime(`${hours}:${minutes}:${seconds}`);
-    }, 1000); // Update every second
-
-    return () => clearInterval(interval); // Cleanup interval on unmount
+    }, 1000);
+    return () => clearInterval(interval);
   }, []);
 
   return <div className="text-zinc-400 text-xs">Uptime: {uptime}</div>;
@@ -141,12 +208,24 @@ export default function ConsoleLog() {
   } = useGlobalConsoleStore();
   const [pageSpeedKeys, setPageSpeedKeys] = useState<string[]>([]);
   const [ga4ID, setGa4ID] = useState<string | null>(null);
-  const [gscCredentials, setGscCredentials] = useState(null);
-  const [clarityApi, setClarityApi] = useState<string>("");
+  const [gscCredentials, setGscCredentials] = useState<any>(null);
+  const [clarityApi, setClarityApi] = useState("");
 
-  // Memoize logs to avoid recalculating on every render
-  const memoizedLogs = useMemo(() => {
-    return generateLogs(
+  // Memoized logs with stable dependencies
+  const memoizedLogs = useMemo(
+    () =>
+      generateLogs(
+        crawler,
+        isGlobalCrawling,
+        isFinishedDeepCrawl,
+        tasks,
+        aiModelLog,
+        pageSpeedKeys,
+        ga4ID,
+        gscCredentials,
+        clarityApi,
+      ),
+    [
       crawler,
       isGlobalCrawling,
       isFinishedDeepCrawl,
@@ -156,178 +235,75 @@ export default function ConsoleLog() {
       ga4ID,
       gscCredentials,
       clarityApi,
-    );
-  }, [
-    crawler,
-    isGlobalCrawling,
-    isFinishedDeepCrawl,
-    tasks,
-    aiModelLog,
-    pageSpeedKeys,
-    ga4ID,
-    gscCredentials,
-    clarityApi,
-  ]);
+    ],
+  );
 
-  // Update logs whenever dependencies change
+  // Single useEffect for log updates and scrolling
   useEffect(() => {
     setLogs(memoizedLogs);
+    const scrollContainer = scrollAreaRef.current?.querySelector(
+      "[data-radix-scroll-area-viewport]",
+    );
+    if (scrollContainer)
+      scrollContainer.scrollTop = scrollContainer.scrollHeight;
   }, [memoizedLogs]);
 
-  // Auto-scroll to bottom when new logs appear
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector(
-        "[data-radix-scroll-area-viewport]",
-      );
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-      }
-    }
-  }, [logs]);
-
-  // GET THE STUFF FROM THE BACKEND
+  // Fetch data once on mount with error boundary
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const aiModelResult = await invoke("get_ai_model");
-        setAiModelLog(aiModelResult);
-
-        const aiModelCheckResult = await invoke("check_ai_model");
-        setAiModelLog(aiModelCheckResult);
-
-        const pageSpeedResult = await invoke("load_api_keys");
-        setPageSpeedKeys(pageSpeedResult);
-
-        const ga4Result = await invoke("get_google_analytics_id");
-        setGa4ID(ga4Result);
-
-        const gscResult = await invoke("read_credentials_file");
-        setGscCredentials(gscResult);
-
-        const clarityResult = await invoke("get_microsoft_clarity_command");
-        setClarityApi(clarityResult);
+        const [aiModel, aiModelCheck, pageSpeed, ga4, gsc, clarity] =
+          await Promise.all([
+            invoke<string>("get_ai_model"),
+            invoke<string>("check_ai_model"),
+            invoke<string[]>("load_api_keys"),
+            invoke<string | null>("get_google_analytics_id"),
+            invoke<any>("read_credentials_file"),
+            invoke<string>("get_microsoft_clarity_command"),
+          ]);
+        setAiModelLog(aiModelCheck || aiModel);
+        setPageSpeedKeys(pageSpeed);
+        setGa4ID(ga4);
+        setGscCredentials(gsc);
+        setClarityApi(clarity);
       } catch (err) {
         console.error("Error fetching API config:", err);
       }
     };
-
     fetchData();
   }, [setAiModelLog]);
 
-  // Memoize getLevelIcon to avoid recreating functions on every render
-  const getLevelIcon = useCallback((level: LogLevel) => {
-    switch (level) {
-      case "success":
-        return <CheckCircle className="w-4 h-4 text-green-700 flex-shrink-0" />;
-      case "error":
-        return <XCircle className="w-4 h-4 text-red-500 flex-shrink-0" />;
-      case "warning":
-        return (
-          <AlertCircle className="w-4 h-4 text-yellow-500 flex-shrink-0" />
-        );
-      case "info":
-        return <Info className="w-4 h-4 text-blue-500 flex-shrink-0" />;
-      case "debug":
-        return <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />;
-    }
-  }, []);
-
-  // Memoize getLevelBadge to avoid recreating functions on every render
-  const getLevelBadge = useCallback((level: LogLevel) => {
-    switch (level) {
-      case "success":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-green-700/10 text-green-700 border-green-700/20 flex-shrink-0 rounded-sm"
-          >
-            OK
-          </Badge>
-        );
-      case "error":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-red-500/10 text-red-500 border-red-500/20 flex-shrink-0 rounded-sm"
-          >
-            ERROR
-          </Badge>
-        );
-      case "warning":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 flex-shrink-0 rounded-sm"
-          >
-            WARNING
-          </Badge>
-        );
-      case "info":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-blue-500/10 text-blue-500 border-blue-500/20 flex-shrink-0 rounded-sm"
-          >
-            INFO
-          </Badge>
-        );
-      case "debug":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-gray-500/10 text-gray-400 border-gray-500/20 flex-shrink-0 rounded-sm"
-          >
-            DEBUG
-          </Badge>
-        );
-    }
-  }, []);
-
-  // Memoize formatTimestamp to avoid recreating functions on every render
-  const formatTimestamp = useCallback((date: Date) => {
-    return date.toISOString().split("T")[1].slice(0, 12);
-  }, []);
+  // Memoized timestamp formatter
+  const formatTimestamp = useCallback(
+    (date: Date) => date.toISOString().slice(11, 23),
+    [],
+  );
 
   return (
     <div className="w-full max-w-[600px] overflow-hidden bg-gray-50 dark:bg-zinc-900 font-mono text-xs h-[calc(100vh-39rem)]">
       <ScrollArea className="h-[calc(100vh-40.6rem)]" ref={scrollAreaRef}>
         <div className="p-2 space-y-2">
-          {logs.map((log, index) => (
-            <div
-              key={log.id}
-              className={`space-y-1 ${
-                index % 2 === 0 ? "bg-transparent" : "bg-transparent"
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                {getLevelIcon(log.level)}
-                {getLevelBadge(log.level)}
-                <span
-                  className={`
-                  ${log.level === "success" ? "text-green-700" : ""}
-                  ${log.level === "error" ? "text-red-400" : ""}
-                  ${log.level === "warning" ? "text-yellow-400" : ""}
-                  ${log.level === "info" ? "text-blue-400" : ""}
-                  ${log.level === "debug" ? "text-zinc-400" : ""}
-                `}
-                >
-                  {log.message}
-                </span>
-              </div>
-              {log.details && (
-                <div className="pl-6 text-xs text-zinc-500 border-l border-zinc-700 ml-2">
-                  {log.details}
+          {logs.map((log) => {
+            const config = LEVEL_CONFIGS[log.level];
+            return (
+              <div key={log.id} className="space-y-1">
+                <div className="flex items-center gap-2">
+                  {config.icon}
+                  {config.badge}
+                  <span className={config.textClass}>{log.message}</span>
                 </div>
-              )}
-            </div>
-          ))}
+                {log.details && (
+                  <div className="pl-6 text-xs text-zinc-500 border-l border-zinc-700 ml-2">
+                    {log.details}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </ScrollArea>
-
       <div className="flex items-center text-xs justify-between px-4 py-1 bg-zinc-100 dark:bg-zinc-800 border-t dark:border-zinc-700">
         <UptimeTimer />
-        <div className="text-zinc-400 text-xs">PID: 12345</div>
       </div>
     </div>
   );
