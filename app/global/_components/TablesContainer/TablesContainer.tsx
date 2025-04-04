@@ -141,38 +141,52 @@ export default function Home() {
     );
   }, [debouncedCrawlData]);
 
-  // Filter All the links and merge external and inteernal
+  // Filters all the links
   const filteredLinks = useMemo(() => {
     const linksWithAnchors = [];
-    const uniqueLinks = new Set(); // Track unique links
+    const uniqueLinks = new Set();
 
     debouncedCrawlData.forEach((item) => {
-      // Add external links with anchors
+      // Process external links with status codes
       item?.anchor_links?.external?.links?.forEach((link, index) => {
         if (link && !uniqueLinks.has(link)) {
-          // Check if the link is unique
-          uniqueLinks.add(link); // Add the link to the Set
+          uniqueLinks.add(link);
+
+          // Find matching status code
+          const statusInfo = item?.inoutlinks_status_codes?.[1]?.find(
+            (status) => status.url === link,
+          );
+
           linksWithAnchors.push({
             link: link,
             anchor: item?.anchor_links?.external?.anchors?.[index] || "",
+            status: statusInfo?.status || null,
+            error: statusInfo?.error || null,
           });
         }
       });
 
-      // Add internal links with anchors
+      // Process internal links with status codes
       item?.anchor_links?.internal?.links?.forEach((link, index) => {
         if (link && !uniqueLinks.has(link)) {
-          // Check if the link is unique
-          uniqueLinks.add(link); // Add the link to the Set
+          uniqueLinks.add(link);
+
+          // Find matching status code
+          const statusInfo = item?.inoutlinks_status_codes?.[0]?.find(
+            (status) => status.url === link,
+          );
+
           linksWithAnchors.push({
             link: link,
             anchor: item?.anchor_links?.internal?.anchors?.[index] || "",
+            status: statusInfo?.status || null,
+            error: statusInfo?.error || null,
           });
         }
       });
     });
 
-    return linksWithAnchors; // Return the array of objects containing unique links and anchors
+    return linksWithAnchors;
   }, [debouncedCrawlData]);
 
   // FILTER THE KEYWORDS, make them as value and the url as key

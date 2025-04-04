@@ -24,6 +24,7 @@ use super::helpers::hreflang_selector::select_hreflang;
 use super::helpers::html_size_calculator::calculate_html_size;
 use super::helpers::keyword_selector::extract_keywords;
 use super::helpers::language_selector::detect_language;
+use super::helpers::links_status_code_checker::get_links_status_code;
 use super::helpers::meta_robots_selector::{get_meta_robots, MetaRobots};
 use super::helpers::robots::get_domain_robots;
 use super::helpers::text_ratio::{get_text_ratio, TextRatio};
@@ -220,6 +221,10 @@ async fn process_url(
         });
     }
 
+    let internal_external_links = anchor_links::extract_internal_external_links(&body, base_url);
+
+    let check_links_status_code = get_links_status_code(internal_external_links, base_url).await;
+
     let result = DomainCrawlResults {
         url: final_url.to_string(),
         title: title_selector::extract_title(&body),
@@ -230,6 +235,7 @@ async fn process_url(
         images: images_selector::extract_images_with_sizes_and_alts(&body, base_url).await,
         status_code,
         anchor_links: anchor_links::extract_internal_external_links(&body, base_url),
+        inoutlinks_status_codes: check_links_status_code,
         indexability: indexability::extract_indexability(&body),
         alt_tags: alt_tags::get_alt_tags(&body),
         schema: schema_selector::get_schema(&body),

@@ -182,7 +182,7 @@ const TableRow = ({
   handleCellClick,
 }: TableRowProps) => {
   const rowData = useMemo(
-    () => [index + 1, row?.anchor, row?.link || ""],
+    () => [index + 1, row?.anchor, row?.link || "", row?.status || ""],
     [row, index],
   );
 
@@ -488,6 +488,8 @@ const LinksTable = ({
   const virtualRows = rowVirtualizer.getVirtualItems();
   const parentRef = useRef<HTMLDivElement>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  console.log(rows);
 
   return (
     <>
