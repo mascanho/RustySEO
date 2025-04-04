@@ -223,7 +223,8 @@ async fn process_url(
 
     let internal_external_links = anchor_links::extract_internal_external_links(&body, base_url);
 
-    let check_links_status_code = get_links_status_code(internal_external_links, base_url).await;
+    let check_links_status_code =
+        get_links_status_code(internal_external_links, base_url, final_url.to_string()).await;
 
     let result = DomainCrawlResults {
         url: final_url.to_string(),

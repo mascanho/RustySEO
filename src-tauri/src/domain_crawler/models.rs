@@ -2,12 +2,15 @@ use std::collections::HashMap;
 
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
+use url::Url;
+
+use crate::crawler::libs::LinkStatus;
 
 use super::helpers::{
     alt_tags::AltTags, anchor_links::InternalExternalLinks, css_selector::CSS,
     hreflang_selector::HreflangObject, html_size_calculator::Sizes, iframe_selector::Iframe,
     indexability::Indexability, javascript_selector::JavaScript,
-    links_status_code_checker::LinkStatus, meta_robots_selector::MetaRobots,
+    links_status_code_checker::LinkCheckResults, meta_robots_selector::MetaRobots,
     pdf_selector::PdfLinks, text_ratio::TextRatio, title_selector::TitleDetails,
 };
 
@@ -39,7 +42,7 @@ pub struct DomainCrawlResults {
     pub images: Result<Vec<(String, String, u64, String, u16, bool)>, String>,
     pub status_code: u16,
     pub anchor_links: Option<InternalExternalLinks>,
-    pub inoutlinks_status_codes: (Vec<LinkStatus>, Vec<LinkStatus>),
+    pub inoutlinks_status_codes: LinkCheckResults,
     pub indexability: Indexability,
     pub alt_tags: AltTags,
     pub schema: Option<String>,
@@ -76,7 +79,12 @@ impl Default for DomainCrawlResults {
             images: Ok(Vec::new()),
             status_code: 0, // Default to 0 for failed URLs
             anchor_links: None,
-            inoutlinks_status_codes: (Vec::new(), Vec::new()),
+            inoutlinks_status_codes: LinkCheckResults {
+                page: String::new(),
+                base_url: Url::parse("www.site.com").expect("failed to set default url"),
+                internal: Vec::new(),
+                external: Vec::new(),
+            },
             indexability: Indexability::default(),
             alt_tags: AltTags::default(),
             schema: None,

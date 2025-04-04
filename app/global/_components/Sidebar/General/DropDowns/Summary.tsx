@@ -4,10 +4,13 @@ import React, {
   memo,
   useCallback,
   useEffect,
+  useState,
   useReducer,
 } from "react";
 import debounce from "lodash.debounce";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+
+import { FiChevronDown, FiChevronRight, FiChevronUp } from "react-icons/fi";
 
 interface CrawlDataItem {
   anchor_links?: {
@@ -90,6 +93,7 @@ const Summary: React.FC = () => {
   const { crawlData, setSummary } = useGlobalCrawlStore();
   const [state, dispatch] = useReducer(reducer, initialState);
 
+  const [isOpen, setIsOpen] = useState(false);
   // Memoize crawlData to prevent unnecessary recalculations
   const stableCrawlData = useMemo(() => crawlData || [], [crawlData]);
 
@@ -180,23 +184,30 @@ const Summary: React.FC = () => {
   );
 
   return (
-    <div className="text-sx w-full">
-      <details
-        className="w-full"
-        onClick={(e) => console.log(e.currentTarget.innerText)}
-      >
-        <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 pb-1.5 cursor-pointer flex items-center">
-          <span>Summary</span>
+    <div className="text-xs w-full">
+      <div className="w-full cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
+        <div className="text-xs font-semibold border-b dark:border-b-brand-dark pl-1 pb-1.5 flex items-center">
+          <span className="">
+            {isOpen ? (
+              <FiChevronDown size={14} />
+            ) : (
+              <FiChevronRight size={14} />
+            )}
+          </span>
+          <span className="ml-1">Summary</span>
           {state.isProcessing && (
             <span className="ml-2 text-xs text-gray-500">Processing...</span>
           )}
-        </summary>
+        </div>
+      </div>
+
+      {isOpen && (
         <div className="w-full">
           {summaryData.map((item, index) => (
             <SummaryItemRow key={index} {...item} />
           ))}
         </div>
-      </details>
+      )}
     </div>
   );
 };
