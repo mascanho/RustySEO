@@ -93,8 +93,8 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data }) => {
 
   return (
     <table ref={tableRef} style={{ width: "100%", borderCollapse: "collapse" }}>
-      <thead className="text-xs">
-        <tr className="sticky top-0 shadow">
+      <thead className="text-xs sticky top-0 ">
+        <tr className="sticky -top-1 shadow">
           <th
             style={{ width: "20px", textAlign: "left", position: "relative" }}
           >
@@ -106,7 +106,7 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data }) => {
             Anchor Text
           </th>
           <th
-            style={{ textAlign: "left", position: "relative", width: "150px" }}
+            style={{ textAlign: "left", position: "relative", width: "100px" }}
           >
             Relative URL
           </th>
