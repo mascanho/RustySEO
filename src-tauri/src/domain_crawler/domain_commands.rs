@@ -9,7 +9,7 @@ use super::{
     database,
     excel::create_xlsx::{
         generate_css_table, generate_excel_main_table, generate_excel_two_cols,
-        generate_keywords_excel, generate_links_excel, generate_xlsx,
+        generate_keywords_excel, generate_links_table_excel, generate_xlsx,
     },
     models::DomainCrawlResults,
 };
@@ -118,10 +118,11 @@ pub async fn create_css_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
         }
     }
 }
-// CREATE THE EXCEL FROM THE LINKS TABLE
+
+// CREATE THE EXCEL FROM THE KEYWORDS TABLE
 #[tauri::command]
-pub async fn create_links_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
-    match generate_links_excel(data) {
+pub async fn create_keywords_excel_command(data: Vec<Value>) -> Result<Vec<u8>, String> {
+    match generate_keywords_excel(data) {
         Ok(file) => Ok(file),
         Err(e) => {
             eprintln!("Error: {}", e);
@@ -130,10 +131,9 @@ pub async fn create_links_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
     }
 }
 
-// CREATE THE EXCEL FROM THE KEYWORDS TABLE
 #[tauri::command]
-pub async fn create_keywords_excel_command(data: Vec<Value>) -> Result<Vec<u8>, String> {
-    match generate_keywords_excel(data) {
+pub async fn generate_links_table_xlsx_command(data: Vec<Value>) -> Result<Vec<u8>, String> {
+    match generate_links_table_excel(data) {
         Ok(file) => Ok(file),
         Err(e) => {
             eprintln!("Error: {}", e);

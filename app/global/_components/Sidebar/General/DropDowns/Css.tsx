@@ -1,6 +1,7 @@
 // @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import React, { useMemo, useState, useCallback, useEffect, memo } from "react";
+import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
 const Css = () => {
   const { crawlData, setCss } = useGlobalCrawlStore();
@@ -39,14 +40,6 @@ const Css = () => {
     [externalCss, inlineCss],
   );
 
-  // Memoize the toggle handler to avoid recreating it on every render
-  const handleToggle = useCallback(
-    (e: React.SyntheticEvent<HTMLDetailsElement>) => {
-      setIsOpen(e.currentTarget.open);
-    },
-    [],
-  );
-
   // Update CSS data only when relevant values change
   useEffect(() => {
     if (typeof setCss === "function") {
@@ -59,11 +52,21 @@ const Css = () => {
   }, [inlineCss, externalCss, totalCss, setCss]);
 
   return (
-    <div className="text-sx w-full">
-      <details className="w-full" onToggle={handleToggle}>
-        <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 py-1 pb-1.5 cursor-pointer flex items-center">
-          <span>CSS</span>
-        </summary>
+    <div className="text-xs w-full">
+      <div className="w-full cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
+        <div className="text-xs font-semibold border-b dark:border-b-brand-dark pl-1 p-1 flex items-center">
+          <span className="">
+            {isOpen ? (
+              <FiChevronDown size={14} />
+            ) : (
+              <FiChevronRight size={14} />
+            )}
+          </span>
+          <span className="ml-1">CSS</span>
+        </div>
+      </div>
+
+      {isOpen && (
         <div className="w-full">
           {scriptData.map((data, index) => (
             <div
@@ -82,7 +85,7 @@ const Css = () => {
             </div>
           ))}
         </div>
-      </details>
+      )}
     </div>
   );
 };

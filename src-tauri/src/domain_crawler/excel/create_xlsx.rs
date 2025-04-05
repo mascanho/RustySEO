@@ -1,4 +1,4 @@
-use rust_xlsxwriter::{Format, FormatAlign, FormatBorder, Workbook};
+use rust_xlsxwriter::{workbook, worksheet, Format, FormatAlign, FormatBorder, Workbook};
 use serde_json::Value;
 
 #[tauri::command]
@@ -717,5 +717,77 @@ pub fn generate_keywords_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
     // Save the workbook to a buffer
     let buffer = workbook.save_to_buffer().map_err(|e| e.to_string())?;
 
+    Ok(buffer)
+}
+
+// GENERATE EXCEL FROM THE LINKS TABLE WITH ALL THE column
+// This table has [Anchor Text] | [HREF] | [Status Code] | [Page]
+//
+
+pub fn generate_links_table_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
+    println!("Received Data, {:?}", &data);
+
+    if data.is_empty() {
+        eprintln!("No data received");
+        return Err("No data received".to_string());
+    }
+
+    let headers = vec!["Anchor Text", "HREF", "Status Code", "Page"];
+    let mut workbook = Workbook::new();
+    let worksheet = workbook.add_worksheet();
+
+    let header_format = Format::new()
+        .set_bold()
+        .set_border(FormatBorder::Thin)
+        .set_align(FormatAlign::Center);
+
+    // Write headers
+    for (col_idx, header) in headers.iter().enumerate() {
+        worksheet
+            .write_with_format(0, col_idx as u16, *header, &header_format)
+            .map_err(|e| e.to_string())?;
+    }
+
+    // Write data rows
+    for (row_idx, value) in data.iter().enumerate() {
+        if let Value::Object(map) = value {
+            let anchor = map
+                .get("anchor")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let link = map
+                .get("link")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let status = map
+                .get("status")
+                .map(|v| match v {
+                    Value::Number(n) => n.to_string(),
+                    Value::Null => "null".to_string(),
+                    _ => v.to_string(),
+                })
+                .unwrap_or("".to_string());
+            let page = map
+                .get("page")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+
+            let values = vec![anchor, link, status, page];
+            for (col_idx, cell) in values.iter().enumerate() {
+                worksheet
+                    .write((row_idx + 1) as u32, col_idx as u16, cell)
+                    .map_err(|e| e.to_string())?;
+            }
+        } else {
+            return Err("Invalid JSON structure: expected an array of objects".to_string());
+        }
+    }
+
+    let buffer = workbook.save_to_buffer().map_err(|e| e.to_string())?;
+
+    println!("Excel file successfully created in memory!");
     Ok(buffer)
 }

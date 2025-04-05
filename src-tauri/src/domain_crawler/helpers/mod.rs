@@ -16,6 +16,7 @@ pub mod javascript_selector;
 pub mod keyword_selector;
 pub mod language_selector;
 pub mod links_selector;
+pub mod links_status_code_checker;
 pub mod meta_robots_selector;
 pub mod mobile_checker;
 pub mod page_description;

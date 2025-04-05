@@ -11,7 +11,14 @@ pub struct InternalExternalLinks {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct LinksAnchors {
     pub links: Vec<String>,
+    pub inlinks: LinkTypes,
     pub anchors: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct LinkTypes {
+    pub relative: Vec<String>,
+    pub absolute: Vec<String>,
 }
 
 /// Extracts internal and external links from an HTML document.
@@ -32,14 +39,15 @@ pub fn extract_internal_external_links(
     let link_selector = Selector::parse("a[href]").ok()?;
 
     // Extract all links and their anchor texts
-    let (internal_links, internal_anchors, external_links, external_anchors) =
+    let (internal_links, internal_anchors, external_links, external_anchors, absolute_links) =
         document.select(&link_selector).fold(
-            (Vec::new(), Vec::new(), Vec::new(), Vec::new()),
+            (Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new()),
             |(
                 mut internal_links,
                 mut internal_anchors,
                 mut external_links,
                 mut external_anchors,
+                mut absolute_links,
             ),
              element| {
                 if let Some(href) = element.value().attr("href") {
@@ -57,23 +65,36 @@ pub fn extract_internal_external_links(
                         external_links.push(href.to_string());
                         external_anchors.push(anchor_text);
                     }
+
+                    // Add the absolute URL to the list
+
+                    absolute_links.push(url.to_string());
                 }
                 (
                     internal_links,
                     internal_anchors,
                     external_links,
                     external_anchors,
+                    absolute_links,
                 )
             },
         );
 
     Some(InternalExternalLinks {
         internal: LinksAnchors {
-            links: internal_links,
+            links: internal_links.clone(),
+            inlinks: LinkTypes {
+                relative: internal_links,
+                absolute: absolute_links.clone(),
+            },
             anchors: internal_anchors,
         },
         external: LinksAnchors {
-            links: external_links,
+            links: external_links.clone(),
+            inlinks: LinkTypes {
+                relative: external_links,
+                absolute: absolute_links,
+            },
             anchors: external_anchors,
         },
     })
@@ -88,9 +109,7 @@ pub fn extract_internal_external_links(
 /// # Returns
 /// A resolved `Url`.
 fn resolve_url(href: &str, base_url: &Url) -> Url {
-    Url::parse(href)
-        .or_else(|_| base_url.join(href))
-        .unwrap_or_else(|_| base_url.clone())
+    Url::parse(href).unwrap_or_else(|_| base_url.join(href).unwrap_or_else(|_| base_url.clone()))
 }
 
 /// Checks if a URL is internal (i.e., has the same domain as the base URL).
@@ -102,5 +121,6 @@ fn resolve_url(href: &str, base_url: &Url) -> Url {
 /// # Returns
 /// `true` if the URL is internal, `false` otherwise.
 fn is_internal_link(url: &Url, base_url: &Url) -> bool {
-    url.domain() == base_url.domain()
+    url.domain()
+        .map_or(false, |domain| domain == base_url.domain().unwrap_or(""))
 }

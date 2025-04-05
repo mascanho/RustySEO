@@ -2,6 +2,7 @@
 import React, { useMemo, useEffect, useRef, useState } from "react";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { debounce } from "lodash";
+import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
 interface CrawlDataItem {
   title?: { title: string; title_len: number }[];
@@ -11,6 +12,7 @@ const PageTitles: React.FC = () => {
   const domainCrawlData = useGlobalCrawlStore();
   const [counts, setCounts] = useState({ all: 0, long: 0, empty: 0, short: 0 });
   const [totalPages, setTotalPages] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
   const crawlDataRef = useRef<CrawlDataItem[]>([]);
 
   // Update the ref with the latest data whenever domainCrawlData changes
@@ -55,13 +57,22 @@ const PageTitles: React.FC = () => {
   );
 
   return (
-    <div className="text-sx w-full">
-      <details className="w-full">
-        <summary className="text-xs text-brand font-semibold border-b dark:border-b-brand-dark pl-2 py-1 pb-1.5 cursor-pointer">
-          Page Titles
-        </summary>
+    <div className="text-xs w-full">
+      <div className="w-full cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
+        <div className="text-xs font-semibold border-b dark:border-b-brand-dark pl-1 p-1  flex items-center">
+          <span className="">
+            {isOpen ? (
+              <FiChevronDown size={14} />
+            ) : (
+              <FiChevronRight size={14} />
+            )}
+          </span>
+          <span className="ml-1">Page Titles</span>
+        </div>
+      </div>
+
+      {isOpen && (
         <div className="w-full">
-          {/* Data Rows */}
           {sections.map(({ label, count }) => (
             <div
               key={label}
@@ -77,7 +88,7 @@ const PageTitles: React.FC = () => {
             </div>
           ))}
         </div>
-      </details>
+      )}
     </div>
   );
 };
