@@ -51,7 +51,6 @@ pub async fn get_links_status_code(
             let full_url = match base_url.join(link) {
                 Ok(u) => {
                     let full_url_str = u.to_string();
-                    println!("{} -> {}", link, full_url_str);
                     full_url_str
                 }
                 Err(e) => {
