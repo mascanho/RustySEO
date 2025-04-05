@@ -148,42 +148,48 @@ export default function Home() {
 
     debouncedCrawlData.forEach((item) => {
       // Process external links with status codes
-      item?.anchor_links?.external?.links?.forEach((link, index) => {
-        if (link && !uniqueLinks.has(link)) {
-          uniqueLinks.add(link);
+      item?.anchor_links?.external?.inlinks?.absolute?.forEach(
+        (link, index) => {
+          if (link && !uniqueLinks.has(link)) {
+            uniqueLinks.add(link);
 
-          // Find matching status code
-          const statusInfo = item?.inoutlinks_status_codes?.[1]?.find(
-            (status) => status.url === link,
-          );
+            // Find matching status code in the new structure
+            const statusInfo = item?.inoutlinks_status_codes?.external?.find(
+              (status) => status.url === link,
+            );
 
-          linksWithAnchors.push({
-            link: link,
-            anchor: item?.anchor_links?.external?.anchors?.[index] || "",
-            status: statusInfo?.status || null,
-            error: statusInfo?.error || null,
-          });
-        }
-      });
+            linksWithAnchors.push({
+              link: link,
+              anchor: item?.anchor_links?.external?.anchors?.[index] || "",
+              status: statusInfo?.status || null,
+              error: statusInfo?.error || null,
+              page: item?.url || url,
+            });
+          }
+        },
+      );
 
       // Process internal links with status codes
-      item?.anchor_links?.internal?.links?.forEach((link, index) => {
-        if (link && !uniqueLinks.has(link)) {
-          uniqueLinks.add(link);
+      item?.anchor_links?.internal?.inlinks?.absolute?.forEach(
+        (link, index) => {
+          if (link && !uniqueLinks.has(link)) {
+            uniqueLinks.add(link);
 
-          // Find matching status code
-          const statusInfo = item?.inoutlinks_status_codes?.[0]?.find(
-            (status) => status.url === link,
-          );
+            // Find matching status code in the new structure
+            const statusInfo = item?.inoutlinks_status_codes?.internal?.find(
+              (status) => status.url === link,
+            );
 
-          linksWithAnchors.push({
-            link: link,
-            anchor: item?.anchor_links?.internal?.anchors?.[index] || "",
-            status: statusInfo?.status || null,
-            error: statusInfo?.error || null,
-          });
-        }
-      });
+            linksWithAnchors.push({
+              link: link,
+              anchor: item?.anchor_links?.internal?.anchors?.[index] || "",
+              status: statusInfo?.status || null,
+              error: statusInfo?.error || null,
+              page: item?.page || null,
+            });
+          }
+        },
+      );
     });
 
     return linksWithAnchors;

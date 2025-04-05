@@ -2,6 +2,7 @@
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import React, { useMemo, memo, useEffect, useRef, useState } from "react";
 import { debounce } from "lodash";
+import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
 interface DescriptionCounts {
   all: number; // Total unique descriptions
@@ -27,6 +28,7 @@ const MetaDescription = () => {
     short: 0,
   });
   const [totalPages, setTotalPages] = useState(0);
+  const [isOpen, setIsOpen] = useState(false);
   const crawlDataRef = useRef(crawlData);
 
   // Update the ref with the latest data whenever crawlData changes
@@ -100,11 +102,21 @@ const MetaDescription = () => {
   }, [counts, totalPages]);
 
   return (
-    <div className="text-sx w-full">
-      <details className="w-full">
-        <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 py-1 pb-1.5 cursor-pointer flex items-center">
-          <span>Meta Description</span>
-        </summary>
+    <div className="text-xs w-full">
+      <div className="w-full cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
+        <div className="text-xs font-semibold border-b dark:border-b-brand-dark pl-1 p-1 flex items-center">
+          <span className="">
+            {isOpen ? (
+              <FiChevronDown size={14} />
+            ) : (
+              <FiChevronRight size={14} />
+            )}
+          </span>
+          <span className="ml-1">Meta Description</span>
+        </div>
+      </div>
+
+      {isOpen && (
         <div className="w-full">
           {sections.map(({ label, count, percentage }) => (
             <div
@@ -117,7 +129,7 @@ const MetaDescription = () => {
             </div>
           ))}
         </div>
-      </details>
+      )}
     </div>
   );
 };

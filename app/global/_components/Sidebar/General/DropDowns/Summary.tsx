@@ -186,7 +186,7 @@ const Summary: React.FC = () => {
   return (
     <div className="text-xs w-full">
       <div className="w-full cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
-        <div className="text-xs font-semibold border-b dark:border-b-brand-dark pl-1 pb-1.5 flex items-center">
+        <div className="text-xs font-semibold border-b dark:border-b-brand-dark pl-1 pb-1.5 pt-0.5 flex items-center">
           <span className="">
             {isOpen ? (
               <FiChevronDown size={14} />

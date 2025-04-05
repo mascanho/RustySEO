@@ -1,6 +1,7 @@
 // @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import React, { useMemo, memo } from "react";
+import React, { useMemo, memo, useState } from "react";
+import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
 interface H2Counts {
   exists: number; // Number of valid H2 headings
@@ -20,6 +21,7 @@ interface Section {
 
 const H2 = () => {
   const { crawlData } = useGlobalCrawlStore();
+  const [isOpen, setIsOpen] = useState(false);
 
   // Ensure crawlData is always an array
   const safeCrawlData = useMemo(
@@ -99,11 +101,21 @@ const H2 = () => {
   }, [counts, totalPages, missingH2Count]);
 
   return (
-    <div className="text-sx w-full">
-      <details className="w-full">
-        <summary className="text-xs font-semibold border-b dark:border-b-brand-dark pl-2 py-1 pb-1.5 cursor-pointer flex items-center">
-          <span>H2</span>
-        </summary>
+    <div className="text-xs w-full">
+      <div className="w-full cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
+        <div className="text-xs font-semibold border-b dark:border-b-brand-dark pl-1 p-1 flex items-center">
+          <span className="">
+            {isOpen ? (
+              <FiChevronDown size={14} />
+            ) : (
+              <FiChevronRight size={14} />
+            )}
+          </span>
+          <span className="ml-1">H2</span>
+        </div>
+      </div>
+
+      {isOpen && (
         <div className="w-full">
           {sections.map(({ label, count, percentage }) => (
             <div
@@ -116,7 +128,7 @@ const H2 = () => {
             </div>
           ))}
         </div>
-      </details>
+      )}
     </div>
   );
 };
