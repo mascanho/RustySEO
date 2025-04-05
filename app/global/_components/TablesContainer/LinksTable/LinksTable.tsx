@@ -182,7 +182,13 @@ const TableRow = ({
   handleCellClick,
 }: TableRowProps) => {
   const rowData = useMemo(
-    () => [index + 1, row?.anchor, row?.link || "", row?.status || ""],
+    () => [
+      index + 1,
+      row?.anchor,
+      row?.link || "",
+      row?.status || "",
+      row?.page || "",
+    ],
     [row, index],
   );
 
@@ -306,7 +312,7 @@ const LinksTable = ({
     setIsGeneratingExcel(true);
     try {
       // Call the backend command to generate the Excel file
-      const fileBuffer = await invoke("create_links_excel", {
+      const fileBuffer = await invoke("generate_links_table_xlsx_command", {
         data: rows,
       });
 

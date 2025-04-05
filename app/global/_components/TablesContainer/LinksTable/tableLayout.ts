@@ -13,4 +13,10 @@ export const initialColumnAlignments = [
   "center", // Status Code
 ];
 
-export const headerTitles = ["ID", "Anchor Text", "URL", "Status Code"];
+export const headerTitles = [
+  "ID",
+  "Anchor Text",
+  "Href",
+  "Status Code",
+  "Page",
+];
