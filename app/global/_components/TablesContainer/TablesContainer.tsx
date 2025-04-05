@@ -148,53 +148,40 @@ export default function Home() {
 
     debouncedCrawlData.forEach((item) => {
       // Process external links with status codes
-      item?.anchor_links?.external?.inlinks?.absolute?.forEach(
-        (link, index) => {
-          if (link && !uniqueLinks.has(link)) {
-            uniqueLinks.add(link);
+      item?.inoutlinks_status_codes?.external?.forEach((statusInfo) => {
+        const link = statusInfo.url;
+        if (link && !uniqueLinks.has(link)) {
+          uniqueLinks.add(link);
 
-            // Find matching status code in the new structure
-            const statusInfo = item?.inoutlinks_status_codes?.external?.find(
-              (status) => status.url === link,
-            );
-
-            linksWithAnchors.push({
-              link: link,
-              anchor: item?.anchor_links?.external?.anchors?.[index] || "",
-              status: statusInfo?.status || null,
-              error: statusInfo?.error || null,
-              page: item?.url || url,
-            });
-          }
-        },
-      );
+          linksWithAnchors.push({
+            link: link,
+            anchor: statusInfo.anchor_text || "", // Use anchor_text from statusInfo
+            status: statusInfo.status || null,
+            error: statusInfo.error || null,
+            page: item?.url || url, // Fallback to url if item.url is unavailable
+          });
+        }
+      });
 
       // Process internal links with status codes
-      item?.anchor_links?.internal?.inlinks?.absolute?.forEach(
-        (link, index) => {
-          if (link && !uniqueLinks.has(link)) {
-            uniqueLinks.add(link);
+      item?.inoutlinks_status_codes?.internal?.forEach((statusInfo) => {
+        const link = statusInfo.url;
+        if (link && !uniqueLinks.has(link)) {
+          uniqueLinks.add(link);
 
-            // Find matching status code in the new structure
-            const statusInfo = item?.inoutlinks_status_codes?.internal?.find(
-              (status) => status.url === link,
-            );
-
-            linksWithAnchors.push({
-              link: link,
-              anchor: item?.anchor_links?.internal?.anchors?.[index] || "",
-              status: statusInfo?.status || null,
-              error: statusInfo?.error || null,
-              page: item?.page || null,
-            });
-          }
-        },
-      );
+          linksWithAnchors.push({
+            link: link,
+            anchor: statusInfo.anchor_text || "", // Use anchor_text from statusInfo
+            status: statusInfo.status || null,
+            error: statusInfo.error || null,
+            page: item?.page || null, // Use item.page as in original
+          });
+        }
+      });
     });
 
     return linksWithAnchors;
   }, [debouncedCrawlData]);
-
   // FILTER THE KEYWORDS, make them as value and the url as key
   const filteredKeywords = useMemo(() => {
     const urlKeywordsArray = []; // Array to store objects with URLs and keywords

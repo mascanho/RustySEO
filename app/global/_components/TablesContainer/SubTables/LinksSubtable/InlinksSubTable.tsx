@@ -9,13 +9,20 @@ interface InlinksSubTableProps {
         links: string[];
       };
     };
+    inoutlinks_status_codes: {
+      internal: {
+        anchor_text: string;
+        url: string;
+        relative_path: string | null;
+        status: number | null;
+        error: string | null;
+      }[];
+    };
   }[];
 }
 
 const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data }) => {
   const tableRef = useRef<HTMLTableElement>(null);
-
-  console.log(data);
 
   // Memoize the makeResizable function
   const makeResizable = useCallback((tableRef: HTMLTableElement | null) => {
@@ -99,30 +106,43 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data }) => {
             Anchor Text
           </th>
           <th
+            style={{ textAlign: "left", position: "relative", width: "150px" }}
+          >
+            Relative URL
+          </th>
+          <th
             style={{ textAlign: "left", position: "relative", width: "300px" }}
           >
-            Links
+            Absolute URL
+          </th>
+          <th
+            style={{ textAlign: "left", position: "relative", width: "30px" }}
+          >
+            Status Code
           </th>
         </tr>
       </thead>
       <tbody>
-        {data?.[0]?.anchor_links?.internal?.anchors?.map(
-          (anchorItem: string, index: number) => {
-            const linkItem = data?.[0]?.anchor_links?.internal?.links?.[index];
-            return (
-              <tr key={index}>
-                <td style={{ textAlign: "left" }} className="pl-4 border">
-                  {index + 1}
-                </td>
-                <td style={{ textAlign: "left" }} className="pl-3 border">
-                  {anchorItem}
-                </td>
-                <td style={{ textAlign: "left" }} className="pl-3 border">
-                  {linkItem}
-                </td>
-              </tr>
-            );
-          },
+        {data?.[0]?.inoutlinks_status_codes?.internal?.map(
+          (item: any, index: number) => (
+            <tr key={index}>
+              <td style={{ textAlign: "left" }} className="pl-4 border">
+                {index + 1}
+              </td>
+              <td style={{ textAlign: "left" }} className="pl-3 border">
+                {item.anchor_text || ""}
+              </td>
+              <td style={{ textAlign: "left" }} className="pl-3 border">
+                {item.relative_path || ""}
+              </td>
+              <td style={{ textAlign: "left" }} className="pl-3 border">
+                {item.url || ""}
+              </td>
+              <td style={{ textAlign: "left" }} className="pl-3 border">
+                {item.status !== null ? item.status : item.error || "N/A"}
+              </td>
+            </tr>
+          ),
         )}
       </tbody>
     </table>
