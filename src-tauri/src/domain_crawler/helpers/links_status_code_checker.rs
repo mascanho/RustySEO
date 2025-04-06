@@ -53,7 +53,7 @@ pub async fn get_links_status_code(
 
     // Limit concurrent requests to avoid overwhelming the local system or remote servers.
     // 200 might still be high; adjust based on system resources and target server tolerance.
-    let semaphore = Arc::new(Semaphore::new(100)); // Reduced concurrency slightly as a safer default
+    let semaphore = Arc::new(Semaphore::new(200)); // Reduced concurrency slightly as a safer default
 
     // Use Arc for base_url and page to avoid cloning them repeatedly for each task.
     let base_url_arc = Arc::new(base_url.clone());
