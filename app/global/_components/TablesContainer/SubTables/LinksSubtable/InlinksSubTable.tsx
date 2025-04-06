@@ -21,7 +21,7 @@ interface InlinksSubTableProps {
   }[];
 }
 
-const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data }) => {
+const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
   const tableRef = useRef<HTMLTableElement>(null);
 
   // Memoize the makeResizable function
@@ -91,13 +91,34 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data }) => {
     console.log("Dark mode:", isDark); // Example usage
   }, []);
 
+  if (data?.length === 0) {
+    return (
+      <div
+        style={{
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "100%",
+        }}
+      >
+        <p className="dark:text-white/50 text-black/50 text-xs">
+          Select a URL from the HTML table to view details
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <section>
+    <section
+      className="overflow-auto  h-full"
+      style={{ height: `${height - 15}px`, minHeight: "100px" }}
+    >
       <table
         ref={tableRef}
         style={{ width: "100%", borderCollapse: "collapse" }}
       >
-        <thead className="text-xs -top-2 sticky">
+        <thead className="text-xs top-0 sticky">
           <tr className=" shadow">
             <th
               style={{ width: "20px", textAlign: "left", position: "relative" }}
@@ -142,6 +163,7 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data }) => {
             </th>
           </tr>
         </thead>
+
         <tbody>
           {data?.[0]?.inoutlinks_status_codes?.internal?.map(
             (item: any, index: number) => (

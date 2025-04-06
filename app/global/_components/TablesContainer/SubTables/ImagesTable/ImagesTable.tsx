@@ -18,7 +18,7 @@ const ImagesTable = () => {
   if (!selectedTableURL?.[0]?.images?.Ok) {
     return (
       <div className="text-base text-black/50 dark:text-white/50 h-full flex justify-center items-center  m-auto w-full dark:text-white/50">
-        <span>No images found</span>
+        <span className="text-xs">Select a URL from the HTML table</span>
       </div>
     );
   }
@@ -57,6 +57,23 @@ const ImagesTable = () => {
                 </th>
               </tr>
             </thead>
+
+            {selectedTableURL[0].images?.Ok?.length === 0 && (
+              <tbody className="w-full">
+                <tr className="h-[25vh]">
+                  {" "}
+                  {/* Adjust height as needed */}
+                  <td
+                    className="border border-gray-200 px-2 text-center"
+                    colSpan={4}
+                    style={{ verticalAlign: "middle" }}
+                  >
+                    No images found
+                  </td>
+                </tr>
+              </tbody>
+            )}
+
             <tbody>
               {selectedTableURL[0].images.Ok.map(
                 (image: [string, string, number, string], index: number) => (

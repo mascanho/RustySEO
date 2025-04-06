@@ -46,6 +46,24 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
     makeResizable(tableRef.current);
   }, []);
 
+  if (data?.length === 0) {
+    return (
+      <div
+        style={{
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "100%",
+        }}
+      >
+        <p className="dark:text-white/50 text-black/50 text-xs">
+          Select a URL from the HTML table to view details
+        </p>
+      </div>
+    );
+  }
+
   return (
     <table ref={tableRef} style={{ width: "100%", borderCollapse: "collapse" }}>
       <thead className="text-xs">

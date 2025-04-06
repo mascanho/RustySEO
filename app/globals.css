@@ -843,3 +843,8 @@ dialog::backdrop {
 .domainCrawlParent tbody tr:nth-child(even) {
   @apply bg-white dark:bg-brand-darker border !important;
 }
+
+table tr:is(.dark *) {
+  border-color: red !important;
+  display: none !important;
+}
