@@ -5,9 +5,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::fs;
 use tokio::sync::Semaphore;
-use tokio::time::{sleep, timeout};
+use tokio::time::timeout;
 use url::Url;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -18,8 +17,6 @@ pub struct LinkStatus {
     pub status: Option<u16>,
     pub error: Option<String>,
     pub anchor_text: Option<String>,
-    pub retries: u8,
-    pub checked_at: Option<String>, // ISO 8601 timestamp
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,20 +25,6 @@ pub struct LinkCheckResults {
     pub base_url: Url,
     pub internal: Vec<LinkStatus>,
     pub external: Vec<LinkStatus>,
-    pub generated_at: String, // ISO 8601 timestamp
-}
-
-impl LinkCheckResults {
-    pub async fn save_to_file(&self, filename: &str) -> std::io::Result<()> {
-        let serialized = serde_json::to_string_pretty(self)?;
-        fs::write(filename, serialized).await
-    }
-
-    pub async fn load_from_file(filename: &str) -> std::io::Result<Self> {
-        let contents = fs::read_to_string(filename).await?;
-        let results: LinkCheckResults = serde_json::from_str(&contents)?;
-        Ok(results)
-    }
 }
 
 pub async fn get_links_status_code(
@@ -49,15 +32,16 @@ pub async fn get_links_status_code(
     base_url: &Url,
     page: String,
 ) -> LinkCheckResults {
+    // Create shared resources
     let client = Arc::new(
         Client::builder()
-            .timeout(Duration::from_secs(15))
+            .timeout(Duration::from_secs(10))
             .pool_idle_timeout(Duration::from_secs(30))
-            .user_agent("Mozilla/5.0 (compatible; LinkChecker/1.0)")
             .build()
             .expect("Failed to create HTTP client"),
     );
 
+    // Limit concurrent requests to avoid overwhelming the system
     let semaphore = Arc::new(Semaphore::new(100));
     let mut tasks = Vec::new();
     let mut seen_urls = HashSet::new();
@@ -78,10 +62,12 @@ pub async fn get_links_status_code(
                 }
             };
 
+            // Skip duplicate URLs
             if !seen_urls.insert(full_url.to_string()) {
                 continue;
             }
 
+            // Prepare task parameters
             let client = Arc::clone(&client);
             let semaphore = Arc::clone(&semaphore);
             let base_url = base_url.clone();
@@ -89,44 +75,34 @@ pub async fn get_links_status_code(
             let link = link.clone();
             let anchor = anchor.clone();
 
+            // Spawn task for each link check
             tasks.push(tokio::spawn(async move {
                 let _permit = semaphore.acquire().await.expect("Semaphore acquire failed");
-                check_link_with_retries(
+                check_link_status(
                     &client,
                     &full_url.to_string(),
                     &base_url,
                     &page,
                     Some(link),
                     Some(anchor),
-                    3,
                 )
                 .await
             }));
         }
 
-        // Process external links with domain-based rate limiting
-        let mut domains = HashSet::new();
+        // Process external links
         for (link, anchor) in links
             .external
             .links
             .iter()
             .zip(links.external.anchors.iter())
         {
+            // Skip duplicate URLs
             if !seen_urls.insert(link.clone()) {
                 continue;
             }
 
-            let domain = match Url::parse(link) {
-                Ok(url) => url.host_str().map(|h| h.to_string()),
-                Err(_) => None,
-            };
-
-            if let Some(domain) = &domain {
-                if !domains.insert(domain.clone()) {
-                    sleep(Duration::from_millis(500)).await;
-                }
-            }
-
+            // Prepare task parameters
             let client = Arc::clone(&client);
             let semaphore = Arc::clone(&semaphore);
             let base_url = base_url.clone();
@@ -134,15 +110,18 @@ pub async fn get_links_status_code(
             let link = link.clone();
             let anchor = anchor.clone();
 
+            // Spawn task for each link check
             tasks.push(tokio::spawn(async move {
                 let _permit = semaphore.acquire().await.expect("Semaphore acquire failed");
-                check_link_with_retries(&client, &link, &base_url, &page, None, Some(anchor), 3)
-                    .await
+                check_link_status(&client, &link, &base_url, &page, None, Some(anchor)).await
             }));
         }
     }
 
+    // Process all results concurrently
     let results = join_all(tasks).await;
+
+    // Separate internal and external links
     let (mut internal, mut external) = (Vec::new(), Vec::new());
 
     for result in results {
@@ -163,66 +142,6 @@ pub async fn get_links_status_code(
         base_url: base_url.clone(),
         internal,
         external,
-        generated_at: chrono::Local::now().to_rfc3339(),
-    }
-}
-
-async fn check_link_with_retries(
-    client: &Client,
-    url: &str,
-    base_url: &Url,
-    page: &str,
-    relative_path: Option<String>,
-    anchor_text: Option<String>,
-    max_retries: u8,
-) -> LinkStatus {
-    let mut retries = 0;
-    let mut last_error = None;
-
-    while retries <= max_retries {
-        let result = check_link_status(
-            client,
-            url,
-            base_url,
-            page,
-            relative_path.clone(),
-            anchor_text.clone(),
-        )
-        .await;
-
-        match result.status {
-            Some(429) => {
-                let delay = Duration::from_millis(500 * u64::from(2u8.pow(retries as u32)));
-                sleep(delay).await;
-                retries += 1;
-                last_error = Some(format!("Rate limited (retry {}/{})", retries, max_retries));
-                continue;
-            }
-            Some(status) if status >= 500 && status < 600 && retries < max_retries => {
-                sleep(Duration::from_millis(500)).await;
-                retries += 1;
-                last_error = Some(format!("Server error (retry {}/{})", retries, max_retries));
-                continue;
-            }
-            _ => {
-                return LinkStatus {
-                    retries,
-                    checked_at: Some(chrono::Local::now().to_rfc3339()),
-                    ..result
-                };
-            }
-        }
-    }
-
-    LinkStatus {
-        base_url: base_url.clone(),
-        url: url.to_string(),
-        relative_path,
-        status: None,
-        error: last_error.or_else(|| Some("Max retries exceeded".to_string())),
-        anchor_text,
-        retries,
-        checked_at: Some(chrono::Local::now().to_rfc3339()),
     }
 }
 
@@ -234,7 +153,7 @@ async fn check_link_status(
     relative_path: Option<String>,
     anchor_text: Option<String>,
 ) -> LinkStatus {
-    match timeout(Duration::from_secs(15), client.head(url).send()).await {
+    match timeout(Duration::from_secs(10), client.head(url).send()).await {
         Ok(Ok(response)) => LinkStatus {
             base_url: base_url.clone(),
             url: url.to_string(),
@@ -242,8 +161,6 @@ async fn check_link_status(
             status: Some(response.status().as_u16()),
             error: None,
             anchor_text,
-            retries: 0,
-            checked_at: None,
         },
         Ok(Err(e)) => LinkStatus {
             base_url: base_url.clone(),
@@ -252,8 +169,6 @@ async fn check_link_status(
             status: None,
             error: Some(format!("Request failed: {}", e)),
             anchor_text,
-            retries: 0,
-            checked_at: None,
         },
         Err(_) => LinkStatus {
             base_url: base_url.clone(),
@@ -262,8 +177,6 @@ async fn check_link_status(
             status: None,
             error: Some("Request timed out".to_string()),
             anchor_text,
-            retries: 0,
-            checked_at: None,
         },
     }
 }
