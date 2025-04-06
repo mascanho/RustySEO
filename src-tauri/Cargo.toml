@@ -71,6 +71,8 @@ thiserror = "2.0.12"
 bloom = "*"
 governor = "*"
 rusqlite = { version = "0.34.0", features = ["bundled"] }
+bytes = "*"
+tracing = "*"
 
 
 [features]
