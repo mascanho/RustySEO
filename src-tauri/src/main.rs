@@ -3,7 +3,6 @@
 use crate::crawler::content::scrape_google_headings_command;
 use crate::domain_crawler::db_deep::db;
 use crate::domain_crawler::domain_commands;
-use crate::domain_crawler::helpers;
 use crawler::{
     CrawlResult, LinkResult, PageSpeedResponse, SEOLighthouseResponse, SeoPageSpeedResponse,
 };
@@ -12,8 +11,9 @@ use globals::actions;
 use serde::{Deserialize, Serialize};
 use std::io::Write;
 use std::time::Duration;
+use tauri::State;
 use tauri::{Manager, Window, WindowEvent};
-use tokio;
+use tokio::{self, sync::Mutex};
 use toml;
 
 pub mod crawler;
@@ -39,6 +39,11 @@ pub mod gsc;
 mod image_converter;
 pub mod server;
 pub mod version;
+
+#[derive(Default)]
+struct AppState {
+    data: Mutex<Vec<String>>,
+}
 
 #[derive(Serialize, Debug, Deserialize)]
 struct Config {
@@ -149,6 +154,7 @@ async fn main() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(LinkResult { links: vec![] })
+        .manage(AppState::default())
         .invoke_handler(tauri::generate_handler![
             crawl,
             fetch_page_speed,

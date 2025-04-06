@@ -17,13 +17,13 @@ export default function KeywordRow({
   keywordIds,
 }: KeywordRowProps) {
   return (
-    <tr className="overflow-hidden">
+    <tr className="overflow-hidden dark:border" style={{ height: "10px" }}>
       {row.getVisibleCells().map((cell) => (
-        <td key={cell.id} className="px-6 py-1 whitespace-nowrap">
+        <td key={cell.id} className="px-6 py-0 whitespace-nowrap">
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
         </td>
       ))}
-      <td className="px-2 py-1 whitespace-nowrap">
+      <td className="px-2 py-0 whitespace-nowrap ">
         <KeywordRowMenu
           keywordId={row.original.id}
           removeKeyword={removeKeyword}

@@ -43,7 +43,7 @@ const DetailsTable = ({ data, height }) => {
         }}
       >
         <p className="dark:text-white/50 text-black/50 text-xs">
-          Select a URL from the table to view details
+          Select a URL from the HTML table to view details
         </p>
       </div>
     );
