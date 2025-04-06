@@ -58,7 +58,7 @@ pub async fn get_links_status_code(
             .expect("Failed to create HTTP client"),
     );
 
-    let semaphore = Arc::new(Semaphore::new(20));
+    let semaphore = Arc::new(Semaphore::new(100));
     let mut tasks = Vec::new();
     let mut seen_urls = HashSet::new();
 

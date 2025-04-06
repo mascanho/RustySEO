@@ -17,10 +17,7 @@ export default function KeywordRow({
   keywordIds,
 }: KeywordRowProps) {
   return (
-    <tr
-      className="overflow-hidden dark:border"
-      style={{ height: "10px", border: "1px solid #ddd" }}
-    >
+    <tr className="overflow-hidden dark:border" style={{ height: "10px" }}>
       {row.getVisibleCells().map((cell) => (
         <td key={cell.id} className="px-6 py-0 whitespace-nowrap">
           {flexRender(cell.column.columnDef.cell, cell.getContext())}
