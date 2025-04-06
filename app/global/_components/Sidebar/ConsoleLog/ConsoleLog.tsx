@@ -23,7 +23,8 @@ const LEVEL_CONFIGS = {
     badge: (
       <Badge
         variant="outline"
-        className="bg-green-700/10 text-green-700 border-green-700/20 flex-shrink-0 rounded-sm"
+        className="bg-green-700/10 text-center text-green-700 border-green-700/20 flex-shrink-0 rounded-sm"
+        style={{ width: "60px", textAlign: "center", display: "inline-block" }}
       >
         OK
       </Badge>
@@ -287,7 +288,7 @@ export default function ConsoleLog() {
             const config = LEVEL_CONFIGS[log.level];
             return (
               <div key={log.id} className="space-y-1">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 text-center">
                   {config.icon}
                   {config.badge}
                   <span className={config.textClass}>{log.message}</span>
