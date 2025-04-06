@@ -84,6 +84,7 @@ impl Default for DomainCrawlResults {
                 base_url: Url::parse("www.site.com").expect("failed to set default url"),
                 internal: Vec::new(),
                 external: Vec::new(),
+                generated_at: String::new(),
             },
             indexability: Indexability::default(),
             alt_tags: AltTags::default(),
