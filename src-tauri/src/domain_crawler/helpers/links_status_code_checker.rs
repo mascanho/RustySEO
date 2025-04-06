@@ -42,23 +42,43 @@ pub async fn get_links_status_code(
     );
 
     // Limit concurrent requests to avoid overwhelming the system
-    let semaphore = Arc::new(Semaphore::new(100));
+    let semaphore = Arc::new(Semaphore::new(200));
     let mut tasks = Vec::new();
     let mut seen_urls = HashSet::new();
 
     if let Some(links) = links {
-        // Process internal links
-        for (link, anchor) in links
+        // Process links in batches
+        let all_links = links
             .internal
             .links
             .iter()
             .zip(links.internal.anchors.iter())
-        {
-            let full_url = match base_url.join(link) {
-                Ok(u) => u,
-                Err(e) => {
-                    eprintln!("Failed to join URL {}: {}", link, e);
-                    continue;
+            .map(|(l, a)| (l, a, true))
+            .chain(
+                links
+                    .external
+                    .links
+                    .iter()
+                    .zip(links.external.anchors.iter())
+                    .map(|(l, a)| (l, a, false)),
+            );
+
+        for (link, anchor, is_internal) in all_links {
+            let full_url = if is_internal {
+                match base_url.join(link) {
+                    Ok(u) => u,
+                    Err(e) => {
+                        eprintln!("Failed to join URL {}: {}", link, e);
+                        continue;
+                    }
+                }
+            } else {
+                match Url::parse(link) {
+                    Ok(u) => u,
+                    Err(e) => {
+                        eprintln!("Failed to parse URL {}: {}", link, e);
+                        continue;
+                    }
                 }
             };
 
@@ -83,37 +103,10 @@ pub async fn get_links_status_code(
                     &full_url.to_string(),
                     &base_url,
                     &page,
-                    Some(link),
+                    if is_internal { Some(link) } else { None },
                     Some(anchor),
                 )
                 .await
-            }));
-        }
-
-        // Process external links
-        for (link, anchor) in links
-            .external
-            .links
-            .iter()
-            .zip(links.external.anchors.iter())
-        {
-            // Skip duplicate URLs
-            if !seen_urls.insert(link.clone()) {
-                continue;
-            }
-
-            // Prepare task parameters
-            let client = Arc::clone(&client);
-            let semaphore = Arc::clone(&semaphore);
-            let base_url = base_url.clone();
-            let page = page.clone();
-            let link = link.clone();
-            let anchor = anchor.clone();
-
-            // Spawn task for each link check
-            tasks.push(tokio::spawn(async move {
-                let _permit = semaphore.acquire().await.expect("Semaphore acquire failed");
-                check_link_status(&client, &link, &base_url, &page, None, Some(anchor)).await
             }));
         }
     }
