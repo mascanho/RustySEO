@@ -80,7 +80,7 @@ export function StatsWidgets({
       description: "Total impressions",
       icon: Eye,
       color: "text-blue-600",
-      differential: 12.5,
+      differential: totalImpressions === 0 ? 0 : 12.5,
       position: 1,
     },
     {
@@ -89,7 +89,7 @@ export function StatsWidgets({
       description: "Total clicks",
       icon: MousePointerClick,
       color: "text-green-600",
-      differential: -2.3,
+      differential: totalClicks === 0 ? 0 : -2.3,
       position: 2,
     },
     {
@@ -98,7 +98,7 @@ export function StatsWidgets({
       description: "Click-through rate",
       icon: Percent,
       color: "text-purple-600",
-      differential: 0.8,
+      differential: ctr === 0 ? 0 : 0.8,
       position: 3,
     },
     {
@@ -107,7 +107,7 @@ export function StatsWidgets({
       description: "Average position",
       icon: ArrowUpDown,
       color: "text-orange-600",
-      differential: 0.3,
+      differential: avgPosition === 0 ? 0 : 0.3,
       position: 4,
     },
     {
@@ -116,7 +116,7 @@ export function StatsWidgets({
       description: "Total keywords tracked",
       icon: KeySquare,
       color: "text-orange-600",
-      differential: 0.3,
+      differential: keywordsSummary?.length === 0 ? 0 : 0.4,
       position: 5,
     },
     {

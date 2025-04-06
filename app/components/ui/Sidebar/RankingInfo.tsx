@@ -86,7 +86,7 @@ const RankingInfo = ({
 
   if (!matchedData || matchedData.length === 0) {
     return (
-      <div className="w-full max-w-[400px] h-[28rem] flex items-center justify-center text-gray-500">
+      <div className="w-full max-w-[400px] h-[28rem] flex items-center justify-center text-gray-500 bg-gray-700">
         No data available
       </div>
     );

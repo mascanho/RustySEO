@@ -158,8 +158,9 @@ export default function KeywordTable({
   });
 
   return (
-    <div className="overflow-x-auto h-[calc(100vh-25rem)] pb-6 bg-white dark:bg-brand-darker rounded-md dark:border-brand-dark border overflow-y-scroll relative">
-      <div className="sticky top-0 z-20 bg-white dark:bg-brand-darker p-2">
+    <div className="flex flex-col h-[calc(100vh-25rem)] bg-white dark:bg-brand-darker rounded-md dark:border-brand-dark border overflow-hidden">
+      {/* Sticky Search Bar - stays fixed at top */}
+      <div className="sticky top-1 z-30 bg-white dark:bg-brand-darker p-2 border-b dark:border-brand-dark">
         <div className="flex items-center relative">
           <Search className="h-4 w-4 text-gray-400 text-xs" />
           <input
@@ -171,54 +172,61 @@ export default function KeywordTable({
           />
           {keywordSearch && (
             <X
-              className="h-4 w-4 text-red-500 absolute left-96   cursor-pointer "
+              className="h-4 w-4 text-red-500 absolute left-96 cursor-pointer"
               onClick={clearSearch}
             />
           )}
         </div>
       </div>
-      <table className="divide-y divide-gray-200 w-full">
-        <thead className="bg-gray-50 sticky top-[40px] z-10">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th
-                  key={header.id}
-                  onClick={() => requestSort(header.column.id as keyof Keyword)}
-                  className="px-6 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer whitespace-nowrap"
-                >
-                  <div className="flex items-center">
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext(),
-                    )}
-                    {sortConfig?.key === header.column.id &&
-                      (sortConfig.direction === "asc" ? (
-                        <ChevronUp className="ml-1 h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="ml-1 h-4 w-4" />
-                      ))}
-                  </div>
+
+      {/* Scrollable Table Container */}
+      <div className="flex-1 overflow-auto relative">
+        <table className="w-full">
+          {/* Sticky Table Header - positioned below search bar */}
+          <thead className="sticky top-[151px] z-20 bg-gray-50 dark:bg-brand-dark text-xs">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    onClick={() =>
+                      requestSort(header.column.id as keyof Keyword)
+                    }
+                    className="px-6 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer whitespace-nowrap"
+                  >
+                    <div className="flex items-center">
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
+                      {sortConfig?.key === header.column.id &&
+                        (sortConfig.direction === "asc" ? (
+                          <ChevronUp className="ml-1 h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="ml-1 h-4 w-4" />
+                        ))}
+                    </div>
+                  </th>
+                ))}
+                <th className="px-6 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                  <Settings className="h-4 w-4" />
                 </th>
-              ))}
-              <th className="px-6 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
-                <Settings className="h-4 w-4" />
-              </th>
-            </tr>
-          ))}
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200 overflow-hidden">
-          {table.getRowModel().rows.map((row, index) => (
-            <KeywordRow
-              key={row.id}
-              row={row}
-              index={index}
-              removeKeyword={removeKeyword}
-              keywordIds={keywordIds}
-            />
-          ))}
-        </tbody>
-      </table>
+              </tr>
+            ))}
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200 dark:divide-brand-dark">
+            {table.getRowModel().rows.map((row, index) => (
+              <KeywordRow
+                key={row.id}
+                row={row}
+                index={index}
+                removeKeyword={removeKeyword}
+                keywordIds={keywordIds}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

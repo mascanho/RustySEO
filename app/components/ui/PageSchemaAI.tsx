@@ -117,12 +117,14 @@ const PageSchemaAI = ({
                   <FiInfo className="w-4 h-4 dark:text-white" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent
-                side="left"
-                className="p-2 max-w-md h-[300px] overflow-y-auto custom-scrollbar mb-36"
-              >
-                {formatFeedback(geminiFeedback)}
-              </TooltipContent>
+              <section className="h-full overflow-auto">
+                <TooltipContent
+                  side="left"
+                  className="p-2 absolute bottom-0 right-0 w-96  max-w-xl h-96 overflow-y-auto custom-scrollbar mb-9"
+                >
+                  {formatFeedback(geminiFeedback)}
+                </TooltipContent>
+              </section>
             </Tooltip>
           </TooltipProvider>
           <CodeBlockSchemaAI code={formattedAISchema} />

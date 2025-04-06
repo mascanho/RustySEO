@@ -4,12 +4,17 @@ import Link from "next/link";
 import usePageSpeedStore from "@/store/StorePerformance";
 import getChecks from "./checks/checks";
 import Spinner from "./checks/_components/Spinner";
-import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import {
+  FaCheckCircle,
+  FaTimesCircle,
+  FaChevronDown,
+  FaChevronUp,
+} from "react-icons/fa";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@shadcn/ui";
+} from "@/components/ui/collapsible";
 import useOnPageSeo from "@/store/storeOnPageSeo";
 
 export default function GeneralOverview({
@@ -31,13 +36,8 @@ export default function GeneralOverview({
     }
   }, [pageTitle, urlLength]);
 
-  // Get All the data from the stores (PageSpeed Performance & SEO)
   const checks = getChecks();
-
-  // filter the ones that Passed
   const passedChecks = checks.filter((check) => check.status === "Passed");
-
-  // Filter the ones that Failed
   const failedChecks = checks.filter((check) => check.status === "Failed");
 
   const memoizedSetChecksData = useCallback(() => {
@@ -51,7 +51,6 @@ export default function GeneralOverview({
   const iconsGray = pageSpeed === undefined;
   const seoIconsGray = pageTitle[0] === undefined;
 
-  // set the results into the session storage
   useEffect(() => {
     const scoring = [
       {
@@ -61,186 +60,204 @@ export default function GeneralOverview({
         total: passedChecks.length + failedChecks.length,
       },
     ];
-
     window.sessionStorage.setItem("score", JSON.stringify(scoring));
   }, [pageSpeed, checks]);
 
   return (
     <>
-      <section className="w-full h-[calc(52vh-160px)]  overflow-auto relative mt-0.5 bg-transparent">
+      <section className="w-full h-[calc(52vh-160px)] overflow-auto relative mt-0.5 bg-transparent">
         <div className="container mx-auto max-w-4xl h-2">
-          <div className="grid h-full ">
+          <div className="grid h-full relative">
             {/* CHECKS THE CORE WEB VITALS */}
-            <details open className="h-fit">
-              <summary className="text-xs cursor-pointer bg-transparent dark:bg-brand-darker font-semibold dark:text-slate-400 pl-2 py-1">
-                Core Web Vitals
-              </summary>
-              {checks.slice(0, 14).map((check, index) => (
-                <div
-                  key={check.id}
-                  className={`flex items-center justify-between px-4 py-1.5 border-b dark:border-b-white/10 ${
-                    index % 2 === 0
-                      ? "bg-gray-200 dark:bg-brand-darker dark:text-white"
-                      : "bg-gray-100 dark:bg-brand-darker dark:text-white"
-                  }`}
-                >
-                  <div className="flex items-center w-full">
-                    {loading ? (
-                      <Spinner />
-                    ) : (
-                      <>
-                        {check.status === "Passed" ? (
-                          <FaCheckCircle
-                            className={`w-4 h-4 ${iconsGray ? "text-gray-400" : "text-green-500"}`}
-                          />
-                        ) : (
-                          <XIcon
-                            className={`w-5 h-5 ${iconsGray ? "text-gray-400" : "text-red-500"}`}
-                          />
-                        )}
-                      </>
-                    )}
-                    <div className="flex justify-between w-full ml-2 items-center">
-                      <span
-                        className={`text-xs  flex-1 ${iconsGray ? "text-gray-400" : ""}`}
-                      >
-                        {check.name}
-                      </span>
-
-                      {iconsGray ? (
-                        <span className="text-black/50 dark:text-white/50">
-                          n/a
-                        </span>
+            <Collapsible defaultOpen className="h-fit relative z-10">
+              <CollapsibleTrigger className="w-full text-left group sticky top-0 bg-white dark:bg-brand-darker z-20">
+                <div className="flex items-center  text-xs cursor-pointer font-semibold dark:text-slate-400 pl-2 py-1">
+                  <CollapsibleChevron />
+                  <span className="ml-2">Core Web Vitals</span>
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="relative z-0">
+                {checks.slice(0, 14).map((check, index) => (
+                  <div
+                    key={check.id}
+                    className={`flex items-center justify-between px-4 py-1.5 border-b dark:border-b-white/10 ${
+                      index % 2 === 0
+                        ? "bg-gray-200 dark:bg-brand-darker dark:text-white"
+                        : "bg-gray-100 dark:bg-brand-darker dark:text-white"
+                    }`}
+                  >
+                    {/* ... rest of the content ... */}
+                    <div className="flex items-center w-full">
+                      {loading ? (
+                        <Spinner />
                       ) : (
-                        <span
-                          className={`text-xs ${
-                            check.status === "Passed"
-                              ? "text-green-500"
-                              : "text-red-500"
-                          }`}
-                        >
-                          {check.status}
-                        </span>
+                        <>
+                          {check.status === "Passed" ? (
+                            <FaCheckCircle
+                              className={`w-4 h-4 ${iconsGray ? "text-gray-400" : "text-green-500"}`}
+                            />
+                          ) : (
+                            <XIcon
+                              className={`w-5 h-5 ${iconsGray ? "text-gray-400" : "text-red-500"}`}
+                            />
+                          )}
+                        </>
                       )}
+                      <div className="flex justify-between w-full ml-2 items-center">
+                        <span
+                          className={`text-xs flex-1 ${iconsGray ? "text-gray-400" : ""}`}
+                        >
+                          {check.name}
+                        </span>
+                        {iconsGray ? (
+                          <span className="text-black/50 dark:text-white/50">
+                            n/a
+                          </span>
+                        ) : (
+                          <span
+                            className={`text-xs ${
+                              check.status === "Passed"
+                                ? "text-green-500"
+                                : "text-red-500"
+                            }`}
+                          >
+                            {check.status}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </details>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
 
             {/* CHECKS THE SEO */}
-            <details className="flex items-center h-full" open>
-              <summary className="flex items-center pl-2 py-1 bg-transparent dark:text-slate-400 font-semibold dark:bg-brand-darker cursor-pointer">
-                SEO
-              </summary>
-              {checks.slice(14, 26).map((check, index) => (
-                <div
-                  key={check.id}
-                  className={`flex items-center justify-between px-4 py-1.5 border-b dark:border-b-white/10 ${
-                    index % 2 === 0
-                      ? "bg-gray-100 dark:bg-brand-darker dark:text-white"
-                      : "bg-gray-200 dark:bg-brand-darker dark:text-white"
-                  }`}
-                >
-                  <div className="flex items-center w-full">
-                    {seoLoading ? (
-                      <Spinner />
-                    ) : (
-                      <>
-                        {check.status === "Passed" ? (
-                          <FaCheckCircle
-                            className={`w-4 h-4 ${seoIconsGray ? "text-gray-400" : "text-green-500"}`}
-                          />
-                        ) : (
-                          <XIcon
-                            className={`w-5 h-5 ${seoIconsGray ? "text-gray-400" : "text-red-500"}`}
-                          />
-                        )}
-                      </>
-                    )}
-                    <div className="flex justify-between w-full ml-2 items-center">
-                      <span
-                        className={`text-xs  flex-1 ${pageTitle.length <= 0 ? "text-gray-400" : ""}`}
-                      >
-                        {check.name}
-                      </span>
-
-                      {!pageTitle && (
-                        <span className="text-black/50 dark:text-white/50">
-                          n/a
-                        </span>
+            <Collapsible defaultOpen className="h-fit relative z-10">
+              <CollapsibleTrigger className="w-full text-left group sticky top-0 bg-white dark:bg-brand-darker z-20">
+                <div className="flex items-center  text-xs cursor-pointer font-semibold dark:text-slate-400 pl-2 py-1">
+                  <CollapsibleChevron />
+                  <span className="ml-2">SEO</span>
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="relative z-0">
+                {checks.slice(14, 26).map((check, index) => (
+                  <div
+                    key={check.id}
+                    className={`flex items-center justify-between px-4 py-1.5 border-b dark:border-b-white/10 ${
+                      index % 2 === 0
+                        ? "bg-gray-100 dark:bg-brand-darker dark:text-white"
+                        : "bg-gray-200 dark:bg-brand-darker dark:text-white"
+                    }`}
+                  >
+                    {/* ... rest of the content ... */}
+                    <div className="flex items-center w-full">
+                      {seoLoading ? (
+                        <Spinner />
+                      ) : (
+                        <>
+                          {check.status === "Passed" ? (
+                            <FaCheckCircle
+                              className={`w-4 h-4 ${seoIconsGray ? "text-gray-400" : "text-green-500"}`}
+                            />
+                          ) : (
+                            <XIcon
+                              className={`w-5 h-5 ${seoIconsGray ? "text-gray-400" : "text-red-500"}`}
+                            />
+                          )}
+                        </>
                       )}
-                      <span
-                        className={`text-xs text-gray-400 ${
-                          check.status === "Passed" &&
-                          pageTitle.length > 0 &&
-                          "text-green-500"
-                        } ${check.status === "Failed" && pageTitle.length > 0 && "text-red-500"} ${pageTitle.length <= 0 && "text-gray-400"}text-gray-400`}
-                      >
-                        {pageTitle.length ? check.status : "n/a"}
-                      </span>
+                      <div className="flex justify-between w-full ml-2 items-center">
+                        <span
+                          className={`text-xs flex-1 ${pageTitle.length <= 0 ? "text-gray-400" : ""}`}
+                        >
+                          {check.name}
+                        </span>
+                        {!pageTitle && (
+                          <span className="text-black/50 dark:text-white/50">
+                            n/a
+                          </span>
+                        )}
+                        <span
+                          className={`text-xs text-gray-400 ${
+                            check.status === "Passed" &&
+                            pageTitle.length > 0 &&
+                            "text-green-500"
+                          } ${check.status === "Failed" && pageTitle.length > 0 && "text-red-500"} ${
+                            pageTitle.length <= 0 && "text-gray-400"
+                          }`}
+                        >
+                          {pageTitle.length ? check.status : "n/a"}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </details>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
 
             {/* CHECKS THE Content */}
-            <details className="flex items-center h-full" open>
-              <summary className="flex items-center pl-2 py-1 bg-transparent dark:text-slate-400 font-semibold dark:bg-brand-darker cursor-pointer">
-                Content
-              </summary>
-              {checks.slice(26, checks.length).map((check, index) => (
-                <div
-                  key={check.id}
-                  className={`flex items-center justify-between px-4 py-1.5 border-b dark:border-b-white/10 ${
-                    index % 2 === 0
-                      ? "bg-gray-100 dark:bg-brand-darker dark:text-white"
-                      : "bg-gray-200 dark:bg-brand-darker dark:text-white"
-                  }`}
-                >
-                  <div className="flex items-center w-full">
-                    {seoLoading ? (
-                      <Spinner />
-                    ) : (
-                      <>
-                        {check.status === "Passed" ? (
-                          <FaCheckCircle
-                            className={`w-4 h-4 ${seoIconsGray ? "text-gray-400" : "text-green-500"}`}
-                          />
-                        ) : (
-                          <XIcon
-                            className={`w-5 h-5 ${seoIconsGray ? "text-gray-400" : "text-red-500"}`}
-                          />
-                        )}
-                      </>
-                    )}
-                    <div className="flex justify-between w-full ml-2 items-center">
-                      <span
-                        className={`text-xs  flex-1 ${pageTitle.length <= 0 ? "text-gray-400" : ""}`}
-                      >
-                        {check.name}
-                      </span>
-
-                      {!pageTitle && (
-                        <span className="text-black/50 dark:text-white/50">
-                          n/a
-                        </span>
+            <Collapsible defaultOpen className="h-fit relative z-10">
+              <CollapsibleTrigger className="w-full text-left group sticky top-0 bg-white dark:bg-brand-darker z-20">
+                <div className="flex items-center text-xs cursor-pointer font-semibold dark:text-slate-400 pl-2 py-1">
+                  <CollapsibleChevron />
+                  <span className="ml-2">Content</span>
+                </div>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="relative z-0">
+                {checks.slice(26, checks.length).map((check, index) => (
+                  <div
+                    key={check.id}
+                    className={`flex items-center justify-between px-4 py-1.5 border-b dark:border-b-white/10 ${
+                      index % 2 === 0
+                        ? "bg-gray-100 dark:bg-brand-darker dark:text-white"
+                        : "bg-gray-200 dark:bg-brand-darker dark:text-white"
+                    }`}
+                  >
+                    {/* ... rest of the content ... */}
+                    <div className="flex items-center w-full">
+                      {seoLoading ? (
+                        <Spinner />
+                      ) : (
+                        <>
+                          {check.status === "Passed" ? (
+                            <FaCheckCircle
+                              className={`w-4 h-4 ${seoIconsGray ? "text-gray-400" : "text-green-500"}`}
+                            />
+                          ) : (
+                            <XIcon
+                              className={`w-5 h-5 ${seoIconsGray ? "text-gray-400" : "text-red-500"}`}
+                            />
+                          )}
+                        </>
                       )}
-                      <span
-                        className={`text-xs text-gray-400 ${
-                          check.status === "Passed" &&
-                          pageTitle.length > 0 &&
-                          "text-green-500"
-                        } ${check.status === "Failed" && pageTitle.length > 0 && "text-red-500"} ${pageTitle.length <= 0 && "text-gray-400"}text-gray-400`}
-                      >
-                        {pageTitle.length ? check.status : "n/a"}
-                      </span>
+                      <div className="flex justify-between w-full ml-2 items-center">
+                        <span
+                          className={`text-xs flex-1 ${pageTitle.length <= 0 ? "text-gray-400" : ""}`}
+                        >
+                          {check.name}
+                        </span>
+                        {!pageTitle && (
+                          <span className="text-black/50 dark:text-white/50">
+                            n/a
+                          </span>
+                        )}
+                        <span
+                          className={`text-xs text-gray-400 ${
+                            check.status === "Passed" &&
+                            pageTitle.length > 0 &&
+                            "text-green-500"
+                          } ${check.status === "Failed" && pageTitle.length > 0 && "text-red-500"} ${
+                            pageTitle.length <= 0 && "text-gray-400"
+                          }`}
+                        >
+                          {pageTitle.length ? check.status : "n/a"}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </details>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
           </div>
         </div>
       </section>
@@ -297,5 +314,14 @@ function XIcon(props: any) {
       <path d="M18 6 6 18" />
       <path d="m6 6 12 12" />
     </svg>
+  );
+}
+
+function CollapsibleChevron() {
+  return (
+    <>
+      <FaChevronDown className="w-3 h-3 transition-transform duration-200 group-data-[state=open]:hidden" />
+      <FaChevronUp className="w-3 h-3 transition-transform duration-200 group-data-[state=closed]:hidden" />
+    </>
   );
 }

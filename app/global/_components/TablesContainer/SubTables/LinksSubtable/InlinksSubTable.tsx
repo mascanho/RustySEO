@@ -21,7 +21,7 @@ interface InlinksSubTableProps {
   }[];
 }
 
-const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data }) => {
+const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
   const tableRef = useRef<HTMLTableElement>(null);
 
   // Memoize the makeResizable function
@@ -91,61 +91,115 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data }) => {
     console.log("Dark mode:", isDark); // Example usage
   }, []);
 
+  if (data?.length === 0) {
+    return (
+      <div
+        style={{
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "100%",
+        }}
+      >
+        <p className="dark:text-white/50 text-black/50 text-xs">
+          Select a URL from the HTML table to view details
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <table ref={tableRef} style={{ width: "100%", borderCollapse: "collapse" }}>
-      <thead className="text-xs sticky top-0 ">
-        <tr className="sticky -top-1 shadow">
-          <th
-            style={{ width: "20px", textAlign: "left", position: "relative" }}
-          >
-            ID
-          </th>
-          <th
-            style={{ textAlign: "left", position: "relative", width: "100px" }}
-          >
-            Anchor Text
-          </th>
-          <th
-            style={{ textAlign: "left", position: "relative", width: "100px" }}
-          >
-            Relative URL
-          </th>
-          <th
-            style={{ textAlign: "left", position: "relative", width: "300px" }}
-          >
-            Absolute URL
-          </th>
-          <th
-            style={{ textAlign: "left", position: "relative", width: "30px" }}
-          >
-            Status Code
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {data?.[0]?.inoutlinks_status_codes?.internal?.map(
-          (item: any, index: number) => (
-            <tr key={index}>
-              <td style={{ textAlign: "left" }} className="pl-4 border">
-                {index + 1}
-              </td>
-              <td style={{ textAlign: "left" }} className="pl-3 border">
-                {item.anchor_text || ""}
-              </td>
-              <td style={{ textAlign: "left" }} className="pl-3 border">
-                {item.relative_path || ""}
-              </td>
-              <td style={{ textAlign: "left" }} className="pl-3 border">
-                {item.url || ""}
-              </td>
-              <td style={{ textAlign: "left" }} className="pl-3 border">
-                {item.status !== null ? item.status : item.error || "N/A"}
-              </td>
-            </tr>
-          ),
-        )}
-      </tbody>
-    </table>
+    <section
+      className="overflow-auto  h-full"
+      style={{ height: `${height - 15}px`, minHeight: "100px" }}
+    >
+      <table
+        ref={tableRef}
+        style={{ width: "100%", borderCollapse: "collapse" }}
+      >
+        <thead className="text-xs top-0 sticky">
+          <tr className=" shadow">
+            <th
+              style={{ width: "20px", textAlign: "left", position: "relative" }}
+            >
+              ID
+            </th>
+            <th
+              style={{
+                textAlign: "left",
+                position: "relative",
+                width: "100px",
+              }}
+            >
+              Anchor Text
+            </th>
+            <th
+              style={{
+                textAlign: "left",
+                position: "relative",
+                width: "100px",
+              }}
+            >
+              Relative Link
+            </th>
+            <th
+              style={{
+                textAlign: "left",
+                position: "relative",
+                width: "300px",
+              }}
+            >
+              Absolute Link
+            </th>
+            <th
+              style={{
+                textAlign: "center",
+                position: "relative",
+                width: "20px",
+              }}
+            >
+              Status Code
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {data?.[0]?.inoutlinks_status_codes?.internal?.map(
+            (item: any, index: number) => (
+              <tr key={index}>
+                <td style={{ textAlign: "left" }} className="pl-4 border">
+                  {index + 1}
+                </td>
+                <td style={{ textAlign: "left" }} className="pl-3 border">
+                  {item.anchor_text || ""}
+                </td>
+                <td style={{ textAlign: "left" }} className="pl-3 border">
+                  {item.relative_path || ""}
+                </td>
+                <td style={{ textAlign: "left" }} className="pl-3 border">
+                  {item.url || ""}
+                </td>
+                <td
+                  style={{
+                    textAlign: "center",
+                    color:
+                      item?.status === 200
+                        ? "green"
+                        : item?.status === 400
+                          ? "red"
+                          : "orange",
+                  }}
+                  className="pl-3 border font-semibold"
+                >
+                  {item.status !== null ? item.status : item.error || "N/A"}
+                </td>
+              </tr>
+            ),
+          )}
+        </tbody>
+      </table>
+    </section>
   );
 };
 
