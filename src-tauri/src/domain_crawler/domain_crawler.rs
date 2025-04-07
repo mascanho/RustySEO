@@ -1,4 +1,3 @@
-use chrono::Local;
 use colored::*;
 use futures::stream::{self, StreamExt};
 use rand::Rng;
@@ -228,10 +227,6 @@ async fn process_url(
         get_links_status_code(internal_external_links, base_url, final_url.to_string()).await;
 
     let result = DomainCrawlResults {
-        date: Local::now()
-            .naive_local()
-            .format("%Y-%m-%d %H:%M:%S")
-            .to_string(),
         url: final_url.to_string(),
         title: title_selector::extract_title(&body),
         description: page_description::extract_page_description(&body)
