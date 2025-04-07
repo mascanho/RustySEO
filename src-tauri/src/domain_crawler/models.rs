@@ -34,6 +34,7 @@ impl Default for Extractor {
 
 #[derive(Serialize, Debug, Deserialize, Clone)]
 pub struct DomainCrawlResults {
+    pub date: String,
     pub url: String,
     pub title: Option<Vec<TitleDetails>>,
     pub description: String,
@@ -71,6 +72,7 @@ pub struct DomainCrawlResults {
 impl Default for DomainCrawlResults {
     fn default() -> Self {
         Self {
+            date: String::new(),
             url: String::new(),
             title: None,
             description: String::new(),
