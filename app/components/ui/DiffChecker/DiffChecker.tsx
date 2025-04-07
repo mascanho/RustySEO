@@ -58,7 +58,7 @@ export default function DiffChecker() {
   }, []);
 
   return (
-    <Card className="w-full h-full flex flex-col overflow-hidden">
+    <Card className="w-full h-full flex flex-col overflow-hidden p-0">
       <CardHeader className="bg-white dark:bg-gray-800 pt-4 pb-2 px-4">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
