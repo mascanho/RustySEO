@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useEffect } from "react";
 
 // Mock data for crawl comparisons
 const previousCrawl = {
@@ -52,13 +53,17 @@ const processUrlChanges = () => {
 const { added, removed } = processUrlChanges();
 
 export default function DiffChecker() {
+  useEffect(() => {
+    console.log("Diff check mounted");
+  }, []);
+
   return (
     <Card className="w-full h-full flex flex-col overflow-hidden">
       <CardHeader className="bg-white dark:bg-gray-800 pt-4 pb-2 px-4">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <FileDiff className="h-5 w-5 text-gray-700 dark:text-gray-300" />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
               {new Date(previousCrawl.date).toLocaleDateString()} →{" "}
               {new Date(currentCrawl.date).toLocaleDateString()}
             </span>
@@ -115,7 +120,7 @@ export default function DiffChecker() {
           <TabsList className="w-full grid bg-gray-100 dark:bg-gray-700 grid-cols-2 rounded-none">
             <TabsTrigger
               value="added"
-              className="rounded-none data-[state=active]:bg-green-50 data-[state=active]:dark:bg-green-900/30 data-[state=active]:text-red-500"
+              className="rounded-none data-[state=active]:bg-green-50 data-[state=active]:dark:bg-green-900/30 data-[state=active]:text-green-500"
             >
               New URLs ({added.length})
             </TabsTrigger>

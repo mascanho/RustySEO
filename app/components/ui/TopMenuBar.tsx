@@ -62,6 +62,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import CustomSearchSelector from "./Extractors/CustomSearchSelector";
 import { PiGitDiff } from "react-icons/pi";
 import DiffChecker from "./DiffChecker/DiffChecker";
+import { GoFileDiff } from "react-icons/go";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -490,8 +491,11 @@ const TopMenuBar = () => {
                 Headings SERP
               </MenubarItem>
               <MenubarSeparator />
-              <MenubarItem onClick={openDiffChecker}>
-                <PiGitDiff className="mr-2 font-semibold" />
+              <MenubarItem
+                disabled={pathname !== "/global"}
+                onClick={openDiffChecker}
+              >
+                <GoFileDiff className="mr-2 font-semibold" />
                 Crawl Diff
               </MenubarItem>
             </MenubarContent>
