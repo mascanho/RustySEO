@@ -366,7 +366,7 @@ const TopMenuBar = () => {
         }}
         styles={{
           header: {
-            backgroundColor: isDarkMode ? "black" : "#f8f9fa",
+            backgroundColor: isDarkMode ? "#171717" : "#f8f9fa",
             borderBottom: isDarkMode
               ? "1px solid #2d3748"
               : "1px solid #e2e8f0",
@@ -380,7 +380,7 @@ const TopMenuBar = () => {
             maxHeight: "100%",
             padding: 0,
             marginTop: "10rem",
-            height: "29rem",
+            height: "37rem",
             overflow: "hidden",
           },
           body: {

@@ -31,6 +31,12 @@ const currentCrawl = {
     "/blog/spring-update",
     "/careers",
     "/careers/lead-engineer",
+    "/careers/lead-engineer",
+    "/careers/lead-engineer",
+    "/careers/lead-engineer",
+    "/careers/lead-engineer",
+    "/careers/lead-engineer",
+    "/careers/lead-engineer",
     "/contact",
     "/products",
     "/products/new-item",
@@ -58,7 +64,10 @@ export default function DiffChecker() {
   }, []);
 
   return (
-    <Card className="w-full h-full flex flex-col overflow-hidden p-0  dark:border dark:border-brand-dark/50">
+    <section
+      className="w-full h-full flex flex-col dark:bg-brand-dark/40 overflow-hidden p-0 dark:border dark:border-brand-dark/50  dark:text-white"
+      style={{ height: "530px" }}
+    >
       <CardHeader className="bg-white dark:bg-brand-darker pt-4 pb-2 px-4">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
@@ -112,11 +121,8 @@ export default function DiffChecker() {
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 p-0 flex flex-col overflow-hidden">
-        <Tabs
-          defaultValue="added"
-          className="flex-1 flex flex-col overflow-hidden"
-        >
+      <CardContent className="flex-1 p-0 flex flex-col min-h-0">
+        <Tabs defaultValue="added" className="flex-1 flex flex-col min-h-0">
           <TabsList className="w-full grid bg-gray-100 dark:bg-gray-900 grid-cols-2 rounded-none">
             <TabsTrigger
               value="added"
@@ -132,8 +138,11 @@ export default function DiffChecker() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="added" className="mt-0 flex-1 overflow-hidden">
-            <ScrollArea className="h-full">
+          <TabsContent
+            value="added"
+            className="mt-0 flex-1 min-h-0 overflow-hidden"
+          >
+            <ScrollArea className="h-full w-full">
               <div className="py-2">
                 {added.length === 0 ? (
                   <div className="py-8 text-center text-gray-500 dark:text-gray-400">
@@ -153,8 +162,11 @@ export default function DiffChecker() {
             </ScrollArea>
           </TabsContent>
 
-          <TabsContent value="removed" className="mt-0 flex-1 overflow-hidden">
-            <ScrollArea className="h-full">
+          <TabsContent
+            value="removed"
+            className="mt-0 flex-1 min-h-0 overflow-hidden"
+          >
+            <ScrollArea className="h-full w-full">
               <div className="py-2">
                 {removed.length === 0 ? (
                   <div className="py-8 text-center text-gray-500 dark:text-gray-400">
@@ -175,6 +187,6 @@ export default function DiffChecker() {
           </TabsContent>
         </Tabs>
       </CardContent>
-    </Card>
+    </section>
   );
 }
