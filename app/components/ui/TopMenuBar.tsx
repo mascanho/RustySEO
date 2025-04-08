@@ -380,7 +380,7 @@ const TopMenuBar = () => {
             maxHeight: "100%",
             padding: 0,
             marginTop: "10rem",
-            height: "30rem",
+            height: "29rem",
             overflow: "hidden",
           },
           body: {
@@ -393,11 +393,7 @@ const TopMenuBar = () => {
           size: "md",
         }}
       >
-        <div className="flex flex-col h-full">
-          <div className="flex-1 overflow-auto p-4">
-            <DiffChecker />
-          </div>
-        </div>
+        <DiffChecker />
       </Modal>
 
       {/* Extractor Component - Now controlled by global store */}
