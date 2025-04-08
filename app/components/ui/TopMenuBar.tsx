@@ -354,7 +354,7 @@ const TopMenuBar = () => {
         opened={openedDiffChecker}
         onClose={closeDiffChecker}
         title="Crawl Diff Checker"
-        size="60%"
+        size="40%"
         overlayProps={{
           backgroundOpacity: 0.55,
           blur: 3,
@@ -366,14 +366,14 @@ const TopMenuBar = () => {
         }}
         styles={{
           header: {
-            backgroundColor: isDarkMode ? "#1a1a2e" : "#f8f9fa",
+            backgroundColor: isDarkMode ? "blue" : "#f8f9fa",
             borderBottom: isDarkMode
               ? "1px solid #2d3748"
               : "1px solid #e2e8f0",
             padding: "0.5rem",
           },
           content: {
-            backgroundColor: isDarkMode ? "#1a1a2e" : "#ffffff",
+            backgroundColor: isDarkMode ? "#171717" : "#ffffff",
             border: isDarkMode ? "1px solid #2d3748" : "1px solid #e2e8f0",
             borderRadius: "0.5rem",
             boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",

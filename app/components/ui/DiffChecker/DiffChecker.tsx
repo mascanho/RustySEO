@@ -58,8 +58,8 @@ export default function DiffChecker() {
   }, []);
 
   return (
-    <Card className="w-full h-full flex flex-col overflow-hidden p-0">
-      <CardHeader className="bg-white dark:bg-gray-800 pt-4 pb-2 px-4">
+    <Card className="w-full h-full flex flex-col overflow-hidden p-0  dark:border dark:border-brand-dark/50">
+      <CardHeader className="bg-white dark:bg-brand-darker pt-4 pb-2 px-4">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">
             <FileDiff className="h-5 w-5 text-gray-700 dark:text-gray-300" />
@@ -70,7 +70,7 @@ export default function DiffChecker() {
           </div>
 
           <div className="grid grid-cols-2 gap-4 mt-2">
-            <div className="flex flex-col items-center justify-center p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
+            <div className="flex flex-col items-center justify-center p-3 bg-gray-50 dark:bg-brand-darker border dark:border-brand-dark/50 rounded-md">
               <div className="text-sm text-gray-500 dark:text-gray-300">
                 Previous Crawl
               </div>
@@ -82,7 +82,7 @@ export default function DiffChecker() {
               </div>
             </div>
 
-            <div className="flex flex-col items-center justify-center p-3 bg-gray-50 dark:bg-gray-700 rounded-md">
+            <div className="flex flex-col items-center justify-center p-3 bg-gray-50 dark:bg-brand-darker rounded-md border dark:border-brand-dark/50">
               <div className="text-sm text-gray-500 dark:text-gray-300">
                 Current Crawl
               </div>
@@ -117,7 +117,7 @@ export default function DiffChecker() {
           defaultValue="added"
           className="flex-1 flex flex-col overflow-hidden"
         >
-          <TabsList className="w-full grid bg-gray-100 dark:bg-gray-700 grid-cols-2 rounded-none">
+          <TabsList className="w-full grid bg-gray-100 dark:bg-gray-900 grid-cols-2 rounded-none">
             <TabsTrigger
               value="added"
               className="rounded-none data-[state=active]:bg-green-50 data-[state=active]:dark:bg-green-900/30 data-[state=active]:text-green-500"
