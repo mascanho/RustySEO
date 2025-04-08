@@ -91,7 +91,7 @@ const HistoryDomainCrawls = () => {
       domain: crawlData[0]?.url || "",
       date: new Date().toISOString(),
       pages: crawledPagesCount || 0,
-      errors: totalIssueCount || 0,
+      errors: issues || 0,
       status: "completed",
       total_links: summary?.totalLinksFound || 0,
       total_internal_links: summary?.totalInternalLinks || 0,
@@ -101,7 +101,7 @@ const HistoryDomainCrawls = () => {
         (crawlData.length || 0) - (summary?.notIndexablePages || 0),
       ),
       not_indexable_pages: summary?.notIndexablePages || 0,
-      issues: issues?.length,
+      issues: issues,
     };
 
     try {
@@ -138,6 +138,7 @@ const HistoryDomainCrawls = () => {
   }, []);
 
   const handleRowClick = (index: number) => {
+    console.log(issues);
     setExpandedRows(
       (prev) =>
         prev.includes(index)
@@ -191,7 +192,7 @@ const HistoryDomainCrawls = () => {
                     <RiPagesLine className="text-gray-500" />
                   </div>
                   <div className="flex items-center  flex-1 justify-end divide-y-2">
-                    {entry.errors}
+                    {entry.not_indexable_pages}
                     <span>
                       <MdOutlineErrorOutline className="ml-1 text-red-500" />
                     </span>
@@ -225,9 +226,7 @@ const HistoryDomainCrawls = () => {
                         <strong>Not Indexable:</strong>{" "}
                         {entry.not_indexable_pages}
                       </p>
-                      <p>
-                        <strong>Issues:</strong> {entry.errors}
-                      </p>
+                      <p>{/* <strong>Issues:</strong> {entry.errors} */}</p>
                     </div>
                   </div>
                 )}
