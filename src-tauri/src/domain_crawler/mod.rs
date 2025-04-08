@@ -6,3 +6,4 @@ pub mod excel;
 pub mod extractors;
 pub mod helpers;
 pub mod models;
+pub mod user_agents;

@@ -16,6 +16,7 @@ use crate::domain_crawler::database::{Database, DatabaseResults};
 use crate::domain_crawler::extractors::html::extract_html;
 use crate::domain_crawler::helpers::sitemap::get_sitemap;
 use crate::domain_crawler::models::Extractor;
+use crate::domain_crawler::user_agents;
 
 use super::database::{self, DatabaseError};
 use super::helpers::canonical_selector::get_canonical;
@@ -337,13 +338,11 @@ pub async fn crawl_domain(
     app_handle: tauri::AppHandle,
     db: Result<Database, DatabaseError>,
 ) -> Result<Vec<DomainCrawlResults>, String> {
-    let user_agents = vec![
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15",
-    ];
+    // Import the user agents from another module to use across domain crawler
+    let user_agents = user_agents::agents();
 
     let client = Client::builder()
-        .user_agent(user_agents[rand::thread_rng().gen_range(0..user_agents.len())])
+        .user_agent(&user_agents[rand::thread_rng().gen_range(0..user_agents.len())])
         .timeout(Duration::from_secs(60))
         .connect_timeout(Duration::from_secs(15))
         .redirect(reqwest::redirect::Policy::limited(5))
