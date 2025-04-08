@@ -366,11 +366,11 @@ const TopMenuBar = () => {
         }}
         styles={{
           header: {
-            backgroundColor: isDarkMode ? "blue" : "#f8f9fa",
+            backgroundColor: isDarkMode ? "black" : "#f8f9fa",
             borderBottom: isDarkMode
               ? "1px solid #2d3748"
               : "1px solid #e2e8f0",
-            padding: "0.5rem",
+            padding: "0.2rem",
           },
           content: {
             backgroundColor: isDarkMode ? "#171717" : "#ffffff",
