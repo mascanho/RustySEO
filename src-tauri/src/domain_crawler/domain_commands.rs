@@ -6,7 +6,7 @@ use serde_json::Value;
 use crate::domain_crawler::domain_crawler;
 
 use super::{
-    database,
+    database::{self, analyse_diffs},
     excel::create_xlsx::{
         generate_css_table, generate_excel_main_table, generate_excel_two_cols,
         generate_keywords_excel, generate_links_table_excel, generate_xlsx,
@@ -138,6 +138,17 @@ pub async fn generate_links_table_xlsx_command(data: Vec<Value>) -> Result<Vec<u
         Err(e) => {
             eprintln!("Error: {}", e);
             Err(e)
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn analyse_diffs_command() -> Result<(), String> {
+    match analyse_diffs().await {
+        Ok(file) => Ok(file),
+        Err(e) => {
+            eprintln!("Error: {}", e);
+            Err(e.to_string())
         }
     }
 }
