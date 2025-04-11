@@ -3,14 +3,17 @@ import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import React, { useMemo, useEffect, memo, useState } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
-interface H1Counts {
-  exists: number; // Number of valid H1 headings
-  all: number; // Total H1 headings (including empty/undefined)
-  empty: number; // Empty/undefined H1 headings
-  duplicate: number; // Duplicate H1 headings
-  long: number; // H1s over 155 characters
-  short: number; // H1s under 70 characters
-  noH1Object: number; // Pages without H1 headings
+interface UrlCounts {
+  total: number; // Total URLs analyzed
+  nonAscii: number; // URLs with non-ASCII characters
+  underscores: number; // URLs containing underscores
+  uppercase: number; // URLs with uppercase letters
+  multipleSlashes: number; // URLs with multiple consecutive slashes
+  repetitivePath: number; // URLs with repetitive path segments
+  containsSpaces: number; // URLs containing spaces (encoded or not)
+  internalSearch: number; // URLs with internal search parameters
+  hasParameters: number; // URLs with query parameters
+  tooLong: number; // URLs over 115 characters
 }
 
 interface Section {
@@ -20,7 +23,7 @@ interface Section {
 }
 
 const URL = () => {
-  const { crawlData, setHeadingsH1 } = useGlobalCrawlStore();
+  const { crawlData, setUrlData } = useGlobalCrawlStore();
   const [isOpen, setIsOpen] = useState(false);
 
   // Ensure crawlData is always an array
@@ -29,38 +32,37 @@ const URL = () => {
     [crawlData],
   );
 
-  // Memoize H1 analysis
-  const { counts, totalPages, missingH1Count } = useMemo(() => {
-    // Extract all H1 headings from crawlData
-    const h1Headings = safeCrawlData
-      .map((item) => item?.headings?.h1 || [])
-      .flat();
+  // Memoize URL analysis
+  const { counts, totalUrls } = useMemo(() => {
+    const urls = safeCrawlData
+      .map((item) => item?.url || "")
+      .filter((url) => url);
 
-    // Filter out empty or undefined H1 headings
-    const validH1Headings = h1Headings.filter((heading) => heading?.trim());
-
-    // Get unique H1 headings
-    const uniqueH1Headings = [...new Set(validH1Headings)];
-
-    // Calculate counts
-    const counts: H1Counts = {
-      exists: validH1Headings.length, // Number of valid H1 headings
-      all: h1Headings.length, // Total H1 headings (including empty/undefined)
-      empty: h1Headings.length - validH1Headings.length, // Empty/undefined H1 headings
-      duplicate: h1Headings.length - uniqueH1Headings.length, // Duplicate H1 headings
-      long: uniqueH1Headings.filter((heading) => heading.length > 155).length, // H1s over 155 characters
-      short: uniqueH1Headings.filter((heading) => heading.length < 70).length, // H1s under 70 characters
-      noH1Object: safeCrawlData.filter((item) => !item?.headings?.h1?.length)
-        .length, // Pages without H1 headings
+    const counts: UrlCounts = {
+      total: urls.length,
+      nonAscii: urls.filter((url) => /[^\x00-\x7F]/.test(url)).length,
+      underscores: urls.filter((url) => url.includes("_")).length,
+      uppercase: urls.filter((url) => /[A-Z]/.test(url)).length,
+      multipleSlashes: urls.filter((url) => {
+        // Remove the protocol part
+        const withoutProtocol = url.replace(/^https?:\/\//, "");
+        // Check for multiple slashes in the remaining part
+        return /\/{2,}/.test(withoutProtocol);
+      }).length,
+      repetitivePath: urls.filter((url) => {
+        const paths = url.split("/").filter(Boolean);
+        return new Set(paths).size !== paths.length;
+      }).length,
+      containsSpaces: urls.filter((url) => /\s|%20/.test(url)).length,
+      internalSearch: urls.filter((url) => /search\?|q=|\?.*=/.test(url))
+        .length,
+      hasParameters: urls.filter((url) => url.includes("?")).length,
+      tooLong: urls.filter((url) => url.length > 115).length,
     };
-
-    const totalPages = safeCrawlData.length;
-    const missingH1Count = Math.abs(totalPages - counts.exists);
 
     return {
       counts,
-      totalPages,
-      missingH1Count,
+      totalUrls: urls.length,
     };
   }, [safeCrawlData]);
 
@@ -74,63 +76,63 @@ const URL = () => {
     return [
       {
         label: "Total",
-        count: counts.exists,
-        percentage: calculatePercentage(counts.exists, totalPages),
+        count: counts.total,
+        percentage: "100%",
       },
       {
         label: "Non ASCII Characters",
-        count: missingH1Count,
-        percentage: calculatePercentage(missingH1Count, totalPages),
+        count: counts.nonAscii,
+        percentage: calculatePercentage(counts.nonAscii, counts.total),
       },
       {
         label: "Underscores",
-        count: counts.duplicate,
-        percentage: calculatePercentage(counts.duplicate, counts.all),
+        count: counts.underscores,
+        percentage: calculatePercentage(counts.underscores, counts.total),
       },
       {
         label: "Uppercase",
-        count: counts.long,
-        percentage: calculatePercentage(counts.long, counts.all),
+        count: counts.uppercase,
+        percentage: calculatePercentage(counts.uppercase, counts.total),
       },
       {
         label: "Multiple Slashes",
-        count: counts.short,
-        percentage: calculatePercentage(counts.short, counts.all),
+        count: counts.multipleSlashes,
+        percentage: calculatePercentage(counts.multipleSlashes, counts.total),
       },
       {
         label: "Repetitive Path",
-        count: counts.short,
-        percentage: calculatePercentage(counts.short, counts.all),
+        count: counts.repetitivePath,
+        percentage: calculatePercentage(counts.repetitivePath, counts.total),
       },
       {
         label: "Contains Space",
-        count: counts.short,
-        percentage: calculatePercentage(counts.short, counts.all),
+        count: counts.containsSpaces,
+        percentage: calculatePercentage(counts.containsSpaces, counts.total),
       },
       {
         label: "Internal Search",
-        count: counts.short,
-        percentage: calculatePercentage(counts.short, counts.all),
+        count: counts.internalSearch,
+        percentage: calculatePercentage(counts.internalSearch, counts.total),
       },
       {
         label: "Parameters",
-        count: counts.short,
-        percentage: calculatePercentage(counts.short, counts.all),
+        count: counts.hasParameters,
+        percentage: calculatePercentage(counts.hasParameters, counts.total),
       },
       {
         label: "Over 115 Characters",
-        count: counts.short,
-        percentage: calculatePercentage(counts.short, counts.all),
+        count: counts.tooLong,
+        percentage: calculatePercentage(counts.tooLong, counts.total),
       },
     ];
-  }, [counts, totalPages, missingH1Count]);
+  }, [counts]);
 
-  // Update headingsH1 state when sections change
+  // Update urlData state when sections change
   useEffect(() => {
-    if (typeof setHeadingsH1 === "function") {
-      setHeadingsH1(sections);
+    if (typeof setUrlData === "function") {
+      setUrlData(sections);
     }
-  }, [sections, setHeadingsH1]);
+  }, [sections, setUrlData]);
 
   return (
     <div className="text-xs w-full">
