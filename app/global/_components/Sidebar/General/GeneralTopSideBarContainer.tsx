@@ -13,7 +13,7 @@ import H1 from "./DropDowns/H1";
 import H2 from "./DropDowns/H2";
 import CustomSearch from "./DropDowns/CustomSearch";
 import Security from "./DropDowns/Security";
-import URL from "./DropDowns/URL";
+import URLinfo from "./DropDowns/URLinfo";
 import Content from "./DropDowns/Content";
 
 const GeneralTopSideBarContainer = () => {
@@ -40,7 +40,7 @@ const GeneralTopSideBarContainer = () => {
         {/* TODO: Needs to be finished */}
         {/* <Security /> */}
         {/* TODO: Needs to be finished */}
-        <URL />
+        <URLinfo />
         {/* TODO: Needs to be finished */}
         <StatusCodes />
         <CustomSearch />

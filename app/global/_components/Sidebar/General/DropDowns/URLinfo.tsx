@@ -22,7 +22,7 @@ interface Section {
   percentage: string;
 }
 
-const URL = () => {
+const URLinfo = () => {
   const { crawlData, setUrlData } = useGlobalCrawlStore();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -167,4 +167,4 @@ const URL = () => {
   );
 };
 
-export default memo(URL);
+export default memo(URLinfo);
