@@ -133,7 +133,9 @@ async fn main() {
     }
 
     // Set the configurations
-    let _settings = settings::settings::init_settings();
+    let _settings = settings::settings::init_settings()
+        .await
+        .expect("Failed to load settings");
 
     // initialise the dbs
     let _start_db = crawler::db::databases_start();
