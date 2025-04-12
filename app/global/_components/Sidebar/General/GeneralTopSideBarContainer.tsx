@@ -38,7 +38,7 @@ const GeneralTopSideBarContainer = () => {
         <Javascript />
         <Schema />
         {/* TODO: Needs to be finished */}
-        {/* <Security /> */}
+        <Security />
         {/* TODO: Needs to be finished */}
         <URLinfo />
         {/* TODO: Needs to be finished */}

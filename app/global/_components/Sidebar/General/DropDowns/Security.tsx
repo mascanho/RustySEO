@@ -3,14 +3,14 @@ import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import React, { useMemo, useEffect, memo, useState } from "react";
 import { FiChevronDown, FiChevronRight } from "react-icons/fi";
 
-interface H1Counts {
-  exists: number; // Number of valid H1 headings
-  all: number; // Total H1 headings (including empty/undefined)
-  empty: number; // Empty/undefined H1 headings
-  duplicate: number; // Duplicate H1 headings
-  long: number; // H1s over 155 characters
-  short: number; // H1s under 70 characters
-  noH1Object: number; // Pages without H1 headings
+interface SecurityCounts {
+  https: number; // Number of HTTPS URLs
+  http: number; // Number of HTTP URLs
+  mixedContent: number; // Pages with both HTTP and HTTPS resources
+  unsafeAnchors: number; // Pages with unsafe cross-origin links
+  insecureIframes: number; // Iframes without sandbox
+  missingCors: number; // Resources missing crossorigin attribute
+  inlineScripts: number; // Inline scripts with potential risks
 }
 
 interface Section {
@@ -20,7 +20,7 @@ interface Section {
 }
 
 const Security = () => {
-  const { crawlData, setHeadingsH1 } = useGlobalCrawlStore();
+  const { crawlData, setSecurityData } = useGlobalCrawlStore();
   const [isOpen, setIsOpen] = useState(false);
 
   // Ensure crawlData is always an array
@@ -29,38 +29,60 @@ const Security = () => {
     [crawlData],
   );
 
-  // Memoize H1 analysis
-  const { counts, totalPages, missingH1Count } = useMemo(() => {
-    // Extract all H1 headings from crawlData
-    const h1Headings = safeCrawlData
-      .map((item) => item?.headings?.h1 || [])
-      .flat();
+  // Memoize security analysis
+  const { counts, totalPages } = useMemo(() => {
+    let httpsCount = 0;
+    let httpCount = 0;
+    let mixedContentCount = 0;
+    let unsafeAnchorsCount = 0;
+    let insecureIframesCount = 0;
+    let missingCorsCount = 0;
+    let inlineScriptsCount = 0;
 
-    // Filter out empty or undefined H1 headings
-    const validH1Headings = h1Headings.filter((heading) => heading?.trim());
+    safeCrawlData.forEach((item) => {
+      // Count HTTPS vs HTTP
+      if (item.https === true) {
+        httpsCount++;
+      } else if (item.https === false) {
+        httpCount++;
+      }
 
-    // Get unique H1 headings
-    const uniqueH1Headings = [...new Set(validH1Headings)];
+      // Check for mixed content (HTTPS page loading HTTP resources)
+      if (item.https === true) {
+        const hasHttpResources =
+          (item.css?.external || []).some((url) => url.startsWith("http://")) ||
+          (item.javascript?.external || []).some((url) =>
+            url.startsWith("http://"),
+          ) ||
+          (item.images?.Ok || []).some((img) => img.src?.startsWith("http://"));
 
-    // Calculate counts
-    const counts: H1Counts = {
-      exists: validH1Headings.length, // Number of valid H1 headings
-      all: h1Headings.length, // Total H1 headings (including empty/undefined)
-      empty: h1Headings.length - validH1Headings.length, // Empty/undefined H1 headings
-      duplicate: h1Headings.length - uniqueH1Headings.length, // Duplicate H1 headings
-      long: uniqueH1Headings.filter((heading) => heading.length > 155).length, // H1s over 155 characters
-      short: uniqueH1Headings.filter((heading) => heading.length < 70).length, // H1s under 70 characters
-      noH1Object: safeCrawlData.filter((item) => !item?.headings?.h1?.length)
-        .length, // Pages without H1 headings
+        if (hasHttpResources) {
+          mixedContentCount++;
+        }
+      }
+
+      // Add cross-origin security metrics
+      if (item.cross_origin) {
+        unsafeAnchorsCount += item.cross_origin.total_unsafe_anchors || 0;
+        insecureIframesCount += item.cross_origin.total_insecure_iframes || 0;
+        missingCorsCount += item.cross_origin.total_missing_cors || 0;
+        inlineScriptsCount += item.cross_origin.total_inline_scripts || 0;
+      }
+    });
+
+    const counts: SecurityCounts = {
+      https: httpsCount,
+      http: httpCount,
+      mixedContent: mixedContentCount,
+      unsafeAnchors: unsafeAnchorsCount,
+      insecureIframes: insecureIframesCount,
+      missingCors: missingCorsCount,
+      inlineScripts: inlineScriptsCount,
     };
-
-    const totalPages = safeCrawlData.length;
-    const missingH1Count = Math.abs(totalPages - counts.exists);
 
     return {
       counts,
-      totalPages,
-      missingH1Count,
+      totalPages: safeCrawlData.length,
     };
   }, [safeCrawlData]);
 
@@ -68,44 +90,54 @@ const Security = () => {
   const sections: Section[] = useMemo(() => {
     const calculatePercentage = (count: number, total: number): string => {
       if (!total) return "0%";
-      return `${Math.min(((count / total) * 100).toFixed(0), 100)}%`;
+      return `${Math.min((count / total) * 100, 100).toFixed(0)}%`;
     };
 
     return [
       {
-        label: "Total",
-        count: counts.exists,
-        percentage: calculatePercentage(counts.exists, totalPages),
+        label: "HTTPS URLs",
+        count: counts.https,
+        percentage: calculatePercentage(counts.https, totalPages),
       },
       {
         label: "HTTP URLs",
-        count: missingH1Count,
-        percentage: calculatePercentage(missingH1Count, totalPages),
-      },
-      {
-        label: "HTTPS URLs",
-        count: counts.duplicate,
-        percentage: calculatePercentage(counts.duplicate, counts.all),
+        count: counts.http,
+        percentage: calculatePercentage(counts.http, totalPages),
       },
       {
         label: "Mixed Content",
-        count: counts.long,
-        percentage: calculatePercentage(counts.long, counts.all),
+        count: counts.mixedContent,
+        percentage: calculatePercentage(counts.mixedContent, counts.https),
       },
       {
-        label: "Unsafe Cross-Origin Links",
-        count: counts.short,
-        percentage: calculatePercentage(counts.short, counts.all),
+        label: "Unsafe Anchors",
+        count: counts.unsafeAnchors,
+        percentage: calculatePercentage(counts.unsafeAnchors, totalPages),
+      },
+      {
+        label: "Insecure Iframes",
+        count: counts.insecureIframes,
+        percentage: calculatePercentage(counts.insecureIframes, totalPages),
+      },
+      // {
+      //   label: "Missing CORS",
+      //   count: counts.missingCors,
+      //   percentage: calculatePercentage(counts.missingCors, totalPages),
+      // },
+      {
+        label: "Inline Scripts",
+        count: counts.inlineScripts,
+        percentage: calculatePercentage(counts.inlineScripts, totalPages),
       },
     ];
-  }, [counts, totalPages, missingH1Count]);
+  }, [counts, totalPages]);
 
-  // Update headingsH1 state when sections change
+  // Update security data state when sections change
   useEffect(() => {
-    if (typeof setHeadingsH1 === "function") {
-      setHeadingsH1(sections);
+    if (typeof setSecurityData === "function") {
+      setSecurityData(sections);
     }
-  }, [sections, setHeadingsH1]);
+  }, [sections, setSecurityData]);
 
   return (
     <div className="text-xs w-full">

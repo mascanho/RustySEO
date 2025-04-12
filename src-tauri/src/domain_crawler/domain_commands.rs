@@ -1,9 +1,12 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    sync::{Arc, RwLock},
+};
 
 use rust_xlsxwriter::XlsxError;
 use serde_json::Value;
 
-use crate::domain_crawler::domain_crawler;
+use crate::{domain_crawler::domain_crawler, settings::settings::Settings, AppState};
 
 use super::{
     database::{self, analyse_diffs},
@@ -18,6 +21,7 @@ use super::{
 pub async fn domain_crawl_command(
     domain: String,
     app_handle: tauri::AppHandle,
+    settings_state: tauri::State<'_, AppState>,
 ) -> Result<Vec<DomainCrawlResults>, String> {
     // Create and initialize the database
     let mut db = match database::Database::new("deep_crawl_batches.db") {
@@ -44,7 +48,7 @@ pub async fn domain_crawl_command(
     }
 
     // Call the crawl_domain function with a clone of the database
-    match domain_crawler::crawl_domain(&domain, app_handle, Ok(db.clone())).await {
+    match domain_crawler::crawl_domain(&domain, app_handle, Ok(db.clone()), settings_state).await {
         Ok(links) => {
             println!("Discovered {} links", links.len());
             for data in &links {

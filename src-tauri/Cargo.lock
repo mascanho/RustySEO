@@ -291,6 +291,7 @@ dependencies = [
  "hyper-rustls 0.24.2",
  "image 0.24.9",
  "isahc",
+ "lazy_static",
  "log",
  "markup5ever_rcdom 0.1.0",
  "oauth2",
