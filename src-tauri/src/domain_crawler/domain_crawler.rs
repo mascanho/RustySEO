@@ -110,6 +110,7 @@ fn to_database_results(result: &DomainCrawlResults) -> DatabaseResults {
 async fn fetch_with_exponential_backoff(
     client: &Client,
     url: &str,
+    settings: &Settings,
 ) -> Result<(reqwest::Response, f64), reqwest::Error> {
     let mut attempt = 0;
     loop {
@@ -118,10 +119,13 @@ async fn fetch_with_exponential_backoff(
             Ok(response) => {
                 let duration = start.elapsed().as_secs_f64();
                 if response.status() == reqwest::StatusCode::TOO_MANY_REQUESTS {
-                    if attempt >= MAX_RETRIES {
+                    if attempt >= settings.max_retries {
                         return Ok((response, duration));
                     }
-                    let delay = std::cmp::min(MAX_DELAY, BASE_DELAY * 2u64.pow(attempt as u32));
+                    let delay = std::cmp::min(
+                        settings.max_delay,
+                        settings.base_delay * 2u64.pow(attempt as u32),
+                    );
                     sleep(Duration::from_millis(delay)).await;
                     attempt += 1;
                     continue;
@@ -129,10 +133,13 @@ async fn fetch_with_exponential_backoff(
                 return Ok((response, duration));
             }
             Err(e) => {
-                if attempt >= MAX_RETRIES {
+                if attempt >= settings.max_retries {
                     return Err(e);
                 }
-                let delay = std::cmp::min(MAX_DELAY, BASE_DELAY * 2u64.pow(attempt as u32));
+                let delay = std::cmp::min(
+                    settings.max_delay,
+                    settings.base_delay * 2u64.pow(attempt as u32),
+                );
                 sleep(Duration::from_millis(delay)).await;
                 attempt += 1;
             }
@@ -147,10 +154,11 @@ async fn process_url(
     base_url: &Url,
     state: Arc<Mutex<CrawlerState>>,
     app_handle: &tauri::AppHandle,
+    settings: &Settings,
 ) -> Result<DomainCrawlResults, String> {
     let response_result = tokio::time::timeout(
         Duration::from_secs(60),
-        fetch_with_exponential_backoff(client, url.as_str()),
+        fetch_with_exponential_backoff(client, url.as_str(), settings),
     )
     .await;
 
@@ -231,8 +239,13 @@ async fn process_url(
 
     let internal_external_links = anchor_links::extract_internal_external_links(&body, base_url);
 
-    let check_links_status_code =
-        get_links_status_code(internal_external_links, base_url, final_url.to_string()).await;
+    let check_links_status_code = get_links_status_code(
+        internal_external_links,
+        base_url,
+        final_url.to_string(),
+        settings,
+    )
+    .await;
 
     // Cross-origin checker funtion
     let cross_origin = analyze_cross_origin_security(&body, base_url);
@@ -354,11 +367,11 @@ pub async fn crawl_domain(
     // Import the user agents from another module to use across domain crawler
     let user_agents = user_agents::agents();
 
-    let settings = settings_state.settings.read().await;
+    let settings = Arc::new(settings_state.settings.read().await.clone());
 
     println!(
         "This is the settings files ouput: {:?}",
-        &settings.user_agents
+        &settings.links_request_timeout
     );
 
     let client = Client::builder()
@@ -405,7 +418,7 @@ pub async fn crawl_domain(
                 }
                 break;
             }
-            let batch_size = std::cmp::min(BATCH_SIZE, state.queue.len());
+            let batch_size = std::cmp::min(settings.batch_size, state.queue.len());
             state.queue.drain(..batch_size).collect()
         };
 
@@ -417,6 +430,8 @@ pub async fn crawl_domain(
             let app_handle = app_handle.clone();
             let semaphore = semaphore.clone();
 
+            let settings_clone = settings.clone();
+
             let handle = tokio::spawn(async move {
                 let _permit = semaphore.acquire().await.unwrap();
                 let jitter = rand::thread_rng().gen_range(500..2000);
@@ -424,12 +439,20 @@ pub async fn crawl_domain(
 
                 let mut retries = 0;
                 let result: Result<DomainCrawlResults, String> = loop {
-                    match process_url(url.clone(), &client, &base_url, state.clone(), &app_handle)
-                        .await
+                    match process_url(
+                        url.clone(),
+                        &client,
+                        &base_url,
+                        state.clone(),
+                        &app_handle,
+                        &settings_clone,
+                    )
+                    .await
                     {
                         Ok(result) => break Ok(result),
                         Err(e) => {
-                            if retries >= MAX_RETRIES {
+                            eprintln!("Error processing URL: {}", e);
+                            if retries >= settings_clone.max_retries {
                                 let mut state = state.lock().await;
                                 state.failed_urls.insert(url.to_string());
                                 break Ok(DomainCrawlResults {
@@ -468,7 +491,8 @@ pub async fn crawl_domain(
                                 .collect::<Vec<_>>();
 
                             // Insert every DB_BATCH_SIZE or if we have any results
-                            if batch_counter >= DB_BATCH_SIZE || !recent_results.is_empty() {
+                            if batch_counter >= settings.db_batch_size || !recent_results.is_empty()
+                            {
                                 match database::insert_bulk_crawl_data(db.get_pool(), db_results)
                                     .await
                                 {
@@ -495,7 +519,7 @@ pub async fn crawl_domain(
             }
         }
 
-        if crawl_start_time.elapsed() > CRAWL_TIMEOUT {
+        if crawl_start_time.elapsed() > Duration::from_secs(settings.crawl_timeout) {
             if let Err(err) = app_handle.emit("crawl_interrupted", ()) {
                 eprintln!("Failed to emit crawl interruption event: {}", err);
             }

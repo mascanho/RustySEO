@@ -1,40 +1,47 @@
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
-use std::sync::Arc;
 use tokio::fs;
-use tokio::task;
+use tokio::time::Duration;
 use toml;
 
 use crate::domain_crawler::user_agents;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Settings {
-    pub crawl_timeout: u32,
+    pub crawl_timeout: u64,
     pub max_retries: u32,
     pub base_delay: u64,
     pub max_delay: u64,
     pub concurrent_requests: usize,
     pub batch_size: usize,
     pub db_batch_size: usize,
-    pub links_concurrent_requests: usize,
     pub user_agents: Vec<String>,
     pub html: bool,
+    pub links_concurrent_requests: usize,
+    pub links_initial_task_capacity: usize,
+    pub links_max_retries: usize,
+    pub links_retry_delay: u64,
+    pub links_request_timeout: u64,
 }
 
 impl Settings {
     pub fn new() -> Self {
         Self {
-            crawl_timeout: 30,
+            crawl_timeout: 28800,
             max_retries: 5,
             base_delay: 500,
             max_delay: 8000,
             concurrent_requests: 150,
             batch_size: 20,
             db_batch_size: 10,
-            links_concurrent_requests: 150,
             user_agents: user_agents::agents(),
             html: false,
+            links_concurrent_requests: 150,
+            links_initial_task_capacity: 100,
+            links_max_retries: 3,
+            links_request_timeout: 15,
+            links_retry_delay: 500,
         }
     }
 
@@ -106,7 +113,7 @@ pub async fn init_settings() -> Result<Settings, String> {
 
 pub fn print_settings(settings: &Settings) {
     // Use the settings
-    println!("Crawl Timeout: {}", settings.crawl_timeout);
+    println!("Crawl Timeout: {:?}", settings.crawl_timeout);
     println!("Max Retries: {}", settings.max_retries);
     println!("Base Delay: {}", settings.base_delay);
     println!("Max Delay: {}", settings.max_delay);

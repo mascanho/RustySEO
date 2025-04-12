@@ -12,7 +12,10 @@ use tokio::sync::{Mutex, Semaphore};
 use tokio::task::JoinHandle;
 use tokio::time::timeout;
 
-use crate::domain_crawler::{helpers::anchor_links::InternalExternalLinks, user_agents};
+use crate::{
+    domain_crawler::{helpers::anchor_links::InternalExternalLinks, user_agents},
+    settings::settings::Settings,
+};
 
 // Constants
 const MAX_CONCURRENT_REQUESTS: usize = 10;
@@ -43,6 +46,7 @@ pub async fn get_links_status_code(
     links: Option<InternalExternalLinks>,
     base_url: &Url,
     page: String,
+    settings: &Settings,
 ) -> LinkCheckResults {
     let user_agents = user_agents::agents();
     let client = build_client(&user_agents);
