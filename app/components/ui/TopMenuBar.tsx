@@ -494,6 +494,11 @@ const TopMenuBar = () => {
                 <GoFileDiff className="mr-2 font-semibold" />
                 Crawl Diff
               </MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem onClick={() => router.push("/serverlogs")}>
+                <GoFileDiff className="mr-2 font-semibold" />
+                Log Checker
+              </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
 
