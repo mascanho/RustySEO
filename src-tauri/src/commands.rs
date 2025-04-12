@@ -10,6 +10,7 @@ use crate::crawler::libs::Credentials;
 use crate::crawler::libs::DateRange;
 use crate::image_converter::converter;
 use crate::machine_learning::keyword_frequency;
+use crate::settings::settings;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;
@@ -19,6 +20,7 @@ use std::fs;
 use std::io::{self, BufWriter, Write};
 use std::path::PathBuf;
 use tauri::command;
+use tauri_plugin_shell::ShellExt;
 use toml;
 
 // ---------------- READ SEO PAGE DATA FROM THE DB ----------------
@@ -265,4 +267,33 @@ pub fn fetch_keywords_summarized_matched_command() -> Result<Vec<KeywordsSummary
         Ok(result) => Ok(result),
         Err(err) => Err(err.to_string()),
     }
+}
+
+// OPEN OS TEXT EDITOR WITH THE SETTINGS FILE
+#[tauri::command]
+pub async fn open_configs_with_native_editor(
+    app_handle: tauri::AppHandle, // Add AppHandle parameter
+) -> Result<(), String> {
+    // Add proper return type
+    // Get config path and handle potential error
+    let config_path = settings::Settings::config_path()
+        .map_err(|e| format!("Failed to get config path: {}", e))?;
+
+    // Convert PathBuf to string
+    let path = config_path.to_string_lossy().to_string();
+
+    #[cfg(not(target_os = "windows"))]
+    let command = "open";
+
+    #[cfg(target_os = "windows")]
+    let command = "start";
+
+    app_handle
+        .shell()
+        .command(command)
+        .args([path])
+        .spawn()
+        .map_err(|e| format!("Failed to open file: {}", e))?;
+
+    Ok(())
 }

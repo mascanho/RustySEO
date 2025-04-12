@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
 
 // Mock data for crawl comparisons
 const previousCrawl = {
@@ -63,11 +64,23 @@ export default function DiffChecker() {
     console.log("Diff check mounted");
   }, []);
 
+  async function checkDiff() {
+    try {
+      console.log("Checking diff...");
+      const result = await invoke("analyse_diffs_command");
+      console.log(result);
+    } catch (error) {
+      console.error("Failed to check diff:", error);
+    }
+  }
+
   return (
     <section
       className="w-full h-full flex flex-col dark:bg-brand-dark/40 overflow-hidden p-0 dark:border dark:border-brand-dark/50  dark:text-white"
       style={{ height: "530px" }}
     >
+      <button onClick={checkDiff}>Check Diff</button>
+
       <CardHeader className="bg-white dark:bg-brand-darker pt-4 pb-2 px-4">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2">

@@ -9,7 +9,7 @@ import {
   MenubarShortcut,
   MenubarTrigger,
 } from "@/components/ui/menubar";
-import { Alert, Drawer, Modal } from "@mantine/core";
+import { Alert, Drawer, MenuItem, Modal } from "@mantine/core";
 import Todo from "./Todo";
 import { useDisclosure } from "@mantine/hooks";
 import TodoItems from "./TodoItems";
@@ -63,6 +63,7 @@ import CustomSearchSelector from "./Extractors/CustomSearchSelector";
 import { PiGitDiff } from "react-icons/pi";
 import DiffChecker from "./DiffChecker/DiffChecker";
 import { GoFileDiff } from "react-icons/go";
+import { Settings } from "lucide-react";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -211,6 +212,16 @@ const TopMenuBar = () => {
     setStrategy(strategy); // Changed from setTodoStrategy
     openModal();
   };
+
+  // OPEN Configurations FILE USING NATIVE TEXT EDITOR
+  async function handleOpenConfigFile() {
+    try {
+      await invoke("open_configs_with_native_editor");
+      console.log("Config file opened successfuylly");
+    } catch (error) {
+      console.error("failed to open the file", error);
+    }
+  }
 
   return (
     <>
@@ -420,6 +431,10 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-4">View</MenubarTrigger>
             <MenubarContent>
+              <MenubarItem onClick={handleOpenConfigFile}>
+                <Settings size={12} className="mr-1.5" />
+                Crawl Settings
+              </MenubarItem>
               <MenubarItem
                 disabled={pathname === "/global"}
                 onClick={openPanes}
@@ -486,14 +501,19 @@ const TopMenuBar = () => {
                 <FiTool className="mr-2" />
                 Headings SERP
               </MenubarItem>
-              <MenubarSeparator />
-              <MenubarItem
+              {/* <MenubarSeparator /> */}
+              {/* <MenubarItem
                 disabled={pathname !== "/global"}
                 onClick={openDiffChecker}
               >
                 <GoFileDiff className="mr-2 font-semibold" />
                 Crawl Diff
               </MenubarItem>
+              <MenubarSeparator /> */}
+              {/* <MenubarItem onClick={() => router.push("/serverlogs")}>
+                <GoFileDiff className="mr-2 font-semibold" />
+                Log Checker
+              </MenubarItem> */}
             </MenubarContent>
           </MenubarMenu>
 

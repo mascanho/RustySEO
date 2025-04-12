@@ -495,8 +495,6 @@ const LinksTable = ({
   const parentRef = useRef<HTMLDivElement>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
-  console.log(rows);
-
   return (
     <>
       <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1">

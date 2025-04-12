@@ -8,12 +8,15 @@ use crawler::{
 };
 use directories::ProjectDirs;
 use globals::actions;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
+use settings::settings::Settings;
 use std::io::Write;
+use std::sync::Arc;
 use std::time::Duration;
 use tauri::State;
 use tauri::{Manager, Window, WindowEvent};
-use tokio::{self, sync::Mutex};
+use tokio::sync::Mutex;
+use tokio::sync::RwLock;
 use toml;
 
 pub mod crawler;
@@ -40,9 +43,9 @@ mod image_converter;
 pub mod server;
 pub mod version;
 
-#[derive(Default)]
-struct AppState {
-    data: Mutex<Vec<String>>,
+// Handling the app state
+pub struct AppState {
+    pub settings: Arc<RwLock<Settings>>,
 }
 
 #[derive(Serialize, Debug, Deserialize)]
@@ -133,7 +136,13 @@ async fn main() {
     }
 
     // Set the configurations
-    let _settings = settings::settings::init_settings();
+    let settings = match settings::settings::init_settings().await {
+        Ok(s) => Arc::new(RwLock::new(s)),
+        Err(e) => {
+            eprintln!("Failed to load settings: {}", e);
+            Arc::new(RwLock::new(Settings::default()))
+        }
+    };
 
     // initialise the dbs
     let _start_db = crawler::db::databases_start();
@@ -154,7 +163,7 @@ async fn main() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(LinkResult { links: vec![] })
-        .manage(AppState::default())
+        .manage(AppState { settings })
         .invoke_handler(tauri::generate_handler![
             crawl,
             fetch_page_speed,
@@ -214,7 +223,9 @@ async fn main() {
             domain_commands::create_excel_two_cols,
             domain_commands::create_css_excel,
             domain_commands::create_keywords_excel_command,
-            domain_commands::generate_links_table_xlsx_command
+            domain_commands::generate_links_table_xlsx_command,
+            domain_commands::analyse_diffs_command,
+            commands::open_configs_with_native_editor
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

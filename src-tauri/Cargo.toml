@@ -73,6 +73,7 @@ governor = "*"
 rusqlite = { version = "0.34.0", features = ["bundled"] }
 bytes = "*"
 tracing = "*"
+lazy_static = "*"
 
 
 [features]

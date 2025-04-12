@@ -1,52 +1,47 @@
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
+use std::sync::Arc;
 use tokio::fs;
+use tokio::task;
+use toml;
+
+use crate::domain_crawler::user_agents;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Settings {
-    pub max_retries: u32,
-    pub base_delay: u32,
-    pub max_delay: u32,
-    pub concurrent_requests: u32,
     pub crawl_timeout: u32,
-    pub batch_size: u32,
-    pub user_agent: String,
-    pub max_page_crawl: u32,
+    pub max_retries: u32,
+    pub base_delay: u64,
+    pub max_delay: u64,
+    pub concurrent_requests: usize,
+    pub batch_size: usize,
+    pub db_batch_size: usize,
+    pub links_concurrent_requests: usize,
+    pub user_agents: Vec<String>,
+    pub html: bool,
 }
 
 impl Settings {
-    /// Creates a new Settings instance with default values
     pub fn new() -> Self {
         Self {
+            crawl_timeout: 30,
             max_retries: 5,
             base_delay: 500,
             max_delay: 8000,
-            concurrent_requests: 120,
-            crawl_timeout: 28800,
+            concurrent_requests: 150,
             batch_size: 20,
-            user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3".to_string(),
-            max_page_crawl: 20000,
+            db_batch_size: 10,
+            links_concurrent_requests: 150,
+            user_agents: user_agents::agents(),
+            html: false,
         }
     }
 
-    /// Builder method to set crawl timeout
-    pub fn with_crawl_timeout(mut self, timeout: u32) -> Self {
-        self.crawl_timeout = timeout;
-        self
-    }
-
-    /// Builder method to set max retries
-    pub fn with_max_retries(mut self, max_retries: u32) -> Self {
-        self.max_retries = max_retries;
-        self
-    }
-
-    /// Gets the default configuration file path
     pub fn config_path() -> Result<PathBuf, String> {
         ProjectDirs::from("", "", "rustyseo")
-            .ok_or_else(|| "Failed to determine configuration directory".to_string())
-            .map(|proj_dirs| proj_dirs.config_dir().join("configs.toml"))
+            .ok_or("Failed to determine config directory".to_string())
+            .map(|dirs| dirs.config_dir().join("configs.toml"))
     }
 }
 
@@ -56,46 +51,72 @@ impl Default for Settings {
     }
 }
 
-/// Creates or loads the configuration file asynchronously
+/// Loads settings from file (returns error if file doesn't exist)
+pub async fn load_settings() -> Result<Settings, String> {
+    let config_path = Settings::config_path()?;
+    let contents = fs::read_to_string(&config_path)
+        .await
+        .map_err(|e| format!("Failed to read config: {}", e))?;
+    toml::from_str(&contents).map_err(|e| format!("Failed to parse config: {}", e))
+}
+
+/// Creates a new config file if it doesn't exist
 pub async fn create_config_file() -> Result<Settings, String> {
     let config_path = Settings::config_path()?;
+    println!("Config path: {:?}", config_path);
 
-    // Create parent directories if they don't exist
     if let Some(parent) = config_path.parent() {
-        fs::create_dir_all(parent)
-            .await
-            .map_err(|e| e.to_string())?;
+        if !parent.exists() {
+            fs::create_dir_all(parent)
+                .await
+                .map_err(|e| format!("Failed to create config dir: {}", e))?;
+        }
     }
 
     let settings = Settings::new();
 
-    // Only write if file doesn't exist
     if !config_path.exists() {
-        let toml_string = toml::to_string(&settings).map_err(|e| e.to_string())?;
-        fs::write(&config_path, toml_string)
+        let toml_str = toml::to_string(&settings)
+            .map_err(|e| format!("Failed to serialize settings: {}", e))?;
+        fs::write(&config_path, toml_str)
             .await
-            .map_err(|e| e.to_string())?;
-        println!("Settings file created successfully at {:?}", config_path);
+            .map_err(|e| format!("Failed to write config: {}", e))?;
+        println!("✅ Config file created at {:?}", config_path);
     } else {
-        eprintln!("Settings file already exists at {:?}", config_path);
+        println!("⚠️ Config file already exists at {:?}", config_path);
     }
 
     Ok(settings)
 }
 
-/// Loads settings from configuration file asynchronously
-pub async fn load_settings() -> Result<Settings, String> {
-    let config_path = Settings::config_path()?;
-    let contents = fs::read_to_string(&config_path)
-        .await
-        .map_err(|e| e.to_string())?;
-    toml::from_str(&contents).map_err(|e| e.to_string())
+/// Initializes settings (loads or creates if missing)
+pub async fn init_settings() -> Result<Settings, String> {
+    println!("Attempting to load settings...");
+    match load_settings().await {
+        Ok(settings) => {
+            println!("Settings loaded successfully.");
+            Ok(settings)
+        }
+        Err(e) => {
+            println!("Failed to load settings: {}. Creating config file...", e);
+            create_config_file().await
+        }
+    }
 }
 
-/// Initializes settings asynchronously (creates if doesn't exist)
-pub async fn init_settings() -> Result<Settings, String> {
-    match load_settings().await {
-        Ok(settings) => Ok(settings),
-        Err(_) => create_config_file().await,
-    }
+pub fn print_settings(settings: &Settings) {
+    // Use the settings
+    println!("Crawl Timeout: {}", settings.crawl_timeout);
+    println!("Max Retries: {}", settings.max_retries);
+    println!("Base Delay: {}", settings.base_delay);
+    println!("Max Delay: {}", settings.max_delay);
+    println!("Concurrent Requests: {}", settings.concurrent_requests);
+    println!("Batch Size: {}", settings.batch_size);
+    println!("DB Batch Size: {}", settings.db_batch_size);
+    println!(
+        "Links Concurrent Requests: {}",
+        settings.links_concurrent_requests
+    );
+    println!("User Agents: {:?}", settings.user_agents);
+    println!("HTML: {}", settings.html);
 }
