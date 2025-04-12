@@ -21,6 +21,7 @@ function MenuDrawer() {
   const options = [
     { name: "Page Crawler", route: "/" },
     { name: "Domain Crawler", route: "/global" },
+    { name: "Logs Checker", route: "/serverlogs" },
   ];
 
   useEffect(() => {
@@ -108,6 +109,8 @@ function MenuDrawer() {
       setBadge(currentOption.name);
     } else if (path === "/images") {
       setBadge("Image Converter");
+    } else if (path === "/serverlogs") {
+      setBadge("Logs Checker");
     }
   }, [path]);
 

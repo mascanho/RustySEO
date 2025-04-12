@@ -1,28 +1,40 @@
-use super::anchor_links::InternalExternalLinks;
 use futures::future::join_all;
-use reqwest::Client;
+use rand::seq::SliceRandom;
+use reqwest::{
+    header::{HeaderMap, ACCEPT, ACCEPT_ENCODING, ACCEPT_LANGUAGE, CONNECTION},
+    Client, Url,
+};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::sync::Semaphore;
+use tokio::sync::{Mutex, Semaphore};
+use tokio::task::JoinHandle;
 use tokio::time::timeout;
-use url::Url;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+use crate::domain_crawler::{helpers::anchor_links::InternalExternalLinks, user_agents};
+
+// Constants
+const MAX_CONCURRENT_REQUESTS: usize = 10;
+const INITIAL_TASK_CAPACITY: usize = 100;
+const MAX_RETRIES: usize = 3;
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(15);
+const RETRY_DELAY: Duration = Duration::from_millis(500);
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct LinkStatus {
-    pub base_url: Url,                 // Keep Url type as per original struct
-    pub url: String,                   // The checked URL (absolute)
-    pub relative_path: Option<String>, // Original relative path for internal links
+    pub base_url: Url,
+    pub url: String,
+    pub relative_path: Option<String>,
     pub status: Option<u16>,
     pub error: Option<String>,
     pub anchor_text: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct LinkCheckResults {
     pub page: String,
-    pub base_url: Url, // Keep Url type as per original struct
+    pub base_url: Url,
     pub internal: Vec<LinkStatus>,
     pub external: Vec<LinkStatus>,
 }
@@ -30,220 +42,297 @@ pub struct LinkCheckResults {
 pub async fn get_links_status_code(
     links: Option<InternalExternalLinks>,
     base_url: &Url,
-    page: String, // Owned page string
+    page: String,
 ) -> LinkCheckResults {
-    // --- Resource Initialization ---
-    // Create shared HTTP client with appropriate timeouts. Arc allows sharing across tasks.
-    // Consider making timeouts configurable if this function is used in diverse environments.
-    let client = Arc::new(
-        Client::builder()
-            .timeout(Duration::from_secs(15)) // Overall request timeout
-            .connect_timeout(Duration::from_secs(5)) // Connection specific timeout
-            .pool_idle_timeout(Duration::from_secs(60)) // Keep connections alive longer
-            .pool_max_idle_per_host(10) // Allow more idle connections per host
-            .user_agent(concat!(
-                env!("CARGO_PKG_NAME"),
-                "/",
-                env!("CARGO_PKG_VERSION")
-            )) // Good practice: identify client
-            .redirect(reqwest::redirect::Policy::limited(5)) // Follow limited redirects
-            .build()
-            .expect("Failed to create HTTP client"),
-    );
+    let user_agents = user_agents::agents();
+    let client = build_client(&user_agents);
+    let client = Arc::new(client);
 
-    // Limit concurrent requests to avoid overwhelming the local system or remote servers.
-    // 200 might still be high; adjust based on system resources and target server tolerance.
-    let semaphore = Arc::new(Semaphore::new(200)); // Reduced concurrency slightly as a safer default
-
-    // Use Arc for base_url and page to avoid cloning them repeatedly for each task.
+    let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_REQUESTS));
     let base_url_arc = Arc::new(base_url.clone());
-    let page_arc = Arc::new(page); // page is now shared via Arc
+    let page_arc = Arc::new(page);
+    let seen_urls = Arc::new(Mutex::new(HashSet::with_capacity(INITIAL_TASK_CAPACITY)));
 
-    // --- Task Creation ---
-    let mut tasks = Vec::new();
-    let mut seen_urls = HashSet::new(); // Tracks absolute URLs to avoid duplicate checks
+    let mut tasks: Vec<JoinHandle<Option<(LinkStatus, bool)>>> =
+        Vec::with_capacity(INITIAL_TASK_CAPACITY);
 
     if let Some(links_data) = links {
-        // Combine internal and external links into a single iterator for processing.
-        // Include the 'is_internal' flag and original relative path directly.
-        let internal_links = links_data
-            .internal
-            .links
-            .into_iter() // Consume the vectors to avoid cloning strings inside the loop if possible
-            .zip(links_data.internal.anchors.into_iter())
-            .map(|(link, anchor)| (link.clone(), anchor.clone(), true)); // Clone here once if needed, or pass ownership if InternalExternalLinks is consumed
-
-        let external_links = links_data
-            .external
-            .links
-            .into_iter()
-            .zip(links_data.external.anchors.into_iter())
-            .map(|(link, anchor)| (link.clone(), anchor.clone(), false)); // Clone here once if needed
-
-        let all_links = internal_links.chain(external_links);
-
-        for (link_str, anchor_text, is_internal) in all_links {
-            // Resolve the relative link to an absolute URL if necessary.
-            let full_url_result = if is_internal {
-                // base_url_arc holds the Arc<Url>, deref to get &Url for join
-                base_url_arc.join(&link_str)
-            } else {
-                Url::parse(&link_str)
-            };
-
-            let full_url = match full_url_result {
-                Ok(u) => u,
-                Err(e) => {
-                    // Log problematic URLs but continue processing others.
-                    // Consider collecting these errors instead of just printing.
-                    eprintln!(
-                        "Skipping invalid URL '{}' on page '{}': {}",
-                        link_str,
-                        page_arc.as_str(), // Access page string via Arc
-                        e
-                    );
-                    continue; // Skip this link
-                }
-            };
-
-            let full_url_str = full_url.to_string();
-
-            // Check if this absolute URL has already been scheduled for checking.
-            // Use entry API for efficiency.
-            if !seen_urls.insert(full_url_str.clone()) {
-                continue; // Skip duplicate URL
-            }
-
-            // --- Prepare data for the asynchronous task ---
-            // Clone Arcs (cheap) and necessary owned data (link_str, anchor_text).
-            let client_task = Arc::clone(&client);
-            let semaphore_task = Arc::clone(&semaphore);
-            let base_url_task = Arc::clone(&base_url_arc);
-            // page_arc is not needed in check_link_status anymore
-            // full_url_str is already an owned String
-            let relative_path_task = if is_internal { Some(link_str) } else { None }; // Store original relative path if internal
-            let anchor_text_task = Some(anchor_text); // Assume anchor text is always present per original logic
-
-            // Spawn a task to check this link's status concurrently.
-            tasks.push(tokio::spawn(async move {
-                // Acquire semaphore permit, limits concurrency. RAII ensures release.
-                let _permit = semaphore_task
-                    .acquire()
-                    .await
-                    .expect("Semaphore acquire failed"); // Consider error handling instead of expect
-
-                // Perform the actual HTTP check.
-                let status_result = check_link_status(
-                    &client_task,
-                    &full_url_str, // Pass the absolute URL string
-                    base_url_task, // Pass the Arc<Url>
-                    relative_path_task,
-                    anchor_text_task,
-                )
-                .await;
-
-                // Return the result along with the is_internal flag to avoid re-calculating later.
-                (status_result, is_internal)
-            }));
+        for (link, anchor, is_internal) in prepare_links(links_data) {
+            spawn_link_check_task(
+                &mut tasks,
+                client.clone(),
+                semaphore.clone(),
+                base_url_arc.clone(),
+                page_arc.clone(),
+                seen_urls.clone(),
+                link,
+                anchor,
+                is_internal,
+            );
         }
     }
 
-    // --- Result Collection and Processing ---
-    // Wait for all spawned tasks to complete.
-    let results = join_all(tasks).await;
+    process_results(join_all(tasks).await, page_arc, base_url_arc)
+}
 
-    // Separate results into internal and external link statuses.
-    let mut internal_statuses = Vec::new();
-    let mut external_statuses = Vec::new();
+fn build_client(user_agents: &[String]) -> Client {
+    Client::builder()
+        .timeout(Duration::from_secs(15))
+        .connect_timeout(Duration::from_secs(5))
+        .pool_idle_timeout(Duration::from_secs(60))
+        .pool_max_idle_per_host(20)
+        .user_agent(
+            user_agents
+                .choose(&mut rand::thread_rng())
+                .expect("User agents list should not be empty"),
+        )
+        .redirect(reqwest::redirect::Policy::limited(5))
+        .default_headers(default_headers())
+        .danger_accept_invalid_certs(false)
+        .build()
+        .expect("Failed to create HTTP client")
+}
+
+fn default_headers() -> HeaderMap {
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        ACCEPT,
+        "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
+            .parse()
+            .unwrap(),
+    );
+    headers.insert(ACCEPT_LANGUAGE, "en-US,en;q=0.5".parse().unwrap());
+    headers.insert(ACCEPT_ENCODING, "gzip, deflate, br".parse().unwrap());
+    headers.insert(CONNECTION, "keep-alive".parse().unwrap());
+    headers
+}
+
+fn prepare_links(
+    links_data: InternalExternalLinks,
+) -> impl Iterator<Item = (String, String, bool)> {
+    links_data
+        .internal
+        .links
+        .into_iter()
+        .zip(links_data.internal.anchors.into_iter())
+        .map(|(link, anchor)| (link, anchor, true))
+        .chain(
+            links_data
+                .external
+                .links
+                .into_iter()
+                .zip(links_data.external.anchors.into_iter())
+                .map(|(link, anchor)| (link, anchor, false)),
+        )
+}
+
+fn spawn_link_check_task(
+    tasks: &mut Vec<JoinHandle<Option<(LinkStatus, bool)>>>,
+    client: Arc<Client>,
+    semaphore: Arc<Semaphore>,
+    base_url: Arc<Url>,
+    page: Arc<String>,
+    seen_urls: Arc<Mutex<HashSet<String>>>,
+    link: String,
+    anchor: String,
+    is_internal: bool,
+) {
+    tasks.push(tokio::spawn(async move {
+        let full_url = match if is_internal {
+            base_url.join(&link)
+        } else {
+            Url::parse(&link)
+        } {
+            Ok(u) => u,
+            Err(e) => {
+                eprintln!("Skipping invalid URL '{}' on page '{}': {}", link, page, e);
+                return None;
+            }
+        };
+
+        let full_url_str = full_url.to_string();
+
+        {
+            let mut seen = seen_urls.lock().await;
+            if !seen.insert(full_url_str.clone()) {
+                return None;
+            }
+        }
+
+        let relative_path = is_internal.then(|| link);
+        let anchor_text = Some(anchor);
+
+        let mut last_error = None;
+        for _ in 0..MAX_RETRIES {
+            let permit = match semaphore.acquire().await {
+                Ok(p) => p,
+                Err(e) => {
+                    eprintln!("Semaphore acquire failed: {}", e);
+                    break;
+                }
+            };
+
+            match timeout(
+                REQUEST_TIMEOUT,
+                check_link_status(
+                    &client,
+                    &full_url_str,
+                    Arc::clone(&base_url),
+                    relative_path.clone(),
+                    anchor_text.clone(),
+                ),
+            )
+            .await
+            {
+                Ok(result) => {
+                    drop(permit);
+                    return Some((result, is_internal));
+                }
+                Err(_) => {
+                    last_error = Some("Request timed out".to_string());
+                    tokio::time::sleep(RETRY_DELAY).await;
+                    continue;
+                }
+            }
+        }
+
+        Some((
+            LinkStatus {
+                base_url: (*base_url).clone(),
+                url: full_url_str,
+                relative_path,
+                status: None,
+                error: last_error,
+                anchor_text,
+            },
+            is_internal,
+        ))
+    }));
+}
+
+fn process_results(
+    results: Vec<Result<Option<(LinkStatus, bool)>, tokio::task::JoinError>>,
+    page_arc: Arc<String>,
+    base_url_arc: Arc<Url>,
+) -> LinkCheckResults {
+    let (mut internal_statuses, mut external_statuses) = (Vec::new(), Vec::new());
 
     for result in results {
         match result {
-            Ok((status, is_internal_res)) => {
-                // Use the is_internal flag returned by the task.
-                if is_internal_res {
-                    internal_statuses.push(status);
-                } else {
-                    external_statuses.push(status);
-                }
-            }
-            Err(e) => {
-                // Log errors from tasks that panicked or were cancelled.
-                eprintln!("Link checking task failed: {}", e);
-                // Consider collecting these errors as well.
-            }
+            Ok(Some((status, true))) => internal_statuses.push(status),
+            Ok(Some((status, false))) => external_statuses.push(status),
+            Ok(None) => {}
+            Err(e) => eprintln!("Task failed: {}", e),
         }
     }
 
-    // Return the aggregated results.
     LinkCheckResults {
-        page: (*page_arc).clone(), // Clone the String from the Arc for the final result
-        base_url: (*base_url_arc).clone(), // Clone the Url from the Arc for the final result
+        page: (*page_arc).clone(),
+        base_url: (*base_url_arc).clone(),
         internal: internal_statuses,
         external: external_statuses,
     }
 }
 
-// Optimized check_link_status function
 async fn check_link_status(
     client: &Client,
-    url: &str,                     // The absolute URL to check
-    base_url_arc: Arc<Url>,        // Use Arc<Url> directly
-    relative_path: Option<String>, // Original relative path for internal links
+    url: &str,
+    base_url_arc: Arc<Url>,
+    relative_path: Option<String>,
     anchor_text: Option<String>,
 ) -> LinkStatus {
-    // Use a timeout for the request operation itself.
-    // The client timeout acts as an overall deadline, this adds a specific one for the HEAD request.
-    // Consider if nested timeouts are necessary or if client.timeout is sufficient.
-    let request_timeout = Duration::from_secs(10);
+    if let Err(e) = Url::parse(url) {
+        return invalid_url_status(base_url_arc, url, relative_path, anchor_text, e);
+    }
 
-    match timeout(request_timeout, client.head(url).send()).await {
-        // Outer Ok: timeout did not elapse
-        // Inner Ok: Request succeeded (got a response, possibly error status code)
-        Ok(Ok(response)) => LinkStatus {
-            // Clone the Url from the Arc for the LinkStatus struct
-            base_url: (*base_url_arc).clone(),
-            url: url.to_string(),
-            relative_path,
-            status: Some(response.status().as_u16()),
-            error: None, // No network/request error, status code indicates link health
-            anchor_text,
-        },
-        // Outer Ok: timeout did not elapse
-        // Inner Err: Request failed (network error, DNS error, connection refused, etc.)
-        Ok(Err(e)) => LinkStatus {
-            base_url: (*base_url_arc).clone(),
-            url: url.to_string(),
-            relative_path,
-            status: None, // No status code available
-            error: Some(format!("Request error: {}", e)),
-            anchor_text,
-        },
-        // Outer Err: timeout elapsed
-        Err(_) => LinkStatus {
+    match try_head_then_get(client, url).await {
+        Ok(response) => {
+            handle_success_response(response, base_url_arc, url, relative_path, anchor_text)
+        }
+        Err(e) => LinkStatus {
             base_url: (*base_url_arc).clone(),
             url: url.to_string(),
             relative_path,
             status: None,
-            error: Some(format!(
-                "Request timed out after {} seconds",
-                request_timeout.as_secs()
-            )),
+            error: Some(e),
             anchor_text,
         },
     }
 }
 
-// This function is no longer needed in the main path, as the 'is_internal'
-// flag is determined once and passed through the task.
-// Kept here for reference or if needed elsewhere, but can be removed if unused.
+async fn try_head_then_get(client: &Client, url: &str) -> Result<reqwest::Response, String> {
+    // Try HEAD request first
+    match client.head(url).send().await {
+        Ok(response) => Ok(response),
+        Err(head_err) => {
+            // Fallback to GET if HEAD fails
+            match client.get(url).send().await {
+                Ok(response) => Ok(response),
+                Err(get_err) => Err(classify_error(&head_err, &get_err)),
+            }
+        }
+    }
+}
+
+fn classify_error(head_err: &reqwest::Error, get_err: &reqwest::Error) -> String {
+    if head_err.is_connect() || get_err.is_connect() {
+        "Connection failed".to_string()
+    } else if head_err.is_timeout() || get_err.is_timeout() {
+        "Timeout occurred".to_string()
+    } else if head_err.is_request() || get_err.is_request() {
+        "Invalid request".to_string()
+    } else if head_err.is_body() || head_err.is_decode() || get_err.is_body() || get_err.is_decode()
+    {
+        "Response body error".to_string()
+    } else {
+        format!("Request error: {}", get_err)
+    }
+}
+
+fn handle_success_response(
+    response: reqwest::Response,
+    base_url_arc: Arc<Url>,
+    url: &str,
+    relative_path: Option<String>,
+    anchor_text: Option<String>,
+) -> LinkStatus {
+    let status = response.status();
+    LinkStatus {
+        base_url: (*base_url_arc).clone(),
+        url: url.to_string(),
+        relative_path,
+        status: Some(status.as_u16()),
+        error: if status.is_client_error() || status.is_server_error() {
+            Some(format!("HTTP Error: {}", status))
+        } else {
+            None
+        },
+        anchor_text,
+    }
+}
+
+fn invalid_url_status(
+    base_url_arc: Arc<Url>,
+    url: &str,
+    relative_path: Option<String>,
+    anchor_text: Option<String>,
+    error: url::ParseError,
+) -> LinkStatus {
+    LinkStatus {
+        base_url: (*base_url_arc).clone(),
+        url: url.to_string(),
+        relative_path,
+        status: None,
+        error: Some(format!("Invalid URL format: {}", error)),
+        anchor_text,
+    }
+}
+
 #[allow(dead_code)]
 fn is_internal(url_to_check: &str, base_url: &Url) -> bool {
-    match Url::parse(url_to_check) {
-        Ok(parsed_url) => {
-            // Compare scheme and domain. Consider comparing port too if relevant.
+    Url::parse(url_to_check)
+        .map(|parsed_url| {
             parsed_url.scheme() == base_url.scheme() && parsed_url.domain() == base_url.domain()
-            // Add port comparison if needed: && parsed_url.port_or_known_default() == base_url.port_or_known_default()
-        }
-        Err(_) => false, // If parsing fails, treat as not internal (or handle error differently)
-    }
+        })
+        .unwrap_or(false)
 }

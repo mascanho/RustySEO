@@ -7,9 +7,9 @@ use url::Url;
 use crate::crawler::libs::LinkStatus;
 
 use super::helpers::{
-    alt_tags::AltTags, anchor_links::InternalExternalLinks, css_selector::CSS,
-    hreflang_selector::HreflangObject, html_size_calculator::Sizes, iframe_selector::Iframe,
-    indexability::Indexability, javascript_selector::JavaScript,
+    alt_tags::AltTags, anchor_links::InternalExternalLinks, cross_origin::SecuritySummary,
+    css_selector::CSS, hreflang_selector::HreflangObject, html_size_calculator::Sizes,
+    iframe_selector::Iframe, indexability::Indexability, javascript_selector::JavaScript,
     links_status_code_checker::LinkCheckResults, meta_robots_selector::MetaRobots,
     pdf_selector::PdfLinks, text_ratio::TextRatio, title_selector::TitleDetails,
 };
@@ -65,6 +65,8 @@ pub struct DomainCrawlResults {
     pub extractor: Extractor,
     pub headers: Vec<(String, String)>,
     pub pdf_files: Vec<String>,
+    pub https: bool,
+    pub cross_origin: SecuritySummary,
 }
 
 // Implement Default for DomainCrawlResults
@@ -107,6 +109,14 @@ impl Default for DomainCrawlResults {
             extractor: Extractor::default(),
             headers: Vec::new(),
             pdf_files: Vec::new(),
+            https: false,
+            cross_origin: SecuritySummary {
+                total_unsafe_anchors: 0,
+                total_insecure_iframes: 0,
+                total_mixed_content: 0,
+                total_missing_cors: 0,
+                total_inline_scripts: 0,
+            },
         }
     }
 }

@@ -5,20 +5,25 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashSet, VecDeque};
 use std::io::Write;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use std::time::Instant;
 use tauri::{Emitter, Manager};
 use tokio::sync::{Mutex, Semaphore};
+use tokio::task;
 use tokio::time::{sleep, Duration};
 use url::Url;
 
 use crate::domain_crawler::database::{Database, DatabaseResults};
 use crate::domain_crawler::extractors::html::extract_html;
-use crate::domain_crawler::helpers::sitemap::get_sitemap;
+use crate::domain_crawler::helpers::https_checker::valid_https;
 use crate::domain_crawler::models::Extractor;
+use crate::domain_crawler::user_agents;
+use crate::settings::settings::Settings;
+use crate::AppState;
 
 use super::database::{self, DatabaseError};
 use super::helpers::canonical_selector::get_canonical;
+use super::helpers::cross_origin::analyze_cross_origin_security;
 use super::helpers::flesch_reader::get_flesch_score;
 use super::helpers::hreflang_selector::select_hreflang;
 use super::helpers::html_size_calculator::calculate_html_size;
@@ -26,7 +31,6 @@ use super::helpers::keyword_selector::extract_keywords;
 use super::helpers::language_selector::detect_language;
 use super::helpers::links_status_code_checker::get_links_status_code;
 use super::helpers::meta_robots_selector::{get_meta_robots, MetaRobots};
-use super::helpers::robots::get_domain_robots;
 use super::helpers::text_ratio::{get_text_ratio, TextRatio};
 use super::helpers::{
     alt_tags, anchor_links, check_html_page,
@@ -165,6 +169,10 @@ async fn process_url(
     };
 
     let final_url = response.url().clone();
+
+    // check if the url is https or not
+    let https = valid_https(&final_url);
+
     let status_code = response.status().as_u16();
     let content_type = response
         .headers()
@@ -226,6 +234,9 @@ async fn process_url(
     let check_links_status_code =
         get_links_status_code(internal_external_links, base_url, final_url.to_string()).await;
 
+    // Cross-origin checker funtion
+    let cross_origin = analyze_cross_origin_security(&body, base_url);
+
     let result = DomainCrawlResults {
         url: final_url.to_string(),
         title: title_selector::extract_title(&body),
@@ -271,6 +282,8 @@ async fn process_url(
         },
         headers,
         pdf_files,
+        https,
+        cross_origin,
     };
 
     {
@@ -336,14 +349,22 @@ pub async fn crawl_domain(
     domain: &str,
     app_handle: tauri::AppHandle,
     db: Result<Database, DatabaseError>,
+    settings_state: tauri::State<'_, AppState>,
 ) -> Result<Vec<DomainCrawlResults>, String> {
-    let user_agents = vec![
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15",
-    ];
+    // Import the user agents from another module to use across domain crawler
+    let user_agents = user_agents::agents();
+
+    let settings = settings_state.settings.read().await;
+
+    println!(
+        "This is the settings files ouput: {:?}",
+        &settings.user_agents
+    );
 
     let client = Client::builder()
-        .user_agent(user_agents[rand::thread_rng().gen_range(0..user_agents.len())])
+        // .user_agent(&user_agents[rand::thread_rng().gen_range(0..user_agents.len())])
+        // Instead use the user agents in the configuration files
+        .user_agent(&settings.user_agents[rand::thread_rng().gen_range(0..user_agents.len())])
         .timeout(Duration::from_secs(60))
         .connect_timeout(Duration::from_secs(15))
         .redirect(reqwest::redirect::Policy::limited(5))
@@ -369,7 +390,9 @@ pub async fn crawl_domain(
         state.pending_urls.insert(base_url.to_string());
     }
 
-    let semaphore = Arc::new(Semaphore::new(CONCURRENT_REQUESTS));
+    // Using the settings here to replace the hardcoded concurrent requests
+    // let semaphore = Arc::new(Semaphore::new(CONCURRENT_REQUESTS));
+    let semaphore = Arc::new(Semaphore::new(settings.concurrent_requests));
     let crawl_start_time = Instant::now();
     let mut batch_counter = 0;
 

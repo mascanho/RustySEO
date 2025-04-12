@@ -1,7 +1,7 @@
 use directories::ProjectDirs;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
-use rusqlite::{params, Result as RusqliteResult};
+use rusqlite::{params, Connection, Result as RusqliteResult};
 use serde::Serialize;
 use serde_json::{self, Value};
 use std::fs;
@@ -159,6 +159,57 @@ impl Database {
         result
     }
 
+    pub async fn initialize_db(db_path: &Path) -> Result<Self, DatabaseError> {
+        let manager = SqliteConnectionManager::file(db_path).with_init(|conn| {
+            conn.pragma_update(None, "journal_mode", "WAL")?;
+            conn.pragma_update(None, "synchronous", "NORMAL")?;
+            Ok(())
+        });
+
+        let pool = Pool::builder()
+            .max_size(16)
+            .connection_timeout(Duration::from_secs(60))
+            .max_lifetime(Some(Duration::from_secs(1800)))
+            .idle_timeout(Some(Duration::from_secs(300)))
+            .build(manager)
+            .map_err(|e| {
+                DatabaseError::ConnectionError(format!(
+                    "Failed to create connection pool for {}: {}",
+                    db_path.display(),
+                    e
+                ))
+            })?;
+
+        let test_conn = pool.get().map_err(|e| {
+            DatabaseError::ConnectionError(format!(
+                "Failed to get initial connection for {}: {}",
+                db_path.display(),
+                e
+            ))
+        })?;
+        drop(test_conn);
+
+        Ok(Self {
+            pool: Arc::new(pool),
+            initialized: Arc::new(Mutex::new(false)), // Initialize with Mutex
+        })
+    }
+
+    pub async fn get_urls(&self) -> Result<Vec<String>, DatabaseError> {
+        let conn = self.pool.get()?;
+        let mut stmt = conn.prepare("SELECT url FROM domain_crawl")?;
+        let urls = stmt
+            .query_map(params![], |row| row.get::<_, String>(0))?
+            .collect::<Result<Vec<String>, _>>()?;
+
+        println!(
+            "Found {} urls in database, trasnferring them to the frontend",
+            urls.len()
+        );
+
+        Ok(urls)
+    }
+
     pub async fn clear(&self) -> Result<(), DatabaseError> {
         let initialized = self.initialized.lock().await;
         if !*initialized {
@@ -259,9 +310,128 @@ pub async fn insert_bulk_crawl_data(
             entries.len(),
             total_rows
         );
+
         Ok(())
     })
     .await?;
 
+    let _create_diff_tables = create_diff_tables().expect("Unable to create the tables for Diffs");
+
+    // now insert just the URLs into a different db and table
+    let project_dirs = ProjectDirs::from("", "", "rustyseo").ok_or_else(|| {
+        DatabaseError::DirectoryError("Failed to get project directories".to_string())
+    })?;
+
+    let data_dir = project_dirs.data_dir();
+    let db_dir = data_dir.join("db");
+
+    let db = Database::initialize_db(&db_dir.join("deep_crawl_batches.db")).await?;
+
+    let conn_diffs = Connection::open(db_dir.join("diff.db"))?;
+
+    let urls = db.get_urls().await?;
+
+    conn_diffs.execute("DELETE FROM previous_crawl", params![])?;
+
+    for url in &urls {
+        conn_diffs.execute(
+            "INSERT OR REPLACE INTO previous_crawl (url) VALUES (?1)",
+            params![url],
+        )?;
+        conn_diffs.execute(
+            "INSERT OR REPLACE INTO current_crawl (url) VALUES (?1)",
+            params![url],
+        )?;
+    }
+
     result
+}
+
+// Create the tables for the diff crawler
+pub fn create_diff_tables() -> Result<(), DatabaseError> {
+    let project_dirs = ProjectDirs::from("", "", "rustyseo").ok_or_else(|| {
+        DatabaseError::DirectoryError("Failed to get project directories".to_string())
+    })?;
+
+    let data_dir = project_dirs.data_dir();
+    let db_dir = data_dir.join("db");
+
+    // Ensure the directory exists
+    fs::create_dir_all(&db_dir).map_err(|e| {
+        DatabaseError::DirectoryError(format!("Failed to create db directory: {}", e))
+    })?;
+
+    let conn = Connection::open(db_dir.join("diff.db"))?;
+
+    conn.execute_batch(
+        "CREATE TABLE IF NOT EXISTS previous_crawl (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            url TEXT NOT NULL UNIQUE
+        )",
+    )?;
+
+    conn.execute_batch(
+        "
+
+        CREATE TABLE IF NOT EXISTS current_crawl (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            url TEXT NOT NULL UNIQUE
+        )
+
+        ",
+    )?;
+
+    println!("Tables created successfully");
+
+    Ok(())
+}
+
+pub async fn analyse_diffs() -> Result<(), DatabaseError> {
+    println!("Analyzing diffs");
+
+    let project_dirs = ProjectDirs::from("", "", "rustyseo").ok_or_else(|| {
+        DatabaseError::DirectoryError("Failed to get project directories".to_string())
+    })?;
+
+    let data_dir = project_dirs.data_dir();
+    let db_dir = data_dir.join("db");
+
+    let db = Database::initialize_db(&db_dir.join("deep_crawl_batches.db")).await?;
+
+    let urls = db.get_urls().await?;
+
+    for url in &urls {
+        // Assuming you just want to print URLs for now since get_diff isn't defined
+        println!("URL: {}", url);
+    }
+
+    Ok(()) // Return Ok(()) as per the function signature
+}
+
+pub async fn clone_batched_crawl_into_persistent_db() -> Result<(), DatabaseError> {
+    let project_dirs = ProjectDirs::from("", "", "rustyseo").ok_or_else(|| {
+        DatabaseError::DirectoryError("Failed to get project directories".to_string())
+    })?;
+
+    let data_dir = project_dirs.data_dir();
+    let db_dir = data_dir.join("db");
+
+    let db = Database::initialize_db(&db_dir.join("deep_crawl_batches.db")).await?;
+
+    let conn_diffs = Connection::open(db_dir.join("diff.db"))?;
+
+    let urls = db.get_urls().await?;
+
+    for url in &urls {
+        conn_diffs.execute(
+            "INSERT OR REPLACE INTO previous_crawl (url) VALUES (?1)",
+            params![url],
+        )?;
+        conn_diffs.execute(
+            "INSERT OR REPLACE INTO current_crawl (url) VALUES (?1)",
+            params![url],
+        )?;
+    }
+
+    Ok(())
 }

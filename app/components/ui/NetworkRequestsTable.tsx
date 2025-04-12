@@ -8,7 +8,7 @@ const NetworkRequestsTable = ({ pageSpeed }: { pageSpeed: any }) => {
     pageSpeed?.lighthouseResult?.audits?.["network-requests"]?.details?.items ||
     [];
 
-  let urlSize = 150;
+  const urlSize = 150;
 
   return (
     <section
@@ -18,41 +18,47 @@ const NetworkRequestsTable = ({ pageSpeed }: { pageSpeed: any }) => {
         <BsHddNetwork className="mr-1.5" /> Network Requests
       </h2>
 
-      <div className="overflow-y-auto h-[25.3rem] shadow custom-scrollbar overflow-x-auto">
-        <table className="w-fit h-full">
-          <thead className="sticky top-0 bg-white dark:bg-transparent shadow">
-            <tr>
-              <th align="left" className="text-xs border-r border-gray-300">
-                <span className="-ml-1 ">Mime Type</span>
-              </th>
-              <th
-                align="left"
-                className="text-xs max-w-[200px] border-r border-gray-300 dark:text-white"
-              >
-                URL
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white  h-[calc(30rem - 3.5rem)] overflow-y-auto">
-            {nr.map((item: any, index: number) => (
-              <tr className="w-[1200px]" key={index}>
-                <td className="px-2 text-[6px] text-gray-700 w-[200px] min-w-[95px] dark:text-white/50 border-b border-r">
-                  {item?.mimeType}
-                </td>{" "}
-                <td className="px-4 text-xs text-blue-600 truncate w-[60rem] dark:text-blue-600 border-b">
-                  <span className="w-full ">
-                    {item?.url?.length > 50
-                      ? item?.url?.slice(0, urlSize) + "..."
-                      : item?.url}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="h-full overflow-hidden">
+        <section className="mx-auto flex flex-col w-full bg-white">
+          <div className="relative">
+            {/* Separate table for header */}
+            <table className="w-full">
+              <thead className="text-xs text-left">
+                <tr>
+                  <th className="w-[110px] border-r border-gray-300">
+                    Mime Type
+                  </th>
+                  <th className="border-r border-gray-300">URL</th>
+                </tr>
+              </thead>
+            </table>
+
+            {/* Scrollable body container */}
+            <div className="overflow-auto custom-scrollbar h-[23.5rem]">
+              <table className="w-full">
+                <tbody>
+                  {nr.map((item: any, index: number) => (
+                    <tr key={index} className="align-middle">
+                      <td className="px-2 text-[6px] text-gray-700 w-[120px] dark:text-white/50 border-r border-b">
+                        {item?.mimeType}
+                      </td>
+                      <td className="border-b">
+                        <span className="px-4 text-xs text-blue-600 truncate dark:text-blue-600 block py-1">
+                          {item?.url?.length > urlSize
+                            ? `${item.url.slice(0, urlSize)}...`
+                            : item?.url}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
       </div>
 
-      <div className="pt-2  m-2 rounded-md text-xs flex justify-end text-black/50 space-x-4">
+      <div className="pt-2 m-2 rounded-md text-xs flex justify-end text-black/50 space-x-4">
         <p>
           Total Requests:{" "}
           <span className="px-1 py-0.5 bg-gray-400 text-white rounded-md min-w-3">

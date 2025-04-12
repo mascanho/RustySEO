@@ -9,7 +9,7 @@ import {
   MenubarShortcut,
   MenubarTrigger,
 } from "@/components/ui/menubar";
-import { Alert, Drawer, Modal } from "@mantine/core";
+import { Alert, Drawer, MenuItem, Modal } from "@mantine/core";
 import Todo from "./Todo";
 import { useDisclosure } from "@mantine/hooks";
 import TodoItems from "./TodoItems";
@@ -60,6 +60,10 @@ import { FaGear } from "react-icons/fa6";
 import MSClarity from "./MSClarityModal/MSClarityModal";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import CustomSearchSelector from "./Extractors/CustomSearchSelector";
+import { PiGitDiff } from "react-icons/pi";
+import DiffChecker from "./DiffChecker/DiffChecker";
+import { GoFileDiff } from "react-icons/go";
+import { Settings } from "lucide-react";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -120,6 +124,12 @@ const TopMenuBar = () => {
 
   const [openedConfs, { open: openConfs, close: closeConfs }] =
     useDisclosure(false);
+
+  // Diff Crawl Checker
+  const [
+    openedDiffChecker,
+    { open: openDiffChecker, close: closeDiffChecker },
+  ] = useDisclosure(false);
 
   useEffect(() => {
     const fetchUrlFromSessionStorage = () => {
@@ -202,6 +212,16 @@ const TopMenuBar = () => {
     setStrategy(strategy); // Changed from setTodoStrategy
     openModal();
   };
+
+  // OPEN Configurations FILE USING NATIVE TEXT EDITOR
+  async function handleOpenConfigFile() {
+    try {
+      await invoke("open_configs_with_native_editor");
+      console.log("Config file opened successfuylly");
+    } catch (error) {
+      console.error("failed to open the file", error);
+    }
+  }
 
   return (
     <>
@@ -340,6 +360,53 @@ const TopMenuBar = () => {
         <Configurations close={closeConfs} />
       </Modal>
 
+      {/* Native-like Diff Checker Modal */}
+      <Modal
+        opened={openedDiffChecker}
+        onClose={closeDiffChecker}
+        title="Crawl Diff Checker"
+        size="40%"
+        overlayProps={{
+          backgroundOpacity: 0.55,
+          blur: 3,
+        }}
+        transitionProps={{
+          transition: "fade",
+          duration: 200,
+          timingFunction: "ease",
+        }}
+        styles={{
+          header: {
+            backgroundColor: isDarkMode ? "#171717" : "#f8f9fa",
+            borderBottom: isDarkMode
+              ? "1px solid #2d3748"
+              : "1px solid #e2e8f0",
+            padding: "0.2rem",
+          },
+          content: {
+            backgroundColor: isDarkMode ? "#171717" : "#ffffff",
+            border: isDarkMode ? "1px solid #2d3748" : "1px solid #e2e8f0",
+            borderRadius: "0.5rem",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.15)",
+            maxHeight: "100%",
+            padding: 0,
+            marginTop: "10rem",
+            height: "37rem",
+            overflow: "hidden",
+          },
+          body: {
+            padding: 0,
+            height: "100%",
+          },
+        }}
+        closeButtonProps={{
+          color: isDarkMode ? "gray" : "dark",
+          size: "md",
+        }}
+      >
+        <DiffChecker />
+      </Modal>
+
       {/* Extractor Component - Now controlled by global store */}
       {visibility.customSearch && (
         <CustomSearchSelector close={hideCustomSearch} />
@@ -364,6 +431,10 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-4">View</MenubarTrigger>
             <MenubarContent>
+              <MenubarItem onClick={handleOpenConfigFile}>
+                <Settings size={12} className="mr-1.5" />
+                Crawl Settings
+              </MenubarItem>
               <MenubarItem
                 disabled={pathname === "/global"}
                 onClick={openPanes}
@@ -430,11 +501,19 @@ const TopMenuBar = () => {
                 <FiTool className="mr-2" />
                 Headings SERP
               </MenubarItem>
-              {/* TODO: FIX THE TOPIC MODELING PART */}
-              {/* <MenubarItem onClick={() => router.push("/topicModeling/")}> */}
-              {/*   <FiTool className="mr-2" /> */}
-              {/*   Topic Modeling */}
-              {/* </MenubarItem> */}
+              <MenubarSeparator />
+              <MenubarItem
+                disabled={pathname !== "/global"}
+                onClick={openDiffChecker}
+              >
+                <GoFileDiff className="mr-2 font-semibold" />
+                Crawl Diff
+              </MenubarItem>
+              <MenubarSeparator />
+              <MenubarItem onClick={() => router.push("/serverlogs")}>
+                <GoFileDiff className="mr-2 font-semibold" />
+                Log Checker
+              </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
 

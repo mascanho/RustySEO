@@ -193,7 +193,7 @@ function UptimeTimer() {
     return () => clearInterval(interval);
   }, []);
 
-  return <div className="text-zinc-400 text-xs">Uptime: {uptime}</div>;
+  return <div className="text-zinc-400 text-[11px]">Uptime: {uptime}</div>;
 }
 
 export default function ConsoleLog() {

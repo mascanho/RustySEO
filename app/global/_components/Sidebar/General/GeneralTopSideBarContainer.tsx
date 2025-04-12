@@ -12,6 +12,9 @@ import MetaDescriptions from "./DropDowns/MetaDescriptions";
 import H1 from "./DropDowns/H1";
 import H2 from "./DropDowns/H2";
 import CustomSearch from "./DropDowns/CustomSearch";
+import Security from "./DropDowns/Security";
+import URLinfo from "./DropDowns/URLinfo";
+import Content from "./DropDowns/Content";
 
 const GeneralTopSideBarContainer = () => {
   return (
@@ -23,6 +26,8 @@ const GeneralTopSideBarContainer = () => {
       </section>
       <div className="overflow-hidden">
         <Summary />
+        {/* TODO: Needs to be finished */}
+        {/* <Content /> */}
         <PageTitles />
         <MetaDescriptions />
         <H1 />
@@ -32,6 +37,11 @@ const GeneralTopSideBarContainer = () => {
         {/* <Iframes /> */}
         <Javascript />
         <Schema />
+        {/* TODO: Needs to be finished */}
+        <Security />
+        {/* TODO: Needs to be finished */}
+        <URLinfo />
+        {/* TODO: Needs to be finished */}
         <StatusCodes />
         <CustomSearch />
       </div>
