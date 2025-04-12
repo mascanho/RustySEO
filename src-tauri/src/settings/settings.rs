@@ -18,7 +18,7 @@ pub struct Settings {
     pub db_batch_size: usize,
     pub user_agents: Vec<String>,
     pub html: bool,
-    pub links_concurrent_requests: usize,
+    pub links_max_concurrent_requests: usize,
     pub links_initial_task_capacity: usize,
     pub links_max_retries: usize,
     pub links_retry_delay: u64,
@@ -37,7 +37,7 @@ impl Settings {
             db_batch_size: 10,
             user_agents: user_agents::agents(),
             html: false,
-            links_concurrent_requests: 150,
+            links_max_concurrent_requests: 150,
             links_initial_task_capacity: 100,
             links_max_retries: 3,
             links_request_timeout: 15,
@@ -122,7 +122,7 @@ pub fn print_settings(settings: &Settings) {
     println!("DB Batch Size: {}", settings.db_batch_size);
     println!(
         "Links Concurrent Requests: {}",
-        settings.links_concurrent_requests
+        settings.links_max_concurrent_requests
     );
     println!("User Agents: {:?}", settings.user_agents);
     println!("HTML: {}", settings.html);

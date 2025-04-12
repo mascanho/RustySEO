@@ -52,7 +52,7 @@ pub async fn get_links_status_code(
     let client = build_client(&user_agents);
     let client = Arc::new(client);
 
-    let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_REQUESTS));
+    let semaphore = Arc::new(Semaphore::new(settings.links_max_concurrent_requests));
     let base_url_arc = Arc::new(base_url.clone());
     let page_arc = Arc::new(page);
     let seen_urls = Arc::new(Mutex::new(HashSet::with_capacity(INITIAL_TASK_CAPACITY)));
