@@ -243,7 +243,7 @@ async fn process_url(
         internal_external_links,
         base_url,
         final_url.to_string(),
-        settings,
+        //settings,
     )
     .await;
 
