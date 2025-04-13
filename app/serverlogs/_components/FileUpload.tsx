@@ -39,6 +39,18 @@ export function FileUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { analyseLogs, setRawLogContent } = useLogAnalysis();
 
+  // Zustand
+  const {
+    entries,
+    overview,
+    isLoading,
+    filters,
+    setLogData,
+    setFilter,
+    resetFilters,
+    resetAll,
+  } = useLogAnalysis();
+
   // Zustand store
 
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
@@ -131,7 +143,10 @@ export function FileUpload({
         data: { log_content: fileContent },
       });
 
+      // persist the data into Zustand
+      setLogData(result);
       console.log(result, "This is the result");
+      console.log("From the store: ", entries);
 
       // Complete the animation
       if (progressInterval) clearInterval(progressInterval);

@@ -38,6 +38,7 @@ import {
 import { ChevronDown, Download, Filter, RefreshCw, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { useLogAnalysis } from "@/store/ServerLogsStore";
 
 // Mock data for demonstration
 const mockLogs = Array.from({ length: 100 }, (_, i) => ({
@@ -124,6 +125,17 @@ export function LogAnalyzer() {
     key: string;
     direction: "ascending" | "descending";
   } | null>(null);
+
+  const {
+    entries,
+    overview,
+    isLoading,
+    error,
+    filters,
+    setLogData,
+    setFilter,
+    resetAll,
+  } = useLogAnalysis();
 
   // Apply filters and search
   useEffect(() => {

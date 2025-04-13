@@ -91,7 +91,7 @@ export const useLogAnalysisStore = create<
         };
         state.isLoading = false;
         state.error = null;
-        console.log("setLogData: Stored entries count:", data.entries.length); // Debug
+        console.log("Zustand Log Store", data.entries); // Debug
         console.log("setLogData: Overview:", data.overview); // Debug
       }),
 
