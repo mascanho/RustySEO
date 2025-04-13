@@ -2,7 +2,11 @@
 "use client";
 
 import { BarSeriesChart } from "./_components/charts/BarSeriesChart";
-import { PieChart, PieChartLogs } from "./_components/charts/PieChart";
+import {
+  PieChart,
+  PieChartLogs,
+  PieChartStatus,
+} from "./_components/charts/PieChartStatus";
 import { TimelineChart } from "./_components/charts/TimelineChart";
 import InputZone from "./_components/InputZone";
 import { LogAnalyzer } from "./_components/table/log-analyzer";
@@ -22,10 +26,10 @@ export default function Page() {
       <main className="h-screen  pb-[6.2rem] overflow-auto">
         <TimelineChart />
         <div className="flex w-full flex-1 justify-evenly bg-white">
-          <PieChartLogs />
-          <PieChartLogs />
-          <PieChartLogs />
-          <PieChartLogs />
+          {/* <PieChartStatus /> */}
+          {/* <PieChartStatus /> */}
+          {/* <PieChartStatus /> */}
+          {/* <PieChartStatus /> */}
         </div>
         <LogAnalyzer />
       </main>

@@ -67,6 +67,13 @@ const getStatusCodeColor = (code: number) => {
   return "bg-gray-500";
 };
 
+// Format response size
+const formatResponseSize = (bytes: number) => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
 export function LogAnalyzer() {
   const {
     entries,
@@ -90,6 +97,7 @@ export function LogAnalyzer() {
     key: string;
     direction: "ascending" | "descending";
   } | null>(null);
+  const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
   // Apply filters and search
   useEffect(() => {
@@ -104,7 +112,8 @@ export function LogAnalyzer() {
         (log) =>
           log.ip.toLowerCase().includes(lowerCaseSearch) ||
           log.path.toLowerCase().includes(lowerCaseSearch) ||
-          log.userAgent.toLowerCase().includes(lowerCaseSearch),
+          log.user_agent.toLowerCase().includes(lowerCaseSearch) ||
+          (log.referer && log.referer.toLowerCase().includes(lowerCaseSearch)),
       );
     }
 
@@ -186,6 +195,7 @@ export function LogAnalyzer() {
     setMethodFilter([]);
     setBotFilter("all");
     setSortConfig(null);
+    setExpandedRow(null);
   };
 
   // Export logs as CSV
@@ -213,7 +223,7 @@ export function LogAnalyzer() {
       log.path,
       log.status,
       log.responseSize,
-      `"${log.userAgent.replace(/"/g, '""')}"`,
+      `"${log.user_agent.replace(/"/g, '""')}"`,
       log.referer || "-",
       log.isCrawler ? "Bot" : "Human",
     ]);
@@ -261,7 +271,7 @@ export function LogAnalyzer() {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search by IP, path, or user agent..."
+            placeholder="Search by IP, path, user agent, or referer..."
             className="pl-8"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -465,12 +475,11 @@ export function LogAnalyzer() {
                         />
                       )}
                     </TableHead>
-                    <TableHead>Bot/Human</TableHead>
                     <TableHead
                       className="cursor-pointer"
                       onClick={() => requestSort("responseSize")}
                     >
-                      Response Size
+                      Size
                       {sortConfig?.key === "responseSize" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${
@@ -481,67 +490,108 @@ export function LogAnalyzer() {
                         />
                       )}
                     </TableHead>
+                    <TableHead>Details</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {currentLogs.length > 0 ? (
                     currentLogs.map((log, index) => (
-                      <TableRow
-                        key={`${log.ip}-${log.timestamp}-${index}`}
-                        className="group"
-                      >
-                        <TableCell className="font-medium">
-                          {indexOfFirstItem + index + 1}
-                        </TableCell>
-                        <TableCell>
-                          {log.ip}
-                          {log.country && (
-                            <Badge variant="outline" className="ml-2">
-                              {log.country}
+                      <>
+                        <TableRow
+                          key={`${log.ip}-${log.timestamp}-${index}`}
+                          className="group cursor-pointer"
+                          onClick={() =>
+                            setExpandedRow(expandedRow === index ? null : index)
+                          }
+                        >
+                          <TableCell className="font-medium">
+                            {indexOfFirstItem + index + 1}
+                          </TableCell>
+                          <TableCell>
+                            {log.ip}
+                            {log.country && (
+                              <Badge variant="outline" className="ml-2">
+                                {log.country}
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>{formatDate(log.timestamp)}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={
+                                log.method === "GET"
+                                  ? "bg-green-100 text-green-800 border-green-200"
+                                  : log.method === "POST"
+                                    ? "bg-blue-100 text-blue-800 border-blue-200"
+                                    : log.method === "PUT"
+                                      ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                                      : "bg-red-100 text-red-800 border-red-200"
+                              }
+                            >
+                              {log.method}
                             </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>{formatDate(log.timestamp)}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant="outline"
-                            className={
-                              log.method === "GET"
-                                ? "bg-green-100 text-green-800 border-green-200"
-                                : log.method === "POST"
-                                  ? "bg-blue-100 text-blue-800 border-blue-200"
-                                  : log.method === "PUT"
-                                    ? "bg-yellow-100 text-yellow-800 border-yellow-200"
-                                    : "bg-red-100 text-red-800 border-red-200"
-                            }
-                          >
-                            {log.method}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="max-w-[200px] truncate">
-                          {log.path}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            className={`${getStatusCodeColor(log.status)} text-white`}
-                          >
-                            {log.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant="outline"
-                            className={
-                              log.isCrawler
-                                ? "bg-purple-100 text-purple-800 border-purple-200"
-                                : "bg-green-100 text-green-800 border-green-200"
-                            }
-                          >
-                            {log.isCrawler ? "Bot" : "Human"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{log.responseSize} bytes</TableCell>
-                      </TableRow>
+                          </TableCell>
+                          <TableCell className="max-w-[200px] truncate">
+                            {log.path}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              className={`${getStatusCodeColor(log.status)} text-white`}
+                            >
+                              {log.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {formatResponseSize(log.response_size)}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className={
+                                log.isCrawler
+                                  ? "bg-purple-100 text-purple-800 border-purple-200"
+                                  : "bg-green-100 text-green-800 border-green-200"
+                              }
+                            >
+                              {log.isCrawler ? "Bot" : "Human"}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                        {expandedRow === index && (
+                          <TableRow>
+                            <TableCell
+                              colSpan={8}
+                              className="bg-gray-50 dark:bg-gray-800 p-4"
+                            >
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <h4 className="font-medium mb-2">
+                                    User Agent
+                                  </h4>
+                                  <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-md">
+                                    <p className="text-sm font-mono break-all">
+                                      {log.user_agent}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div>
+                                  <h4 className="font-medium mb-2">Referer</h4>
+                                  <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-md">
+                                    <p className="text-sm break-all">
+                                      {log.referer || (
+                                        <span className="text-muted-foreground">
+                                          No referer
+                                        </span>
+                                      )}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}{" "}
+                      </>
                     ))
                   ) : (
                     <TableRow>
