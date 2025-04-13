@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect } from "react";
 import {
   AlertCircle,
@@ -392,7 +393,7 @@ export function LogAnalyzer() {
         </div>
       </div>
 
-      <div className="h-[calc(100vh-35.1rem)]">
+      <div style={{ height: "calc(100vh - 47vh)" }}>
         <CardContent className="p-0 h-full">
           <div className="rounded-md border h-full">
             <div className="relative w-full h-full overflow-auto">

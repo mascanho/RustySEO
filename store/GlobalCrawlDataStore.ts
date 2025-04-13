@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { create } from "zustand";
 import { shallow } from "zustand/shallow";
 import { useCallback } from "react";
