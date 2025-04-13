@@ -5,6 +5,7 @@ import { BarSeriesChart } from "./_components/charts/BarSeriesChart";
 import { PieChart, PieChartLogs } from "./_components/charts/PieChart";
 import { TimelineChart } from "./_components/charts/TimelineChart";
 import InputZone from "./_components/InputZone";
+import { LogAnalyzer } from "./_components/table/log-analyzer";
 import UploadButton from "./_components/UploadButton";
 
 interface CrawlResult {
@@ -16,7 +17,7 @@ interface CrawlResult {
 
 export default function Page() {
   return (
-    <section className="flex flex-col dark:bg-brand-darker  overflow-visible w-[100%] pt-[3rem]">
+    <section className="flex flex-col dark:bg-brand-darker  overflow-visible w-[100%] pt-[3rem] h-screen">
       <InputZone handleDomainCrawl={""} />
       <main className="h-screen  pb-[6.2rem] overflow-auto">
         <TimelineChart />
@@ -26,12 +27,7 @@ export default function Page() {
           <PieChartLogs />
           <PieChartLogs />
         </div>
-        <div className="flex w-full flex-1 justify-evenly bg-white">
-          <PieChartLogs />
-          <PieChartLogs />
-          <PieChartLogs />
-          <PieChartLogs />
-        </div>{" "}
+        <LogAnalyzer />
       </main>
     </section>
   );
