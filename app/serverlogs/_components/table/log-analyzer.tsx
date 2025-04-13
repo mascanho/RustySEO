@@ -392,7 +392,7 @@ export function LogAnalyzer() {
         </div>
       </div>
 
-      <div className="h-[calc(100vh-12.4rem)]">
+      <div className="h-[calc(100vh-35.1rem)]">
         <CardContent className="p-0 h-full">
           <div className="rounded-md border h-full">
             <div className="relative w-full h-full overflow-auto">
@@ -607,10 +607,10 @@ export function LogAnalyzer() {
         </CardContent>
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between w-full -mt-10">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">
-            Showing {indexOfFirstItem + 1}-
+            {indexOfFirstItem + 1}-
             {Math.min(
               indexOfLastItem,
               filteredLogs.length > 0 ? filteredLogs.length : entries.length,
@@ -618,24 +618,9 @@ export function LogAnalyzer() {
             of {filteredLogs.length > 0 ? filteredLogs.length : entries.length}{" "}
             entries
           </span>
-          <Select
-            value={itemsPerPage.toString()}
-            onValueChange={(value) => setItemsPerPage(Number(value))}
-          >
-            <SelectTrigger className="w-[70px]">
-              <SelectValue placeholder="100" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="25">25</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-              <SelectItem value="100">100</SelectItem>
-            </SelectContent>
-          </Select>
-          <span className="text-sm text-muted-foreground">per page</span>
         </div>
 
-        <Pagination>
+        <Pagination className="text-xs">
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
@@ -696,6 +681,20 @@ export function LogAnalyzer() {
             </PaginationItem>
           </PaginationContent>
         </Pagination>
+        <Select
+          value={itemsPerPage.toString()}
+          onValueChange={(value) => setItemsPerPage(Number(value))}
+        >
+          <SelectTrigger className="w-[70px]">
+            <SelectValue placeholder="100" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="10">10</SelectItem>
+            <SelectItem value="25">25</SelectItem>
+            <SelectItem value="50">50</SelectItem>
+            <SelectItem value="100">100</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

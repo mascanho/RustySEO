@@ -21,16 +21,10 @@ interface CrawlResult {
 
 export default function Page() {
   return (
-    <section className="flex flex-col dark:bg-brand-darker  overflow-visible w-[100%] pt-[3rem] h-screen">
+    <section className="flex flex-col dark:bg-brand-darker   w-[100%] pt-[4rem] h-[calc(100vh - 20-rem)] overflow-hidden  ">
       <InputZone handleDomainCrawl={""} />
-      <main className="h-screen  pb-[6.2rem] overflow-auto">
+      <main className="pb-[6.2rem] overflow-auto">
         <TimelineChart />
-        <div className="flex w-full flex-1 justify-evenly bg-white">
-          {/* <PieChartStatus /> */}
-          {/* <PieChartStatus /> */}
-          {/* <PieChartStatus /> */}
-          {/* <PieChartStatus /> */}
-        </div>
         <LogAnalyzer />
       </main>
     </section>
