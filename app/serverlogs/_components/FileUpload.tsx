@@ -9,19 +9,19 @@ import { cn } from "@/lib/utils";
 interface FileUploadProps {
   maxSizeMB?: number;
   acceptedFileTypes?: string[];
-  onUpload?: (file: File) => Promise<void>;
   className?: string;
 }
 
 export function FileUpload({
-  maxSizeMB = 5,
+  maxSizeMB = 245,
   acceptedFileTypes = [
     "image/jpeg",
     "image/png",
     "image/gif",
     "application/pdf",
+    "text/plain",
+    "text",
   ],
-  onUpload,
   className,
 }: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
@@ -44,22 +44,30 @@ export function FileUpload({
     setIsDragging(false);
   };
 
-  const validateFile = (file: File): boolean => {
-    setError(null);
-
-    if (!acceptedFileTypes.includes(file.type)) {
-      setError(
-        `File type not supported. Please upload: ${acceptedFileTypes.join(", ")}`,
-      );
+  const validateFile = (file: any) => {
+    const fileSizeMB = file.size / 1024 / 1024;
+    if (fileSizeMB > maxSizeMB) {
+      setError(`File size exceeds the maximum limit of ${maxSizeMB}MB.`);
       return false;
     }
 
-    if (file.size > maxSizeBytes) {
-      setError(`File is too large. Maximum size is ${maxSizeMB}MB`);
-      return false;
+    const fileType = file.type || "";
+    const fileExtension = file.name.split(".").pop().toLowerCase();
+
+    // Check if the file type or extension is accepted
+    if (
+      acceptedFileTypes.includes(fileType) ||
+      acceptedFileTypes.includes(`text/${fileExtension}`) ||
+      (fileExtension === "log" && acceptedFileTypes.includes("text/plain"))
+    ) {
+      setError(null);
+      return true;
     }
 
-    return true;
+    setError(
+      `Unsupported file type. Supported types: ${acceptedFileTypes.join(", ")}`,
+    );
+    return false;
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
@@ -70,7 +78,7 @@ export function FileUpload({
       const droppedFile = e.dataTransfer.files[0];
       if (validateFile(droppedFile)) {
         setFile(droppedFile);
-        console.log("Selected file:", droppedFile); // Log file info
+        console.log("Selected file:", droppedFile);
       }
     }
   };
@@ -80,7 +88,7 @@ export function FileUpload({
       const selectedFile = e.target.files[0];
       if (validateFile(selectedFile)) {
         setFile(selectedFile);
-        console.log("Selected file:", selectedFile); // Log file info
+        console.log("Selected file:", selectedFile);
       }
     }
   };
@@ -92,50 +100,39 @@ export function FileUpload({
       setUploading(true);
       setProgress(0);
 
-      // Log file details before upload
+      // Convert File to Uint8Array for Tauri
+      const arrayBuffer = await file.arrayBuffer();
+      const bytes = Array.from(new Uint8Array(arrayBuffer));
+
       console.log("Uploading file:", {
         name: file.name,
         type: file.type,
         size: file.size,
-        lastModified: file.lastModified,
       });
 
-      // Simulate upload progress
+      // Simulate progress (replace with actual progress events if supported by your backend)
       const progressInterval = setInterval(() => {
         setProgress((prev) => {
           const newProgress = prev + 10;
-          if (newProgress >= 100) {
+          if (newProgress >= 90) {
+            // Stop at 90% until completion
             clearInterval(progressInterval);
-            return 100;
+            return 90;
           }
           return newProgress;
         });
       }, 300);
 
-      if (onUpload) {
-        await onUpload(file);
-      } else {
-        // Prepare FormData for backend submission
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("fileName", file.name);
-        formData.append("fileType", file.type);
+      // Call Tauri backend command
+      const result = await invoke("handle_file_upload", {
+        fileName: file.name,
+        fileType: file.type,
+        fileBytes: bytes,
+      });
 
-        // Example API call (replace with your actual endpoint)
-        const response = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
+      console.log("Upload result:", result);
 
-        if (!response.ok) {
-          throw new Error(`Upload failed: ${response.statusText}`);
-        }
-
-        const result = await response.json();
-        console.log("Upload successful:", result);
-      }
-
-      clearInterval(progressInterval);
+      // Complete the progress
       setProgress(100);
       setSuccess(true);
 
@@ -221,7 +218,7 @@ export function FileUpload({
               onClick={handleRemoveFile}
               disabled={uploading}
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4 text-[9px] text-red-500" />
               <span className="sr-only">Remove file</span>
             </Button>
           </div>
