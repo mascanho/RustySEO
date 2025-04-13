@@ -152,6 +152,10 @@ function MenuDrawer() {
       if (event.ctrlKey && event.key === "r") {
         router.refresh();
       }
+
+      if (event.ctrlKey && event.key === "k") {
+        router.push("/serverlogs");
+      }
     };
 
     // Add the event listener

@@ -116,7 +116,7 @@ export function LogAnalyzer() {
   const [filteredLogs, setFilteredLogs] = useState(mockLogs);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(100);
   const [statusFilter, setStatusFilter] = useState<number[]>([]);
   const [methodFilter, setMethodFilter] = useState<string[]>([]);
   const [botFilter, setBotFilter] = useState<string | null>("all");
@@ -264,7 +264,7 @@ export function LogAnalyzer() {
 
   return (
     <div className="space-y-4 h-full">
-      <div className="flex flex-col md:flex-row gap-4 justify-between">
+      <div className="flex flex-col md:flex-row gap-4 justify-between -mb-4">
         <div className="relative w-full md:w-1/3">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -390,7 +390,7 @@ export function LogAnalyzer() {
         </div>
       </div>
 
-      <div className="h-[calc(100vh-15.5rem)]">
+      <div className="h-[calc(100vh-12.4rem)] ">
         <CardContent className="p-0 h-full">
           <div className="rounded-md border h-full">
             <div className="relative w-full h-full overflow-auto">

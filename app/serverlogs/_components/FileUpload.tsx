@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import { useState, useRef } from "react";
@@ -5,11 +6,15 @@ import { UploadCloud, X, CheckCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { invoke } from "@tauri-apps/api/core";
+import { toast } from "sonner";
+import { useLogAnalysis } from "@/store/ServerLogsStore";
 
 interface FileUploadProps {
   maxSizeMB?: number;
   acceptedFileTypes?: string[];
   className?: string;
+  closeDialog: () => void;
 }
 
 export function FileUpload({
@@ -23,6 +28,7 @@ export function FileUpload({
     "text",
   ],
   className,
+  closeDialog,
 }: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -31,6 +37,9 @@ export function FileUpload({
   const [progress, setProgress] = useState(0);
   const [success, setSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { analyseLogs, setRawLogContent } = useLogAnalysis();
+
+  // Zustand store
 
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
@@ -96,58 +105,50 @@ export function FileUpload({
   const handleUpload = async () => {
     if (!file) return;
 
+    // Declare progressInterval outside the try block so it's accessible in catch
+    let progressInterval: NodeJS.Timeout | null = null;
+
     try {
       setUploading(true);
-      setProgress(0);
+      setProgress(10); // Start immediately at 10%
+      setSuccess(false);
 
-      // Convert File to Uint8Array for Tauri
-      const arrayBuffer = await file.arrayBuffer();
-      const bytes = Array.from(new Uint8Array(arrayBuffer));
-
-      console.log("Uploading file:", {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-      });
-
-      // Simulate progress (replace with actual progress events if supported by your backend)
-      const progressInterval = setInterval(() => {
+      // Start smooth progress animation
+      progressInterval = setInterval(() => {
         setProgress((prev) => {
-          const newProgress = prev + 10;
-          if (newProgress >= 90) {
-            // Stop at 90% until completion
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return newProgress;
+          const newProgress = prev + 5; // Smaller increments
+          return newProgress >= 90 ? 90 : newProgress; // Cap at 90%
         });
-      }, 300);
+      }, 150); // Faster updates
 
-      // Call Tauri backend command
-      const result = await invoke("handle_file_upload", {
-        fileName: file.name,
-        fileType: file.type,
-        fileBytes: bytes,
+      // Process file and upload in parallel
+      const [fileContent] = await Promise.all([
+        file.text(),
+        new Promise((resolve) => setTimeout(resolve, 300)), // Minimum progress time
+      ]);
+
+      const result = await invoke("check_logs_command", {
+        data: { log_content: fileContent },
       });
 
-      console.log("Upload result:", result);
+      console.log(result, "This is the result");
 
-      // Complete the progress
+      // Complete the animation
+      if (progressInterval) clearInterval(progressInterval);
       setProgress(100);
       setSuccess(true);
 
-      setTimeout(() => {
-        setSuccess(false);
-      }, 3000);
+      // Brief display before closing
+      setTimeout(() => closeDialog(), 800);
+      toast.success("Upload complete!");
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Upload failed";
-      setError(errorMessage);
-      console.error("Upload error:", err);
+      if (progressInterval) clearInterval(progressInterval);
+      setError(err instanceof Error ? err.message : "Upload failed");
+      toast.error("Upload failed");
     } finally {
       setUploading(false);
     }
   };
-
   const handleRemoveFile = () => {
     setFile(null);
     setError(null);
@@ -225,7 +226,7 @@ export function FileUpload({
 
           {uploading || success ? (
             <div className="space-y-2 dark:text-white">
-              <Progress value={progress} className="h-2" />
+              <Progress value={progress} className="h-2  " />
               <div className="flex justify-between items-center text-xs">
                 <span>
                   {success ? "Upload complete" : `Uploading... ${progress}%`}
