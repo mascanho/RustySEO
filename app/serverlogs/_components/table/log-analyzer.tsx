@@ -390,7 +390,7 @@ export function LogAnalyzer() {
         </div>
       </div>
 
-      <div className="h-full">
+      <div className="h-[calc(100vh-15.5rem)]">
         <CardContent className="p-0 h-full">
           <div className="rounded-md border h-full">
             <div className="relative w-full h-full overflow-auto">
