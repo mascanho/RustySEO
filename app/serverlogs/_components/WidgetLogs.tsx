@@ -53,14 +53,14 @@ export default function WidgetLogs() {
   const chartData = mockData[activeTab];
 
   return (
-    <div className="bg-white rounded-2xl shadow px-2 w-full max-w-4xl mx-auto">
+    <div className="bg-white  shadow px-2 w-full max-w-4xl mx-auto">
       {/* Tabs */}
-      <div className="flex space-x-2  pt-4 pb-0 w-full justify-center ">
+      <div className="flex space-x-2 pt-[2px]  pb-0 w-full justify-center ">
         {tabs.map(({ label, icon }) => (
           <button
             key={label}
             onClick={() => setActiveTab(label)}
-            className={`flex items-center space-x-2 px-4 py-1 text-xs rounded-full  font-medium transition ${
+            className={`flex items-center space-x-2 px-4 py-1 text-xs rounded-b-md  font-medium transition ${
               activeTab === label
                 ? "bg-blue-600 text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -98,7 +98,7 @@ export default function WidgetLogs() {
           <Tooltip />
         </PieChart>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-md">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-md pr-10">
           {chartData.map((entry, idx) => (
             <div
               key={idx}
