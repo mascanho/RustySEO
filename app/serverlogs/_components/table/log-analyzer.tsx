@@ -1,15 +1,21 @@
-"use client";
-
 import { useState, useEffect } from "react";
+import {
+  AlertCircle,
+  ChevronDown,
+  Download,
+  Filter,
+  RefreshCw,
+  Search,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
+  DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import {
   Table,
@@ -35,69 +41,9 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { ChevronDown, Download, Filter, RefreshCw, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
-
-// Mock data for demonstration
-const mockLogs = Array.from({ length: 100 }, (_, i) => ({
-  id: i + 1,
-  ip: `${Math.floor(Math.random() * 255)}.${Math.floor(
-    Math.random() * 255,
-  )}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`,
-  userAgent: [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15",
-    "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
-    "Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)",
-    "Mozilla/5.0 (iPhone; CPU iPhone OS 14_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1",
-  ][Math.floor(Math.random() * 5)],
-  timestamp: new Date(
-    Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000),
-  ).toISOString(),
-  method: ["GET", "POST", "PUT", "DELETE"][Math.floor(Math.random() * 4)],
-  path: [
-    "/",
-    "/about",
-    "/contact",
-    "/api/users",
-    "/products",
-    "/login",
-    "/dashboard",
-    "/images/logo.png",
-    "/css/style.css",
-    "/js/main.js",
-  ][Math.floor(Math.random() * 10)],
-  statusCode: [200, 201, 204, 400, 401, 403, 404, 500][
-    Math.floor(Math.random() * 8)
-  ],
-  responseSize: Math.floor(Math.random() * 10000),
-  referer: [
-    "-",
-    "https://www.google.com",
-    "https://www.bing.com",
-    "https://www.example.com",
-  ][Math.floor(Math.random() * 4)],
-  responseTime: Math.floor(Math.random() * 1000),
-}));
-
-// Helper function to determine if a user agent is likely a bot
-const isBot = (userAgent: string) => {
-  const botPatterns = [
-    "bot",
-    "crawler",
-    "spider",
-    "slurp",
-    "baiduspider",
-    "yandex",
-    "googlebot",
-    "bingbot",
-    "rogerbot",
-  ];
-  const lowerCaseUA = userAgent.toLowerCase();
-  return botPatterns.some((pattern) => lowerCaseUA.includes(pattern));
-};
 
 // Helper function to format date
 const formatDate = (dateString: string) => {
@@ -112,20 +58,16 @@ const formatDate = (dateString: string) => {
   }).format(date);
 };
 
-export function LogAnalyzer() {
-  const [logs, setLogs] = useState(mockLogs);
-  const [filteredLogs, setFilteredLogs] = useState(mockLogs);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(100);
-  const [statusFilter, setStatusFilter] = useState<number[]>([]);
-  const [methodFilter, setMethodFilter] = useState<string[]>([]);
-  const [botFilter, setBotFilter] = useState<string | null>("all");
-  const [sortConfig, setSortConfig] = useState<{
-    key: string;
-    direction: "ascending" | "descending";
-  } | null>(null);
+// Get status code badge color
+const getStatusCodeColor = (code: number) => {
+  if (code >= 200 && code < 300) return "bg-green-500";
+  if (code >= 300 && code < 400) return "bg-blue-500";
+  if (code >= 400 && code < 500) return "bg-yellow-500";
+  if (code >= 500) return "bg-red-500";
+  return "bg-gray-500";
+};
 
+export function LogAnalyzer() {
   const {
     entries,
     overview,
@@ -137,9 +79,23 @@ export function LogAnalyzer() {
     resetAll,
   } = useLogAnalysis();
 
+  const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(100);
+  const [statusFilter, setStatusFilter] = useState<number[]>([]);
+  const [methodFilter, setMethodFilter] = useState<string[]>([]);
+  const [botFilter, setBotFilter] = useState<string | null>("all");
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: "ascending" | "descending";
+  } | null>(null);
+
   // Apply filters and search
   useEffect(() => {
-    let result = [...logs];
+    if (!entries.length) return;
+
+    let result = [...entries];
 
     // Apply search
     if (searchTerm) {
@@ -154,7 +110,7 @@ export function LogAnalyzer() {
 
     // Apply status filter
     if (statusFilter.length > 0) {
-      result = result.filter((log) => statusFilter.includes(log.statusCode));
+      result = result.filter((log) => statusFilter.includes(log.status));
     }
 
     // Apply method filter
@@ -165,19 +121,28 @@ export function LogAnalyzer() {
     // Apply bot filter
     if (botFilter !== null) {
       if (botFilter === "bot") {
-        result = result.filter((log) => isBot(log.userAgent));
+        result = result.filter((log) => log.isCrawler);
       } else if (botFilter === "human") {
-        result = result.filter((log) => !isBot(log.userAgent));
+        result = result.filter((log) => !log.isCrawler);
       }
     }
 
     // Apply sorting
     if (sortConfig) {
       result.sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) {
+        const aValue = a[sortConfig.key as keyof LogEntry];
+        const bValue = b[sortConfig.key as keyof LogEntry];
+
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          return sortConfig.direction === "ascending"
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+        }
+
+        if (aValue < bValue) {
           return sortConfig.direction === "ascending" ? -1 : 1;
         }
-        if (a[sortConfig.key] > b[sortConfig.key]) {
+        if (aValue > bValue) {
           return sortConfig.direction === "ascending" ? 1 : -1;
         }
         return 0;
@@ -186,13 +151,20 @@ export function LogAnalyzer() {
 
     setFilteredLogs(result);
     setCurrentPage(1);
-  }, [logs, searchTerm, statusFilter, methodFilter, botFilter, sortConfig]);
+  }, [entries, searchTerm, statusFilter, methodFilter, botFilter, sortConfig]);
 
   // Get current logs for pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentLogs = filteredLogs.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+  const currentLogs =
+    filteredLogs.length > 0
+      ? filteredLogs.slice(indexOfFirstItem, indexOfLastItem)
+      : entries.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(
+    filteredLogs.length > 0
+      ? filteredLogs.length / itemsPerPage
+      : entries.length / itemsPerPage,
+  );
 
   // Handle sorting
   const requestSort = (key: string) => {
@@ -219,31 +191,31 @@ export function LogAnalyzer() {
   // Export logs as CSV
   const exportCSV = () => {
     const headers = [
-      "ID",
       "IP",
-      "User Agent",
+      "Country",
       "Timestamp",
       "Method",
       "Path",
       "Status Code",
       "Response Size",
+      "User Agent",
       "Referer",
-      "Response Time",
       "Bot/Human",
     ];
 
-    const csvData = filteredLogs.map((log) => [
-      log.id,
+    const dataToExport = filteredLogs.length > 0 ? filteredLogs : entries;
+
+    const csvData = dataToExport.map((log) => [
       log.ip,
-      `"${log.userAgent.replace(/"/g, '""')}"`,
+      log.country || "",
       log.timestamp,
       log.method,
       log.path,
-      log.statusCode,
+      log.status,
       log.responseSize,
-      log.referer,
-      log.responseTime,
-      isBot(log.userAgent) ? "Bot" : "Human",
+      `"${log.userAgent.replace(/"/g, '""')}"`,
+      log.referer || "-",
+      log.isCrawler ? "Bot" : "Human",
     ]);
 
     const csvContent = [
@@ -257,22 +229,30 @@ export function LogAnalyzer() {
     link.setAttribute("href", url);
     link.setAttribute(
       "download",
-      `apache_logs_${new Date().toISOString().slice(0, 10)}.csv`,
+      `server_logs_${new Date().toISOString().slice(0, 10)}.csv`,
     );
-    link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  // Get status code badge color
-  const getStatusCodeColor = (code: number) => {
-    if (code >= 200 && code < 300) return "bg-green-500";
-    if (code >= 300 && code < 400) return "bg-blue-500";
-    if (code >= 400 && code < 500) return "bg-yellow-500";
-    if (code >= 500) return "bg-red-500";
-    return "bg-gray-500";
-  };
+  // Handle loading and error states
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-full text-destructive">
+        <AlertCircle className="h-5 w-5 mr-2" />
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 h-full">
@@ -402,28 +382,14 @@ export function LogAnalyzer() {
         </div>
       </div>
 
-      <div className="h-[calc(100vh-12.4rem)] ">
+      <div className="h-[calc(100vh-12.4rem)]">
         <CardContent className="p-0 h-full">
           <div className="rounded-md border h-full">
             <div className="relative w-full h-full overflow-auto">
               <Table className="h-full">
                 <TableHeader>
                   <TableRow>
-                    <TableHead
-                      className="w-[80px] cursor-pointer"
-                      onClick={() => requestSort("id")}
-                    >
-                      ID
-                      {sortConfig?.key === "id" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      )}
-                    </TableHead>
+                    <TableHead className="w-[80px]">#</TableHead>
                     <TableHead
                       className="cursor-pointer"
                       onClick={() => requestSort("ip")}
@@ -486,10 +452,10 @@ export function LogAnalyzer() {
                     </TableHead>
                     <TableHead
                       className="cursor-pointer"
-                      onClick={() => requestSort("statusCode")}
+                      onClick={() => requestSort("status")}
                     >
                       Status
-                      {sortConfig?.key === "statusCode" && (
+                      {sortConfig?.key === "status" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${
                             sortConfig.direction === "descending"
@@ -502,10 +468,10 @@ export function LogAnalyzer() {
                     <TableHead>Bot/Human</TableHead>
                     <TableHead
                       className="cursor-pointer"
-                      onClick={() => requestSort("responseTime")}
+                      onClick={() => requestSort("responseSize")}
                     >
-                      Response Time
-                      {sortConfig?.key === "responseTime" && (
+                      Response Size
+                      {sortConfig?.key === "responseSize" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${
                             sortConfig.direction === "descending"
@@ -519,10 +485,22 @@ export function LogAnalyzer() {
                 </TableHeader>
                 <TableBody>
                   {currentLogs.length > 0 ? (
-                    currentLogs.map((log) => (
-                      <TableRow key={log.id} className="group">
-                        <TableCell className="font-medium">{log.id}</TableCell>
-                        <TableCell>{log.ip}</TableCell>
+                    currentLogs.map((log, index) => (
+                      <TableRow
+                        key={`${log.ip}-${log.timestamp}-${index}`}
+                        className="group"
+                      >
+                        <TableCell className="font-medium">
+                          {indexOfFirstItem + index + 1}
+                        </TableCell>
+                        <TableCell>
+                          {log.ip}
+                          {log.country && (
+                            <Badge variant="outline" className="ml-2">
+                              {log.country}
+                            </Badge>
+                          )}
+                        </TableCell>
                         <TableCell>{formatDate(log.timestamp)}</TableCell>
                         <TableCell>
                           <Badge
@@ -545,30 +523,30 @@ export function LogAnalyzer() {
                         </TableCell>
                         <TableCell>
                           <Badge
-                            className={`${getStatusCodeColor(log.statusCode)} text-white`}
+                            className={`${getStatusCodeColor(log.status)} text-white`}
                           >
-                            {log.statusCode}
+                            {log.status}
                           </Badge>
                         </TableCell>
                         <TableCell>
                           <Badge
                             variant="outline"
                             className={
-                              isBot(log.userAgent)
+                              log.isCrawler
                                 ? "bg-purple-100 text-purple-800 border-purple-200"
                                 : "bg-green-100 text-green-800 border-green-200"
                             }
                           >
-                            {isBot(log.userAgent) ? "Bot" : "Human"}
+                            {log.isCrawler ? "Bot" : "Human"}
                           </Badge>
                         </TableCell>
-                        <TableCell>{log.responseTime} ms</TableCell>
+                        <TableCell>{log.responseSize} bytes</TableCell>
                       </TableRow>
                     ))
                   ) : (
                     <TableRow>
                       <TableCell colSpan={8} className="h-24 text-center">
-                        No results found.
+                        No log entries found.
                       </TableCell>
                     </TableRow>
                   )}
@@ -583,15 +561,19 @@ export function LogAnalyzer() {
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">
             Showing {indexOfFirstItem + 1}-
-            {Math.min(indexOfLastItem, filteredLogs.length)} of{" "}
-            {filteredLogs.length} entries
+            {Math.min(
+              indexOfLastItem,
+              filteredLogs.length > 0 ? filteredLogs.length : entries.length,
+            )}{" "}
+            of {filteredLogs.length > 0 ? filteredLogs.length : entries.length}{" "}
+            entries
           </span>
           <Select
             value={itemsPerPage.toString()}
             onValueChange={(value) => setItemsPerPage(Number(value))}
           >
             <SelectTrigger className="w-[70px]">
-              <SelectValue placeholder="10" />
+              <SelectValue placeholder="100" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="10">10</SelectItem>
@@ -617,7 +599,6 @@ export function LogAnalyzer() {
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               let pageNum = i + 1;
 
-              // Adjust page numbers for pagination with ellipsis
               if (totalPages > 5) {
                 if (currentPage > 3 && currentPage <= totalPages - 2) {
                   pageNum = currentPage - 2 + i;
@@ -666,8 +647,6 @@ export function LogAnalyzer() {
           </PaginationContent>
         </Pagination>
       </div>
-
-      {/* Log Details Modal would go here */}
     </div>
   );
 }
