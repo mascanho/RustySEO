@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState } from "react";
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
 import { FileText, Server, Bot, BarChart3 } from "lucide-react";
@@ -52,14 +53,14 @@ export default function WidgetLogs() {
   const chartData = mockData[activeTab];
 
   return (
-    <div className="bg-white rounded-2xl shadow p-6 w-full max-w-4xl mx-auto">
+    <div className="bg-white rounded-2xl shadow px-2 w-full max-w-4xl mx-auto">
       {/* Tabs */}
-      <div className="flex space-x-2 mb-4">
+      <div className="flex space-x-2  pt-4 pb-0 w-full justify-center ">
         {tabs.map(({ label, icon }) => (
           <button
             key={label}
             onClick={() => setActiveTab(label)}
-            className={`flex items-center space-x-2 px-4 py-1.5 rounded-full text-sm font-medium transition ${
+            className={`flex items-center space-x-2 px-4 py-1 text-xs rounded-full  font-medium transition ${
               activeTab === label
                 ? "bg-blue-600 text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
@@ -77,9 +78,9 @@ export default function WidgetLogs() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="flex flex-col md:flex-row gap-6 items-center justify-between"
+        className="flex flex-col md:flex-row  items-center justify-around"
       >
-        <PieChart width={260} height={260}>
+        <PieChart width={220} height={220}>
           <Pie
             data={chartData}
             dataKey="value"
@@ -87,7 +88,7 @@ export default function WidgetLogs() {
             cx="50%"
             cy="50%"
             innerRadius={60}
-            outerRadius={100}
+            outerRadius={90}
             paddingAngle={3}
           >
             {chartData.map((_, idx) => (
