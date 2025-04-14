@@ -393,7 +393,7 @@ export function LogAnalyzer() {
         </div>
       </div>
 
-      <div style={{ height: "calc(100vh - 47vh)" }}>
+      <div style={{ height: "calc(100vh - 44vh)" }}>
         <CardContent className="p-0 h-full">
           <div className="rounded-md border h-full">
             <div className="relative w-full h-full overflow-auto">
@@ -608,9 +608,9 @@ export function LogAnalyzer() {
         </CardContent>
       </div>
 
-      <div className="flex items-center justify-between w-full -mt-10">
+      <div className="flex items-center justify-between w-full " style={{marginTop: "0.2em"}}>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-muted-foreground w-[180px] -mr-8">
             {indexOfFirstItem + 1}-
             {Math.min(
               indexOfLastItem,
@@ -621,7 +621,7 @@ export function LogAnalyzer() {
           </span>
         </div>
 
-        <Pagination className="text-xs">
+        <Pagination className="text-xs" style={{marginTop: "0px"}}>
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
@@ -646,6 +646,7 @@ export function LogAnalyzer() {
               return (
                 <PaginationItem key={i}>
                   <PaginationLink
+                  className="cursor-pointer"
                     onClick={() => setCurrentPage(pageNum)}
                     isActive={currentPage === pageNum}
                   >
@@ -682,11 +683,14 @@ export function LogAnalyzer() {
             </PaginationItem>
           </PaginationContent>
         </Pagination>
+        <div className="-mt-2">
         <Select
+        style={{marginTop: "20px"}}
+        className="-mt-2"
           value={itemsPerPage.toString()}
           onValueChange={(value) => setItemsPerPage(Number(value))}
         >
-          <SelectTrigger className="w-[70px]">
+          <SelectTrigger className="w-[70px] text-xs h-8">
             <SelectValue placeholder="100" />
           </SelectTrigger>
           <SelectContent>
@@ -696,6 +700,7 @@ export function LogAnalyzer() {
             <SelectItem value="100">100</SelectItem>
           </SelectContent>
         </Select>
+        </div>
       </div>
     </div>
   );
