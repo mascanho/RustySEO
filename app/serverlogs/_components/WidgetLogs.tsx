@@ -103,11 +103,18 @@ export default function WidgetLogs() {
             <div
               key={idx}
               className="flex justify-between items-center border border-gray-100 px-4 py-2 rounded-xl"
+              style={{
+                borderLeft: `4px solid ${COLORS[idx % COLORS.length]}`,
+                backgroundColor: `${COLORS[idx % COLORS.length]}10`,
+              }}
             >
               <span className="text-sm font-medium text-gray-700">
                 {entry.name}
               </span>
-              <span className="text-sm font-semibold text-gray-900">
+              <span
+                className="text-sm font-semibold text-gray-900"
+                style={{ color: COLORS[idx % COLORS.length] }}
+              >
                 {entry.value}
               </span>
             </div>
