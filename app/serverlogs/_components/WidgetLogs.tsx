@@ -61,7 +61,10 @@ export default function WidgetLogs() {
       Crawlers: [
         { name: "Google", value: overview?.totals?.google || 50 },
         { name: "Bing", value: overview?.totals?.bing || 0 },
-        { name: "Other", value: 0 },
+        { name: "OpenAI", value: overview?.totals?.openai || 0 },
+        { name: "Claude", value: overview?.totals?.claude || 0 },
+        { name: "Moz", value: overview?.totals?.moz || 0 },
+        { name: "Semrush", value: overview?.totals?.semrush || 0 },
       ],
       Analytics: [
         {
