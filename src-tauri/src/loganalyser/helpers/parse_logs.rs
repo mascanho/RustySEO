@@ -27,7 +27,7 @@ fn detect_bot(user_agent: &str) -> Option<String> {
             return Some(user_agent[start..end].to_string());
         }
     }
-    None
+    Some("Human".to_string())
 }
 
 pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {

@@ -543,12 +543,12 @@ export function LogAnalyzer() {
                             <Badge
                               variant="outline"
                               className={
-                                log.isCrawler
-                                  ? "bg-purple-100 text-purple-800 border-purple-200"
+                                log.crawler_type !== "Human"
+                                  ? "bg-purple-50 text-purple-800 border-purple-200"
                                   : "bg-green-100 text-green-800 border-green-200"
                               }
                             >
-                              {log.isCrawler ? "Bot" : "Human"}
+                              {log.crawler_type}
                             </Badge>
                           </TableCell>
                         </TableRow>
