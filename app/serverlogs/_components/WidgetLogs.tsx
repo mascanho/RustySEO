@@ -141,7 +141,38 @@ export default function WidgetLogs() {
                     />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => [`${value}`, ""]} />
+                <Tooltip
+                  formatter={(value, name, props) => {
+                    // Get the full name from the data payload
+                    const fullName = props.payload.name || name;
+                    // Format the value with commas if it's a number
+                    const formattedValue =
+                      typeof value === "number"
+                        ? value.toLocaleString()
+                        : value;
+                    // Calculate percentage if we have total
+                    const total = chartData.reduce(
+                      (sum, item) => sum + item.value,
+                      0,
+                    );
+                    const percentage =
+                      total > 0 ? Math.round((Number(value) / total) * 100) : 0;
+
+                    return [
+                      `${fullName}: ${formattedValue} (${percentage}%)`,
+                      null, // Remove the second line
+                    ];
+                  }}
+                  contentStyle={{
+                    backgroundColor: "#1f2937", // bg-gray-800
+                    borderColor: "#374151", // border-gray-700
+                    borderRadius: "0.375rem", // rounded
+                    color: "#f9fafb", // text-gray-50
+                  }}
+                  itemStyle={{
+                    color: "#f9fafb", // text-gray-50
+                  }}
+                />
               </PieChart>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-md pl-4">
