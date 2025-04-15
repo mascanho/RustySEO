@@ -55,7 +55,7 @@ export default function WidgetLogs() {
   return (
     <div className="bg-white  shadow px-2 w-full max-w-4xl mx-auto dark:bg-brand-darker dark:text-white h-64">
       {/* Tabs */}
-      <div className="flex space-x-2 pt-[20upx]  pb-0 w-full justify-center ">
+      <div className="flex space-x-2 pt-[3px]  pb-0 w-full justify-center ">
         {tabs.map(({ label, icon }) => (
           <button
             key={label}
