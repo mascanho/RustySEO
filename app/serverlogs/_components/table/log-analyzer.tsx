@@ -341,11 +341,12 @@ export function LogAnalyzer() {
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="bg-white dark:border-brand-dark dark:text-white dark:active:bg-brand-bright  dark:bg-brand-darker">
               <DropdownMenuLabel>Filter by Method</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {["GET", "POST", "PUT", "DELETE"].map((method) => (
                 <DropdownMenuCheckboxItem
+                    className={"bg-white active:bg-gray-100 hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"}
                   key={method}
                   checked={methodFilter.includes(method)}
                   onCheckedChange={(checked) => {
@@ -369,7 +370,7 @@ export function LogAnalyzer() {
               setBotFilter(value === "all" ? null : value)
             }
           >
-            <SelectTrigger className="w-[130px] dark:bg-brand-darker dark:text-white">
+            <SelectTrigger className="w-[130px] dark:bg-brand-darker  dark:text-white">
               <SelectValue placeholder="Bot/Human" />
             </SelectTrigger>
             <SelectContent>
@@ -690,7 +691,7 @@ export function LogAnalyzer() {
               filteredLogs.length > 0 ? filteredLogs.length : entries.length,
             )}{" "}
             of {filteredLogs.length > 0 ? filteredLogs.length : entries.length}{" "}
-            entries
+            logs
           </span>
         </div>
       </div>

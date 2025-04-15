@@ -239,7 +239,7 @@ export function FileUpload({
 
                     {uploading || success ? (
                         <div className="space-y-2 dark:text-white">
-                            <Progress value={progress} className="h-2  "/>
+                            <Progress value={progress} className="h-5  "/>
                             <div className="flex justify-between items-center text-xs">
                 <span>
                   {success ? "Upload complete" : `Uploading & analyzing your log... ${progress}%`}
