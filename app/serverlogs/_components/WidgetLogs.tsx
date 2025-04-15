@@ -53,9 +53,9 @@ export default function WidgetLogs() {
   const chartData = mockData[activeTab];
 
   return (
-    <div className="bg-white  shadow px-2 w-full max-w-4xl mx-auto">
+    <div className="bg-white  shadow px-2 w-full max-w-4xl mx-auto dark:bg-brand-darker dark:text-white h-64">
       {/* Tabs */}
-      <div className="flex space-x-2 pt-[2px]  pb-0 w-full justify-center ">
+      <div className="flex space-x-2 pt-[20upx]  pb-0 w-full justify-center ">
         {tabs.map(({ label, icon }) => (
           <button
             key={label}
@@ -78,7 +78,7 @@ export default function WidgetLogs() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="flex flex-col md:flex-row  items-center justify-around"
+        className="flex flex-col md:flex-row dark:bg-brand-darker dark:text-white items-center justify-around "
       >
         <PieChart width={220} height={220}>
           <Pie
@@ -98,7 +98,7 @@ export default function WidgetLogs() {
           <Tooltip />
         </PieChart>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-md pr-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-md pr-10 dark:text-white">
           {chartData.map((entry, idx) => (
             <div
               key={idx}
@@ -108,7 +108,7 @@ export default function WidgetLogs() {
                 backgroundColor: `${COLORS[idx % COLORS.length]}10`,
               }}
             >
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-gray-700 dark:text-white">
                 {entry.name}
               </span>
               <span

@@ -267,27 +267,27 @@ export function LogAnalyzer() {
 
   return (
     <div className="space-y-4 h-full">
-      <div className="flex flex-col md:flex-row gap-4 justify-between -mb-4">
-        <div className="relative w-full md:w-1/3">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <div className="flex flex-col md:flex-row  justify-between -mb-4 p-1">
+        <div className="relative w-full mr-1 ">
+          <Search className="absolute dark:text-white/50 left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
             placeholder="Search by IP, path, user agent, or referer..."
-            className="pl-8"
+            className="pl-8 w-full "
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-1 gap-1 ">
           {/* Status Code Filter */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex gap-2">
+              <Button variant="outline" className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark">
                 <Filter className="h-4 w-4" />
                 Status
                 {statusFilter.length > 0 && (
-                  <Badge variant="secondary" className="ml-1">
+                  <Badge variant="secondary" className="ml-0">
                     {statusFilter.length}
                   </Badge>
                 )}
@@ -329,7 +329,7 @@ export function LogAnalyzer() {
           {/* Method Filter */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex gap-2">
+              <Button variant="outline" className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark">
                 <Filter className="h-4 w-4" />
                 Method
                 {methodFilter.length > 0 && (
@@ -367,7 +367,7 @@ export function LogAnalyzer() {
               setBotFilter(value === "all" ? null : value)
             }
           >
-            <SelectTrigger className="w-[130px]">
+            <SelectTrigger className="w-[130px] dark:bg-brand-darker dark:text-white">
               <SelectValue placeholder="Bot/Human" />
             </SelectTrigger>
             <SelectContent>
@@ -377,25 +377,23 @@ export function LogAnalyzer() {
             </SelectContent>
           </Select>
 
-          <Button
-            variant="outline"
-            onClick={resetFilters}
-            className="flex gap-2"
+          <Button variant="outline" onClick={resetFilters}
+            className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white"
           >
             <RefreshCw className="h-4 w-4" />
             Reset
           </Button>
 
-          <Button variant="outline" onClick={exportCSV} className="flex gap-2">
+          <Button variant="outline" onClick={exportCSV} className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white">
             <Download className="h-4 w-4" />
             Export CSV
           </Button>
         </div>
       </div>
 
-      <div style={{ height: "calc(100vh - 44vh)" }}>
+      <div style={{ height: "calc(100vh - 43.2vh)", maxHeight: "calc(100vh - 43.2vh)" }} className="px-1">
         <CardContent className="p-0 h-full">
-          <div className="rounded-md border h-full">
+          <div className="rounded-md border  dark:border-brand-dark h-full">
             <div className="relative w-full h-full overflow-auto">
               <Table className="h-full">
                 <TableHeader>
@@ -491,7 +489,7 @@ export function LogAnalyzer() {
                         />
                       )}
                     </TableHead>
-                    <TableHead>Details</TableHead>
+                    <TableHead>Type</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -522,12 +520,12 @@ export function LogAnalyzer() {
                               variant="outline"
                               className={
                                 log.method === "GET"
-                                  ? "bg-green-100 text-green-800 border-green-200"
+                                  ? "bg-green-100 dark:bg-green-400 text-green-800 border-green-200"
                                   : log.method === "POST"
-                                    ? "bg-blue-100 text-blue-800 border-blue-200"
+                                    ? "bg-blue-100 dark:bg-blue-400 text-blue-800 border-blue-200"
                                     : log.method === "PUT"
-                                      ? "bg-yellow-100 text-yellow-800 border-yellow-200"
-                                      : "bg-red-100 text-red-800 border-red-200"
+                                      ? "bg-yellow-100 dark:bg-yellow-400 text-yellow-800 border-yellow-200"
+                                      : "bg-red-100 dark:bg-red-400 text-red-800 border-red-200"
                               }
                             >
                               {log.method}
@@ -565,30 +563,28 @@ export function LogAnalyzer() {
                               colSpan={8}
                               className="bg-gray-50 dark:bg-gray-800 p-4"
                             >
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                  <h4 className="font-medium mb-2">
-                                    User Agent
-                                  </h4>
-                                  <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-md">
-                                    <p className="text-sm font-mono break-all">
-                                      {log.user_agent}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div>
-                                  <h4 className="font-medium mb-2">Referer</h4>
-                                  <div className="p-3 bg-gray-100 dark:bg-gray-700 rounded-md">
-                                    <p className="text-sm break-all">
-                                      {log.referer || (
-                                        <span className="text-muted-foreground">
-                                          No referer
-                                        </span>
-                                      )}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
+                             
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  {/* User Agent */}
+  <div className="flex flex-col">
+    <h4 className="font-medium mb-2">User Agent</h4>
+    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+      <p className="text-sm font-mono break-all">{log.user_agent}</p>
+    </div>
+  </div>
+
+  {/* Referer */}
+  <div className="flex flex-col">
+    <h4 className="font-medium mb-2">Referer</h4>
+    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+      <p className="text-sm break-all">
+        {log.referer || (
+          <span className="text-muted-foreground">No referer</span>
+        )}
+      </p>
+    </div>
+  </div>
+</div>
                             </TableCell>
                           </TableRow>
                         )}{" "}
@@ -609,20 +605,27 @@ export function LogAnalyzer() {
       </div>
 
       <div className="flex items-center justify-between w-full " style={{marginTop: "0.2em"}}>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground w-[180px] -mr-8">
-            {indexOfFirstItem + 1}-
-            {Math.min(
-              indexOfLastItem,
-              filteredLogs.length > 0 ? filteredLogs.length : entries.length,
-            )}{" "}
-            of {filteredLogs.length > 0 ? filteredLogs.length : entries.length}{" "}
-            entries
-          </span>
+        <div className="flex items-center -mt-2 ml-1">
+
+          <Select
+              value={itemsPerPage.toString()}
+              onValueChange={(value) => setItemsPerPage(Number(value))}
+          >
+            <SelectTrigger className="w-[70px] text-xs h-6 mr-2  z-50">
+              <SelectValue placeholder="100" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="100">100</SelectItem>
+              <SelectItem value="500">500</SelectItem>
+              <SelectItem value="1000">1000</SelectItem>
+            </SelectContent>
+          </Select>
+
+
         </div>
 
-        <Pagination className="text-xs" style={{marginTop: "0px"}}>
-          <PaginationContent>
+        <Pagination className="text-xs">
+          <PaginationContent style={{marginTop: "-5px"}}>
             <PaginationItem>
               <PaginationPrevious
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
@@ -646,7 +649,7 @@ export function LogAnalyzer() {
               return (
                 <PaginationItem key={i}>
                   <PaginationLink
-                  className="cursor-pointer"
+                  className="cursor-pointer h-6"
                     onClick={() => setCurrentPage(pageNum)}
                     isActive={currentPage === pageNum}
                   >
@@ -683,23 +686,16 @@ export function LogAnalyzer() {
             </PaginationItem>
           </PaginationContent>
         </Pagination>
-        <div className="-mt-2">
-        <Select
-        style={{marginTop: "20px"}}
-        className="-mt-2"
-          value={itemsPerPage.toString()}
-          onValueChange={(value) => setItemsPerPage(Number(value))}
-        >
-          <SelectTrigger className="w-[70px] text-xs h-8">
-            <SelectValue placeholder="100" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="10">10</SelectItem>
-            <SelectItem value="25">25</SelectItem>
-            <SelectItem value="50">50</SelectItem>
-            <SelectItem value="100">100</SelectItem>
-          </SelectContent>
-        </Select>
+        <div >
+         <span className="flex justify-end text-muted-foreground w-[150px] flex-nowrap text-right  pr-2.5 -mt-1.5 text-xs text-black/50" >
+            {indexOfFirstItem + 1}-
+           {Math.min(
+               indexOfLastItem,
+               filteredLogs.length > 0 ? filteredLogs.length : entries.length,
+           )}{" "}
+           of {filteredLogs.length > 0 ? filteredLogs.length : entries.length}{" "}
+           entries
+          </span>
         </div>
       </div>
     </div>

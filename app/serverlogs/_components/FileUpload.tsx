@@ -179,7 +179,7 @@ export function FileUpload({
       {!file ? (
         <div
           className={cn(
-            "border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-colors dark:text-white",
+            "border-2 border-dashed border-brand-bright rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-colors dark:text-white",
             isDragging
               ? "border-primary bg-primary/5"
               : "border-muted-foreground/20 hover:border-primary/50",
@@ -190,11 +190,11 @@ export function FileUpload({
           onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
         >
-          <UploadCloud className="h-12 w-12 text-muted-foreground mb-2" />
+          <UploadCloud className="h-12 w-12 text-muted-foreground mb-2 text-brand-bright" />
           <p className="text-sm font-medium mb-1">
-            Drag & drop your file here or click to browse
+            Click to browse your files
           </p>
-          <p className="text-xs text-muted-foreground mb-4">
+          <p className="text-xs mb-4 text-center text-black/50">
             Supported formats: {acceptedFileTypes.join(", ")} (Max size:{" "}
             {maxSizeMB}MB)
           </p>
@@ -244,13 +244,13 @@ export function FileUpload({
               <Progress value={progress} className="h-2  " />
               <div className="flex justify-between items-center text-xs">
                 <span>
-                  {success ? "Upload complete" : `Uploading... ${progress}%`}
+                  {success ? "Upload complete" : `Uploading & analyzing your log... ${progress}%`}
                 </span>
                 {success && <CheckCircle className="h-4 w-4 text-green-500" />}
               </div>
             </div>
           ) : (
-            <Button onClick={handleUpload} className="w-full mt-2">
+            <Button onClick={handleUpload} className="w-full mt-2 bg-brand-bright text-white hover:bg-brand-bright">
               Upload File
             </Button>
           )}

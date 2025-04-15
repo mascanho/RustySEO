@@ -25,7 +25,7 @@ export default function Page() {
     <section className="flex flex-col dark:bg-brand-darker   w-[100%] pt-[4rem] h-[calc(100vh - 20-rem)] overflow-hidden  ">
       <InputZone handleDomainCrawl={""} />
       <main className="pb-[6.2rem] overflow-auto">
-        <div className="flex">
+        <div className="flex ">
           <TimelineChart />
           <WidgetLogs />
         </div>

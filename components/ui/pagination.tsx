@@ -8,7 +8,7 @@ const Pagination = ({ className, ...props }: React.ComponentProps<"nav">) => (
   <nav
     role="navigation"
     aria-label="pagination"
-    className={cn("mx-auto flex w-full justify-center text-xs", className)}
+    className={cn("mx-auto flex w-full justify-center text-xs dark:text-white", className)}
     {...props}
   />
 )
@@ -82,7 +82,7 @@ const PaginationNext = ({
   <PaginationLink
     aria-label="Go to next page"
     size="default"
-    className={cn("gap-1 pr-2.5 text-xs", className)}
+    className={cn("gap-1 pr-2.5 text-xs dark:text-white", className)}
     {...props}
   >
     <span>Next</span>
@@ -97,7 +97,7 @@ const PaginationEllipsis = ({
 }: React.ComponentProps<"span">) => (
   <span
     aria-hidden
-    className={cn("flex h-9 w-9 items-center justify-center", className)}
+    className={cn("flex h-9 w-9 items-center justify-center dark:text-white", className)}
     {...props}
   >
     <MoreHorizontal className="h-4 w-4" />
