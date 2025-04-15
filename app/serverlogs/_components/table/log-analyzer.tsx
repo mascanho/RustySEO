@@ -131,12 +131,13 @@ export function LogAnalyzer() {
 
     // Apply bot filter
     if (botFilter !== null) {
-      if (botFilter === "bot") {
-        result = result.filter((log) => log.isCrawler);
-      } else if (botFilter === "human") {
-        result = result.filter((log) => !log.isCrawler);
+      if (botFilter !== "Human") {
+        result = result.filter((log) => log?.crawler_type !== "Human");
+      } else {
+        result = result.filter((log) => log?.crawler_type === "Human");
       }
     }
+
 
     // Apply sorting
     if (sortConfig) {
@@ -227,7 +228,7 @@ export function LogAnalyzer() {
       log.responseSize,
       `"${log.user_agent.replace(/"/g, '""')}"`,
       log.referer || "-",
-      log.isCrawler ? "Bot" : "Human",
+      log.crawler_type,
     ]);
 
     const csvContent = [
@@ -374,7 +375,7 @@ export function LogAnalyzer() {
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="bot">Bots</SelectItem>
-              <SelectItem value="human">Humans</SelectItem>
+              <SelectItem value="Human">Humans</SelectItem>
             </SelectContent>
           </Select>
 
