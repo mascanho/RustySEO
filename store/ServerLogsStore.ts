@@ -15,6 +15,17 @@ interface LogEntry {
   isCrawler: boolean;
 }
 
+interface CrawlerTotals {
+  google: number;
+  bing: number;
+  semrush: number;
+  hrefs: number;
+  moz: number;
+  uptime: number;
+  claude?: number;
+  openai?: number;
+}
+
 interface LogAnalysisOverview {
   message: string;
   lineCount: number;
@@ -22,6 +33,7 @@ interface LogAnalysisOverview {
   uniqueUserAgents: number;
   crawlerCount: number;
   successRate: number;
+  totals: CrawlerTotals;
 }
 
 interface Filters {
@@ -42,12 +54,23 @@ interface LogAnalysisState {
 interface LogAnalysisActions {
   setLogData: (data: {
     entries: LogEntry[];
-    overview: LogAnalysisOverview;
+    overview: Partial<LogAnalysisOverview>;
   }) => void;
   setFilter: <K extends keyof Filters>(key: K, value: Filters[K]) => void;
   resetFilters: () => void;
   resetAll: () => void;
+  setLoading: (isLoading: boolean) => void;
+  setError: (error: string | null) => void;
 }
+
+const defaultTotals: CrawlerTotals = {
+  google: 0,
+  bing: 0,
+  semrush: 0,
+  hrefs: 0,
+  moz: 0,
+  uptime: 0,
+};
 
 const initialState: LogAnalysisState = {
   entries: [],
@@ -58,6 +81,7 @@ const initialState: LogAnalysisState = {
     uniqueUserAgents: 0,
     crawlerCount: 0,
     successRate: 0,
+    totals: defaultTotals,
   },
   isLoading: false,
   error: null,
@@ -75,27 +99,29 @@ export const useLogAnalysisStore = create<
   immer((set) => ({
     ...initialState,
 
-    setLogData: (data: {
-      entries: LogEntry[];
-      overview: LogAnalysisOverview;
-    }) =>
+    setLogData: (data) =>
       set((state) => {
-        state.entries = data.entries;
+        state.entries = data.entries || [];
         state.overview = {
-          message: data.overview.message,
-          lineCount: data.overview.lineCount,
-          uniqueIps: data.overview.uniqueIps,
-          uniqueUserAgents: data.overview.uniqueUserAgents,
-          crawlerCount: data.overview.crawlerCount,
-          successRate: data.overview.successRate,
+          message: data.overview.message || "",
+          lineCount: data.overview.lineCount || 0,
+          uniqueIps: data.overview.uniqueIps || 0,
+          uniqueUserAgents: data.overview.uniqueUserAgents || 0,
+          crawlerCount: data.overview.crawlerCount || 0,
+          successRate: data.overview.successRate || 0,
+          totals: {
+            ...defaultTotals,
+            ...(data.overview.totals || {}),
+          },
         };
         state.isLoading = false;
         state.error = null;
-        console.log("Zustand Log Store", data.entries); // Debug
-        console.log("setLogData: Overview:", data.overview); // Debug
+
+        console.log("Log entries stored:", state.entries.length);
+        console.log("Overview data stored:", state.overview);
       }),
 
-    setFilter: <K extends keyof Filters>(key: K, value: Filters[K]) =>
+    setFilter: (key, value) =>
       set((state) => {
         state.filters[key] = value;
       }),
@@ -108,6 +134,16 @@ export const useLogAnalysisStore = create<
     resetAll: () =>
       set((state) => {
         Object.assign(state, initialState);
+      }),
+
+    setLoading: (isLoading) =>
+      set((state) => {
+        state.isLoading = isLoading;
+      }),
+
+    setError: (error) =>
+      set((state) => {
+        state.error = error;
       }),
   })),
 );
@@ -124,6 +160,8 @@ export const useLogAnalysis = () =>
       setFilter: state.setFilter,
       resetFilters: state.resetFilters,
       resetAll: state.resetAll,
+      setLoading: state.setLoading,
+      setError: state.setError,
     }),
     shallow,
   );
