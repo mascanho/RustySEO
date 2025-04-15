@@ -92,7 +92,7 @@ export default function WidgetLogs() {
   const formatNumber = (num: number) => num?.toLocaleString() || "0";
 
   return (
-    <div className="bg-white shadow rounded-lg p-2 w-full max-w-4xl mx-auto dark:bg-brand-darker dark:text-white h-64">
+    <div className="bg-white shadow rounded-lg p-2 pr-1 w-full max-w-4xl mx-auto dark:bg-brand-darker dark:text-white h-64">
       {/* Tabs */}
       <div className="flex space-x-2 pt-1 pb-0 w-full justify-center">
         {tabs.map(({ label, icon }) => (
@@ -200,7 +200,7 @@ export default function WidgetLogs() {
             </div>
           </>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-44 mt-2 pt-3 overflow-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-52 pb-2 mt-2 pt-3 overflow-auto">
             {/* Analytics Overview */}
             <div className="space-y-4">
               <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
