@@ -18,6 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
+
 import {
   Table,
   TableBody,
@@ -406,11 +407,10 @@ export function LogAnalyzer() {
                       IP Address
                       {sortConfig?.key === "ip" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -421,11 +421,10 @@ export function LogAnalyzer() {
                       Timestamp
                       {sortConfig?.key === "timestamp" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -436,11 +435,10 @@ export function LogAnalyzer() {
                       Method
                       {sortConfig?.key === "method" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -451,11 +449,10 @@ export function LogAnalyzer() {
                       Path
                       {sortConfig?.key === "path" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -466,11 +463,10 @@ export function LogAnalyzer() {
                       Status
                       {sortConfig?.key === "status" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -481,11 +477,10 @@ export function LogAnalyzer() {
                       Size
                       {sortConfig?.key === "responseSize" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -563,28 +558,28 @@ export function LogAnalyzer() {
                               colSpan={8}
                               className="bg-gray-50 dark:bg-gray-800 p-4"
                             >
-                             
-<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-  {/* User Agent */}
-  <div className="flex flex-col">
-    <h4 className="font-medium mb-2">User Agent</h4>
-    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-      <p className="text-sm font-mono break-all">{log.user_agent}</p>
-    </div>
-  </div>
 
-  {/* Referer */}
-  <div className="flex flex-col">
-    <h4 className="font-medium mb-2">Referer</h4>
-    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-      <p className="text-sm break-all">
-        {log.referer || (
-          <span className="text-muted-foreground">No referer</span>
-        )}
-      </p>
-    </div>
-  </div>
-</div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* User Agent */}
+                                <div className="flex flex-col">
+                                  <h4 className="font-medium mb-2">User Agent</h4>
+                                  <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                                    <p className="text-sm font-mono break-all">{log.user_agent}</p>
+                                  </div>
+                                </div>
+
+                                {/* Referer */}
+                                <div className="flex flex-col">
+                                  <h4 className="font-medium mb-2">Referer</h4>
+                                  <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                                    <p className="text-sm break-all">
+                                      {log.referer || (
+                                        <span className="text-muted-foreground">No referer</span>
+                                      )}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
                             </TableCell>
                           </TableRow>
                         )}{" "}
@@ -604,12 +599,12 @@ export function LogAnalyzer() {
         </CardContent>
       </div>
 
-      <div className="flex items-center justify-between w-full " style={{marginTop: "0.2em"}}>
+      <div className="flex items-center justify-between w-full " style={{ marginTop: "0.2em" }}>
         <div className="flex items-center -mt-2 ml-1">
 
           <Select
-              value={itemsPerPage.toString()}
-              onValueChange={(value) => setItemsPerPage(Number(value))}
+            value={itemsPerPage.toString()}
+            onValueChange={(value) => setItemsPerPage(Number(value))}
           >
             <SelectTrigger className="w-[70px] text-xs h-6 mr-2  z-50">
               <SelectValue placeholder="100" />
@@ -625,8 +620,8 @@ export function LogAnalyzer() {
         </div>
 
         <Pagination className="text-xs">
-          <PaginationContent style={{marginTop: "-5px"}}>
-            <PaginationItem>
+          <PaginationContent style={{ marginTop: "-5px" }}>
+            <PaginationItem className="cursor-pointer">
               <PaginationPrevious
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 className={
@@ -649,7 +644,7 @@ export function LogAnalyzer() {
               return (
                 <PaginationItem key={i}>
                   <PaginationLink
-                  className="cursor-pointer h-6"
+                    className="cursor-pointer h-6"
                     onClick={() => setCurrentPage(pageNum)}
                     isActive={currentPage === pageNum}
                   >
@@ -661,7 +656,7 @@ export function LogAnalyzer() {
 
             {totalPages > 5 && currentPage < totalPages - 2 && (
               <>
-                <PaginationItem>
+                <PaginationItem className="cursor-pointer">
                   <PaginationEllipsis />
                 </PaginationItem>
                 <PaginationItem>
@@ -672,7 +667,7 @@ export function LogAnalyzer() {
               </>
             )}
 
-            <PaginationItem>
+            <PaginationItem className="cursor-pointer">
               <PaginationNext
                 onClick={() =>
                   setCurrentPage(Math.min(totalPages, currentPage + 1))
@@ -687,14 +682,14 @@ export function LogAnalyzer() {
           </PaginationContent>
         </Pagination>
         <div >
-         <span className="flex justify-end text-muted-foreground w-[150px] flex-nowrap text-right  pr-2.5 -mt-1.5 text-xs text-black/50" >
+          <span className="flex justify-end text-muted-foreground w-[150px] flex-nowrap text-right  pr-2.5 -mt-1.5 text-xs text-black/50" >
             {indexOfFirstItem + 1}-
-           {Math.min(
-               indexOfLastItem,
-               filteredLogs.length > 0 ? filteredLogs.length : entries.length,
-           )}{" "}
-           of {filteredLogs.length > 0 ? filteredLogs.length : entries.length}{" "}
-           entries
+            {Math.min(
+              indexOfLastItem,
+              filteredLogs.length > 0 ? filteredLogs.length : entries.length,
+            )}{" "}
+            of {filteredLogs.length > 0 ? filteredLogs.length : entries.length}{" "}
+            entries
           </span>
         </div>
       </div>

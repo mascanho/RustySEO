@@ -19,6 +19,7 @@ pub struct LogEntry {
     pub response_size: u64,
     pub country: Option<String>,
     pub is_crawler: bool,
+    pub crawler_type: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -61,6 +62,7 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
                 referer: e.referer.unwrap_or_default(),
                 response_size: e.response_size,
                 country: extract_country(&e.ip),
+                crawler_type: e.crawler_type,
                 is_crawler,
             }
         })
