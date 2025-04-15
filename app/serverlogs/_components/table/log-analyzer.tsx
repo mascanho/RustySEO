@@ -131,9 +131,9 @@ export function LogAnalyzer() {
 
     // Apply bot filter
     if (botFilter !== null) {
-      if (botFilter !== "Human") {
-        result = result.filter((log) => log?.crawler_type !== "Human");
-      } else {
+      if (botFilter === "bot") {
+        result = result.filter((log) => log?.crawler_type && log.crawler_type !== "Human");
+      } else if (botFilter === "Human") {
         result = result.filter((log) => log?.crawler_type === "Human");
       }
     }
