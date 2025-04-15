@@ -28,7 +28,22 @@ pub struct LogAnalysisResult {
     pub unique_ips: usize,
     pub unique_user_agents: usize,
     pub crawler_count: usize,
+    pub totals: Totals,
     pub success_rate: f32,
+    pub log_start_time: String,
+    pub log_finish_time: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Totals {
+    pub google: usize,
+    pub bing: usize,
+    pub semrush: usize,
+    pub hrefs: usize,
+    pub moz: usize,
+    pub uptime: usize,
+    pub openai: usize,
+    pub claude: usize,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -45,6 +60,19 @@ pub struct LogInput {
 pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
     let log = data.log_content;
     let entries = parse_log_entries(&log);
+
+    let log_start_time = entries
+        .first()
+        .unwrap()
+        .timestamp
+        .format("%Y-%m-%d %H:%M:%S")
+        .to_string();
+    let log_finish_time = entries
+        .last()
+        .unwrap()
+        .timestamp
+        .format("%Y-%m-%d %H:%M:%S")
+        .to_string();
 
     // Enhance each entry with additional data
     let enhanced_entries: Vec<LogEntry> = entries
@@ -85,6 +113,42 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
         .collect::<HashSet<_>>()
         .len();
 
+    // DEFINE THE TOTALS FOR EACH CRAWLER TYPE
+    let google_bot_totals = enhanced_entries
+        .iter()
+        .filter(|e| e.crawler_type.to_lowercase().starts_with("google"))
+        .count();
+    let bing_bot_totals = enhanced_entries
+        .iter()
+        .filter(|e| e.crawler_type.to_lowercase().starts_with("bing"))
+        .count();
+    let semrush_bot_totals = enhanced_entries
+        .iter()
+        .filter(|e| e.crawler_type.to_lowercase().starts_with("semrush"))
+        .count();
+    let hrefs_bot_totals = enhanced_entries
+        .iter()
+        .filter(|e| e.crawler_type.to_lowercase().starts_with("hrefs"))
+        .count();
+    let moz_bot_totals = enhanced_entries
+        .iter()
+        .filter(|e| e.crawler_type.to_lowercase().starts_with("moz"))
+        .count();
+    let uptime_bot_totals = enhanced_entries
+        .iter()
+        .filter(|e| e.crawler_type.to_lowercase().starts_with("uptime"))
+        .count();
+
+    let openai_bot_totals = enhanced_entries
+        .iter()
+        .filter(|e| e.crawler_type.to_lowercase().starts_with("chat"))
+        .count();
+
+    let claude_bot_totals = enhanced_entries
+        .iter()
+        .filter(|e| e.crawler_type.to_lowercase().starts_with("claude"))
+        .count();
+
     Ok(LogResult {
         overview: LogAnalysisResult {
             message: "Log analysis completed".to_string(),
@@ -97,6 +161,18 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
             } else {
                 0.0
             },
+            totals: Totals {
+                google: google_bot_totals,
+                bing: bing_bot_totals,
+                semrush: semrush_bot_totals,
+                hrefs: hrefs_bot_totals,
+                moz: moz_bot_totals,
+                uptime: uptime_bot_totals,
+                openai: openai_bot_totals,
+                claude: claude_bot_totals,
+            },
+            log_start_time,
+            log_finish_time,
         },
         entries: enhanced_entries,
     })

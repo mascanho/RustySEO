@@ -36,7 +36,7 @@ fn detect_browser(user_agent: &str) -> Option<String> {
 fn detect_bot(user_agent: &str) -> Option<String> {
     let lower = user_agent.to_lowercase();
     for keyword in [
-        "bot", "crawler", "spider", "sistrix", "ai", "open", "uptime", "sistrix",
+        "crawler", "spider", "sistrix", "chat", "uptime", "google", "bot",
     ] {
         if let Some(pos) = lower.find(keyword) {
             let start = lower[..pos]
