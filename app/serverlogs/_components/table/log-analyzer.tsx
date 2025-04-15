@@ -132,12 +132,13 @@ export function LogAnalyzer() {
     // Apply bot filter
     if (botFilter !== null) {
       if (botFilter === "bot") {
-        result = result.filter((log) => log?.crawler_type && log.crawler_type !== "Human");
+        result = result.filter(
+          (log) => log?.crawler_type && log.crawler_type !== "Human",
+        );
       } else if (botFilter === "Human") {
         result = result.filter((log) => log?.crawler_type === "Human");
       }
     }
-
 
     // Apply sorting
     if (sortConfig) {
@@ -285,7 +286,10 @@ export function LogAnalyzer() {
           {/* Status Code Filter */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark">
+              <Button
+                variant="outline"
+                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark"
+              >
                 <Filter className="h-4 w-4" />
                 Status
                 {statusFilter.length > 0 && (
@@ -331,7 +335,10 @@ export function LogAnalyzer() {
           {/* Method Filter */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark">
+              <Button
+                variant="outline"
+                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark"
+              >
                 <Filter className="h-4 w-4" />
                 Method
                 {methodFilter.length > 0 && (
@@ -341,12 +348,17 @@ export function LogAnalyzer() {
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-white dark:border-brand-dark dark:text-white dark:active:bg-brand-bright  dark:bg-brand-darker">
+            <DropdownMenuContent
+              align="end"
+              className="bg-white dark:border-brand-dark dark:text-white dark:active:bg-brand-bright  dark:bg-brand-darker"
+            >
               <DropdownMenuLabel>Filter by Method</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {["GET", "POST", "PUT", "DELETE"].map((method) => (
                 <DropdownMenuCheckboxItem
-                    className={"bg-white active:bg-gray-100 hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"}
+                  className={
+                    "bg-white active:bg-gray-100 hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                  }
                   key={method}
                   checked={methodFilter.includes(method)}
                   onCheckedChange={(checked) => {
@@ -380,21 +392,33 @@ export function LogAnalyzer() {
             </SelectContent>
           </Select>
 
-          <Button variant="outline" onClick={resetFilters}
+          <Button
+            variant="outline"
+            onClick={resetFilters}
             className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white"
           >
             <RefreshCw className="h-4 w-4" />
             Reset
           </Button>
 
-          <Button variant="outline" onClick={exportCSV} className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white">
+          <Button
+            variant="outline"
+            onClick={exportCSV}
+            className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white"
+          >
             <Download className="h-4 w-4" />
             Export CSV
           </Button>
         </div>
       </div>
 
-      <div style={{ height: "calc(100vh - 43.2vh)", maxHeight: "calc(100vh - 43.2vh)" }} className="px-1">
+      <div
+        style={{
+          height: "calc(100vh - 43.2vh)",
+          maxHeight: "calc(100vh - 43.2vh)",
+        }}
+        className="px-1"
+      >
         <CardContent className="p-0 h-full">
           <div className="rounded-md border  dark:border-brand-dark h-full">
             <div className="relative w-full h-full overflow-auto">
@@ -409,10 +433,26 @@ export function LogAnalyzer() {
                       IP Address
                       {sortConfig?.key === "ip" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
+                        />
+                      )}
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer"
+                      onClick={() => requestSort("browser")}
+                    >
+                      Browser
+                      {sortConfig?.key === "browser" && (
+                        <ChevronDown
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -423,10 +463,11 @@ export function LogAnalyzer() {
                       Timestamp
                       {sortConfig?.key === "timestamp" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -437,10 +478,11 @@ export function LogAnalyzer() {
                       Method
                       {sortConfig?.key === "method" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -451,10 +493,11 @@ export function LogAnalyzer() {
                       Path
                       {sortConfig?.key === "path" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -465,10 +508,11 @@ export function LogAnalyzer() {
                       Status
                       {sortConfig?.key === "status" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -479,10 +523,11 @@ export function LogAnalyzer() {
                       Size
                       {sortConfig?.key === "responseSize" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -511,6 +556,7 @@ export function LogAnalyzer() {
                               </Badge>
                             )}
                           </TableCell>
+                          <TableCell>{log?.browser}</TableCell>
                           <TableCell>{formatDate(log.timestamp)}</TableCell>
                           <TableCell>
                             <Badge
@@ -557,16 +603,19 @@ export function LogAnalyzer() {
                         {expandedRow === index && (
                           <TableRow>
                             <TableCell
-                              colSpan={8}
+                              colSpan={9}
                               className="bg-gray-50 dark:bg-gray-800 p-4"
                             >
-
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* User Agent */}
                                 <div className="flex flex-col">
-                                  <h4 className="font-medium mb-2">User Agent</h4>
+                                  <h4 className="font-medium mb-2">
+                                    User Agent
+                                  </h4>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-                                    <p className="text-sm font-mono break-all">{log.user_agent}</p>
+                                    <p className="text-sm font-mono break-all">
+                                      {log.user_agent}
+                                    </p>
                                   </div>
                                 </div>
 
@@ -576,7 +625,9 @@ export function LogAnalyzer() {
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                                     <p className="text-sm break-all">
                                       {log.referer || (
-                                        <span className="text-muted-foreground">No referer</span>
+                                        <span className="text-muted-foreground">
+                                          No referer
+                                        </span>
                                       )}
                                     </p>
                                   </div>
@@ -601,9 +652,11 @@ export function LogAnalyzer() {
         </CardContent>
       </div>
 
-      <div className="flex items-center justify-between w-full " style={{ marginTop: "0.2em" }}>
+      <div
+        className="flex items-center justify-between w-full "
+        style={{ marginTop: "0.2em" }}
+      >
         <div className="flex items-center -mt-2 ml-1">
-
           <Select
             value={itemsPerPage.toString()}
             onValueChange={(value) => setItemsPerPage(Number(value))}
@@ -617,8 +670,6 @@ export function LogAnalyzer() {
               <SelectItem value="1000">1000</SelectItem>
             </SelectContent>
           </Select>
-
-
         </div>
 
         <Pagination className="text-xs">
@@ -683,8 +734,8 @@ export function LogAnalyzer() {
             </PaginationItem>
           </PaginationContent>
         </Pagination>
-        <div >
-          <span className="flex justify-end text-muted-foreground w-[150px] flex-nowrap text-right  pr-2.5 -mt-1.5 text-xs text-black/50" >
+        <div>
+          <span className="flex justify-end text-muted-foreground w-[180px] flex-nowrap text-right  pr-2.5 -mt-1.5 text-xs text-black/50">
             {indexOfFirstItem + 1}-
             {Math.min(
               indexOfLastItem,

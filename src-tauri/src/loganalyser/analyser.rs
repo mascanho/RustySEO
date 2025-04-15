@@ -1,5 +1,3 @@
-use chrono::NaiveDateTime;
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
@@ -20,6 +18,7 @@ pub struct LogEntry {
     pub country: Option<String>,
     pub is_crawler: bool,
     pub crawler_type: String,
+    pub browser: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -64,6 +63,7 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
                 country: extract_country(&e.ip),
                 crawler_type: e.crawler_type,
                 is_crawler,
+                browser: e.browser,
             }
         })
         .collect();

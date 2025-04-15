@@ -13,16 +13,37 @@ pub struct LogEntry {
     pub referer: Option<String>,
     pub response_size: u64,
     pub crawler_type: String,
+    pub browser: String,
+}
+
+fn detect_browser(user_agent: &str) -> Option<String> {
+    let lower = user_agent.to_lowercase();
+    for keyword in ["chrome", "firefox", "safari", "edge", "opera"] {
+        if let Some(pos) = lower.find(keyword) {
+            let start = lower[..pos]
+                .rfind(|c: char| !c.is_alphanumeric() && c != '/')
+                .map_or(0, |p| p + 1);
+            let end = lower[pos..]
+                .find(|c: char| c == ' ' || c == ';' || c == ')' || c == '"')
+                .map_or(user_agent.len(), |p| pos + p);
+            return Some(user_agent[start..end].to_string());
+        }
+    }
+    Some("Bot".to_string())
 }
 
 // Detect crawler type from user-agent
 fn detect_bot(user_agent: &str) -> Option<String> {
     let lower = user_agent.to_lowercase();
-    for keyword in ["bot", "crawler", "spider"] {
+    for keyword in [
+        "bot", "crawler", "spider", "sistrix", "ai", "open", "uptime", "sistrix",
+    ] {
         if let Some(pos) = lower.find(keyword) {
-            let start = lower[..pos].rfind(|c: char| !c.is_alphanumeric() && c != '/')
+            let start = lower[..pos]
+                .rfind(|c: char| !c.is_alphanumeric() && c != '/')
                 .map_or(0, |p| p + 1);
-            let end = lower[pos..].find(|c: char| c == ' ' || c == ';' || c == ')' || c == '"')
+            let end = lower[pos..]
+                .find(|c: char| c == ' ' || c == ';' || c == ')' || c == '"')
                 .map_or(user_agent.len(), |p| pos + p);
             return Some(user_agent[start..end].to_string());
         }
@@ -48,18 +69,19 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
             }
 
             re.captures(line).map(|caps| {
-                let timestamp = match NaiveDateTime::parse_from_str(&caps[2], "%d/%b/%Y:%H:%M:%S %z") {
-                    Ok(t) => t,
-                    Err(e) => {
-                        eprintln!(
-                            "Error parsing timestamp on line {}: '{}' - {}",
-                            i + 1,
-                            &caps[2],
-                            e
-                        );
-                        NaiveDateTime::from_timestamp_opt(0, 0).unwrap()
-                    }
-                };
+                let timestamp =
+                    match NaiveDateTime::parse_from_str(&caps[2], "%d/%b/%Y:%H:%M:%S %z") {
+                        Ok(t) => t,
+                        Err(e) => {
+                            eprintln!(
+                                "Error parsing timestamp on line {}: '{}' - {}",
+                                i + 1,
+                                &caps[2],
+                                e
+                            );
+                            NaiveDateTime::from_timestamp_opt(0, 0).unwrap()
+                        }
+                    };
 
                 let referer = match caps[7].trim() {
                     "-" => None,
@@ -68,6 +90,7 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
 
                 let user_agent = caps[8].to_string();
                 let crawler_type = detect_bot(&user_agent).unwrap_or_default();
+                let browser = detect_browser(&user_agent).unwrap_or_default();
 
                 LogEntry {
                     ip: caps[1].to_string(),
@@ -79,6 +102,7 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
                     referer,
                     response_size: caps[6].parse().unwrap_or(0),
                     crawler_type,
+                    browser,
                 }
             })
         })
@@ -86,7 +110,6 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
 }
 
 fn parse_user_agent(user_agent: &str) -> Option<String> {
-
- let string =   Some("*".to_string());
+    let string = Some("*".to_string());
     string
 }
