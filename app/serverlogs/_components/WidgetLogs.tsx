@@ -117,7 +117,7 @@ export default function WidgetLogs() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="h-[calc(100%-32px)] p-4 overflow-y-auto"
+        className="h-[calc(100%-32px)]"
       >
         {activeTab !== "Analytics" ? (
           <>
@@ -200,7 +200,7 @@ export default function WidgetLogs() {
             </div>
           </>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-44 mt-2 pt-3 overflow-auto">
             {/* Analytics Overview */}
             <div className="space-y-4">
               <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
