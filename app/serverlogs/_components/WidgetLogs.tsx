@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useState } from "react";
-import { FileText, Server, Bot, BarChart3 } from "lucide-react";
+import { FileText, Server, Bot, BarChart3, PenBox } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { Cell, Pie, PieChart, Tooltip } from "recharts";
@@ -9,6 +9,8 @@ import { WidgetTable } from "./WidgetTables/WidgetCrawlersTable.tsx";
 
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
+
+  { label: "Content", icon: <PenBox className="w-4 h-4" /> },
   { label: "Status Codes", icon: <Server className="w-4 h-4" /> },
   { label: "Crawlers", icon: <Bot className="w-4 h-4" /> },
   { label: "Analytics", icon: <BarChart3 className="w-4 h-4" /> },
@@ -34,6 +36,13 @@ export default function WidgetLogs() {
   const fileTypeData = entries?.reduce((acc, entry) => {
     const type = entry.file_type || "Other";
     acc[type] = (acc[type] || 0) + 1;
+    return acc;
+  }, {});
+
+  // Prepare content data from actual entries
+  const contentData = entries?.reduce((acc, entry) => {
+    const content = entry.content;
+    acc[content] = (acc[content] || 0) + 1;
     return acc;
   }, {});
 
@@ -74,14 +83,7 @@ export default function WidgetLogs() {
             value,
           }),
         ),
-        Crawlers:
-          crawlerData.length > 0
-            ? crawlerData
-            : [
-                { name: "Google", value: overview?.totals?.google || 0 },
-                { name: "Bing", value: overview?.totals?.bing || 0 },
-                { name: "Other", value: 0 },
-              ],
+        Crawlers: crawlerData.length > 0 ? crawlerData : "",
       }[activeTab] || []
     );
   };
@@ -193,7 +195,9 @@ export default function WidgetLogs() {
                 />
               </PieChart>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-md pl-4">
+              <div
+                className={`grid grid-cols-1 ${activeTab === "Status Codes" ? "grid-cols-3" : "grid-cols-2"} gap-2 w-full max-w-md pl-4`}
+              >
                 {chartData.map((entry, idx) => (
                   <Dialog
                     key={`${entry.name}-${idx}`}
