@@ -76,7 +76,7 @@ const formatResponseSize = (bytes: number) => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-export function LogAnalyzer() {
+export function WidgetTable({ data }: { data: any }) {
   const {
     entries,
     overview,
@@ -418,7 +418,7 @@ export function LogAnalyzer() {
 
       <div
         style={{
-          height: "calc(100vh - 43.2vh)",
+          height: "calc(100vh - 40.2vh)",
           maxHeight: "calc(100vh - 43.2vh)",
         }}
         className="px-1"

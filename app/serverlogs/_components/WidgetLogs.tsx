@@ -4,6 +4,8 @@ import { FileText, Server, Bot, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { Cell, Pie, PieChart, Tooltip } from "recharts";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { WidgetTable } from "./WidgetTables/WidgetCrawlersTable.tsx";
 
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
@@ -26,6 +28,7 @@ const COLORS = [
 export default function WidgetLogs() {
   const [activeTab, setActiveTab] = useState("Crawlers");
   const { entries, overview } = useLogAnalysis();
+  const [openDialogs, setOpenDialogs] = useState({});
 
   // Prepare filetype data from actual entries
   const fileTypeData = entries?.reduce((acc, entry) => {
@@ -106,6 +109,10 @@ export default function WidgetLogs() {
 
   // Format numbers with commas
   const formatNumber = (num: number) => num?.toLocaleString() || "0";
+
+  const handleOpenChange = (name, isOpen) => {
+    setOpenDialogs((prev) => ({ ...prev, [name]: isOpen }));
+  };
 
   return (
     <div className="bg-white shadow rounded-lg p-2 pr-1 w-full max-w-4xl mx-auto dark:bg-brand-darker dark:text-white h-64">
@@ -188,49 +195,76 @@ export default function WidgetLogs() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-md pl-4">
                 {chartData.map((entry, idx) => (
-                  <div
+                  <Dialog
                     key={`${entry.name}-${idx}`}
-                    className="flex justify-between items-center border border-gray-100 px-2 py-1 rounded-md text-xs"
-                    style={{
-                      borderLeft: `3px solid ${COLORS[idx % COLORS.length]}`,
-                      backgroundColor: `${COLORS[idx % COLORS.length]}10`,
-                    }}
+                    open={openDialogs[entry.name] || false}
+                    onOpenChange={(isOpen) =>
+                      handleOpenChange(entry.name, isOpen)
+                    }
+                    w
                   >
-                    <span className="truncate dark:text-white">
-                      {entry.name}
-                    </span>
-                    <span
-                      className="font-medium ml-2"
-                      style={{ color: COLORS[idx % COLORS.length] }}
+                    <DialogTrigger
+                      className={`${entry.name === "Google" ? "cursor-pointer" : "cursor-default"}`}
                     >
-                      {entry.value.toLocaleString()}
-                    </span>
-                  </div>
+                      <div
+                        className="flex justify-between items-center border border-gray-100 px-2 py-1 rounded-md text-xs"
+                        style={{
+                          borderLeft: `3px solid ${COLORS[idx % COLORS.length]}`,
+                          backgroundColor: `${COLORS[idx % COLORS.length]}10`,
+                        }}
+                      >
+                        <span className="truncate dark:text-white">
+                          {entry.name}
+                        </span>
+                        <span
+                          className="font-medium ml-2"
+                          style={{ color: COLORS[idx % COLORS.length] }}
+                        >
+                          {entry.value.toLocaleString()}
+                        </span>
+                      </div>
+                    </DialogTrigger>
+
+                    {entry?.name === "Google" && (
+                      <DialogContent
+                        style={{ width: "90%" }}
+                        className="max-w-2xl"
+                      >
+                        <WidgetTable data={overview} />
+                      </DialogContent>
+                    )}
+                  </Dialog>
                 ))}
               </div>
             </div>
           </>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-52 pb-2 mt-2 pt-3 overflow-auto">
-            <div className="space-y-4">
-              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                <h3 className="font-medium mb-2">Traffic Overview</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span>Total Requests</span>
-                    <span className="font-medium">
+          <div
+            className="grid grid-cols-1 md:grid-cols-2 gap-3  pt-2 overflow-auto"
+            style={{ height: "calc(100% - 8px)", marginTop: "0.2em" }}
+          >
+            {/* Left Column - Stats */}
+            <div className="space-y-2">
+              <div className="bg-white/50 dark:bg-gray-800/80 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+                <h3 className="font-medium text-sm text-gray-500 dark:text-gray-400 mb-2">
+                  TRAFFIC OVERVIEW
+                </h3>
+                <div className="space-y-2.5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Total</span>
+                    <span className="font-medium text-sm tabular-nums">
                       {formatNumber(overview.line_count)}
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Successful Requests</span>
-                    <span className="font-medium">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Success Rate</span>
+                    <span className="font-medium text-sm tabular-nums">
                       {overview.success_rate?.toFixed(1)}%
                     </span>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Crawler Traffic</span>
-                    <span className="font-medium">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Crawlers</span>
+                    <span className="font-medium text-sm tabular-nums">
                       {formatNumber(overview.crawler_count)} (
                       {Math.round(
                         (overview.crawler_count / overview.line_count) * 100,
@@ -241,47 +275,71 @@ export default function WidgetLogs() {
                 </div>
               </div>
 
-              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-                <h3 className="font-medium mb-2">Unique Values</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span>Unique IPs</span>
-                    <span className="font-medium">
+              <div className="bg-white/50 dark:bg-gray-800/80 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+                <h3 className="font-medium text-sm text-gray-500 dark:text-gray-400 mb-2">
+                  UNIQUE VALUES
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      IPs
+                    </div>
+                    <div className="font-medium text-sm tabular-nums">
                       {formatNumber(overview.unique_ips)}
-                    </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span>User Agents</span>
-                    <span className="font-medium">
+                  <div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      User Agents
+                    </div>
+                    <div className="font-medium text-sm tabular-nums">
                       {formatNumber(overview.unique_user_agents)}
-                    </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-              <h3 className="font-medium mb-2">Crawler Breakdown</h3>
-              <div className="space-y-3">
-                {crawlerData.map((crawler, index) => (
-                  <div key={crawler.name} className="space-y-1">
-                    <div className="flex justify-between">
-                      <span>{crawler.name}</span>
-                      <span className="font-medium">
-                        {formatNumber(crawler.value)}
-                      </span>
+            {/* Right Column - Crawlers */}
+            <div className="bg-white/50 dark:bg-gray-800/80 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="font-medium text-sm text-gray-500 dark:text-gray-400">
+                  CRAWLER BREAKDOWN
+                </h3>
+                <span className="text-xs text-gray-400 dark:text-gray-500">
+                  {formatNumber(overview.crawler_count)} total
+                </span>
+              </div>
+              <div className="space-y-2">
+                {crawlerData.map((crawler, index) => {
+                  const percentage = Math.round(
+                    (crawler.value / overview.line_count) * 100,
+                  );
+                  return (
+                    <div key={crawler.name} className="space-y-1">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="truncate pr-2">{crawler.name}</span>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-medium tabular-nums">
+                            {formatNumber(crawler.value)}
+                          </span>
+                          <span className="text-xs text-gray-500 tabular-nums w-8 text-right">
+                            {percentage}%
+                          </span>
+                        </div>
+                      </div>
+                      <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5">
+                        <div
+                          className="h-1.5 rounded-full"
+                          style={{
+                            width: `${percentage}%`,
+                            backgroundColor: COLORS[index % COLORS.length],
+                          }}
+                        />
+                      </div>
                     </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div
-                        className="h-2 rounded-full"
-                        style={{
-                          width: `${(crawler.value / overview.line_count) * 100}%`,
-                          backgroundColor: COLORS[index % COLORS.length],
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

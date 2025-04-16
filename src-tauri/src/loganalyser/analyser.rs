@@ -45,6 +45,7 @@ pub struct Totals {
     pub uptime: usize,
     pub openai: usize,
     pub claude: usize,
+    pub google_bot_pages: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -151,6 +152,13 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
         .filter(|e| e.crawler_type.to_lowercase().starts_with("claude"))
         .count();
 
+    // Filtering pages crawled by Google Bot
+    let google_bot_pages = enhanced_entries
+        .iter()
+        .filter(|e| e.crawler_type.to_lowercase().contains("google"))
+        .map(|e| e.path.clone())
+        .collect::<Vec<_>>();
+
     Ok(LogResult {
         overview: LogAnalysisResult {
             message: "Log analysis completed".to_string(),
@@ -172,6 +180,7 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
                 uptime: uptime_bot_totals,
                 openai: openai_bot_totals,
                 claude: claude_bot_totals,
+                google_bot_pages,
             },
             log_start_time,
             log_finish_time,
