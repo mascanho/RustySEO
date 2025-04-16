@@ -625,8 +625,8 @@ export function LogAnalyzer() {
                             >
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* User Agent */}
-                                <div className="flex flex-col max-w-[calc(100vw-48rem)]">
-                                  <h4 className="font-medium mb-2">
+                                <div className="flex flex-col max-w-[calc(100vw-62rem)]">
+                                  <h4 className="mb-2 font-bold">
                                     User Agent
                                   </h4>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
@@ -638,7 +638,7 @@ export function LogAnalyzer() {
 
                                 {/* Referer */}
                                 <div className="flex flex-col">
-                                  <h4 className="font-medium mb-2">Referer</h4>
+                                  <h4 className="mb-2 font-bold">Referer</h4>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                                     <p className="text-sm break-all">
                                       {log.referer || (

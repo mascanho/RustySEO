@@ -52,7 +52,7 @@ fn detect_file_type(path: &str) -> Option<String> {
         Some("JS".to_string())
     } else if lower.ends_with(".pdf") {
         Some("Document".to_string())
-    } else if lower.ends_with(".html") || lower.ends_with(".htm") || lower.ends_with("/") {
+    } else if lower.ends_with(".html") || lower.ends_with(".htm") || lower.ends_with("/") || !lower.ends_with("/") {
         Some("HTML".to_string())
     } else if lower.ends_with(".zip")
         || lower.ends_with(".rar")
