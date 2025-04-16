@@ -19,6 +19,7 @@ pub struct LogEntry {
     pub is_crawler: bool,
     pub crawler_type: String,
     pub browser: String,
+    pub file_type: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -91,6 +92,7 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
                 country: extract_country(&e.ip),
                 crawler_type: e.crawler_type,
                 is_crawler,
+                file_type: e.file_type,
                 browser: e.browser,
             }
         })

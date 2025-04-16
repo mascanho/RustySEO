@@ -14,7 +14,31 @@ pub struct LogEntry {
     pub response_size: u64,
     pub crawler_type: String,
     pub browser: String,
+    pub file_type: String
+
 }
+
+fn detect_file_type(path: &str) -> Option<String> {
+    let lower = path.to_lowercase();
+
+    if lower.ends_with(".jpg") || lower.ends_with(".jpeg") || lower.ends_with(".png") || lower.ends_with(".gif") || lower.ends_with(".bmp") || lower.ends_with(".webp") {
+        Some("Image".to_string())
+    } else if lower.ends_with(".mp4") || lower.ends_with(".mov") || lower.ends_with(".avi") || lower.ends_with(".mkv") {
+        Some("Video".to_string())
+    } else if lower.ends_with(".mp3") || lower.ends_with(".wav") || lower.ends_with(".flac") || lower.ends_with(".aac") {
+        Some("Audio".to_string())
+    } else if lower.ends_with(".pdf") {
+        Some("Document".to_string())
+    } else if lower.ends_with(".html") || lower.ends_with(".htm") || lower.ends_with("/")  {
+        Some("HTML".to_string())
+    } else if lower.ends_with(".zip") || lower.ends_with(".rar") || lower.ends_with(".tar") || lower.ends_with(".gz") {
+        Some("Archive".to_string())
+    } else {
+        None
+    }
+}
+
+
 
 fn detect_browser(user_agent: &str) -> Option<String> {
     let lower = user_agent.to_lowercase();
@@ -103,6 +127,7 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
                     response_size: caps[6].parse().unwrap_or(0),
                     crawler_type,
                     browser,
+                    file_type : detect_file_type(&caps[4]).unwrap_or_default(),
                 }
             })
         })

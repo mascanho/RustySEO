@@ -574,7 +574,7 @@ export function LogAnalyzer() {
                               {log.method}
                             </Badge>
                           </TableCell>
-                          <TableCell className="max-w-[200px] truncate">
+                          <TableCell className="max-w-[480px] truncate">
                             {log.path}
                           </TableCell>
                           <TableCell>
