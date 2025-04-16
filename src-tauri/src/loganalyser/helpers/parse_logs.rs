@@ -59,7 +59,7 @@ fn detect_file_type(path: &str) -> Option<String> {
         || lower.ends_with(".gz")
     {
         Some("Archive".to_string())
-    } else if lower.ends_with(".wolf") || lower.ends_with(".wolf2") || lower.ends_with(".zip") {
+    } else if lower.ends_with(".wolf") || lower.ends_with(".woff2") || lower.ends_with(".zip") {
         Some("Font".to_string())
     } else {
         None
