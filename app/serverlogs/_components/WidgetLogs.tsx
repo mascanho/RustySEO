@@ -77,6 +77,14 @@ export default function WidgetLogs() {
           name: name.toUpperCase(),
           value,
         })),
+
+        "Content Types": Object.entries(contentData || {}).map(
+          ([name, value]) => ({
+            name: name.toUpperCase(),
+            value,
+          }),
+        ),
+
         "Status Codes": Object.entries(statusCodeData || {}).map(
           ([name, value]) => ({
             name: `${name} ${getStatusText(name)}`,
