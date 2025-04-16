@@ -621,11 +621,11 @@ export function LogAnalyzer() {
                           <TableRow>
                             <TableCell
                               colSpan={10}
-                              className="bg-gray-50 dark:bg-gray-800 p-4"
+                              className="bg-gray-50 dark:bg-gray-800 p-4 "
                             >
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* User Agent */}
-                                <div className="flex flex-col">
+                                <div className="flex flex-col max-w-[calc(100vw-48rem)]">
                                   <h4 className="font-medium mb-2">
                                     User Agent
                                   </h4>
