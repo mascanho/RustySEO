@@ -299,11 +299,12 @@ export function LogAnalyzer() {
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-brand-darker">
               <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {[200, 201, 204, 400, 401, 403, 404, 500].map((code) => (
                 <DropdownMenuCheckboxItem
+                    className="hover:bg-brand-blue hover:text-white"
                   key={code}
                   checked={statusFilter.includes(code)}
                   onCheckedChange={(checked) => {
