@@ -4,12 +4,17 @@ import { FileText, Server, Bot, BarChart3, PenBox } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { Cell, Pie, PieChart, Tooltip } from "recharts";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { WidgetTable } from "./WidgetTables/WidgetCrawlersTable.tsx";
 
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
-
   { label: "Content", icon: <PenBox className="w-4 h-4" /> },
   { label: "Status Codes", icon: <Server className="w-4 h-4" /> },
   { label: "Crawlers", icon: <Bot className="w-4 h-4" /> },
@@ -39,12 +44,21 @@ export default function WidgetLogs() {
     return acc;
   }, {});
 
-  // Prepare content data from actual entries
+  // Prepare content data from actual entries or use dummy data
   const contentData = entries?.reduce((acc, entry) => {
     const content = entry.content;
     acc[content] = (acc[content] || 0) + 1;
     return acc;
-  }, {});
+  }, {}) || {
+    Home: 1200,
+    Blog: 850,
+    Events: 420,
+    Solutions: 680,
+    Customers: 320,
+    Industries: 540,
+    Products: 610,
+    About: 290,
+  };
 
   // Prepare status code data from actual entries
   const statusCodeData = entries?.reduce((acc, entry) => {
@@ -77,14 +91,10 @@ export default function WidgetLogs() {
           name: name.toUpperCase(),
           value,
         })),
-
-        "Content Types": Object.entries(contentData || {}).map(
-          ([name, value]) => ({
-            name: name.toUpperCase(),
-            value,
-          }),
-        ),
-
+        Content: Object.entries(contentData || {}).map(([name, value]) => ({
+          name: name,
+          value,
+        })),
         "Status Codes": Object.entries(statusCodeData || {}).map(
           ([name, value]) => ({
             name: `${name} ${getStatusText(name)}`,
@@ -197,7 +207,7 @@ export default function WidgetLogs() {
                     alignItems: "center",
                   }}
                   itemStyle={{
-                    color: "#f9fafb", // text-gray-50
+                    color: "#f9fafb",
                     fontSize: "0.75rem",
                   }}
                 />
@@ -213,7 +223,6 @@ export default function WidgetLogs() {
                     onOpenChange={(isOpen) =>
                       handleOpenChange(entry.name, isOpen)
                     }
-                    w
                   >
                     <DialogTrigger
                       className={`${entry.name === "Google" ? "cursor-pointer" : "cursor-default"}`}
@@ -237,12 +246,40 @@ export default function WidgetLogs() {
                       </div>
                     </DialogTrigger>
 
-                    {entry?.name === "Google" && (
+                    {entry?.name === "Google" ? (
                       <DialogContent
                         style={{ width: "90%" }}
                         className="max-w-2xl"
                       >
                         <WidgetTable data={overview} />
+                      </DialogContent>
+                    ) : (
+                      <DialogContent className="max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>{entry.name} Details</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="flex justify-between">
+                            <span>Total Requests:</span>
+                            <span className="font-medium">
+                              {entry.value.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Percentage:</span>
+                            <span className="font-medium">
+                              {Math.round(
+                                (entry.value /
+                                  chartData.reduce(
+                                    (sum, item) => sum + item.value,
+                                    0,
+                                  )) *
+                                  100,
+                              )}
+                              %
+                            </span>
+                          </div>
+                        </div>
                       </DialogContent>
                     )}
                   </Dialog>
@@ -252,7 +289,7 @@ export default function WidgetLogs() {
           </>
         ) : (
           <div
-            className="grid grid-cols-1 md:grid-cols-2 gap-3  pt-2 overflow-auto"
+            className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 overflow-auto"
             style={{ height: "calc(100% - 8px)", marginTop: "0.2em" }}
           >
             {/* Left Column - Stats */}

@@ -447,6 +447,21 @@ export function LogAnalyzer() {
                     </TableHead>
                     <TableHead
                       className="cursor-pointer"
+                      onClick={() => requestSort("method")}
+                    >
+                      Method
+                      {sortConfig?.key === "method" && (
+                        <ChevronDown
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
+                        />
+                      )}
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer"
                       onClick={() => requestSort("browser")}
                     >
                       Browser
@@ -466,21 +481,6 @@ export function LogAnalyzer() {
                     >
                       Timestamp
                       {sortConfig?.key === "timestamp" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      )}
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer"
-                      onClick={() => requestSort("method")}
-                    >
-                      Method
-                      {sortConfig?.key === "method" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${
                             sortConfig.direction === "descending"
@@ -568,8 +568,6 @@ export function LogAnalyzer() {
                             {indexOfFirstItem + index + 1}
                           </TableCell>
                           <TableCell>{log.ip}</TableCell>
-                          <TableCell>{log?.browser}</TableCell>
-                          <TableCell>{formatDate(log.timestamp)}</TableCell>
                           <TableCell>
                             <Badge
                               variant="outline"
@@ -586,6 +584,8 @@ export function LogAnalyzer() {
                               {log.method}
                             </Badge>
                           </TableCell>
+                          <TableCell>{log?.browser}</TableCell>
+                          <TableCell>{formatDate(log.timestamp)}</TableCell>
                           <TableCell className="max-w-[480px] truncate">
                             {log.path}
                           </TableCell>
