@@ -299,12 +299,15 @@ export function LogAnalyzer() {
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-brand-darker">
+            <DropdownMenuContent
+              align="end"
+              className="w-56 bg-white dark:bg-brand-darker"
+            >
               <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {[200, 201, 204, 400, 401, 403, 404, 500].map((code) => (
                 <DropdownMenuCheckboxItem
-                    className="hover:bg-brand-blue hover:text-white"
+                  className="hover:bg-brand-blue hover:text-white"
                   key={code}
                   checked={statusFilter.includes(code)}
                   onCheckedChange={(checked) => {
@@ -503,18 +506,18 @@ export function LogAnalyzer() {
                       )}
                     </TableHead>
                     <TableHead
-                        className="cursor-pointer"
-                        onClick={() => requestSort("file_type")}
+                      className="cursor-pointer"
+                      onClick={() => requestSort("file_type")}
                     >
-                     File Type
+                      File Type
                       {sortConfig?.key === "file_type" && (
-                          <ChevronDown
-                              className={`ml-1 h-4 w-4 inline-block ${
-                                  sortConfig.direction === "descending"
-                                      ? "rotate-180"
-                                      : ""
-                              }`}
-                          />
+                        <ChevronDown
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
+                        />
                       )}
                     </TableHead>
                     <TableHead
@@ -564,10 +567,7 @@ export function LogAnalyzer() {
                           <TableCell className="font-medium">
                             {indexOfFirstItem + index + 1}
                           </TableCell>
-                          <TableCell>
-                            {log.ip}
-
-                          </TableCell>
+                          <TableCell>{log.ip}</TableCell>
                           <TableCell>{log?.browser}</TableCell>
                           <TableCell>{formatDate(log.timestamp)}</TableCell>
                           <TableCell>
@@ -590,9 +590,7 @@ export function LogAnalyzer() {
                             {log.path}
                           </TableCell>
                           <TableCell className="max-w-[480px] truncate">
-                            <Badge variant={"outline"}>
-                              {log.file_type}
-                            </Badge>
+                            <Badge variant={"outline"}>{log.file_type}</Badge>
                           </TableCell>
                           <TableCell>
                             <Badge
@@ -625,10 +623,8 @@ export function LogAnalyzer() {
                             >
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* User Agent */}
-                                <div className="flex flex-col max-w-[calc(100vw-62rem)]">
-                                  <h4 className="mb-2 font-bold">
-                                    User Agent
-                                  </h4>
+                                <div className="flex flex-col max-w-[calc(100vw-62vw)]">
+                                  <h4 className="mb-2 font-bold">User Agent</h4>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                                     <p className="text-sm font-mono break-all">
                                       {log.user_agent}

@@ -8,11 +8,14 @@ interface LogEntry {
   method: string;
   path: string;
   status: number;
-  userAgent: string;
+  user_agent: string;
   referer: string;
-  responseSize: number;
+  response_size: number;
   country?: string;
-  isCrawler: boolean;
+  crawler_type: string;
+  is_crawler: boolean;
+  browser: string;
+  file_type: string;
 }
 
 interface CrawlerTotals {
@@ -28,11 +31,11 @@ interface CrawlerTotals {
 
 interface LogAnalysisOverview {
   message: string;
-  lineCount: number;
-  uniqueIps: number;
-  uniqueUserAgents: number;
-  crawlerCount: number;
-  successRate: number;
+  line_count: number;
+  unique_ips: number;
+  unique_user_agents: number;
+  crawler_count: number;
+  success_rate: number;
   totals: CrawlerTotals;
 }
 
@@ -76,11 +79,11 @@ const initialState: LogAnalysisState = {
   entries: [],
   overview: {
     message: "",
-    lineCount: 0,
-    uniqueIps: 0,
-    uniqueUserAgents: 0,
-    crawlerCount: 0,
-    successRate: 0,
+    line_count: 0,
+    unique_ips: 0,
+    unique_user_agents: 0,
+    crawler_count: 0,
+    success_rate: 0,
     totals: defaultTotals,
   },
   isLoading: false,
@@ -102,23 +105,21 @@ export const useLogAnalysisStore = create<
     setLogData: (data) =>
       set((state) => {
         state.entries = data.entries || [];
+        const ov = data.overview || {};
         state.overview = {
-          message: data.overview.message || "",
-          lineCount: data.overview.lineCount || 0,
-          uniqueIps: data.overview.uniqueIps || 0,
-          uniqueUserAgents: data.overview.uniqueUserAgents || 0,
-          crawlerCount: data.overview.crawlerCount || 0,
-          successRate: data.overview.successRate || 0,
+          message: ov.message || "",
+          line_count: ov.line_count || ov.lineCount || 0,
+          unique_ips: ov.unique_ips || ov.uniqueIps || 0,
+          unique_user_agents: ov.unique_user_agents || ov.uniqueUserAgents || 0,
+          crawler_count: ov.crawler_count || ov.crawlerCount || 0,
+          success_rate: ov.success_rate || ov.successRate || 0,
           totals: {
             ...defaultTotals,
-            ...(data.overview.totals || {}),
+            ...(ov.totals || {}),
           },
         };
         state.isLoading = false;
         state.error = null;
-
-        console.log("Log entries stored:", state.entries.length);
-        console.log("Overview data stored:", state.overview);
       }),
 
     setFilter: (key, value) =>
