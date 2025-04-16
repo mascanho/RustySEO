@@ -1,13 +1,6 @@
 // @ts-nocheck
 import { useState } from "react";
-import {
-  FileText,
-  Server,
-  Bot,
-  BarChart3,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { FileText, Server, Bot, BarChart3 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { Cell, Pie, PieChart, Tooltip } from "recharts";
@@ -34,6 +27,20 @@ export default function WidgetLogs() {
   const [activeTab, setActiveTab] = useState("Crawlers");
   const { entries, overview } = useLogAnalysis();
 
+  // Prepare filetype data from actual entries
+  const fileTypeData = entries?.reduce((acc, entry) => {
+    const type = entry.file_type || "Other";
+    acc[type] = (acc[type] || 0) + 1;
+    return acc;
+  }, {});
+
+  // Prepare status code data from actual entries
+  const statusCodeData = entries?.reduce((acc, entry) => {
+    const code = entry.status;
+    acc[code] = (acc[code] || 0) + 1;
+    return acc;
+  }, {});
+
   // Prepare crawler data
   const crawlerData = overview?.totals
     ? Object.entries(overview.totals)
@@ -54,18 +61,16 @@ export default function WidgetLogs() {
 
     return (
       {
-        Filetypes: [
-          { name: "HTML", value: 55 },
-          { name: "JPG", value: 20 },
-          { name: "JS", value: 15 },
-          { name: "CSS", value: 10 },
-        ],
-        "Status Codes": [
-          { name: "200 OK", value: overview?.success_rate || 82 },
-          { name: "301 Redirect", value: 10 },
-          { name: "404 Not Found", value: 6 },
-          { name: "500 Error", value: 2 },
-        ],
+        Filetypes: Object.entries(fileTypeData || {}).map(([name, value]) => ({
+          name: name.toUpperCase(),
+          value,
+        })),
+        "Status Codes": Object.entries(statusCodeData || {}).map(
+          ([name, value]) => ({
+            name: `${name} ${getStatusText(name)}`,
+            value,
+          }),
+        ),
         Crawlers:
           crawlerData.length > 0
             ? crawlerData
@@ -74,8 +79,19 @@ export default function WidgetLogs() {
                 { name: "Bing", value: overview?.totals?.bing || 0 },
                 { name: "Other", value: 0 },
               ],
-      }[activeTab as keyof typeof data] || []
+      }[activeTab] || []
     );
+  };
+
+  // Helper function to get status code text
+  const getStatusText = (code) => {
+    const codes = {
+      "200": "OK",
+      "301": "Redirect",
+      "404": "Not Found",
+      "500": "Server Error",
+    };
+    return codes[code] || "";
   };
 
   const chartData = getChartData();
@@ -122,7 +138,6 @@ export default function WidgetLogs() {
         {activeTab !== "Analytics" ? (
           <>
             <div className="flex flex-col md:flex-row items-center justify-center">
-              {/* Donut Chart for non-Analytics tabs */}
               <PieChart width={200} height={200}>
                 <Pie
                   data={chartData}
@@ -142,35 +157,31 @@ export default function WidgetLogs() {
                   ))}
                 </Pie>
                 <Tooltip
+                  style={{ backgroundColor: "#1f2937", color: "#f9fafb" }}
                   formatter={(value, name, props) => {
-                    // Get the full name from the data payload
-                    const fullName = props.payload.name || name;
-                    // Format the value with commas if it's a number
-                    const formattedValue =
-                      typeof value === "number"
-                        ? value.toLocaleString()
-                        : value;
-                    // Calculate percentage if we have total
                     const total = chartData.reduce(
                       (sum, item) => sum + item.value,
                       0,
                     );
                     const percentage =
                       total > 0 ? Math.round((Number(value) / total) * 100) : 0;
-
                     return [
-                      `${fullName}: ${formattedValue} (${percentage}%)`,
-                      null, // Remove the second line
+                      `${name}: ${value.toLocaleString()} (${percentage}%)`,
+                      null,
                     ];
                   }}
                   contentStyle={{
-                    backgroundColor: "#1f2937", // bg-gray-800
-                    borderColor: "#374151", // border-gray-700
-                    borderRadius: "0.375rem", // rounded
-                    color: "#f9fafb", // text-gray-50
+                    backgroundColor: "#1f2937",
+                    borderColor: "#374151",
+                    borderRadius: "0.375rem",
+                    color: "#f9fafb",
+                    height: "30px",
+                    display: "flex",
+                    alignItems: "center",
                   }}
                   itemStyle={{
                     color: "#f9fafb", // text-gray-50
+                    fontSize: "0.75rem",
                   }}
                 />
               </PieChart>
@@ -201,7 +212,6 @@ export default function WidgetLogs() {
           </>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-52 pb-2 mt-2 pt-3 overflow-auto">
-            {/* Analytics Overview */}
             <div className="space-y-4">
               <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                 <h3 className="font-medium mb-2">Traffic Overview</h3>
@@ -250,7 +260,6 @@ export default function WidgetLogs() {
               </div>
             </div>
 
-            {/* Crawler Breakdown */}
             <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
               <h3 className="font-medium mb-2">Crawler Breakdown</h3>
               <div className="space-y-3">
