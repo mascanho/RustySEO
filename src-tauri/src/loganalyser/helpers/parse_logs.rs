@@ -21,13 +21,18 @@ pub struct LogEntry {
 fn detect_file_type(path: &str) -> Option<String> {
     let lower = path.to_lowercase();
 
-    if lower.ends_with(".jpg") || lower.ends_with(".jpeg") || lower.ends_with(".png") || lower.ends_with(".gif") || lower.ends_with(".bmp") || lower.ends_with(".webp") {
+    if lower.ends_with(".jpg") || lower.ends_with(".svg") || lower.ends_with(".jpeg") || lower.ends_with(".png") || lower.ends_with(".gif") || lower.ends_with(".bmp") || lower.ends_with(".webp") {
         Some("Image".to_string())
     } else if lower.ends_with(".mp4") || lower.ends_with(".mov") || lower.ends_with(".avi") || lower.ends_with(".mkv") {
         Some("Video".to_string())
     } else if lower.ends_with(".mp3") || lower.ends_with(".wav") || lower.ends_with(".flac") || lower.ends_with(".aac") {
         Some("Audio".to_string())
-    } else if lower.ends_with(".pdf") {
+    } else if lower.ends_with(".php") {
+        Some("PHP".to_string())
+    } else if lower.ends_with(".txt") {
+      Some("TXT".to_string())
+
+}  else if lower.ends_with(".pdf") {
         Some("Document".to_string())
     } else if lower.ends_with(".html") || lower.ends_with(".htm") || lower.ends_with("/")  {
         Some("HTML".to_string())
@@ -37,8 +42,6 @@ fn detect_file_type(path: &str) -> Option<String> {
         None
     }
 }
-
-
 
 fn detect_browser(user_agent: &str) -> Option<String> {
     let lower = user_agent.to_lowercase();

@@ -502,6 +502,21 @@ export function LogAnalyzer() {
                       )}
                     </TableHead>
                     <TableHead
+                        className="cursor-pointer"
+                        onClick={() => requestSort("file_type")}
+                    >
+                     File Type
+                      {sortConfig?.key === "file_type" && (
+                          <ChevronDown
+                              className={`ml-1 h-4 w-4 inline-block ${
+                                  sortConfig.direction === "descending"
+                                      ? "rotate-180"
+                                      : ""
+                              }`}
+                          />
+                      )}
+                    </TableHead>
+                    <TableHead
                       className="cursor-pointer"
                       onClick={() => requestSort("status")}
                     >
@@ -531,7 +546,7 @@ export function LogAnalyzer() {
                         />
                       )}
                     </TableHead>
-                    <TableHead>Type</TableHead>
+                    <TableHead>Crawler Type</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -550,11 +565,7 @@ export function LogAnalyzer() {
                           </TableCell>
                           <TableCell>
                             {log.ip}
-                            {log.country && (
-                              <Badge variant="outline" className="ml-2">
-                                {log.country}
-                              </Badge>
-                            )}
+
                           </TableCell>
                           <TableCell>{log?.browser}</TableCell>
                           <TableCell>{formatDate(log.timestamp)}</TableCell>
@@ -576,6 +587,11 @@ export function LogAnalyzer() {
                           </TableCell>
                           <TableCell className="max-w-[480px] truncate">
                             {log.path}
+                          </TableCell>
+                          <TableCell className="max-w-[480px] truncate">
+                            <Badge variant={"outline"}>
+                              {log.file_type}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <Badge
@@ -603,7 +619,7 @@ export function LogAnalyzer() {
                         {expandedRow === index && (
                           <TableRow>
                             <TableCell
-                              colSpan={9}
+                              colSpan={10}
                               className="bg-gray-50 dark:bg-gray-800 p-4"
                             >
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -640,7 +656,7 @@ export function LogAnalyzer() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={9} className="h-24 text-center">
+                      <TableCell colSpan={10} className="h-24 text-center">
                         No log entries found.
                       </TableCell>
                     </TableRow>
