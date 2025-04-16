@@ -27,6 +27,7 @@ fn detect_file_type(path: &str) -> Option<String> {
         || lower.ends_with(".gif")
         || lower.ends_with(".bmp")
         || lower.ends_with(".webp")
+        || lower.ends_with(".ico")
     {
         Some("Image".to_string())
     } else if lower.ends_with(".mp4")
@@ -59,7 +60,7 @@ fn detect_file_type(path: &str) -> Option<String> {
         || lower.ends_with(".gz")
     {
         Some("Archive".to_string())
-    } else if lower.ends_with(".wolf") || lower.ends_with(".woff2") || lower.ends_with(".zip") {
+    } else if lower.ends_with(".woff") || lower.ends_with(".woff2") || lower.ends_with(".ttf") {
         Some("Font".to_string())
     } else {
         None
