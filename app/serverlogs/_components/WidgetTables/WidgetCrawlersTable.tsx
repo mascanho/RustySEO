@@ -446,7 +446,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer min-w-10 w-32"
+                      className="cursor-pointer min-w-10 w-24 text-center"
                       onClick={() => requestSort("frequency")}
                     >
                       Frequency
