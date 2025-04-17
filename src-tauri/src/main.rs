@@ -40,6 +40,7 @@ pub mod gemini;
 pub mod genai;
 pub mod gsc;
 mod image_converter;
+pub mod loganalyser;
 pub mod server;
 pub mod version;
 
@@ -225,7 +226,8 @@ async fn main() {
             domain_commands::create_keywords_excel_command,
             domain_commands::generate_links_table_xlsx_command,
             domain_commands::analyse_diffs_command,
-            commands::open_configs_with_native_editor
+            commands::open_configs_with_native_editor,
+            loganalyser::log_commands::check_logs_command
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

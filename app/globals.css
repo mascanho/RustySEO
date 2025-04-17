@@ -6,6 +6,11 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 224, 224, 224;
   --background-end-rgb: 255, 255, 255;
+  --color-status-200: #4299e1; /* Light Blue for success */
+  --color-status-301: #2b8cbe; /* Medium Blue for redirection */
+  --color-status-404: #3182bd; /* Dark Blue for client error */
+  --color-status-500: #2a78b8; /* Darker Blue for server error */
+  /* Add more status codes as needed */
 }
 
 h1 {

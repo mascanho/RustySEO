@@ -1,25 +1,37 @@
+use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+
 use futures::future::join_all;
 use rand::seq::SliceRandom;
+use rand::Rng;
 use reqwest::{
-    header::{HeaderMap, ACCEPT, ACCEPT_ENCODING, ACCEPT_LANGUAGE, CONNECTION},
+    header::{
+        HeaderMap, ACCEPT, ACCEPT_ENCODING, ACCEPT_LANGUAGE, CACHE_CONTROL, CONNECTION, DNT,
+        UPGRADE_INSECURE_REQUESTS,
+    },
     Client, Url,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
-use std::sync::Arc;
-use std::time::Duration;
 use tokio::sync::{Mutex, Semaphore};
-use tokio::task::JoinHandle;
-use tokio::time::timeout;
+use tokio::task::{JoinError, JoinHandle};
+use tokio::time::{sleep, timeout};
 
 use crate::domain_crawler::{helpers::anchor_links::InternalExternalLinks, user_agents};
 
-// Constants
-const MAX_CONCURRENT_REQUESTS: usize = 10;
-const INITIAL_TASK_CAPACITY: usize = 100;
+// Constants configuration
+const MAX_CONCURRENT_REQUESTS: usize = 8;
+const MIN_DELAY_MS: u64 = 800;
+const MAX_DELAY_MS: u64 = 3000;
 const MAX_RETRIES: usize = 3;
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(15);
-const RETRY_DELAY: Duration = Duration::from_millis(500);
+const REQUEST_TIMEOUT_SECS: u64 = 15;
+const JITTER_FACTOR: f32 = 0.3;
+const MAX_REQUESTS_PER_DOMAIN: usize = 50;
+const INITIAL_TASK_CAPACITY: usize = 100;
+const RETRY_DELAY_MS: u64 = 500;
+const CONNECTION_TIMEOUT_SECS: u64 = 5;
+const POOL_IDLE_TIMEOUT_SECS: u64 = 60;
+const POOL_MAX_IDLE_PER_HOST: usize = 10;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct LinkStatus {
@@ -39,14 +51,66 @@ pub struct LinkCheckResults {
     pub external: Vec<LinkStatus>,
 }
 
+struct DomainTracker {
+    last_request: Mutex<HashMap<String, Instant>>,
+    delays: Mutex<HashMap<String, Duration>>,
+    request_counts: Mutex<HashMap<String, usize>>,
+}
+
+impl DomainTracker {
+    fn new() -> Self {
+        DomainTracker {
+            last_request: Mutex::new(HashMap::new()),
+            delays: Mutex::new(HashMap::new()),
+            request_counts: Mutex::new(HashMap::new()),
+        }
+    }
+
+    async fn get_delay_for(&self, domain: &str) -> Duration {
+        let delays = self.delays.lock().await;
+        delays
+            .get(domain)
+            .copied()
+            .unwrap_or(Duration::from_millis(MIN_DELAY_MS))
+    }
+
+    async fn update_delay_for(&self, domain: &str, response: &reqwest::Response) {
+        let mut delays = self.delays.lock().await;
+        if response.status() == 429 {
+            // Increase delay for this domain
+            let current = delays
+                .entry(domain.to_string())
+                .or_insert(Duration::from_millis(MIN_DELAY_MS));
+            *current = (*current * 2).min(Duration::from_secs(5));
+        } else if response.status().is_success() {
+            // Gradually decrease delay for well-behaved domains
+            if let Some(delay) = delays.get_mut(domain) {
+                *delay = (*delay / 2).max(Duration::from_millis(500));
+            }
+        }
+    }
+
+    async fn should_throttle(&self, domain: &str) -> bool {
+        let mut counts = self.request_counts.lock().await;
+        let count = counts.entry(domain.to_string()).or_insert(0);
+        *count += 1;
+        *count > MAX_REQUESTS_PER_DOMAIN
+    }
+
+    async fn record_request(&self, domain: &str) {
+        let mut last_request = self.last_request.lock().await;
+        last_request.insert(domain.to_string(), Instant::now());
+    }
+}
+
 pub async fn get_links_status_code(
     links: Option<InternalExternalLinks>,
     base_url: &Url,
     page: String,
 ) -> LinkCheckResults {
-    let user_agents = user_agents::agents();
-    let client = build_client(&user_agents);
+    let client = build_client();
     let client = Arc::new(client);
+    let domain_tracker = Arc::new(DomainTracker::new());
 
     let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_REQUESTS));
     let base_url_arc = Arc::new(base_url.clone());
@@ -65,6 +129,7 @@ pub async fn get_links_status_code(
                 base_url_arc.clone(),
                 page_arc.clone(),
                 seen_urls.clone(),
+                domain_tracker.clone(),
                 link,
                 anchor,
                 is_internal,
@@ -75,25 +140,7 @@ pub async fn get_links_status_code(
     process_results(join_all(tasks).await, page_arc, base_url_arc)
 }
 
-fn build_client(user_agents: &[String]) -> Client {
-    Client::builder()
-        .timeout(Duration::from_secs(15))
-        .connect_timeout(Duration::from_secs(5))
-        .pool_idle_timeout(Duration::from_secs(60))
-        .pool_max_idle_per_host(20)
-        .user_agent(
-            user_agents
-                .choose(&mut rand::thread_rng())
-                .expect("User agents list should not be empty"),
-        )
-        .redirect(reqwest::redirect::Policy::limited(5))
-        .default_headers(default_headers())
-        .danger_accept_invalid_certs(false)
-        .build()
-        .expect("Failed to create HTTP client")
-}
-
-fn default_headers() -> HeaderMap {
+fn build_client() -> Client {
     let mut headers = HeaderMap::new();
     headers.insert(
         ACCEPT,
@@ -101,10 +148,28 @@ fn default_headers() -> HeaderMap {
             .parse()
             .unwrap(),
     );
-    headers.insert(ACCEPT_LANGUAGE, "en-US,en;q=0.5".parse().unwrap());
+    headers.insert(ACCEPT_LANGUAGE, "en-US,en;q=0.9".parse().unwrap());
     headers.insert(ACCEPT_ENCODING, "gzip, deflate, br".parse().unwrap());
     headers.insert(CONNECTION, "keep-alive".parse().unwrap());
-    headers
+    headers.insert(CACHE_CONTROL, "no-cache".parse().unwrap());
+    headers.insert(DNT, "1".parse().unwrap());
+    headers.insert(UPGRADE_INSECURE_REQUESTS, "1".parse().unwrap());
+
+    Client::builder()
+        .timeout(Duration::from_secs(REQUEST_TIMEOUT_SECS))
+        .connect_timeout(Duration::from_secs(CONNECTION_TIMEOUT_SECS))
+        .pool_idle_timeout(Duration::from_secs(POOL_IDLE_TIMEOUT_SECS))
+        .pool_max_idle_per_host(POOL_MAX_IDLE_PER_HOST)
+        .user_agent(
+            user_agents::agents()
+                .choose(&mut rand::thread_rng())
+                .unwrap(),
+        )
+        .redirect(reqwest::redirect::Policy::limited(5))
+        .default_headers(headers)
+        .danger_accept_invalid_certs(false)
+        .build()
+        .expect("Failed to create HTTP client")
 }
 
 fn prepare_links(
@@ -133,6 +198,7 @@ fn spawn_link_check_task(
     base_url: Arc<Url>,
     page: Arc<String>,
     seen_urls: Arc<Mutex<HashSet<String>>>,
+    domain_tracker: Arc<DomainTracker>,
     link: String,
     anchor: String,
     is_internal: bool,
@@ -151,6 +217,7 @@ fn spawn_link_check_task(
         };
 
         let full_url_str = full_url.to_string();
+        let domain = full_url.domain().unwrap_or("").to_string();
 
         {
             let mut seen = seen_urls.lock().await;
@@ -159,59 +226,109 @@ fn spawn_link_check_task(
             }
         }
 
+        // Check if we should throttle this domain
+        if domain_tracker.should_throttle(&domain).await {
+            //eprintln!("Throttling requests to domain: {}", domain);
+            return None;
+        }
+
         let relative_path = is_internal.then(|| link);
         let anchor_text = Some(anchor);
 
-        let mut last_error = None;
-        for _ in 0..MAX_RETRIES {
-            let permit = match semaphore.acquire().await {
-                Ok(p) => p,
-                Err(e) => {
-                    eprintln!("Semaphore acquire failed: {}", e);
-                    break;
-                }
-            };
+        let result = fetch_with_retry(
+            &client,
+            &full_url_str,
+            &domain,
+            &domain_tracker,
+            Arc::clone(&base_url),
+            relative_path.clone(),
+            anchor_text.clone(),
+            Arc::clone(&semaphore),
+        )
+        .await;
 
-            match timeout(
-                REQUEST_TIMEOUT,
-                check_link_status(
-                    &client,
-                    &full_url_str,
-                    Arc::clone(&base_url),
-                    relative_path.clone(),
-                    anchor_text.clone(),
-                ),
-            )
-            .await
-            {
-                Ok(result) => {
-                    drop(permit);
-                    return Some((result, is_internal));
-                }
-                Err(_) => {
-                    last_error = Some("Request timed out".to_string());
-                    tokio::time::sleep(RETRY_DELAY).await;
-                    continue;
-                }
-            }
-        }
+        domain_tracker.record_request(&domain).await;
 
-        Some((
-            LinkStatus {
-                base_url: (*base_url).clone(),
-                url: full_url_str,
-                relative_path,
-                status: None,
-                error: last_error,
-                anchor_text,
-            },
-            is_internal,
-        ))
+        Some((result, is_internal))
     }));
 }
 
+async fn fetch_with_retry(
+    client: &Client,
+    url: &str,
+    domain: &str,
+    domain_tracker: &DomainTracker,
+    base_url: Arc<Url>,
+    relative_path: Option<String>,
+    anchor_text: Option<String>,
+    semaphore: Arc<Semaphore>,
+) -> LinkStatus {
+    let mut attempt = 0;
+    let mut last_error = None;
+
+    loop {
+        // Get domain-specific delay
+        let delay = domain_tracker.get_delay_for(domain).await;
+        sleep(delay).await;
+
+        let permit = match Semaphore::acquire_owned(semaphore.clone()).await {
+            Ok(p) => p,
+            Err(_) => {
+                last_error = Some("Semaphore acquire failed".to_string());
+                break;
+            }
+        };
+
+        match timeout(
+            Duration::from_secs(REQUEST_TIMEOUT_SECS),
+            try_head_then_get(client, url),
+        )
+        .await
+        {
+            Ok(Ok(response)) => {
+                domain_tracker.update_delay_for(domain, &response).await;
+                drop(permit);
+                return handle_success_response(
+                    response,
+                    base_url,
+                    url,
+                    relative_path,
+                    anchor_text,
+                );
+            }
+            Ok(Err(e)) => {
+                last_error = Some(e.to_string());
+            }
+            Err(_) => {
+                last_error = Some("Request timeout".to_string());
+            }
+        }
+
+        attempt += 1;
+        if attempt >= MAX_RETRIES {
+            break;
+        }
+
+        // Exponential backoff with jitter
+        let base_delay = MIN_DELAY_MS * 2u64.pow(attempt as u32 - 1);
+        let jitter =
+            (base_delay as f32 * JITTER_FACTOR * rand::thread_rng().gen_range(-1.0..1.0)) as i64;
+        let delay = (base_delay as i64 + jitter).max(0) as u64;
+        sleep(Duration::from_millis(delay)).await;
+    }
+
+    LinkStatus {
+        base_url: (*base_url).clone(),
+        url: url.to_string(),
+        relative_path,
+        status: None,
+        error: last_error,
+        anchor_text,
+    }
+}
+
 fn process_results(
-    results: Vec<Result<Option<(LinkStatus, bool)>, tokio::task::JoinError>>,
+    results: Vec<Result<Option<(LinkStatus, bool)>, JoinError>>,
     page_arc: Arc<String>,
     base_url_arc: Arc<Url>,
 ) -> LinkCheckResults {
@@ -234,33 +351,10 @@ fn process_results(
     }
 }
 
-async fn check_link_status(
+async fn try_head_then_get(
     client: &Client,
     url: &str,
-    base_url_arc: Arc<Url>,
-    relative_path: Option<String>,
-    anchor_text: Option<String>,
-) -> LinkStatus {
-    if let Err(e) = Url::parse(url) {
-        return invalid_url_status(base_url_arc, url, relative_path, anchor_text, e);
-    }
-
-    match try_head_then_get(client, url).await {
-        Ok(response) => {
-            handle_success_response(response, base_url_arc, url, relative_path, anchor_text)
-        }
-        Err(e) => LinkStatus {
-            base_url: (*base_url_arc).clone(),
-            url: url.to_string(),
-            relative_path,
-            status: None,
-            error: Some(e),
-            anchor_text,
-        },
-    }
-}
-
-async fn try_head_then_get(client: &Client, url: &str) -> Result<reqwest::Response, String> {
+) -> Result<reqwest::Response, reqwest::Error> {
     // Try HEAD request first
     match client.head(url).send().await {
         Ok(response) => Ok(response),
@@ -268,37 +362,22 @@ async fn try_head_then_get(client: &Client, url: &str) -> Result<reqwest::Respon
             // Fallback to GET if HEAD fails
             match client.get(url).send().await {
                 Ok(response) => Ok(response),
-                Err(get_err) => Err(classify_error(&head_err, &get_err)),
+                Err(get_err) => Err(get_err),
             }
         }
     }
 }
 
-fn classify_error(head_err: &reqwest::Error, get_err: &reqwest::Error) -> String {
-    if head_err.is_connect() || get_err.is_connect() {
-        "Connection failed".to_string()
-    } else if head_err.is_timeout() || get_err.is_timeout() {
-        "Timeout occurred".to_string()
-    } else if head_err.is_request() || get_err.is_request() {
-        "Invalid request".to_string()
-    } else if head_err.is_body() || head_err.is_decode() || get_err.is_body() || get_err.is_decode()
-    {
-        "Response body error".to_string()
-    } else {
-        format!("Request error: {}", get_err)
-    }
-}
-
 fn handle_success_response(
     response: reqwest::Response,
-    base_url_arc: Arc<Url>,
+    base_url: Arc<Url>,
     url: &str,
     relative_path: Option<String>,
     anchor_text: Option<String>,
 ) -> LinkStatus {
     let status = response.status();
     LinkStatus {
-        base_url: (*base_url_arc).clone(),
+        base_url: (*base_url).clone(),
         url: url.to_string(),
         relative_path,
         status: Some(status.as_u16()),
@@ -307,23 +386,6 @@ fn handle_success_response(
         } else {
             None
         },
-        anchor_text,
-    }
-}
-
-fn invalid_url_status(
-    base_url_arc: Arc<Url>,
-    url: &str,
-    relative_path: Option<String>,
-    anchor_text: Option<String>,
-    error: url::ParseError,
-) -> LinkStatus {
-    LinkStatus {
-        base_url: (*base_url_arc).clone(),
-        url: url.to_string(),
-        relative_path,
-        status: None,
-        error: Some(format!("Invalid URL format: {}", error)),
         anchor_text,
     }
 }

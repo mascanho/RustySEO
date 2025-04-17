@@ -15,7 +15,7 @@ rust-version = "1.78"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-log = "0.4.26"
+ipnet = "2.5.0"
 r2d2 = "0.8"
 r2d2_sqlite = "0.27.0"
 rust_xlsxwriter = "0.84.0"
@@ -24,11 +24,8 @@ serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "2", features = [] }
 reqwest = { version = "0.12.12", features = ["blocking", "json"] }
 tokio = { version = "1.26.0", features = ["full"] }
-crawler = "*"
 scraper = "*"
-xml-rs = "*"
 url = "2.5.4"
-select = "0.6.0"
 dotenv = "0.15.0"
 regex = "1.7.0"
 html2text = "0.4.0"
@@ -51,9 +48,7 @@ base64 = "0.22.1"
 image = "0.24.1"
 actix-web = "4.0"
 google-sheets4 = "*"
-async-trait = "*"
 futures = "*"
-google-analytics3 = "*"
 rand = "*"
 tauri-plugin-fs = "2"
 tauri-plugin-notification = "2"
@@ -64,16 +59,9 @@ tauri-plugin-shell = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-http = "2"
 semver = "1.0.17"
-once_cell = "1.17.1"
-isahc = "1.7.2"
 colored = "3.0.0"
 thiserror = "2.0.12"
-bloom = "*"
-governor = "*"
 rusqlite = { version = "0.34.0", features = ["bundled"] }
-bytes = "*"
-tracing = "*"
-lazy_static = "*"
 
 
 [features]

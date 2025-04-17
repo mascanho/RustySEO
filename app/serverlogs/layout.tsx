@@ -1,6 +1,6 @@
 export const dynamic = "force-static";
 import MenuDrawer from "../components/ui/MenuDrawer";
 
-export default function ImagesLayout({ children }: any) {
-  return <main className="-mt-20 h-full">{children}</main>;
+export default function Layout({ children }: any) {
+  return <main className="-mt-24 h-screen overflow-hidden">{children}</main>;
 }
