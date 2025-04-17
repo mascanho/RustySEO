@@ -144,6 +144,7 @@ const Footer = () => {
         event.preventDefault();
         openedAiDrawer ? closeAiDrawer() : openAiDrawer();
       }
+
       if (event.ctrlKey && event.key === "h") {
         event.preventDefault();
         if (visibility.sidebar) {

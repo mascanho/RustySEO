@@ -124,11 +124,11 @@ const chartConfig = {
     label: "Visitors",
   },
   desktop: {
-    label: "Desktop",
+    label: "Human",
     color: "hsl(var(--chart-1))",
   },
   mobile: {
-    label: "Mobile",
+    label: "Robot",
     color: "hsl(var(--chart-2))",
   },
 } satisfies ChartConfig;
@@ -151,35 +151,34 @@ export function TimelineChart() {
   });
 
   return (
-    <Card className="w-full">
-      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-        <div className="grid flex-1 gap-1 text-center sm:text-left">
-          <CardTitle>Area Chart - Interactive</CardTitle>
-          <CardDescription>
-            Showing total visitors for the last 3 months
-          </CardDescription>
-        </div>
-        <Select value={timeRange} onValueChange={setTimeRange}>
-          <SelectTrigger
-            className="w-[160px] rounded-lg sm:ml-auto"
-            aria-label="Select a value"
-          >
-            <SelectValue placeholder="Last 3 months" />
-          </SelectTrigger>
-          <SelectContent className="rounded-xl">
-            <SelectItem value="90d" className="rounded-lg">
-              Last 3 months
-            </SelectItem>
-            <SelectItem value="30d" className="rounded-lg">
-              Last 30 days
-            </SelectItem>
-            <SelectItem value="7d" className="rounded-lg">
-              Last 7 days
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </CardHeader>
-      <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+    <Card className="w-full rounded-none -mt-1 pl-0">
+      {/* <CardHeader className="flex items-center gap-2 space-y-0 border-b py-1 sm:flex-row"> */}
+      {/* <div className="grid flex-1 gap-1 text-center sm:text-left"> */}
+      {/* <CardDescription> */}
+      {/*   Showing total visitors for the last 3 months */}
+      {/* </CardDescription> */}
+      {/* </div> */}
+      {/* <Select value={timeRange} onValueChange={setTimeRange}> */}
+      {/*   <SelectTrigger */}
+      {/*     className="w-[160px] rounded-lg sm:ml-auto" */}
+      {/*     aria-label="Select a value" */}
+      {/*   > */}
+      {/*     <SelectValue placeholder="Last 3 months" /> */}
+      {/*   </SelectTrigger> */}
+      {/*   <SelectContent className="rounded-xl"> */}
+      {/*     <SelectItem value="90d" className="rounded-lg"> */}
+      {/*       Last 3 months */}
+      {/*     </SelectItem> */}
+      {/*     <SelectItem value="30d" className="rounded-lg"> */}
+      {/*       Last 30 days */}
+      {/*     </SelectItem> */}
+      {/*     <SelectItem value="7d" className="rounded-lg"> */}
+      {/*       Last 7 days */}
+      {/*     </SelectItem> */}
+      {/*   </SelectContent> */}
+      {/* </Select> */}
+      {/* </CardHeader> */}
+      <CardContent className="px-2 ">
         <ChartContainer
           config={chartConfig}
           className="aspect-auto h-[250px] w-full"

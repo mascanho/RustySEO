@@ -21,7 +21,7 @@ function MenuDrawer() {
   const options = [
     { name: "Page Crawler", route: "/" },
     { name: "Domain Crawler", route: "/global" },
-    { name: "Logs Checker", route: "/serverlogs" },
+    { name: "Log Analyzer", route: "/serverlogs" },
   ];
 
   useEffect(() => {
@@ -110,7 +110,7 @@ function MenuDrawer() {
     } else if (path === "/images") {
       setBadge("Image Converter");
     } else if (path === "/serverlogs") {
-      setBadge("Logs Checker");
+      setBadge("Log Analyzer");
     }
   }, [path]);
 
@@ -151,6 +151,10 @@ function MenuDrawer() {
 
       if (event.ctrlKey && event.key === "r") {
         router.refresh();
+      }
+
+      if (event.ctrlKey && event.key === "k") {
+        router.push("/serverlogs");
       }
     };
 
