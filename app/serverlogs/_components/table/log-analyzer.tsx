@@ -607,7 +607,7 @@ export function LogAnalyzer() {
                               variant="outline"
                               className={
                                 log.crawler_type !== "Human"
-                                  ? "bg-gradient-to-r from-blue-50 via-red-50 to-green-80 text-blue-600 border border-red-30/30 px-3 py-1 rounded-full font-medium shadow-xs hover:shadow-green-300/20 transition-all"
+                                  ? "bg-gradient-to-r from-blue-50 via-red-100 to-green-80 text-blue-600 border border-red-30/30 px-3 py-1 rounded-full font-medium shadow-xs hover:shadow-green-300/20 transition-all"
                                   : "bg-green-100 text-green-800 border-green-200"
                               }
                             >
