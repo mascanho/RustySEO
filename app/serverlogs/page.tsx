@@ -10,7 +10,6 @@ import {
 } from "./_components/charts/PieChartStatus";
 import { TimelineChart } from "./_components/charts/TimelineChart";
 import InputZone from "./_components/InputZone";
-import { LogSheet } from "./_components/LogSheet";
 import { LogAnalyzer } from "./_components/table/log-analyzer";
 import UploadButton from "./_components/UploadButton";
 import WidgetLogs from "./_components/WidgetLogs";
