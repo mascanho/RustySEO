@@ -171,7 +171,7 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
         let mut frequency_map: HashMap<String, Vec<GoogleBotPageDetails>> = HashMap::new();
 
         for entry in entries {
-            let key = entry.path.clone();
+            let key = format!("{}:{}", entry.path, entry.crawler_type);
             let details = GoogleBotPageDetails {
                 crawler_type: entry.crawler_type.clone(),
                 file_type: entry.file_type.clone(),
@@ -190,9 +190,9 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
                 .push(details);
         }
 
-        // Aggregate frequencies for identical paths
+        // Aggregate frequencies for identical path:crawler_type combinations
         let mut aggregated_map: HashMap<String, Vec<GoogleBotPageDetails>> = HashMap::new();
-        for (path, details_vec) in frequency_map {
+        for (key, details_vec) in frequency_map {
             let aggregated_details = GoogleBotPageDetails {
                 crawler_type: details_vec[0].crawler_type.clone(),
                 file_type: details_vec[0].file_type.clone(), // Keep first file_type
@@ -202,9 +202,9 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
                 referer: details_vec[0].referer.clone(), // Keep first referer
                 browser: details_vec[0].browser.clone(), // Keep first browser
                 user_agent: details_vec[0].user_agent.clone(), // Keep first user agent
-                frequency: details_vec.len(), // Frequency is the number of occurrences of this path
+                frequency: details_vec.len(), // Frequency is the number of occurrences of this path:crawler_type
             };
-            aggregated_map.insert(path, vec![aggregated_details]);
+            aggregated_map.insert(key, vec![aggregated_details]);
         }
 
         aggregated_map
