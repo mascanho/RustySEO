@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   AlertCircle,
   ChevronDown,
@@ -6,9 +6,9 @@ import {
   Filter,
   RefreshCw,
   Search,
-} from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+} from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -16,7 +16,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuCheckboxItem,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -24,14 +24,14 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   Pagination,
   PaginationContent,
@@ -40,9 +40,9 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination";
-import { Badge } from "@/components/ui/badge";
-import { CardContent } from "@/components/ui/card";
+} from '@/components/ui/pagination';
+import { Badge } from '@/components/ui/badge';
+import { CardContent } from '@/components/ui/card';
 
 // Interface for log entry based on provided data structure
 interface LogEntry {
@@ -60,44 +60,40 @@ interface LogEntry {
 }
 
 // Helper function to format date
-const formatDate = (dateString: string) => {
+const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
   }).format(date);
 };
 
-// Get status code badge color
-const getStatusCodeColor = (code: number) => {
-  if (code >= 200 && code < 300) return "bg-green-500";
-  if (code >= 300 && code < 400) return "bg-blue-500";
-  if (code >= 400 && code < 500) return "bg-yellow-500";
-  if (code >= 500) return "bg-red-500";
-  return "bg-gray-500";
-};
-
 // Format response size
-const formatResponseSize = (bytes: number) => {
+const formatResponseSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-export function WidgetTable({ data }: { data: any }) {
+interface WidgetTableProps {
+  data: any;
+}
+
+const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
+  const [initialLogs, setInitialLogs] = useState<LogEntry[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(100);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(100);
   const [methodFilter, setMethodFilter] = useState<string[]>([]);
-  const [botFilter, setBotFilter] = useState<string | null>("all");
+  const [botFilter, setBotFilter] = useState<string | null>('all');
   const [sortConfig, setSortConfig] = useState<{
     key: string;
-    direction: "ascending" | "descending";
+    direction: 'ascending' | 'descending';
   } | null>(null);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
@@ -115,14 +111,13 @@ export function WidgetTable({ data }: { data: any }) {
       });
     });
 
+    setInitialLogs(logs);
     setFilteredLogs(logs);
   }, [data]);
 
   // Apply filters and search
   useEffect(() => {
-    if (!filteredLogs.length) return;
-
-    let result = [...filteredLogs];
+    let result = [...initialLogs];
 
     // Apply search
     if (searchTerm) {
@@ -132,7 +127,7 @@ export function WidgetTable({ data }: { data: any }) {
               log.ip.toLowerCase().includes(lowerCaseSearch) ||
               log.path.toLowerCase().includes(lowerCaseSearch) ||
               log.user_agent.toLowerCase().includes(lowerCaseSearch) ||
-              (log.referer && log.referer.toLowerCase().includes(lowerCaseSearch))
+              (log.referer && log.referer.toLowerCase().includes(lowerCaseSearch)),
       );
     }
 
@@ -143,10 +138,10 @@ export function WidgetTable({ data }: { data: any }) {
 
     // Apply bot filter
     if (botFilter !== null) {
-      if (botFilter === "bot") {
-        result = result.filter((log) => log.crawler_type !== "Human");
-      } else if (botFilter === "Human") {
-        result = result.filter((log) => log.crawler_type === "Human");
+      if (botFilter === 'bot') {
+        result = result.filter((log) => log.crawler_type !== 'Human');
+      } else if (botFilter === 'Human') {
+        result = result.filter((log) => log.crawler_type === 'Human');
       }
     }
 
@@ -156,17 +151,17 @@ export function WidgetTable({ data }: { data: any }) {
         const aValue = a[sortConfig.key as keyof LogEntry];
         const bValue = b[sortConfig.key as keyof LogEntry];
 
-        if (typeof aValue === "string" && typeof bValue === "string") {
-          return sortConfig.direction === "ascending"
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          return sortConfig.direction === 'ascending'
               ? aValue.localeCompare(bValue)
               : bValue.localeCompare(aValue);
         }
 
         if (aValue < bValue) {
-          return sortConfig.direction === "ascending" ? -1 : 1;
+          return sortConfig.direction === 'ascending' ? -1 : 1;
         }
         if (aValue > bValue) {
-          return sortConfig.direction === "ascending" ? 1 : -1;
+          return sortConfig.direction === 'ascending' ? 1 : -1;
         }
         return 0;
       });
@@ -174,7 +169,7 @@ export function WidgetTable({ data }: { data: any }) {
 
     setFilteredLogs(result);
     setCurrentPage(1);
-  }, [searchTerm, methodFilter, botFilter, sortConfig]);
+  }, [searchTerm, methodFilter, botFilter, sortConfig, initialLogs]);
 
   // Get current logs for pagination
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -184,39 +179,40 @@ export function WidgetTable({ data }: { data: any }) {
 
   // Handle sorting
   const requestSort = (key: string) => {
-    let direction: "ascending" | "descending" = "ascending";
+    let direction: 'ascending' | 'descending' = 'ascending';
     if (
         sortConfig &&
         sortConfig.key === key &&
-        sortConfig.direction === "ascending"
+        sortConfig.direction === 'ascending'
     ) {
-      direction = "descending";
+      direction = 'descending';
     }
     setSortConfig({ key, direction });
   };
 
   // Reset all filters
   const resetFilters = () => {
-    setSearchTerm("");
+    setSearchTerm('');
     setMethodFilter([]);
-    setBotFilter("all");
+    setBotFilter('all');
     setSortConfig(null);
     setExpandedRow(null);
+    setFilteredLogs(initialLogs); // Restore filteredLogs to initial state
   };
 
   // Export logs as CSV
   const exportCSV = () => {
     const headers = [
-      "IP",
-      "Timestamp",
-      "Method",
-      "Path",
-      "File Type",
-      "Response Size",
-      "User Agent",
-      "Referer",
-      "Crawler Type",
-      "Frequency",
+      'IP',
+      'Timestamp',
+      'Method',
+      'Path',
+      'File Type',
+      'Response Size',
+      'User Agent',
+      'Referer',
+      'Crawler Type',
+      'Frequency',
     ];
 
     const csvData = filteredLogs.map((log) => [
@@ -227,24 +223,18 @@ export function WidgetTable({ data }: { data: any }) {
       log.file_type,
       log.response_size,
       `"${log.user_agent.replace(/"/g, '""')}"`,
-      log.referer || "-",
+      log.referer || '-',
       log.crawler_type,
       log.frequency,
     ]);
 
-    const csvContent = [
-      headers.join(","),
-      ...csvData.map((row) => row.join(",")),
-    ].join("\n");
+    const csvContent = [headers.join(','), ...csvData.map((row) => row.join(','))].join('\n');
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute(
-        "download",
-        `server_logs_${new Date().toISOString().slice(0, 10)}.csv`
-    );
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `server_logs_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -287,7 +277,7 @@ export function WidgetTable({ data }: { data: any }) {
               >
                 <DropdownMenuLabel>Filter by Method</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {["GET", "POST", "PUT", "DELETE"].map((method) => (
+                {['GET', 'POST', 'PUT', 'DELETE'].map((method) => (
                     <DropdownMenuCheckboxItem
                         className="bg-white active:bg-gray-100 hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
                         key={method}
@@ -308,10 +298,8 @@ export function WidgetTable({ data }: { data: any }) {
 
             {/* Bot/Human Filter */}
             <Select
-                value={botFilter || "all"}
-                onValueChange={(value) =>
-                    setBotFilter(value === "all" ? null : value)
-                }
+                value={botFilter || 'all'}
+                onValueChange={(value) => setBotFilter(value === 'all' ? null : value)}
             >
               <SelectTrigger className="w-[130px] dark:bg-brand-darker dark:text-white">
                 <SelectValue placeholder="Bot/Human" />
@@ -345,8 +333,8 @@ export function WidgetTable({ data }: { data: any }) {
 
         <div
             style={{
-              height: "calc(100vh - 40.2vh)",
-              maxHeight: "calc(100vh - 43.2vh)",
+              height: 'calc(100vh - 40.2vh)',
+              maxHeight: 'calc(100vh - 43.2vh)',
             }}
             className="px-1"
         >
@@ -357,122 +345,82 @@ export function WidgetTable({ data }: { data: any }) {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[80px]">#</TableHead>
-                      <TableHead
-                          className="cursor-pointer"
-                          onClick={() => requestSort("ip")}
-                      >
+                      <TableHead className="cursor-pointer" onClick={() => requestSort('ip')}>
                         IP Address
-                        {sortConfig?.key === "ip" && (
+                        {sortConfig?.key === 'ip' && (
                             <ChevronDown
                                 className={`ml-1 h-4 w-4 inline-block ${
-                                    sortConfig.direction === "descending"
-                                        ? "rotate-180"
-                                        : ""
+                                    sortConfig.direction === 'descending' ? 'rotate-180' : ''
                                 }`}
                             />
                         )}
                       </TableHead>
-                      <TableHead
-                          className="cursor-pointer"
-                          onClick={() => requestSort("browser")}
-                      >
+                      <TableHead className="cursor-pointer" onClick={() => requestSort('browser')}>
                         Browser
-                        {sortConfig?.key === "browser" && (
+                        {sortConfig?.key === 'browser' && (
                             <ChevronDown
                                 className={`ml-1 h-4 w-4 inline-block ${
-                                    sortConfig.direction === "descending"
-                                        ? "rotate-180"
-                                        : ""
+                                    sortConfig.direction === 'descending' ? 'rotate-180' : ''
                                 }`}
                             />
                         )}
                       </TableHead>
-                      <TableHead
-                          className="cursor-pointer"
-                          onClick={() => requestSort("timestamp")}
-                      >
+                      <TableHead className="cursor-pointer" onClick={() => requestSort('timestamp')}>
                         Timestamp
-                        {sortConfig?.key === "timestamp" && (
+                        {sortConfig?.key === 'timestamp' && (
                             <ChevronDown
                                 className={`ml-1 h-4 w-4 inline-block ${
-                                    sortConfig.direction === "descending"
-                                        ? "rotate-180"
-                                        : ""
+                                    sortConfig.direction === 'descending' ? 'rotate-180' : ''
                                 }`}
                             />
                         )}
                       </TableHead>
-                      <TableHead
-                          className="cursor-pointer"
-                          onClick={() => requestSort("method")}
-                      >
+                      <TableHead className="cursor-pointer" onClick={() => requestSort('method')}>
                         Method
-                        {sortConfig?.key === "method" && (
+                        {sortConfig?.key === 'method' && (
                             <ChevronDown
                                 className={`ml-1 h-4 w-4 inline-block ${
-                                    sortConfig.direction === "descending"
-                                        ? "rotate-180"
-                                        : ""
+                                    sortConfig.direction === 'descending' ? 'rotate-180' : ''
                                 }`}
                             />
                         )}
                       </TableHead>
-                      <TableHead
-                          className="cursor-pointer"
-                          onClick={() => requestSort("path")}
-                      >
+                      <TableHead className="cursor-pointer" onClick={() => requestSort('path')}>
                         Path
-                        {sortConfig?.key === "path" && (
+                        {sortConfig?.key === 'path' && (
                             <ChevronDown
                                 className={`ml-1 h-4 w-4 inline-block ${
-                                    sortConfig.direction === "descending"
-                                        ? "rotate-180"
-                                        : ""
+                                    sortConfig.direction === 'descending' ? 'rotate-180' : ''
                                 }`}
                             />
                         )}
                       </TableHead>
-                      <TableHead
-                          className="cursor-pointer"
-                          onClick={() => requestSort("file_type")}
-                      >
+                      <TableHead className="cursor-pointer" onClick={() => requestSort('file_type')}>
                         File Type
-                        {sortConfig?.key === "file_type" && (
+                        {sortConfig?.key === 'file_type' && (
                             <ChevronDown
                                 className={`ml-1 h-4 w-4 inline-block ${
-                                    sortConfig.direction === "descending"
-                                        ? "rotate-180"
-                                        : ""
+                                    sortConfig.direction === 'descending' ? 'rotate-180' : ''
                                 }`}
                             />
                         )}
                       </TableHead>
-                      <TableHead
-                          className="cursor-pointer"
-                          onClick={() => requestSort("response_size")}
-                      >
+                      <TableHead className="cursor-pointer" onClick={() => requestSort('response_size')}>
                         Size
-                        {sortConfig?.key === "response_size" && (
+                        {sortConfig?.key === 'response_size' && (
                             <ChevronDown
                                 className={`ml-1 h-4 w-4 inline-block ${
-                                    sortConfig.direction === "descending"
-                                        ? "rotate-180"
-                                        : ""
+                                    sortConfig.direction === 'descending' ? 'rotate-180' : ''
                                 }`}
                             />
                         )}
                       </TableHead>
-                      <TableHead
-                          className="cursor-pointer"
-                          onClick={() => requestSort("frequency")}
-                      >
+                      <TableHead className="cursor-pointer" onClick={() => requestSort('frequency')}>
                         Frequency
-                        {sortConfig?.key === "frequency" && (
+                        {sortConfig?.key === 'frequency' && (
                             <ChevronDown
                                 className={`ml-1 h-4 w-4 inline-block ${
-                                    sortConfig.direction === "descending"
-                                        ? "rotate-180"
-                                        : ""
+                                    sortConfig.direction === 'descending' ? 'rotate-180' : ''
                                 }`}
                             />
                         )}
@@ -483,17 +431,12 @@ export function WidgetTable({ data }: { data: any }) {
                   <TableBody>
                     {currentLogs.length > 0 ? (
                         currentLogs.map((log, index) => (
-                            <>
+                            <React.Fragment key={`${log.ip}-${log.timestamp}-${index}`}>
                               <TableRow
-                                  key={`${log.ip}-${log.timestamp}-${index}`}
                                   className="group cursor-pointer"
-                                  onClick={() =>
-                                      setExpandedRow(expandedRow === index ? null : index)
-                                  }
+                                  onClick={() => setExpandedRow(expandedRow === index ? null : index)}
                               >
-                                <TableCell className="font-medium">
-                                  {indexOfFirstItem + index + 1}
-                                </TableCell>
+                                <TableCell className="font-medium">{indexOfFirstItem + index + 1}</TableCell>
                                 <TableCell>{log.ip}</TableCell>
                                 <TableCell>{log.browser}</TableCell>
                                 <TableCell>{formatDate(log.timestamp)}</TableCell>
@@ -501,35 +444,31 @@ export function WidgetTable({ data }: { data: any }) {
                                   <Badge
                                       variant="outline"
                                       className={
-                                        log.method === "GET"
-                                            ? "bg-green-100 dark:bg-green-400 text-green-800 border-green-200"
-                                            : log.method === "POST"
-                                                ? "bg-blue-100 dark:bg-blue-400 text-blue-800 border-blue-200"
-                                                : log.method === "PUT"
-                                                    ? "bg-yellow-100 dark:bg-yellow-400 text-yellow-800 border-yellow-200"
-                                                    : "bg-red-100 dark:bg-red-400 text-red-800 border-red-200"
+                                        log.method === 'GET'
+                                            ? 'bg-green-100 dark:bg-green-400 text-green-800 border-green-200'
+                                            : log.method === 'POST'
+                                                ? 'bg-blue-100 dark:bg-blue-400 text-blue-800 border-blue-200'
+                                                : log.method === 'PUT'
+                                                    ? 'bg-yellow-100 dark:bg-yellow-400 text-yellow-800 border-yellow-200'
+                                                    : 'bg-red-100 dark:bg-red-400 text-red-800 border-red-200'
                                       }
                                   >
                                     {log.method}
                                   </Badge>
                                 </TableCell>
-                                <TableCell className="max-w-[480px] truncate">
-                                  {log.path}
-                                </TableCell>
+                                <TableCell className="max-w-[480px] truncate">{log.path}</TableCell>
                                 <TableCell className="max-w-[480px] truncate">
                                   <Badge variant="outline">{log.file_type}</Badge>
                                 </TableCell>
-                                <TableCell>
-                                  {formatResponseSize(log.response_size)}
-                                </TableCell>
+                                <TableCell>{formatResponseSize(log.response_size)}</TableCell>
                                 <TableCell>{log.frequency}</TableCell>
                                 <TableCell>
                                   <Badge
                                       variant="outline"
                                       className={
-                                        log.crawler_type !== "Human"
-                                            ? "bg-purple-50 text-purple-800 border-purple-200"
-                                            : "bg-green-100 text-green-800 border-green-200"
+                                        log.crawler_type !== 'Human'
+                                            ? 'bg-purple-50 text-purple-800 border-purple-200'
+                                            : 'bg-green-100 text-green-800 border-green-200'
                                       }
                                   >
                                     {log.crawler_type}
@@ -538,18 +477,13 @@ export function WidgetTable({ data }: { data: any }) {
                               </TableRow>
                               {expandedRow === index && (
                                   <TableRow>
-                                    <TableCell
-                                        colSpan={10}
-                                        className="bg-gray-50 dark:bg-gray-800 p-4"
-                                    >
+                                    <TableCell colSpan={10} className="bg-gray-50 dark:bg-gray-800 p-4">
                                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {/* User Agent */}
                                         <div className="flex flex-col max-w-[calc(100vw-72vw)]">
                                           <h4 className="mb-2 font-bold">User Agent</h4>
                                           <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-                                            <p className="text-sm font-mono break-all">
-                                              {log.user_agent}
-                                            </p>
+                                            <p className="text-sm font-mono break-all">{log.user_agent}</p>
                                           </div>
                                         </div>
 
@@ -559,9 +493,7 @@ export function WidgetTable({ data }: { data: any }) {
                                           <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                                             <p className="text-sm break-all">
                                               {log.referer || (
-                                                  <span className="text-muted-foreground">
-                                          No referer
-                                        </span>
+                                                  <span className="text-muted-foreground">No referer</span>
                                               )}
                                             </p>
                                           </div>
@@ -570,7 +502,7 @@ export function WidgetTable({ data }: { data: any }) {
                                     </TableCell>
                                   </TableRow>
                               )}
-                            </>
+                            </React.Fragment>
                         ))
                     ) : (
                         <TableRow>
@@ -586,7 +518,7 @@ export function WidgetTable({ data }: { data: any }) {
           </CardContent>
         </div>
 
-        <div className="flex items-center justify-between w-full" style={{ marginTop: "0.2em" }}>
+        <div className="flex items-center justify-between w-full" style={{ marginTop: '0.2em' }}>
           <div className="flex items-center -mt-2 ml-1">
             <Select
                 value={itemsPerPage.toString()}
@@ -604,11 +536,11 @@ export function WidgetTable({ data }: { data: any }) {
           </div>
 
           <Pagination className="text-xs">
-            <PaginationContent style={{ marginTop: "-5px" }}>
+            <PaginationContent style={{ marginTop: '-5px' }}>
               <PaginationItem className="cursor-pointer">
                 <PaginationPrevious
                     onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                    className={currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
                 />
               </PaginationItem>
 
@@ -652,20 +584,19 @@ export function WidgetTable({ data }: { data: any }) {
               <PaginationItem className="cursor-pointer">
                 <PaginationNext
                     onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                    className={
-                      currentPage === totalPages ? "pointer-events-none opacity-50" : ""
-                    }
+                    className={currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}
                 />
               </PaginationItem>
             </PaginationContent>
           </Pagination>
           <div>
           <span className="flex justify-end text-muted-foreground w-[180px] flex-nowrap text-right pr-2.5 -mt-1.5 text-xs text-black/50">
-            {indexOfFirstItem + 1}-
-            {Math.min(indexOfLastItem, filteredLogs.length)} of {filteredLogs.length} logs
+            {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredLogs.length)} of {filteredLogs.length} logs
           </span>
           </div>
         </div>
       </div>
   );
-}
+};
+
+export  {WidgetTable};
