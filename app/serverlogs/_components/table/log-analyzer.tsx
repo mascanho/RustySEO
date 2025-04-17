@@ -611,12 +611,20 @@ export function LogAnalyzer() {
                                   : "bg-green-100 text-green-800 border-green-200"
                               }
                             >
-                              {log.crawler_type}{" "}
-                              {log.verified && log.crawler_type !== "Human" && (
-                                <BadgeCheck
-                                  className="ml-1 text-blue-600"
-                                  size={15}
-                                />
+                              {log.crawler_type && (
+                                <>
+                                  {log.verified &&
+                                  log.crawler_type !== "Human" &&
+                                  log.crawler_type.length >= 10
+                                    ? log.crawler_type.slice(0, 10) + "..."
+                                    : log.crawler_type}
+                                  {log.verified && (
+                                    <BadgeCheck
+                                      className="ml-1 text-blue-600"
+                                      size={15}
+                                    />
+                                  )}{" "}
+                                </>
                               )}
                             </Badge>
                           </TableCell>

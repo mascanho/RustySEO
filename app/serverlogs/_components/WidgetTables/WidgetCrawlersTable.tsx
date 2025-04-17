@@ -372,21 +372,6 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                     </TableHead>
                     <TableHead
                       className="cursor-pointer"
-                      onClick={() => requestSort("browser")}
-                    >
-                      Browser
-                      {sortConfig?.key === "browser" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      )}
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer"
                       onClick={() => requestSort("timestamp")}
                     >
                       Timestamp
@@ -461,7 +446,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="cursor-pointer min-w-10 w-32"
                       onClick={() => requestSort("frequency")}
                     >
                       Frequency
@@ -494,7 +479,6 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                             {indexOfFirstItem + index + 1}
                           </TableCell>
                           <TableCell>{log.ip}</TableCell>
-                          <TableCell>{log.browser}</TableCell>
                           <TableCell width={200}>
                             {formatDate(log.timestamp)}
                           </TableCell>
@@ -535,7 +519,9 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                   : "bg-green-100 text-green-800 border-green-200"
                               }
                             >
-                              {log.crawler_type}
+                              {log.crawler_type.length > 20
+                                ? log.crawler_type.slice(0, 10) + "..."
+                                : log.crawler_type}
                             </Badge>
                           </TableCell>
                         </TableRow>
@@ -684,4 +670,3 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
 };
 
 export { WidgetTable };
-
