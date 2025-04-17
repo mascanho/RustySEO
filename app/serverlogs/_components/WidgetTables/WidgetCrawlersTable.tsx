@@ -241,7 +241,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
   };
 
   return (
-      <div className="space-y-4 h-full">
+      <div className="space-y-4 h-full pb-0 -mb-4">
         <div className="flex flex-col md:flex-row justify-between -mb-4 p-1">
           <div className="relative w-full mr-1">
             <Search className="absolute dark:text-white/50 left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -334,7 +334,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
         <div
             style={{
               height: 'calc(100vh - 40.2vh)',
-              maxHeight: 'calc(100vh - 43.2vh)',
+              maxHeight: 'calc(100vh - 40.2vh)',
             }}
             className="px-1"
         >
