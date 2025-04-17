@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use crate::loganalyser::helpers::{
     country_extractor::extract_country, crawler_type::is_crawler, parse_logs::parse_log_entries,
@@ -46,6 +46,7 @@ pub struct Totals {
     pub openai: usize,
     pub claude: usize,
     pub google_bot_pages: Vec<String>,
+    pub google_bot_page_frequencies: HashMap<String, usize>, // Corrected variable name
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -159,6 +160,25 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
         .map(|e| e.path.clone())
         .collect::<Vec<_>>();
 
+    fn calculate_url_frequencies(urls: Vec<(String, String)>) -> HashMap<String, usize> {
+        let mut frequency = HashMap::new();
+
+        for (url, file_type) in urls {
+            let key = format!("{}:{}", url, file_type); // Combine url and file_type into a single key
+            *frequency.entry(key).or_insert(0) += 1;
+        }
+
+        frequency
+    }
+
+    let google_bot_page_frequencies = calculate_url_frequencies(
+        enhanced_entries
+            .iter()
+            .filter(|e| e.crawler_type.to_lowercase().contains("google"))
+            .map(|e| (e.path.clone(), e.file_type.clone()))
+            .collect(),
+    );
+
     Ok(LogResult {
         overview: LogAnalysisResult {
             message: "Log analysis completed".to_string(),
@@ -181,6 +201,7 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
                 openai: openai_bot_totals,
                 claude: claude_bot_totals,
                 google_bot_pages,
+                google_bot_page_frequencies, // Corrected variable name
             },
             log_start_time,
             log_finish_time,

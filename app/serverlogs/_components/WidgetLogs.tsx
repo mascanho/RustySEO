@@ -248,8 +248,8 @@ export default function WidgetLogs() {
 
                     {entry?.name === "Google" ? (
                       <DialogContent
-                        style={{ width: "90%" }}
-                        className="max-w-2xl"
+                        style={{ width: "130rem" }}
+                        className="max-w-[90%]"
                       >
                         <WidgetTable data={overview} />
                       </DialogContent>

@@ -623,7 +623,7 @@ export function LogAnalyzer() {
                             >
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* User Agent */}
-                                <div className="flex flex-col max-w-[calc(100vw-72vw)]">
+                                <div className="flex flex-col max-w-[70rem] w-full">
                                   <h4 className="mb-2 font-bold">User Agent</h4>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                                     <p className="text-sm font-mono break-all">
