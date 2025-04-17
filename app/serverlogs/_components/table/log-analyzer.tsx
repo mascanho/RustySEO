@@ -269,8 +269,8 @@ export function LogAnalyzer() {
   }
 
   return (
-    <div className="space-y-4 h-full">
-      <div className="flex flex-col md:flex-row  justify-between -mb-4 p-1">
+    <div className="space-y-4  flex flex-col flex-1 h-full">
+      <div className="flex flex-col md:flex-row  justify-between -mb-4 p-1 h-full">
         <div className="relative w-full mr-1 ">
           <Search className="absolute dark:text-white/50 left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -416,15 +416,14 @@ export function LogAnalyzer() {
         </div>
       </div>
 
-      <div
-        style={{
-          height: "calc(100vh - 43.2vh)",
-          maxHeight: "calc(100vh - 43.2vh)",
-        }}
-        className="px-1"
-      >
-        <CardContent className="p-0 h-full">
-          <div className="rounded-md border  dark:border-brand-dark h-full">
+      <div>
+        <CardContent
+          className="p-0 "
+          style={{
+            height: "calc(100vh - 27.2rem)",
+          }}
+        >
+          <div className="rounded-md border  dark:border-brand-dark h-full ">
             <div className="relative w-full h-full overflow-auto">
               <Table className="h-full">
                 <TableHeader>

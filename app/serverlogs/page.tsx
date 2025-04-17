@@ -24,21 +24,16 @@ interface CrawlResult {
 export default function Page() {
   return (
     <section className="flex flex-col dark:bg-brand-darker   w-[100%] pt-[4rem] h-[calc(100vh - 20-rem)] overflow-hidden  ">
-      <Tabs>
-        <Tabs.Tab value="Logs" label="Logs" className="absolute top-2 z-50">
-          <span>helkkl</span>
-        </Tabs.Tab>
-        <UploadButton />
+      <UploadButton />
 
-        <InputZone handleDomainCrawl={""} />
-        <main className="pb-[6.2rem] overflow-auto">
-          <div className="flex ">
-            <TimelineChart />
-            <WidgetLogs />
-          </div>
-          <LogAnalyzer />
-        </main>
-      </Tabs>
+      <InputZone handleDomainCrawl={""} />
+      <main className="pb-[6.2rem] overflow-hidden h-[100%]">
+        <div className="flex flex-1 h-full ">
+          <TimelineChart />
+          <WidgetLogs />
+        </div>
+        <LogAnalyzer />
+      </main>
     </section>
   );
 }
