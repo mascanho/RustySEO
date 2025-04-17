@@ -171,7 +171,7 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
         let mut frequency_map: HashMap<String, Vec<GoogleBotPageDetails>> = HashMap::new();
 
         for entry in entries {
-            let key = format!("{}:{}", entry.path, entry.file_type);
+            let key = entry.path.clone();
             let details = GoogleBotPageDetails {
                 crawler_type: entry.crawler_type.clone(),
                 file_type: entry.file_type.clone(),
@@ -190,25 +190,21 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
                 .push(details);
         }
 
-        // Aggregate frequencies for identical keys
+        // Aggregate frequencies for identical paths
         let mut aggregated_map: HashMap<String, Vec<GoogleBotPageDetails>> = HashMap::new();
-        for (key, details_vec) in frequency_map {
-            if details_vec.len() == 1 {
-                aggregated_map.insert(key, details_vec);
-            } else {
-                let mut aggregated_details = GoogleBotPageDetails {
-                    crawler_type: details_vec[0].crawler_type.clone(),
-                    file_type: details_vec[0].file_type.clone(),
-                    response_size: details_vec.iter().map(|d| d.response_size).sum(),
-                    timestamp: details_vec[0].timestamp.clone(), // Keep the first timestamp
-                    ip: details_vec[0].ip.clone(), // Keep the first IP
-                    referer: details_vec[0].referer.clone(), // Keep the first referer
-                    browser: details_vec[0].browser.clone(), // Keep the first browser
-                    user_agent: details_vec[0].user_agent.clone(), // Keep the first user agent
-                    frequency: details_vec.len(),
-                };
-                aggregated_map.insert(key, vec![aggregated_details]);
-            }
+        for (path, details_vec) in frequency_map {
+            let aggregated_details = GoogleBotPageDetails {
+                crawler_type: details_vec[0].crawler_type.clone(),
+                file_type: details_vec[0].file_type.clone(), // Keep first file_type
+                response_size: details_vec.iter().map(|d| d.response_size).sum(),
+                timestamp: details_vec[0].timestamp.clone(), // Keep first timestamp
+                ip: details_vec[0].ip.clone(), // Keep first IP
+                referer: details_vec[0].referer.clone(), // Keep first referer
+                browser: details_vec[0].browser.clone(), // Keep first browser
+                user_agent: details_vec[0].user_agent.clone(), // Keep first user agent
+                frequency: details_vec.len(), // Frequency is the number of occurrences of this path
+            };
+            aggregated_map.insert(path, vec![aggregated_details]);
         }
 
         aggregated_map
