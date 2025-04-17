@@ -36,7 +36,7 @@ pub struct LogAnalysisResult {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct GoogleBotPageDetails {
+pub struct BotPageDetails {
     pub crawler_type: String,
     pub file_type: String,
     pub response_size: u64,
@@ -46,6 +46,7 @@ pub struct GoogleBotPageDetails {
     pub browser: String,
     pub user_agent: String,
     pub frequency: usize,
+    pub method: String
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -59,7 +60,7 @@ pub struct Totals {
     pub openai: usize,
     pub claude: usize,
     pub google_bot_pages: Vec<String>,
-    pub google_bot_page_frequencies: HashMap<String, Vec<GoogleBotPageDetails>>,
+    pub google_bot_page_frequencies: HashMap<String, Vec<BotPageDetails>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -167,17 +168,18 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
         .map(|e| e.path.clone())
         .collect::<Vec<_>>();
 
-    fn calculate_url_frequencies(entries: Vec<&LogEntry>) -> HashMap<String, Vec<GoogleBotPageDetails>> {
-        let mut frequency_map: HashMap<String, Vec<GoogleBotPageDetails>> = HashMap::new();
+    fn calculate_url_frequencies(entries: Vec<&LogEntry>) -> HashMap<String, Vec<BotPageDetails>> {
+        let mut frequency_map: HashMap<String, Vec<BotPageDetails>> = HashMap::new();
 
         for entry in entries {
-            let key = format!("{}:{}", entry.path, entry.crawler_type);
-            let details = GoogleBotPageDetails {
+            let key = format!("{}", entry.path);
+            let details = BotPageDetails {
                 crawler_type: entry.crawler_type.clone(),
                 file_type: entry.file_type.clone(),
                 response_size: entry.response_size,
                 timestamp: entry.timestamp.clone(),
                 ip: entry.ip.clone(),
+                method: entry.method.clone(),
                 referer: entry.referer.clone(),
                 browser: entry.browser.clone(),
                 user_agent: entry.user_agent.clone(),
@@ -191,13 +193,14 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
         }
 
         // Aggregate frequencies for identical path:crawler_type combinations
-        let mut aggregated_map: HashMap<String, Vec<GoogleBotPageDetails>> = HashMap::new();
+        let mut aggregated_map: HashMap<String, Vec<BotPageDetails>> = HashMap::new();
         for (key, details_vec) in frequency_map {
-            let aggregated_details = GoogleBotPageDetails {
+            let aggregated_details = BotPageDetails {
                 crawler_type: details_vec[0].crawler_type.clone(),
                 file_type: details_vec[0].file_type.clone(), // Keep first file_type
                 response_size: details_vec.iter().map(|d| d.response_size).sum(),
                 timestamp: details_vec[0].timestamp.clone(), // Keep first timestamp
+                method: details_vec[0].method.clone(),
                 ip: details_vec[0].ip.clone(), // Keep first IP
                 referer: details_vec[0].referer.clone(), // Keep first referer
                 browser: details_vec[0].browser.clone(), // Keep first browser
