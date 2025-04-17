@@ -15,6 +15,7 @@ rust-version = "1.78"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
+ipnet = "2.5.0"
 r2d2 = "0.8"
 r2d2_sqlite = "0.27.0"
 rust_xlsxwriter = "0.84.0"

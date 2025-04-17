@@ -20,6 +20,7 @@ pub struct LogEntry {
     pub crawler_type: String,
     pub browser: String,
     pub file_type: String,
+    pub verified: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -46,7 +47,8 @@ pub struct BotPageDetails {
     pub browser: String,
     pub user_agent: String,
     pub frequency: usize,
-    pub method: String
+    pub method: String,
+    pub verified: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -106,6 +108,7 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
                 is_crawler,
                 file_type: e.file_type,
                 browser: e.browser,
+                verified: e.verified,
             }
         })
         .collect();
@@ -184,6 +187,7 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
                 browser: entry.browser.clone(),
                 user_agent: entry.user_agent.clone(),
                 frequency: 1, // Each entry contributes one to the frequency
+                verified: entry.verified.clone(),
             };
 
             frequency_map
@@ -206,6 +210,7 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
                 browser: details_vec[0].browser.clone(), // Keep first browser
                 user_agent: details_vec[0].user_agent.clone(), // Keep first user agent
                 frequency: details_vec.len(), // Frequency is the number of occurrences of this path:crawler_type
+                verified: details_vec[0].verified.clone(),
             };
             aggregated_map.insert(key, vec![aggregated_details]);
         }

@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { WidgetTable } from "./WidgetTables/WidgetCrawlersTable.tsx";
-import {Tabs} from "@mantine/core";
+import { Tabs } from "@mantine/core";
 
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
@@ -248,12 +248,9 @@ export default function WidgetLogs() {
                     </DialogTrigger>
 
                     {entry?.name === "Google" ? (
-                      <DialogContent
-                        style={{ width: "130rem", height: "75%" }}
-                        className="max-w-[90%] min-h-96"
-                      >
+                      <DialogContent className="max-w-[90%] min-h-96 overflow-hidden">
                         <Tabs defaultValue="overview">
-                          <Tabs.List className="mb-2">
+                          <Tabs.List className="mb-2 mx-1">
                             <Tabs.Tab value="overview">Overview</Tabs.Tab>
                             <Tabs.Tab value="charts">Charts</Tabs.Tab>
                           </Tabs.List>

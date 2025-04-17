@@ -1,6 +1,9 @@
 use chrono::NaiveDateTime;
+use ipnet::IpNet;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::net::{AddrParseError, IpAddr};
+use std::str::FromStr;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LogEntry {
@@ -15,6 +18,66 @@ pub struct LogEntry {
     pub crawler_type: String,
     pub browser: String,
     pub file_type: String,
+    pub verified: bool,
+}
+
+/// Custom error type for IP verification
+#[derive(Debug)]
+pub enum IpVerificationError {
+    InvalidIp(AddrParseError),
+    InvalidCidr(ipnet::PrefixLenError),
+}
+
+impl From<AddrParseError> for IpVerificationError {
+    fn from(err: AddrParseError) -> Self {
+        IpVerificationError::InvalidIp(err)
+    }
+}
+
+impl From<ipnet::PrefixLenError> for IpVerificationError {
+    fn from(err: ipnet::PrefixLenError) -> Self {
+        IpVerificationError::InvalidCidr(err)
+    }
+}
+
+/// Google's verified crawler IP ranges (IPv4 and IPv6)
+/// Updated as of 2024 - always check official sources for changes:
+/// https://developers.google.com/search/docs/crawling-indexing/verifying-googlebot
+const GOOGLE_VERIFIED_IPS: &[&str] = &[
+    // IPv4 ranges
+    "64.233.160.0/19",
+    "66.102.0.0/20",
+    "66.249.64.0/19",
+    "72.14.192.0/18",
+    "74.125.0.0/16",
+    "108.177.8.0/21",
+    "172.217.0.0/19",
+    "173.194.0.0/16",
+    "209.85.128.0/17",
+    "216.58.192.0/19",
+    "216.239.32.0/19",
+    // IPv6 ranges
+    "2001:4860:4000::/36",
+    "2404:6800:4000::/36",
+    "2607:f8b0:4000::/36",
+    "2800:3f0:4000::/36",
+    "2a00:1450:4000::/36",
+    "2c0f:fb50:4000::/36",
+];
+
+fn is_google_verified(ip: &str) -> Result<bool, IpVerificationError> {
+    // Parse the input IP address
+    let ip_addr = IpAddr::from_str(ip)?;
+
+    // Check if the IP is within any of Google's verified CIDR ranges
+    for &cidr in GOOGLE_VERIFIED_IPS {
+        let net = IpNet::from_str(cidr).expect("couldn't convert ip");
+        if net.contains(&ip_addr) {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
 }
 
 fn detect_file_type(path: &str) -> Option<String> {
@@ -52,7 +115,11 @@ fn detect_file_type(path: &str) -> Option<String> {
         Some("JS".to_string())
     } else if lower.ends_with(".pdf") {
         Some("Document".to_string())
-    } else if lower.ends_with(".html") || lower.ends_with(".htm") || lower.ends_with("/") || !lower.ends_with("/") {
+    } else if lower.ends_with(".html")
+        || lower.ends_with(".htm")
+        || lower.ends_with("/")
+        || !lower.ends_with("/")
+    {
         Some("HTML".to_string())
     } else if lower.ends_with(".zip")
         || lower.ends_with(".rar")
@@ -142,9 +209,11 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
                 let user_agent = caps[8].to_string();
                 let crawler_type = detect_bot(&user_agent).unwrap_or_default();
                 let browser = detect_browser(&user_agent).unwrap_or_default();
+                let ip = caps[1].to_string();
+                let verified = is_google_verified(&ip).unwrap_or(false); // Default to false on error
 
                 LogEntry {
-                    ip: caps[1].to_string(),
+                    ip,
                     timestamp,
                     method: caps[3].to_string(),
                     path: caps[4].to_string(),
@@ -155,6 +224,7 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
                     crawler_type,
                     browser,
                     file_type: detect_file_type(&caps[4]).unwrap_or_default(),
+                    verified,
                 }
             })
         })
@@ -162,6 +232,5 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
 }
 
 fn parse_user_agent(user_agent: &str) -> Option<String> {
-    let string = Some("*".to_string());
-    string
+    Some("*".to_string())
 }
