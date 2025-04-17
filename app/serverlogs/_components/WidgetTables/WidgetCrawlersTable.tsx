@@ -431,7 +431,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="cursor-pointer text-center w-20"
                       onClick={() => requestSort("response_size")}
                     >
                       Size
@@ -504,7 +504,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                           <TableCell className="max-w-[480px] truncate">
                             <Badge variant="outline">{log.file_type}</Badge>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="text-center">
                             {formatResponseSize(log.response_size)}
                           </TableCell>
                           <TableCell className="text-center">
