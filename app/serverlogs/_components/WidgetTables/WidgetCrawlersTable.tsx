@@ -461,7 +461,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                   <Badge variant="outline">{log.file_type}</Badge>
                                 </TableCell>
                                 <TableCell>{formatResponseSize(log.response_size)}</TableCell>
-                                <TableCell>{log.frequency}</TableCell>
+                                <TableCell className="text-center">{log.frequency}</TableCell>
                                 <TableCell>
                                   <Badge
                                       variant="outline"
