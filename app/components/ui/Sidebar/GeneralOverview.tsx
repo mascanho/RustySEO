@@ -84,10 +84,9 @@ export default function GeneralOverview({
                       index % 2 === 0
                         ? "bg-gray-200 dark:bg-brand-darker dark:text-white"
                         : "bg-gray-100 dark:bg-brand-darker dark:text-white"
-                    }`}
+                    } hover:bg-brand-bright dark:hover:bg-brand-bright hover:bg-opacity-80 transition-colors duration-200`}
                   >
-                    {/* ... rest of the content ... */}
-                    <div className="flex items-center w-full hover:bg-red-500">
+                    <div className="flex items-center w-full">
                       {loading ? (
                         <Spinner />
                       ) : (
@@ -147,9 +146,8 @@ export default function GeneralOverview({
                       index % 2 === 0
                         ? "bg-gray-100 dark:bg-brand-darker dark:text-white"
                         : "bg-gray-200 dark:bg-brand-darker dark:text-white"
-                    }`}
+                    } hover:bg-brand-bright dark:hover:bg-brand-bright hover:bg-opacity-80 transition-colors duration-200`}
                   >
-                    {/* ... rest of the content ... */}
                     <div className="flex items-center w-full">
                       {seoLoading ? (
                         <Spinner />
@@ -211,9 +209,8 @@ export default function GeneralOverview({
                       index % 2 === 0
                         ? "bg-gray-100 dark:bg-brand-darker dark:text-white"
                         : "bg-gray-200 dark:bg-brand-darker dark:text-white"
-                    }`}
+                    } hover:bg-brand-bright dark:hover:bg-brand-bright hover:bg-opacity-80 transition-colors duration-200`}
                   >
-                    {/* ... rest of the content ... */}
                     <div className="flex items-center w-full">
                       {seoLoading ? (
                         <Spinner />
