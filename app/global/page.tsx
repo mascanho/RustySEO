@@ -194,7 +194,7 @@ export default function Page() {
               </Tabs.Tab>
               <Tabs.Tab value="powerbi">
                 <PiShuffleAngularLight className="inline-block mr-2 mb-[2px] text-sm" />
-                PowerBI
+                Power BI
               </Tabs.Tab>
               <Tabs.Tab value="kws">
                 <IoKeyOutline className="inline-block mr-2 mb-[2px] text-sm" />

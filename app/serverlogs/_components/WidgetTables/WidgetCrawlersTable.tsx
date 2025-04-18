@@ -519,12 +519,6 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                           <TableCell className="max-w-[160px] truncate">
                             <div className="flex items-center gap-1">
                               {log.ip}
-                              {log.verified && (
-                                <BadgeCheck
-                                  size={13}
-                                  className="text-green-500"
-                                />
-                              )}
                             </div>
                           </TableCell>
                           <TableCell width={200}>
