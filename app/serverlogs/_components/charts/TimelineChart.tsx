@@ -191,7 +191,7 @@ export function TimelineChart() {
       </div>
 
       <CardContent className="pt-4 w-full">
-        <div className="h-[250px]">
+        <div className="h-[258px]">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               data={filteredData}
