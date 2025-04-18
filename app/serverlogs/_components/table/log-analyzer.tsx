@@ -67,7 +67,7 @@ const formatDate = (dateString: string) => {
 // Get status code badge color
 const getStatusCodeColor = (code: number) => {
   if (code >= 200 && code < 300)
-    return "bg-green-100 border-green-200 text-green-800 dark:bg-green-700 dark:text-white";
+    return "bg-green-100 border-green-200 text-green-800 dark:bg-green-700 hover:bg-green-500 dark:text-white";
   if (code >= 300 && code < 400)
     return "bg-blue-400 dark:bg-blue-700 dark:text-white";
   if (code >= 400 && code < 500)
