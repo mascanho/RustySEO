@@ -87,7 +87,7 @@ export default function GeneralOverview({
                     }`}
                   >
                     {/* ... rest of the content ... */}
-                    <div className="flex items-center w-full">
+                    <div className="flex items-center w-full hover:bg-red-500">
                       {loading ? (
                         <Spinner />
                       ) : (
