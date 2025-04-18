@@ -9,6 +9,7 @@ import {
   YAxis,
   Tooltip,
   Legend,
+  ResponsiveContainer,
 } from "recharts";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import {
@@ -26,6 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { cn } from "@/lib/utils";
 
 const COLORS = {
   human: "hsl(var(--primary))",
@@ -46,10 +48,8 @@ export function TimelineChart() {
       let key: string;
 
       if (viewMode === "daily") {
-        // Format as YYYY-MM-DD for daily view
         key = date.toISOString().split("T")[0];
       } else {
-        // Format as YYYY-MM-DDTHH:00 for hourly view
         const hour = date.getHours();
         key = `${date.toISOString().split("T")[0]}T${hour.toString().padStart(2, "0")}:00`;
       }
@@ -66,7 +66,6 @@ export function TimelineChart() {
       }
     });
 
-    // Convert the map to an array of objects sorted by date
     return Array.from(dateMap.entries())
       .map(([date, counts]) => ({
         date,
@@ -81,7 +80,7 @@ export function TimelineChart() {
   const filteredData = chartData.filter((item) => {
     const date = new Date(item.date);
     const referenceDate = new Date();
-    let daysToSubtract = 7; // Default to 7 days
+    let daysToSubtract = 7;
 
     if (timeRange === "30d") {
       daysToSubtract = 30;
@@ -94,7 +93,6 @@ export function TimelineChart() {
     return date >= startDate;
   });
 
-  // Custom tooltip component
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const date = new Date(label);
@@ -116,22 +114,22 @@ export function TimelineChart() {
             });
 
       return (
-        <div className="bg-background p-4 border rounded-lg shadow-sm">
-          <p className="font-medium">{formattedDate}</p>
-          <div className="grid gap-1">
+        <div className="bg-background dark:bg-gray-900 p-3 border rounded-lg shadow-lg">
+          <p className="font-medium text-sm">{formattedDate}</p>
+          <div className="grid gap-1 mt-1">
             <div className="flex items-center">
               <div
-                className="w-3 h-3 rounded-full mr-2"
+                className="w-2 h-2 rounded-full mr-2"
                 style={{ backgroundColor: COLORS.human }}
               />
-              <span className="text-sm">Human: {payload[1].value}</span>
+              <span className="text-xs">Human: {payload[1].value}</span>
             </div>
             <div className="flex items-center">
               <div
-                className="w-3 h-3 rounded-full mr-2"
+                className="w-2 h-2 rounded-full mr-2"
                 style={{ backgroundColor: COLORS.crawler }}
               />
-              <span className="text-sm">Crawler: {payload[0].value}</span>
+              <span className="text-xs">Crawler: {payload[0].value}</span>
             </div>
           </div>
         </div>
@@ -140,7 +138,6 @@ export function TimelineChart() {
     return null;
   };
 
-  // X-axis tick formatting based on view mode
   const xAxisTickFormatter = (value: string) => {
     const date = new Date(value);
     if (viewMode === "daily") {
@@ -157,98 +154,157 @@ export function TimelineChart() {
   };
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <div className="space-y-1">
-          <CardTitle>Traffic Overview</CardTitle>
-          <CardDescription>
-            {viewMode === "daily" ? "Daily" : "Hourly"} human vs crawler traffic
-          </CardDescription>
-        </div>
-        <div className="flex items-center gap-2">
-          <ToggleGroup
-            type="single"
-            value={viewMode}
-            onValueChange={(value) => setViewMode(value as "daily" | "hourly")}
-            variant="outline"
-            size="sm"
-          >
-            <ToggleGroupItem value="daily">Day</ToggleGroupItem>
-            <ToggleGroupItem value="hourly">Hour</ToggleGroupItem>
-          </ToggleGroup>
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-[100px]">
-              <SelectValue placeholder="Range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="90d">Last 90 days</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </CardHeader>
-      <CardContent>
+    <Card className="relative w-full h-64 rounded-none">
+      {/* Absolute positioned controls */}
+      <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+        <ToggleGroup
+          type="single"
+          value={viewMode}
+          onValueChange={(value) => setViewMode(value as "daily" | "hourly")}
+          variant="outline"
+          size="sm"
+          className="h-8"
+        >
+          <ToggleGroupItem value="daily" className="text-xs px-2 h-8">
+            Day
+          </ToggleGroupItem>
+          <ToggleGroupItem value="hourly" className="text-xs px-2 h-8">
+            Hour
+          </ToggleGroupItem>
+        </ToggleGroup>
+        <Select value={timeRange} onValueChange={setTimeRange}>
+          <SelectTrigger className="w-[100px] h-8 text-xs">
+            <SelectValue placeholder="Range" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="7d" className="text-xs">
+              Last 7 days
+            </SelectItem>
+            <SelectItem value="30d" className="text-xs">
+              Last 30 days
+            </SelectItem>
+            <SelectItem value="90d" className="text-xs">
+              Last 90 days
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <CardContent className="pt-4 w-full">
         <div className="h-[250px]">
-          <AreaChart
-            width={800}
-            height={250}
-            data={filteredData}
-            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
-          >
-            <defs>
-              <linearGradient id="colorHuman" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={COLORS.human} stopOpacity={0.8} />
-                <stop offset="95%" stopColor={COLORS.human} stopOpacity={0.1} />
-              </linearGradient>
-              <linearGradient id="colorCrawler" x1="0" y1="0" x2="0" y2="1">
-                <stop
-                  offset="5%"
-                  stopColor={COLORS.crawler}
-                  stopOpacity={0.8}
-                />
-                <stop
-                  offset="95%"
-                  stopColor={COLORS.crawler}
-                  stopOpacity={0.1}
-                />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickFormatter={xAxisTickFormatter}
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={viewMode === "hourly" ? 4 : 32}
-            />
-            <YAxis tickLine={false} axisLine={false} width={30} />
-            <Tooltip content={<CustomTooltip />} />
-            <Legend
-              formatter={(value) => (
-                <span className="text-sm">
-                  {value === "human" ? "Human" : "Crawler"}
-                </span>
-              )}
-              iconType="circle"
-              iconSize={8}
-            />
-            <Area
-              type="monotone"
-              dataKey="crawler"
-              stackId="1"
-              stroke={COLORS.crawler}
-              fill="url(#colorCrawler)"
-            />
-            <Area
-              type="monotone"
-              dataKey="human"
-              stackId="1"
-              stroke={COLORS.human}
-              fill="url(#colorHuman)"
-            />
-          </AreaChart>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart
+              data={filteredData}
+              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient id="colorHuman" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor={COLORS.human}
+                    stopOpacity={0.8}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor={COLORS.human}
+                    stopOpacity={0.1}
+                  />
+                </linearGradient>
+                <linearGradient id="colorCrawler" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor={COLORS.crawler}
+                    stopOpacity={0.8}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor={COLORS.crawler}
+                    stopOpacity={0.1}
+                  />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                stroke="hsl(var(--border))"
+              />
+              <XAxis
+                dataKey="date"
+                tickFormatter={xAxisTickFormatter}
+                tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: 9 }}
+                tickMargin={8}
+                minTickGap={viewMode === "hourly" ? 4 : 32}
+                stroke="hsl(var(--muted-foreground))"
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                width={30}
+                tick={{ fontSize: 9 }}
+                stroke="hsl(var(--muted-foreground))"
+              />
+              <Tooltip
+                content={<CustomTooltip />}
+                cursor={{
+                  stroke: "hsl(var(--border))",
+                  strokeWidth: 1,
+                  strokeDasharray: "3 3",
+                }}
+                wrapperStyle={{
+                  backgroundColor: "hsl(var(--card))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "4px",
+                }}
+              />
+              <Legend
+                formatter={(value) => (
+                  <div className="bg-white/50 inline-block dark:bg-slate-800/50">
+                    <span className="text-xs flex">
+                      {value === "human" ? "Human" : "Crawler"}
+                    </span>
+                  </div>
+                )}
+                iconType="circle"
+                iconSize={8}
+                wrapperStyle={{
+                  fontSize: "10px",
+                  position: "absolute",
+                  top: 0,
+                  padding: "0 0 0 6px",
+                  left: 50,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "auto",
+                  height: "20px",
+                  border: "1px solid hsl(var(--border))",
+                  width: "140px",
+                  borderRadius: "20px",
+                  backgroundColor: "hsl(var(--card))",
+                }}
+              />
+              <Area
+                type="monotone"
+                dataKey="crawler"
+                stackId="1"
+                stroke={COLORS.crawler}
+                strokeWidth={2}
+                fill="url(#colorCrawler)"
+                fillOpacity={0.8}
+              />
+              <Area
+                type="monotone"
+                dataKey="human"
+                stackId="1"
+                stroke={COLORS.human}
+                strokeWidth={2}
+                fill="url(#colorHuman)"
+                fillOpacity={0.8}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       </CardContent>
     </Card>
