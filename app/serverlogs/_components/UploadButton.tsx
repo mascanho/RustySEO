@@ -9,6 +9,8 @@ import {
 import { Plus, Settings } from "lucide-react";
 import { FileUpload } from "./FileUpload";
 import { useState } from "react";
+import TaxonomyManager from "./TaxonomyManager";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function UploadButton() {
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -37,14 +39,24 @@ function UploadButton() {
             Settings
           </button>
         </DialogTrigger>
-        <DialogContent className="p-8">
-          <DialogHeader>
-            <DialogTitle>Log Analysis Settings</DialogTitle>
-            <DialogDescription>
-              Configure your log analysis preferences
-            </DialogDescription>
-          </DialogHeader>
-          {/* <SettingsPanel closeDialog={() => setSettingsOpen(false)} /> */}
+        <DialogContent className="p-8 max-w-[700px] h-[540px]">
+          <Tabs>
+            <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-brand-darker">
+              <TabsTrigger value="taxonomy">Content Taxonomies</TabsTrigger>
+              <TabsTrigger value="settings">Settings</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="taxonomy" className="mt-4">
+              <TaxonomyManager closeDialog={() => setSettingsOpen(false)} />
+            </TabsContent>
+
+            <TabsContent value="settings" className="mt-4">
+              {/* Add your settings content here */}
+              <div className="p-4 text-center">
+                <p>Settings content goes here</p>
+              </div>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </div>

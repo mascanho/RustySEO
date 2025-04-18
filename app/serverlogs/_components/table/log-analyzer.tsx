@@ -47,6 +47,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { CardContent } from "@/components/ui/card";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { ask, message, save } from "@tauri-apps/plugin-dialog";
+import { SiGoogle } from "react-icons/si";
 
 // Helper function to format date
 const formatDate = (dateString: string) => {
@@ -68,8 +71,8 @@ const getStatusCodeColor = (code: number) => {
   if (code >= 300 && code < 400)
     return "bg-blue-400 dark:bg-blue-700 dark:text-white";
   if (code >= 400 && code < 500)
-    return "bg-red-400 dark:bg-red-600 dark:text-white";
-  if (code >= 500) return "bg-red-500";
+    return "bg-red-400 dark:bg-red-600 dark:text-white text-white";
+  if (code >= 500) return "bg-red-400 text-white";
   return "bg-gray-500";
 };
 
@@ -207,33 +210,41 @@ export function LogAnalyzer() {
   };
 
   // Export logs as CSV
-  const exportCSV = () => {
+  const exportCSV = async () => {
     const headers = [
       "IP",
       "Country",
+      "Browser",
       "Timestamp",
       "Method",
       "Path",
+      "File Type",
       "Status Code",
       "Response Size",
       "User Agent",
       "Referer",
       "Bot/Human",
+      "Google Verified",
+      "Taxonomy",
     ];
 
     const dataToExport = filteredLogs.length > 0 ? filteredLogs : entries;
 
     const csvData = dataToExport.map((log) => [
-      log.ip,
+      log.ip || "",
       log.country || "",
-      log.timestamp,
-      log.method,
-      log.path,
-      log.status,
-      log.responseSize,
-      `"${log.user_agent.replace(/"/g, '""')}"`,
+      log.browser || "",
+      log.timestamp || "",
+      log.method || "",
+      log.path || "",
+      log.file_type || "",
+      log.status || "",
+      log.response_size || "",
+      `"${(log.user_agent || "").replace(/"/g, '""')}"`,
       log.referer || "-",
-      log.crawler_type,
+      log.crawler_type || "",
+      log.verified || "",
+      log.taxonomy || "",
     ]);
 
     const csvContent = [
@@ -241,17 +252,34 @@ export function LogAnalyzer() {
       ...csvData.map((row) => row.join(",")),
     ].join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      `server_logs_${new Date().toISOString().slice(0, 10)}.csv`,
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      // Ask user for save location
+      const filePath = await save({
+        defaultPath: `RustySEO - server_logs_${new Date().toISOString().slice(0, 10)}.csv`,
+        filters: [
+          {
+            name: "CSV",
+            extensions: ["csv"],
+          },
+        ],
+      });
+
+      if (filePath) {
+        await writeTextFile(filePath, csvContent);
+
+        // Optional: Show success message
+        await message("CSV file saved successfully!", {
+          title: "Export Complete",
+          type: "info",
+        });
+      }
+    } catch (error) {
+      console.error("Export failed:", error);
+      await message(`Failed to export CSV: ${error}`, {
+        title: "Export Error",
+        type: "error",
+      });
+    }
   };
 
   // Handle loading and error states
@@ -610,8 +638,8 @@ export function LogAnalyzer() {
                               variant="outline"
                               className={
                                 log.crawler_type !== "Human"
-                                  ? "bg-gradient-to-r from-blue-50 dark:from-brand-bright via-red-100 to-green-80 dark:to-slate-900 text-blue-600  dark:text-white border dark:border-brand-dark border-red-30/30 px-3 py-1 rounded-full font-medium shadow-xs  transition-all"
-                                  : "bg-green-100 dark:bg-green-700 dark:text-white text-green-800  border-green-200"
+                                  ? "bg-red-100"
+                                  : "bg-blue-100 dark:bg-green-700 dark:text-white text-green-800  border-green-200"
                               }
                             >
                               {log.crawler_type && (
@@ -641,7 +669,15 @@ export function LogAnalyzer() {
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* User Agent */}
                                 <div className="flex flex-col max-w-[70rem] w-full">
-                                  <h4 className="mb-2 font-bold">User Agent</h4>
+                                  <div className="flex mb-2 space-x-2 items-center justify-between">
+                                    <h4 className=" font-bold">User Agent</h4>
+                                    {log.verified && (
+                                      <div className="flex items-center space-x-1 bg-red-100 px-2 text-xs rounded-md">
+                                        <BadgeCheck className="text-blue-400 pr-1" />
+                                        {log?.crawler_type}
+                                      </div>
+                                    )}
+                                  </div>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                                     <p className="text-sm font-mono break-all">
                                       {log.user_agent}

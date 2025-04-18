@@ -1,9 +1,11 @@
 use chrono::NaiveDateTime;
 use ipnet::IpNet;
+use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::net::{AddrParseError, IpAddr};
 use std::str::FromStr;
+use std::sync::Mutex;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LogEntry {
@@ -19,6 +21,7 @@ pub struct LogEntry {
     pub browser: String,
     pub file_type: String,
     pub verified: bool,
+    pub taxonomy: String,
 }
 
 /// Custom error type for IP verification
@@ -38,6 +41,54 @@ impl From<ipnet::PrefixLenError> for IpVerificationError {
     fn from(err: ipnet::PrefixLenError) -> Self {
         IpVerificationError::InvalidCidr(err)
     }
+}
+
+// THIS SEGMENTS THE PATHS INTO DIFFERENT TAXONOMIES PROVIDED BY THE User
+// TODO: Make this available in the configurations file
+//const TAXONOMIES: &[&str] = &[
+//    "blog",
+//    "customers",
+//    "industries",
+//    "solutions",
+//    "downloads",
+//    "platform",
+//    "events",
+//];
+
+// Use a static variable to cache taxonomies
+
+// Use a static variable to cache taxonomies
+static TAXONOMIES: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));
+
+// Tauri command to set taxonomies from frontend
+#[tauri::command]
+pub fn set_taxonomies(new_taxonomies: Vec<String>) -> Result<(), String> {
+    let mut taxonomies = TAXONOMIES.lock().map_err(|e| e.to_string())?;
+
+    println!("New taxonomies: {:?}", &taxonomies);
+
+    *taxonomies = new_taxonomies;
+    Ok(())
+}
+
+// Tauri command to get current taxonomies
+#[tauri::command]
+pub fn get_taxonomies() -> Vec<String> {
+    let taxonomies = TAXONOMIES.lock().unwrap();
+    taxonomies.clone()
+}
+
+// Filter the path to see if it matches any taxonomy
+fn classify_taxonomy(path: &str) -> String {
+    let taxonomies = TAXONOMIES.lock().unwrap();
+
+    for taxonomy in taxonomies.iter() {
+        if path.contains(taxonomy) {
+            return taxonomy.clone();
+        }
+    }
+
+    "other".to_string()
 }
 
 /// Google's verified crawler IP ranges (IPv4 and IPv6)
@@ -225,12 +276,9 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
                     browser,
                     file_type: detect_file_type(&caps[4]).unwrap_or_default(),
                     verified,
+                    taxonomy: classify_taxonomy(&caps[4]),
                 }
             })
         })
         .collect()
-}
-
-fn parse_user_agent(user_agent: &str) -> Option<String> {
-    Some("*".to_string())
 }

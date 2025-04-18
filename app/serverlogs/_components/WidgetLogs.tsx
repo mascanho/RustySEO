@@ -19,7 +19,7 @@ const tabs = [
   { label: "Content", icon: <PenBox className="w-4 h-4" /> },
   { label: "Status Codes", icon: <Server className="w-4 h-4" /> },
   { label: "Crawlers", icon: <Bot className="w-4 h-4" /> },
-  { label: "Analytics", icon: <BarChart3 className="w-4 h-4" /> },
+  // { label: "Analytics", icon: <BarChart3 className="w-4 h-4" /> },
 ];
 
 const COLORS = [
@@ -47,7 +47,7 @@ export default function WidgetLogs() {
 
   // Prepare content data from actual entries or use dummy data
   const contentData = entries?.reduce((acc, entry) => {
-    const content = entry.content;
+    const content = entry.taxonomy;
     acc[content] = (acc[content] || 0) + 1;
     return acc;
   }, {}) || {
