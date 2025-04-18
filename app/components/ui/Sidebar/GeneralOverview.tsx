@@ -261,7 +261,7 @@ export default function GeneralOverview({
           </div>
         </div>
       </section>
-      <footer className="absolute bottom-0 w-full font-bold p-1 px-5 bg-brand-dark dark:bg-blue-950 text-white flex justify-center space-x-10">
+      <footer className="absolute bottom-0 z-10 w-full font-bold p-1 px-5 bg-brand-dark dark:bg-blue-950 text-white flex justify-center space-x-10">
         <div className="flex items-center">
           <FaCheckCircle className="mr-1 text-green-500" />
           <span>Passed: </span>{" "}
