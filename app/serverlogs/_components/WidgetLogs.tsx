@@ -254,7 +254,9 @@ export default function WidgetLogs() {
                       <DialogContent className="max-w-[90%] min-h-96 overflow-hidden">
                         <Tabs defaultValue="overview">
                           <Tabs.List className="mb-2 mx-1">
-                            <Tabs.Tab value="overview">Overview</Tabs.Tab>
+                            <Tabs.Tab value="overview">
+                              Frequency Table
+                            </Tabs.Tab>
                             <Tabs.Tab value="charts">Charts</Tabs.Tab>
                           </Tabs.List>
 
