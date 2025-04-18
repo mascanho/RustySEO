@@ -15,9 +15,10 @@ import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 
 const roboto = Roboto({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-roboto",
+  weight: ["400", "500", "700"], // Specify weights you need
+  subsets: ["latin"], // Optimize for Latin characters
+  display: "swap", // Improves loading performance
+  variable: "--font-roboto", // Optional: CSS variable name
 });
 
 // export const metadata: Metadata = {

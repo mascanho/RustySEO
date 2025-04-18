@@ -35,8 +35,8 @@ const COLORS = {
 };
 
 export function TimelineChart() {
-  const [timeRange, setTimeRange] = React.useState("7d");
-  const [viewMode, setViewMode] = React.useState<"daily" | "hourly">("daily");
+  const [timeRange, setTimeRange] = React.useState("90d");
+  const [viewMode, setViewMode] = React.useState<"daily" | "hourly">("hourly");
   const { entries } = useLogAnalysis();
 
   // Process the log entries to create chart data
@@ -262,7 +262,7 @@ export function TimelineChart() {
                 formatter={(value) => (
                   <div className="bg-white/50 inline-block dark:bg-slate-800/50">
                     <span className="text-xs flex">
-                      {value === "human" ? "Human" : "Crawler"}
+                      {value === "human" ? "Human" : "Robots"}
                     </span>
                   </div>
                 )}

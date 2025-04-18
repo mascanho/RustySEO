@@ -1,34 +1,28 @@
 // @ts-nocheck
 "use client";
 
-import type React from "react";
-
-import { useEffect, useState } from "react";
-import { PlusCircle, X, Save, Loader2, Pen } from "lucide-react";
-import { toast, Toaster } from "sonner";
+import React, { useEffect, useState } from "react";
+import { PlusCircle, X, Save, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { CardContent, CardFooter } from "@/components/ui/card";
 import { BiSolidCategoryAlt } from "react-icons/bi";
+import { invoke } from "@tauri-apps/api/core";
 
 interface Taxonomy {
   id: string;
   name: string;
 }
 
-export default function TaxonomyManager({ closeDialog }) {
+interface TaxonomyManagerProps {
+  closeDialog: () => void;
+}
+
+export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
   const [taxonomies, setTaxonomies] = useState<Taxonomy[]>([]);
   const [newTaxonomy, setNewTaxonomy] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [storedTaxonomies, setStoredTaxonomies] = useState<Taxonomy[]>([]);
 
   const handleAddTaxonomy = () => {
     if (!newTaxonomy.trim()) {
@@ -46,13 +40,14 @@ export default function TaxonomyManager({ closeDialog }) {
       return;
     }
 
-    // Add new taxonomy
+    // Add new taxonomy with a unique ID
     const newTax: Taxonomy = {
-      id: Date.now().toString(),
-      name: newTaxonomy.trim(),
+      id: crypto.randomUUID(), // Use crypto.randomUUID() for unique IDs
+      name: newTaxonomy.toLowerCase().trim(),
     };
 
     setTaxonomies([...taxonomies, newTax]);
+
     setNewTaxonomy("");
 
     toast.success(`Taxonomy "${newTaxonomy}" has been added`);
@@ -82,11 +77,21 @@ export default function TaxonomyManager({ closeDialog }) {
       return;
     }
 
+    if (taxonomies.length > 8) {
+      toast.error("Maximum of 8 taxonomies allowed");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      // Simulate API call to database
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Convert taxonomies to an array of names
+      const taxonomyNames = taxonomies.map((tax) => tax.name);
+
+      console.log(taxonomyNames);
+
+      // Send the array to the Tauri command with the correct argument name
+      await invoke("set_taxonomies", { newTaxonomies: taxonomyNames });
 
       // STORE THE INFORMATION INSIDE LOCALSTORAGE
       localStorage.setItem("taxonomies", JSON.stringify(taxonomies));
@@ -118,7 +123,6 @@ export default function TaxonomyManager({ closeDialog }) {
     };
     getTaxonomies();
   }, []);
-  console.log(storedTaxonomies, "This is the stored taxonomies");
 
   return (
     <section className="w-[650px] max-w-5xl mx-auto h-[650px] pt-4">
@@ -145,9 +149,11 @@ export default function TaxonomyManager({ closeDialog }) {
             </Button>
           </div>
           <div className="py-2 bg-neutral-100 dark:bg-brand-dark dark:text-white/50 px-2 rounded-md mt-4">
-            <p className="text-sm text-muted-foreground ">
+            <p className="text-xs text-muted-foreground ">
               Add content taxonomies one at a time to categorize your content.
-              Each taxonomy should be unique.
+              Each taxonomy should be unique. Each taxonomy needs a unique name
+              to segment your content. Use your website structure as names.
+              Example: blog
             </p>
           </div>
         </div>
@@ -195,7 +201,7 @@ export default function TaxonomyManager({ closeDialog }) {
       <CardFooter>
         <Button
           onClick={handleSubmitTaxonomies}
-          className="w-full flex items-center gap-2 bg-brand-bright"
+          className="w-full flex items-center gap-2 bg-brand-bright hover:bg-brand-bright dark:bg-brand-bright dark:hover:bg-brand-bright dark:text-white"
           size="lg"
           disabled={taxonomies.length === 0 || isSubmitting}
         >
@@ -207,7 +213,7 @@ export default function TaxonomyManager({ closeDialog }) {
           ) : (
             <>
               <Save className="h-4 w-4" />
-              <span>Save Taxonomies to Database</span>
+              <span>Save content taxonomies</span>
             </>
           )}
         </Button>

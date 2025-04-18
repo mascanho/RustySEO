@@ -136,7 +136,10 @@ export default function WidgetLogs() {
   };
 
   return (
-    <div className="bg-white border dark:border-brand-dark shadow rounded-none p-2 pr-1 w-full max-w-4xl mx-auto dark:bg-slate-950 dark:text-white h-64">
+    <div className="bg-white border dark:border-brand-dark shadow rounded-none p-2 pr-1 w-full max-w-4xl mx-auto dark:bg-slate-950 dark:text-white h-64 relative">
+      <span className="absolute top-8 font-bold text-black/20 dark:text-white/50 text-xl">
+        {entries.length} Entries
+      </span>
       {/* Tabs */}
       <div className="flex space-x-2 pt-1 pb-0 w-full justify-center">
         {tabs.map(({ label, icon }) => (
@@ -165,7 +168,7 @@ export default function WidgetLogs() {
       >
         {activeTab !== "Analytics" ? (
           <>
-            <div className="flex flex-col md:flex-row items-center justify-center">
+            <div className="flex flex-col md:flex-row items-center justify-center relative">
               <PieChart width={200} height={200}>
                 <Pie
                   data={chartData}

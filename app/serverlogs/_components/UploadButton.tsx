@@ -11,6 +11,7 @@ import { FileUpload } from "./FileUpload";
 import { useState } from "react";
 import TaxonomyManager from "./TaxonomyManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import IPManager from "./IPManager";
 
 function UploadButton() {
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -43,18 +44,16 @@ function UploadButton() {
           <Tabs>
             <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-brand-darker">
               <TabsTrigger value="taxonomy">Content Taxonomies</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
+              <TabsTrigger value="ips">Google IPs</TabsTrigger>
             </TabsList>
 
             <TabsContent value="taxonomy" className="mt-4">
               <TaxonomyManager closeDialog={() => setSettingsOpen(false)} />
             </TabsContent>
 
-            <TabsContent value="settings" className="mt-4">
+            <TabsContent value="ips" className="mt-4">
               {/* Add your settings content here */}
-              <div className="p-4 text-center">
-                <p>Settings content goes here</p>
-              </div>
+              <IPManager closeDialog={() => setSettingsOpen(false)} />
             </TabsContent>
           </Tabs>
         </DialogContent>
