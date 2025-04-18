@@ -136,7 +136,7 @@ export default function WidgetLogs() {
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-2 pr-1 w-full max-w-4xl mx-auto dark:bg-brand-darker dark:text-white h-64">
+    <div className="bg-white border dark:border-brand-dark shadow rounded-none p-2 pr-1 w-full max-w-4xl mx-auto dark:bg-slate-950 dark:text-white h-64">
       {/* Tabs */}
       <div className="flex space-x-2 pt-1 pb-0 w-full justify-center">
         {tabs.map(({ label, icon }) => (
@@ -145,7 +145,7 @@ export default function WidgetLogs() {
             onClick={() => setActiveTab(label)}
             className={`flex items-center space-x-1 px-3 py-1 text-xs rounded-md font-medium transition-colors ${
               activeTab === label
-                ? "bg-blue-600 text-white"
+                ? "bg-brand-bright text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
             }`}
           >
@@ -229,7 +229,7 @@ export default function WidgetLogs() {
                       className={`${entry.name === "Google" ? "cursor-pointer" : "cursor-default"}`}
                     >
                       <div
-                        className="flex justify-between items-center border border-gray-100 px-2 py-1 rounded-md text-xs"
+                        className="flex justify-between items-center border border-gray-100 px-2 py-1 rounded-md text-xs dark:border-brand-dark"
                         style={{
                           borderLeft: `3px solid ${COLORS[idx % COLORS.length]}`,
                           backgroundColor: `${COLORS[idx % COLORS.length]}10`,

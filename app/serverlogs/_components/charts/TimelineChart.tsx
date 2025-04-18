@@ -156,7 +156,7 @@ export function TimelineChart() {
   return (
     <Card className="relative w-full h-64 rounded-none">
       {/* Absolute positioned controls */}
-      <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+      <div className="absolute top-2 right-4 flex items-center gap-2 z-10">
         <ToggleGroup
           type="single"
           value={viewMode}
@@ -165,15 +165,15 @@ export function TimelineChart() {
           size="sm"
           className="h-8"
         >
-          <ToggleGroupItem value="daily" className="text-xs px-2 h-8">
+          <ToggleGroupItem value="daily" className="text-xs px-2 h-6">
             Day
           </ToggleGroupItem>
-          <ToggleGroupItem value="hourly" className="text-xs px-2 h-8">
+          <ToggleGroupItem value="hourly" className="text-xs px-2 h-6">
             Hour
           </ToggleGroupItem>
         </ToggleGroup>
         <Select value={timeRange} onValueChange={setTimeRange}>
-          <SelectTrigger className="w-[100px] h-8 text-xs">
+          <SelectTrigger className="w-[100px] h-6 text-xs">
             <SelectValue placeholder="Range" />
           </SelectTrigger>
           <SelectContent>

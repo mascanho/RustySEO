@@ -63,9 +63,12 @@ const formatDate = (dateString: string) => {
 
 // Get status code badge color
 const getStatusCodeColor = (code: number) => {
-  if (code >= 200 && code < 300) return "bg-green-500";
-  if (code >= 300 && code < 400) return "bg-blue-500";
-  if (code >= 400 && code < 500) return "bg-yellow-500";
+  if (code >= 200 && code < 300)
+    return "bg-green-100 border-green-200 text-green-800 dark:bg-green-700 dark:text-white";
+  if (code >= 300 && code < 400)
+    return "bg-blue-400 dark:bg-blue-700 dark:text-white";
+  if (code >= 400 && code < 500)
+    return "bg-red-400 dark:bg-red-600 dark:text-white";
   if (code >= 500) return "bg-red-500";
   return "bg-gray-500";
 };
@@ -321,7 +324,7 @@ export function LogAnalyzer() {
                 >
                   <Badge
                     variant="outline"
-                    className={`mr-2 ${getStatusCodeColor(code)} text-white`}
+                    className={`mr-2 ${getStatusCodeColor(code)}`}
                   >
                     {code}
                   </Badge>
@@ -573,12 +576,12 @@ export function LogAnalyzer() {
                               variant="outline"
                               className={
                                 log.method === "GET"
-                                  ? "bg-green-100 dark:bg-green-400 text-green-800 border-green-200"
+                                  ? "bg-green-100 dark:bg-green-700 text-green-800 border-green-200"
                                   : log.method === "POST"
-                                    ? "bg-blue-100 dark:bg-blue-400 text-blue-800 border-blue-200"
+                                    ? "bg-blue-100 dark:bg-blue-700 text-blue-800 border-blue-200"
                                     : log.method === "PUT"
                                       ? "bg-yellow-100 dark:bg-yellow-400 text-yellow-800 border-yellow-200"
-                                      : "bg-red-100 dark:bg-red-400 text-red-800 border-red-200"
+                                      : "bg-red-100 dark:bg-red-700 text-red-800 border-red-200"
                               }
                             >
                               {log.method}
@@ -594,7 +597,7 @@ export function LogAnalyzer() {
                           </TableCell>
                           <TableCell>
                             <Badge
-                              className={`${getStatusCodeColor(log.status)} text-white`}
+                              className={`${getStatusCodeColor(log.status)} `}
                             >
                               {log.status}
                             </Badge>
@@ -607,8 +610,8 @@ export function LogAnalyzer() {
                               variant="outline"
                               className={
                                 log.crawler_type !== "Human"
-                                  ? "bg-gradient-to-r from-blue-50 via-red-100 to-green-80 text-blue-600 border border-red-30/30 px-3 py-1 rounded-full font-medium shadow-xs hover:shadow-green-300/20 transition-all"
-                                  : "bg-green-100 text-green-800 border-green-200"
+                                  ? "bg-gradient-to-r from-blue-50 dark:from-brand-bright via-red-100 to-green-80 dark:to-slate-900 text-blue-600  dark:text-white border dark:border-brand-dark border-red-30/30 px-3 py-1 rounded-full font-medium shadow-xs  transition-all"
+                                  : "bg-green-100 dark:bg-green-700 dark:text-white text-green-800  border-green-200"
                               }
                             >
                               {log.crawler_type && (
@@ -688,7 +691,7 @@ export function LogAnalyzer() {
             value={itemsPerPage.toString()}
             onValueChange={(value) => setItemsPerPage(Number(value))}
           >
-            <SelectTrigger className="w-[70px] text-xs h-6 mr-2  z-50">
+            <SelectTrigger className="w-[70px] dark:text-white/50 text-xs h-6 mr-2  z-50">
               <SelectValue placeholder="100" />
             </SelectTrigger>
             <SelectContent>
@@ -762,7 +765,7 @@ export function LogAnalyzer() {
           </PaginationContent>
         </Pagination>
         <div>
-          <span className="flex justify-end text-muted-foreground w-[180px] flex-nowrap text-right  pr-2.5 -mt-1.5 text-xs text-black/50">
+          <span className="flex justify-end text-muted-foreground w-[180px] flex-nowrap dark:text-white/50 text-right  pr-2.5 -mt-1.5 text-xs text-black/50">
             {indexOfFirstItem + 1}-
             {Math.min(
               indexOfLastItem,
