@@ -88,6 +88,7 @@ import { SlSocialGoogle } from "react-icons/sl";
 import GSCcontainer from "./components/ui/GSCcontainer/GSCcontainer";
 import ContentPlannerContainer from "./components/ui/ContentPlanner/ContentPlannerContainer";
 import TopicModelingContainer from "./components/ui/TopicModeling/TopicModelingContainer";
+import { PiShuffleAngularLight } from "react-icons/pi";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -622,6 +623,10 @@ const Home: React.FC<HomeProps> = () => {
                   <RiFireLine className="inline-block mr-2 mb-[2px] text-sm" />
                   Clarity
                 </Tabs.Tab>
+                <Tabs.Tab value="powerbi">
+                  <PiShuffleAngularLight className="inline-block mr-2 mb-[2px] text-sm" />
+                  Power BI
+                </Tabs.Tab>
                 <Tabs.Tab value="kws">
                   <IoKeyOutline className="inline-block mr-2 mb-[2px] text-sm" />
                   Tracking
@@ -852,6 +857,20 @@ const Home: React.FC<HomeProps> = () => {
             <Tabs.Panel value="semrush">
               <SemrushContainer />
             </Tabs.Panel>{" "}
+            <Tabs.Panel
+              value="powerbi"
+              className="w-full h-full flex justify-center items-center py-8 bg-white"
+            >
+              <div className="flex justify-center items-center w-full h-full">
+                <iframe
+                  width="1080"
+                  height="800"
+                  src="https://app.powerbi.com/reportEmbed?reportId=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx&autoAuth=true"
+                  frameBorder="0"
+                  allowFullScreen={true}
+                ></iframe>
+              </div>
+            </Tabs.Panel>
             <Tabs.Panel value="content">
               <ContentPlannerContainer />
             </Tabs.Panel>{" "}

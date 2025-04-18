@@ -382,10 +382,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
         style={{
           height: "calc(100vh - 40vh)",
           maxHeight: "calc(100vh - 40vh)",
+          overflowX: "hidden",
         }}
         className="px-1"
       >
-        <CardContent className="p-0 h-full">
+        <CardContent className="p-0 h-full overflow-hidden">
           <div className="rounded-md border dark:border-brand-dark h-full">
             <div className="relative w-full h-full overflow-auto">
               <Table className="h-full">
@@ -393,7 +394,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                   <TableRow>
                     <TableHead className="w-[80px]">#</TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="cursor-pointer w-[80px] truncate"
                       onClick={() => requestSort("ip")}
                     >
                       IP Address
@@ -483,7 +484,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer min-w-10 w-32 text-center"
+                      className="cursor-pointer min-w-10 max-w-[100px] text-center"
                       onClick={() => requestSort("frequency")}
                     >
                       Frequency

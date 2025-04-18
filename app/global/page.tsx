@@ -24,6 +24,7 @@ import GSCcontainer from "../components/ui/GSCcontainer/GSCcontainer";
 import ContentPlannerContainer from "../components/ui/ContentPlanner/ContentPlannerContainer";
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 import GlobalSettings from "../components/ui/GeneralSettings/GeneralSettings";
+import { PiShuffleAngularLight } from "react-icons/pi";
 
 interface CrawlResult {
   url: string;
@@ -191,6 +192,10 @@ export default function Page() {
                 <RiFireLine className="inline-block mr-2 mb-[2px] text-sm" />
                 Clarity
               </Tabs.Tab>
+              <Tabs.Tab value="powerbi">
+                <PiShuffleAngularLight className="inline-block mr-2 mb-[2px] text-sm" />
+                PowerBI
+              </Tabs.Tab>
               <Tabs.Tab value="kws">
                 <IoKeyOutline className="inline-block mr-2 mb-[2px] text-sm" />
                 Tracking
@@ -240,6 +245,23 @@ export default function Page() {
               <section className="h-[calc(100vh-8rem)] overflow-auto">
                 <ClarityContainer />
               </section>
+            </Tabs.Panel>
+          )}
+
+          {activeTab === "powerbi" && (
+            <Tabs.Panel
+              value="powerbi"
+              className="w-full h-screen flex justify-center items-center pb-8 bg-white"
+            >
+              <div className="flex justify-center items-center w-full h-full">
+                <iframe
+                  width="1080"
+                  height="800"
+                  src="https://app.powerbi.com/reportEmbed?reportId=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx&autoAuth=true"
+                  frameBorder="0"
+                  allowFullScreen={true}
+                ></iframe>
+              </div>
             </Tabs.Panel>
           )}
 
