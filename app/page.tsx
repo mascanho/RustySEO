@@ -89,6 +89,10 @@ import GSCcontainer from "./components/ui/GSCcontainer/GSCcontainer";
 import ContentPlannerContainer from "./components/ui/ContentPlanner/ContentPlannerContainer";
 import TopicModelingContainer from "./components/ui/TopicModeling/TopicModelingContainer";
 import { PiShuffleAngularLight } from "react-icons/pi";
+import { PieChartIcon } from "lucide-react";
+import { BsFillPieChartFill } from "react-icons/bs";
+import { BiLogoMicrosoft } from "react-icons/bi";
+import { LuMicroscope } from "react-icons/lu";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -624,16 +628,16 @@ const Home: React.FC<HomeProps> = () => {
                   Clarity
                 </Tabs.Tab>
                 <Tabs.Tab value="powerbi">
-                  <PiShuffleAngularLight className="inline-block mr-2 mb-[2px] text-sm" />
+                  <LuMicroscope className="inline-block mr-2 mb-[2px] text-sm" />
                   Power BI
-                </Tabs.Tab>
-                <Tabs.Tab value="kws">
-                  <IoKeyOutline className="inline-block mr-2 mb-[2px] text-sm" />
-                  Tracking
                 </Tabs.Tab>
                 <Tabs.Tab value="gsc">
                   <SlSocialGoogle className="inline-block mr-2 mb-[2px] text-sm" />
                   Search Console
+                </Tabs.Tab>
+                <Tabs.Tab value="kws">
+                  <IoKeyOutline className="inline-block mr-2 mb-[2px] text-sm" />
+                  Tracking
                 </Tabs.Tab>
                 {/* <Tabs.Tab value="semrush">
                   <SiSemrush className="inline-block mr-2 mb-[2px] text-sm" />

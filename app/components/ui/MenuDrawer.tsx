@@ -8,6 +8,7 @@ import { invoke } from "@tauri-apps/api/core";
 import useModelStore from "@/store/AIModels";
 import KeywordSerp from "./TopMenuBar/KeywordSerp";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
+import Onboarding from "../Onboarding";
 
 function MenuDrawer() {
   const [opened, setOpened] = useState(false);
@@ -215,6 +216,7 @@ function MenuDrawer() {
           alt=""
         />
       </a>
+      <Onboarding />
     </>
   );
 }

@@ -25,6 +25,7 @@ import ContentPlannerContainer from "../components/ui/ContentPlanner/ContentPlan
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 import GlobalSettings from "../components/ui/GeneralSettings/GeneralSettings";
 import { PiShuffleAngularLight } from "react-icons/pi";
+import { LuMicroscope } from "react-icons/lu";
 
 interface CrawlResult {
   url: string;
@@ -193,16 +194,16 @@ export default function Page() {
                 Clarity
               </Tabs.Tab>
               <Tabs.Tab value="powerbi">
-                <PiShuffleAngularLight className="inline-block mr-2 mb-[2px] text-sm" />
+                <LuMicroscope className="inline-block mr-2 mb-[2px] text-sm" />
                 Power BI
-              </Tabs.Tab>
-              <Tabs.Tab value="kws">
-                <IoKeyOutline className="inline-block mr-2 mb-[2px] text-sm" />
-                Tracking
               </Tabs.Tab>
               <Tabs.Tab value="gsc">
                 <SlSocialGoogle className="inline-block mr-2 mb-[2px] text-sm" />
                 Search Console
+              </Tabs.Tab>
+              <Tabs.Tab value="kws">
+                <IoKeyOutline className="inline-block mr-2 mb-[2px] text-sm" />
+                Tracking
               </Tabs.Tab>
               <Tabs.Tab value="content">
                 <GrPlan className="inline-block mr-2 mb-[2px] text-sm" />
