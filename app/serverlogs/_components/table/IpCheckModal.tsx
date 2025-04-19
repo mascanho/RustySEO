@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Copy, Check, X, CloudCog } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,17 +16,13 @@ interface IpDisplayProps {
 export function IpDisplay({ ip, close }: IpDisplayProps) {
   const [copiedIp, setCopiedIp] = useState(false);
   const [copiedHostname, setCopiedHostname] = useState(false);
-  const [visible, setVisible] = useState(false);
   const { toast } = useToast();
   const [hostname, setHostname] = useState<string>("");
-
-  // Simulate terminal typing effect
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setVisible(true);
-    }, 5);
-    return () => clearTimeout(timer);
-  }, []);
+  const [displayedHostname, setDisplayedHostname] = useState<string>("");
+  const [displayedIp, setDisplayedIp] = useState<string>("");
+  const [isTypingComplete, setIsTypingComplete] = useState(false);
+  const typingSpeed = 50; // milliseconds per character
+  const ipRef = useRef<string>(ip);
 
   const copyToClipboard = async (text: string, type: "ip" | "hostname") => {
     try {
@@ -59,13 +55,48 @@ export function IpDisplay({ ip, close }: IpDisplayProps) {
     }
   };
 
+  // Typewriter effect for hostname
   useEffect(() => {
-    invoke("reverse_lookup", { ip })
+    if (!hostname) return;
+
+    let i = 0;
+    const typingInterval = setInterval(() => {
+      if (i < hostname.length) {
+        setDisplayedHostname(hostname.substring(0, i + 1));
+        i++;
+      } else {
+        clearInterval(typingInterval);
+        // Start typing IP after hostname finishes
+        typeIp();
+      }
+    }, typingSpeed);
+
+    return () => clearInterval(typingInterval);
+  }, [hostname]);
+
+  // Typewriter effect for IP
+  const typeIp = () => {
+    let i = 0;
+    const ipString = ipRef.current;
+    const typingInterval = setInterval(() => {
+      if (i < ipString.length) {
+        setDisplayedIp(ipString.substring(0, i + 1));
+        i++;
+      } else {
+        clearInterval(typingInterval);
+        setIsTypingComplete(true);
+      }
+    }, typingSpeed);
+  };
+
+  // Fetch hostname
+  useEffect(() => {
+    invoke("reverse_lookup", { ip: ipRef.current })
       .then((result) => {
-        setHostname(result || "");
+        setHostname(result || "Not Found");
       })
       .catch(console.error);
-  }, [ip]);
+  }, []);
 
   return (
     <Card className="w-fit max-w-xl border-2 border-brand-bright bg-white dark:bg-black p-0 font-mono shadow-sm transition-all">
@@ -85,35 +116,38 @@ export function IpDisplay({ ip, close }: IpDisplayProps) {
         <div className="space-y-2 text-brand-bright">
           <div className="flex items-start">
             <div className="flex-1">
-              <div
-                className={`transition-opacity duration-500 ${visible ? "opacity-100" : "opacity-0"}`}
-              >
+              <div className="opacity-100">
                 <div className="flex items-center">
                   <span className="mr-2">$</span>
                   <p className="text-xs font-bold">HOSTNAME:</p>
                 </div>
-                <p className="mb-3 text-lg tracking-wider text-brand-bright/80">
-                  {hostname || "Not Found"}
-                </p>
+                <div className="flex items-center mb-3">
+                  <p className="text-lg tracking-wider text-brand-bright/80">
+                    {displayedHostname}
+                  </p>
+                  {/* Persistent blinking cursor */}
+                  {/* <span className="ml-1 h-6 w-2 bg-brand-bright animate-[blink_1s_step-end_infinite]"></span> */}
+                </div>
 
                 <div className="flex items-center">
                   <span className="mr-2">$</span>
                   <p className="text-xs font-bold">IP ADDRESS:</p>
                 </div>
                 <div className="flex items-center">
-                  <p className=" text-lg tracking-wider text-brand-bright/80">
-                    {ip}
+                  <p className="text-lg tracking-wider text-brand-bright/80">
+                    {displayedIp}
                   </p>
-
-                  {/* Blinking cursor */}
-                  <div className="h-4 w-2 ml-1 animate-[blink_1s_step-end_infinite] bg-brand-bright"></div>
+                  {/* Persistent blinking cursor */}
+                  <span className="ml-1 h-6 w-2 bg-brand-bright animate-[blink_1s_step-end_infinite]"></span>
                 </div>
+
                 <div className="mt-4 grid grid-cols-3 gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => copyToClipboard(ip, "ip")}
+                    onClick={() => copyToClipboard(ipRef.current, "ip")}
                     className="h-8 border border-brand-bright bg-white dark:bg-black px-2 text-xs text-brand-bright hover:bg-brand-bright/10 hover:text-brand-bright flex items-center justify-center"
+                    disabled={!isTypingComplete}
                   >
                     {copiedIp ? (
                       <Check className="mr-1 h-3 w-3 flex-shrink-0" />
@@ -130,7 +164,9 @@ export function IpDisplay({ ip, close }: IpDisplayProps) {
                     size="sm"
                     onClick={() => copyToClipboard(hostname, "hostname")}
                     className="h-8 border border-brand-bright bg-white dark:bg-black px-2 text-xs text-brand-bright hover:bg-brand-bright/10 hover:text-brand-bright flex items-center justify-center"
-                    disabled={!hostname}
+                    disabled={
+                      !hostname || !isTypingComplete || hostname === "Not Found"
+                    }
                   >
                     {copiedHostname ? (
                       <Check className="mr-1 h-3 w-3 flex-shrink-0" />
@@ -145,7 +181,7 @@ export function IpDisplay({ ip, close }: IpDisplayProps) {
                   <a
                     target="_blank"
                     rel="noopener noreferrer"
-                    href={`https://check-host.net/ip-info?host=${ip}`}
+                    href={`https://check-host.net/ip-info?host=${ipRef.current}`}
                     className="w-full"
                   >
                     <Button
