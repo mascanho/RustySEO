@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Copy, Check, X } from "lucide-react";
+import { Copy, Check, X, CloudCog } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -10,15 +10,15 @@ import { invoke } from "@tauri-apps/api/core";
 
 interface IpDisplayProps {
   ip: string;
-  hostname: string;
   close: () => void;
 }
 
 export function IpDisplay({ ip, close }: IpDisplayProps) {
-  const [copied, setCopied] = useState(false);
+  const [copiedIp, setCopiedIp] = useState(false);
+  const [copiedHostname, setCopiedHostname] = useState(false);
   const [visible, setVisible] = useState(false);
   const { toast } = useToast();
-  const [hostname, setHostname] = useState<string[]>([]);
+  const [hostname, setHostname] = useState<string>("");
 
   // Simulate terminal typing effect
   useEffect(() => {
@@ -28,18 +28,27 @@ export function IpDisplay({ ip, close }: IpDisplayProps) {
     return () => clearTimeout(timer);
   }, []);
 
-  const copyToClipboard = async () => {
+  const copyToClipboard = async (text: string, type: "ip" | "hostname") => {
     try {
-      await navigator.clipboard.writeText(ip);
-      setCopied(true);
+      await navigator.clipboard.writeText(text);
+      if (type === "ip") {
+        setCopiedIp(true);
+      } else {
+        setCopiedHostname(true);
+      }
+
       toast({
         title: "COPIED",
-        description: `IP ADDRESS ${ip} COPIED TO BUFFER`,
+        description: `${type.toUpperCase()} ${text} COPIED TO CLIPBOARD`,
         duration: 2000,
         className: "font-mono bg-black text-brand-bright border-brand-bright",
       });
 
-      setTimeout(() => setCopied(false), 2000);
+      const timer = setTimeout(() => {
+        type === "ip" ? setCopiedIp(false) : setCopiedHostname(false);
+      }, 2000);
+
+      return () => clearTimeout(timer);
     } catch (err) {
       toast({
         title: "ERROR",
@@ -51,15 +60,12 @@ export function IpDisplay({ ip, close }: IpDisplayProps) {
   };
 
   useEffect(() => {
-    console.log(ip);
-  }, []);
-
-  useEffect(() => {
-    invoke("reverse_lookup", { ip }).then((hostname) => {
-      setHostname(hostname);
-      console.log(hostname, "Hostname");
-    });
-  }, []);
+    invoke("reverse_lookup", { ip })
+      .then((result) => {
+        setHostname(result || "");
+      })
+      .catch(console.error);
+  }, [ip]);
 
   return (
     <Card className="w-fit max-w-xl border-2 border-brand-bright bg-white dark:bg-black p-0 font-mono shadow-sm transition-all">
@@ -68,7 +74,7 @@ export function IpDisplay({ ip, close }: IpDisplayProps) {
 
       {/* Terminal header */}
       <div className="border-b border-brand-bright flex justify-between bg-brand-bright/10 pl-4 pr-2 py-1 text-xs text-brand-bright">
-        <span> SYSTEM://NETWORK_INFO.term</span>
+        <span>RUSTYSEO - TERMINAL</span>
         <X
           onClick={() => close(false)}
           className="ml-2 h-4 w-4 cursor-pointer"
@@ -84,37 +90,72 @@ export function IpDisplay({ ip, close }: IpDisplayProps) {
               >
                 <div className="flex items-center">
                   <span className="mr-2">$</span>
-                  <p className="text-xs">HOSTNAME:</p>
+                  <p className="text-xs font-bold">HOSTNAME:</p>
                 </div>
                 <p className="mb-3 text-lg tracking-wider text-brand-bright/80">
                   {hostname || "Not Found"}
                 </p>
-                <p className="mb-1 text-xs">IP_ADDRESS:</p>
-                <p className="mb-2 text-lg tracking-wider text-brand-bright/80">
-                  {ip}
-                </p>
-                <div className="mt-4 flex items-center">
-                  <span className="mr-2 text-xs">CMD:</span>
+
+                <div className="flex items-center">
+                  <span className="mr-2">$</span>
+                  <p className="text-xs font-bold">IP ADDRESS:</p>
+                </div>
+                <div className="flex items-center">
+                  <p className=" text-lg tracking-wider text-brand-bright/80">
+                    {ip}
+                  </p>
+
+                  {/* Blinking cursor */}
+                  <div className="h-4 w-2 ml-1 animate-[blink_1s_step-end_infinite] bg-brand-bright"></div>
+                </div>
+                <div className="mt-4 flex items-center space-x-2 justify-between">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={copyToClipboard}
-                    className="h-8 border border-brand-bright bg-white dark:bg-black px-3 text-xs text-brand-bright hover:bg-brand-bright/10 hover:text-brand-bright"
+                    onClick={() => copyToClipboard(ip, "ip")}
+                    className="h-8 border border-brand-bright bg-white dark:bg-black px-3 text-xs text-brand-bright hover:bg-brand-bright/10 hover:text-brand-bright w-full"
                   >
-                    {copied ? (
+                    {copiedIp ? (
                       <Check className="mr-1 h-3 w-3" />
                     ) : (
                       <Copy className="mr-1 h-3 w-3" />
                     )}
-                    {copied ? "COPIED" : "COPY_IP"}
+                    {copiedIp ? "COPIED" : "COPY IP"}
                   </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyToClipboard(hostname, "hostname")}
+                    className="h-8 border border-brand-bright bg-white dark:bg-black px-3 text-xs text-brand-bright hover:bg-brand-bright/10 hover:text-brand-bright w-full"
+                    disabled={!hostname}
+                  >
+                    {copiedHostname ? (
+                      <Check className="mr-1 h-3 w-3" />
+                    ) : (
+                      <Copy className="mr-1 h-3 w-3" />
+                    )}
+                    {copiedHostname ? "COPIED" : "COPY HOST"}
+                  </Button>
+
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href={`https://check-host.net/ip-info?host=${ip}`}
+                  >
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 border border-brand-bright bg-white dark:bg-black  text-xs text-brand-bright hover:bg-brand-bright/10 hover:text-brand-bright w-full min-w-20"
+                    >
+                      <CloudCog className="mr-1 h-3 w-3" />
+                      MORE INFO
+                    </Button>
+                  </a>
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Blinking cursor */}
-          <div className="h-4 w-2 animate-[blink_1s_step-end_infinite] bg-brand-bright"></div>
         </div>
       </div>
     </Card>
