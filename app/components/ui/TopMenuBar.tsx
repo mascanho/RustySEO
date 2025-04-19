@@ -64,6 +64,7 @@ import { PiGitDiff } from "react-icons/pi";
 import DiffChecker from "./DiffChecker/DiffChecker";
 import { GoFileDiff } from "react-icons/go";
 import { Settings } from "lucide-react";
+import PowerBi from "./MSClarityModal/PowerBi";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -115,6 +116,9 @@ const TopMenuBar = () => {
   ] = useDisclosure(false);
 
   const [openedMSClarity, { open: openMSClarity, close: closeMSClarity }] =
+    useDisclosure(false);
+
+  const [openedPowerBi, { open: openPowerBi, close: closePowerBi }] =
     useDisclosure(false);
 
   const [
@@ -259,6 +263,18 @@ const TopMenuBar = () => {
         centered
       >
         <MSClarity close={closeMSClarity} />
+      </Modal>
+
+      {/* MS  Power BI MODAL */}
+      <Modal
+        opened={openedPowerBi}
+        closeOnEscape
+        closeOnClickOutside
+        onClose={closePowerBi}
+        title="Microsoft Power BI Connector"
+        centered
+      >
+        <PowerBi close={closePowerBi} />
       </Modal>
 
       {/* Todo Modal */}
@@ -523,6 +539,10 @@ const TopMenuBar = () => {
               <MenubarItem onClick={openMSClarity}>
                 <FiZap className="mr-2" />
                 Microsoft Clarity
+              </MenubarItem>
+              <MenubarItem onClick={openPowerBi}>
+                <FiZap className="mr-2" />
+                MS Power BI
               </MenubarItem>
               <MenubarSeparator />
               <MenubarItem onClick={openPageSpeed}>

@@ -863,11 +863,12 @@ const Home: React.FC<HomeProps> = () => {
             >
               <div className="flex justify-center items-center w-full h-full">
                 <iframe
-                  width="1080"
-                  height="800"
-                  src="https://app.powerbi.com/reportEmbed?reportId=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx&autoAuth=true"
-                  frameBorder="0"
-                  allowFullScreen={true}
+                  title="Sample Report Demo"
+                  width="1920"
+                  height="941.25"
+                  src="https://playground.powerbi.com/sampleReportEmbed"
+                  frameborder="0"
+                  allowFullScreen="true"
                 ></iframe>
               </div>
             </Tabs.Panel>
