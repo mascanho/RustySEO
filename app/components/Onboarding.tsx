@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Rocket,
   Shield,
+  X,
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,7 @@ const steps = [
     description:
       "We're excited to have you on board. Let's get you set up in just a few steps.",
     icon: Rocket,
-    imageSrc: "/images/welcome-illustration.png",
+    imageSrc: "https://github.com/mascanho/RustySEO/raw/main/assets/hero.png",
   },
   {
     id: 2,
@@ -37,7 +38,7 @@ const steps = [
     description:
       "Customize your experience and help others get to know you better.",
     icon: Shield,
-    imageSrc: "/images/profile-illustration.png",
+    imageSrc: "https://github.com/mascanho/RustySEO/raw/main/assets/hero.png",
   },
   {
     id: 3,
@@ -45,7 +46,7 @@ const steps = [
     description:
       "Discover the powerful tools and features that will help you succeed.",
     icon: Zap,
-    imageSrc: "/images/features-illustration.png",
+    imageSrc: "https://github.com/mascanho/RustySEO/raw/main/assets/hero.png",
   },
   {
     id: 4,
@@ -53,7 +54,7 @@ const steps = [
     description:
       "Congratulations! You're ready to start using our platform to its full potential.",
     icon: CheckCircle,
-    imageSrc: "/images/complete-illustration.png",
+    imageSrc: "https://github.com/mascanho/RustySEO/raw/main/assets/hero.png",
   },
 ];
 
@@ -88,13 +89,13 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="flex items-center z-50  absolute top-[500px] h-96 justify-center p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl">
+    <div className="absolute max-h-10 -z-50 -top-2 left-1/2 transform -translate-x-1/2 translate-y-[10rem] p-4  from-blue-50 to-purple-50 rounded-xl">
       <section className="w-full md:w-[900px] border-0 shadow-lg bg-white">
-        <CardHeader className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg">
-          <CardTitle className="text-2xl font-bold">Onboarding</CardTitle>
-          <CardDescription className="text-blue-100">
-            Step {currentStep} of {steps.length}
-          </CardDescription>
+        <CardHeader className="bg-gradient-to-r relative flex h-10 from-blue-600 to-purple-600 text-white rounded-t-lg p-0">
+          <CardTitle className="text-2xl font-bold p-1 pl-6 text-white">
+            Onboarding
+          </CardTitle>
+          <X className="absolute right-4 top-1" />
         </CardHeader>
         <CardContent className="p-6">
           <div className="mb-6">
@@ -180,12 +181,20 @@ export default function Onboarding() {
                       <p className="text-gray-600 mb-4">
                         You've completed the onboarding process.
                       </p>
-                      <Button
-                        onClick={handleReset}
-                        className="mt-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
-                      >
-                        Start Over
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button
+                          onClick={handleReset}
+                          className="mt-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+                        >
+                          Start Over
+                        </Button>
+                        <Button
+                          onClick={handleReset}
+                          className="mt-2 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600"
+                        >
+                          Start Over
+                        </Button>
+                      </div>
                     </div>
                     <div className="flex-1 flex justify-center items-center h-full">
                       <div className="w-full h-[250px] relative rounded-lg overflow-hidden shadow-md">

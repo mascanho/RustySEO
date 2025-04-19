@@ -171,6 +171,7 @@ function MenuDrawer() {
   return (
     <>
       <KeywordSerp />
+      <Onboarding />
       <div
         className={`items-center hidden md:flex  z-[50] absolute top-[9px] ${pathname === "/images" ? "pt-1" : ""} left-2`}
       >
@@ -216,7 +217,6 @@ function MenuDrawer() {
           alt=""
         />
       </a>
-      <Onboarding />
     </>
   );
 }
