@@ -24,7 +24,7 @@ export function IpDisplay({ ip, close }: IpDisplayProps) {
   useEffect(() => {
     const timer = setTimeout(() => {
       setVisible(true);
-    }, 500);
+    }, 5);
     return () => clearTimeout(timer);
   }, []);
 

@@ -110,7 +110,7 @@ export function LogAnalyzer() {
   } = useLogAnalysis();
 
   const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState("google");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(100);
   const [statusFilter, setStatusFilter] = useState<number[]>([]);
@@ -126,6 +126,21 @@ export function LogAnalyzer() {
   const [domain, setDomain] = useState("");
   const [showOnTables, setShowOnTables] = useState(false);
 
+  // GET THE domain from the local storage to use on the table to complement the path
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedDomain = localStorage.getItem("domain");
+      if (storedDomain) {
+        setDomain(storedDomain);
+      }
+
+      const isShowing = localStorage.getItem("showOnTables");
+      if (isShowing === "true") {
+        setShowOnTables(true);
+      }
+    }
+  }, [entries.length]);
+
   // Apply filters and search
   useEffect(() => {
     if (!entries.length) return;
@@ -139,8 +154,8 @@ export function LogAnalyzer() {
         (log) =>
           log.ip.toLowerCase().includes(lowerCaseSearch) ||
           log.path.toLowerCase().includes(lowerCaseSearch) ||
-          log.user_agent.toLowerCase().includes(lowerCaseSearch) ||
-          (log.referer && log.referer.toLowerCase().includes(lowerCaseSearch)),
+          log.user_agent.toLowerCase().includes(lowerCaseSearch),
+        // (log.referer && log.referer.toLowerCase().includes(lowerCaseSearch)),
       );
     }
 
@@ -254,14 +269,15 @@ export function LogAnalyzer() {
       log.browser || "",
       log.timestamp || "",
       log.method || "",
-      (domain && showOnTables ? "https://" + domain : log.path) || "",
+      (domain && showOnTables ? "https://" + domain + log.path : log.path) ||
+        "",
       log.file_type || "",
       log.status || "",
       log.response_size || "",
       `"${(log.user_agent || "").replace(/"/g, '""')}"`,
       log.referer || "-",
       log.crawler_type || "",
-      log.verified || "",
+      log.verified || "false",
       log.taxonomy || "",
     ]);
 
@@ -322,21 +338,6 @@ export function LogAnalyzer() {
     setIpModal(true);
     setIP(ip);
   }
-
-  // GET THE domain from the local storage to use on the table to complement the path
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedDomain = localStorage.getItem("domain");
-      if (storedDomain) {
-        setDomain(storedDomain);
-      }
-
-      const isShowing = localStorage.getItem("showOnTables");
-      if (isShowing === "true") {
-        setShowOnTables(true);
-      }
-    }
-  }, [entries.length]);
 
   return (
     <div className="space-y-4  flex flex-col flex-1 h-full ">
