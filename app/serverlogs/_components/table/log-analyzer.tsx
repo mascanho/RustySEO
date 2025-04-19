@@ -110,7 +110,7 @@ export function LogAnalyzer() {
   } = useLogAnalysis();
 
   const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
-  const [searchTerm, setSearchTerm] = useState("google");
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(100);
   const [statusFilter, setStatusFilter] = useState<number[]>([]);
@@ -251,6 +251,7 @@ export function LogAnalyzer() {
       "Timestamp",
       "Method",
       "Path",
+      "Taxonomy",
       "File Type",
       "Status Code",
       "Response Size",
@@ -258,7 +259,6 @@ export function LogAnalyzer() {
       "Referer",
       "Bot/Human",
       "Google Verified",
-      "Taxonomy",
     ];
 
     const dataToExport = filteredLogs.length > 0 ? filteredLogs : entries;
@@ -271,6 +271,7 @@ export function LogAnalyzer() {
       log.method || "",
       (domain && showOnTables ? "https://" + domain + log.path : log.path) ||
         "",
+      log.taxonomy || "",
       log.file_type || "",
       log.status || "",
       log.response_size || "",
@@ -278,7 +279,6 @@ export function LogAnalyzer() {
       log.referer || "-",
       log.crawler_type || "",
       log.verified || "false",
-      log.taxonomy || "",
     ]);
 
     const csvContent = [
