@@ -859,3 +859,7 @@ dialog::backdrop {
     opacity: 0;
   }
 }
+
+.logs table {
+  display: none !important;
+}

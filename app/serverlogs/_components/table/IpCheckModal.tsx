@@ -122,7 +122,7 @@ export function IpDisplay({ ip, close }: IpDisplayProps) {
                   <p className="text-xs font-bold">HOSTNAME:</p>
                 </div>
                 <div className="flex items-center mb-3">
-                  <p className="text-lg tracking-wider text-brand-bright/80">
+                  <p className="text-sm tracking-wider text-brand-bright/80">
                     {displayedHostname}
                   </p>
                   {/* Persistent blinking cursor */}
@@ -134,7 +134,7 @@ export function IpDisplay({ ip, close }: IpDisplayProps) {
                   <p className="text-xs font-bold">IP ADDRESS:</p>
                 </div>
                 <div className="flex items-center">
-                  <p className="text-lg tracking-wider text-brand-bright/80">
+                  <p className="text-sm tracking-wider text-brand-bright/80">
                     {displayedIp}
                   </p>
                   {/* Persistent blinking cursor */}

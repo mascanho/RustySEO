@@ -499,11 +499,11 @@ export function LogAnalyzer() {
             height: "calc(100vh - 27.2rem)",
           }}
         >
-          <div className="rounded-md border  dark:border-brand-dark h-full ">
+          <div className="rounded-md border  dark:border-brand-dark h-full logs">
             <div className="relative w-full h-full overflow-auto">
-              <Table className="h-full">
+              <Table className="h-full [&_tr]:p-10 logs">
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="p-10">
                     <TableHead className="w-[80px]">#</TableHead>
                     <TableHead
                       className="cursor-pointer"
