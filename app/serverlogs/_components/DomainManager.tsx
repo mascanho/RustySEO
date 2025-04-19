@@ -158,8 +158,8 @@ export default function DomainManager({ closeDialog }: DomainManagerProps) {
           <div className="py-2 bg-neutral-100 dark:bg-brand-dark dark:text-white/50 px-2 rounded-md mt-4">
             <p className="text-xs text-muted-foreground">
               Enter your primary domain to enable site-wide features. This
-              should be your root domain without protocol (e.g., "example.com"
-              not "https://example.com").
+              should be your root domain without protocol (e.g.,
+              &quot;example.com&quot; not &quot;https://example.com&quot;).
             </p>
           </div>
         </div>
