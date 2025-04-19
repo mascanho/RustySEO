@@ -7,6 +7,8 @@ use std::net::{AddrParseError, IpAddr};
 use std::str::FromStr;
 use std::sync::Mutex;
 
+use super::google_ip_fetcher::get_google_ip_ranges;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LogEntry {
     pub ip: String,
@@ -42,20 +44,6 @@ impl From<ipnet::PrefixLenError> for IpVerificationError {
         IpVerificationError::InvalidCidr(err)
     }
 }
-
-// THIS SEGMENTS THE PATHS INTO DIFFERENT TAXONOMIES PROVIDED BY THE User
-// TODO: Make this available in the configurations file
-//const TAXONOMIES: &[&str] = &[
-//    "blog",
-//    "customers",
-//    "industries",
-//    "solutions",
-//    "downloads",
-//    "platform",
-//    "events",
-//];
-
-// Use a static variable to cache taxonomies
 
 // Use a static variable to cache taxonomies
 static TAXONOMIES: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));
@@ -94,35 +82,44 @@ fn classify_taxonomy(path: &str) -> String {
 /// Google's verified crawler IP ranges (IPv4 and IPv6)
 /// Updated as of 2024 - always check official sources for changes:
 /// https://developers.google.com/search/docs/crawling-indexing/verifying-googlebot
-const GOOGLE_VERIFIED_IPS: &[&str] = &[
-    // IPv4 ranges
-    "64.233.160.0/19",
-    "66.102.0.0/20",
-    "66.249.64.0/19",
-    "72.14.192.0/18",
-    "74.125.0.0/16",
-    "108.177.8.0/21",
-    "172.217.0.0/19",
-    "173.194.0.0/16",
-    "209.85.128.0/17",
-    "216.58.192.0/19",
-    "216.239.32.0/19",
-    // IPv6 ranges
-    "2001:4860:4000::/36",
-    "2404:6800:4000::/36",
-    "2607:f8b0:4000::/36",
-    "2800:3f0:4000::/36",
-    "2a00:1450:4000::/36",
-    "2c0f:fb50:4000::/36",
-];
+static GOOGLE_IP_RANGES: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));
+
+#[tauri::command]
+pub async fn fetch_google_ip_ranges() -> Result<Vec<String>, String> {
+    // If we already have the ranges cached, return them
+    {
+        let ranges = GOOGLE_IP_RANGES.lock().map_err(|e| e.to_string())?;
+        if !ranges.is_empty() {
+            return Ok(ranges.iter().map(|n| n.to_string()).collect());
+        }
+    }
+
+    // Otherwise fetch them (this is where you'd implement your actual fetching logic)
+    let fetched_ranges = get_google_ip_ranges().await.map_err(|e| e.to_string())?;
+
+    // Store them in the global state
+    {
+        let mut ranges = GOOGLE_IP_RANGES.lock().map_err(|e| e.to_string())?;
+        *ranges = fetched_ranges.clone();
+    }
+
+    Ok(fetched_ranges.iter().map(|n| n.to_string()).collect())
+}
 
 fn is_google_verified(ip: &str) -> Result<bool, IpVerificationError> {
     // Parse the input IP address
     let ip_addr = IpAddr::from_str(ip)?;
 
+    // Get a lock on the Mutex to access the ranges
+    let ranges = GOOGLE_IP_RANGES.lock().unwrap();
+
     // Check if the IP is within any of Google's verified CIDR ranges
-    for &cidr in GOOGLE_VERIFIED_IPS {
-        let net = IpNet::from_str(cidr).expect("couldn't convert ip");
+    for cidr in ranges.iter() {
+        let net = IpNet::from_str(cidr).map_err(|e| {
+            eprintln!("Failed to parse CIDR {}: {}", cidr, e);
+            IpVerificationError::InvalidCidr(ipnet::PrefixLenError)
+        })?;
+
         if net.contains(&ip_addr) {
             return Ok(true);
         }

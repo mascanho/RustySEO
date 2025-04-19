@@ -35,18 +35,23 @@ const COLORS = {
 };
 
 export function TimelineChart() {
-  const [timeRange, setTimeRange] = React.useState("90d");
+  const [timeRange, setTimeRange] = React.useState("all");
   const [viewMode, setViewMode] = React.useState<"daily" | "hourly">("hourly");
   const { entries } = useLogAnalysis();
 
   // Process the log entries to create chart data
   const processData = () => {
-    const dateMap = new Map<string, { human: number; crawler: number }>();
+    if (entries.length === 0) return [];
 
+    const dateMap = new Map<string, { human: number; crawler: number }>();
+    const allDates: Date[] = [];
+
+    // First pass: collect all dates and count entries
     entries.forEach((entry) => {
       const date = new Date(entry.timestamp);
-      let key: string;
+      allDates.push(date);
 
+      let key: string;
       if (viewMode === "daily") {
         key = date.toISOString().split("T")[0];
       } else {
@@ -66,32 +71,42 @@ export function TimelineChart() {
       }
     });
 
+    // Sort all dates to find min and max
+    allDates.sort((a, b) => a.getTime() - b.getTime());
+    const minDate = allDates[0];
+    const maxDate = allDates[allDates.length - 1];
+
+    // Determine date range based on selection
+    let startDate = new Date(minDate);
+    const endDate = new Date(maxDate);
+
+    if (timeRange === "7d") {
+      startDate = new Date(endDate);
+      startDate.setDate(startDate.getDate() - 7);
+    } else if (timeRange === "30d") {
+      startDate = new Date(endDate);
+      startDate.setDate(startDate.getDate() - 30);
+    } else if (timeRange === "90d") {
+      startDate = new Date(endDate);
+      startDate.setDate(startDate.getDate() - 90);
+    }
+    // "all" keeps the original minDate
+
+    // Convert to array and filter by date range
     return Array.from(dateMap.entries())
       .map(([date, counts]) => ({
         date,
         human: counts.human,
         crawler: counts.crawler,
       }))
+      .filter((item) => {
+        const itemDate = new Date(item.date);
+        return itemDate >= startDate && itemDate <= endDate;
+      })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   };
 
   const chartData = processData();
-
-  const filteredData = chartData.filter((item) => {
-    const date = new Date(item.date);
-    const referenceDate = new Date();
-    let daysToSubtract = 7;
-
-    if (timeRange === "30d") {
-      daysToSubtract = 30;
-    } else if (timeRange === "90d") {
-      daysToSubtract = 90;
-    }
-
-    const startDate = new Date(referenceDate);
-    startDate.setDate(startDate.getDate() - daysToSubtract);
-    return date >= startDate;
-  });
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -177,6 +192,9 @@ export function TimelineChart() {
             <SelectValue placeholder="Range" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="all" className="text-xs">
+              All time
+            </SelectItem>
             <SelectItem value="7d" className="text-xs">
               Last 7 days
             </SelectItem>
@@ -194,7 +212,7 @@ export function TimelineChart() {
         <div className="h-[258px]">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
-              data={filteredData}
+              data={chartData}
               margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
             >
               <defs>

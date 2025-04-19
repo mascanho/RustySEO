@@ -177,9 +177,21 @@ export default function IPManager({ closeDialog }: IPManagerProps) {
           </div>
           <div className="py-2 bg-neutral-100 dark:bg-brand-dark dark:text-white/50 px-2 rounded-md mt-4">
             <p className="text-xs text-muted-foreground">
-              Add Google&aposs verified IP ranges in CIDR notation (e.g.,
+              Add Google&apos;s verified IP ranges in CIDR notation (e.g.,
               64.233.160.0/19). These are used to identify legitimate Google
               crawlers.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Please refer to{" "}
+              <a
+                className="mr-1 underline"
+                href="https://developers.google.com/search/docs/crawling-indexing/verifying-googlebot"
+                target="_blank"
+              >
+                Google&apos;s{""}
+              </a>
+              {""}
+              official documentation
             </p>
           </div>
         </div>

@@ -49,6 +49,16 @@ export default function Page() {
     getTaxonomies();
   }, []);
 
+  // FETCH THE GOOGLE'S IP AND HAVE IT READY TO BE USED BY THE BE
+  useEffect(() => {
+    try {
+      invoke("fetch_google_ip_ranges", {});
+    } catch (error) {
+      console.error("Error loading taxonomies:", error);
+      toast.error("RustySEO failed to load Google's IP ranges");
+    }
+  }, []);
+
   return (
     <section className="flex flex-col dark:bg-brand-darker   w-[100%] pt-[4rem] h-[calc(100vh - 20-rem)] overflow-hidden  ">
       <UploadButton />

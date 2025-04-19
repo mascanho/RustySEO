@@ -4,10 +4,17 @@ import {
   AlertCircle,
   BadgeCheck,
   ChevronDown,
+  CircleHelp,
+  ClipboardCopy,
+  Copy,
+  CopyPlus,
   Download,
   Filter,
+  FlaskRound,
+  Ghost,
   RefreshCw,
   Search,
+  Waypoints,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -50,6 +57,13 @@ import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { ask, message, save } from "@tauri-apps/plugin-dialog";
 import { SiGoogle } from "react-icons/si";
+import { toast } from "sonner";
+import { IpDisplay } from "./IpCheckModal";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Helper function to format date
 const formatDate = (dateString: string) => {
@@ -107,6 +121,8 @@ export function LogAnalyzer() {
     direction: "ascending" | "descending";
   } | null>(null);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const [ipModal, setIpModal] = useState(false);
+  const [ip, setIP] = useState("");
 
   // Apply filters and search
   useEffect(() => {
@@ -300,9 +316,19 @@ export function LogAnalyzer() {
     );
   }
 
+  function handleIP(ip) {
+    setIpModal(true);
+    setIP(ip);
+  }
+
   return (
-    <div className="space-y-4  flex flex-col flex-1 h-full">
+    <div className="space-y-4  flex flex-col flex-1 h-full relative">
       <div className="flex flex-col md:flex-row  justify-between -mb-4 p-1 h-full">
+        {ipModal && (
+          <div className="absolute z-50 top-1/3  left-1/2 transform -translate-x-1/2 translate-y-[20rem]">
+            <IpDisplay ip={ip} close={setIpModal} />
+          </div>
+        )}
         <div className="relative w-full mr-1 ">
           <Search className="absolute dark:text-white/50 left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -591,14 +617,30 @@ export function LogAnalyzer() {
                         <TableRow
                           key={`${log.ip}-${log.timestamp}-${index}`}
                           className="group cursor-pointer"
-                          onClick={() =>
-                            setExpandedRow(expandedRow === index ? null : index)
-                          }
+                          onClick={() => {
+                            setExpandedRow(
+                              expandedRow === index ? null : index,
+                            );
+                          }}
                         >
                           <TableCell className="font-medium">
                             {indexOfFirstItem + index + 1}
                           </TableCell>
-                          <TableCell>{log.ip}</TableCell>
+
+                          <TableCell>
+                            <div className="flex items-center">
+                              <Waypoints
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleIP(log.ip);
+                                }}
+                                title="Click to inspect IP"
+                                className="mr-2 text-blue-400 dark:text-white/50 hover:scale-110 cursor-pointer"
+                                size={13}
+                              />
+                              {log.ip}
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <Badge
                               variant="outline"
@@ -642,21 +684,7 @@ export function LogAnalyzer() {
                                   : "bg-blue-100 dark:bg-green-700 dark:text-white text-green-800  border-green-200"
                               }
                             >
-                              {log.crawler_type && (
-                                <>
-                                  {log.verified &&
-                                  log.crawler_type !== "Human" &&
-                                  log.crawler_type.length >= 10
-                                    ? log.crawler_type.slice(0, 10) + "..."
-                                    : log.crawler_type}
-                                  {log.verified && (
-                                    <BadgeCheck
-                                      className="ml-1 text-blue-600"
-                                      size={15}
-                                    />
-                                  )}{" "}
-                                </>
-                              )}
+                              {log.crawler_type}
                             </Badge>
                           </TableCell>
                         </TableRow>
@@ -673,7 +701,10 @@ export function LogAnalyzer() {
                                     <h4 className=" font-bold">User Agent</h4>
                                     {log.verified && (
                                       <div className="flex items-center space-x-1 bg-red-100 px-2 text-xs rounded-md">
-                                        <BadgeCheck className="text-blue-400 pr-1" />
+                                        <BadgeCheck
+                                          className="text-blue-400 pr-1"
+                                          size={18}
+                                        />
                                         {log?.crawler_type}
                                       </div>
                                     )}
