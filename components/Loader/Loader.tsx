@@ -97,7 +97,9 @@ const Loader = () => {
       <div className="fixed inset-0 bg-black opacity-50"></div>
       <div className="relative z-10 flex flex-col bg-whitw items-center">
         <div className="w-16 h-16 border-t-4 border-blue-500 border-solid rounded-full animate-spin"></div>
-        <h1 className="text-white mt-4">{message}</h1>
+        <h1 className="text-white mt-4">
+          {pathname === "/serverlogs" ? "Reloading..." : message}
+        </h1>
       </div>
     </div>
   );

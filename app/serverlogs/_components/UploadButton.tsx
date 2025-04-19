@@ -12,6 +12,7 @@ import { useState } from "react";
 import TaxonomyManager from "./TaxonomyManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import IPManager from "./IPManager";
+import DomainManager from "./DomainManager";
 
 function UploadButton() {
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -42,7 +43,8 @@ function UploadButton() {
         </DialogTrigger>
         <DialogContent className="p-8 max-w-[700px] h-[540px]">
           <Tabs>
-            <TabsList className="grid w-full grid-cols-2 bg-gray-100 dark:bg-brand-darker">
+            <TabsList className="grid w-full grid-cols-3 bg-gray-100 dark:bg-brand-darker">
+              <TabsTrigger value="domain">Domain</TabsTrigger>
               <TabsTrigger value="taxonomy">Content Taxonomies</TabsTrigger>
               <TabsTrigger value="ips">Google IPs</TabsTrigger>
             </TabsList>
@@ -54,6 +56,10 @@ function UploadButton() {
             <TabsContent value="ips" className="mt-4">
               {/* Add your settings content here */}
               <IPManager closeDialog={() => setSettingsOpen(false)} />
+            </TabsContent>
+
+            <TabsContent value="domain" className="mt-4">
+              <DomainManager closeDialog={() => setSettingsOpen(false)} />
             </TabsContent>
           </Tabs>
         </DialogContent>

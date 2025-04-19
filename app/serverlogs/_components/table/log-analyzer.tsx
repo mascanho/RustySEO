@@ -123,6 +123,8 @@ export function LogAnalyzer() {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [ipModal, setIpModal] = useState(false);
   const [ip, setIP] = useState("");
+  const [domain, setDomain] = useState("");
+  const [showOnTables, setShowOnTables] = useState(false);
 
   // Apply filters and search
   useEffect(() => {
@@ -252,7 +254,7 @@ export function LogAnalyzer() {
       log.browser || "",
       log.timestamp || "",
       log.method || "",
-      log.path || "",
+      (domain && showOnTables ? "https://" + domain : log.path) || "",
       log.file_type || "",
       log.status || "",
       log.response_size || "",
@@ -320,6 +322,21 @@ export function LogAnalyzer() {
     setIpModal(true);
     setIP(ip);
   }
+
+  // GET THE domain from the local storage to use on the table to complement the path
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedDomain = localStorage.getItem("domain");
+      if (storedDomain) {
+        setDomain(storedDomain);
+      }
+
+      const isShowing = localStorage.getItem("showOnTables");
+      if (isShowing === "true") {
+        setShowOnTables(true);
+      }
+    }
+  }, [entries.length]);
 
   return (
     <div className="space-y-4  flex flex-col flex-1 h-full ">
@@ -660,7 +677,9 @@ export function LogAnalyzer() {
                           <TableCell>{log?.browser}</TableCell>
                           <TableCell>{formatDate(log.timestamp)}</TableCell>
                           <TableCell className="max-w-[480px] truncate">
-                            {log.path}
+                            {showOnTables && domain
+                              ? "https://" + domain + log.path
+                              : log?.path}
                           </TableCell>
                           <TableCell className="max-w-[480px] truncate">
                             <Badge variant={"outline"}>{log.file_type}</Badge>
