@@ -108,48 +108,53 @@ export function IpDisplay({ ip, close }: IpDisplayProps) {
                   {/* Blinking cursor */}
                   <div className="h-4 w-2 ml-1 animate-[blink_1s_step-end_infinite] bg-brand-bright"></div>
                 </div>
-                <div className="mt-4 flex items-center space-x-2 justify-between">
+                <div className="mt-4 grid grid-cols-3 gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => copyToClipboard(ip, "ip")}
-                    className="h-8 border border-brand-bright bg-white dark:bg-black px-3 text-xs text-brand-bright hover:bg-brand-bright/10 hover:text-brand-bright w-full"
+                    className="h-8 border border-brand-bright bg-white dark:bg-black px-2 text-xs text-brand-bright hover:bg-brand-bright/10 hover:text-brand-bright flex items-center justify-center"
                   >
                     {copiedIp ? (
-                      <Check className="mr-1 h-3 w-3" />
+                      <Check className="mr-1 h-3 w-3 flex-shrink-0" />
                     ) : (
-                      <Copy className="mr-1 h-3 w-3" />
+                      <Copy className="mr-1 h-3 w-3 flex-shrink-0" />
                     )}
-                    {copiedIp ? "COPIED" : "COPY IP"}
+                    <span className="truncate">
+                      {copiedIp ? "COPIED" : "COPY IP"}
+                    </span>
                   </Button>
 
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => copyToClipboard(hostname, "hostname")}
-                    className="h-8 border border-brand-bright bg-white dark:bg-black px-3 text-xs text-brand-bright hover:bg-brand-bright/10 hover:text-brand-bright w-full"
+                    className="h-8 border border-brand-bright bg-white dark:bg-black px-2 text-xs text-brand-bright hover:bg-brand-bright/10 hover:text-brand-bright flex items-center justify-center"
                     disabled={!hostname}
                   >
                     {copiedHostname ? (
-                      <Check className="mr-1 h-3 w-3" />
+                      <Check className="mr-1 h-3 w-3 flex-shrink-0" />
                     ) : (
-                      <Copy className="mr-1 h-3 w-3" />
+                      <Copy className="mr-1 h-3 w-3 flex-shrink-0" />
                     )}
-                    {copiedHostname ? "COPIED" : "COPY HOST"}
+                    <span className="truncate">
+                      {copiedHostname ? "COPIED" : "COPY HOST"}
+                    </span>
                   </Button>
 
                   <a
                     target="_blank"
                     rel="noopener noreferrer"
                     href={`https://check-host.net/ip-info?host=${ip}`}
+                    className="w-full"
                   >
                     <Button
                       variant="outline"
                       size="sm"
-                      className="h-8 border border-brand-bright bg-white dark:bg-black  text-xs text-brand-bright hover:bg-brand-bright/10 hover:text-brand-bright w-full min-w-20"
+                      className="h-8 border border-brand-bright bg-white dark:bg-black px-2 text-xs text-brand-bright hover:bg-brand-bright/10 hover:text-brand-bright w-full flex items-center justify-center"
                     >
-                      <CloudCog className="mr-1 h-3 w-3" />
-                      MORE INFO
+                      <CloudCog className="mr-1 h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">MORE INFO</span>
                     </Button>
                   </a>
                 </div>
