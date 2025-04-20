@@ -2,9 +2,18 @@
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { useEffect, useRef } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const OutlinksSubTable = ({ data }: { data: any }) => {
   const tableRef = useRef<HTMLTableElement>(null);
+  const rowHeight = "2px"; // Adjust this value to change row height
 
   // Function to make columns resizable
   const makeResizable = (tableRef: HTMLTableElement | null) => {
@@ -74,7 +83,7 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
     try {
       // Ask user for save location
       const filePath = await save({
-        defaultPath: `Outlinks_Export_${new Date().toISOString().slice(0, 10)}.csv`,
+        defaultPath: `RustySEO - Outlinks Export - ${new Date().toISOString().slice(0, 10)}.csv`,
         filters: [
           {
             name: "CSV",
@@ -130,22 +139,22 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
     <section>
       <button
         onClick={exportCSV}
-        className="absolute -top-2.5 -mt-8 dark:-mt-7 right-2 z-50 text-xs border px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors dark:border-brand-dark dark:text-white/50 "
+        className="absolute -top-2.5 -mt-8 dark:-mt-7 right-2 z-50 text-xs border px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors dark:border-brand-dark dark:text-white/50"
       >
         Export
       </button>
-      <table
+      <Table
         ref={tableRef}
         style={{ width: "100%", borderCollapse: "collapse", zIndex: 99999 }}
       >
-        <thead className="text-xs">
-          <tr className="sticky top-0">
-            <th
+        <TableHeader className="text-xs h-2">
+          <TableRow className="sticky top-0" style={{ height: rowHeight }}>
+            <TableHead
               style={{ width: "10px", textAlign: "left", position: "relative" }}
             >
               ID
-            </th>
-            <th
+            </TableHead>
+            <TableHead
               style={{
                 textAlign: "left",
                 position: "relative",
@@ -153,8 +162,8 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
               }}
             >
               Anchor Text
-            </th>
-            <th
+            </TableHead>
+            <TableHead
               style={{
                 textAlign: "left",
                 position: "relative",
@@ -162,8 +171,8 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
               }}
             >
               Links
-            </th>
-            <th
+            </TableHead>
+            <TableHead
               style={{
                 textAlign: "left",
                 position: "relative",
@@ -171,39 +180,48 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
               }}
             >
               Status Code
-            </th>
-          </tr>
-        </thead>
-        <tbody>
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {data[0].inoutlinks_status_codes.external.map(
             (anchorItem: any, index: number) => {
               return (
-                <tr key={index}>
-                  <td style={{ textAlign: "left" }} className="pl-4 border w-2">
-                    {index + 1}
-                  </td>
-                  <td
-                    width="100px"
+                <TableRow key={index} style={{ height: "10px" }}>
+                  <TableCell
                     style={{ textAlign: "left" }}
+                    className="pl-4 border w-2 h-2"
+                  >
+                    {index + 1}
+                  </TableCell>
+                  <TableCell
+                    style={{ textAlign: "left", width: "100px" }}
                     className="pl-3 border"
                   >
                     {anchorItem.anchor_text}
-                  </td>
-                  <td style={{ textAlign: "left" }} className="pl-3 border">
-                    {anchorItem.url}
-                  </td>
-                  <td
+                  </TableCell>
+                  <TableCell
                     style={{ textAlign: "left" }}
-                    className={`pl-3 border font-semibold ${anchorItem.status === 200 ? "text-green-700" : "text-red-500"}`}
+                    className="pl-3 border"
+                  >
+                    {anchorItem.url}
+                  </TableCell>
+                  <TableCell
+                    style={{ textAlign: "left" }}
+                    className={`pl-3 border font-semibold ${
+                      anchorItem.status === 200
+                        ? "text-green-700"
+                        : "text-red-500"
+                    }`}
                   >
                     {anchorItem.status}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             },
           )}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </section>
   );
 };
