@@ -126,7 +126,7 @@ export default function Onboarding() {
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl p-4">
-        <section className="w-full h-[700px] border-0 shadow-lg bg-white rounded-lg overflow-hidden flex flex-col">
+        <section className="w-full h-[500px] border-0 shadow-lg bg-white rounded-lg overflow-hidden flex flex-col">
           <div className="bg-gradient-to-r relative flex h-10 from-blue-600 to-purple-600 text-white">
             <CardTitle className="text-2xl font-bold p-1.5 pl-4 text-white">
               Onboarding
@@ -157,7 +157,7 @@ export default function Onboarding() {
               </div>
             </div>
 
-            <div className="h-[400px]">
+            <div className="h-[300px]">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentStep}
