@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 import { useEffect, useState } from "react";
 import { Drawer, Button, Group, Menu } from "@mantine/core";
@@ -20,6 +21,7 @@ function MenuDrawer() {
   const { Visible } = useStore();
   const { selectedModel, setSelectedModel } = useModelStore();
   // ONBOARDING STUFF
+  const { toggle, setCompleted } = useOnboardingStore();
   const completed = useOnboardingStore((state) => state.completed);
 
   const options = [
@@ -116,7 +118,7 @@ function MenuDrawer() {
     } else if (path === "/serverlogs") {
       setBadge("Log Analyzer");
     }
-  }, [path, completed]);
+  }, [path]);
 
   const handleOptionClick = (option: any) => {
     setBadge(option.name);
@@ -162,6 +164,8 @@ function MenuDrawer() {
       }
     };
 
+    console.log("Current onboarding completed state:", completed);
+
     // Add the event listener
     window.addEventListener("keydown", handleKeyDown);
 
@@ -171,10 +175,37 @@ function MenuDrawer() {
     };
   }, [router, completed]);
 
+  // Sync with localStorage on mount
+  useEffect(() => {
+    const savedValue = localStorage.getItem("onboarding") === "true";
+    if (savedValue !== completed) {
+      setCompleted(savedValue);
+    }
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "onboarding") {
+        setCompleted(e.newValue === "true");
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
+  // Simplified handleOnboarding
+  const handleOnboarding = () => {
+    toggle();
+  };
+
+  // Debugging
+  useEffect(() => {
+    console.log("Onboarding state changed to:", completed);
+  }, [completed]);
+
   return (
     <>
       <KeywordSerp />
-      {completed && <Onboarding />}
+      {!completed && <Onboarding onComplete={handleOnboarding} />}
       <div
         className={`items-center hidden md:flex  z-[50] absolute top-[9px] ${pathname === "/images" ? "pt-1" : ""} left-2`}
       >

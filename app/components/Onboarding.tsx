@@ -26,9 +26,9 @@ import confetti from "canvas-confetti";
 const steps = [
   {
     id: 1,
-    title: "Welcome to RustySEO. A Marketing Toolkit for SEO  GEO",
+    title: "Welcome to RustySEO,",
     description:
-      "Thank you for choosing RustySEO. In the next steps you will get a top level overview of what you can do with Rusty.",
+      "A comprehensive Marketing Toolkit designed for SEO and GEO professionals — your all-in-one solution for every need.",
     icon: Rocket,
     imageSrc: "icon.png",
   },
@@ -64,9 +64,17 @@ const steps = [
     icon: CheckCircle,
     imageSrc: "https://github.com/mascanho/RustySEO/raw/main/assets/hero.png",
   },
+  {
+    id: 6,
+    title: "You re all set!",
+    description:
+      "Congratulations! You are ready to start using our platform to its full potential.",
+    icon: CheckCircle,
+    imageSrc: "https://github.com/mascanho/RustySEO/raw/main/assets/hero.png",
+  },
 ];
 
-export default function Onboarding() {
+export default function Onboarding({ onComplete }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [completed, setCompleted] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -93,6 +101,8 @@ export default function Onboarding() {
       setCurrentStep(currentStep + 1);
     } else {
       setCompleted(true);
+
+      onComplete();
       completeOnboarding();
       confetti({
         particleCount: 150,
@@ -124,20 +134,20 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-[40]">
+    <div className="fixed inset-0 flex items-center justify-center -z-10">
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl p-4">
-        <section className="w-full h-[500px] border-0 shadow-lg bg-white rounded-lg overflow-hidden flex flex-col">
+        <section className="w-full h-[450px] border-0 shadow-lg bg-white dark:bg-slate-900 rounded-lg overflow-hidden flex flex-col">
           <div className="bg-gradient-to-r relative flex h-10 from-blue-600 to-purple-600 text-white">
-            <CardTitle className="text-2xl font-bold p-1.5 pl-4 text-white">
+            <CardTitle className="text-2xl font-bold p-1.5 pl-4 text-white dark:text-white z-0">
               Onboarding
             </CardTitle>
             <X
-              className="absolute right-4 mt-2 top-[50px] cursor-pointer"
+              className="absolute right-4 top-2 cursor-pointer"
               onClick={handleClose}
             />
           </div>
 
-          <CardContent className="p-6 flex-1 overflow-auto">
+          <CardContent className="p-6 flex-1 overflow-auto z-0">
             <div className="mb-6">
               <div className="flex justify-between mb-2">
                 {steps.map((step) => (
@@ -157,7 +167,7 @@ export default function Onboarding() {
               </div>
             </div>
 
-            <div className="h-[300px]">
+            <div className="h-[200px]">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentStep}
@@ -175,11 +185,11 @@ export default function Onboarding() {
                             (() => {
                               const IconComponent = steps[currentStep - 1].icon;
                               return (
-                                <IconComponent className="h-8 w-8 text-blue-600" />
+                                <IconComponent className="h-4 w-4 text-blue-600" />
                               );
                             })()}
                         </div>
-                        <h3 className="text-2xl font-bold mb-3">
+                        <h3 className="text-2xl font-bold mb-3 dark:text-white">
                           {steps[currentStep - 1]?.title}
                         </h3>
                         <p className="text-gray-600 mb-4">
@@ -197,7 +207,7 @@ export default function Onboarding() {
                       </div>
                       <div className="flex-1 flex justify-center items-center h-full">
                         <div
-                          className={`${currentStep === 1 ? "w-52" : " w-96"} h-auto relative rounded-lg overflow-hidden`}
+                          className={`${currentStep === 1 ? "w-40" : " w-96"} h-auto relative rounded-lg overflow-hidden`}
                         >
                           <img
                             src={
@@ -214,7 +224,7 @@ export default function Onboarding() {
                     <div className="w-full flex flex-col md:flex-row items-center justify-center gap-8">
                       <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left">
                         <div className="mb-4 p-4 rounded-full bg-gradient-to-r from-blue-100 to-purple-100">
-                          <CheckCircle className="h-10 w-10 text-purple-600" />
+                          <CheckCircle className="h-5 w-5 text-purple-600" />
                         </div>
                         <h3 className="text-2xl font-bold mb-3">All Done!</h3>
                         <p className="text-gray-600 mb-4">
@@ -253,20 +263,20 @@ export default function Onboarding() {
           </CardContent>
 
           {!completed && (
-            <CardFooter className="flex justify-between border-t p-2">
+            <CardFooter className="flex justify-between border-t dark:border-t-brand-dark p-3 px-6">
               <Button
                 variant="outline"
                 onClick={handlePrevious}
                 disabled={currentStep === 1}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 dark:text-white dark:bg-brand-dark h-7"
               >
-                <ChevronLeft className="h-4 w-4" /> Back
+                <ChevronLeft className="h-4 w-4 dark:text-white" /> Back
               </Button>
               <Button
                 onClick={handleNext}
-                className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 flex items-center gap-1"
+                className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 flex items-center gap-1 dark:text-white  h-7"
               >
-                {currentStep === steps.length ? "Complete" : "Next"}{" "}
+                {currentStep === steps.length ? "Finish" : "Next"}{" "}
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </CardFooter>

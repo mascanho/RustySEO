@@ -138,7 +138,7 @@ const TopMenuBar = () => {
 
   // HANDLE ONBOARDING MODAL
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const toggleOnboarding = useOnboardingStore((state) => state.toggle);
+  const completed = useOnboardingStore((state) => state.completed);
 
   useEffect(() => {
     const fetchUrlFromSessionStorage = () => {
@@ -232,37 +232,37 @@ const TopMenuBar = () => {
     }
   }
 
-  // HANDLE ONBOARDING MODAL.
-  const handleOnboarding = () => {
-    const newValue = localStorage.getItem("onboarding") !== "true";
-    localStorage.setItem("onboarding", String(newValue));
-
-    // Dispatch event
-    window.dispatchEvent(
-      new CustomEvent("onboardingChange", {
-        detail: { completed: newValue },
-      }),
-    );
-  };
-
-  // In your Onboarding component:
+  // Sync with localstorage to avoid double click
   useEffect(() => {
-    const handleOnboardingChange = (e: CustomEvent) => {
-      setShowOnboarding(!e.detail.completed);
+    // Sync with localStorage on mount
+    const savedValue = localStorage.getItem("onboarding") === "true";
+    if (savedValue !== completed) {
+      useOnboardingStore.setState({ completed: savedValue });
+    }
+
+    // Listen for storage events (changes from other tabs)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "onboarding") {
+        useOnboardingStore.setState({ completed: e.newValue === "true" });
+      }
     };
 
-    window.addEventListener(
-      "onboardingChange",
-      handleOnboardingChange as EventListener,
-    );
-
-    return () => {
-      window.removeEventListener(
-        "onboardingChange",
-        handleOnboardingChange as EventListener,
-      );
-    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
+
+  // Handles the click on the menu
+  const handleOnboarding = () => {
+    // Get current state directly from the store
+    const currentState = useOnboardingStore.getState().completed;
+
+    // Calculate new value
+    const newValue = !currentState;
+
+    // Update both localStorage and Zustand store
+    localStorage.setItem("onboarding", String(newValue));
+    useOnboardingStore.setState({ completed: newValue });
+  };
 
   return (
     <>

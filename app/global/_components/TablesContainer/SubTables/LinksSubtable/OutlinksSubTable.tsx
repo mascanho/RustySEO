@@ -1,6 +1,11 @@
+// @ts-nocheck
+import { message, save } from "@tauri-apps/plugin-dialog";
+import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { useEffect, useRef } from "react";
 
 const OutlinksSubTable = ({ data }: { data: any }) => {
+  const tableRef = useRef<HTMLTableElement>(null);
+
   // Function to make columns resizable
   const makeResizable = (tableRef: HTMLTableElement | null) => {
     if (!tableRef) return;
@@ -40,13 +45,70 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
     });
   };
 
-  const tableRef = useRef<HTMLTableElement>(null);
+  // Export data as CSV
+  const exportCSV = async () => {
+    if (!data?.[0]?.inoutlinks_status_codes?.external?.length) {
+      await message("No data to export", {
+        title: "Export Error",
+        type: "error",
+      });
+      return;
+    }
+
+    const headers = ["ID", "Anchor Text", "URL", "Status Code"];
+
+    const csvData = data[0].inoutlinks_status_codes.external.map(
+      (item: any, index: number) => [
+        index + 1,
+        `"${(item.anchor_text || "").replace(/"/g, '""')}"`,
+        item.url || "",
+        item.status || "",
+      ],
+    );
+
+    const csvContent = [
+      headers.join(","),
+      ...csvData.map((row: string[]) => row.join(",")),
+    ].join("\n");
+
+    try {
+      // Ask user for save location
+      const filePath = await save({
+        defaultPath: `Outlinks_Export_${new Date().toISOString().slice(0, 10)}.csv`,
+        filters: [
+          {
+            name: "CSV",
+            extensions: ["csv"],
+          },
+        ],
+      });
+
+      if (filePath) {
+        await writeTextFile(filePath, csvContent);
+
+        // Show success message
+        await message("CSV file saved successfully!", {
+          title: "Export Complete",
+          type: "info",
+        });
+      }
+    } catch (error) {
+      console.error("Export failed:", error);
+      await message(`Failed to export CSV: ${error}`, {
+        title: "Export Error",
+        type: "error",
+      });
+    }
+  };
 
   useEffect(() => {
     makeResizable(tableRef.current);
   }, []);
 
-  if (data?.length === 0) {
+  if (
+    data?.length === 0 ||
+    !data?.[0]?.inoutlinks_status_codes?.external?.length
+  ) {
     return (
       <div
         style={{
@@ -65,51 +127,84 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
   }
 
   return (
-    <table ref={tableRef} style={{ width: "100%", borderCollapse: "collapse" }}>
-      <thead className="text-xs">
-        <tr className="sticky top-0">
-          <th
-            style={{ width: "10px", textAlign: "left", position: "relative" }}
-          >
-            ID
-          </th>
-          <th
-            style={{ textAlign: "left", position: "relative", width: "100px" }}
-          >
-            Anchor Text
-          </th>
-          <th
-            style={{ textAlign: "left", position: "relative", width: "300px" }}
-          >
-            Links
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {data?.[0]?.anchor_links?.external?.anchors?.map(
-          (anchorItem: any, index: number) => {
-            const linkItem = data?.[0]?.anchor_links?.external?.links?.[index];
-            return (
-              <tr key={index}>
-                <td style={{ textAlign: "left" }} className="pl-4 border w-2">
-                  {index + 1}
-                </td>
-                <td
-                  width="100px"
-                  style={{ textAlign: "left" }}
-                  className="pl-3 border"
-                >
-                  {anchorItem}
-                </td>
-                <td style={{ textAlign: "left" }} className="pl-3 border">
-                  {linkItem}
-                </td>
-              </tr>
-            );
-          },
-        )}
-      </tbody>
-    </table>
+    <section>
+      <button
+        onClick={exportCSV}
+        className="absolute -top-2.5 -mt-8 dark:-mt-7 right-2 z-50 text-xs border px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors dark:border-brand-dark dark:text-white/50 "
+      >
+        Export
+      </button>
+      <table
+        ref={tableRef}
+        style={{ width: "100%", borderCollapse: "collapse", zIndex: 99999 }}
+      >
+        <thead className="text-xs">
+          <tr className="sticky top-0">
+            <th
+              style={{ width: "10px", textAlign: "left", position: "relative" }}
+            >
+              ID
+            </th>
+            <th
+              style={{
+                textAlign: "left",
+                position: "relative",
+                width: "100px",
+              }}
+            >
+              Anchor Text
+            </th>
+            <th
+              style={{
+                textAlign: "left",
+                position: "relative",
+                width: "300px",
+              }}
+            >
+              Links
+            </th>
+            <th
+              style={{
+                textAlign: "left",
+                position: "relative",
+                width: "300px",
+              }}
+            >
+              Status Code
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {data[0].inoutlinks_status_codes.external.map(
+            (anchorItem: any, index: number) => {
+              return (
+                <tr key={index}>
+                  <td style={{ textAlign: "left" }} className="pl-4 border w-2">
+                    {index + 1}
+                  </td>
+                  <td
+                    width="100px"
+                    style={{ textAlign: "left" }}
+                    className="pl-3 border"
+                  >
+                    {anchorItem.anchor_text}
+                  </td>
+                  <td style={{ textAlign: "left" }} className="pl-3 border">
+                    {anchorItem.url}
+                  </td>
+                  <td
+                    style={{ textAlign: "left" }}
+                    className={`pl-3 border font-semibold ${anchorItem.status === 200 ? "text-green-700" : "text-red-500"}`}
+                  >
+                    {anchorItem.status}
+                  </td>
+                </tr>
+              );
+            },
+          )}
+        </tbody>
+      </table>
+    </section>
   );
 };
 
