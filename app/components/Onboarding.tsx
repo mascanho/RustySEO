@@ -124,7 +124,7 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50">
+    <div className="fixed inset-0 flex items-center justify-center z-[9999999999999] bg-black bg-opacity-50">
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl p-4">
         <section className="w-full h-[500px] border-0 shadow-lg bg-white rounded-lg overflow-hidden flex flex-col">
           <div className="bg-gradient-to-r relative flex h-10 from-blue-600 to-purple-600 text-white">
@@ -197,7 +197,7 @@ export default function Onboarding() {
                       </div>
                       <div className="flex-1 flex justify-center items-center h-full">
                         <div
-                          className={`${currentStep === 1 ? "w-60" : " w-96"} h-auto relative rounded-lg overflow-hidden`}
+                          className={`${currentStep === 1 ? "w-52" : " w-96"} h-auto relative rounded-lg overflow-hidden`}
                         >
                           <img
                             src={
