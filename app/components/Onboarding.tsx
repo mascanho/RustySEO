@@ -50,7 +50,7 @@ const steps = [
   },
   {
     id: 4,
-    title: "You're all set!",
+    title: "You  re all set!",
     description:
       "Congratulations! You are ready to start using our platform to its full potential.",
     icon: CheckCircle,
@@ -58,7 +58,7 @@ const steps = [
   },
   {
     id: 5,
-    title: "You're all set!",
+    title: "You re all set!",
     description:
       "Congratulations! You are ready to start using our platform to its full potential.",
     icon: CheckCircle,
@@ -187,12 +187,12 @@ export default function Onboarding() {
                         </p>
                         <p className="text-sm text-gray-500">
                           {currentStep === 1
-                            ? "Let's get started with a few simple steps."
+                            ? "Let s get started with a few simple steps."
                             : currentStep === 2
                               ? "Your profile helps us personalize your experience."
                               : currentStep === 3
                                 ? "Discover what makes our platform unique."
-                                : "You're ready to explore everything we have to offer."}
+                                : "You rre ready to explore everything we have to offer."}
                         </p>
                       </div>
                       <div className="flex-1 flex justify-center items-center h-full">
