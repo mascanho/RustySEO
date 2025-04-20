@@ -26,7 +26,7 @@ import confetti from "canvas-confetti";
 const steps = [
   {
     id: 1,
-    title: "Welcome to RustySEO. A Marketing Toolkit for SEO/GEO",
+    title: "Welcome to RustySEO. A Marketing Toolkit for SEO  GEO",
     description:
       "Thank you for choosing RustySEO. In the next steps you will get a top level overview of what you can do with Rusty.",
     icon: Rocket,
@@ -218,7 +218,7 @@ export default function Onboarding() {
                         </div>
                         <h3 className="text-2xl font-bold mb-3">All Done!</h3>
                         <p className="text-gray-600 mb-4">
-                          You've completed the onboarding process.
+                          You ve completed the onboarding process.
                         </p>
                         <div className="flex space-x-2">
                           <Button
