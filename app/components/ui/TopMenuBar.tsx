@@ -65,6 +65,7 @@ import DiffChecker from "./DiffChecker/DiffChecker";
 import { GoFileDiff } from "react-icons/go";
 import { Settings } from "lucide-react";
 import PowerBi from "./MSClarityModal/PowerBi";
+import { useOnboardingStore } from "@/store/OnboardingStore";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -134,6 +135,10 @@ const TopMenuBar = () => {
     openedDiffChecker,
     { open: openDiffChecker, close: closeDiffChecker },
   ] = useDisclosure(false);
+
+  // HANDLE ONBOARDING MODAL
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const toggleOnboarding = useOnboardingStore((state) => state.toggle);
 
   useEffect(() => {
     const fetchUrlFromSessionStorage = () => {
@@ -229,12 +234,35 @@ const TopMenuBar = () => {
 
   // HANDLE ONBOARDING MODAL.
   const handleOnboarding = () => {
-    const onboarding = localStorage.getItem("onboarding");
-    if (onboarding === "true") {
-      localStorage.setItem("onboarding", "false");
-      window.location.reload();
-    }
+    const newValue = localStorage.getItem("onboarding") !== "true";
+    localStorage.setItem("onboarding", String(newValue));
+
+    // Dispatch event
+    window.dispatchEvent(
+      new CustomEvent("onboardingChange", {
+        detail: { completed: newValue },
+      }),
+    );
   };
+
+  // In your Onboarding component:
+  useEffect(() => {
+    const handleOnboardingChange = (e: CustomEvent) => {
+      setShowOnboarding(!e.detail.completed);
+    };
+
+    window.addEventListener(
+      "onboardingChange",
+      handleOnboardingChange as EventListener,
+    );
+
+    return () => {
+      window.removeEventListener(
+        "onboardingChange",
+        handleOnboardingChange as EventListener,
+      );
+    };
+  }, []);
 
   return (
     <>
