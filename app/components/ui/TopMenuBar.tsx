@@ -227,6 +227,15 @@ const TopMenuBar = () => {
     }
   }
 
+  // HANDLE ONBOARDING MODAL.
+  const handleOnboarding = () => {
+    const onboarding = localStorage.getItem("onboarding");
+    if (onboarding === "true") {
+      localStorage.setItem("onboarding", "false");
+      window.location.reload();
+    }
+  };
+
   return (
     <>
       {/* Panes Insights Modal */}
@@ -603,6 +612,10 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-3">Help</MenubarTrigger>
             <MenubarContent>
+              <MenubarItem onClick={handleOnboarding}>
+                <FiHelpCircle className="mr-2" />
+                Onboarding
+              </MenubarItem>
               <MenubarItem onClick={openAbout}>
                 <FiHelpCircle className="mr-2" />
                 About

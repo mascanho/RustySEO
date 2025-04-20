@@ -166,7 +166,7 @@ function MenuDrawer() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [router]); // Add router to the dependency array
+  }, [router]);
 
   return (
     <>
