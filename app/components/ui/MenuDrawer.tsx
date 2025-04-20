@@ -9,6 +9,7 @@ import useModelStore from "@/store/AIModels";
 import KeywordSerp from "./TopMenuBar/KeywordSerp";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import Onboarding from "../Onboarding";
+import { useOnboardingStore } from "@/store/OnboardingStore";
 
 function MenuDrawer() {
   const [opened, setOpened] = useState(false);
@@ -18,6 +19,8 @@ function MenuDrawer() {
   const router = useRouter();
   const { Visible } = useStore();
   const { selectedModel, setSelectedModel } = useModelStore();
+  // ONBOARDING STUFF
+  const completed = useOnboardingStore((state) => state.completed);
 
   const options = [
     { name: "Page Crawler", route: "/" },
@@ -171,7 +174,7 @@ function MenuDrawer() {
   return (
     <>
       <KeywordSerp />
-      <Onboarding />
+      {!completed && <Onboarding />}
       <div
         className={`items-center hidden md:flex  z-[50] absolute top-[9px] ${pathname === "/images" ? "pt-1" : ""} left-2`}
       >
