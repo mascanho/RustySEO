@@ -52,7 +52,7 @@ const steps = [
     id: 4,
     title: "You're all set!",
     description:
-      "Congratulations! You're ready to start using our platform to its full potential.",
+      "Congratulations! You are ready to start using our platform to its full potential.",
     icon: CheckCircle,
     imageSrc: "https://github.com/mascanho/RustySEO/raw/main/assets/hero.png",
   },
@@ -60,7 +60,7 @@ const steps = [
     id: 5,
     title: "You're all set!",
     description:
-      "Congratulations! You're ready to start using our platform to its full potential.",
+      "Congratulations! You are ready to start using our platform to its full potential.",
     icon: CheckCircle,
     imageSrc: "https://github.com/mascanho/RustySEO/raw/main/assets/hero.png",
   },
