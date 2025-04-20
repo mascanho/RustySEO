@@ -116,7 +116,7 @@ function MenuDrawer() {
     } else if (path === "/serverlogs") {
       setBadge("Log Analyzer");
     }
-  }, [path]);
+  }, [path, completed]);
 
   const handleOptionClick = (option: any) => {
     setBadge(option.name);
@@ -169,12 +169,12 @@ function MenuDrawer() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [router]);
+  }, [router, completed]);
 
   return (
     <>
       <KeywordSerp />
-      {!completed && <Onboarding />}
+      {completed && <Onboarding />}
       <div
         className={`items-center hidden md:flex  z-[50] absolute top-[9px] ${pathname === "/images" ? "pt-1" : ""} left-2`}
       >
