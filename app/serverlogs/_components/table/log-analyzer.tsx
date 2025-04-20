@@ -351,7 +351,7 @@ export function LogAnalyzer() {
           <Search className="absolute dark:text-white/50 left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search by IP, path, user agent, or referer..."
+            placeholder="Search by IP, path, user agent..."
             className="pl-8 w-full "
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
