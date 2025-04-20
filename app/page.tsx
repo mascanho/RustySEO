@@ -150,6 +150,10 @@ const Home: React.FC<HomeProps> = () => {
   const [sessionUrl, setSessionUrl] = useState<string | null>(null);
   const seoIsLoading = useOnPageSeo();
 
+  //POWERBI
+  const [powerBiUrl, setPowerBiUrl] = useState("");
+  const [error, setError] = useState("");
+
   // Panes Store
   const { Visible } = useStore();
 
@@ -483,6 +487,16 @@ const Home: React.FC<HomeProps> = () => {
   const seoPageSpeed = pageSpeed && pageSpeed[1];
   pageSpeed = pageSpeed && pageSpeed[0];
 
+  // POWERBI eMBED HANDLING FROM LOCALSTORAGE
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedUrl = localStorage.getItem("powerBiUrl");
+      if (savedUrl) {
+        setPowerBiUrl(savedUrl);
+      }
+    }
+  }, []);
+
   return (
     <section className="h-full overflow-y-clip flex">
       <Loader />
@@ -627,10 +641,12 @@ const Home: React.FC<HomeProps> = () => {
                   <RiFireLine className="inline-block mr-2 mb-[2px] text-sm" />
                   Clarity
                 </Tabs.Tab>
-                <Tabs.Tab value="powerbi">
-                  <LuMicroscope className="inline-block mr-2 mb-[2px] text-sm" />
-                  Power BI
-                </Tabs.Tab>
+                {powerBiUrl && (
+                  <Tabs.Tab value="powerbi">
+                    <LuMicroscope className="inline-block mr-2 mb-[2px] text-sm" />
+                    Power BI
+                  </Tabs.Tab>
+                )}
                 <Tabs.Tab value="gsc">
                   <SlSocialGoogle className="inline-block mr-2 mb-[2px] text-sm" />
                   Search Console
@@ -863,16 +879,19 @@ const Home: React.FC<HomeProps> = () => {
             </Tabs.Panel>{" "}
             <Tabs.Panel
               value="powerbi"
-              className="w-full h-full flex justify-center items-center py-8 bg-white"
+              className="w-full max-w-96 flex-none h-screen overflow-scroll  flex justify-center items-center  bg-white"
+              style={{
+                height: "calc(100vh - 4rem)",
+                width: "calc(100vw - 21.5rem)",
+              }}
             >
-              <div className="flex justify-center items-center w-full h-full">
+              <div className="flex justify-center items-center w-full h-screen overflow-auto">
                 <iframe
-                  title="Sample Report Demo"
                   width="1920"
-                  height="941.25"
-                  src="https://playground.powerbi.com/sampleReportEmbed"
-                  frameborder="0"
-                  allowFullScreen="true"
+                  height="900"
+                  src={powerBiUrl}
+                  frameBorder="0"
+                  allowFullScreen={true}
                 ></iframe>
               </div>
             </Tabs.Panel>

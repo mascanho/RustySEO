@@ -1,5 +1,7 @@
 // @ts-nocheck
 import React, { useEffect, useRef, useCallback } from "react";
+import { message, save } from "@tauri-apps/plugin-dialog";
+import { writeTextFile } from "@tauri-apps/plugin-fs";
 
 interface InlinksSubTableProps {
   data: {
@@ -71,6 +73,69 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
     });
   }, []);
 
+  // Export data as CSV
+  const exportCSV = async () => {
+    if (!data?.[0]?.inoutlinks_status_codes?.internal?.length) {
+      await message("No data to export", {
+        title: "Export Error",
+        type: "error",
+      });
+      return;
+    }
+
+    const headers = [
+      "ID",
+      "Anchor Text",
+      "Relative Link",
+      "Absolute Link",
+      "Status Code",
+    ];
+
+    const csvData = data[0].inoutlinks_status_codes.internal.map(
+      (item: any, index: number) => [
+        index + 1,
+        `"${(item.anchor_text || "").replace(/"/g, '""')}"`,
+        `"${(item.relative_path || "").replace(/"/g, '""')}"`,
+        `"${(item.url || "").replace(/"/g, '""')}"`,
+        item.status !== null ? item.status : item.error || "N/A",
+      ],
+    );
+
+    const csvContent = [
+      headers.join(","),
+      ...csvData.map((row: string[]) => row.join(",")),
+    ].join("\n");
+
+    try {
+      // Ask user for save location
+      const filePath = await save({
+        defaultPath: `RustySEO - Inlinks Export - ${new Date().toISOString().slice(0, 10)}.csv`,
+        filters: [
+          {
+            name: "CSV",
+            extensions: ["csv"],
+          },
+        ],
+      });
+
+      if (filePath) {
+        await writeTextFile(filePath, csvContent);
+
+        // Show success message
+        await message("CSV file saved successfully!", {
+          title: "Export Complete",
+          type: "info",
+        });
+      }
+    } catch (error) {
+      console.error("Export failed:", error);
+      await message(`Failed to export CSV: ${error}`, {
+        title: "Export Error",
+        type: "error",
+      });
+    }
+  };
+
   useEffect(() => {
     const table = tableRef.current;
     if (table) {
@@ -111,15 +176,21 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
 
   return (
     <section
-      className="overflow-auto  h-full"
+      className="overflow-auto h-full"
       style={{ height: `${height - 15}px`, minHeight: "100px" }}
     >
+      <button
+        onClick={exportCSV}
+        className="absolute -top-2.5 -mt-8 dark:-mt-7 right-2 z-50 text-xs border px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors dark:border-brand-dark dark:text-white/50"
+      >
+        Export
+      </button>
       <table
         ref={tableRef}
         style={{ width: "100%", borderCollapse: "collapse" }}
       >
         <thead className="text-xs top-0 sticky">
-          <tr className=" shadow">
+          <tr className="shadow">
             <th
               style={{ width: "20px", textAlign: "left", position: "relative" }}
             >
@@ -163,7 +234,6 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
             </th>
           </tr>
         </thead>
-
         <tbody>
           {data?.[0]?.inoutlinks_status_codes?.internal?.map(
             (item: any, index: number) => (

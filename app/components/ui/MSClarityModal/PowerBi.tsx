@@ -6,6 +6,7 @@ import { toast } from "sonner";
 const PowerBiEmbed = ({ close }) => {
   const [powerBiUrl, setPowerBiUrl] = useState("");
   const [error, setError] = useState("");
+  const [savedUrl, setSavedUrl] = useState("");
 
   // Load saved URL on component mount
   useEffect(() => {
@@ -13,6 +14,7 @@ const PowerBiEmbed = ({ close }) => {
       const savedUrl = localStorage.getItem("powerBiUrl");
       if (savedUrl) {
         setPowerBiUrl(savedUrl);
+        setSavedUrl(savedUrl);
       }
     }
   }, []);
@@ -34,8 +36,12 @@ const PowerBiEmbed = ({ close }) => {
     try {
       // Save to localStorage
       localStorage.setItem("powerBiUrl", powerBiUrl);
-      toast.success("Power BI URL saved successfully");
-      close();
+      toast.success("Power BI URL saved successfully, reloading RustySEO...");
+      setSavedUrl(powerBiUrl); // Update savedUrl to reflect new URL
+      setTimeout(() => {
+        close();
+        window.location.reload();
+      }, 800); // Delay to ensure toast is displayed
     } catch (err) {
       setError("Failed to save URL");
       console.error("Error saving Power BI URL:", err);
@@ -73,13 +79,27 @@ const PowerBiEmbed = ({ close }) => {
           </div>
 
           <div className="flex justify-end space-x-2">
-            <button
-              type="button"
-              onClick={close}
-              className="px-4 py-0 text-sm border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-            >
-              Cancel
-            </button>
+            {savedUrl ? (
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.removeItem("powerBiUrl");
+                  setPowerBiUrl("");
+                  setSavedUrl("");
+                }}
+                className="px-4 py-0 h-7 text-sm bg-red-500 text-white rounded-md hover:bg-red-600 transition"
+              >
+                Clear
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={close}
+                className="px-4 py-0 text-sm border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+              >
+                Cancel
+              </button>
+            )}
             <button
               type="submit"
               className="px-4 py-0 h-7 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"

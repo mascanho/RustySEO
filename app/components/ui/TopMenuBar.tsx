@@ -66,6 +66,7 @@ import { GoFileDiff } from "react-icons/go";
 import { Settings } from "lucide-react";
 import PowerBi from "./MSClarityModal/PowerBi";
 import { useOnboardingStore } from "@/store/OnboardingStore";
+import { BiDoorOpen } from "react-icons/bi";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -641,7 +642,7 @@ const TopMenuBar = () => {
             <MenubarTrigger className="ml-3">Help</MenubarTrigger>
             <MenubarContent>
               <MenubarItem onClick={handleOnboarding}>
-                <FiHelpCircle className="mr-2" />
+                <BiDoorOpen className="mr-2" />
                 Onboarding
               </MenubarItem>
               <MenubarItem onClick={openAbout}>

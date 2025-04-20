@@ -11,6 +11,11 @@ import {
   Shield,
   X,
   Zap,
+  FileCode,
+  Layers,
+  ScrollText,
+  PlugZap,
+  Key,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,53 +27,62 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import confetti from "canvas-confetti";
+import { GitHubLogoIcon } from "@radix-ui/react-icons";
 
 const steps = [
   {
     id: 1,
-    title: "Welcome to RustySEO,",
+    title: "Welcome to RustySEO.",
     description:
-      "A comprehensive Marketing Toolkit designed for SEO and GEO professionals — your all-in-one solution for every need.",
+      "Your complete marketing solution — built for SEO and GEO professionals who want it all, in one smart toolkit.",
     icon: Rocket,
     imageSrc: "icon.png",
   },
   {
     id: 2,
-    title: "Set up your profile",
+    title: "Shallow Crawl (single page)",
     description:
-      "Customize your experience and help others get to know you better.",
-    icon: Shield,
+      "Granular page analysis with AI-driven insights and performance recommendations. Identify and resolve issues with precision.",
+    icon: FileCode,
     imageSrc: "https://github.com/mascanho/RustySEO/raw/main/assets/hero.png",
   },
   {
     id: 3,
-    title: "Explore key features",
+    title: "Deep Crawl (bulk)",
     description:
-      "Discover the powerful tools and features that will help you succeed.",
-    icon: Zap,
+      "Crawl your entire website and get actionable insights. RustySEO detects errors and delivers smart solutions. Discover your website\'s deepest secrets.",
+    icon: Layers,
     imageSrc: "https://github.com/mascanho/RustySEO/raw/main/assets/hero.png",
   },
   {
     id: 4,
-    title: "You  re all set!",
+    title: "Log Analyser",
     description:
-      "Congratulations! You are ready to start using our platform to its full potential.",
-    icon: CheckCircle,
+      "A powerfull feature to enable you to analyse your server logs (Apache/Nginx) and get actionable insights. We use AI to pinpoint errors and provide you with the right solutions.",
+    icon: ScrollText,
     imageSrc: "https://github.com/mascanho/RustySEO/raw/main/assets/hero.png",
   },
   {
     id: 5,
-    title: "You re all set!",
+    title: "Connectors & Integrations",
     description:
-      "Congratulations! You are ready to start using our platform to its full potential.",
-    icon: CheckCircle,
+      "Extend RustySEO\'s capabilities by integrating with your favorite tools — PageSpeed Insights, Google Search Console, Google Analytics, Microsoft Clarity, Power BI, and more.",
+    icon: PlugZap,
     imageSrc: "https://github.com/mascanho/RustySEO/raw/main/assets/hero.png",
   },
   {
     id: 6,
-    title: "You re all set!",
+    title: "Keyword Tracking & Content Exploration",
     description:
-      "Congratulations! You are ready to start using our platform to its full potential.",
+      "Track your keywords, identify patterns and receive new content ideas and recommendations as you optimise your pages with contextual awareness.",
+    icon: Key,
+    imageSrc: "https://github.com/mascanho/RustySEO/raw/main/assets/hero.png",
+  },
+  {
+    id: 7,
+    title: "And more...",
+    description:
+      "RustySEO offers a wide range of advanced features and integrations. Help us improve by contributing and giving us feedback.",
     icon: CheckCircle,
     imageSrc: "https://github.com/mascanho/RustySEO/raw/main/assets/hero.png",
   },
@@ -141,10 +155,10 @@ export default function Onboarding({ onComplete }) {
             <CardTitle className="text-2xl font-bold p-1.5 pl-4 text-white dark:text-white z-0">
               Onboarding
             </CardTitle>
-            <X
-              className="absolute right-4 top-2 cursor-pointer"
-              onClick={handleClose}
-            />
+            {/* <X */}
+            {/*   className="absolute right-4 top-2 cursor-pointer" */}
+            {/*   onClick={handleClose} */}
+            {/* /> */}
           </div>
 
           <CardContent className="p-6 flex-1 overflow-auto z-0">
@@ -167,7 +181,7 @@ export default function Onboarding({ onComplete }) {
               </div>
             </div>
 
-            <div className="h-[200px]">
+            <div className="h-[250px]">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentStep}
@@ -195,19 +209,39 @@ export default function Onboarding({ onComplete }) {
                         <p className="text-gray-600 mb-4">
                           {steps[currentStep - 1]?.description}
                         </p>
-                        <p className="text-sm text-gray-500">
-                          {currentStep === 1
-                            ? "Let s get started with a few simple steps."
-                            : currentStep === 2
-                              ? "Your profile helps us personalize your experience."
-                              : currentStep === 3
-                                ? "Discover what makes our platform unique."
-                                : "You rre ready to explore everything we have to offer."}
-                        </p>
+                        <section className="w-full flex items-center">
+                          <p className="text-sm text-gray-500">
+                            {currentStep === 1
+                              ? "Let's get started with a few simple steps."
+                              : currentStep === 2
+                                ? "Perfect for on-page, off-page, and technical SEO."
+                                : currentStep === 3
+                                  ? "Great for bulk analysis and optimisation"
+                                  : currentStep === 4
+                                    ? "Perfect for crawl budget analysis"
+                                    : currentStep === 5
+                                      ? "A one-stop solution for all your SEO needs"
+                                      : currentStep === 6
+                                        ? "Great for content optimisation"
+                                        : currentStep === 7
+                                          ? "Enjoy it, and let us know what you think! Find us on "
+                                          : "Keep all your data in one place"}{" "}
+                          </p>
+                          {currentStep === 7 && (
+                            <a
+                              href="https://github.com/mascanho/RustySEO"
+                              target="_blank"
+                              rel="noreferrer"
+                              className="inline-block ml-2"
+                            >
+                              <GitHubLogoIcon className="h-5 w-5 text-gray-500" />
+                            </a>
+                          )}
+                        </section>
                       </div>
                       <div className="flex-1 flex justify-center items-center h-full">
                         <div
-                          className={`${currentStep === 1 ? "w-40" : " w-96"} h-auto relative rounded-lg overflow-hidden`}
+                          className={`${currentStep === 1 ? "w-48" : " w-80"} h-auto relative rounded-lg overflow-hidden`}
                         >
                           <img
                             src={
