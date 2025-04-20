@@ -181,7 +181,7 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
     >
       <button
         onClick={exportCSV}
-        className="absolute top-0 -mt-8 dark:-mt-7 right-2 z-50 text-xs border px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors dark:border-brand-dark dark:text-white/50"
+        className="absolute top-0 -mt-8 dark:-mt-7 right-2 z-50 text-xs border border-brand-bright px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors dark:border-brand-dark dark:text-white/50"
       >
         Export
       </button>
