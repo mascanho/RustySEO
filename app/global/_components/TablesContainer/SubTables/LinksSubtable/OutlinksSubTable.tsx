@@ -139,7 +139,7 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
     <section>
       <button
         onClick={exportCSV}
-        className="absolute top-1   right-2 z-50 text-xs border bg-brand-bright/50 border-brand-bright px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors dark:border-brand-dark dark:text-white/50"
+        className="absolute top-1   right-2 z-50 text-xs border dark:border-brand-bright  border-brand-bright px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors  dark:text-white/50"
       >
         Export
       </button>
