@@ -227,7 +227,7 @@ export function FileUpload({
                     <>
                       <span className="flex items-center">
                         Uploading & analyzing your log
-                        <span className="flex items-center ml-2">
+                        <span className="flex items-center mx-2">
                           <span className="animate-bounce [animation-delay:-0.3s]">
                             .
                           </span>
@@ -236,7 +236,7 @@ export function FileUpload({
                           </span>
                           <span className="animate-bounce">.</span>
                         </span>
-                        {progress}%
+                        {""} {progress}%
                       </span>
                     </>
                   )}

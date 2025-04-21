@@ -34,7 +34,7 @@ const COLORS = [
 ];
 
 export default function WidgetLogs() {
-  const [activeTab, setActiveTab] = useState("Crawlers");
+  const [activeTab, setActiveTab] = useState("FileTypes");
   const { entries, overview } = useLogAnalysis();
   const [openDialogs, setOpenDialogs] = useState({});
 
