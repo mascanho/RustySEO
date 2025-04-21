@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
+import { useCurrentLogs } from "@/store/logFilterStore";
 
 const COLORS = {
   human: "hsl(var(--primary))",
@@ -38,6 +39,11 @@ export function TimelineChart() {
   const [timeRange, setTimeRange] = React.useState("all");
   const [viewMode, setViewMode] = React.useState<"daily" | "hourly">("hourly");
   const { entries } = useLogAnalysis();
+  const { currentLogs } = useCurrentLogs();
+
+  React.useEffect(() => {
+    console.log(currentLogs, "Logs from chart");
+  }, [currentLogs]);
 
   // Process the log entries to create chart data
   const processData = () => {
@@ -47,7 +53,7 @@ export function TimelineChart() {
     const allDates: Date[] = [];
 
     // First pass: collect all dates and count entries
-    entries.forEach((entry) => {
+    currentLogs.forEach((entry) => {
       const date = new Date(entry.timestamp);
       allDates.push(date);
 

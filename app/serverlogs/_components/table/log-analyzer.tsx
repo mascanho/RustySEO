@@ -73,6 +73,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useCurrentLogs } from "@/store/logFilterStore";
 
 // Helper function to format date
 const formatDate = (dateString: string) => {
@@ -294,6 +295,11 @@ export function LogAnalyzer() {
     setFileTypeFilter([]);
   };
 
+  // Set the Zustand store with the current filtered logs
+  useEffect(() => {
+    useCurrentLogs.getState().setCurrentLogs(filteredLogs);
+  }, [currentLogs, fileTypeFilter, botFilter, methodFilter, statusFilter]);
+
   // Export logs as CSV
   const exportCSV = async () => {
     const headers = [
@@ -390,6 +396,8 @@ export function LogAnalyzer() {
     setIpModal(true);
     setIP(ip);
   }
+
+  console.log(currentLogs, "currentLogs");
 
   return (
     <div className="space-y-4  flex flex-col flex-1 h-full ">
