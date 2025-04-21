@@ -65,7 +65,7 @@ export default function WidgetLogs() {
   };
 
   // Prepare status code data from actual entries
-  const statusCodeData = entries?.reduce((acc, entry) => {
+  const statusCodeData = currentLogs?.reduce((acc, entry) => {
     const code = entry.status;
     acc[code] = (acc[code] || 0) + 1;
     return acc;
