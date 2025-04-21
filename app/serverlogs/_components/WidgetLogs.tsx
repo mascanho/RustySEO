@@ -14,6 +14,8 @@ import {
 import { WidgetTable } from "./WidgetTables/WidgetCrawlersTable.tsx";
 import { Tabs } from "@mantine/core";
 
+import { useCurrentLogs } from "@/store/logFilterStore";
+
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
   { label: "Content", icon: <PenBox className="w-4 h-4" /> },
@@ -37,16 +39,17 @@ export default function WidgetLogs() {
   const [activeTab, setActiveTab] = useState("Filetypes");
   const { entries, overview } = useLogAnalysis();
   const [openDialogs, setOpenDialogs] = useState({});
+  const { currentLogs } = useCurrentLogs();
 
   // Prepare filetype data from actual entries
-  const fileTypeData = entries?.reduce((acc, entry) => {
+  const fileTypeData = currentLogs?.reduce((acc, entry) => {
     const type = entry.file_type || "Other";
     acc[type] = (acc[type] || 0) + 1;
     return acc;
   }, {});
 
   // Prepare content data from actual entries or use dummy data
-  const contentData = entries?.reduce((acc, entry) => {
+  const contentData = currentLogs?.reduce((acc, entry) => {
     const content = entry.taxonomy;
     acc[content] = (acc[content] || 0) + 1;
     return acc;
@@ -138,7 +141,7 @@ export default function WidgetLogs() {
   return (
     <div className="bg-white border dark:border-brand-dark shadow rounded-none p-2 pr-1 w-1/2  mx-auto dark:bg-slate-950 dark:text-white h-64 relative">
       <span className="absolute top-2 font-bold text-black/20 dark:text-white/50 text-xl">
-        {entries.length} Entries
+        {currentLogs.length} Entries
       </span>
       {/* Tabs */}
       <div className="flex space-x-2 pt-1 pb-0 w-full justify-center">
