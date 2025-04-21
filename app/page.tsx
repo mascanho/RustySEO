@@ -88,6 +88,11 @@ import { SlSocialGoogle } from "react-icons/sl";
 import GSCcontainer from "./components/ui/GSCcontainer/GSCcontainer";
 import ContentPlannerContainer from "./components/ui/ContentPlanner/ContentPlannerContainer";
 import TopicModelingContainer from "./components/ui/TopicModeling/TopicModelingContainer";
+import { PiShuffleAngularLight } from "react-icons/pi";
+import { PieChartIcon } from "lucide-react";
+import { BsFillPieChartFill } from "react-icons/bs";
+import { BiLogoMicrosoft } from "react-icons/bi";
+import { LuMicroscope } from "react-icons/lu";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
@@ -144,6 +149,10 @@ const Home: React.FC<HomeProps> = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [sessionUrl, setSessionUrl] = useState<string | null>(null);
   const seoIsLoading = useOnPageSeo();
+
+  //POWERBI
+  const [powerBiUrl, setPowerBiUrl] = useState("");
+  const [error, setError] = useState("");
 
   // Panes Store
   const { Visible } = useStore();
@@ -478,6 +487,16 @@ const Home: React.FC<HomeProps> = () => {
   const seoPageSpeed = pageSpeed && pageSpeed[1];
   pageSpeed = pageSpeed && pageSpeed[0];
 
+  // POWERBI eMBED HANDLING FROM LOCALSTORAGE
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedUrl = localStorage.getItem("powerBiUrl");
+      if (savedUrl) {
+        setPowerBiUrl(savedUrl);
+      }
+    }
+  }, []);
+
   return (
     <section className="h-full overflow-y-clip flex">
       <Loader />
@@ -622,13 +641,19 @@ const Home: React.FC<HomeProps> = () => {
                   <RiFireLine className="inline-block mr-2 mb-[2px] text-sm" />
                   Clarity
                 </Tabs.Tab>
-                <Tabs.Tab value="kws">
-                  <IoKeyOutline className="inline-block mr-2 mb-[2px] text-sm" />
-                  Tracking
-                </Tabs.Tab>
+                {powerBiUrl && (
+                  <Tabs.Tab value="powerbi">
+                    <LuMicroscope className="inline-block mr-2 mb-[2px] text-sm" />
+                    Power BI
+                  </Tabs.Tab>
+                )}
                 <Tabs.Tab value="gsc">
                   <SlSocialGoogle className="inline-block mr-2 mb-[2px] text-sm" />
                   Search Console
+                </Tabs.Tab>
+                <Tabs.Tab value="kws">
+                  <IoKeyOutline className="inline-block mr-2 mb-[2px] text-sm" />
+                  Tracking
                 </Tabs.Tab>
                 {/* <Tabs.Tab value="semrush">
                   <SiSemrush className="inline-block mr-2 mb-[2px] text-sm" />
@@ -852,6 +877,25 @@ const Home: React.FC<HomeProps> = () => {
             <Tabs.Panel value="semrush">
               <SemrushContainer />
             </Tabs.Panel>{" "}
+            <Tabs.Panel
+              value="powerbi"
+              className="w-full flex-none h-screen overflow-scroll  flex justify-center items-center  bg-white"
+              style={{
+                height: "calc(100vh - 4rem)",
+                width: "calc(100vw - 21.5rem)",
+                overflow: "hidden",
+              }}
+            >
+              <div className="flex justify-center items-center w-full h-screen overflow-auto">
+                <iframe
+                  width="1920"
+                  height="900"
+                  src={powerBiUrl}
+                  frameBorder="0"
+                  allowFullScreen={true}
+                ></iframe>
+              </div>
+            </Tabs.Panel>
             <Tabs.Panel value="content">
               <ContentPlannerContainer />
             </Tabs.Panel>{" "}

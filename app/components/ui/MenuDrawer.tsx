@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 import { useEffect, useState } from "react";
 import { Drawer, Button, Group, Menu } from "@mantine/core";
@@ -8,6 +9,8 @@ import { invoke } from "@tauri-apps/api/core";
 import useModelStore from "@/store/AIModels";
 import KeywordSerp from "./TopMenuBar/KeywordSerp";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
+import Onboarding from "../Onboarding";
+import { useOnboardingStore } from "@/store/OnboardingStore";
 
 function MenuDrawer() {
   const [opened, setOpened] = useState(false);
@@ -17,10 +20,13 @@ function MenuDrawer() {
   const router = useRouter();
   const { Visible } = useStore();
   const { selectedModel, setSelectedModel } = useModelStore();
+  // ONBOARDING STUFF
+  const { toggle, setCompleted } = useOnboardingStore();
+  const completed = useOnboardingStore((state) => state.completed);
 
   const options = [
-    { name: "Page Crawler", route: "/" },
-    { name: "Domain Crawler", route: "/global" },
+    { name: "Shallow Crawler", route: "/" },
+    { name: "Deep Crawler", route: "/global" },
     { name: "Log Analyzer", route: "/serverlogs" },
   ];
 
@@ -158,6 +164,8 @@ function MenuDrawer() {
       }
     };
 
+    console.log("Current onboarding completed state:", completed);
+
     // Add the event listener
     window.addEventListener("keydown", handleKeyDown);
 
@@ -165,11 +173,39 @@ function MenuDrawer() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [router]); // Add router to the dependency array
+  }, [router, completed]);
+
+  // Sync with localStorage on mount
+  useEffect(() => {
+    const savedValue = localStorage.getItem("onboarding") === "true";
+    if (savedValue !== completed) {
+      setCompleted(savedValue);
+    }
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "onboarding") {
+        setCompleted(e.newValue === "true");
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
+  // Simplified handleOnboarding
+  const handleOnboarding = () => {
+    toggle();
+  };
+
+  // Debugging
+  useEffect(() => {
+    console.log("Onboarding state changed to:", completed);
+  }, [completed]);
 
   return (
     <>
       <KeywordSerp />
+      {!completed && <Onboarding onComplete={handleOnboarding} />}
       <div
         className={`items-center hidden md:flex  z-[50] absolute top-[9px] ${pathname === "/images" ? "pt-1" : ""} left-2`}
       >

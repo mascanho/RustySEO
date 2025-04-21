@@ -24,6 +24,8 @@ import GSCcontainer from "../components/ui/GSCcontainer/GSCcontainer";
 import ContentPlannerContainer from "../components/ui/ContentPlanner/ContentPlannerContainer";
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 import GlobalSettings from "../components/ui/GeneralSettings/GeneralSettings";
+import { PiShuffleAngularLight } from "react-icons/pi";
+import { LuMicroscope } from "react-icons/lu";
 
 interface CrawlResult {
   url: string;
@@ -53,6 +55,10 @@ export default function Page() {
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
 
   const allData = useMemo(() => crawlData, [crawlData]);
+
+  //POWERBI
+  const [powerBiUrl, setPowerBiUrl] = useState("");
+  const [error, setError] = useState("");
 
   // Load data from sessionStorage on mount
   useEffect(() => {
@@ -155,6 +161,16 @@ export default function Page() {
     }
   }, [crawlDataLength]);
 
+  // POWERBI eMBED HANDLING FROM LOCALSTORAGE
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedUrl = localStorage.getItem("powerBiUrl");
+      if (savedUrl) {
+        setPowerBiUrl(savedUrl);
+      }
+    }
+  }, []);
+
   return (
     <main className="flex h-full w-full">
       <InputZone handleDomainCrawl={handleDomainCrawl} />
@@ -191,13 +207,19 @@ export default function Page() {
                 <RiFireLine className="inline-block mr-2 mb-[2px] text-sm" />
                 Clarity
               </Tabs.Tab>
-              <Tabs.Tab value="kws">
-                <IoKeyOutline className="inline-block mr-2 mb-[2px] text-sm" />
-                Tracking
-              </Tabs.Tab>
+              {powerBiUrl && (
+                <Tabs.Tab value="powerbi">
+                  <LuMicroscope className="inline-block mr-2 mb-[2px] text-sm" />
+                  Power BI
+                </Tabs.Tab>
+              )}
               <Tabs.Tab value="gsc">
                 <SlSocialGoogle className="inline-block mr-2 mb-[2px] text-sm" />
                 Search Console
+              </Tabs.Tab>
+              <Tabs.Tab value="kws">
+                <IoKeyOutline className="inline-block mr-2 mb-[2px] text-sm" />
+                Tracking
               </Tabs.Tab>
               <Tabs.Tab value="content">
                 <GrPlan className="inline-block mr-2 mb-[2px] text-sm" />
@@ -240,6 +262,27 @@ export default function Page() {
               <section className="h-[calc(100vh-8rem)] overflow-auto">
                 <ClarityContainer />
               </section>
+            </Tabs.Panel>
+          )}
+
+          {activeTab === "powerbi" && (
+            <Tabs.Panel
+              value="powerbi"
+              className="w-full max-w-96 flex-none h-screen overflow-scroll  flex justify-center items-center  bg-white"
+              style={{
+                height: "calc(100vh - 4rem)",
+                width: "calc(100vw - 21.5rem)",
+              }}
+            >
+              <div className="flex justify-center items-center w-full h-screen overflow-auto">
+                <iframe
+                  width="1920"
+                  height="900"
+                  src={powerBiUrl}
+                  frameBorder="0"
+                  allowFullScreen={true}
+                ></iframe>
+              </div>
             </Tabs.Panel>
           )}
 
