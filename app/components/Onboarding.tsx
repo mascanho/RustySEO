@@ -44,7 +44,7 @@ const steps = [
     description:
       "Granular page analysis with AI-driven insights and performance recommendations. Identify and resolve issues with precision.",
     icon: FileCode,
-    imageSrc: "https://github.com/mascanho/RustySEO/raw/main/assets/hero.png",
+    imageSrc: "shallow.png",
   },
   {
     id: 3,
@@ -52,15 +52,15 @@ const steps = [
     description:
       "Crawl your entire website and get actionable insights. RustySEO detects errors and delivers smart solutions. Discover your website\'s deepest secrets.",
     icon: Layers,
-    imageSrc: "https://github.com/mascanho/RustySEO/raw/main/assets/hero.png",
+    imageSrc: "deep.png",
   },
   {
     id: 4,
     title: "Log Analyser",
     description:
-      "A powerfull feature to enable you to analyse your server logs (Apache/Nginx) and get actionable insights. We use AI to pinpoint errors and provide you with the right solutions.",
+      "A powerful feature that enables you to analyze your server logs (Apache/Nginx) and gain actionable insights. Discover crawler timings, visit frequencies, and content taxonomies.",
     icon: ScrollText,
-    imageSrc: "https://github.com/mascanho/RustySEO/raw/main/assets/hero.png",
+    imageSrc: "log.png",
   },
   {
     id: 5,
@@ -68,7 +68,7 @@ const steps = [
     description:
       "Extend RustySEO\'s capabilities by integrating with your favorite tools — PageSpeed Insights, Google Search Console, Google Analytics, Microsoft Clarity, Power BI, and more.",
     icon: PlugZap,
-    imageSrc: "https://github.com/mascanho/RustySEO/raw/main/assets/hero.png",
+    imageSrc: "integrations.png",
   },
   {
     id: 6,
@@ -76,7 +76,7 @@ const steps = [
     description:
       "Track your keywords, identify patterns and receive new content ideas and recommendations as you optimise your pages with contextual awareness.",
     icon: Key,
-    imageSrc: "https://github.com/mascanho/RustySEO/raw/main/assets/hero.png",
+    imageSrc: "tracking.png",
   },
   {
     id: 7,
@@ -84,7 +84,7 @@ const steps = [
     description:
       "RustySEO offers a wide range of advanced features and integrations. Help us improve by contributing and giving us feedback.",
     icon: CheckCircle,
-    imageSrc: "https://github.com/mascanho/RustySEO/raw/main/assets/hero.png",
+    imageSrc: "more.png",
   },
 ];
 

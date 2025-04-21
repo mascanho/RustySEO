@@ -879,10 +879,11 @@ const Home: React.FC<HomeProps> = () => {
             </Tabs.Panel>{" "}
             <Tabs.Panel
               value="powerbi"
-              className="w-full max-w-96 flex-none h-screen overflow-scroll  flex justify-center items-center  bg-white"
+              className="w-full flex-none h-screen overflow-scroll  flex justify-center items-center  bg-white"
               style={{
                 height: "calc(100vh - 4rem)",
                 width: "calc(100vw - 21.5rem)",
+                overflow: "hidden",
               }}
             >
               <div className="flex justify-center items-center w-full h-screen overflow-auto">

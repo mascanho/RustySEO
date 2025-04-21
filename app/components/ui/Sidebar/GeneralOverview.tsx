@@ -84,7 +84,7 @@ export default function GeneralOverview({
                       index % 2 === 0
                         ? "bg-gray-200 dark:bg-brand-darker dark:text-white"
                         : "bg-gray-100 dark:bg-brand-darker dark:text-white"
-                    } hover:bg-brand-bright dark:hover:bg-brand-bright hover:bg-opacity-80 transition-colors duration-200`}
+                    } hover:bg-brand-bright hover:text-white dark:hover:bg-brand-bright hover:bg-opacity-80 transition-colors duration-200`}
                   >
                     <div className="flex items-center w-full">
                       {loading ? (
@@ -93,7 +93,7 @@ export default function GeneralOverview({
                         <>
                           {check.status === "Passed" ? (
                             <FaCheckCircle
-                              className={`w-4 h-4 ${iconsGray ? "text-gray-400" : "text-green-500"}`}
+                              className={`w-4 h-4 ${iconsGray ? "text-gray-400" : "text-green-500 hover:text-green-900"}`}
                             />
                           ) : (
                             <XIcon

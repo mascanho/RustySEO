@@ -25,8 +25,8 @@ function MenuDrawer() {
   const completed = useOnboardingStore((state) => state.completed);
 
   const options = [
-    { name: "Page Crawler", route: "/" },
-    { name: "Domain Crawler", route: "/global" },
+    { name: "Shallow Crawler", route: "/" },
+    { name: "Deep Crawler", route: "/global" },
     { name: "Log Analyzer", route: "/serverlogs" },
   ];
 
