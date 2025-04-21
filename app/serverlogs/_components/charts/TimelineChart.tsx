@@ -169,7 +169,7 @@ export function TimelineChart() {
   };
 
   return (
-    <Card className="relative w-full h-64 rounded-none">
+    <Card className="relative w-1/2 h-64 rounded-none">
       {/* Absolute positioned controls */}
       <div className="absolute top-2 right-4 flex items-center gap-2 z-10">
         <ToggleGroup

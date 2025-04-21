@@ -136,7 +136,7 @@ export default function WidgetLogs() {
   };
 
   return (
-    <div className="bg-white border dark:border-brand-dark shadow rounded-none p-2 pr-1 w-full max-w-4xl mx-auto dark:bg-slate-950 dark:text-white h-64 relative">
+    <div className="bg-white border dark:border-brand-dark shadow rounded-none p-2 pr-1 w-1/2  mx-auto dark:bg-slate-950 dark:text-white h-64 relative">
       <span className="absolute top-2 font-bold text-black/20 dark:text-white/50 text-xl">
         {entries.length} Entries
       </span>

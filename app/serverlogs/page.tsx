@@ -65,7 +65,7 @@ export default function Page() {
 
       <InputZone handleDomainCrawl={""} />
       <main className="pb-[6.2rem] overflow-hidden h-[100%]">
-        <div className="flex flex-1 h-full ">
+        <div className="flex flex-1 h-full w-full ">
           <TimelineChart />
           <WidgetLogs />
         </div>
