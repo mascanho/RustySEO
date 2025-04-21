@@ -824,17 +824,19 @@ export function LogAnalyzer() {
                               className={
                                 log.crawler_type !== "Human"
                                   ? "bg-red-100 dark:bg-red-400 dark:text-white"
-                                  : "bg-blue-100 dark:bg-blue-500 dark:text-white text-green-800  border-green-200"
+                                  : "bg-blue-100 dark:bg-blue-500 dark:text-white text-green-800 border-green-200"
                               }
                             >
-                              {log.crawler_type}{" "}
+                              {log.crawler_type && log.crawler_type.length > 16
+                                ? `${log.crawler_type.substring(0, 13)}...`
+                                : log.crawler_type}{" "}
                               {log.verified && (
                                 <BadgeCheck
                                   className="text-blue-800 pl-1"
                                   size={18}
                                 />
                               )}
-                            </Badge>
+                            </Badge>{" "}
                           </TableCell>
                         </TableRow>
                         {expandedRow === index && (
