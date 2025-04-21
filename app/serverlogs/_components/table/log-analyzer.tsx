@@ -92,13 +92,13 @@ const getFileIcon = (path) => {
     case "HTML":
       return <FileCode type="html" size={14} />;
     case "Image":
-      return <Image size={14} />; // or <FileImage size={14} />
+      return <Image size={14} />;
     case "Video":
-      return <FileVideo size={14} />; // or <FileVideo size={14} />
+      return <FileVideo size={14} />;
     case "Audio":
-      return <FileAudio size={14} />; // or <FileAudio size={14} />
+      return <FileAudio size={14} />;
     case "PHP":
-      return <FileCode type="php" size={14} />; // or <PhpIcon size={14} />
+      return <FileCode type="php" size={14} />;
     case "TXT":
       return <FileType size={14} />;
     case "CSS":
@@ -108,11 +108,11 @@ const getFileIcon = (path) => {
     case "Document": // PDF
       return <FileText size={14} />;
     case "Archive":
-      return <Package size={14} />; // or <FileZip size={14} />
+      return <Package size={14} />;
     case "Font":
       return <FileType2 size={14} />;
     default:
-      return <FileCode size={14} />; // Default file icon
+      return <FileCode size={14} />;
   }
 };
 
@@ -153,6 +153,7 @@ export function LogAnalyzer() {
   const [itemsPerPage, setItemsPerPage] = useState(100);
   const [statusFilter, setStatusFilter] = useState<number[]>([]);
   const [methodFilter, setMethodFilter] = useState<string[]>([]);
+  const [fileTypeFilter, setFileTypeFilter] = useState<string[]>([]);
   const [botFilter, setBotFilter] = useState<string | null>("all");
   const [sortConfig, setSortConfig] = useState<{
     key: string;
@@ -207,6 +208,10 @@ export function LogAnalyzer() {
       result = result.filter((log) => methodFilter.includes(log.method));
     }
 
+    if (fileTypeFilter.length > 0) {
+      result = result.filter((log) => fileTypeFilter.includes(log.file_type));
+    }
+
     // Apply bot filter
     if (botFilter !== null) {
       if (botFilter === "bot") {
@@ -242,7 +247,15 @@ export function LogAnalyzer() {
 
     setFilteredLogs(result);
     setCurrentPage(1);
-  }, [entries, searchTerm, statusFilter, methodFilter, botFilter, sortConfig]);
+  }, [
+    entries,
+    searchTerm,
+    statusFilter,
+    methodFilter,
+    botFilter,
+    sortConfig,
+    fileTypeFilter,
+  ]);
 
   // Get current logs for pagination
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -278,6 +291,7 @@ export function LogAnalyzer() {
     setBotFilter("all");
     setSortConfig(null);
     setExpandedRow(null);
+    setFileTypeFilter([]);
   };
 
   // Export logs as CSV
@@ -488,6 +502,63 @@ export function LogAnalyzer() {
                   }}
                 >
                   {method}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* FileType Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark"
+              >
+                <Filter className="h-4 w-4" />
+                File Type
+                {fileTypeFilter.length > 0 && (
+                  <Badge variant="secondary" className="ml-1">
+                    {fileTypeFilter.length}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-white dark:border-brand-dark dark:text-white dark:active:bg-brand-bright  dark:bg-brand-darker"
+            >
+              <DropdownMenuLabel>Filter by File Type</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {[
+                "HTML",
+                "CSS",
+                "JS",
+                "PHP",
+                "TXT",
+                "Image",
+                "Video",
+                "Audio",
+                "Document",
+                "Archive",
+                "Font",
+              ].map((fileType) => (
+                <DropdownMenuCheckboxItem
+                  className={
+                    "bg-white active:bg-gray-100 hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                  }
+                  key={fileType}
+                  checked={fileTypeFilter.includes(fileType)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setFileTypeFilter([...fileTypeFilter, fileType]);
+                    } else {
+                      setFileTypeFilter(
+                        fileTypeFilter.filter((m) => m !== fileType),
+                      );
+                    }
+                  }}
+                >
+                  {fileType}
                 </DropdownMenuCheckboxItem>
               ))}
             </DropdownMenuContent>
@@ -715,15 +786,16 @@ export function LogAnalyzer() {
                           </TableCell>
                           <TableCell>{log?.browser}</TableCell>
                           <TableCell>{formatDate(log.timestamp)}</TableCell>
-                          <TableCell className="max-w-[480px] truncate">
-                            <div className="flex items-center">
-                              <span className="mr-2">
-                                {getFileIcon(log.file_type)}
-                              </span>
-                              {showOnTables && domain
-                                ? "https://" + domain + log.path
-                                : log?.path}
-                            </div>
+                          <TableCell className="max-w-[480px]  truncate mr-2 ">
+                            <span
+                              className="mr-1 inline-block"
+                              style={{ paddingTop: "" }}
+                            >
+                              {getFileIcon(log.file_type)}
+                            </span>
+                            {showOnTables && domain
+                              ? "https://" + domain + log.path
+                              : log?.path}
                           </TableCell>
                           <TableCell className="max-w-[480px] truncate">
                             <Badge variant={"outline"}>{log.file_type}</Badge>
