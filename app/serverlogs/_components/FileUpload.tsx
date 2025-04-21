@@ -171,7 +171,7 @@ export function FileUpload({
         >
           <UploadCloud className="h-12 w-12 text-muted-foreground mb-2 text-brand-bright" />
           <p className="text-sm font-medium mb-1">Click to browse your files</p>
-          <p className="text-xs mb-4 text-center text-black/50">
+          <p className="text-xs mb-4 text-center text-black/50 dark:text-white/50">
             Supported formats: {acceptedFileTypes.join(", ")} (Max size:{" "}
             {maxSizeMB}MB)
           </p>
@@ -191,9 +191,9 @@ export function FileUpload({
         </div>
       ) : (
         <div className="border-0 rounded-lg dark:text-white">
-          <div className="flex items-center justify-between mb-2 border rounded-md dark:border-x-brand-highlight">
+          <div className="flex items-center justify-between mb-2 border rounded-md dark:border-brand-dark">
             <div className="flex items-center">
-              <div className="w-10 h-10 rounded bg-muted flex items-center justify-center mr-3">
+              <div className="w-10 h-10 rounded border-none  bg-muted flex items-center justify-center mr-3">
                 <span className="text-xs font-medium">
                   {file.name.split(".").pop()?.toUpperCase()}
                 </span>
@@ -227,7 +227,7 @@ export function FileUpload({
                     <>
                       <span className="flex items-center">
                         Uploading & analyzing your log
-                        <span className="flex items-center ml-1">
+                        <span className="flex items-center ml-2">
                           <span className="animate-bounce [animation-delay:-0.3s]">
                             .
                           </span>
@@ -247,7 +247,7 @@ export function FileUpload({
           ) : (
             <Button
               onClick={handleUpload}
-              className="w-full mt-2 bg-brand-bright text-white hover:bg-brand-bright"
+              className="w-full mt-2 bg-brand-bright text-white dark:bg-brand-bright dark:text-white hover:bg-brand-bright dark:hover:bg-brand-bright"
             >
               Upload File
             </Button>

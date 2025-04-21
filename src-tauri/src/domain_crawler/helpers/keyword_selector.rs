@@ -94,10 +94,6 @@ fn normalize_word(word: &str) -> String {
         &word[..word.len() - 3]
     } else if word.ends_with("ed") {
         &word[..word.len() - 2]
-    } else if word.ends_with("s") {
-        &word[..word.len() - 1]
-    } else if word.ends_with("es") {
-        &word[..word.len() - 2]
     } else {
         word
     };

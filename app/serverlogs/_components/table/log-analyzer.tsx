@@ -653,7 +653,7 @@ export function LogAnalyzer() {
                                   handleIP(log.ip);
                                 }}
                                 title="Click to inspect IP"
-                                className="mr-2 text-blue-400 dark:text-white/50 hover:scale-110 cursor-pointer"
+                                className="mr-2 text-blue-400 dark:text-blue-300/50 hover:scale-110 cursor-pointer"
                                 size={13}
                               />
                               {log.ip}
@@ -700,8 +700,8 @@ export function LogAnalyzer() {
                               variant="outline"
                               className={
                                 log.crawler_type !== "Human"
-                                  ? "bg-red-100"
-                                  : "bg-blue-100 dark:bg-green-700 dark:text-white text-green-800  border-green-200"
+                                  ? "bg-red-100 dark:bg-red-400 dark:text-white"
+                                  : "bg-blue-100 dark:bg-blue-500 dark:text-white text-green-800  border-green-200"
                               }
                             >
                               {log.crawler_type}
@@ -791,7 +791,7 @@ export function LogAnalyzer() {
 
         <Pagination className="text-xs">
           <PaginationContent style={{ marginTop: "-5px" }}>
-            <PaginationItem className="cursor-pointer">
+            <PaginationItem>
               <PaginationPrevious
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 className={
@@ -826,11 +826,14 @@ export function LogAnalyzer() {
 
             {totalPages > 5 && currentPage < totalPages - 2 && (
               <>
-                <PaginationItem className="cursor-pointer">
+                <PaginationItem>
                   <PaginationEllipsis />
                 </PaginationItem>
                 <PaginationItem>
-                  <PaginationLink onClick={() => setCurrentPage(totalPages)}>
+                  <PaginationLink
+                    className="cursor-pointer"
+                    onClick={() => setCurrentPage(totalPages)}
+                  >
                     {totalPages}
                   </PaginationLink>
                 </PaginationItem>

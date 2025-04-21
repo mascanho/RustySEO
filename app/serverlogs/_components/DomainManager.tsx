@@ -94,7 +94,7 @@ export default function DomainManager({ closeDialog }: DomainManagerProps) {
       <CardContent className="grid gap-6 h-[380px]">
         {/* Domain Input Section */}
         <div className="space-y-4">
-          <h3 className="text-sm font-medium">Set Domain</h3>
+          <h3 className="text-sm font-medium dark:text-white">Set Domain</h3>
           <div className="flex gap-2">
             <Input
               placeholder="Enter your domain (e.g., example.com)"
@@ -116,7 +116,9 @@ export default function DomainManager({ closeDialog }: DomainManagerProps) {
 
           {/* Current Domain Display */}
           <div className="space-y-4 mt-6">
-            <h3 className="text-sm font-medium">Current Domain</h3>
+            <h3 className="text-sm font-medium dark:text-white">
+              Current Domain
+            </h3>
             <div className="border dark:border-brand-dark rounded-md p-4">
               {domain ? (
                 <div className="flex items-center justify-between">
@@ -137,7 +139,7 @@ export default function DomainManager({ closeDialog }: DomainManagerProps) {
                   </Button>
                 </div>
               ) : (
-                <div className="text-sm text-muted-foreground py-4 text-center">
+                <div className="text-sm text-muted-foreground py-4 text-center dark:text-white/50">
                   No domain set yet
                 </div>
               )}
@@ -152,11 +154,13 @@ export default function DomainManager({ closeDialog }: DomainManagerProps) {
               onCheckedChange={setShowOnTables}
               disabled={isSubmitting}
             />
-            <Label htmlFor="show-on-tables">Show domain on tables</Label>
+            <Label className="dark:text-white/50" htmlFor="show-on-tables">
+              Show domain on tables
+            </Label>
           </div>
 
           <div className="py-2 bg-neutral-100 dark:bg-brand-dark dark:text-white/50 px-2 rounded-md mt-4">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground dark:text-white/50">
               Enter your primary domain to enable site-wide features. This
               should be your root domain without protocol (e.g.,
               &quot;example.com&quot; not &quot;https://example.com&quot;).
