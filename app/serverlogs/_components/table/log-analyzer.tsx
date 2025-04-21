@@ -4,10 +4,26 @@ import {
   AlertCircle,
   BadgeCheck,
   ChevronDown,
+  CircleHelp,
+  ClipboardCopy,
+  Copy,
+  CopyPlus,
   Download,
+  FileCode,
+  FileIcon,
   Filter,
+  FlaskRound,
+  Ghost,
   RefreshCw,
   Search,
+  Waypoints,
+  Image,
+  FileVideo,
+  FileAudio,
+  FileType,
+  FileText,
+  Package,
+  FileType2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -47,6 +63,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { CardContent } from "@/components/ui/card";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { ask, message, save } from "@tauri-apps/plugin-dialog";
+import { SiGoogle } from "react-icons/si";
+import { toast } from "sonner";
+import { IpDisplay } from "./IpCheckModal";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useCurrentLogs } from "@/store/logFilterStore";
 
 // Helper function to format date
 const formatDate = (dateString: string) => {
@@ -61,12 +88,44 @@ const formatDate = (dateString: string) => {
   }).format(date);
 };
 
+const getFileIcon = (path) => {
+  switch (path) {
+    case "HTML":
+      return <FileCode type="html" size={14} />;
+    case "Image":
+      return <Image size={14} />;
+    case "Video":
+      return <FileVideo size={14} />;
+    case "Audio":
+      return <FileAudio size={14} />;
+    case "PHP":
+      return <FileCode type="php" size={14} />;
+    case "TXT":
+      return <FileType size={14} />;
+    case "CSS":
+      return <FileCode type="css" size={14} />;
+    case "JS":
+      return <FileCode type="javascript" size={14} />;
+    case "Document": // PDF
+      return <FileText size={14} />;
+    case "Archive":
+      return <Package size={14} />;
+    case "Font":
+      return <FileType2 size={14} />;
+    default:
+      return <FileCode size={14} />;
+  }
+};
+
 // Get status code badge color
 const getStatusCodeColor = (code: number) => {
-  if (code >= 200 && code < 300) return "bg-green-500";
-  if (code >= 300 && code < 400) return "bg-blue-500";
-  if (code >= 400 && code < 500) return "bg-yellow-500";
-  if (code >= 500) return "bg-red-500";
+  if (code >= 200 && code < 300)
+    return "bg-green-100 border-green-200 text-green-800 dark:bg-green-700 hover:bg-green-500 dark:text-white";
+  if (code >= 300 && code < 400)
+    return "bg-blue-400 dark:bg-blue-700 dark:text-white";
+  if (code >= 400 && code < 500)
+    return "bg-red-400 dark:bg-red-600 dark:text-white text-white";
+  if (code >= 500) return "bg-red-400 text-white";
   return "bg-gray-500";
 };
 
@@ -95,12 +154,32 @@ export function LogAnalyzer() {
   const [itemsPerPage, setItemsPerPage] = useState(100);
   const [statusFilter, setStatusFilter] = useState<number[]>([]);
   const [methodFilter, setMethodFilter] = useState<string[]>([]);
+  const [fileTypeFilter, setFileTypeFilter] = useState<string[]>([]);
   const [botFilter, setBotFilter] = useState<string | null>("all");
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "ascending" | "descending";
   } | null>(null);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const [ipModal, setIpModal] = useState(false);
+  const [ip, setIP] = useState("");
+  const [domain, setDomain] = useState("");
+  const [showOnTables, setShowOnTables] = useState(false);
+
+  // GET THE domain from the local storage to use on the table to complement the path
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedDomain = localStorage.getItem("domain");
+      if (storedDomain) {
+        setDomain(storedDomain);
+      }
+
+      const isShowing = localStorage.getItem("showOnTables");
+      if (isShowing === "true") {
+        setShowOnTables(true);
+      }
+    }
+  }, [entries.length]);
 
   // Apply filters and search
   useEffect(() => {
@@ -115,8 +194,8 @@ export function LogAnalyzer() {
         (log) =>
           log.ip.toLowerCase().includes(lowerCaseSearch) ||
           log.path.toLowerCase().includes(lowerCaseSearch) ||
-          log.user_agent.toLowerCase().includes(lowerCaseSearch) ||
-          (log.referer && log.referer.toLowerCase().includes(lowerCaseSearch)),
+          log.user_agent.toLowerCase().includes(lowerCaseSearch),
+        // (log.referer && log.referer.toLowerCase().includes(lowerCaseSearch)),
       );
     }
 
@@ -128,6 +207,10 @@ export function LogAnalyzer() {
     // Apply method filter
     if (methodFilter.length > 0) {
       result = result.filter((log) => methodFilter.includes(log.method));
+    }
+
+    if (fileTypeFilter.length > 0) {
+      result = result.filter((log) => fileTypeFilter.includes(log.file_type));
     }
 
     // Apply bot filter
@@ -165,7 +248,15 @@ export function LogAnalyzer() {
 
     setFilteredLogs(result);
     setCurrentPage(1);
-  }, [entries, searchTerm, statusFilter, methodFilter, botFilter, sortConfig]);
+  }, [
+    entries,
+    searchTerm,
+    statusFilter,
+    methodFilter,
+    botFilter,
+    sortConfig,
+    fileTypeFilter,
+  ]);
 
   // Get current logs for pagination
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -201,36 +292,51 @@ export function LogAnalyzer() {
     setBotFilter("all");
     setSortConfig(null);
     setExpandedRow(null);
+    setFileTypeFilter([]);
   };
 
+  // Set the Zustand store with the current filtered logs
+  useEffect(() => {
+    useCurrentLogs.getState().setCurrentLogs(filteredLogs);
+  }, [currentLogs, fileTypeFilter, botFilter, methodFilter, statusFilter]);
+
   // Export logs as CSV
-  const exportCSV = () => {
+  const exportCSV = async () => {
     const headers = [
       "IP",
       "Country",
+      "Browser",
       "Timestamp",
       "Method",
       "Path",
+      "Taxonomy",
+      "File Type",
       "Status Code",
       "Response Size",
       "User Agent",
       "Referer",
       "Bot/Human",
+      "Google Verified",
     ];
 
     const dataToExport = filteredLogs.length > 0 ? filteredLogs : entries;
 
     const csvData = dataToExport.map((log) => [
-      log.ip,
+      log.ip || "",
       log.country || "",
-      log.timestamp,
-      log.method,
-      log.path,
-      log.status,
-      log.responseSize,
-      `"${log.user_agent.replace(/"/g, '""')}"`,
+      log.browser || "",
+      log.timestamp || "",
+      log.method || "",
+      (domain && showOnTables ? "https://" + domain + log.path : log.path) ||
+        "",
+      log.taxonomy || "",
+      log.file_type || "",
+      log.status || "",
+      log.response_size || "",
+      `"${(log.user_agent || "").replace(/"/g, '""')}"`,
       log.referer || "-",
-      log.crawler_type,
+      log.crawler_type || "",
+      log.verified || "false",
     ]);
 
     const csvContent = [
@@ -238,17 +344,34 @@ export function LogAnalyzer() {
       ...csvData.map((row) => row.join(",")),
     ].join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      `server_logs_${new Date().toISOString().slice(0, 10)}.csv`,
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      // Ask user for save location
+      const filePath = await save({
+        defaultPath: `RustySEO - server_logs_${new Date().toISOString().slice(0, 10)}.csv`,
+        filters: [
+          {
+            name: "CSV",
+            extensions: ["csv"],
+          },
+        ],
+      });
+
+      if (filePath) {
+        await writeTextFile(filePath, csvContent);
+
+        // Optional: Show success message
+        await message("CSV file saved successfully!", {
+          title: "Export Complete",
+          type: "info",
+        });
+      }
+    } catch (error) {
+      console.error("Export failed:", error);
+      await message(`Failed to export CSV: ${error}`, {
+        title: "Export Error",
+        type: "error",
+      });
+    }
   };
 
   // Handle loading and error states
@@ -269,14 +392,26 @@ export function LogAnalyzer() {
     );
   }
 
+  function handleIP(ip) {
+    setIpModal(true);
+    setIP(ip);
+  }
+
+  console.log(currentLogs, "currentLogs");
+
   return (
-    <div className="space-y-4  flex flex-col flex-1 h-full">
-      <div className="flex flex-col md:flex-row  justify-between -mb-4 p-1 h-full">
+    <div className="space-y-4  flex flex-col flex-1 h-full ">
+      <div className="flex flex-col md:flex-row  justify-between relative -mb-4 p-1 h-full">
+        {ipModal && (
+          <div className="absolute z-50 top-1/3  left-1/2 transform -translate-x-1/2 -translate-y-[2rem]">
+            <IpDisplay ip={ip} close={setIpModal} />
+          </div>
+        )}
         <div className="relative w-full mr-1 ">
           <Search className="absolute dark:text-white/50 left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Search by IP, path, user agent, or referer..."
+            placeholder="Search by IP, path, user agent..."
             className="pl-8 w-full "
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -321,7 +456,7 @@ export function LogAnalyzer() {
                 >
                   <Badge
                     variant="outline"
-                    className={`mr-2 ${getStatusCodeColor(code)} text-white`}
+                    className={`mr-2 ${getStatusCodeColor(code)}`}
                   >
                     {code}
                   </Badge>
@@ -380,6 +515,63 @@ export function LogAnalyzer() {
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* FileType Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark"
+              >
+                <Filter className="h-4 w-4" />
+                File Type
+                {fileTypeFilter.length > 0 && (
+                  <Badge variant="secondary" className="ml-1">
+                    {fileTypeFilter.length}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-white dark:border-brand-dark dark:text-white dark:active:bg-brand-bright  dark:bg-brand-darker"
+            >
+              <DropdownMenuLabel>Filter by File Type</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {[
+                "HTML",
+                "CSS",
+                "JS",
+                "PHP",
+                "TXT",
+                "Image",
+                "Video",
+                "Audio",
+                "Document",
+                "Archive",
+                "Font",
+              ].map((fileType) => (
+                <DropdownMenuCheckboxItem
+                  className={
+                    "bg-white active:bg-gray-100 hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                  }
+                  key={fileType}
+                  checked={fileTypeFilter.includes(fileType)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setFileTypeFilter([...fileTypeFilter, fileType]);
+                    } else {
+                      setFileTypeFilter(
+                        fileTypeFilter.filter((m) => m !== fileType),
+                      );
+                    }
+                  }}
+                >
+                  {fileType}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {/* Bot/Human Filter */}
           <Select
             value={botFilter || "all"}
@@ -424,11 +616,11 @@ export function LogAnalyzer() {
             height: "calc(100vh - 27.2rem)",
           }}
         >
-          <div className="rounded-md border  dark:border-brand-dark h-full ">
+          <div className="rounded-md border  dark:border-brand-dark h-full logs">
             <div className="relative w-full h-full overflow-auto">
-              <Table className="h-full">
+              <Table className="h-full [&_tr]:p-10 logs">
                 <TableHeader>
-                  <TableRow>
+                  <TableRow className="p-10">
                     <TableHead className="w-[80px]">#</TableHead>
                     <TableHead
                       className="cursor-pointer"
@@ -560,25 +752,41 @@ export function LogAnalyzer() {
                         <TableRow
                           key={`${log.ip}-${log.timestamp}-${index}`}
                           className="group cursor-pointer"
-                          onClick={() =>
-                            setExpandedRow(expandedRow === index ? null : index)
-                          }
+                          onClick={() => {
+                            setExpandedRow(
+                              expandedRow === index ? null : index,
+                            );
+                          }}
                         >
                           <TableCell className="font-medium">
                             {indexOfFirstItem + index + 1}
                           </TableCell>
-                          <TableCell>{log.ip}</TableCell>
+
+                          <TableCell>
+                            <div className="flex items-center">
+                              <Waypoints
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleIP(log.ip);
+                                }}
+                                title="Click to inspect IP"
+                                className="mr-2 text-blue-400 dark:text-blue-300/50 hover:scale-110 cursor-pointer"
+                                size={13}
+                              />
+                              {log.ip}
+                            </div>
+                          </TableCell>
                           <TableCell>
                             <Badge
                               variant="outline"
                               className={
                                 log.method === "GET"
-                                  ? "bg-green-100 dark:bg-green-400 text-green-800 border-green-200"
+                                  ? "bg-green-100 dark:bg-green-700 text-green-800 border-green-200"
                                   : log.method === "POST"
-                                    ? "bg-blue-100 dark:bg-blue-400 text-blue-800 border-blue-200"
+                                    ? "bg-blue-100 dark:bg-blue-700 text-blue-800 border-blue-200"
                                     : log.method === "PUT"
                                       ? "bg-yellow-100 dark:bg-yellow-400 text-yellow-800 border-yellow-200"
-                                      : "bg-red-100 dark:bg-red-400 text-red-800 border-red-200"
+                                      : "bg-red-100 dark:bg-red-700 text-red-800 border-red-200"
                               }
                             >
                               {log.method}
@@ -586,15 +794,23 @@ export function LogAnalyzer() {
                           </TableCell>
                           <TableCell>{log?.browser}</TableCell>
                           <TableCell>{formatDate(log.timestamp)}</TableCell>
-                          <TableCell className="max-w-[480px] truncate">
-                            {log.path}
+                          <TableCell className="max-w-[480px]  truncate mr-2 ">
+                            <span
+                              className="mr-1 inline-block"
+                              style={{ paddingTop: "" }}
+                            >
+                              {getFileIcon(log.file_type)}
+                            </span>
+                            {showOnTables && domain
+                              ? "https://" + domain + log.path
+                              : log?.path}
                           </TableCell>
                           <TableCell className="max-w-[480px] truncate">
                             <Badge variant={"outline"}>{log.file_type}</Badge>
                           </TableCell>
                           <TableCell>
                             <Badge
-                              className={`${getStatusCodeColor(log.status)} text-white`}
+                              className={`${getStatusCodeColor(log.status)} `}
                             >
                               {log.status}
                             </Badge>
@@ -607,18 +823,20 @@ export function LogAnalyzer() {
                               variant="outline"
                               className={
                                 log.crawler_type !== "Human"
-                                  ? "bg-gradient-to-r from-blue-50 via-red-100 to-green-80 text-blue-600 border border-red-30/30 px-3 py-1 rounded-full font-medium shadow-xs hover:shadow-green-300/20 transition-all"
-                                  : "bg-green-100 text-green-800 border-green-200"
+                                  ? "bg-red-100 dark:bg-red-400 dark:text-white"
+                                  : "bg-blue-100 dark:bg-blue-500 dark:text-white text-green-800 border-green-200"
                               }
                             >
-                              {log.crawler_type}{" "}
-                              {log.verified && log.crawler_type !== "Human" && (
+                              {log.crawler_type && log.crawler_type.length > 16
+                                ? `${log.crawler_type.substring(0, 13)}...`
+                                : log.crawler_type}{" "}
+                              {log.verified && (
                                 <BadgeCheck
-                                  className="ml-1 text-blue-600"
-                                  size={15}
+                                  className="text-blue-800 pl-1"
+                                  size={18}
                                 />
                               )}
-                            </Badge>
+                            </Badge>{" "}
                           </TableCell>
                         </TableRow>
                         {expandedRow === index && (
@@ -630,7 +848,18 @@ export function LogAnalyzer() {
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* User Agent */}
                                 <div className="flex flex-col max-w-[70rem] w-full">
-                                  <h4 className="mb-2 font-bold">User Agent</h4>
+                                  <div className="flex mb-2 space-x-2 items-center justify-between">
+                                    <h4 className=" font-bold">User Agent</h4>
+                                    {log.verified && (
+                                      <div className="flex items-center space-x-1 bg-red-400 px-2 text-xs rounded-md">
+                                        <BadgeCheck
+                                          className="text-blue-600 pr-1"
+                                          size={18}
+                                        />
+                                        {log?.crawler_type}
+                                      </div>
+                                    )}
+                                  </div>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                                     <p className="text-sm font-mono break-all">
                                       {log.user_agent}
@@ -680,7 +909,7 @@ export function LogAnalyzer() {
             value={itemsPerPage.toString()}
             onValueChange={(value) => setItemsPerPage(Number(value))}
           >
-            <SelectTrigger className="w-[70px] text-xs h-6 mr-2  z-50">
+            <SelectTrigger className="w-[70px] dark:text-white/50 text-xs h-6 mr-2  z-50">
               <SelectValue placeholder="100" />
             </SelectTrigger>
             <SelectContent>
@@ -693,7 +922,7 @@ export function LogAnalyzer() {
 
         <Pagination className="text-xs">
           <PaginationContent style={{ marginTop: "-5px" }}>
-            <PaginationItem className="cursor-pointer">
+            <PaginationItem>
               <PaginationPrevious
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 className={
@@ -728,11 +957,14 @@ export function LogAnalyzer() {
 
             {totalPages > 5 && currentPage < totalPages - 2 && (
               <>
-                <PaginationItem className="cursor-pointer">
+                <PaginationItem>
                   <PaginationEllipsis />
                 </PaginationItem>
                 <PaginationItem>
-                  <PaginationLink onClick={() => setCurrentPage(totalPages)}>
+                  <PaginationLink
+                    className="cursor-pointer"
+                    onClick={() => setCurrentPage(totalPages)}
+                  >
                     {totalPages}
                   </PaginationLink>
                 </PaginationItem>
@@ -754,7 +986,7 @@ export function LogAnalyzer() {
           </PaginationContent>
         </Pagination>
         <div>
-          <span className="flex justify-end text-muted-foreground w-[180px] flex-nowrap text-right  pr-2.5 -mt-1.5 text-xs text-black/50">
+          <span className="flex justify-end text-muted-foreground w-[180px] flex-nowrap dark:text-white/50 text-right  pr-2.5 -mt-1.5 text-xs text-black/50">
             {indexOfFirstItem + 1}-
             {Math.min(
               indexOfLastItem,

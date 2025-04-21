@@ -64,6 +64,9 @@ import { PiGitDiff } from "react-icons/pi";
 import DiffChecker from "./DiffChecker/DiffChecker";
 import { GoFileDiff } from "react-icons/go";
 import { Settings } from "lucide-react";
+import PowerBi from "./MSClarityModal/PowerBi";
+import { useOnboardingStore } from "@/store/OnboardingStore";
+import { BiDoorOpen } from "react-icons/bi";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -117,6 +120,9 @@ const TopMenuBar = () => {
   const [openedMSClarity, { open: openMSClarity, close: closeMSClarity }] =
     useDisclosure(false);
 
+  const [openedPowerBi, { open: openPowerBi, close: closePowerBi }] =
+    useDisclosure(false);
+
   const [
     openedGoogleAnalytics,
     { open: openGoogleAnalytics, close: closeGoogleAnalytics },
@@ -130,6 +136,10 @@ const TopMenuBar = () => {
     openedDiffChecker,
     { open: openDiffChecker, close: closeDiffChecker },
   ] = useDisclosure(false);
+
+  // HANDLE ONBOARDING MODAL
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const completed = useOnboardingStore((state) => state.completed);
 
   useEffect(() => {
     const fetchUrlFromSessionStorage = () => {
@@ -223,6 +233,38 @@ const TopMenuBar = () => {
     }
   }
 
+  // Sync with localstorage to avoid double click
+  useEffect(() => {
+    // Sync with localStorage on mount
+    const savedValue = localStorage.getItem("onboarding") === "true";
+    if (savedValue !== completed) {
+      useOnboardingStore.setState({ completed: savedValue });
+    }
+
+    // Listen for storage events (changes from other tabs)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "onboarding") {
+        useOnboardingStore.setState({ completed: e.newValue === "true" });
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
+
+  // Handles the click on the menu
+  const handleOnboarding = () => {
+    // Get current state directly from the store
+    const currentState = useOnboardingStore.getState().completed;
+
+    // Calculate new value
+    const newValue = !currentState;
+
+    // Update both localStorage and Zustand store
+    localStorage.setItem("onboarding", String(newValue));
+    useOnboardingStore.setState({ completed: newValue });
+  };
+
   return (
     <>
       {/* Panes Insights Modal */}
@@ -259,6 +301,18 @@ const TopMenuBar = () => {
         centered
       >
         <MSClarity close={closeMSClarity} />
+      </Modal>
+
+      {/* MS  Power BI MODAL */}
+      <Modal
+        opened={openedPowerBi}
+        closeOnEscape
+        closeOnClickOutside
+        onClose={closePowerBi}
+        title="Microsoft Power BI Connector"
+        centered
+      >
+        <PowerBi close={closePowerBi} />
       </Modal>
 
       {/* Todo Modal */}
@@ -524,6 +578,10 @@ const TopMenuBar = () => {
                 <FiZap className="mr-2" />
                 Microsoft Clarity
               </MenubarItem>
+              <MenubarItem onClick={openPowerBi}>
+                <FiZap className="mr-2" />
+                MS Power BI
+              </MenubarItem>
               <MenubarSeparator />
               <MenubarItem onClick={openPageSpeed}>
                 <FiZap className="mr-2" />
@@ -583,6 +641,10 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-3">Help</MenubarTrigger>
             <MenubarContent>
+              <MenubarItem onClick={handleOnboarding}>
+                <BiDoorOpen className="mr-2" />
+                Onboarding
+              </MenubarItem>
               <MenubarItem onClick={openAbout}>
                 <FiHelpCircle className="mr-2" />
                 About

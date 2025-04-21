@@ -21,6 +21,7 @@ pub struct LogEntry {
     pub browser: String,
     pub file_type: String,
     pub verified: bool,
+    pub taxonomy: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -49,6 +50,7 @@ pub struct BotPageDetails {
     pub frequency: usize,
     pub method: String,
     pub verified: bool,
+    pub taxonomy: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -109,6 +111,7 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
                 file_type: e.file_type,
                 browser: e.browser,
                 verified: e.verified,
+                taxonomy: e.taxonomy,
             }
         })
         .collect();
@@ -188,6 +191,7 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
                 user_agent: entry.user_agent.clone(),
                 frequency: 1, // Each entry contributes one to the frequency
                 verified: entry.verified.clone(),
+                taxonomy: entry.taxonomy.clone(),
             };
 
             frequency_map
@@ -211,6 +215,7 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
                 user_agent: details_vec[0].user_agent.clone(), // Keep first user agent
                 frequency: details_vec.len(), // Frequency is the number of occurrences of this path:crawler_type
                 verified: details_vec[0].verified.clone(),
+                taxonomy: details_vec[0].taxonomy.clone(),
             };
             aggregated_map.insert(key, vec![aggregated_details]);
         }

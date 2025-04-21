@@ -37,6 +37,7 @@ const LEVEL_CONFIGS = {
       <Badge
         variant="outline"
         className="bg-red-500/10 text-red-500 border-red-500/20 flex-shrink-0 rounded-sm"
+        style={{ width: "60px", textAlign: "center", display: "inline-block" }}
       >
         ERROR
       </Badge>
@@ -61,6 +62,7 @@ const LEVEL_CONFIGS = {
       <Badge
         variant="outline"
         className="bg-blue-500/10 text-blue-500 border-blue-500/20 flex-shrink-0 rounded-sm"
+        style={{ width: "60px", textAlign: "center", display: "inline-block" }}
       >
         INFO
       </Badge>

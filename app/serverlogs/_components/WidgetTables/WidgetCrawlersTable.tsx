@@ -1,6 +1,8 @@
+// @ts-nocheck
 import React, { useState, useEffect } from "react";
 import {
   AlertCircle,
+  BadgeCheck,
   ChevronDown,
   Download,
   Filter,
@@ -43,8 +45,9 @@ import {
 } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import { CardContent } from "@/components/ui/card";
+import { message, save } from "@tauri-apps/plugin-dialog";
+import { writeTextFile } from "@tauri-apps/plugin-fs";
 
-// Interface for log entry based on provided data structure
 interface LogEntry {
   browser: string;
   crawler_type: string;
@@ -57,9 +60,9 @@ interface LogEntry {
   timestamp: string;
   user_agent: string;
   path: string;
+  verified: boolean;
 }
 
-// Helper function to format date
 const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
   return new Intl.DateTimeFormat("en-US", {
@@ -72,7 +75,6 @@ const formatDate = (dateString: string): string => {
   }).format(date);
 };
 
-// Format response size
 const formatResponseSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -91,13 +93,13 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
   const [itemsPerPage, setItemsPerPage] = useState<number>(100);
   const [methodFilter, setMethodFilter] = useState<string[]>([]);
   const [botFilter, setBotFilter] = useState<string | null>("all");
+  const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "ascending" | "descending";
   } | null>(null);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
 
-  // Process data when component mounts or data changes
   useEffect(() => {
     if (!data?.totals?.google_bot_page_frequencies) return;
 
@@ -117,11 +119,9 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     setFilteredLogs(logs);
   }, [data]);
 
-  // Apply filters and search
   useEffect(() => {
     let result = [...initialLogs];
 
-    // Apply search
     if (searchTerm) {
       const lowerCaseSearch = searchTerm.toLowerCase();
       result = result.filter(
@@ -133,12 +133,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
       );
     }
 
-    // Apply method filter
     if (methodFilter.length > 0) {
       result = result.filter((log) => methodFilter.includes(log.method));
     }
 
-    // Apply bot filter
     if (botFilter !== null) {
       if (botFilter === "bot") {
         result = result.filter((log) => log.crawler_type !== "Human");
@@ -147,7 +145,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
       }
     }
 
-    // Apply sorting
+    if (verifiedFilter !== null) {
+      result = result.filter((log) => log.verified === verifiedFilter);
+    }
+
     if (sortConfig) {
       result.sort((a, b) => {
         const aValue = a[sortConfig.key as keyof LogEntry];
@@ -171,15 +172,20 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
 
     setFilteredLogs(result);
     setCurrentPage(1);
-  }, [searchTerm, methodFilter, botFilter, sortConfig, initialLogs]);
+  }, [
+    searchTerm,
+    methodFilter,
+    botFilter,
+    verifiedFilter,
+    sortConfig,
+    initialLogs,
+  ]);
 
-  // Get current logs for pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentLogs = filteredLogs.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
 
-  // Handle sorting
   const requestSort = (key: string) => {
     let direction: "ascending" | "descending" = "ascending";
     if (
@@ -192,18 +198,17 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     setSortConfig({ key, direction });
   };
 
-  // Reset all filters
   const resetFilters = () => {
     setSearchTerm("");
     setMethodFilter([]);
     setBotFilter("all");
+    setVerifiedFilter(null);
     setSortConfig(null);
     setExpandedRow(null);
-    setFilteredLogs(initialLogs); // Restore filteredLogs to initial state
+    setFilteredLogs(initialLogs);
   };
 
-  // Export logs as CSV
-  const exportCSV = () => {
+  const exportCSV = async () => {
     const headers = [
       "IP",
       "Timestamp",
@@ -211,23 +216,25 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
       "Path",
       "File Type",
       "Response Size",
-      "User Agent",
-      "Referer",
-      "Crawler Type",
       "Frequency",
+      "User Agent",
+      "Crawler Type",
+      "Google Verified",
     ];
 
-    const csvData = filteredLogs.map((log) => [
-      log.ip,
-      log.timestamp,
-      log.method,
-      log.path,
-      log.file_type,
-      log.response_size,
-      `"${log.user_agent.replace(/"/g, '""')}"`,
-      log.referer || "-",
-      log.crawler_type,
-      log.frequency,
+    const dataToExport = filteredLogs.length > 0 ? filteredLogs : data;
+
+    const csvData = dataToExport.map((log) => [
+      log.ip || "",
+      log.timestamp || "",
+      log.method || "",
+      log.path || "",
+      log.file_type || "",
+      log.response_size || "",
+      log.frequency || "",
+      `"${(log.user_agent || "").replace(/"/g, '""')}"`,
+      log.crawler_type || "",
+      log.verified ? "Yes" : "No",
     ]);
 
     const csvContent = [
@@ -235,17 +242,26 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
       ...csvData.map((row) => row.join(",")),
     ].join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute(
-      "download",
-      `server_logs_${new Date().toISOString().slice(0, 10)}.csv`,
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      const filePath = await save({
+        defaultPath: `RustySEO - Google Bot Frequency -${new Date().toISOString().slice(0, 10)}.csv`,
+        filters: [{ name: "CSV", extensions: ["csv"] }],
+      });
+
+      if (filePath) {
+        await writeTextFile(filePath, csvContent);
+        await message("CSV file saved successfully!", {
+          title: "Export Complete",
+          type: "info",
+        });
+      }
+    } catch (error) {
+      console.error("Export failed:", error);
+      await message(`Failed to export CSV: ${error}`, {
+        title: "Export Error",
+        type: "error",
+      });
+    }
   };
 
   return (
@@ -263,7 +279,6 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
         </div>
 
         <div className="flex flex-1 gap-1">
-          {/* Method Filter */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -304,20 +319,42 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Bot/Human Filter */}
           <Select
             value={botFilter || "all"}
             onValueChange={(value) =>
               setBotFilter(value === "all" ? null : value)
             }
           >
-            <SelectTrigger className="w-[130px] dark:bg-brand-darker dark:text-white">
+            <SelectTrigger className="w-[130px] dark:bg-brand-darker font-medium dark:text-white">
               <SelectValue placeholder="Bot/Human" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="bot">Bots</SelectItem>
               <SelectItem value="Human">Humans</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={
+              verifiedFilter === null
+                ? "all"
+                : verifiedFilter
+                  ? "verified"
+                  : "unverified"
+            }
+            onValueChange={(value) => {
+              if (value === "all") setVerifiedFilter(null);
+              else setVerifiedFilter(value === "verified");
+            }}
+          >
+            <SelectTrigger className="w-[150px] dark:bg-brand-darker dark:text-white">
+              <SelectValue placeholder="Verification" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All IPs</SelectItem>
+              <SelectItem value="verified">Verified Google</SelectItem>
+              <SelectItem value="unverified">Unverified</SelectItem>
             </SelectContent>
           </Select>
 
@@ -345,10 +382,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
         style={{
           height: "calc(100vh - 40vh)",
           maxHeight: "calc(100vh - 40vh)",
+          overflowX: "hidden",
         }}
         className="px-1"
       >
-        <CardContent className="p-0 h-full">
+        <CardContent className="p-0 h-full overflow-hidden">
           <div className="rounded-md border dark:border-brand-dark h-full">
             <div className="relative w-full h-full overflow-auto">
               <Table className="h-full">
@@ -356,26 +394,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                   <TableRow>
                     <TableHead className="w-[80px]">#</TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="cursor-pointer w-[80px] truncate"
                       onClick={() => requestSort("ip")}
                     >
                       IP Address
                       {sortConfig?.key === "ip" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      )}
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer"
-                      onClick={() => requestSort("browser")}
-                    >
-                      Browser
-                      {sortConfig?.key === "browser" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${
                             sortConfig.direction === "descending"
@@ -446,7 +469,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="cursor-pointer text-center w-20"
                       onClick={() => requestSort("response_size")}
                     >
                       Size
@@ -461,7 +484,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="cursor-pointer min-w-10 max-w-[100px] text-center"
                       onClick={() => requestSort("frequency")}
                     >
                       Frequency
@@ -493,8 +516,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                           <TableCell className="font-medium">
                             {indexOfFirstItem + index + 1}
                           </TableCell>
-                          <TableCell>{log.ip}</TableCell>
-                          <TableCell>{log.browser}</TableCell>
+                          <TableCell className="max-w-[160px] truncate">
+                            <div className="flex items-center gap-1">
+                              {log.ip}
+                            </div>
+                          </TableCell>
                           <TableCell width={200}>
                             {formatDate(log.timestamp)}
                           </TableCell>
@@ -514,13 +540,13 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                               {log.method}
                             </Badge>
                           </TableCell>
-                          <TableCell className="max-w-[480px] truncate">
+                          <TableCell className="max-w-[380px] truncate">
                             {log.path}
                           </TableCell>
                           <TableCell className="max-w-[480px] truncate">
                             <Badge variant="outline">{log.file_type}</Badge>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="text-center">
                             {formatResponseSize(log.response_size)}
                           </TableCell>
                           <TableCell className="text-center">
@@ -535,7 +561,9 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                   : "bg-green-100 text-green-800 border-green-200"
                               }
                             >
-                              {log.crawler_type}
+                              {log.crawler_type.length > 20
+                                ? log.crawler_type.slice(0, 10) + "..."
+                                : log.crawler_type}
                             </Badge>
                           </TableCell>
                         </TableRow>
@@ -543,12 +571,20 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                           <TableRow>
                             <TableCell
                               colSpan={10}
-                              className="bg-gray-50 dark:bg-gray-800 p-4"
+                              className="bg-gray-50 dark:bg-gray-800 p-4 "
                             >
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* User Agent */}
-                                <div className="flex flex-col max-w-[calc(100vw-62vw)]">
-                                  <h4 className="mb-2 font-bold">User Agent</h4>
+                                <div className="flex flex-col max-w-[70rem] w-full">
+                                  <div className="flex mb-2 space-x-2 items-center justify-between">
+                                    <h4 className=" font-bold">User Agent</h4>
+                                    {log.verified && (
+                                      <div className="flex items-center space-x-1 bg-red-100 px-2 text-xs rounded-md">
+                                        <BadgeCheck className="text-blue-400 pr-1" />
+                                        {log?.crawler_type}
+                                      </div>
+                                    )}
+                                  </div>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                                     <p className="text-sm font-mono break-all">
                                       {log.user_agent}
@@ -572,7 +608,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                               </div>
                             </TableCell>
                           </TableRow>
-                        )}
+                        )}{" "}
                       </React.Fragment>
                     ))
                   ) : (
@@ -684,4 +720,3 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
 };
 
 export { WidgetTable };
-

@@ -3,6 +3,7 @@
 use crate::crawler::content::scrape_google_headings_command;
 use crate::domain_crawler::db_deep::db;
 use crate::domain_crawler::domain_commands;
+use crate::loganalyser::helpers::parse_logs;
 use crawler::{
     CrawlResult, LinkResult, PageSpeedResponse, SEOLighthouseResponse, SeoPageSpeedResponse,
 };
@@ -227,7 +228,10 @@ async fn main() {
             domain_commands::generate_links_table_xlsx_command,
             domain_commands::analyse_diffs_command,
             commands::open_configs_with_native_editor,
-            loganalyser::log_commands::check_logs_command
+            loganalyser::log_commands::check_logs_command,
+            loganalyser::helpers::parse_logs::set_taxonomies,
+            loganalyser::helpers::parse_logs::fetch_google_ip_ranges,
+            loganalyser::helpers::check_hostname::reverse_lookup
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

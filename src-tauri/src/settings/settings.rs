@@ -6,6 +6,7 @@ use tokio::time::Duration;
 use toml;
 
 use crate::domain_crawler::user_agents;
+use crate::loganalyser::log_state::set_taxonomies;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Settings {
@@ -23,6 +24,7 @@ pub struct Settings {
     pub links_max_retries: usize,
     pub links_retry_delay: u64,
     pub links_request_timeout: u64,
+    pub taxonomies: Vec<String>,
 }
 
 impl Settings {
@@ -42,6 +44,7 @@ impl Settings {
             links_max_retries: 3,
             links_request_timeout: 15,
             links_retry_delay: 500,
+            taxonomies: set_taxonomies(),
         }
     }
 
@@ -126,4 +129,12 @@ pub fn print_settings(settings: &Settings) {
     );
     println!("User Agents: {:?}", settings.user_agents);
     println!("HTML: {}", settings.html);
+    println!(
+        "Links Initial Task Capacity: {}",
+        settings.links_initial_task_capacity
+    );
+    println!("Links Max Retries: {}", settings.links_max_retries);
+    println!("Links Retry Delay: {}", settings.links_retry_delay);
+    println!("Links Request Timeout: {}", settings.links_request_timeout);
+    println!("Taxonomies: {:?}", settings.taxonomies);
 }

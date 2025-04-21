@@ -14,12 +14,14 @@ import {
 import { WidgetTable } from "./WidgetTables/WidgetCrawlersTable.tsx";
 import { Tabs } from "@mantine/core";
 
+import { useCurrentLogs } from "@/store/logFilterStore";
+
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
   { label: "Content", icon: <PenBox className="w-4 h-4" /> },
   { label: "Status Codes", icon: <Server className="w-4 h-4" /> },
   { label: "Crawlers", icon: <Bot className="w-4 h-4" /> },
-  { label: "Analytics", icon: <BarChart3 className="w-4 h-4" /> },
+  // { label: "Analytics", icon: <BarChart3 className="w-4 h-4" /> },
 ];
 
 const COLORS = [
@@ -34,20 +36,21 @@ const COLORS = [
 ];
 
 export default function WidgetLogs() {
-  const [activeTab, setActiveTab] = useState("Crawlers");
+  const [activeTab, setActiveTab] = useState("Filetypes");
   const { entries, overview } = useLogAnalysis();
   const [openDialogs, setOpenDialogs] = useState({});
+  const { currentLogs } = useCurrentLogs();
 
   // Prepare filetype data from actual entries
-  const fileTypeData = entries?.reduce((acc, entry) => {
+  const fileTypeData = currentLogs?.reduce((acc, entry) => {
     const type = entry.file_type || "Other";
     acc[type] = (acc[type] || 0) + 1;
     return acc;
   }, {});
 
   // Prepare content data from actual entries or use dummy data
-  const contentData = entries?.reduce((acc, entry) => {
-    const content = entry.content;
+  const contentData = currentLogs?.reduce((acc, entry) => {
+    const content = entry.taxonomy;
     acc[content] = (acc[content] || 0) + 1;
     return acc;
   }, {}) || {
@@ -62,7 +65,7 @@ export default function WidgetLogs() {
   };
 
   // Prepare status code data from actual entries
-  const statusCodeData = entries?.reduce((acc, entry) => {
+  const statusCodeData = currentLogs?.reduce((acc, entry) => {
     const code = entry.status;
     acc[code] = (acc[code] || 0) + 1;
     return acc;
@@ -136,7 +139,10 @@ export default function WidgetLogs() {
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-2 pr-1 w-full max-w-4xl mx-auto dark:bg-brand-darker dark:text-white h-64">
+    <div className="bg-white border dark:border-brand-dark shadow rounded-none p-2 pr-1 w-1/2  mx-auto dark:bg-slate-950 dark:text-white h-64 relative">
+      <span className="absolute top-2 font-bold text-black/20 dark:text-white/50 text-xl">
+        {currentLogs.length} Entries
+      </span>
       {/* Tabs */}
       <div className="flex space-x-2 pt-1 pb-0 w-full justify-center">
         {tabs.map(({ label, icon }) => (
@@ -145,7 +151,7 @@ export default function WidgetLogs() {
             onClick={() => setActiveTab(label)}
             className={`flex items-center space-x-1 px-3 py-1 text-xs rounded-md font-medium transition-colors ${
               activeTab === label
-                ? "bg-blue-600 text-white"
+                ? "bg-brand-bright text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
             }`}
           >
@@ -165,7 +171,7 @@ export default function WidgetLogs() {
       >
         {activeTab !== "Analytics" ? (
           <>
-            <div className="flex flex-col md:flex-row items-center justify-center">
+            <div className="flex flex-col md:flex-row items-center justify-center relative">
               <PieChart width={200} height={200}>
                 <Pie
                   data={chartData}
@@ -229,7 +235,7 @@ export default function WidgetLogs() {
                       className={`${entry.name === "Google" ? "cursor-pointer" : "cursor-default"}`}
                     >
                       <div
-                        className="flex justify-between items-center border border-gray-100 px-2 py-1 rounded-md text-xs"
+                        className="flex justify-between items-center border border-gray-100 px-2 py-1 rounded-md text-xs dark:border-brand-dark"
                         style={{
                           borderLeft: `3px solid ${COLORS[idx % COLORS.length]}`,
                           backgroundColor: `${COLORS[idx % COLORS.length]}10`,
@@ -251,7 +257,9 @@ export default function WidgetLogs() {
                       <DialogContent className="max-w-[90%] min-h-96 overflow-hidden">
                         <Tabs defaultValue="overview">
                           <Tabs.List className="mb-2 mx-1">
-                            <Tabs.Tab value="overview">Overview</Tabs.Tab>
+                            <Tabs.Tab value="overview">
+                              Frequency Table
+                            </Tabs.Tab>
                             <Tabs.Tab value="charts">Charts</Tabs.Tab>
                           </Tabs.List>
 

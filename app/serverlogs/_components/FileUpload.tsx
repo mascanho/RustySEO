@@ -18,11 +18,11 @@ interface FileUploadProps {
 }
 
 export function FileUpload({
-                             maxSizeMB = 245,
-                             acceptedFileTypes = ["text/plain", ".log", ".txt"],
-                             className,
-                             closeDialog,
-                           }: FileUploadProps) {
+  maxSizeMB = 245,
+  acceptedFileTypes = ["text/plain", ".log", ".txt"],
+  className,
+  closeDialog,
+}: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -56,16 +56,16 @@ export function FileUpload({
 
     // Check if the file type or extension is accepted
     if (
-        acceptedFileTypes.includes(fileType) ||
-        acceptedFileTypes.includes(`text/${fileExtension}`) ||
-        (fileExtension === "log" && acceptedFileTypes.includes("text/plain"))
+      acceptedFileTypes.includes(fileType) ||
+      acceptedFileTypes.includes(`text/${fileExtension}`) ||
+      (fileExtension === "log" && acceptedFileTypes.includes("text/plain"))
     ) {
       setError(null);
       return true;
     }
 
     setError(
-        `Unsupported file type. Supported types: ${acceptedFileTypes.join(", ")}`,
+      `Unsupported file type. Supported types: ${acceptedFileTypes.join(", ")}`,
     );
     return false;
   };
@@ -154,80 +154,80 @@ export function FileUpload({
   };
 
   return (
-      <div className={cn("w-full", className)}>
-        {!file ? (
-            <div
-                className={cn(
-                    "border-2 border-dashed border-brand-bright rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-colors dark:text-white",
-                    isDragging
-                        ? "border-primary bg-primary/5"
-                        : "border-muted-foreground/20 hover:border-primary/50",
-                    error && "border-destructive/50 bg-destructive/5",
-                )}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-            >
-              <UploadCloud className="h-12 w-12 text-muted-foreground mb-2 text-brand-bright" />
-              <p className="text-sm font-medium mb-1">Click to browse your files</p>
-              <p className="text-xs mb-4 text-center text-black/50">
-                Supported formats: {acceptedFileTypes.join(", ")} (Max size:{" "}
-                {maxSizeMB}MB)
-              </p>
-              <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  accept={acceptedFileTypes.join(",")}
-                  className="hidden"
-              />
-              {error && (
-                  <div className="flex items-center text-destructive mt-2 text-sm">
-                    <AlertCircle className="h-4 w-4 mr-1" />
-                    {error}
-                  </div>
-              )}
+    <div className={cn("w-full", className)}>
+      {!file ? (
+        <div
+          className={cn(
+            "border-2 border-dashed border-brand-bright rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-colors dark:text-white",
+            isDragging
+              ? "border-primary bg-primary/5"
+              : "border-muted-foreground/20 hover:border-primary/50",
+            error && "border-destructive/50 bg-destructive/5",
+          )}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <UploadCloud className="h-12 w-12 text-muted-foreground mb-2 text-brand-bright" />
+          <p className="text-sm font-medium mb-1">Click to browse your files</p>
+          <p className="text-xs mb-4 text-center text-black/50 dark:text-white/50">
+            Supported formats: {acceptedFileTypes.join(", ")} (Max size:{" "}
+            {maxSizeMB}MB)
+          </p>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept={acceptedFileTypes.join(",")}
+            className="hidden"
+          />
+          {error && (
+            <div className="flex items-center text-destructive mt-2 text-sm">
+              <AlertCircle className="h-4 w-4 mr-1" />
+              {error}
             </div>
-        ) : (
-            <div className="border-0 rounded-lg dark:text-white">
-              <div className="flex items-center justify-between mb-2 border rounded-md dark:border-x-brand-highlight">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 rounded bg-muted flex items-center justify-center mr-3">
+          )}
+        </div>
+      ) : (
+        <div className="border-0 rounded-lg dark:text-white">
+          <div className="flex items-center justify-between mb-2 border rounded-md dark:border-brand-dark">
+            <div className="flex items-center">
+              <div className="w-10 h-10 rounded border-none  bg-muted flex items-center justify-center mr-3">
                 <span className="text-xs font-medium">
                   {file.name.split(".").pop()?.toUpperCase()}
                 </span>
-                  </div>
-                  <div className="overflow-hidden dark:text-white">
-                    <p className="text-sm font-medium truncate">{file.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {(file.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                  </div>
-                </div>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleRemoveFile}
-                    disabled={uploading}
-                >
-                  <X className="h-4 w-4 text-[9px] text-red-500" />
-                  <span className="sr-only">Remove file</span>
-                </Button>
               </div>
+              <div className="overflow-hidden dark:text-white">
+                <p className="text-sm font-medium truncate">{file.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleRemoveFile}
+              disabled={uploading}
+            >
+              <X className="h-4 w-4 text-[9px] text-red-500" />
+              <span className="sr-only">Remove file</span>
+            </Button>
+          </div>
 
-              {uploading || success ? (
-                  <div className="space-y-2 dark:text-white">
-                    <Progress value={progress} className="h-5" />
-                    <div className="flex justify-between items-center text-xs">
-                      <div className="flex items-center">
-                        {success ? (
-                            "Upload complete"
-                        ) : (
-                            <>
+          {uploading || success ? (
+            <div className="space-y-2 dark:text-white">
+              <Progress value={progress} className="h-5" />
+              <div className="flex justify-between items-center text-xs">
+                <div className="flex items-center">
+                  {success ? (
+                    "Upload complete"
+                  ) : (
+                    <>
                       <span className="flex items-center">
                         Uploading & analyzing your log
-                        <span className="flex items-center ml-1">
+                        <span className="flex items-center mx-2">
                           <span className="animate-bounce [animation-delay:-0.3s]">
                             .
                           </span>
@@ -236,31 +236,31 @@ export function FileUpload({
                           </span>
                           <span className="animate-bounce">.</span>
                         </span>
-                        {progress}%
+                        {""} {progress}%
                       </span>
-                            </>
-                        )}
-                      </div>
-                      {success && <CheckCircle className="h-4 w-4 text-green-500" />}
-                    </div>
-                  </div>
-              ) : (
-                  <Button
-                      onClick={handleUpload}
-                      className="w-full mt-2 bg-brand-bright text-white hover:bg-brand-bright"
-                  >
-                    Upload File
-                  </Button>
-              )}
-
-              {error && (
-                  <div className="flex items-center text-destructive mt-2 text-xs">
-                    <AlertCircle className="h-3 w-3 mr-1" />
-                    {error}
-                  </div>
-              )}
+                    </>
+                  )}
+                </div>
+                {success && <CheckCircle className="h-4 w-4 text-green-500" />}
+              </div>
             </div>
-        )}
-      </div>
+          ) : (
+            <Button
+              onClick={handleUpload}
+              className="w-full mt-2 bg-brand-bright text-white dark:bg-brand-bright dark:text-white hover:bg-brand-bright dark:hover:bg-brand-bright"
+            >
+              Upload File
+            </Button>
+          )}
+
+          {error && (
+            <div className="flex items-center text-destructive mt-2 text-xs">
+              <AlertCircle className="h-3 w-3 mr-1" />
+              {error}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
