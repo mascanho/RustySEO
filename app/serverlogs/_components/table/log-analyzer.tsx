@@ -851,9 +851,9 @@ export function LogAnalyzer() {
                                   <div className="flex mb-2 space-x-2 items-center justify-between">
                                     <h4 className=" font-bold">User Agent</h4>
                                     {log.verified && (
-                                      <div className="flex items-center space-x-1 bg-red-400 px-2 text-xs rounded-md">
+                                      <div className="flex items-center space-x-1 bg-red-200 p-1 px-2 text-xs rounded-md">
                                         <BadgeCheck
-                                          className="text-blue-600 pr-1"
+                                          className="text-blue-700 pr-1"
                                           size={18}
                                         />
                                         {log?.crawler_type}
