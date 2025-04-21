@@ -34,7 +34,7 @@ const COLORS = [
 ];
 
 export default function WidgetLogs() {
-  const [activeTab, setActiveTab] = useState("FileTypes");
+  const [activeTab, setActiveTab] = useState("Filetypes");
   const { entries, overview } = useLogAnalysis();
   const [openDialogs, setOpenDialogs] = useState({});
 

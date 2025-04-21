@@ -9,12 +9,21 @@ import {
   Copy,
   CopyPlus,
   Download,
+  FileCode,
+  FileIcon,
   Filter,
   FlaskRound,
   Ghost,
   RefreshCw,
   Search,
   Waypoints,
+  Image,
+  FileVideo,
+  FileAudio,
+  FileType,
+  FileText,
+  Package,
+  FileType2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -76,6 +85,35 @@ const formatDate = (dateString: string) => {
     minute: "2-digit",
     second: "2-digit",
   }).format(date);
+};
+
+const getFileIcon = (path) => {
+  switch (path) {
+    case "HTML":
+      return <FileCode type="html" size={14} />;
+    case "Image":
+      return <Image size={14} />; // or <FileImage size={14} />
+    case "Video":
+      return <FileVideo size={14} />; // or <FileVideo size={14} />
+    case "Audio":
+      return <FileAudio size={14} />; // or <FileAudio size={14} />
+    case "PHP":
+      return <FileCode type="php" size={14} />; // or <PhpIcon size={14} />
+    case "TXT":
+      return <FileType size={14} />;
+    case "CSS":
+      return <FileCode type="css" size={14} />;
+    case "JS":
+      return <FileCode type="javascript" size={14} />;
+    case "Document": // PDF
+      return <FileText size={14} />;
+    case "Archive":
+      return <Package size={14} />; // or <FileZip size={14} />
+    case "Font":
+      return <FileType2 size={14} />;
+    default:
+      return <FileCode size={14} />; // Default file icon
+  }
 };
 
 // Get status code badge color
@@ -678,9 +716,14 @@ export function LogAnalyzer() {
                           <TableCell>{log?.browser}</TableCell>
                           <TableCell>{formatDate(log.timestamp)}</TableCell>
                           <TableCell className="max-w-[480px] truncate">
-                            {showOnTables && domain
-                              ? "https://" + domain + log.path
-                              : log?.path}
+                            <div className="flex items-center">
+                              <span className="mr-2">
+                                {getFileIcon(log.file_type)}
+                              </span>
+                              {showOnTables && domain
+                                ? "https://" + domain + log.path
+                                : log?.path}
+                            </div>
                           </TableCell>
                           <TableCell className="max-w-[480px] truncate">
                             <Badge variant={"outline"}>{log.file_type}</Badge>
@@ -704,7 +747,13 @@ export function LogAnalyzer() {
                                   : "bg-blue-100 dark:bg-blue-500 dark:text-white text-green-800  border-green-200"
                               }
                             >
-                              {log.crawler_type}
+                              {log.crawler_type}{" "}
+                              {log.verified && (
+                                <BadgeCheck
+                                  className="text-blue-800 pl-1"
+                                  size={18}
+                                />
+                              )}
                             </Badge>
                           </TableCell>
                         </TableRow>
