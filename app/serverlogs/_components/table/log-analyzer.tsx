@@ -620,8 +620,8 @@ export function LogAnalyzer() {
             <div className="relative w-full h-full overflow-auto">
               <Table className="h-full [&_tr]:p-10 logs">
                 <TableHeader>
-                  <TableRow className="p-10">
-                    <TableHead className="w-[80px]">#</TableHead>
+                  <TableRow>
+                    <TableHead className="w-[60px] text-center">#</TableHead>
                     <TableHead
                       className="cursor-pointer"
                       onClick={() => requestSort("ip")}
@@ -758,11 +758,11 @@ export function LogAnalyzer() {
                             );
                           }}
                         >
-                          <TableCell className="font-medium">
+                          <TableCell className="font-medium text-center">
                             {indexOfFirstItem + index + 1}
                           </TableCell>
 
-                          <TableCell>
+                          <TableCell className="w-[60px]">
                             <div className="flex items-center">
                               <Waypoints
                                 onClick={(e) => {
@@ -888,7 +888,10 @@ export function LogAnalyzer() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={10} className="h-24 text-center text-black/50">
+                      <TableCell
+                        colSpan={10}
+                        className="h-24 text-center text-black/50"
+                      >
                         No log entries found.
                       </TableCell>
                     </TableRow>
@@ -926,7 +929,9 @@ export function LogAnalyzer() {
               <PaginationPrevious
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 className={
-                  currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                  currentPage === 1
+                    ? "pointer-events-none opacity-50"
+                    : "cursor-pointer"
                 }
               />
             </PaginationItem>
@@ -986,7 +991,7 @@ export function LogAnalyzer() {
           </PaginationContent>
         </Pagination>
         <div>
-          <span className="flex justify-end text-muted-foreground w-[180px] flex-nowrap dark:text-white/50 text-right  pr-2.5 -mt-1.5 text-xs text-black/50">
+          <span className="flex justify-end text-muted-foreground w-[180px] flex-nowrap dark:text-white/50 text-right  pr-2.5 -mt-1.5 -ml-28 text-xs text-black/50">
             {indexOfFirstItem + 1}-
             {Math.min(
               indexOfLastItem,
