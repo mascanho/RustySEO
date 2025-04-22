@@ -436,8 +436,8 @@ export function LogAnalyzer() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              align="end"
-              className="w-56 bg-white dark:bg-brand-darker"
+              align="center"
+              className="w-48 m-0 bg-white dark:bg-brand-darker text-left"
             >
               <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -824,7 +824,7 @@ export function LogAnalyzer() {
                               className={
                                 log.crawler_type !== "Human"
                                   ? "bg-red-100 dark:bg-red-400 dark:text-white"
-                                  : "bg-blue-100 dark:bg-blue-500 dark:text-white text-green-800 border-green-200"
+                                  : "bg-blue-100 dark:bg-blue-500 dark:text-white text-blue-800 border-blue-200"
                               }
                             >
                               {log.crawler_type && log.crawler_type.length > 16
@@ -847,7 +847,7 @@ export function LogAnalyzer() {
                             >
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* User Agent */}
-                                <div className="flex flex-col max-w-[70rem] w-full">
+                                <div className="flex flex-col max-w-5xl">
                                   <div className="flex mb-2 space-x-2 items-center justify-between">
                                     <h4 className=" font-bold">User Agent</h4>
                                     {log.verified && (
