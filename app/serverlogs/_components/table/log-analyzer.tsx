@@ -746,7 +746,7 @@ export function LogAnalyzer() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {currentLogs.length > 0 ? (
+                  {filteredLogs.length > 0 ? (
                     currentLogs.map((log, index) => (
                       <>
                         <TableRow
