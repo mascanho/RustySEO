@@ -443,7 +443,7 @@ export function LogAnalyzer() {
               <DropdownMenuSeparator />
               {[200, 201, 204, 400, 401, 403, 404, 500].map((code) => (
                 <DropdownMenuCheckboxItem
-                  className="hover:bg-brand-blue hover:text-white"
+                  className="hover:bg-brand-blue active:text-black hover:text-white"
                   key={code}
                   checked={statusFilter.includes(code)}
                   onCheckedChange={(checked) => {
