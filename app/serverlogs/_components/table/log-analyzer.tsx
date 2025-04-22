@@ -751,7 +751,7 @@ export function LogAnalyzer() {
                       <>
                         <TableRow
                           key={`${log.ip}-${log.timestamp}-${index}`}
-                          className="group cursor-pointer"
+                          className="group cursor-pointer max-h-2"
                           onClick={() => {
                             setExpandedRow(
                               expandedRow === index ? null : index,
