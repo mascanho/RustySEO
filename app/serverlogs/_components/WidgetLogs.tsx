@@ -249,6 +249,12 @@ export default function WidgetLogs() {
                           style={{ color: COLORS[idx % COLORS.length] }}
                         >
                           {entry.value.toLocaleString()}{" "}
+                          <span className="px-1 py-[2px] -mr-1 bg-slate-500 rounded-md text-white ml-2">
+                            {Math.round(
+                              (Number(entry.value) / entries.length) * 100,
+                            )}
+                            %
+                          </span>{" "}
                         </span>
                       </div>
                     </DialogTrigger>
