@@ -111,9 +111,7 @@ export default function IPManager({ closeDialog }: IPManagerProps) {
     try {
       // Convert IP ranges to an array of strings
       const ranges = ipRanges.map((ip) => ip.range);
-
-      // Send to backend
-      await invoke("set_verified_ips", { ipRanges: ranges });
+      
 
       // Store in localStorage
       localStorage.setItem("google_verified_ips", JSON.stringify(ipRanges));
