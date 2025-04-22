@@ -888,7 +888,7 @@ export function LogAnalyzer() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={10} className="h-24 text-center">
+                      <TableCell colSpan={10} className="h-24 text-center text-black/50">
                         No log entries found.
                       </TableCell>
                     </TableRow>
