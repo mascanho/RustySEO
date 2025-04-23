@@ -19,7 +19,7 @@
 #### Deep Crawl (Page Bulk)
 ![Logo](assets/hero2.png)
 
-#### Log Analyser (Page Bulk)
+#### Log Analyser (Apache & Nginx)
 ![Logo](assets/logs.png)
 
 ------------------------
