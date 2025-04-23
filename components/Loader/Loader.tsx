@@ -93,7 +93,7 @@ const Loader = () => {
   }
 
   return (
-    <div className="fixed bg-black inset-0 flex items-center justify-center z-50 h-screen">
+    <div className="fixed bg-black inset-0 flex items-center justify-center z-[999999999] h-screen">
       <div className="fixed inset-0 bg-black opacity-50"></div>
       <div className="relative z-10 flex flex-col bg-whitw items-center">
         <div className="w-16 h-16 border-t-4 border-blue-500 border-solid rounded-full animate-spin"></div>

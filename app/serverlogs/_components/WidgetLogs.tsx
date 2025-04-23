@@ -221,7 +221,7 @@ export default function WidgetLogs() {
               </PieChart>
 
               <div
-                className={`grid grid-cols-1 ${activeTab === "Status Codes" ? "grid-cols-3" : "grid-cols-2"} gap-2 w-full max-w-md pl-4`}
+                className={`grid grid-cols-1 ${activeTab === "Status Codes" ? "grid-cols-3 max-w-xl" : "grid-cols-2"} gap-2 w-full max-w-md pl-4`}
               >
                 {chartData.map((entry, idx) => (
                   <Dialog

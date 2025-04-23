@@ -298,7 +298,14 @@ export function LogAnalyzer() {
   // Set the Zustand store with the current filtered logs
   useEffect(() => {
     useCurrentLogs.getState().setCurrentLogs(filteredLogs);
-  }, [currentLogs, fileTypeFilter, botFilter, methodFilter, statusFilter]);
+  }, [
+    currentLogs,
+    fileTypeFilter,
+    botFilter,
+    methodFilter,
+    statusFilter,
+    filteredLogs,
+  ]);
 
   // Export logs as CSV
   const exportCSV = async () => {
@@ -436,14 +443,14 @@ export function LogAnalyzer() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              align="end"
-              className="w-56 bg-white dark:bg-brand-darker"
+              align="center"
+              className="w-48 m-0 bg-white dark:bg-brand-darker text-left"
             >
               <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {[200, 201, 204, 400, 401, 403, 404, 500].map((code) => (
                 <DropdownMenuCheckboxItem
-                  className="hover:bg-brand-blue hover:text-white"
+                  className="hover:bg-brand-blue active:text-black hover:text-white"
                   key={code}
                   checked={statusFilter.includes(code)}
                   onCheckedChange={(checked) => {
@@ -533,7 +540,7 @@ export function LogAnalyzer() {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="bg-white dark:border-brand-dark dark:text-white dark:active:bg-brand-bright  dark:bg-brand-darker"
+              className="bg-white dark:border-brand-dark dark:text-white   dark:bg-brand-darker"
             >
               <DropdownMenuLabel>Filter by File Type</DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -552,7 +559,7 @@ export function LogAnalyzer() {
               ].map((fileType) => (
                 <DropdownMenuCheckboxItem
                   className={
-                    "bg-white active:bg-gray-100 hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                    "bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
                   }
                   key={fileType}
                   checked={fileTypeFilter.includes(fileType)}
@@ -585,7 +592,7 @@ export function LogAnalyzer() {
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="bot">Bots</SelectItem>
-              <SelectItem value="Human">Humans</SelectItem>
+              <SelectItem value="Human">Human</SelectItem>
             </SelectContent>
           </Select>
 
@@ -620,8 +627,8 @@ export function LogAnalyzer() {
             <div className="relative w-full h-full overflow-auto">
               <Table className="h-full [&_tr]:p-10 logs">
                 <TableHeader>
-                  <TableRow className="p-10">
-                    <TableHead className="w-[80px]">#</TableHead>
+                  <TableRow>
+                    <TableHead className="w-[60px] text-center">#</TableHead>
                     <TableHead
                       className="cursor-pointer"
                       onClick={() => requestSort("ip")}
@@ -746,23 +753,23 @@ export function LogAnalyzer() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {currentLogs.length > 0 ? (
+                  {filteredLogs.length > 0 ? (
                     currentLogs.map((log, index) => (
                       <>
                         <TableRow
                           key={`${log.ip}-${log.timestamp}-${index}`}
-                          className="group cursor-pointer"
+                          className="group cursor-pointer max-h-2"
                           onClick={() => {
                             setExpandedRow(
                               expandedRow === index ? null : index,
                             );
                           }}
                         >
-                          <TableCell className="font-medium">
+                          <TableCell className="font-medium text-center">
                             {indexOfFirstItem + index + 1}
                           </TableCell>
 
-                          <TableCell>
+                          <TableCell className="w-[60px]">
                             <div className="flex items-center">
                               <Waypoints
                                 onClick={(e) => {
@@ -792,8 +799,10 @@ export function LogAnalyzer() {
                               {log.method}
                             </Badge>
                           </TableCell>
-                          <TableCell>{log?.browser}</TableCell>
-                          <TableCell>{formatDate(log.timestamp)}</TableCell>
+                          <TableCell width={9}>{log?.browser}</TableCell>
+                          <TableCell className="max-w-44">
+                            {formatDate(log.timestamp)}
+                          </TableCell>
                           <TableCell className="max-w-[480px]  truncate mr-2 ">
                             <span
                               className="mr-1 inline-block"
@@ -824,7 +833,7 @@ export function LogAnalyzer() {
                               className={
                                 log.crawler_type !== "Human"
                                   ? "bg-red-100 dark:bg-red-400 dark:text-white"
-                                  : "bg-blue-100 dark:bg-blue-500 dark:text-white text-green-800 border-green-200"
+                                  : "bg-blue-100 dark:bg-blue-500 dark:text-white text-blue-800 border-blue-200"
                               }
                             >
                               {log.crawler_type && log.crawler_type.length > 16
@@ -847,13 +856,13 @@ export function LogAnalyzer() {
                             >
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* User Agent */}
-                                <div className="flex flex-col max-w-[70rem] w-full">
+                                <div className="flex flex-col max-w-5xl">
                                   <div className="flex mb-2 space-x-2 items-center justify-between">
                                     <h4 className=" font-bold">User Agent</h4>
                                     {log.verified && (
-                                      <div className="flex items-center space-x-1 bg-red-400 px-2 text-xs rounded-md">
+                                      <div className="flex items-center space-x-1 bg-red-200 dark:bg-red-400 p-1 px-2 text-xs rounded-md">
                                         <BadgeCheck
-                                          className="text-blue-600 pr-1"
+                                          className="text-blue-700 pr-1"
                                           size={18}
                                         />
                                         {log?.crawler_type}
@@ -888,7 +897,10 @@ export function LogAnalyzer() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={10} className="h-24 text-center">
+                      <TableCell
+                        colSpan={10}
+                        className="h-24 text-center text-black/50 dark:text-white/50"
+                      >
                         No log entries found.
                       </TableCell>
                     </TableRow>
@@ -926,7 +938,9 @@ export function LogAnalyzer() {
               <PaginationPrevious
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 className={
-                  currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                  currentPage === 1
+                    ? "pointer-events-none opacity-50"
+                    : "cursor-pointer"
                 }
               />
             </PaginationItem>
@@ -986,7 +1000,7 @@ export function LogAnalyzer() {
           </PaginationContent>
         </Pagination>
         <div>
-          <span className="flex justify-end text-muted-foreground w-[180px] flex-nowrap dark:text-white/50 text-right  pr-2.5 -mt-1.5 text-xs text-black/50">
+          <span className="flex justify-end text-muted-foreground w-[180px] flex-nowrap dark:text-white/50 text-right  pr-2.5 -mt-1.5 -ml-28 text-xs text-black/50">
             {indexOfFirstItem + 1}-
             {Math.min(
               indexOfLastItem,

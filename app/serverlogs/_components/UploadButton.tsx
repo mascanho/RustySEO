@@ -6,7 +6,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Settings } from "lucide-react";
+import { Menu, Plus, Settings } from "lucide-react";
 import { FileUpload } from "./FileUpload";
 import { useState } from "react";
 import TaxonomyManager from "./TaxonomyManager";
@@ -32,6 +32,8 @@ function UploadButton() {
           <FileUpload closeDialog={() => setUploadOpen(false)} />
         </DialogContent>
       </Dialog>
+
+      <Menu className="hidden" />
 
       {/* Settings Button */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>

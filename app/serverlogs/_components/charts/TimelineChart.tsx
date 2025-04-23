@@ -150,7 +150,7 @@ export function TimelineChart() {
                 className="w-2 h-2 rounded-full mr-2"
                 style={{ backgroundColor: COLORS.crawler }}
               />
-              <span className="text-xs">Crawler: {payload[0].value}</span>
+              <span className="text-xs">Robots: {payload[0].value}</span>
             </div>
           </div>
         </div>
