@@ -634,7 +634,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                           <TableCell className="font-medium text-center max-w-[40px]">
                             {indexOfFirstItem + index + 1}
                           </TableCell>
-                          <TableCell className="max-w-[160px] truncate">
+                          <TableCell className="max-w-[160px] w-[180px] truncate">
                             <div className="flex items-center gap-1">
                               {log.ip}
                             </div>
@@ -659,8 +659,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                             </Badge>
                           </TableCell>
                           <TableCell
-                            // width={500}
-                            className="items-center inline-block max-w-[720px] truncate"
+                            width={500}
+                            className="items-center inline-block max-w-[320px] truncate"
                           >
                             <span className="mr-2 inline-block">
                               {getFileIcon(log.file_type)}
@@ -710,10 +710,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                   <div className="flex mb-2 space-x-2 items-center justify-between">
                                     <h4 className=" font-bold">User Agent</h4>
                                     {log.verified && (
-                                      <div className="flex items-center space-x-1 py-1 bg-red-200 px-2 text-xs rounded-md">
+                                      <div className="flex items-center space-x-1 py-1 bg-red-200 dark:bg-red-400 px-2 text-xs rounded-md">
                                         <BadgeCheck
                                           size={18}
-                                          className="text-blue-800 pr-1 "
+                                          className="text-blue-800 pr-1 dark:text-blue-900 "
                                         />
                                         {log?.crawler_type}
                                       </div>
