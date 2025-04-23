@@ -298,7 +298,14 @@ export function LogAnalyzer() {
   // Set the Zustand store with the current filtered logs
   useEffect(() => {
     useCurrentLogs.getState().setCurrentLogs(filteredLogs);
-  }, [currentLogs, fileTypeFilter, botFilter, methodFilter, statusFilter]);
+  }, [
+    currentLogs,
+    fileTypeFilter,
+    botFilter,
+    methodFilter,
+    statusFilter,
+    filteredLogs,
+  ]);
 
   // Export logs as CSV
   const exportCSV = async () => {
@@ -585,7 +592,7 @@ export function LogAnalyzer() {
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="bot">Bots</SelectItem>
-              <SelectItem value="Human">Humans</SelectItem>
+              <SelectItem value="Human">Human</SelectItem>
             </SelectContent>
           </Select>
 
@@ -792,8 +799,10 @@ export function LogAnalyzer() {
                               {log.method}
                             </Badge>
                           </TableCell>
-                          <TableCell>{log?.browser}</TableCell>
-                          <TableCell>{formatDate(log.timestamp)}</TableCell>
+                          <TableCell width={9}>{log?.browser}</TableCell>
+                          <TableCell className="max-w-44">
+                            {formatDate(log.timestamp)}
+                          </TableCell>
                           <TableCell className="max-w-[480px]  truncate mr-2 ">
                             <span
                               className="mr-1 inline-block"

@@ -5,7 +5,15 @@ import {
   BadgeCheck,
   ChevronDown,
   Download,
+  FileAudio,
+  FileCode,
+  FileText,
+  FileType,
+  FileType2,
+  FileVideo,
   Filter,
+  Image,
+  Package,
   RefreshCw,
   Search,
 } from "lucide-react";
@@ -92,6 +100,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(100);
   const [methodFilter, setMethodFilter] = useState<string[]>([]);
+  const [fileTypeFilter, setFileTypeFilter] = useState<string[]>([]);
   const [botFilter, setBotFilter] = useState<string | null>("all");
   const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
   const [sortConfig, setSortConfig] = useState<{
@@ -99,6 +108,23 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     direction: "ascending" | "descending";
   } | null>(null);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const [domain, setDomain] = useState("");
+  const [showOnTables, setShowOnTables] = useState(false);
+
+  // GET THE domain from the local storage to use on the table to complement the path
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedDomain = localStorage.getItem("domain");
+      if (storedDomain) {
+        setDomain(storedDomain);
+      }
+
+      const isShowing = localStorage.getItem("showOnTables");
+      if (isShowing === "true") {
+        setShowOnTables(true);
+      }
+    }
+  }, [data.length]);
 
   useEffect(() => {
     if (!data?.totals?.google_bot_page_frequencies) return;
@@ -135,6 +161,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
 
     if (methodFilter.length > 0) {
       result = result.filter((log) => methodFilter.includes(log.method));
+    }
+
+    if (fileTypeFilter.length > 0) {
+      result = result.filter((log) => fileTypeFilter.includes(log.file_type));
     }
 
     if (botFilter !== null) {
@@ -179,6 +209,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     verifiedFilter,
     sortConfig,
     initialLogs,
+    fileTypeFilter,
   ]);
 
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -264,6 +295,36 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     }
   };
 
+  // Get the fileType and add the icon
+  const getFileIcon = (path) => {
+    switch (path) {
+      case "HTML":
+        return <FileCode type="html" size={14} />;
+      case "Image":
+        return <Image size={14} />;
+      case "Video":
+        return <FileVideo size={14} />;
+      case "Audio":
+        return <FileAudio size={14} />;
+      case "PHP":
+        return <FileCode type="php" size={14} />;
+      case "TXT":
+        return <FileType size={14} />;
+      case "CSS":
+        return <FileCode type="css" size={14} />;
+      case "JS":
+        return <FileCode type="javascript" size={14} />;
+      case "Document": // PDF
+        return <FileText size={14} />;
+      case "Archive":
+        return <Package size={14} />;
+      case "Font":
+        return <FileType2 size={14} />;
+      default:
+        return <FileCode size={14} />;
+    }
+  };
+
   return (
     <div className="space-y-4 h-full pb-0 -mb-4">
       <div className="flex flex-col md:flex-row justify-between -mb-4 p-1">
@@ -314,6 +375,63 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                   }}
                 >
                   {method}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* FileType Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark"
+              >
+                <Filter className="h-4 w-4" />
+                File Type
+                {fileTypeFilter.length > 0 && (
+                  <Badge variant="secondary" className="ml-1">
+                    {fileTypeFilter.length}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-white dark:border-brand-dark dark:text-white   dark:bg-brand-darker"
+            >
+              <DropdownMenuLabel>Filter by File Type</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {[
+                "HTML",
+                "CSS",
+                "JS",
+                "PHP",
+                "TXT",
+                "Image",
+                "Video",
+                "Audio",
+                "Document",
+                "Archive",
+                "Font",
+              ].map((fileType) => (
+                <DropdownMenuCheckboxItem
+                  className={
+                    "bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                  }
+                  key={fileType}
+                  checked={fileTypeFilter.includes(fileType)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setFileTypeFilter([...fileTypeFilter, fileType]);
+                    } else {
+                      setFileTypeFilter(
+                        fileTypeFilter.filter((m) => m !== fileType),
+                      );
+                    }
+                  }}
+                >
+                  {fileType}
                 </DropdownMenuCheckboxItem>
               ))}
             </DropdownMenuContent>
@@ -409,7 +527,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="cursor-pointer max-w-[20px] truncate"
                       onClick={() => requestSort("timestamp")}
                     >
                       Timestamp
@@ -424,7 +542,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer max-w-[40px] text-center"
+                      className="cursor-pointer w-[90px] text-center"
                       onClick={() => requestSort("method")}
                     >
                       Method
@@ -521,10 +639,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                               {log.ip}
                             </div>
                           </TableCell>
-                          <TableCell width={170}>
+                          <TableCell width={180}>
                             {formatDate(log.timestamp)}
                           </TableCell>
-                          <TableCell className="text-center max-w-[40px]">
+                          <TableCell className="text-center max-w-[150px]">
                             <Badge
                               variant="outline"
                               className={
@@ -540,34 +658,44 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                               {log.method}
                             </Badge>
                           </TableCell>
-                          <TableCell className="max-w-[380px] truncate">
-                            {log.path}
+                          <TableCell
+                            // width={500}
+                            className="items-center inline-block max-w-[720px] truncate"
+                          >
+                            <span className="mr-2 inline-block">
+                              {getFileIcon(log.file_type)}
+                            </span>
+                            {showOnTables && domain
+                              ? "https://" + domain + log.path
+                              : log?.path}
                           </TableCell>
-                          <TableCell className="max-w-[350px] truncate">
+                          <TableCell className="min-w-[30px] truncate">
                             <Badge variant="outline">{log.file_type}</Badge>
                           </TableCell>
                           <TableCell className="text-center">
                             {formatResponseSize(log.response_size)}
                           </TableCell>
-                          <TableCell size={60} className="text-center">
+                          <TableCell
+                            size={80}
+                            className="text-center min-w-[90px]"
+                          >
                             {log.frequency}
                           </TableCell>
                           <TableCell width={100} className="max-w-[100px]">
-                           
-<Badge
-  variant="outline"
-  className={
-    log.crawler_type !== "Human"
-      ? "bg-red-300 dark:bg-red-400 border-purple-200 text-black dark:text-white"
-      : "bg-green-100 text-green-800 border-green-200"
-  }
->
-  {log.crawler_type.startsWith("Goo")
-    ? "Google Bot"
-    : log.crawler_type.length > 20
-      ? log.crawler_type.slice(0, 10) + "..."
-      : log.crawler_type}
-</Badge>
+                            <Badge
+                              variant="outline"
+                              className={
+                                log.crawler_type !== "Human"
+                                  ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
+                                  : "bg-green-100 text-green-800 border-green-200"
+                              }
+                            >
+                              {log.crawler_type.startsWith("Goo")
+                                ? "Google Bot"
+                                : log.crawler_type.length > 20
+                                  ? log.crawler_type.slice(0, 10) + "..."
+                                  : log.crawler_type}
+                            </Badge>
                           </TableCell>
                         </TableRow>
                         {expandedRow === index && (
@@ -582,8 +710,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                   <div className="flex mb-2 space-x-2 items-center justify-between">
                                     <h4 className=" font-bold">User Agent</h4>
                                     {log.verified && (
-                                      <div className="flex items-center space-x-1 py-1 bg-red-300 px-2 text-xs rounded-md">
-                                        <BadgeCheck size={18} className="text-blue-800 pr-1 " />
+                                      <div className="flex items-center space-x-1 py-1 bg-red-200 px-2 text-xs rounded-md">
+                                        <BadgeCheck
+                                          size={18}
+                                          className="text-blue-800 pr-1 "
+                                        />
                                         {log?.crawler_type}
                                       </div>
                                     )}
