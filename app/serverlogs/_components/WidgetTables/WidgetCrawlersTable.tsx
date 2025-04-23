@@ -392,7 +392,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
               <Table className="h-full">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[80px]">#</TableHead>
+                    <TableHead className="w-[80px] text-center">#</TableHead>
                     <TableHead
                       className="cursor-pointer w-[80px] truncate"
                       onClick={() => requestSort("ip")}
@@ -424,7 +424,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="cursor-pointer max-w-[40px] text-center"
                       onClick={() => requestSort("method")}
                     >
                       Method
@@ -484,7 +484,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer min-w-10 max-w-[100px] text-center"
+                      className="cursor-pointer min-w-10 max-w-[50px] text-center"
                       onClick={() => requestSort("frequency")}
                     >
                       Frequency
@@ -513,7 +513,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                             setExpandedRow(expandedRow === index ? null : index)
                           }
                         >
-                          <TableCell className="font-medium">
+                          <TableCell className="font-medium text-center max-w-[40px]">
                             {indexOfFirstItem + index + 1}
                           </TableCell>
                           <TableCell className="max-w-[160px] truncate">
@@ -521,10 +521,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                               {log.ip}
                             </div>
                           </TableCell>
-                          <TableCell width={200}>
+                          <TableCell width={170}>
                             {formatDate(log.timestamp)}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="text-center max-w-[40px]">
                             <Badge
                               variant="outline"
                               className={
@@ -543,28 +543,31 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                           <TableCell className="max-w-[380px] truncate">
                             {log.path}
                           </TableCell>
-                          <TableCell className="max-w-[480px] truncate">
+                          <TableCell className="max-w-[350px] truncate">
                             <Badge variant="outline">{log.file_type}</Badge>
                           </TableCell>
                           <TableCell className="text-center">
                             {formatResponseSize(log.response_size)}
                           </TableCell>
-                          <TableCell className="text-center">
+                          <TableCell size={60} className="text-center">
                             {log.frequency}
                           </TableCell>
                           <TableCell width={100} className="max-w-[100px]">
-                            <Badge
-                              variant="outline"
-                              className={
-                                log.crawler_type !== "Human"
-                                  ? "bg-purple-50 text-purple-800 border-purple-200"
-                                  : "bg-green-100 text-green-800 border-green-200"
-                              }
-                            >
-                              {log.crawler_type.length > 20
-                                ? log.crawler_type.slice(0, 10) + "..."
-                                : log.crawler_type}
-                            </Badge>
+                           
+<Badge
+  variant="outline"
+  className={
+    log.crawler_type !== "Human"
+      ? "bg-red-300 dark:bg-red-400 border-purple-200 text-black dark:text-white"
+      : "bg-green-100 text-green-800 border-green-200"
+  }
+>
+  {log.crawler_type.startsWith("Goo")
+    ? "Google Bot"
+    : log.crawler_type.length > 20
+      ? log.crawler_type.slice(0, 10) + "..."
+      : log.crawler_type}
+</Badge>
                           </TableCell>
                         </TableRow>
                         {expandedRow === index && (
@@ -579,8 +582,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                   <div className="flex mb-2 space-x-2 items-center justify-between">
                                     <h4 className=" font-bold">User Agent</h4>
                                     {log.verified && (
-                                      <div className="flex items-center space-x-1 bg-red-100 px-2 text-xs rounded-md">
-                                        <BadgeCheck className="text-blue-400 pr-1" />
+                                      <div className="flex items-center space-x-1 py-1 bg-red-300 px-2 text-xs rounded-md">
+                                        <BadgeCheck size={18} className="text-blue-800 pr-1 " />
                                         {log?.crawler_type}
                                       </div>
                                     )}
@@ -634,7 +637,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
             value={itemsPerPage.toString()}
             onValueChange={(value) => setItemsPerPage(Number(value))}
           >
-            <SelectTrigger className="w-[70px] text-xs h-6 mr-2 z-50">
+            <SelectTrigger className="w-[70px] text-xs dark:text-white/50 h-6 mr-2 z-50">
               <SelectValue placeholder="100" />
             </SelectTrigger>
             <SelectContent>
@@ -708,7 +711,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
           </PaginationContent>
         </Pagination>
         <div>
-          <span className="flex justify-end text-muted-foreground w-[180px] flex-nowrap text-right pr-2.5 -mt-1.5 text-xs text-black/50">
+          <span className="flex justify-end text-muted-foreground dark:text-white/50 w-[180px] flex-nowrap -ml-16 text-right pr-2.5 -mt-1.5 text-xs text-black/50">
             {indexOfFirstItem + 1}-
             {Math.min(indexOfLastItem, filteredLogs.length)} of{" "}
             {filteredLogs.length} logs
