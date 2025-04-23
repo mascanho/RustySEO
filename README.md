@@ -19,6 +19,9 @@
 #### Deep Crawl (Page Bulk)
 ![Logo](assets/hero2.png)
 
+#### Deep Crawl (Page Bulk)
+![Logo](assets/logs.png)
+
 ------------------------
 
 ## RustySEO - A cross-platform SEO toolkit
