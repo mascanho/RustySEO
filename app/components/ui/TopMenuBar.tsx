@@ -566,7 +566,7 @@ const TopMenuBar = () => {
               <MenubarSeparator />
               <MenubarItem onClick={() => router.push("/serverlogs")}>
                 <GoFileDiff className="mr-2 font-semibold" />
-                Log Checker
+                Log Analyser
               </MenubarItem>
             </MenubarContent>
           </MenubarMenu>

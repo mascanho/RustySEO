@@ -27,7 +27,7 @@ function MenuDrawer() {
   const options = [
     { name: "Shallow Crawler", route: "/" },
     { name: "Deep Crawler", route: "/global" },
-    { name: "Log Analyzer", route: "/serverlogs" },
+    { name: "Log Analyser", route: "/serverlogs" },
   ];
 
   useEffect(() => {
