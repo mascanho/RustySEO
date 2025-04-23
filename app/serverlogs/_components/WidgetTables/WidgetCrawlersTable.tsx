@@ -639,7 +639,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                               {log.ip}
                             </div>
                           </TableCell>
-                          <TableCell width={180}>
+                          <TableCell className="w-[200px]">
                             {formatDate(log.timestamp)}
                           </TableCell>
                           <TableCell className="text-center max-w-[150px]">
@@ -658,10 +658,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                               {log.method}
                             </Badge>
                           </TableCell>
-                          <TableCell
-                            width={500}
-                            className="items-center inline-block max-w-[320px] truncate"
-                          >
+                          <TableCell className="inline-block truncate max-w-[600px]">
                             <span className="mr-2 inline-block">
                               {getFileIcon(log.file_type)}
                             </span>
