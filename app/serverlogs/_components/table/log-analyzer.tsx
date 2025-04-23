@@ -533,7 +533,7 @@ export function LogAnalyzer() {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="bg-white dark:border-brand-dark dark:text-white dark:active:bg-brand-bright  dark:bg-brand-darker"
+              className="bg-white dark:border-brand-dark dark:text-white   dark:bg-brand-darker"
             >
               <DropdownMenuLabel>Filter by File Type</DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -552,7 +552,7 @@ export function LogAnalyzer() {
               ].map((fileType) => (
                 <DropdownMenuCheckboxItem
                   className={
-                    "bg-white active:bg-gray-100 hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                    "bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
                   }
                   key={fileType}
                   checked={fileTypeFilter.includes(fileType)}
