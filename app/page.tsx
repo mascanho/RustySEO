@@ -887,13 +887,15 @@ const Home: React.FC<HomeProps> = () => {
               }}
             >
               <div className="flex justify-center items-center w-full h-screen overflow-auto">
-                <iframe
-                  width="1920"
-                  height="900"
-                  src={powerBiUrl}
-                  frameBorder="0"
-                  allowFullScreen={true}
-                ></iframe>
+                {powerBiUrl ? (
+                  <iframe
+                    width="1920"
+                    height="900"
+                    src={powerBiUrl}
+                    frameBorder="0"
+                    allowFullScreen={true}
+                  ></iframe>
+                ) : null}
               </div>
             </Tabs.Panel>
             <Tabs.Panel value="content">
