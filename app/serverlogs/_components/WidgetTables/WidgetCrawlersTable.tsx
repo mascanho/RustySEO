@@ -259,7 +259,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
       log.ip || "",
       log.timestamp || "",
       log.method || "",
-      log.path || "",
+      showOnTables ? "https://" + domain + log.path : log.path || "",
       log.file_type || "",
       log.response_size || "",
       log.frequency || "",

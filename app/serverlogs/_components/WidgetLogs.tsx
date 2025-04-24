@@ -260,7 +260,7 @@ export default function WidgetLogs() {
                             <Tabs.Tab value="overview">
                               Frequency Table
                             </Tabs.Tab>
-                            <Tabs.Tab value="charts">Charts</Tabs.Tab>
+                            {/* <Tabs.Tab value="charts">Charts</Tabs.Tab> */}
                           </Tabs.List>
 
                           <Tabs.Panel value="overview">
