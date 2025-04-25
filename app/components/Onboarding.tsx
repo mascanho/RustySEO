@@ -241,7 +241,7 @@ export default function Onboarding({ onComplete }) {
                       </div>
                       <div className="flex-1 flex justify-center items-center h-full">
                         <div
-                          className={`${currentStep === 1 ? "w-48" : " w-80"} h-auto relative rounded-lg overflow-hidden`}
+                          className={`${currentStep === 1 ? "w-40" : " w-80"} h-auto relative rounded-lg overflow-hidden`}
                         >
                           <img
                             src={
