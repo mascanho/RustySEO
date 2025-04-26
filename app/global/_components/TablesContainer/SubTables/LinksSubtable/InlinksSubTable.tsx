@@ -218,7 +218,7 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
               style={{
                 textAlign: "left",
                 position: "relative",
-                width: "300px",
+                width: "400px",
               }}
             >
               Absolute Link
@@ -227,7 +227,7 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
               style={{
                 textAlign: "center",
                 position: "relative",
-                width: "20px",
+                width: "60px",
               }}
             >
               Status Code

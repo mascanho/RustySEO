@@ -174,9 +174,9 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
             </TableHead>
             <TableHead
               style={{
-                textAlign: "left",
+                textAlign: "center",
                 position: "relative",
-                width: "300px",
+                width: "20px",
               }}
             >
               Status Code
@@ -195,7 +195,7 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
                     {index + 1}
                   </TableCell>
                   <TableCell
-                    style={{ textAlign: "left", width: "100px" }}
+                    style={{ textAlign: "left", width: "300px" }}
                     className="pl-3 border"
                   >
                     {anchorItem.anchor_text}
@@ -207,8 +207,7 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
                     {anchorItem.url}
                   </TableCell>
                   <TableCell
-                    style={{ textAlign: "left" }}
-                    className={`pl-3 border font-semibold ${
+                    className={`border text-center font-semibold ${
                       anchorItem.status === 200
                         ? "text-green-700"
                         : "text-red-500"

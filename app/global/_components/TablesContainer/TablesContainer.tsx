@@ -340,7 +340,7 @@ export default function Home() {
           style={{ height: `${bottomTableHeight}px`, minHeight: "100px" }}
         >
           <Tabs value={activeBottomTab} onValueChange={setActiveBottomTab}>
-            <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t  bg-slate-50 rounded-none sticky top-0 -z-0  ">
+            <TabsList className="w-full justify-start dark:bg-brand-darker  dark:border-brand-dark border-t  bg-slate-50 rounded-none sticky top-0 -z-0  ">
               <TabsTrigger value="details" className="rounded-t-md">
                 Details
               </TabsTrigger>
