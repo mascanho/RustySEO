@@ -537,7 +537,7 @@ const LinksTable = ({
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark h-6"
+              className="flex gap-2 bg-trasnparent font-normal dark:bg-brand-darker dark:text-white dark:border-brand-dark h-6 w-40"
             >
               <Filter size={2} className="h-3 w-3 text-xs p-[2px]" />
               Status
@@ -549,14 +549,14 @@ const LinksTable = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            align="center"
-            className="w-48 m-0 bg-white dark:bg-brand-darker dark:text-white text-left dark:border-brand-dark"
+            align="left"
+            className="w-44 ml-0 text-center m-0 bg-white dark:bg-brand-darker dark:text-white  dark:border-brand-dark"
           >
             <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {[200, 201, 204, 400, 401, 403, 404, 500].map((code) => (
               <DropdownMenuCheckboxItem
-                className="hover:bg-brand-blue active:text-black hover:text-white dark:text-white"
+                className="hover:bg-brand-blue  text-left active:text-black hover:text-white dark:text-whe"
                 key={code}
                 checked={statusFilter?.includes(code)}
                 onCheckedChange={(checked) => {

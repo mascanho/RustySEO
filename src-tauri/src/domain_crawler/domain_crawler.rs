@@ -564,5 +564,16 @@ pub async fn crawl_domain(
         "Crawl completed with {} unique results",
         unique_results.len()
     );
+
+    match database::create_diff_tables() {
+        Ok(()) => println!("Successfully created diff tables"),
+        Err(e) => eprintln!("Failed to create diff tables: {}", e),
+    };
+
+    match database::clone_batched_crawl_into_persistent_db().await {
+        Ok(()) => println!("Successfully cloned batched crawl into persistent db"),
+        Err(e) => eprintln!("Failed to clone batched crawl into persistent db: {}", e),
+    }
+
     Ok(unique_results)
 }

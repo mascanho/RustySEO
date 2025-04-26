@@ -146,13 +146,15 @@ pub async fn generate_links_table_xlsx_command(data: Vec<Value>) -> Result<Vec<u
     }
 }
 
+// GET THE DIFFERENCES BETWWEN THE CRAWLS
 #[tauri::command]
-pub async fn analyse_diffs_command() -> Result<(), String> {
-    match analyse_diffs().await {
-        Ok(file) => Ok(file),
-        Err(e) => {
-            eprintln!("Error: {}", e);
-            Err(e.to_string())
-        }
-    }
+pub async fn get_url_diff_command() -> Result<(Vec<String>, Vec<String>), String> {
+    database::analyse_diffs().await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn clone_crawl_data_command() -> Result<(), String> {
+    database::clone_batched_crawl_into_persistent_db()
+        .await
+        .map_err(|e| e.to_string())
 }
