@@ -431,7 +431,7 @@ export function LogAnalyzer() {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark"
+                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark "
               >
                 <Filter className="h-4 w-4" />
                 Status
@@ -444,13 +444,13 @@ export function LogAnalyzer() {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="center"
-              className="w-48 m-0 bg-white dark:bg-brand-darker text-left"
+              className="w-48 m-0 bg-white dark:bg-brand-darker text-left dark:text-white dark:border-brand-dark"
             >
               <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {[200, 201, 204, 400, 401, 403, 404, 500].map((code) => (
                 <DropdownMenuCheckboxItem
-                  className="hover:bg-brand-blue active:text-black hover:text-white"
+                  className="hover:bg-brand-blue active:text-black hover:text-white dark:text-white"
                   key={code}
                   checked={statusFilter.includes(code)}
                   onCheckedChange={(checked) => {

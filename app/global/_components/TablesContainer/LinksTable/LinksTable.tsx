@@ -550,13 +550,13 @@ const LinksTable = ({
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="center"
-            className="w-48 m-0 bg-white dark:bg-brand-darker text-left"
+            className="w-48 m-0 bg-white dark:bg-brand-darker dark:text-white text-left dark:border-brand-dark"
           >
             <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {[200, 201, 204, 400, 401, 403, 404, 500].map((code) => (
               <DropdownMenuCheckboxItem
-                className="hover:bg-brand-blue active:text-black hover:text-white"
+                className="hover:bg-brand-blue active:text-black hover:text-white dark:text-white"
                 key={code}
                 checked={statusFilter?.includes(code)}
                 onCheckedChange={(checked) => {
