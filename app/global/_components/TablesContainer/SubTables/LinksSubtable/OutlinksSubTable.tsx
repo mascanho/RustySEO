@@ -176,7 +176,7 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
               style={{
                 textAlign: "center",
                 position: "relative",
-                width: "20px",
+                width: "60px",
               }}
             >
               Status Code

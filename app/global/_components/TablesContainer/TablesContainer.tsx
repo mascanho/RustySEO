@@ -174,7 +174,7 @@ export default function Home() {
             anchor: statusInfo.anchor_text || "", // Use anchor_text from statusInfo
             status: statusInfo.status || null,
             error: statusInfo.error || null,
-            page: item?.page || null, // Use item.page as in original
+            page: item?.url || null, // Use item.page as in original
           });
         }
       });
@@ -182,6 +182,7 @@ export default function Home() {
 
     return linksWithAnchors;
   }, [debouncedCrawlData]);
+
   // FILTER THE KEYWORDS, make them as value and the url as key
   const filteredKeywords = useMemo(() => {
     const urlKeywordsArray = []; // Array to store objects with URLs and keywords
