@@ -13,6 +13,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   initialColumnWidths,
@@ -28,6 +30,9 @@ import { toast } from "sonner";
 import { writeFile } from "@tauri-apps/plugin-fs";
 import { save } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Filter } from "lucide-react";
 
 interface TableCrawlProps {
   rows: Array<{
@@ -300,6 +305,19 @@ const LinksTable = ({
   );
   const { isGeneratingExcel, setIsGeneratingExcel, setIssuesView } =
     useGlobalCrawlStore();
+  const [statusFilter, setStatusFilter] = useState<number[]>([]);
+
+  // Get status code badge color
+  const getStatusCodeColor = (code: number) => {
+    if (code >= 200 && code < 300)
+      return "bg-green-100 border-green-200 text-green-800 dark:bg-green-700 hover:bg-green-500 dark:text-white";
+    if (code >= 300 && code < 400)
+      return "bg-blue-400 dark:bg-blue-700 dark:text-white";
+    if (code >= 400 && code < 500)
+      return "bg-red-400 dark:bg-red-600 dark:text-white text-white";
+    if (code >= 500) return "bg-red-400 text-white";
+    return "bg-gray-500";
+  };
 
   // Define the handleDownload function
   const handleDownload = async () => {
@@ -447,8 +465,6 @@ const LinksTable = ({
     if (cellIndex === 1) {
       // Handle anchor column click if needed
     }
-
-    console.log(cellContent, rowIndex, cellIndex);
   };
 
   // Memoize filtered rows
@@ -483,6 +499,7 @@ const LinksTable = ({
     () => debounce((value: string) => setSearchTerm(value), 300),
     [],
   );
+  console.log(rows, "links table");
 
   // Cleanup
   useEffect(() => {
@@ -490,6 +507,16 @@ const LinksTable = ({
       debouncedSearch.cancel();
     };
   }, [debouncedSearch]);
+
+  // Filter table based on status code
+  const filteredTable = useMemo(() => {
+    if (!rows || !Array.isArray(filteredRows)) return [];
+
+    return filteredRows.filter((row) => {
+      if (!row || typeof row !== "object") return false;
+      return statusFilter.length === 0 || statusFilter.includes(row.status);
+    });
+  }, [filteredRows, statusFilter]);
 
   const virtualRows = rowVirtualizer.getVirtualItems();
   const parentRef = useRef<HTMLDivElement>(null);
@@ -504,6 +531,59 @@ const LinksTable = ({
           onChange={(e) => debouncedSearch(e.target.value)}
           className="w-full p-1 pl-2 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
         />
+
+        {/* Status Code Filter */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark h-6"
+            >
+              <Filter size={2} className="h-3 w-3 text-xs p-[2px]" />
+              Status
+              {statusFilter?.length > 0 && (
+                <Badge variant="secondary" className="ml-0">
+                  {statusFilter?.length}
+                </Badge>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="center"
+            className="w-48 m-0 bg-white dark:bg-brand-darker text-left"
+          >
+            <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {[200, 201, 204, 400, 401, 403, 404, 500].map((code) => (
+              <DropdownMenuCheckboxItem
+                className="hover:bg-brand-blue active:text-black hover:text-white"
+                key={code}
+                checked={statusFilter?.includes(code)}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setStatusFilter([...statusFilter, code]);
+                  } else {
+                    setStatusFilter(statusFilter?.filter((c) => c !== code));
+                  }
+                }}
+              >
+                <Badge
+                  variant="outline"
+                  className={`mr-2 ${getStatusCodeColor(code)}`}
+                >
+                  {code}
+                </Badge>
+                {code >= 200 && code < 300
+                  ? "Success"
+                  : code >= 300 && code < 400
+                    ? "Redirection"
+                    : code >= 400 && code < 500
+                      ? "Client Error"
+                      : "Server Error"}
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
         <DownloadButton
           download={handleDownload} // Pass the handleDownload function
           loading={isGeneratingExcel}
@@ -526,7 +606,10 @@ const LinksTable = ({
           style={{ minWidth: `${totalWidth}px` }}
           className="domainCrawlParent sticky top-0"
         >
-          <table className="w-full text-xs border-collapse domainCrawlParent h-full">
+          <table
+            style={{ tableLayout: "fixed" }}
+            className="w-full text-xs border-collapse domainCrawlParent h-full"
+          >
             <TableHeader
               headers={headerTitles}
               columnWidths={columnWidths}
@@ -536,7 +619,7 @@ const LinksTable = ({
               columnVisibility={columnVisibility}
             />
             <tbody>
-              {filteredRows.length > 0 ? (
+              {filteredTable.length > 0 ? (
                 <>
                   <tr
                     style={{
@@ -546,7 +629,7 @@ const LinksTable = ({
                   {virtualRows.map((virtualRow) => (
                     <tr key={virtualRow.key}>
                       <TableRow
-                        row={filteredRows[virtualRow.index]}
+                        row={filteredTable[virtualRow.index]}
                         index={virtualRow.index}
                         columnWidths={columnWidths}
                         columnAlignments={columnAlignments}

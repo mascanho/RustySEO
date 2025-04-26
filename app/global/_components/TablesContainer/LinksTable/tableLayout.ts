@@ -1,9 +1,10 @@
 // Column configurations
 export const initialColumnWidths = [
-  "30px", // ID
+  "60px", // ID
   "120px", // Anchor
   "600px", // URL
-  "120px", // Status Code
+  "80px", // Status Code
+  "320px", // Page
 ];
 
 export const initialColumnAlignments = [
@@ -11,6 +12,7 @@ export const initialColumnAlignments = [
   "left", // Anchor
   "left", // URL
   "center", // Status Code
+  "left", // Status Code
 ];
 
 export const headerTitles = [

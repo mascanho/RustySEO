@@ -227,7 +227,7 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
               style={{
                 textAlign: "center",
                 position: "relative",
-                width: "60px",
+                width: "50px",
               }}
             >
               Status Code
