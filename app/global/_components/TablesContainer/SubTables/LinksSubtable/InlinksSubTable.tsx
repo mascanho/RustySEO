@@ -88,6 +88,9 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
       "Anchor Text",
       "Relative Link",
       "Absolute Link",
+      "Rel",
+      "Target",
+      "Title",
       "Status Code",
     ];
 
@@ -174,6 +177,8 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
     );
   }
 
+  console.log(data, "From the Inlinks");
+
   return (
     <section
       className="overflow-auto h-full"
@@ -181,7 +186,7 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
     >
       <button
         onClick={exportCSV}
-        className="absolute -top-8   right-2 z-50 text-xs border border-brand-bright dark:border-brand-bright px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors  dark:text-white/50"
+        className="absolute -top-8   right-1 z-50 text-xs border border-brand-bright dark:border-brand-bright px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors  dark:text-white/50"
       >
         Export
       </button>
@@ -225,6 +230,33 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
             </th>
             <th
               style={{
+                textAlign: "left",
+                position: "relative",
+                width: "400px",
+              }}
+            >
+              Rel
+            </th>
+            <th
+              style={{
+                textAlign: "left",
+                position: "relative",
+                width: "400px",
+              }}
+            >
+              Target
+            </th>
+            <th
+              style={{
+                textAlign: "left",
+                position: "relative",
+                width: "400px",
+              }}
+            >
+              Title
+            </th>
+            <th
+              style={{
                 textAlign: "center",
                 position: "relative",
                 width: "80px",
@@ -249,6 +281,15 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
                 </td>
                 <td style={{ textAlign: "left" }} className="pl-3 border">
                   {item.url || ""}
+                </td>
+                <td style={{ textAlign: "left" }} className="pl-3 border">
+                  {item.rel || ""}
+                </td>
+                <td style={{ textAlign: "left" }} className="pl-3 border">
+                  {item.target || ""}
+                </td>
+                <td style={{ textAlign: "left" }} className="pl-3 border">
+                  {item.title || ""}
                 </td>
                 <td
                   style={{

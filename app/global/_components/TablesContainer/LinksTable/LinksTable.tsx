@@ -190,7 +190,10 @@ const TableRow = ({
     () => [
       index + 1,
       row?.anchor,
+      row?.rel || "",
       row?.link || "",
+      row?.title || "",
+      row?.target || "",
       row?.status || "",
       row?.page || "",
     ],

@@ -722,7 +722,6 @@ pub fn generate_keywords_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
 
 // GENERATE EXCEL FROM THE LINKS TABLE WITH ALL THE column
 // This table has [Anchor Text] | [HREF] | [Status Code] | [Page]
-//
 
 pub fn generate_links_table_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
     println!("Received Data, {:?}", &data);
@@ -732,7 +731,15 @@ pub fn generate_links_table_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
         return Err("No data received".to_string());
     }
 
-    let headers = vec!["Anchor Text", "HREF", "Status Code", "Page"];
+    let headers = vec![
+        "Anchor Text",
+        "Rel",
+        "HREF",
+        "Title",
+        "Target",
+        "Status Code",
+        "Page",
+    ];
     let mut workbook = Workbook::new();
     let worksheet = workbook.add_worksheet();
 
@@ -756,11 +763,31 @@ pub fn generate_links_table_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
                 .and_then(|v| v.as_str())
                 .unwrap_or("")
                 .to_string();
+
+            let rel = map
+                .get("rel")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+
             let link = map
                 .get("link")
                 .and_then(|v| v.as_str())
                 .unwrap_or("")
                 .to_string();
+
+            let title = map
+                .get("title")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+
+            let target = map
+                .get("target")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+
             let status = map
                 .get("status")
                 .map(|v| match v {
@@ -775,7 +802,7 @@ pub fn generate_links_table_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
                 .unwrap_or("")
                 .to_string();
 
-            let values = vec![anchor, link, status, page];
+            let values = vec![anchor, rel, link, title, target, status, page];
             for (col_idx, cell) in values.iter().enumerate() {
                 worksheet
                     .write((row_idx + 1) as u32, col_idx as u16, cell)

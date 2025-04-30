@@ -41,6 +41,9 @@ pub struct LinkStatus {
     pub status: Option<u16>,
     pub error: Option<String>,
     pub anchor_text: Option<String>,
+    pub rel: Option<String>,
+    pub title: Option<String>,
+    pub target: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -121,7 +124,7 @@ pub async fn get_links_status_code(
         Vec::with_capacity(INITIAL_TASK_CAPACITY);
 
     if let Some(links_data) = links {
-        for (link, anchor, is_internal) in prepare_links(links_data) {
+        for (link, anchor, rel, title, target, is_internal) in prepare_links(links_data) {
             spawn_link_check_task(
                 &mut tasks,
                 client.clone(),
@@ -132,6 +135,9 @@ pub async fn get_links_status_code(
                 domain_tracker.clone(),
                 link,
                 anchor,
+                rel,
+                title,
+                target,
                 is_internal,
             );
         }
@@ -174,20 +180,37 @@ fn build_client() -> Client {
 
 fn prepare_links(
     links_data: InternalExternalLinks,
-) -> impl Iterator<Item = (String, String, bool)> {
+) -> impl Iterator<
+    Item = (
+        String,
+        String,
+        Option<String>,
+        Option<String>,
+        Option<String>,
+        bool,
+    ),
+> {
     links_data
         .internal
         .links
         .into_iter()
         .zip(links_data.internal.anchors.into_iter())
-        .map(|(link, anchor)| (link, anchor, true))
+        .zip(links_data.internal.rels.into_iter())
+        .zip(links_data.internal.titles.into_iter())
+        .zip(links_data.internal.targets.into_iter())
+        .map(|((((link, anchor), rel), title), target)| (link, anchor, rel, title, target, true))
         .chain(
             links_data
                 .external
                 .links
                 .into_iter()
                 .zip(links_data.external.anchors.into_iter())
-                .map(|(link, anchor)| (link, anchor, false)),
+                .zip(links_data.external.rels.into_iter())
+                .zip(links_data.external.titles.into_iter())
+                .zip(links_data.external.targets.into_iter())
+                .map(|((((link, anchor), rel), title), target)| {
+                    (link, anchor, rel, title, target, false)
+                }),
         )
 }
 
@@ -201,6 +224,9 @@ fn spawn_link_check_task(
     domain_tracker: Arc<DomainTracker>,
     link: String,
     anchor: String,
+    rel: Option<String>,
+    title: Option<String>,
+    target: Option<String>,
     is_internal: bool,
 ) {
     tasks.push(tokio::spawn(async move {
@@ -243,6 +269,9 @@ fn spawn_link_check_task(
             Arc::clone(&base_url),
             relative_path.clone(),
             anchor_text.clone(),
+            rel,
+            title,
+            target,
             Arc::clone(&semaphore),
         )
         .await;
@@ -261,6 +290,9 @@ async fn fetch_with_retry(
     base_url: Arc<Url>,
     relative_path: Option<String>,
     anchor_text: Option<String>,
+    rel: Option<String>,
+    title: Option<String>,
+    target: Option<String>,
     semaphore: Arc<Semaphore>,
 ) -> LinkStatus {
     let mut attempt = 0;
@@ -294,6 +326,9 @@ async fn fetch_with_retry(
                     url,
                     relative_path,
                     anchor_text,
+                    rel,
+                    title,
+                    target,
                 );
             }
             Ok(Err(e)) => {
@@ -324,6 +359,9 @@ async fn fetch_with_retry(
         status: None,
         error: last_error,
         anchor_text,
+        rel,
+        title,
+        target,
     }
 }
 
@@ -374,6 +412,9 @@ fn handle_success_response(
     url: &str,
     relative_path: Option<String>,
     anchor_text: Option<String>,
+    rel: Option<String>,
+    title: Option<String>,
+    target: Option<String>,
 ) -> LinkStatus {
     let status = response.status();
     LinkStatus {
@@ -387,6 +428,9 @@ fn handle_success_response(
             None
         },
         anchor_text,
+        rel,
+        title,
+        target,
     }
 }
 
