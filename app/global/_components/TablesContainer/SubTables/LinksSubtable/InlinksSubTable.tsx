@@ -181,8 +181,13 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
 
   return (
     <section
-      className="overflow-auto h-full"
-      style={{ height: `${height - 15}px`, minHeight: "100px" }}
+      className="overflow-auto h-full w-[calc(100vw - 28rem)]"
+      style={{
+        height: `${height - 15}px`,
+        minHeight: "100px",
+        width: "100%",
+        overflow: "auto",
+      }}
     >
       <button
         onClick={exportCSV}
@@ -192,7 +197,7 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
       </button>
       <table
         ref={tableRef}
-        style={{ width: "100%", borderCollapse: "collapse" }}
+        style={{ width: "100%", borderCollapse: "collapse", overflow: "auto" }}
       >
         <thead className="text-xs top-0 sticky">
           <tr className="shadow">
