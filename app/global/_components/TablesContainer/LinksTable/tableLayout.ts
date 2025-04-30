@@ -1,7 +1,7 @@
 // Column configurations
 export const initialColumnWidths = [
   "60px", // ID
-  "120px", // Anchor
+  "150px", // Anchor
   "150px", // URL
   "600px", // Rel
   "100px", // Title
