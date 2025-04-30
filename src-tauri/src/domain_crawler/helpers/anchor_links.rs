@@ -13,6 +13,9 @@ pub struct LinksAnchors {
     pub links: Vec<String>,
     pub inlinks: LinkTypes,
     pub anchors: Vec<String>,
+    pub rels: Vec<Option<String>>,
+    pub titles: Vec<Option<String>>,
+    pub targets: Vec<Option<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -39,46 +42,91 @@ pub fn extract_internal_external_links(
     let link_selector = Selector::parse("a[href]").ok()?;
 
     // Extract all links and their anchor texts
-    let (internal_links, internal_anchors, external_links, external_anchors, absolute_links) =
-        document.select(&link_selector).fold(
-            (Vec::new(), Vec::new(), Vec::new(), Vec::new(), Vec::new()),
-            |(
-                mut internal_links,
-                mut internal_anchors,
-                mut external_links,
-                mut external_anchors,
-                mut absolute_links,
-            ),
-             element| {
-                if let Some(href) = element.value().attr("href") {
-                    // Resolve the URL (handle relative and absolute URLs)
-                    let url = resolve_url(href, base_url);
+    let (
+        internal_links,
+        internal_anchors,
+        external_links,
+        external_anchors,
+        absolute_links,
+        internal_rels,
+        internal_titles,
+        internal_targets,
+        external_rels,
+        external_titles,
+        external_targets,
+    ) = document.select(&link_selector).fold(
+        (
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+        ),
+        |(
+            mut internal_links,
+            mut internal_anchors,
+            mut external_links,
+            mut external_anchors,
+            mut absolute_links,
+            mut internal_rels,
+            mut internal_titles,
+            mut internal_targets,
+            mut external_rels,
+            mut external_titles,
+            mut external_targets,
+        ),
+         element| {
+            if let Some(href) = element.value().attr("href") {
+                // Resolve the URL (handle relative and absolute URLs)
+                let url = resolve_url(href, base_url);
 
-                    // Get the anchor text
-                    let anchor_text = element.text().collect::<String>();
+                // Get the anchor text
+                let anchor_text = element.text().collect::<String>();
 
-                    // Classify as internal or external
-                    if is_internal_link(&url, base_url) {
-                        internal_links.push(href.to_string());
-                        internal_anchors.push(anchor_text);
-                    } else {
-                        external_links.push(href.to_string());
-                        external_anchors.push(anchor_text);
-                    }
+                // Get the rel, title, and target attributes
+                let rel = element.value().attr("rel").map(|s| s.to_string());
+                let title = element.value().attr("title").map(|s| s.to_string());
+                let target = element.value().attr("target").map(|s| s.to_string());
 
-                    // Add the absolute URL to the list
-
-                    absolute_links.push(url.to_string());
+                // Classify as internal or external
+                if is_internal_link(&url, base_url) {
+                    internal_links.push(href.to_string());
+                    internal_anchors.push(anchor_text);
+                    internal_rels.push(rel);
+                    internal_titles.push(title);
+                    internal_targets.push(target);
+                } else {
+                    external_links.push(href.to_string());
+                    external_anchors.push(anchor_text);
+                    external_rels.push(rel);
+                    external_titles.push(title);
+                    external_targets.push(target);
                 }
-                (
-                    internal_links,
-                    internal_anchors,
-                    external_links,
-                    external_anchors,
-                    absolute_links,
-                )
-            },
-        );
+
+                // Add the absolute URL to the list
+                absolute_links.push(url.to_string());
+            }
+            (
+                internal_links,
+                internal_anchors,
+                external_links,
+                external_anchors,
+                absolute_links,
+                internal_rels,
+                internal_titles,
+                internal_targets,
+                external_rels,
+                external_titles,
+                external_targets,
+            )
+        },
+    );
 
     Some(InternalExternalLinks {
         internal: LinksAnchors {
@@ -88,6 +136,9 @@ pub fn extract_internal_external_links(
                 absolute: absolute_links.clone(),
             },
             anchors: internal_anchors,
+            rels: internal_rels,
+            titles: internal_titles,
+            targets: internal_targets,
         },
         external: LinksAnchors {
             links: external_links.clone(),
@@ -96,6 +147,9 @@ pub fn extract_internal_external_links(
                 absolute: absolute_links,
             },
             anchors: external_anchors,
+            rels: external_rels,
+            titles: external_titles,
+            targets: external_targets,
         },
     })
 }

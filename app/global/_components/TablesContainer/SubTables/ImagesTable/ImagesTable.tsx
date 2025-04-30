@@ -55,6 +55,9 @@ const ImagesTable = () => {
                 <th className="border border-gray-200 py-0 px-2 w-20">
                   Size (KB)
                 </th>
+                <th className="border border-gray-200 py-0 px-2 w-20">
+                  Status Code
+                </th>
               </tr>
             </thead>
 
@@ -98,10 +101,13 @@ const ImagesTable = () => {
                       <span>{image[0]}</span>
                     </td>{" "}
                     {/* Image Link */}
-                    <td className="border border-gray-200 px-2 truncate">
+                    <td className="border border-gray-200 px-2 truncate text-center">
                       {image[2]} KB
                     </td>{" "}
                     {/* Image Size */}
+                    <td className="border border-gray-200 px-2 truncate text-center">
+                      {image[4]}
+                    </td>{" "}
                   </tr>
                 ),
               )}
