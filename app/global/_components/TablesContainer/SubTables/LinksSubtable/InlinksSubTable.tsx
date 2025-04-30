@@ -21,6 +21,7 @@ interface InlinksSubTableProps {
       }[];
     };
   }[];
+  height: number;
 }
 
 const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
@@ -73,7 +74,7 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
     });
   }, []);
 
-  // Expor data as CSV
+  // Export data as CSV
   const exportCSV = async () => {
     if (!data?.[0]?.inoutlinks_status_codes?.internal?.length) {
       await message("No data to export", {
@@ -181,9 +182,9 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
 
   return (
     <section
-      className="overflow-auto h-full w-[calc(100vw - 28rem)]"
+      className="overflow-auto h-full"
       style={{
-        height: `${height - 15}px`,
+        height: `${height + 100}px`,
         minHeight: "100px",
         width: "100%",
         overflow: "auto",
@@ -191,130 +192,162 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
     >
       <button
         onClick={exportCSV}
-        className="absolute -top-8   right-1 z-50 text-xs border border-brand-bright dark:border-brand-bright px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors  dark:text-white/50"
+        className="absolute -top-8 right-1 z-50 text-xs border border-brand-bright dark:border-brand-bright px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors dark:text-white/50"
       >
         Export
       </button>
-      <table
-        ref={tableRef}
-        style={{ width: "100%", borderCollapse: "collapse", overflow: "auto" }}
-      >
-        <thead className="text-xs top-0 sticky">
-          <tr className="shadow">
-            <th
-              style={{ width: "20px", textAlign: "left", position: "relative" }}
-            >
-              ID
-            </th>
-            <th
-              style={{
-                textAlign: "left",
-                position: "relative",
-                width: "100px",
-              }}
-            >
-              Anchor Text
-            </th>
-            <th
-              style={{
-                textAlign: "left",
-                position: "relative",
-                width: "100px",
-              }}
-            >
-              Relative Link
-            </th>
-            <th
-              style={{
-                textAlign: "left",
-                position: "relative",
-                width: "400px",
-              }}
-            >
-              Absolute Link
-            </th>
-            <th
-              style={{
-                textAlign: "left",
-                position: "relative",
-                width: "400px",
-              }}
-            >
-              Rel
-            </th>
-            <th
-              style={{
-                textAlign: "left",
-                position: "relative",
-                width: "400px",
-              }}
-            >
-              Target
-            </th>
-            <th
-              style={{
-                textAlign: "left",
-                position: "relative",
-                width: "400px",
-              }}
-            >
-              Title
-            </th>
-            <th
-              style={{
-                textAlign: "center",
-                position: "relative",
-                width: "80px",
-              }}
-            >
-              Status Code
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {data?.[0]?.inoutlinks_status_codes?.internal?.map(
-            (item: any, index: number) => (
-              <tr key={index}>
-                <td style={{ textAlign: "left" }} className="pl-4 border">
-                  {index + 1}
-                </td>
-                <td style={{ textAlign: "left" }} className="pl-3 border">
-                  {item.anchor_text || ""}
-                </td>
-                <td style={{ textAlign: "left" }} className="pl-3 border">
-                  {item.relative_path || ""}
-                </td>
-                <td style={{ textAlign: "left" }} className="pl-3 border">
-                  {item.url || ""}
-                </td>
-                <td style={{ textAlign: "left" }} className="pl-3 border">
-                  {item.rel || ""}
-                </td>
-                <td style={{ textAlign: "left" }} className="pl-3 border">
-                  {item.target || ""}
-                </td>
-                <td style={{ textAlign: "left" }} className="pl-3 border">
-                  {item.title || ""}
-                </td>
-                <td
-                  style={{
-                    textAlign: "center",
-                    color:
-                      item?.status === 200
-                        ? "green"
-                        : item?.status === 400
-                          ? "red"
-                          : "orange",
-                  }}
-                  className="pl-3 border font-semibold"
-                >
-                  {item.status !== null ? item.status : item.error || "N/A"}
-                </td>
-              </tr>
-            ),
-          )}
-        </tbody>
-      </table>
+      <div style={{ overflowX: "auto", width: "100%" }}>
+        <table
+          ref={tableRef}
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            minWidth: "100%",
+          }}
+        >
+          <thead className="text-xs top-0 sticky">
+            <tr className="shadow">
+              <th
+                style={{
+                  width: "20px",
+                  textAlign: "left",
+                  position: "relative",
+                }}
+              >
+                ID
+              </th>
+              <th
+                style={{
+                  textAlign: "left",
+                  position: "relative",
+                  width: "100px",
+                }}
+              >
+                Anchor Text
+              </th>
+              <th
+                style={{
+                  textAlign: "left",
+                  position: "relative",
+                  width: "100px",
+                }}
+              >
+                Relative Link
+              </th>
+              <th
+                style={{
+                  textAlign: "left",
+                  position: "relative",
+                  width: "400px",
+                }}
+              >
+                Absolute Link
+              </th>
+              <th
+                style={{
+                  textAlign: "left",
+                  position: "relative",
+                  minWidth: "100px",
+                }}
+              >
+                Rel
+              </th>
+              <th
+                style={{
+                  textAlign: "left",
+                  position: "relative",
+                  minWidth: "100px",
+                }}
+              >
+                Target
+              </th>
+              <th
+                style={{
+                  textAlign: "left",
+                  position: "relative",
+                  minWidth: "100px",
+                }}
+              >
+                Title
+              </th>
+              <th
+                style={{
+                  textAlign: "center",
+                  position: "relative",
+                  width: "120px",
+                }}
+              >
+                Status
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {data?.[0]?.inoutlinks_status_codes?.internal?.map(
+              (item: any, index: number) => (
+                <tr key={index}>
+                  <td
+                    style={{ textAlign: "left", whiteSpace: "nowrap" }}
+                    className="pl-4 border"
+                  >
+                    {index + 1}
+                  </td>
+                  <td
+                    style={{ textAlign: "left", whiteSpace: "nowrap" }}
+                    className="pl-3 border"
+                  >
+                    {item.anchor_text || ""}
+                  </td>
+                  <td
+                    style={{ textAlign: "left", whiteSpace: "nowrap" }}
+                    className="pl-3 border"
+                  >
+                    {item.relative_path || ""}
+                  </td>
+                  <td
+                    style={{ textAlign: "left", whiteSpace: "nowrap" }}
+                    className="pl-3 border"
+                  >
+                    {item.url || ""}
+                  </td>
+                  <td
+                    style={{ textAlign: "left", whiteSpace: "nowrap" }}
+                    className="pl-3 border"
+                  >
+                    {item.rel || ""}
+                  </td>
+                  <td
+                    style={{ textAlign: "left", whiteSpace: "nowrap" }}
+                    className="pl-3 border"
+                  >
+                    {item.target || ""}
+                  </td>
+                  <td
+                    style={{ textAlign: "left", whiteSpace: "nowrap" }}
+                    className="pl-3 border"
+                  >
+                    {item.title || ""}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: "center",
+                      whiteSpace: "nowrap",
+                      color:
+                        item?.status === 200
+                          ? "green"
+                          : item?.status === 400
+                            ? "red"
+                            : "orange",
+                    }}
+                    className="pl-3 border font-semibold"
+                  >
+                    {item.status !== null ? item.status : item.error || "N/A"}
+                  </td>
+                </tr>
+              ),
+            )}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 };
