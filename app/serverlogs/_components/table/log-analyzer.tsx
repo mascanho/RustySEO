@@ -91,23 +91,23 @@ const formatDate = (dateString: string) => {
 const getFileIcon = (path) => {
   switch (path) {
     case "HTML":
-      return <FileCode type="html" size={14} />;
+      return <FileCode type="html" className="text-blue-400" size={14} />;
     case "Image":
-      return <Image size={14} />;
+      return <Image className="text-green-600" size={14} />;
     case "Video":
       return <FileVideo size={14} />;
     case "Audio":
       return <FileAudio size={14} />;
     case "PHP":
-      return <FileCode type="php" size={14} />;
+      return <FileCode className="text-blue-400" type="php" size={14} />;
     case "TXT":
-      return <FileType size={14} />;
+      return <FileType size={14} className="text-purple-400" />;
     case "CSS":
-      return <FileCode type="css" size={14} />;
+      return <FileCode type="css" className="text-yellow-400" size={14} />;
     case "JS":
       return <FileCode type="javascript" size={14} />;
     case "Document": // PDF
-      return <FileText size={14} />;
+      return <FileText className="text-red-500" size={14} />;
     case "Archive":
       return <Package size={14} />;
     case "Font":
