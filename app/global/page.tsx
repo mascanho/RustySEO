@@ -233,7 +233,7 @@ export default function Page() {
               value="first"
               className="flex flex-col h-screen bg-white dark:bg-brand-darker overflow-auto"
             >
-              <TablesContainer />
+              {/* <TablesContainer /> */}
             </Tabs.Panel>
           )}
 
@@ -243,7 +243,7 @@ export default function Page() {
               className="flex flex-col space-y-8 overflow-scroll"
             >
               <section className="mt-[3rem]">
-                <TaskManagerContainer />
+                {/* <TaskManagerContainer /> */}
               </section>
             </Tabs.Panel>
           )}
@@ -253,14 +253,14 @@ export default function Page() {
               value="analytics"
               className="pt-9 dark:bg-brand-darker mb-0"
             >
-              <Analytics />
+              {/* <Analytics /> */}
             </Tabs.Panel>
           )}
 
           {activeTab === "clarity" && (
             <Tabs.Panel value="clarity" className="pt-8">
               <section className="h-[calc(100vh-8rem)] overflow-auto">
-                <ClarityContainer />
+                {/* <ClarityContainer /> */}
               </section>
             </Tabs.Panel>
           )}
@@ -293,7 +293,7 @@ export default function Page() {
               value="kws"
               className="h-[calc(100vh-4rem)] pt-9 dark:bg-brand-darker"
             >
-              <KeywordAnalytics />
+              {/* <KeywordAnalytics /> */}
             </Tabs.Panel>
           )}
 
@@ -302,7 +302,7 @@ export default function Page() {
               value="gsc"
               className="h-calc(100vh-8.8rem)] pt-9 dark:bg-brand-darker"
             >
-              <GSCcontainer />
+              {/* <GSCcontainer /> */}
             </Tabs.Panel>
           )}
 
@@ -311,7 +311,7 @@ export default function Page() {
               value="content"
               className="pt-6 h-[calc(100vh-3rem)] overflow-auto "
             >
-              <ContentPlannerContainer />
+              {/* <ContentPlannerContainer /> */}
             </Tabs.Panel>
           )}
 

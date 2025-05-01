@@ -22,7 +22,7 @@ const TopContainer = () => {
 
         {/* Render components directly */}
         <Tabs.Panel value="first">
-          <GeneralTopSideBarContainer />
+          {/* <GeneralTopSideBarContainer /> */}
         </Tabs.Panel>
 
         <Tabs.Panel value="issues" className="h-full">
