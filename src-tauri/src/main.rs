@@ -20,6 +20,7 @@ use tokio::sync::Mutex;
 use tokio::sync::RwLock;
 use toml;
 
+pub mod chat;
 pub mod crawler;
 pub mod domain_crawler;
 pub mod settings;
