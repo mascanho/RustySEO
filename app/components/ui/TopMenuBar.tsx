@@ -423,6 +423,7 @@ const TopMenuBar = () => {
         overlayProps={{
           backgroundOpacity: 0.55,
           blur: 3,
+          zIndex: 0,
         }}
         transitionProps={{
           transition: "fade",
@@ -456,6 +457,7 @@ const TopMenuBar = () => {
         closeButtonProps={{
           color: isDarkMode ? "gray" : "dark",
           size: "md",
+          right: 10,
         }}
       >
         <DiffChecker />
