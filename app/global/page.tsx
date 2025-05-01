@@ -26,6 +26,7 @@ import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 import GlobalSettings from "../components/ui/GeneralSettings/GeneralSettings";
 import { PiShuffleAngularLight } from "react-icons/pi";
 import { LuMicroscope } from "react-icons/lu";
+import { useDiffStore } from "@/store/DiffStore";
 
 interface CrawlResult {
   url: string;
@@ -53,6 +54,7 @@ export default function Page() {
   const { setIsGlobalCrawling, setIsFinishedDeepCrawl } =
     useGlobalConsoleStore();
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
+  const { setBulkDiffData } = useDiffStore();
 
   const allData = useMemo(() => crawlData, [crawlData]);
 
@@ -111,6 +113,8 @@ export default function Page() {
       // Get the differences between crawls
       const diff = await invoke("get_url_diff_command");
       console.log("Diff:", diff);
+
+      setBulkDiffData(diff);
 
       const crawledLinks =
         JSON.parse(sessionStorage.getItem("CrawledLinks")) || [];

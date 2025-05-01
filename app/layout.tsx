@@ -13,6 +13,7 @@ import Footer from "./components/ui/Footer";
 import Loader from "@/components/Loader/Loader";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
+import { ChatBar } from "./components/Chat/Chatbar";
 
 const roboto = Roboto({
   // weight: ["400"], // Specify weights you need
@@ -78,6 +79,7 @@ export default function RootLayout({
           <section className="mb-[6.3rem]">
             <Loader />
             <TopMenuBar />
+            <ChatBar />
           </section>
           <main className="mt-9   rounded-md  ">
             {children}

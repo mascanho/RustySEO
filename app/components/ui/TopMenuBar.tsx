@@ -419,7 +419,7 @@ const TopMenuBar = () => {
         opened={openedDiffChecker}
         onClose={closeDiffChecker}
         title="Crawl Diff Checker"
-        size="40%"
+        size="60%"
         overlayProps={{
           backgroundOpacity: 0.55,
           blur: 3,

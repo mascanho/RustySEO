@@ -2,7 +2,7 @@ use directories::ProjectDirs;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{params, Connection, Result as RusqliteResult};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{self, Value};
 use std::fs;
 use std::path::Path;
@@ -39,6 +39,14 @@ pub enum DatabaseError {
 
     #[error("Lock error")]
     LockError,
+
+    #[error("IO error: {0}")]
+    NotFound(String), // Added
+
+    #[error("IO error: {0}")]
+    QueryError(String), // Added
+    #[error("IO error: {0}")]
+    JoinError(String), // Added
 }
 
 #[derive(Serialize, Clone)]
@@ -387,7 +395,20 @@ pub async fn clone_batched_crawl_into_persistent_db() -> Result<(), DatabaseErro
     .await?
 }
 
-pub async fn analyse_diffs() -> Result<(Vec<String>, Vec<String>), DatabaseError> {
+#[derive(Serialize, Debug, Deserialize)]
+pub struct DiffAnalysis {
+    added: Differential,
+    removed: Differential,
+}
+
+#[derive(Serialize, Debug, Deserialize)]
+pub struct Differential {
+    url: Option<String>, // Use Option to handle cases where there is no URL
+    pages: Vec<String>,
+    number_of_pages: usize,
+}
+
+pub async fn analyse_diffs() -> Result<DiffAnalysis, DatabaseError> {
     println!("Analyzing diffs");
 
     let project_dirs = ProjectDirs::from("", "", "rustyseo").ok_or_else(|| {
@@ -395,34 +416,97 @@ pub async fn analyse_diffs() -> Result<(Vec<String>, Vec<String>), DatabaseError
     })?;
 
     let db_dir = project_dirs.data_dir().join("db");
+    let db_path = db_dir.join("diff.db");
 
-    tokio::task::spawn_blocking(move || {
-        let conn = Connection::open(db_dir.join("diff.db"))?;
+    // Verify database file exists
+    if !db_path.exists() {
+        return Err(DatabaseError::NotFound(
+            "Database file not found".to_string(),
+        ));
+    }
 
+    let result = tokio::task::spawn_blocking(move || {
+        let conn = Connection::open(&db_path).map_err(|e| {
+            DatabaseError::ConnectionError(format!("Failed to open database: {}", e))
+        })?;
+
+        // Check if tables exist
+        let tables: Vec<String> = conn
+            .prepare("SELECT name FROM sqlite_master WHERE type='table'")?
+            .query_map([], |row| row.get(0))?
+            .collect::<Result<_, _>>()?;
+
+        if !tables.contains(&"current_crawl".to_string())
+            || !tables.contains(&"previous_crawl".to_string())
+        {
+            return Err(DatabaseError::NotFound(
+                "Required tables not found in database".to_string(),
+            ));
+        }
+
+        // Get added URLs (in current but not in previous)
         let mut added_urls = Vec::new();
-        let mut stmt = conn.prepare(
-            "SELECT url FROM current_crawl 
+        let mut stmt = conn
+            .prepare(
+                "SELECT url FROM current_crawl
              WHERE url NOT IN (SELECT url FROM previous_crawl)",
-        )?;
-        let mut rows = stmt.query([])?;
-        while let Some(row) = rows.next()? {
-            added_urls.push(row.get(0)?);
+            )
+            .map_err(|e| {
+                DatabaseError::QueryError(format!("Failed to prepare added URLs query: {}", e))
+            })?;
+
+        let mut rows = stmt.query([]).map_err(|e| {
+            DatabaseError::QueryError(format!("Failed to execute added URLs query: {}", e))
+        })?;
+        while let Some(row) = rows.next().map_err(|e| {
+            DatabaseError::QueryError(format!("Failed to fetch added URL row: {}", e))
+        })? {
+            added_urls.push(row.get::<_, String>(0).map_err(|e| {
+                DatabaseError::QueryError(format!("Failed to get URL from row: {}", e))
+            })?);
         }
 
+        // Get removed URLs (in previous but not in current)
         let mut removed_urls = Vec::new();
-        let mut stmt = conn.prepare(
-            "SELECT url FROM previous_crawl 
+        let mut stmt = conn
+            .prepare(
+                "SELECT url FROM previous_crawl
              WHERE url NOT IN (SELECT url FROM current_crawl)",
-        )?;
-        let mut rows = stmt.query([])?;
-        while let Some(row) = rows.next()? {
-            removed_urls.push(row.get(0)?);
+            )
+            .map_err(|e| {
+                DatabaseError::QueryError(format!("Failed to prepare removed URLs query: {}", e))
+            })?;
+
+        let mut rows = stmt.query([]).map_err(|e| {
+            DatabaseError::QueryError(format!("Failed to execute removed URLs query: {}", e))
+        })?;
+        while let Some(row) = rows.next().map_err(|e| {
+            DatabaseError::QueryError(format!("Failed to fetch removed URL row: {}", e))
+        })? {
+            removed_urls.push(row.get::<_, String>(0).map_err(|e| {
+                DatabaseError::QueryError(format!("Failed to get URL from row: {}", e))
+            })?);
         }
 
-        println!("Added URLs: {:?}", added_urls);
-        println!("Removed URLs: {:?}", removed_urls);
+        let added_differential = Differential {
+            url: added_urls.get(0).cloned(), // Safely get the first URL if it exists
+            pages: added_urls.clone(),
+            number_of_pages: added_urls.len(),
+        };
 
-        Ok((added_urls, removed_urls))
+        let removed_differential = Differential {
+            url: removed_urls.get(0).cloned(), // Safely get the first URL if it exists
+            pages: removed_urls.clone(),
+            number_of_pages: removed_urls.len(),
+        };
+
+        Ok(DiffAnalysis {
+            added: added_differential,
+            removed: removed_differential,
+        })
     })
-    .await?
+    .await
+    .map_err(|e| DatabaseError::JoinError(format!("Task join error: {}", e)))??;
+
+    Ok(result)
 }

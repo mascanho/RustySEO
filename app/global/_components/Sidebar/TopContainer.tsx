@@ -6,12 +6,14 @@ import GeneralTopSideBarContainer from "./General/GeneralTopSideBarContainer";
 import IssuesContainer from "./Issues/IssuesContainer";
 import RankingInfo from "@/app/global/_components/Sidebar/GSCRankingInfo/RankingInfo";
 import ConsoleLog from "./ConsoleLog/ConsoleLog";
+import { useVisibilityStore } from "@/store/VisibilityStore";
 
 const TopContainer = () => {
+  const { showSidebar } = useVisibilityStore();
+
   return (
     <div
-      className="h-full w-full"
-      style={{ width: "100%", scrollbarGutter: "stable" }}
+      className={`h-full w-full overflow-hidden ${showSidebar ? "block" : "hidden"}`}
     >
       <Tabs defaultValue="first">
         <Tabs.List

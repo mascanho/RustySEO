@@ -1,10 +1,10 @@
 "use client";
 import React, { useEffect, useState, useCallback } from "react";
-import { LiaListAlt, LiaTasksSolid } from "react-icons/lia";
+import { LiaTasksSolid } from "react-icons/lia";
 import { CgWebsite } from "react-icons/cg";
-import { FaRobot, FaSkullCrossbones } from "react-icons/fa6";
+import { FaRobot } from "react-icons/fa6";
 import { useChat } from "ai/react";
-import { BsLayoutSidebarInsetReverse } from "react-icons/bs";
+import { BsChatDots, BsLayoutSidebarInsetReverse } from "react-icons/bs";
 import {
   Drawer,
   DrawerClose,
@@ -12,28 +12,19 @@ import {
   DrawerDescription,
   DrawerFooter,
   DrawerHeader,
-  DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { Button, Modal } from "@mantine/core";
 import AIcontainer from "./AiContainer/AIcontainer";
 import { useDisclosure } from "@mantine/hooks";
-import Todo from "./Todo";
 import TodoItems from "./TodoItems";
 import { Drawer as MantineDrawer } from "@mantine/core";
-import { IoIosHelpBuoy, IoMdClose } from "react-icons/io";
+import { IoMdClose } from "react-icons/io";
 import { usePathname } from "next/navigation";
-import { LiaHeadingSolid } from "react-icons/lia";
 import { useVisibilityStore } from "@/store/VisibilityStore";
-import { GiPirateFlag, GiPirateHat, GiSurprisedSkull } from "react-icons/gi";
-import { ImGoogle3 } from "react-icons/im";
-import { AiFillX } from "react-icons/ai";
-import { FaShip, FaSpider } from "react-icons/fa";
-import { listen } from "@tauri-apps/api/event";
+import { GiSurprisedSkull } from "react-icons/gi";
 import FooterLoader from "./FooterLoader/FooterLoader";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import CrawlerType from "./Footer/CrawlerType";
-import { TbHelpSquareRoundedFilled, TbSeo } from "react-icons/tb";
 import SeoToolkit from "./Footer/SeoToolkit/SeoToolkit";
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 
@@ -63,6 +54,8 @@ const Footer = () => {
     hideSerpKeywords,
     showSeoToolkit,
     hideSeoToolkit,
+    showChatbar,
+    hideChatbar,
   } = useVisibilityStore();
   const [openedDrawer, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
@@ -223,7 +216,7 @@ const Footer = () => {
         </section>
         <section className="flex items-center space-x-2">
           <div className="flex w-50 items-center justify-center pr-3">
-            <div className="flex items-center text-xs mt-[2px] space-x-3">
+            <div className="flex items-center text-xs mt-[2px] space-x-[1em]">
               <div
                 onClick={() => (openedDrawer ? closeDrawer() : openDrawer())}
                 className="flex items-center cursor-pointer relative group hover:delay-1000"
@@ -238,6 +231,20 @@ const Footer = () => {
                 <span className="text-sky-dark dark:text-sky-dark ml-1">
                   {tasks.length}
                 </span>
+              </div>
+
+              {/* CHAT BUTTON */}
+
+              <div className="relative group hover:delay-1000">
+                <BsChatDots
+                  onClick={() =>
+                    visibility.chatbar ? hideChatbar() : showChatbar()
+                  }
+                  className="text-sm mb-[2px] cursor-pointer"
+                />
+                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
+                  Open chat
+                </div>
               </div>
 
               {/* TODO: FIX THE GOOGLE CRAWL ISSUE  */}
