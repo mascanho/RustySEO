@@ -31,7 +31,7 @@ export const useVisibilityStore = create<BearState>((set) => ({
     serpKeywords: false,
     seotoolkit: false,
     customSearch: false, // Ensure this matches the initial state
-    chatbar: true,
+    chatbar: false,
   },
 
   // Sidebar actions
