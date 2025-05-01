@@ -108,6 +108,10 @@ export default function Page() {
       setIsFinishedDeepCrawl(true);
       setIsGlobalCrawling(false);
 
+      // Get the differences between crawls
+      const diff = await invoke("get_url_diff_command");
+      console.log("Diff:", diff);
+
       const crawledLinks =
         JSON.parse(sessionStorage.getItem("CrawledLinks")) || [];
       if (crawlData?.length) {
@@ -326,7 +330,7 @@ export default function Page() {
       <aside
         className={`transition-all ease-linear delay-100 ${visibility.sidebar ? "w-full max-w-[21.8rem] flex-grow" : "w-0"} h-screen`}
       >
-        {/* <SidebarContainer /> */}
+        <SidebarContainer />
       </aside>
     </main>
   );

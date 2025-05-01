@@ -365,22 +365,20 @@ pub async fn crawl_domain(
     settings_state: tauri::State<'_, AppState>,
 ) -> Result<Vec<DomainCrawlResults>, String> {
     // Import the user agents from another module to use across domain crawler
-    let user_agents = user_agents::agents();
+    // // Using the ones from global state/memory that are placed in the HD
+    // let user_agents = user_agents::agents();
 
     let settings = Arc::new(settings_state.settings.read().await.clone());
-
-    println!(
-        "This is the settings files ouput: {:?}",
-        &settings.links_request_timeout
-    );
 
     let client = Client::builder()
         // .user_agent(&user_agents[rand::thread_rng().gen_range(0..user_agents.len())])
         // Instead use the user agents in the configuration files
-        .user_agent(&settings.user_agents[rand::thread_rng().gen_range(0..user_agents.len())])
-        .timeout(Duration::from_secs(60))
-        .connect_timeout(Duration::from_secs(15))
-        .redirect(reqwest::redirect::Policy::limited(5))
+        .user_agent(
+            &settings.user_agents[rand::thread_rng().gen_range(0..settings.user_agents.len())],
+        )
+        .timeout(Duration::from_secs(settings.client_timeout)) // 60 seconds
+        .connect_timeout(Duration::from_secs(settings.client_connect_timeout)) // 15
+        .redirect(reqwest::redirect::Policy::limited(settings.redirect_policy)) // 5
         .build()
         .map_err(|e| e.to_string())?;
 
@@ -565,6 +563,7 @@ pub async fn crawl_domain(
         unique_results.len()
     );
 
+    // CREATE THE DATABSES FOR THE DIFF TABLES
     match database::create_diff_tables() {
         Ok(()) => println!("Successfully created diff tables"),
         Err(e) => eprintln!("Failed to create diff tables: {}", e),

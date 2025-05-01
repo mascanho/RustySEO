@@ -469,7 +469,7 @@ const TopMenuBar = () => {
       <Menubar className="fixed w-full top-0 z-[1000] p-0 pl-0 dark:bg-brand-darker dark:text-white/50 text-black/70 bg-white dark:border-b-brand-dark border-b pb-1 font-mono font-light">
         <section className="flex -ml-3 space-x-1 cursor-pointer">
           <MenubarMenu>
-            <MenubarTrigger className="ml-4">File</MenubarTrigger>
+            <MenubarTrigger className="ml-4 text-xs">File</MenubarTrigger>
             <MenubarContent>
               <MenubarItem onClick={openConfs}>
                 <FiTool className="mr-2" />
@@ -483,7 +483,7 @@ const TopMenuBar = () => {
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="ml-4">View</MenubarTrigger>
+            <MenubarTrigger className="ml-4 text-xs">View</MenubarTrigger>
             <MenubarContent>
               <MenubarItem onClick={handleOpenConfigFile}>
                 <Settings size={12} className="mr-1.5" />
@@ -531,7 +531,7 @@ const TopMenuBar = () => {
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="ml-3">Reports</MenubarTrigger>
+            <MenubarTrigger className="ml-3 text-xs">Reports</MenubarTrigger>
             <MenubarContent>
               <MenubarItem onClick={handleDownloadPerformance}>
                 <FiBarChart2 className="mr-2" />
@@ -545,7 +545,7 @@ const TopMenuBar = () => {
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="ml-3">Tools</MenubarTrigger>
+            <MenubarTrigger className="ml-3 text-xs">Tools</MenubarTrigger>
             <MenubarContent>
               <MenubarItem onClick={() => router.push("/images")}>
                 <FiTool className="mr-2" />
@@ -572,7 +572,7 @@ const TopMenuBar = () => {
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="ml-3">Connectors</MenubarTrigger>
+            <MenubarTrigger className="ml-3 text-xs">Connectors</MenubarTrigger>
             <MenubarContent>
               <MenubarItem onClick={openMSClarity}>
                 <FiZap className="mr-2" />
@@ -611,7 +611,7 @@ const TopMenuBar = () => {
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="ml-3">Crawlers</MenubarTrigger>
+            <MenubarTrigger className="ml-3 text-xs">Crawlers</MenubarTrigger>
             <MenubarContent>
               <MenubarItem onClick={() => router.push("/")}>
                 <GiRobotGrab className="mr-2" />
@@ -625,7 +625,7 @@ const TopMenuBar = () => {
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="ml-3">Extractors</MenubarTrigger>
+            <MenubarTrigger className="ml-3 text-xs">Extractors</MenubarTrigger>
             <MenubarContent>
               <MenubarItem
                 className={`mr-2 ${pathname !== "/global" ? "text-gray-400 pointer-events-none w-full" : "w-full"}`}
@@ -639,7 +639,7 @@ const TopMenuBar = () => {
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="ml-3">Help</MenubarTrigger>
+            <MenubarTrigger className="ml-3 text-xs">Help</MenubarTrigger>
             <MenubarContent>
               <MenubarItem onClick={handleOnboarding}>
                 <BiDoorOpen className="mr-2" />

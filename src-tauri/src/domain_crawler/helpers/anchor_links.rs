@@ -38,10 +38,10 @@ pub fn extract_internal_external_links(
 ) -> Option<InternalExternalLinks> {
     let document = Html::parse_document(html);
 
-    // Selector for <a> tags with href attributes
-    let link_selector = Selector::parse("a[href]").ok()?;
+    // Selector for all <a> tags with href attributes
+    let link_selector = Selector::parse("a").ok()?;
 
-    // Extract all links and their anchor texts
+    // Extract all links and their attributes
     let (
         internal_links,
         internal_anchors,
@@ -89,7 +89,7 @@ pub fn extract_internal_external_links(
                 // Get the anchor text
                 let anchor_text = element.text().collect::<String>();
 
-                // Get the rel, title, and target attributes
+                // Get the optional attributes (these will be None if attribute doesn't exist)
                 let rel = element.value().attr("rel").map(|s| s.to_string());
                 let title = element.value().attr("title").map(|s| s.to_string());
                 let target = element.value().attr("target").map(|s| s.to_string());

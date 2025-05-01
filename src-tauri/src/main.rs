@@ -230,7 +230,8 @@ async fn main() {
             loganalyser::log_commands::check_logs_command,
             loganalyser::helpers::parse_logs::set_taxonomies,
             loganalyser::helpers::parse_logs::fetch_google_ip_ranges,
-            loganalyser::helpers::check_hostname::reverse_lookup
+            loganalyser::helpers::check_hostname::reverse_lookup,
+            domain_commands::get_url_diff_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

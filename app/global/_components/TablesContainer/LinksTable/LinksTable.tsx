@@ -327,7 +327,7 @@ const ColumnPicker = ({
 const LinksTable = ({
   rows,
   rowHeight = 41,
-  overscan = 30,
+  overscan = 20,
   tabName,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);

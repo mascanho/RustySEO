@@ -64,7 +64,15 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
       return;
     }
 
-    const headers = ["ID", "Anchor Text", "URL", "Status Code"];
+    const headers = [
+      "ID",
+      "Anchor Text",
+      "URL",
+      "Status Code",
+      "Rel",
+      "Target",
+      "Title",
+    ];
 
     const csvData = data[0].inoutlinks_status_codes.external.map(
       (item: any, index: number) => [
@@ -72,6 +80,9 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
         `"${(item.anchor_text || "").replace(/"/g, '""')}"`,
         item.url || "",
         item.status || "",
+        item.rel || "",
+        item.target || "",
+        `"${(item.title || "").replace(/"/g, '""')}"`,
       ],
     );
 
@@ -170,16 +181,43 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
                 width: "300px",
               }}
             >
-              Links
+              Link
+            </TableHead>
+            <TableHead
+              style={{
+                textAlign: "left",
+                position: "relative",
+                width: "300px",
+              }}
+            >
+              Rel
+            </TableHead>
+            <TableHead
+              style={{
+                textAlign: "left",
+                position: "relative",
+                width: "300px",
+              }}
+            >
+              Target
+            </TableHead>
+            <TableHead
+              style={{
+                textAlign: "left",
+                position: "relative",
+                width: "300px",
+              }}
+            >
+              Title
             </TableHead>
             <TableHead
               style={{
                 textAlign: "center",
                 position: "relative",
-                width: "60px",
+                width: "90px",
               }}
             >
-              Status Code
+              Status
             </TableHead>
           </TableRow>
         </TableHeader>
@@ -205,6 +243,24 @@ const OutlinksSubTable = ({ data }: { data: any }) => {
                     className="pl-3 border"
                   >
                     {anchorItem.url}
+                  </TableCell>
+                  <TableCell
+                    style={{ textAlign: "left" }}
+                    className="pl-3 border"
+                  >
+                    {anchorItem?.rel}
+                  </TableCell>
+                  <TableCell
+                    style={{ textAlign: "left" }}
+                    className="pl-3 border"
+                  >
+                    {anchorItem?.target}
+                  </TableCell>
+                  <TableCell
+                    style={{ textAlign: "left" }}
+                    className="pl-3 border"
+                  >
+                    {anchorItem?.title}
                   </TableCell>
                   <TableCell
                     className={`border text-center font-semibold ${
