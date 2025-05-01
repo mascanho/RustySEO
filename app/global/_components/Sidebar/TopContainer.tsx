@@ -9,9 +9,16 @@ import ConsoleLog from "./ConsoleLog/ConsoleLog";
 
 const TopContainer = () => {
   return (
-    <div className="h-full">
-      <Tabs defaultValue="first" className="overflow-auto">
-        <Tabs.List justify="center" grow className="dark:text-white text-xs">
+    <div
+      className="h-full w-full"
+      style={{ width: "100%", scrollbarGutter: "stable" }}
+    >
+      <Tabs defaultValue="first">
+        <Tabs.List
+          justify="center"
+          grow
+          className="dark:text-white text-xs border-0"
+        >
           <Tabs.Tab value="first">General</Tabs.Tab>
           <Tabs.Tab value="issues">Issues</Tabs.Tab>
           {/* <Tabs.Tab value="gsc">GSC</Tabs.Tab> */}
@@ -26,7 +33,7 @@ const TopContainer = () => {
         </Tabs.Panel>
 
         <Tabs.Panel value="issues" className="h-full">
-          <IssuesContainer />
+          {/* <IssuesContainer /> */}
         </Tabs.Panel>
 
         <Tabs.Panel value="gsc">
