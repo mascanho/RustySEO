@@ -288,7 +288,7 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.3rem)]"}
             disabled={newMessage.trim() === ""}
             className="h-8 w-8 rounded-sm bg-blue-600 p-0 hover:bg-blue-700 dark:bg-[#333333] dark:hover:bg-[#444444]"
           >
-            <Send className="h-4 w-4" />
+            <Send className="h-4 w-4 dark:text-sky-bright" />
           </Button>
         </div>
       </div>

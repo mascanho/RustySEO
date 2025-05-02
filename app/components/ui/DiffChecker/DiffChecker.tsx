@@ -37,6 +37,74 @@ export default function DiffChecker() {
     return format(new Date(timestamp), "MMM dd, yyyy - h:mm a");
   };
 
+  console.log(diff, "Diff Data from the modal");
+
+  if (diff?.added?.url !== diff?.removed?.url) {
+    return (
+      <section className="flex flex-col justify-center items-center min-h-screen p-6  transition-colors duration-300 -mt-64">
+        <div className="bg-white p-8 w-full max-w-lg text-center ">
+          <h3 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-6 tracking-tight">
+            Crawled Website Mismatch
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-6 text-sm">
+            The websites from the previous and current crawls are different and
+            cannot be compared.
+          </p>
+          <div className="space-y-6">
+            <div className="flex items-center bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg transition-colors duration-200">
+              <svg
+                className="w-7 h-7 text-blue-600 dark:text-blue-400 mr-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"
+                ></path>
+              </svg>
+              <div className="text-left">
+                <span className="font-semibold text-gray-700 dark:text-gray-200">
+                  Previous Crawl:
+                </span>
+                <span className="ml-2 text-gray-600 dark:text-gray-400 break-all underline">
+                  {diff?.removed?.url}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg transition-colors duration-200">
+              <svg
+                className="w-7 h-7 text-green-600 dark:text-green-400 mr-3"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.763 21H7.438a2 2 0 01-1.789-2.894l3.5-7A2 2 0 0110 10H5a2 2 0 00-2 2v8a2 2 0 002 2h10a2 2 0 002-2v-8a2 2 0 00-2-2z"
+                ></path>
+              </svg>
+              <div className="text-left">
+                <span className="font-semibold text-gray-700 dark:text-gray-200">
+                  Current Crawl:
+                </span>
+                <span className="ml-2 text-gray-600 dark:text-gray-400 break-all underline">
+                  {diff?.added?.url}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
       className="w-full h-full flex flex-col dark:bg-brand-dark/40 overflow-hidden p-0 dark:border dark:border-brand-dark/50 dark:text-white"

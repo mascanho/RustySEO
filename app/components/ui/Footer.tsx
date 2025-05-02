@@ -4,7 +4,11 @@ import { LiaTasksSolid } from "react-icons/lia";
 import { CgWebsite } from "react-icons/cg";
 import { FaRobot } from "react-icons/fa6";
 import { useChat } from "ai/react";
-import { BsChatDots, BsLayoutSidebarInsetReverse } from "react-icons/bs";
+import {
+  BsChatDots,
+  BsLayoutSidebarInsetReverse,
+  BsPeopleFill,
+} from "react-icons/bs";
 import {
   Drawer,
   DrawerClose,
@@ -27,6 +31,7 @@ import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import CrawlerType from "./Footer/CrawlerType";
 import SeoToolkit from "./Footer/SeoToolkit/SeoToolkit";
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
+import { Code } from "lucide-react";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -236,11 +241,11 @@ const Footer = () => {
               {/* CHAT BUTTON */}
 
               <div className="relative group hover:delay-1000">
-                <BsChatDots
+                <BsPeopleFill
                   onClick={() =>
                     visibility.chatbar ? hideChatbar() : showChatbar()
                   }
-                  className="text-sm mb-[2px] cursor-pointer"
+                  className={`text-sm mb-[2px] cursor-pointer ${visibility.chatbar && "text-brand-bright"}`}
                 />
                 <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
                   Open chat
@@ -268,7 +273,7 @@ const Footer = () => {
                   onClick={() =>
                     visibility.seotoolkit ? hideSeoToolkit() : showSeoToolkit()
                   }
-                  className={iconClasses}
+                  className={`${iconClasses} ${visibility.seotoolkit && "text-brand-bright"}`}
                   style={{ fontSize: "15px", marginBottom: "0.5px" }}
                 />
                 <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
@@ -284,7 +289,9 @@ const Footer = () => {
               >
                 <DrawerTrigger className="flex items-center space-x-1">
                   <div className="relative group hover:delay-1000">
-                    <FaRobot className={`pb-[2px] text-base ${iconClasses}`} />
+                    <FaRobot
+                      className={`pb-[2px] text-base ${iconClasses} ${openedAiDrawer && "text-brand-bright"}`}
+                    />
                     <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
                       Rusty Chat
                     </div>
@@ -321,7 +328,7 @@ const Footer = () => {
 
               <div className="relative group hover:delay-1000">
                 <BsLayoutSidebarInsetReverse
-                  className={`text-sm ${iconClasses}`}
+                  className={`text-sm ${iconClasses} ${visibility.sidebar && "text-brand-bright"}`}
                   onClick={() => {
                     if (visibility.sidebar) {
                       hideSidebar();
