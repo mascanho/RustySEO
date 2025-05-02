@@ -28,10 +28,10 @@ import KeywordsTable from "./KeywordsTable/KeywordsTable";
 const BottomTableContent = ({ children, height }) => (
   <div
     style={{
-      height: `${height - 40}px`,
+      height: `${height - 34}px`,
       minHeight: "100px",
       overflowY: "auto",
-      marginBottom: "80px",
+      marginBottom: "60px",
     }}
   >
     {children}
