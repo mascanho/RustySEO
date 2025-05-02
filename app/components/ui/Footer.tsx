@@ -191,7 +191,7 @@ const Footer = () => {
         <TodoItems url={url} strategy={""} />
       </MantineDrawer>
 
-      <footer className="w-full justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[1000000] border-t-2 pb-1.5 dark:border-t-brand-dark flex items-center py-1 text-xs">
+      <footer className="w-full justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[99999999999] border-t-2 pb-1.5 dark:border-t-brand-dark flex items-center py-1 text-xs">
         <section>
           <div className="flex items-center ml-2 space-x-1 w-full">
             {loading ? (
@@ -287,24 +287,27 @@ const Footer = () => {
                   open ? openAiDrawer() : closeAiDrawer()
                 }
               >
-                <DrawerTrigger className="flex items-center space-x-1">
-                  <div className="relative group hover:delay-1000">
-                    <FaRobot
-                      className={`pb-[2px] text-base ${iconClasses} ${openedAiDrawer && "text-brand-bright"}`}
-                    />
-                    <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
-                      Rusty Chat
-                    </div>
+                {/* <DrawerTrigger className="flex items-center space-x-1"> */}
+                <div className="relative group hover:delay-1000">
+                  <FaRobot
+                    onClick={() =>
+                      openedAiDrawer ? closeAiDrawer() : openAiDrawer()
+                    }
+                    className={`pb-[2px] cursor-pointer z-50 text-base ${iconClasses} ${openedAiDrawer && "text-brand-bright cursor-pointer"} ${!openedAiDrawer && "cursor-pointer"}`}
+                  />
+                  <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
+                    Rusty AI
                   </div>
-                </DrawerTrigger>
+                </div>
+                {/* </DrawerTrigger> */}
                 <DrawerContent>
                   <DrawerHeader>
                     <div className="flex items-center space-x-2">
                       <FaRobot
-                        className={`text-2xl text-brand-highlight ${iconClasses}`}
+                        className={`text-2xl pb-1 text-brand-highlight ${iconClasses}`}
                       />
                       <span className="text-xl font-bold text-brand-highlight dark:text-white/40">
-                        Rusty Chat
+                        Rusty AI
                       </span>
                     </div>
                     <DrawerDescription>
@@ -318,7 +321,7 @@ const Footer = () => {
                       <div className="relative group hover:delay-1000">
                         <IoMdClose className="text-lg" />
                         <div className="absolute bottom-[calc(100%+5px)] right-0 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
-                          Rusty Chat
+                          Rusty AI
                         </div>
                       </div>
                     </DrawerClose>

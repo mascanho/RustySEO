@@ -11,8 +11,10 @@ import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 const IssueRow = React.memo(({ item, isSelected, onClick }) => (
   <tr
     onClick={() => onClick(item.name)}
-    className={`cursor-pointer border border-b p-1 text-[9px] ${
-      isSelected ? "text-[#2B6CC4]" : "text-[#f5f5f5]"
+    className={`cursor-pointer border border-b p-1 text-[9px] dark:text-white ${
+      isSelected
+        ? "dark:text-[#2B6CC4] text-[#2B6CC4] font-bold"
+        : "dark:text-[#f5f5f5]"
     }`}
   >
     <td className="px-2 py-1 dark:bg-brand-darker border text-[9px]">
@@ -361,7 +363,7 @@ const IssuesContainer = () => {
       style={{ width: "100%", scrollbarGutter: "stable", overflowY: "visible" }}
       className="text-xs space-y-1 min-h-[10rem] h-[calc(100vh-39rem)] overflow-y-visible overflow-x-hidden relative"
     >
-      <table className="w-full border-collapse border-0 dark:border-red-500 issues pt-2">
+      <table className="w-full border-collapse border-0 issues dark:text-white text-black  pt-2">
         <thead className="sticky top-0 dark:bg-brand-darker">
           <tr className="text-xs bg-gray-100">
             <th

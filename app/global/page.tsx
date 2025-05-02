@@ -251,7 +251,7 @@ export default function Page() {
               className="flex flex-col space-y-8 overflow-scroll"
             >
               <section className="mt-[3rem]">
-                {/* <TaskManagerContainer /> */}
+                <TaskManagerContainer />
               </section>
             </Tabs.Panel>
           )}
@@ -261,14 +261,14 @@ export default function Page() {
               value="analytics"
               className="pt-9 dark:bg-brand-darker mb-0"
             >
-              {/* <Analytics /> */}
+              <Analytics />
             </Tabs.Panel>
           )}
 
           {activeTab === "clarity" && (
             <Tabs.Panel value="clarity" className="pt-8">
               <section className="h-[calc(100vh-8rem)] overflow-auto">
-                {/* <ClarityContainer /> */}
+                <ClarityContainer />
               </section>
             </Tabs.Panel>
           )}
@@ -276,21 +276,19 @@ export default function Page() {
           {activeTab === "powerbi" && (
             <Tabs.Panel
               value="powerbi"
-              className="w-full max-w-96 flex-none h-screen overflow-scroll  flex justify-center items-center  bg-white"
-              style={{
-                height: "calc(100vh - 4rem)",
-                width: "calc(100vw - 21.5rem)",
-              }}
+              className="w-full  flex-none  overflow-auto  flex justify-center items-center  bg-white "
             >
               <div className="flex justify-center items-center w-full h-screen overflow-auto">
                 {powerBiUrl ? (
-                  <iframe
-                    width="1920"
-                    height="900"
-                    src={powerBiUrl}
-                    frameBorder="0"
-                    allowFullScreen={true}
-                  ></iframe>
+                  <div className="relative w-full h-[calc(100vh-7.9rem)] -mt-20 mb-1  max-w-full max-h-full aspect-[32/15]">
+                    <iframe
+                      className="absolute top-0 left-0 w-full h-full border-0"
+                      src={powerBiUrl}
+                      frameBorder="0"
+                      allowFullScreen={true}
+                      title="Power BI Report"
+                    ></iframe>
+                  </div>
                 ) : null}
               </div>
             </Tabs.Panel>
@@ -301,7 +299,7 @@ export default function Page() {
               value="kws"
               className="h-[calc(100vh-4rem)] pt-9 dark:bg-brand-darker"
             >
-              {/* <KeywordAnalytics /> */}
+              <KeywordAnalytics />
             </Tabs.Panel>
           )}
 
@@ -310,7 +308,7 @@ export default function Page() {
               value="gsc"
               className="h-calc(100vh-8.8rem)] pt-9 dark:bg-brand-darker"
             >
-              {/* <GSCcontainer /> */}
+              <GSCcontainer />
             </Tabs.Panel>
           )}
 

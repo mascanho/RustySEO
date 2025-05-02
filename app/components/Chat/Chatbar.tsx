@@ -72,51 +72,39 @@ const initialMessages: Message[] = [
   },
   {
     id: "m2",
-    text: "Pretty good! Working on that new project.",
+    text: "Pretty good!",
     timestamp: new Date(Date.now() - 1000 * 60 * 30),
     senderId: "2",
   },
   {
-    id: "m3",
-    text: "Can someone help me with the design specs?",
-    timestamp: new Date(Date.now() - 1000 * 60 * 15),
-    senderId: "4",
-  },
-  {
-    id: "m4",
-    text: "I'll send them over in a bit.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 5),
+    id: "m1",
+    text: "Just to let you know that a chat function is on the way.🔥",
+    timestamp: new Date(Date.now() - 1000 * 60 * 60),
     senderId: "1",
   },
   {
-    id: "m5",
-    text: "I'll send them over in a bit.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 5),
+    id: "m2",
+    text: "That would be cool. What kind of chat?",
+    timestamp: new Date(Date.now() - 1000 * 60 * 30),
+    senderId: "2",
+  },
+  {
+    id: "m1",
+    text: "A chat where SEO professionals can be conneted to each other, ask questions and get cool feedback from other SEO peers. All while they analyse their websites.",
+    timestamp: new Date(Date.now() - 1000 * 60 * 60),
     senderId: "1",
   },
   {
-    id: "m6",
-    text: "I'll send them over in a bit.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 5),
+    id: "m1",
+    text: "For now its just dummy text... RustySEO's developer is working on it. Stay tunned",
+    timestamp: new Date(Date.now() - 1000 * 60 * 60),
     senderId: "1",
   },
   {
-    id: "m7",
-    text: "I'll send them over in a bit.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 5),
-    senderId: "1",
-  },
-  {
-    id: "m8",
-    text: "I'll send them over in a bit.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 5),
-    senderId: "1",
-  },
-  {
-    id: "m9",
-    text: "I'll send them over in a bit.",
-    timestamp: new Date(Date.now() - 1000 * 60 * 5),
-    senderId: "1",
+    id: "m2",
+    text: "Nice!! That could be interesting. Hope it comes out soon.",
+    timestamp: new Date(Date.now() - 1000 * 60 * 30),
+    senderId: "2",
   },
 ];
 
@@ -162,8 +150,8 @@ export function ChatBar() {
 
   return (
     <div
-      className={`flex flex-col overflow-hidden border font-mono shadow-xl transition ease-in delay-75 z-[999999] absolute right-0
-  ${visibility.chatbar ? "w-[22rem]" : "w-0"}
+      className={`flex flex-col overflow-hidden border border-l-2 font-mono shadow-xl transition ease-in delay-75 z-[999999] absolute right-0
+  ${visibility.chatbar ? "w-[20.4rem]" : "w-0"}
   border-gray-200 text-gray-800 dark:border-gray-800 dark:bg-[#1a1a1a] dark:text-gray-200
   ${pathname === "/" && "top-0 h-[calc(100vh-8.1rem)]"}
 ${pathname === "/global" && "top-[5.1rem] h-[calc(100vh-8.4rem)]"}
@@ -174,7 +162,7 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.3rem)]"}
       <div className="border-b border-gray-200 bg-white px-3 py-2 dark:border-[#333333] dark:bg-[#1a1a1a]">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <h2 className="text-sm font-medium">TEAM CHAT</h2>
+            <h2 className="text-sm font-medium">SEO CHAT</h2>
             <X
               size={16}
               className="ml-2 text-purple-500 cursor-pointer"
@@ -209,16 +197,16 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.3rem)]"}
             return (
               <div
                 key={message.id}
-                className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}
+                className={`flex  ${isCurrentUser ? "justify-end" : "justify-start"}`}
               >
                 <div className="max-w-[85%]">
-                  <div className="flex items-start space-x-2">
+                  <div className="flex items-start space-x-2 ">
                     {!isCurrentUser && (
                       <div
                         className="mt-1 flex h-6 w-6 items-center justify-center rounded-sm"
                         style={{ color: getParticipantColor(sender) }}
                       >
-                        {sender.icon}
+                        <span className="mb-4">{sender.icon}</span>
                       </div>
                     )}
                     <div>
@@ -252,7 +240,7 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.3rem)]"}
                             className="flex h-6 w-6 items-center justify-center"
                             style={{ color: getParticipantColor(sender) }}
                           >
-                            {sender.icon}
+                            <span>{sender.icon}</span>
                           </div>
                         )}
                       </div>

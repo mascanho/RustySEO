@@ -557,10 +557,10 @@ const TopMenuBar = () => {
                 <FiTool className="mr-2" />
                 Image Converter
               </MenubarItem>
-              <MenubarItem onClick={showSerpKeywords}>
-                <FiTool className="mr-2" />
-                Headings SERP
-              </MenubarItem>
+              {/* <MenubarItem onClick={showSerpKeywords}> */}
+              {/*   <FiTool className="mr-2" /> */}
+              {/*   Headings SERP */}
+              {/* </MenubarItem> */}
               <MenubarSeparator />
               <MenubarItem
                 disabled={pathname !== "/global"}
