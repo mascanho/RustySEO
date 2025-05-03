@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use tokio::fs;
 use tokio::time::Duration;
 use toml;
+use uuid::Uuid;
 
 use crate::domain_crawler::user_agents;
 use crate::loganalyser::log_state::set_taxonomies;
@@ -28,6 +29,7 @@ pub struct Settings {
     pub links_retry_delay: u64,
     pub links_request_timeout: u64,
     pub taxonomies: Vec<String>,
+    pub rustyid: Uuid,
 }
 
 impl Settings {
@@ -51,6 +53,7 @@ impl Settings {
             links_request_timeout: 15,
             links_retry_delay: 500,
             taxonomies: set_taxonomies(),
+            rustyid: Uuid::new_v4(),
         }
     }
 

@@ -65,7 +65,7 @@ const PowerBiEmbed = ({ close }) => {
               name="powerbi-url"
               value={powerBiUrl}
               onChange={handleUrlChange}
-              className={`w-full px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 ${
+              className={`w-full px-3 py-1 -ml-1 border rounded-lg focus:outline-none focus:ring-2 ${
                 error
                   ? "border-red-500 focus:ring-red-200 dark:border-red-500"
                   : "border-gray-300 focus:ring-blue-200 dark:border-white/30 dark:bg-brand-darker"

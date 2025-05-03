@@ -406,6 +406,7 @@ pub struct Differential {
     url: Option<String>, // Use Option to handle cases where there is no URL
     pages: Vec<String>,
     number_of_pages: usize,
+    timestamp: Option<String>,
 }
 
 pub async fn analyse_diffs() -> Result<DiffAnalysis, DatabaseError> {
@@ -444,12 +445,19 @@ pub async fn analyse_diffs() -> Result<DiffAnalysis, DatabaseError> {
             ));
         }
 
-        // Get added URLs (in current but not in previous)
-        let mut added_urls = Vec::new();
+        // Struct to hold URL and timestamp pairs
+        #[derive(Debug)]
+        struct UrlRecord {
+            url: String,
+            timestamp: Option<String>,
+        }
+
+        // Get added URLs with timestamps
+        let mut added_records = Vec::new();
         let mut stmt = conn
             .prepare(
-                "SELECT url FROM current_crawl
-             WHERE url NOT IN (SELECT url FROM previous_crawl)",
+                "SELECT url, timestamp FROM current_crawl
+                 WHERE url NOT IN (SELECT url FROM previous_crawl)",
             )
             .map_err(|e| {
                 DatabaseError::QueryError(format!("Failed to prepare added URLs query: {}", e))
@@ -461,17 +469,22 @@ pub async fn analyse_diffs() -> Result<DiffAnalysis, DatabaseError> {
         while let Some(row) = rows.next().map_err(|e| {
             DatabaseError::QueryError(format!("Failed to fetch added URL row: {}", e))
         })? {
-            added_urls.push(row.get::<_, String>(0).map_err(|e| {
-                DatabaseError::QueryError(format!("Failed to get URL from row: {}", e))
-            })?);
+            added_records.push(UrlRecord {
+                url: row.get(0).map_err(|e| {
+                    DatabaseError::QueryError(format!("Failed to get URL from row: {}", e))
+                })?,
+                timestamp: row.get(1).map_err(|e| {
+                    DatabaseError::QueryError(format!("Failed to get timestamp from row: {}", e))
+                })?,
+            });
         }
 
-        // Get removed URLs (in previous but not in current)
-        let mut removed_urls = Vec::new();
+        // Get removed URLs with timestamps
+        let mut removed_records = Vec::new();
         let mut stmt = conn
             .prepare(
-                "SELECT url FROM previous_crawl
-             WHERE url NOT IN (SELECT url FROM current_crawl)",
+                "SELECT url, timestamp FROM previous_crawl
+                 WHERE url NOT IN (SELECT url FROM current_crawl)",
             )
             .map_err(|e| {
                 DatabaseError::QueryError(format!("Failed to prepare removed URLs query: {}", e))
@@ -483,21 +496,42 @@ pub async fn analyse_diffs() -> Result<DiffAnalysis, DatabaseError> {
         while let Some(row) = rows.next().map_err(|e| {
             DatabaseError::QueryError(format!("Failed to fetch removed URL row: {}", e))
         })? {
-            removed_urls.push(row.get::<_, String>(0).map_err(|e| {
-                DatabaseError::QueryError(format!("Failed to get URL from row: {}", e))
-            })?);
+            removed_records.push(UrlRecord {
+                url: row.get(0).map_err(|e| {
+                    DatabaseError::QueryError(format!("Failed to get URL from row: {}", e))
+                })?,
+                timestamp: row.get(1).map_err(|e| {
+                    DatabaseError::QueryError(format!("Failed to get timestamp from row: {}", e))
+                })?,
+            });
         }
 
+        // Get most recent timestamp from added records
+        let added_timestamp = added_records
+            .iter()
+            .filter_map(|r| r.timestamp.as_ref())
+            .max()
+            .cloned();
+
+        // Get most recent timestamp from removed records
+        let removed_timestamp = removed_records
+            .iter()
+            .filter_map(|r| r.timestamp.as_ref())
+            .max()
+            .cloned();
+
         let added_differential = Differential {
-            url: added_urls.get(0).cloned(), // Safely get the first URL if it exists
-            pages: added_urls.clone(),
-            number_of_pages: added_urls.len(),
+            url: added_records.first().map(|r| r.url.clone()),
+            pages: added_records.iter().map(|r| r.url.clone()).collect(),
+            number_of_pages: added_records.len(),
+            timestamp: added_timestamp,
         };
 
         let removed_differential = Differential {
-            url: removed_urls.get(0).cloned(), // Safely get the first URL if it exists
-            pages: removed_urls.clone(),
-            number_of_pages: removed_urls.len(),
+            url: removed_records.first().map(|r| r.url.clone()),
+            pages: removed_records.iter().map(|r| r.url.clone()).collect(),
+            number_of_pages: removed_records.len(),
+            timestamp: removed_timestamp,
         };
 
         Ok(DiffAnalysis {

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useEffect } from "react";
-import { FileDiff, Calendar } from "lucide-react";
+import { FileDiff, Calendar, Worm } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CardHeader, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useDiffStore } from "@/store/DiffStore";
 import { invoke } from "@tauri-apps/api/core";
 import { format } from "date-fns";
+import { GiSpiderBot } from "react-icons/gi";
 
 export default function DiffChecker() {
   const { diff, setBulkDiffData, setLoading, setError } = useDiffStore();
@@ -42,7 +43,7 @@ export default function DiffChecker() {
   if (diff?.added?.url !== diff?.removed?.url) {
     return (
       <section className="flex flex-col justify-center items-center min-h-screen p-6  transition-colors duration-300 -mt-64">
-        <div className="bg-white p-8 w-full max-w-lg text-center ">
+        <div className="bg-white p-8 w-full max-w-lg text-center dark:bg-brand-darker">
           <h3 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-6 tracking-tight">
             Crawled Website Mismatch
           </h3>
@@ -50,46 +51,24 @@ export default function DiffChecker() {
             The websites from the previous and current crawls are different and
             cannot be compared.
           </p>
-          <div className="space-y-6">
-            <div className="flex items-center bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg transition-colors duration-200">
-              <svg
-                className="w-7 h-7 text-blue-600 dark:text-blue-400 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"
-                ></path>
-              </svg>
+          <div className="space-y-6 dark:bg-brand-darker">
+            <div className="flex items-center bg-gray-50 dark:bg-gray-700 p-4 rounded-lg transition-colors duration-200">
+              <GiSpiderBot className="text-2xl text-purple-500 mr-2" />
               <div className="text-left">
                 <span className="font-semibold text-gray-700 dark:text-gray-200">
                   Previous Crawl:
                 </span>
-                <span className="ml-2 text-gray-600 dark:text-gray-400 break-all underline">
-                  {diff?.removed?.url}
+                <span
+                  className={`first-letter:ml-2 text-gray-600 dark:text-gray-400 break-all ${diff?.removed?.url === null ? "italic ml-2 text-red-400" : "ml-2 underline"}`}
+                >
+                  {diff?.removed?.url === null
+                    ? "No website crawled previously"
+                    : diff?.removed?.url}
                 </span>
               </div>
             </div>
-            <div className="flex items-center bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg transition-colors duration-200">
-              <svg
-                className="w-7 h-7 text-green-600 dark:text-green-400 mr-3"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.763 21H7.438a2 2 0 01-1.789-2.894l3.5-7A2 2 0 0110 10H5a2 2 0 00-2 2v8a2 2 0 002 2h10a2 2 0 002-2v-8a2 2 0 00-2-2z"
-                ></path>
-              </svg>
+            <div className="flex items-center bg-gray-50 dark:bg-gray-700 p-4 rounded-lg transition-colors duration-200">
+              <GiSpiderBot className="text-2xl text-blue-500 mr-2" />
               <div className="text-left">
                 <span className="font-semibold text-gray-700 dark:text-gray-200">
                   Current Crawl:
@@ -115,7 +94,9 @@ export default function DiffChecker() {
           <div className="flex items-center gap-2">
             <FileDiff className="h-5 w-5 text-gray-700 dark:text-gray-300 -ml-1" />
             <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-              URL Changes Detected Since Last Crawl
+              {diff?.added?.number_of_pages === diff?.removed?.number_of_pages
+                ? "No URLs were added or removed between the crawls"
+                : "RustySEO detected changes between the crawls"}
             </span>
           </div>
 
@@ -123,19 +104,17 @@ export default function DiffChecker() {
           <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-1 mb-2">
             <div className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              <span>
-                Previous: {formatDate(diff?.previous_crawl_timestamp)}
-              </span>
+              <span>Previous: {formatDate(diff?.removed?.timestamp)}</span>
             </div>
             <div className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              <span>Current: {formatDate(diff?.current_crawl_timestamp)}</span>
+              <span>Current: {formatDate(diff?.added?.timestamp)}</span>
             </div>
           </div>
 
           {/* Stats Cards */}
           <div className="grid grid-cols-2 gap-4 mt-1">
-            <div className="flex flex-col items-center justify-center p-3 bg-gray-50 dark:bg-brand-darker border dark:border-brand-dark/50 rounded-md">
+            <div className="flex flex-col items-center justify-center p-3dark:bg-brand-darker  bg-gray-50 dark:bg-brand-darker border dark:border-brand-dark/50 rounded-md">
               <div className="text-sm text-gray-500 dark:text-gray-300">
                 Added Pages
               </div>
@@ -201,8 +180,8 @@ export default function DiffChecker() {
             <ScrollArea className="h-full w-full">
               <div className="py-2">
                 {!diff?.added?.pages?.length ? (
-                  <div className="py-8 text-center text-gray-500 dark:text-gray-400">
-                    No new URLs found
+                  <div className="py-8 text-center mt-16 text-gray-500 dark:text-gray-400">
+                    No new URLs added since last crawl
                   </div>
                 ) : (
                   diff.added.pages.sort().map((url) => (
@@ -227,8 +206,8 @@ export default function DiffChecker() {
             <ScrollArea className="h-full w-full">
               <div className="py-2">
                 {!diff?.removed?.pages?.length ? (
-                  <div className="py-8 text-center text-gray-500 dark:text-gray-400">
-                    No removed URLs found
+                  <div className="py-8 mt-16 text-center text-gray-500 dark:text-gray-400">
+                    No removed URLs detected between crawls
                   </div>
                 ) : (
                   diff.removed.pages.sort().map((url) => (
