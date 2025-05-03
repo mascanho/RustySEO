@@ -67,6 +67,7 @@ import { Settings } from "lucide-react";
 import PowerBi from "./MSClarityModal/PowerBi";
 import { useOnboardingStore } from "@/store/OnboardingStore";
 import { BiDoorOpen } from "react-icons/bi";
+import { CiSettings } from "react-icons/ci";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -419,10 +420,11 @@ const TopMenuBar = () => {
         opened={openedDiffChecker}
         onClose={closeDiffChecker}
         title="Crawl Diff Checker"
-        size="40%"
+        size="60%"
         overlayProps={{
           backgroundOpacity: 0.55,
           blur: 3,
+          zIndex: 0,
         }}
         transitionProps={{
           transition: "fade",
@@ -456,6 +458,7 @@ const TopMenuBar = () => {
         closeButtonProps={{
           color: isDarkMode ? "gray" : "dark",
           size: "md",
+          right: 10,
         }}
       >
         <DiffChecker />
@@ -466,11 +469,11 @@ const TopMenuBar = () => {
         <CustomSearchSelector close={hideCustomSearch} />
       )}
 
-      <Menubar className="fixed w-full top-0 z-[1000] p-0 pl-0 dark:bg-brand-darker dark:text-white bg-white dark:border-b-brand-dark border-b pb-1">
+      <Menubar className="fixed w-full top-0 z-[999999999] p-0 pl-0 dark:bg-brand-darker dark:text-white/50 text-black/70 bg-white dark:border-b-brand-dark border-b pb-1 font-mono font-light">
         <section className="flex -ml-3 space-x-1 cursor-pointer">
           <MenubarMenu>
-            <MenubarTrigger className="ml-4">File</MenubarTrigger>
-            <MenubarContent>
+            <MenubarTrigger className="ml-4 text-xs">File</MenubarTrigger>
+            <MenubarContent className="z-[999999999999999]">
               <MenubarItem onClick={openConfs}>
                 <FiTool className="mr-2" />
                 Configurations
@@ -483,10 +486,13 @@ const TopMenuBar = () => {
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="ml-4">View</MenubarTrigger>
-            <MenubarContent>
+            <MenubarTrigger className="ml-4 text-xs">View</MenubarTrigger>
+            <MenubarContent className="z-[999999999999999]">
               <MenubarItem onClick={handleOpenConfigFile}>
-                <Settings size={12} className="mr-1.5" />
+                <CiSettings
+                  className=" text-sm mr-1.5 "
+                  style={{ marginLeft: "-1px" }}
+                />
                 Crawl Settings
               </MenubarItem>
               <MenubarItem
@@ -513,7 +519,7 @@ const TopMenuBar = () => {
 
           <MenubarMenu>
             <MenubarTrigger className="ml-3">Tasks</MenubarTrigger>
-            <MenubarContent>
+            <MenubarContent className="z-[999999999999999]">
               <MenubarItem onClick={openModal}>
                 <FiCheckSquare className="mr-2" />
                 New task
@@ -531,7 +537,7 @@ const TopMenuBar = () => {
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="ml-3">Reports</MenubarTrigger>
+            <MenubarTrigger className="ml-3 text-xs">Reports</MenubarTrigger>
             <MenubarContent>
               <MenubarItem onClick={handleDownloadPerformance}>
                 <FiBarChart2 className="mr-2" />
@@ -545,16 +551,16 @@ const TopMenuBar = () => {
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="ml-3">Tools</MenubarTrigger>
-            <MenubarContent>
+            <MenubarTrigger className="ml-3 text-xs">Tools</MenubarTrigger>
+            <MenubarContent className="z-[999999999999999]">
               <MenubarItem onClick={() => router.push("/images")}>
                 <FiTool className="mr-2" />
                 Image Converter
               </MenubarItem>
-              <MenubarItem onClick={showSerpKeywords}>
-                <FiTool className="mr-2" />
-                Headings SERP
-              </MenubarItem>
+              {/* <MenubarItem onClick={showSerpKeywords}> */}
+              {/*   <FiTool className="mr-2" /> */}
+              {/*   Headings SERP */}
+              {/* </MenubarItem> */}
               <MenubarSeparator />
               <MenubarItem
                 disabled={pathname !== "/global"}
@@ -572,8 +578,8 @@ const TopMenuBar = () => {
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="ml-3">Connectors</MenubarTrigger>
-            <MenubarContent>
+            <MenubarTrigger className="ml-3 text-xs">Connectors</MenubarTrigger>
+            <MenubarContent className="z-[999999999999999]">
               <MenubarItem onClick={openMSClarity}>
                 <FiZap className="mr-2" />
                 Microsoft Clarity
@@ -611,8 +617,8 @@ const TopMenuBar = () => {
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="ml-3">Crawlers</MenubarTrigger>
-            <MenubarContent>
+            <MenubarTrigger className="ml-3 text-xs">Crawlers</MenubarTrigger>
+            <MenubarContent className="z-[999999999999999]">
               <MenubarItem onClick={() => router.push("/")}>
                 <GiRobotGrab className="mr-2" />
                 Shallow Crawler
@@ -625,8 +631,8 @@ const TopMenuBar = () => {
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="ml-3">Extractors</MenubarTrigger>
-            <MenubarContent>
+            <MenubarTrigger className="ml-3 text-xs">Extractors</MenubarTrigger>
+            <MenubarContent className="z-[999999999999999]">
               <MenubarItem
                 className={`mr-2 ${pathname !== "/global" ? "text-gray-400 pointer-events-none w-full" : "w-full"}`}
                 onClick={showCustomSearch}
@@ -639,8 +645,8 @@ const TopMenuBar = () => {
           </MenubarMenu>
 
           <MenubarMenu>
-            <MenubarTrigger className="ml-3">Help</MenubarTrigger>
-            <MenubarContent>
+            <MenubarTrigger className="ml-3 text-xs">Help</MenubarTrigger>
+            <MenubarContent className="z-[999999999999999]">
               <MenubarItem onClick={handleOnboarding}>
                 <BiDoorOpen className="mr-2" />
                 Onboarding

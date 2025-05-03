@@ -3,7 +3,7 @@ use serde_json::Value;
 
 #[tauri::command]
 pub fn generate_xlsx(data: Vec<Value>) -> Result<Vec<u8>, String> {
-    println!("Received Data: {:?}", data);
+    // println!("Received Data: {:?}", data);
 
     if data.is_empty() {
         return Err("Invalid JSON structure: expected a non-empty array of arrays".to_string());
@@ -432,7 +432,7 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
 
 // Create the XLXS FILE FROM THE DATA (TWO COLUMNS TABLE: CSS, JAVASCRIPT, LINKS)
 pub fn generate_excel_two_cols(data: Vec<Value>) -> Result<Vec<u8>, String> {
-    println!("Generating Excel with: {:?}", &data);
+    // println!("Generating Excel with: {:?}", &data);
 
     // CHECK IF THE DATA IS EMPTY
     if data.is_empty() {
@@ -486,7 +486,7 @@ pub fn generate_excel_two_cols(data: Vec<Value>) -> Result<Vec<u8>, String> {
 
 // EXTRACT AND PRINT THE DATA FROM THE CSS TABLE
 pub fn generate_css_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
-    println!("This is the data: {:#?}", &data);
+    // println!("This is the data: {:#?}", &data);
 
     // CHECK IF THE DATA IS EMPTY
     if data.is_empty() {
@@ -537,7 +537,7 @@ pub fn generate_css_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
 
 // EXTRACT AND PRINT THE DATA FROM THE CSS TABLE
 pub fn generate_links_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
-    println!("Generating Excel with: {:?}", &data);
+    // println!("Generating Excel with: {:?}", &data);
 
     // CHECK IF THE DATA IS EMPTY
     if data.is_empty() {
@@ -603,7 +603,7 @@ pub fn generate_links_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
 
 // EXTRACT AND PRINT THE DATA FROM THE KEYWORDS TABLE
 pub fn generate_keywords_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
-    println!("Generating Excel with: {:?}", &data);
+    // println!("Generating Excel with: {:?}", &data);
 
     // CHECK IF THE DATA IS EMPTY
     if data.is_empty() {
@@ -722,17 +722,24 @@ pub fn generate_keywords_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
 
 // GENERATE EXCEL FROM THE LINKS TABLE WITH ALL THE column
 // This table has [Anchor Text] | [HREF] | [Status Code] | [Page]
-//
 
 pub fn generate_links_table_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
-    println!("Received Data, {:?}", &data);
+    // println!("Received Data, {:?}", &data);
 
     if data.is_empty() {
         eprintln!("No data received");
         return Err("No data received".to_string());
     }
 
-    let headers = vec!["Anchor Text", "HREF", "Status Code", "Page"];
+    let headers = vec![
+        "Anchor Text",
+        "Rel",
+        "HREF",
+        "Title",
+        "Target",
+        "Status Code",
+        "Page",
+    ];
     let mut workbook = Workbook::new();
     let worksheet = workbook.add_worksheet();
 
@@ -756,11 +763,31 @@ pub fn generate_links_table_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
                 .and_then(|v| v.as_str())
                 .unwrap_or("")
                 .to_string();
+
+            let rel = map
+                .get("rel")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+
             let link = map
                 .get("link")
                 .and_then(|v| v.as_str())
                 .unwrap_or("")
                 .to_string();
+
+            let title = map
+                .get("title")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+
+            let target = map
+                .get("target")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+
             let status = map
                 .get("status")
                 .map(|v| match v {
@@ -775,7 +802,7 @@ pub fn generate_links_table_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
                 .unwrap_or("")
                 .to_string();
 
-            let values = vec![anchor, link, status, page];
+            let values = vec![anchor, rel, link, title, target, status, page];
             for (col_idx, cell) in values.iter().enumerate() {
                 worksheet
                     .write((row_idx + 1) as u32, col_idx as u16, cell)
@@ -788,6 +815,6 @@ pub fn generate_links_table_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
 
     let buffer = workbook.save_to_buffer().map_err(|e| e.to_string())?;
 
-    println!("Excel file successfully created in memory!");
+    // println!("Excel file successfully created in memory!");
     Ok(buffer)
 }

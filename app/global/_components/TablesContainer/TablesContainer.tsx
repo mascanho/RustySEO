@@ -28,10 +28,10 @@ import KeywordsTable from "./KeywordsTable/KeywordsTable";
 const BottomTableContent = ({ children, height }) => (
   <div
     style={{
-      height: `${height - 40}px`,
+      height: `${height - 34}px`,
       minHeight: "100px",
       overflowY: "auto",
-      marginBottom: "80px",
+      marginBottom: "60px",
     }}
   >
     {children}
@@ -174,7 +174,7 @@ export default function Home() {
             anchor: statusInfo.anchor_text || "", // Use anchor_text from statusInfo
             status: statusInfo.status || null,
             error: statusInfo.error || null,
-            page: item?.page || null, // Use item.page as in original
+            page: item?.url || null, // Use item.page as in original
           });
         }
       });
@@ -182,6 +182,7 @@ export default function Home() {
 
     return linksWithAnchors;
   }, [debouncedCrawlData]);
+
   // FILTER THE KEYWORDS, make them as value and the url as key
   const filteredKeywords = useMemo(() => {
     const urlKeywordsArray = []; // Array to store objects with URLs and keywords
@@ -340,7 +341,7 @@ export default function Home() {
           style={{ height: `${bottomTableHeight}px`, minHeight: "100px" }}
         >
           <Tabs value={activeBottomTab} onValueChange={setActiveBottomTab}>
-            <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t  bg-slate-50 rounded-none sticky top-0 -z-0  ">
+            <TabsList className="w-full justify-start dark:bg-brand-darker  dark:border-brand-dark border-t  bg-slate-50 rounded-none sticky top-0 -z-0  ">
               <TabsTrigger value="details" className="rounded-t-md">
                 Details
               </TabsTrigger>

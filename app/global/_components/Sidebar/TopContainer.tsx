@@ -6,12 +6,21 @@ import GeneralTopSideBarContainer from "./General/GeneralTopSideBarContainer";
 import IssuesContainer from "./Issues/IssuesContainer";
 import RankingInfo from "@/app/global/_components/Sidebar/GSCRankingInfo/RankingInfo";
 import ConsoleLog from "./ConsoleLog/ConsoleLog";
+import { useVisibilityStore } from "@/store/VisibilityStore";
 
 const TopContainer = () => {
+  const { showSidebar } = useVisibilityStore();
+
   return (
-    <div className="h-full">
-      <Tabs defaultValue="first" className="overflow-auto">
-        <Tabs.List justify="center" grow className="dark:text-white text-xs">
+    <div
+      className={`h-full w-full overflow-hidden ${showSidebar ? "block" : "hidden"}`}
+    >
+      <Tabs defaultValue="first">
+        <Tabs.List
+          justify="center"
+          grow
+          className="dark:text-white text-xs border-0"
+        >
           <Tabs.Tab value="first">General</Tabs.Tab>
           <Tabs.Tab value="issues">Issues</Tabs.Tab>
           {/* <Tabs.Tab value="gsc">GSC</Tabs.Tab> */}

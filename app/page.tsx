@@ -879,21 +879,21 @@ const Home: React.FC<HomeProps> = () => {
             </Tabs.Panel>{" "}
             <Tabs.Panel
               value="powerbi"
-              className="w-full flex-none h-screen overflow-scroll  flex justify-center items-center  bg-white"
-              style={{
-                height: "calc(100vh - 4rem)",
-                width: "calc(100vw - 21.5rem)",
-                overflow: "hidden",
-              }}
+              className="w-full  flex-none  overflow-hidden   flex justify-center items-center  bg-white "
+              style={{ height: "90%" }}
             >
-              <div className="flex justify-center items-center w-full h-screen overflow-auto">
-                <iframe
-                  width="1920"
-                  height="900"
-                  src={powerBiUrl}
-                  frameBorder="0"
-                  allowFullScreen={true}
-                ></iframe>
+              <div className="flex justify-center items-center  w-full h-[calc(100vh-140px)]    overflow-hidden">
+                {powerBiUrl ? (
+                  <div className="relative w-full h-full    max-w-full max-h-full aspect-[32/15]">
+                    <iframe
+                      className="absolute top-0 left-0 w-full h-full border-0"
+                      src={powerBiUrl}
+                      frameBorder="0"
+                      allowFullScreen={true}
+                      title="Power BI Report"
+                    ></iframe>
+                  </div>
+                ) : null}
               </div>
             </Tabs.Panel>
             <Tabs.Panel value="content">

@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use tokio::fs;
 use tokio::time::Duration;
 use toml;
+use uuid::Uuid;
 
 use crate::domain_crawler::user_agents;
 use crate::loganalyser::log_state::set_taxonomies;
@@ -11,6 +12,9 @@ use crate::loganalyser::log_state::set_taxonomies;
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Settings {
     pub crawl_timeout: u64,
+    pub client_timeout: u64,
+    pub client_connect_timeout: u64,
+    pub redirect_policy: usize,
     pub max_retries: u32,
     pub base_delay: u64,
     pub max_delay: u64,
@@ -25,12 +29,16 @@ pub struct Settings {
     pub links_retry_delay: u64,
     pub links_request_timeout: u64,
     pub taxonomies: Vec<String>,
+    pub rustyid: Uuid,
 }
 
 impl Settings {
     pub fn new() -> Self {
         Self {
             crawl_timeout: 28800,
+            client_timeout: 60,
+            client_connect_timeout: 15,
+            redirect_policy: 5,
             max_retries: 5,
             base_delay: 500,
             max_delay: 8000,
@@ -45,6 +53,7 @@ impl Settings {
             links_request_timeout: 15,
             links_retry_delay: 500,
             taxonomies: set_taxonomies(),
+            rustyid: Uuid::new_v4(),
         }
     }
 

@@ -20,9 +20,11 @@ use tokio::sync::Mutex;
 use tokio::sync::RwLock;
 use toml;
 
+pub mod chat;
 pub mod crawler;
 pub mod domain_crawler;
 pub mod settings;
+pub mod users;
 
 pub mod machine_learning;
 
@@ -129,8 +131,12 @@ async fn generate_ai_topics(body: String) -> Result<String, String> {
 
 #[tokio::main]
 async fn main() {
-    // Execute the ID check
-    // let uuid = globals::actions::uuid_creation_check();
+    // Add RustySEO uuid to DB
+    match users::add_user().await {
+        Ok(_) => println!("User added successfully"),
+        Err(err) => eprintln!("Error adding user: {}", err),
+    };
+
     // clear the custom_search DB entry
     match db::clear_custom_search() {
         Ok(_) => println!("Custom search entry cleared successfully"),
@@ -226,12 +232,12 @@ async fn main() {
             domain_commands::create_css_excel,
             domain_commands::create_keywords_excel_command,
             domain_commands::generate_links_table_xlsx_command,
-            domain_commands::analyse_diffs_command,
             commands::open_configs_with_native_editor,
             loganalyser::log_commands::check_logs_command,
             loganalyser::helpers::parse_logs::set_taxonomies,
             loganalyser::helpers::parse_logs::fetch_google_ip_ranges,
-            loganalyser::helpers::check_hostname::reverse_lookup
+            loganalyser::helpers::check_hostname::reverse_lookup,
+            domain_commands::get_url_diff_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

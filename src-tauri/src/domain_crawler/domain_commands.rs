@@ -9,7 +9,7 @@ use serde_json::Value;
 use crate::{domain_crawler::domain_crawler, settings::settings::Settings, AppState};
 
 use super::{
-    database::{self, analyse_diffs},
+    database::{self, analyse_diffs, DiffAnalysis, Differential},
     excel::create_xlsx::{
         generate_css_table, generate_excel_main_table, generate_excel_two_cols,
         generate_keywords_excel, generate_links_table_excel, generate_xlsx,
@@ -146,13 +146,15 @@ pub async fn generate_links_table_xlsx_command(data: Vec<Value>) -> Result<Vec<u
     }
 }
 
+// GET THE DIFFERENCES BETWWEN THE CRAWLS
 #[tauri::command]
-pub async fn analyse_diffs_command() -> Result<(), String> {
-    match analyse_diffs().await {
-        Ok(file) => Ok(file),
-        Err(e) => {
-            eprintln!("Error: {}", e);
-            Err(e.to_string())
-        }
-    }
+pub async fn get_url_diff_command() -> Result<DiffAnalysis, String> {
+    database::analyse_diffs().await.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn clone_crawl_data_command() -> Result<(), String> {
+    database::clone_batched_crawl_into_persistent_db()
+        .await
+        .map_err(|e| e.to_string())
 }
