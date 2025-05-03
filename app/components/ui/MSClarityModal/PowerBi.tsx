@@ -50,7 +50,7 @@ const PowerBiEmbed = ({ close }) => {
 
   return (
     <section>
-      <div className="max-w-md mx-auto p-4 bg-white dark:bg-brand-darker dark:text-white rounded-lg text-sm">
+      <div className="max-w-md mx-auto p-2 px-4 bg-white dark:bg-brand-darker dark:text-white rounded-lg text-sm">
         <form onSubmit={handleSubmit}>
           <div className="mb-6">
             <label
@@ -65,7 +65,7 @@ const PowerBiEmbed = ({ close }) => {
               name="powerbi-url"
               value={powerBiUrl}
               onChange={handleUrlChange}
-              className={`w-full px-3 py-1 -ml-1 border rounded-lg focus:outline-none focus:ring-2 ${
+              className={`w-full px-3 py-1 -ml-1 border rounded-sm focus:outline-none focus:ring-0 ${
                 error
                   ? "border-red-500 focus:ring-red-200 dark:border-red-500"
                   : "border-gray-300 focus:ring-blue-200 dark:border-white/30 dark:bg-brand-darker"
