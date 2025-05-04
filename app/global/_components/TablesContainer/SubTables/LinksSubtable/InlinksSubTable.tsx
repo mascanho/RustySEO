@@ -179,7 +179,7 @@ const InlinksSubTable: React.FC<InlinksSubTableProps> = ({ data, height }) => {
 
   return (
     <section
-      className="overflow-auto h-full w-[100rem]"
+      className="overflow-auto h-full w-full"
       style={{
         height: `${height}px`,
         minHeight: "100px",
