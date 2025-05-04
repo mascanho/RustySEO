@@ -47,6 +47,7 @@ use super::helpers::{
 use super::helpers::{pdf_checker, pdf_selector};
 use super::models::DomainCrawlResults;
 
+
 // Constants for crawler behavior
 const MAX_RETRIES: usize = 5;
 const BASE_DELAY: u64 = 500;
@@ -246,6 +247,8 @@ async fn process_url(
         //settings,
     )
     .await;
+
+    let check_url_with_page_speed = page_speed
 
     // Cross-origin checker funtion
     let cross_origin = analyze_cross_origin_security(&body, base_url);

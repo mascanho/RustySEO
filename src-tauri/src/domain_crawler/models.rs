@@ -67,6 +67,7 @@ pub struct DomainCrawlResults {
     pub pdf_files: Vec<String>,
     pub https: bool,
     pub cross_origin: SecuritySummary,
+    pub page_speed_result: Option<Vec<String>>,
 }
 
 // Implement Default for DomainCrawlResults
@@ -109,6 +110,7 @@ impl Default for DomainCrawlResults {
             extractor: Extractor::default(),
             headers: Vec::new(),
             pdf_files: Vec::new(),
+            page_speed_result: None,
             https: false,
             cross_origin: SecuritySummary {
                 total_unsafe_anchors: 0,
