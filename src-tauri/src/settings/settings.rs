@@ -46,7 +46,7 @@ impl Settings {
             max_retries: 5,
             base_delay: 500,
             max_delay: 8000,
-            concurrent_requests: 150,
+            concurrent_requests: 200,
             batch_size: 20,
             db_batch_size: 10,
             user_agents: user_agents::agents(),
