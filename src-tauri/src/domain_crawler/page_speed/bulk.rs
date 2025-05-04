@@ -1,30 +1,73 @@
-pub async fn get_page_speed_insights(
-    url: String,
-    strategy: Option<String>,
-) -> Result<(PageSpeedResponse, SeoPageSpeedResponse), String> {
-    let api_key = get_api_key().await;
-    let client = reqwest::Client::new();
-    let mut url = format!(
-        "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={}&key={}",
-        url, api_key
-    );
+use crate::{
+    domain_crawler::page_speed::model::{LighthouseResult, PsiResponse},
+    Settings,
+};
+use reqwest::Client;
+use serde_json::Value;
+use url::Url;
 
-    if let Some(strategy) = strategy {
-        url.push_str(&format!("&strategy={}", strategy));
+use super::model::Crawler;
+
+pub enum PageSpeedStrategy {
+    Mobile,
+    Desktop,
+}
+
+const STRATEGY: &[PageSpeedStrategy] = &[PageSpeedStrategy::Mobile, PageSpeedStrategy::Desktop];
+
+pub async fn fetch_psi_bulk(
+    url: Url,
+    settings: &Settings,
+) -> Result<Vec<LighthouseResult>, String> {
+    println!("Calling the GPSI with url: {}", &url);
+    println!("Using Key: {:#?}", settings.page_speed_bulk_api_key);
+
+    let client = Client::new();
+    let mut results = Vec::new();
+
+    let api_key = settings
+        .page_speed_bulk_api_key
+        .as_ref()
+        .and_then(|inner| inner.as_deref())
+        .ok_or("No PSI API key configured".to_string())?;
+
+    for strategy in STRATEGY {
+        let api_url = format!(
+            "https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={}&strategy={}&key={}",
+            url.to_string(),
+            match strategy {
+                PageSpeedStrategy::Mobile => "mobile",
+                PageSpeedStrategy::Desktop => "desktop",
+            },
+            api_key
+        );
+
+        let response = client
+            .get(&api_url)
+            .send()
+            .await
+            .map_err(|e| format!("Request failed: {}", e))?;
+
+        let response_body = response
+            .text()
+            .await
+            .map_err(|e| format!("Failed to read response body: {}", e))?;
+        println!("Response body: {}", response_body);
+
+        if let Ok(error_response) = serde_json::from_str::<Value>(&response_body) {
+            if error_response.get("error").is_some() {
+                return Err(format!(
+                    "API error: {}",
+                    error_response.get("error").unwrap()
+                ));
+            }
+        }
+
+        let psi_response: PsiResponse = serde_json::from_str(&response_body)
+            .map_err(|e| format!("Failed to parse response: {}", e))?;
+
+        results.push(psi_response.lighthouse_result);
     }
 
-    let response = client.get(&url).send().await.map_err(|e| e.to_string())?;
-    let status_code = response.status();
-
-    if !status_code.is_success() {
-        return Err(format!("Error: {}", status_code));
-    }
-
-    let body = response.text().await.map_err(|e| e.to_string())?;
-    let page_speed_response: PageSpeedResponse =
-        serde_json::from_str(&body).map_err(|e| e.to_string())?;
-
-    let seo_response = SeoPageSpeedResponse::from_page_speed_response(&page_speed_response);
-
-    Ok((page_speed_response, seo_response))
+    Ok(results)
 }

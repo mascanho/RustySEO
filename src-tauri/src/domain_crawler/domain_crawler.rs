@@ -13,6 +13,7 @@ use tokio::task;
 use tokio::time::{sleep, Duration};
 use url::Url;
 
+use crate::crawler::get_page_speed_insights;
 use crate::domain_crawler::database::{Database, DatabaseResults};
 use crate::domain_crawler::extractors::html::extract_html;
 use crate::domain_crawler::helpers::https_checker::valid_https;
@@ -46,7 +47,8 @@ use super::helpers::{
 };
 use super::helpers::{pdf_checker, pdf_selector};
 use super::models::DomainCrawlResults;
-
+use super::page_speed::bulk::fetch_psi_bulk;
+use super::page_speed::model::Crawler;
 
 // Constants for crawler behavior
 const MAX_RETRIES: usize = 5;
@@ -248,10 +250,19 @@ async fn process_url(
     )
     .await;
 
-    let check_url_with_page_speed = page_speed
+    // let check_url_with_page_speed = get_page_speed_insights_bulk(url, settings).await;
 
     // Cross-origin checker funtion
     let cross_origin = analyze_cross_origin_security(&body, base_url);
+
+    // Page Speed Insights Checker
+    // Check if the key exists to make the call otherwise return an empty vector
+    // Attempt to fetch PSI results, but if there's an error, use an empty Vec
+    let psi_results = if settings.page_speed_bulk_api_key.is_some() {
+        fetch_psi_bulk(url.clone(), settings).await
+    } else {
+        Ok(Vec::new())
+    };
 
     let result = DomainCrawlResults {
         url: final_url.to_string(),
@@ -291,6 +302,7 @@ async fn process_url(
         hreflangs: select_hreflang(&body),
         language: detect_language(&body),
         flesch: get_flesch_score(&body),
+        psi_results,
         extractor: Extractor {
             html: extract_html(&body).await,
             css: false,

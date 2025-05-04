@@ -14,6 +14,9 @@ const PageSpeedInsigthsApi = ({ close }: any) => {
         apiType: "page_speed",
       });
       console.log(result, "This is the result");
+      // Add the API key to the settings
+      await invoke("read_page_speed_bulk_api_key");
+
       if (result) {
         console.log("API key added successfully");
         toast("API key added successfully");
