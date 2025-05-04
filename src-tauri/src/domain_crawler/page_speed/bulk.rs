@@ -15,13 +15,7 @@ pub enum PageSpeedStrategy {
 
 const STRATEGY: &[PageSpeedStrategy] = &[PageSpeedStrategy::Mobile, PageSpeedStrategy::Desktop];
 
-pub async fn fetch_psi_bulk(
-    url: Url,
-    settings: &Settings,
-) -> Result<Vec<LighthouseResult>, String> {
-    println!("Calling the GPSI with url: {}", &url);
-    println!("Using Key: {:#?}", settings.page_speed_bulk_api_key);
-
+pub async fn fetch_psi_bulk(url: Url, settings: &Settings) -> Result<Vec<Value>, String> {
     let client = Client::new();
     let mut results = Vec::new();
 
@@ -52,21 +46,20 @@ pub async fn fetch_psi_bulk(
             .text()
             .await
             .map_err(|e| format!("Failed to read response body: {}", e))?;
-        println!("Response body: {}", response_body);
 
-        if let Ok(error_response) = serde_json::from_str::<Value>(&response_body) {
-            if error_response.get("error").is_some() {
-                return Err(format!(
-                    "API error: {}",
-                    error_response.get("error").unwrap()
-                ));
-            }
-        }
-
-        let psi_response: PsiResponse = serde_json::from_str(&response_body)
+        let value: Value = serde_json::from_str(&response_body)
             .map_err(|e| format!("Failed to parse response: {}", e))?;
 
-        results.push(psi_response.lighthouse_result);
+        if value.get("error").is_some() {
+            return Err(format!("API error: {}", value.get("error").unwrap()));
+        }
+
+        // Extract lighthouseResult directly as Value
+        let lighthouse_result = value
+            .get("lighthouseResult")
+            .ok_or("No lighthouseResult in response".to_string())?
+            .clone();
+        results.push(lighthouse_result);
     }
 
     Ok(results)

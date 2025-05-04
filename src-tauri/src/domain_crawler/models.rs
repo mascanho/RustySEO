@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use url::Url;
 
 use crate::crawler::libs::LinkStatus;
@@ -70,7 +71,7 @@ pub struct DomainCrawlResults {
     pub pdf_files: Vec<String>,
     pub https: bool,
     pub cross_origin: SecuritySummary,
-    pub psi_results: Result<Vec<LighthouseResult>, String>,
+    pub psi_results: Result<Vec<Value>, String>,
 }
 
 // Implement Default for DomainCrawlResults
