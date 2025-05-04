@@ -258,7 +258,7 @@ async fn process_url(
     // Page Speed Insights Checker
     // Check if the key exists to make the call otherwise return an empty vector
     // Attempt to fetch PSI results, but if there's an error, use an empty Vec
-    let psi_results = if settings.page_speed_bulk_api_key.is_some() {
+    let psi_results = if settings.page_speed_bulk {
         fetch_psi_bulk(url.clone(), settings).await
     } else {
         Ok(Vec::new())

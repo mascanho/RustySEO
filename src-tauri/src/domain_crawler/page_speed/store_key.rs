@@ -31,3 +31,22 @@ pub async fn read_page_speed_bulk_api_key() -> Result<(), String> {
 
     Ok(())
 }
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub struct PageSpeedDetails {
+    pub apiKey: Option<String>,
+    pub page_speed_crawl: bool,
+}
+
+#[tauri::command]
+pub async fn check_page_speed_bulk() -> Result<PageSpeedDetails, String> {
+    let settings = settings::settings::load_settings().await?;
+
+    // Create the PageSpeedDetails struct to return
+    let details = PageSpeedDetails {
+        apiKey: settings.page_speed_bulk_api_key.unwrap_or_default(),
+        page_speed_crawl: settings.page_speed_bulk,
+    };
+
+    Ok(details)
+}

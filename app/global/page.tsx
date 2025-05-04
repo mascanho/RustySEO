@@ -179,6 +179,20 @@ export default function Page() {
     }
   }, []);
 
+  // CHECK WHAT IS THE STATUS OF THE PAGESPEED DETAILS - API KEY and TRUE or FALSE to show on the front end.
+  useEffect(() => {
+    const check_psi_status = async () => {
+      try {
+        const psiDetails = await invoke("check_page_speed_bulk");
+        localStorage.setItem("PSIdetails", JSON.stringify(psiDetails));
+      } catch (error) {
+        console.error("Error checking PageSpeed Insights status:", error);
+      }
+    };
+
+    check_psi_status();
+  }, []);
+
   return (
     <main className="flex h-full w-full">
       <InputZone handleDomainCrawl={handleDomainCrawl} />

@@ -17,6 +17,8 @@ const STRATEGIES: &[PageSpeedStrategy] = &[PageSpeedStrategy::Mobile, PageSpeedS
 pub async fn fetch_psi_bulk(url: Url, settings: &Settings) -> Result<Vec<Value>, String> {
     let client = Client::new();
 
+    println!("The Page Speed is: {}", settings.page_speed_bulk);
+
     let api_key = settings
         .page_speed_bulk_api_key
         .as_ref()

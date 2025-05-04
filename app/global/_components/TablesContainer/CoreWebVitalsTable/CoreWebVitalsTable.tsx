@@ -167,42 +167,42 @@ const TableRow = ({
     () => [
       index + 1,
       row?.url || "",
-      row?.psi_results?.Ok?.[0]?.categories?.performance?.score ?? "N/A",
-      row?.psi_results?.Ok?.[1]?.categories?.performance?.score ?? "N/A",
-      row?.psi_results?.Ok?.[0]?.audits?.["speed-index"]?.score ?? "N/A",
-      row?.psi_results?.Ok?.[1]?.audits?.["speed-index"]?.score ?? "N/A",
+      row?.psi_results?.Ok?.[0]?.categories?.performance?.score ?? "n/a",
+      row?.psi_results?.Ok?.[1]?.categories?.performance?.score ?? "n/a",
+      row?.psi_results?.Ok?.[0]?.audits?.["speed-index"]?.score ?? "n/a",
+      row?.psi_results?.Ok?.[1]?.audits?.["speed-index"]?.score ?? "n/a",
       row?.psi_results?.Ok?.[0]?.audits?.["largest-contentful-paint"]?.score ??
-        "N/A",
+        "n/a",
       row?.psi_results?.Ok?.[1]?.audits?.["largest-contentful-paint"]?.score ??
-        "N/A",
+        "n/a",
       row?.psi_results?.Ok?.[0]?.audits?.["cumulative-layout-shift"]?.score ??
-        "N/A",
+        "n/a",
       row?.psi_results?.Ok?.[1]?.audits?.["cumulative-layout-shift"]?.score ??
-        "N/A",
+        "n/a",
       row?.psi_results?.Ok?.[0]?.audits?.["first-contentful-paint"]?.score ??
-        "N/A",
+        "n/a",
       row?.psi_results?.Ok?.[1]?.audits?.["first-contentful-paint"]?.score ??
-        "N/A",
+        "n/a",
 
       // Interactive
-      row?.psi_results?.Ok?.[0]?.audits?.["interactive"]?.score ?? "N/A",
-      row?.psi_results?.Ok?.[1]?.audits?.["interactive"]?.score ?? "N/A",
+      row?.psi_results?.Ok?.[0]?.audits?.["interactive"]?.score ?? "n/a",
+      row?.psi_results?.Ok?.[1]?.audits?.["interactive"]?.score ?? "n/a",
 
       // Redirects
-      row?.psi_results?.Ok?.[0]?.audits?.["redirects"]?.score ?? "N/A",
+      row?.psi_results?.Ok?.[0]?.audits?.["redirects"]?.score ?? "n/a",
 
       // Server Response Time
       row?.psi_results?.Ok?.[0]?.audits?.["server-response-time"]?.numericValue
         ? `${row?.psi_results?.Ok?.[0]?.audits?.["server-response-time"]?.numericValue} ms`
-        : "N/A",
+        : "n/a",
 
       //  Total Blocking Time
       row?.psi_results?.Ok?.[0]?.audits?.["total-blocking-time"]?.numericValue
         ? `${row?.psi_results?.Ok?.[0]?.audits?.["total-blocking-time"]?.numericValue.toFixed(0)} ms`
-        : "N/A",
+        : "n/a",
 
       // dom size
-      row?.psi_results?.Ok?.[0]?.audits?.["dom-size"]?.numericValue ?? "N/A",
+      row?.psi_results?.Ok?.[0]?.audits?.["dom-size"]?.numericValue ?? "n/a",
     ],
     [row, index],
   );

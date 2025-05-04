@@ -1,6 +1,7 @@
+// @ts-nocheck
 import useCrawlStore from "@/store/GlobalCrawlDataStore";
 import { FaSpider } from "react-icons/fa6";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 
 // Constants for crawler types
@@ -13,6 +14,11 @@ const CrawlerType = () => {
   const { crawlerType, setCrawlerType } = useCrawlStore();
   const { setCrawler } = useGlobalConsoleStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // PSI DETAILS
+  const [details, setDetails] = useState({
+    apiKey: "",
+    psiCrawl: "",
+  });
 
   // Toggle between "Spider" and "Custom Search"
   const toggleCrawlerType = () => {
@@ -29,6 +35,23 @@ const CrawlerType = () => {
     crawlerType === CRAWLER_TYPES.CUSTOM_SEARCH
       ? "text-red-500 dark:text-red-500/50 mt-[2px]"
       : "text-black dark:text-white/50 mt-[2px]";
+
+  // HANDLE THE PSI DETAILS TO SHOW THE USER THAT PSI IS ACTIVATED
+  useEffect(() => {
+    // Get the PSIdetails from localStorage
+    const psidetails = localStorage.getItem("PSIdetails");
+
+    const parsedPSIdetails = JSON.parse(psidetails);
+
+    if (parsedPSIdetails) {
+      setDetails({
+        apiKey: parsedPSIdetails.apiKey,
+        psiCrawl: parsedPSIdetails.page_speed_crawl,
+      });
+    }
+  }, []);
+
+  console.log(details);
 
   return (
     <div className="relative">

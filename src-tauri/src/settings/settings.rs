@@ -33,6 +33,7 @@ pub struct Settings {
     pub links_request_timeout: u64,
     pub taxonomies: Vec<String>,
     pub rustyid: Uuid,
+    pub page_speed_bulk: bool,
     pub page_speed_bulk_api_key: Option<Option<String>>,
 }
 
@@ -58,6 +59,7 @@ impl Settings {
             links_retry_delay: 500,
             taxonomies: set_taxonomies(),
             rustyid: Uuid::new_v4(),
+            page_speed_bulk: false,
             page_speed_bulk_api_key: None,
         }
     }
@@ -164,6 +166,7 @@ pub fn print_settings(settings: &Settings) {
     println!("Links Request Timeout: {}", settings.links_request_timeout);
     println!("Taxonomies: {:?}", settings.taxonomies);
     println!("Rusty ID: {}", settings.rustyid);
+    println!("Page Speed Bulkd: {}", settings.page_speed_bulk);
     if let Some(key) = &settings.page_speed_bulk_api_key {
         println!("Page Speed Bulk API Key: {:#?}", key);
     } else {
@@ -283,6 +286,10 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
         .and_then(|v| v.as_integer())
     {
         settings.links_request_timeout = val as u64;
+    }
+
+    if let Some(val) = updates.get("page_speed_bulk").and_then(|v| v.as_bool()) {
+        settings.page_speed_bulk = val;
     }
 
     if let Some(val) = updates.get("taxonomies").and_then(|v| v.as_array()) {
