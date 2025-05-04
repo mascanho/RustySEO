@@ -285,6 +285,7 @@ dependencies = [
  "hyper-rustls 0.24.2",
  "image 0.24.9",
  "ipnet",
+ "lazy_static",
  "markup5ever_rcdom",
  "oauth2",
  "once_cell",

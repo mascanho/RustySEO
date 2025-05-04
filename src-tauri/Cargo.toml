@@ -64,6 +64,7 @@ semver = "1.0.17"
 colored = "3.0.0"
 thiserror = "2.0.12"
 rusqlite = { version = "0.35.0", features = ["bundled"] }
+lazy_static = "1.5.0"
 
 
 [features]
