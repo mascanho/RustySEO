@@ -151,7 +151,7 @@ const CrawlerType = () => {
                 id="modal-title"
                 className="text-lg font-medium text-gray-900 dark:text-white"
               >
-                Crawler Settings
+                Crawler Methods
               </h3>
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -165,7 +165,13 @@ const CrawlerType = () => {
             {/* Toggle Switch for Crawler Type */}
             <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-md mb-3">
               <span className="text-sm text-gray-700 dark:text-gray-300">
-                Crawler Type: {crawlerType}
+                Crawler:{" "}
+                <span
+                  className={`${crawlerType === CRAWLER_TYPES.SPIDER ? "text-blue-600" : "text-red-500"}`}
+                >
+                  {" "}
+                  {crawlerType}
+                </span>
               </span>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
@@ -184,7 +190,15 @@ const CrawlerType = () => {
               <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-md">
                 <span className="text-sm text-gray-700 dark:text-gray-300">
                   PageSpeed Insights:{" "}
-                  {details.psiCrawl ? "Enabled" : "Disabled"}
+                  <span
+                    className={
+                      details.psiCrawl
+                        ? "text-green-500 font-medium"
+                        : "text-red-500 font-medium"
+                    }
+                  >
+                    {details.psiCrawl ? "Enabled" : "Disabled"}
+                  </span>
                 </span>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input

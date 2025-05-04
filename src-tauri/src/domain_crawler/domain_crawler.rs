@@ -258,10 +258,23 @@ async fn process_url(
     // Page Speed Insights Checker
     // Check if the key exists to make the call otherwise return an empty vector
     // Attempt to fetch PSI results, but if there's an error, use an empty Vec
-    let psi_results = if settings.page_speed_bulk {
-        fetch_psi_bulk(url.clone(), settings).await
+    // Start PSI fetch as a separate task
+    // Start PSI fetch as a separate task
+    // Start PSI fetch as a separate task
+    let psi_future = if settings.page_speed_bulk {
+        let url_clone = url.clone();
+        let settings_clone = settings.clone();
+        Some(tokio::spawn(async move {
+            fetch_psi_bulk(url_clone, &settings_clone).await
+        }))
     } else {
-        Ok(Vec::new())
+        None
+    };
+
+    // Do all other processing while PSI is fetching
+    let psi_results = match psi_future {
+        Some(fut) => fut.await.map_err(|e| e.to_string())?, // Handle task join error
+        None => Ok(Vec::new()),                             // No PSI requested
     };
 
     let result = DomainCrawlResults {
