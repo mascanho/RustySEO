@@ -24,6 +24,7 @@ import ResponseHeaders from "./SubTables/Headers/ResponseHeaders";
 import TableCrawlCSS from "../Sidebar/CSSTable/TableCrawlCSS";
 import LinksTable from "./LinksTable/LinksTable";
 import KeywordsTable from "./KeywordsTable/KeywordsTable";
+import CoreWebVitalsTable from "./CoreWebVitalsTable/CoreWebVitalsTable";
 
 const BottomTableContent = ({ children, height }) => (
   <div
@@ -273,6 +274,9 @@ export default function Home() {
               <TabsTrigger value="keywords" className="rounded-t-md">
                 Keywords
               </TabsTrigger>
+              <TabsTrigger value="cwv" className="rounded-t-md">
+                Core Web Vitals
+              </TabsTrigger>{" "}
               <TabsTrigger value="search" className="rounded-t-md">
                 Custom Search
               </TabsTrigger>
@@ -313,6 +317,11 @@ export default function Home() {
 
             <TabsContent value="keywords" className="flex-grow overflow-hidden">
               <KeywordsTable rows={filteredKeywords} tabName="All Keywords" />
+            </TabsContent>
+
+            {/* CORE WEB VITALS TABLe */}
+            <TabsContent value="cwv" className="flex-grow overflow-hidden">
+              <CoreWebVitalsTable tabName={"AllData"} rows={crawlData} />
             </TabsContent>
 
             {/* CUSTOM SEARCH */}

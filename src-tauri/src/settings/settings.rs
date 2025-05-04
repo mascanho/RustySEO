@@ -1,12 +1,15 @@
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fmt::format;
 use std::path::PathBuf;
 use tokio::fs;
+use tokio::io::AsyncWriteExt;
 use tokio::time::Duration;
 use toml;
 use uuid::Uuid;
 
-use crate::domain_crawler::user_agents;
+use crate::domain_crawler::{self, user_agents};
 use crate::loganalyser::log_state::set_taxonomies;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -30,6 +33,8 @@ pub struct Settings {
     pub links_request_timeout: u64,
     pub taxonomies: Vec<String>,
     pub rustyid: Uuid,
+    pub page_speed_bulk: bool,
+    pub page_speed_bulk_api_key: Option<Option<String>>,
 }
 
 impl Settings {
@@ -42,7 +47,7 @@ impl Settings {
             max_retries: 5,
             base_delay: 500,
             max_delay: 8000,
-            concurrent_requests: 150,
+            concurrent_requests: 200,
             batch_size: 20,
             db_batch_size: 10,
             user_agents: user_agents::agents(),
@@ -54,6 +59,8 @@ impl Settings {
             links_retry_delay: 500,
             taxonomies: set_taxonomies(),
             rustyid: Uuid::new_v4(),
+            page_speed_bulk: false,
+            page_speed_bulk_api_key: None,
         }
     }
 
@@ -61,6 +68,12 @@ impl Settings {
         ProjectDirs::from("", "", "rustyseo")
             .ok_or("Failed to determine config directory".to_string())
             .map(|dirs| dirs.config_dir().join("configs.toml"))
+    }
+
+    // Delete the file
+    pub fn delete_file() -> Result<(), String> {
+        let config_path = Self::config_path()?;
+        std::fs::remove_file(config_path).map_err(|e| e.to_string())
     }
 }
 
@@ -126,6 +139,12 @@ pub async fn init_settings() -> Result<Settings, String> {
 pub fn print_settings(settings: &Settings) {
     // Use the settings
     println!("Crawl Timeout: {:?}", settings.crawl_timeout);
+    println!("Client Timeout: {:?}", settings.client_timeout);
+    println!(
+        "Client Connect Timeout: {:?}",
+        settings.client_connect_timeout
+    );
+    println!("Redirect Policy: {:?}", settings.redirect_policy);
     println!("Max Retries: {}", settings.max_retries);
     println!("Base Delay: {}", settings.base_delay);
     println!("Max Delay: {}", settings.max_delay);
@@ -146,4 +165,157 @@ pub fn print_settings(settings: &Settings) {
     println!("Links Retry Delay: {}", settings.links_retry_delay);
     println!("Links Request Timeout: {}", settings.links_request_timeout);
     println!("Taxonomies: {:?}", settings.taxonomies);
+    println!("Rusty ID: {}", settings.rustyid);
+    println!("Page Speed Bulkd: {}", settings.page_speed_bulk);
+    if let Some(key) = &settings.page_speed_bulk_api_key {
+        println!("Page Speed Bulk API Key: {:#?}", key);
+    } else {
+        println!("Page Speed Bulk API Key: None");
+    }
+    println!("")
+}
+
+// Rewrite the settings file with only the ones that need to be overridden
+
+// Rewrite the settings file with only the ones that need to be overridden
+// Rewrite the settings file with only the ones that need to be overridden
+pub async fn override_settings(updates: &str) -> Result<Settings, String> {
+    // Load current settings or create new ones
+    let mut settings = init_settings().await?;
+
+    // Parse updates into a HashMap
+    let updates: HashMap<String, toml::Value> =
+        toml::from_str(updates).map_err(|e| format!("Failed to parse updates: {}", e))?;
+
+    // Apply updates (only fields that were provided)
+    if let Some(val) = updates
+        .get("page_speed_bulk_api_key")
+        .and_then(|v| v.as_str())
+    {
+        settings.page_speed_bulk_api_key = Some(Some(val.to_string()));
+    }
+
+    if let Some(val) = updates.get("crawl_timeout").and_then(|v| v.as_integer()) {
+        settings.crawl_timeout = val as u64;
+    }
+
+    if let Some(val) = updates.get("client_timeout").and_then(|v| v.as_integer()) {
+        settings.client_timeout = val as u64;
+    }
+
+    if let Some(val) = updates
+        .get("client_connect_timeout")
+        .and_then(|v| v.as_integer())
+    {
+        settings.client_connect_timeout = val as u64;
+    }
+
+    if let Some(val) = updates.get("redirect_policy").and_then(|v| v.as_integer()) {
+        settings.redirect_policy = val as usize;
+    }
+
+    if let Some(val) = updates.get("max_retries").and_then(|v| v.as_integer()) {
+        settings.max_retries = val as u32;
+    }
+
+    if let Some(val) = updates.get("base_delay").and_then(|v| v.as_integer()) {
+        settings.base_delay = val as u64;
+    }
+
+    if let Some(val) = updates.get("max_delay").and_then(|v| v.as_integer()) {
+        settings.max_delay = val as u64;
+    }
+
+    if let Some(val) = updates
+        .get("concurrent_requests")
+        .and_then(|v| v.as_integer())
+    {
+        settings.concurrent_requests = val as usize;
+    }
+
+    if let Some(val) = updates.get("batch_size").and_then(|v| v.as_integer()) {
+        settings.batch_size = val as usize;
+    }
+
+    if let Some(val) = updates.get("db_batch_size").and_then(|v| v.as_integer()) {
+        settings.db_batch_size = val as usize;
+    }
+
+    if let Some(val) = updates.get("user_agents").and_then(|v| v.as_array()) {
+        settings.user_agents = val
+            .iter()
+            .filter_map(|v| v.as_str())
+            .map(|s| s.to_string())
+            .collect();
+    }
+
+    if let Some(val) = updates.get("html").and_then(|v| v.as_bool()) {
+        settings.html = val;
+    }
+
+    if let Some(val) = updates
+        .get("links_max_concurrent_requests")
+        .and_then(|v| v.as_integer())
+    {
+        settings.links_max_concurrent_requests = val as usize;
+    }
+
+    if let Some(val) = updates
+        .get("links_initial_task_capacity")
+        .and_then(|v| v.as_integer())
+    {
+        settings.links_initial_task_capacity = val as usize;
+    }
+
+    if let Some(val) = updates
+        .get("links_max_retries")
+        .and_then(|v| v.as_integer())
+    {
+        settings.links_max_retries = val as usize;
+    }
+
+    if let Some(val) = updates
+        .get("links_retry_delay")
+        .and_then(|v| v.as_integer())
+    {
+        settings.links_retry_delay = val as u64;
+    }
+
+    if let Some(val) = updates
+        .get("links_request_timeout")
+        .and_then(|v| v.as_integer())
+    {
+        settings.links_request_timeout = val as u64;
+    }
+
+    if let Some(val) = updates.get("page_speed_bulk").and_then(|v| v.as_bool()) {
+        settings.page_speed_bulk = val;
+    }
+
+    if let Some(val) = updates.get("taxonomies").and_then(|v| v.as_array()) {
+        settings.taxonomies = val
+            .iter()
+            .filter_map(|v| v.as_str())
+            .map(|s| s.to_string())
+            .collect();
+    }
+
+    // Explicit file writing with flush
+    let config_path = Settings::config_path()?;
+    let toml_str = toml::to_string_pretty(&settings) // prettier formatting
+        .map_err(|e| format!("Failed to serialize settings: {}", e))?;
+
+    let mut file = fs::File::create(&config_path)
+        .await
+        .map_err(|e| format!("Failed to create config file: {}", e))?;
+
+    AsyncWriteExt::write_all(&mut file, toml_str.as_bytes())
+        .await
+        .map_err(|e| format!("Failed to write config: {}", e))?;
+
+    file.flush()
+        .await // Ensure data is written to disk
+        .map_err(|e| format!("Failed to flush config: {}", e))?;
+
+    Ok(settings)
 }
