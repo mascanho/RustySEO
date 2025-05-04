@@ -1,6 +1,7 @@
 use std::{collections::HashMap, fs, path::PathBuf};
 
 use directories::ProjectDirs;
+use tauri::Emitter;
 
 use crate::settings;
 
@@ -49,4 +50,24 @@ pub async fn check_page_speed_bulk() -> Result<PageSpeedDetails, String> {
     };
 
     Ok(details)
+}
+
+#[tauri::command]
+pub async fn toggle_page_speed_bulk(
+    value: bool,
+    app_handle: tauri::AppHandle,
+) -> Result<(), String> {
+    // Create proper TOML update string (unquoted boolean)
+    let state = format!("page_speed_bulk = {}", value);
+
+    settings::settings::override_settings(&state).await?;
+
+    println!("Page Speed Bulk Check set to: {}", value);
+
+    // Emit a tauri event
+    app_handle
+        .emit("page-speed-bulk-toggled", value)
+        .map_err(|e| format!("Failed to emit event: {}", e))?;
+
+    Ok(())
 }

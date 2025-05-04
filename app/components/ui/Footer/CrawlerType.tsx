@@ -3,6 +3,9 @@ import useCrawlStore from "@/store/GlobalCrawlDataStore";
 import { FaSpider } from "react-icons/fa6";
 import { useEffect, useState } from "react";
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
+import { emit } from "@tauri-apps/api/event";
+import { IconVolume } from "@tabler/icons-react";
+import { invoke } from "@tauri-apps/api/core";
 
 // Constants for crawler types
 const CRAWLER_TYPES = {
@@ -17,7 +20,7 @@ const CrawlerType = () => {
   // PSI DETAILS
   const [details, setDetails] = useState({
     apiKey: "",
-    psiCrawl: "",
+    psiCrawl: false,
   });
 
   // Toggle between "Spider" and "Custom Search"
@@ -30,28 +33,88 @@ const CrawlerType = () => {
     setCrawler(newType);
   };
 
-  // Determine icon color based on crawlerType
-  const iconColorClass =
-    crawlerType === CRAWLER_TYPES.CUSTOM_SEARCH
+  // Toggle PSI Crawl
+  const togglePsiCrawl = async () => {
+    const newPsiCrawlValue = !details.psiCrawl;
+
+    try {
+      // Call the Tauri command with the new value
+      await invoke("toggle_page_speed_bulk", { value: newPsiCrawlValue });
+      console.log(`PageSpeed Insights toggled: ${newPsiCrawlValue}`);
+
+      // Update local state only after successful invocation
+      setDetails((prev) => ({
+        ...prev,
+        psiCrawl: newPsiCrawlValue,
+      }));
+
+      // Update localStorage immediately with the new value
+      if (details.apiKey) {
+        localStorage.setItem(
+          "PSIdetails",
+          JSON.stringify({
+            apiKey: details.apiKey,
+            page_speed_crawl: newPsiCrawlValue,
+          }),
+        );
+        console.log(
+          "LocalStorage updated with new PSI crawl value:",
+          newPsiCrawlValue,
+        );
+      }
+    } catch (error) {
+      console.error(`Failed to toggle page speed bulk: ${error}`);
+    }
+  };
+
+  // Determine icon color based on crawlerType and psiCrawl
+  const iconColorClass = details.psiCrawl
+    ? "text-blue-500 dark:text-blue-500/50 mt-[2px]"
+    : crawlerType === CRAWLER_TYPES.CUSTOM_SEARCH
       ? "text-red-500 dark:text-red-500/50 mt-[2px]"
       : "text-black dark:text-white/50 mt-[2px]";
 
   // HANDLE THE PSI DETAILS TO SHOW THE USER THAT PSI IS ACTIVATED
   useEffect(() => {
-    // Get the PSIdetails from localStorage
-    const psidetails = localStorage.getItem("PSIdetails");
+    try {
+      // Get the PSIdetails from localStorage
+      const psidetails = localStorage.getItem("PSIdetails");
 
-    const parsedPSIdetails = JSON.parse(psidetails);
+      if (!psidetails) {
+        console.log("No PSI details found in localStorage");
+        return;
+      }
 
-    if (parsedPSIdetails) {
+      const parsedPSIdetails = JSON.parse(psidetails);
+      console.log("Raw localStorage value:", psidetails);
+      console.log("Parsed PSI details:", parsedPSIdetails);
+
+      // More robust check for true values
+      const isPsiCrawlEnabled =
+        parsedPSIdetails.page_speed_crawl === "true" ||
+        parsedPSIdetails.page_speed_crawl === true ||
+        parsedPSIdetails.page_speed_crawl === 1 ||
+        parsedPSIdetails.page_speed_crawl === "1";
+
+      console.log("Is PSI crawl enabled?", isPsiCrawlEnabled);
+
       setDetails({
-        apiKey: parsedPSIdetails.apiKey,
-        psiCrawl: parsedPSIdetails.page_speed_crawl,
+        apiKey: parsedPSIdetails.apiKey || "",
+        psiCrawl: isPsiCrawlEnabled,
       });
+
+      // Emit initial state on component mount
+      emit("page-speed-bulk-toggled", isPsiCrawlEnabled).catch((error) => {
+        console.error(
+          `Failed to emit initial page-speed-bulk-toggled event: ${error}`,
+        );
+      });
+    } catch (error) {
+      console.error("Error parsing PSI details from localStorage:", error);
     }
   }, []);
 
-  console.log(details);
+  console.log("Current details state:", details);
 
   return (
     <div className="relative">
@@ -99,8 +162,8 @@ const CrawlerType = () => {
               </button>
             </div>
 
-            {/* Toggle Switch */}
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-md">
+            {/* Toggle Switch for Crawler Type */}
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-md mb-3">
               <span className="text-sm text-gray-700 dark:text-gray-300">
                 Crawler Type: {crawlerType}
               </span>
@@ -116,14 +179,46 @@ const CrawlerType = () => {
               </label>
             </div>
 
+            {/* Toggle Switch for PSI Crawl (only shown when API key exists) */}
+            {details.apiKey && (
+              <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-md">
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  PageSpeed Insights:{" "}
+                  {details.psiCrawl ? "Enabled" : "Disabled"}
+                </span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={details.psiCrawl}
+                    onChange={togglePsiCrawl}
+                    className="sr-only peer"
+                    aria-label="Toggle PageSpeed Insights crawl"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                </label>
+              </div>
+            )}
+
             {/* Footer */}
             <div className="mt-4 flex justify-end">
               <button
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => {
+                  // Save PSI settings before closing
+                  if (details.apiKey) {
+                    localStorage.setItem(
+                      "PSIdetails",
+                      JSON.stringify({
+                        apiKey: details.apiKey,
+                        page_speed_crawl: details.psiCrawl,
+                      }),
+                    );
+                  }
+                  setIsModalOpen(false);
+                }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                aria-label="Close modal"
+                aria-label="Close and save settings"
               >
-                Close
+                Save & Close
               </button>
             </div>
           </div>
