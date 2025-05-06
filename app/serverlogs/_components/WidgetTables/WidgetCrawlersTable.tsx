@@ -784,7 +784,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                 className={
                   currentPage === 1
                     ? "pointer-events-none opacity-50 text-xs"
-                    : ""
+                    : "text-xs"
                 }
               />
             </PaginationItem>

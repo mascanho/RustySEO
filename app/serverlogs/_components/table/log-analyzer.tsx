@@ -939,8 +939,8 @@ export function LogAnalyzer() {
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 className={
                   currentPage === 1
-                    ? "pointer-events-none opacity-50"
-                    : "cursor-pointer"
+                    ? "pointer-events-none opacity-50 text-xs"
+                    : "cursor-pointer text-xs"
                 }
               />
             </PaginationItem>
