@@ -25,7 +25,7 @@ export const headerTitles = [
   "ID",
   "Anchor Text",
   "Rel",
-  "Href",
+  "Link",
   "Title",
   "Target",
   "Status Code",

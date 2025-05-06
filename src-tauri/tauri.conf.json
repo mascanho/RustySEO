@@ -42,7 +42,7 @@
   },
   "productName": "Rustyseo",
   "mainBinaryName": "Rustyseo",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "identifier": "linux",
   "plugins": {},
   "app": {

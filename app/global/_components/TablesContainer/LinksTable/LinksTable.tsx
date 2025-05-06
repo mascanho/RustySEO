@@ -33,6 +33,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Filter } from "lucide-react";
+import { exportLinksCSV } from "./exportLinksCsv";
 
 interface TableCrawlProps {
   rows: Array<{
@@ -368,35 +369,40 @@ const LinksTable = ({
       return;
     }
 
-    setIsGeneratingExcel(true);
-    try {
-      const fileBuffer = await invoke("generate_links_table_xlsx_command", {
-        data: rows,
-      });
+    if (rows.length > 1000) {
+      toast.info("Getting your data ready for download");
+      await exportLinksCSV(rows);
+    } else {
+      setIsGeneratingExcel(true);
+      try {
+        const fileBuffer = await invoke("generate_links_table_xlsx_command", {
+          data: rows,
+        });
 
-      setIsGeneratingExcel(false);
+        setIsGeneratingExcel(false);
 
-      const filePath = await save({
-        filters: [
-          {
-            name: "Excel File",
-            extensions: ["xlsx"],
-          },
-        ],
-        defaultPath: `RustySEO-${tabName}.xlsx`,
-      });
+        const filePath = await save({
+          filters: [
+            {
+              name: "Excel File",
+              extensions: ["xlsx"],
+            },
+          ],
+          defaultPath: `RustySEO-${tabName}.xlsx`,
+        });
 
-      if (filePath) {
-        await writeFile(filePath, new Uint8Array(fileBuffer));
-        toast.success("Excel file saved successfully!");
-      } else {
-        console.log("User canceled the save dialog.");
+        if (filePath) {
+          await writeFile(filePath, new Uint8Array(fileBuffer));
+          toast.success("Excel file saved successfully!");
+        } else {
+          console.log("User canceled the save dialog.");
+        }
+      } catch (error) {
+        console.error("Error generating or saving Excel file:", error);
+        toast.error("Failed to generate or save Excel file.");
+      } finally {
+        setIsGeneratingExcel(false);
       }
-    } catch (error) {
-      console.error("Error generating or saving Excel file:", error);
-      toast.error("Failed to generate or save Excel file.");
-    } finally {
-      setIsGeneratingExcel(false);
     }
   };
 

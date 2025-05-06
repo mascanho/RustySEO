@@ -293,7 +293,7 @@ export default function Home() {
               <TableCrawl tabName={"AllData"} rows={crawlData} />
             </TabsContent>
 
-            <TabsContent value="css">
+            <TabsContent className="flex-grow overflow-hidden" value="css">
               <TableCrawlCSS rows={filteredCssArr} tabName={"All CSS "} />
             </TabsContent>
 
