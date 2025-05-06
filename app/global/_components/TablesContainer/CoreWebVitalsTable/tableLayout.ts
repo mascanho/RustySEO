@@ -2,7 +2,7 @@
 export const initialColumnWidths = [
   "40px", // ID
   "500px", // URL
-  "122px", // Mobile Performance
+  "132px", // Mobile Performance
   "140px", // Desktop Performance
   "140px", // Mobile Speed Index
   "140px", // Desktop Speed Index

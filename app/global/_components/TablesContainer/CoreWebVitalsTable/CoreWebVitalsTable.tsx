@@ -304,7 +304,9 @@ const CoreWebVitalsTable = ({
       toast.error("No data to download");
     }
 
-    if (rows.length > 1) {
+    // TODO: Implement Excel export functionality
+
+    if (rows.length > 0) {
       toast.info("Getting your data ready...");
       await exportPSIDataCSV(rows);
     } else {
