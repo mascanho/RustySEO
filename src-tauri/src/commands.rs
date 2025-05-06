@@ -271,29 +271,35 @@ pub fn fetch_keywords_summarized_matched_command() -> Result<Vec<KeywordsSummary
 
 // OPEN OS TEXT EDITOR WITH THE SETTINGS FILE
 #[tauri::command]
-pub async fn open_configs_with_native_editor(
-    app_handle: tauri::AppHandle, // Add AppHandle parameter
-) -> Result<(), String> {
-    // Add proper return type
-    // Get config path and handle potential error
+pub async fn open_configs_with_native_editor(app_handle: tauri::AppHandle) -> Result<(), String> {
     let config_path = settings::Settings::config_path()
         .map_err(|e| format!("Failed to get config path: {}", e))?;
 
-    // Convert PathBuf to string
     let path = config_path.to_string_lossy().to_string();
 
-    #[cfg(not(target_os = "windows"))]
-    let command = "open";
-
     #[cfg(target_os = "windows")]
-    let command = "start";
+    {
+        use std::os::windows::process::CommandExt;
 
-    app_handle
-        .shell()
-        .command(command)
-        .args([path])
-        .spawn()
-        .map_err(|e| format!("Failed to open file: {}", e))?;
+        // On Windows, we need to use cmd.exe /C start
+        app_handle
+            .shell()
+            .command("cmd.exe")
+            .args(["/C", "start", "", &path]) // The empty string after start is important
+            .creation_flags(0x08000000) // CREATE_NO_WINDOW flag
+            .spawn()
+            .map_err(|e| format!("Failed to open file: {}", e))?;
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        app_handle
+            .shell()
+            .command("open")
+            .args([&path])
+            .spawn()
+            .map_err(|e| format!("Failed to open file: {}", e))?;
+    }
 
     Ok(())
 }
