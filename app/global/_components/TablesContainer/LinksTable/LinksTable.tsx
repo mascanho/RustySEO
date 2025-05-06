@@ -231,7 +231,7 @@ const TableRow = ({
 
   return useMemo(
     () => (
-      <tr style={{ height: `${rowHeight}px`, position: "relative" }}>
+      <tr style={{ height: `5px`, position: "relative" }}>
         {rowData.map((cell, cellIndex) =>
           columnVisibility[cellIndex] ? (
             <td
@@ -240,7 +240,7 @@ const TableRow = ({
               style={{
                 width: columnWidths[cellIndex],
                 border: "1px solid #ddd",
-                padding: "10px",
+                padding: "0px 10px",
                 paddingLeft: cellIndex === 0 ? "20px" : "0px",
                 height: "100%",
                 textAlign: columnAlignments[cellIndex],

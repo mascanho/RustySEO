@@ -26,6 +26,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { save } from "@tauri-apps/plugin-dialog";
 import { writeFile } from "@tauri-apps/plugin-fs";
 import { toast } from "sonner";
+import { exportSEODataCSV } from "./generateCSV";
 
 interface TableCrawlProps {
   rows: Array<{
@@ -289,31 +290,37 @@ const TableCrawl = ({
       return;
     }
 
-    setIsGeneratingExcel(true);
-    try {
-      const fileBuffer = await invoke("create_excel_main_table", {
-        data: rows,
-      });
+    if (rows.length > 2000) {
+      toast.info("Getting your data ready...");
 
-      setIsGeneratingExcel(false);
-      const filePath = await save({
-        filters: [
-          {
-            name: "Excel File",
-            extensions: ["xlsx"],
-          },
-        ],
-        defaultPath: `RustySEO-${tabName}.xlsx`,
-      });
+      await exportSEODataCSV(rows);
+    } else {
+      setIsGeneratingExcel(true);
+      try {
+        const fileBuffer = await invoke("create_excel_main_table", {
+          data: rows,
+        });
 
-      if (filePath) {
-        await writeFile(filePath, new Uint8Array(fileBuffer));
-        toast.success("Excel file saved successfully!");
-      } else {
-        console.log("User canceled the save dialog.");
+        setIsGeneratingExcel(false);
+        const filePath = await save({
+          filters: [
+            {
+              name: "Excel File",
+              extensions: ["xlsx"],
+            },
+          ],
+          defaultPath: `RustySEO-${tabName}.xlsx`,
+        });
+
+        if (filePath) {
+          await writeFile(filePath, new Uint8Array(fileBuffer));
+          toast.success("Excel file saved successfully!");
+        } else {
+          console.log("User canceled the save dialog.");
+        }
+      } catch (error) {
+        console.error("Error generating or saving Excel file:", error);
       }
-    } catch (error) {
-      console.error("Error generating or saving Excel file:", error);
     }
   };
 
