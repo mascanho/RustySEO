@@ -92,7 +92,7 @@ pub async fn create_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String
     match generate_excel_main_table(data) {
         Ok(file) => Ok(file),
         Err(e) => {
-            eprintln!("Error: {}", e);
+            // eprintln!("Error: {}", e);
             // Explicitly return the error
             Err(e)
         }
