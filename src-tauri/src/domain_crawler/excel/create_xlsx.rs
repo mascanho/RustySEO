@@ -57,7 +57,7 @@ pub fn generate_xlsx(data: Vec<Value>) -> Result<Vec<u8>, String> {
 // Generate EXCEL FILE WITH THE DATA FROM THE MAIN TABLE
 
 pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
-    println!("Generating Excel with: {:?}", &data);
+    // println!("Generating Excel with: {:?}", &data);
 
     // Check if data is empty
     if data.is_empty() {
