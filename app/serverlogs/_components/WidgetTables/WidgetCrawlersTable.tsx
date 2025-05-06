@@ -782,7 +782,9 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
               <PaginationPrevious
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 className={
-                  currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                  currentPage === 1
+                    ? "pointer-events-none opacity-50 text-xs"
+                    : ""
                 }
               />
             </PaginationItem>
