@@ -88,7 +88,7 @@ impl Default for DomainCrawlResults {
             anchor_links: None,
             inoutlinks_status_codes: LinkCheckResults {
                 page: String::new(),
-                base_url: Url::parse("www.site.com").expect("failed to set default url"),
+                base_url: Url::parse("https://www.site.com").expect("failed to set default url"),
                 internal: Vec::new(),
                 external: Vec::new(),
             },
