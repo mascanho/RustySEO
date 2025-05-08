@@ -270,7 +270,7 @@ const TableCrawl = ({
   tabName,
   rows,
   rowHeight = 41,
-  overscan = 38,
+  overscan = 28,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
   const [columnAlignments, setColumnAlignments] = useState(
@@ -496,7 +496,7 @@ const TableCrawl = ({
       </div>
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-0.4rem)] overflow-scroll relative"
+        className="w-full h-[calc(100%-1.4rem)] overflow-scroll relative"
       >
         <div
           ref={tableContainerRef}

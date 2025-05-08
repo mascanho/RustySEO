@@ -63,7 +63,7 @@ const DetailsTable = ({ data, height }) => {
         style={{
           position: "sticky",
           top: 0,
-          zIndex: 1,
+          zIndex: 0,
           backgroundColor: "#f87171",
         }}
       >
