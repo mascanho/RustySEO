@@ -328,7 +328,7 @@ const ColumnPicker = ({
 const LinksTable = ({
   rows,
   rowHeight = 41,
-  overscan = 18,
+  overscan = 20,
   tabName,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
@@ -683,7 +683,7 @@ const LinksTable = ({
       </div>
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-1.4rem)] overflow-scroll relative"
+        className="w-full h-[calc(100%-1.9rem)] overflow-scroll relative"
       >
         <div
           ref={tableContainerRef}
