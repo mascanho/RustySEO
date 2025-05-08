@@ -280,7 +280,7 @@ const ColumnPicker = ({
 const TableCrawlJs = ({
   rows,
   rowHeight = 41,
-  overscan = 30,
+  overscan = 18,
   tabName,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
@@ -519,7 +519,7 @@ const TableCrawlJs = ({
       </div>
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-1.9rem)] overflow-scroll relative"
+        className="w-full h-[calc(100%-1.4rem)] overflow-scroll relative"
       >
         <div
           ref={tableContainerRef}

@@ -270,7 +270,7 @@ const TableCrawl = ({
   tabName,
   rows,
   rowHeight = 41,
-  overscan = 28,
+  overscan = 18,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
   const [columnAlignments, setColumnAlignments] = useState(
@@ -290,7 +290,7 @@ const TableCrawl = ({
       return;
     }
 
-    if (rows.length > 2000) {
+    if (rows.length > 10000) {
       toast.info("Getting your data ready...");
 
       await exportSEODataCSV(rows);
