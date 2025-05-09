@@ -329,7 +329,7 @@ const Footer = () => {
                 </DrawerContent>
               </Drawer>
 
-              <div className="relative group hover:delay-1000">
+              <button className="relative group hover:delay-1000">
                 <BsLayoutSidebarInsetReverse
                   className={`text-sm ${iconClasses} ${visibility.sidebar && "text-brand-bright"}`}
                   onClick={() => {
@@ -343,7 +343,7 @@ const Footer = () => {
                 <div className="absolute bottom-[calc(100%+5px)] -right-2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
                   Toggle Sidebar
                 </div>
-              </div>
+              </button>
             </div>
           </div>
         </section>
