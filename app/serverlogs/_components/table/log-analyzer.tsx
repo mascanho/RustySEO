@@ -354,7 +354,7 @@ export function LogAnalyzer() {
     try {
       // Ask user for save location
       const filePath = await save({
-        defaultPath: `RustySEO - server_logs_${new Date().toISOString().slice(0, 10)}.csv`,
+        defaultPath: `RustySEO - Server Logs - ${new Date().toISOString().slice(0, 10)}.csv`,
         filters: [
           {
             name: "CSV",
@@ -916,7 +916,7 @@ export function LogAnalyzer() {
         className="flex items-center justify-between w-full "
         style={{ marginTop: "0.2em" }}
       >
-        <div className="flex items-center -mt-2 ml-1">
+        <div className="flex items-center -mt-2 ml-1 z-0">
           <Select
             value={itemsPerPage.toString()}
             onValueChange={(value) => setItemsPerPage(Number(value))}
