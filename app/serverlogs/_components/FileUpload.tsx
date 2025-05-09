@@ -140,6 +140,12 @@ export function FileUpload({
     setOverallProgress(0);
     await delay(100); // Small delay to ensure state updates
 
+    if (files.length > 10) {
+      toast.info(
+        "Whoohaaaa, that is a lot of files. This might take a while...",
+      );
+    }
+
     try {
       // Initial progress
       setOverallProgress(10);
