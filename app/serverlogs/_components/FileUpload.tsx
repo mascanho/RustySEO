@@ -130,14 +130,22 @@ export function FileUpload({
     });
   };
 
+  const delay = (ms: number) =>
+    new Promise((resolve) => setTimeout(resolve, ms));
+
   const handleUpload = async () => {
     if (files.length === 0) return;
 
     setUploading(true);
     setOverallProgress(0);
+    await delay(100); // Small delay to ensure state updates
 
     try {
-      // Process all files in parallel
+      // Initial progress
+      setOverallProgress(10);
+      await delay(200);
+
+      // Process all files with progress updates
       const fileContents = await Promise.all(
         files.map(async (fileWithProgress, index) => {
           try {
@@ -147,6 +155,13 @@ export function FileUpload({
                 idx === index ? { ...f, success: true } : f,
               ),
             );
+
+            // Update progress incrementally for each file
+            const progressIncrement = 30 / files.length;
+            setOverallProgress((prev) =>
+              Math.min(prev + progressIncrement, 40),
+            );
+
             return { filename: fileWithProgress.file.name, content };
           } catch (err) {
             setFiles((prev) =>
@@ -165,14 +180,16 @@ export function FileUpload({
         }),
       );
 
-      // Update overall progress to 50% when all files are read
-      setOverallProgress(50);
+      // Update progress to indicate processing
+      setOverallProgress(60);
+      await delay(300);
 
       // Prepare data for backend
       const logContents = fileContents.map((fc) => [fc.filename, fc.content]);
 
-      // Update overall progress to indicate backend processing
-      setOverallProgress(75);
+      // Update progress to indicate backend processing
+      setOverallProgress(80);
+      await delay(300);
 
       const result = await invoke("check_logs_command", {
         data: { log_contents: logContents },
@@ -184,10 +201,11 @@ export function FileUpload({
       // Mark all files as successfully uploaded
       setFiles((prev) => prev.map((f) => ({ ...f, success: true })));
 
-      // Update overall progress to 100% when done
+      // Final progress update
       setOverallProgress(100);
+      await delay(500);
 
-      setTimeout(() => closeDialog(), 800);
+      closeDialog();
       toast.success("Upload complete!");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
@@ -307,7 +325,10 @@ export function FileUpload({
 
           {uploading && (
             <div className="w-full mt-2">
-              <Progress value={overallProgress} className="h-2" />
+              <Progress
+                value={overallProgress}
+                className="h-2 bg-gray-200 dark:bg-gray-700 [&>div]:bg-brand-bright"
+              />
               <div className="flex justify-between items-center text-xs mt-1">
                 <div className="flex items-center">
                   {overallProgress === 100 ? (
@@ -315,11 +336,13 @@ export function FileUpload({
                   ) : (
                     <>
                       <span className="flex items-center">
-                        {overallProgress < 50
+                        {overallProgress < 40
                           ? "Reading files"
-                          : overallProgress < 75
-                            ? "Preparing data"
-                            : "Uploading data"}
+                          : overallProgress < 60
+                            ? "Processing files"
+                            : overallProgress < 80
+                              ? "Preparing data"
+                              : "Uploading data"}
                         <span className="flex items-center mx-2">
                           <span className="animate-bounce [animation-delay:-0.3s]">
                             .
@@ -329,7 +352,7 @@ export function FileUpload({
                           </span>
                           <span className="animate-bounce">.</span>
                         </span>
-                        {overallProgress}%
+                        {Math.round(overallProgress)}%
                       </span>
                     </>
                   )}
@@ -343,10 +366,16 @@ export function FileUpload({
 
           <Button
             onClick={handleUpload}
-            className="w-full mt-2 bg-brand-bright text-white dark:bg-brand-bright dark:text-white hover:bg-brand-bright dark:hover:bg-brand-bright"
+            className="w-full mt-2 bg-brand-bright text-white dark:bg-brand-bright dark:text-white hover:bg-brand-bright/90 dark:hover:bg-brand-bright/90"
             disabled={uploading}
           >
-            Upload {files.length} File{files.length !== 1 ? "s" : ""}
+            {uploading ? (
+              <span className="flex items-center">
+                Uploading... {Math.round(overallProgress)}%
+              </span>
+            ) : (
+              `Upload ${files.length} File${files.length !== 1 ? "s" : ""}`
+            )}
           </Button>
 
           {error && (
