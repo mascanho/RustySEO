@@ -329,9 +329,12 @@ const Footer = () => {
                 </DrawerContent>
               </Drawer>
 
-              <button className="relative group hover:delay-1000">
+              <button
+                disabled={pathname === "/serverlogs"}
+                className={`relative group hover:delay-1000 ${pathname === "/serverlogs" ? "not cursor-not-allowed" : " "}`}
+              >
                 <BsLayoutSidebarInsetReverse
-                  className={`text-sm ${iconClasses} ${visibility.sidebar && "text-brand-bright"}`}
+                  className={`text-sm ${iconClasses} ${visibility.sidebar && "text-brand-bright"} ${pathname === "/serverlogs" ? "text-gray-400 cursor-not-allowed" : ""}`}
                   onClick={() => {
                     if (visibility.sidebar) {
                       hideSidebar();
