@@ -144,6 +144,8 @@ export function FileUpload({
       toast.info(
         "Whoohaaaa, that is a lot of files. This might take a while...",
       );
+    } else {
+      toast.info("RustySEO is analysing your logs...");
     }
 
     try {
