@@ -184,7 +184,7 @@ export function TimelineChart() {
           onValueChange={(value) => setViewMode(value as "daily" | "hourly")}
           variant="outline"
           size="sm"
-          className="h-8"
+          className="h-8 z-0"
         >
           <ToggleGroupItem value="daily" className="text-xs px-2 h-6">
             Day

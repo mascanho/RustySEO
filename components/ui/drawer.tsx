@@ -24,22 +24,22 @@ const DrawerPortal = DrawerPrimitive.Portal;
 const DrawerClose = DrawerPrimitive.Close;
 
 const DrawerOverlay = React.forwardRef<
-const pathname = usePathname()
   React.ElementRef<typeof DrawerPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Overlay>
->(({ className, ...props }, ref) => (
-
-
-
-  <DrawerPrimitive.Overlay
-    ref={ref}
-    className={cn(
-      "fixed top-0 left-0 right-0 bottom-0 z-0  w-full bg-black/80",
-      className,
-    )}
-    {...props}
-  />
-));
+>(({ className, ...props }, ref) => {
+  const pathname = usePathname();
+  return (
+    <DrawerPrimitive.Overlay
+      ref={ref}
+      className={cn(
+        "fixed top-0 left-0 right-0 bottom-0 w-full bg-black/80",
+        pathname === "/" || pathname === "/serverlogs" ? "z-50" : "z-0",
+        className,
+      )}
+      {...props}
+    />
+  );
+});
 DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
 
 const DrawerContent = React.forwardRef<

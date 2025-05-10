@@ -437,7 +437,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Select
+          {/* <Select
             value={botFilter || "all"}
             onValueChange={(value) =>
               setBotFilter(value === "all" ? null : value)
@@ -451,7 +451,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
               <SelectItem value="bot">Bots</SelectItem>
               <SelectItem value="Human">Humans</SelectItem>
             </SelectContent>
-          </Select>
+          </Select> */}
 
           <Select
             value={
@@ -471,7 +471,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All IPs</SelectItem>
-              <SelectItem value="verified">Verified Google</SelectItem>
+              <SelectItem value="verified">Verified</SelectItem>
               <SelectItem value="unverified">Unverified</SelectItem>
             </SelectContent>
           </Select>
