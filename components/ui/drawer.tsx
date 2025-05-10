@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
+import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
 
@@ -23,12 +24,19 @@ const DrawerPortal = DrawerPrimitive.Portal;
 const DrawerClose = DrawerPrimitive.Close;
 
 const DrawerOverlay = React.forwardRef<
+const pathname = usePathname()
   React.ElementRef<typeof DrawerPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Overlay>
 >(({ className, ...props }, ref) => (
+
+
+
   <DrawerPrimitive.Overlay
     ref={ref}
-    className={cn("fixed inset-0 z-30 bg-black/80", className)}
+    className={cn(
+      "fixed top-0 left-0 right-0 bottom-0 z-0  w-full bg-black/80",
+      className,
+    )}
     {...props}
   />
 ));
@@ -43,7 +51,7 @@ const DrawerContent = React.forwardRef<
     <DrawerPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950",
+        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border border-slate-200 shadow-xl bg-white dark:border-slate-800 dark:bg-slate-950",
         className,
       )}
       {...props}
