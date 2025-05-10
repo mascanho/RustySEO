@@ -208,7 +208,7 @@ export default function Page() {
         </div>
 
         <Tabs value={activeTab} onChange={setActiveTab}>
-          <aside className="absolute top-13 pt-1 left-0 w-full dark:bg-brand-darker z-10 bg-white">
+          <aside className="absolute top-13 pt-1 left-0 w-full dark:bg-brand-darker z-[200] bg-white">
             <Tabs.List
               justify="center"
               className="dark:text-white text-xs border-b dark:border-b-brand-dark h-7"
