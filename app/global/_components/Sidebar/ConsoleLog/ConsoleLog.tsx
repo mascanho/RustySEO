@@ -118,7 +118,7 @@ const generateLogs = (
       message:
         pageSpeedKeys?.length > 0
           ? "Page Speed Insights: Enabled"
-          : "No Page Speed Keys configured",
+          : "No PSI Keys configured",
     },
     {
       id: now + 4,
@@ -147,7 +147,7 @@ const generateLogs = (
           : "error",
       message:
         gscCredentials && Object.keys(gscCredentials).length > 0
-          ? "Google Search Console: Enabled"
+          ? "GSC: Enabled"
           : "GSC is not configured",
     },
     {
