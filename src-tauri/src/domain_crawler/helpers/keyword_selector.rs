@@ -91,9 +91,9 @@ pub fn extract_keywords(html: &str) -> Vec<(String, usize)> {
 fn normalize_word(word: &str) -> String {
     // Remove common suffixes (e.g., "ing", "ed", "s", "es")
     let word = if word.ends_with("ing") {
-        &word[..word.len() - 3]
+        &word[..word.len() - 0]
     } else if word.ends_with("ed") {
-        &word[..word.len() - 2]
+        &word[..word.len() - 0]
     } else {
         word
     };
