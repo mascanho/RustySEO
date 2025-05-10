@@ -33,7 +33,7 @@ const DrawerOverlay = React.forwardRef<
       ref={ref}
       className={cn(
         "fixed top-0 left-0 right-0 bottom-0 w-full bg-black/80",
-        pathname === "/" || pathname === "/serverlogs" ? "z-50" : "z-0",
+        pathname === "/" || pathname === "/serverlogs" ? "z-50" : "z-50",
         className,
       )}
       {...props}

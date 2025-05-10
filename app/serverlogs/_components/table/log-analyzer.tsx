@@ -981,7 +981,7 @@ function PaginationControls({
             return (
               <PaginationItem key={i}>
                 <PaginationLink
-                  className="cursor-pointer h-6"
+                  className="cursor-pointer h-6 text-xs"
                   onClick={() => setCurrentPage(pageNum)}
                   isActive={currentPage === pageNum}
                 >
@@ -993,12 +993,12 @@ function PaginationControls({
 
           {totalPages > 5 && currentPage < totalPages - 2 && (
             <>
-              <PaginationItem>
+              <PaginationItem className="text-xs">
                 <PaginationEllipsis />
               </PaginationItem>
               <PaginationItem>
                 <PaginationLink
-                  className="cursor-pointer"
+                  className="cursor-pointer text-xs"
                   onClick={() => setCurrentPage(totalPages)}
                 >
                   {totalPages}
@@ -1007,15 +1007,15 @@ function PaginationControls({
             </>
           )}
 
-          <PaginationItem className="cursor-pointer">
+          <PaginationItem className="cursor-pointer text-xs">
             <PaginationNext
               onClick={() =>
                 setCurrentPage(Math.min(totalPages, currentPage + 1))
               }
               className={
                 currentPage === totalPages
-                  ? "pointer-events-none opacity-50"
-                  : ""
+                  ? "pointer-events-none opacity-50 text-xs"
+                  : "text-xs"
               }
             />
           </PaginationItem>

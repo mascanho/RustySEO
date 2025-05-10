@@ -615,12 +615,12 @@ const Home: React.FC<HomeProps> = () => {
         {/* TABS SECTION */}
         <section className="mt-1 relative h-[calc(100vh-8.6rem)] overflow-x-hidden pt-0 px-1.5 side-scrollbar">
           <Tabs defaultValue="first">
-            <div className="transition-all   ease-in  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-1 top-[70px]  transform dark:bg-brand-darker  pb-0 z-50">
+            <div className="transition-all   ease-in  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-1 top-[70px]  transform dark:bg-brand-darker  pb-0 z-[1000000000000]">
               <Tabs.List
                 justify="center"
-                className="dark:text-white pb-[2px] z-40"
+                className="dark:text-white pb-[2px] z-50"
               >
-                <Tabs.Tab value="first" className="pb-2">
+                <Tabs.Tab value="first" className="pb-2 z-50">
                   <CgPerformance className="inline-block text-sm mr-1 mb-[1px]" />{" "}
                   Diagnostics
                 </Tabs.Tab>

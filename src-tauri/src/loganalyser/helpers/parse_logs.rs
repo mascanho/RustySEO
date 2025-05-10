@@ -195,7 +195,7 @@ fn detect_browser(user_agent: &str) -> Option<String> {
             return Some(user_agent[start..end].to_string());
         }
     }
-    Some("Bot".to_string())
+    Some("Other".to_string())
 }
 
 // Detect crawler type from user-agent

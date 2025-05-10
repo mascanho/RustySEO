@@ -149,7 +149,7 @@ export default function WidgetLogs() {
           <button
             key={label}
             onClick={() => setActiveTab(label)}
-            className={`flex items-center space-x-1 px-3 py-1 text-xs rounded-md font-medium transition-colors ${
+            className={`flex items-center space-x-1 px-4 py-1 text-xs rounded-sm font-medium transition-colors ${
               activeTab === label
                 ? "bg-brand-bright text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
