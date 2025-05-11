@@ -128,7 +128,7 @@ const CrawlerType = () => {
         title={`Crawler Type: ${crawlerType}`}
         aria-label="Open crawler settings"
       >
-        <FaSpider className={`text-sm ${iconColorClass}`} />
+        <FaSpider className={`text-sm p-[1px] ${iconColorClass}`} />
       </button>
 
       {/* Modal */}

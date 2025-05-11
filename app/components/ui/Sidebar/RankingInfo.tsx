@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import React, { useState, useEffect } from "react";
 import RankingMenus from "./RankingInfo/RankingMenus";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface MatchedDataItem {
   query: string;
@@ -31,6 +32,7 @@ const RankingInfo = ({
   useEffect(() => {
     const handleUrlMatch = async (url: string) => {
       try {
+        // TODO: Pass this to the Deepcrawl
         const result: MatchedDataItem[] = await invoke("call_gsc_match_url", {
           url,
         });
@@ -93,7 +95,7 @@ const RankingInfo = ({
   }
 
   return (
-    <div className="w-full ranking-table max-w-full bg-gray-50  h-[calc(50rem-250px)] overflow-auto bg-brand-bright/5 dark:bg-transparent ">
+    <ScrollArea className="w-full ranking-table max-w-full bg-gray-50  h-[28rem] overflow-auto bg-brand-bright/5 dark:bg-transparent ">
       <table className="w-full text-xs ">
         <thead className="bg-gray-100 dark:bg-gray-700 sticky top-0">
           <tr>
@@ -146,7 +148,7 @@ const RankingInfo = ({
           ))}
         </tbody>
       </table>
-    </div>
+    </ScrollArea>
   );
 };
 

@@ -158,7 +158,7 @@ export default function KeywordTable({
   });
 
   return (
-    <div className="flex flex-col h-[calc(100vh-25rem)] bg-white dark:bg-brand-darker rounded-md dark:border-brand-dark border overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-26rem)] bg-white dark:bg-brand-darker rounded-md dark:border-brand-dark border overflow-hidden">
       {/* Sticky Search Bar - stays fixed at top */}
       <div className="sticky top-1 z-30 bg-white dark:bg-brand-darker p-2 border-b dark:border-brand-dark">
         <div className="flex items-center relative">
@@ -215,15 +215,17 @@ export default function KeywordTable({
             ))}
           </thead>
           <tbody className="bg-white divide-y divide-gray-200 dark:divide-brand-dark">
-            {table.getRowModel().rows.map((row, index) => (
-              <KeywordRow
-                key={row.id}
-                row={row}
-                index={index}
-                removeKeyword={removeKeyword}
-                keywordIds={keywordIds}
-              />
-            ))}
+            {table
+              ?.getRowModel()
+              .rows.map((row, index) => (
+                <KeywordRow
+                  key={row?.id || index}
+                  row={row || {}}
+                  index={index}
+                  removeKeyword={removeKeyword || ""}
+                  keywordIds={keywordIds}
+                />
+              ))}
           </tbody>
         </table>
       </div>

@@ -85,7 +85,6 @@ const LEVEL_CONFIGS = {
   },
 } as const;
 
-// Optimized log generator with minimal object creation
 const generateLogs = (
   crawler: string,
   isGlobalCrawling: boolean,
@@ -116,10 +115,10 @@ const generateLogs = (
     {
       id: now + 3,
       timestamp,
-      level: pageSpeedKeys?.length > 0 ? "success" : "error",
+      level: pageSpeedKeys?.page_speed_key?.length > 0 ? "success" : "error",
       message:
-        pageSpeedKeys?.length > 0
-          ? "Page Speed Insights: Enabled"
+        pageSpeedKeys?.page_speed_key?.length > 0
+          ? "PSI: Enabled"
           : "No PSI Keys configured",
     },
     {
@@ -136,9 +135,7 @@ const generateLogs = (
       timestamp,
       level: clarityApi !== "" ? "success" : "error",
       message:
-        clarityApi !== ""
-          ? "MS Clarity: Enabled"
-          : "MS Clarity is not configured",
+        clarityApi !== "" ? "MS Clarity: Enabled" : "MS Clarity: Disabled",
     },
     {
       id: now + 6,
@@ -216,6 +213,8 @@ export default function ConsoleLog() {
   const [gscCredentials, setGscCredentials] = useState<any>(null);
   const [clarityApi, setClarityApi] = useState("");
 
+  console.log(pageSpeedKeys, "PSI");
+
   // Memoized logs with stable dependencies
   const memoizedLogs = useMemo(
     () =>
@@ -267,7 +266,7 @@ export default function ConsoleLog() {
             invoke<string>("get_microsoft_clarity_command"),
           ]);
         setAiModelLog(aiModelCheck || aiModel);
-        setPageSpeedKeys(pageSpeed);
+        setPageSpeedKeys(pageSpeedK);
         setGa4ID(ga4);
         setGscCredentials(gsc);
         setClarityApi(clarity);

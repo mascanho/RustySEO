@@ -1,3 +1,4 @@
+" use client";
 import React from "react";
 import { MoreHorizontal, Edit, Trash2, BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,9 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { invoke } from "@tauri-apps/api/core";
-import { emit } from "@tauri-apps/api/event";
-import { toast } from "sonner";
+import { usePathname } from "next/navigation";
 
 interface KeywordRowMenuProps {
   keywordId: string;
@@ -24,6 +23,10 @@ export default function KeywordRowMenu({
   removeKeyword,
   keywordIds,
 }: KeywordRowMenuProps) {
+  const pathname = usePathname();
+
+  if (pathname !== "/") return <section className="h-7">{""}</section>;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

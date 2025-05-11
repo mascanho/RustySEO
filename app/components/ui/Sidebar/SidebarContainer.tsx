@@ -111,7 +111,7 @@ const SidebarContainer: React.FC<SidebarContainerProps> = ({
             </Tabs.Panel>
             <Tabs.Panel
               value="third"
-              className="h-full w-full bg-brand-highlight/5"
+              className="w-full bg-brand-highlight/5 h-[28rem] "
             >
               <RankingInfo keywords={keywords} pageSpeed={pageSpeed} />
             </Tabs.Panel>
