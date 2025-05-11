@@ -41,7 +41,7 @@ const BottomTableContent = ({ children, height }) => (
 
 export default function Home() {
   const [containerHeight, setContainerHeight] = useState(770);
-  const [bottomTableHeight, setBottomTableHeight] = useState(200);
+  const [bottomTableHeight, setBottomTableHeight] = useState(218);
   const [activeBottomTab, setActiveBottomTab] = useState("details");
   const containerRef = useRef<HTMLDivElement>(null);
 

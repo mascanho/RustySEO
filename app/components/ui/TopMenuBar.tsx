@@ -424,7 +424,7 @@ const TopMenuBar = () => {
         overlayProps={{
           backgroundOpacity: 0.55,
           blur: 3,
-          zIndex: 0,
+          zIndex: 20,
         }}
         transitionProps={{
           transition: "fade",
