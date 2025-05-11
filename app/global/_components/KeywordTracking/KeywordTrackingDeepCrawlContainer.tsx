@@ -1,9 +1,9 @@
-import KeywordTrackingDeepTable from "./KeywordTrackingDeepTable";
+import { KeywordsTableDeep } from "./KeywordTrackingDeepTable";
 
 const KeywordTrackingDeepCrawlContainer = () => {
   return (
     <section className="px-1">
-      <KeywordTrackingDeepTable />
+      <KeywordsTableDeep />
     </section>
   );
 };
