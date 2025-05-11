@@ -859,3 +859,11 @@ dialog::backdrop {
     opacity: 0;
   }
 }
+
+/* RECHARTS FIX */
+.recharts-area-curve[data-key="human"] {
+  stroke: hsl(var(--primary)) !important;
+}
+.recharts-area-curve[data-key="crawler"] {
+  stroke: red !important;
+}

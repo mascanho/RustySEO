@@ -32,7 +32,7 @@ import { useCurrentLogs } from "@/store/logFilterStore";
 
 const COLORS = {
   human: "hsl(var(--primary))",
-  crawler: "hsl(var(--destructive))",
+  crawler: "red", // Hardcoded for testing; revert to "hsl(var(--destructive))" after confirming
 };
 
 export function TimelineChart() {
@@ -98,13 +98,18 @@ export function TimelineChart() {
     }
     // "all" keeps the original minDate
 
-    // Convert to array and filter by date range
+    // Convert to array, filter by date range, and apply filter logic
     return Array.from(dateMap.entries())
-      .map(([date, counts]) => ({
-        date,
-        human: counts.human,
-        crawler: counts.crawler,
-      }))
+      .map(([date, counts]) => {
+        // Determine which data to show based on currentLogs filter
+        const showHuman = currentLogs.some((log) => !log.is_crawler);
+        const showCrawler = currentLogs.some((log) => log.is_crawler);
+        return {
+          date,
+          human: showHuman ? counts.human : 0, // Set to 0 if humans are not included
+          crawler: showCrawler ? counts.crawler : 0, // Set to 0 if crawlers are not included
+        };
+      })
       .filter((item) => {
         const itemDate = new Date(item.date);
         return itemDate >= startDate && itemDate <= endDate;
@@ -134,6 +139,10 @@ export function TimelineChart() {
               hour12: true,
             });
 
+      // Map payload to ensure correct dataKey alignment
+      const humanData = payload.find((p: any) => p.dataKey === "human");
+      const crawlerData = payload.find((p: any) => p.dataKey === "crawler");
+
       return (
         <div className="bg-background dark:bg-gray-900 p-3 border rounded-lg shadow-lg">
           <p className="font-medium text-sm">{formattedDate}</p>
@@ -143,14 +152,18 @@ export function TimelineChart() {
                 className="w-2 h-2 rounded-full mr-2"
                 style={{ backgroundColor: COLORS.human }}
               />
-              <span className="text-xs">Human: {payload[1].value}</span>
+              <span className="text-xs">
+                Human: {humanData ? humanData.value : 0}
+              </span>
             </div>
             <div className="flex items-center">
               <div
                 className="w-2 h-2 rounded-full mr-2"
                 style={{ backgroundColor: COLORS.crawler }}
               />
-              <span className="text-xs">Robots: {payload[0].value}</span>
+              <span className="text-xs">
+                Robots: {crawlerData ? crawlerData.value : 0}
+              </span>
             </div>
           </div>
         </div>
@@ -176,6 +189,16 @@ export function TimelineChart() {
 
   return (
     <Card className="relative w-1/2 h-64 rounded-none">
+      {/* Inline CSS to enforce stroke colors */}
+      <style jsx>{`
+        .crawler-area .recharts-area-curve {
+          stroke: ${COLORS.crawler} !important;
+        }
+        .human-area .recharts-area-curve {
+          stroke: ${COLORS.human} !important;
+        }
+      `}</style>
+
       {/* Absolute positioned controls */}
       <div className="absolute top-2 right-4 flex items-center gap-2 z-10">
         <ToggleGroup
@@ -317,15 +340,19 @@ export function TimelineChart() {
                 strokeWidth={2}
                 fill="url(#colorCrawler)"
                 fillOpacity={0.8}
+                style={{ stroke: COLORS.crawler }}
+                className="crawler-area"
               />
               <Area
                 type="monotone"
                 dataKey="human"
-                stackId="1"
+                stackId="2"
                 stroke={COLORS.human}
                 strokeWidth={2}
                 fill="url(#colorHuman)"
                 fillOpacity={0.8}
+                style={{ stroke: COLORS.human }}
+                className="human-area"
               />
             </AreaChart>
           </ResponsiveContainer>
