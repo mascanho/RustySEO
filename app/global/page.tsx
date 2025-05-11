@@ -312,7 +312,7 @@ export default function Page() {
           {activeTab === "kws" && (
             <Tabs.Panel
               value="kws"
-              className="h-[calc(100vh-4rem)] pt-9 dark:bg-brand-darker"
+              className="h-screen pt-9 dark:bg-brand-darker"
             >
               <KeywordTrackingDeepCrawlContainer />
             </Tabs.Panel>

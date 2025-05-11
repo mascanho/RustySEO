@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { invoke } from "@tauri-apps/api/core";
+import { emit } from "@tauri-apps/api/event";
 
 interface KeywordData {
   id: string;
@@ -87,13 +88,8 @@ export function KeywordsTableDeep() {
       return [];
     }
 
-    const dataWithId = data.map((item, index) => ({
-      id: index,
-      ...item,
-    }));
-
     const term = searchTerm.toLowerCase();
-    return dataWithId.filter((item) => {
+    return data.filter((item) => {
       const keyword = item.keyword?.toLowerCase() || "";
       const url = item.url?.toLowerCase() || "";
       return keyword.includes(term) || url.includes(term);
@@ -106,19 +102,27 @@ export function KeywordsTableDeep() {
   const currentData = filteredData.slice(startIndex, endIndex);
 
   const handleDelete = async (id: string) => {
-    console.log(id, "trying to delete");
+    if (!id) {
+      toast.error("No keyword ID provided");
+      return;
+    }
 
     try {
-      await invoke("delete_keyword_command", { id });
-      setData(data.filter((item) => item.id !== id));
-      toast.success("Keyword deleted successfully");
+      await invoke("delete_keyword_command", { id: String(id) });
+      await emit("keyword-tracked", { action: "delete", id });
 
-      if (currentData.length === 1 && currentPage > 1) {
+      // Update state properly
+      setData((prev) => prev.filter((item) => item.id !== id));
+
+      // Handle pagination
+      if (currentData.length <= 1 && currentPage > 1) {
         setCurrentPage(currentPage - 1);
       }
+
+      toast.success("Keyword deleted successfully");
     } catch (error) {
       toast.error("Failed to delete keyword");
-      console.error("Error deleting keyword:", error);
+      console.error("Delete error:", error);
     }
   };
 
@@ -212,20 +216,16 @@ export function KeywordsTableDeep() {
     );
   }
 
-  console.log(currentData, "currentData");
-
   return (
-    <div className="container mx-auto py-10">
-      <h1 className="text-2xl font-bold mb-6">SEO Performance Metrics</h1>
-
+    <div className="mt-4 dark:bg-brand-darker">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
         <div className="relative w-full md:w-auto md:flex-1">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground dark:text-white/50" />
           <Input
             placeholder="Search by keyword or URL..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 dark:text-white"
           />
         </div>
 
@@ -234,12 +234,13 @@ export function KeywordsTableDeep() {
             variant="outline"
             onClick={refreshData}
             disabled={isRefreshing}
+            className="dark:bg-brand-darker dark:text-white/50 dark:border-brand-dark"
           >
             {isRefreshing ? "Refreshing..." : "Refresh Data"}
           </Button>
 
           <div className="flex items-center">
-            <span className="text-sm mr-2">Show:</span>
+            <span className="text-sm mr-2 dark:text-white/50">Show:</span>
             <Select
               value={itemsPerPage.toString()}
               onValueChange={(value) => {
@@ -247,7 +248,7 @@ export function KeywordsTableDeep() {
                 setCurrentPage(1);
               }}
             >
-              <SelectTrigger className="w-[80px]">
+              <SelectTrigger className="w-[80px] dark:bg-brand-darker dark:text-white/50">
                 <SelectValue placeholder="10" />
               </SelectTrigger>
               <SelectContent>
@@ -261,58 +262,114 @@ export function KeywordsTableDeep() {
         </div>
       </div>
 
-      <div className="border rounded-md overflow-hidden">
-        <div className="overflow-x-auto max-h-[600px] h-[600px]">
-          <Table>
+      <div className="border rounded-md overflow-hidden dark:border-brand-dark">
+        <div className="overflow-x-auto h-[calc(100vh-26.5rem)] max-h-[calc(100vh-26rem)] border-none">
+          <Table className="bg-white dark:border-brand-dark [&_tr]:h-[12px] [&_td]:p-0 [&_th]:p-0">
             <TableHeader className="sticky top-0 bg-background z-10">
-              <TableRow>
-                <TableHead className="w-[200px]">Keyword</TableHead>
-                <TableHead className="text-right">Impressions</TableHead>
-                <TableHead className="text-right">Clicks</TableHead>
-                <TableHead className="hidden md:table-cell">URL</TableHead>
-                <TableHead className="text-right">Position</TableHead>
-                <TableHead className="hidden md:table-cell">
+              <TableRow style={{ height: "12px" }}>
+                <TableHead
+                  className="w-[150px]"
+                  style={{ height: "12px", padding: 10 }}
+                >
+                  Keyword
+                </TableHead>
+                <TableHead
+                  className="text-right"
+                  style={{ height: "12px", padding: 10 }}
+                >
+                  Impressions
+                </TableHead>
+                <TableHead
+                  className="text-right"
+                  style={{ height: "12px", padding: 10 }}
+                >
+                  Clicks
+                </TableHead>
+                <TableHead
+                  className="hidden md:table-cell"
+                  style={{ height: "12px", padding: 10 }}
+                >
+                  URL
+                </TableHead>
+                <TableHead
+                  className="text-right"
+                  style={{ height: "12px", padding: 10 }}
+                >
+                  Position
+                </TableHead>
+                <TableHead
+                  className="hidden md:table-cell"
+                  style={{ height: "12px", padding: 10 }}
+                >
                   Date Added
                 </TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead
+                  className="text-center"
+                  style={{ height: "12px", padding: 10 }}
+                >
+                  Actions
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {currentData.length > 0 ? (
                 currentData.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell className="font-medium">{row?.query}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <span>{row.current_impressions.toLocaleString()}</span>
+                  <TableRow key={row.id} style={{ height: "12px" }}>
+                    <TableCell
+                      style={{ height: "12px", padding: 5, paddingLeft: 12 }}
+                      className="font-medium truncate text-xs"
+                    >
+                      {row?.query}
+                    </TableCell>
+                    <TableCell
+                      style={{ height: "12px", padding: 0 }}
+                      className="text-right"
+                    >
+                      <div className="flex items-center justify-end gap-1 h-[12px] overflow-hidden">
+                        <span className="text-xs leading-none">
+                          {row.current_impressions.toLocaleString()}
+                        </span>
                         {renderChangeIndicator(
                           row.current_impressions,
                           row.initial_impressions,
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <span>{row.current_clicks.toLocaleString()}</span>
+                    <TableCell
+                      style={{ height: "12px", padding: 0 }}
+                      className="text-right"
+                    >
+                      <div className="flex items-center justify-end gap-1 h-[12px] overflow-hidden">
+                        <span className="text-xs leading-none">
+                          {row.current_clicks.toLocaleString()}
+                        </span>
                         {renderChangeIndicator(
                           row.current_clicks,
                           row.initial_clicks,
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell truncate max-w-[200px]">
+                    <TableCell
+                      style={{ height: "12px", padding: 0, paddingLeft: 16 }}
+                      className="hidden md:table-cell truncate"
+                    >
                       <a
                         href={row.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-500 hover:underline"
+                        className="text-blue-500 hover:underline text-xs leading-none"
                       >
                         {row.url}
                       </a>
                     </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <span>{row.current_position.toFixed(1)}</span>
+                    <TableCell
+                      style={{ height: "12px", padding: 0 }}
+                      className="text-right"
+                    >
+                      <div className="flex items-center justify-end gap-1 h-[12px] overflow-hidden">
+                        <span className="text-xs leading-none">
+                          {row.current_position.toFixed(1)}
+                        </span>
                         {renderChangeIndicator(
                           row.current_position,
                           row.initial_position,
@@ -320,24 +377,37 @@ export function KeywordsTableDeep() {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {formatDate(row.date_added)}
+                    <TableCell
+                      style={{ height: "12px", padding: 0, paddingLeft: 16 }}
+                      className="hidden md:table-cell"
+                    >
+                      <span className="text-xs leading-none">
+                        {formatDate(row.date_added)}
+                      </span>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell
+                      style={{ height: "12px", paddingTop: 8 }}
+                      className="text-center"
+                    >
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDelete(row?.id.toString())}
+                        className="h-[12px] w-[12px]"
+                        onClick={() => handleDelete(row?.id)}
                         aria-label="Delete row"
                       >
-                        <Trash2 className="h-4 w-4 text-red-500" />
+                        <Trash2 className="h-3 w-3 text-red-500" />
                       </Button>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-6">
+                <TableRow style={{ height: "12px" }}>
+                  <TableCell
+                    colSpan={7}
+                    style={{ height: "12px", padding: 0 }}
+                    className="text-center text-xs"
+                  >
                     {searchTerm
                       ? `No results found for "${searchTerm}"`
                       : "No keywords available"}
@@ -345,40 +415,40 @@ export function KeywordsTableDeep() {
                 </TableRow>
               )}
             </TableBody>
-          </Table>
+          </Table>{" "}
         </div>
       </div>
 
       {filteredData.length > 0 && (
-        <div className="mt-4 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="text-sm text-muted-foreground">
+        <div className="mt-2 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="text-xs text-muted-foreground dark:text-white/50">
             Showing {startIndex + 1}-{Math.min(endIndex, filteredData.length)}{" "}
             of {filteredData.length} entries
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 text-xs">
             <Button
               variant="outline"
               size="icon"
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
               aria-label="Previous page"
+              className=" w-5 h-5 text-xs p-0 dark:bg-slate-900 dark:text-white"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
 
             {getPageNumbers().map((page, index) =>
               page === "..." ? (
-                <span key={`ellipsis-${index}`} className="px-2">
+                <span key={`ellipsis-${index}`} className="px-2 ">
                   ...
                 </span>
               ) : (
                 <Button
                   key={`page-${page}`}
                   variant={currentPage === page ? "default" : "outline"}
-                  size="sm"
                   onClick={() => handlePageChange(Number(page))}
-                  className="min-w-[32px]"
+                  className=" w-4 h-4 text-xs p-0  dark:text-brand-bright"
                 >
                   {page}
                 </Button>
@@ -391,6 +461,7 @@ export function KeywordsTableDeep() {
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
               aria-label="Next page"
+              className="w-5 h-5 dark:bg-slate-900 dark:text-white"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
