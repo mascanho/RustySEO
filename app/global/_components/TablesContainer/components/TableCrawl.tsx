@@ -290,7 +290,7 @@ const TableCrawl = ({
       return;
     }
 
-    if (rows.length > 10000) {
+    if (rows.length > 3000) {
       toast.info("Getting your data ready...");
 
       await exportSEODataCSV(rows);

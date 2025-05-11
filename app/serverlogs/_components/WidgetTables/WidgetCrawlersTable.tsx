@@ -688,7 +688,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                               }
                             >
                               {log.crawler_type.startsWith("Goo")
-                                ? "Google Bot"
+                                ? "Google 🤖"
                                 : log.crawler_type.length > 20
                                   ? log.crawler_type.slice(0, 10) + "..."
                                   : log.crawler_type}

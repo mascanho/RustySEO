@@ -83,8 +83,11 @@ export const exportSEODataCSV = async (data) => {
       item.word_count?.toString() || "",
 
       // Indexability (11)
-      `"${(getValue("indexability", "indexability_reason") || "Unknown").replace(/"/g, '""')}"`,
-
+      `"${(
+        getValue("indexability", "indexability_reason") ||
+        getValue("indexability", "indexability", "indexability_reason") ||
+        "Unknown"
+      ).replace(/"/g, '""')}"`,
       // Schema (12)
       item.schema === null ? "no" : item.schema ? "yes" : "no",
 

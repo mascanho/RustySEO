@@ -1,4 +1,5 @@
 // @ts-nocheck
+"use client";
 import useCrawlStore from "@/store/GlobalCrawlDataStore";
 import { FaSpider } from "react-icons/fa6";
 import { useEffect, useState } from "react";
@@ -6,6 +7,7 @@ import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 import { emit } from "@tauri-apps/api/event";
 import { IconVolume } from "@tabler/icons-react";
 import { invoke } from "@tauri-apps/api/core";
+import { toast } from "sonner";
 
 // Constants for crawler types
 const CRAWLER_TYPES = {
@@ -57,6 +59,7 @@ const CrawlerType = () => {
             page_speed_crawl: newPsiCrawlValue,
           }),
         );
+        toast.info("Page Speed Insights toggled, please restart RustySEO");
         console.log(
           "LocalStorage updated with new PSI crawl value:",
           newPsiCrawlValue,

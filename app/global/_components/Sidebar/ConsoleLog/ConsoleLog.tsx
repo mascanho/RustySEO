@@ -24,7 +24,7 @@ const LEVEL_CONFIGS = {
       <Badge
         variant="outline"
         className="bg-green-700/10 text-center text-green-700 border-green-700/20 flex-shrink-0 rounded-sm"
-        style={{ width: "60px", textAlign: "center", display: "inline-block" }}
+        style={{ width: "70px", textAlign: "center", display: "inline-block" }}
       >
         OK
       </Badge>
@@ -37,7 +37,7 @@ const LEVEL_CONFIGS = {
       <Badge
         variant="outline"
         className="bg-red-500/10 text-red-500 border-red-500/20 flex-shrink-0 rounded-sm"
-        style={{ width: "60px", textAlign: "center", display: "inline-block" }}
+        style={{ width: "70px", textAlign: "center", display: "inline-block" }}
       >
         ERROR
       </Badge>
@@ -50,6 +50,7 @@ const LEVEL_CONFIGS = {
       <Badge
         variant="outline"
         className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 flex-shrink-0 rounded-sm"
+        style={{ width: "70px", textAlign: "center", display: "inline-block" }}
       >
         WARNING
       </Badge>
@@ -62,7 +63,7 @@ const LEVEL_CONFIGS = {
       <Badge
         variant="outline"
         className="bg-blue-500/10 text-blue-500 border-blue-500/20 flex-shrink-0 rounded-sm"
-        style={{ width: "60px", textAlign: "center", display: "inline-block" }}
+        style={{ width: "70px", textAlign: "center", display: "inline-block" }}
       >
         INFO
       </Badge>
@@ -75,6 +76,7 @@ const LEVEL_CONFIGS = {
       <Badge
         variant="outline"
         className="bg-gray-500/10 text-gray-400 border-gray-500/20 flex-shrink-0 rounded-sm"
+        style={{ width: "70px", textAlign: "center", display: "inline-block" }}
       >
         DEBUG
       </Badge>
