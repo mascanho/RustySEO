@@ -625,6 +625,7 @@ pub fn read_tracked_keywords_from_db() -> Result<Vec<KwTrackingData>> {
 
 // ----------- FUNCTION TO DELETE KEYWORD TRACKING DATA FROM THE DB
 pub fn delete_keyword_from_db(id: &str) -> Result<()> {
+    println!("Deleting keyword with id: {}", id);
     let conn = open_db_connection("keyword_tracking.db")?;
     conn.execute("DELETE FROM keywords WHERE id = ?", params![id])?;
     Ok(())
@@ -748,18 +749,37 @@ pub fn match_tracked_with_gsc() -> Result<()> {
     conn_tracked.execute("DROP TABLE IF EXISTS summarized_data", [])?;
 
     conn_tracked.execute(
-        "CREATE TABLE summarized_data AS
-        SELECT
-            MIN(tracked_url) as url,
-            MIN(tracked_query) as query,
-            SUM(DISTINCT tracked_clicks) as initial_clicks,
-            SUM(CASE WHEN tracked_url = gsc_url THEN gsc_clicks ELSE 0 END) as current_clicks,
-            SUM(DISTINCT tracked_impressions) as initial_impressions,
-            SUM(CASE WHEN tracked_url = gsc_url THEN gsc_impressions ELSE 0 END) as current_impressions,
-            MIN(tracked_position) as initial_position,
-            AVG(gsc_position) as current_position
-        FROM keywords_tracked_gsc
-        GROUP BY tracked_url, tracked_query",
+        "CREATE TABLE summarized_data (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        url TEXT,
+        query TEXT,
+        initial_clicks INTEGER,
+        current_clicks INTEGER,
+        initial_impressions INTEGER,
+        current_impressions INTEGER,
+        initial_position REAL,
+        current_position REAL
+    )",
+        [],
+    )?;
+
+    // Step 3: Insert summarized results into the table
+    conn_tracked.execute(
+        "INSERT INTO summarized_data (
+        url, query, initial_clicks, current_clicks, initial_impressions,
+        current_impressions, initial_position, current_position
+    )
+    SELECT
+        MIN(tracked_url) as url,
+        MIN(tracked_query) as query,
+        SUM(DISTINCT tracked_clicks) as initial_clicks,
+        SUM(CASE WHEN tracked_url = gsc_url THEN gsc_clicks ELSE 0 END) as current_clicks,
+        SUM(DISTINCT tracked_impressions) as initial_impressions,
+        SUM(CASE WHEN tracked_url = gsc_url THEN gsc_impressions ELSE 0 END) as current_impressions,
+        MIN(tracked_position) as initial_position,
+        AVG(gsc_position) as current_position
+    FROM keywords_tracked_gsc
+    GROUP BY tracked_url, tracked_query",
         [],
     )?;
 
@@ -819,6 +839,7 @@ pub fn read_matched_keywords_from_db() -> Result<Vec<MatchedKeywordData>> {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct KeywordsSummary {
+    pub id: i64,
     pub url: String,
     pub query: String,
     pub initial_clicks: i64,
@@ -833,20 +854,21 @@ pub fn fetch_keywords_summarized_matched() -> Result<Vec<KeywordsSummary>> {
     let conn_tracked = open_db_connection("keyword_tracking.db")?;
 
     let mut stmt = conn_tracked.prepare(
-        "SELECT url, query, initial_clicks, current_clicks, initial_impressions, current_impressions, initial_position, current_position
+        "SELECT id, url, query, initial_clicks, current_clicks, initial_impressions, current_impressions, initial_position, current_position
          FROM summarized_data",
     )?;
 
     let keywords_summarized_matched = stmt.query_map([], |row| {
         Ok(KeywordsSummary {
-            url: row.get(0)?,
-            query: row.get(1)?,
-            initial_clicks: row.get(2)?,
-            current_clicks: row.get(3)?,
-            initial_impressions: row.get(4)?,
-            current_impressions: row.get(5)?,
-            initial_position: row.get(6)?,
-            current_position: row.get(7)?,
+            id: row.get(0)?,
+            url: row.get(1)?,
+            query: row.get(2)?,
+            initial_clicks: row.get(3)?,
+            current_clicks: row.get(4)?,
+            initial_impressions: row.get(5)?,
+            current_impressions: row.get(6)?,
+            initial_position: row.get(7)?,
+            current_position: row.get(8)?,
         })
     })?;
 

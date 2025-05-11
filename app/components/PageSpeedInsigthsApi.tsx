@@ -1,11 +1,12 @@
+"use client";
 import { invoke } from "@tauri-apps/api/core";
 import React, { useState } from "react";
 import { toast } from "sonner";
+import { usePathname } from "next/navigation";
 
 const PageSpeedInsigthsApi = ({ close }: any) => {
   const [userInput, setUserInput] = useState("");
-
-  console.log(userInput);
+  const pathname = usePathname();
 
   const handleAddApiKey: any = async (key: string) => {
     try {
@@ -14,10 +15,16 @@ const PageSpeedInsigthsApi = ({ close }: any) => {
         apiType: "page_speed",
       });
       console.log(result, "This is the result");
-      if (result) {
+      // Add the API key to the settings
+      await invoke("read_page_speed_bulk_api_key");
+
+      if (result && pathname === "/") {
         console.log("API key added successfully");
-        toast("API key added successfully");
+
+        toast.success("API key added successfully");
         // Perform any additional actions on success
+      } else if (result && pathname !== "/") {
+        toast.success("API key added, toggle to enable CWV analysis");
       } else {
         console.log("Failed to add API key");
         // Handle the failure case

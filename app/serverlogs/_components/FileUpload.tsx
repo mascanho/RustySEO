@@ -17,22 +17,28 @@ interface FileUploadProps {
   closeDialog: () => void;
 }
 
+interface FileWithProgress {
+  file: File;
+  success: boolean;
+  error: string | null;
+}
+
 export function FileUpload({
-  maxSizeMB = 245,
+  maxSizeMB = 345,
   acceptedFileTypes = ["text/plain", ".log", ".txt"],
   className,
   closeDialog,
 }: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<FileWithProgress[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [success, setSuccess] = useState(false);
+  const [overallProgress, setOverallProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setLogData } = useLogAnalysis();
 
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
+  const maxVisibleFiles = 5;
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -44,7 +50,7 @@ export function FileUpload({
     setIsDragging(false);
   };
 
-  const validateFile = (file: any) => {
+  const validateFile = (file: File) => {
     const fileSizeMB = file.size / 1024 / 1024;
     if (fileSizeMB > maxSizeMB) {
       setError(`File size exceeds the maximum limit of ${maxSizeMB}MB.`);
@@ -52,9 +58,8 @@ export function FileUpload({
     }
 
     const fileType = file.type || "";
-    const fileExtension = file.name.split(".").pop().toLowerCase();
+    const fileExtension = file.name.split(".").pop()?.toLowerCase() || "";
 
-    // Check if the file type or extension is accepted
     if (
       acceptedFileTypes.includes(fileType) ||
       acceptedFileTypes.includes(`text/${fileExtension}`) ||
@@ -75,67 +80,142 @@ export function FileUpload({
     setIsDragging(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const droppedFile = e.dataTransfer.files[0];
-      if (validateFile(droppedFile)) {
-        setFile(droppedFile);
-        console.log("Selected file:", droppedFile);
+      const droppedFiles = Array.from(e.dataTransfer.files);
+      const validFiles = droppedFiles.filter((file) => validateFile(file));
+
+      if (validFiles.length > 0) {
+        setFiles((prev) => [
+          ...prev,
+          ...validFiles.map((file) => ({
+            file,
+            success: false,
+            error: null,
+          })),
+        ]);
       }
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const selectedFile = e.target.files[0];
-      if (validateFile(selectedFile)) {
-        setFile(selectedFile);
-        console.log("Selected file:", selectedFile);
+      const selectedFiles = Array.from(e.target.files);
+      const validFiles = selectedFiles.filter((file) => validateFile(file));
+
+      if (validFiles.length > 0) {
+        setFiles((prev) => [
+          ...prev,
+          ...validFiles.map((file) => ({
+            file,
+            success: false,
+            error: null,
+          })),
+        ]);
       }
     }
   };
 
-  const handleUpload = async () => {
-    if (!file) return;
+  const readFile = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
 
-    // Declare progressInterval outside the try block so it's accessible in catch
-    let progressInterval: NodeJS.Timeout | null = null;
+      reader.onload = (event) => {
+        resolve(event.target?.result as string);
+      };
+
+      reader.onerror = (error) => {
+        reject(error);
+      };
+
+      reader.readAsText(file);
+    });
+  };
+
+  const delay = (ms: number) =>
+    new Promise((resolve) => setTimeout(resolve, ms));
+
+  const handleUpload = async () => {
+    if (files.length === 0) return;
+
+    setUploading(true);
+    setOverallProgress(0);
+    await delay(100); // Small delay to ensure state updates
+
+    if (files.length >= 10) {
+      toast.info(
+        "Whoohaaaa, that is a lot of files. This might take a while...",
+      );
+    } else {
+      toast.info("RustySEO is analysing your logs...");
+    }
 
     try {
-      setUploading(true);
-      setProgress(10); // Start immediately at 10%
-      setSuccess(false);
+      // Initial progress
+      setOverallProgress(10);
+      await delay(200);
 
-      // Start smooth progress animation
-      progressInterval = setInterval(() => {
-        setProgress((prev) => {
-          const newProgress = prev + 5; // Smaller increments
-          return newProgress >= 90 ? 90 : newProgress; // Cap at 90%
-        });
-      }, 150); // Faster updates
+      // Process all files with progress updates
+      const fileContents = await Promise.all(
+        files.map(async (fileWithProgress, index) => {
+          try {
+            const content = await readFile(fileWithProgress.file);
+            setFiles((prev) =>
+              prev.map((f, idx) =>
+                idx === index ? { ...f, success: true } : f,
+              ),
+            );
 
-      // Process file and upload in parallel
-      const [fileContent] = await Promise.all([
-        file.text(),
-        new Promise((resolve) => setTimeout(resolve, 300)), // Minimum progress time
-      ]);
+            // Update progress incrementally for each file
+            const progressIncrement = 30 / files.length;
+            setOverallProgress((prev) =>
+              Math.min(prev + progressIncrement, 40),
+            );
+
+            return { filename: fileWithProgress.file.name, content };
+          } catch (err) {
+            setFiles((prev) =>
+              prev.map((f, idx) =>
+                idx === index
+                  ? {
+                      ...f,
+                      error:
+                        err instanceof Error ? err.message : "Upload failed",
+                    }
+                  : f,
+              ),
+            );
+            throw err;
+          }
+        }),
+      );
+
+      // Update progress to indicate processing
+      setOverallProgress(60);
+      await delay(300);
+
+      // Prepare data for backend
+      const logContents = fileContents.map((fc) => [fc.filename, fc.content]);
+
+      // Update progress to indicate backend processing
+      setOverallProgress(80);
+      await delay(300);
 
       const result = await invoke("check_logs_command", {
-        data: { log_content: fileContent },
+        data: { log_contents: logContents },
       });
 
-      // persist the data into Zustand
       setLogData(result);
       console.log(result, "This is the result");
 
-      // Complete the animation
-      if (progressInterval) clearInterval(progressInterval);
-      setProgress(100);
-      setSuccess(true);
+      // Mark all files as successfully uploaded
+      setFiles((prev) => prev.map((f) => ({ ...f, success: true })));
 
-      // Brief display before closing
-      setTimeout(() => closeDialog(), 800);
+      // Final progress update
+      setOverallProgress(100);
+      await delay(500);
+
+      closeDialog();
       toast.success("Upload complete!");
     } catch (err) {
-      if (progressInterval) clearInterval(progressInterval);
       setError(err instanceof Error ? err.message : "Upload failed");
       toast.error("Upload failed");
     } finally {
@@ -143,11 +223,16 @@ export function FileUpload({
     }
   };
 
-  const handleRemoveFile = () => {
-    setFile(null);
+  const handleRemoveFile = (index: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+    if (files.length === 1) {
+      setError(null);
+    }
+  };
+
+  const handleRemoveAllFiles = () => {
+    setFiles([]);
     setError(null);
-    setProgress(0);
-    setSuccess(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -155,7 +240,7 @@ export function FileUpload({
 
   return (
     <div className={cn("w-full", className)}>
-      {!file ? (
+      {files.length === 0 ? (
         <div
           className={cn(
             "border-2 border-dashed border-brand-bright rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-colors dark:text-white",
@@ -181,6 +266,7 @@ export function FileUpload({
             onChange={handleFileChange}
             accept={acceptedFileTypes.join(",")}
             className="hidden"
+            multiple
           />
           {error && (
             <div className="flex items-center text-destructive mt-2 text-sm">
@@ -191,42 +277,80 @@ export function FileUpload({
         </div>
       ) : (
         <div className="border-0 rounded-lg dark:text-white">
-          <div className="flex items-center justify-between mb-2 border rounded-md dark:border-brand-dark">
-            <div className="flex items-center">
-              <div className="w-10 h-10 rounded border-none  bg-muted flex items-center justify-center mr-3">
-                <span className="text-xs font-medium">
-                  {file.name.split(".").pop()?.toUpperCase()}
-                </span>
-              </div>
-              <div className="overflow-hidden dark:text-white">
-                <p className="text-sm font-medium truncate">{file.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {(file.size / 1024 / 1024).toFixed(2)} MB
-                </p>
-              </div>
-            </div>
+          <div className="mb-2 flex justify-between items-center">
+            <h3 className="text-sm font-medium">
+              {files.length} file{files.length !== 1 ? "s" : ""} selected
+            </h3>
             <Button
               variant="ghost"
-              size="icon"
-              onClick={handleRemoveFile}
+              size="sm"
+              onClick={handleRemoveAllFiles}
               disabled={uploading}
+              className="text-red-500 hover:text-red-700"
             >
-              <X className="h-4 w-4 text-[9px] text-red-500" />
-              <span className="sr-only">Remove file</span>
+              Remove all
             </Button>
           </div>
 
-          {uploading || success ? (
-            <div className="space-y-2 dark:text-white">
-              <Progress value={progress} className="h-5" />
-              <div className="flex justify-between items-center text-xs">
+          <div className="max-h-60 overflow-y-auto mb-2">
+            {files.map((fileWithProgress, index) => (
+              <div
+                key={index}
+                className={cn(
+                  "flex items-center justify-between p-2 border rounded-md dark:border-brand-dark mb-2",
+                )}
+              >
                 <div className="flex items-center">
-                  {success ? (
+                  <div className="w-10 h-10 rounded border-none bg-muted flex items-center justify-center mr-3">
+                    <span className="text-xs font-medium">
+                      {fileWithProgress.file.name
+                        .split(".")
+                        .pop()
+                        ?.toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="overflow-hidden dark:text-white">
+                    <p className="text-sm font-medium truncate">
+                      {fileWithProgress.file.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {(fileWithProgress.file.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleRemoveFile(index)}
+                  disabled={uploading}
+                >
+                  <X className="h-4 w-4 text-[9px] text-red-500" />
+                  <span className="sr-only">Remove file</span>
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          {uploading && (
+            <div className="w-full mt-2">
+              <Progress
+                value={overallProgress}
+                className="h-2 bg-gray-200 dark:bg-gray-700 [&>div]:bg-brand-bright"
+              />
+              <div className="flex justify-between items-center text-xs mt-1">
+                <div className="flex items-center">
+                  {overallProgress === 100 ? (
                     "Upload complete"
                   ) : (
                     <>
                       <span className="flex items-center">
-                        Uploading & analyzing your log
+                        {overallProgress < 40
+                          ? "Reading files"
+                          : overallProgress < 60
+                            ? "Processing files"
+                            : overallProgress < 80
+                              ? "Preparing data"
+                              : "Uploading data"}
                         <span className="flex items-center mx-2">
                           <span className="animate-bounce [animation-delay:-0.3s]">
                             .
@@ -236,22 +360,31 @@ export function FileUpload({
                           </span>
                           <span className="animate-bounce">.</span>
                         </span>
-                        {""} {progress}%
+                        {Math.round(overallProgress)}%
                       </span>
                     </>
                   )}
                 </div>
-                {success && <CheckCircle className="h-4 w-4 text-green-500" />}
+                {overallProgress === 100 && (
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                )}
               </div>
             </div>
-          ) : (
-            <Button
-              onClick={handleUpload}
-              className="w-full mt-2 bg-brand-bright text-white dark:bg-brand-bright dark:text-white hover:bg-brand-bright dark:hover:bg-brand-bright"
-            >
-              Upload File
-            </Button>
           )}
+
+          <Button
+            onClick={handleUpload}
+            className="w-full mt-2 bg-brand-bright text-white dark:bg-brand-bright dark:text-white hover:bg-brand-bright/90 dark:hover:bg-brand-bright/90"
+            disabled={uploading}
+          >
+            {uploading ? (
+              <span className="flex items-center">
+                Uploading... {Math.round(overallProgress)}%
+              </span>
+            ) : (
+              `Upload ${files.length} File${files.length !== 1 ? "s" : ""}`
+            )}
+          </Button>
 
           {error && (
             <div className="flex items-center text-destructive mt-2 text-xs">

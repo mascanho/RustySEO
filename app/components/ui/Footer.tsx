@@ -1,10 +1,14 @@
 "use client";
 import React, { useEffect, useState, useCallback } from "react";
-import { LiaListAlt, LiaTasksSolid } from "react-icons/lia";
+import { LiaTasksSolid } from "react-icons/lia";
 import { CgWebsite } from "react-icons/cg";
-import { FaRobot, FaSkullCrossbones } from "react-icons/fa6";
+import { FaRobot } from "react-icons/fa6";
 import { useChat } from "ai/react";
-import { BsLayoutSidebarInsetReverse } from "react-icons/bs";
+import {
+  BsChatDots,
+  BsLayoutSidebarInsetReverse,
+  BsPeopleFill,
+} from "react-icons/bs";
 import {
   Drawer,
   DrawerClose,
@@ -12,30 +16,22 @@ import {
   DrawerDescription,
   DrawerFooter,
   DrawerHeader,
-  DrawerTitle,
   DrawerTrigger,
 } from "@/components/ui/drawer";
-import { Button, Modal } from "@mantine/core";
 import AIcontainer from "./AiContainer/AIcontainer";
 import { useDisclosure } from "@mantine/hooks";
-import Todo from "./Todo";
 import TodoItems from "./TodoItems";
 import { Drawer as MantineDrawer } from "@mantine/core";
-import { IoIosHelpBuoy, IoMdClose } from "react-icons/io";
+import { IoMdClose } from "react-icons/io";
 import { usePathname } from "next/navigation";
-import { LiaHeadingSolid } from "react-icons/lia";
 import { useVisibilityStore } from "@/store/VisibilityStore";
-import { GiPirateFlag, GiPirateHat, GiSurprisedSkull } from "react-icons/gi";
-import { ImGoogle3 } from "react-icons/im";
-import { AiFillX } from "react-icons/ai";
-import { FaShip, FaSpider } from "react-icons/fa";
-import { listen } from "@tauri-apps/api/event";
+import { GiSurprisedSkull } from "react-icons/gi";
 import FooterLoader from "./FooterLoader/FooterLoader";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import CrawlerType from "./Footer/CrawlerType";
-import { TbHelpSquareRoundedFilled, TbSeo } from "react-icons/tb";
 import SeoToolkit from "./Footer/SeoToolkit/SeoToolkit";
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
+import { Code } from "lucide-react";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -63,6 +59,8 @@ const Footer = () => {
     hideSerpKeywords,
     showSeoToolkit,
     hideSeoToolkit,
+    showChatbar,
+    hideChatbar,
   } = useVisibilityStore();
   const [openedDrawer, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
@@ -193,7 +191,7 @@ const Footer = () => {
         <TodoItems url={url} strategy={""} />
       </MantineDrawer>
 
-      <footer className="w-full justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[1000000] border-t-2 pb-1.5 dark:border-t-brand-dark flex items-center py-1 text-xs">
+      <footer className="w-full justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[99999999999] border-t-2 pb-1.5 dark:border-t-brand-dark flex items-center py-1 text-xs">
         <section>
           <div className="flex items-center ml-2 space-x-1 w-full">
             {loading ? (
@@ -223,7 +221,7 @@ const Footer = () => {
         </section>
         <section className="flex items-center space-x-2">
           <div className="flex w-50 items-center justify-center pr-3">
-            <div className="flex items-center text-xs mt-[2px] space-x-3">
+            <div className="flex items-center text-xs mt-[2px] space-x-[1em]">
               <div
                 onClick={() => (openedDrawer ? closeDrawer() : openDrawer())}
                 className="flex items-center cursor-pointer relative group hover:delay-1000"
@@ -238,6 +236,20 @@ const Footer = () => {
                 <span className="text-sky-dark dark:text-sky-dark ml-1">
                   {tasks.length}
                 </span>
+              </div>
+
+              {/* CHAT BUTTON */}
+
+              <div className="relative group hover:delay-1000">
+                <BsPeopleFill
+                  onClick={() =>
+                    visibility.chatbar ? hideChatbar() : showChatbar()
+                  }
+                  className={`text-sm mb-[2px] cursor-pointer ${visibility.chatbar && "text-brand-bright"}`}
+                />
+                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
+                  Open chat
+                </div>
               </div>
 
               {/* TODO: FIX THE GOOGLE CRAWL ISSUE  */}
@@ -261,7 +273,7 @@ const Footer = () => {
                   onClick={() =>
                     visibility.seotoolkit ? hideSeoToolkit() : showSeoToolkit()
                   }
-                  className={iconClasses}
+                  className={`${iconClasses} ${visibility.seotoolkit && "text-brand-bright"}`}
                   style={{ fontSize: "15px", marginBottom: "0.5px" }}
                 />
                 <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
@@ -275,22 +287,27 @@ const Footer = () => {
                   open ? openAiDrawer() : closeAiDrawer()
                 }
               >
-                <DrawerTrigger className="flex items-center space-x-1">
-                  <div className="relative group hover:delay-1000">
-                    <FaRobot className={`pb-[2px] text-base ${iconClasses}`} />
-                    <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
-                      Rusty Chat
-                    </div>
+                {/* <DrawerTrigger className="flex items-center space-x-1"> */}
+                <div className="relative group hover:delay-1000">
+                  <FaRobot
+                    onClick={() =>
+                      openedAiDrawer ? closeAiDrawer() : openAiDrawer()
+                    }
+                    className={`pb-[2px] cursor-pointer z-50 text-base ${iconClasses} ${openedAiDrawer && "text-brand-bright cursor-pointer"} ${!openedAiDrawer && "cursor-pointer"}`}
+                  />
+                  <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
+                    Rusty AI
                   </div>
-                </DrawerTrigger>
+                </div>
+                {/* </DrawerTrigger> */}
                 <DrawerContent>
                   <DrawerHeader>
                     <div className="flex items-center space-x-2">
                       <FaRobot
-                        className={`text-2xl text-brand-highlight ${iconClasses}`}
+                        className={`text-2xl pb-1 text-brand-highlight ${iconClasses}`}
                       />
                       <span className="text-xl font-bold text-brand-highlight dark:text-white/40">
-                        Rusty Chat
+                        Rusty AI
                       </span>
                     </div>
                     <DrawerDescription>
@@ -304,7 +321,7 @@ const Footer = () => {
                       <div className="relative group hover:delay-1000">
                         <IoMdClose className="text-lg" />
                         <div className="absolute bottom-[calc(100%+5px)] right-0 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
-                          Rusty Chat
+                          Rusty AI
                         </div>
                       </div>
                     </DrawerClose>
@@ -312,9 +329,12 @@ const Footer = () => {
                 </DrawerContent>
               </Drawer>
 
-              <div className="relative group hover:delay-1000">
+              <button
+                disabled={pathname === "/serverlogs"}
+                className={`relative group hover:delay-1000 ${pathname === "/serverlogs" ? "not cursor-not-allowed" : " "}`}
+              >
                 <BsLayoutSidebarInsetReverse
-                  className={`text-sm ${iconClasses}`}
+                  className={`text-sm ${iconClasses} ${visibility.sidebar && "text-brand-bright"} ${pathname === "/serverlogs" ? "text-gray-400 cursor-not-allowed" : ""}`}
                   onClick={() => {
                     if (visibility.sidebar) {
                       hideSidebar();
@@ -326,7 +346,7 @@ const Footer = () => {
                 <div className="absolute bottom-[calc(100%+5px)] -right-2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
                   Toggle Sidebar
                 </div>
-              </div>
+              </button>
             </div>
           </div>
         </section>

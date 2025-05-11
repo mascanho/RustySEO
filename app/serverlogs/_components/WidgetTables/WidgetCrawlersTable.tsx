@@ -5,7 +5,15 @@ import {
   BadgeCheck,
   ChevronDown,
   Download,
+  FileAudio,
+  FileCode,
+  FileText,
+  FileType,
+  FileType2,
+  FileVideo,
   Filter,
+  Image,
+  Package,
   RefreshCw,
   Search,
 } from "lucide-react";
@@ -92,6 +100,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(100);
   const [methodFilter, setMethodFilter] = useState<string[]>([]);
+  const [fileTypeFilter, setFileTypeFilter] = useState<string[]>([]);
   const [botFilter, setBotFilter] = useState<string | null>("all");
   const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
   const [sortConfig, setSortConfig] = useState<{
@@ -99,6 +108,23 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     direction: "ascending" | "descending";
   } | null>(null);
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const [domain, setDomain] = useState("");
+  const [showOnTables, setShowOnTables] = useState(false);
+
+  // GET THE domain from the local storage to use on the table to complement the path
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedDomain = localStorage.getItem("domain");
+      if (storedDomain) {
+        setDomain(storedDomain);
+      }
+
+      const isShowing = localStorage.getItem("showOnTables");
+      if (isShowing === "true") {
+        setShowOnTables(true);
+      }
+    }
+  }, [data.length]);
 
   useEffect(() => {
     if (!data?.totals?.google_bot_page_frequencies) return;
@@ -135,6 +161,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
 
     if (methodFilter.length > 0) {
       result = result.filter((log) => methodFilter.includes(log.method));
+    }
+
+    if (fileTypeFilter.length > 0) {
+      result = result.filter((log) => fileTypeFilter.includes(log.file_type));
     }
 
     if (botFilter !== null) {
@@ -179,6 +209,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     verifiedFilter,
     sortConfig,
     initialLogs,
+    fileTypeFilter,
   ]);
 
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -228,7 +259,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
       log.ip || "",
       log.timestamp || "",
       log.method || "",
-      log.path || "",
+      showOnTables ? "https://" + domain + log.path : log.path || "",
       log.file_type || "",
       log.response_size || "",
       log.frequency || "",
@@ -261,6 +292,36 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
         title: "Export Error",
         type: "error",
       });
+    }
+  };
+
+  // Get the fileType and add the icon
+  const getFileIcon = (path) => {
+    switch (path) {
+      case "HTML":
+        return <FileCode type="html" size={14} />;
+      case "Image":
+        return <Image size={14} />;
+      case "Video":
+        return <FileVideo size={14} />;
+      case "Audio":
+        return <FileAudio size={14} />;
+      case "PHP":
+        return <FileCode type="php" size={14} />;
+      case "TXT":
+        return <FileType size={14} />;
+      case "CSS":
+        return <FileCode type="css" size={14} />;
+      case "JS":
+        return <FileCode type="javascript" size={14} />;
+      case "Document": // PDF
+        return <FileText size={14} />;
+      case "Archive":
+        return <Package size={14} />;
+      case "Font":
+        return <FileType2 size={14} />;
+      default:
+        return <FileCode size={14} />;
     }
   };
 
@@ -319,7 +380,64 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Select
+          {/* FileType Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark"
+              >
+                <Filter className="h-4 w-4" />
+                File Type
+                {fileTypeFilter.length > 0 && (
+                  <Badge variant="secondary" className="ml-1">
+                    {fileTypeFilter.length}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-white dark:border-brand-dark dark:text-white   dark:bg-brand-darker"
+            >
+              <DropdownMenuLabel>Filter by File Type</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {[
+                "HTML",
+                "CSS",
+                "JS",
+                "PHP",
+                "TXT",
+                "Image",
+                "Video",
+                "Audio",
+                "Document",
+                "Archive",
+                "Font",
+              ].map((fileType) => (
+                <DropdownMenuCheckboxItem
+                  className={
+                    "bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                  }
+                  key={fileType}
+                  checked={fileTypeFilter.includes(fileType)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setFileTypeFilter([...fileTypeFilter, fileType]);
+                    } else {
+                      setFileTypeFilter(
+                        fileTypeFilter.filter((m) => m !== fileType),
+                      );
+                    }
+                  }}
+                >
+                  {fileType}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* <Select
             value={botFilter || "all"}
             onValueChange={(value) =>
               setBotFilter(value === "all" ? null : value)
@@ -333,7 +451,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
               <SelectItem value="bot">Bots</SelectItem>
               <SelectItem value="Human">Humans</SelectItem>
             </SelectContent>
-          </Select>
+          </Select> */}
 
           <Select
             value={
@@ -353,7 +471,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All IPs</SelectItem>
-              <SelectItem value="verified">Verified Google</SelectItem>
+              <SelectItem value="verified">Verified</SelectItem>
               <SelectItem value="unverified">Unverified</SelectItem>
             </SelectContent>
           </Select>
@@ -392,7 +510,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
               <Table className="h-full">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[80px]">#</TableHead>
+                    <TableHead className="w-[80px] text-center">#</TableHead>
                     <TableHead
                       className="cursor-pointer w-[80px] truncate"
                       onClick={() => requestSort("ip")}
@@ -409,7 +527,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="cursor-pointer max-w-[20px] truncate"
                       onClick={() => requestSort("timestamp")}
                     >
                       Timestamp
@@ -424,7 +542,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="cursor-pointer w-[90px] text-center"
                       onClick={() => requestSort("method")}
                     >
                       Method
@@ -484,7 +602,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer min-w-10 max-w-[100px] text-center"
+                      className="cursor-pointer min-w-10 max-w-[50px] text-center"
                       onClick={() => requestSort("frequency")}
                     >
                       Frequency
@@ -513,18 +631,18 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                             setExpandedRow(expandedRow === index ? null : index)
                           }
                         >
-                          <TableCell className="font-medium">
+                          <TableCell className="font-medium text-center max-w-[40px]">
                             {indexOfFirstItem + index + 1}
                           </TableCell>
-                          <TableCell className="max-w-[160px] truncate">
+                          <TableCell className="max-w-[160px] w-[180px] truncate">
                             <div className="flex items-center gap-1">
                               {log.ip}
                             </div>
                           </TableCell>
-                          <TableCell width={200}>
+                          <TableCell className="w-[200px]">
                             {formatDate(log.timestamp)}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="text-center max-w-[150px]">
                             <Badge
                               variant="outline"
                               className={
@@ -540,16 +658,24 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                               {log.method}
                             </Badge>
                           </TableCell>
-                          <TableCell className="max-w-[380px] truncate">
-                            {log.path}
+                          <TableCell className="inline-block truncate max-w-[600px]">
+                            <span className="mr-2 inline-block">
+                              {getFileIcon(log.file_type)}
+                            </span>
+                            {showOnTables && domain
+                              ? "https://" + domain + log.path
+                              : log?.path}
                           </TableCell>
-                          <TableCell className="max-w-[480px] truncate">
+                          <TableCell className="min-w-[30px] truncate">
                             <Badge variant="outline">{log.file_type}</Badge>
                           </TableCell>
                           <TableCell className="text-center">
                             {formatResponseSize(log.response_size)}
                           </TableCell>
-                          <TableCell className="text-center">
+                          <TableCell
+                            size={80}
+                            className="text-center min-w-[90px]"
+                          >
                             {log.frequency}
                           </TableCell>
                           <TableCell width={100} className="max-w-[100px]">
@@ -557,13 +683,15 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                               variant="outline"
                               className={
                                 log.crawler_type !== "Human"
-                                  ? "bg-purple-50 text-purple-800 border-purple-200"
+                                  ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
                                   : "bg-green-100 text-green-800 border-green-200"
                               }
                             >
-                              {log.crawler_type.length > 20
-                                ? log.crawler_type.slice(0, 10) + "..."
-                                : log.crawler_type}
+                              {log.crawler_type.startsWith("Goo")
+                                ? "Google 🤖"
+                                : log.crawler_type.length > 20
+                                  ? log.crawler_type.slice(0, 10) + "..."
+                                  : log.crawler_type}
                             </Badge>
                           </TableCell>
                         </TableRow>
@@ -579,8 +707,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                   <div className="flex mb-2 space-x-2 items-center justify-between">
                                     <h4 className=" font-bold">User Agent</h4>
                                     {log.verified && (
-                                      <div className="flex items-center space-x-1 bg-red-100 px-2 text-xs rounded-md">
-                                        <BadgeCheck className="text-blue-400 pr-1" />
+                                      <div className="flex items-center space-x-1 py-1 bg-red-200 dark:bg-red-400 px-2 text-xs rounded-md">
+                                        <BadgeCheck
+                                          size={18}
+                                          className="text-blue-800 pr-1 dark:text-blue-900 "
+                                        />
                                         {log?.crawler_type}
                                       </div>
                                     )}
@@ -634,7 +765,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
             value={itemsPerPage.toString()}
             onValueChange={(value) => setItemsPerPage(Number(value))}
           >
-            <SelectTrigger className="w-[70px] text-xs h-6 mr-2 z-50">
+            <SelectTrigger className="w-[70px] text-xs dark:text-white/50 h-6 mr-2 z-50">
               <SelectValue placeholder="100" />
             </SelectTrigger>
             <SelectContent>
@@ -651,7 +782,9 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
               <PaginationPrevious
                 onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
                 className={
-                  currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                  currentPage === 1
+                    ? "pointer-events-none opacity-50 text-xs"
+                    : "text-xs"
                 }
               />
             </PaginationItem>
@@ -708,7 +841,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
           </PaginationContent>
         </Pagination>
         <div>
-          <span className="flex justify-end text-muted-foreground w-[180px] flex-nowrap text-right pr-2.5 -mt-1.5 text-xs text-black/50">
+          <span className="flex justify-end text-muted-foreground dark:text-white/50 w-[180px] flex-nowrap -ml-16 text-right pr-2.5 -mt-1.5 text-xs text-black/50">
             {indexOfFirstItem + 1}-
             {Math.min(indexOfLastItem, filteredLogs.length)} of{" "}
             {filteredLogs.length} logs

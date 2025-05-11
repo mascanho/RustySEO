@@ -2,9 +2,11 @@
 export const initialColumnWidths = [
   "30px", // ID
   "120px", // URL
-  "800px",
-  "100px",
-  "150px",
+  "800px", // Image Size
+  "100px", // Image Type
+  "150px", // Status code
+  "80px", // Status code
+  "90px", // Status code
 ];
 
 export const initialColumnAlignments = [
@@ -12,7 +14,8 @@ export const initialColumnAlignments = [
   "left", // URL
   "left", // Image Size
   "center", // URL
-  "left", // URL
+  "center", // URL
+  "center", // Status code
 ];
 
 export const headerTitles = [
@@ -21,4 +24,5 @@ export const headerTitles = [
   "URL",
   "Image Size",
   "Image Type",
+  "Status code",
 ];

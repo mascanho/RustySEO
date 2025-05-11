@@ -2,16 +2,20 @@ use std::collections::HashMap;
 
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use url::Url;
 
 use crate::crawler::libs::LinkStatus;
 
-use super::helpers::{
-    alt_tags::AltTags, anchor_links::InternalExternalLinks, cross_origin::SecuritySummary,
-    css_selector::CSS, hreflang_selector::HreflangObject, html_size_calculator::Sizes,
-    iframe_selector::Iframe, indexability::Indexability, javascript_selector::JavaScript,
-    links_status_code_checker::LinkCheckResults, meta_robots_selector::MetaRobots,
-    pdf_selector::PdfLinks, text_ratio::TextRatio, title_selector::TitleDetails,
+use super::{
+    helpers::{
+        alt_tags::AltTags, anchor_links::InternalExternalLinks, cross_origin::SecuritySummary,
+        css_selector::CSS, hreflang_selector::HreflangObject, html_size_calculator::Sizes,
+        iframe_selector::Iframe, indexability::Indexability, javascript_selector::JavaScript,
+        links_status_code_checker::LinkCheckResults, meta_robots_selector::MetaRobots,
+        pdf_selector::PdfLinks, text_ratio::TextRatio, title_selector::TitleDetails,
+    },
+    page_speed::model::LighthouseResult,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -67,6 +71,7 @@ pub struct DomainCrawlResults {
     pub pdf_files: Vec<String>,
     pub https: bool,
     pub cross_origin: SecuritySummary,
+    pub psi_results: Result<Vec<Value>, String>,
 }
 
 // Implement Default for DomainCrawlResults
@@ -83,7 +88,7 @@ impl Default for DomainCrawlResults {
             anchor_links: None,
             inoutlinks_status_codes: LinkCheckResults {
                 page: String::new(),
-                base_url: Url::parse("www.site.com").expect("failed to set default url"),
+                base_url: Url::parse("https://www.site.com").expect("failed to set default url"),
                 internal: Vec::new(),
                 external: Vec::new(),
             },
@@ -117,6 +122,7 @@ impl Default for DomainCrawlResults {
                 total_missing_cors: 0,
                 total_inline_scripts: 0,
             },
+            psi_results: Ok(Vec::new()),
         }
     }
 }

@@ -150,7 +150,7 @@ export function TimelineChart() {
                 className="w-2 h-2 rounded-full mr-2"
                 style={{ backgroundColor: COLORS.crawler }}
               />
-              <span className="text-xs">Crawler: {payload[0].value}</span>
+              <span className="text-xs">Robots: {payload[0].value}</span>
             </div>
           </div>
         </div>
@@ -184,7 +184,7 @@ export function TimelineChart() {
           onValueChange={(value) => setViewMode(value as "daily" | "hourly")}
           variant="outline"
           size="sm"
-          className="h-8"
+          className="h-8 z-0"
         >
           <ToggleGroupItem value="daily" className="text-xs px-2 h-6">
             Day
@@ -321,7 +321,7 @@ export function TimelineChart() {
               <Area
                 type="monotone"
                 dataKey="human"
-                stackId="1"
+                stackId="2"
                 stroke={COLORS.human}
                 strokeWidth={2}
                 fill="url(#colorHuman)"

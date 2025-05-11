@@ -8,7 +8,7 @@ use crate::loganalyser::helpers::{
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LogEntry {
     pub ip: String,
-    pub timestamp: String, // Serialized as string
+    pub timestamp: String,
     pub method: String,
     pub path: String,
     pub status: u16,
@@ -22,6 +22,7 @@ pub struct LogEntry {
     pub file_type: String,
     pub verified: bool,
     pub taxonomy: String,
+    pub filename: String, // Added to track which file each entry came from
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -35,6 +36,7 @@ pub struct LogAnalysisResult {
     pub success_rate: f32,
     pub log_start_time: String,
     pub log_finish_time: String,
+    pub file_count: usize, // Added to track number of files processed
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -51,6 +53,7 @@ pub struct BotPageDetails {
     pub method: String,
     pub verified: bool,
     pub taxonomy: String,
+    pub filename: String, // Added to track which file each entry came from
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -70,105 +73,141 @@ pub struct Totals {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct LogResult {
     pub overview: LogAnalysisResult,
-    pub entries: Vec<LogEntry>, // Now contains complete entries
+    pub entries: Vec<LogEntry>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct LogInput {
-    pub log_content: String,
+    pub log_contents: Vec<(String, String)>, // Now accepts multiple files with their names
 }
 
 pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
-    let log = data.log_content;
-    let entries = parse_log_entries(&log);
+    let mut all_entries = Vec::new();
+    let mut file_count = 0;
 
-    let log_start_time = entries
+    // Process each file
+    for (filename, log_content) in data.log_contents {
+        file_count += 1;
+        let entries = parse_log_entries(&log_content);
+
+        // Add filename to each entry
+        let entries_with_filename: Vec<LogEntry> = entries
+            .into_iter()
+            .map(|e| {
+                let is_crawler = is_crawler(&e.user_agent);
+                LogEntry {
+                    ip: e.ip.clone(),
+                    timestamp: e.timestamp.format("%Y-%m-%d %H:%M:%S").to_string(),
+                    method: e.method,
+                    path: e.path,
+                    status: e.status,
+                    user_agent: e.user_agent,
+                    referer: e.referer.unwrap_or_default(),
+                    response_size: e.response_size,
+                    country: extract_country(&e.ip),
+                    crawler_type: e.crawler_type,
+                    is_crawler,
+                    file_type: e.file_type,
+                    browser: e.browser,
+                    verified: e.verified,
+                    taxonomy: e.taxonomy,
+                    filename: filename.clone(), // Add filename to each entry
+                }
+            })
+            .collect();
+
+        all_entries.extend(entries_with_filename);
+    }
+
+    if all_entries.is_empty() {
+        return Ok(LogResult {
+            overview: LogAnalysisResult {
+                message: "No log entries found".to_string(),
+                line_count: 0,
+                unique_ips: 0,
+                unique_user_agents: 0,
+                crawler_count: 0,
+                success_rate: 0.0,
+                totals: Totals {
+                    google: 0,
+                    bing: 0,
+                    semrush: 0,
+                    hrefs: 0,
+                    moz: 0,
+                    uptime: 0,
+                    openai: 0,
+                    claude: 0,
+                    google_bot_pages: Vec::new(),
+                    google_bot_page_frequencies: HashMap::new(),
+                },
+                log_start_time: String::new(),
+                log_finish_time: String::new(),
+                file_count,
+            },
+            entries: Vec::new(),
+        });
+    }
+
+    let log_start_time = all_entries
         .first()
-        .map(|e| e.timestamp.format("%Y-%m-%d %H:%M:%S").to_string())
+        .map(|e| e.timestamp.clone())
         .unwrap_or_default();
-    let log_finish_time = entries
+    let log_finish_time = all_entries
         .last()
-        .map(|e| e.timestamp.format("%Y-%m-%d %H:%M:%S").to_string())
+        .map(|e| e.timestamp.clone())
         .unwrap_or_default();
 
-    // Enhance each entry with additional data
-    let enhanced_entries: Vec<LogEntry> = entries
-        .into_iter()
-        .map(|e| {
-            let is_crawler = is_crawler(&e.user_agent);
-            LogEntry {
-                ip: e.ip.clone(),
-                timestamp: e.timestamp.format("%Y-%m-%d %H:%M:%S").to_string(),
-                method: e.method,
-                path: e.path,
-                status: e.status,
-                user_agent: e.user_agent,
-                referer: e.referer.unwrap_or_default(),
-                response_size: e.response_size,
-                country: extract_country(&e.ip),
-                crawler_type: e.crawler_type,
-                is_crawler,
-                file_type: e.file_type,
-                browser: e.browser,
-                verified: e.verified,
-                taxonomy: e.taxonomy,
-            }
-        })
-        .collect();
-
-    let crawler_count = enhanced_entries.iter().filter(|e| e.is_crawler).count();
-    let total_requests = enhanced_entries.len();
-    let success_count = enhanced_entries
+    let crawler_count = all_entries.iter().filter(|e| e.is_crawler).count();
+    let total_requests = all_entries.len();
+    let success_count = all_entries
         .iter()
         .filter(|e| e.status >= 200 && e.status < 300)
         .count();
-    let unique_ips = enhanced_entries
+    let unique_ips = all_entries
         .iter()
         .map(|e| &e.ip)
         .collect::<HashSet<_>>()
         .len();
-    let unique_user_agents = enhanced_entries
+    let unique_user_agents = all_entries
         .iter()
         .map(|e| &e.user_agent)
         .collect::<HashSet<_>>()
         .len();
 
-    // DEFINE THE TOTALS FOR EACH CRAWLER TYPE
-    let google_bot_totals = enhanced_entries
+    let google_bot_totals = all_entries
         .iter()
         .filter(|e| e.crawler_type.to_lowercase().starts_with("google"))
         .count();
-    let bing_bot_totals = enhanced_entries
+    let bing_bot_totals = all_entries
         .iter()
         .filter(|e| e.crawler_type.to_lowercase().starts_with("bing"))
         .count();
-    let semrush_bot_totals = enhanced_entries
+    let semrush_bot_totals = all_entries
         .iter()
         .filter(|e| e.crawler_type.to_lowercase().starts_with("semrush"))
         .count();
-    let hrefs_bot_totals = enhanced_entries
+    let hrefs_bot_totals = all_entries
         .iter()
         .filter(|e| e.crawler_type.to_lowercase().starts_with("hrefs"))
         .count();
-    let moz_bot_totals = enhanced_entries
+    let moz_bot_totals = all_entries
         .iter()
         .filter(|e| e.crawler_type.to_lowercase().starts_with("moz"))
         .count();
-    let uptime_bot_totals = enhanced_entries
+    let uptime_bot_totals = all_entries
         .iter()
         .filter(|e| e.crawler_type.to_lowercase().starts_with("uptime"))
         .count();
-    let openai_bot_totals = enhanced_entries
+    let openai_bot_totals = all_entries
         .iter()
         .filter(|e| e.crawler_type.to_lowercase().starts_with("chat"))
         .count();
-    let claude_bot_totals = enhanced_entries
+    let claude_bot_totals = all_entries
         .iter()
         .filter(|e| e.crawler_type.to_lowercase().starts_with("claude"))
         .count();
 
-    // Filtering pages crawled by Google Bot
-    let google_bot_pages = enhanced_entries
+    let google_bot_pages = all_entries
         .iter()
         .filter(|e| e.crawler_type.to_lowercase().contains("google"))
         .map(|e| e.path.clone())
@@ -189,9 +228,10 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
                 referer: entry.referer.clone(),
                 browser: entry.browser.clone(),
                 user_agent: entry.user_agent.clone(),
-                frequency: 1, // Each entry contributes one to the frequency
+                frequency: 1,
                 verified: entry.verified.clone(),
                 taxonomy: entry.taxonomy.clone(),
+                filename: entry.filename.clone(),
             };
 
             frequency_map
@@ -200,22 +240,22 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
                 .push(details);
         }
 
-        // Aggregate frequencies for identical path:crawler_type combinations
         let mut aggregated_map: HashMap<String, Vec<BotPageDetails>> = HashMap::new();
         for (key, details_vec) in frequency_map {
             let aggregated_details = BotPageDetails {
                 crawler_type: details_vec[0].crawler_type.clone(),
-                file_type: details_vec[0].file_type.clone(), // Keep first file_type
+                file_type: details_vec[0].file_type.clone(),
                 response_size: details_vec.iter().map(|d| d.response_size).sum(),
-                timestamp: details_vec[0].timestamp.clone(), // Keep first timestamp
+                timestamp: details_vec[0].timestamp.clone(),
                 method: details_vec[0].method.clone(),
-                ip: details_vec[0].ip.clone(), // Keep first IP
-                referer: details_vec[0].referer.clone(), // Keep first referer
-                browser: details_vec[0].browser.clone(), // Keep first browser
-                user_agent: details_vec[0].user_agent.clone(), // Keep first user agent
-                frequency: details_vec.len(), // Frequency is the number of occurrences of this path:crawler_type
+                ip: details_vec[0].ip.clone(),
+                referer: details_vec[0].referer.clone(),
+                browser: details_vec[0].browser.clone(),
+                user_agent: details_vec[0].user_agent.clone(),
+                frequency: details_vec.len(),
                 verified: details_vec[0].verified.clone(),
                 taxonomy: details_vec[0].taxonomy.clone(),
+                filename: details_vec[0].filename.clone(),
             };
             aggregated_map.insert(key, vec![aggregated_details]);
         }
@@ -224,7 +264,7 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
     }
 
     let google_bot_page_frequencies = calculate_url_frequencies(
-        enhanced_entries
+        all_entries
             .iter()
             .filter(|e| e.crawler_type.to_lowercase().contains("google"))
             .collect(),
@@ -256,7 +296,8 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
             },
             log_start_time,
             log_finish_time,
+            file_count,
         },
-        entries: enhanced_entries,
+        entries: all_entries,
     })
 }

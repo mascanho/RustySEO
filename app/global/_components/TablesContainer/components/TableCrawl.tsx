@@ -19,16 +19,14 @@ import {
   initialColumnAlignments,
   headerTitles,
 } from "./tableLayout";
-import SelectFilter from "./SelectFilter";
 import { TbColumns3 } from "react-icons/tb";
 import DownloadButton from "./DownloadButton";
-import useFilterTableURL from "@/app/Hooks/useFilterTableUrl";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import { Handle } from "vaul";
 import { invoke } from "@tauri-apps/api/core";
 import { save } from "@tauri-apps/plugin-dialog";
 import { writeFile } from "@tauri-apps/plugin-fs";
-import { toast, Toaster } from "sonner";
+import { toast } from "sonner";
+import { exportSEODataCSV } from "./generateCSV";
 
 interface TableCrawlProps {
   rows: Array<{
@@ -89,40 +87,34 @@ const TruncatedCell = ({
     return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
   }, [text, maxLength]);
 
-  return useMemo(
-    () => (
-      <div
-        style={{
-          width,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {truncatedText}
-      </div>
-    ),
-    [width, truncatedText],
+  return (
+    <div
+      style={{
+        width,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {truncatedText}
+    </div>
   );
 };
 
 const ResizableDivider = ({ onMouseDown }: ResizableDividerProps) => {
-  return useMemo(
-    () => (
-      <div
-        onMouseDown={onMouseDown}
-        style={{
-          position: "absolute",
-          right: 0,
-          top: 0,
-          bottom: 0,
-          width: "5px",
-          cursor: "col-resize",
-          zIndex: 1,
-        }}
-      />
-    ),
-    [onMouseDown],
+  return (
+    <div
+      onMouseDown={onMouseDown}
+      style={{
+        position: "absolute",
+        right: 0,
+        top: 0,
+        bottom: 0,
+        width: "5px",
+        cursor: "col-resize",
+        zIndex: 1,
+      }}
+    />
   );
 };
 
@@ -134,42 +126,32 @@ const TableHeader = ({
   onAlignToggle,
   columnVisibility,
 }: TableHeaderProps) => {
-  return useMemo(
-    () => (
-      <thead className="sticky top-0 z-10 domainCrawl border">
-        <tr>
-          {headers.map((header, index) =>
-            columnVisibility[index] ? (
-              <th
-                key={header}
-                style={{
-                  width: columnWidths[index],
-                  position: "relative",
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  userSelect: "none",
-                  minWidth: columnWidths[index],
-                  textAlign: columnAlignments[index],
-                  backgroundColor: "var(--background, white)",
-                }}
-                onClick={() => onAlignToggle(index)}
-              >
-                {header}
-                <ResizableDivider onMouseDown={(e) => onResize(index, e)} />
-              </th>
-            ) : null,
-          )}
-        </tr>
-      </thead>
-    ),
-    [
-      headers,
-      columnWidths,
-      columnAlignments,
-      onResize,
-      onAlignToggle,
-      columnVisibility,
-    ],
+  return (
+    <thead className="sticky top-0 z-10 domainCrawl border">
+      <tr>
+        {headers.map((header, index) =>
+          columnVisibility[index] ? (
+            <th
+              key={header}
+              style={{
+                width: columnWidths[index],
+                position: "relative",
+                border: "1px solid #ddd",
+                padding: "8px",
+                userSelect: "none",
+                minWidth: columnWidths[index],
+                textAlign: columnAlignments[index],
+                backgroundColor: "var(--background, white)",
+              }}
+              onClick={() => onAlignToggle(index)}
+            >
+              {header}
+              <ResizableDivider onMouseDown={(e) => onResize(index, e)} />
+            </th>
+          ) : null,
+        )}
+      </tr>
+    </thead>
   );
 };
 
@@ -211,49 +193,37 @@ const TableRow = ({
     [row, index],
   );
 
-  return useMemo(
-    () => (
-      <>
-        {rowData.map((cell, cellIndex) =>
-          columnVisibility[cellIndex] ? (
-            <td
-              key={`cell-${index}-${cellIndex}`}
-              onClick={() =>
-                handleCellClick(index, cellIndex, cell.toString(), row)
-              }
-              style={{
-                width: columnWidths[cellIndex],
-                border: "1px solid #ddd",
-                padding: "6px 8px",
-                textAlign: columnAlignments[cellIndex],
-                overflow: "hidden",
-                whiteSpace: "nowrap",
-                minWidth: columnWidths[cellIndex],
-                backgroundColor:
-                  clickedCell.row === index ? "#2B6CC4" : "transparent",
-                color: clickedCell.row === index ? "white" : "inherit",
-              }}
-              className="dark:text-white/50 cursor-pointer"
-            >
-              <TruncatedCell
-                text={cell?.toString()}
-                width={columnWidths[cellIndex]}
-              />
-            </td>
-          ) : null,
-        )}
-      </>
-    ),
-    [
-      rowData,
-      columnWidths,
-      columnAlignments,
-      columnVisibility,
-      index,
-      clickedCell,
-      handleCellClick,
-      row,
-    ],
+  return (
+    <>
+      {rowData.map((cell, cellIndex) =>
+        columnVisibility[cellIndex] ? (
+          <td
+            key={`cell-${index}-${cellIndex}`}
+            onClick={() =>
+              handleCellClick(index, cellIndex, cell.toString(), row)
+            }
+            style={{
+              width: columnWidths[cellIndex],
+              border: "1px solid #ddd",
+              padding: "6px 8px",
+              textAlign: columnAlignments[cellIndex],
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              minWidth: columnWidths[cellIndex],
+              backgroundColor:
+                clickedCell.row === index ? "#2B6CC4" : "transparent",
+              color: clickedCell.row === index ? "white" : "inherit",
+            }}
+            className="dark:text-white/50 cursor-pointer"
+          >
+            <TruncatedCell
+              text={cell?.toString()}
+              width={columnWidths[cellIndex]}
+            />
+          </td>
+        ) : null,
+      )}
+    </>
   );
 };
 
@@ -273,29 +243,26 @@ const ColumnPicker = ({
     [setColumnVisibility],
   );
 
-  return useMemo(
-    () => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <div className="border dark:border-white/20  w-8  flex justify-center items-center rounded h-6">
-            <TbColumns3 className="w-5 h-5 dark:text-white/50 p-1 " />
-          </div>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-32 bg-white dark:bg-brand-darker border dark:border-brand-dark rounded shadow-lg z-20">
-          {headerTitles.map((header, index) => (
-            <DropdownMenuCheckboxItem
-              key={header}
-              checked={columnVisibility[index] ?? true}
-              onCheckedChange={() => handleToggle(index)}
-              className="p-2 hover:bg-gray-100 w-fit dark:hover:bg-brand-dark space-x-6 dark:text-white text-brand-bright"
-            >
-              <span className="ml-5 dark:text-brand-bright">{header}</span>
-            </DropdownMenuCheckboxItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
-    [columnVisibility, handleToggle, headerTitles],
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <div className="border dark:border-white/20 w-8 flex justify-center items-center rounded h-6">
+          <TbColumns3 className="w-5 h-5 dark:text-white/50 p-1" />
+        </div>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-32 bg-white dark:bg-brand-darker border dark:border-brand-dark rounded shadow-lg z-20">
+        {headerTitles.map((header, index) => (
+          <DropdownMenuCheckboxItem
+            key={header}
+            checked={columnVisibility[index] ?? true}
+            onCheckedChange={() => handleToggle(index)}
+            className="p-2 hover:bg-gray-100 w-fit dark:hover:bg-brand-dark space-x-6 dark:text-white text-brand-bright"
+          >
+            <span className="ml-5 dark:text-brand-bright">{header}</span>
+          </DropdownMenuCheckboxItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 
@@ -303,7 +270,7 @@ const TableCrawl = ({
   tabName,
   rows,
   rowHeight = 41,
-  overscan = 50,
+  overscan = 18,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
   const [columnAlignments, setColumnAlignments] = useState(
@@ -317,47 +284,46 @@ const TableCrawl = ({
   const { isGeneratingExcel, setIsGeneratingExcel, setIssuesView } =
     useGlobalCrawlStore();
 
-  // SET THE TAURI STUFF FOR THE DOWNLOAD
   const handleDownload = async () => {
     if (!rows.length) {
       toast.error("No data to download");
       return;
     }
 
-    // Set the loader state to true
-    setIsGeneratingExcel(true);
-    try {
-      // Call the backend command to generate the Excel file
+    if (rows.length > 3000) {
+      toast.info("Getting your data ready...");
 
-      const fileBuffer = await invoke("create_excel_main_table", {
-        data: rows,
-      });
+      await exportSEODataCSV(rows);
+    } else {
+      setIsGeneratingExcel(true);
+      try {
+        const fileBuffer = await invoke("create_excel_main_table", {
+          data: rows,
+        });
 
-      setIsGeneratingExcel(false);
-      // Prompt the user to choose a file path to save the Excel file
-      const filePath = await save({
-        filters: [
-          {
-            name: "Excel File",
-            extensions: ["xlsx"],
-          },
-        ],
-        defaultPath: `RustySEO-${tabName}.xlsx`, // Default file name
-      });
+        setIsGeneratingExcel(false);
+        const filePath = await save({
+          filters: [
+            {
+              name: "Excel File",
+              extensions: ["xlsx"],
+            },
+          ],
+          defaultPath: `RustySEO-${tabName}.xlsx`,
+        });
 
-      if (filePath) {
-        // Convert the Uint8Array to a binary file and save it
-        await writeFile(filePath, new Uint8Array(fileBuffer));
-        toast.success("Excel file saved successfully!");
-      } else {
-        console.log("User canceled the save dialog.");
+        if (filePath) {
+          await writeFile(filePath, new Uint8Array(fileBuffer));
+          toast.success("Excel file saved successfully!");
+        } else {
+          console.log("User canceled the save dialog.");
+        }
+      } catch (error) {
+        console.error("Error generating or saving Excel file:", error);
       }
-    } catch (error) {
-      console.error("Error generating or saving Excel file:", error);
     }
   };
 
-  // State to track the clicked cell (rowIndex, cellIndex)
   const [clickedCell, setClickedCell] = useState<{
     row: number | null;
     cell: number | null;
@@ -373,11 +339,9 @@ const TableCrawl = ({
     rowIndex: number,
   ) => {
     if (!arr || arr.length === 0) return [];
-
     return arr.filter((item) => item.url === url);
   };
 
-  // Handle cell click
   const handleCellClick = (
     rowIndex: number,
     cellIndex: number,
@@ -388,10 +352,8 @@ const TableCrawl = ({
         prevClickedCell.row === rowIndex &&
         prevClickedCell.cell === cellIndex
       ) {
-        // If the clicked cell is already highlighted, unhighlight it
         return { row: null, cell: null };
       } else {
-        // Otherwise, highlight the clicked cell
         return { row: rowIndex, cell: cellIndex };
       }
     });
@@ -399,17 +361,13 @@ const TableCrawl = ({
     if (cellIndex === 1) {
       const urlData = filterTableURL(rows, cellContent, rowIndex);
       setSelectedTableURL(urlData);
-      console.log(urlData);
     }
-
-    console.log(cellContent, rowIndex, cellIndex, rows);
   };
 
   const startXRef = useRef(0);
   const parentRef = useRef<HTMLDivElement>(null);
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
-  // Memoize filtered rows
   const filteredRows = useMemo(() => {
     if (!rows || !Array.isArray(rows)) return [];
 
@@ -428,7 +386,6 @@ const TableCrawl = ({
       : rows;
   }, [rows, searchTerm]);
 
-  // Initialize virtualizer
   const rowVirtualizer = useVirtualizer({
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
@@ -436,20 +393,17 @@ const TableCrawl = ({
     overscan,
   });
 
-  // Debounced search handler
   const debouncedSearch = useMemo(
     () => debounce((value: string) => setSearchTerm(value), 300),
     [],
   );
 
-  // Cleanup
   useEffect(() => {
     return () => {
       debouncedSearch.cancel();
     };
   }, [debouncedSearch]);
 
-  // Column resizing handlers
   const handleMouseDown = useCallback(
     (index: number, event: React.MouseEvent) => {
       setIsResizing(index);
@@ -479,7 +433,6 @@ const TableCrawl = ({
     setIsResizing(null);
   }, []);
 
-  // Event listeners for resizing
   useEffect(() => {
     if (isResizing !== null) {
       window.addEventListener("mousemove", handleMouseMove);
@@ -492,7 +445,6 @@ const TableCrawl = ({
     }
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
-  // Calculate total table width
   const totalWidth = useMemo(
     () =>
       columnWidths.reduce((acc, width) => {
@@ -521,14 +473,13 @@ const TableCrawl = ({
 
   return (
     <>
-      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1 ">
+      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1">
         <input
           type="text"
           placeholder="Search..."
           onChange={(e) => debouncedSearch(e.target.value)}
           className="w-full p-1 pl-2 h-6 bg-white dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
         />
-        {/* <SelectFilter /> */}
         <DownloadButton
           data={"data"}
           download={handleDownload}
@@ -545,7 +496,7 @@ const TableCrawl = ({
       </div>
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-1.9rem)] overflow-scroll relative"
+        className="w-full h-[calc(100%-1.4rem)] overflow-scroll relative"
       >
         <div
           ref={tableContainerRef}
@@ -586,7 +537,7 @@ const TableCrawl = ({
                     style={{
                       height: `${Math.max(0, rowVirtualizer.getTotalSize() - (virtualRows[virtualRows.length - 1]?.end || 0))}px`,
                     }}
-                  />{" "}
+                  />
                 </>
               ) : (
                 <tr>

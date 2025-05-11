@@ -27,7 +27,7 @@ function MenuDrawer() {
   const options = [
     { name: "Shallow Crawler", route: "/" },
     { name: "Deep Crawler", route: "/global" },
-    { name: "Log Analyzer", route: "/serverlogs" },
+    { name: "Log Analyser", route: "/serverlogs" },
   ];
 
   useEffect(() => {
@@ -238,12 +238,12 @@ function MenuDrawer() {
         <img
           src="icon.png"
           alt=""
-          className="w-6 h-auto py-1 object-cover mr-2 hidden dark:flex"
+          className="w-5 h-auto py-1 object-cover mr-2 hidden dark:flex"
         />
         <img
           src="icon-light.png"
           alt=""
-          className="w-6 h-auto py-1 object-cover mr-2  dark:hidden"
+          className="w-5 h-auto py-1 object-cover mr-2  dark:hidden"
         />
         <img
           src="rustyLight.png"

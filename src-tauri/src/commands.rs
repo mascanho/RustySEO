@@ -272,28 +272,33 @@ pub fn fetch_keywords_summarized_matched_command() -> Result<Vec<KeywordsSummary
 // OPEN OS TEXT EDITOR WITH THE SETTINGS FILE
 #[tauri::command]
 pub async fn open_configs_with_native_editor(
-    app_handle: tauri::AppHandle, // Add AppHandle parameter
+    _app_handle: tauri::AppHandle, // We might not need this for std::process
 ) -> Result<(), String> {
-    // Add proper return type
-    // Get config path and handle potential error
     let config_path = settings::Settings::config_path()
         .map_err(|e| format!("Failed to get config path: {}", e))?;
 
-    // Convert PathBuf to string
     let path = config_path.to_string_lossy().to_string();
 
-    #[cfg(not(target_os = "windows"))]
-    let command = "open";
-
     #[cfg(target_os = "windows")]
-    let command = "start";
+    {
+        std::process::Command::new("cmd.exe")
+            .args(["/C", "start", "", &path]) // Empty string after start is important
+            .spawn()
+            .map_err(|e| format!("Failed to open file: {}", e))?;
+    }
 
-    app_handle
-        .shell()
-        .command(command)
-        .args([path])
-        .spawn()
-        .map_err(|e| format!("Failed to open file: {}", e))?;
+    #[cfg(not(target_os = "windows"))]
+    {
+        std::process::Command::new("xdg-open") // Linux
+            .arg(&path)
+            .spawn()
+            .or_else(|_| {
+                std::process::Command::new("open") // macOS fallback
+                    .arg(&path)
+                    .spawn()
+            })
+            .map_err(|e| format!("Failed to open file: {}", e))?;
+    }
 
     Ok(())
 }

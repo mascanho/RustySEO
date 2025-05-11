@@ -6,7 +6,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, Settings } from "lucide-react";
+import { Menu, Plus, Settings } from "lucide-react";
 import { FileUpload } from "./FileUpload";
 import { useState } from "react";
 import TaxonomyManager from "./TaxonomyManager";
@@ -33,11 +33,13 @@ function UploadButton() {
         </DialogContent>
       </Dialog>
 
+      <Menu className="hidden" />
+
       {/* Settings Button */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DialogTrigger asChild>
           <button className="bg-gray-200 dark:bg-gray-700 text-xs w-32 h-7 rounded-r-2xl text-gray-800 dark:text-white flex justify-center items-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
-            <Settings size={18} className="text-xs mr-1" />
+            <Settings size={15} className="text-xs -ml-3 mr-2" />
             Settings
           </button>
         </DialogTrigger>

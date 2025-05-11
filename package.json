@@ -1,6 +1,6 @@
 {
   "name": "nextjs-tauri",
-  "version": "0.2.0",
+  "version": "0.2.3",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -47,7 +47,7 @@
     "@tauri-apps/plugin-notification": "^2.2.0",
     "@tauri-apps/plugin-os": "^2.2.0",
     "@tauri-apps/plugin-process": "^2.2.0",
-    "@tauri-apps/plugin-shell": "^2.2.0",
+    "@tauri-apps/plugin-shell": "^2.2.1",
     "@types/react-syntax-highlighter": "^15.5.13",
     "ai": "^3.2.37",
     "canvas-confetti": "^1.9.3",
@@ -64,7 +64,7 @@
     "jsonld": "^8.3.2",
     "jspdf": "^2.5.2",
     "lucide-react": "^0.396.0",
-    "next": "15.2.3",
+    "next": "15.3",
     "next-themes": "^0.3.0",
     "ollama": "^0.5.6",
     "ollama-ai-provider": "^0.10.0",

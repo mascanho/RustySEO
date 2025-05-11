@@ -13,6 +13,7 @@ use tokio::task;
 use tokio::time::{sleep, Duration};
 use url::Url;
 
+use crate::crawler::get_page_speed_insights;
 use crate::domain_crawler::database::{Database, DatabaseResults};
 use crate::domain_crawler::extractors::html::extract_html;
 use crate::domain_crawler::helpers::https_checker::valid_https;
@@ -46,6 +47,8 @@ use super::helpers::{
 };
 use super::helpers::{pdf_checker, pdf_selector};
 use super::models::DomainCrawlResults;
+use super::page_speed::bulk::fetch_psi_bulk;
+use super::page_speed::model::Crawler;
 
 // Constants for crawler behavior
 const MAX_RETRIES: usize = 5;
@@ -247,8 +250,32 @@ async fn process_url(
     )
     .await;
 
+    // let check_url_with_page_speed = get_page_speed_insights_bulk(url, settings).await;
+
     // Cross-origin checker funtion
     let cross_origin = analyze_cross_origin_security(&body, base_url);
+
+    // Page Speed Insights Checker
+    // Check if the key exists to make the call otherwise return an empty vector
+    // Attempt to fetch PSI results, but if there's an error, use an empty Vec
+    // Start PSI fetch as a separate task
+    // Start PSI fetch as a separate task
+    // Start PSI fetch as a separate task
+    let psi_future = if settings.page_speed_bulk {
+        let url_clone = url.clone();
+        let settings_clone = settings.clone();
+        Some(tokio::spawn(async move {
+            fetch_psi_bulk(url_clone, &settings_clone).await
+        }))
+    } else {
+        None
+    };
+
+    // Do all other processing while PSI is fetching
+    let psi_results = match psi_future {
+        Some(fut) => fut.await.map_err(|e| e.to_string())?, // Handle task join error
+        None => Ok(Vec::new()),                             // No PSI requested
+    };
 
     let result = DomainCrawlResults {
         url: final_url.to_string(),
@@ -288,6 +315,7 @@ async fn process_url(
         hreflangs: select_hreflang(&body),
         language: detect_language(&body),
         flesch: get_flesch_score(&body),
+        psi_results,
         extractor: Extractor {
             html: extract_html(&body).await,
             css: false,
@@ -365,22 +393,20 @@ pub async fn crawl_domain(
     settings_state: tauri::State<'_, AppState>,
 ) -> Result<Vec<DomainCrawlResults>, String> {
     // Import the user agents from another module to use across domain crawler
-    let user_agents = user_agents::agents();
+    // // Using the ones from global state/memory that are placed in the HD
+    // let user_agents = user_agents::agents();
 
     let settings = Arc::new(settings_state.settings.read().await.clone());
-
-    println!(
-        "This is the settings files ouput: {:?}",
-        &settings.links_request_timeout
-    );
 
     let client = Client::builder()
         // .user_agent(&user_agents[rand::thread_rng().gen_range(0..user_agents.len())])
         // Instead use the user agents in the configuration files
-        .user_agent(&settings.user_agents[rand::thread_rng().gen_range(0..user_agents.len())])
-        .timeout(Duration::from_secs(60))
-        .connect_timeout(Duration::from_secs(15))
-        .redirect(reqwest::redirect::Policy::limited(5))
+        .user_agent(
+            &settings.user_agents[rand::thread_rng().gen_range(0..settings.user_agents.len())],
+        )
+        .timeout(Duration::from_secs(settings.client_timeout)) // 60 seconds
+        .connect_timeout(Duration::from_secs(settings.client_connect_timeout)) // 15
+        .redirect(reqwest::redirect::Policy::limited(settings.redirect_policy)) // 5
         .build()
         .map_err(|e| e.to_string())?;
 
@@ -564,5 +590,17 @@ pub async fn crawl_domain(
         "Crawl completed with {} unique results",
         unique_results.len()
     );
+
+    // CREATE THE DATABSES FOR THE DIFF TABLES
+    match database::create_diff_tables() {
+        Ok(()) => println!("Successfully created diff tables"),
+        Err(e) => eprintln!("Failed to create diff tables: {}", e),
+    };
+
+    match database::clone_batched_crawl_into_persistent_db().await {
+        Ok(()) => println!("Successfully cloned batched crawl into persistent db"),
+        Err(e) => eprintln!("Failed to clone batched crawl into persistent db: {}", e),
+    }
+
     Ok(unique_results)
 }

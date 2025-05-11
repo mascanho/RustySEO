@@ -40,10 +40,10 @@
       }
     }
   },
-  "productName": "Rustyseo",
-  "mainBinaryName": "Rustyseo",
-  "version": "0.2.0",
-  "identifier": "linux",
+  "productName": "RustySEO",
+  "mainBinaryName": "RustySEO",
+  "version": "0.2.3",
+  "identifier": "rustyseo.com",
   "plugins": {},
   "app": {
     "withGlobalTauri": true,
@@ -51,10 +51,10 @@
       {
         "fullscreen": false,
         "resizable": true,
-        "title": "RustySEO - 0.2.0",
-        "minWidth": 1500,
+        "title": "RustySEO - 0.2.3",
+        "minWidth": 1600,
         "minHeight": 1000,
-        "width": 1300,
+        "width": 1500,
         "height": 800,
         "decorations": true,
         "useHttpsScheme": true

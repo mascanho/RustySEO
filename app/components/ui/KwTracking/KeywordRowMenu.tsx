@@ -1,5 +1,5 @@
 import React from "react";
-import { MoreHorizontal, Edit, Trash2, BarChart2 } from "lucide-react";
+import { MoreHorizontal, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,9 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { invoke } from "@tauri-apps/api/core";
-import { emit } from "@tauri-apps/api/event";
-import { toast } from "sonner";
+import { usePathname } from "next/navigation";
 
 interface KeywordRowMenuProps {
   keywordId: string;
@@ -24,6 +22,17 @@ export default function KeywordRowMenu({
   removeKeyword,
   keywordIds,
 }: KeywordRowMenuProps) {
+  const pathname = usePathname();
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted || pathname !== "/") {
+    return <div className="h-8 w-8" />; // Return empty space with consistent dimensions
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -39,23 +48,9 @@ export default function KeywordRowMenu({
         <DropdownMenuLabel className="text-xs dark:text-gray-400">
           Actions
         </DropdownMenuLabel>
-        {/* <DropdownMenuItem
-          onClick={() => console.log("Edit keyword", keywordId)}
-          className="focus:bg-blue-100 dark:focus:bg-blue-900 cursor-pointer"
-        >
-          <Edit className="mr-2 h-4 w-4" />
-          <span className="dark:text-gray-200">Edit</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => console.log("View details", keywordId)}
-          className="focus:bg-blue-100 dark:focus:bg-blue-900 cursor-pointer"
-        >
-          <BarChart2 className="mr-2 h-4 w-4" />
-          <span className="dark:text-gray-200">View Details</span>
-        </DropdownMenuItem> */}
         <DropdownMenuSeparator className="dark:bg-gray-800" />
         <DropdownMenuItem
-          onClick={() => removeKeyword(keywordId.toString())}
+          onClick={() => removeKeyword(keywordId)}
           className="text-red-600 dark:text-red-400 focus:bg-blue-100 dark:focus:bg-blue-900 cursor-pointer"
         >
           <Trash2 className="mr-2 h-4 w-4" />

@@ -341,7 +341,6 @@ const AIcontainer = () => {
             <span>No AI model found.</span>
             <span className="block">
               Go to <strong>Menu</strong> &gt; <strong>Connectors</strong>{" "}
-              &gt;{" "}
             </span>
           </div>
         );

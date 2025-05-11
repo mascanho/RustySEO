@@ -24,14 +24,15 @@ import ResponseHeaders from "./SubTables/Headers/ResponseHeaders";
 import TableCrawlCSS from "../Sidebar/CSSTable/TableCrawlCSS";
 import LinksTable from "./LinksTable/LinksTable";
 import KeywordsTable from "./KeywordsTable/KeywordsTable";
+import CoreWebVitalsTable from "./CoreWebVitalsTable/CoreWebVitalsTable";
 
 const BottomTableContent = ({ children, height }) => (
   <div
     style={{
-      height: `${height - 40}px`,
+      height: `${height - 34}px`,
       minHeight: "100px",
       overflowY: "auto",
-      marginBottom: "80px",
+      marginBottom: "60px",
     }}
   >
     {children}
@@ -39,8 +40,8 @@ const BottomTableContent = ({ children, height }) => (
 );
 
 export default function Home() {
-  const [containerHeight, setContainerHeight] = useState(600);
-  const [bottomTableHeight, setBottomTableHeight] = useState(200);
+  const [containerHeight, setContainerHeight] = useState(770);
+  const [bottomTableHeight, setBottomTableHeight] = useState(218);
   const [activeBottomTab, setActiveBottomTab] = useState("details");
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -174,7 +175,7 @@ export default function Home() {
             anchor: statusInfo.anchor_text || "", // Use anchor_text from statusInfo
             status: statusInfo.status || null,
             error: statusInfo.error || null,
-            page: item?.page || null, // Use item.page as in original
+            page: item?.url || null, // Use item.page as in original
           });
         }
       });
@@ -182,6 +183,7 @@ export default function Home() {
 
     return linksWithAnchors;
   }, [debouncedCrawlData]);
+
   // FILTER THE KEYWORDS, make them as value and the url as key
   const filteredKeywords = useMemo(() => {
     const urlKeywordsArray = []; // Array to store objects with URLs and keywords
@@ -272,6 +274,9 @@ export default function Home() {
               <TabsTrigger value="keywords" className="rounded-t-md">
                 Keywords
               </TabsTrigger>
+              <TabsTrigger value="cwv" className="rounded-t-md">
+                Core Web Vitals
+              </TabsTrigger>{" "}
               <TabsTrigger value="search" className="rounded-t-md">
                 Custom Search
               </TabsTrigger>
@@ -288,7 +293,7 @@ export default function Home() {
               <TableCrawl tabName={"AllData"} rows={crawlData} />
             </TabsContent>
 
-            <TabsContent value="css">
+            <TabsContent className="flex-grow overflow-hidden" value="css">
               <TableCrawlCSS rows={filteredCssArr} tabName={"All CSS "} />
             </TabsContent>
 
@@ -312,6 +317,11 @@ export default function Home() {
 
             <TabsContent value="keywords" className="flex-grow overflow-hidden">
               <KeywordsTable rows={filteredKeywords} tabName="All Keywords" />
+            </TabsContent>
+
+            {/* CORE WEB VITALS TABLe */}
+            <TabsContent value="cwv" className="flex-grow overflow-hidden">
+              <CoreWebVitalsTable tabName={"AllData"} rows={crawlData} />
             </TabsContent>
 
             {/* CUSTOM SEARCH */}
@@ -340,7 +350,7 @@ export default function Home() {
           style={{ height: `${bottomTableHeight}px`, minHeight: "100px" }}
         >
           <Tabs value={activeBottomTab} onValueChange={setActiveBottomTab}>
-            <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t  bg-slate-50 rounded-none sticky top-0 -z-0  ">
+            <TabsList className="w-full justify-start dark:bg-brand-darker  dark:border-brand-dark border-t  bg-slate-50 rounded-none sticky top-0 -z-0  ">
               <TabsTrigger value="details" className="rounded-t-md">
                 Details
               </TabsTrigger>

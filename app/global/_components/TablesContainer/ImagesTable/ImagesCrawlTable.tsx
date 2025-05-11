@@ -142,6 +142,7 @@ const TableRow = ({
       row[0] || "",
       row[2] + " KB" || "",
       row[3] || "",
+      row[4] || "",
     ],
     [row, index],
   );

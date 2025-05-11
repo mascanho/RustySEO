@@ -26,6 +26,8 @@ import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 import GlobalSettings from "../components/ui/GeneralSettings/GeneralSettings";
 import { PiShuffleAngularLight } from "react-icons/pi";
 import { LuMicroscope } from "react-icons/lu";
+import { useDiffStore } from "@/store/DiffStore";
+import KeywordTrackingDeepCrawlContainer from "./_components/KeywordTracking/KeywordTrackingDeepCrawlContainer";
 
 interface CrawlResult {
   url: string;
@@ -53,6 +55,7 @@ export default function Page() {
   const { setIsGlobalCrawling, setIsFinishedDeepCrawl } =
     useGlobalConsoleStore();
   const { visibility, showSidebar, hideSidebar } = useVisibilityStore();
+  const { setBulkDiffData } = useDiffStore();
 
   const allData = useMemo(() => crawlData, [crawlData]);
 
@@ -107,6 +110,12 @@ export default function Page() {
       setDomainCrawlLoading(false);
       setIsFinishedDeepCrawl(true);
       setIsGlobalCrawling(false);
+
+      // Get the differences between crawls
+      const diff = await invoke("get_url_diff_command");
+      console.log("Diff:", diff);
+
+      setBulkDiffData(diff);
 
       const crawledLinks =
         JSON.parse(sessionStorage.getItem("CrawledLinks")) || [];
@@ -171,6 +180,20 @@ export default function Page() {
     }
   }, []);
 
+  // CHECK WHAT IS THE STATUS OF THE PAGESPEED DETAILS - API KEY and TRUE or FALSE to show on the front end.
+  useEffect(() => {
+    const check_psi_status = async () => {
+      try {
+        const psiDetails = await invoke("check_page_speed_bulk");
+        localStorage.setItem("PSIdetails", JSON.stringify(psiDetails));
+      } catch (error) {
+        console.error("Error checking PageSpeed Insights status:", error);
+      }
+    };
+
+    check_psi_status();
+  }, []);
+
   return (
     <main className="flex h-full w-full">
       <InputZone handleDomainCrawl={handleDomainCrawl} />
@@ -186,7 +209,7 @@ export default function Page() {
         </div>
 
         <Tabs value={activeTab} onChange={setActiveTab}>
-          <aside className="absolute top-13 pt-1 left-0 w-full dark:bg-brand-darker z-10 bg-white">
+          <aside className="absolute top-13 pt-1 left-0 w-full dark:bg-brand-darker z-[200] bg-white">
             <Tabs.List
               justify="center"
               className="dark:text-white text-xs border-b dark:border-b-brand-dark h-7"
@@ -268,20 +291,20 @@ export default function Page() {
           {activeTab === "powerbi" && (
             <Tabs.Panel
               value="powerbi"
-              className="w-full max-w-96 flex-none h-screen overflow-scroll  flex justify-center items-center  bg-white"
-              style={{
-                height: "calc(100vh - 4rem)",
-                width: "calc(100vw - 21.5rem)",
-              }}
+              className="w-full  flex-none  overflow-auto  flex justify-center items-center  bg-white "
             >
               <div className="flex justify-center items-center w-full h-screen overflow-auto">
-                <iframe
-                  width="1920"
-                  height="900"
-                  src={powerBiUrl}
-                  frameBorder="0"
-                  allowFullScreen={true}
-                ></iframe>
+                {powerBiUrl ? (
+                  <div className="relative w-full h-[calc(100vh-7.9rem)] -mt-20 mb-1  max-w-full max-h-full aspect-[32/15]">
+                    <iframe
+                      className="absolute top-0 left-0 w-full h-full border-0"
+                      src={powerBiUrl}
+                      frameBorder="0"
+                      allowFullScreen={true}
+                      title="Power BI Report"
+                    ></iframe>
+                  </div>
+                ) : null}
               </div>
             </Tabs.Panel>
           )}
@@ -289,9 +312,9 @@ export default function Page() {
           {activeTab === "kws" && (
             <Tabs.Panel
               value="kws"
-              className="h-[calc(100vh-4rem)] pt-9 dark:bg-brand-darker"
+              className="h-screen pt-9 dark:bg-brand-darker"
             >
-              <KeywordAnalytics />
+              <KeywordTrackingDeepCrawlContainer />
             </Tabs.Panel>
           )}
 
@@ -322,7 +345,7 @@ export default function Page() {
       </section>
 
       <aside
-        className={`transition-all ease-linear delay-100 ${visibility.sidebar ? "w-full max-w-[20.4rem] flex-grow" : "w-0"} h-screen`}
+        className={`${visibility.sidebar ? "  max-w-[20.4rem] w-[20.4rem] flex-grow " : "w-0"} h-screen`}
       >
         <SidebarContainer />
       </aside>

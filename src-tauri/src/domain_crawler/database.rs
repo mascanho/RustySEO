@@ -2,15 +2,14 @@ use directories::ProjectDirs;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
 use rusqlite::{params, Connection, Result as RusqliteResult};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{self, Value};
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
-use tokio::sync::Mutex; // Added for thread-safe mutability
-use tokio::task;
+use tokio::sync::Mutex;
 
 #[derive(Error, Debug)]
 pub enum DatabaseError {
@@ -37,6 +36,17 @@ pub enum DatabaseError {
 
     #[error("Database not initialized")]
     NotInitialized,
+
+    #[error("Lock error")]
+    LockError,
+
+    #[error("IO error: {0}")]
+    NotFound(String), // Added
+
+    #[error("IO error: {0}")]
+    QueryError(String), // Added
+    #[error("IO error: {0}")]
+    JoinError(String), // Added
 }
 
 #[derive(Serialize, Clone)]
@@ -48,7 +58,7 @@ pub struct DatabaseResults {
 #[derive(Clone)]
 pub struct Database {
     pool: Arc<Pool<SqliteConnectionManager>>,
-    initialized: Arc<Mutex<bool>>, // Changed from Arc<bool> to Arc<Mutex<bool>>
+    initialized: Arc<Mutex<bool>>,
 }
 
 impl Database {
@@ -111,7 +121,7 @@ impl Database {
 
             Ok(Self {
                 pool: Arc::new(pool),
-                initialized: Arc::new(Mutex::new(false)), // Initialize with Mutex
+                initialized: Arc::new(Mutex::new(false)),
             })
         } else {
             Err(DatabaseError::DirectoryError(format!(
@@ -129,7 +139,7 @@ impl Database {
         let pool = self.pool.clone();
         let initialized = self.initialized.clone();
 
-        let result = task::spawn_blocking(move || {
+        let result = tokio::task::spawn_blocking(move || {
             let conn = pool.get().map_err(|e| {
                 DatabaseError::ConnectionError(format!(
                     "Failed to get connection for initialization: {}",
@@ -152,7 +162,6 @@ impl Database {
         })
         .await?;
 
-        // Lock the mutex and update the value
         let mut initialized_guard = initialized.lock().await;
         *initialized_guard = true;
 
@@ -191,23 +200,28 @@ impl Database {
 
         Ok(Self {
             pool: Arc::new(pool),
-            initialized: Arc::new(Mutex::new(false)), // Initialize with Mutex
+            initialized: Arc::new(Mutex::new(false)),
         })
     }
 
     pub async fn get_urls(&self) -> Result<Vec<String>, DatabaseError> {
-        let conn = self.pool.get()?;
-        let mut stmt = conn.prepare("SELECT url FROM domain_crawl")?;
-        let urls = stmt
-            .query_map(params![], |row| row.get::<_, String>(0))?
-            .collect::<Result<Vec<String>, _>>()?;
+        let pool = self.pool.clone();
 
-        println!(
-            "Found {} urls in database, trasnferring them to the frontend",
-            urls.len()
-        );
+        tokio::task::spawn_blocking(move || {
+            let conn = pool.get()?;
+            let mut stmt = conn.prepare("SELECT url FROM domain_crawl")?;
+            let urls = stmt
+                .query_map(params![], |row| row.get::<_, String>(0))?
+                .collect::<Result<Vec<String>, _>>()?;
 
-        Ok(urls)
+            println!(
+                "Found {} urls in database, transferring them to the frontend",
+                urls.len()
+            );
+
+            Ok(urls)
+        })
+        .await?
     }
 
     pub async fn clear(&self) -> Result<(), DatabaseError> {
@@ -215,11 +229,11 @@ impl Database {
         if !*initialized {
             return Err(DatabaseError::NotInitialized);
         }
-        drop(initialized); // Release the lock
+        drop(initialized);
 
         let pool = self.pool.clone();
 
-        task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || {
             let conn = pool.get().map_err(|e| {
                 DatabaseError::ConnectionError(format!("Failed to get connection for clear: {}", e))
             })?;
@@ -233,7 +247,7 @@ impl Database {
     pub async fn count_rows(&self) -> Result<i64, DatabaseError> {
         let pool = self.pool.clone();
 
-        task::spawn_blocking(move || {
+        tokio::task::spawn_blocking(move || {
             let conn = pool.get()?;
             let count: i64 =
                 conn.query_row("SELECT COUNT(*) FROM domain_crawl", [], |row| row.get(0))?;
@@ -247,10 +261,10 @@ pub async fn insert_crawl_data(
     pool: Arc<Pool<SqliteConnectionManager>>,
     data: DatabaseResults,
 ) -> Result<(), DatabaseError> {
-    let data_json = serde_json::to_string(&data.data).map_err(|e| DatabaseError::SerdeJson(e))?;
+    let data_json = serde_json::to_string(&data.data)?;
     let url = data.url.clone();
 
-    let result = task::spawn_blocking(move || {
+    tokio::task::spawn_blocking(move || {
         let conn = pool.get().map_err(|e| {
             DatabaseError::ConnectionError(format!("Failed to get connection for insert: {}", e))
         })?;
@@ -260,9 +274,7 @@ pub async fn insert_crawl_data(
         println!("Inserted data for URL: {}, rows affected: {}", url, rows);
         Ok(())
     })
-    .await?;
-
-    result
+    .await?
 }
 
 pub async fn insert_bulk_crawl_data(
@@ -282,14 +294,14 @@ pub async fn insert_bulk_crawl_data(
         })
         .collect();
 
-    let result = task::spawn_blocking(move || {
+    tokio::task::spawn_blocking(move || {
         let mut conn = pool.get().map_err(|e| {
             DatabaseError::ConnectionError(format!(
                 "Failed to get connection for bulk insert: {}",
                 e
             ))
         })?;
-        let tx = conn.transaction().map_err(|e| DatabaseError::Rusqlite(e))?;
+        let tx = conn.transaction()?;
 
         let mut total_rows = 0;
         {
@@ -303,7 +315,7 @@ pub async fn insert_bulk_crawl_data(
             }
         }
 
-        tx.commit().map_err(|e| DatabaseError::Rusqlite(e))?;
+        tx.commit()?;
 
         println!(
             "Bulk insert completed: {} entries, {} rows affected",
@@ -313,41 +325,9 @@ pub async fn insert_bulk_crawl_data(
 
         Ok(())
     })
-    .await?;
-
-    let _create_diff_tables = create_diff_tables().expect("Unable to create the tables for Diffs");
-
-    // now insert just the URLs into a different db and table
-    let project_dirs = ProjectDirs::from("", "", "rustyseo").ok_or_else(|| {
-        DatabaseError::DirectoryError("Failed to get project directories".to_string())
-    })?;
-
-    let data_dir = project_dirs.data_dir();
-    let db_dir = data_dir.join("db");
-
-    let db = Database::initialize_db(&db_dir.join("deep_crawl_batches.db")).await?;
-
-    let conn_diffs = Connection::open(db_dir.join("diff.db"))?;
-
-    let urls = db.get_urls().await?;
-
-    conn_diffs.execute("DELETE FROM previous_crawl", params![])?;
-
-    for url in &urls {
-        conn_diffs.execute(
-            "INSERT OR REPLACE INTO previous_crawl (url) VALUES (?1)",
-            params![url],
-        )?;
-        conn_diffs.execute(
-            "INSERT OR REPLACE INTO current_crawl (url) VALUES (?1)",
-            params![url],
-        )?;
-    }
-
-    result
+    .await?
 }
 
-// Create the tables for the diff crawler
 pub fn create_diff_tables() -> Result<(), DatabaseError> {
     let project_dirs = ProjectDirs::from("", "", "rustyseo").ok_or_else(|| {
         DatabaseError::DirectoryError("Failed to get project directories".to_string())
@@ -356,7 +336,6 @@ pub fn create_diff_tables() -> Result<(), DatabaseError> {
     let data_dir = project_dirs.data_dir();
     let db_dir = data_dir.join("db");
 
-    // Ensure the directory exists
     fs::create_dir_all(&db_dir).map_err(|e| {
         DatabaseError::DirectoryError(format!("Failed to create db directory: {}", e))
     })?;
@@ -366,46 +345,21 @@ pub fn create_diff_tables() -> Result<(), DatabaseError> {
     conn.execute_batch(
         "CREATE TABLE IF NOT EXISTS previous_crawl (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            url TEXT NOT NULL UNIQUE
+            url TEXT NOT NULL UNIQUE,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )",
     )?;
 
     conn.execute_batch(
-        "
-
-        CREATE TABLE IF NOT EXISTS current_crawl (
+        "CREATE TABLE IF NOT EXISTS current_crawl (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            url TEXT NOT NULL UNIQUE
-        )
-
-        ",
+            url TEXT NOT NULL UNIQUE,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )",
     )?;
 
     println!("Tables created successfully");
-
     Ok(())
-}
-
-pub async fn analyse_diffs() -> Result<(), DatabaseError> {
-    println!("Analyzing diffs");
-
-    let project_dirs = ProjectDirs::from("", "", "rustyseo").ok_or_else(|| {
-        DatabaseError::DirectoryError("Failed to get project directories".to_string())
-    })?;
-
-    let data_dir = project_dirs.data_dir();
-    let db_dir = data_dir.join("db");
-
-    let db = Database::initialize_db(&db_dir.join("deep_crawl_batches.db")).await?;
-
-    let urls = db.get_urls().await?;
-
-    for url in &urls {
-        // Assuming you just want to print URLs for now since get_diff isn't defined
-        println!("URL: {}", url);
-    }
-
-    Ok(()) // Return Ok(()) as per the function signature
 }
 
 pub async fn clone_batched_crawl_into_persistent_db() -> Result<(), DatabaseError> {
@@ -417,21 +371,176 @@ pub async fn clone_batched_crawl_into_persistent_db() -> Result<(), DatabaseErro
     let db_dir = data_dir.join("db");
 
     let db = Database::initialize_db(&db_dir.join("deep_crawl_batches.db")).await?;
-
-    let conn_diffs = Connection::open(db_dir.join("diff.db"))?;
-
     let urls = db.get_urls().await?;
 
-    for url in &urls {
-        conn_diffs.execute(
-            "INSERT OR REPLACE INTO previous_crawl (url) VALUES (?1)",
-            params![url],
+    tokio::task::spawn_blocking(move || {
+        let mut conn = Connection::open(db_dir.join("diff.db"))?;
+        let tx = conn.transaction()?;
+
+        tx.execute("DELETE FROM previous_crawl", [])?;
+        tx.execute(
+            "INSERT INTO previous_crawl (url) SELECT url FROM current_crawl",
+            [],
         )?;
-        conn_diffs.execute(
-            "INSERT OR REPLACE INTO current_crawl (url) VALUES (?1)",
-            params![url],
-        )?;
+
+        tx.execute("DELETE FROM current_crawl", [])?;
+
+        for url in &urls {
+            tx.execute("INSERT INTO current_crawl (url) VALUES (?1)", params![url])?;
+        }
+
+        tx.commit()?;
+        Ok(())
+    })
+    .await?
+}
+
+#[derive(Serialize, Debug, Deserialize)]
+pub struct DiffAnalysis {
+    added: Differential,
+    removed: Differential,
+}
+
+#[derive(Serialize, Debug, Deserialize)]
+pub struct Differential {
+    url: Option<String>, // Use Option to handle cases where there is no URL
+    pages: Vec<String>,
+    number_of_pages: usize,
+    timestamp: Option<String>,
+}
+
+pub async fn analyse_diffs() -> Result<DiffAnalysis, DatabaseError> {
+    println!("Analyzing diffs");
+
+    let project_dirs = ProjectDirs::from("", "", "rustyseo").ok_or_else(|| {
+        DatabaseError::DirectoryError("Failed to get project directories".to_string())
+    })?;
+
+    let db_dir = project_dirs.data_dir().join("db");
+    let db_path = db_dir.join("diff.db");
+
+    // Verify database file exists
+    if !db_path.exists() {
+        return Err(DatabaseError::NotFound(
+            "Database file not found".to_string(),
+        ));
     }
 
-    Ok(())
+    let result = tokio::task::spawn_blocking(move || {
+        let conn = Connection::open(&db_path).map_err(|e| {
+            DatabaseError::ConnectionError(format!("Failed to open database: {}", e))
+        })?;
+
+        // Check if tables exist
+        let tables: Vec<String> = conn
+            .prepare("SELECT name FROM sqlite_master WHERE type='table'")?
+            .query_map([], |row| row.get(0))?
+            .collect::<Result<_, _>>()?;
+
+        if !tables.contains(&"current_crawl".to_string())
+            || !tables.contains(&"previous_crawl".to_string())
+        {
+            return Err(DatabaseError::NotFound(
+                "Required tables not found in database".to_string(),
+            ));
+        }
+
+        // Struct to hold URL and timestamp pairs
+        #[derive(Debug)]
+        struct UrlRecord {
+            url: String,
+            timestamp: Option<String>,
+        }
+
+        // Get added URLs with timestamps
+        let mut added_records = Vec::new();
+        let mut stmt = conn
+            .prepare(
+                "SELECT url, timestamp FROM current_crawl
+                 WHERE url NOT IN (SELECT url FROM previous_crawl)",
+            )
+            .map_err(|e| {
+                DatabaseError::QueryError(format!("Failed to prepare added URLs query: {}", e))
+            })?;
+
+        let mut rows = stmt.query([]).map_err(|e| {
+            DatabaseError::QueryError(format!("Failed to execute added URLs query: {}", e))
+        })?;
+        while let Some(row) = rows.next().map_err(|e| {
+            DatabaseError::QueryError(format!("Failed to fetch added URL row: {}", e))
+        })? {
+            added_records.push(UrlRecord {
+                url: row.get(0).map_err(|e| {
+                    DatabaseError::QueryError(format!("Failed to get URL from row: {}", e))
+                })?,
+                timestamp: row.get(1).map_err(|e| {
+                    DatabaseError::QueryError(format!("Failed to get timestamp from row: {}", e))
+                })?,
+            });
+        }
+
+        // Get removed URLs with timestamps
+        let mut removed_records = Vec::new();
+        let mut stmt = conn
+            .prepare(
+                "SELECT url, timestamp FROM previous_crawl
+                 WHERE url NOT IN (SELECT url FROM current_crawl)",
+            )
+            .map_err(|e| {
+                DatabaseError::QueryError(format!("Failed to prepare removed URLs query: {}", e))
+            })?;
+
+        let mut rows = stmt.query([]).map_err(|e| {
+            DatabaseError::QueryError(format!("Failed to execute removed URLs query: {}", e))
+        })?;
+        while let Some(row) = rows.next().map_err(|e| {
+            DatabaseError::QueryError(format!("Failed to fetch removed URL row: {}", e))
+        })? {
+            removed_records.push(UrlRecord {
+                url: row.get(0).map_err(|e| {
+                    DatabaseError::QueryError(format!("Failed to get URL from row: {}", e))
+                })?,
+                timestamp: row.get(1).map_err(|e| {
+                    DatabaseError::QueryError(format!("Failed to get timestamp from row: {}", e))
+                })?,
+            });
+        }
+
+        // Get most recent timestamp from added records
+        let added_timestamp = added_records
+            .iter()
+            .filter_map(|r| r.timestamp.as_ref())
+            .max()
+            .cloned();
+
+        // Get most recent timestamp from removed records
+        let removed_timestamp = removed_records
+            .iter()
+            .filter_map(|r| r.timestamp.as_ref())
+            .max()
+            .cloned();
+
+        let added_differential = Differential {
+            url: added_records.first().map(|r| r.url.clone()),
+            pages: added_records.iter().map(|r| r.url.clone()).collect(),
+            number_of_pages: added_records.len(),
+            timestamp: added_timestamp,
+        };
+
+        let removed_differential = Differential {
+            url: removed_records.first().map(|r| r.url.clone()),
+            pages: removed_records.iter().map(|r| r.url.clone()).collect(),
+            number_of_pages: removed_records.len(),
+            timestamp: removed_timestamp,
+        };
+
+        Ok(DiffAnalysis {
+            added: added_differential,
+            removed: removed_differential,
+        })
+    })
+    .await
+    .map_err(|e| DatabaseError::JoinError(format!("Task join error: {}", e)))??;
+
+    Ok(result)
 }
