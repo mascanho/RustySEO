@@ -1,6 +1,6 @@
 // @ts-nocheck
-import { StatsWidgets } from "@/app/components/ui/GscContainer/Widgets/WidgetsKeywordsContainer";
 import { KeywordsTableDeep } from "./KeywordTrackingDeepTable";
+import { StatsWidgets } from "./KeywordTrackingWidgets";
 
 const KeywordTrackingDeepCrawlContainer = () => {
   return (

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import {
@@ -27,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { invoke } from "@tauri-apps/api/core";
 import { emit } from "@tauri-apps/api/event";
+import { useKeywordsStore } from "@/store/KWTrackingStore";
 
 interface KeywordData {
   id: string;
@@ -49,6 +51,9 @@ export function KeywordsTableDeep() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
+  // Store
+  const { setKeywords } = useKeywordsStore();
+
   const fetchKeywordsData = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -56,6 +61,9 @@ export function KeywordsTableDeep() {
         "fetch_keywords_summarized_matched_command",
       );
       setData(response);
+
+      useKeywordsStore.getState().setKeywords(response);
+
       console.log(response, "reponse KWs");
     } catch (error) {
       toast.error("Failed to fetch data");
@@ -88,11 +96,29 @@ export function KeywordsTableDeep() {
       return [];
     }
 
-    const term = searchTerm.toLowerCase();
+    const term = searchTerm.toLowerCase().trim();
+
+    if (!term) {
+      return data;
+    }
+
+    const searchWords = term.split(/\s+/).filter((word) => word.length > 0);
+
     return data.filter((item) => {
       const keyword = item.keyword?.toLowerCase() || "";
       const url = item.url?.toLowerCase() || "";
-      return keyword.includes(term) || url.includes(term);
+      const query = item.query?.toLowerCase() || ""; // If you have a query field
+
+      // Check all search words against all relevant fields
+      return searchWords.every(
+        (word) =>
+          keyword.includes(word) || url.includes(word) || query.includes(word),
+      );
+
+      // Alternative: Check if all words appear in at least one field (not necessarily same field)
+      // return searchWords.every(word =>
+      //   [keyword, url, query].some(field => field.includes(word))
+      // );
     });
   }, [data, searchTerm]);
 
@@ -301,7 +327,7 @@ export function KeywordsTableDeep() {
                   className="hidden md:table-cell"
                   style={{ height: "12px", padding: 10 }}
                 >
-                  Date Added
+                  Updated
                 </TableHead>
                 <TableHead
                   className="text-center"
@@ -336,7 +362,7 @@ export function KeywordsTableDeep() {
                       </div>
                     </TableCell>
                     <TableCell
-                      style={{ height: "12px", padding: 0 }}
+                      style={{ height: "12px", padding: 0, paddingRight: 10 }}
                       className="text-right"
                     >
                       <div className="flex items-center justify-end gap-1 h-[12px] overflow-hidden">
@@ -363,7 +389,7 @@ export function KeywordsTableDeep() {
                       </a>
                     </TableCell>
                     <TableCell
-                      style={{ height: "12px", padding: 0 }}
+                      style={{ height: "12px", padding: 0, paddingRight: 12 }}
                       className="text-right"
                     >
                       <div className="flex items-center justify-end gap-1 h-[12px] overflow-hidden">
@@ -382,7 +408,7 @@ export function KeywordsTableDeep() {
                       className="hidden md:table-cell"
                     >
                       <span className="text-xs leading-none">
-                        {formatDate(row.date_added)}
+                        {formatDate(new Date())}
                       </span>
                     </TableCell>
                     <TableCell

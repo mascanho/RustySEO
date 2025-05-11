@@ -10,45 +10,50 @@ import {
   Medal,
   Crown,
 } from "lucide-react";
+import { useKeywordsStore } from "@/store/KWTrackingStore";
 
-interface KeywordSummary {
-  current_impressions: number;
-  current_clicks: number;
-  current_position: number;
-  initial_impressions: number;
-  initial_clicks: number;
-  initial_position: number;
+interface KeywordData {
+  id: number;
   query: string;
   url: string;
+  current_impressions: number;
+  initial_impressions: number;
+  current_clicks: number;
+  initial_clicks: number;
+  current_position: number;
+  initial_position: number;
 }
 
-export function StatsWidgets({
-  keywordsSummary,
-}: {
-  keywordsSummary: KeywordSummary[];
-}) {
-  const totalImpressions =
-    keywordsSummary?.reduce(
-      (sum, keyword) => sum + (keyword?.current_impressions || 0),
-      0,
-    ) || 0;
-  const totalClicks =
-    keywordsSummary?.reduce(
-      (sum, keyword) => sum + (keyword?.current_clicks || 0),
-      0,
-    ) || 0;
+export function StatsWidgets() {
+  // Use the hook directly to subscribe to state updates
+  const { keywords } = useKeywordsStore();
+
+  console.log(keywords, "keywords from store");
+
+  // Calculate stats based on keywords from store
+  const totalImpressions = keywords.reduce(
+    (sum, keyword) => sum + (keyword?.current_impressions || 0),
+    0,
+  );
+
+  const totalClicks = keywords.reduce(
+    (sum, keyword) => sum + (keyword?.current_clicks || 0),
+    0,
+  );
+
   const ctr = totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
+
   const avgPosition =
-    keywordsSummary?.length > 0
-      ? keywordsSummary.reduce(
+    keywords.length > 0
+      ? keywords.reduce(
           (sum, keyword) => sum + (keyword?.current_position || 0),
           0,
-        ) / keywordsSummary.length
+        ) / keywords.length
       : 0;
 
   const mostImpressions =
-    keywordsSummary?.length > 0
-      ? keywordsSummary.reduce((prev, current) =>
+    keywords.length > 0
+      ? keywords.reduce((prev, current) =>
           (prev?.current_impressions || 0) > (current?.current_impressions || 0)
             ? prev
             : current,
@@ -56,8 +61,8 @@ export function StatsWidgets({
       : null;
 
   const mostClicks =
-    keywordsSummary?.length > 0
-      ? keywordsSummary.reduce((prev, current) =>
+    keywords.length > 0
+      ? keywords.reduce((prev, current) =>
           (prev?.current_clicks || 0) > (current?.current_clicks || 0)
             ? prev
             : current,
@@ -65,8 +70,8 @@ export function StatsWidgets({
       : null;
 
   const bestPosition =
-    keywordsSummary?.length > 0
-      ? keywordsSummary.reduce((prev, current) =>
+    keywords.length > 0
+      ? keywords.reduce((prev, current) =>
           (prev?.current_position || 0) < (current?.current_position || 0)
             ? prev
             : current,
@@ -76,7 +81,7 @@ export function StatsWidgets({
   const stats = [
     {
       title: "Impressions",
-      value: totalImpressions || 0,
+      value: totalImpressions,
       description: "Total impressions",
       icon: Eye,
       color: "text-blue-600",
@@ -85,7 +90,7 @@ export function StatsWidgets({
     },
     {
       title: "Clicks",
-      value: totalClicks || 0,
+      value: totalClicks,
       description: "Total clicks",
       icon: MousePointerClick,
       color: "text-green-600",
@@ -94,7 +99,7 @@ export function StatsWidgets({
     },
     {
       title: "CTR",
-      value: (ctr || 0).toFixed(2) + "%",
+      value: ctr.toFixed(2) + "%",
       description: "Click-through rate",
       icon: Percent,
       color: "text-purple-600",
@@ -103,7 +108,7 @@ export function StatsWidgets({
     },
     {
       title: "Average Position",
-      value: (avgPosition || 0).toFixed(1),
+      value: avgPosition.toFixed(1),
       description: "Average position",
       icon: ArrowUpDown,
       color: "text-orange-600",
@@ -112,11 +117,11 @@ export function StatsWidgets({
     },
     {
       title: "Keywords Tracked",
-      value: keywordsSummary?.length || 0,
+      value: keywords.length,
       description: "Total keywords tracked",
       icon: KeySquare,
       color: "text-orange-600",
-      differential: keywordsSummary?.length === 0 ? 0 : 0.4,
+      differential: keywords.length === 0 ? 0 : 0.4,
       position: 5,
     },
     {
@@ -163,7 +168,7 @@ export function StatsWidgets({
           icon={stat.icon}
           color={stat.color}
           differential={stat.differential}
-          keywordsSummary={keywordsSummary}
+          keywordsSummary={keywords} // Pass the keywords from store
         />
       ))}
     </div>
