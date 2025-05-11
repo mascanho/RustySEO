@@ -213,8 +213,6 @@ export default function ConsoleLog() {
   const [gscCredentials, setGscCredentials] = useState<any>(null);
   const [clarityApi, setClarityApi] = useState("");
 
-  console.log(pageSpeedKeys, "PSI");
-
   // Memoized logs with stable dependencies
   const memoizedLogs = useMemo(
     () =>
@@ -266,7 +264,7 @@ export default function ConsoleLog() {
             invoke<string>("get_microsoft_clarity_command"),
           ]);
         setAiModelLog(aiModelCheck || aiModel);
-        setPageSpeedKeys(pageSpeedK);
+        setPageSpeedKeys(pageSpeed);
         setGa4ID(ga4);
         setGscCredentials(gsc);
         setClarityApi(clarity);

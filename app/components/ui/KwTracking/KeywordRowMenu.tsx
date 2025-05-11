@@ -1,6 +1,5 @@
-" use client";
 import React from "react";
-import { MoreHorizontal, Edit, Trash2, BarChart2 } from "lucide-react";
+import { MoreHorizontal, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -24,8 +23,15 @@ export default function KeywordRowMenu({
   keywordIds,
 }: KeywordRowMenuProps) {
   const pathname = usePathname();
+  const [isMounted, setIsMounted] = React.useState(false);
 
-  if (pathname !== "/") return <section className="h-7">{""}</section>;
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted || pathname !== "/") {
+    return <div className="h-8 w-8" />; // Return empty space with consistent dimensions
+  }
 
   return (
     <DropdownMenu>
@@ -42,23 +48,9 @@ export default function KeywordRowMenu({
         <DropdownMenuLabel className="text-xs dark:text-gray-400">
           Actions
         </DropdownMenuLabel>
-        {/* <DropdownMenuItem
-          onClick={() => console.log("Edit keyword", keywordId)}
-          className="focus:bg-blue-100 dark:focus:bg-blue-900 cursor-pointer"
-        >
-          <Edit className="mr-2 h-4 w-4" />
-          <span className="dark:text-gray-200">Edit</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => console.log("View details", keywordId)}
-          className="focus:bg-blue-100 dark:focus:bg-blue-900 cursor-pointer"
-        >
-          <BarChart2 className="mr-2 h-4 w-4" />
-          <span className="dark:text-gray-200">View Details</span>
-        </DropdownMenuItem> */}
         <DropdownMenuSeparator className="dark:bg-gray-800" />
         <DropdownMenuItem
-          onClick={() => removeKeyword(keywordId.toString())}
+          onClick={() => removeKeyword(keywordId)}
           className="text-red-600 dark:text-red-400 focus:bg-blue-100 dark:focus:bg-blue-900 cursor-pointer"
         >
           <Trash2 className="mr-2 h-4 w-4" />

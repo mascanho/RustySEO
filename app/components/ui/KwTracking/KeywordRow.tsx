@@ -16,6 +16,11 @@ export default function KeywordRow({
   removeKeyword,
   keywordIds,
 }: KeywordRowProps) {
+  if (!row?.original?.id) {
+    console.error("Missing row data:", row);
+    return null; // or a fallback row
+  }
+
   return (
     <tr className="overflow-hidden dark:border" style={{ height: "10px" }}>
       {row?.getVisibleCells().map((cell) => (
