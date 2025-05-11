@@ -55,6 +55,7 @@ export function KeywordsTableDeep() {
         "fetch_keywords_summarized_matched_command",
       );
       setData(response);
+      console.log(response, "reponse KWs");
     } catch (error) {
       toast.error("Failed to fetch data");
       console.error("Error fetching data:", error);
@@ -86,8 +87,13 @@ export function KeywordsTableDeep() {
       return [];
     }
 
+    const dataWithId = data.map((item, index) => ({
+      id: index,
+      ...item,
+    }));
+
     const term = searchTerm.toLowerCase();
-    return data.filter((item) => {
+    return dataWithId.filter((item) => {
       const keyword = item.keyword?.toLowerCase() || "";
       const url = item.url?.toLowerCase() || "";
       return keyword.includes(term) || url.includes(term);
@@ -100,8 +106,10 @@ export function KeywordsTableDeep() {
   const currentData = filteredData.slice(startIndex, endIndex);
 
   const handleDelete = async (id: string) => {
+    console.log(id, "trying to delete");
+
     try {
-      await invoke("delete_keyword", { id });
+      await invoke("delete_keyword_command", { id });
       setData(data.filter((item) => item.id !== id));
       toast.success("Keyword deleted successfully");
 
@@ -319,7 +327,7 @@ export function KeywordsTableDeep() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleDelete(row.id)}
+                        onClick={() => handleDelete(row?.id.toString())}
                         aria-label="Delete row"
                       >
                         <Trash2 className="h-4 w-4 text-red-500" />
