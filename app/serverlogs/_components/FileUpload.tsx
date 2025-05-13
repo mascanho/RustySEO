@@ -57,12 +57,20 @@ export function FileUpload({
       return false;
     }
 
+    // Add a warning for large files
+    if (fileSizeMB > 50) {
+      // adjust threshold as needed
+      toast.warning(
+        `Large file detected (${fileSizeMB.toFixed(2)}MB). Processing may take longer.`,
+      );
+    }
+
     const fileType = file.type || "";
     const fileExtension = file.name.split(".").pop()?.toLowerCase() || "";
 
     if (
       acceptedFileTypes.includes(fileType) ||
-      acceptedFileTypes.includes(`text/${fileExtension}`) ||
+      acceptedFileTypes.includes(`.${fileExtension}`) ||
       (fileExtension === "log" && acceptedFileTypes.includes("text/plain"))
     ) {
       setError(null);
@@ -138,7 +146,7 @@ export function FileUpload({
 
     setUploading(true);
     setOverallProgress(0);
-    await delay(100); // Small delay to ensure state updates
+    await delay(100);
 
     if (files.length >= 10) {
       toast.info(
@@ -149,67 +157,62 @@ export function FileUpload({
     }
 
     try {
-      // Initial progress
       setOverallProgress(10);
-      await delay(200);
+      const fileContents = [];
 
-      // Process all files with progress updates
-      const fileContents = await Promise.all(
-        files.map(async (fileWithProgress, index) => {
-          try {
-            const content = await readFile(fileWithProgress.file);
-            setFiles((prev) =>
-              prev.map((f, idx) =>
-                idx === index ? { ...f, success: true } : f,
-              ),
-            );
+      // Process files sequentially instead of all at once
+      for (let i = 0; i < files.length; i++) {
+        try {
+          const content = await readFile(files[i].file);
+          setFiles((prev) =>
+            prev.map((f, idx) => (idx === i ? { ...f, success: true } : f)),
+          );
 
-            // Update progress incrementally for each file
-            const progressIncrement = 30 / files.length;
-            setOverallProgress((prev) =>
-              Math.min(prev + progressIncrement, 40),
-            );
+          fileContents.push({
+            filename: files[i].file.name,
+            content,
+          });
 
-            return { filename: fileWithProgress.file.name, content };
-          } catch (err) {
-            setFiles((prev) =>
-              prev.map((f, idx) =>
-                idx === index
-                  ? {
-                      ...f,
-                      error:
-                        err instanceof Error ? err.message : "Upload failed",
-                    }
-                  : f,
-              ),
-            );
-            throw err;
-          }
-        }),
-      );
+          // Update progress based on files processed
+          setOverallProgress(10 + (i / files.length) * 50);
+        } catch (err) {
+          setFiles((prev) =>
+            prev.map((f, idx) =>
+              idx === i
+                ? {
+                    ...f,
+                    error: err instanceof Error ? err.message : "Upload failed",
+                  }
+                : f,
+            ),
+          );
+          throw err;
+        }
+      }
 
-      // Update progress to indicate processing
       setOverallProgress(60);
-      await delay(300);
-
-      // Prepare data for backend
       const logContents = fileContents.map((fc) => [fc.filename, fc.content]);
 
-      // Update progress to indicate backend processing
-      setOverallProgress(80);
+      // Process in chunks if needed
+      const chunkSize = 5; // Process 5 files at a time
+      const resultChunks = [];
+      for (let i = 0; i < logContents.length; i += chunkSize) {
+        const chunk = logContents.slice(i, i + chunkSize);
+        const result = await invoke("check_logs_command", {
+          data: { log_contents: chunk },
+        });
+        resultChunks.push(result);
+        setOverallProgress(60 + (i / logContents.length) * 30);
+      }
+
+      // Combine results if needed
+      const finalResult = resultChunks.flat(); // or however you need to combine them
+
+      setLogData(finalResult);
+      setOverallProgress(95);
       await delay(300);
 
-      const result = await invoke("check_logs_command", {
-        data: { log_contents: logContents },
-      });
-
-      setLogData(result);
-      console.log(result, "This is the result");
-
-      // Mark all files as successfully uploaded
       setFiles((prev) => prev.map((f) => ({ ...f, success: true })));
-
-      // Final progress update
       setOverallProgress(100);
       await delay(500);
 
@@ -291,7 +294,6 @@ export function FileUpload({
               Remove all
             </Button>
           </div>
-
           <div className="max-h-60 overflow-y-auto mb-2">
             {files.map((fileWithProgress, index) => (
               <div
@@ -330,7 +332,6 @@ export function FileUpload({
               </div>
             ))}
           </div>
-
           {uploading && (
             <div className="w-full mt-2">
               <Progress
@@ -371,21 +372,22 @@ export function FileUpload({
               </div>
             </div>
           )}
-
           <Button
             onClick={handleUpload}
             className="w-full mt-2 bg-brand-bright text-white dark:bg-brand-bright dark:text-white hover:bg-brand-bright/90 dark:hover:bg-brand-bright/90"
-            disabled={uploading}
+            disabled={uploading || files.length === 0}
           >
             {uploading ? (
               <span className="flex items-center">
-                Uploading... {Math.round(overallProgress)}%
+                {files.length >= 10
+                  ? "Processing many files..."
+                  : "Uploading..."}
+                {Math.round(overallProgress)}%
               </span>
             ) : (
               `Upload ${files.length} File${files.length !== 1 ? "s" : ""}`
             )}
           </Button>
-
           {error && (
             <div className="flex items-center text-destructive mt-2 text-xs">
               <AlertCircle className="h-3 w-3 mr-1" />
