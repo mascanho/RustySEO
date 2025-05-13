@@ -140,7 +140,7 @@ export function FileUpload({
     setOverallProgress(0);
     await delay(100);
 
-    if (files.length >= 10) {
+    if (files.length > 10) {
       toast.info(
         "Whoohaaaa, that is a lot of files. This might take a while...",
       );
@@ -200,7 +200,7 @@ export function FileUpload({
       await delay(500);
 
       closeDialog();
-      toast.success("Upload complete!");
+      toast.success("Log analysis complete!");
     } catch (err) {
       console.error("Error during upload:", err);
       setError(err instanceof Error ? err.message : "Upload failed");

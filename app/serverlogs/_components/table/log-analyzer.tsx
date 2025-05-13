@@ -99,7 +99,10 @@ export function LogAnalyzer() {
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "ascending" | "descending";
-  } | null>(null);
+  } | null>({
+    key: "timestamp",
+    direction: "ascending",
+  });
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [ipModal, setIpModal] = useState(false);
   const [ip, setIP] = useState("");
@@ -221,12 +224,23 @@ export function LogAnalyzer() {
             const aValue = a[sortConfig.key as keyof LogEntry];
             const bValue = b[sortConfig.key as keyof LogEntry];
 
+            // Special case for timestamp sorting
+            if (sortConfig.key === "timestamp") {
+              const aDate = new Date(aValue as string).getTime();
+              const bDate = new Date(bValue as string).getTime();
+              return sortConfig.direction === "ascending"
+                ? aDate - bDate
+                : bDate - aDate;
+            }
+
+            // Normal string sorting
             if (typeof aValue === "string" && typeof bValue === "string") {
               return sortConfig.direction === "ascending"
                 ? aValue.localeCompare(bValue)
                 : bValue.localeCompare(aValue);
             }
 
+            // Fallback for other types
             if (aValue < bValue) {
               return sortConfig.direction === "ascending" ? -1 : 1;
             }
@@ -381,6 +395,8 @@ export function LogAnalyzer() {
     setIpModal(true);
     setIP(ip);
   }, []);
+
+  const mac = process.platform === "darwin";
 
   if (isLoading) {
     return (
@@ -647,7 +663,7 @@ export function LogAnalyzer() {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="cursor-pointer w-[180px] text-left"
                       onClick={() => requestSort("browser")}
                     >
                       Browser
@@ -662,7 +678,7 @@ export function LogAnalyzer() {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="cursor-pointer w-[200px] text-left"
                       onClick={() => requestSort("timestamp")}
                     >
                       Timestamp
@@ -677,7 +693,7 @@ export function LogAnalyzer() {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="cursor-pointer pl-7"
                       onClick={() => requestSort("path")}
                     >
                       Path
@@ -847,7 +863,9 @@ function LogRow({
             {log.method}
           </Badge>
         </TableCell>
-        <TableCell width={9}>{log?.browser}</TableCell>
+        <TableCell className="pl-3" width={12}>
+          {log?.browser}
+        </TableCell>
         <TableCell className="max-w-44">{formatDate(log.timestamp)}</TableCell>
         <TableCell className="max-w-[480px] truncate mr-2">
           <span className="mr-1 inline-block" style={{ paddingTop: "" }}>
