@@ -340,45 +340,45 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
         </div>
 
         <div className="flex flex-1 gap-1">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark"
-              >
-                <Filter className="h-4 w-4" />
-                Method
-                {methodFilter.length > 0 && (
-                  <Badge variant="secondary" className="ml-1">
-                    {methodFilter.length}
-                  </Badge>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="bg-white dark:border-brand-dark dark:text-white dark:active:bg-brand-bright dark:bg-brand-darker"
-            >
-              <DropdownMenuLabel>Filter by Method</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {["GET", "POST", "PUT", "DELETE"].map((method) => (
-                <DropdownMenuCheckboxItem
-                  className="bg-white active:bg-gray-100 hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
-                  key={method}
-                  checked={methodFilter.includes(method)}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setMethodFilter([...methodFilter, method]);
-                    } else {
-                      setMethodFilter(methodFilter.filter((m) => m !== method));
-                    }
-                  }}
-                >
-                  {method}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* <DropdownMenu> */}
+          {/*   <DropdownMenuTrigger asChild> */}
+          {/*     <Button */}
+          {/*       variant="outline" */}
+          {/*       className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark" */}
+          {/*     > */}
+          {/*       <Filter className="h-4 w-4" /> */}
+          {/*       Method */}
+          {/*       {methodFilter.length > 0 && ( */}
+          {/*         <Badge variant="secondary" className="ml-1"> */}
+          {/*           {methodFilter.length} */}
+          {/*         </Badge> */}
+          {/*       )} */}
+          {/*     </Button> */}
+          {/*   </DropdownMenuTrigger> */}
+          {/*   <DropdownMenuContent */}
+          {/*     align="end" */}
+          {/*     className="bg-white dark:border-brand-dark dark:text-white dark:active:bg-brand-bright dark:bg-brand-darker" */}
+          {/*   > */}
+          {/*     <DropdownMenuLabel>Filter by Method</DropdownMenuLabel> */}
+          {/*     <DropdownMenuSeparator /> */}
+          {/*     {["GET", "POST", "PUT", "DELETE"].map((method) => ( */}
+          {/*       <DropdownMenuCheckboxItem */}
+          {/*         className="bg-white active:bg-gray-100 hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright" */}
+          {/*         key={method} */}
+          {/*         checked={methodFilter.includes(method)} */}
+          {/*         onCheckedChange={(checked) => { */}
+          {/*           if (checked) { */}
+          {/*             setMethodFilter([...methodFilter, method]); */}
+          {/*           } else { */}
+          {/*             setMethodFilter(methodFilter.filter((m) => m !== method)); */}
+          {/*           } */}
+          {/*         }} */}
+          {/*       > */}
+          {/*         {method} */}
+          {/*       </DropdownMenuCheckboxItem> */}
+          {/*     ))} */}
+          {/*   </DropdownMenuContent> */}
+          {/* </DropdownMenu> */}
 
           {/* FileType Filter */}
           <DropdownMenu>
@@ -511,21 +511,21 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[80px] text-center">#</TableHead>
-                    <TableHead
-                      className="cursor-pointer w-[80px] truncate"
-                      onClick={() => requestSort("ip")}
-                    >
-                      IP Address
-                      {sortConfig?.key === "ip" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      )}
-                    </TableHead>
+                    {/* <TableHead */}
+                    {/*   className="cursor-pointer w-[80px] truncate" */}
+                    {/*   onClick={() => requestSort("ip")} */}
+                    {/* > */}
+                    {/*   IP Address */}
+                    {/*   {sortConfig?.key === "ip" && ( */}
+                    {/*     <ChevronDown */}
+                    {/*       className={`ml-1 h-4 w-4 inline-block ${ */}
+                    {/*         sortConfig.direction === "descending" */}
+                    {/*           ? "rotate-180" */}
+                    {/*           : "" */}
+                    {/*       }`} */}
+                    {/*     /> */}
+                    {/*   )} */}
+                    {/* </TableHead> */}
                     <TableHead
                       className="cursor-pointer max-w-[20px] truncate"
                       onClick={() => requestSort("timestamp")}
@@ -541,21 +541,21 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                         />
                       )}
                     </TableHead>
-                    <TableHead
-                      className="cursor-pointer w-[90px] text-center"
-                      onClick={() => requestSort("method")}
-                    >
-                      Method
-                      {sortConfig?.key === "method" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      )}
-                    </TableHead>
+                    {/* <TableHead */}
+                    {/*   className="cursor-pointer w-[90px] text-center" */}
+                    {/*   onClick={() => requestSort("method")} */}
+                    {/* > */}
+                    {/*   Method */}
+                    {/*   {sortConfig?.key === "method" && ( */}
+                    {/*     <ChevronDown */}
+                    {/*       className={`ml-1 h-4 w-4 inline-block ${ */}
+                    {/*         sortConfig.direction === "descending" */}
+                    {/*           ? "rotate-180" */}
+                    {/*           : "" */}
+                    {/*       }`} */}
+                    {/*     /> */}
+                    {/*   )} */}
+                    {/* </TableHead> */}
                     <TableHead
                       className="cursor-pointer"
                       onClick={() => requestSort("path")}
@@ -634,32 +634,32 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                           <TableCell className="font-medium text-center max-w-[40px]">
                             {indexOfFirstItem + index + 1}
                           </TableCell>
-                          <TableCell className="max-w-[160px] w-[180px] truncate">
-                            <div className="flex items-center gap-1">
-                              {log.ip}
-                            </div>
-                          </TableCell>
-                          <TableCell className="w-[200px]">
+                          {/* <TableCell className="max-w-[160px] w-[180px] truncate"> */}
+                          {/*   <div className="flex items-center gap-1"> */}
+                          {/*     {log.ip} */}
+                          {/*   </div> */}
+                          {/* </TableCell> */}
+                          <TableCell className="w-[200px] pl-2">
                             {formatDate(log.timestamp)}
                           </TableCell>
-                          <TableCell className="text-center max-w-[150px]">
-                            <Badge
-                              variant="outline"
-                              className={
-                                log.method === "GET"
-                                  ? "bg-green-100 dark:bg-green-400 text-green-800 border-green-200"
-                                  : log.method === "POST"
-                                    ? "bg-blue-100 dark:bg-blue-400 text-blue-800 border-blue-200"
-                                    : log.method === "PUT"
-                                      ? "bg-yellow-100 dark:bg-yellow-400 text-yellow-800 border-yellow-200"
-                                      : "bg-red-100 dark:bg-red-400 text-red-800 border-red-200"
-                              }
-                            >
-                              {log.method}
-                            </Badge>
-                          </TableCell>
+                          {/* <TableCell className="text-center max-w-[150px]"> */}
+                          {/*   <Badge */}
+                          {/*     variant="outline" */}
+                          {/*     className={ */}
+                          {/*       log.method === "GET" */}
+                          {/*         ? "bg-green-100 dark:bg-green-400 text-green-800 border-green-200" */}
+                          {/*         : log.method === "POST" */}
+                          {/*           ? "bg-blue-100 dark:bg-blue-400 text-blue-800 border-blue-200" */}
+                          {/*           : log.method === "PUT" */}
+                          {/*             ? "bg-yellow-100 dark:bg-yellow-400 text-yellow-800 border-yellow-200" */}
+                          {/*             : "bg-red-100 dark:bg-red-400 text-red-800 border-red-200" */}
+                          {/*     } */}
+                          {/*   > */}
+                          {/*     {log.method} */}
+                          {/*   </Badge> */}
+                          {/* </TableCell> */}
                           <TableCell className="inline-block truncate max-w-[600px]">
-                            <span className="mr-2 inline-block">
+                            <span className="mr-2 inline-block pl-2">
                               {getFileIcon(log.file_type)}
                             </span>
                             {showOnTables && domain
