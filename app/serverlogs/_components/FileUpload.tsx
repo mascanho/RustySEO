@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
-import {analyzeLogChunk} from "./logAnalyzer";
 
 interface FileUploadProps {
   maxSizeMB?: number;
@@ -134,134 +133,82 @@ export function FileUpload({
   const delay = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
 
-  // Handle the upload stuff
   const handleUpload = async () => {
     if (files.length === 0) return;
 
     setUploading(true);
     setOverallProgress(0);
-    setError(null);
+    await delay(100);
+
+    if (files.length > 10) {
+      toast.info(
+        "Whoohaaaa, that is a lot of files. This might take a while...",
+      );
+    } else {
+      toast.info("RustySEO is analysing your logs...");
+    }
 
     try {
-      toast.info(
-        files.length >= 10
-          ? "Processing many files, please wait..."
-          : "Analyzing logs...",
-      );
+      setOverallProgress(10);
+      const fileContents = [];
 
-      // Process files in batches
-      const BATCH_SIZE = 3;
-      const allResults: LogAnalysisResult[] = [];
+      // Read all files and collect their contents
+      for (let i = 0; i < files.length; i++) {
+        try {
+          const content = await readFile(files[i].file);
+          setFiles((prev) =>
+            prev.map((f, idx) => (idx === i ? { ...f, success: true } : f)),
+          );
 
-      for (let i = 0; i < files.length; i += BATCH_SIZE) {
-        const batch = files.slice(i, i + BATCH_SIZE);
-        const batchResults = await Promise.all(
-          batch.map(async (fileWithProgress, batchIndex) => {
-            try {
-              // Update progress for batch start
-              setOverallProgress(Math.floor((i / files.length) * 50));
+          fileContents.push({
+            filename: files[i].file.name,
+            content,
+          });
 
-              // Read file in chunks
-              const content = await readFileInChunks(fileWithProgress.file);
-
-              // Analyze content
-              const analysis = await analyzeLogChunk(content);
-              const compressed = compressLogContent(content);
-
-              // Update progress for this file
-              setOverallProgress(
-                Math.floor(((i + batchIndex + 1) / files.length) * 80),
-              );
-
-              return {
-                filename: fileWithProgress.file.name,
-                content: compressed,
-                summary: analysis.summary,
-                notableErrors: analysis.notableErrors,
-              };
-            } catch (err) {
-              console.error(
-                `Error processing ${fileWithProgress.file.name}:`,
-                err,
-              );
-              throw err;
-            }
-          }),
-        );
-
-        allResults.push(...batchResults);
-
-        // Update files state with progress
-        setFiles((prev) =>
-          prev.map((f, idx) =>
-            idx >= i && idx < i + BATCH_SIZE ? { ...f, success: true } : f,
-          ),
-        );
+          // Update progress based on files processed
+          setOverallProgress(10 + (i / files.length) * 50);
+        } catch (err) {
+          console.error(`Error reading file ${files[i].file.name}:`, err);
+          setFiles((prev) =>
+            prev.map((f, idx) =>
+              idx === i
+                ? {
+                    ...f,
+                    error: err instanceof Error ? err.message : "Upload failed",
+                  }
+                : f,
+            ),
+          );
+          throw err;
+        }
       }
 
-      // Final processing
-      setOverallProgress(90);
+      setOverallProgress(60);
+      const logContents = fileContents.map((fc) => [fc.filename, fc.content]);
+
+      // Send all files in a single request
       const result = await invoke("check_logs_command", {
-        data: {
-          log_contents: allResults.map((r) => [r.filename, r.content]),
-          analysis: allResults.map((r) => r.summary),
-        },
+        data: { log_contents: logContents },
       });
 
-      setLogData({
-        rawResult: result,
-        analysis: allResults,
-        notableErrors: allResults.flatMap((r) => r.notableErrors),
-      });
+      setLogData(result);
+      setOverallProgress(95);
+      await delay(300);
 
+      setFiles((prev) => prev.map((f) => ({ ...f, success: true })));
       setOverallProgress(100);
+      await delay(500);
+
       closeDialog();
-      toast.success("Analysis complete!");
+      toast.success("Log analysis complete!");
     } catch (err) {
-      const errMsg = err instanceof Error ? err.message : "Processing failed";
-      setError(errMsg);
-      toast.error(`Error: ${errMsg}`);
+      console.error("Error during upload:", err);
+      setError(err instanceof Error ? err.message : "Upload failed");
+      toast.error("Upload failed");
     } finally {
       setUploading(false);
     }
   };
-
-  // Add this helper function
-  async function readFileInChunks(
-    file: File,
-    chunkSize = 5 * 1024 * 1024,
-  ): Promise<string> {
-    return new Promise((resolve, reject) => {
-      let result = "";
-      const reader = new FileReader();
-      let offset = 0;
-
-      const readNextChunk = () => {
-        const chunk = file.slice(offset, offset + chunkSize);
-        reader.readAsText(chunk);
-      };
-
-      reader.onload = (e) => {
-        if (e.target?.result) {
-          result += e.target.result as string;
-          offset += chunkSize;
-
-          if (offset < file.size) {
-            // Yield to main thread between chunks
-            setTimeout(readNextChunk, 0);
-          } else {
-            resolve(result);
-          }
-        }
-      };
-
-      reader.onerror = (error) => {
-        reject(error);
-      };
-
-      readNextChunk();
-    });
-  }
 
   const handleRemoveFile = (index: number) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
