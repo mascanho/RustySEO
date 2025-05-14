@@ -25,6 +25,7 @@ import {
   FileText,
   Package,
   FileType2,
+  BadgeInfo,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -108,6 +109,7 @@ export function LogAnalyzer() {
   const [ip, setIP] = useState("");
   const [domain, setDomain] = useState("");
   const [showOnTables, setShowOnTables] = useState(false);
+  const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
 
   // Helper functions
   const formatDate = useCallback((dateString: string) => {
@@ -218,6 +220,10 @@ export function LogAnalyzer() {
           }
         }
 
+        // Apply verified filter
+        if (verifiedFilter !== null) {
+          result = result.filter((log) => log.verified === verifiedFilter);
+        }
         // Apply sorting
         if (sortConfig) {
           result.sort((a, b) => {
@@ -254,7 +260,14 @@ export function LogAnalyzer() {
         setFilteredLogs(result);
         setCurrentPage(1);
       }, 300),
-    [statusFilter, methodFilter, fileTypeFilter, botFilter, sortConfig],
+    [
+      statusFilter,
+      methodFilter,
+      fileTypeFilter,
+      botFilter,
+      sortConfig,
+      verifiedFilter,
+    ],
   );
 
   // Apply filters when search term or entries change
@@ -318,6 +331,7 @@ export function LogAnalyzer() {
     setSortConfig(null);
     setExpandedRow(null);
     setFileTypeFilter([]);
+    setVerifiedFilter(null);
   }, []);
 
   // Export logs as CSV
@@ -589,13 +603,50 @@ export function LogAnalyzer() {
               setBotFilter(value === "all" ? null : value)
             }
           >
-            <SelectTrigger className="w-[130px] dark:bg-brand-darker dark:text-white">
+            <SelectTrigger className="w-[120px] dark:bg-brand-darker dark:text-white">
               <SelectValue placeholder="Bot/Human" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
               <SelectItem value="bot">🤖 Robots</SelectItem>
               <SelectItem value="Human">🙋 Human</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* SELECT VEREFIED OR NOT VERIFIED */}
+          <Select
+            value={
+              verifiedFilter === null
+                ? "all"
+                : verifiedFilter
+                  ? "verified"
+                  : "unverified"
+            }
+            onValueChange={(value) => {
+              if (value === "all") setVerifiedFilter(null);
+              else setVerifiedFilter(value === "verified");
+            }}
+          >
+            <SelectTrigger className="w-[130px] dark:bg-brand-darker dark:text-white">
+              <SelectValue placeholder="Verification" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All IPs</SelectItem>
+              <SelectItem className="flex" value="verified">
+                <div className="flex items-center">
+                  <BadgeCheck
+                    className="text-xs active:text-brand-bright hover:white active:white"
+                    size={17}
+                  />
+                  <span className="ml-1 inline-block">Verified</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="unverified">
+                <div className="flex">
+                  <BadgeInfo size={17} />{" "}
+                  <span className="ml-1">Unverified</span>
+                </div>
+              </SelectItem>
             </SelectContent>
           </Select>
 
