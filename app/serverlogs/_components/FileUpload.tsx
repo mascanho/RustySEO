@@ -133,82 +133,85 @@ export function FileUpload({
   const delay = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
 
-  const handleUpload = async () => {
-    if (files.length === 0) return;
+const handleUpload = async () => {
+  if (files.length === 0) return;
 
-    setUploading(true);
-    setOverallProgress(0);
-    await delay(100);
+  setUploading(true);
+  setOverallProgress(0);
+  await delay(100); // Small delay to allow UI to update
 
-    if (files.length > 10) {
-      toast.info(
-        "Whoohaaaa, that is a lot of files. This might take a while...",
-      );
-    } else {
-      toast.info("RustySEO is analysing your logs...");
-    }
+  if (files.length > 10) {
+    toast.info("Whoohaaaa, that is a lot of files. This might take a while...");
+  } else {
+    toast.info("RustySEO is analysing your logs...");
+  }
 
-    try {
-      setOverallProgress(10);
-      const fileContents = [];
+  try {
+    setOverallProgress(10);
+    const fileContents = [];
+    const updatedFiles = [...files];
 
-      // Read all files and collect their contents
-      for (let i = 0; i < files.length; i++) {
+    // Process files in batches for better performance
+    const batchSize = 5;
+    for (let i = 0; i < updatedFiles.length; i += batchSize) {
+      const batch = updatedFiles.slice(i, i + batchSize);
+      
+      // Process batch in parallel
+      await Promise.all(batch.map(async (fileWithProgress, batchIndex) => {
+        const originalIndex = i + batchIndex;
         try {
-          const content = await readFile(files[i].file);
-          setFiles((prev) =>
-            prev.map((f, idx) => (idx === i ? { ...f, success: true } : f)),
-          );
-
+          const content = await readFile(updatedFiles[originalIndex].file);
+          updatedFiles[originalIndex] = { 
+            ...updatedFiles[originalIndex], 
+            success: true 
+          };
           fileContents.push({
-            filename: files[i].file.name,
+            filename: updatedFiles[originalIndex].file.name,
             content,
           });
-
-          // Update progress based on files processed
-          setOverallProgress(10 + (i / files.length) * 50);
         } catch (err) {
-          console.error(`Error reading file ${files[i].file.name}:`, err);
-          setFiles((prev) =>
-            prev.map((f, idx) =>
-              idx === i
-                ? {
-                    ...f,
-                    error: err instanceof Error ? err.message : "Upload failed",
-                  }
-                : f,
-            ),
-          );
+          updatedFiles[originalIndex] = {
+            ...updatedFiles[originalIndex],
+            error: err instanceof Error ? err.message : "Upload failed",
+          };
           throw err;
         }
-      }
+      }));
 
-      setOverallProgress(60);
-      const logContents = fileContents.map((fc) => [fc.filename, fc.content]);
-
-      // Send all files in a single request
-      const result = await invoke("check_logs_command", {
-        data: { log_contents: logContents },
-      });
-
-      setLogData(result);
-      setOverallProgress(95);
-      await delay(300);
-
-      setFiles((prev) => prev.map((f) => ({ ...f, success: true })));
-      setOverallProgress(100);
-      await delay(500);
-
-      closeDialog();
-      toast.success("Log analysis complete!");
-    } catch (err) {
-      console.error("Error during upload:", err);
-      setError(err instanceof Error ? err.message : "Upload failed");
-      toast.error("Upload failed");
-    } finally {
-      setUploading(false);
+      // Update progress and yield to main thread
+      const progress = 10 + (i / updatedFiles.length) * 50;
+      setOverallProgress(progress);
+      setFiles([...updatedFiles]); // Update files state with current batch
+      await new Promise(resolve => setTimeout(resolve, 0)); // Yield to main thread
     }
-  };
+
+    setOverallProgress(60);
+    const logContents = fileContents.map((fc) => [fc.filename, fc.content]);
+
+    // Send all files in a single request
+    const result = await invoke("check_logs_command", {
+      data: { log_contents: logContents },
+    });
+
+    setLogData(result);
+    setOverallProgress(95);
+    await delay(300);
+
+    // Final update with all files marked as successful
+    setFiles(prev => prev.map(f => ({ ...f, success: true })));
+    setOverallProgress(100);
+    await delay(500);
+
+    closeDialog();
+    toast.success("Log analysis complete!");
+  } catch (err) {
+    console.error("Error during upload:", err);
+    setError(err instanceof Error ? err.message : "Upload failed");
+    toast.error("Upload failed");
+  } finally {
+    setUploading(false);
+  }
+};
 
   const handleRemoveFile = (index: number) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));

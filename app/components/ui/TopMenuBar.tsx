@@ -538,7 +538,7 @@ const TopMenuBar = () => {
 
           <MenubarMenu>
             <MenubarTrigger className="ml-3 text-xs">Reports</MenubarTrigger>
-            <MenubarContent>
+            <MenubarContent className="z-[999999999999999]">
               <MenubarItem onClick={handleDownloadPerformance}>
                 <FiBarChart2 className="mr-2" />
                 Performance History
