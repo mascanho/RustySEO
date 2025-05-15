@@ -106,7 +106,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "ascending" | "descending";
-  } | null>(null);
+  } | null>({ key: "frequency", direction: "descending" }); // Changed this line
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [domain, setDomain] = useState("");
   const [showOnTables, setShowOnTables] = useState(false);

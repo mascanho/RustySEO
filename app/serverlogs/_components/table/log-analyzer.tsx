@@ -714,7 +714,7 @@ export function LogAnalyzer() {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer w-[180px] text-left"
+                      className="cursor-pointer w-[90px] text-left"
                       onClick={() => requestSort("browser")}
                     >
                       Browser
@@ -914,7 +914,13 @@ function LogRow({
             {log.method}
           </Badge>
         </TableCell>
-        <TableCell className="pl-3" width={12}>
+        <TableCell
+          className={` pl-3  ${log?.browser === "Chrome" ? "text-red-400" : ""}
+          ${log?.browser === "Firefox" ? "text-green-500" : ""}
+${log?.browser === "Safari" ? "text-blue-400" : ""}
+`}
+          width={12}
+        >
           {log?.browser}
         </TableCell>
         <TableCell className="max-w-44">{formatDate(log.timestamp)}</TableCell>
