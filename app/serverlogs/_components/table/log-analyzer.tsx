@@ -442,7 +442,7 @@ export function LogAnalyzer() {
           <Input
             type="search"
             placeholder="Search by IP, path, user agent..."
-            className="pl-8 w-full dark:text-white"
+            className="pl-8 w-full"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
