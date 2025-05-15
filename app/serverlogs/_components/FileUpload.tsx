@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { getOS } from "../util";
 
 interface FileUploadProps {
   maxSizeMB?: number;
@@ -134,18 +135,27 @@ export function FileUpload({
     new Promise((resolve) => setTimeout(resolve, ms));
 
   const handleUpload = async () => {
+    // GET THE OS
+    const os = getOS();
+
     if (files.length === 0) return;
 
     setUploading(true);
     setOverallProgress(0);
     await delay(100); // Small delay to allow UI to update
 
-    if (files.length > 10) {
+    if (os === "Windows" && files.length > 5) {
       toast.info(
-        "Whoohaaaa, that is a lot of files. This might take a while...",
+        "Whoohaaaa, that is a lot of files. This might take a while, consider uploading less files on each batch.",
       );
     } else {
       toast.info("RustySEO is analysing your logs...");
+    }
+
+    if (os === "MacOS" && files.length > 10) {
+      toast.info(
+        "Whoohaaaa, that is a lot of files. This might take a while...",
+      );
     }
 
     try {

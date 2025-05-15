@@ -331,7 +331,7 @@ export function LogAnalyzer() {
     setSortConfig(null);
     setExpandedRow(null);
     setFileTypeFilter([]);
-    setVerifiedFilter(null);
+    setVerifiedFieter(null);
   }, []);
 
   // Export logs as CSV
