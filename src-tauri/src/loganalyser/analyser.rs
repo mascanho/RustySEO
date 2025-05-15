@@ -2,7 +2,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 
 use crate::loganalyser::helpers::{
-    country_extractor::extract_country, crawler_type::is_crawler, parse_logs::parse_log_entries,
+    browser_trim_name, country_extractor::extract_country, crawler_type::is_crawler,
+    parse_logs::parse_log_entries,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -108,7 +109,7 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
                     crawler_type: e.crawler_type,
                     is_crawler,
                     file_type: e.file_type,
-                    browser: e.browser,
+                    browser: browser_trim_name::trim_browser_name(&e.browser),
                     verified: e.verified,
                     taxonomy: e.taxonomy,
                     filename: filename.clone(), // Add filename to each entry

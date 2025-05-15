@@ -138,7 +138,7 @@ export function FileUpload({
 
     setUploading(true);
     setOverallProgress(0);
-    await delay(100);
+    await delay(100); // Small delay to allow UI to update
 
     if (files.length > 10) {
       toast.info(
@@ -150,37 +150,66 @@ export function FileUpload({
 
     try {
       setOverallProgress(10);
-      const fileContents = [];
+      const fileContents: Array<{ filename: string; content: string }> = [];
 
-      // Read all files and collect their contents
-      for (let i = 0; i < files.length; i++) {
-        try {
-          const content = await readFile(files[i].file);
-          setFiles((prev) =>
-            prev.map((f, idx) => (idx === i ? { ...f, success: true } : f)),
-          );
+      // Process files in batches for better performance
+      const batchSize = 5;
+      for (let i = 0; i < files.length; i += batchSize) {
+        const batch = files.slice(i, i + batchSize);
 
-          fileContents.push({
-            filename: files[i].file.name,
-            content,
+        // Process batch in parallel, but collect updates safely
+        const batchResults = await Promise.all(
+          batch.map(async (fileWithProgress, batchIndex) => {
+            const originalIndex = i + batchIndex;
+            try {
+              const content = await readFile(files[originalIndex].file);
+              return {
+                index: originalIndex,
+                update: {
+                  ...files[originalIndex],
+                  success: true,
+                },
+                content: {
+                  filename: files[originalIndex].file.name,
+                  content,
+                },
+              };
+            } catch (err) {
+              return {
+                index: originalIndex,
+                update: {
+                  ...files[originalIndex],
+                  error: err instanceof Error ? err.message : "Upload failed",
+                },
+                error: err,
+              };
+            }
+          }),
+        );
+
+        // Apply updates to state in a single operation
+        setFiles((prevFiles) => {
+          const newFiles = [...prevFiles];
+          batchResults.forEach((result) => {
+            newFiles[result.index] = result.update;
           });
+          return newFiles;
+        });
 
-          // Update progress based on files processed
-          setOverallProgress(10 + (i / files.length) * 50);
-        } catch (err) {
-          console.error(`Error reading file ${files[i].file.name}:`, err);
-          setFiles((prev) =>
-            prev.map((f, idx) =>
-              idx === i
-                ? {
-                    ...f,
-                    error: err instanceof Error ? err.message : "Upload failed",
-                  }
-                : f,
-            ),
-          );
-          throw err;
-        }
+        // Collect file contents safely
+        batchResults.forEach((result) => {
+          if (result.content) {
+            fileContents.push(result.content);
+          }
+          if (result.error) {
+            throw result.error;
+          }
+        });
+
+        // Update progress
+        const progress = 10 + (i / files.length) * 50;
+        setOverallProgress(progress);
+        await new Promise((resolve) => setTimeout(resolve, 0)); // Yield to main thread
       }
 
       setOverallProgress(60);
@@ -195,6 +224,7 @@ export function FileUpload({
       setOverallProgress(95);
       await delay(300);
 
+      // Final update with all files marked as successful
       setFiles((prev) => prev.map((f) => ({ ...f, success: true })));
       setOverallProgress(100);
       await delay(500);

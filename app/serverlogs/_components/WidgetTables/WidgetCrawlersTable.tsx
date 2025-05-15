@@ -333,7 +333,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
           <Input
             type="search"
             placeholder="Search by IP, path, user agent, or referer..."
-            className="pl-8 w-full"
+            className="pl-8 w-full dark:text-white"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />

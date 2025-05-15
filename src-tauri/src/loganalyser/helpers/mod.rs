@@ -1,3 +1,4 @@
+pub mod browser_trim_name;
 pub mod check_hostname;
 pub mod country_extractor;
 pub mod crawler_type;
