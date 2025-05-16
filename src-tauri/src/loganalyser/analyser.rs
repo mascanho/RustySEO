@@ -86,10 +86,18 @@ pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
     let mut all_entries = Vec::new();
     let mut file_count = 0;
 
+
+
+
     // Process each file
     for (filename, log_content) in data.log_contents {
         file_count += 1;
+
+        println!("Processing file: {}", filename);
+
         let entries = parse_log_entries(&log_content);
+
+
 
         // Add filename to each entry
         let entries_with_filename: Vec<LogEntry> = entries
