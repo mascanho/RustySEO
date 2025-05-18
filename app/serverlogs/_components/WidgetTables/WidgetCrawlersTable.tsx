@@ -325,6 +325,56 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     }
   };
 
+  console.log("data from eidget table", data);
+  console.log(currentLogs), "current Logs";
+
+  // Handle the dates and the timings hits
+  function timings(data, log) {
+    const initialDate = new Date(log?.timestamp);
+    const finishDate = new Date(data?.log_finish_time);
+
+    const elapsedTimeMs = Math.abs(
+      finishDate.getTime() - initialDate.getTime(),
+    );
+
+    // Calculate hours, minutes, seconds (FIXED: Math.floor for minutes)
+    const hours = Math.floor(elapsedTimeMs / (1000 * 60 * 60));
+    const minutes = Math.floor(
+      (elapsedTimeMs % (1000 * 60 * 60)) / (1000 * 60),
+    );
+    const seconds = Math.floor((elapsedTimeMs % (1000 * 60)) / 1000);
+
+    // Calculate elapsed time in different units for frequency
+    const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60);
+    const elapsedTimeMinutes = elapsedTimeMs / (1000 * 60);
+    const elapsedTimeSeconds = elapsedTimeMs / 1000;
+
+    // Handle missing frequency (default to 0)
+    const frequency = log?.frequency || 0;
+
+    // Calculate rates (avoid division by zero)
+    const perHour =
+      elapsedTimeHours > 0 ? (frequency / elapsedTimeHours).toFixed(1) : "0.00";
+    const perMinute =
+      elapsedTimeMinutes > 0
+        ? (frequency / elapsedTimeMinutes).toFixed(2)
+        : "0.00";
+    const perSecond =
+      elapsedTimeSeconds > 0
+        ? (frequency / elapsedTimeSeconds).toFixed(2)
+        : "0.00";
+
+    return {
+      elapsedTime: `${hours}h ${minutes}m ${seconds}s`,
+      frequency: {
+        total: frequency,
+        perHour: `${perHour}`,
+        perMinute: `${perMinute}/minute`,
+        perSecond: `${perSecond}/second`,
+      },
+    };
+  }
+
   return (
     <div className="space-y-4 h-full pb-0 -mb-4">
       <div className="flex flex-col md:flex-row justify-between -mb-4 p-1">
@@ -605,7 +655,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       className="cursor-pointer min-w-10 max-w-[50px] text-center"
                       onClick={() => requestSort("frequency")}
                     >
-                      Frequency
+                      ∑ Frequency
                       {sortConfig?.key === "frequency" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${
@@ -705,7 +755,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                 {/* User Agent */}
                                 <div className="flex flex-col max-w-[70rem] w-full">
                                   <div className="flex mb-2 space-x-2 items-center justify-between">
-                                    <h4 className=" font-bold">User Agent</h4>
+                                    <h4 className=" font-bold">Timespan</h4>
                                     {log.verified && (
                                       <div className="flex items-center space-x-1 py-1 bg-red-200 dark:bg-red-400 px-2 text-xs rounded-md">
                                         <BadgeCheck
@@ -718,21 +768,19 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                   </div>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                                     <p className="text-sm font-mono break-all">
-                                      {log.user_agent}
+                                      {timings(data, log)?.elapsedTime}
                                     </p>
                                   </div>
                                 </div>
 
                                 {/* Referer */}
                                 <div className="flex flex-col">
-                                  <h4 className="mb-2 font-bold">Referer</h4>
+                                  <h4 className="mb-2 font-bold">
+                                    Hits per Hour
+                                  </h4>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                                     <p className="text-sm break-all">
-                                      {log.referer || (
-                                        <span className="text-muted-foreground">
-                                          No referer
-                                        </span>
-                                      )}
+                                      {timings(data, log)?.frequency?.perHour}
                                     </p>
                                   </div>
                                 </div>
