@@ -13,6 +13,10 @@
   /* Add more status codes as needed */
 }
 
+* {
+  user-select: none;
+}
+
 h1 {
   font-size: 1rem !important;
 }
