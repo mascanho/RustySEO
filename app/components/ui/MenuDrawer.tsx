@@ -28,6 +28,7 @@ function MenuDrawer() {
     { name: "Shallow Crawler", route: "/" },
     { name: "Deep Crawler", route: "/global" },
     { name: "Log Analyser", route: "/serverlogs" },
+    { name: "PPC Simulator", route: "/ppc" },
   ];
 
   useEffect(() => {

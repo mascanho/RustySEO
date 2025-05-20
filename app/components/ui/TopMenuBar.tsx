@@ -561,6 +561,10 @@ const TopMenuBar = () => {
               {/*   <FiTool className="mr-2" /> */}
               {/*   Headings SERP */}
               {/* </MenubarItem> */}
+              <MenubarItem onClick={() => router.push("/ppc")}>
+                <FiTool className="mr-2" />
+                Google Ads Sim.
+              </MenubarItem>
               <MenubarSeparator />
               <MenubarItem
                 disabled={pathname !== "/global"}
