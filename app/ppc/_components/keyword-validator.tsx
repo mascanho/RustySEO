@@ -22,7 +22,10 @@ export function KeywordValidator({
 
   if (validationResults.valid) {
     return (
-      <Alert variant="default" className="bg-green-50 border-green-200">
+      <Alert
+        variant="default"
+        className="bg-green-50 border-green-200 overflow-y-auto h-56 min-h-56"
+      >
         <Check className="h-4 w-4 text-green-600" />
         <AlertTitle className="text-green-800">
           All keywords are present
@@ -35,7 +38,10 @@ export function KeywordValidator({
   }
 
   return (
-    <Alert variant="destructive" className="bg-red-50 border-red-200">
+    <Alert
+      variant="destructive"
+      className="bg-red-50 border-red-200 overflow-y-auto h-56 min-h-56"
+    >
       <AlertTriangle className="h-4 w-4 text-red-600" />
       <AlertTitle className="text-red-800">Missing keywords</AlertTitle>
       <AlertDescription className="text-red-700">

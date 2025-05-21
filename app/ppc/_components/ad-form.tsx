@@ -147,15 +147,17 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
   };
 
   return (
-    <div className="space-y-6 w-full max-w-full">
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="dark:text-white/50">Ad Type</CardTitle>
-          <CardDescription>
-            Select the type of ad you want to create
-          </CardDescription>
+    <div className="space-y-6 w-full max-w-full relative">
+      <Card className="w-fit right-[0rem] h-20  p-0 -top-[5.8rem] px-3 absolute bg-white dark:bg-brand-darker rounded-md dark:border-brand-dark">
+        <CardHeader className="p-3 m-0">
+          <CardTitle className="dark:text-white/50 p-0 m-0 pt-2">
+            Ad Type
+          </CardTitle>
+          {/* <CardDescription> */}
+          {/*   Select the type of ad you want to create */}
+          {/* </CardDescription> */}
         </CardHeader>
-        <CardContent>
+        <CardContent className="h-10">
           <RadioGroup
             value={formData.type}
             onValueChange={handleTypeChange}
@@ -176,16 +178,15 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
           </RadioGroup>
         </CardContent>
       </Card>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="w-full">
+        <Card className="w-full h-[51.2rem] max-h-full overflow-y-scroll dark:bg-brand-darker dark:border-brand-dark relative">
           <CardHeader>
             <CardTitle>Ad Details</CardTitle>
             <CardDescription>
               Enter the basic information for your ad
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 px-6">
             <div className="space-y-2">
               <Label htmlFor="ad-name">Ad Name</Label>
               <Input
@@ -247,6 +248,7 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
                   size="sm"
                   onClick={handleAddDescription}
                   disabled={formData.descriptions.length >= 4}
+                  className="dark:bg-brand-bright dark:text-white"
                 >
                   <Plus className="h-4 w-4 mr-1" /> Add Description
                 </Button>
@@ -261,7 +263,7 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
                       }
                       placeholder={`Description ${index + 1}`}
                       maxLength={90}
-                      className="resize-none"
+                      className="resize-none dark:bg-brand-darker dark:border-brand-dark"
                       rows={2}
                     />
                     <Button
@@ -285,14 +287,14 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
         </Card>
 
         <div className="space-y-6">
-          <Card className="w-full">
+          <Card className="w-full h-fit pb-6 dark:bg-brand-darker dark:border-brand-dark">
             <CardHeader>
               <CardTitle>URL Settings</CardTitle>
               <CardDescription>
                 Set the destination and display URLs
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 px-6">
               <div className="space-y-2">
                 <Label htmlFor="final-url">Final URL</Label>
                 <Input
@@ -315,14 +317,14 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
             </CardContent>
           </Card>
 
-          <Card className="w-full">
+          <Card className="w-full h-[52rem] max-h-[32rem] overflow-y-auto dark:bg-brand-darker dark:border-brand-dark">
             <CardHeader>
               <CardTitle>Keywords</CardTitle>
               <CardDescription>
                 Add keywords to track in your ad copy
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 px-6">
               <form onSubmit={handleAddKeyword} className="flex gap-2">
                 <Input
                   value={keywordInput}
@@ -332,12 +334,12 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
                 <Button type="submit">Add</Button>
               </form>
 
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 max-h-24 h-24 overflow-y-auto   ">
                 {formData.keywords.map((keyword, index) => (
                   <Badge
                     key={index}
                     variant="secondary"
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-1 h-fit"
                   >
                     {keyword}
                     <Button
@@ -359,10 +361,12 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
                 )}
               </div>
 
-              <KeywordValidator
-                validationResults={validationResults}
-                adContent={formData}
-              />
+              <section className="pt-2">
+                <KeywordValidator
+                  validationResults={validationResults}
+                  adContent={formData}
+                />
+              </section>
             </CardContent>
           </Card>
         </div>

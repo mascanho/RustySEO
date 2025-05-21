@@ -35,7 +35,7 @@ export function DashboardLayout({
   onViewChange,
 }: DashboardLayoutProps) {
   return (
-    <div className="flex  w-full">
+    <div className="flex  w-full h-full pb-8">
       <Sidebar>
         <SidebarHeader className=" dark:border-brand-dark">
           <div className="flex items-center px-2 py-3">
@@ -128,7 +128,7 @@ export function DashboardLayout({
             Google Ads Generator
           </div>
         </div>
-        <main className="p-4 md:p-6 w-[calc(100%-20px)] ">{children}</main>
+        <main className="p-4 md:p-6  ">{children}</main>
       </div>
     </div>
   );

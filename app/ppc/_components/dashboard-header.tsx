@@ -32,7 +32,7 @@ export function DashboardHeader({
       <div className="flex items-center gap-3">
         {showBackButton && (
           <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft className="h-7 w-7 bg-brand-bright text-white text-xl" />
           </Button>
         )}
         <div>
@@ -51,7 +51,10 @@ export function DashboardHeader({
           <FileImportExport ads={ads} onImport={onImport} />
         )}
         {onAddNew && (
-          <Button onClick={onAddNew}>
+          <Button
+            onClick={onAddNew}
+            className="h-8 dark:text-white bg-brand-bright dark:bg-brand-bright dark:hover:bg-brand-bright active:scale-95"
+          >
             <PlusCircle className="mr-2 h-4 w-4" />
             Add New Ad
           </Button>
