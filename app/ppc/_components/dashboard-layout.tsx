@@ -40,7 +40,7 @@ export function DashboardLayout({
         <SidebarHeader className=" dark:border-brand-dark">
           <div className="flex items-center px-2 py-3">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-primary dark:bg-brand flex items-center justify-center text-primary-foreground font-bold">
+              <div className="h-8 w-8 rounded-full bg-primary dark:bg-brand-bright flex items-center justify-center text-primary-foreground font-bold">
                 A
               </div>
               <div className="font-semibold text-lg">Ad Generator</div>
@@ -60,7 +60,6 @@ export function DashboardLayout({
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton
-              className="dark;bg-transparent dark:text-brand-bright"
                 isActive={
                   activeView === "ads" &&
                   !onViewChange.toString().includes("setSidebarView")
@@ -108,9 +107,13 @@ export function DashboardLayout({
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter className="border-t dark:border-brand-dark">
-          <div className="p-2">
+          <div className="p-2 pt-1">
             {onAddNew && (
-              <Button className="w-full" size="sm" onClick={onAddNew}>
+              <Button
+                className="w-full bg-brand-bright dark:bg-brand-bright dark:text-white"
+                size="sm"
+                onClick={onAddNew}
+              >
                 <PlusCircle className="h-4 w-4 mr-2" />
                 New Ad
               </Button>

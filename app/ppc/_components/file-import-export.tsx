@@ -136,13 +136,20 @@ export function FileImportExport({ ads, onImport }: FileImportExportProps) {
     <div className="flex gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm">
+          <Button
+            className="dark:text-white/50 dark:bg-brand-darker border-0"
+            variant="outline"
+            size="sm"
+          >
             <Download className="h-4 w-4 mr-2" />
             Export
             <ChevronDown className="h-4 w-4 ml-2" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent
+          className="dark:bg-brand-darker dark:border-brand-dark dark:text-white"
+          align="end"
+        >
           <DropdownMenuItem onClick={() => handleExport("json")}>
             Export as JSON
           </DropdownMenuItem>
@@ -154,12 +161,16 @@ export function FileImportExport({ ads, onImport }: FileImportExportProps) {
 
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline" size="sm">
+          <Button
+            variant="outline"
+            className="dark:text-white/50 dark:bg-brand-darker dark:border-0 "
+            size="sm"
+          >
             <Upload className="h-4 w-4 mr-2" />
             Import
           </Button>
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent className="dark:bg-brand-darker dark:text-white">
           <DialogHeader>
             <DialogTitle>Import Ads</DialogTitle>
             <DialogDescription>

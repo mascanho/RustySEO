@@ -283,11 +283,13 @@ pre:not([class*="robots"]) {
   }
 }
 
-button:where([data-active]) {
-  border-color: var(--tabs-color);
-  @apply dark:bg-white !important;
-}
-
+/* TODO: Don't remember why I added this */
+/* THIS WAS CAUSING THE PPC TO AVE STRANGE STYLING */
+/* button:where([data-active]) { */
+/*   border-color: var(--tabs-color); */
+/*   @apply dark:bg-white !important; */
+/* } */
+/**/
 /* CHARTS COLOURS END */
 
 /* TABS COLOURS */

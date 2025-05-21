@@ -91,7 +91,7 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 w-full">
           {filteredAds.map((ad) => (
-            <Card key={ad.id} className="overflow-hidden">
+            <Card key={ad.id} className="overflow-hidden dark:bg-brand-dark">
               <CardHeader className="pb-2 pt-3">
                 <div className="flex justify-between items-start">
                   <div>
@@ -144,7 +144,7 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-between pt-2 pb-3">
+              <CardFooter className="flex justify-between px-5 pb-3">
                 <Button
                   variant="outline"
                   size="sm"

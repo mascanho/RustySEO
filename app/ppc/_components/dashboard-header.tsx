@@ -28,7 +28,7 @@ export function DashboardHeader({
   showImportExport = false,
 }: DashboardHeaderProps) {
   return (
-    <div className="flex items-center justify-between mb-6">
+    <div className="flex items-center justify-between mb-4">
       <div className="flex items-center gap-3">
         {showBackButton && (
           <Button variant="ghost" size="icon" onClick={onBack}>
@@ -36,9 +36,13 @@ export function DashboardHeader({
           </Button>
         )}
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{heading}</h1>
+          <h1 className="text-2xl font-bold tracking-tight dark:text-white/50">
+            {heading}
+          </h1>
           {description && (
-            <p className="text-muted-foreground">{description}</p>
+            <p className="text-muted-foreground dark:text-white/50">
+              {description}
+            </p>
           )}
         </div>
       </div>
