@@ -37,10 +37,10 @@ export function DashboardLayout({
   return (
     <div className="flex  w-full">
       <Sidebar>
-        <SidebarHeader className="border-b">
+        <SidebarHeader className=" dark:border-brand-dark">
           <div className="flex items-center px-2 py-3">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
+              <div className="h-8 w-8 rounded-full bg-primary dark:bg-brand flex items-center justify-center text-primary-foreground font-bold">
                 A
               </div>
               <div className="font-semibold text-lg">Ad Generator</div>
@@ -106,7 +106,7 @@ export function DashboardLayout({
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
-        <SidebarFooter className="border-t">
+        <SidebarFooter className="border-t dark:border-brand-dark">
           <div className="p-2">
             {onAddNew && (
               <Button className="w-full" size="sm" onClick={onAddNew}>
@@ -118,9 +118,11 @@ export function DashboardLayout({
         </SidebarFooter>
       </Sidebar>
       <div className="flex-1 overflow-auto w-full mt-[4.45rem]">
-        <div className="flex h-[4.8rem] items-center border-b px-4 -mt-2">
-          <SidebarTrigger className="ml-2" />
-          <div className="ml-4 font-medium">Google Ads Generator</div>
+        <div className="flex h-[4.8rem] items-center border-b dark:border-brand-dark px-4 -mt-2">
+          <SidebarTrigger className="ml-2 dark:text-white/50" />
+          <div className="ml-4 font-medium dark:text-white/50">
+            Google Ads Generator
+          </div>
         </div>
         <main className="p-4 md:p-6 w-[calc(100%-20px)] ">{children}</main>
       </div>
