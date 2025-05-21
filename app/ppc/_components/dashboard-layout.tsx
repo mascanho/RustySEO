@@ -60,6 +60,7 @@ export function DashboardLayout({
             </SidebarMenuItem>
             <SidebarMenuItem>
               <SidebarMenuButton
+              className="dark;bg-transparent dark:text-brand-bright"
                 isActive={
                   activeView === "ads" &&
                   !onViewChange.toString().includes("setSidebarView")

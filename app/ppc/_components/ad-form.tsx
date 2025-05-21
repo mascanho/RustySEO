@@ -150,7 +150,7 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
     <div className="space-y-6 w-full max-w-full">
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Ad Type</CardTitle>
+          <CardTitle className="dark:text-white/50">Ad Type</CardTitle>
           <CardDescription>
             Select the type of ad you want to create
           </CardDescription>
