@@ -61,9 +61,7 @@ export function FileUpload({
     return () => {
       unlisten.then((f) => f()).catch(console.error);
     };
-  }, []);
-
-  console.log(progress, "the progress");
+  }, [files]);
 
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
   const maxVisibleFiles = 5;
@@ -351,11 +349,11 @@ export function FileUpload({
               <div
                 key={index}
                 className={cn(
-                  "flex items-center justify-between p-2 border rounded-md dark:border-brand-dark mb-2",
+                  "flex items-center justify-between p-2 border mr-1.5 rounded-md dark:border-brand-dark mb-2",
                 )}
               >
                 <div className="flex items-center">
-                  <div className="w-10 h-10 rounded border-none bg-muted flex items-center justify-center mr-3">
+                  <div className="w-10 h-10 rounded border-none border-r bg-muted flex items-center justify-center mr-3">
                     <span className="text-xs font-medium">
                       {fileWithProgress.file.name
                         .split(".")
@@ -364,7 +362,7 @@ export function FileUpload({
                     </span>
                   </div>
                   <div className="overflow-hidden dark:text-white">
-                    <p className="text-sm font-medium truncate">
+                    <p className="text-sm font-medium truncate text-brand-bright">
                       {fileWithProgress.file.name}
                     </p>
                     <p className="text-xs text-muted-foreground">
