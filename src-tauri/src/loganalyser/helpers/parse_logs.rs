@@ -47,6 +47,7 @@ impl From<ipnet::PrefixLenError> for IpVerificationError {
 
 // Use a static variable to cache taxonomies
 static TAXONOMIES: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));
+static LOG_NUMBER: Lazy<Mutex<i32>> = Lazy::new(|| Mutex::new(0));
 
 // Tauri command to set taxonomies from frontend
 #[tauri::command]
@@ -218,6 +219,11 @@ fn detect_bot(user_agent: &str) -> Option<String> {
 }
 
 pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
+    let mut num = LOG_NUMBER.lock().unwrap();
+
+    // add 1 to x
+    *num += 1;
+
     let re = Regex::new(r#"(?x)
         ^(\S+)\s+\S+\s+\S+\s+\[([^\]]+)\]\s+                              # IP and timestamp
         "(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH)\s+([^?"]+)(?:\?[^"]*)?\s+HTTP/[0-9.]+"\s+  # Method and path

@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertCircle, CheckCircle, UploadCloud, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -10,6 +10,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { getOS } from "../util";
+import { listen } from "@tauri-apps/api/event";
 
 interface FileUploadProps {
   maxSizeMB?: number;
@@ -37,6 +38,32 @@ export function FileUpload({
   const [overallProgress, setOverallProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setLogData } = useLogAnalysis();
+  const [progress, setProgress] = useState({
+    current: 0,
+    total: 0,
+    percent: 0,
+    filename: "",
+  });
+
+  useEffect(() => {
+    const unlisten = listen("progress-update", (event) => {
+      const payload = event.payload;
+      console.log("Progress event received:", payload);
+
+      setProgress({
+        current: payload.current_file,
+        total: payload.total_files,
+        percent: payload.percentage,
+        filename: payload.filename,
+      });
+    });
+
+    return () => {
+      unlisten.then((f) => f()).catch(console.error);
+    };
+  }, []);
+
+  console.log(progress, "the progress");
 
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
   const maxVisibleFiles = 5;
@@ -137,13 +164,13 @@ export function FileUpload({
   const handleUpload = async () => {
     // GET THE OS
     const os = getOS();
-  
+
     if (files.length === 0) return;
-  
+
     setUploading(true);
     setOverallProgress(0);
     await delay(100); // Small delay to allow UI to update
-  
+
     if (os === "Windows" && files.length > 5) {
       toast.info(
         "Whoohaaaa, that is a lot of files. This might take a while, consider uploading less files on each batch.",
@@ -151,22 +178,22 @@ export function FileUpload({
     } else {
       toast.info("RustySEO is analysing your logs...");
     }
-  
+
     if (os === "MacOS" && files.length > 10) {
       toast.info(
         "Whoohaaaa, that is a lot of files. This might take a while...",
       );
     }
-  
+
     try {
       setOverallProgress(10);
       const fileContents: Array<{ filename: string; content: string }> = [];
-  
+
       // Process files in batches for better performance
       const batchSize = 5;
       for (let i = 0; i < files.length; i += batchSize) {
         const batch = files.slice(i, i + batchSize);
-  
+
         // Process batch in parallel, but collect updates safely
         const batchResults = await Promise.allSettled(
           batch.map(async (fileWithProgress, batchIndex) => {
@@ -196,10 +223,10 @@ export function FileUpload({
             }
           }),
         );
-  
+
         // Process the results of Promise.allSettled
         batchResults.forEach((result) => {
-          if (result.status === 'fulfilled') {
+          if (result.status === "fulfilled") {
             // Handle successful promise
             if (result.value.content) {
               fileContents.push(result.value.content);
@@ -215,30 +242,30 @@ export function FileUpload({
             });
           }
         });
-  
+
         // Update progress
         const progress = 10 + (i / files.length) * 50;
         setOverallProgress(progress);
         await new Promise((resolve) => setTimeout(resolve, 0)); // Yield to main thread
       }
-  
+
       setOverallProgress(60);
       const logContents = fileContents.map((fc) => [fc.filename, fc.content]);
-  
+
       // Send all files in a single request
       const result = await invoke("check_logs_command", {
         data: { log_contents: logContents },
       });
-  
+
       setLogData(result);
       setOverallProgress(95);
       await delay(300);
-  
+
       // Final update with all files marked as successful
       setFiles((prev) => prev.map((f) => ({ ...f, success: true })));
       setOverallProgress(100);
       await delay(500);
-  
+
       closeDialog();
       toast.success("Log analysis complete!");
     } catch (err) {
@@ -249,7 +276,6 @@ export function FileUpload({
       setUploading(false);
     }
   };
-  
 
   const handleRemoveFile = (index: number) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
@@ -360,46 +386,47 @@ export function FileUpload({
           </div>
 
           {uploading && (
-  <div className="w-full mt-2">
-    <Progress
-      value={overallProgress}
-      className={`h-2 bg-gray-200 dark:bg-gray-700 [&>div]:bg-brand-bright ${uploading ? 'pulse' : ''}`}
-    />
-    <div className="flex justify-between items-center text-xs mt-1">
-      <div className="flex items-center">
-        {overallProgress === 100 ? (
-          "Upload complete"
-        ) : (
-          <>
-            <span className="flex items-center">
-              {overallProgress < 40
-                ? "Reading files"
-                : overallProgress < 60
-                  ? "Processing files"
-                  : overallProgress < 80
-                    ? "Preparing data"
-                    : "Uploading data"}
-              <span className="flex items-center mx-2">
-                <span className="animate-bounce [animation-delay:-0.3s]">
-                  .
-                </span>
-                <span className="animate-bounce [animation-delay:-0.15s]">
-                  .
-                </span>
-                <span className="animate-bounce">.</span>
-              </span>
-              {Math.round(overallProgress)}%
-            </span>
-          </>
-        )}
-      </div>
-      {overallProgress === 100 && (
-        <CheckCircle className="h-4 w-4 text-green-500" />
-      )}
-    </div>
-  </div>
-)}
+            <div className="w-full mt-2">
+              {/* Overall progress bar */}
+              <Progress
+                value={overallProgress}
+                className="h-2 bg-gray-200 dark:bg-gray-700 [&>div]:bg-brand-bright"
+              />
 
+              {/* Current file progress */}
+              <div className="mt-2">
+                <div className="flex justify-between text-xs mb-1">
+                  <span>Processing: {progress.filename}</span>
+                  <span>{progress.percent}%</span>
+                </div>
+                <Progress
+                  value={progress.percent}
+                  className="h-2 bg-gray-200 dark:bg-gray-700 [&>div]:bg-blue-500"
+                />
+                <div className="text-xs mt-1">
+                  File {progress.current} of {progress.total}
+                </div>
+              </div>
+
+              {/* Status text */}
+              <div className="flex justify-between items-center text-xs mt-2">
+                <div>
+                  {overallProgress === 100 ? (
+                    "Complete!"
+                  ) : (
+                    <>
+                      {overallProgress < 40 && "Reading files..."}
+                      {overallProgress >= 40 &&
+                        overallProgress < 70 &&
+                        "Processing..."}
+                      {overallProgress >= 70 && "Finalizing..."}
+                    </>
+                  )}
+                </div>
+                <div>{Math.round(overallProgress)}%</div>
+              </div>
+            </div>
+          )}
 
           <Button
             onClick={handleUpload}

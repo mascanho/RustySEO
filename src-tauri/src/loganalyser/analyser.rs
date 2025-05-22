@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
+use tauri::{Emitter, Manager};
 
 use crate::loganalyser::helpers::{
     browser_trim_name, country_extractor::extract_country, crawler_type::is_crawler,
@@ -82,22 +83,48 @@ pub struct LogInput {
     pub log_contents: Vec<(String, String)>, // Now accepts multiple files with their names
 }
 
-pub fn analyse_log(data: LogInput) -> Result<LogResult, String> {
+#[derive(Serialize, Deserialize, Clone)]
+struct ProgressUpdate {
+    current_file: usize,
+    total_files: i32,
+    percentage: f32,
+    filename: String,
+}
+
+pub fn analyse_log(
+    data: LogInput,
+    log_count: &i32,
+    app_handle: tauri::AppHandle,
+) -> Result<LogResult, String> {
     let mut all_entries = Vec::new();
-    let mut file_count = 0;
-
-
-
+    let mut file_count: usize = 0;
 
     // Process each file
     for (filename, log_content) in data.log_contents {
         file_count += 1;
 
+        let total = *log_count;
+        let percentage = (file_count as f32 / total as f32) * 100.0;
+
         println!("Processing file: {}", filename);
+        println!("Total logs: {}", total);
+        println!("Processing log: {}", file_count);
+        println!("Percentage complete: {:.2}%", percentage);
+
+        // SEND PROGRESS TO THE FRONT END
+        app_handle
+            .emit(
+                "progress-update",
+                ProgressUpdate {
+                    current_file: file_count,
+                    total_files: total,
+                    percentage,
+                    filename: filename.clone(),
+                },
+            )
+            .unwrap();
 
         let entries = parse_log_entries(&log_content);
-
-
 
         // Add filename to each entry
         let entries_with_filename: Vec<LogEntry> = entries
