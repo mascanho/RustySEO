@@ -30,6 +30,7 @@ interface AdPreviewProps {
 }
 
 export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
+  // All hooks must be declared at the top
   const [currentAdIndex, setCurrentAdIndex] = useState(
     allAds.findIndex((a) => a.id === ad?.id),
   );
@@ -42,7 +43,61 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
   const [viewMode, setViewMode] = useState<"single" | "grid">("single");
   const autoRotateTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // If no ad is provided or allAds is empty, show a message
+  // Reset indices and start auto-rotation when ad changes
+  useEffect(() => {
+    if (!ad || allAds.length === 0) return;
+    
+    setHeadlineIndex(0);
+    setDescriptionIndex(0);
+
+    const validHeadlines = ad.headlines.filter((h) => h.trim());
+    const validDescriptions = ad.descriptions.filter((d) => d.trim());
+
+    // Calculate max indices for cycling
+    const maxHeadlineIndex = Math.max(
+      0,
+      Math.ceil(validHeadlines.length / 4) - 1,
+    );
+    const maxDescriptionIndex = Math.max(0, validDescriptions.length - 1);
+
+    // Should auto-rotate headlines? Only if there are more than 4
+    const shouldAutoRotateHeadlines = validHeadlines.length > 4;
+
+    // Start auto-rotation of headlines and descriptions
+    const startAutoRotation = () => {
+      if (autoRotateTimerRef.current) {
+        clearInterval(autoRotateTimerRef.current);
+      }
+
+      if (!shouldAutoRotateHeadlines && validDescriptions.length <= 1) {
+        return; // No need to rotate if there aren't enough headlines/descriptions
+      }
+
+      autoRotateTimerRef.current = setInterval(() => {
+        if (shouldAutoRotateHeadlines) {
+          setHeadlineIndex((prev) => (prev < maxHeadlineIndex ? prev + 1 : 0));
+        }
+
+        if (validDescriptions.length > 1) {
+          setDescriptionIndex((prev) =>
+            prev < maxDescriptionIndex ? prev + 1 : 0,
+          );
+        }
+      }, 3000); // Rotate every 3 seconds
+    };
+
+    if (shouldAutoRotateHeadlines) {
+      startAutoRotation();
+    }
+
+    return () => {
+      if (autoRotateTimerRef.current) {
+        clearInterval(autoRotateTimerRef.current);
+      }
+    };
+  }, [ad?.id]);
+
+  // Early return only after all hooks are declared
   if (!ad || allAds.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -54,7 +109,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
     );
   }
 
-  // Filter out empty headlines and descriptions
+  // Now safe to use ad and allAds since we've returned early if they're invalid
   const validHeadlines = ad.headlines.filter((h) => h.trim());
   const validDescriptions = ad.descriptions.filter((d) => d.trim());
 
@@ -70,45 +125,6 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
 
   // Should auto-rotate headlines? Only if there are more than 4
   const shouldAutoRotateHeadlines = validHeadlines.length > 4;
-
-  // Start auto-rotation of headlines and descriptions
-  const startAutoRotation = () => {
-    if (autoRotateTimerRef.current) {
-      clearInterval(autoRotateTimerRef.current);
-    }
-
-    if (!shouldAutoRotateHeadlines && validDescriptions.length <= 1) {
-      return; // No need to rotate if there aren't enough headlines/descriptions
-    }
-
-    autoRotateTimerRef.current = setInterval(() => {
-      if (shouldAutoRotateHeadlines) {
-        setHeadlineIndex((prev) => (prev < maxHeadlineIndex ? prev + 1 : 0));
-      }
-
-      if (validDescriptions.length > 1) {
-        setDescriptionIndex((prev) =>
-          prev < maxDescriptionIndex ? prev + 1 : 0,
-        );
-      }
-    }, 3000); // Rotate every 3 seconds
-  };
-
-  // Reset indices and start auto-rotation when ad changes
-  useEffect(() => {
-    setHeadlineIndex(0);
-    setDescriptionIndex(0);
-
-    if (shouldAutoRotateHeadlines) {
-      startAutoRotation();
-    }
-
-    return () => {
-      if (autoRotateTimerRef.current) {
-        clearInterval(autoRotateTimerRef.current);
-      }
-    };
-  }, [ad?.id, shouldAutoRotateHeadlines]);
 
   // Toggle auto-rotation
   const toggleAutoRotation = () => {
