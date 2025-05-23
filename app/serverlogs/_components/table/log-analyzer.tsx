@@ -110,6 +110,7 @@ export function LogAnalyzer() {
   const [domain, setDomain] = useState("");
   const [showOnTables, setShowOnTables] = useState(false);
   const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
+  const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
 
   // Helper functions
   const formatDate = useCallback((dateString: string) => {
@@ -220,6 +221,17 @@ export function LogAnalyzer() {
           }
         }
 
+        // Apply Bot type filter (Mobile or Desktop)
+        if (botTypeFilter !== null) {
+          if (botTypeFilter === "Mobile") {
+            result = result.filter((log) => log?.user_agent.includes("Mobile"));
+          } else if (botTypeFilter === "Desktop") {
+            result = result.filter(
+              (log) => !log?.user_agent.includes("Mobile"),
+            );
+          }
+        }
+
         // Apply verified filter
         if (verifiedFilter !== null) {
           result = result.filter((log) => log.verified === verifiedFilter);
@@ -267,6 +279,7 @@ export function LogAnalyzer() {
       botFilter,
       sortConfig,
       verifiedFilter,
+      botTypeFilter,
     ],
   );
 
@@ -331,7 +344,8 @@ export function LogAnalyzer() {
     setSortConfig(null);
     setExpandedRow(null);
     setFileTypeFilter([]);
-    setVerifiedFieter(null);
+    setVerifiedFilter(null);
+    setBotTypeFilter(null);
   }, []);
 
   // Export logs as CSV
@@ -603,13 +617,30 @@ export function LogAnalyzer() {
               setBotFilter(value === "all" ? null : value)
             }
           >
+            <SelectTrigger className="w-[125px] dark:bg-brand-darker dark:text-white">
+              <SelectValue placeholder="Bot/Human" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Requests</SelectItem>
+              <SelectItem value="bot">🤖 Robots</SelectItem>
+              <SelectItem value="Human">🙋 Human</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* SELECT BOT TYPE (DESKTOP OR MOBILE) */}
+          <Select
+            value={botTypeFilter === null ? "all" : botTypeFilter}
+            onValueChange={(value) =>
+              setBotTypeFilter(value === "all" ? null : value)
+            }
+          >
             <SelectTrigger className="w-[120px] dark:bg-brand-darker dark:text-white">
               <SelectValue placeholder="Bot/Human" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="bot">🤖 Robots</SelectItem>
-              <SelectItem value="Human">🙋 Human</SelectItem>
+              <SelectItem value="all">All devices</SelectItem>
+              <SelectItem value="Desktop">Desktop</SelectItem>
+              <SelectItem value="Mobile">Mobile</SelectItem>
             </SelectContent>
           </Select>
 

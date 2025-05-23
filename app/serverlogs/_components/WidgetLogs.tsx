@@ -254,7 +254,7 @@ export default function WidgetLogs() {
                     </DialogTrigger>
 
                     {entry?.name === "Google" ? (
-                      <DialogContent className="max-w-[90%] min-h-96 overflow-hidden">
+                      <DialogContent className="max-w-[90%] min-h-96 overflow-hidden dark:bg-brand-darker dark:border-brand-bright">
                         <Tabs defaultValue="overview">
                           <Tabs.List className="mb-2 mx-1">
                             <Tabs.Tab value="overview">
@@ -273,7 +273,7 @@ export default function WidgetLogs() {
                         </Tabs>
                       </DialogContent>
                     ) : (
-                      <DialogContent className="max-w-md">
+                      <DialogContent className="max-w-md dark:text-white dark:border-brand-bright dark:bg-brand-darker">
                         <DialogHeader>
                           <DialogTitle>{entry.name} Details</DialogTitle>
                         </DialogHeader>

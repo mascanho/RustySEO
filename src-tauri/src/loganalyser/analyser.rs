@@ -1,3 +1,4 @@
+use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::mpsc;
@@ -99,7 +100,7 @@ pub fn analyse_log(
     app_handle: tauri::AppHandle,
 ) -> Result<LogResult, String> {
     let mut all_entries = Vec::new();
-    let mut file_count: usize = 0;
+    let file_count = data.log_contents.len();
 
     // Create channel for progress updates
     let (progress_tx, progress_rx) = mpsc::channel();
@@ -114,62 +115,64 @@ pub fn analyse_log(
         }
     });
 
-    // Process each file
-    for (filename, log_content) in data.log_contents {
-        file_count += 1;
+    // Process each file in parallel
+    let entries: Vec<LogEntry> = data
+        .log_contents
+        .par_iter() // Parallel iterator
+        .enumerate()
+        .flat_map(|(index, (filename, log_content))| {
+            let entries = parse_log_entries(log_content);
 
-        let entries = parse_log_entries(&log_content);
+            // Add filename to each entry
+            let entries_with_filename: Vec<LogEntry> = entries
+                .into_iter()
+                .map(|e| {
+                    let is_crawler = is_crawler(&e.user_agent);
+                    LogEntry {
+                        ip: e.ip.clone(),
+                        timestamp: e.timestamp.format("%Y-%m-%d %H:%M:%S").to_string(),
+                        method: e.method,
+                        path: e.path,
+                        status: e.status,
+                        user_agent: e.user_agent,
+                        referer: e.referer.unwrap_or_default(),
+                        response_size: e.response_size,
+                        country: extract_country(&e.ip),
+                        crawler_type: e.crawler_type,
+                        is_crawler,
+                        file_type: e.file_type,
+                        browser: browser_trim_name::trim_browser_name(&e.browser),
+                        verified: e.verified,
+                        taxonomy: e.taxonomy,
+                        filename: filename.clone(),
+                    }
+                })
+                .collect();
 
-        // Add filename to each entry
-        let entries_with_filename: Vec<LogEntry> = entries
-            .into_iter()
-            .map(|e| {
-                let is_crawler = is_crawler(&e.user_agent);
-                LogEntry {
-                    ip: e.ip.clone(),
-                    timestamp: e.timestamp.format("%Y-%m-%d %H:%M:%S").to_string(),
-                    method: e.method,
-                    path: e.path,
-                    status: e.status,
-                    user_agent: e.user_agent,
-                    referer: e.referer.unwrap_or_default(),
-                    response_size: e.response_size,
-                    country: extract_country(&e.ip),
-                    crawler_type: e.crawler_type,
-                    is_crawler,
-                    file_type: e.file_type,
-                    browser: browser_trim_name::trim_browser_name(&e.browser),
-                    verified: e.verified,
-                    taxonomy: e.taxonomy,
-                    filename: filename.clone(), // Add filename to each entry
-                }
-            })
-            .collect();
+            // Send progress update
+            let total = *log_count;
+            let percentage = file_count as f32 / total as f32 * 100.0;
 
-        // STREAM THE INFORMATION TO THE FRONTEND
+            // OUTPUT THE PROCESSING IN THE TERMINAL
+            println!("Processing file: {}", filename);
+            println!("Total logs: {}", total);
+            println!("Processing log: {}", file_count);
+            println!("Percentage complete: {:.2}%", percentage);
 
-        let total = *log_count;
-        let percentage = (file_count as f32 / total as f32) * 100.0;
+            progress_tx
+                .send(ProgressUpdate {
+                    current_file: index + 1,
+                    total_files: total,
+                    percentage,
+                    filename: filename.clone(),
+                })
+                .unwrap();
 
-        println!("Processing file: {}", filename);
-        println!("Total logs: {}", total);
-        println!("Processing log: {}", file_count);
-        println!("Percentage complete: {:.2}%", percentage);
+            entries_with_filename
+        })
+        .collect();
 
-        all_entries.extend(entries_with_filename);
-
-        // SEND PROGRESS TO THE FRONT END
-        // Send progress update
-
-        progress_tx
-            .send(ProgressUpdate {
-                current_file: file_count as usize + 1,
-                total_files: total,
-                percentage,
-                filename: filename.clone(),
-            })
-            .unwrap();
-    }
+    all_entries.extend(entries);
 
     if all_entries.is_empty() {
         return Ok(LogResult {

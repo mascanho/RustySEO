@@ -110,6 +110,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [domain, setDomain] = useState("");
   const [showOnTables, setShowOnTables] = useState(false);
+  const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
 
   // GET THE domain from the local storage to use on the table to complement the path
   useEffect(() => {
@@ -179,6 +180,14 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
       result = result.filter((log) => log.verified === verifiedFilter);
     }
 
+    if (botTypeFilter !== null) {
+      if (botTypeFilter === "Mobile") {
+        result = result.filter((log) => log.user_agent.includes("Mobile"));
+      } else if (botTypeFilter === "Desktop") {
+        result = result.filter((log) => !log.user_agent.includes("Mobile"));
+      }
+    }
+
     if (sortConfig) {
       result.sort((a, b) => {
         const aValue = a[sortConfig.key as keyof LogEntry];
@@ -210,6 +219,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     sortConfig,
     initialLogs,
     fileTypeFilter,
+    botTypeFilter,
   ]);
 
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -237,6 +247,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     setSortConfig(null);
     setExpandedRow(null);
     setFilteredLogs(initialLogs);
+    setBotTypeFilter(null);
   };
 
   const exportCSV = async () => {
@@ -383,7 +394,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
           <Input
             type="search"
             placeholder="Search by IP, path, user agent, or referer..."
-            className="pl-8 w-full dark:text-white"
+            className="pl-8 w-full dark:text-white dark:bg-brand-darker"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -520,9 +531,56 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
               <SelectValue placeholder="Verification" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All IPs</SelectItem>
-              <SelectItem value="verified">Verified</SelectItem>
-              <SelectItem value="unverified">Unverified</SelectItem>
+              <SelectItem
+                className="hover:bg-brand-bright hover:text-white"
+                value="all"
+              >
+                All IPs
+              </SelectItem>
+              <SelectItem
+                className="hover:bg-brand-bright hover:text-white"
+                value="verified"
+              >
+                Verified
+              </SelectItem>
+              <SelectItem
+                className="hover:bg-brand-bright hover:text-white"
+                value="unverified"
+              >
+                Unverified
+              </SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* SELECT BOT TYPE (DESKTOP OR MOBILE) */}
+          <Select
+            value={botTypeFilter === null ? "all" : botTypeFilter}
+            onValueChange={(value) =>
+              setBotTypeFilter(value === "all" ? null : value)
+            }
+          >
+            <SelectTrigger className="w-[120px] dark:bg-brand-darker dark:text-white">
+              <SelectValue placeholder="Bot/Human" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem
+                className="hover:bg-brand-bright hover:text-white"
+                value="all"
+              >
+                All devices
+              </SelectItem>
+              <SelectItem
+                className="hover:bg-brand-bright hover:text-white"
+                value="Desktop"
+              >
+                Desktop
+              </SelectItem>
+              <SelectItem
+                className="hover:bg-brand-bright hover:text-white"
+                value="Mobile"
+              >
+                Mobile
+              </SelectItem>
             </SelectContent>
           </Select>
 

@@ -24,7 +24,7 @@ const GeneralTopSideBarContainer = () => {
         <div className="w-[7em]">Total</div>
         <div className="w-[3.5em]">%</div>
       </section>
-      <div className="overflow-hidden">
+      <div className="overflow-hidden not-selectable">
         <Summary />
         {/* TODO: Needs to be finished */}
         {/* <Content /> */}

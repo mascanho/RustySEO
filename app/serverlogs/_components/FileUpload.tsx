@@ -344,12 +344,12 @@ export function FileUpload({
             </Button>
           </div>
 
-          <div className="max-h-60 overflow-y-auto mb-2">
+          <div className="max-h-60 overflow-y-auto mb-2 dark:bg-black/50 px-2 rounded-md">
             {files.map((fileWithProgress, index) => (
               <div
                 key={index}
                 className={cn(
-                  "flex items-center justify-between p-2 border mr-1.5 rounded-md dark:border-brand-dark mb-2",
+                  "flex items-center space justify-between p-2 border mr-0.5 rounded-md dark:border-brand-dark my-2   dark:bg-slate-900",
                 )}
               >
                 <div className="flex items-center">
@@ -414,7 +414,7 @@ export function FileUpload({
 
           <Button
             onClick={handleUpload}
-            className={`first-letter:w-full mt-4 bg-brand-bright text-white dark:bg-brand-bright dark:text-white hover:bg-brand-bright/90 dark:hover:bg-brand-bright/90 w-full ${uploading && "pulse w-full"}`}
+            className={`first-letter:w-full mt-4 bg-brand-bright text-white dark:bg-brand-bright dark:text-white hover:bg-brand-bright/90 dark:hover:bg-brand-bright/90 w-full `}
             disabled={uploading}
           >
             {uploading ? (

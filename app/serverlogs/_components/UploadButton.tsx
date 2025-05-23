@@ -28,7 +28,7 @@ function UploadButton() {
             Upload Logs
           </button>
         </DialogTrigger>
-        <DialogContent className="p-8">
+        <DialogContent className="p-8 dark:bg-brand-darker dark:border-brand-bright ">
           <FileUpload closeDialog={() => setUploadOpen(false)} />
         </DialogContent>
       </Dialog>
@@ -43,7 +43,7 @@ function UploadButton() {
             Settings
           </button>
         </DialogTrigger>
-        <DialogContent className="p-8 max-w-[700px] h-[540px]">
+        <DialogContent className="p-8 max-w-[700px] h-[540px] dark:bg-brand-darker">
           <Tabs>
             <TabsList className="grid w-full grid-cols-3 bg-gray-100 dark:bg-brand-darker">
               <TabsTrigger value="domain">Domain</TabsTrigger>
