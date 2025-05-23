@@ -219,11 +219,7 @@ fn detect_bot(user_agent: &str) -> Option<String> {
 }
 
 pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
-
     println!("Parsing log entries: {}", log);
-
-    let mut num = LOG_NUMBER.lock().unwrap();
-
 
     let re = Regex::new(r#"(?x)
         ^(\S+)\s+\S+\s+\S+\s+\[([^\]]+)\]\s+                              # IP and timestamp

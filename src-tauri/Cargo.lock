@@ -300,6 +300,7 @@ dependencies = [
  "r2d2",
  "r2d2_sqlite",
  "rand 0.8.5",
+ "rayon",
  "regex",
  "reqwest 0.12.12",
  "rusqlite",
