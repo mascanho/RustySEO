@@ -103,28 +103,8 @@ pub fn analyse_log(
     for (filename, log_content) in data.log_contents {
         file_count += 1;
 
-        let total = *log_count;
-        let percentage = (file_count as f32 / total as f32) * 100.0;
 
-        println!("Processing file: {}", filename);
-        println!("Total logs: {}", total);
-        println!("Processing log: {}", file_count);
-        println!("Percentage complete: {:.2}%", percentage);
-
-        // SEND PROGRESS TO THE FRONT END
-        app_handle
-            .emit(
-                "progress-update",
-                ProgressUpdate {
-                    current_file: file_count,
-                    total_files: total,
-                    percentage,
-                    filename: filename.clone(),
-                },
-            )
-            .unwrap();
-
-        let entries = parse_log_entries(&log_content);
+        let entries = parse_log_entries(&log_content);    
 
         // Add filename to each entry
         let entries_with_filename: Vec<LogEntry> = entries
@@ -152,8 +132,36 @@ pub fn analyse_log(
             })
             .collect();
 
+
+            // STREAM THE INFORMATION TO THE FRONTEND
+
+            let total = *log_count;
+            let percentage = (file_count as f32 / total as f32) * 100.0;
+        
+            println!("Processing file: {}", filename);
+            println!("Total logs: {}", total);
+            println!("Processing log: {}", file_count);
+            println!("Percentage complete: {:.2}%", percentage);
+        
+            // SEND PROGRESS TO THE FRONT END
+            app_handle
+                .emit(
+                    "progress-update",
+                    ProgressUpdate {
+                        current_file: file_count,
+                        total_files: total,
+                        percentage,
+                        filename: filename.clone(),
+                    },
+                )
+                .unwrap();
+        
+
         all_entries.extend(entries_with_filename);
     }
+
+
+  
 
     if all_entries.is_empty() {
         return Ok(LogResult {
@@ -306,6 +314,8 @@ pub fn analyse_log(
             .collect(),
     );
 
+   
+
     Ok(LogResult {
         overview: LogAnalysisResult {
             message: "Log analysis completed".to_string(),
@@ -336,4 +346,6 @@ pub fn analyse_log(
         },
         entries: all_entries,
     })
+
+   
 }
