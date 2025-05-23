@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
+use std::sync::mpsc;
+use std::thread;
 use tauri::{Emitter, Manager};
 
 use crate::loganalyser::helpers::{
@@ -99,12 +101,24 @@ pub fn analyse_log(
     let mut all_entries = Vec::new();
     let mut file_count: usize = 0;
 
+    // Create channel for progress updates
+    let (progress_tx, progress_rx) = mpsc::channel();
+
+    // Spawn progress emitter thread
+    let app_handle_clone = app_handle.clone();
+    thread::spawn(move || {
+        for update in progress_rx {
+            app_handle_clone
+                .emit("progress-update", update)
+                .unwrap_or_else(|e| eprintln!("Progress update failed: {}", e));
+        }
+    });
+
     // Process each file
     for (filename, log_content) in data.log_contents {
         file_count += 1;
 
-
-        let entries = parse_log_entries(&log_content);    
+        let entries = parse_log_entries(&log_content);
 
         // Add filename to each entry
         let entries_with_filename: Vec<LogEntry> = entries
@@ -132,36 +146,30 @@ pub fn analyse_log(
             })
             .collect();
 
+        // STREAM THE INFORMATION TO THE FRONTEND
 
-            // STREAM THE INFORMATION TO THE FRONTEND
+        let total = *log_count;
+        let percentage = (file_count as f32 / total as f32) * 100.0;
 
-            let total = *log_count;
-            let percentage = (file_count as f32 / total as f32) * 100.0;
-        
-            println!("Processing file: {}", filename);
-            println!("Total logs: {}", total);
-            println!("Processing log: {}", file_count);
-            println!("Percentage complete: {:.2}%", percentage);
-        
-            // SEND PROGRESS TO THE FRONT END
-            app_handle
-                .emit(
-                    "progress-update",
-                    ProgressUpdate {
-                        current_file: file_count,
-                        total_files: total,
-                        percentage,
-                        filename: filename.clone(),
-                    },
-                )
-                .unwrap();
-        
+        println!("Processing file: {}", filename);
+        println!("Total logs: {}", total);
+        println!("Processing log: {}", file_count);
+        println!("Percentage complete: {:.2}%", percentage);
 
         all_entries.extend(entries_with_filename);
+
+        // SEND PROGRESS TO THE FRONT END
+        // Send progress update
+
+        progress_tx
+            .send(ProgressUpdate {
+                current_file: file_count as usize + 1,
+                total_files: total,
+                percentage,
+                filename: filename.clone(),
+            })
+            .unwrap();
     }
-
-
-  
 
     if all_entries.is_empty() {
         return Ok(LogResult {
@@ -314,8 +322,6 @@ pub fn analyse_log(
             .collect(),
     );
 
-   
-
     Ok(LogResult {
         overview: LogAnalysisResult {
             message: "Log analysis completed".to_string(),
@@ -346,6 +352,4 @@ pub fn analyse_log(
         },
         entries: all_entries,
     })
-
-   
 }

@@ -384,17 +384,11 @@ export function FileUpload({
           </div>
 
           {uploading && (
-            <div className="w-full mt-2">
-              {/* Overall progress bar */}
-              <Progress
-                value={overallProgress}
-                className="h-2 bg-gray-200 dark:bg-gray-700 [&>div]:bg-brand-bright"
-              />
-
+            <div className="w-full mt-2 space-y-2 ">
               {/* Current file progress */}
               <div className="mt-2">
                 <div className="flex justify-between text-xs mb-1">
-                  <span>Processing: {progress.filename}</span>
+                  <span>Parsing: {progress.filename}</span>
                   <span>{progress.percent}%</span>
                 </div>
                 <Progress
@@ -406,35 +400,28 @@ export function FileUpload({
                 </div>
               </div>
 
-              {/* Status text */}
-              <div className="flex justify-between items-center text-xs mt-2">
-                <div>
-                  {overallProgress === 100 ? (
-                    "Complete!"
-                  ) : (
-                    <>
-                      {overallProgress < 40 && "Reading files..."}
-                      {overallProgress >= 40 &&
-                        overallProgress < 70 &&
-                        "Processing..."}
-                      {overallProgress >= 70 && "Finalizing..."}
-                    </>
-                  )}
-                </div>
-                <div>{Math.round(overallProgress)}%</div>
+              {/* Overall progress bar */}
+              <div className="flex justify-between h-3 ">
+                <span className="text-xs">Overall progress</span>
+                <div className="text-xs">{Math.round(overallProgress)}%</div>
               </div>
+              <Progress
+                value={overallProgress}
+                className="h-2 bg-gray-200 dark:bg-gray-700 [&>div]:bg-brand-bright"
+              />
             </div>
           )}
 
           <Button
             onClick={handleUpload}
-            className="w-full mt-2 bg-brand-bright text-white dark:bg-brand-bright dark:text-white hover:bg-brand-bright/90 dark:hover:bg-brand-bright/90"
+            className={`first-letter:w-full mt-4 bg-brand-bright text-white dark:bg-brand-bright dark:text-white hover:bg-brand-bright/90 dark:hover:bg-brand-bright/90 w-full ${uploading && "pulse w-full"}`}
             disabled={uploading}
           >
             {uploading ? (
-              <span className="flex items-center">
-                Uploading... {Math.round(overallProgress)}%
-              </span>
+              <>
+                <span className="flex items-center">Analysing...</span>
+                <div class="border-gray-300 h-4 w-4 animate-spin rounded-full border-2 border-t-blue-600" />
+              </>
             ) : (
               `Upload ${files.length} File${files.length !== 1 ? "s" : ""}`
             )}
