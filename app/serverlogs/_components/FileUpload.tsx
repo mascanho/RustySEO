@@ -26,7 +26,7 @@ interface FileWithProgress {
 }
 
 export function FileUpload({
-  maxSizeMB = 345,
+  maxSizeMB = 245,
   acceptedFileTypes = ["text/plain", ".log", ".txt"],
   className,
   closeDialog,
