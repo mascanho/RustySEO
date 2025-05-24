@@ -10,6 +10,7 @@ use super::analyser::{LogAnalysisResult, LogInput};
 pub struct DatabaseResults {
     pub id: i32,
     pub date: String,
+    pub filename: String,
     pub log: serde_json::Value,
 }
 
@@ -27,6 +28,7 @@ impl Database {
             "CREATE TABLE IF NOT EXISTS server_logs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 date TEXT NOT NULL,
+                filename TEXT NOT NULL,
                 log TEXT NOT NULL
             )",
             [], // no params
@@ -46,16 +48,24 @@ pub fn create_serverlog_db(db_name: &str) {
     }
 }
 
-pub fn add_data_to_serverlog_db(db_name: &str, data: &LogInput) {
+pub fn add_data_to_serverlog_db(db_name: &str, data: &LogInput, filename: &str) {
     let today_date = chrono::Utc::today().format("%Y-%m-%d").to_string();
-    let db = Database::new(db_name).unwrap();
+    let mut db = Database::new(db_name).unwrap();
+
+    let tx = db.conn.transaction().unwrap(); // Start transaction
 
     for log in &data.log_contents {
-        let _ = db.conn.execute(
-            "INSERT INTO server_logs (date, log_name, log) VALUES (?1, ?2)",
-            params![today_date, serde_json::to_string(&log).unwrap()],
-        );
+        if let Err(e) = tx.execute(
+            "INSERT INTO server_logs (date, filename, log) VALUES (?1, ?2, ?3)",
+            params![today_date, filename, serde_json::to_string(&log).unwrap()],
+        ) {
+            eprintln!("Failed to insert log: {}", e);
+            tx.rollback().unwrap();
+            return;
+        }
     }
+
+    tx.commit().unwrap();
 }
 
 #[tauri::command]

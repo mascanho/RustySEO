@@ -2,10 +2,12 @@
 "use client";
 
 import React from "react";
-import { X, Save, Loader2 } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardFooter } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface LogEntry {
   id: string;
@@ -17,6 +19,7 @@ interface LogEntry {
 export default function LogsDBManager({ closeDialog }) {
   const [logs, setLogs] = React.useState<LogEntry[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [autoRefresh, setAutoRefresh] = React.useState(false);
 
   // Generate 15 placeholder logs
   React.useEffect(() => {
@@ -151,41 +154,74 @@ export default function LogsDBManager({ closeDialog }) {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-4">
-                {/* Left Column - Log Metadata */}
-                <div>
-                  <h3 className="text-sm font-medium mb-2 text-left">
-                    Log Details
-                  </h3>
-                  <div className="border rounded-md p-2 h-[370px] overflow-y-auto">
-                    {logs.map((log) => (
-                      <div
-                        key={log.id}
-                        className="flex items-start border justify-between p-2 mb-2 bg-muted rounded-md"
-                      >
-                        <div>
-                          <p className="text-xs font-medium">{log.timestamp}</p>
-                          <p className={`text-xs ${getLevelColor(log.level)}`}>
-                            {log.level.toUpperCase()}
-                          </p>
+                {/* Left Column - Toggle Settings */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-sm font-medium mb-4 text-left">
+                      Log Settings
+                    </h3>
+                    <div className="space-y-4 p-4 border rounded-md bg-muted">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="auto-refresh"
+                          checked={autoRefresh}
+                          onCheckedChange={setAutoRefresh}
+                        />
+                        <Label htmlFor="auto-refresh">Auto Refresh</Label>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        When enabled, logs will automatically refresh every 30
+                        seconds.
+                      </p>
+
+                      <div className="pt-4">
+                        <h4 className="text-xs font-medium mb-2">
+                          Log Level Filter
+                        </h4>
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Switch id="show-errors" defaultChecked />
+                            <Label htmlFor="show-errors">Show Errors</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Switch id="show-warnings" defaultChecked />
+                            <Label htmlFor="show-warnings">Show Warnings</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Switch id="show-info" defaultChecked />
+                            <Label htmlFor="show-info">Show Info</Label>
+                          </div>
                         </div>
                       </div>
-                    ))}
+                    </div>
                   </div>
                 </div>
 
                 {/* Right Column - Log Messages */}
                 <div>
                   <h3 className="text-sm font-medium mb-2 text-left">
-                    Messages
+                    Server Logs
                   </h3>
-                  <div className="border rounded-md p-2 h-[370px] overflow-y-auto">
+                  <div className="border rounded-md h-[370px] overflow-y-auto">
                     {logs.map((log) => (
                       <div
                         key={log.id}
-                        className="flex items-start justify-between p-2 mb-2 bg-muted rounded-md"
+                        className="flex items-start justify-between p-3 border-b"
                       >
-                        <div>
-                          <p className="text-xs dark:text-white/80">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span
+                              className={`text-xs font-mono ${getLevelColor(log.level)}`}
+                            >
+                              [{log.timestamp}]
+                            </span>
+                            <span
+                              className={`text-xs px-2 py-0.5 rounded ${getLevelColor(log.level)} bg-opacity-20 ${log.level === "error" ? "bg-red-500" : log.level === "warn" ? "bg-yellow-500" : "bg-green-500"}`}
+                            >
+                              {log.level.toUpperCase()}
+                            </span>
+                          </div>
+                          <p className="text-xs dark:text-white/80 truncate">
                             {log.message}
                           </p>
                         </div>
@@ -194,7 +230,7 @@ export default function LogsDBManager({ closeDialog }) {
                           size="icon"
                           aria-label="Remove log"
                           disabled={isLoading}
-                          className="h-6 w-6"
+                          className="h-6 w-6 ml-2"
                         >
                           <X className="h-3 w-3 text-muted-foreground" />
                         </Button>

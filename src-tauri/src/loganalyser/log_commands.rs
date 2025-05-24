@@ -5,15 +5,20 @@ use super::{
 use crate::loganalyser::analyser::{analyse_log, LogAnalysisResult, LogInput};
 
 #[tauri::command]
-pub fn check_logs_command(data: LogInput, app: tauri::AppHandle) -> Result<LogResult, String> {
+pub fn check_logs_command(
+    data: LogInput,
+    filename: String,
+    app: tauri::AppHandle,
+) -> Result<LogResult, String> {
     let log_count = data.log_contents.len() as i32;
 
-    println!("Data is: {:?}", &data);
+    //println!("Data is: {:?}", &data.log_contents);
+    println!("Filename is: {:?}", &filename);
 
     // Create the DB
     let _create_table = create_serverlog_db("serverlog.db");
     // Add the data to the debug_assert!
-    let _add_data = add_data_to_serverlog_db("serverlog.db", &data);
+    let _add_data = add_data_to_serverlog_db("serverlog.db", &data, &filename);
 
     match analyse_log(data, &log_count, app) {
         Ok(result) => {
