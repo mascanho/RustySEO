@@ -13,12 +13,36 @@ import { invoke } from "@tauri-apps/api/core";
 import { FaCalendarAlt, FaClock, FaFile } from "react-icons/fa";
 import { FaHourglass } from "react-icons/fa6";
 
-interface LogEntry {
-  id: string;
-  timestamp: string;
-  message: string;
-  level: "info" | "warn" | "error";
-}
+const formatTimestamp = (timestamp) => {
+  if (!timestamp || typeof timestamp !== "string") {
+    return "Invalid Timestamp";
+  }
+
+  try {
+    // Parse the ISO-8601 string (works even with microseconds)
+    const date = new Date(timestamp);
+
+    // Check if the date is invalid
+    if (isNaN(date.getTime())) {
+      return "Invalid Date";
+    }
+
+    // Format in a readable way (24-hour format, UTC)
+    return date.toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour24: true,
+      timeZone: "UTC", // Ensures no timezone conversion
+    });
+  } catch (error) {
+    console.error("Error formatting timestamp:", error);
+    return "Invalid Timestamp";
+  }
+};
 
 export default function LogsDBManager({ closeDialog, dbLogs }: any) {
   // Initialize saveLogs directly from localStorage
@@ -39,6 +63,7 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
       setLogs(JSON.parse(storedLogs));
     }
   }, []);
+  console.log(logsFromDB, "logsFromDB");
 
   useEffect(() => {
     // Write to localStorage only when saveLogs changes
@@ -74,7 +99,7 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
     }
   };
 
-  // REFREWSH BLOGS
+  // REFRESH LOGS
   const handleRefreshLogs = async () => {
     setIsLoading(true);
 
@@ -89,7 +114,7 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
     }
   };
 
-  // DELETE SINGLE BLOG
+  // DELETE SINGLE LOG
   const handleDeleteLog = async (id: string) => {
     try {
       await invoke("delete_log_from_db", { id });
@@ -204,9 +229,12 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <span className={`text-xs font-mono text-gray-500`}>
-                            <FaCalendarAlt className="inline-block -mr-0.5 text-black" />{" "}
-                            {log?.date}
+                          <FaCalendarAlt className="inline-block text-xs ml-[1px] text-black" />{" "}
+                          <span
+                            className={`text-[10px] -ml-[2px] font-mono text-gray-500`}
+                          >
+                            {formatTimestamp(log?.date)}
+                            {/* {log?.timestamp} */}
                           </span>
                         </div>
                       </div>

@@ -51,7 +51,7 @@ pub fn create_serverlog_db(db_name: &str) {
 
 // ADD LOGS TO THE DB
 pub fn add_data_to_serverlog_db(db_name: &str, data: &LogInput) {
-    let today_date = chrono::Utc::now().format("%Y-%m-%d-%H-%M-%S").to_string();
+    let today_date = chrono::Utc::now().to_rfc3339().to_string();
     let mut db = Database::new(db_name).unwrap();
 
     let tx = db.conn.transaction().unwrap(); // Start transaction
