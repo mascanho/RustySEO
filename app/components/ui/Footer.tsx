@@ -234,7 +234,7 @@ const Footer = () => {
         <TodoItems url={url} strategy={""} />
       </MantineDrawer>
 
-      <footer className="w-full justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[99999999999] border-t-2 pb-1.5 dark:border-t-brand-dark flex items-center py-1 text-xs">
+      <footer className="w-full justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[999999999999999] border-t-2 pb-1.5 dark:border-t-brand-dark flex items-center py-1 text-xs">
         <section>
           <div className="flex items-center ml-2 space-x-1 w-full">
             {loading ? (
