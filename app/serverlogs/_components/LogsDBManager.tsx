@@ -83,7 +83,7 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
   const handleRemoveAllLogs = () => {
     try {
       invoke("remove_all_logs_from_serverlog_db", { dbName: "serverlog.db" });
-      setSaveLogs(false);
+      // setSaveLogs(false);
       handleRefreshLogs();
       toast.success("All logs have been removed from database");
     } catch (error) {

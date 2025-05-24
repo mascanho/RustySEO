@@ -17,34 +17,70 @@ import DomainManager from "./DomainManager";
 import LogsDBManager from "./LogsDBManager";
 import { invoke } from "@tauri-apps/api/core";
 import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
+import { IoReload } from "react-icons/io5";
+import { toast } from "sonner";
+import { Tooltip } from "react-tooltip";
+import { useLogAnalysis } from "@/store/ServerLogsStore";
 
 function UploadButton() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [logsFromDB, setLogsFromDB] = useState(false);
   const { setStoredLogsFromDBStore } = useServerLogsStore();
+  const { resetAll } = useLogAnalysis();
+
+  const handleClearStoreLogs = async () => {
+    setLogData([]);
+    toast.success("All previous logs have been removed from cache");
+  };
 
   return (
-    <div className="flex space-x-2 absolute left-1/2 -translate-x-1/2 top-2 z-50">
+    <div className="flex space-x-1.5 absolute left-1/2 -translate-x-1/2 top-2 z-50 items-center">
       {/* Upload Logs Button */}
-      <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
-        <DialogTrigger asChild>
-          <button className="bg-brand-bright rounded-l-2xl  text-xs w-32 h-7 text-white flex justify-center items-center hover:bg-brand-bright/90 transition-colors">
-            <Plus size={18} className="text-xs mr-1 dark:text-white" />
-            Upload Logs
-          </button>
-        </DialogTrigger>
-        <DialogContent className="p-8 dark:bg-brand-darker dark:border-brand-bright ">
-          <FileUpload closeDialog={() => setUploadOpen(false)} />
-        </DialogContent>
-      </Dialog>
+      <>
+        <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
+          <DialogTrigger asChild>
+            <button
+              data-tooltip-id="upload-tooltip"
+              className="bg-brand-bright rounded-l-2xl text-xs w-32 h-7 text-white flex justify-center items-center hover:bg-brand-bright/90 transition-colors active:scale-95"
+            >
+              <Plus size={18} className="text-xs mr-1 dark:text-white" />
+              Upload Logs
+            </button>
+          </DialogTrigger>
+          <DialogContent className="p-8 dark:bg-brand-darker dark:border-brand-bright">
+            <FileUpload closeDialog={() => setUploadOpen(false)} />
+          </DialogContent>
+        </Dialog>
 
-      <Menu className="hidden" />
+        {/* Tooltip must be outside Dialog component */}
+        <Tooltip
+          id="upload-tooltip"
+          place="top"
+          content="Upload or append logs"
+          className="!bg-gray-800 !text-xs"
+        />
+      </>
 
+      <>
+        <aside
+          data-tooltip-id="reload-tooltip"
+          onClick={() => resetAll()}
+          className="bg-red-400 w-7 h-7 flex items-center justify-center text-white rounded-md cursor-pointer active:scale-95"
+        >
+          <IoReload />
+        </aside>
+        <Tooltip
+          id="reload-tooltip"
+          place="top"
+          content="Clear all logs"
+          className="!bg-gray-800 !text-xs"
+        />
+      </>
       {/* Settings Button */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DialogTrigger asChild>
-          <button className="bg-gray-200 dark:bg-gray-700 text-xs w-32 h-7 rounded-r-2xl text-gray-800 dark:text-white flex justify-center items-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+          <button className="bg-gray-200 dark:bg-gray-700 text-xs w-32 h-7 rounded-r-2xl text-gray-800 dark:text-white flex justify-center items-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors active:scale-95">
             <Settings size={15} className="text-xs -ml-3 mr-2" />
             Settings
           </button>

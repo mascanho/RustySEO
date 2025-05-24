@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, CheckCircle, UploadCloud, X } from "lucide-react";
+import { AlertCircle, UploadCloud, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -28,7 +28,7 @@ interface FileWithProgress {
 }
 
 export function FileUpload({
-  maxSizeMB = 245,
+  maxSizeMB = 345,
   acceptedFileTypes = ["text/plain", ".log", ".txt"],
   className,
   closeDialog,
@@ -165,14 +165,13 @@ export function FileUpload({
     new Promise((resolve) => setTimeout(resolve, ms));
 
   const handleUpload = async () => {
-    // GET THE OS
     const os = getOS();
 
     if (files.length === 0) return;
 
     setUploading(true);
     setOverallProgress(0);
-    await delay(100); // Small delay to allow UI to update
+    await delay(100);
 
     if (os === "Windows" && files.length > 5) {
       toast.info(
@@ -192,12 +191,10 @@ export function FileUpload({
       setOverallProgress(10);
       const fileContents: Array<{ filename: string; content: string }> = [];
 
-      // Process files in batches for better performance
       const batchSize = 5;
       for (let i = 0; i < files.length; i += batchSize) {
         const batch = files.slice(i, i + batchSize);
 
-        // Process batch in parallel, but collect updates safely
         const batchResults = await Promise.allSettled(
           batch.map(async (fileWithProgress, batchIndex) => {
             const originalIndex = i + batchIndex;
@@ -227,17 +224,13 @@ export function FileUpload({
           }),
         );
 
-        // Process the results of Promise.allSettled
         batchResults.forEach((result) => {
           if (result.status === "fulfilled") {
-            // Handle successful promise
             if (result.value.content) {
               fileContents.push(result.value.content);
             }
           } else {
-            // Handle rejected promise
             console.error("Error processing file:", result.reason);
-            // Optionally, you can update the state to reflect the error
             setFiles((prevFiles) => {
               const newFiles = [...prevFiles];
               newFiles[result.value.index] = result.value.update;
@@ -246,27 +239,55 @@ export function FileUpload({
           }
         });
 
-        // Update progress
         const progress = 10 + (i / files.length) * 50;
         setOverallProgress(progress);
-        await new Promise((resolve) => setTimeout(resolve, 0)); // Yield to main thread
+        await new Promise((resolve) => setTimeout(resolve, 0));
       }
 
       setOverallProgress(60);
       const logContents = fileContents.map((fc) => [fc.filename, fc.content]);
 
-      // Send all files in a single request
       const result = await invoke("check_logs_command", {
         data: { log_contents: logContents },
         storingLogs,
       });
 
-      setLogData(result);
-      console.log(result, "THE LOGS RESULT -----");
+      // Validate result structure
+      if (!result || !result.overview) {
+        console.error("Invalid result structure:", result);
+        throw new Error("Invalid server response: Missing overview data");
+      }
+
+      // Pass the new data to the store to append
+      setLogData({
+        entries: result.entries || [],
+        overview: result.overview || {
+          message: "",
+          line_count: 0,
+          unique_ips: 0,
+          unique_user_agents: 0,
+          crawler_count: 0,
+          success_rate: 0,
+          totals: {
+            google: 0,
+            bing: 0,
+            semrush: 0,
+            hrefs: 0,
+            moz: 0,
+            uptime: 0,
+            openai: 0,
+            claude: 0,
+            google_bot_pages: [],
+            google_bot_pages_frequency: {},
+          },
+          log_start_time: "",
+          log_finish_time: "",
+        },
+      });
+
       setOverallProgress(95);
       await delay(300);
 
-      // Final update with all files marked as successful
       setFiles((prev) => prev.map((f) => ({ ...f, success: true })));
       setOverallProgress(100);
       await delay(500);
@@ -358,7 +379,7 @@ export function FileUpload({
               <div
                 key={index}
                 className={cn(
-                  "flex items-center space justify-between p-2 border mr-0.5 rounded-md dark:border-brand-dark my-2   dark:bg-slate-900",
+                  "flex items-center space justify-between p-2 border mr-0.5 rounded-md dark:border-brand-dark my-2 dark:bg-slate-900",
                 )}
               >
                 <div className="flex items-center">
@@ -393,8 +414,7 @@ export function FileUpload({
           </div>
 
           {uploading && (
-            <div className="w-full mt-2 space-y-2 ">
-              {/* Current file progress */}
+            <div className="w-full mt-2 space-y-2">
               <div className="mt-2">
                 <div className="flex justify-between text-xs mb-1">
                   <span>Parsing: {progress.filename}</span>
@@ -409,8 +429,7 @@ export function FileUpload({
                 </div>
               </div>
 
-              {/* Overall progress bar */}
-              <div className="flex justify-between h-3 ">
+              <div className="flex justify-between h-3">
                 <span className="text-xs">Overall progress</span>
                 <div className="text-xs">{Math.round(overallProgress)}%</div>
               </div>
@@ -423,20 +442,19 @@ export function FileUpload({
 
           <Button
             onClick={handleUpload}
-            className={`first-letter:w-full mt-4 bg-brand-bright text-white dark:bg-brand-bright dark:text-white hover:bg-brand-bright/90 dark:hover:bg-brand-bright/90 w-full `}
+            className={`first-letter:w-full mt-4 bg-brand-bright text-white dark:bg-brand-bright dark:text-white hover:bg-brand-bright/90 dark:hover:bg-brand-bright/90 w-full`}
             disabled={uploading}
           >
             {uploading ? (
               <>
                 <span className="flex items-center">Analysing...</span>
-                <div class="border-gray-300 h-4 w-4 animate-spin rounded-full border-2 border-t-blue-600" />
+                <div className="border-gray-300 h-4 w-4 animate-spin rounded-full border-2 border-t-blue-600" />
               </>
             ) : (
               `Upload ${files.length} File${files.length !== 1 ? "s" : ""}`
             )}
           </Button>
 
-          {/* DATABASE WARNING */}
           <section className="flex mt-3 -mb-4 w-full items-center justify-center">
             <FaDatabase
               className={`text-xs ${storingLogs ? "pulse text-green-500" : "text-red-600 pulse"}`}
@@ -444,7 +462,7 @@ export function FileUpload({
             <span className="ml-2 text-[10px]">
               {storingLogs
                 ? "Your logs will be appended to the DB"
-                : "Logs will not be added to Databse"}
+                : "Logs will not be added to Database"}
             </span>
           </section>
 
