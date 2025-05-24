@@ -12,6 +12,8 @@ import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
 import { invoke } from "@tauri-apps/api/core";
 import { FaCalendarAlt, FaClock, FaFile } from "react-icons/fa";
 import { FaHourglass } from "react-icons/fa6";
+import Spinner from "@/app/components/ui/Sidebar/checks/_components/Spinner";
+import { SkeletonLoader } from "./SkeletonLoader";
 
 const formatTimestamp = (timestamp) => {
   if (!timestamp || typeof timestamp !== "string") {
@@ -52,8 +54,10 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
   });
   const [logs, setLogs] = React.useState<LogEntry[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
-  const { setStoringLogs } = useServerLogsStore();
-  const [logsFromDB, setLogsFromDB] = React.useState<LogEntry[]>(dbLogs);
+  const { setStoringLogs, storedLogsFromDBStore } = useServerLogsStore();
+  const [logsFromDB, setLogsFromDB] = React.useState<LogEntry[]>(
+    storedLogsFromDBStore,
+  );
 
   // READ LOGS FROM LOCALSTORAGE BEFORE SETTING
   useEffect(() => {
@@ -63,7 +67,6 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
       setLogs(JSON.parse(storedLogs));
     }
   }, []);
-  console.log(logsFromDB, "logsFromDB");
 
   useEffect(() => {
     // Write to localStorage only when saveLogs changes
@@ -136,6 +139,15 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
         return "text-green-500";
     }
   };
+
+  // create a timer on tab load and after 5 seconds fetch the data, displaying a loader while it fetches
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(true);
+      handleRefreshLogs();
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <section className="w-[650px] max-w-5xl mx-auto h-[670px] pt-2">
@@ -215,6 +227,12 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
                   Stored Server Logs
                 </h3>
                 <div className="border dark:border-gray-700 rounded-lg h-[370px] overflow-y-auto">
+                  {isLoading && (
+                    <div className="flex w-full h-full">
+                      <SkeletonLoader />
+                    </div>
+                  )}
+
                   {logsFromDB.map((log) => (
                     <div
                       key={log.id}

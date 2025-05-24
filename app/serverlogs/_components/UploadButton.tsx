@@ -16,26 +16,13 @@ import IPManager from "./IPManager";
 import DomainManager from "./DomainManager";
 import LogsDBManager from "./LogsDBManager";
 import { invoke } from "@tauri-apps/api/core";
+import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
 
 function UploadButton() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [logsFromDB, setLogsFromDB] = useState(false);
-
-  useEffect(() => {
-    const fetchLogs = async () => {
-      try {
-        const data = await invoke("read_logs_from_db");
-        setLogsFromDB(data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        console.log("Logs read from DB");
-      }
-    };
-
-    fetchLogs();
-  }, []);
+  const { setStoredLogsFromDBStore } = useServerLogsStore();
 
   return (
     <div className="flex space-x-2 absolute left-1/2 -translate-x-1/2 top-2 z-50">
