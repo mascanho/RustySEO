@@ -444,7 +444,7 @@ export function LogAnalyzer() {
   }
 
   return (
-    <div className="space-y-4 flex flex-col flex-1 h-full">
+    <div className="space-y-4 flex flex-col flex-1 h-full not-selectable">
       <div className="flex flex-col md:flex-row justify-between relative -mb-4 p-1 h-full">
         {ipModal && (
           <div className="absolute z-50 top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-[2rem]">

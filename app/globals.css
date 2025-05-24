@@ -913,3 +913,7 @@ dialog::backdrop {
 .pulse {
   animation: pulse 2s infinite;
 }
+
+tr:is(.dark *) {
+  @apply border-b-brand-dark/50 !important;
+}

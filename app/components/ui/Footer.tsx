@@ -33,6 +33,13 @@ import SeoToolkit from "./Footer/SeoToolkit/SeoToolkit";
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 import { Code } from "lucide-react";
 import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { FaInfoCircle } from "react-icons/fa";
+import PopOverParsedLogs from "@/app/serverlogs/_components/PopOverParsedLogs";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -262,10 +269,21 @@ const Footer = () => {
             {deep ? <FooterLoader /> : null}
             {serverLogs && (
               <div className="flex items-center">
-                <FaDatabase
-                  className={`${logSorage ? "text-green-700" : "text-red-700"} mr-1.5 `}
-                />{" "}
-                {logSorage ? "Storing Logs" : "Not storing logs"}
+                <Popover>
+                  <PopoverTrigger>
+                    <FaInfoCircle className=" text-sm ml-0.5 text-black dark:text-white/50" />
+                  </PopoverTrigger>
+                  <PopoverContent className="min-w-70 max-w-96 max-h-[400px] py-2 px-0 mb-10 ml-2 relative z-20">
+                    {/* <div className="h-5 w-5 absolute -top-2 right-32 bg-white rotate-45 border -z-10" /> */}
+                    <PopOverParsedLogs />
+                  </PopoverContent>
+                </Popover>
+                <section className="min-w-24 flex items-center ml-2.5">
+                  <FaDatabase
+                    className={`${logSorage ? "text-green-700" : "text-red-700"} mr-1.5 `}
+                  />{" "}
+                  {logSorage ? "Storing logs" : "Not storing logs"}
+                </section>
               </div>
             )}
           </div>

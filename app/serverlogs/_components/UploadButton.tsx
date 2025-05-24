@@ -66,7 +66,7 @@ function UploadButton() {
         <aside
           data-tooltip-id="reload-tooltip"
           onClick={() => resetAll()}
-          className="bg-red-400 w-7 h-7 flex items-center justify-center text-white rounded-md cursor-pointer active:scale-95"
+          className="dark:bg-red-800  bg-red-400 w-7 h-7 flex items-center justify-center text-white rounded-sm cursor-pointer active:scale-95 p-1"
         >
           <IoReload />
         </aside>

@@ -172,7 +172,7 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
 
                     <div className="py-1">
                       <h4 className="text-sm font-medium mb-2 dark:text-white">
-                        Log automations
+                        Log storage options
                       </h4>
                       <div className="space-y-2 dark:text-white/50 pt-2">
                         <div className="flex items-center space-x-2">
@@ -216,7 +216,7 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
                 <h3 className="text-lg dark:text-white font-semibold text-left">
                   Stored Server Logs
                 </h3>
-                <div className="border dark:border-gray-700 rounded-lg h-[370px] overflow-y-auto">
+                <div className="border dark:border-brand-dark dark:border-brand rounded-lg h-[370px] overflow-y-auto">
                   {isLoading ? (
                     <SkeletonLoader />
                   ) : logsFromDB.length > 0 ? (
@@ -272,10 +272,10 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
       <CardFooter className="flex justify-between mt-8">
         <Button
           variant="outline"
-          onClick={() => toast.info("Export feature coming soon")}
+          onClick={() => toast.info("Feature coming soon...")}
           className="dark:bg-brand-bright dark:border-brand-darker dark:text-white"
         >
-          Display Logs
+          Display saved Logs
         </Button>
         <div className="flex gap-2">
           <Button

@@ -47,6 +47,7 @@ export function FileUpload({
     filename: "",
   });
   const { storingLogs, setStoringLogs } = useServerLogsStore();
+  const { uploadedLogFiles, setUploadedLogFiles } = useServerLogsStore();
 
   console.log(storingLogs, "storing logs");
 
@@ -247,6 +248,19 @@ export function FileUpload({
       setOverallProgress(60);
       const logContents = fileContents.map((fc) => [fc.filename, fc.content]);
 
+      const filesUploaded = files.map((file) => file.file.name);
+      const timeUploaded = new Date().toISOString();
+
+      // Create the object
+      const logEntry = {
+        name: filesUploaded,
+        time: timeUploaded,
+        contents: logContents,
+      };
+
+      // In your store (zustand), modify the setter to handle objects:
+      setUploadedLogFiles(logEntry); // Pass the object directly
+
       const result = await invoke("check_logs_command", {
         data: { log_contents: logContents },
         storingLogs,
@@ -357,7 +371,7 @@ export function FileUpload({
         </div>
       ) : (
         <div className="border-0 rounded-lg dark:text-white">
-          <div className="mb-2 flex justify-between items-center">
+          <div className="mb-2 flex justify-between items-center ">
             <div className="flex items-center">
               <h3 className="text-sm font-medium">
                 {files.length} file{files.length !== 1 ? "s" : ""} selected
@@ -374,7 +388,7 @@ export function FileUpload({
             </Button>
           </div>
 
-          <div className="max-h-60 overflow-y-auto mb-2 dark:bg-black/50 px-2 rounded-md">
+          <div className="max-h-60 overflow-y-auto mb-2 px-2  rounded-md border dark:border-brand-dark">
             {files.map((fileWithProgress, index) => (
               <div
                 key={index}

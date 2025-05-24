@@ -6,6 +6,8 @@ interface ServerLogSettings {
   setStoringLogs: (logs: LogEntry[]) => void;
   storedLogsFromDBStore: LogEntry[];
   setStoredLogsFromDBStore: (logs: LogEntry[]) => void;
+  uploadedLogFiles: File[];
+  setUploadedLogFiles: (files: File[]) => void;
 }
 
 export const useServerLogsStore = create<ServerLogSettings>((set) => ({
@@ -14,4 +16,10 @@ export const useServerLogsStore = create<ServerLogSettings>((set) => ({
 
   storedLogsFromDBStore: [],
   setStoredLogsFromDBStore: (logs) => set({ storedLogsFromDBStore: logs }),
+
+  uploadedLogFiles: [],
+  setUploadedLogFiles: (newEntry) =>
+    set((state) => ({
+      uploadedLogFiles: [...state.uploadedLogFiles, newEntry],
+    })),
 }));
