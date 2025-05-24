@@ -227,14 +227,14 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center text-sm mb-1">
-                            <FaFile className="mr-2 text-black" />
-                            <p className="text-sm dark:text-white truncate -ml-1">
+                            <FaFile className="mr-2 text-black dark:text-white" />
+                            <p className="text-sm text-brand-bright font-semibold dark:text-brand-bright  truncate -ml-1">
                               {log?.filename}
                             </p>
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <FaCalendarAlt className="inline-block text-xs ml-[1px] text-black" />{" "}
+                            <FaCalendarAlt className="inline-block text-xs ml-[1px] text-black dark:text-white" />{" "}
                             <span
                               className={`text-[10px] -ml-[2px] font-mono text-gray-500`}
                             >
