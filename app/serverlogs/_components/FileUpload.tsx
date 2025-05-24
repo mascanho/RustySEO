@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { getOS } from "../util";
 import { listen } from "@tauri-apps/api/event";
+import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
+import { FaDatabase } from "react-icons/fa";
 
 interface FileUploadProps {
   maxSizeMB?: number;
@@ -44,6 +46,9 @@ export function FileUpload({
     percent: 0,
     filename: "",
   });
+  const { storingLogs, setStoringLogs } = useServerLogsStore();
+
+  console.log(storingLogs, "storing logs");
 
   useEffect(() => {
     const unlisten = listen("progress-update", (event) => {
@@ -253,6 +258,7 @@ export function FileUpload({
       // Send all files in a single request
       const result = await invoke("check_logs_command", {
         data: { log_contents: logContents },
+        storingLogs,
       });
 
       setLogData(result);
@@ -330,9 +336,11 @@ export function FileUpload({
       ) : (
         <div className="border-0 rounded-lg dark:text-white">
           <div className="mb-2 flex justify-between items-center">
-            <h3 className="text-sm font-medium">
-              {files.length} file{files.length !== 1 ? "s" : ""} selected
-            </h3>
+            <div className="flex items-center">
+              <h3 className="text-sm font-medium">
+                {files.length} file{files.length !== 1 ? "s" : ""} selected
+              </h3>
+            </div>
             <Button
               variant="ghost"
               size="sm"
@@ -426,6 +434,18 @@ export function FileUpload({
               `Upload ${files.length} File${files.length !== 1 ? "s" : ""}`
             )}
           </Button>
+
+          {/* DATABASE WARNING */}
+          <section className="flex mt-3 -mb-4 w-full items-center justify-center">
+            <FaDatabase
+              className={`text-xs ${storingLogs ? "pulse text-green-500" : "text-red-600 pulse"}`}
+            />
+            <span className="ml-2 text-[10px]">
+              {storingLogs
+                ? "Your logs will be appended to the DB"
+                : "Logs will not be added to Databse"}
+            </span>
+          </section>
 
           {error && (
             <div className="flex items-center text-destructive mt-2 text-xs">

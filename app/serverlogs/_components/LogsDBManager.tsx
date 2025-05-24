@@ -1,13 +1,15 @@
 // @ts-nocheck
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
+import { invoke } from "@tauri-apps/api/core";
 
 interface LogEntry {
   id: string;
@@ -17,9 +19,56 @@ interface LogEntry {
 }
 
 export default function LogsDBManager({ closeDialog }) {
+  // Initialize saveLogs directly from localStorage
+  const [saveLogs, setSaveLogs] = React.useState(() => {
+    const logsStorageValue = localStorage.getItem("logsStorage");
+    return logsStorageValue ? JSON.parse(logsStorageValue) : false;
+  });
   const [logs, setLogs] = React.useState<LogEntry[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
-  const [autoRefresh, setAutoRefresh] = React.useState(false);
+  const { setStoringLogs } = useServerLogsStore();
+
+  // READ LOGS FROM LOCALSTORAGE BEFORE SETTING
+  useEffect(() => {
+    // Read logs from localStorage first
+    const storedLogs = localStorage.getItem("logsData");
+    if (storedLogs) {
+      setLogs(JSON.parse(storedLogs));
+    }
+  }, []);
+
+  useEffect(() => {
+    // Write to localStorage only when saveLogs changes
+    localStorage.setItem("logsStorage", JSON.stringify(saveLogs));
+    // Dispatch a proper StorageEvent if needed
+    window.dispatchEvent(
+      new StorageEvent("storage", {
+        key: "logsStorage",
+        newValue: JSON.stringify(saveLogs),
+      }),
+    );
+
+    // Save logs to localStorage when saveLogs is true
+    if (saveLogs) {
+      localStorage.setItem("logsData", JSON.stringify(logs));
+    } else {
+      localStorage.removeItem("logsData");
+    }
+
+    setStoringLogs(saveLogs);
+  }, [saveLogs, logs]);
+
+  const handleRemoveAllLogs = () => {
+    try {
+      invoke("remove_all_logs_from_serverlog_db", { dbName: "serverlog.db" });
+
+      toast.success("All logs have been removed from database");
+      setSaveLogs(false);
+    } catch (error) {
+      console.error(error);
+      toast.error(error);
+    }
+  };
 
   // Generate 15 placeholder logs
   React.useEffect(() => {
@@ -144,102 +193,118 @@ export default function LogsDBManager({ closeDialog }) {
   };
 
   return (
-    <section className="w-[650px] max-w-5xl mx-auto h-[670px] pt-1">
+    <section className="w-[650px] max-w-5xl mx-auto h-[670px] pt-2">
       <CardContent className="grid grid-cols-1 gap-6 h-[380px]">
         <div className="space-y-4">
           <div className="rounded-md h-[580px] overflow-y-auto">
-            {logs.length === 0 ? (
-              <div className="text-sm text-muted-foreground py-4 text-center h-full flex items-center justify-center">
-                No logs available
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-4">
-                {/* Left Column - Toggle Settings */}
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-sm font-medium mb-4 text-left">
-                      Log Settings
-                    </h3>
-                    <div className="space-y-4 p-4 border rounded-md bg-muted">
-                      <div className="flex items-center space-x-2">
-                        <Switch
-                          id="auto-refresh"
-                          checked={autoRefresh}
-                          onCheckedChange={setAutoRefresh}
-                        />
-                        <Label htmlFor="auto-refresh">Auto Refresh</Label>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        When enabled, logs will automatically refresh every 30
-                        seconds.
-                      </p>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Left Column - Toggle Settings */}
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-sm font-medium mb-2 text-left dark:text-white">
+                    Log Settings
+                  </h3>
+                  <div className="bg-gray-200 dark:bg-brand-dark dark:text-white p-2 rounded-md mb-3">
+                    <span className=" text-xs leading-none">
+                      By default logs are not stored in the database. You can
+                      toggle this option to store them in your local machine and
+                      incrementally upload them.
+                    </span>
+                  </div>
+                  <div className="space-y-4 p-4 border rounded-md bg-muted h-[16.9rem] dark:border-brand-dark">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="save-logs"
+                        checked={saveLogs}
+                        onCheckedChange={setSaveLogs}
+                        className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700"
+                      />
+                      <Label htmlFor="save-logs" className="dark:text-white">
+                        Store Logs in DB
+                      </Label>
+                    </div>
+                    <p className="text-xs text-muted-foreground dark:text-white/50">
+                      When enabled, logs will automatically refresh every 30
+                      seconds.
+                    </p>
 
-                      <div className="pt-4">
-                        <h4 className="text-xs font-medium mb-2">
-                          Log Level Filter
-                        </h4>
-                        <div className="space-y-2">
-                          <div className="flex items-center space-x-2">
-                            <Switch id="show-errors" defaultChecked />
-                            <Label htmlFor="show-errors">Show Errors</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Switch id="show-warnings" defaultChecked />
-                            <Label htmlFor="show-warnings">Show Warnings</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Switch id="show-info" defaultChecked />
-                            <Label htmlFor="show-info">Show Info</Label>
-                          </div>
+                    <div className="pt-1">
+                      <h4 className="text-xs font-medium mb-2 dark:text-white">
+                        Log Level Filter
+                      </h4>
+                      <div className="space-y-2 dark:text-white/50">
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id="show-errors"
+                            className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700"
+                            defaultChecked
+                          />
+                          <Label htmlFor="show-errors">Show Errors</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id="show-warnings"
+                            defaultChecked
+                            className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700"
+                          />
+                          <Label htmlFor="show-warnings">Show Warnings</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id="show-info"
+                            defaultChecked
+                            className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700"
+                          />
+                          <Label htmlFor="show-info">Show Info</Label>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Right Column - Log Messages */}
-                <div>
-                  <h3 className="text-sm font-medium mb-2 text-left">
-                    Server Logs
-                  </h3>
-                  <div className="border rounded-md h-[370px] overflow-y-auto">
-                    {logs.map((log) => (
-                      <div
-                        key={log.id}
-                        className="flex items-start justify-between p-3 border-b"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span
-                              className={`text-xs font-mono ${getLevelColor(log.level)}`}
-                            >
-                              [{log.timestamp}]
-                            </span>
-                            <span
-                              className={`text-xs px-2 py-0.5 rounded ${getLevelColor(log.level)} bg-opacity-20 ${log.level === "error" ? "bg-red-500" : log.level === "warn" ? "bg-yellow-500" : "bg-green-500"}`}
-                            >
-                              {log.level.toUpperCase()}
-                            </span>
-                          </div>
-                          <p className="text-xs dark:text-white/80 truncate">
-                            {log.message}
-                          </p>
+              {/* Right Column - Log Messages */}
+              <div>
+                <h3 className="text-sm dark:text-white font-medium mb-2 text-left">
+                  Stored Server Logs
+                </h3>
+                <div className="border dark:border-brand-dark rounded-md h-[370px] overflow-y-auto">
+                  {logs.map((log) => (
+                    <div
+                      key={log.id}
+                      className="flex items-start justify-between px-3 py-2 border-b dark:border-b-brand-dark"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span
+                            className={`text-xs font-mono ${getLevelColor(log.level)}`}
+                          >
+                            [{log.timestamp}]
+                          </span>
+                          <span
+                            className={`text-xs px-2 py-0.5 rounded ${getLevelColor(log.level)} bg-opacity-20 ${log.level === "error" ? "bg-red-500" : log.level === "warn" ? "bg-yellow-500" : "bg-green-500"}`}
+                          >
+                            {log.level.toUpperCase()}
+                          </span>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Remove log"
-                          disabled={isLoading}
-                          className="h-6 w-6 ml-2"
-                        >
-                          <X className="h-3 w-3 text-muted-foreground" />
-                        </Button>
+                        <p className="text-xs dark:text-white/80 truncate">
+                          {log.message}
+                        </p>
                       </div>
-                    ))}
-                  </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Remove log"
+                        disabled={isLoading}
+                        className="h-6 w-6 ml-2"
+                      >
+                        <X className="h-3 w-3 text-muted-foreground dark:text-red-400" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </CardContent>
@@ -247,8 +312,9 @@ export default function LogsDBManager({ closeDialog }) {
         <Button
           variant="outline"
           onClick={() => toast.info("Export feature coming soon")}
+          className="dark:bg-brand-bright dark:border-brand-darker dark:text-white"
         >
-          Export Logs
+          Display Logs
         </Button>
         <div className="flex gap-2">
           <Button
@@ -261,11 +327,8 @@ export default function LogsDBManager({ closeDialog }) {
             ) : null}
             Refresh
           </Button>
-          <Button
-            onClick={() => toast.info("Clear logs feature coming soon")}
-            variant="destructive"
-          >
-            Clear Logs
+          <Button onClick={handleRemoveAllLogs} variant="destructive">
+            Clear database
           </Button>
         </div>
       </CardFooter>

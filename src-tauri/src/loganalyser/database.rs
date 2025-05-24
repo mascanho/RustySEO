@@ -74,6 +74,7 @@ pub fn add_data_to_serverlog_db(db_name: &str, data: &LogInput) {
     tx.commit().unwrap();
 }
 
+// REMOVE ALL THE LOGS
 #[tauri::command]
 pub fn remove_all_logs_from_serverlog_db(db_name: &str) {
     let db = Database::new(db_name).unwrap();

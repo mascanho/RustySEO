@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { LiaTasksSolid } from "react-icons/lia";
 import { CgWebsite } from "react-icons/cg";
-import { FaRobot } from "react-icons/fa6";
+import { FaDatabase, FaRobot } from "react-icons/fa6";
 import { useChat } from "ai/react";
 import {
   BsChatDots,
@@ -32,6 +32,7 @@ import CrawlerType from "./Footer/CrawlerType";
 import SeoToolkit from "./Footer/SeoToolkit/SeoToolkit";
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 import { Code } from "lucide-react";
+import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -70,9 +71,12 @@ const Footer = () => {
     useDisclosure(false);
   const { crawlerType } = useGlobalCrawlStore();
   const { setTasksNumber } = useGlobalConsoleStore();
+  const [logSorage, setLogStorage] = useState<boolean>(false);
+  const { setStoringLogs, storingLogs } = useServerLogsStore();
 
   const deep = pathname === "/global";
   const shallow = pathname === "/";
+  const serverLogs = pathname === "/serverlogs";
 
   const updateSessionState = () => {
     const storedUrl = sessionStorage?.getItem("url") || "";
@@ -173,6 +177,45 @@ const Footer = () => {
     };
   }, [handleKeyDown]);
 
+  // GET THE STATUS OF THE DATABSE STORAGE FOR THE LOGS
+  useEffect(() => {
+    // Initial load
+    const logStorageValue = JSON.parse(
+      localStorage.getItem("logsStorage") || "false",
+    );
+    setLogStorage(logStorageValue);
+    setStoringLogs(logStorageValue);
+
+    // Cross-tab listener (storage event)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "logsStorage") {
+        setLogStorage(JSON.parse(e.newValue || "false"));
+      }
+    };
+
+    // Same-tab listener (custom event)
+    const handleCustomStorageChange = (e: CustomEvent) => {
+      if (e.detail.key === "logsStorage") {
+        setLogStorage(e.detail.value);
+
+        setStoringLogs(e.detail.value);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener(
+      "localStorageChange",
+      handleCustomStorageChange as EventListener,
+    );
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener(
+        "localStorageChange",
+        handleCustomStorageChange as EventListener,
+      );
+    };
+  }, []);
   return (
     <>
       <MantineDrawer
@@ -217,6 +260,14 @@ const Footer = () => {
             )}
             {deep && <CrawlerType />}
             {deep ? <FooterLoader /> : null}
+            {serverLogs && (
+              <div className="flex items-center">
+                <FaDatabase
+                  className={`${logSorage ? "text-green-700" : "text-red-700"} mr-1.5 `}
+                />{" "}
+                {logSorage ? "Storing Logs" : "Not storing logs"}
+              </div>
+            )}
           </div>
         </section>
         <section className="flex items-center space-x-2">

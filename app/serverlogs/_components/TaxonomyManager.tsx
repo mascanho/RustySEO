@@ -129,7 +129,9 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
       <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[380px]">
         {/* Left Column - Add Taxonomy Form */}
         <div className="space-y-4">
-          <h3 className="text-sm font-medium">Add New Taxonomy</h3>
+          <h3 className="text-sm font-medium dark:text-white">
+            Add New Taxonomy
+          </h3>
           <div className="flex gap-2">
             <Input
               placeholder="Enter taxonomy name"
@@ -160,7 +162,9 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
 
         {/* Right Column - Taxonomy List */}
         <div className="space-y-4">
-          <h3 className="text-sm font-medium">Current Taxonomies</h3>
+          <h3 className="text-sm font-medium dark:text-white">
+            Current Taxonomies
+          </h3>
           <div className="border dark:border-brand-dark rounded-md h-[330px] overflow-y-auto">
             {taxonomies.length === 0 ? (
               <div className="text-sm text-muted-foreground py-4 text-center h-full flex items-center justify-center">

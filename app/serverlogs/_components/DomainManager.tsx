@@ -153,6 +153,7 @@ export default function DomainManager({ closeDialog }: DomainManagerProps) {
               checked={showOnTables}
               onCheckedChange={setShowOnTables}
               disabled={isSubmitting}
+              className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700"
             />
             <Label className="dark:text-white/50" htmlFor="show-on-tables">
               Show domain on tables

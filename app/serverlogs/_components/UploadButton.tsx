@@ -44,14 +44,17 @@ function UploadButton() {
             Settings
           </button>
         </DialogTrigger>
-        <DialogContent className="p-9 pl-6 max-w-[700px] h-[560px] dark:bg-brand-darker">
+        <DialogContent className="p-9 overflow-hidden pl-6 max-w-[700px] h-[560px] dark:bg-brand-darker">
           <Tabs>
-            <TabsList className="grid w-full grid-cols-4 bg-gray-100 dark:bg-brand-darker">
+            <TabsList className="grid w-full grid-cols-4 bg-gray-100 dark:bg-brand-dark">
               <TabsTrigger value="domain">Domain</TabsTrigger>
               <TabsTrigger value="taxonomy">Content Taxonomies</TabsTrigger>
               <TabsTrigger value="ips">Google IPs</TabsTrigger>
               <TabsTrigger value="logs">Stored Logs</TabsTrigger>
             </TabsList>
+
+            {/* SEPARATOR */}
+            {/* <div className="w-full bg-gray-700 h-[1px] hidden dark:block mt-1 mr-4" /> */}
 
             <TabsContent value="taxonomy" className="mt-4">
               <TaxonomyManager closeDialog={() => setSettingsOpen(false)} />

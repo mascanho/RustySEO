@@ -3,6 +3,7 @@
 use crate::crawler::content::scrape_google_headings_command;
 use crate::domain_crawler::db_deep::db;
 use crate::domain_crawler::domain_commands;
+use crate::loganalyser::database::remove_all_logs_from_serverlog_db;
 use crate::loganalyser::helpers::parse_logs;
 use crawler::{
     CrawlResult, LinkResult, PageSpeedResponse, SEOLighthouseResponse, SeoPageSpeedResponse,
@@ -241,6 +242,7 @@ async fn main() {
             domain_crawler::page_speed::store_key::read_page_speed_bulk_api_key,
             domain_crawler::page_speed::store_key::check_page_speed_bulk,
             domain_crawler::page_speed::store_key::toggle_page_speed_bulk,
+            remove_all_logs_from_serverlog_db,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
