@@ -11,10 +11,14 @@ import { FaFile } from "react-icons/fa6";
 const PopOverParsedLogs = () => {
   const { uploadedLogFiles } = useServerLogsStore();
 
+  const totalLogsAnalysed = uploadedLogFiles
+    .map((log) => log.name.length)
+    .reduce((a, b) => a + b, 0);
+
   return (
     <div className="flex flex-col   rounded-lg z-20">
       <h2 className="font-semibold mb-1  text-xs font-mono pl-3 pb-2  pt-1 shadow text-brand-bright">
-        Analysing Logs:
+        Logs Analysed: {totalLogsAnalysed} // Batches: {uploadedLogFiles.length}
       </h2>
       <section className="flex flex-col gap-2 max-h-80 overflow-auto px-2 pt-1">
         {Array.isArray(uploadedLogFiles) &&
