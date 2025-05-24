@@ -54,8 +54,6 @@ static LOG_NUMBER: Lazy<Mutex<i32>> = Lazy::new(|| Mutex::new(0));
 pub fn set_taxonomies(new_taxonomies: Vec<String>) -> Result<(), String> {
     let mut taxonomies = TAXONOMIES.lock().map_err(|e| e.to_string())?;
 
-    println!("New taxonomies: {:?}", &taxonomies);
-
     *taxonomies = new_taxonomies;
     Ok(())
 }
@@ -219,8 +217,6 @@ fn detect_bot(user_agent: &str) -> Option<String> {
 }
 
 pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
-    println!("Parsing log entries: {}", log);
-
     let re = Regex::new(r#"(?x)
         ^(\S+)\s+\S+\s+\S+\s+\[([^\]]+)\]\s+                              # IP and timestamp
         "(GET|POST|PUT|DELETE|HEAD|OPTIONS|PATCH)\s+([^?"]+)(?:\?[^"]*)?\s+HTTP/[0-9.]+"\s+  # Method and path

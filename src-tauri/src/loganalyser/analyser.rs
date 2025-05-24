@@ -5,6 +5,7 @@ use std::sync::mpsc;
 use std::thread;
 use tauri::{Emitter, Manager};
 
+use crate::loganalyser::database::{add_data_to_serverlog_db, create_serverlog_db};
 use crate::loganalyser::helpers::{
     browser_trim_name, country_extractor::extract_country, crawler_type::is_crawler,
     parse_logs::parse_log_entries,

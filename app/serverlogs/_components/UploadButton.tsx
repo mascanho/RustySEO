@@ -13,6 +13,7 @@ import TaxonomyManager from "./TaxonomyManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import IPManager from "./IPManager";
 import DomainManager from "./DomainManager";
+import LogsDBManager from "./LogsDBManager";
 
 function UploadButton() {
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -43,12 +44,13 @@ function UploadButton() {
             Settings
           </button>
         </DialogTrigger>
-        <DialogContent className="p-8 max-w-[700px] h-[540px] dark:bg-brand-darker">
+        <DialogContent className="p-9 pl-6 max-w-[700px] h-[560px] dark:bg-brand-darker">
           <Tabs>
-            <TabsList className="grid w-full grid-cols-3 bg-gray-100 dark:bg-brand-darker">
+            <TabsList className="grid w-full grid-cols-4 bg-gray-100 dark:bg-brand-darker">
               <TabsTrigger value="domain">Domain</TabsTrigger>
               <TabsTrigger value="taxonomy">Content Taxonomies</TabsTrigger>
               <TabsTrigger value="ips">Google IPs</TabsTrigger>
+              <TabsTrigger value="logs">Stored Logs</TabsTrigger>
             </TabsList>
 
             <TabsContent value="taxonomy" className="mt-4">
@@ -62,6 +64,9 @@ function UploadButton() {
 
             <TabsContent value="domain" className="mt-4">
               <DomainManager closeDialog={() => setSettingsOpen(false)} />
+            </TabsContent>
+            <TabsContent value="logs" className="mt-4">
+              <LogsDBManager closeDialog={() => setSettingsOpen(false)} />
             </TabsContent>
           </Tabs>
         </DialogContent>
