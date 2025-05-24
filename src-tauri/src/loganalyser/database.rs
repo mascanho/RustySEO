@@ -42,22 +42,28 @@ impl Database {
     }
 }
 
+// CREATE THE DB
 pub fn create_serverlog_db(db_name: &str) {
     if let Err(e) = Database::new(db_name) {
         eprintln!("Failed to create server log database: {}", e);
     }
 }
 
-pub fn add_data_to_serverlog_db(db_name: &str, data: &LogInput, filename: &str) {
-    let today_date = chrono::Utc::today().format("%Y-%m-%d").to_string();
+// ADD LOGS TO THE DB
+pub fn add_data_to_serverlog_db(db_name: &str, data: &LogInput) {
+    let today_date = chrono::Utc::now().format("%Y-%m-%d-%H-%M-%S").to_string();
     let mut db = Database::new(db_name).unwrap();
 
     let tx = db.conn.transaction().unwrap(); // Start transaction
 
-    for log in &data.log_contents {
+    for (filename, content) in &data.log_contents {
         if let Err(e) = tx.execute(
             "INSERT INTO server_logs (date, filename, log) VALUES (?1, ?2, ?3)",
-            params![today_date, filename, serde_json::to_string(&log).unwrap()],
+            params![
+                today_date,
+                filename,
+                serde_json::to_string(&content).unwrap()
+            ],
         ) {
             eprintln!("Failed to insert log: {}", e);
             tx.rollback().unwrap();
