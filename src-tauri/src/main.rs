@@ -243,6 +243,8 @@ async fn main() {
             domain_crawler::page_speed::store_key::check_page_speed_bulk,
             domain_crawler::page_speed::store_key::toggle_page_speed_bulk,
             remove_all_logs_from_serverlog_db,
+            loganalyser::database::read_logs_from_db,
+            loganalyser::database::delete_log_from_db,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

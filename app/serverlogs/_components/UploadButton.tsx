@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {
   Dialog,
   DialogContent,
@@ -8,16 +9,33 @@ import {
 } from "@/components/ui/dialog";
 import { Menu, Plus, Settings } from "lucide-react";
 import { FileUpload } from "./FileUpload";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TaxonomyManager from "./TaxonomyManager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import IPManager from "./IPManager";
 import DomainManager from "./DomainManager";
 import LogsDBManager from "./LogsDBManager";
+import { invoke } from "@tauri-apps/api/core";
 
 function UploadButton() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [logsFromDB, setLogsFromDB] = useState(false);
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const data = await invoke("read_logs_from_db");
+        setLogsFromDB(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        console.log("Logs read from DB");
+      }
+    };
+
+    fetchLogs();
+  }, []);
 
   return (
     <div className="flex space-x-2 absolute left-1/2 -translate-x-1/2 top-2 z-50">
@@ -69,7 +87,10 @@ function UploadButton() {
               <DomainManager closeDialog={() => setSettingsOpen(false)} />
             </TabsContent>
             <TabsContent value="logs" className="mt-4">
-              <LogsDBManager closeDialog={() => setSettingsOpen(false)} />
+              <LogsDBManager
+                dbLogs={logsFromDB}
+                closeDialog={() => setSettingsOpen(false)}
+              />
             </TabsContent>
           </Tabs>
         </DialogContent>

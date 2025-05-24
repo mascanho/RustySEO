@@ -87,3 +87,45 @@ pub fn remove_item_from_serverlog_db(db_name: &str, date: &str) {
         .conn
         .execute("DELETE FROM server_logs WHERE date = ?1", params![date]);
 }
+
+// GET A LIST OF ALL THE ENTRIES INSIDE THE TABLE
+#[tauri::command]
+pub fn read_logs_from_db() -> Result<Vec<DatabaseResults>, String> {
+    let db = Database::new("serverlog.db").map_err(|e| e.to_string())?;
+    let mut stmt = db
+        .conn
+        .prepare("SELECT id, date, filename, log FROM server_logs")
+        .map_err(|e| e.to_string())?;
+
+    let rows = stmt
+        .query_map([], |row| {
+            let log_str: String = row.get(3)?; // Retrieve the log as a String
+            let log: serde_json::Value = serde_json::from_str(&log_str).unwrap(); // Parse the string into serde_json::Value
+            Ok(DatabaseResults {
+                id: row.get(0)?,
+                date: row.get(1)?,
+                filename: row.get(2)?,
+                log,
+            })
+        })
+        .map_err(|e| e.to_string())?;
+
+    let mut results = Vec::new();
+    for row in rows {
+        match row {
+            Ok(value) => results.push(value),
+            Err(e) => return Err(e.to_string()), // Convert rusqlite::Error to String
+        }
+    }
+
+    Ok(results)
+}
+
+// DELETE A SPECIFIC LOG USING THE ID
+#[tauri::command]
+pub fn delete_log_from_db(id: i32) {
+    let db = Database::new("serverlog.db").unwrap();
+    let _ = db
+        .conn
+        .execute("DELETE FROM server_logs WHERE id = ?1", params![id]);
+}

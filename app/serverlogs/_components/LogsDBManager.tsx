@@ -10,6 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
 import { invoke } from "@tauri-apps/api/core";
+import { FaCalendarAlt, FaClock, FaFile } from "react-icons/fa";
+import { FaHourglass } from "react-icons/fa6";
 
 interface LogEntry {
   id: string;
@@ -18,7 +20,7 @@ interface LogEntry {
   level: "info" | "warn" | "error";
 }
 
-export default function LogsDBManager({ closeDialog }) {
+export default function LogsDBManager({ closeDialog, dbLogs }: any) {
   // Initialize saveLogs directly from localStorage
   const [saveLogs, setSaveLogs] = React.useState(() => {
     const logsStorageValue = localStorage.getItem("logsStorage");
@@ -27,6 +29,7 @@ export default function LogsDBManager({ closeDialog }) {
   const [logs, setLogs] = React.useState<LogEntry[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
   const { setStoringLogs } = useServerLogsStore();
+  const [logsFromDB, setLogsFromDB] = React.useState<LogEntry[]>(dbLogs);
 
   // READ LOGS FROM LOCALSTORAGE BEFORE SETTING
   useEffect(() => {
@@ -62,122 +65,39 @@ export default function LogsDBManager({ closeDialog }) {
     try {
       invoke("remove_all_logs_from_serverlog_db", { dbName: "serverlog.db" });
 
-      toast.success("All logs have been removed from database");
       setSaveLogs(false);
+      handleRefreshLogs();
+      toast.success("All logs have been removed from database");
     } catch (error) {
       console.error(error);
       toast.error(error);
     }
   };
 
-  // Generate 15 placeholder logs
-  React.useEffect(() => {
-    const placeholderLogs: LogEntry[] = [
-      {
-        id: "1",
-        timestamp: "10:23:45 AM",
-        message: "Server started successfully on port 8080",
-        level: "info",
-      },
-      {
-        id: "2",
-        timestamp: "10:24:12 AM",
-        message: "Database connection established",
-        level: "info",
-      },
-      {
-        id: "3",
-        timestamp: "10:25:03 AM",
-        message: "User session created for user_id: 1234",
-        level: "info",
-      },
-      {
-        id: "4",
-        timestamp: "10:26:47 AM",
-        message: "Cache initialized with 256MB memory",
-        level: "info",
-      },
-      {
-        id: "5",
-        timestamp: "10:28:15 AM",
-        message: "High memory usage detected (85%)",
-        level: "warn",
-      },
-      {
-        id: "6",
-        timestamp: "10:30:22 AM",
-        message: "API request received: GET /api/users",
-        level: "info",
-      },
-      {
-        id: "7",
-        timestamp: "10:31:05 AM",
-        message: "Failed to load resource from CDN: /assets/image.jpg",
-        level: "warn",
-      },
-      {
-        id: "8",
-        timestamp: "10:32:18 AM",
-        message: "Database query took longer than expected (1200ms)",
-        level: "warn",
-      },
-      {
-        id: "9",
-        timestamp: "10:33:42 AM",
-        message: "Authentication failed for user: admin@example.com",
-        level: "error",
-      },
-      {
-        id: "10",
-        timestamp: "10:35:11 AM",
-        message: "New user registered: user_id: 5678",
-        level: "info",
-      },
-      {
-        id: "11",
-        timestamp: "10:36:29 AM",
-        message: "Scheduled backup completed successfully",
-        level: "info",
-      },
-      {
-        id: "12",
-        timestamp: "10:38:03 AM",
-        message: "SSL certificate renewed",
-        level: "info",
-      },
-      {
-        id: "13",
-        timestamp: "10:39:57 AM",
-        message: "Rate limit exceeded for IP: 192.168.1.100",
-        level: "warn",
-      },
-      {
-        id: "14",
-        timestamp: "10:41:22 AM",
-        message: "System temperature within normal range",
-        level: "info",
-      },
-      {
-        id: "15",
-        timestamp: "10:42:45 AM",
-        message: "Starting maintenance tasks",
-        level: "info",
-      },
-    ];
-
-    setLogs(placeholderLogs);
-  }, []);
-
+  // REFREWSH BLOGS
   const handleRefreshLogs = async () => {
     setIsLoading(true);
+
     try {
-      // Simulate loading fresh logs
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success("Logs refreshed successfully");
+      const data = await invoke("read_logs_from_db");
+      console.log(data, "Data from logs DB");
+      setLogsFromDB(data);
     } catch (error) {
-      toast.error("Failed to refresh logs");
+      console.error(error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // DELETE SINGLE BLOG
+  const handleDeleteLog = async (id: string) => {
+    try {
+      await invoke("delete_log_from_db", { id });
+      toast.success("Log deleted successfully");
+      handleRefreshLogs();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete log");
     }
   };
 
@@ -264,41 +184,41 @@ export default function LogsDBManager({ closeDialog }) {
               </div>
 
               {/* Right Column - Log Messages */}
+
               <div>
-                <h3 className="text-sm dark:text-white font-medium mb-2 text-left">
+                <h3 className="text-lg dark:text-white font-semibold text-left">
                   Stored Server Logs
                 </h3>
-                <div className="border dark:border-brand-dark rounded-md h-[370px] overflow-y-auto">
-                  {logs.map((log) => (
+                <div className="border dark:border-gray-700 rounded-lg h-[370px] overflow-y-auto">
+                  {logsFromDB.map((log) => (
                     <div
                       key={log.id}
-                      className="flex items-start justify-between px-3 py-2 border-b dark:border-b-brand-dark"
+                      className="flex items-center justify-between px-4 py-2 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
                     >
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span
-                            className={`text-xs font-mono ${getLevelColor(log.level)}`}
-                          >
-                            [{log.timestamp}]
-                          </span>
-                          <span
-                            className={`text-xs px-2 py-0.5 rounded ${getLevelColor(log.level)} bg-opacity-20 ${log.level === "error" ? "bg-red-500" : log.level === "warn" ? "bg-yellow-500" : "bg-green-500"}`}
-                          >
-                            {log.level.toUpperCase()}
+                        <div className="flex items-center text-sm mb-1">
+                          <FaFile className="mr-2 text-black" />
+                          <p className="text-sm dark:text-white truncate -ml-1">
+                            {log?.filename}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-mono text-gray-500`}>
+                            <FaCalendarAlt className="inline-block -mr-0.5 text-black" />{" "}
+                            {log?.date}
                           </span>
                         </div>
-                        <p className="text-xs dark:text-white/80 truncate">
-                          {log.message}
-                        </p>
                       </div>
                       <Button
                         variant="ghost"
                         size="icon"
                         aria-label="Remove log"
                         disabled={isLoading}
-                        className="h-6 w-6 ml-2"
+                        className="h-8 w-8 ml-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors duration-200"
+                        onClick={() => handleDeleteLog(log.id)}
                       >
-                        <X className="h-3 w-3 text-muted-foreground dark:text-red-400" />
+                        <X className="h-4 w-4 text-gray-500 dark:text-red-400" />
                       </Button>
                     </div>
                   ))}
