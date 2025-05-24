@@ -262,6 +262,7 @@ export function FileUpload({
       });
 
       setLogData(result);
+      console.log(result, "THE LOGS RESULT -----");
       setOverallProgress(95);
       await delay(300);
 

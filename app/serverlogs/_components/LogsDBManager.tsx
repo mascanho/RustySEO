@@ -14,6 +14,7 @@ import { FaCalendarAlt, FaClock, FaFile } from "react-icons/fa";
 import { FaHourglass } from "react-icons/fa6";
 import Spinner from "@/app/components/ui/Sidebar/checks/_components/Spinner";
 import { SkeletonLoader } from "./SkeletonLoader";
+import { MdErrorOutline } from "react-icons/md";
 
 const formatTimestamp = (timestamp) => {
   if (!timestamp || typeof timestamp !== "string") {
@@ -21,15 +22,11 @@ const formatTimestamp = (timestamp) => {
   }
 
   try {
-    // Parse the ISO-8601 string (works even with microseconds)
     const date = new Date(timestamp);
-
-    // Check if the date is invalid
     if (isNaN(date.getTime())) {
       return "Invalid Date";
     }
 
-    // Format in a readable way (24-hour format, UTC)
     return date.toLocaleString("en-US", {
       year: "numeric",
       month: "short",
@@ -38,7 +35,7 @@ const formatTimestamp = (timestamp) => {
       minute: "2-digit",
       second: "2-digit",
       hour24: true,
-      timeZone: "UTC", // Ensures no timezone conversion
+      // timeZone: "GTM",
     });
   } catch (error) {
     console.error("Error formatting timestamp:", error);
@@ -47,21 +44,18 @@ const formatTimestamp = (timestamp) => {
 };
 
 export default function LogsDBManager({ closeDialog, dbLogs }: any) {
-  // Initialize saveLogs directly from localStorage
   const [saveLogs, setSaveLogs] = React.useState(() => {
     const logsStorageValue = localStorage.getItem("logsStorage");
     return logsStorageValue ? JSON.parse(logsStorageValue) : false;
   });
   const [logs, setLogs] = React.useState<LogEntry[]>([]);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true); // Set initial loading state to true
   const { setStoringLogs, storedLogsFromDBStore } = useServerLogsStore();
   const [logsFromDB, setLogsFromDB] = React.useState<LogEntry[]>(
     storedLogsFromDBStore,
   );
 
-  // READ LOGS FROM LOCALSTORAGE BEFORE SETTING
   useEffect(() => {
-    // Read logs from localStorage first
     const storedLogs = localStorage.getItem("logsData");
     if (storedLogs) {
       setLogs(JSON.parse(storedLogs));
@@ -69,9 +63,7 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
   }, []);
 
   useEffect(() => {
-    // Write to localStorage only when saveLogs changes
     localStorage.setItem("logsStorage", JSON.stringify(saveLogs));
-    // Dispatch a proper StorageEvent if needed
     window.dispatchEvent(
       new StorageEvent("storage", {
         key: "logsStorage",
@@ -79,7 +71,6 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
       }),
     );
 
-    // Save logs to localStorage when saveLogs is true
     if (saveLogs) {
       localStorage.setItem("logsData", JSON.stringify(logs));
     } else {
@@ -92,7 +83,6 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
   const handleRemoveAllLogs = () => {
     try {
       invoke("remove_all_logs_from_serverlog_db", { dbName: "serverlog.db" });
-
       setSaveLogs(false);
       handleRefreshLogs();
       toast.success("All logs have been removed from database");
@@ -102,10 +92,8 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
     }
   };
 
-  // REFRESH LOGS
   const handleRefreshLogs = async () => {
     setIsLoading(true);
-
     try {
       const data = await invoke("read_logs_from_db");
       console.log(data, "Data from logs DB");
@@ -117,7 +105,6 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
     }
   };
 
-  // DELETE SINGLE LOG
   const handleDeleteLog = async (id: string) => {
     try {
       await invoke("delete_log_from_db", { id });
@@ -140,12 +127,10 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
     }
   };
 
-  // create a timer on tab load and after 5 seconds fetch the data, displaying a loader while it fetches
   useEffect(() => {
     const timer = setTimeout(() => {
-      setIsLoading(true);
       handleRefreshLogs();
-    }, 5000);
+    }, 500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -181,38 +166,44 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
                       </Label>
                     </div>
                     <p className="text-xs text-muted-foreground dark:text-white/50">
-                      When enabled, logs will automatically refresh every 30
-                      seconds.
+                      When enabled it will incrementally add logs into your
+                      local database.
                     </p>
 
-                    <div className="pt-1">
-                      <h4 className="text-xs font-medium mb-2 dark:text-white">
-                        Log Level Filter
+                    <div className="py-1">
+                      <h4 className="text-sm font-medium mb-2 dark:text-white">
+                        Log automations
                       </h4>
-                      <div className="space-y-2 dark:text-white/50">
+                      <div className="space-y-2 dark:text-white/50 pt-2">
                         <div className="flex items-center space-x-2">
                           <Switch
                             id="show-errors"
                             className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700"
-                            defaultChecked
+                            // defaultChecked
                           />
-                          <Label htmlFor="show-errors">Show Errors</Label>
+                          <Label htmlFor="show-errors" className="text-xs">
+                            Keep latest 10 logs only
+                          </Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Switch
                             id="show-warnings"
-                            defaultChecked
+                            // defaultChecked
                             className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700"
                           />
-                          <Label htmlFor="show-warnings">Show Warnings</Label>
+                          <Label className="text-xs" htmlFor="show-warnings">
+                            Keep latest 20 logs only
+                          </Label>
                         </div>
                         <div className="flex items-center space-x-2">
                           <Switch
                             id="show-info"
-                            defaultChecked
+                            // defaultChecked
                             className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700"
                           />
-                          <Label htmlFor="show-info">Show Info</Label>
+                          <Label htmlFor="show-info" className="text-xs">
+                            Keep last 2 months only
+                          </Label>
                         </div>
                       </div>
                     </div>
@@ -221,53 +212,57 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
               </div>
 
               {/* Right Column - Log Messages */}
-
               <div>
                 <h3 className="text-lg dark:text-white font-semibold text-left">
                   Stored Server Logs
                 </h3>
                 <div className="border dark:border-gray-700 rounded-lg h-[370px] overflow-y-auto">
-                  {isLoading && (
-                    <div className="flex w-full h-full">
-                      <SkeletonLoader />
+                  {isLoading ? (
+                    <SkeletonLoader />
+                  ) : logsFromDB.length > 0 ? (
+                    logsFromDB.map((log) => (
+                      <div
+                        key={log.id}
+                        className="flex items-center justify-between px-4 py-2 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center text-sm mb-1">
+                            <FaFile className="mr-2 text-black" />
+                            <p className="text-sm dark:text-white truncate -ml-1">
+                              {log?.filename}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <FaCalendarAlt className="inline-block text-xs ml-[1px] text-black" />{" "}
+                            <span
+                              className={`text-[10px] -ml-[2px] font-mono text-gray-500`}
+                            >
+                              {formatTimestamp(log?.date)}
+                            </span>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label="Remove log"
+                          disabled={isLoading}
+                          className="h-8 w-8 ml-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors duration-200"
+                          onClick={() => handleDeleteLog(log.id)}
+                        >
+                          <X className="h-4 w-4 text-gray-500 dark:text-red-400" />
+                        </Button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                      <MdErrorOutline className="h-8 w-8 mb-2" />
+                      <p className="text-xs">No logs available.</p>
+                      <p className="text-xs">
+                        Enable DB storage and scan some logs.
+                      </p>
                     </div>
                   )}
-
-                  {logsFromDB.map((log) => (
-                    <div
-                      key={log.id}
-                      className="flex items-center justify-between px-4 py-2 border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center text-sm mb-1">
-                          <FaFile className="mr-2 text-black" />
-                          <p className="text-sm dark:text-white truncate -ml-1">
-                            {log?.filename}
-                          </p>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <FaCalendarAlt className="inline-block text-xs ml-[1px] text-black" />{" "}
-                          <span
-                            className={`text-[10px] -ml-[2px] font-mono text-gray-500`}
-                          >
-                            {formatTimestamp(log?.date)}
-                            {/* {log?.timestamp} */}
-                          </span>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Remove log"
-                        disabled={isLoading}
-                        className="h-8 w-8 ml-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors duration-200"
-                        onClick={() => handleDeleteLog(log.id)}
-                      >
-                        <X className="h-4 w-4 text-gray-500 dark:text-red-400" />
-                      </Button>
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>
