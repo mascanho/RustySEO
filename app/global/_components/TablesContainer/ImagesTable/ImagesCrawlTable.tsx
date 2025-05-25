@@ -241,7 +241,7 @@ const ColumnPicker = ({
 const ImagesCrawlTable = ({
   rows,
   rowHeight = 31,
-  overscan = 30,
+  overscan = 18,
   tabName,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);

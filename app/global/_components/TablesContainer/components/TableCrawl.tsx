@@ -270,7 +270,7 @@ const TableCrawl = ({
   tabName,
   rows,
   rowHeight = 41,
-  overscan = 18,
+  overscan = 10,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
   const [columnAlignments, setColumnAlignments] = useState(

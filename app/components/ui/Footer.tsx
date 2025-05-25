@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/popover";
 import { FaInfoCircle } from "react-icons/fa";
 import PopOverParsedLogs from "@/app/serverlogs/_components/PopOverParsedLogs";
+import ChangeLogContainer from "@/components/ui/changelog/ChangeLogContainer";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -240,6 +241,8 @@ const Footer = () => {
       >
         <TodoItems url={url} strategy={""} />
       </MantineDrawer>
+
+      <ChangeLogContainer />
 
       <footer className="w-full justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[999999999999999] border-t-2 pb-1.5 dark:border-t-brand-dark flex items-center py-1 text-xs">
         <section>

@@ -285,7 +285,7 @@ const CoreWebVitalsTable = ({
   tabName,
   rows,
   rowHeight = 41,
-  overscan = 38,
+  overscan = 18,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
   const [columnAlignments, setColumnAlignments] = useState(
