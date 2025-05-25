@@ -155,28 +155,28 @@ export default function WidgetLogs() {
   return (
     <div className="bg-white border dark:border-brand-dark shadow rounded-none p-2 pr-1 w-1/2  mx-auto dark:bg-slate-950 dark:text-white h-64 relative">
       <Popover>
-        <PopoverTrigger className="absolute bottom-3 left-3">
+        <PopoverTrigger className="absolute bottom-3 left-3 flex cursor-pointer">
           <FaInfoCircle className=" h-4 w-4 text-brand-bright" />
+
+          <div className="flex items-center space-x-1 text-brand-bright/50 cursor-pointer -mt-1 ml-1.5">
+            <span className="text-sm inline-block">
+              {totalLogsAnalysed} logs
+            </span>
+            <span>/</span>
+            <span className="text-xs inline-block">
+              {uploadedLogFiles ? uploadedLogFiles?.length : 0} batches
+            </span>
+          </div>
         </PopoverTrigger>
         <PopoverContent className="min-w-70 max-w-96 py-2 px-0 mt-2 relative z-20">
-          {/* <div className="h-5 w-5 absolute -top-2 right-32 bg-white rotate-45 border -z-10" /> */}
           <PopOverParsedLogs />
         </PopoverContent>
       </Popover>
 
       <Popover>
-        <PopoverTrigger className="absolute top-2 font-bold text-black/20 dark:text-white/50 text-xl">
+        <PopoverTrigger className="absolute top-3 font-bold text-black/20 dark:text-white/50 text-xl">
           <div className="flex flex-col items-start justify-start">
             <span>{currentLogs.length} Entries</span>
-            <div className="flex items-center space-x-2 text-brand-bright/50 -mt-1.5">
-              <span className="text-sm inline-block">
-                {totalLogsAnalysed} logs
-              </span>
-              <span>/</span>
-              <span className="text-xs inline-block">
-                {uploadedLogFiles ? uploadedLogFiles?.length : 0} batches
-              </span>
-            </div>
           </div>
         </PopoverTrigger>
         <PopoverContent className="min-w-70 max-w-96 py-2 px-0 mt-2 relative z-20">

@@ -261,10 +261,10 @@ export function FileUpload({
       // In your store (zustand), modify the setter to handle objects:
       setUploadedLogFiles(logEntry); // Pass the object directly
 
-      // const result = await invoke("check_logs_command", {
-      //   data: { log_contents: logContents },
-      //   storingLogs,
-      // });
+      const result = await invoke("check_logs_command", {
+        data: { log_contents: logContents },
+        storingLogs,
+      });
 
       // Validate result structure
       if (!result || !result.overview) {
