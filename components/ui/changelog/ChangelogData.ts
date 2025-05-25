@@ -1,22 +1,19 @@
 export const changelogData = [
   {
-    version: "3.2.0",
-    date: "2024-04-10",
-    type: "feature",
+    version: "0.2.4",
+    date: "2025-05-25",
+    type: "update",
     changes: [
-      "Added AI-powered suggestions",
-      "Multi-language support added",
-      "New collaborative editing features",
-    ],
-  },
-  {
-    version: "3.1.9",
-    date: "2024-04-05",
-    type: "fix",
-    changes: [
-      "Fixed memory leak in editor",
-      "Resolved PDF export formatting issues",
-      "Patched security vulnerability in auth system",
+      "Microsoft Power BI integration",
+      "Incremental log analysis",
+      "Log storage and retrieval",
+      "Parallel log parsing",
+      "Improved log filtering",
+      "PPC simulator added",
+      "Tables UI improvements",
+      "Bulk Page Speed Insights on Deep crawler",
+      "Deep crawler performance improvements",
+      "Request status codes on in/out links",
     ],
   },
   {

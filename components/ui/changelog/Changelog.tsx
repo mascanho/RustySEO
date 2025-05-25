@@ -12,7 +12,7 @@ const getTypeColor = (type: string) => {
     case "breaking":
       return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
     default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300";
+      return "bg-orange-100 text-gray-800 dark:bg-orange-900 dark:text-gray-300";
   }
 };
 
@@ -37,7 +37,7 @@ export default function Changelog() {
           Changelog
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 px-4 h-[calc(100vh-9.8rem)] pt-1 pb-8 overflow-auto">
+      <CardContent className="space-y-4 px-4 h-[calc(100vh-9.8rem)] pt-3 pb-8 overflow-auto">
         {changelogData.map((entry, index) => (
           <div key={entry.version} className="space-y-2 ">
             <div className="flex items-center justify-between">
@@ -54,6 +54,7 @@ export default function Changelog() {
                 {new Date(entry.date).toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
+                  year: "numeric",
                 })}
               </span>
             </div>
@@ -61,7 +62,7 @@ export default function Changelog() {
               {entry.changes.map((change, changeIndex) => (
                 <li key={changeIndex} className="flex items-start gap-2">
                   <span className="text-muted-foreground dark:text-white/50 mt-1.5 block w-1 h-1 bg-current rounded-full flex-shrink-0" />
-                  <span className="leading-relaxed dark:text-white/50">
+                  <span className="leading-relaxed text-xs dark:text-white/50">
                     {change}
                   </span>
                 </li>
