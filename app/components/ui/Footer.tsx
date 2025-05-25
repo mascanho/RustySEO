@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { LiaTasksSolid } from "react-icons/lia";
 import { CgWebsite } from "react-icons/cg";
-import { FaRobot } from "react-icons/fa6";
+import { FaDatabase, FaRobot } from "react-icons/fa6";
 import { useChat } from "ai/react";
 import {
   BsChatDots,
@@ -32,6 +32,14 @@ import CrawlerType from "./Footer/CrawlerType";
 import SeoToolkit from "./Footer/SeoToolkit/SeoToolkit";
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 import { Code } from "lucide-react";
+import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { FaInfoCircle } from "react-icons/fa";
+import PopOverParsedLogs from "@/app/serverlogs/_components/PopOverParsedLogs";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -70,9 +78,12 @@ const Footer = () => {
     useDisclosure(false);
   const { crawlerType } = useGlobalCrawlStore();
   const { setTasksNumber } = useGlobalConsoleStore();
+  const [logSorage, setLogStorage] = useState<boolean>(false);
+  const { setStoringLogs, storingLogs } = useServerLogsStore();
 
   const deep = pathname === "/global";
   const shallow = pathname === "/";
+  const serverLogs = pathname === "/serverlogs";
 
   const updateSessionState = () => {
     const storedUrl = sessionStorage?.getItem("url") || "";
@@ -173,6 +184,45 @@ const Footer = () => {
     };
   }, [handleKeyDown]);
 
+  // GET THE STATUS OF THE DATABSE STORAGE FOR THE LOGS
+  useEffect(() => {
+    // Initial load
+    const logStorageValue = JSON.parse(
+      localStorage.getItem("logsStorage") || "false",
+    );
+    setLogStorage(logStorageValue);
+    setStoringLogs(logStorageValue);
+
+    // Cross-tab listener (storage event)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "logsStorage") {
+        setLogStorage(JSON.parse(e.newValue || "false"));
+      }
+    };
+
+    // Same-tab listener (custom event)
+    const handleCustomStorageChange = (e: CustomEvent) => {
+      if (e.detail.key === "logsStorage") {
+        setLogStorage(e.detail.value);
+
+        setStoringLogs(e.detail.value);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener(
+      "localStorageChange",
+      handleCustomStorageChange as EventListener,
+    );
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener(
+        "localStorageChange",
+        handleCustomStorageChange as EventListener,
+      );
+    };
+  }, []);
   return (
     <>
       <MantineDrawer
@@ -191,7 +241,7 @@ const Footer = () => {
         <TodoItems url={url} strategy={""} />
       </MantineDrawer>
 
-      <footer className="w-full justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[99999999999] border-t-2 pb-1.5 dark:border-t-brand-dark flex items-center py-1 text-xs">
+      <footer className="w-full justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[999999999999999] border-t-2 pb-1.5 dark:border-t-brand-dark flex items-center py-1 text-xs">
         <section>
           <div className="flex items-center ml-2 space-x-1 w-full">
             {loading ? (
@@ -217,6 +267,25 @@ const Footer = () => {
             )}
             {deep && <CrawlerType />}
             {deep ? <FooterLoader /> : null}
+            {serverLogs && (
+              <div className="flex items-center">
+                <Popover>
+                  <PopoverTrigger>
+                    <FaInfoCircle className=" text-sm ml-0.5 text-black dark:text-white/50" />
+                  </PopoverTrigger>
+                  <PopoverContent className="min-w-70 max-w-96 max-h-[400px] py-2 px-0 mb-10 ml-2 relative z-20">
+                    {/* <div className="h-5 w-5 absolute -top-2 right-32 bg-white rotate-45 border -z-10" /> */}
+                    <PopOverParsedLogs />
+                  </PopoverContent>
+                </Popover>
+                <section className="min-w-24 flex items-center ml-2.5">
+                  <FaDatabase
+                    className={`${logSorage ? "text-green-700" : "text-red-700"} mr-1.5 `}
+                  />{" "}
+                  {logSorage ? "Storing logs" : "Not storing logs"}
+                </section>
+              </div>
+            )}
           </div>
         </section>
         <section className="flex items-center space-x-2">
@@ -334,7 +403,7 @@ const Footer = () => {
                 className={`relative group hover:delay-1000 ${pathname === "/serverlogs" ? "not cursor-not-allowed" : " "}`}
               >
                 <BsLayoutSidebarInsetReverse
-                  className={`text-sm ${iconClasses} ${visibility.sidebar && "text-brand-bright"} ${pathname === "/serverlogs" ? "text-gray-400 cursor-not-allowed" : ""}`}
+                  className={`text-sm ${iconClasses} ${visibility.sidebar && "text-brand-bright"} ${pathname === "/serverlogs" || pathname === "/ppc" ? "text-gray-400 cursor-not-allowed" : ""}`}
                   onClick={() => {
                     if (visibility.sidebar) {
                       hideSidebar();

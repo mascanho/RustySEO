@@ -1,14 +1,18 @@
 // @ts-nocheck
 "use client";
 
-import { useRef, useState } from "react";
-import { AlertCircle, CheckCircle, UploadCloud, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { AlertCircle, UploadCloud, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { getOS } from "../util";
+import { listen } from "@tauri-apps/api/event";
+import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
+import { FaDatabase } from "react-icons/fa";
 
 interface FileUploadProps {
   maxSizeMB?: number;
@@ -36,6 +40,34 @@ export function FileUpload({
   const [overallProgress, setOverallProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { setLogData } = useLogAnalysis();
+  const [progress, setProgress] = useState({
+    current: 0,
+    total: 0,
+    percent: 0,
+    filename: "",
+  });
+  const { storingLogs, setStoringLogs } = useServerLogsStore();
+  const { uploadedLogFiles, setUploadedLogFiles } = useServerLogsStore();
+
+  console.log(storingLogs, "storing logs");
+
+  useEffect(() => {
+    const unlisten = listen("progress-update", (event) => {
+      const payload = event.payload;
+      console.log("Progress event received:", payload);
+
+      setProgress({
+        current: payload.current_file,
+        total: payload.total_files,
+        percent: payload.percentage,
+        filename: payload.filename,
+      });
+    });
+
+    return () => {
+      unlisten.then((f) => f()).catch(console.error);
+    };
+  }, [files]);
 
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
   const maxVisibleFiles = 5;
@@ -134,88 +166,150 @@ export function FileUpload({
     new Promise((resolve) => setTimeout(resolve, ms));
 
   const handleUpload = async () => {
+    const os = getOS();
+
     if (files.length === 0) return;
 
     setUploading(true);
     setOverallProgress(0);
-    await delay(100); // Small delay to ensure state updates
+    await delay(100);
 
-    if (files.length >= 10) {
+    if (os === "Windows" && files.length > 5) {
       toast.info(
-        "Whoohaaaa, that is a lot of files. This might take a while...",
+        "Whoohaaaa, that is a lot of files. This might take a while, consider uploading less files on each batch.",
       );
     } else {
       toast.info("RustySEO is analysing your logs...");
     }
 
-    try {
-      // Initial progress
-      setOverallProgress(10);
-      await delay(200);
-
-      // Process all files with progress updates
-      const fileContents = await Promise.all(
-        files.map(async (fileWithProgress, index) => {
-          try {
-            const content = await readFile(fileWithProgress.file);
-            setFiles((prev) =>
-              prev.map((f, idx) =>
-                idx === index ? { ...f, success: true } : f,
-              ),
-            );
-
-            // Update progress incrementally for each file
-            const progressIncrement = 30 / files.length;
-            setOverallProgress((prev) =>
-              Math.min(prev + progressIncrement, 40),
-            );
-
-            return { filename: fileWithProgress.file.name, content };
-          } catch (err) {
-            setFiles((prev) =>
-              prev.map((f, idx) =>
-                idx === index
-                  ? {
-                      ...f,
-                      error:
-                        err instanceof Error ? err.message : "Upload failed",
-                    }
-                  : f,
-              ),
-            );
-            throw err;
-          }
-        }),
+    if (os === "MacOS" && files.length > 10) {
+      toast.info(
+        "Whoohaaaa, that is a lot of files. This might take a while...",
       );
+    }
 
-      // Update progress to indicate processing
+    try {
+      setOverallProgress(10);
+      const fileContents: Array<{ filename: string; content: string }> = [];
+
+      const batchSize = 5;
+      for (let i = 0; i < files.length; i += batchSize) {
+        const batch = files.slice(i, i + batchSize);
+
+        const batchResults = await Promise.allSettled(
+          batch.map(async (fileWithProgress, batchIndex) => {
+            const originalIndex = i + batchIndex;
+            try {
+              const content = await readFile(files[originalIndex].file);
+              return {
+                index: originalIndex,
+                update: {
+                  ...files[originalIndex],
+                  success: true,
+                },
+                content: {
+                  filename: files[originalIndex].file.name,
+                  content,
+                },
+              };
+            } catch (err) {
+              return {
+                index: originalIndex,
+                update: {
+                  ...files[originalIndex],
+                  error: err instanceof Error ? err.message : "Upload failed",
+                },
+                error: err,
+              };
+            }
+          }),
+        );
+
+        batchResults.forEach((result) => {
+          if (result.status === "fulfilled") {
+            if (result.value.content) {
+              fileContents.push(result.value.content);
+            }
+          } else {
+            console.error("Error processing file:", result.reason);
+            setFiles((prevFiles) => {
+              const newFiles = [...prevFiles];
+              newFiles[result.value.index] = result.value.update;
+              return newFiles;
+            });
+          }
+        });
+
+        const progress = 10 + (i / files.length) * 50;
+        setOverallProgress(progress);
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+
       setOverallProgress(60);
-      await delay(300);
-
-      // Prepare data for backend
       const logContents = fileContents.map((fc) => [fc.filename, fc.content]);
 
-      // Update progress to indicate backend processing
-      setOverallProgress(80);
-      await delay(300);
+      const filesUploaded = files.map((file) => file.file.name);
+      const timeUploaded = new Date().toISOString();
 
-      const result = await invoke("check_logs_command", {
-        data: { log_contents: logContents },
+      // Create the object
+      const logEntry = {
+        name: filesUploaded,
+        time: timeUploaded,
+        contents: logContents,
+      };
+
+      // In your store (zustand), modify the setter to handle objects:
+      setUploadedLogFiles(logEntry); // Pass the object directly
+
+      // const result = await invoke("check_logs_command", {
+      //   data: { log_contents: logContents },
+      //   storingLogs,
+      // });
+
+      // Validate result structure
+      if (!result || !result.overview) {
+        console.error("Invalid result structure:", result);
+        throw new Error("Invalid server response: Missing overview data");
+      }
+
+      // Pass the new data to the store to append
+      setLogData({
+        entries: result.entries || [],
+        overview: result.overview || {
+          message: "",
+          line_count: 0,
+          unique_ips: 0,
+          unique_user_agents: 0,
+          crawler_count: 0,
+          success_rate: 0,
+          totals: {
+            google: 0,
+            bing: 0,
+            semrush: 0,
+            hrefs: 0,
+            moz: 0,
+            uptime: 0,
+            openai: 0,
+            claude: 0,
+            google_bot_pages: [],
+            google_bot_pages_frequency: {},
+          },
+          log_start_time: "",
+          log_finish_time: "",
+        },
       });
 
-      setLogData(result);
-      console.log(result, "This is the result");
+      setOverallProgress(95);
+      await delay(300);
 
-      // Mark all files as successfully uploaded
       setFiles((prev) => prev.map((f) => ({ ...f, success: true })));
-
-      // Final progress update
       setOverallProgress(100);
       await delay(500);
 
       closeDialog();
-      toast.success("Upload complete!");
+      toast.success("Log analysis complete!");
     } catch (err) {
+      console.error("Error during upload:", err);
       setError(err instanceof Error ? err.message : "Upload failed");
       toast.error("Upload failed");
     } finally {
@@ -277,10 +371,12 @@ export function FileUpload({
         </div>
       ) : (
         <div className="border-0 rounded-lg dark:text-white">
-          <div className="mb-2 flex justify-between items-center">
-            <h3 className="text-sm font-medium">
-              {files.length} file{files.length !== 1 ? "s" : ""} selected
-            </h3>
+          <div className="mb-2 flex justify-between items-center ">
+            <div className="flex items-center">
+              <h3 className="text-sm font-medium">
+                {files.length} file{files.length !== 1 ? "s" : ""} selected
+              </h3>
+            </div>
             <Button
               variant="ghost"
               size="sm"
@@ -292,16 +388,16 @@ export function FileUpload({
             </Button>
           </div>
 
-          <div className="max-h-60 overflow-y-auto mb-2">
+          <div className="max-h-60 overflow-y-auto mb-2 px-2  rounded-md border dark:border-brand-dark">
             {files.map((fileWithProgress, index) => (
               <div
                 key={index}
                 className={cn(
-                  "flex items-center justify-between p-2 border rounded-md dark:border-brand-dark mb-2",
+                  "flex items-center space justify-between p-2 border mr-0.5 rounded-md dark:border-brand-dark my-2 dark:bg-slate-900 border-brand-bright/30 bg-brand-bright/20",
                 )}
               >
                 <div className="flex items-center">
-                  <div className="w-10 h-10 rounded border-none bg-muted flex items-center justify-center mr-3">
+                  <div className="w-10 h-10 rounded border-none border-r bg-muted flex items-center justify-center mr-3">
                     <span className="text-xs font-medium">
                       {fileWithProgress.file.name
                         .split(".")
@@ -310,7 +406,7 @@ export function FileUpload({
                     </span>
                   </div>
                   <div className="overflow-hidden dark:text-white">
-                    <p className="text-sm font-medium truncate">
+                    <p className="text-sm font-medium truncate text-brand-bright">
                       {fileWithProgress.file.name}
                     </p>
                     <p className="text-xs text-muted-foreground">
@@ -332,59 +428,57 @@ export function FileUpload({
           </div>
 
           {uploading && (
-            <div className="w-full mt-2">
+            <div className="w-full mt-2 space-y-2">
+              <div className="mt-2">
+                <div className="flex justify-between text-xs mb-1">
+                  <span>Parsing: {progress.filename}</span>
+                  <span>{progress.percent}%</span>
+                </div>
+                <Progress
+                  value={progress.percent}
+                  className="h-2 bg-gray-200 dark:bg-gray-700 [&>div]:bg-blue-500"
+                />
+                <div className="text-xs mt-1">
+                  File {progress.current} of {progress.total}
+                </div>
+              </div>
+
+              <div className="flex justify-between h-3">
+                <span className="text-xs">Overall progress</span>
+                <div className="text-xs">{Math.round(overallProgress)}%</div>
+              </div>
               <Progress
                 value={overallProgress}
                 className="h-2 bg-gray-200 dark:bg-gray-700 [&>div]:bg-brand-bright"
               />
-              <div className="flex justify-between items-center text-xs mt-1">
-                <div className="flex items-center">
-                  {overallProgress === 100 ? (
-                    "Upload complete"
-                  ) : (
-                    <>
-                      <span className="flex items-center">
-                        {overallProgress < 40
-                          ? "Reading files"
-                          : overallProgress < 60
-                            ? "Processing files"
-                            : overallProgress < 80
-                              ? "Preparing data"
-                              : "Uploading data"}
-                        <span className="flex items-center mx-2">
-                          <span className="animate-bounce [animation-delay:-0.3s]">
-                            .
-                          </span>
-                          <span className="animate-bounce [animation-delay:-0.15s]">
-                            .
-                          </span>
-                          <span className="animate-bounce">.</span>
-                        </span>
-                        {Math.round(overallProgress)}%
-                      </span>
-                    </>
-                  )}
-                </div>
-                {overallProgress === 100 && (
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                )}
-              </div>
             </div>
           )}
 
           <Button
             onClick={handleUpload}
-            className="w-full mt-2 bg-brand-bright text-white dark:bg-brand-bright dark:text-white hover:bg-brand-bright/90 dark:hover:bg-brand-bright/90"
+            className={`first-letter:w-full mt-4 bg-brand-bright text-white dark:bg-brand-bright dark:text-white hover:bg-brand-bright/90 dark:hover:bg-brand-bright/90 w-full`}
             disabled={uploading}
           >
             {uploading ? (
-              <span className="flex items-center">
-                Uploading... {Math.round(overallProgress)}%
-              </span>
+              <>
+                <span className="flex items-center">Analysing...</span>
+                <div className="border-gray-300 h-4 w-4 animate-spin rounded-full border-2 border-t-blue-600" />
+              </>
             ) : (
               `Upload ${files.length} File${files.length !== 1 ? "s" : ""}`
             )}
           </Button>
+
+          <section className="flex mt-3 -mb-4 w-full items-center justify-center">
+            <FaDatabase
+              className={`text-xs ${storingLogs ? "pulse text-green-500" : "text-red-600 pulse"}`}
+            />
+            <span className="ml-2 text-[10px]">
+              {storingLogs
+                ? "Your logs will be appended to the DB"
+                : "Logs will not be added to Database"}
+            </span>
+          </section>
 
           {error && (
             <div className="flex items-center text-destructive mt-2 text-xs">

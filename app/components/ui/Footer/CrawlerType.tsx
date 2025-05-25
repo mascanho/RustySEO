@@ -8,6 +8,7 @@ import { emit } from "@tauri-apps/api/event";
 import { IconVolume } from "@tabler/icons-react";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
+import { GiRobotAntennas, GiRobotHelmet, GiSpiderAlt } from "react-icons/gi";
 
 // Constants for crawler types
 const CRAWLER_TYPES = {
@@ -128,7 +129,7 @@ const CrawlerType = () => {
         title={`Crawler Type: ${crawlerType}`}
         aria-label="Open crawler settings"
       >
-        <FaSpider className={`text-sm p-[1px] ${iconColorClass}`} />
+        <GiRobotAntennas className={`text-sm p-[1px] ${iconColorClass}`} />
       </button>
 
       {/* Modal */}

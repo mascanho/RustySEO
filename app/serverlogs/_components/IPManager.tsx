@@ -112,7 +112,6 @@ export default function IPManager({ closeDialog }: IPManagerProps) {
       // Convert IP ranges to an array of strings
       const ranges = ipRanges.map((ip) => ip.range);
 
-
       // Store in localStorage
       localStorage.setItem("google_verified_ips", JSON.stringify(ipRanges));
 
@@ -154,7 +153,9 @@ export default function IPManager({ closeDialog }: IPManagerProps) {
       <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[380px]">
         {/* Left Column - Add IP Range Form */}
         <div className="space-y-4">
-          <h3 className="text-sm font-medium">Add Google Verified IP Range</h3>
+          <h3 className="text-sm font-medium dark:text-white">
+            Add Google Verified IP Range
+          </h3>
           <div className="flex gap-2">
             <Input
               placeholder="Enter IP range (CIDR format)"
@@ -196,7 +197,9 @@ export default function IPManager({ closeDialog }: IPManagerProps) {
 
         {/* Right Column - IP Range List */}
         <div className="space-y-4">
-          <h3 className="text-sm font-medium">Current IP Ranges</h3>
+          <h3 className="text-sm font-medium dark:text-white">
+            Current IP Ranges
+          </h3>
           <div className="border dark:border-brand-dark rounded-md h-[330px] overflow-y-auto">
             {ipRanges.length === 0 ? (
               <div className="text-sm text-muted-foreground py-4 text-center h-full flex items-center justify-center">

@@ -3,26 +3,23 @@
 <h1>RustySEO</h1>
 
 ##### A modern SEO/GEO toolkit
+
 [![Rust](https://img.shields.io/badge/Rust-red.svg?style=for-the-badge&logo=rust)](https://www.rust-lang.org/)
 
+![Logo](assets/icon.png)
 
-  ![Logo](assets/icon.png)
 </div>
 
--------------------------
-
+---
 
 #### Shallow Crawl (Single Page)
+
 ![Logo](assets/hero.png)
 
-
 #### Deep Crawl (Page Bulk)
+
 ![Logo](assets/hero2.png)
 
-#### Log Analyser (Apache & Nginx)
-![Logo](assets/logs.png)
-
-------------------------
 
 ## RustySEO - A cross-platform SEO toolkit
 
@@ -59,9 +56,9 @@ This authentication will be passed to the client-side in the future.
 
 Use at your own risk, this software is new and under development.
 
- ‼️ You will get prompted with "Unknown/Unregistered Developer" on Windows and Mac. See below how to open and install ‼️
- 
- [Windows](https://www.process.st/how-to/turn-off-microsoftverified-app-windows-11/#:~:text=This%20can%20be%20helpful%20if,option%20to%20install%20from%20anywhere.) [Mac OS](https://support.apple.com/en-gb/102445)
+‼️ You will get prompted with "Unknown/Unregistered Developer" on Windows and Mac. See below how to open and install ‼️
+
+[Windows](https://www.process.st/how-to/turn-off-microsoftverified-app-windows-11/#:~:text=This%20can%20be%20helpful%20if,option%20to%20install%20from%20anywhere.) [Mac OS](https://support.apple.com/en-gb/102445)
 
 ## 🤘 Features
 
@@ -103,7 +100,6 @@ Use at your own risk, this software is new and under development.
 | 17  | API / Streaming                          |   ⏳   |
 | 18  | Very Large website support (> 100K URLs) |   🏋🏻   |
 
-
 ## 🔌 Connectors / APIs (Get your keys, they are free 😉)
 
 - [Google Search Console](https://search.google.com/search-console/about)
@@ -116,15 +112,14 @@ Use at your own risk, this software is new and under development.
 
 ## ⌨️ Keymaps
 
-|     Keys     |               Result                  |                 
-| :----------: | ------------------------------------- | 
-|  CTRL + D    |                Deep Crawl             |
-|  CTRL + S    |               Shalow Crawl            |
-|  CTRL + K    |               log analysis            |
-|  CTRL + H    |              Toggle Sidebar           |  
-|  CTRL + L    |        Toggle Side Task Manager       |
-|  CTRL + T    |            Create TODO/Task           |
-
+|       Keys       | Result                   |
+| :--------------: | ------------------------ |
+|     CTRL + D     | Deep Crawl               |
+|     CTRL + S     | Shalow Crawl             |
+|     CTRL + H     | Toggle Sidebar           |
+|     CTRL + L     | Toggle Side Task Manager |
+|     CTRL + T     | Create TODO/Task         |
+| CTRL + Shift + C | Delete Logs From DB      |
 
 # Setting up Google Search Console
 

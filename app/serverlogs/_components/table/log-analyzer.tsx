@@ -25,6 +25,7 @@ import {
   FileText,
   Package,
   FileType2,
+  BadgeInfo,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -99,12 +100,17 @@ export function LogAnalyzer() {
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "ascending" | "descending";
-  } | null>(null);
+  } | null>({
+    key: "timestamp",
+    direction: "ascending",
+  });
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [ipModal, setIpModal] = useState(false);
   const [ip, setIP] = useState("");
   const [domain, setDomain] = useState("");
   const [showOnTables, setShowOnTables] = useState(false);
+  const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
+  const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
 
   // Helper functions
   const formatDate = useCallback((dateString: string) => {
@@ -215,18 +221,44 @@ export function LogAnalyzer() {
           }
         }
 
+        // Apply Bot type filter (Mobile or Desktop)
+        if (botTypeFilter !== null) {
+          if (botTypeFilter === "Mobile") {
+            result = result.filter((log) => log?.user_agent.includes("Mobile"));
+          } else if (botTypeFilter === "Desktop") {
+            result = result.filter(
+              (log) => !log?.user_agent.includes("Mobile"),
+            );
+          }
+        }
+
+        // Apply verified filter
+        if (verifiedFilter !== null) {
+          result = result.filter((log) => log.verified === verifiedFilter);
+        }
         // Apply sorting
         if (sortConfig) {
           result.sort((a, b) => {
             const aValue = a[sortConfig.key as keyof LogEntry];
             const bValue = b[sortConfig.key as keyof LogEntry];
 
+            // Special case for timestamp sorting
+            if (sortConfig.key === "timestamp") {
+              const aDate = new Date(aValue as string).getTime();
+              const bDate = new Date(bValue as string).getTime();
+              return sortConfig.direction === "ascending"
+                ? aDate - bDate
+                : bDate - aDate;
+            }
+
+            // Normal string sorting
             if (typeof aValue === "string" && typeof bValue === "string") {
               return sortConfig.direction === "ascending"
                 ? aValue.localeCompare(bValue)
                 : bValue.localeCompare(aValue);
             }
 
+            // Fallback for other types
             if (aValue < bValue) {
               return sortConfig.direction === "ascending" ? -1 : 1;
             }
@@ -240,7 +272,15 @@ export function LogAnalyzer() {
         setFilteredLogs(result);
         setCurrentPage(1);
       }, 300),
-    [statusFilter, methodFilter, fileTypeFilter, botFilter, sortConfig],
+    [
+      statusFilter,
+      methodFilter,
+      fileTypeFilter,
+      botFilter,
+      sortConfig,
+      verifiedFilter,
+      botTypeFilter,
+    ],
   );
 
   // Apply filters when search term or entries change
@@ -304,6 +344,8 @@ export function LogAnalyzer() {
     setSortConfig(null);
     setExpandedRow(null);
     setFileTypeFilter([]);
+    setVerifiedFilter(null);
+    setBotTypeFilter(null);
   }, []);
 
   // Export logs as CSV
@@ -382,6 +424,8 @@ export function LogAnalyzer() {
     setIP(ip);
   }, []);
 
+  const mac = process.platform === "darwin";
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -400,7 +444,7 @@ export function LogAnalyzer() {
   }
 
   return (
-    <div className="space-y-4 flex flex-col flex-1 h-full">
+    <div className="space-y-4 flex flex-col flex-1 h-full not-selectable">
       <div className="flex flex-col md:flex-row justify-between relative -mb-4 p-1 h-full">
         {ipModal && (
           <div className="absolute z-50 top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-[2rem]">
@@ -412,7 +456,7 @@ export function LogAnalyzer() {
           <Input
             type="search"
             placeholder="Search by IP, path, user agent..."
-            className="pl-8 w-full"
+            className="pl-8 w-full dark:text-white"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -573,13 +617,67 @@ export function LogAnalyzer() {
               setBotFilter(value === "all" ? null : value)
             }
           >
-            <SelectTrigger className="w-[130px] dark:bg-brand-darker dark:text-white">
+            <SelectTrigger className="w-[125px] dark:bg-brand-darker dark:text-white">
               <SelectValue placeholder="Bot/Human" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="all">All Requests</SelectItem>
               <SelectItem value="bot">🤖 Robots</SelectItem>
               <SelectItem value="Human">🙋 Human</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* SELECT BOT TYPE (DESKTOP OR MOBILE) */}
+          <Select
+            value={botTypeFilter === null ? "all" : botTypeFilter}
+            onValueChange={(value) =>
+              setBotTypeFilter(value === "all" ? null : value)
+            }
+          >
+            <SelectTrigger className="w-[120px] dark:bg-brand-darker dark:text-white">
+              <SelectValue placeholder="Bot/Human" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All devices</SelectItem>
+              <SelectItem value="Desktop">Desktop</SelectItem>
+              <SelectItem value="Mobile">Mobile</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* SELECT VEREFIED OR NOT VERIFIED */}
+          <Select
+            value={
+              verifiedFilter === null
+                ? "all"
+                : verifiedFilter
+                  ? "verified"
+                  : "unverified"
+            }
+            onValueChange={(value) => {
+              if (value === "all") setVerifiedFilter(null);
+              else setVerifiedFilter(value === "verified");
+            }}
+          >
+            <SelectTrigger className="w-[130px] dark:bg-brand-darker dark:text-white">
+              <SelectValue placeholder="Verification" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All IPs</SelectItem>
+              <SelectItem className="flex" value="verified">
+                <div className="flex items-center">
+                  <BadgeCheck
+                    className="text-xs active:text-brand-bright hover:white active:white"
+                    size={17}
+                  />
+                  <span className="ml-1 inline-block">Verified</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="unverified">
+                <div className="flex">
+                  <BadgeInfo size={17} />{" "}
+                  <span className="ml-1">Unverified</span>
+                </div>
+              </SelectItem>
             </SelectContent>
           </Select>
 
@@ -647,7 +745,7 @@ export function LogAnalyzer() {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="cursor-pointer w-[90px] text-left"
                       onClick={() => requestSort("browser")}
                     >
                       Browser
@@ -662,7 +760,7 @@ export function LogAnalyzer() {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="cursor-pointer w-[200px] text-left"
                       onClick={() => requestSort("timestamp")}
                     >
                       Timestamp
@@ -677,7 +775,7 @@ export function LogAnalyzer() {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="cursor-pointer pl-7"
                       onClick={() => requestSort("path")}
                     >
                       Path
@@ -847,7 +945,15 @@ function LogRow({
             {log.method}
           </Badge>
         </TableCell>
-        <TableCell width={9}>{log?.browser}</TableCell>
+        <TableCell
+          className={` pl-3  ${log?.browser === "Chrome" ? "text-red-400" : ""}
+          ${log?.browser === "Firefox" ? "text-green-500" : ""}
+${log?.browser === "Safari" ? "text-blue-400" : ""}
+`}
+          width={12}
+        >
+          {log?.browser}
+        </TableCell>
         <TableCell className="max-w-44">{formatDate(log.timestamp)}</TableCell>
         <TableCell className="max-w-[480px] truncate mr-2">
           <span className="mr-1 inline-block" style={{ paddingTop: "" }}>

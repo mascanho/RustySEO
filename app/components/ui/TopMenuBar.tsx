@@ -538,7 +538,7 @@ const TopMenuBar = () => {
 
           <MenubarMenu>
             <MenubarTrigger className="ml-3 text-xs">Reports</MenubarTrigger>
-            <MenubarContent>
+            <MenubarContent className="z-[999999999999999]">
               <MenubarItem onClick={handleDownloadPerformance}>
                 <FiBarChart2 className="mr-2" />
                 Performance History
@@ -561,6 +561,10 @@ const TopMenuBar = () => {
               {/*   <FiTool className="mr-2" /> */}
               {/*   Headings SERP */}
               {/* </MenubarItem> */}
+              <MenubarItem onClick={() => router.push("/ppc")}>
+                <FiTool className="mr-2" />
+                Google Ads Sim.
+              </MenubarItem>
               <MenubarSeparator />
               <MenubarItem
                 disabled={pathname !== "/global"}

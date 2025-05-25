@@ -37,11 +37,21 @@ const config: Config = {
           darker: "#171717",
         },
         apple: {
-          blue: "#0070CD", // Apple's traditional blue color
-          silver: "#D3D3D3", // Silver used in Apple devices
-          spaceGray: "#333333", // Space Gray used in Apple products
-          gold: "#D7B590", // Gold used in some Apple products
-          white: "#FFFFFF", // Apple's classic white color
+          blue: "#0070CD",
+          silver: "#D3D3D3",
+          spaceGray: "#333333",
+          gold: "#D7B590",
+          white: "#FFFFFF",
+        },
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar-background))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          primary: "hsl(var(--sidebar-primary))",
+          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
+          accent: "hsl(var(--sidebar-accent))",
+          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
+          border: "hsl(var(--sidebar-border))",
+          ring: "hsl(var(--sidebar-ring))",
         },
       },
       keyframes: {
@@ -61,6 +71,10 @@ const config: Config = {
             height: "0",
           },
         },
+      },
+      animation: {
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
       },
     },
   },

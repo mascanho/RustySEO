@@ -15,6 +15,15 @@ import { WidgetTable } from "./WidgetTables/WidgetCrawlersTable.tsx";
 import { Tabs } from "@mantine/core";
 
 import { useCurrentLogs } from "@/store/logFilterStore";
+import { FaInfoCircle } from "react-icons/fa";
+
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import PopOverParsedLogs from "./PopOverParsedLogs";
+import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
 
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
@@ -40,6 +49,7 @@ export default function WidgetLogs() {
   const { entries, overview } = useLogAnalysis();
   const [openDialogs, setOpenDialogs] = useState({});
   const { currentLogs } = useCurrentLogs();
+  const { uploadedLogFiles } = useServerLogsStore();
 
   // Prepare filetype data from actual entries
   const fileTypeData = currentLogs?.reduce((acc, entry) => {
@@ -138,11 +148,64 @@ export default function WidgetLogs() {
     setOpenDialogs((prev) => ({ ...prev, [name]: isOpen }));
   };
 
+  const totalLogsAnalysed = uploadedLogFiles
+    .map((log) => log?.name?.length)
+    .reduce((a, b) => a + b, 0);
+
   return (
     <div className="bg-white border dark:border-brand-dark shadow rounded-none p-2 pr-1 w-1/2  mx-auto dark:bg-slate-950 dark:text-white h-64 relative">
-      <span className="absolute top-2 font-bold text-black/20 dark:text-white/50 text-xl">
-        {currentLogs.length} Entries
-      </span>
+      <Popover>
+        <PopoverTrigger className="absolute bottom-3 left-3">
+          <FaInfoCircle className=" h-4 w-4 text-brand-bright" />
+        </PopoverTrigger>
+        <PopoverContent className="min-w-70 max-w-96 py-2 px-0 mt-2 relative z-20">
+          {/* <div className="h-5 w-5 absolute -top-2 right-32 bg-white rotate-45 border -z-10" /> */}
+          <PopOverParsedLogs />
+        </PopoverContent>
+      </Popover>
+
+      <Popover>
+        <PopoverTrigger className="absolute top-2 font-bold text-black/20 dark:text-white/50 text-xl">
+          <div className="flex flex-col items-start justify-start">
+            <span>{currentLogs.length} Entries</span>
+            <div className="flex items-center space-x-2 text-brand-bright/50 -mt-1.5">
+              <span className="text-sm inline-block">
+                {totalLogsAnalysed} logs
+              </span>
+              <span>/</span>
+              <span className="text-xs inline-block">
+                {uploadedLogFiles ? uploadedLogFiles?.length : 0} batches
+              </span>
+            </div>
+          </div>
+        </PopoverTrigger>
+        <PopoverContent className="min-w-70 max-w-96 py-2 px-0 mt-2 relative z-20">
+          {/* <div className="h-5 w-5 absolute -top-2 right-32 bg-white rotate-45 border -z-10" /> */}
+          <PopOverParsedLogs />
+        </PopoverContent>
+      </Popover>
+
+      {/* <Popover> */}
+      {/*   <PopoverTrigger className="absolute top-[7.8rem] left-[9.8rem] font-bold text-black/20 dark:text-white/50 text-xl z-[999999]"> */}
+      {/*     <div className="flex flex-col items-start justify-start"> */}
+      {/*       <div className="flex flex-col justify-center items-left  text-gray-500/50 -mt-2 text-xs"> */}
+      {/*         <span className="text-sm inline-block"> */}
+      {/*           {totalLogsAnalysed} logs */}
+      {/*         </span> */}
+      {/*         <span className="text-sm inline-block"> */}
+      {/*           {uploadedLogFiles.length} batches */}
+      {/*         </span> */}
+      {/*       </div> */}
+      {/*     </div> */}
+      {/*   </PopoverTrigger> */}
+      {/*   <PopoverContent className="min-w-70 max-w-96 py-2 px-0 mt-2 relative z-20"> */}
+      {/* <div className="h-5 w-5 absolute -top-2 right-32 bg-white rotate-45 border -z-10" /> */}
+      {/*     <PopOverParsedLogs /> */}
+      {/*   </PopoverContent> */}
+      {/* </Popover> */}
+
+      {/* Information about the uploaded logs */}
+
       {/* Tabs */}
       <div className="flex space-x-2 pt-1 pb-0 w-full justify-center">
         {tabs.map(({ label, icon }) => (
@@ -172,7 +235,7 @@ export default function WidgetLogs() {
         {activeTab !== "Analytics" ? (
           <>
             <div className="flex flex-col md:flex-row items-center justify-center relative">
-              <PieChart width={200} height={200}>
+              <PieChart width={200} height={200} className="relative">
                 <Pie
                   data={chartData}
                   dataKey="value"
@@ -221,7 +284,7 @@ export default function WidgetLogs() {
               </PieChart>
 
               <div
-                className={`grid grid-cols-1 ${activeTab === "Status Codes" ? "grid-cols-3 max-w-xl" : "grid-cols-2"} gap-2 w-full max-w-md pl-4`}
+                className={`grid grid-cols-1 ${activeTab === "Status Codes" ? "grid-cols-4 max-w-xl" : "grid-cols-2"} gap-2 w-full max-w-md pl-4`}
               >
                 {chartData.map((entry, idx) => (
                   <Dialog
@@ -254,7 +317,7 @@ export default function WidgetLogs() {
                     </DialogTrigger>
 
                     {entry?.name === "Google" ? (
-                      <DialogContent className="max-w-[90%] min-h-96 overflow-hidden">
+                      <DialogContent className="max-w-[90%] min-h-96 overflow-hidden dark:bg-brand-darker dark:border-brand-bright">
                         <Tabs defaultValue="overview">
                           <Tabs.List className="mb-2 mx-1">
                             <Tabs.Tab value="overview">
@@ -273,7 +336,7 @@ export default function WidgetLogs() {
                         </Tabs>
                       </DialogContent>
                     ) : (
-                      <DialogContent className="max-w-md">
+                      <DialogContent className="max-w-md dark:text-white dark:border-brand-bright dark:bg-brand-darker">
                         <DialogHeader>
                           <DialogTitle>{entry.name} Details</DialogTitle>
                         </DialogHeader>

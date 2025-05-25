@@ -47,13 +47,12 @@ impl From<ipnet::PrefixLenError> for IpVerificationError {
 
 // Use a static variable to cache taxonomies
 static TAXONOMIES: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));
+static LOG_NUMBER: Lazy<Mutex<i32>> = Lazy::new(|| Mutex::new(0));
 
 // Tauri command to set taxonomies from frontend
 #[tauri::command]
 pub fn set_taxonomies(new_taxonomies: Vec<String>) -> Result<(), String> {
     let mut taxonomies = TAXONOMIES.lock().map_err(|e| e.to_string())?;
-
-    println!("New taxonomies: {:?}", &taxonomies);
 
     *taxonomies = new_taxonomies;
     Ok(())
@@ -225,6 +224,9 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
         "([^"]*)"\s+                                                      # Referer
         "([^"]*)"                                                         # User agent
     "#).expect("Invalid regex pattern");
+
+    // Output something to terminal showing loading
+    println!("Parsing log entries...");
 
     log.lines()
         .enumerate()

@@ -106,10 +106,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "ascending" | "descending";
-  } | null>(null);
+  } | null>({ key: "frequency", direction: "descending" }); // Changed this line
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [domain, setDomain] = useState("");
   const [showOnTables, setShowOnTables] = useState(false);
+  const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
 
   // GET THE domain from the local storage to use on the table to complement the path
   useEffect(() => {
@@ -179,6 +180,14 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
       result = result.filter((log) => log.verified === verifiedFilter);
     }
 
+    if (botTypeFilter !== null) {
+      if (botTypeFilter === "Mobile") {
+        result = result.filter((log) => log.user_agent.includes("Mobile"));
+      } else if (botTypeFilter === "Desktop") {
+        result = result.filter((log) => !log.user_agent.includes("Mobile"));
+      }
+    }
+
     if (sortConfig) {
       result.sort((a, b) => {
         const aValue = a[sortConfig.key as keyof LogEntry];
@@ -210,6 +219,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     sortConfig,
     initialLogs,
     fileTypeFilter,
+    botTypeFilter,
   ]);
 
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -237,6 +247,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     setSortConfig(null);
     setExpandedRow(null);
     setFilteredLogs(initialLogs);
+    setBotTypeFilter(null);
   };
 
   const exportCSV = async () => {
@@ -325,6 +336,56 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     }
   };
 
+  console.log("data from eidget table", data);
+  console.log(currentLogs), "current Logs";
+
+  // Handle the dates and the timings hits
+  function timings(data, log) {
+    const initialDate = new Date(log?.timestamp);
+    const finishDate = new Date(data?.log_finish_time);
+
+    const elapsedTimeMs = Math.abs(
+      finishDate.getTime() - initialDate.getTime(),
+    );
+
+    // Calculate hours, minutes, seconds (FIXED: Math.floor for minutes)
+    const hours = Math.floor(elapsedTimeMs / (1000 * 60 * 60));
+    const minutes = Math.floor(
+      (elapsedTimeMs % (1000 * 60 * 60)) / (1000 * 60),
+    );
+    const seconds = Math.floor((elapsedTimeMs % (1000 * 60)) / 1000);
+
+    // Calculate elapsed time in different units for frequency
+    const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60);
+    const elapsedTimeMinutes = elapsedTimeMs / (1000 * 60);
+    const elapsedTimeSeconds = elapsedTimeMs / 1000;
+
+    // Handle missing frequency (default to 0)
+    const frequency = log?.frequency || 0;
+
+    // Calculate rates (avoid division by zero)
+    const perHour =
+      elapsedTimeHours > 0 ? (frequency / elapsedTimeHours).toFixed(1) : "0.00";
+    const perMinute =
+      elapsedTimeMinutes > 0
+        ? (frequency / elapsedTimeMinutes).toFixed(2)
+        : "0.00";
+    const perSecond =
+      elapsedTimeSeconds > 0
+        ? (frequency / elapsedTimeSeconds).toFixed(2)
+        : "0.00";
+
+    return {
+      elapsedTime: `${hours}h ${minutes}m ${seconds}s`,
+      frequency: {
+        total: frequency,
+        perHour: `${perHour}`,
+        perMinute: `${perMinute}/minute`,
+        perSecond: `${perSecond}/second`,
+      },
+    };
+  }
+
   return (
     <div className="space-y-4 h-full pb-0 -mb-4">
       <div className="flex flex-col md:flex-row justify-between -mb-4 p-1">
@@ -333,52 +394,52 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
           <Input
             type="search"
             placeholder="Search by IP, path, user agent, or referer..."
-            className="pl-8 w-full"
+            className="pl-8 w-full dark:text-white dark:bg-brand-darker"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
 
         <div className="flex flex-1 gap-1">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark"
-              >
-                <Filter className="h-4 w-4" />
-                Method
-                {methodFilter.length > 0 && (
-                  <Badge variant="secondary" className="ml-1">
-                    {methodFilter.length}
-                  </Badge>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="bg-white dark:border-brand-dark dark:text-white dark:active:bg-brand-bright dark:bg-brand-darker"
-            >
-              <DropdownMenuLabel>Filter by Method</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {["GET", "POST", "PUT", "DELETE"].map((method) => (
-                <DropdownMenuCheckboxItem
-                  className="bg-white active:bg-gray-100 hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
-                  key={method}
-                  checked={methodFilter.includes(method)}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setMethodFilter([...methodFilter, method]);
-                    } else {
-                      setMethodFilter(methodFilter.filter((m) => m !== method));
-                    }
-                  }}
-                >
-                  {method}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* <DropdownMenu> */}
+          {/*   <DropdownMenuTrigger asChild> */}
+          {/*     <Button */}
+          {/*       variant="outline" */}
+          {/*       className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark" */}
+          {/*     > */}
+          {/*       <Filter className="h-4 w-4" /> */}
+          {/*       Method */}
+          {/*       {methodFilter.length > 0 && ( */}
+          {/*         <Badge variant="secondary" className="ml-1"> */}
+          {/*           {methodFilter.length} */}
+          {/*         </Badge> */}
+          {/*       )} */}
+          {/*     </Button> */}
+          {/*   </DropdownMenuTrigger> */}
+          {/*   <DropdownMenuContent */}
+          {/*     align="end" */}
+          {/*     className="bg-white dark:border-brand-dark dark:text-white dark:active:bg-brand-bright dark:bg-brand-darker" */}
+          {/*   > */}
+          {/*     <DropdownMenuLabel>Filter by Method</DropdownMenuLabel> */}
+          {/*     <DropdownMenuSeparator /> */}
+          {/*     {["GET", "POST", "PUT", "DELETE"].map((method) => ( */}
+          {/*       <DropdownMenuCheckboxItem */}
+          {/*         className="bg-white active:bg-gray-100 hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright" */}
+          {/*         key={method} */}
+          {/*         checked={methodFilter.includes(method)} */}
+          {/*         onCheckedChange={(checked) => { */}
+          {/*           if (checked) { */}
+          {/*             setMethodFilter([...methodFilter, method]); */}
+          {/*           } else { */}
+          {/*             setMethodFilter(methodFilter.filter((m) => m !== method)); */}
+          {/*           } */}
+          {/*         }} */}
+          {/*       > */}
+          {/*         {method} */}
+          {/*       </DropdownMenuCheckboxItem> */}
+          {/*     ))} */}
+          {/*   </DropdownMenuContent> */}
+          {/* </DropdownMenu> */}
 
           {/* FileType Filter */}
           <DropdownMenu>
@@ -470,9 +531,56 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
               <SelectValue placeholder="Verification" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All IPs</SelectItem>
-              <SelectItem value="verified">Verified</SelectItem>
-              <SelectItem value="unverified">Unverified</SelectItem>
+              <SelectItem
+                className="hover:bg-brand-bright hover:text-white"
+                value="all"
+              >
+                All IPs
+              </SelectItem>
+              <SelectItem
+                className="hover:bg-brand-bright hover:text-white"
+                value="verified"
+              >
+                Verified
+              </SelectItem>
+              <SelectItem
+                className="hover:bg-brand-bright hover:text-white"
+                value="unverified"
+              >
+                Unverified
+              </SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* SELECT BOT TYPE (DESKTOP OR MOBILE) */}
+          <Select
+            value={botTypeFilter === null ? "all" : botTypeFilter}
+            onValueChange={(value) =>
+              setBotTypeFilter(value === "all" ? null : value)
+            }
+          >
+            <SelectTrigger className="w-[120px] dark:bg-brand-darker dark:text-white">
+              <SelectValue placeholder="Bot/Human" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem
+                className="hover:bg-brand-bright hover:text-white"
+                value="all"
+              >
+                All devices
+              </SelectItem>
+              <SelectItem
+                className="hover:bg-brand-bright hover:text-white"
+                value="Desktop"
+              >
+                Desktop
+              </SelectItem>
+              <SelectItem
+                className="hover:bg-brand-bright hover:text-white"
+                value="Mobile"
+              >
+                Mobile
+              </SelectItem>
             </SelectContent>
           </Select>
 
@@ -511,21 +619,21 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[80px] text-center">#</TableHead>
-                    <TableHead
-                      className="cursor-pointer w-[80px] truncate"
-                      onClick={() => requestSort("ip")}
-                    >
-                      IP Address
-                      {sortConfig?.key === "ip" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      )}
-                    </TableHead>
+                    {/* <TableHead */}
+                    {/*   className="cursor-pointer w-[80px] truncate" */}
+                    {/*   onClick={() => requestSort("ip")} */}
+                    {/* > */}
+                    {/*   IP Address */}
+                    {/*   {sortConfig?.key === "ip" && ( */}
+                    {/*     <ChevronDown */}
+                    {/*       className={`ml-1 h-4 w-4 inline-block ${ */}
+                    {/*         sortConfig.direction === "descending" */}
+                    {/*           ? "rotate-180" */}
+                    {/*           : "" */}
+                    {/*       }`} */}
+                    {/*     /> */}
+                    {/*   )} */}
+                    {/* </TableHead> */}
                     <TableHead
                       className="cursor-pointer max-w-[20px] truncate"
                       onClick={() => requestSort("timestamp")}
@@ -541,21 +649,21 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                         />
                       )}
                     </TableHead>
-                    <TableHead
-                      className="cursor-pointer w-[90px] text-center"
-                      onClick={() => requestSort("method")}
-                    >
-                      Method
-                      {sortConfig?.key === "method" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      )}
-                    </TableHead>
+                    {/* <TableHead */}
+                    {/*   className="cursor-pointer w-[90px] text-center" */}
+                    {/*   onClick={() => requestSort("method")} */}
+                    {/* > */}
+                    {/*   Method */}
+                    {/*   {sortConfig?.key === "method" && ( */}
+                    {/*     <ChevronDown */}
+                    {/*       className={`ml-1 h-4 w-4 inline-block ${ */}
+                    {/*         sortConfig.direction === "descending" */}
+                    {/*           ? "rotate-180" */}
+                    {/*           : "" */}
+                    {/*       }`} */}
+                    {/*     /> */}
+                    {/*   )} */}
+                    {/* </TableHead> */}
                     <TableHead
                       className="cursor-pointer"
                       onClick={() => requestSort("path")}
@@ -605,7 +713,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       className="cursor-pointer min-w-10 max-w-[50px] text-center"
                       onClick={() => requestSort("frequency")}
                     >
-                      Frequency
+                      ∑ Frequency
                       {sortConfig?.key === "frequency" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${
@@ -634,32 +742,32 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                           <TableCell className="font-medium text-center max-w-[40px]">
                             {indexOfFirstItem + index + 1}
                           </TableCell>
-                          <TableCell className="max-w-[160px] w-[180px] truncate">
-                            <div className="flex items-center gap-1">
-                              {log.ip}
-                            </div>
-                          </TableCell>
-                          <TableCell className="w-[200px]">
+                          {/* <TableCell className="max-w-[160px] w-[180px] truncate"> */}
+                          {/*   <div className="flex items-center gap-1"> */}
+                          {/*     {log.ip} */}
+                          {/*   </div> */}
+                          {/* </TableCell> */}
+                          <TableCell className="w-[200px] pl-2">
                             {formatDate(log.timestamp)}
                           </TableCell>
-                          <TableCell className="text-center max-w-[150px]">
-                            <Badge
-                              variant="outline"
-                              className={
-                                log.method === "GET"
-                                  ? "bg-green-100 dark:bg-green-400 text-green-800 border-green-200"
-                                  : log.method === "POST"
-                                    ? "bg-blue-100 dark:bg-blue-400 text-blue-800 border-blue-200"
-                                    : log.method === "PUT"
-                                      ? "bg-yellow-100 dark:bg-yellow-400 text-yellow-800 border-yellow-200"
-                                      : "bg-red-100 dark:bg-red-400 text-red-800 border-red-200"
-                              }
-                            >
-                              {log.method}
-                            </Badge>
-                          </TableCell>
+                          {/* <TableCell className="text-center max-w-[150px]"> */}
+                          {/*   <Badge */}
+                          {/*     variant="outline" */}
+                          {/*     className={ */}
+                          {/*       log.method === "GET" */}
+                          {/*         ? "bg-green-100 dark:bg-green-400 text-green-800 border-green-200" */}
+                          {/*         : log.method === "POST" */}
+                          {/*           ? "bg-blue-100 dark:bg-blue-400 text-blue-800 border-blue-200" */}
+                          {/*           : log.method === "PUT" */}
+                          {/*             ? "bg-yellow-100 dark:bg-yellow-400 text-yellow-800 border-yellow-200" */}
+                          {/*             : "bg-red-100 dark:bg-red-400 text-red-800 border-red-200" */}
+                          {/*     } */}
+                          {/*   > */}
+                          {/*     {log.method} */}
+                          {/*   </Badge> */}
+                          {/* </TableCell> */}
                           <TableCell className="inline-block truncate max-w-[600px]">
-                            <span className="mr-2 inline-block">
+                            <span className="mr-2 inline-block pl-2">
                               {getFileIcon(log.file_type)}
                             </span>
                             {showOnTables && domain
@@ -705,7 +813,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                 {/* User Agent */}
                                 <div className="flex flex-col max-w-[70rem] w-full">
                                   <div className="flex mb-2 space-x-2 items-center justify-between">
-                                    <h4 className=" font-bold">User Agent</h4>
+                                    <h4 className=" font-bold">Timespan</h4>
                                     {log.verified && (
                                       <div className="flex items-center space-x-1 py-1 bg-red-200 dark:bg-red-400 px-2 text-xs rounded-md">
                                         <BadgeCheck
@@ -718,21 +826,19 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                   </div>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                                     <p className="text-sm font-mono break-all">
-                                      {log.user_agent}
+                                      {timings(data, log)?.elapsedTime}
                                     </p>
                                   </div>
                                 </div>
 
                                 {/* Referer */}
                                 <div className="flex flex-col">
-                                  <h4 className="mb-2 font-bold">Referer</h4>
+                                  <h4 className="mb-2 font-bold">
+                                    Hits per Hour
+                                  </h4>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                                     <p className="text-sm break-all">
-                                      {log.referer || (
-                                        <span className="text-muted-foreground">
-                                          No referer
-                                        </span>
-                                      )}
+                                      {timings(data, log)?.frequency?.perHour}
                                     </p>
                                   </div>
                                 </div>

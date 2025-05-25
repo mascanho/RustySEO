@@ -14,6 +14,7 @@ import Loader from "@/components/Loader/Loader";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import { ChatBar } from "./components/Chat/Chatbar";
+import { usePathname } from "next/navigation";
 
 const roboto = Roboto({
   // weight: ["400"], // Specify weights you need
@@ -33,6 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const pathname = usePathname();
 
   // GET THE THEME AND SET IT
   useEffect(() => {
@@ -83,7 +85,7 @@ export default function RootLayout({
           </section>
           <main className="mt-9   rounded-md  ">
             {children}
-            <Toaster />
+            {pathname === "/ppc" ? "" : <Toaster />}
           </main>
           <Footer />
         </MantineProvider>
