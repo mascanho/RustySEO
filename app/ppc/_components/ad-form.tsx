@@ -381,6 +381,8 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
         </div>
       </div>
 
+      {/* SITELINKS */}
+
       {formData.type === "search" && (
         <Card className="w-full dark:bg-brand-darker dark:border-brand-dark  relative h-[30rem] max-h-[30rem]">
           <CardHeader className="-z-10">
@@ -389,7 +391,7 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
               Add sitelinks to enhance your search ad
             </CardDescription>
           </CardHeader>
-          <CardContent className="h-96 overflow-auto">
+          <CardContent className="h-96 overflow-auto px-6">
             <SitelinksEditor
               sitelinks={formData.sitelinks || []}
               onChange={handleUpdateSitelinks}
