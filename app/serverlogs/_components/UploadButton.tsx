@@ -17,10 +17,11 @@ import DomainManager from "./DomainManager";
 import LogsDBManager from "./LogsDBManager";
 import { invoke } from "@tauri-apps/api/core";
 import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
-import { IoReload } from "react-icons/io5";
+import { IoReload, IoTrashBin } from "react-icons/io5";
 import { toast } from "sonner";
 import { Tooltip } from "react-tooltip";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { FaRegTrashCan } from "react-icons/fa6";
 
 function UploadButton() {
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -30,7 +31,7 @@ function UploadButton() {
   const { resetAll } = useLogAnalysis();
 
   const handleClearStoreLogs = async () => {
-    setLogData([]);
+    resetAll();
     toast.success("All previous logs have been removed from cache");
   };
 
@@ -65,10 +66,10 @@ function UploadButton() {
       <>
         <aside
           data-tooltip-id="reload-tooltip"
-          onClick={() => resetAll()}
-          className="dark:bg-red-800  bg-red-400 w-7 h-7 flex items-center justify-center text-white rounded-sm cursor-pointer active:scale-95 p-1"
+          onClick={() => handleClearStoreLogs()}
+          className="dark:bg-red-800  bg-red-500 w-7 h-7 flex items-center justify-center text-white rounded-sm cursor-pointer active:scale-95 p-2"
         >
-          <IoReload />
+          <FaRegTrashCan />
         </aside>
         <Tooltip
           id="reload-tooltip"

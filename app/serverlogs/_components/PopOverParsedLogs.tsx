@@ -44,8 +44,8 @@ const PopOverParsedLogs = () => {
                     key={fileIndex}
                     className="flex items-center space-x-2 mt-1"
                   >
-                    <FaRegFileAlt className="text-gray-500 text-xs dark:text-white" />
-                    <div className="text-gray-800 text-xs  dark:text-brand-bright">
+                    <FaRegFileAlt className="text-brand-bright text-xs dark:text-white" />
+                    <div className="text-brand-bright text-xs  dark:text-brand-bright">
                       {fileName}
                     </div>
                   </div>
