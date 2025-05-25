@@ -12,7 +12,7 @@ const PopOverParsedLogs = () => {
   const { uploadedLogFiles } = useServerLogsStore();
 
   const totalLogsAnalysed = uploadedLogFiles
-    .map((log) => log.name.length)
+    .map((log) => log?.name?.length)
     .reduce((a, b) => a + b, 0);
 
   return (
@@ -31,10 +31,10 @@ const PopOverParsedLogs = () => {
                 <div className="flex items-center gap-2 text-xs text-gray-500 mb-1 dark:text-white font-semibold">
                   {/* <span>Added:</span> */}
                   <FaCalendarAlt />
-                  <span>{new Date(logEntry.time).toLocaleDateString()}</span>
+                  <span>{new Date(logEntry?.time).toLocaleDateString()}</span>
                   <FaClock className="ml-2" />
                   <span>
-                    Time: {new Date(logEntry.time).toLocaleTimeString()}
+                    Time: {new Date(logEntry?.time).toLocaleTimeString()}
                   </span>
                 </div>
 
@@ -46,7 +46,7 @@ const PopOverParsedLogs = () => {
                   >
                     <FaRegFileAlt className="text-brand-bright text-xs dark:text-white" />
                     <div className="text-brand-bright text-xs  dark:text-brand-bright">
-                      {fileName}
+                      {fileName && fileName}
                     </div>
                   </div>
                 ))}

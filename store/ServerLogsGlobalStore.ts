@@ -2,12 +2,16 @@
 import { create } from "zustand";
 
 interface ServerLogSettings {
-  storingLogs: boolean; // Replace LogEntry with your actual type
+  storingLogs: boolean;
   setStoringLogs: (logs: LogEntry[]) => void;
+
   storedLogsFromDBStore: LogEntry[];
   setStoredLogsFromDBStore: (logs: LogEntry[]) => void;
+
   uploadedLogFiles: File[];
   setUploadedLogFiles: (files: File[]) => void;
+
+  reset: () => void;
 }
 
 export const useServerLogsStore = create<ServerLogSettings>((set) => ({
@@ -22,4 +26,11 @@ export const useServerLogsStore = create<ServerLogSettings>((set) => ({
     set((state) => ({
       uploadedLogFiles: [...state.uploadedLogFiles, newEntry],
     })),
+
+  reset: () =>
+    set({
+      storingLogs: false,
+      storedLogsFromDBStore: [],
+      uploadedLogFiles: [],
+    }),
 }));

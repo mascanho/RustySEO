@@ -29,9 +29,14 @@ function UploadButton() {
   const [logsFromDB, setLogsFromDB] = useState(false);
   const { setStoredLogsFromDBStore } = useServerLogsStore();
   const { resetAll } = useLogAnalysis();
+  const { setServerLogsStore, setUploadedLogFiles, reset } =
+    useServerLogsStore();
 
   const handleClearStoreLogs = async () => {
     resetAll();
+    setLogsFromDB([]);
+    setStoredLogsFromDBStore([]);
+    reset();
     toast.success("All previous logs have been removed from cache");
   };
 

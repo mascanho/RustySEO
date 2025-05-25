@@ -149,7 +149,7 @@ export default function WidgetLogs() {
   };
 
   const totalLogsAnalysed = uploadedLogFiles
-    .map((log) => log.name.length)
+    .map((log) => log?.name?.length)
     .reduce((a, b) => a + b, 0);
 
   return (
@@ -174,7 +174,7 @@ export default function WidgetLogs() {
               </span>
               <span>/</span>
               <span className="text-xs inline-block">
-                {uploadedLogFiles.length} batches
+                {uploadedLogFiles ? uploadedLogFiles?.length : 0} batches
               </span>
             </div>
           </div>

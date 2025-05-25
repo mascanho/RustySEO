@@ -393,7 +393,7 @@ export function FileUpload({
               <div
                 key={index}
                 className={cn(
-                  "flex items-center space justify-between p-2 border mr-0.5 rounded-md dark:border-brand-dark my-2 dark:bg-slate-900",
+                  "flex items-center space justify-between p-2 border mr-0.5 rounded-md dark:border-brand-dark my-2 dark:bg-slate-900 border-brand-bright/30 bg-brand-bright/20",
                 )}
               >
                 <div className="flex items-center">
