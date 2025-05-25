@@ -144,6 +144,9 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
 
   const handleSave = () => {
     onSave(formData);
+
+    // set the data into local storage
+    localStorage.setItem("Ads", JSON.stringify(formData));
   };
 
   return (
@@ -206,6 +209,7 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
                   size="sm"
                   onClick={handleAddHeadline}
                   disabled={formData.headlines.length >= 15}
+                  className=" dark:bg-brand-bright h-7 text-xs"
                 >
                   <Plus className="h-4 w-4 mr-1" /> Add Headline
                 </Button>
@@ -248,7 +252,7 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
                   size="sm"
                   onClick={handleAddDescription}
                   disabled={formData.descriptions.length >= 4}
-                  className="dark:bg-brand-bright dark:text-white"
+                  className="dark:bg-brand-bright dark:text-white h-7 text-xs"
                 >
                   <Plus className="h-4 w-4 mr-1" /> Add Description
                 </Button>
@@ -324,14 +328,19 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
                 Add keywords to track in your ad copy
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 px-6">
+            <CardContent className="space-y-4 px-6 items-center">
               <form onSubmit={handleAddKeyword} className="flex gap-2">
                 <Input
                   value={keywordInput}
                   onChange={(e) => setKeywordInput(e.target.value)}
                   placeholder="Enter a keyword"
                 />
-                <Button type="submit">Add</Button>
+                <Button
+                  className="text-xs bg-white border text-black  dark:bg-brand-bright  h-9 dark:text-white dark:border-brand-dark hover:bg-gray-100"
+                  type="submit"
+                >
+                  Add
+                </Button>
               </form>
 
               <div className="flex flex-wrap gap-2 max-h-24 h-24 overflow-y-auto   ">
@@ -372,15 +381,17 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
         </div>
       </div>
 
+      {/* SITELINKS */}
+
       {formData.type === "search" && (
-        <Card className="w-full">
-          <CardHeader>
+        <Card className="w-full dark:bg-brand-darker dark:border-brand-dark  relative h-[30rem] max-h-[30rem]">
+          <CardHeader className="-z-10">
             <CardTitle>Sitelinks</CardTitle>
             <CardDescription>
               Add sitelinks to enhance your search ad
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="h-96 overflow-auto px-6">
             <SitelinksEditor
               sitelinks={formData.sitelinks || []}
               onChange={handleUpdateSitelinks}
@@ -390,7 +401,11 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
       )}
 
       <div className="flex justify-between">
-        <Button variant="outline" onClick={onPreview}>
+        <Button
+          variant="outline"
+          onClick={onPreview}
+          className="dark:bg-brand-darker dark:text-white dark:border-brand-dark"
+        >
           <Eye className="h-4 w-4 mr-2" />
           Preview Ad
         </Button>
