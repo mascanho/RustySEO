@@ -62,7 +62,7 @@ export function SitelinksEditor({ sitelinks, onChange }: SitelinksEditorProps) {
           size="sm"
           onClick={handleAddSitelink}
           disabled={sitelinks.length >= 6}
-          className="absolute top-8 right-6 h-7 text-xs z-50 bg-brand-bright dark:bg-brand-bright"
+          className="absolute top-8 right-6 h-7 text-xs z-50  dark:bg-brand-bright"
         >
           <Plus className="h-4 w-4 mr-1" /> Add Sitelink
         </Button>

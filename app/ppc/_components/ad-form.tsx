@@ -144,7 +144,12 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
 
   const handleSave = () => {
     onSave(formData);
+
+    // set the data into local storage
+    localStorage.setItem("Ads", JSON.stringify(formData));
   };
+
+  console.log(formData, "formData");
 
   return (
     <div className="space-y-6 w-full max-w-full relative">
@@ -206,7 +211,7 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
                   size="sm"
                   onClick={handleAddHeadline}
                   disabled={formData.headlines.length >= 15}
-                  className="bg-brand-bright dark:bg-brand-bright h-7 text-xs"
+                  className=" dark:bg-brand-bright h-7 text-xs"
                 >
                   <Plus className="h-4 w-4 mr-1" /> Add Headline
                 </Button>
@@ -333,7 +338,7 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
                   placeholder="Enter a keyword"
                 />
                 <Button
-                  className="text-xs bg-brand-bright dark:bg-brand-bright text-white dark:text-white h-9"
+                  className="text-xs bg-white border text-black  dark:bg-brand-bright  h-9 dark:text-white dark:border-brand-dark hover:bg-gray-100"
                   type="submit"
                 >
                   Add
