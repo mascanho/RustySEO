@@ -123,7 +123,7 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
                     <p className="text-sm text-muted-foreground truncate">
                       {ad.headlines
                         .filter((h) => h.trim())
-                        .slice(0, 3)
+                        .slice(0, 4)
                         .join(" | ")}
                     </p>
                   </div>

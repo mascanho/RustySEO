@@ -40,10 +40,12 @@ export function DashboardLayout({
         <SidebarHeader className=" dark:border-brand-dark">
           <div className="flex items-center px-2 py-3">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-primary dark:bg-brand-bright flex items-center justify-center text-primary-foreground font-bold">
-                A
+              {/* <div className="h-8 w-8 rounded-full bg-primary dark:bg-brand-bright flex items-center justify-center text-primary-foreground font-bold"> */}
+              {/*   A */}
+              {/* </div> */}
+              <div className="font-bold text-lg text-brand-bright">
+                Google Ad Simulator
               </div>
-              <div className="font-semibold text-lg">Ad Generator</div>
             </div>
           </div>
         </SidebarHeader>

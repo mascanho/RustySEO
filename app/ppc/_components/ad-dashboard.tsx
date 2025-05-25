@@ -11,9 +11,19 @@ import { toast } from "@/hooks/use-toast";
 
 export function AdDashboard() {
   const [ads, setAds] = useState<Ad[]>([]);
-
-  const [selectedAd, setSelectedAd] = useState<Ad | null>(ads[0]);
+  const [selectedAd, setSelectedAd] = useState<Ad | null>(null);
   const [sidebarView, setSidebarView] = useState<string>("dashboard");
+
+  // Function to save ads to localStorage
+  const saveAdsToLocalStorage = (ads) => {
+    localStorage.setItem("ads", JSON.stringify(ads));
+  };
+
+  // Function to retrieve ads from localStorage
+  const getAdsFromLocalStorage = () => {
+    const ads = localStorage.getItem("ads");
+    return ads ? JSON.parse(ads) : [];
+  };
 
   useEffect(() => {
     const handleClearSelectedAd = () => {
@@ -22,13 +32,20 @@ export function AdDashboard() {
 
     window.addEventListener("clearSelectedAd", handleClearSelectedAd);
 
+    // Load ads from localStorage when the component mounts
+    const savedAds = getAdsFromLocalStorage();
+    if (savedAds.length > 0) {
+      setAds(savedAds);
+      setSelectedAd(savedAds[0]);
+    }
+
     return () => {
       window.removeEventListener("clearSelectedAd", handleClearSelectedAd);
     };
   }, []);
 
   const handleAddAd = () => {
-    const newAd: Ad = {
+    const newAd = {
       id: Date.now().toString(),
       name: "New Ad",
       type: "search", // Default type
@@ -39,9 +56,11 @@ export function AdDashboard() {
       displayPath: "",
       sitelinks: [],
     };
-    setAds([...ads, newAd]);
+    const updatedAds = [...ads, newAd];
+    setAds(updatedAds);
     setSelectedAd(newAd);
     setSidebarView("ads");
+    saveAdsToLocalStorage(updatedAds); // Save to localStorage
 
     toast.info({
       title: "Ad added",
@@ -49,7 +68,7 @@ export function AdDashboard() {
     });
   };
 
-  const handleCloneAd = (ad: Ad) => {
+  const handleCloneAd = (ad) => {
     // Clone sitelinks with new IDs
     const clonedSitelinks = ad.sitelinks
       ? ad.sitelinks.map((sitelink) => ({
@@ -58,15 +77,17 @@ export function AdDashboard() {
         }))
       : [];
 
-    const clonedAd: Ad = {
+    const clonedAd = {
       ...ad,
       id: Date.now().toString(),
       name: `${ad.name} (Copy)`,
       sitelinks: clonedSitelinks,
     };
-    setAds([...ads, clonedAd]);
+    const updatedAds = [...ads, clonedAd];
+    setAds(updatedAds);
     setSelectedAd(clonedAd);
     setSidebarView("ads");
+    saveAdsToLocalStorage(updatedAds); // Save to localStorage
 
     toast.info({
       title: "Ad cloned",
@@ -74,12 +95,12 @@ export function AdDashboard() {
     });
   };
 
-  const handleSelectAd = (ad: Ad) => {
+  const handleSelectAd = (ad) => {
     setSelectedAd(ad);
     setSidebarView("ads");
   };
 
-  const handleDeleteAd = (adId: string) => {
+  const handleDeleteAd = (adId) => {
     try {
       console.log("Delete function called with ID:", adId);
 
@@ -98,6 +119,7 @@ export function AdDashboard() {
 
       // Update state with the new array
       setAds(updatedAds);
+      saveAdsToLocalStorage(updatedAds); // Save to localStorage
 
       // If we're deleting the currently selected ad, update selectedAd
       if (selectedAd?.id === adId) {
@@ -131,9 +153,13 @@ export function AdDashboard() {
     }
   };
 
-  const handleSaveAd = (updatedAd: Ad) => {
-    setAds(ads.map((ad) => (ad.id === updatedAd.id ? updatedAd : ad)));
+  const handleSaveAd = (updatedAd) => {
+    const updatedAds = ads.map((ad) =>
+      ad.id === updatedAd.id ? updatedAd : ad,
+    );
+    setAds(updatedAds);
     setSelectedAd(updatedAd);
+    saveAdsToLocalStorage(updatedAds); // Save to localStorage
 
     toast({
       title: "Ad saved",
@@ -142,7 +168,7 @@ export function AdDashboard() {
     });
   };
 
-  const handleImportAds = (importedAds: Ad[]) => {
+  const handleImportAds = (importedAds) => {
     // Add type if missing in imported ads
     const processedAds = importedAds.map((ad) => ({
       ...ad,
@@ -156,6 +182,7 @@ export function AdDashboard() {
     const updatedAds = [...ads, ...newAds];
 
     setAds(updatedAds);
+    saveAdsToLocalStorage(updatedAds); // Save to localStorage
 
     if (newAds.length > 0 && !selectedAd) {
       setSelectedAd(newAds[0]);

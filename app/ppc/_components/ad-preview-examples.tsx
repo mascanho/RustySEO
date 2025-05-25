@@ -23,7 +23,7 @@ export function SearchPreview({
     .slice(0, 4);
 
   return (
-    <div className="border rounded-lg p-4 shadow-sm w-full mx-auto">
+    <div className="border dark:border-brand-dark rounded-lg p-4 shadow-sm w-full mx-auto">
       <div className="flex items-center text-sm text-green-700 mb-1">
         <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded mr-2">
           Ad
@@ -93,7 +93,7 @@ export function YoutubePreview({
   displayUrl,
 }: PreviewProps) {
   return (
-    <div className="border rounded-lg p-4 shadow-sm w-full mx-auto bg-gray-100">
+    <div className="border rounded-lg p-4 shadow-sm w-full mx-auto bg-gray-100 dark:bg-brand-darker dark:border-brand-dark">
       <div className="flex items-start gap-3">
         <div className="w-32 h-20 bg-gray-300 rounded flex items-center justify-center text-gray-500 text-xs">
           Video Thumbnail
@@ -141,7 +141,7 @@ export function MobilePreview({
     .slice(0, 2);
 
   return (
-    <div className="border rounded-lg p-3 shadow-sm max-w-sm mx-auto bg-white">
+    <div className="border dark:bg-brand-darker dark:border-brand-dark rounded-lg p-3 shadow-sm max-w-sm mx-auto bg-white">
       <div className="flex items-center text-xs text-green-700 mb-1">
         <span className="bg-green-100 text-green-800 text-xs font-medium px-1.5 py-0.5 rounded mr-1">
           Ad
@@ -199,7 +199,7 @@ export function AdThumbnail({ ad }: { ad: Ad }) {
     ad.displayPath || ad.finalUrl.replace(/^https?:\/\//, "") || "example.com";
 
   return (
-    <div className="border rounded-md p-3 h-full bg-white hover:shadow-md transition-shadow">
+    <div className="rounded-md p-3 h-full bg-white dark:bg-brand-darker dark:border-brand-darker">
       <div className="flex items-center text-xs text-green-700 mb-1">
         <span className="bg-green-100 text-green-800 text-xs font-medium px-1.5 py-0.5 rounded mr-1">
           Ad
