@@ -20,6 +20,8 @@
 
 ![Logo](assets/hero2.png)
 
+#### Log analyser (Apache / Nginx)
+![Logo](assets/logs.png)
 
 ## RustySEO - A cross-platform SEO toolkit
 
