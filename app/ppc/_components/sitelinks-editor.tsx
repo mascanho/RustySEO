@@ -50,7 +50,7 @@ export function SitelinksEditor({ sitelinks, onChange }: SitelinksEditorProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 z-20 ">
       <div className="flex justify-between items-center">
         <p className="text-sm text-muted-foreground">
           Sitelinks appear as additional links below your ad. Add up to 6
@@ -62,6 +62,7 @@ export function SitelinksEditor({ sitelinks, onChange }: SitelinksEditorProps) {
           size="sm"
           onClick={handleAddSitelink}
           disabled={sitelinks.length >= 6}
+          className="absolute top-8 right-6 h-7 text-xs z-50  dark:bg-brand-bright"
         >
           <Plus className="h-4 w-4 mr-1" /> Add Sitelink
         </Button>
@@ -86,7 +87,7 @@ export function SitelinksEditor({ sitelinks, onChange }: SitelinksEditorProps) {
           {sitelinks.map((sitelink) => (
             <div
               key={sitelink.id}
-              className="border rounded-md overflow-hidden"
+              className="border dark:border-brand-dark rounded-md overflow-hidden"
             >
               <div className="flex items-center justify-between p-3 bg-muted/30">
                 <div className="flex items-center gap-2">
@@ -117,7 +118,7 @@ export function SitelinksEditor({ sitelinks, onChange }: SitelinksEditorProps) {
               </div>
 
               {expandedSitelink === sitelink.id && (
-                <div className="p-3 space-y-3 border-t">
+                <div className="p-3 space-y-3 border-t dark:border-t-brand-dark  ">
                   <div className="space-y-2">
                     <Label htmlFor={`sitelink-title-${sitelink.id}`}>
                       Link Text

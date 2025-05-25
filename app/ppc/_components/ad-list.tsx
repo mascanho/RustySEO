@@ -123,7 +123,7 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
                     <p className="text-sm text-muted-foreground truncate">
                       {ad.headlines
                         .filter((h) => h.trim())
-                        .slice(0, 3)
+                        .slice(0, 4)
                         .join(" | ")}
                     </p>
                   </div>
@@ -131,9 +131,12 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
                     <h4 className="text-sm font-medium">Keywords:</h4>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {ad.keywords.slice(0, 3).map((keyword, i) => (
-                        <Badge key={i} variant="secondary">
+                        <span
+                          key={i}
+                          className="text-xs bg-brand-bright text-white rounded-full p-0.5 px-2"
+                        >
                           {keyword}
-                        </Badge>
+                        </span>
                       ))}
                       {ad.keywords.length > 3 && (
                         <Badge variant="outline">

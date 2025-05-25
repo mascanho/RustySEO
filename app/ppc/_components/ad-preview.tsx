@@ -46,7 +46,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
   // Reset indices and start auto-rotation when ad changes
   useEffect(() => {
     if (!ad || allAds.length === 0) return;
-    
+
     setHeadlineIndex(0);
     setDescriptionIndex(0);
 
@@ -177,7 +177,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
 
   return (
     <div className="space-y-6 w-full">
-      <Card className="w-full flex-1 flex-col">
+      <Card className="w-full flex-1 flex-col dark:bg-brand-darker dark:border-brand-dark">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Ad Preview</CardTitle>
           <div className="flex items-center gap-2">
@@ -188,6 +188,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
                 setViewMode(viewMode === "single" ? "grid" : "single")
               }
               title={viewMode === "single" ? "Show all ads" : "Show single ad"}
+              className="h-7 dark:bg-brand-darker dark:border-brand-dark"
             >
               {viewMode === "single" ? (
                 <Grid3X3 className="h-4 w-4" />
@@ -219,7 +220,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
             )}
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-6">
           {viewMode === "single" ? (
             <>
               <div className="flex items-center justify-between mb-4">
@@ -228,6 +229,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
                   size="sm"
                   onClick={prevAd}
                   disabled={allAds.length <= 1}
+                  className="dark:bg-brand-darker dark:border-brand-dark h-7 text-xs px-2"
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" /> Previous Ad
                 </Button>
@@ -239,6 +241,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
                   size="sm"
                   onClick={nextAd}
                   disabled={allAds.length <= 1}
+                  className="dark:bg-brand-darker dark:border-brand-dark h-7 text-xs px-2"
                 >
                   Next Ad <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
@@ -320,7 +323,10 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
                   </div>
                   <div className="text-sm space-y-1">
                     {currentHeadlines.map((headline, i) => (
-                      <div key={i} className="p-2 bg-gray-50 rounded">
+                      <div
+                        key={i}
+                        className="p-2 bg-gray-50 rounded dark:bg-brand-darker dark:border  dark:border-brand-dark "
+                      >
                         {headline}
                       </div>
                     ))}
@@ -361,7 +367,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
                   </div>
                   <div className="text-sm">
                     {currentDescription ? (
-                      <div className="p-2 bg-gray-50 rounded">
+                      <div className="p-2 bg-gray-50 dark:bg-brand-darker dark:border dark:border-brand-dark rounded">
                         {currentDescription}
                       </div>
                     ) : (
@@ -378,7 +384,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
               {allAds.map((adItem) => (
                 <div
                   key={adItem.id}
-                  className={`cursor-pointer ${adItem.id === ad.id ? "ring-2 ring-primary" : ""}`}
+                  className={`cursor-pointer ${adItem.id === ad.id ? "border rounded-md" : ""}`}
                   onClick={() => onSelectAd(adItem)}
                 >
                   <AdThumbnail ad={adItem} />
@@ -390,11 +396,11 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
       </Card>
 
       {viewMode === "single" && (
-        <Card className="w-full">
+        <Card className="w-full dark:bg-brand-darker dark:border-brand-dark">
           <CardHeader>
             <CardTitle>Ad Details</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-6">
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-medium">Ad Type:</h3>
@@ -489,3 +495,4 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
     </div>
   );
 }
+

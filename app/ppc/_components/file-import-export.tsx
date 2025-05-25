@@ -150,10 +150,16 @@ export function FileImportExport({ ads, onImport }: FileImportExportProps) {
           className="dark:bg-brand-darker dark:border-brand-dark dark:text-white"
           align="end"
         >
-          <DropdownMenuItem onClick={() => handleExport("json")}>
+          <DropdownMenuItem
+            className="hover:text-white"
+            onClick={() => handleExport("json")}
+          >
             Export as JSON
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleExport("csv")}>
+          <DropdownMenuItem
+            className="hover:text-white"
+            onClick={() => handleExport("csv")}
+          >
             Export as CSV
           </DropdownMenuItem>
         </DropdownMenuContent>
