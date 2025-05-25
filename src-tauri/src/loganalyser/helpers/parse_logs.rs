@@ -225,6 +225,9 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
         "([^"]*)"                                                         # User agent
     "#).expect("Invalid regex pattern");
 
+    // Output something to terminal showing loading
+    println!("Parsing log entries...");
+
     log.lines()
         .enumerate()
         .filter_map(|(i, line)| {

@@ -14,7 +14,7 @@ import { LogAnalyzer } from "./_components/table/log-analyzer";
 import UploadButton from "./_components/UploadButton";
 import WidgetLogs from "./_components/WidgetLogs";
 import { toast, Toaster } from "sonner";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 
 interface CrawlResult {
@@ -25,6 +25,9 @@ interface CrawlResult {
 }
 
 export default function Page() {
+  const [keysPressed, setKeysPressed] = useState(new Set());
+  const [shortcutActivated, setShortcutActivated] = useState(false);
+
   // ALWAYS CHECK THE TAXONOMIES FROM THE LOCALSTORAGE AND SEND THEM TO THE TAURI COMMAND ON FIRST RUN
   useEffect(() => {
     const getTaxonomies = async () => {
@@ -58,6 +61,65 @@ export default function Page() {
       toast.error("RustySEO failed to load Google's IP ranges");
     }
   }, []);
+
+  // SHORTCUT TO CLEAR ALL THE LOGS
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const newKeysPressed = new Set(keysPressed);
+      newKeysPressed.add(e.key.toLowerCase());
+      setKeysPressed(newKeysPressed);
+
+      // Check for Ctrl+L+C sequence
+      if (
+        newKeysPressed.has("control") &&
+        newKeysPressed.has("shift") &&
+        newKeysPressed.has("c")
+      ) {
+        setShortcutActivated(true);
+        // Your action here
+        console.log("Ctrl+L+C pressed!");
+        // Perform your specific action
+        performCustomAction();
+      }
+    };
+
+    const handleKeyUp = (e) => {
+      const newKeysPressed = new Set(keysPressed);
+      newKeysPressed.delete(e.key.toLowerCase());
+      setKeysPressed(newKeysPressed);
+
+      // Reset activation state when keys are released
+      if (e.key.toLowerCase() === "c") {
+        setShortcutActivated(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [keysPressed]);
+
+  const performCustomAction = () => {
+    // REMOVE ALL THE LOGS FROM DB
+    handleRemoveAllLogs();
+
+    toast.message("All logs have been removed from databse");
+  };
+
+  const handleRemoveAllLogs = () => {
+    try {
+      invoke("remove_all_logs_from_serverlog_db", { dbName: "serverlog.db" });
+      // setSaveLogs(false);
+      toast.success("All logs have been removed from database");
+    } catch (error) {
+      console.error(error);
+      toast.error(error);
+    }
+  };
 
   return (
     <section className="flex flex-col dark:bg-brand-darker   w-[100%] pt-[4rem] h-[calc(100vh - 20-rem)] overflow-hidden  ">

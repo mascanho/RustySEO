@@ -156,9 +156,6 @@ pub fn analyse_log(
 
             // OUTPUT THE PROCESSING IN THE TERMINAL
             println!("Processing file: {}", filename);
-            println!("Total logs: {}", total);
-            println!("Processing log: {}", file_count);
-            println!("Percentage complete: {:.2}%", percentage);
 
             progress_tx
                 .send(ProgressUpdate {
