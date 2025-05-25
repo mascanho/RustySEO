@@ -149,8 +149,6 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
     localStorage.setItem("Ads", JSON.stringify(formData));
   };
 
-  console.log(formData, "formData");
-
   return (
     <div className="space-y-6 w-full max-w-full relative">
       <Card className="w-fit right-[0rem] h-20  p-0 -top-[5.8rem] px-3 absolute bg-white dark:bg-brand-darker rounded-md dark:border-brand-dark">

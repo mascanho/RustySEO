@@ -7,7 +7,7 @@ import { AdList } from "./ad-list";
 import { AdPreview } from "./ad-preview";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardLayout } from "./dashboard-layout";
-import { toast } from "sonner";
+import { toast } from "@/hooks/use-toast";
 
 export function AdDashboard() {
   const [ads, setAds] = useState<Ad[]>([]);
@@ -107,6 +107,8 @@ export function AdDashboard() {
           setSelectedAd(null);
         }
       }
+
+      console.log("Saving Ad");
 
       // Show success toast
       toast({
