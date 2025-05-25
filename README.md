@@ -20,11 +20,12 @@
 
 ![Logo](assets/hero2.png)
 
----
+#### Log analyser (Apache / Nginx)
+![Logo](assets/logs.png)
 
 ## RustySEO - A cross-platform SEO toolkit
 
-RustySEO is an all-in-one, cross-platform Marketing toolkit, designed for comprehensive SEO & GEO analysis. It enables users to crawl websites and gain actionable insights into their marketing and SEO strategies.
+RustySEO is an all-in-one, cross-platform Marketing toolkit, designed for comprehensive SEO & GEO analysis. It enables users to crawl websites, analise server logs gaining actionable insights into their marketing and SEO strategies.
 
 As an open-source project, RustySEO aims to enhance your SEO efforts. Please note that initial versions may have bugs and issues, and we welcome your contributions in the form of bug reports or fixes via our repository.
 
