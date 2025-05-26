@@ -152,7 +152,7 @@ pub fn analyse_log(
 
             // Send progress update
             let total = *log_count;
-            let percentage = file_count as f32 / total as f32 * 100.0;
+            let percentage = ((index + 1) as f32 / total as f32) * 100.0;
 
             // OUTPUT THE PROCESSING IN THE TERMINAL
             println!("Processing file: {}", filename);
@@ -161,7 +161,7 @@ pub fn analyse_log(
                 .send(ProgressUpdate {
                     current_file: index + 1,
                     total_files: total,
-                    percentage,
+                    percentage: ((index + 1) as f32 / file_count as f32) * 100.0,
                     filename: filename.clone(),
                 })
                 .unwrap();

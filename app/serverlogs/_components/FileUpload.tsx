@@ -240,7 +240,7 @@ export function FileUpload({
           }
         });
 
-        const progress = 10 + (i / files.length) * 50;
+        const progress = 10 + ((i + batch.length) / files.length) * 50;
         setOverallProgress(progress);
         await new Promise((resolve) => setTimeout(resolve, 0));
       }
@@ -432,7 +432,7 @@ export function FileUpload({
               <div className="mt-2">
                 <div className="flex justify-between text-xs mb-1">
                   <span>Parsing: {progress.filename}</span>
-                  <span>{progress.percent}%</span>
+                  <span>{Math.round(progress.percent)}%</span>
                 </div>
                 <Progress
                   value={progress.percent}
