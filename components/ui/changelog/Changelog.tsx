@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { changelogData } from "./ChangelogData";
+import { usePathname } from "next/navigation";
 
 const getTypeColor = (type: string) => {
   switch (type) {
@@ -30,14 +31,20 @@ const getTypeLabel = (type: string) => {
 };
 
 export default function Changelog() {
+  const pathname = usePathname();
+
+  const logs = pathname === "/serverlogs";
+
   return (
-    <Card className="w-full max-w-[360px] border-0 shadow-none max-h-full dark:bg-brand-darker">
+    <Card className="w-full max-w-[360px] border-0 shadow-none max-h-[calc(100vh-0.8rem)] dark:bg-brand-darker">
       <CardHeader className="pb-3 shadow">
         <CardTitle className="text-lg -ml-3 mt-[2px] -mb-2 font-semibold">
           Changelog
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4 px-4 h-[calc(100vh-9.8rem)] pt-3 pb-8 overflow-auto">
+      <CardContent
+        className={`space-y-4 px-4 h-[calc(100vh-8.8rem)] pt-3 pb-8 overflow-auto`}
+      >
         {changelogData.map((entry, index) => (
           <div key={entry.version} className="space-y-2 ">
             <div className="flex items-center justify-between">
