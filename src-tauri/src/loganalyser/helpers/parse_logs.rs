@@ -3,9 +3,7 @@ use ipnet::IpNet;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use std::io;
-
-use std::io::Write;
+use std::io::{self, Write};
 use std::net::{AddrParseError, IpAddr};
 use std::str::FromStr;
 use std::sync::Mutex;
@@ -56,7 +54,6 @@ static LOG_NUMBER: Lazy<Mutex<i32>> = Lazy::new(|| Mutex::new(0));
 #[tauri::command]
 pub fn set_taxonomies(new_taxonomies: Vec<String>) -> Result<(), String> {
     let mut taxonomies = TAXONOMIES.lock().map_err(|e| e.to_string())?;
-
     *taxonomies = new_taxonomies;
     Ok(())
 }
@@ -71,13 +68,11 @@ pub fn get_taxonomies() -> Vec<String> {
 // Filter the path to see if it matches any taxonomy
 fn classify_taxonomy(path: &str) -> String {
     let taxonomies = TAXONOMIES.lock().unwrap();
-
     for taxonomy in taxonomies.iter() {
         if path.contains(taxonomy) {
             return taxonomy.clone();
         }
     }
-
     "other".to_string()
 }
 
@@ -228,59 +223,60 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
         "([^"]*)"                                                         # User agent
     "#).expect("Invalid regex pattern");
 
-    log.lines()
-        .enumerate()
-        .filter_map(|(i, line)| {
-            let line = line.trim();
-            if line.is_empty() {
-                return None;
-            }
+    let mut entries = Vec::new();
+    for (i, line) in log.lines().enumerate() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
 
-            print!("\rParsing line {}...", i + 1);
-            io::stdout().flush().unwrap();
+        // Print log file length
+        print!("\rParsing line {} of {}...", i + 1, log.lines().count());
+        io::stdout().flush().unwrap();
 
-            re.captures(line).map(|caps| {
-                let timestamp =
-                    match NaiveDateTime::parse_from_str(&caps[2], "%d/%b/%Y:%H:%M:%S %z") {
-                        Ok(t) => t,
-                        Err(e) => {
-                            eprintln!(
-                                "Error parsing timestamp on line {}: '{}' - {}",
-                                i + 1,
-                                &caps[2],
-                                e
-                            );
-                            NaiveDateTime::from_timestamp_opt(0, 0).unwrap()
-                        }
-                    };
-
-                let referer = match caps[7].trim() {
-                    "-" => None,
-                    ref r => Some(r.to_string()),
-                };
-
-                let user_agent = caps[8].to_string();
-                let crawler_type = detect_bot(&user_agent).unwrap_or_default();
-                let browser = detect_browser(&user_agent).unwrap_or_default();
-                let ip = caps[1].to_string();
-                let verified = is_google_verified(&ip).unwrap_or(false); // Default to false on error
-
-                LogEntry {
-                    ip,
-                    timestamp,
-                    method: caps[3].to_string(),
-                    path: caps[4].to_string(),
-                    status: caps[5].parse().unwrap_or(0),
-                    user_agent,
-                    referer,
-                    response_size: caps[6].parse().unwrap_or(0),
-                    crawler_type,
-                    browser,
-                    file_type: detect_file_type(&caps[4]).unwrap_or_default(),
-                    verified,
-                    taxonomy: classify_taxonomy(&caps[4]),
+        if let Some(caps) = re.captures(line) {
+            let timestamp = match NaiveDateTime::parse_from_str(&caps[2], "%d/%b/%Y:%H:%M:%S %z") {
+                Ok(t) => t,
+                Err(e) => {
+                    eprintln!(
+                        "Error parsing timestamp on line {}: '{}' - {}",
+                        i + 1,
+                        &caps[2],
+                        e
+                    );
+                    NaiveDateTime::from_timestamp_opt(0, 0).unwrap()
                 }
-            })
-        })
-        .collect()
+            };
+
+            let referer = match caps[7].trim() {
+                "-" => None,
+                ref r => Some(r.to_string()),
+            };
+
+            let user_agent = caps[8].to_string();
+            let crawler_type = detect_bot(&user_agent).unwrap_or_default();
+            let browser = detect_browser(&user_agent).unwrap_or_default();
+            let ip = caps[1].to_string();
+            let verified = is_google_verified(&ip).unwrap_or(false); // Default to false on error
+
+            entries.push(LogEntry {
+                ip,
+                timestamp,
+                method: caps[3].to_string(),
+                path: caps[4].to_string(),
+                status: caps[5].parse().unwrap_or(0),
+                user_agent,
+                referer,
+                response_size: caps[6].parse().unwrap_or(0),
+                crawler_type,
+                browser,
+                file_type: detect_file_type(&caps[4]).unwrap_or_default(),
+                verified,
+                taxonomy: classify_taxonomy(&caps[4]),
+            });
+        }
+    }
+
+    println!();
+    entries
 }
