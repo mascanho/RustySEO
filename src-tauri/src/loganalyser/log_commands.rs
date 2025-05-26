@@ -26,7 +26,7 @@ pub fn check_logs_command(
         println!("Not storing logs");
     }
 
-    match analyse_log(data, &log_count, app) {
+    match analyse_log(data, app) {
         Ok(result) => {
             // Optional: You could include the current total in the result
             Ok(result)

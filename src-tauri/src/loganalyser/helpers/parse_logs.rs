@@ -3,6 +3,9 @@ use ipnet::IpNet;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
+use std::io;
+
+use std::io::Write;
 use std::net::{AddrParseError, IpAddr};
 use std::str::FromStr;
 use std::sync::Mutex;
@@ -225,9 +228,6 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
         "([^"]*)"                                                         # User agent
     "#).expect("Invalid regex pattern");
 
-    // Output something to terminal showing loading
-    println!("Parsing log entries...");
-
     log.lines()
         .enumerate()
         .filter_map(|(i, line)| {
@@ -235,6 +235,9 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
             if line.is_empty() {
                 return None;
             }
+
+            print!("\rParsing line {}...", i + 1);
+            io::stdout().flush().unwrap();
 
             re.captures(line).map(|caps| {
                 let timestamp =
