@@ -223,6 +223,8 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
         "([^"]*)"                                                         # User agent
     "#).expect("Invalid regex pattern");
 
+    println!("Log contains {} lines", log.lines().count());
+
     let mut entries = Vec::new();
     for (i, line) in log.lines().enumerate() {
         let line = line.trim();
@@ -231,7 +233,7 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
         }
 
         // Print log file length
-        print!("\rParsing line {} of {}...", i + 1, log.lines().count());
+        print!("\rParsing line {}...", i + 1);
         io::stdout().flush().unwrap();
 
         if let Some(caps) = re.captures(line) {

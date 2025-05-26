@@ -67,7 +67,7 @@ export function FileUpload({
     return () => {
       unlisten.then((f) => f()).catch(console.error);
     };
-  }, []);
+  }, [files, progress]);
 
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
   const maxVisibleFiles = 5;

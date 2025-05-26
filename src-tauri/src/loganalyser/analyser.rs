@@ -144,7 +144,7 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
 
             // Send progress update
             let percentage = ((index + 1) as f32 / file_count as f32) * 100.0;
-            println!("\rProcessing file: {} ({:.2}%)", filename, percentage);
+            println!("\rProcesed file: {} ({:.2}%)", filename, percentage);
 
             progress_tx
                 .send(ProgressUpdate {
