@@ -51,23 +51,31 @@ export function FileUpload({
 
   console.log(storingLogs, "storing logs");
 
+  // Modify your progress listener to use requestAnimationFrame
+  // In your component
   useEffect(() => {
     const unlisten = listen("progress-update", (event) => {
-      const payload = event.payload;
-      console.log("Progress event received:", payload);
+      const payload = event.payload as ProgressUpdate;
 
-      setProgress({
+      setProgress((prev) => ({
+        ...prev,
         current: payload.current_file,
         total: payload.total_files,
         percent: payload.percentage,
         filename: payload.filename,
-      });
+        status: payload.status, // Track current status
+      }));
+
+      // Show different messages based on status
+      if (payload.status === "started") {
+        toast.info(`Starting to process ${payload.filename}`);
+      }
     });
 
     return () => {
       unlisten.then((f) => f()).catch(console.error);
     };
-  }, [files, progress]);
+  }, []);
 
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
   const maxVisibleFiles = 5;
@@ -431,7 +439,7 @@ export function FileUpload({
             <div className="w-full mt-2 space-y-2">
               <div className="mt-2">
                 <div className="flex justify-between text-xs mb-1">
-                  <span>Parsing: {progress.filename}</span>
+                  <span>Processing: {progress.filename}</span>
                   <span>{Math.round(progress.percent)}%</span>
                 </div>
                 <Progress
@@ -443,14 +451,14 @@ export function FileUpload({
                 </div>
               </div>
 
-              <div className="flex justify-between h-3">
-                <span className="text-xs">Overall progress</span>
-                <div className="text-xs">{Math.round(overallProgress)}%</div>
-              </div>
-              <Progress
-                value={overallProgress}
-                className="h-2 bg-gray-200 dark:bg-gray-700 [&>div]:bg-brand-bright"
-              />
+              {/* <div className="flex justify-between h-3"> */}
+              {/*   <span className="text-xs">Overall progress</span> */}
+              {/*   <div className="text-xs">{Math.round(overallProgress)}%</div> */}
+              {/* </div> */}
+              {/* <Progress */}
+              {/*   value={overallProgress} */}
+              {/*   className="h-2 bg-gray-200 dark:bg-gray-700 [&>div]:bg-brand-bright" */}
+              {/* /> */}
             </div>
           )}
 

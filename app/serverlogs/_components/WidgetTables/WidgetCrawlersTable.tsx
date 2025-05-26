@@ -459,7 +459,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="bg-white dark:border-brand-dark dark:text-white   dark:bg-brand-darker"
+              className="bg-white dark:border-brand-dark dark:text-white   dark:bg-brand-darker z-[999999999999] hover:text-black active:text-black hover:bg-brand-brigh"
             >
               <DropdownMenuLabel>Filter by File Type</DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -478,7 +478,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
               ].map((fileType) => (
                 <DropdownMenuCheckboxItem
                   className={
-                    "bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                    "bg-white active:bg-brand-bright  dark:bg-brand-darker dark:hover:bg-brand-bright active:text-white hover:bg-brand-bright hover:text-white"
                   }
                   key={fileType}
                   checked={fileTypeFilter.includes(fileType)}
@@ -530,7 +530,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
             <SelectTrigger className="w-[150px] dark:bg-brand-darker dark:text-white">
               <SelectValue placeholder="Verification" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[999999999999999]">
               <SelectItem
                 className="hover:bg-brand-bright hover:text-white"
                 value="all"
@@ -559,10 +559,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
               setBotTypeFilter(value === "all" ? null : value)
             }
           >
-            <SelectTrigger className="w-[120px] dark:bg-brand-darker dark:text-white">
+            <SelectTrigger className="w-[120px] dark:bg-brand-darker dark:text-white ">
               <SelectValue placeholder="Bot/Human" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[999999999999999]">
               <SelectItem
                 className="hover:bg-brand-bright hover:text-white"
                 value="all"

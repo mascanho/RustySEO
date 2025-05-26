@@ -93,6 +93,7 @@ struct ProgressUpdate {
     total_files: usize,
     percentage: f32,
     filename: String,
+    phase: String,
 }
 
 pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogResult, String> {
@@ -101,13 +102,17 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
 
     // Spawn progress emitter thread
     let app_handle_clone = app_handle.clone();
-    thread::spawn(move || {
-        for update in progress_rx {
-            app_handle_clone
-                .emit("progress-update", update)
-                .unwrap_or_else(|e| eprintln!("Progress update failed: {}", e));
-        }
-    });
+    thread::Builder::new()
+        .name("progress-emitter".into())
+        .spawn(move || {
+            for update in progress_rx {
+                // Non-blocking emit - don't wait for acknowledgement
+                let _ = app_handle_clone.emit("progress-update", update);
+                // Small yield to prevent overwhelming the frontend
+                thread::yield_now();
+            }
+        })
+        .expect("Failed to spawn progress thread");
 
     // Process files sequentially
     let entries: Vec<LogEntry> = data
@@ -115,6 +120,16 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
         .into_iter()
         .enumerate()
         .flat_map(|(index, (filename, log_content))| {
+            progress_tx
+                .send(ProgressUpdate {
+                    current_file: index + 1,
+                    total_files: file_count,
+                    percentage: (index as f32 / file_count as f32) * 100.0, // Current file just starting
+                    filename: filename.clone(),
+                    phase: "started".to_string(), // Add status field
+                })
+                .unwrap();
+
             let entries = parse_log_entries(&log_content);
 
             let entries_with_filename: Vec<LogEntry> = entries
@@ -144,7 +159,7 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
 
             // Send progress update
             let percentage = ((index + 1) as f32 / file_count as f32) * 100.0;
-            println!("\rProcesed file: {} ({:.2}%)", filename, percentage);
+            println!("\rProcessed file: {} ({:.2}%)", filename, percentage);
 
             progress_tx
                 .send(ProgressUpdate {
@@ -152,6 +167,7 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
                     total_files: file_count,
                     percentage,
                     filename: filename.clone(),
+                    phase: "Completed".to_string(),
                 })
                 .unwrap();
 
