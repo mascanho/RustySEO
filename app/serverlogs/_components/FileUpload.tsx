@@ -72,6 +72,8 @@ export function FileUpload({
       }
     });
 
+    console.log(progress, "progress");
+
     return () => {
       unlisten.then((f) => f()).catch(console.error);
     };

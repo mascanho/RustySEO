@@ -7,6 +7,7 @@ use std::io::{self, Write};
 use std::net::{AddrParseError, IpAddr};
 use std::str::FromStr;
 use std::sync::Mutex;
+use tauri::{Emitter, Manager};
 
 use super::google_ip_fetcher::get_google_ip_ranges;
 

@@ -88,12 +88,12 @@ pub struct LogInput {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-struct ProgressUpdate {
-    current_file: usize,
-    total_files: usize,
-    percentage: f32,
-    filename: String,
-    phase: String,
+pub struct ProgressUpdate {
+    pub current_file: usize,
+    pub total_files: usize,
+    pub percentage: f32,
+    pub filename: String,
+    pub phase: String,
 }
 
 pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogResult, String> {
@@ -132,6 +132,20 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
 
             let entries = parse_log_entries(&log_content);
 
+            // Send progress update
+            let percentage = ((index + 1) as f32 / file_count as f32) * 100.0;
+            println!("\rProcessed file: {} ({:.2}%)", filename, percentage);
+
+            progress_tx
+                .send(ProgressUpdate {
+                    current_file: index + 1,
+                    total_files: file_count,
+                    percentage,
+                    filename: filename.clone(),
+                    phase: "Completed".to_string(),
+                })
+                .unwrap();
+
             let entries_with_filename: Vec<LogEntry> = entries
                 .into_iter()
                 .map(|e| {
@@ -156,20 +170,6 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
                     }
                 })
                 .collect();
-
-            // Send progress update
-            let percentage = ((index + 1) as f32 / file_count as f32) * 100.0;
-            println!("\rProcessed file: {} ({:.2}%)", filename, percentage);
-
-            progress_tx
-                .send(ProgressUpdate {
-                    current_file: index + 1,
-                    total_files: file_count,
-                    percentage,
-                    filename: filename.clone(),
-                    phase: "Completed".to_string(),
-                })
-                .unwrap();
 
             entries_with_filename
         })

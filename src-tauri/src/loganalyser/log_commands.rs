@@ -12,8 +12,6 @@ pub fn check_logs_command(
 ) -> Result<LogResult, String> {
     let log_count = data.log_contents.len() as i32;
 
-    println!("Storing Logs: {} ", storing_logs);
-
     // IF THE USER HAS CHOOSEN TO STORE THE LOGS IN A DB
     if storing_logs == true {
         // Create the DB
