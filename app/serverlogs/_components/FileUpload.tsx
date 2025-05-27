@@ -202,7 +202,7 @@ export function FileUpload({
       setOverallProgress(10);
       const fileContents: Array<{ filename: string; content: string }> = [];
 
-      const batchSize = 5;
+      const batchSize = 3;
       for (let i = 0; i < files.length; i += batchSize) {
         const batch = files.slice(i, i + batchSize);
 
