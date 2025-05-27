@@ -36,7 +36,7 @@ interface ProgressUpdate {
 }
 
 export function FileUpload({
-  maxSizeMB = 345,
+  maxSizeMB = 75,
   acceptedFileTypes = ["text/plain", ".log", ".txt"],
   className,
   closeDialog,
@@ -119,26 +119,26 @@ export function FileUpload({
     return false;
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const droppedFiles = Array.from(e.dataTransfer.files);
-      const validFiles = droppedFiles.filter((file) => validateFile(file));
-
-      if (validFiles.length > 0) {
-        setFiles((prev) => [
-          ...prev,
-          ...validFiles.map((file) => ({
-            file,
-            success: false,
-            error: null,
-          })),
-        ]);
-      }
-    }
-  };
+  // const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  //   e.preventDefault();
+  //   setIsDragging(false);
+  //
+  //   if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+  //     const droppedFiles = Array.from(e.dataTransfer.files);
+  //     const validFiles = droppedFiles.filter((file) => validateFile(file));
+  //
+  //     if (validFiles.length > 0) {
+  //       setFiles((prev) => [
+  //         ...prev,
+  //         ...validFiles.map((file) => ({
+  //           file,
+  //           success: false,
+  //           error: null,
+  //         })),
+  //       ]);
+  //     }
+  //   }
+  // };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -184,11 +184,11 @@ export function FileUpload({
             result += event.target?.result as string;
             offset += chunkSize;
             chunksProcessed++;
-            
+
             if (onProgress) {
               onProgress((chunksProcessed / totalChunks) * 100);
             }
-            
+
             // Yield to main thread periodically
             setTimeout(readNextChunk, 0);
           } catch (err) {
@@ -252,13 +252,13 @@ export function FileUpload({
                   setProgress((prev) => ({
                     ...prev,
                     percent: Math.round(
-                      (i + batchIndex) / files.length * 100 * 0.5 + 
-                      chunkProgress * 0.5
+                      ((i + batchIndex) / files.length) * 100 * 0.5 +
+                        chunkProgress * 0.5,
                     ),
                   }));
-                }
+                },
               );
-              
+
               return {
                 index: originalIndex,
                 update: {
@@ -536,3 +536,4 @@ export function FileUpload({
     </div>
   );
 }
+
