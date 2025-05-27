@@ -312,7 +312,7 @@ export function FileUpload({
       const logEntry = {
         name: filesUploaded,
         time: timeUploaded,
-        contents: logContents,
+        // contents: logContents,
       };
 
       setUploadedLogFiles(logEntry);
