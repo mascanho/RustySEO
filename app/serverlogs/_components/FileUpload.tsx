@@ -386,6 +386,12 @@ export function FileUpload({
     }
   };
 
+  // total size in MB of all files
+  const totalSize = files.reduce(
+    (acc, file) => acc + file.file.size / 1024 / 1024,
+    0,
+  );
+
   return (
     <div className={cn("w-full", className)}>
       {files.length === 0 ? (
@@ -397,9 +403,9 @@ export function FileUpload({
               : "border-muted-foreground/20 hover:border-primary/50",
             error && "border-destructive/50 bg-destructive/5",
           )}
-          onDragOver={handleDragOver}
+          // onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
+          // onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
         >
           <UploadCloud className="h-12 w-12 text-muted-foreground mb-2 text-brand-bright" />
@@ -430,6 +436,9 @@ export function FileUpload({
               <h3 className="text-sm font-medium">
                 {files.length} file{files.length !== 1 ? "s" : ""} selected
               </h3>
+              <span className="ml-2 text-xs font-medium text-black/40 dark:text-white/40 ">
+                ( {totalSize.toFixed(2)} MB )
+              </span>
             </div>
             <Button
               variant="ghost"
