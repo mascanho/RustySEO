@@ -27,6 +27,14 @@ interface FileWithProgress {
   error: string | null;
 }
 
+interface ProgressUpdate {
+  current_file: number;
+  total_files: number;
+  percentage: number;
+  filename: string;
+  status: string;
+}
+
 export function FileUpload({
   maxSizeMB = 345,
   acceptedFileTypes = ["text/plain", ".log", ".txt"],
@@ -45,14 +53,11 @@ export function FileUpload({
     total: 0,
     percent: 0,
     filename: "",
+    status: "",
   });
   const { storingLogs, setStoringLogs } = useServerLogsStore();
   const { uploadedLogFiles, setUploadedLogFiles } = useServerLogsStore();
 
-  console.log(storingLogs, "storing logs");
-
-  // Modify your progress listener to use requestAnimationFrame
-  // In your component
   useEffect(() => {
     const unlisten = listen("progress-update", (event) => {
       const payload = event.payload as ProgressUpdate;
@@ -63,16 +68,13 @@ export function FileUpload({
         total: payload.total_files,
         percent: payload.percentage,
         filename: payload.filename,
-        status: payload.status, // Track current status
+        status: payload.status,
       }));
 
-      // Show different messages based on status
       if (payload.status === "started") {
         toast.info(`Starting to process ${payload.filename}`);
       }
     });
-
-    console.log(progress, "progress");
 
     return () => {
       unlisten.then((f) => f()).catch(console.error);
@@ -156,19 +158,52 @@ export function FileUpload({
     }
   };
 
-  const readFile = (file: File): Promise<string> => {
+  const readFileInChunks = (
+    file: File,
+    onProgress?: (progress: number) => void,
+    chunkSize = 1024 * 1024 * 5, // 5MB chunks
+  ): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
+      const fileSize = file.size;
+      let offset = 0;
+      let result = "";
+      let chunksProcessed = 0;
+      const totalChunks = Math.ceil(fileSize / chunkSize);
 
-      reader.onload = (event) => {
-        resolve(event.target?.result as string);
+      const readNextChunk = () => {
+        if (offset >= fileSize) {
+          resolve(result);
+          return;
+        }
+
+        const reader = new FileReader();
+        const chunk = file.slice(offset, offset + chunkSize);
+
+        reader.onload = (event) => {
+          try {
+            result += event.target?.result as string;
+            offset += chunkSize;
+            chunksProcessed++;
+            
+            if (onProgress) {
+              onProgress((chunksProcessed / totalChunks) * 100);
+            }
+            
+            // Yield to main thread periodically
+            setTimeout(readNextChunk, 0);
+          } catch (err) {
+            reject(err);
+          }
+        };
+
+        reader.onerror = (error) => {
+          reject(error);
+        };
+
+        reader.readAsText(chunk);
       };
 
-      reader.onerror = (error) => {
-        reject(error);
-      };
-
-      reader.readAsText(file);
+      readNextChunk();
     });
   };
 
@@ -210,7 +245,20 @@ export function FileUpload({
           batch.map(async (fileWithProgress, batchIndex) => {
             const originalIndex = i + batchIndex;
             try {
-              const content = await readFile(files[originalIndex].file);
+              const content = await readFileInChunks(
+                files[originalIndex].file,
+                (chunkProgress) => {
+                  // Update progress for this file
+                  setProgress((prev) => ({
+                    ...prev,
+                    percent: Math.round(
+                      (i + batchIndex) / files.length * 100 * 0.5 + 
+                      chunkProgress * 0.5
+                    ),
+                  }));
+                }
+              );
+              
               return {
                 index: originalIndex,
                 update: {
@@ -261,28 +309,24 @@ export function FileUpload({
       const filesUploaded = files.map((file) => file.file.name);
       const timeUploaded = new Date().toISOString();
 
-      // Create the object
       const logEntry = {
         name: filesUploaded,
         time: timeUploaded,
         contents: logContents,
       };
 
-      // In your store (zustand), modify the setter to handle objects:
-      setUploadedLogFiles(logEntry); // Pass the object directly
+      setUploadedLogFiles(logEntry);
 
       const result = await invoke("check_logs_command", {
         data: { log_contents: logContents },
         storingLogs,
       });
 
-      // Validate result structure
       if (!result || !result.overview) {
         console.error("Invalid result structure:", result);
         throw new Error("Invalid server response: Missing overview data");
       }
 
-      // Pass the new data to the store to append
       setLogData({
         entries: result.entries || [],
         overview: result.overview || {
@@ -398,7 +442,7 @@ export function FileUpload({
             </Button>
           </div>
 
-          <div className="max-h-60 overflow-y-auto mb-2 px-2  rounded-md border dark:border-brand-dark">
+          <div className="max-h-60 overflow-y-auto mb-2 px-2 rounded-md border dark:border-brand-dark">
             {files.map((fileWithProgress, index) => (
               <div
                 key={index}
@@ -452,15 +496,6 @@ export function FileUpload({
                   File {progress.current} of {progress.total}
                 </div>
               </div>
-
-              {/* <div className="flex justify-between h-3"> */}
-              {/*   <span className="text-xs">Overall progress</span> */}
-              {/*   <div className="text-xs">{Math.round(overallProgress)}%</div> */}
-              {/* </div> */}
-              {/* <Progress */}
-              {/*   value={overallProgress} */}
-              {/*   className="h-2 bg-gray-200 dark:bg-gray-700 [&>div]:bg-brand-bright" */}
-              {/* /> */}
             </div>
           )}
 
