@@ -380,19 +380,24 @@ const TableCrawl = ({
             url = "https://" + url;
           }
 
-          // IF URL HAS NO www after HTTPS:// THEN ADD IT
+          // If URL does not start with "https://www.", add it
           if (!url.startsWith("https://www.")) {
-            url = "https://www." + url;
+            // Check if the URL starts with "https://" but not "https://www."
+            if (url.startsWith("https://")) {
+              // If it starts with "https://", replace it with "https://www."
+              url = "https://www." + url.substring(8);
+            } else {
+              // Otherwise, prepend "https://www."
+              url = "https://www." + url;
+            }
           }
 
-          return (
-            url
-              .toString() // Ensure it's a string
-              .trim() // Remove whitespace
-              .toLowerCase() // Case-insensitive
-              // .replace(/(https?:\/)?(www\.)?/, "") // Remove protocol & www
-              .replace(/\/+$/, "")
-          ); // Remove trailing slashes
+          return url
+            .toString() // Ensure it's a string
+            .trim() // Remove whitespace
+            .toLowerCase(); // Case-insensitive
+          // .replace(/(https?:\/)?(www\.)?/, ""); // Remove protocol & www
+          // .replace(/\/+$/, ""); // Remove trailing slashes
         };
 
         const targetUrl = cellContent;
@@ -404,7 +409,8 @@ const TableCrawl = ({
           // Check each link for a match
           return internalLinks.some((link) => {
             const linkUrl = normalizeUrl(link?.url);
-            return linkUrl === targetUrl;
+
+            return linkUrl === normalizeUrl(targetUrl);
           });
         });
       };

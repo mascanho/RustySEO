@@ -187,26 +187,37 @@ const InnerLinksDetailsTable: React.FC<InlinksSubTableProps> = ({
     );
   }
 
+  function normalizeUrl(url) {
+    // Remove "https://" and "www." for comparison
+    let normalized = url.replace(/^https?:\/\/(www\.)?/, "");
+    // Ensure the normalized URL starts with "www."
+    return `https://www.${normalized}`;
+  }
+
   function getAnchorText(obj, targetUrl) {
-    console.log("object:", obj?.url);
+    const normalizedTargetUrl = normalizeUrl(targetUrl);
 
     const anchorTexts = obj?.inoutlinks_status_codes?.internal
-
-      .filter((item) => item.url === targetUrl)
+      .filter((item) => {
+        const normalizedItemUrl = normalizeUrl(item.url);
+        return normalizedItemUrl === normalizedTargetUrl;
+      })
       .map((item) => item.anchor_text);
 
     return anchorTexts;
   }
 
   function getStatusCode(obj, targetUrl) {
-    console.log("object:", obj?.url);
+    const normalizedTargetUrl = normalizeUrl(targetUrl);
 
-    const anchorTexts = obj?.inoutlinks_status_codes?.internal
-
-      .filter((item) => item.url === targetUrl)
+    const statusCodes = obj?.inoutlinks_status_codes?.internal
+      .filter((item) => {
+        const normalizedItemUrl = normalizeUrl(item.url);
+        return normalizedItemUrl === normalizedTargetUrl;
+      })
       .map((item) => item.status);
 
-    return anchorTexts;
+    return statusCodes;
   }
 
   return (
@@ -283,7 +294,7 @@ const InnerLinksDetailsTable: React.FC<InlinksSubTableProps> = ({
             // Determine the background color class based on the index
             const rowColorClass =
               index % 2 === 0
-                ? "bg-gray-100 dark:bg-brand-dark"
+                ? "bg-gray-50 dark:bg-brand-dark/20"
                 : "bg-white dark:bg-brand-darker";
 
             return (
