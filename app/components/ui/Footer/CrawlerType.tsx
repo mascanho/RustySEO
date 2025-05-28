@@ -43,7 +43,6 @@ const CrawlerType = () => {
     try {
       // Call the Tauri command with the new value
       await invoke("toggle_page_speed_bulk", { value: newPsiCrawlValue });
-      console.log(`PageSpeed Insights toggled: ${newPsiCrawlValue}`);
 
       // Update local state only after successful invocation
       setDetails((prev) => ({
@@ -61,10 +60,6 @@ const CrawlerType = () => {
           }),
         );
         toast.info("Page Speed Insights toggled, please restart RustySEO");
-        console.log(
-          "LocalStorage updated with new PSI crawl value:",
-          newPsiCrawlValue,
-        );
       }
     } catch (error) {
       console.error(`Failed to toggle page speed bulk: ${error}`);
@@ -90,8 +85,6 @@ const CrawlerType = () => {
       }
 
       const parsedPSIdetails = JSON.parse(psidetails);
-      console.log("Raw localStorage value:", psidetails);
-      console.log("Parsed PSI details:", parsedPSIdetails);
 
       // More robust check for true values
       const isPsiCrawlEnabled =
@@ -99,8 +92,6 @@ const CrawlerType = () => {
         parsedPSIdetails.page_speed_crawl === true ||
         parsedPSIdetails.page_speed_crawl === 1 ||
         parsedPSIdetails.page_speed_crawl === "1";
-
-      console.log("Is PSI crawl enabled?", isPsiCrawlEnabled);
 
       setDetails({
         apiKey: parsedPSIdetails.apiKey || "",
@@ -117,8 +108,6 @@ const CrawlerType = () => {
       console.error("Error parsing PSI details from localStorage:", error);
     }
   }, []);
-
-  console.log("Current details state:", details);
 
   return (
     <div className="relative">

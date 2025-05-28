@@ -25,6 +25,9 @@ import TableCrawlCSS from "../Sidebar/CSSTable/TableCrawlCSS";
 import LinksTable from "./LinksTable/LinksTable";
 import KeywordsTable from "./KeywordsTable/KeywordsTable";
 import CoreWebVitalsTable from "./CoreWebVitalsTable/CoreWebVitalsTable";
+import InnerLinksDetailsTable from "./SubTables/InnerLinksTable/InnerLinksDetailsTable";
+
+import { shallow } from "zustand/shallow";
 
 const BottomTableContent = ({ children, height }) => (
   <div
@@ -56,6 +59,14 @@ export default function Home() {
     setDeepCrawlTab,
   } = useCrawlStore();
   const [activeTab, setActiveTab] = useState("crawledPages"); // Default to "crawledPages"
+
+  const { inlinks, outlinks } = useGlobalCrawlStore(
+    (state) => ({
+      inlinks: state.inlinks,
+      outlinks: state.outlinks,
+    }),
+    shallow,
+  );
 
   // Sync `activeTab` with `issuesView` when `issuesView` changes
   useEffect(() => {
@@ -142,8 +153,34 @@ export default function Home() {
     );
   }, [debouncedCrawlData]);
 
-  // Filters all the links
-  const filteredLinks = useMemo(() => {
+  // Filters all the Internal links
+  const filteredInternalLinks = useMemo(() => {
+    const linksWithAnchors = [];
+    const uniqueLinks = new Set();
+
+    debouncedCrawlData.forEach((item) => {
+      // Process internal links with status codes
+      item?.inoutlinks_status_codes?.internal?.forEach((statusInfo) => {
+        const link = statusInfo.url;
+        if (link && !uniqueLinks.has(link)) {
+          uniqueLinks.add(link);
+
+          linksWithAnchors.push({
+            link: link,
+            anchor: statusInfo.anchor_text || "", // Use anchor_text from statusInfo
+            status: statusInfo.status || null,
+            error: statusInfo.error || null,
+            page: item?.url || null, // Use item.page as in original
+          });
+        }
+      });
+    });
+
+    return linksWithAnchors;
+  }, [debouncedCrawlData]);
+
+  // Filters all the External links
+  const filteredExternalLinks = useMemo(() => {
     const linksWithAnchors = [];
     const uniqueLinks = new Set();
 
@@ -160,22 +197,6 @@ export default function Home() {
             status: statusInfo.status || null,
             error: statusInfo.error || null,
             page: item?.url || url, // Fallback to url if item.url is unavailable
-          });
-        }
-      });
-
-      // Process internal links with status codes
-      item?.inoutlinks_status_codes?.internal?.forEach((statusInfo) => {
-        const link = statusInfo.url;
-        if (link && !uniqueLinks.has(link)) {
-          uniqueLinks.add(link);
-
-          linksWithAnchors.push({
-            link: link,
-            anchor: statusInfo.anchor_text || "", // Use anchor_text from statusInfo
-            status: statusInfo.status || null,
-            error: statusInfo.error || null,
-            page: item?.url || null, // Use item.page as in original
           });
         }
       });
@@ -265,8 +286,11 @@ export default function Home() {
               <TabsTrigger value="javascript" className="rounded-t-md">
                 Javascript
               </TabsTrigger>
-              <TabsTrigger value="links" className="rounded-t-md">
-                Links
+              <TabsTrigger value="internalLinks" className="rounded-t-md">
+                Internal
+              </TabsTrigger>
+              <TabsTrigger value="externalLinks" className="rounded-t-md">
+                External
               </TabsTrigger>
               <TabsTrigger value="images" className="rounded-t-md">
                 Images
@@ -304,10 +328,19 @@ export default function Home() {
               <TableCrawlJs tabName={"Javascript"} rows={filteredJsArr} />
             </TabsContent>
 
-            <TabsContent value="links" className="flex-grow overflow-hidden">
-              <LinksTable tabName={"All Links"} rows={filteredLinks} />
+            <TabsContent
+              value="internalLinks"
+              className="flex-grow overflow-hidden"
+            >
+              <LinksTable tabName={"All Links"} rows={filteredInternalLinks} />
             </TabsContent>
 
+            <TabsContent
+              value="externalLinks"
+              className="flex-grow overflow-hidden"
+            >
+              <LinksTable tabName={"All Links"} rows={filteredExternalLinks} />
+            </TabsContent>
             <TabsContent value="images" className="flex-grow overflow-hidden">
               <ImagesCrawlTable
                 tabName={"All Images"}
@@ -369,7 +402,11 @@ export default function Home() {
               <TabsTrigger value="headers" className="rounded-t-md">
                 Headers
               </TabsTrigger>
+              <TabsTrigger value="innerLinks" className="rounded-t-md">
+                InnerLinks - TEST
+              </TabsTrigger>
             </TabsList>
+
             <TabsContent value="details">
               <DetailsTable
                 data={selectedTableURL}
@@ -378,12 +415,12 @@ export default function Home() {
             </TabsContent>
             <TabsContent value="inlinks" className="relative z-0">
               <BottomTableContent height={bottomTableHeight}>
-                <InlinksSubTable data={selectedTableURL} />
+                <InnerLinksDetailsTable data={inlinks} />
               </BottomTableContent>
             </TabsContent>
             <TabsContent value="outlinks">
               <BottomTableContent height={bottomTableHeight}>
-                <OutlinksSubTable data={selectedTableURL} />
+                <OutlinksSubTable data={outlinks} />
               </BottomTableContent>
             </TabsContent>
             <TabsContent value="images">
@@ -407,6 +444,11 @@ export default function Home() {
                 height={bottomTableHeight}
               />
             </TabsContent>
+
+            <TabsContent
+              value="innerLinks"
+              className="relative z-0"
+            ></TabsContent>
           </Tabs>
         </div>
       </div>
