@@ -1,9 +1,10 @@
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::fmt::format;
 use std::path::PathBuf;
-use sysinfo::{System, SystemExt};
+use sysinfo::{ProcessExt, System, SystemExt};
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
 use tokio::time::Duration;
@@ -322,8 +323,22 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
 }
 
 #[tauri::command]
-pub fn get_system() -> String {
+pub fn get_system() -> Result<Value, String> {
     let mut sys = System::new_all();
     sys.refresh_all();
-    format!("{:#?}", sys)
+
+    Ok(json!({
+        "totalMemory": sys.total_memory(),
+        "usedMemory": sys.used_memory(),
+        "totalSwap": sys.total_swap(),
+        "usedSwap": sys.used_swap(),
+
+        // System Information
+        "systemName": sys.name(),
+        "kernelVersion" : sys.kernel_version(),
+        "osVersion": sys.os_version(),
+        "hostName": sys.host_name(),
+        "cpus": sys.cpus().len(),
+
+    }))
 }
