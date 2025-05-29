@@ -52,9 +52,9 @@ const PopOverParsedLogs = () => {
                 ))}
 
                 {/* Display number of log entries */}
-                <div className="text-xs text-gray-400 mt-1">
-                  Contains {logEntry.contents?.length || 0} log entries
-                </div>
+                {/* <div className="text-xs text-gray-400 mt-1"> */}
+                {/*   Contains {logEntry.contents?.length || 0} log entries */}
+                {/* </div> */}
               </div>
             </div>
           ))}
