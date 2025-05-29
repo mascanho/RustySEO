@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::format;
 use std::path::PathBuf;
+use sysinfo::{System, SystemExt};
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
 use tokio::time::Duration;
@@ -318,4 +319,11 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
         .map_err(|e| format!("Failed to flush config: {}", e))?;
 
     Ok(settings)
+}
+
+#[tauri::command]
+pub fn get_system() -> String {
+    let mut sys = System::new_all();
+    sys.refresh_all();
+    format!("{:#?}", sys)
 }
