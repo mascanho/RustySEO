@@ -358,7 +358,7 @@ export function FileUpload({
 
       setFiles((prev) => prev.map((f) => ({ ...f, success: true })));
       setOverallProgress(100);
-      await delay(300);
+      await delay(500);
 
       closeDialog();
       toast.success("Log analysis complete!");
