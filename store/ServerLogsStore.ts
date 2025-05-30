@@ -178,10 +178,10 @@ export const useLogAnalysisStore = create<
               (state.overview.totals.claude || 0) +
               (data.overview?.totals?.claude || 0),
             google_bot_pages: [
-              ...new Set([
+          
                 ...(state.overview.totals.google_bot_pages || []),
                 ...(data.overview?.totionąls?.google_bot_pages || []),
-              ]),
+            
             ],
             google_bot_pages_frequency: mergeFrequencyObjects(
               state.overview.totals.google_bot_pages_frequency,
