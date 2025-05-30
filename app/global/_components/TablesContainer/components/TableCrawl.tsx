@@ -422,18 +422,69 @@ const TableCrawl = ({
         "internal",
       );
 
-      const outerLinksMatched = findInLinkedObjects(
-        rows,
-        cellContent,
-        "external",
-      );
-
       // SET THE SEPARATE STATE
 
       setInlinks([{ url: cellContent }, innerLinksMatched]);
 
       console.log(cellContent, "Selected URL");
       console.log(urlData, "URL Data");
+
+      // FILTER FOR THE OULINKS ON PAGES THAT ARE CONTAINED INSIOE THE INNERLINKS OF OTHER PAGHES
+      const findOutLinkedObjects = (rows, selectedUrl, linkType) => {
+        // Normalize URLs for consistent comparison
+        const normalizeUrl = (url) => {
+          if (!url) return "";
+
+          if (!url.startsWith("http")) {
+            url = "https://" + url;
+          }
+
+          // If URL does not start with "https://www.", add it
+          if (!url.startsWith("https://www.")) {
+            // Check if the URL starts with "https://" but not "https://www."
+            if (url.startsWith("https://")) {
+              // If it starts with "https://", replace it with "https://www."
+              url = "https://www." + url.substring(8);
+            } else {
+              // Otherwise, prepend "https://www."
+              url = "https://www." + url;
+            }
+          }
+
+          return url
+            .toString() // Ensure it's a string
+            .trim() // Remove whitespace
+            .toLowerCase(); // Case-insensitive
+          // .replace(/(https?:\/)?(www\.)?/, ""); // Remove protocol & www
+          // .replace(/\/+$/, ""); // Remove trailing slashes
+        };
+
+        const targetUrl = cellContent;
+
+        return rows.filter((row) => {
+          // Check if row has internal links (defensive check)
+          const internalLinks = row?.inoutlinks_status_codes?.internal || [];
+
+          // Check each link for a match
+          return internalLinks.some((link) => {
+            const linkUrl = normalizeUrl(link?.url);
+
+            return linkUrl === normalizeUrl(targetUrl);
+          });
+        });
+      };
+
+      // Match the selected URL with internal and external links
+      const outLinksMatched = findOutLinkedObjects(
+        rows,
+        cellContent,
+        "external",
+      );
+
+      // SET THE SEPARATE STATE
+      setOutlinks([{ url: cellContent }, outLinksMatched]);
+
+      console.log(outLinksMatched, "Outlinks");
     }
   };
 

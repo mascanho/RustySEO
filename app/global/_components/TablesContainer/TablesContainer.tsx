@@ -28,6 +28,7 @@ import CoreWebVitalsTable from "./CoreWebVitalsTable/CoreWebVitalsTable";
 import InnerLinksDetailsTable from "./SubTables/InnerLinksTable/InnerLinksDetailsTable";
 
 import { shallow } from "zustand/shallow";
+import OuterLinksSubTable from "./SubTables/OuterLinksSubTable/OuterLinksSubTable";
 
 const BottomTableContent = ({ children, height }) => (
   <div
@@ -417,7 +418,7 @@ export default function Home() {
             </TabsContent>
             <TabsContent value="outlinks">
               <BottomTableContent height={bottomTableHeight}>
-                <OutlinksSubTable data={outlinks} />
+                <OuterLinksSubTable data={outlinks} />
               </BottomTableContent>
             </TabsContent>
             <TabsContent value="images">
