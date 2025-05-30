@@ -132,47 +132,40 @@ const mergeFrequencyObjects = (
   existing: GoogleBotPagesFrequency = {},
   incoming: GoogleBotPagesFrequency = {},
 ): GoogleBotPagesFrequency => {
-  const merged = { ...existing };
+  // Create a deep clone of existing to avoid mutating the original
+  const merged = JSON.parse(JSON.stringify(existing));
 
-  for (const [url, detailsArray] of Object.entries(incoming)) {
-    if (merged[url]) {
-      // If URL exists, merge the details arrays
-      const existingDetails = merged[url];
-      const newDetails = detailsArray;
-
-      // Create a map of existing details by their unique identifier
-      const detailsMap = new Map<string, BotPageDetails>();
-
-      // Add existing details to the map
-      existingDetails.forEach((detail) => {
-        const key = `${detail.timestamp}_${detail.ip}_${detail.user_agent}`;
-        detailsMap.set(key, detail);
-      });
-
-      // Add or update with new details
-      newDetails.forEach((newDetail) => {
-        const key = `${newDetail.timestamp}_${newDetail.ip}_${newDetail.user_agent}`;
-        if (detailsMap.has(key)) {
-          // Update frequency if it's the same request
-          const existingDetail = detailsMap.get(key)!;
-          detailsMap.set(key, {
-            ...existingDetail,
-            frequency: existingDetail.frequency + newDetail.frequency,
-            response_size:
-              existingDetail.response_size + newDetail.response_size,
-          });
-        } else {
-          // Add new entry
-          detailsMap.set(key, newDetail);
-        }
-      });
-
-      // Convert back to array
-      merged[url] = Array.from(detailsMap.values());
-    } else {
-      // If URL doesn't exist, add it with its details
-      merged[url] = detailsArray;
+  for (const [url, incomingDetails] of Object.entries(incoming)) {
+    if (!merged[url]) {
+      // If URL doesn't exist, add all new details
+      merged[url] = [...incomingDetails];
+      continue;
     }
+
+    // Create a map for existing details for efficient lookup
+    const existingDetailsMap = new Map<string, BotPageDetails>();
+    merged[url].forEach((detail) => {
+      const key = `${detail.timestamp}_${detail.ip}_${detail.user_agent}`;
+      existingDetailsMap.set(key, detail);
+    });
+
+    // Process incoming details
+    for (const newDetail of incomingDetails) {
+      const key = `${newDetail.timestamp}_${newDetail.ip}_${newDetail.user_agent}`;
+
+      if (existingDetailsMap.has(key)) {
+        // Merge frequencies and response sizes for matching details
+        const existingDetail = existingDetailsMap.get(key)!;
+        existingDetail.frequency += newDetail.frequency;
+        existingDetail.response_size += newDetail.response_size;
+      } else {
+        // Add new detail
+        existingDetailsMap.set(key, { ...newDetail });
+      }
+    }
+
+    // Update the merged result with the combined details
+    merged[url] = Array.from(existingDetailsMap.values());
   }
 
   return merged;

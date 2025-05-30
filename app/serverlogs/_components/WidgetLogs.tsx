@@ -168,7 +168,7 @@ export default function WidgetLogs() {
             </span>
           </div>
         </PopoverTrigger>
-        <PopoverContent className="min-w-70 max-w-96 py-2 px-0 mt-2 relative z-20">
+        <PopoverContent className="min-w-[300px] max-w-96 py-2 px-0 mt-2 relative z-20">
           <PopOverParsedLogs />
         </PopoverContent>
       </Popover>
