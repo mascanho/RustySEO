@@ -336,9 +336,6 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     }
   };
 
-  console.log("data from eidget table", data);
-  console.log(currentLogs), "current Logs";
-
   // Handle the dates and the timings hits
   function timings(data, log) {
     const initialDate = new Date(log?.timestamp);
@@ -401,46 +398,6 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
         </div>
 
         <div className="flex flex-1 gap-1">
-          {/* <DropdownMenu> */}
-          {/*   <DropdownMenuTrigger asChild> */}
-          {/*     <Button */}
-          {/*       variant="outline" */}
-          {/*       className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark" */}
-          {/*     > */}
-          {/*       <Filter className="h-4 w-4" /> */}
-          {/*       Method */}
-          {/*       {methodFilter.length > 0 && ( */}
-          {/*         <Badge variant="secondary" className="ml-1"> */}
-          {/*           {methodFilter.length} */}
-          {/*         </Badge> */}
-          {/*       )} */}
-          {/*     </Button> */}
-          {/*   </DropdownMenuTrigger> */}
-          {/*   <DropdownMenuContent */}
-          {/*     align="end" */}
-          {/*     className="bg-white dark:border-brand-dark dark:text-white dark:active:bg-brand-bright dark:bg-brand-darker" */}
-          {/*   > */}
-          {/*     <DropdownMenuLabel>Filter by Method</DropdownMenuLabel> */}
-          {/*     <DropdownMenuSeparator /> */}
-          {/*     {["GET", "POST", "PUT", "DELETE"].map((method) => ( */}
-          {/*       <DropdownMenuCheckboxItem */}
-          {/*         className="bg-white active:bg-gray-100 hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright" */}
-          {/*         key={method} */}
-          {/*         checked={methodFilter.includes(method)} */}
-          {/*         onCheckedChange={(checked) => { */}
-          {/*           if (checked) { */}
-          {/*             setMethodFilter([...methodFilter, method]); */}
-          {/*           } else { */}
-          {/*             setMethodFilter(methodFilter.filter((m) => m !== method)); */}
-          {/*           } */}
-          {/*         }} */}
-          {/*       > */}
-          {/*         {method} */}
-          {/*       </DropdownMenuCheckboxItem> */}
-          {/*     ))} */}
-          {/*   </DropdownMenuContent> */}
-          {/* </DropdownMenu> */}
-
           {/* FileType Filter */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -619,21 +576,6 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[80px] text-center">#</TableHead>
-                    {/* <TableHead */}
-                    {/*   className="cursor-pointer w-[80px] truncate" */}
-                    {/*   onClick={() => requestSort("ip")} */}
-                    {/* > */}
-                    {/*   IP Address */}
-                    {/*   {sortConfig?.key === "ip" && ( */}
-                    {/*     <ChevronDown */}
-                    {/*       className={`ml-1 h-4 w-4 inline-block ${ */}
-                    {/*         sortConfig.direction === "descending" */}
-                    {/*           ? "rotate-180" */}
-                    {/*           : "" */}
-                    {/*       }`} */}
-                    {/*     /> */}
-                    {/*   )} */}
-                    {/* </TableHead> */}
                     <TableHead
                       className="cursor-pointer max-w-[20px] truncate"
                       onClick={() => requestSort("timestamp")}
