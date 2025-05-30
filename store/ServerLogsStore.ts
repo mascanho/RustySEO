@@ -178,10 +178,10 @@ export const useLogAnalysisStore = create<
               (state.overview.totals.claude || 0) +
               (data.overview?.totals?.claude || 0),
             google_bot_pages: [
-          
+              ...new Set([
                 ...(state.overview.totals.google_bot_pages || []),
-                ...(data.overview?.totionąls?.google_bot_pages || []),
-            
+                ...(data.overview?.totals?.google_bot_pages || []),
+              ]),
             ],
             google_bot_pages_frequency: mergeFrequencyObjects(
               state.overview.totals.google_bot_pages_frequency,
@@ -196,8 +196,16 @@ export const useLogAnalysisStore = create<
         state.isLoading = false;
         state.error = null;
 
-        console.log("Log entries stored:", state.entries.length);
-        console.log("Overview data stored:", state.overview);
+        // console.log("Log entries stored:", state.entries.length);
+        // console.log("Overview data stored:", state.overview);
+
+        console.log('Existing frequencies:', state.overview.totals.google_bot_pages_frequency);
+        console.log('Incoming frequencies:', data.overview?.totals?.google_bot_pages_frequency);
+        console.log('Merged frequencies:', {
+          ...state.overview.totals.google_bot_pages_frequency,
+          ...(data.overview?.totals?.google_bot_pages_frequency || {}),
+        });
+
       }),
 
     setFilter: (key, value) =>
