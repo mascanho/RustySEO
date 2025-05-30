@@ -25,13 +25,15 @@ function System() {
         {" "}
         <GiGearStickPattern className={`${open ? "text-brand-bright" : ""}`} />
       </PopoverTrigger>
-      <PopoverContent className="m-0 mb-3 mr-2 p-1 min-w-80  h-[390px] overflow-hidden dark:bg-brand-darker">
+      <PopoverContent className="m-0 mb-3 mr-2 p-1 min-w-80  h-[405px] overflow-hidden dark:bg-brand-darker">
         <Tabs>
-          <TabsList className="border dark:border-brand-dark w-fit flex justify-around">
-            <TabsTrigger className="active:bg-brand-bright" value="logs">
+          <TabsList className="border dark:border-brand-dark flex justify-around mx-1 mt-1">
+            <TabsTrigger className="active:bg-brand-bright w-full" value="logs">
               Logs
             </TabsTrigger>
-            <TabsTrigger value="system">System</TabsTrigger>
+            <TabsTrigger className="w-full" value="system">
+              System
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="logs">

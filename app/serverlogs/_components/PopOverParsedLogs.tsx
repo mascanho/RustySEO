@@ -15,10 +15,15 @@ const PopOverParsedLogs = () => {
     .map((log) => log?.name?.length)
     .reduce((a, b) => a + b, 0);
 
+  const totalSizeinMB = uploadedLogFiles
+    .map((log) => log?.totalFileSize)
+    .reduce((a, b) => a + b, 0);
+
   return (
     <div className="flex flex-col   rounded-lg z-20">
       <h2 className="font-semibold mb-1  text-xs font-mono pl-3 pb-2  pt-1 shadow text-brand-bright">
-        Logs Analysed: {totalLogsAnalysed} | Batches: {uploadedLogFiles.length}
+        Logs: {totalLogsAnalysed} | Batches: {uploadedLogFiles.length} | Size:{" "}
+        {totalSizeinMB.toFixed(1)} MB
       </h2>
       <section className="flex flex-col gap-2 max-h-80 overflow-auto px-2 pt-1">
         {Array.isArray(uploadedLogFiles) &&
@@ -45,8 +50,11 @@ const PopOverParsedLogs = () => {
                     className="flex items-center space-x-2 mt-1"
                   >
                     <FaRegFileAlt className="text-brand-bright text-xs dark:text-white" />
-                    <div className="text-brand-bright text-xs  dark:text-brand-bright">
-                      {fileName && fileName}
+                    <div className="text-brand-bright text-xs  dark:text-brand-bright flex space-x-2 items-center">
+                      <span>{fileName && fileName} </span>
+                      <span className="text-gray-400 text-[9px] ">
+                        {logEntry?.totalFileSize?.toFixed(1)} MB
+                      </span>
                     </div>
                   </div>
                 ))}

@@ -1,5 +1,17 @@
 export const changelogData = [
   {
+    version: "0.2.5",
+    date: "2025-06-01",
+    type: "fix",
+    changes: [
+      "Inlinks & Outlinks improvements",
+      "Improved log analysis",
+      "Log analyser: improved search",
+      "Global system info",
+      "Deep Crawl: context menus added to tables",
+    ],
+  },
+  {
     version: "0.2.4",
     date: "2025-05-25",
     type: "update",

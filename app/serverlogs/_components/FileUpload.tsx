@@ -308,22 +308,23 @@ export function FileUpload({
 
       const filesUploaded = files.map((file) => file.file.name);
       const timeUploaded = new Date().toISOString();
+      const fileSize = files.reduce((acc, file) => acc + file.file.size, 0);
 
       const logEntry = {
         name: filesUploaded,
         time: timeUploaded,
+        singleFileSize: fileSize,
         // contents: logContents,
+        totalFileSize: totalSize,
       };
 
+      // Set the state for the popup modal
       setUploadedLogFiles(logEntry);
 
       const result = await invoke("check_logs_command", {
         data: { log_contents: logContents },
         storingLogs,
       });
-
-      console.log('Google bot pages frequency in result:', result.overview?.totals?.google_bot_pages_frequency);
-
 
       if (!result || !result.overview) {
         console.error("Invalid result structure:", result);
@@ -505,7 +506,7 @@ export function FileUpload({
                   className="h-2 bg-gray-200 dark:bg-gray-700 [&>div]:bg-blue-500"
                 />
                 <div className="text-xs mt-1">
-                  File {progress.current} of {progress.total}
+                  {/* File {progress.current} of {progress.total} */}
                 </div>
               </div>
             </div>

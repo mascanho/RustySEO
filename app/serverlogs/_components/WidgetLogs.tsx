@@ -176,10 +176,12 @@ export default function WidgetLogs() {
       <Popover>
         <PopoverTrigger className="absolute top-3 font-bold text-black/20 dark:text-white/50 text-xl">
           <div className="flex flex-col items-start justify-start">
-            <span>{currentLogs.length} Entries</span>
+            <span className="hover:text-brand-bright">
+              {currentLogs.length} Entries
+            </span>
           </div>
         </PopoverTrigger>
-        <PopoverContent className="min-w-70 max-w-96 py-2 px-0 mt-2 relative z-20">
+        <PopoverContent className="min-w-[300px] max-w-96  py-2 px-0 mt-2 relative z-20">
           {/* <div className="h-5 w-5 absolute -top-2 right-32 bg-white rotate-45 border -z-10" /> */}
           <PopOverParsedLogs />
         </PopoverContent>

@@ -431,10 +431,8 @@ const TableCrawl = ({
       // SET THE SEPARATE STATE
 
       setInlinks([{ url: cellContent }, innerLinksMatched]);
-      setOutlinks(outerLinksMatched);
 
       console.log(cellContent, "Selected URL");
-      console.log("Matching objects:", innerLinksMatched, outerLinksMatched);
       console.log(urlData, "URL Data");
     }
   };

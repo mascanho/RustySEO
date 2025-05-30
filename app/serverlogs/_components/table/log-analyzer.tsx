@@ -26,6 +26,7 @@ import {
   Package,
   FileType2,
   BadgeInfo,
+  X,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -76,6 +77,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useCurrentLogs } from "@/store/logFilterStore";
+import { IoClose } from "react-icons/io5";
+import { FaApper } from "react-icons/fa";
 
 export function LogAnalyzer() {
   const {
@@ -111,6 +114,9 @@ export function LogAnalyzer() {
   const [showOnTables, setShowOnTables] = useState(false);
   const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
   const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
+
+  // SET the input search to be based on button click
+  const [inputValue, setInputValue] = useState(""); // stores what's typed in the input
 
   // Helper functions
   const formatDate = useCallback((dateString: string) => {
@@ -454,12 +460,32 @@ export function LogAnalyzer() {
         <div className="relative w-full mr-1">
           <Search className="absolute dark:text-white/50 left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
+            reset={resetFilters}
             type="search"
             placeholder="Search by IP, path, user agent..."
             className="pl-8 w-full dark:text-white"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && setSearchTerm(inputValue)}
           />
+          {/* <button */}
+          {/*   onClick={() => setSearchTerm(inputValue)} */}
+          {/*   className="absolute right-3 bg-brand-bright p-1 top-2 rounded-md px-2 dark:text-white text-xs" */}
+          {/* > */}
+          {/*   search */}
+          {/* </button> */}
+
+          {inputValue && (
+            <X
+              size={14}
+              className="absolute right-3 text-red-500 w-6 dark:text-red-500    top-3 rounded-md  text-xs bg-white dark:bg-brand-darker cursor-pointer "
+              onClick={() => {
+                setInputValue("");
+                setSearchTerm("");
+                resetFilters();
+              }}
+            />
+          )}
         </div>
 
         <div className="flex flex-1 gap-1">

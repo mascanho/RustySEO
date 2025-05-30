@@ -874,10 +874,25 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
             <SelectTrigger className="w-[70px] text-xs dark:text-white/50 h-6 mr-2 z-50">
               <SelectValue placeholder="100" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="100">100</SelectItem>
-              <SelectItem value="500">500</SelectItem>
-              <SelectItem value="1000">1000</SelectItem>
+            <SelectContent className="z-[9999999999]">
+              <SelectItem
+                className="dark:hover:bg-brand-bright dark:hover:text-white hover:bg-brand-bright hover:text-white"
+                value="100"
+              >
+                100
+              </SelectItem>
+              <SelectItem
+                className="dark:hover:bg-brand-bright dark:hover:text-white hover:bg-brand-bright hover:text-white"
+                value="500"
+              >
+                500
+              </SelectItem>
+              <SelectItem
+                className="dark:hover:bg-brand-bright dark:hover:text-white hover:bg-brand-bright hover:text-white"
+                value="1000"
+              >
+                1000
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -947,11 +962,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
           </PaginationContent>
         </Pagination>
         <div>
-          <span className="flex justify-end text-muted-foreground dark:text-white/50 w-[180px] flex-nowrap -ml-16 text-right pr-2.5 -mt-1.5 text-xs text-black/50">
-            {indexOfFirstItem + 1}-
-            {Math.min(indexOfLastItem, filteredLogs.length)} of{" "}
-            {filteredLogs.length} logs
-          </span>
+          {/* <span className="flex justify-end text-muted-foreground dark:text-white/50 w-[180px] flex-nowrap -ml-16 text-right pr-2.5 -mt-1.5 text-xs text-black/50"> */}
+          {/*   {indexOfFirstItem + 1}- */}
+          {/*   {Math.min(indexOfLastItem, filteredLogs.length)} of{" "} */}
+          {/*   {filteredLogs.length} logs */}
+          {/* </span> */}
         </div>
       </div>
     </div>

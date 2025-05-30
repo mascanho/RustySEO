@@ -402,9 +402,6 @@ export default function Home() {
               <TabsTrigger value="headers" className="rounded-t-md">
                 Headers
               </TabsTrigger>
-              <TabsTrigger value="innerLinks" className="rounded-t-md">
-                InnerLinks - TEST
-              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="details">
