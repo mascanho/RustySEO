@@ -322,6 +322,9 @@ export function FileUpload({
         storingLogs,
       });
 
+      console.log('Google bot pages frequency in result:', result.overview?.totals?.google_bot_pages_frequency);
+
+
       if (!result || !result.overview) {
         console.error("Invalid result structure:", result);
         throw new Error("Invalid server response: Missing overview data");
