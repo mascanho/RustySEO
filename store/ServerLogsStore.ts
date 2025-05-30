@@ -3,6 +3,39 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { shallow } from "zustand/shallow";
 
+interface BotPageDetails {
+  crawler_type: string;
+  file_type: string;
+  response_size: number;
+  timestamp: string;
+  ip: string;
+  referer: string;
+  browser: string;
+  user_agent: string;
+  frequency: number;
+  method: string;
+  verified: boolean;
+  taxonomy: string;
+  filename: string;
+}
+
+interface GoogleBotPagesFrequency {
+  [key: string]: BotPageDetails[];
+}
+
+interface CrawlerTotals {
+  google: number;
+  bing: number;
+  semrush: number;
+  hrefs: number;
+  moz: number;
+  uptime: number;
+  openai: number;
+  claude: number;
+  google_bot_pages: string[];
+  google_bot_page_frequencies: GoogleBotPagesFrequency;
+}
+
 interface LogEntry {
   ip: string;
   timestamp: string;
@@ -17,23 +50,6 @@ interface LogEntry {
   crawler_type: string;
   browser: string;
   file_type: string;
-}
-
-interface GoogleBotPagesFrequency {
-  [key: string]: number;
-}
-
-interface CrawlerTotals {
-  google: number;
-  bing: number;
-  semrush: number;
-  hrefs: number;
-  moz: number;
-  uptime: number;
-  openai: number;
-  claude: number;
-  google_bot_pages: string[];
-  google_bot_pages_frequency: GoogleBotPagesFrequency;
 }
 
 interface LogAnalysisOverview {
@@ -86,7 +102,7 @@ const defaultTotals: CrawlerTotals = {
   openai: 0,
   claude: 0,
   google_bot_pages: [],
-  google_bot_pages_frequency: {},
+  google_bot_page_frequencies: {},
 };
 
 const initialState: LogAnalysisState = {
@@ -115,11 +131,50 @@ const initialState: LogAnalysisState = {
 const mergeFrequencyObjects = (
   existing: GoogleBotPagesFrequency = {},
   incoming: GoogleBotPagesFrequency = {},
-) => {
+): GoogleBotPagesFrequency => {
   const merged = { ...existing };
-  for (const [key, value] of Object.entries(incoming)) {
-    merged[key] = (merged[key] || 0) + (value as number);
+
+  for (const [url, detailsArray] of Object.entries(incoming)) {
+    if (merged[url]) {
+      // If URL exists, merge the details arrays
+      const existingDetails = merged[url];
+      const newDetails = detailsArray;
+
+      // Create a map of existing details by their unique identifier
+      const detailsMap = new Map<string, BotPageDetails>();
+
+      // Add existing details to the map
+      existingDetails.forEach((detail) => {
+        const key = `${detail.timestamp}_${detail.ip}_${detail.user_agent}`;
+        detailsMap.set(key, detail);
+      });
+
+      // Add or update with new details
+      newDetails.forEach((newDetail) => {
+        const key = `${newDetail.timestamp}_${newDetail.ip}_${newDetail.user_agent}`;
+        if (detailsMap.has(key)) {
+          // Update frequency if it's the same request
+          const existingDetail = detailsMap.get(key)!;
+          detailsMap.set(key, {
+            ...existingDetail,
+            frequency: existingDetail.frequency + newDetail.frequency,
+            response_size:
+              existingDetail.response_size + newDetail.response_size,
+          });
+        } else {
+          // Add new entry
+          detailsMap.set(key, newDetail);
+        }
+      });
+
+      // Convert back to array
+      merged[url] = Array.from(detailsMap.values());
+    } else {
+      // If URL doesn't exist, add it with its details
+      merged[url] = detailsArray;
+    }
   }
+
   return merged;
 };
 
@@ -183,9 +238,9 @@ export const useLogAnalysisStore = create<
                 ...(data.overview?.totals?.google_bot_pages || []),
               ]),
             ],
-            google_bot_pages_frequency: mergeFrequencyObjects(
-              state.overview.totals.google_bot_pages_frequency,
-              data.overview?.totals?.google_bot_pages_frequency,
+            google_bot_page_frequencies: mergeFrequencyObjects(
+              state.overview.totals.google_bot_page_frequencies,
+              data.overview?.totals?.google_bot_page_frequencies || {},
             ),
           },
           log_start_time:
@@ -195,17 +250,6 @@ export const useLogAnalysisStore = create<
         };
         state.isLoading = false;
         state.error = null;
-
-        // console.log("Log entries stored:", state.entries.length);
-        // console.log("Overview data stored:", state.overview);
-
-        console.log('Existing frequencies:', state.overview.totals.google_bot_pages_frequency);
-        console.log('Incoming frequencies:', data.overview?.totals?.google_bot_pages_frequency);
-        console.log('Merged frequencies:', {
-          ...state.overview.totals.google_bot_pages_frequency,
-          ...(data.overview?.totals?.google_bot_pages_frequency || {}),
-        });
-
       }),
 
     setFilter: (key, value) =>
@@ -238,7 +282,6 @@ export const useLogAnalysisStore = create<
         state.entries = [];
         state.overview = {
           ...initialState.overview,
-          // Keep these from current state if needed
           log_start_time: state.overview.log_start_time,
           log_finish_time: state.overview.log_finish_time,
         };
