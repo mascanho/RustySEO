@@ -50,7 +50,6 @@ interface LogEntry {
   crawler_type: string;
   browser: string;
   file_type: string;
-  frequency?: number;
 }
 
 interface LogAnalysisOverview {
@@ -133,64 +132,43 @@ const mergeFrequencyObjects = (
   existing: GoogleBotPagesFrequency = {},
   incoming: GoogleBotPagesFrequency = {},
 ): GoogleBotPagesFrequency => {
+  // Create a deep clone of existing to avoid mutating the original
   const merged = JSON.parse(JSON.stringify(existing));
 
   for (const [url, incomingDetails] of Object.entries(incoming)) {
     if (!merged[url]) {
+      // If URL doesn't exist, add all new details
       merged[url] = [...incomingDetails];
       continue;
     }
 
+    // Create a map for existing details for efficient lookup
     const existingDetailsMap = new Map<string, BotPageDetails>();
     merged[url].forEach((detail) => {
       const key = `${detail.timestamp}_${detail.ip}_${detail.user_agent}`;
       existingDetailsMap.set(key, detail);
     });
 
+    // Process incoming details
     for (const newDetail of incomingDetails) {
       const key = `${newDetail.timestamp}_${newDetail.ip}_${newDetail.user_agent}`;
 
       if (existingDetailsMap.has(key)) {
-        const existingDetail = existingDetailsMap.get(key);
+        // Merge frequencies and response sizes for matching details
+        const existingDetail = existingDetailsMap.get(key)!;
         existingDetail.frequency += newDetail.frequency;
         existingDetail.response_size += newDetail.response_size;
       } else {
+        // Add new detail
         existingDetailsMap.set(key, { ...newDetail });
       }
     }
 
+    // Update the merged result with the combined details
     merged[url] = Array.from(existingDetailsMap.values());
   }
 
   return merged;
-};
-
-const ensureUniqueUrls = (existingEntries, newEntries) => {
-  const urlMap = new Map();
-
-  // Populate the map with existing entries
-  existingEntries.forEach((entry) => {
-    if (!urlMap.has(entry.path)) {
-      urlMap.set(entry.path, { ...entry });
-    }
-  });
-
-  // Process new entries
-  newEntries.forEach((newEntry) => {
-    if (urlMap.has(newEntry.path)) {
-      // If URL exists, sum the metrics regardless of other fields
-      const existingEntry = urlMap.get(newEntry.path);
-      existingEntry.frequency =
-        (existingEntry.frequency || 0) + (newEntry.frequency || 0);
-      existingEntry.response_size =
-        (existingEntry.response_size || 0) + (newEntry.response_size || 0);
-    } else {
-      // If URL does not exist, add the new entry
-      urlMap.set(newEntry.path, { ...newEntry });
-    }
-  });
-
-  return Array.from(urlMap.values());
 };
 
 export const useLogAnalysisStore = create<
@@ -201,14 +179,10 @@ export const useLogAnalysisStore = create<
 
     setLogData: (data) =>
       set((state) => {
-        const uniqueEntries = ensureUniqueUrls(
-          state.entries,
-          data.entries || [],
-        );
+        // Append entries
+        state.entries = [...state.entries, ...(data.entries || [])];
 
-        state.entries = uniqueEntries;
-
-        // Update overview with new data
+        // Merge overview
         state.overview = {
           ...state.overview,
           message: data.overview?.message || state.overview.message,
