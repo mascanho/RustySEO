@@ -234,8 +234,8 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
         }
 
         // Print log file length
-        print!("\rParsing line {}...", i + 1);
-        io::stdout().flush().unwrap();
+        //print!("\rParsing line {}...", i + 1);
+        //io::stdout().flush().unwrap();
 
         if let Some(caps) = re.captures(line) {
             let timestamp = match NaiveDateTime::parse_from_str(&caps[2], "%d/%b/%Y:%H:%M:%S %z") {
