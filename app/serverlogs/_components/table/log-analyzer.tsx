@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { debounce } from "lodash";
 import {
   AlertCircle,
@@ -114,7 +114,7 @@ export function LogAnalyzer() {
   const [showOnTables, setShowOnTables] = useState(false);
   const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
   const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
-
+  const searchTermRef = useRef("");
   // SET the input search to be based on button click
   const [inputValue, setInputValue] = useState(""); // stores what's typed in the input
 
@@ -287,6 +287,26 @@ export function LogAnalyzer() {
       verifiedFilter,
       botTypeFilter,
     ],
+  );
+
+  const [searchInput, setSearchInput] = useState("");
+  // DEBOUNCING SEARCH FUNCTION
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((term: string) => {
+        searchTermRef.current = term;
+        applyFilters(term, entries);
+      }, 300),
+    [entries, applyFilters],
+  );
+
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e?.target?.value;
+      setSearchInput(value);
+      debouncedSearch(value);
+    },
+    [debouncedSearch],
   );
 
   // Apply filters when search term or entries change
@@ -464,8 +484,8 @@ export function LogAnalyzer() {
             type="search"
             placeholder="Search by IP, path, user agent..."
             className="pl-8 w-full dark:text-white"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            value={searchInput}
+            onChange={handleSearchChange}
             onKeyPress={(e) => e.key === "Enter" && setSearchTerm(inputValue)}
           />
           {/* <button */}

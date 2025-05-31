@@ -304,18 +304,21 @@ export function FileUpload({
       }
 
       setOverallProgress(60);
+
       const logContents = fileContents.map((fc) => [fc.filename, fc.content]);
 
       const filesUploaded = files.map((file) => file.file.name);
       const timeUploaded = new Date().toISOString();
-      const fileSize = files.reduce((acc, file) => acc + file.file.size, 0);
+      const fileSizes = files.map((file) => file.file.size);
+      const totalSizeInBytes = fileSizes.reduce((acc, size) => acc + size, 0);
+      const totalBatchSizeInMB = totalSizeInBytes / (1024 * 1024); // Convert bytes to MB
 
       const logEntry = {
-        name: filesUploaded,
+        names: filesUploaded,
         time: timeUploaded,
-        singleFileSize: fileSize,
-        // contents: logContents,
-        totalFileSize: totalSize,
+        individualSizes: fileSizes,
+        totalSize: totalSizeInBytes,
+        totalBatchSize: totalBatchSizeInMB,
       };
 
       // Set the state for the popup modal
@@ -539,7 +542,7 @@ export function FileUpload({
           </section>
 
           {error && (
-            <div className="flex items-center text-destructive mt-2 text-xs">
+            <div className="flex items-center text-destructive mt-4 text-xs">
               <AlertCircle className="h-3 w-3 mr-1" />
               {error}
             </div>
