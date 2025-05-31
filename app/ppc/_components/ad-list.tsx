@@ -32,8 +32,10 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
   if (ads.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <h3 className="text-lg font-medium">No ads created yet</h3>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h3 className="text-lg font-medium dark:text-white/50">
+          No ads created yet
+        </h3>
+        <p className="text-sm text-muted-foreground mt-1 dark:text-white/50">
           Create your first ad to get started
         </p>
       </div>

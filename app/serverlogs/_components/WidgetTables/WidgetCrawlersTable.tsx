@@ -336,9 +336,6 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     }
   };
 
-  console.log("data from eidget table", data);
-  console.log(currentLogs), "current Logs";
-
   // Handle the dates and the timings hits
   function timings(data, log) {
     const initialDate = new Date(log?.timestamp);
@@ -401,46 +398,6 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
         </div>
 
         <div className="flex flex-1 gap-1">
-          {/* <DropdownMenu> */}
-          {/*   <DropdownMenuTrigger asChild> */}
-          {/*     <Button */}
-          {/*       variant="outline" */}
-          {/*       className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark" */}
-          {/*     > */}
-          {/*       <Filter className="h-4 w-4" /> */}
-          {/*       Method */}
-          {/*       {methodFilter.length > 0 && ( */}
-          {/*         <Badge variant="secondary" className="ml-1"> */}
-          {/*           {methodFilter.length} */}
-          {/*         </Badge> */}
-          {/*       )} */}
-          {/*     </Button> */}
-          {/*   </DropdownMenuTrigger> */}
-          {/*   <DropdownMenuContent */}
-          {/*     align="end" */}
-          {/*     className="bg-white dark:border-brand-dark dark:text-white dark:active:bg-brand-bright dark:bg-brand-darker" */}
-          {/*   > */}
-          {/*     <DropdownMenuLabel>Filter by Method</DropdownMenuLabel> */}
-          {/*     <DropdownMenuSeparator /> */}
-          {/*     {["GET", "POST", "PUT", "DELETE"].map((method) => ( */}
-          {/*       <DropdownMenuCheckboxItem */}
-          {/*         className="bg-white active:bg-gray-100 hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright" */}
-          {/*         key={method} */}
-          {/*         checked={methodFilter.includes(method)} */}
-          {/*         onCheckedChange={(checked) => { */}
-          {/*           if (checked) { */}
-          {/*             setMethodFilter([...methodFilter, method]); */}
-          {/*           } else { */}
-          {/*             setMethodFilter(methodFilter.filter((m) => m !== method)); */}
-          {/*           } */}
-          {/*         }} */}
-          {/*       > */}
-          {/*         {method} */}
-          {/*       </DropdownMenuCheckboxItem> */}
-          {/*     ))} */}
-          {/*   </DropdownMenuContent> */}
-          {/* </DropdownMenu> */}
-
           {/* FileType Filter */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -459,7 +416,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="bg-white dark:border-brand-dark dark:text-white   dark:bg-brand-darker"
+              className="bg-white dark:border-brand-dark dark:text-white   dark:bg-brand-darker z-[999999999999] hover:text-black active:text-black hover:bg-brand-brigh"
             >
               <DropdownMenuLabel>Filter by File Type</DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -478,7 +435,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
               ].map((fileType) => (
                 <DropdownMenuCheckboxItem
                   className={
-                    "bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                    "bg-white active:bg-brand-bright  dark:bg-brand-darker dark:hover:bg-brand-bright active:text-white hover:bg-brand-bright hover:text-white"
                   }
                   key={fileType}
                   checked={fileTypeFilter.includes(fileType)}
@@ -530,7 +487,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
             <SelectTrigger className="w-[150px] dark:bg-brand-darker dark:text-white">
               <SelectValue placeholder="Verification" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[999999999999999]">
               <SelectItem
                 className="hover:bg-brand-bright hover:text-white"
                 value="all"
@@ -559,10 +516,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
               setBotTypeFilter(value === "all" ? null : value)
             }
           >
-            <SelectTrigger className="w-[120px] dark:bg-brand-darker dark:text-white">
+            <SelectTrigger className="w-[120px] dark:bg-brand-darker dark:text-white ">
               <SelectValue placeholder="Bot/Human" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[999999999999999]">
               <SelectItem
                 className="hover:bg-brand-bright hover:text-white"
                 value="all"
@@ -619,21 +576,6 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[80px] text-center">#</TableHead>
-                    {/* <TableHead */}
-                    {/*   className="cursor-pointer w-[80px] truncate" */}
-                    {/*   onClick={() => requestSort("ip")} */}
-                    {/* > */}
-                    {/*   IP Address */}
-                    {/*   {sortConfig?.key === "ip" && ( */}
-                    {/*     <ChevronDown */}
-                    {/*       className={`ml-1 h-4 w-4 inline-block ${ */}
-                    {/*         sortConfig.direction === "descending" */}
-                    {/*           ? "rotate-180" */}
-                    {/*           : "" */}
-                    {/*       }`} */}
-                    {/*     /> */}
-                    {/*   )} */}
-                    {/* </TableHead> */}
                     <TableHead
                       className="cursor-pointer max-w-[20px] truncate"
                       onClick={() => requestSort("timestamp")}
@@ -874,10 +816,25 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
             <SelectTrigger className="w-[70px] text-xs dark:text-white/50 h-6 mr-2 z-50">
               <SelectValue placeholder="100" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="100">100</SelectItem>
-              <SelectItem value="500">500</SelectItem>
-              <SelectItem value="1000">1000</SelectItem>
+            <SelectContent className="z-[9999999999]">
+              <SelectItem
+                className="dark:hover:bg-brand-bright dark:hover:text-white hover:bg-brand-bright hover:text-white"
+                value="100"
+              >
+                100
+              </SelectItem>
+              <SelectItem
+                className="dark:hover:bg-brand-bright dark:hover:text-white hover:bg-brand-bright hover:text-white"
+                value="500"
+              >
+                500
+              </SelectItem>
+              <SelectItem
+                className="dark:hover:bg-brand-bright dark:hover:text-white hover:bg-brand-bright hover:text-white"
+                value="1000"
+              >
+                1000
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -947,11 +904,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
           </PaginationContent>
         </Pagination>
         <div>
-          <span className="flex justify-end text-muted-foreground dark:text-white/50 w-[180px] flex-nowrap -ml-16 text-right pr-2.5 -mt-1.5 text-xs text-black/50">
-            {indexOfFirstItem + 1}-
-            {Math.min(indexOfLastItem, filteredLogs.length)} of{" "}
-            {filteredLogs.length} logs
-          </span>
+          {/* <span className="flex justify-end text-muted-foreground dark:text-white/50 w-[180px] flex-nowrap -ml-16 text-right pr-2.5 -mt-1.5 text-xs text-black/50"> */}
+          {/*   {indexOfFirstItem + 1}- */}
+          {/*   {Math.min(indexOfLastItem, filteredLogs.length)} of{" "} */}
+          {/*   {filteredLogs.length} logs */}
+          {/* </span> */}
         </div>
       </div>
     </div>

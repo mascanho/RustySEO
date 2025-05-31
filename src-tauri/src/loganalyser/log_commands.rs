@@ -12,8 +12,6 @@ pub fn check_logs_command(
 ) -> Result<LogResult, String> {
     let log_count = data.log_contents.len() as i32;
 
-    println!("Storing Logs: {} ", storing_logs);
-
     // IF THE USER HAS CHOOSEN TO STORE THE LOGS IN A DB
     if storing_logs == true {
         // Create the DB
@@ -26,7 +24,7 @@ pub fn check_logs_command(
         println!("Not storing logs");
     }
 
-    match analyse_log(data, &log_count, app) {
+    match analyse_log(data, app) {
         Ok(result) => {
             // Optional: You could include the current total in the result
             Ok(result)

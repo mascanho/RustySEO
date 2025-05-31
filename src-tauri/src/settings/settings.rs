@@ -1,8 +1,10 @@
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::fmt::format;
 use std::path::PathBuf;
+use sysinfo::{ProcessExt, System, SystemExt};
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
 use tokio::time::Duration;
@@ -35,6 +37,7 @@ pub struct Settings {
     pub rustyid: Uuid,
     pub page_speed_bulk: bool,
     pub page_speed_bulk_api_key: Option<Option<String>>,
+    pub log_batchsize: usize,
 }
 
 impl Settings {
@@ -61,6 +64,7 @@ impl Settings {
             rustyid: Uuid::new_v4(),
             page_speed_bulk: false,
             page_speed_bulk_api_key: None,
+            log_batchsize: 2,
         }
     }
 
@@ -318,4 +322,25 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
         .map_err(|e| format!("Failed to flush config: {}", e))?;
 
     Ok(settings)
+}
+
+#[tauri::command]
+pub fn get_system() -> Result<Value, String> {
+    let mut sys = System::new_all();
+    sys.refresh_all();
+
+    Ok(json!({
+        "totalMemory": sys.total_memory(),
+        "usedMemory": sys.used_memory(),
+        "totalSwap": sys.total_swap(),
+        "usedSwap": sys.used_swap(),
+
+        // System Information
+        "systemName": sys.name(),
+        "kernelVersion" : sys.kernel_version(),
+        "osVersion": sys.os_version(),
+        "hostName": sys.host_name(),
+        "cpus": sys.cpus().len(),
+
+    }))
 }

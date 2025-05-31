@@ -40,6 +40,8 @@ import {
 } from "@/components/ui/popover";
 import { FaInfoCircle } from "react-icons/fa";
 import PopOverParsedLogs from "@/app/serverlogs/_components/PopOverParsedLogs";
+import ChangeLogContainer from "@/components/ui/changelog/ChangeLogContainer";
+import System from "./Footer/Sys/System";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -241,6 +243,8 @@ const Footer = () => {
         <TodoItems url={url} strategy={""} />
       </MantineDrawer>
 
+      <ChangeLogContainer />
+
       <footer className="w-full justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[999999999999999] border-t-2 pb-1.5 dark:border-t-brand-dark flex items-center py-1 text-xs">
         <section>
           <div className="flex items-center ml-2 space-x-1 w-full">
@@ -305,6 +309,16 @@ const Footer = () => {
                 <span className="text-sky-dark dark:text-sky-dark ml-1">
                   {tasks.length}
                 </span>
+              </div>
+
+              {/* SYSTEM SETTINGS */}
+              <div className="relative group hover:delay-1000">
+                <button className="pt-[2px]">
+                  <System />
+                </button>
+                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
+                  Status
+                </div>
               </div>
 
               {/* CHAT BUTTON */}

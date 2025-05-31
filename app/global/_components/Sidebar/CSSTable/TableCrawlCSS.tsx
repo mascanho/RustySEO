@@ -276,7 +276,7 @@ const ColumnPicker = ({
 const TableCrawlCSS = ({
   rows,
   rowHeight = 41,
-  overscan = 30,
+  overscan = 18,
   tabName,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);

@@ -66,7 +66,7 @@ import { GoFileDiff } from "react-icons/go";
 import { Settings } from "lucide-react";
 import PowerBi from "./MSClarityModal/PowerBi";
 import { useOnboardingStore } from "@/store/OnboardingStore";
-import { BiDoorOpen } from "react-icons/bi";
+import { BiDoorOpen, BiLogoSlackOld } from "react-icons/bi";
 import { CiSettings } from "react-icons/ci";
 
 const TopMenuBar = () => {
@@ -79,6 +79,7 @@ const TopMenuBar = () => {
     hideSerpKeywords,
     showCustomSearch,
     hideCustomSearch,
+    showChangelog,
   } = useVisibilityStore();
 
   const router = useRouter();
@@ -654,6 +655,10 @@ const TopMenuBar = () => {
               <MenubarItem onClick={handleOnboarding}>
                 <BiDoorOpen className="mr-2" />
                 Onboarding
+              </MenubarItem>
+              <MenubarItem onClick={showChangelog}>
+                <BiLogoSlackOld className="mr-2" />
+                Changelog
               </MenubarItem>
               <MenubarItem onClick={openAbout}>
                 <FiHelpCircle className="mr-2" />

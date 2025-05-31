@@ -18,7 +18,7 @@ interface StreamingUpdate {
 }
 
 interface CrawlStore {
-  // State
+  // State properties
   crawlData: PageDetails[];
   domainCrawlLoading: boolean;
   crawlerType: string;
@@ -44,6 +44,8 @@ interface CrawlStore {
   streamedCrawledPages: number;
   streamedTotalPages: number;
   deepCrawlTab: string;
+  inlinks: string[];
+  outlinks: string[];
 
   // Original actions (maintained for backward compatibility)
   setDomainCrawlData: (data: PageDetails[]) => void;
@@ -73,6 +75,8 @@ interface CrawlStore {
   setStreamedCrawledPages: (pages: number) => void;
   setStreamedTotalPages: (pages: number) => void;
   setDeepCrawlTab: (tab: string) => void;
+  setInlinks: (links: string[]) => void;
+  setOutlinks: (links: string[]) => void;
   updateStreamingData: (
     result: PageDetails,
     crawledPages: number,
@@ -98,6 +102,8 @@ interface CrawlStore {
       setSummary: (summary: string[]) => void;
       setIssuesData: (data: string[]) => void;
       setCrawlSessionTotalArray: (data: string[]) => void;
+      setInlinks: (links: string[]) => void;
+      setOutlinks: (links: string[]) => void;
     };
     ui: {
       setGenericChart: (chart: string) => void;
@@ -163,6 +169,8 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
     setStreamedCrawledPages: createSetter<number>("streamedCrawledPages"),
     setStreamedTotalPages: createSetter<number>("streamedTotalPages"),
     setDeepCrawlTab: createSetter<string>("deepCrawlTab"),
+    setInlinks: createSetter<string[]>("inlinks"),
+    setOutlinks: createSetter<string[]>("outlinks"),
     updateStreamingData: (
       result: PageDetails,
       crawledPages: number,
@@ -204,6 +212,8 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
     streamedCrawledPages: 0,
     streamedTotalPages: 0,
     deepCrawlTab: "",
+    inlinks: [],
+    outlinks: [],
 
     // Original actions (for backward compatibility)
     ...setters,
@@ -227,6 +237,8 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
         setSummary: setters.setSummary,
         setIssuesData: setters.setIssuesData,
         setCrawlSessionTotalArray: setters.setCrawlSessionTotalArray,
+        setInlinks: setters.setInlinks,
+        setOutlinks: setters.setOutlinks,
       },
       ui: {
         setGenericChart: setters.setGenericChart,

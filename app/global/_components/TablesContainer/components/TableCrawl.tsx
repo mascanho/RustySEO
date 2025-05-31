@@ -21,12 +21,15 @@ import {
 } from "./tableLayout";
 import { TbColumns3 } from "react-icons/tb";
 import DownloadButton from "./DownloadButton";
-import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import useGlobalCrawlStore, {
+  useDataActions,
+} from "@/store/GlobalCrawlDataStore";
 import { invoke } from "@tauri-apps/api/core";
 import { save } from "@tauri-apps/plugin-dialog";
 import { writeFile } from "@tauri-apps/plugin-fs";
 import { toast } from "sonner";
 import { exportSEODataCSV } from "./generateCSV";
+import ContextTableMenu from "./ContextTableMenu";
 
 interface TableCrawlProps {
   rows: Array<{
@@ -216,10 +219,12 @@ const TableRow = ({
             }}
             className="dark:text-white/50 cursor-pointer"
           >
-            <TruncatedCell
-              text={cell?.toString()}
-              width={columnWidths[cellIndex]}
-            />
+            <ContextTableMenu data={cell}>
+              <TruncatedCell
+                text={cell?.toString()}
+                width={columnWidths[cellIndex]}
+              />
+            </ContextTableMenu>
           </td>
         ) : null,
       )}
@@ -269,7 +274,7 @@ const ColumnPicker = ({
 const TableCrawl = ({
   tabName,
   rows,
-  rowHeight = 41,
+  rowHeight = 15,
   overscan = 18,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
@@ -283,6 +288,8 @@ const TableCrawl = ({
   );
   const { isGeneratingExcel, setIsGeneratingExcel, setIssuesView } =
     useGlobalCrawlStore();
+
+  const { setInlinks, setOutlinks } = useDataActions();
 
   const handleDownload = async () => {
     if (!rows.length) {
@@ -360,7 +367,121 @@ const TableCrawl = ({
 
     if (cellIndex === 1) {
       const urlData = filterTableURL(rows, cellContent, rowIndex);
+
+      // SET THE FILETERED DATA FOR THE SUBTABLES
       setSelectedTableURL(urlData);
+
+      const findInLinkedObjects = (rows, selectedUrl, linkType) => {
+        // Normalize URLs for consistent comparison
+        const normalizeUrl = (url) => {
+          if (!url) return "";
+
+          if (!url.startsWith("http")) {
+            url = "https://" + url;
+          }
+
+          // If URL does not start with "https://www.", add it
+          if (!url.startsWith("https://www.")) {
+            // Check if the URL starts with "https://" but not "https://www."
+            if (url.startsWith("https://")) {
+              // If it starts with "https://", replace it with "https://www."
+              url = "https://www." + url.substring(8);
+            } else {
+              // Otherwise, prepend "https://www."
+              url = "https://www." + url;
+            }
+          }
+
+          return url
+            .toString() // Ensure it's a string
+            .trim() // Remove whitespace
+            .toLowerCase(); // Case-insensitive
+          // .replace(/(https?:\/)?(www\.)?/, ""); // Remove protocol & www
+          // .replace(/\/+$/, ""); // Remove trailing slashes
+        };
+
+        const targetUrl = cellContent;
+
+        return rows.filter((row) => {
+          // Check if row has internal links (defensive check)
+          const internalLinks = row?.inoutlinks_status_codes?.[linkType] || [];
+
+          // Check each link for a match
+          return internalLinks.some((link) => {
+            const linkUrl = normalizeUrl(link?.url);
+
+            return linkUrl === normalizeUrl(targetUrl);
+          });
+        });
+      };
+
+      // Match the selected URL with internal and external links
+      const innerLinksMatched = findInLinkedObjects(
+        rows,
+        cellContent,
+        "internal",
+      );
+
+      // SET THE SEPARATE STATE
+
+      setInlinks([{ url: cellContent }, innerLinksMatched]);
+
+      // FILTER FOR THE OULINKS ON PAGES THAT ARE CONTAINED INSIOE THE INNERLINKS OF OTHER PAGHES
+      const findOutLinkedObjects = (rows, selectedUrl, linkType) => {
+        // Normalize URLs for consistent comparison
+        const normalizeUrl = (url) => {
+          if (!url) return "";
+
+          if (!url.startsWith("http")) {
+            url = "https://" + url;
+          }
+
+          // If URL does not start with "https://www.", add it
+          if (!url.startsWith("https://www.")) {
+            // Check if the URL starts with "https://" but not "https://www."
+            if (url.startsWith("https://")) {
+              // If it starts with "https://", replace it with "https://www."
+              url = "https://www." + url.substring(8);
+            } else {
+              // Otherwise, prepend "https://www."
+              url = "https://www." + url;
+            }
+          }
+
+          return url
+            .toString() // Ensure it's a string
+            .trim() // Remove whitespace
+            .toLowerCase(); // Case-insensitive
+          // .replace(/(https?:\/)?(www\.)?/, ""); // Remove protocol & www
+          // .replace(/\/+$/, ""); // Remove trailing slashes
+        };
+
+        const targetUrl = cellContent;
+
+        return rows.filter((row) => {
+          // Check if row has internal links (defensive check)
+          const internalLinks = row?.inoutlinks_status_codes?.internal || [];
+
+          // Check each link for a match
+          return internalLinks.some((link) => {
+            const linkUrl = normalizeUrl(link?.url);
+
+            return linkUrl === normalizeUrl(targetUrl);
+          });
+        });
+      };
+
+      // Match the selected URL with internal and external links
+      const outLinksMatched = findOutLinkedObjects(
+        rows,
+        cellContent,
+        "external",
+      );
+
+      // SET THE SEPARATE STATE
+      setOutlinks([{ url: cellContent }, outLinksMatched]);
+
+      console.log(outLinksMatched, "Outlinks");
     }
   };
 
@@ -473,7 +594,7 @@ const TableCrawl = ({
 
   return (
     <>
-      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1">
+      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1 not-selectable">
         <input
           type="text"
           placeholder="Search..."
@@ -512,7 +633,7 @@ const TableCrawl = ({
               onAlignToggle={toggleColumnAlignment}
               columnVisibility={columnVisibility}
             />
-            <tbody>
+            <tbody className="not-selectable">
               {filteredRows.length > 0 ? (
                 <>
                   <tr

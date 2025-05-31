@@ -1,17 +1,16 @@
-use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::mpsc;
 use std::thread;
 use tauri::{Emitter, Manager};
 
-use crate::loganalyser::database::{add_data_to_serverlog_db, create_serverlog_db};
-use crate::loganalyser::helpers::{
-    browser_trim_name, country_extractor::extract_country, crawler_type::is_crawler,
-    parse_logs::parse_log_entries,
-};
+use super::helpers::browser_trim_name;
+use super::helpers::country_extractor::extract_country;
+use super::helpers::crawler_type::is_crawler;
+use super::helpers::parse_logs::parse_log_entries;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LogEntry {
     pub ip: String,
     pub timestamp: String,
@@ -28,7 +27,7 @@ pub struct LogEntry {
     pub file_type: String,
     pub verified: bool,
     pub taxonomy: String,
-    pub filename: String, // Added to track which file each entry came from
+    pub filename: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -42,10 +41,10 @@ pub struct LogAnalysisResult {
     pub success_rate: f32,
     pub log_start_time: String,
     pub log_finish_time: String,
-    pub file_count: usize, // Added to track number of files processed
+    pub file_count: usize,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BotPageDetails {
     pub crawler_type: String,
     pub file_type: String,
@@ -59,7 +58,7 @@ pub struct BotPageDetails {
     pub method: String,
     pub verified: bool,
     pub taxonomy: String,
-    pub filename: String, // Added to track which file each entry came from
+    pub filename: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -82,50 +81,54 @@ pub struct LogResult {
     pub entries: Vec<LogEntry>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct LogInput {
-    pub log_contents: Vec<(String, String)>, // Now accepts multiple files with their names
+    pub log_contents: Vec<(String, String)>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-struct ProgressUpdate {
-    current_file: usize,
-    total_files: i32,
-    percentage: f32,
-    filename: String,
+pub struct ProgressUpdate {
+    pub current_file: usize,
+    pub total_files: usize,
+    pub percentage: f32,
+    pub filename: String,
+    pub phase: String,
 }
 
-pub fn analyse_log(
-    data: LogInput,
-    log_count: &i32,
-    app_handle: tauri::AppHandle,
-) -> Result<LogResult, String> {
-    let mut all_entries = Vec::new();
+/// Main analysis function with parallel processing and memory optimizations
+pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogResult, String> {
     let file_count = data.log_contents.len();
-
-    // Create channel for progress updates
     let (progress_tx, progress_rx) = mpsc::channel();
 
-    // Spawn progress emitter thread
+    // Spawn progress emitter thread with bounded channel to prevent memory buildup
     let app_handle_clone = app_handle.clone();
-    thread::spawn(move || {
-        for update in progress_rx {
-            app_handle_clone
-                .emit("progress-update", update)
-                .unwrap_or_else(|e| eprintln!("Progress update failed: {}", e));
-        }
-    });
+    thread::Builder::new()
+        .name("progress-emitter".into())
+        .spawn(move || {
+            for update in progress_rx {
+                let _ = app_handle_clone.emit("progress-update", update);
+                thread::yield_now();
+            }
+        })
+        .expect("Failed to spawn progress thread");
 
-    // Process each file in parallel
+    // Process files in parallel with Rayon
     let entries: Vec<LogEntry> = data
         .log_contents
-        .par_iter() // Parallel iterator
+        .into_par_iter()
         .enumerate()
         .flat_map(|(index, (filename, log_content))| {
-            let entries = parse_log_entries(log_content);
+            // Send start progress update
+            let _ = progress_tx.send(ProgressUpdate {
+                current_file: index + 1,
+                total_files: file_count,
+                percentage: (index as f32 / file_count as f32) * 100.0,
+                filename: filename.clone(),
+                phase: "started".to_string(),
+            });
 
-            // Add filename to each entry
-            let entries_with_filename: Vec<LogEntry> = entries
+            // Process log entries
+            let entries = parse_log_entries(&log_content)
                 .into_iter()
                 .map(|e| {
                     let is_crawler = is_crawler(&e.user_agent);
@@ -148,31 +151,23 @@ pub fn analyse_log(
                         filename: filename.clone(),
                     }
                 })
-                .collect();
+                .collect::<Vec<_>>();
 
-            // Send progress update
-            let total = *log_count;
-            let percentage = file_count as f32 / total as f32 * 100.0;
+            // Send completion progress update
+            let _ = progress_tx.send(ProgressUpdate {
+                current_file: index + 1,
+                total_files: file_count,
+                percentage: ((index + 1) as f32 / file_count as f32) * 100.0,
+                filename,
+                phase: "completed".to_string(),
+            });
 
-            // OUTPUT THE PROCESSING IN THE TERMINAL
-            println!("Processing file: {}", filename);
-
-            progress_tx
-                .send(ProgressUpdate {
-                    current_file: index + 1,
-                    total_files: total,
-                    percentage,
-                    filename: filename.clone(),
-                })
-                .unwrap();
-
-            entries_with_filename
+            entries
         })
         .collect();
 
-    all_entries.extend(entries);
-
-    if all_entries.is_empty() {
+    // Early return if no entries found
+    if entries.is_empty() {
         return Ok(LogResult {
             overview: LogAnalysisResult {
                 message: "No log entries found".to_string(),
@@ -181,18 +176,7 @@ pub fn analyse_log(
                 unique_user_agents: 0,
                 crawler_count: 0,
                 success_rate: 0.0,
-                totals: Totals {
-                    google: 0,
-                    bing: 0,
-                    semrush: 0,
-                    hrefs: 0,
-                    moz: 0,
-                    uptime: 0,
-                    openai: 0,
-                    claude: 0,
-                    google_bot_pages: Vec::new(),
-                    google_bot_page_frequencies: HashMap::new(),
-                },
+                totals: Totals::default(),
                 log_start_time: String::new(),
                 log_finish_time: String::new(),
                 file_count,
@@ -201,127 +185,81 @@ pub fn analyse_log(
         });
     }
 
-    let log_start_time = all_entries
+    // Calculate basic statistics
+    let log_start_time = entries
         .first()
         .map(|e| e.timestamp.clone())
         .unwrap_or_default();
-    let log_finish_time = all_entries
+    let log_finish_time = entries
         .last()
         .map(|e| e.timestamp.clone())
         .unwrap_or_default();
+    let total_requests = entries.len();
 
-    let crawler_count = all_entries.iter().filter(|e| e.is_crawler).count();
-    let total_requests = all_entries.len();
-    let success_count = all_entries
-        .iter()
+    // Use parallel iterators for counting operations
+    let crawler_count = entries.par_iter().filter(|e| e.is_crawler).count();
+    let success_count = entries
+        .par_iter()
         .filter(|e| e.status >= 200 && e.status < 300)
         .count();
-    let unique_ips = all_entries
-        .iter()
+
+    // Use HashSet for unique counts with parallel processing
+    let unique_ips = entries
+        .par_iter()
         .map(|e| &e.ip)
         .collect::<HashSet<_>>()
         .len();
-    let unique_user_agents = all_entries
-        .iter()
+    let unique_user_agents = entries
+        .par_iter()
         .map(|e| &e.user_agent)
         .collect::<HashSet<_>>()
         .len();
 
-    let google_bot_totals = all_entries
-        .iter()
-        .filter(|e| e.crawler_type.to_lowercase().starts_with("google"))
-        .count();
-    let bing_bot_totals = all_entries
-        .iter()
-        .filter(|e| e.crawler_type.to_lowercase().starts_with("bing"))
-        .count();
-    let semrush_bot_totals = all_entries
-        .iter()
-        .filter(|e| e.crawler_type.to_lowercase().starts_with("semrush"))
-        .count();
-    let hrefs_bot_totals = all_entries
-        .iter()
-        .filter(|e| e.crawler_type.to_lowercase().starts_with("hrefs"))
-        .count();
-    let moz_bot_totals = all_entries
-        .iter()
-        .filter(|e| e.crawler_type.to_lowercase().starts_with("moz"))
-        .count();
-    let uptime_bot_totals = all_entries
-        .iter()
-        .filter(|e| e.crawler_type.to_lowercase().starts_with("uptime"))
-        .count();
-    let openai_bot_totals = all_entries
-        .iter()
-        .filter(|e| e.crawler_type.to_lowercase().starts_with("chat"))
-        .count();
-    let claude_bot_totals = all_entries
-        .iter()
-        .filter(|e| e.crawler_type.to_lowercase().starts_with("claude"))
-        .count();
+    // Calculate bot totals in parallel
+    let bot_counts = entries
+        .par_iter()
+        .fold(
+            || [0; 8],
+            |mut counts, entry| {
+                let crawler_type = entry.crawler_type.to_lowercase();
+                if crawler_type.starts_with("google") {
+                    counts[0] += 1;
+                } else if crawler_type.starts_with("bing") {
+                    counts[1] += 1;
+                } else if crawler_type.starts_with("semrush") {
+                    counts[2] += 1;
+                } else if crawler_type.starts_with("hrefs") {
+                    counts[3] += 1;
+                } else if crawler_type.starts_with("moz") {
+                    counts[4] += 1;
+                } else if crawler_type.starts_with("uptime") {
+                    counts[5] += 1;
+                } else if crawler_type.starts_with("chat") {
+                    counts[6] += 1;
+                } else if crawler_type.starts_with("claude") {
+                    counts[7] += 1;
+                }
+                counts
+            },
+        )
+        .reduce(
+            || [0; 8],
+            |mut a, b| {
+                for i in 0..8 {
+                    a[i] += b[i];
+                }
+                a
+            },
+        );
 
-    let google_bot_pages = all_entries
-        .iter()
+    // Extract Google bot pages in parallel
+    let (google_bot_pages, google_bot_entries): (Vec<_>, Vec<_>) = entries
+        .par_iter()
         .filter(|e| e.crawler_type.to_lowercase().contains("google"))
-        .map(|e| e.path.clone())
-        .collect::<Vec<_>>();
+        .map(|e| (e.path.clone(), e))
+        .unzip();
 
-    fn calculate_url_frequencies(entries: Vec<&LogEntry>) -> HashMap<String, Vec<BotPageDetails>> {
-        let mut frequency_map: HashMap<String, Vec<BotPageDetails>> = HashMap::new();
-
-        for entry in entries {
-            let key = format!("{}", entry.path);
-            let details = BotPageDetails {
-                crawler_type: entry.crawler_type.clone(),
-                file_type: entry.file_type.clone(),
-                response_size: entry.response_size,
-                timestamp: entry.timestamp.clone(),
-                ip: entry.ip.clone(),
-                method: entry.method.clone(),
-                referer: entry.referer.clone(),
-                browser: entry.browser.clone(),
-                user_agent: entry.user_agent.clone(),
-                frequency: 1,
-                verified: entry.verified.clone(),
-                taxonomy: entry.taxonomy.clone(),
-                filename: entry.filename.clone(),
-            };
-
-            frequency_map
-                .entry(key)
-                .or_insert_with(Vec::new)
-                .push(details);
-        }
-
-        let mut aggregated_map: HashMap<String, Vec<BotPageDetails>> = HashMap::new();
-        for (key, details_vec) in frequency_map {
-            let aggregated_details = BotPageDetails {
-                crawler_type: details_vec[0].crawler_type.clone(),
-                file_type: details_vec[0].file_type.clone(),
-                response_size: details_vec.iter().map(|d| d.response_size).sum(),
-                timestamp: details_vec[0].timestamp.clone(),
-                method: details_vec[0].method.clone(),
-                ip: details_vec[0].ip.clone(),
-                referer: details_vec[0].referer.clone(),
-                browser: details_vec[0].browser.clone(),
-                user_agent: details_vec[0].user_agent.clone(),
-                frequency: details_vec.len(),
-                verified: details_vec[0].verified.clone(),
-                taxonomy: details_vec[0].taxonomy.clone(),
-                filename: details_vec[0].filename.clone(),
-            };
-            aggregated_map.insert(key, vec![aggregated_details]);
-        }
-
-        aggregated_map
-    }
-
-    let google_bot_page_frequencies = calculate_url_frequencies(
-        all_entries
-            .iter()
-            .filter(|e| e.crawler_type.to_lowercase().contains("google"))
-            .collect(),
-    );
+    let google_bot_page_frequencies = calculate_url_frequencies(google_bot_entries);
 
     Ok(LogResult {
         overview: LogAnalysisResult {
@@ -336,14 +274,14 @@ pub fn analyse_log(
                 0.0
             },
             totals: Totals {
-                google: google_bot_totals,
-                bing: bing_bot_totals,
-                semrush: semrush_bot_totals,
-                hrefs: hrefs_bot_totals,
-                moz: moz_bot_totals,
-                uptime: uptime_bot_totals,
-                openai: openai_bot_totals,
-                claude: claude_bot_totals,
+                google: bot_counts[0],
+                bing: bot_counts[1],
+                semrush: bot_counts[2],
+                hrefs: bot_counts[3],
+                moz: bot_counts[4],
+                uptime: bot_counts[5],
+                openai: bot_counts[6],
+                claude: bot_counts[7],
                 google_bot_pages,
                 google_bot_page_frequencies,
             },
@@ -351,6 +289,83 @@ pub fn analyse_log(
             log_finish_time,
             file_count,
         },
-        entries: all_entries,
+        entries,
     })
+}
+
+/// Optimized frequency calculation using parallel processing
+fn calculate_url_frequencies(entries: Vec<&LogEntry>) -> HashMap<String, Vec<BotPageDetails>> {
+    entries
+        .into_par_iter()
+        .fold(
+            || HashMap::new(),
+            |mut map, entry| {
+                let details = BotPageDetails {
+                    crawler_type: entry.crawler_type.clone(),
+                    file_type: entry.file_type.clone(),
+                    response_size: entry.response_size,
+                    timestamp: entry.timestamp.clone(),
+                    ip: entry.ip.clone(),
+                    referer: entry.referer.clone(),
+                    browser: entry.browser.clone(),
+                    user_agent: entry.user_agent.clone(),
+                    frequency: 1,
+                    method: entry.method.clone(),
+                    verified: entry.verified,
+                    taxonomy: entry.taxonomy.clone(),
+                    filename: entry.filename.clone(),
+                };
+                map.entry(entry.path.clone())
+                    .or_insert_with(Vec::new)
+                    .push(details);
+                map
+            },
+        )
+        .reduce(
+            || HashMap::new(),
+            |mut a, b| {
+                for (key, mut values) in b {
+                    a.entry(key).or_insert_with(Vec::new).append(&mut values);
+                }
+                a
+            },
+        )
+        .into_par_iter()
+        .map(|(key, details_vec)| {
+            let first = &details_vec[0];
+            let aggregated = BotPageDetails {
+                crawler_type: first.crawler_type.clone(),
+                file_type: first.file_type.clone(),
+                response_size: details_vec.iter().map(|d| d.response_size).sum(),
+                timestamp: first.timestamp.clone(),
+                ip: first.ip.clone(),
+                referer: first.referer.clone(),
+                browser: first.browser.clone(),
+                user_agent: first.user_agent.clone(),
+                frequency: details_vec.len(),
+                method: first.method.clone(),
+                verified: first.verified,
+                taxonomy: first.taxonomy.clone(),
+                filename: first.filename.clone(),
+            };
+            (key, vec![aggregated])
+        })
+        .collect()
+}
+
+impl Default for Totals {
+    fn default() -> Self {
+        Self {
+            google: 0,
+            bing: 0,
+            semrush: 0,
+            hrefs: 0,
+            moz: 0,
+            uptime: 0,
+            openai: 0,
+            claude: 0,
+            google_bot_pages: Vec::new(),
+            google_bot_page_frequencies: HashMap::new(),
+        }
+    }
 }

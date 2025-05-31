@@ -27,8 +27,16 @@ interface FileWithProgress {
   error: string | null;
 }
 
+interface ProgressUpdate {
+  current_file: number;
+  total_files: number;
+  percentage: number;
+  filename: string;
+  status: string;
+}
+
 export function FileUpload({
-  maxSizeMB = 345,
+  maxSizeMB = 75,
   acceptedFileTypes = ["text/plain", ".log", ".txt"],
   className,
   closeDialog,
@@ -45,29 +53,33 @@ export function FileUpload({
     total: 0,
     percent: 0,
     filename: "",
+    status: "",
   });
   const { storingLogs, setStoringLogs } = useServerLogsStore();
   const { uploadedLogFiles, setUploadedLogFiles } = useServerLogsStore();
 
-  console.log(storingLogs, "storing logs");
-
   useEffect(() => {
     const unlisten = listen("progress-update", (event) => {
-      const payload = event.payload;
-      console.log("Progress event received:", payload);
+      const payload = event.payload as ProgressUpdate;
 
-      setProgress({
+      setProgress((prev) => ({
+        ...prev,
         current: payload.current_file,
         total: payload.total_files,
         percent: payload.percentage,
         filename: payload.filename,
-      });
+        status: payload.status,
+      }));
+
+      if (payload.status === "started") {
+        toast.info(`Starting to process ${payload.filename}`);
+      }
     });
 
     return () => {
       unlisten.then((f) => f()).catch(console.error);
     };
-  }, [files]);
+  }, []);
 
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
   const maxVisibleFiles = 5;
@@ -107,26 +119,26 @@ export function FileUpload({
     return false;
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const droppedFiles = Array.from(e.dataTransfer.files);
-      const validFiles = droppedFiles.filter((file) => validateFile(file));
-
-      if (validFiles.length > 0) {
-        setFiles((prev) => [
-          ...prev,
-          ...validFiles.map((file) => ({
-            file,
-            success: false,
-            error: null,
-          })),
-        ]);
-      }
-    }
-  };
+  // const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  //   e.preventDefault();
+  //   setIsDragging(false);
+  //
+  //   if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+  //     const droppedFiles = Array.from(e.dataTransfer.files);
+  //     const validFiles = droppedFiles.filter((file) => validateFile(file));
+  //
+  //     if (validFiles.length > 0) {
+  //       setFiles((prev) => [
+  //         ...prev,
+  //         ...validFiles.map((file) => ({
+  //           file,
+  //           success: false,
+  //           error: null,
+  //         })),
+  //       ]);
+  //     }
+  //   }
+  // };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -146,19 +158,52 @@ export function FileUpload({
     }
   };
 
-  const readFile = (file: File): Promise<string> => {
+  const readFileInChunks = (
+    file: File,
+    onProgress?: (progress: number) => void,
+    chunkSize = 1024 * 1024 * 5, // 5MB chunks
+  ): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
+      const fileSize = file.size;
+      let offset = 0;
+      let result = "";
+      let chunksProcessed = 0;
+      const totalChunks = Math.ceil(fileSize / chunkSize);
 
-      reader.onload = (event) => {
-        resolve(event.target?.result as string);
+      const readNextChunk = () => {
+        if (offset >= fileSize) {
+          resolve(result);
+          return;
+        }
+
+        const reader = new FileReader();
+        const chunk = file.slice(offset, offset + chunkSize);
+
+        reader.onload = (event) => {
+          try {
+            result += event.target?.result as string;
+            offset += chunkSize;
+            chunksProcessed++;
+
+            if (onProgress) {
+              onProgress((chunksProcessed / totalChunks) * 100);
+            }
+
+            // Yield to main thread periodically
+            setTimeout(readNextChunk, 0);
+          } catch (err) {
+            reject(err);
+          }
+        };
+
+        reader.onerror = (error) => {
+          reject(error);
+        };
+
+        reader.readAsText(chunk);
       };
 
-      reader.onerror = (error) => {
-        reject(error);
-      };
-
-      reader.readAsText(file);
+      readNextChunk();
     });
   };
 
@@ -192,7 +237,7 @@ export function FileUpload({
       setOverallProgress(10);
       const fileContents: Array<{ filename: string; content: string }> = [];
 
-      const batchSize = 5;
+      const batchSize = 2;
       for (let i = 0; i < files.length; i += batchSize) {
         const batch = files.slice(i, i + batchSize);
 
@@ -200,7 +245,20 @@ export function FileUpload({
           batch.map(async (fileWithProgress, batchIndex) => {
             const originalIndex = i + batchIndex;
             try {
-              const content = await readFile(files[originalIndex].file);
+              const content = await readFileInChunks(
+                files[originalIndex].file,
+                (chunkProgress) => {
+                  // Update progress for this file
+                  setProgress((prev) => ({
+                    ...prev,
+                    percent: Math.round(
+                      ((i + batchIndex) / files.length) * 100 * 0.5 +
+                        chunkProgress * 0.5,
+                    ),
+                  }));
+                },
+              );
+
               return {
                 index: originalIndex,
                 update: {
@@ -240,39 +298,42 @@ export function FileUpload({
           }
         });
 
-        const progress = 10 + (i / files.length) * 50;
+        const progress = 10 + ((i + batch.length) / files.length) * 50;
         setOverallProgress(progress);
         await new Promise((resolve) => setTimeout(resolve, 0));
       }
 
       setOverallProgress(60);
+
       const logContents = fileContents.map((fc) => [fc.filename, fc.content]);
 
       const filesUploaded = files.map((file) => file.file.name);
       const timeUploaded = new Date().toISOString();
+      const fileSizes = files.map((file) => file.file.size);
+      const totalSizeInBytes = fileSizes.reduce((acc, size) => acc + size, 0);
+      const totalBatchSizeInMB = totalSizeInBytes / (1024 * 1024); // Convert bytes to MB
 
-      // Create the object
       const logEntry = {
-        name: filesUploaded,
+        names: filesUploaded,
         time: timeUploaded,
-        contents: logContents,
+        individualSizes: fileSizes,
+        totalSize: totalSizeInBytes,
+        totalBatchSize: totalBatchSizeInMB,
       };
 
-      // In your store (zustand), modify the setter to handle objects:
-      setUploadedLogFiles(logEntry); // Pass the object directly
+      // Set the state for the popup modal
+      setUploadedLogFiles(logEntry);
 
       const result = await invoke("check_logs_command", {
         data: { log_contents: logContents },
         storingLogs,
       });
 
-      // Validate result structure
       if (!result || !result.overview) {
         console.error("Invalid result structure:", result);
         throw new Error("Invalid server response: Missing overview data");
       }
 
-      // Pass the new data to the store to append
       setLogData({
         entries: result.entries || [],
         overview: result.overview || {
@@ -332,6 +393,12 @@ export function FileUpload({
     }
   };
 
+  // total size in MB of all files
+  const totalSize = files.reduce(
+    (acc, file) => acc + file.file.size / 1024 / 1024,
+    0,
+  );
+
   return (
     <div className={cn("w-full", className)}>
       {files.length === 0 ? (
@@ -343,9 +410,9 @@ export function FileUpload({
               : "border-muted-foreground/20 hover:border-primary/50",
             error && "border-destructive/50 bg-destructive/5",
           )}
-          onDragOver={handleDragOver}
+          // onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
+          // onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
         >
           <UploadCloud className="h-12 w-12 text-muted-foreground mb-2 text-brand-bright" />
@@ -376,6 +443,9 @@ export function FileUpload({
               <h3 className="text-sm font-medium">
                 {files.length} file{files.length !== 1 ? "s" : ""} selected
               </h3>
+              <span className="ml-2 text-xs font-medium text-black/40 dark:text-white/40 ">
+                ( {totalSize.toFixed(2)} MB )
+              </span>
             </div>
             <Button
               variant="ghost"
@@ -388,7 +458,7 @@ export function FileUpload({
             </Button>
           </div>
 
-          <div className="max-h-60 overflow-y-auto mb-2 px-2  rounded-md border dark:border-brand-dark">
+          <div className="max-h-60 overflow-y-auto mb-2 px-2 rounded-md border dark:border-brand-dark">
             {files.map((fileWithProgress, index) => (
               <div
                 key={index}
@@ -431,26 +501,17 @@ export function FileUpload({
             <div className="w-full mt-2 space-y-2">
               <div className="mt-2">
                 <div className="flex justify-between text-xs mb-1">
-                  <span>Parsing: {progress.filename}</span>
-                  <span>{progress.percent}%</span>
+                  <span>Processing: {progress.filename}</span>
+                  <span>{Math.round(progress.percent)}%</span>
                 </div>
                 <Progress
                   value={progress.percent}
                   className="h-2 bg-gray-200 dark:bg-gray-700 [&>div]:bg-blue-500"
                 />
                 <div className="text-xs mt-1">
-                  File {progress.current} of {progress.total}
+                  {/* File {progress.current} of {progress.total} */}
                 </div>
               </div>
-
-              <div className="flex justify-between h-3">
-                <span className="text-xs">Overall progress</span>
-                <div className="text-xs">{Math.round(overallProgress)}%</div>
-              </div>
-              <Progress
-                value={overallProgress}
-                className="h-2 bg-gray-200 dark:bg-gray-700 [&>div]:bg-brand-bright"
-              />
             </div>
           )}
 
@@ -481,7 +542,7 @@ export function FileUpload({
           </section>
 
           {error && (
-            <div className="flex items-center text-destructive mt-2 text-xs">
+            <div className="flex items-center text-destructive mt-4 text-xs">
               <AlertCircle className="h-3 w-3 mr-1" />
               {error}
             </div>

@@ -315,7 +315,7 @@ const ColumnPicker = ({
 const KeywordsTable = ({
   rows,
   rowHeight = 41,
-  overscan = 30,
+  overscan = 18,
   tabName,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState<string[]>([]);
