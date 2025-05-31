@@ -77,13 +77,15 @@ const PopOverParsedLogs = () => {
                 ))}
 
                 {/* Batch size display - moved outside the files loop */}
-                <div className="mt-2 text-[9px] text-gray-500 dark:text-gray-400 border-t dark:border-t-gray-800 pt-1">
-                  Batch contains {logEntry?.names?.length} files | Total size:{" "}
-                  {(
-                    logEntry?.individualSizes?.reduce((a, b) => a + b, 0) /
-                    (1024 * 1024)
-                  ).toFixed(1)}{" "}
-                  MB
+                <div className="mt-2 text-[9px] text-gray-500 dark:text-gray-400 border-t dark:border-t-gray-800 pt-1 flex">
+                  <span className="mt-1">
+                    Batch contains {logEntry?.names?.length} files | Total size:{" "}
+                    {(
+                      logEntry?.individualSizes?.reduce((a, b) => a + b, 0) /
+                      (1024 * 1024)
+                    ).toFixed(1)}{" "}
+                    MB
+                  </span>
                 </div>
               </div>
             </div>

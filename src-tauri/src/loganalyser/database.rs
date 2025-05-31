@@ -90,37 +90,38 @@ pub fn remove_item_from_serverlog_db(db_name: &str, date: &str) {
 
 // GET A LIST OF ALL THE ENTRIES INSIDE THE TABLE
 #[tauri::command]
-pub fn read_logs_from_db() -> Result<Vec<DatabaseResults>, String> {
+pub fn read_logs_from_db() -> Result<Vec<LogMetadata>, String> {
     let db = Database::new("serverlog.db").map_err(|e| e.to_string())?;
     let mut stmt = db
         .conn
-        .prepare("SELECT id, date, filename, log FROM server_logs")
+        .prepare("SELECT id, date, filename FROM server_logs") // Only select needed columns
         .map_err(|e| e.to_string())?;
 
     let rows = stmt
         .query_map([], |row| {
-            let log_str: String = row.get(3)?; // Retrieve the log as a String
-            let log: serde_json::Value = serde_json::from_str(&log_str).unwrap(); // Parse the string into serde_json::Value
-            Ok(DatabaseResults {
+            Ok(LogMetadata {
                 id: row.get(0)?,
                 date: row.get(1)?,
                 filename: row.get(2)?,
-                log,
             })
         })
         .map_err(|e| e.to_string())?;
 
     let mut results = Vec::new();
     for row in rows {
-        match row {
-            Ok(value) => results.push(value),
-            Err(e) => return Err(e.to_string()), // Convert rusqlite::Error to String
-        }
+        results.push(row.map_err(|e| e.to_string())?);
     }
 
     Ok(results)
 }
 
+// Add this struct near your DatabaseResults struct
+#[derive(Debug, serde::Serialize)]
+pub struct LogMetadata {
+    pub id: i64,
+    pub date: String,
+    pub filename: String,
+}
 // DELETE A SPECIFIC LOG USING THE ID
 #[tauri::command]
 pub fn delete_log_from_db(id: i32) {
