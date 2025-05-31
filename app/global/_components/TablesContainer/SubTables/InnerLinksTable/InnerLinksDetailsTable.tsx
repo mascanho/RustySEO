@@ -217,7 +217,23 @@ const InnerLinksDetailsTable: React.FC<InlinksSubTableProps> = ({
       })
       .map((item) => item.status);
 
-    return statusCodes;
+    console.log(statusCodes);
+
+    return (
+      <span
+        className={` font-semibold
+
+${statusCodes?.[0] === 200 && "text-green-700"}
+
+${statusCodes?.[0] === 404 && "text-red-700"}
+
+${statusCodes?.[0] === 403 && "text-orange-700"}
+
+`}
+      >
+        {statusCodes}
+      </span>
+    );
   }
 
   return (
