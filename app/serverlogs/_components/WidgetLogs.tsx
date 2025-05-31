@@ -149,7 +149,7 @@ export default function WidgetLogs() {
   };
 
   const totalLogsAnalysed = uploadedLogFiles
-    .map((log) => log?.name?.length)
+    .map((log) => log?.names?.length)
     .reduce((a, b) => a + b, 0);
 
   return (
@@ -160,7 +160,7 @@ export default function WidgetLogs() {
 
           <div className="flex items-center space-x-0.5 text-brand-bright/50 cursor-pointer -mt-1 ml-1.5">
             <span className="text-xs inline-block">
-              {totalLogsAnalysed} logs
+              {totalLogsAnalysed || 0} logs
             </span>
             <span>/</span>
             <span className="text-xs inline-block">

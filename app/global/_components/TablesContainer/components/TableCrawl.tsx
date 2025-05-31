@@ -426,9 +426,6 @@ const TableCrawl = ({
 
       setInlinks([{ url: cellContent }, innerLinksMatched]);
 
-      console.log(cellContent, "Selected URL");
-      console.log(urlData, "URL Data");
-
       // FILTER FOR THE OULINKS ON PAGES THAT ARE CONTAINED INSIOE THE INNERLINKS OF OTHER PAGHES
       const findOutLinkedObjects = (rows, selectedUrl, linkType) => {
         // Normalize URLs for consistent comparison
