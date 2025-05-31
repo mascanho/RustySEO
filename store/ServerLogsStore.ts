@@ -6,7 +6,7 @@ import { shallow } from "zustand/shallow";
 interface BotPageDetails {
   crawler_type: string;
   file_type: string;
-  response_size: number;
+  response_size: string;
   timestamp: string;
   ip: string;
   referer: string;
@@ -44,13 +44,14 @@ interface LogEntry {
   status: number;
   user_agent: string;
   referer: string;
-  response_size: number;
+  response_size: string;
   country?: string;
   is_crawler: boolean;
   crawler_type: string;
   browser: string;
   file_type: string;
   frequency?: number;
+  verified?: boolean;
 }
 
 interface LogAnalysisOverview {
@@ -137,7 +138,7 @@ const mergeFrequencyObjects = (
 
   for (const [url, incomingDetails] of Object.entries(incoming)) {
     if (!merged[url]) {
-      merged[url] = [...incomingDetails];
+      merged[url] = incomingDetails;
       continue;
     }
 
@@ -149,13 +150,11 @@ const mergeFrequencyObjects = (
 
     for (const newDetail of incomingDetails) {
       const key = `${newDetail.timestamp}_${newDetail.ip}_${newDetail.user_agent}`;
-
       if (existingDetailsMap.has(key)) {
-        const existingDetail = existingDetailsMap.get(key);
+        const existingDetail = existingDetailsMap.get(key)!;
         existingDetail.frequency += newDetail.frequency;
-        existingDetail.response_size += newDetail.response_size;
       } else {
-        existingDetailsMap.set(key, { ...newDetail });
+        existingDetailsMap.set(key, newDetail);
       }
     }
 
@@ -165,28 +164,65 @@ const mergeFrequencyObjects = (
   return merged;
 };
 
-const ensureUniqueUrls = (existingEntries, newEntries) => {
-  const urlMap = new Map();
+const ensureUniqueUrls = (
+  existingEntries: LogEntry[],
+  newEntries: LogEntry[],
+): LogEntry[] => {
+  const urlMap = new Map<string, LogEntry>();
 
-  // Populate the map with existing entries
+  // Process existing entries
   existingEntries.forEach((entry) => {
-    if (!urlMap.has(entry.path)) {
-      urlMap.set(entry.path, { ...entry });
+    const normalizedPath = entry.path.toLowerCase().trim();
+    if (urlMap.has(normalizedPath)) {
+      const existing = urlMap.get(normalizedPath)!;
+      // Sum frequency
+      existing.frequency = (existing.frequency || 1) + (entry.frequency || 1);
+
+      // Keep metadata from most recent entry
+      if (new Date(entry.timestamp) > new Date(existing.timestamp)) {
+        existing.timestamp = entry.timestamp;
+        existing.status = entry.status;
+        existing.ip = entry.ip;
+        existing.user_agent = entry.user_agent;
+        existing.method = entry.method;
+        existing.file_type = entry.file_type;
+        existing.crawler_type = entry.crawler_type;
+        existing.verified = entry.verified;
+        existing.response_size = entry.response_size;
+      }
+    } else {
+      urlMap.set(normalizedPath, {
+        ...entry,
+        frequency: entry.frequency || 1,
+      });
     }
   });
 
   // Process new entries
-  newEntries.forEach((newEntry) => {
-    if (urlMap.has(newEntry.path)) {
-      // If URL exists, sum the metrics regardless of other fields
-      const existingEntry = urlMap.get(newEntry.path);
-      existingEntry.frequency =
-        (existingEntry.frequency || 0) + (newEntry.frequency || 0);
-      existingEntry.response_size =
-        (existingEntry.response_size || 0) + (newEntry.response_size || 0);
+  newEntries.forEach((entry) => {
+    const normalizedPath = entry.path.toLowerCase().trim();
+    if (urlMap.has(normalizedPath)) {
+      const existing = urlMap.get(normalizedPath)!;
+      // Sum frequency
+      existing.frequency = (existing.frequency || 1) + (entry.frequency || 1);
+
+      // Keep metadata from most recent entry
+      if (new Date(entry.timestamp) > new Date(existing.timestamp)) {
+        existing.timestamp = entry.timestamp;
+        existing.status = entry.status;
+        existing.ip = entry.ip;
+        existing.user_agent = entry.user_agent;
+        existing.method = entry.method;
+        existing.file_type = entry.file_type;
+        existing.crawler_type = entry.crawler_type;
+        existing.verified = entry.verified;
+        existing.response_size = entry.response_size;
+      }
     } else {
-      // If URL does not exist, add the new entry
-      urlMap.set(newEntry.path, { ...newEntry });
+      urlMap.set(normalizedPath, {
+        ...entry,
+        frequency: entry.frequency || 1,
+      });
     }
   });
 
@@ -208,7 +244,6 @@ export const useLogAnalysisStore = create<
 
         state.entries = uniqueEntries;
 
-        // Update overview with new data
         state.overview = {
           ...state.overview,
           message: data.overview?.message || state.overview.message,

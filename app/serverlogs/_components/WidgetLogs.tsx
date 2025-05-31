@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { WidgetTable } from "./WidgetTables/WidgetCrawlersTable.tsx";
+import WidgetCrawlersTable from "./WidgetTables/WidgetCrawlersTable";
 import { Tabs } from "@mantine/core";
 
 import { useCurrentLogs } from "@/store/logFilterStore";
@@ -329,7 +329,7 @@ export default function WidgetLogs() {
                           </Tabs.List>
 
                           <Tabs.Panel value="overview">
-                            <WidgetTable data={overview} />
+                            <WidgetCrawlersTable data={overview} />
                           </Tabs.Panel>
 
                           <Tabs.Panel value="charts">
