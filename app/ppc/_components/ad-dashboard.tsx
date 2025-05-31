@@ -237,8 +237,8 @@ export function AdDashboard() {
         return "Ad Previews";
       case "settings":
         return "Settings";
-      case "help":
-        return "Help";
+      // case "help":
+      //   return "";
       case "dashboard":
       default:
         return "Dashboard";
@@ -255,8 +255,8 @@ export function AdDashboard() {
         return "Preview how your ads will appear";
       case "settings":
         return "Configure your account settings";
-      case "help":
-        return "Get help with using the platform";
+      // case "help":
+      //   return "Get help with using the platform";
       case "dashboard":
       default:
         return "Overview of your Google search ads";

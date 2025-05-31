@@ -101,8 +101,10 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
   if (!ad || allAds.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
-        <h3 className="text-lg font-medium">No ads available</h3>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h3 className="text-lg font-medium dark:text-white/50">
+          No ads available
+        </h3>
+        <p className="text-sm text-muted-foreground mt-1 dark:text-white/50">
           Create an ad to preview it here
         </p>
       </div>
@@ -495,4 +497,3 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
     </div>
   );
 }
-

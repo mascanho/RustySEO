@@ -49,7 +49,7 @@ export function DashboardLayout({
             </div>
           </div>
         </SidebarHeader>
-        <SidebarContent>
+        <SidebarContent className="pl-2">
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton
@@ -88,24 +88,24 @@ export function DashboardLayout({
                 <span>Previews</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                isActive={activeView === "settings"}
-                onClick={() => onViewChange("settings")}
-              >
-                <Settings className="h-4 w-4" />
-                <span>Settings</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                isActive={activeView === "help"}
-                onClick={() => onViewChange("help")}
-              >
-                <HelpCircle className="h-4 w-4" />
-                <span>Help</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            {/* <SidebarMenuItem> */}
+            {/*   <SidebarMenuButton */}
+            {/*     isActive={activeView === "settings"} */}
+            {/*     onClick={() => onViewChange("settings")} */}
+            {/*   > */}
+            {/*     <Settings className="h-4 w-4" /> */}
+            {/*     <span>Settings</span> */}
+            {/*   </SidebarMenuButton> */}
+            {/* </SidebarMenuItem> */}
+            {/* <SidebarMenuItem> */}
+            {/*   <SidebarMenuButton */}
+            {/*     isActive={activeView === "help"} */}
+            {/*     onClick={() => onViewChange("help")} */}
+            {/*   > */}
+            {/*     <HelpCircle className="h-4 w-4" /> */}
+            {/*     <span>Help</span> */}
+            {/*   </SidebarMenuButton> */}
+            {/* </SidebarMenuItem> */}
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter className="border-t dark:border-brand-dark">
