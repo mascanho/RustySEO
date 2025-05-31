@@ -37,6 +37,7 @@ pub struct Settings {
     pub rustyid: Uuid,
     pub page_speed_bulk: bool,
     pub page_speed_bulk_api_key: Option<Option<String>>,
+    pub log_batchsize: usize,
 }
 
 impl Settings {
@@ -63,6 +64,7 @@ impl Settings {
             rustyid: Uuid::new_v4(),
             page_speed_bulk: false,
             page_speed_bulk_api_key: None,
+            log_batchsize: 2,
         }
     }
 
