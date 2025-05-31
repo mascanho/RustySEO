@@ -186,10 +186,16 @@ export function TimelineChart() {
           size="sm"
           className="h-8 z-0"
         >
-          <ToggleGroupItem value="daily" className="text-xs px-2 h-6">
+          <ToggleGroupItem
+            value="daily"
+            className="text-xs px-2 h-6 dark:bg-slate-950"
+          >
             Day
           </ToggleGroupItem>
-          <ToggleGroupItem value="hourly" className="text-xs px-2 h-6">
+          <ToggleGroupItem
+            value="hourly"
+            className="text-xs px-2 h-6 dark:bg-slate-950"
+          >
             Hour
           </ToggleGroupItem>
         </ToggleGroup>
@@ -284,7 +290,7 @@ export function TimelineChart() {
               />
               <Legend
                 formatter={(value) => (
-                  <div className="bg-white/50 inline-block dark:bg-slate-800/50">
+                  <div className="bg-white/50 inline-block dark:bg-transparent">
                     <span className="text-xs flex">
                       {value === "human" ? "Human" : "Robots"}
                     </span>
