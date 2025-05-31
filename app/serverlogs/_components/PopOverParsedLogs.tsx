@@ -77,7 +77,7 @@ const PopOverParsedLogs = () => {
                 ))}
 
                 {/* Batch size display - moved outside the files loop */}
-                <div className="mt-2 text-[9px] text-gray-500 dark:text-gray-400 border-t pt-1">
+                <div className="mt-2 text-[9px] text-gray-500 dark:text-gray-400 border-t dark:border-t-gray-800 pt-1">
                   Batch contains {logEntry?.names?.length} files | Total size:{" "}
                   {(
                     logEntry?.individualSizes?.reduce((a, b) => a + b, 0) /
