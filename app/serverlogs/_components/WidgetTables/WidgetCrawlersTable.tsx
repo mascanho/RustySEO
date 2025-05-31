@@ -57,21 +57,18 @@ import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 
 interface LogEntry {
-  ip: string;
-  timestamp: string;
-  method: string;
-  path: string;
-  status: number;
-  user_agent: string;
-  referer: string;
-  response_size: string | number;
-  country?: string;
-  is_crawler: boolean;
-  crawler_type: string;
   browser: string;
+  crawler_type: string;
   file_type: string;
-  frequency?: number;
-  verified?: boolean;
+  frequency: number;
+  ip: string;
+  method: string;
+  referer: string;
+  response_size: number;
+  timestamp: string;
+  user_agent: string;
+  path: string;
+  verified: boolean;
 }
 
 const formatDate = (dateString: string): string => {
@@ -86,50 +83,18 @@ const formatDate = (dateString: string): string => {
   }).format(date);
 };
 
-const formatResponseSize = (size: string | number): string => {
-  if (typeof size === "number") {
-    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-  }
-
-  if (typeof size === "string") {
-    if (size.includes("MB")) return size;
-    if (size.includes("KB")) {
-      const kbValue = parseFloat(size.split(" ")[0]) || 0;
-      return `${(kbValue / 1024).toFixed(1)} MB`;
-    }
-    const bytesValue = parseFloat(size) || 0;
-    return `${(bytesValue / (1024 * 1024)).toFixed(1)} MB`;
-  }
-
-  return "0 MB";
+const formatResponseSize = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-const parseSizeToNumber = (size: string | number): number => {
-  if (typeof size === "number") return size;
-
-  if (typeof size === "string") {
-    const [value, unit] = size.split(" ");
-    const numericValue = parseFloat(value) || 0;
-
-    if (unit === "MB") return numericValue * 1024 * 1024;
-    if (unit === "KB") return numericValue * 1024;
-    return numericValue;
-  }
-
-  return 0;
-};
-
-interface WidgetCrawlersTableProps {
-  data: {
-    totals?: {
-      google_bot_page_frequencies?: Record<string, LogEntry[]>;
-    };
-    log_finish_time?: string;
-  };
+interface WidgetTableProps {
+  data: any;
 }
 
-const WidgetCrawlersTable: React.FC<WidgetCrawlersTableProps> = ({ data }) => {
-  const [logs, setLogs] = useState<LogEntry[]>([]);
+const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
+  const [initialLogs, setInitialLogs] = useState<LogEntry[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -141,75 +106,48 @@ const WidgetCrawlersTable: React.FC<WidgetCrawlersTableProps> = ({ data }) => {
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "ascending" | "descending";
-  } | null>({ key: "frequency", direction: "descending" });
+  } | null>({ key: "frequency", direction: "descending" }); // Changed this line
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [domain, setDomain] = useState("");
   const [showOnTables, setShowOnTables] = useState(false);
   const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
 
+  // GET THE domain from the local storage to use on the table to complement the path
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedDomain = localStorage.getItem("domain");
-      if (storedDomain) setDomain(storedDomain);
+      if (storedDomain) {
+        setDomain(storedDomain);
+      }
+
       const isShowing = localStorage.getItem("showOnTables");
-      if (isShowing === "true") setShowOnTables(true);
+      if (isShowing === "true") {
+        setShowOnTables(true);
+      }
     }
-  }, []);
+  }, [data.length]);
 
   useEffect(() => {
     if (!data?.totals?.google_bot_page_frequencies) return;
 
-    const mergedLogs: LogEntry[] = [];
-    const urlMap = new Map<string, LogEntry>();
-
+    const logs: LogEntry[] = [];
     Object.entries(data.totals.google_bot_page_frequencies).forEach(
       ([path, entries]) => {
-        entries.forEach((entry: LogEntry) => {
-          const normalizedPath = path.toLowerCase().trim();
-          const responseSize =
-            typeof entry.response_size === "string"
-              ? entry.response_size
-              : `${(entry.response_size / (1024 * 1024)).toFixed(1)} MB`;
-
-          if (urlMap.has(normalizedPath)) {
-            const existing = urlMap.get(normalizedPath)!;
-            existing.frequency =
-              (existing.frequency || 0) + (entry.frequency || 1);
-
-            const existingSize = parseSizeToNumber(existing.response_size);
-            const newSize = parseSizeToNumber(entry.response_size);
-            existing.response_size = `${((existingSize + newSize) / (1024 * 1024)).toFixed(1)} MB`;
-
-            if (new Date(entry.timestamp) > new Date(existing.timestamp)) {
-              existing.timestamp = entry.timestamp;
-              existing.status = entry.status;
-              existing.ip = entry.ip;
-              existing.user_agent = entry.user_agent;
-              existing.method = entry.method;
-              existing.file_type = entry.file_type;
-              existing.crawler_type = entry.crawler_type;
-              existing.verified = entry.verified;
-            }
-          } else {
-            const newEntry = {
-              ...entry,
-              path,
-              response_size: responseSize,
-              frequency: entry.frequency || 1,
-            };
-            urlMap.set(normalizedPath, newEntry);
-          }
+        (entries as any[]).forEach((entry: any) => {
+          logs.push({
+            ...entry,
+            path,
+          });
         });
       },
     );
 
-    const mergedEntries = Array.from(urlMap.values());
-    setLogs(mergedEntries);
-    setFilteredLogs(mergedEntries);
+    setInitialLogs(logs);
+    setFilteredLogs(logs);
   }, [data]);
 
   useEffect(() => {
-    let result = [...logs];
+    let result = [...initialLogs];
 
     if (searchTerm) {
       const lowerCaseSearch = searchTerm.toLowerCase();
@@ -255,14 +193,6 @@ const WidgetCrawlersTable: React.FC<WidgetCrawlersTableProps> = ({ data }) => {
         const aValue = a[sortConfig.key as keyof LogEntry];
         const bValue = b[sortConfig.key as keyof LogEntry];
 
-        if (sortConfig.key === "response_size") {
-          const aSize = parseSizeToNumber(a.response_size);
-          const bSize = parseSizeToNumber(b.response_size);
-          return sortConfig.direction === "ascending"
-            ? aSize - bSize
-            : bSize - aSize;
-        }
-
         if (typeof aValue === "string" && typeof bValue === "string") {
           return sortConfig.direction === "ascending"
             ? aValue.localeCompare(bValue)
@@ -287,7 +217,7 @@ const WidgetCrawlersTable: React.FC<WidgetCrawlersTableProps> = ({ data }) => {
     botFilter,
     verifiedFilter,
     sortConfig,
-    logs,
+    initialLogs,
     fileTypeFilter,
     botTypeFilter,
   ]);
@@ -314,8 +244,9 @@ const WidgetCrawlersTable: React.FC<WidgetCrawlersTableProps> = ({ data }) => {
     setMethodFilter([]);
     setBotFilter("all");
     setVerifiedFilter(null);
-    setSortConfig({ key: "frequency", direction: "descending" });
+    setSortConfig(null);
     setExpandedRow(null);
+    setFilteredLogs(initialLogs);
     setBotTypeFilter(null);
   };
 
@@ -333,13 +264,15 @@ const WidgetCrawlersTable: React.FC<WidgetCrawlersTableProps> = ({ data }) => {
       "Google Verified",
     ];
 
-    const csvData = filteredLogs.map((log) => [
+    const dataToExport = filteredLogs.length > 0 ? filteredLogs : data;
+
+    const csvData = dataToExport.map((log) => [
       log.ip || "",
       log.timestamp || "",
       log.method || "",
       showOnTables ? "https://" + domain + log.path : log.path || "",
       log.file_type || "",
-      formatResponseSize(log.response_size),
+      log.response_size || "",
       log.frequency || "",
       `"${(log.user_agent || "").replace(/"/g, '""')}"`,
       log.crawler_type || "",
@@ -353,7 +286,7 @@ const WidgetCrawlersTable: React.FC<WidgetCrawlersTableProps> = ({ data }) => {
 
     try {
       const filePath = await save({
-        defaultPath: `Google_Bot_Frequency_${new Date().toISOString().slice(0, 10)}.csv`,
+        defaultPath: `RustySEO - Google Bot Frequency -${new Date().toISOString().slice(0, 10)}.csv`,
         filters: [{ name: "CSV", extensions: ["csv"] }],
       });
 
@@ -373,10 +306,11 @@ const WidgetCrawlersTable: React.FC<WidgetCrawlersTableProps> = ({ data }) => {
     }
   };
 
-  const getFileIcon = (fileType: string) => {
-    switch (fileType) {
+  // Get the fileType and add the icon
+  const getFileIcon = (path) => {
+    switch (path) {
       case "HTML":
-        return <FileCode size={14} />;
+        return <FileCode type="html" size={14} />;
       case "Image":
         return <Image size={14} />;
       case "Video":
@@ -384,14 +318,14 @@ const WidgetCrawlersTable: React.FC<WidgetCrawlersTableProps> = ({ data }) => {
       case "Audio":
         return <FileAudio size={14} />;
       case "PHP":
-        return <FileCode size={14} />;
+        return <FileCode type="php" size={14} />;
       case "TXT":
         return <FileType size={14} />;
       case "CSS":
-        return <FileCode size={14} />;
+        return <FileCode type="css" size={14} />;
       case "JS":
-        return <FileCode size={14} />;
-      case "Document":
+        return <FileCode type="javascript" size={14} />;
+      case "Document": // PDF
         return <FileText size={14} />;
       case "Archive":
         return <Package size={14} />;
@@ -402,85 +336,55 @@ const WidgetCrawlersTable: React.FC<WidgetCrawlersTableProps> = ({ data }) => {
     }
   };
 
-  // Get the oldest date in the array
-  const findOldestEntry = (logs: LogEntry[]): LogEntry | null => {
-    if (logs.length === 0) return null;
-
-    return logs.reduce((oldest, current) => {
-      return new Date(current.timestamp) < new Date(oldest.timestamp)
-        ? current
-        : oldest;
-    });
-  };
-
-  function calculateElapsedTime(
-    oldestEntry: LogEntry | null,
-    finishTime?: string,
-  ) {
-    if (!oldestEntry || !finishTime) return "N/A";
-
-    const initialDate = new Date(oldestEntry.timestamp);
-    const finishDate = new Date(finishTime);
-
-    const elapsedTimeMs = Math.abs(
-      finishDate.getTime() - initialDate.getTime(),
-    );
-    const hours = Math.floor(elapsedTimeMs / (1000 * 60 * 60));
-    const minutes = Math.floor(
-      (elapsedTimeMs % (1000 * 60 * 60)) / (1000 * 60),
-    );
-    const seconds = Math.floor((elapsedTimeMs % (1000 * 60)) / 1000);
-
-    return `${hours}h ${minutes}m ${seconds}s`;
-  }
-
-  function calculateHitsPerHour(log: LogEntry, finishTime?: string) {
-    if (!finishTime) return "N/A";
-
-    const initialDate = new Date(log.timestamp);
-    const finishDate = new Date(finishTime);
-    const elapsedTimeHours =
-      Math.abs(finishDate.getTime() - initialDate.getTime()) / (1000 * 60 * 60);
-    const frequency = log.frequency || 0;
-
-    return elapsedTimeHours > 0
-      ? (frequency / elapsedTimeHours).toFixed(1)
-      : "0.0";
-  }
-
-  function timings(log: LogEntry, finishTime?: string) {
-    if (!finishTime)
-      return { elapsedTime: "N/A", frequency: { perHour: "N/A" } };
-
+  // Handle the dates and the timings hits
+  function timings(data, log) {
     const initialDate = new Date(log?.timestamp);
-    const finishDate = new Date(finishTime);
+    const finishDate = new Date(data?.log_finish_time);
 
     const elapsedTimeMs = Math.abs(
       finishDate.getTime() - initialDate.getTime(),
     );
+
+    // Calculate hours, minutes, seconds (FIXED: Math.floor for minutes)
     const hours = Math.floor(elapsedTimeMs / (1000 * 60 * 60));
     const minutes = Math.floor(
       (elapsedTimeMs % (1000 * 60 * 60)) / (1000 * 60),
     );
     const seconds = Math.floor((elapsedTimeMs % (1000 * 60)) / 1000);
 
+    // Calculate elapsed time in different units for frequency
     const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60);
+    const elapsedTimeMinutes = elapsedTimeMs / (1000 * 60);
+    const elapsedTimeSeconds = elapsedTimeMs / 1000;
+
+    // Handle missing frequency (default to 0)
     const frequency = log?.frequency || 0;
+
+    // Calculate rates (avoid division by zero)
     const perHour =
-      elapsedTimeHours > 0 ? (frequency / elapsedTimeHours).toFixed(1) : "0.0";
+      elapsedTimeHours > 0 ? (frequency / elapsedTimeHours).toFixed(1) : "0.00";
+    const perMinute =
+      elapsedTimeMinutes > 0
+        ? (frequency / elapsedTimeMinutes).toFixed(2)
+        : "0.00";
+    const perSecond =
+      elapsedTimeSeconds > 0
+        ? (frequency / elapsedTimeSeconds).toFixed(2)
+        : "0.00";
 
     return {
       elapsedTime: `${hours}h ${minutes}m ${seconds}s`,
       frequency: {
-        perHour,
+        total: frequency,
+        perHour: `${perHour}`,
+        perMinute: `${perMinute}/minute`,
+        perSecond: `${perSecond}/second`,
       },
     };
   }
 
-  const oldestEntry = findOldestEntry(logs);
-
   return (
-    <div className="space-y-4 h-full pb-0 -mb-4 not-selectable">
+    <div className="space-y-4 h-full pb-0 -mb-4">
       <div className="flex flex-col md:flex-row justify-between -mb-4 p-1">
         <div className="relative w-full mr-1">
           <Search className="absolute dark:text-white/50 left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -494,6 +398,7 @@ const WidgetCrawlersTable: React.FC<WidgetCrawlersTableProps> = ({ data }) => {
         </div>
 
         <div className="flex flex-1 gap-1">
+          {/* FileType Filter */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -550,6 +455,22 @@ const WidgetCrawlersTable: React.FC<WidgetCrawlersTableProps> = ({ data }) => {
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* <Select
+            value={botFilter || "all"}
+            onValueChange={(value) =>
+              setBotFilter(value === "all" ? null : value)
+            }
+          >
+            <SelectTrigger className="w-[130px] dark:bg-brand-darker font-medium dark:text-white">
+              <SelectValue placeholder="Bot/Human" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="bot">Bots</SelectItem>
+              <SelectItem value="Human">Humans</SelectItem>
+            </SelectContent>
+          </Select> */}
+
           <Select
             value={
               verifiedFilter === null
@@ -588,6 +509,7 @@ const WidgetCrawlersTable: React.FC<WidgetCrawlersTableProps> = ({ data }) => {
             </SelectContent>
           </Select>
 
+          {/* SELECT BOT TYPE (DESKTOP OR MOBILE) */}
           <Select
             value={botTypeFilter === null ? "all" : botTypeFilter}
             onValueChange={(value) =>
@@ -650,7 +572,7 @@ const WidgetCrawlersTable: React.FC<WidgetCrawlersTableProps> = ({ data }) => {
         <CardContent className="p-0 h-full overflow-hidden">
           <div className="rounded-md border dark:border-brand-dark h-full">
             <div className="relative w-full h-full overflow-auto">
-              <Table className="h-full not-selectable">
+              <Table className="h-full">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[80px] text-center">#</TableHead>
@@ -669,6 +591,21 @@ const WidgetCrawlersTable: React.FC<WidgetCrawlersTableProps> = ({ data }) => {
                         />
                       )}
                     </TableHead>
+                    {/* <TableHead */}
+                    {/*   className="cursor-pointer w-[90px] text-center" */}
+                    {/*   onClick={() => requestSort("method")} */}
+                    {/* > */}
+                    {/*   Method */}
+                    {/*   {sortConfig?.key === "method" && ( */}
+                    {/*     <ChevronDown */}
+                    {/*       className={`ml-1 h-4 w-4 inline-block ${ */}
+                    {/*         sortConfig.direction === "descending" */}
+                    {/*           ? "rotate-180" */}
+                    {/*           : "" */}
+                    {/*       }`} */}
+                    {/*     /> */}
+                    {/*   )} */}
+                    {/* </TableHead> */}
                     <TableHead
                       className="cursor-pointer"
                       onClick={() => requestSort("path")}
@@ -747,16 +684,37 @@ const WidgetCrawlersTable: React.FC<WidgetCrawlersTableProps> = ({ data }) => {
                           <TableCell className="font-medium text-center max-w-[40px]">
                             {indexOfFirstItem + index + 1}
                           </TableCell>
+                          {/* <TableCell className="max-w-[160px] w-[180px] truncate"> */}
+                          {/*   <div className="flex items-center gap-1"> */}
+                          {/*     {log.ip} */}
+                          {/*   </div> */}
+                          {/* </TableCell> */}
                           <TableCell className="w-[200px] pl-2">
                             {formatDate(log.timestamp)}
                           </TableCell>
+                          {/* <TableCell className="text-center max-w-[150px]"> */}
+                          {/*   <Badge */}
+                          {/*     variant="outline" */}
+                          {/*     className={ */}
+                          {/*       log.method === "GET" */}
+                          {/*         ? "bg-green-100 dark:bg-green-400 text-green-800 border-green-200" */}
+                          {/*         : log.method === "POST" */}
+                          {/*           ? "bg-blue-100 dark:bg-blue-400 text-blue-800 border-blue-200" */}
+                          {/*           : log.method === "PUT" */}
+                          {/*             ? "bg-yellow-100 dark:bg-yellow-400 text-yellow-800 border-yellow-200" */}
+                          {/*             : "bg-red-100 dark:bg-red-400 text-red-800 border-red-200" */}
+                          {/*     } */}
+                          {/*   > */}
+                          {/*     {log.method} */}
+                          {/*   </Badge> */}
+                          {/* </TableCell> */}
                           <TableCell className="inline-block truncate max-w-[600px]">
                             <span className="mr-2 inline-block pl-2">
                               {getFileIcon(log.file_type)}
                             </span>
                             {showOnTables && domain
                               ? "https://" + domain + log.path
-                              : log.path}
+                              : log?.path}
                           </TableCell>
                           <TableCell className="min-w-[30px] truncate">
                             <Badge variant="outline">{log.file_type}</Badge>
@@ -794,6 +752,7 @@ const WidgetCrawlersTable: React.FC<WidgetCrawlersTableProps> = ({ data }) => {
                               className="bg-gray-50 dark:bg-gray-800 p-4 "
                             >
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* User Agent */}
                                 <div className="flex flex-col max-w-[70rem] w-full">
                                   <div className="flex mb-2 space-x-2 items-center justify-between">
                                     <h4 className=" font-bold">Timespan</h4>
@@ -809,31 +768,26 @@ const WidgetCrawlersTable: React.FC<WidgetCrawlersTableProps> = ({ data }) => {
                                   </div>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                                     <p className="text-sm font-mono break-all">
-                                      {calculateElapsedTime(
-                                        oldestEntry,
-                                        data?.log_finish_time,
-                                      )}
+                                      {timings(data, log)?.elapsedTime}
                                     </p>
                                   </div>
                                 </div>
 
+                                {/* Referer */}
                                 <div className="flex flex-col">
                                   <h4 className="mb-2 font-bold">
                                     Hits per Hour
                                   </h4>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                                     <p className="text-sm break-all">
-                                      {calculateHitsPerHour(
-                                        log,
-                                        data?.log_finish_time,
-                                      )}{" "}
+                                      {timings(data, log)?.frequency?.perHour}
                                     </p>
                                   </div>
                                 </div>
                               </div>
                             </TableCell>
                           </TableRow>
-                        )}
+                        )}{" "}
                       </React.Fragment>
                     ))
                   ) : (
@@ -961,4 +915,4 @@ const WidgetCrawlersTable: React.FC<WidgetCrawlersTableProps> = ({ data }) => {
   );
 };
 
-export default WidgetCrawlersTable;
+export { WidgetTable };

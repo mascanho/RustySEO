@@ -171,71 +171,11 @@ export function LogAnalyzer() {
     return "bg-gray-500";
   }, []);
 
-  const formatResponseSize = (size: unknown): string => {
-    // Handle empty/undefined cases
-    if (size === undefined || size === null || size === "") {
-      return "0 KB";
-    }
-
-    // Convert to bytes first
-    let bytes: number;
-    if (typeof size === "number") {
-      bytes = size;
-    } else if (typeof size === "string") {
-      // Clean and parse the string value
-      const str = size.replace(/,/g, ".").trim();
-      const numericMatch = str.match(/(\d+\.?\d*)\s*(B|KB|MB|GB)?/i);
-      if (!numericMatch) return "0 KB";
-
-      const numericValue = parseFloat(numericMatch[1]);
-      if (isNaN(numericValue)) return "0 KB";
-
-      // Convert to bytes based on unit
-      const unit = (numericMatch[2] || "B").toUpperCase();
-      switch (unit) {
-        case "GB":
-          bytes = numericValue * 1024 * 1024 * 1024;
-          break;
-        case "MB":
-          bytes = numericValue * 1024 * 1024;
-          break;
-        case "KB":
-          bytes = numericValue * 1024;
-          break;
-        default:
-          bytes = numericValue;
-          break; // Bytes
-      }
-    } else {
-      return "0 KB";
-    }
-
-    // Convert to KB first
-    const kbValue = bytes / 1024;
-
-    // Only use MB/GB if KB would be too large (>10,000 KB)
-    if (kbValue >= 10000) {
-      const mbValue = kbValue / 1024;
-      if (mbValue >= 1000) {
-        const gbValue = mbValue / 1024;
-        if (gbValue >= 100) return `${Math.round(gbValue)} GB`;
-        return `${gbValue.toFixed(2)} GB`;
-      }
-      if (mbValue >= 100) return `${Math.round(mbValue)} MB`;
-      return `${mbValue.toFixed(2)} MB`;
-    }
-
-    // Default to KB display
-    if (kbValue < 1) {
-      return "<1 KB";
-    } else if (kbValue < 10) {
-      return `${kbValue.toFixed(2)} KB`;
-    } else if (kbValue < 100) {
-      return `${kbValue.toFixed(1)} KB`;
-    } else {
-      return `${Math.round(kbValue)} KB`;
-    }
-  };
+  const formatResponseSize = useCallback((bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }, []);
 
   // Debounced filter function
   const applyFilters = useMemo(
@@ -528,8 +468,6 @@ export function LogAnalyzer() {
       </div>
     );
   }
-
-  console.log(entries, "Entries");
 
   return (
     <div className="space-y-4 flex flex-col flex-1 h-full not-selectable">
