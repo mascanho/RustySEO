@@ -4,6 +4,7 @@ export const changelogData = [
     date: "2025-06-01",
     type: "fix",
     changes: [
+      "Performance Improvements",
       "Inlinks & Outlinks improvements",
       "Improved log analysis",
       "Log analyser: improved search",
