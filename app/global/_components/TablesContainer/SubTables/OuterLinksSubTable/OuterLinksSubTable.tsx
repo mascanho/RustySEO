@@ -83,67 +83,69 @@ const OuterLinksSubTable: React.FC<InlinksSubTableProps> = ({
 
   // Expor data as CSV
   const exportCSV = async () => {
-    if (!data?.[0]?.inoutlinks_status_codes?.internal?.length) {
-      await message("No data to export", {
-        title: "Export Error",
-        type: "error",
-      });
-      return;
-    }
-
-    const headers = [
-      "ID",
-      "From",
-      "Relative Link",
-      "Absolute Link",
-      "Rel",
-      "Target",
-      "Title",
-      "Status Code",
-    ];
-
-    const csvData = data[0].inoutlinks_status_codes.internal.map(
-      (item: any, index: number) => [
-        index + 1,
-        `"${(item.anchor_text || "").replace(/"/g, '""')}"`,
-        `"${(item.relative_path || "").replace(/"/g, '""')}"`,
-        `"${(item.url || "").replace(/"/g, '""')}"`,
-        item.status !== null ? item.status : item.error || "N/A",
-      ],
-    );
-
-    const csvContent = [
-      headers.join(","),
-      ...csvData.map((row: string[]) => row.join(",")),
-    ].join("\n");
-
     try {
+      // Check if we have valid data to export
+      if (!data || data.length < 2 || !data[1]?.length) {
+        await message("No data to export", {
+          title: "Export Error",
+          type: "error",
+        });
+        return;
+      }
+
+      const headers = [
+        "ID",
+        "Source URL",
+        "Target URL",
+        "Anchor Text",
+        "Status Code",
+      ];
+
+      // Prepare CSV data matching the table structure
+      const csvData = data[1].map((item, index) => {
+        const sourceUrl = data[0]?.url || "N/A";
+        const targetUrl = item?.url || "N/A";
+        const anchorTexts = getAnchorText(item, sourceUrl);
+        const statusCodes = getStatusCode(item, sourceUrl);
+
+        return [
+          index + 1,
+          `"${sourceUrl.replace(/"/g, '""')}"`,
+          `"${targetUrl.replace(/"/g, '""')}"`,
+          `"${(Array.isArray(anchorTexts) ? anchorTexts.join(", ") : anchorTexts || "N/A").replace(/"/g, '""')}"`,
+          Array.isArray(statusCodes)
+            ? statusCodes.join(", ")
+            : statusCodes || "N/A",
+        ];
+      });
+
+      const csvContent = [
+        headers.join(","),
+        ...csvData.map((row) => row.join(",")),
+      ].join("\n");
+
       // Ask user for save location
       const filePath = await save({
-        defaultPath: `RustySEO - Inlinks Export - ${new Date().toISOString().slice(0, 10)}.csv`,
-        filters: [
-          {
-            name: "CSV",
-            extensions: ["csv"],
-          },
-        ],
+        defaultPath: `RustySEO-Outlinks-Export-${new Date().toISOString().slice(0, 10)}.csv`,
+        filters: [{ name: "CSV", extensions: ["csv"] }],
       });
 
       if (filePath) {
         await writeTextFile(filePath, csvContent);
-
-        // Show success message
-        await message("CSV file saved successfully!", {
+        await message("CSV exported successfully!", {
           title: "Export Complete",
           type: "info",
         });
       }
     } catch (error) {
       console.error("Export failed:", error);
-      await message(`Failed to export CSV: ${error}`, {
-        title: "Export Error",
-        type: "error",
-      });
+      await message(
+        `Export failed: ${error instanceof Error ? error.message : String(error)}`,
+        {
+          title: "Export Error",
+          type: "error",
+        },
+      );
     }
   };
 
@@ -228,7 +230,7 @@ const OuterLinksSubTable: React.FC<InlinksSubTableProps> = ({
     >
       <button
         onClick={exportCSV}
-        className="absolute -top-8   right-1 z-50 text-xs border border-brand-bright dark:border-brand-bright px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors  dark:text-white/50"
+        className="absolute top-1   right-1 z-50 text-xs border border-brand-bright dark:border-brand-bright px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors  dark:text-white/50"
       >
         Export
       </button>
