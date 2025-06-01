@@ -34,7 +34,6 @@ export default function Component({ bodyElements }: ComponentProps) {
         const res = await invoke("generate_ai_topics", {
           body: bodyElements[0],
         });
-        console.log("Raw response:", res);
 
         if (res) {
           let topics = res.toString();

@@ -41,9 +41,7 @@ export function TimelineChart() {
   const { entries } = useLogAnalysis();
   const { currentLogs } = useCurrentLogs();
 
-  React.useEffect(() => {
-    console.log(currentLogs, "Logs from chart");
-  }, [currentLogs]);
+  React.useEffect(() => {}, [currentLogs]);
 
   // Process the log entries to create chart data
   const processData = () => {

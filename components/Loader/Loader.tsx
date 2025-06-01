@@ -36,7 +36,6 @@ const Loader = () => {
         if (typeof window !== "undefined") {
           // Step 2: Call search console API
           const result = await invoke<{}>("call_google_search_console");
-          console.log("Calling Search Console From UseEffect", result);
         }
       } catch (error) {
         // Step 3: Handle any errors

@@ -23,7 +23,6 @@ const Sitemap = () => {
         setCrawlResult(result.links);
         showLinksSequentially(result.links); // Show links one by one
         setSitemap(result.sitemap_xml);
-        console.log(result);
       })
       .catch(console.error);
   };
@@ -35,9 +34,6 @@ const Sitemap = () => {
       }, index * 300); // Adjust timing for each link appearance
     });
   };
-
-  console.log("DATA");
-  console.log(crawlResult, visibleLinks);
 
   return (
     <>

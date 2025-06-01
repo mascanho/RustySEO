@@ -327,7 +327,7 @@ const ImagesCrawlTable = ({
       // console.log(urlData);
     }
 
-    console.log(cellContent, rowIndex, cellIndex);
+    // console.log(cellContent, rowIndex, cellIndex);
   };
 
   const startXRef = useRef(0);

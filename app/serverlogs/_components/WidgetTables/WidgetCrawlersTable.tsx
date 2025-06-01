@@ -458,7 +458,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark"
+                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-32"
               >
                 <Filter className="h-4 w-4" />
                 File Type
@@ -471,7 +471,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker"
+              className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999]"
             >
               <DropdownMenuLabel>Filter by File Type</DropdownMenuLabel>
               <DropdownMenuSeparator />

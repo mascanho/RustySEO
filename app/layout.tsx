@@ -54,7 +54,6 @@ export default function RootLayout({
     const checkVersion = async () => {
       try {
         const version = await invoke("version_check_command");
-        console.log(version, "This is the version");
 
         setTimeout(() => {
           if (version.local !== version.github) {

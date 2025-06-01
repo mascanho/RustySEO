@@ -163,11 +163,9 @@ const OuterLinksSubTable: React.FC<InlinksSubTableProps> = ({
     }
   }, [makeResizable]);
 
-  // Move localStorage access into useEffect to avoid re-renders
-  useEffect(() => {
-    const isDark = localStorage.getItem("dark-mode");
-    console.log("Dark mode:", isDark); // Example usage
-  }, []);
+  // useEffect(() => {
+  //   const isDark = localStorage.getItem("dark-mode");
+  // }, []);
 
   if (data?.length === 0) {
     return (

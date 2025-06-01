@@ -480,8 +480,6 @@ const TableCrawl = ({
 
       // SET THE SEPARATE STATE
       setOutlinks([{ url: cellContent }, outLinksMatched]);
-
-      console.log(outLinksMatched, "Outlinks");
     }
   };
 

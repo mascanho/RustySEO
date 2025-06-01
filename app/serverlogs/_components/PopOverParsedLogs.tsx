@@ -19,8 +19,6 @@ interface LogEntry {
 const PopOverParsedLogs = () => {
   const { uploadedLogFiles } = useServerLogsStore();
 
-  console.log(uploadedLogFiles, "LOGS STORED");
-
   const totalLogsAnalysed = uploadedLogFiles
     .map((log) => log?.names?.length || 0)
     .reduce((a, b) => a + b, 0);

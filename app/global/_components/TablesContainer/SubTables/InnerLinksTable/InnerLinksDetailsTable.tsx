@@ -29,8 +29,6 @@ const InnerLinksDetailsTable: React.FC<InlinksSubTableProps> = ({
 }) => {
   const tableRef = useRef<HTMLTableElement>(null);
 
-  console.log(data, "FROM THE INLINKS TABLE BOTTOM");
-
   const urlsWithPageAsInternalLink = data
     .map((page) => page?.inoutlinks_status_codes?.internal)
     .flat()

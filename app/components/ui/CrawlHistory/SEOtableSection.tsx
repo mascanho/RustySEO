@@ -157,7 +157,6 @@ const SEOtableSection: React.FC<PerformanceSectionProps> = ({
     try {
       // Generate the SEO CSV content
       const result = await invoke("generate_seo_csv");
-      console.log("CSV content:", result);
 
       // Prompt the user to select a save location
       const path = await save({
