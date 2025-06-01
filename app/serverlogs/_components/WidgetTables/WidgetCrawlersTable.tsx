@@ -374,13 +374,53 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     }
   };
 
-  const timings = (data: any, log: LogEntry) => {
-    const initialDate = new Date(log?.timestamp);
-    const finishDate = new Date(data?.log_finish_time);
+  // CALCULATE THE TIMINGS
 
-    const elapsedTimeMs = Math.abs(
-      finishDate.getTime() - initialDate.getTime(),
-    );
+  const oldestEntry =
+    initialLogs.length > 0
+      ? initialLogs.reduce((oldest, log) =>
+          new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+        )
+      : null;
+
+  const newestEntry =
+    initialLogs.length > 0
+      ? initialLogs.reduce((newest, log) =>
+          new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+        )
+      : null;
+
+  const totalTimeBetweenNewAndOldest = () => {
+    if (newestEntry && oldestEntry) {
+      const start = new Date(oldestEntry.timestamp);
+      const end = new Date(newestEntry.timestamp);
+      const diff = Math.abs(end.getTime() - start.getTime());
+      return diff;
+    }
+    return 0;
+  };
+
+  const elapsedTimeMs = totalTimeBetweenNewAndOldest();
+
+  const timings = (log: LogEntry) => {
+    if (!oldestEntry || !newestEntry) {
+      return {
+        elapsedTime: "0h 0m 0s",
+        frequency: {
+          total: 0,
+          perHour: "0.00",
+          perMinute: "0.00/minute",
+          perSecond: "0.00/second",
+        },
+      };
+    }
+
+    const frequency = log?.frequency || 0;
+    const elapsedTimeMs = totalTimeBetweenNewAndOldest();
+    const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60);
+
+    const perHour =
+      elapsedTimeHours > 0 ? (frequency / elapsedTimeHours).toFixed(1) : "0.0";
 
     const hours = Math.floor(elapsedTimeMs / (1000 * 60 * 60));
     const minutes = Math.floor(
@@ -388,30 +428,13 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     );
     const seconds = Math.floor((elapsedTimeMs % (1000 * 60)) / 1000);
 
-    const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60);
-    const elapsedTimeMinutes = elapsedTimeMs / (1000 * 60);
-    const elapsedTimeSeconds = elapsedTimeMs / 1000;
-
-    const frequency = log?.frequency || 0;
-
-    const perHour =
-      elapsedTimeHours > 0 ? (frequency / elapsedTimeHours).toFixed(1) : "0.00";
-    const perMinute =
-      elapsedTimeMinutes > 0
-        ? (frequency / elapsedTimeMinutes).toFixed(2)
-        : "0.00";
-    const perSecond =
-      elapsedTimeSeconds > 0
-        ? (frequency / elapsedTimeSeconds).toFixed(2)
-        : "0.00";
-
     return {
       elapsedTime: `${hours}h ${minutes}m ${seconds}s`,
       frequency: {
         total: frequency,
-        perHour: `${perHour}`,
-        perMinute: `${perMinute}/minute`,
-        perSecond: `${perSecond}/second`,
+        perHour: perHour,
+        perMinute: `${(frequency / (elapsedTimeMs / (1000 * 60))).toFixed(2)}/minute`,
+        perSecond: `${(frequency / (elapsedTimeMs / 1000)).toFixed(2)}/second`,
       },
     };
   };
@@ -589,21 +612,21 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[80px] text-center">#</TableHead>
-                    <TableHead
-                      className="cursor-pointer w-[200px] truncate"
-                      onClick={() => requestSort("timestamp")}
-                    >
-                      Timestamp
-                      {sortConfig?.key === "timestamp" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      )}
-                    </TableHead>
+                    {/* <TableHead */}
+                    {/*   className="cursor-pointer w-[200px] truncate" */}
+                    {/*   onClick={() => requestSort("timestamp")} */}
+                    {/* > */}
+                    {/*   Timestamp */}
+                    {/*   {sortConfig?.key === "timestamp" && ( */}
+                    {/*     <ChevronDown */}
+                    {/*       className={`ml-1 h-4 w-4 inline-block ${ */}
+                    {/*         sortConfig.direction === "descending" */}
+                    {/*           ? "rotate-180" */}
+                    {/*           : "" */}
+                    {/*       }`} */}
+                    {/*     /> */}
+                    {/*   )} */}
+                    {/* </TableHead> */}
                     <TableHead
                       className="cursor-pointer"
                       onClick={() => requestSort("path")}
@@ -653,7 +676,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       className="cursor-pointer min-w-10 max-w-[50px] text-center"
                       onClick={() => requestSort("frequency")}
                     >
-                      ∑ Frequency
+                      Total Hits
                       {sortConfig?.key === "frequency" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${
@@ -664,6 +687,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                         />
                       )}
                     </TableHead>
+                    <TableHead>Hourly Hits</TableHead>
                     <TableHead>Crawler Type</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -682,9 +706,9 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                           <TableCell className="font-medium text-center max-w-[40px]">
                             {indexOfFirstItem + index + 1}
                           </TableCell>
-                          <TableCell className="w-[200px] pl-2">
-                            {formatDate(log.timestamp)}
-                          </TableCell>
+                          {/* <TableCell className="w-[200px] pl-2"> */}
+                          {/*   {formatDate(log.timestamp)} */}
+                          {/* </TableCell> */}
                           <TableCell className="inline-block truncate max-w-[600px]">
                             <span className="mr-2 inline-block pl-2">
                               {getFileIcon(log.file_type)}
@@ -700,7 +724,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                             {formatResponseSize(log.response_size)}
                           </TableCell>
                           <TableCell className="text-center min-w-[90px]">
-                            {log.frequency}
+                            {timings(log)?.frequency?.total}
+                          </TableCell>
+                          <TableCell className="text-center w-[90px]">
+                            {timings(log)?.frequency?.perHour}
                           </TableCell>
                           <TableCell width={100} className="max-w-[100px]">
                             <Badge
@@ -741,7 +768,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                   </div>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                                     <p className="text-sm font-mono break-all">
-                                      {timings(data, log)?.elapsedTime}
+                                      {timings(log)?.elapsedTime}
                                     </p>
                                   </div>
                                 </div>
@@ -751,7 +778,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                   </h4>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                                     <p className="text-sm break-all">
-                                      {timings(data, log)?.frequency?.perHour}
+                                      {timings(log)?.frequency?.perHour}
                                     </p>
                                   </div>
                                 </div>
