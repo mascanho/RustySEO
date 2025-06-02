@@ -287,6 +287,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     setExpandedRow(null);
     setFilteredLogs(initialLogs);
     setBotTypeFilter(null);
+    setFileTypeFilter([]);
+
+
+    console.log("resetting filters")
   };
 
   const exportCSV = async () => {
@@ -698,7 +702,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                         key={`${log.ip}-${log.timestamp}-${index}`}
                       >
                         <TableRow
-                          className="group cursor-pointer"
+                          className="group cursor-pointer "
                           onClick={() =>
                             setExpandedRow(expandedRow === index ? null : index)
                           }
@@ -709,15 +713,19 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                           {/* <TableCell className="w-[200px] pl-2"> */}
                           {/*   {formatDate(log.timestamp)} */}
                           {/* </TableCell> */}
-                          <TableCell className="inline-block truncate max-w-[600px] h-10 ">
-                            <span className="mr-2 inline-block pl-2">
+                          <TableCell className="inline-block truncate max-w-[600px]  ">
+                            <div className="flex items-center w-full m-auto">
+
+                            
+                            <span className="mr-2  pl-2">
                               {getFileIcon(log.file_type)}
                             </span>
-                            <span className="inline-block leading-[28px]">
+                            <span className="leading-[28px] m-auto flex items-center">
                               {showOnTables && domain
                                 ? "https://" + domain + log.path
                                 : log?.path}
                             </span>
+                            </div>
                           </TableCell>
                           <TableCell className="min-w-[30px] truncate">
                             <Badge variant="outline">{log.file_type}</Badge>

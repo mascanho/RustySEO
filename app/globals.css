@@ -917,3 +917,8 @@ dialog::backdrop {
 tr:is(.dark *) {
   @apply border-b-brand-dark/50 !important;
 }
+
+tbody tr {
+  max-height: 28px !important;
+  height: 1px !important;
+}
