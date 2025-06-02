@@ -508,7 +508,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Select
+          {/* <Select
             value={
               verifiedFilter === null
                 ? "all"
@@ -544,9 +544,9 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                 Unverified
               </SelectItem>
             </SelectContent>
-          </Select>
+          </Select> */}
 
-          <Select
+          {/* <Select
             value={botTypeFilter === null ? "all" : botTypeFilter}
             onValueChange={(value) =>
               setBotTypeFilter(value === "all" ? null : value)
@@ -575,7 +575,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                 Mobile
               </SelectItem>
             </SelectContent>
-          </Select>
+          </Select> */}
 
           <Button
             variant="outline"
