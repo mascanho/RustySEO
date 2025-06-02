@@ -709,13 +709,15 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                           {/* <TableCell className="w-[200px] pl-2"> */}
                           {/*   {formatDate(log.timestamp)} */}
                           {/* </TableCell> */}
-                          <TableCell className="inline-block truncate max-w-[600px]">
+                          <TableCell className="inline-block truncate max-w-[600px] h-10 ">
                             <span className="mr-2 inline-block pl-2">
                               {getFileIcon(log.file_type)}
                             </span>
-                            {showOnTables && domain
-                              ? "https://" + domain + log.path
-                              : log?.path}
+                            <span className="inline-block leading-[28px]">
+                              {showOnTables && domain
+                                ? "https://" + domain + log.path
+                                : log?.path}
+                            </span>
                           </TableCell>
                           <TableCell className="min-w-[30px] truncate">
                             <Badge variant="outline">{log.file_type}</Badge>
