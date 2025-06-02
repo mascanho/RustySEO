@@ -880,7 +880,7 @@ export function LogAnalyzer() {
                         />
                       )}
                     </TableHead>
-                    <TableHead>Crawler Type</TableHead>
+                    <TableHead align="center" className="text-center">Crawler Type</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
