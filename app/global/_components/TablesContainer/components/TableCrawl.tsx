@@ -274,7 +274,7 @@ const ColumnPicker = ({
 const TableCrawl = ({
   tabName,
   rows,
-  rowHeight = 25,
+  rowHeight = 20,
   overscan = 50,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
@@ -510,6 +510,8 @@ const TableCrawl = ({
     getScrollElement: () => parentRef.current,
     estimateSize: useCallback(() => rowHeight, [rowHeight]),
     overscan,
+    getItemKey: useCallback((index) => filteredRows[index]?.url || index, [filteredRows]),
+
   });
 
   const debouncedSearch = useMemo(
