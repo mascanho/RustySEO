@@ -291,6 +291,28 @@ const TableCrawl = ({
 
   const { setInlinks, setOutlinks } = useDataActions();
 
+  // Add this to your TableCrawl component
+  const getDynamicOverscan = useCallback(() => {
+    const rowCount = rows.length;
+    const viewportHeight = parentRef.current?.clientHeight || 0;
+    const visibleRows = Math.ceil(viewportHeight / rowHeight);
+
+    // Logarithmic scaling for large datasets
+    if (rowCount <= 100) return Math.max(5, Math.floor(visibleRows * 0.5));
+    if (rowCount <= 1000) return Math.max(10, Math.floor(visibleRows * 0.3));
+    if (rowCount <= 10000) return Math.max(15, Math.floor(visibleRows * 0.2));
+    return 20; // Absolute maximum for 10k+ rows
+  }, [rows.length, rowHeight]);
+
+  // Then in your virtualizer config:
+  const rowVirtualizer = useVirtualizer({
+    count: filteredRows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => rowHeight,
+    overscan: getDynamicOverscan(),
+    getItemKey: (index) => filteredRows[index]?.url || index,
+  });
+
   const handleDownload = async () => {
     if (!rows.length) {
       toast.error("No data to download");
@@ -505,13 +527,16 @@ const TableCrawl = ({
       : rows;
   }, [rows, searchTerm]);
 
+  // TODO: Fix THIs, it should be the ROWS?
   const rowVirtualizer = useVirtualizer({
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: useCallback(() => rowHeight, [rowHeight]),
     overscan,
-    getItemKey: useCallback((index) => filteredRows[index]?.url || index, [filteredRows]),
-
+    getItemKey: useCallback(
+      (index) => filteredRows[index]?.url || index,
+      [filteredRows],
+    ),
   });
 
   const debouncedSearch = useMemo(
