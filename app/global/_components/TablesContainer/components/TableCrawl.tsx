@@ -304,15 +304,6 @@ const TableCrawl = ({
     return 20; // Absolute maximum for 10k+ rows
   }, [rows.length, rowHeight]);
 
-  // Then in your virtualizer config:
-  const rowVirtualizer = useVirtualizer({
-    count: filteredRows.length,
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => rowHeight,
-    overscan: getDynamicOverscan(),
-    getItemKey: (index) => filteredRows[index]?.url || index,
-  });
-
   const handleDownload = async () => {
     if (!rows.length) {
       toast.error("No data to download");
@@ -528,15 +519,25 @@ const TableCrawl = ({
   }, [rows, searchTerm]);
 
   // TODO: Fix THIs, it should be the ROWS?
+  // const rowVirtualizer = useVirtualizer({
+  //   count: filteredRows.length,
+  //   getScrollElement: () => parentRef.current,
+  //   estimateSize: useCallback(() => rowHeight, [rowHeight]),
+  //   overscan,
+  //   getItemKey: useCallback(
+  //     (index) => filteredRows[index]?.url || index,
+  //     [filteredRows],
+  //   ),
+  // });
+
+  // TODO: NEW CONFIGS HERE - CHECK IF THE CONTAINER HEIGHT INFLUENCES OR NOT
+  // Then in your virtualizer config:
   const rowVirtualizer = useVirtualizer({
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: useCallback(() => rowHeight, [rowHeight]),
-    overscan,
-    getItemKey: useCallback(
-      (index) => filteredRows[index]?.url || index,
-      [filteredRows],
-    ),
+    estimateSize: () => rowHeight,
+    overscan: getDynamicOverscan(),
+    getItemKey: (index) => filteredRows[index]?.url || index,
   });
 
   const debouncedSearch = useMemo(
