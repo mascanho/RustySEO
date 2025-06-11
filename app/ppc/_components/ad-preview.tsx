@@ -402,7 +402,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
           <CardHeader>
             <CardTitle>Ad Details</CardTitle>
           </CardHeader>
-          <CardContent className="px-6">
+          <CardContent className="px-6  overflow-y-auto pb-10" >
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-medium">Ad Type:</h3>

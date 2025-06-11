@@ -56,7 +56,7 @@ export function SearchPreview({
       )}
 
       {validSitelinks.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-gray-200">
+        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-t-gray-700">
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             {validSitelinks.map((sitelink) => (
               <div key={sitelink.id} className="text-sm">
