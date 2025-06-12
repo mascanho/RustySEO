@@ -213,6 +213,7 @@ const TableRow = ({
               overflow: "hidden",
               whiteSpace: "nowrap",
               minWidth: columnWidths[cellIndex],
+              height: "30px",
               backgroundColor:
                 clickedCell.row === index ? "#2B6CC4" : "transparent",
               color: clickedCell.row === index ? "white" : "inherit",
@@ -274,8 +275,8 @@ const ColumnPicker = ({
 const TableCrawl = ({
   tabName,
   rows,
-  rowHeight = 20,
-  overscan = 50,
+  rowHeight = 5,
+  overscan = 10,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
   const [columnAlignments, setColumnAlignments] = useState(
@@ -290,19 +291,6 @@ const TableCrawl = ({
     useGlobalCrawlStore();
 
   const { setInlinks, setOutlinks } = useDataActions();
-
-  // Add this to your TableCrawl component
-  const getDynamicOverscan = useCallback(() => {
-    const rowCount = rows.length;
-    const viewportHeight = parentRef.current?.clientHeight || 0;
-    const visibleRows = Math.ceil(viewportHeight / rowHeight);
-
-    // Logarithmic scaling for large datasets
-    if (rowCount <= 100) return Math.max(5, Math.floor(visibleRows * 0.5));
-    if (rowCount <= 1000) return Math.max(10, Math.floor(visibleRows * 0.3));
-    if (rowCount <= 10000) return Math.max(15, Math.floor(visibleRows * 0.2));
-    return 20; // Absolute maximum for 10k+ rows
-  }, [rows.length, rowHeight]);
 
   const handleDownload = async () => {
     if (!rows.length) {
@@ -533,10 +521,10 @@ const TableCrawl = ({
   // TODO: NEW CONFIGS HERE - CHECK IF THE CONTAINER HEIGHT INFLUENCES OR NOT
   // Then in your virtualizer config:
   const rowVirtualizer = useVirtualizer({
-    count: filteredRows.length,
+    count: rows?.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
-    overscan: getDynamicOverscan(),
+    overscan: 15,
     getItemKey: (index) => filteredRows[index]?.url || index,
   });
 
@@ -643,14 +631,14 @@ const TableCrawl = ({
       </div>
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-1.4rem)] overflow-scroll relative"
+        className="w-full h-[calc(100%-1.4rem)] overflow-auto relative"
       >
         <div
           ref={tableContainerRef}
           style={{ minWidth: `${totalWidth}px` }}
           className="domainCrawlParent sticky top-0"
         >
-          <table className="w-full text-xs border-collapse domainCrawlParent h-full">
+          <table className="w-full text-xs border-collapse domainCrawlParent h-10">
             <TableHeader
               headers={headerTitles}
               columnWidths={columnWidths}
@@ -660,15 +648,10 @@ const TableCrawl = ({
               columnVisibility={columnVisibility}
             />
             <tbody className="not-selectable">
-              {filteredRows.length > 0 ? (
+              {rows.length > 0 ? (
                 <>
-                  <tr
-                    style={{
-                      height: `${rowVirtualizer.getVirtualItems()[0]?.start || 0}px`,
-                    }}
-                  />
                   {virtualRows.map((virtualRow) => (
-                    <tr key={virtualRow.key}>
+                    <tr key={virtualRow.key} style={{ height: "20px" }}>
                       <TableRow
                         row={filteredRows[virtualRow.index]}
                         index={virtualRow.index}
@@ -680,11 +663,6 @@ const TableCrawl = ({
                       />
                     </tr>
                   ))}
-                  <tr
-                    style={{
-                      height: `${Math.max(0, rowVirtualizer.getTotalSize() - (virtualRows[virtualRows.length - 1]?.end || 0))}px`,
-                    }}
-                  />
                 </>
               ) : (
                 <tr>
