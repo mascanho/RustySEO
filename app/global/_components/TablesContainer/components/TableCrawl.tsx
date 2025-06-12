@@ -288,15 +288,15 @@ const TableCrawl = ({ tabName, rows, rowHeight = 5 }: TableCrawlProps) => {
 
   // Add this to your TableCrawl component
   const getDynamicOverscan = useCallback(() => {
-    const rowCount = filteredRows.length;
+    const rowCount = rows.length;
     const viewportHeight = parentRef.current?.clientHeight || 0;
     const visibleRows = Math.ceil(viewportHeight / rowHeight);
 
     // Logarithmic scaling for large datasets
-    if (rowCount <= 100) return Math.max(15, Math.floor(rows?.length * 0.5));
-    if (rowCount <= 1000) return Math.max(25, Math.floor(rows?.length * 0.3));
-    if (rowCount <= 10000) return Math.max(45, Math.floor(rows?.length * 0.2));
-    return rows.length;
+    if (rowCount <= 100) return Math.max(5, Math.floor(visibleRows * 0.5));
+    if (rowCount <= 1000) return Math.max(15, Math.floor(visibleRows * 0.3));
+    if (rowCount <= 10000) return Math.max(25, Math.floor(visibleRows * 0.2));
+    return 30; // Absolute maximum for 10k+ rows
   }, [rows.length, rowHeight]);
 
   const handleDownload = async () => {
@@ -528,7 +528,7 @@ const TableCrawl = ({ tabName, rows, rowHeight = 5 }: TableCrawlProps) => {
   // TODO: NEW CONFIGS HERE - CHECK IF THE CONTAINER HEIGHT INFLUENCES OR NOT
   // Then in your virtualizer config:
   const rowVirtualizer = useVirtualizer({
-    count: filteredRows.length,
+    count: filteredRows.length, // Use filteredRows.length here
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
     overscan: getDynamicOverscan(),
