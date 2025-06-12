@@ -197,14 +197,12 @@ const TableRow = ({
   );
 
   return (
-    <>
+    <tr>
       {rowData.map((cell, cellIndex) =>
         columnVisibility[cellIndex] ? (
           <td
             key={`cell-${index}-${cellIndex}`}
-            onClick={() =>
-              handleCellClick(index, cellIndex, cell.toString(), row)
-            }
+            onClick={() => handleCellClick(index, cellIndex, cell.toString(), row)}
             style={{
               width: columnWidths[cellIndex],
               border: "1px solid #ddd",
@@ -228,7 +226,7 @@ const TableRow = ({
           </td>
         ) : null,
       )}
-    </>
+    </tr>
   );
 };
 
@@ -271,7 +269,7 @@ const ColumnPicker = ({
   );
 };
 
-const TableCrawl = ({ tabName, rows, rowHeight = 5 }: TableCrawlProps) => {
+const TableCrawl = ({ tabName, rows, rowHeight = 30 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
   const [columnAlignments, setColumnAlignments] = useState(
     initialColumnAlignments,
@@ -288,7 +286,7 @@ const TableCrawl = ({ tabName, rows, rowHeight = 5 }: TableCrawlProps) => {
 
   // Add this to your TableCrawl component
   const getDynamicOverscan = useCallback(() => {
-    const rowCount = filteredRows.length;
+    const rowCount = rows?.length;
     const viewportHeight = parentRef.current?.clientHeight || 0;
     const visibleRows = Math.ceil(viewportHeight / rowHeight);
 
@@ -531,8 +529,8 @@ const TableCrawl = ({ tabName, rows, rowHeight = 5 }: TableCrawlProps) => {
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
-    overscan: getDynamicOverscan(),
-    getItemKey: (index) => filteredRows[index]?.url || index,
+    overscan: 20,
+    getItemKey: (index) => rows[index]?.url || index,
   });
 
   const handleMouseDown = useCallback(
@@ -659,16 +657,31 @@ const TableCrawl = ({ tabName, rows, rowHeight = 5 }: TableCrawlProps) => {
               onAlignToggle={toggleColumnAlignment}
               columnVisibility={columnVisibility}
             />
-            <tbody className="not-selectable">
+            <tbody
+              style={{
+                height: `${rowVirtualizer.getTotalSize()}px`,
+                position: "relative",
+              }}
+            >
               {rows?.length > 0 ? (
                 <>
                   <tr
                     style={{
-                      height: `${rowVirtualizer.getVirtualItems()[0]?.start || 0}px`,
+                      height: `30px`,
                     }}
                   />
                   {virtualRows.map((virtualRow) => (
-                    <tr key={virtualRow.key}>
+                    <tr
+                      key={virtualRow.key}
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: `${virtualRow.size}px`,
+                        transform: `translateY(${virtualRow.start}px)`,
+                      }}
+                    >
                       <TableRow
                         row={filteredRows[virtualRow.index]}
                         index={virtualRow.index}
