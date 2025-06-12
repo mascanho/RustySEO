@@ -271,7 +271,12 @@ const ColumnPicker = ({
   );
 };
 
-const TableCrawl = ({ tabName, rows, rowHeight = 5 }: TableCrawlProps) => {
+const TableCrawl = ({
+  tabName,
+  rows,
+  rowHeight = 20,
+  overscan = 50,
+}: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
   const [columnAlignments, setColumnAlignments] = useState(
     initialColumnAlignments,
@@ -294,9 +299,9 @@ const TableCrawl = ({ tabName, rows, rowHeight = 5 }: TableCrawlProps) => {
 
     // Logarithmic scaling for large datasets
     if (rowCount <= 100) return Math.max(5, Math.floor(visibleRows * 0.5));
-    if (rowCount <= 1000) return Math.max(15, Math.floor(visibleRows * 0.3));
-    if (rowCount <= 10000) return Math.max(25, Math.floor(visibleRows * 0.2));
-    return 30; // Absolute maximum for 10k+ rows
+    if (rowCount <= 1000) return Math.max(10, Math.floor(visibleRows * 0.3));
+    if (rowCount <= 10000) return Math.max(15, Math.floor(visibleRows * 0.2));
+    return 20; // Absolute maximum for 10k+ rows
   }, [rows.length, rowHeight]);
 
   const handleDownload = async () => {
@@ -528,12 +533,23 @@ const TableCrawl = ({ tabName, rows, rowHeight = 5 }: TableCrawlProps) => {
   // TODO: NEW CONFIGS HERE - CHECK IF THE CONTAINER HEIGHT INFLUENCES OR NOT
   // Then in your virtualizer config:
   const rowVirtualizer = useVirtualizer({
-    count: filteredRows.length, // Use filteredRows.length here
+    count: filteredRows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
     overscan: getDynamicOverscan(),
     getItemKey: (index) => filteredRows[index]?.url || index,
   });
+
+  const debouncedSearch = useMemo(
+    () => debounce((value: string) => setSearchTerm(value), 300),
+    [],
+  );
+
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
 
   const handleMouseDown = useCallback(
     (index: number, event: React.MouseEvent) => {
@@ -543,22 +559,6 @@ const TableCrawl = ({ tabName, rows, rowHeight = 5 }: TableCrawlProps) => {
     },
     [],
   );
-
-  useEffect(() => {
-    const resizeObserver = new ResizeObserver(() => {
-      rowVirtualizer.measure();
-    });
-
-    if (parentRef.current) {
-      resizeObserver.observe(parentRef.current);
-    }
-
-    return () => resizeObserver.disconnect();
-  }, []);
-
-  useEffect(() => {
-    rowVirtualizer.measure();
-  }, [filteredRows]);
 
   const handleMouseMove = useCallback(
     (event: MouseEvent) => {
@@ -660,7 +660,7 @@ const TableCrawl = ({ tabName, rows, rowHeight = 5 }: TableCrawlProps) => {
               columnVisibility={columnVisibility}
             />
             <tbody className="not-selectable">
-              {rows?.length > 0 ? (
+              {filteredRows.length > 0 ? (
                 <>
                   <tr
                     style={{
@@ -682,7 +682,7 @@ const TableCrawl = ({ tabName, rows, rowHeight = 5 }: TableCrawlProps) => {
                   ))}
                   <tr
                     style={{
-                      height: "30px",
+                      height: `${Math.max(0, rowVirtualizer.getTotalSize() - (virtualRows[virtualRows.length - 1]?.end || 0))}px`,
                     }}
                   />
                 </>
