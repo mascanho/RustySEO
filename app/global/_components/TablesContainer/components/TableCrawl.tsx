@@ -293,10 +293,10 @@ const TableCrawl = ({ tabName, rows, rowHeight = 5 }: TableCrawlProps) => {
     const visibleRows = Math.ceil(viewportHeight / rowHeight);
 
     // Logarithmic scaling for large datasets
-    if (rowCount <= 100) return Math.max(15, Math.floor(rows?.length * 0.5));
-    if (rowCount <= 1000) return Math.max(25, Math.floor(rows?.length * 0.3));
-    if (rowCount <= 10000) return Math.max(45, Math.floor(rows?.length * 0.2));
-    return rows.length;
+    if (rowCount <= 100) return Math.max(15, Math.floor(filteredRows?.length * 0.5));
+    if (rowCount <= 1000) return Math.max(25, Math.floor(filteredRows?.length * 0.3));
+    if (rowCount <= 10000) return Math.max(45, Math.floor(filteredRows?.length * 0.2));
+    return 20;
   }, [rows.length, rowHeight]);
 
   const handleDownload = async () => {
