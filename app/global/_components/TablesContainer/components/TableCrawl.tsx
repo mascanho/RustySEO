@@ -524,8 +524,11 @@ const TableCrawl = ({
     count: rows?.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
-    overscan: 15,
+    overscan: 25,
     getItemKey: (index) => filteredRows[index]?.url || index,
+    paddingStart: 0,
+    paddingEnd: 0,
+    scrollMargin: 0,
   });
 
   const debouncedSearch = useMemo(
@@ -606,6 +609,18 @@ const TableCrawl = ({
 
   const virtualRows = rowVirtualizer.getVirtualItems();
 
+  useEffect(() => {
+  console.log('Virtualizer debug:', {
+    totalSize: rowVirtualizer.getTotalSize(),
+    virtualItems: rowVirtualizer.getVirtualItems(),
+    scrollElement: parentRef.current,
+    measurements: rowVirtualizer.measurementsCache,
+    filteredRowsCount: filteredRows?.length
+  });
+
+  
+}, [rowVirtualizer, filteredRows]);
+
   return (
     <>
       <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1 not-selectable">
@@ -635,7 +650,7 @@ const TableCrawl = ({
       >
         <div
           ref={tableContainerRef}
-          style={{ minWidth: `${totalWidth}px` }}
+          style={{ height: `${rowVirtualizer.getTotalSize()}px` }}
           className="domainCrawlParent sticky top-0"
         >
           <table className="w-full text-xs border-collapse domainCrawlParent h-10">
