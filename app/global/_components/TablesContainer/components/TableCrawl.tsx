@@ -213,7 +213,7 @@ const TableRow = ({
               overflow: "hidden",
               whiteSpace: "nowrap",
               minWidth: columnWidths[cellIndex],
-              height: "20px",
+              height: "30px",
               backgroundColor:
                 clickedCell.row === index ? "#2B6CC4" : "transparent",
               color: clickedCell.row === index ? "white" : "inherit",
@@ -275,8 +275,8 @@ const ColumnPicker = ({
 const TableCrawl = ({
   tabName,
   rows,
-  rowHeight = 20,
-  overscan = 15,
+  rowHeight = 5,
+  overscan = 10,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
   const [columnAlignments, setColumnAlignments] = useState(
@@ -521,14 +521,11 @@ const TableCrawl = ({
   // TODO: NEW CONFIGS HERE - CHECK IF THE CONTAINER HEIGHT INFLUENCES OR NOT
   // Then in your virtualizer config:
   const rowVirtualizer = useVirtualizer({
-    count: filteredRows?.length,
+    count: rows?.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
-    overscan,
+    overscan: 15,
     getItemKey: (index) => filteredRows[index]?.url || index,
-    paddingStart: 0,
-    paddingEnd: 0,
-    scrollMargin: 0,
   });
 
   const debouncedSearch = useMemo(
@@ -609,17 +606,6 @@ const TableCrawl = ({
 
   const virtualRows = rowVirtualizer.getVirtualItems();
 
-   // Debug output
-useEffect(() => {
-  console.log('Virtualizer debug:', {
-    totalSize: rowVirtualizer.getTotalSize(),
-    virtualItems: rowVirtualizer.getVirtualItems(),
-    scrollElement: parentRef.current,
-    measurements: rowVirtualizer.measurementsCache,
-    filteredRowsCount: filteredRows?.length
-  });
-}, [rowVirtualizer, filteredRows]);
-
   return (
     <>
       <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1 not-selectable">
@@ -649,7 +635,7 @@ useEffect(() => {
       >
         <div
           ref={tableContainerRef}
-          style={{  height: `${rowVirtualizer.getTotalSize()}px`, position: "relative" }}
+          style={{ minWidth: `${totalWidth}px` }}
           className="domainCrawlParent sticky top-0"
         >
           <table className="w-full text-xs border-collapse domainCrawlParent h-10">
@@ -665,15 +651,7 @@ useEffect(() => {
               {rows.length > 0 ? (
                 <>
                   {virtualRows.map((virtualRow) => (
-                    <tr key={virtualRow.key}
-    style={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: `${virtualRow.size}px`,
-      transform: `translateY(${virtualRow.start}px)`,
-    }}>
+                    <tr key={virtualRow.key} style={{ height: "20px" }}>
                       <TableRow
                         row={filteredRows[virtualRow.index]}
                         index={virtualRow.index}
