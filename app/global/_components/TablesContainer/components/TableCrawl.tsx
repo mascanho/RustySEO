@@ -1,11 +1,8 @@
 // @ts-nocheck
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  useMemo,
-} from "react";
+"use client";
+
+import type React from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import debounce from "lodash/debounce";
 import {
@@ -43,6 +40,7 @@ interface TableCrawlProps {
   }>;
   rowHeight?: number;
   overscan?: number;
+  tabName?: string;
 }
 
 interface TruncatedCellProps {
@@ -71,7 +69,12 @@ interface TableRowProps {
   columnAlignments: string[];
   columnVisibility: boolean[];
   clickedCell: { row: number | null; cell: number | null };
-  handleCellClick: (rowIndex: number, cellIndex: number) => void;
+  handleCellClick: (
+    rowIndex: number,
+    cellIndex: number,
+    cellContent: string,
+    row: any,
+  ) => void;
 }
 
 interface ColumnPickerProps {
@@ -129,32 +132,56 @@ const TableHeader = ({
   onAlignToggle,
   columnVisibility,
 }: TableHeaderProps) => {
+  const visibleHeaders = headers.filter((_, index) => columnVisibility[index]);
+  const visibleWidths = columnWidths.filter(
+    (_, index) => columnVisibility[index],
+  );
+  const visibleAlignments = columnAlignments.filter(
+    (_, index) => columnVisibility[index],
+  );
+
   return (
-    <thead className="sticky top-0 z-10 domainCrawl border">
-      <tr>
-        {headers.map((header, index) =>
-          columnVisibility[index] ? (
-            <th
-              key={header}
-              style={{
-                width: columnWidths[index],
-                position: "relative",
-                border: "1px solid #ddd",
-                padding: "8px",
-                userSelect: "none",
-                minWidth: columnWidths[index],
-                textAlign: columnAlignments[index],
-                backgroundColor: "var(--background, white)",
-              }}
-              onClick={() => onAlignToggle(index)}
-            >
-              {header}
-              <ResizableDivider onMouseDown={(e) => onResize(index, e)} />
-            </th>
-          ) : null,
-        )}
-      </tr>
-    </thead>
+    <div
+      className="domainCrawl border-b bg-white dark:bg-brand-darker"
+      style={{
+        display: "grid",
+        gridTemplateColumns: visibleWidths.join(" "),
+        height: "40px",
+        alignItems: "center",
+      }}
+    >
+      {visibleHeaders.map((header, visibleIndex) => {
+        const originalIndex = headers.findIndex(
+          (h, i) =>
+            columnVisibility[i] &&
+            headers.slice(0, i + 1).filter((_, j) => columnVisibility[j])
+              .length ===
+              visibleIndex + 1,
+        );
+        return (
+          <div
+            key={header}
+            style={{
+              position: "relative",
+              border: "1px solid #ddd",
+              padding: "8px",
+              userSelect: "none",
+              textAlign: visibleAlignments[visibleIndex] as any,
+              backgroundColor: "var(--background, white)",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              fontWeight: "bold",
+            }}
+            onClick={() => onAlignToggle(originalIndex)}
+            className="dark:text-white"
+          >
+            {header}
+            <ResizableDivider onMouseDown={(e) => onResize(originalIndex, e)} />
+          </div>
+        );
+      })}
+    </div>
   );
 };
 
@@ -182,10 +209,10 @@ const TableRow = ({
       row?.status_code || "",
       row?.word_count || "",
       row?.text_ratio?.[0]?.text_ratio?.toFixed(1) || "",
-      row?.flesch?.Ok?.[0].toFixed(1) || "",
+      row?.flesch?.Ok?.[0]?.toFixed(1) || "",
       row?.flesch?.Ok?.[1] || "",
       row?.mobile ? "Yes" : "No",
-      row?.meta_robots?.meta_robots[0] || "",
+      row?.meta_robots?.meta_robots?.[0] || "",
       row?.content_type || "",
       row?.indexability?.indexability > 0.5
         ? "Indexable"
@@ -196,40 +223,61 @@ const TableRow = ({
     [row, index],
   );
 
+  const visibleData = rowData.filter(
+    (_, cellIndex) => columnVisibility[cellIndex],
+  );
+  const visibleWidths = columnWidths.filter(
+    (_, cellIndex) => columnVisibility[cellIndex],
+  );
+  const visibleAlignments = columnAlignments.filter(
+    (_, cellIndex) => columnVisibility[cellIndex],
+  );
+
   return (
-    <>
-      {rowData.map((cell, cellIndex) =>
-        columnVisibility[cellIndex] ? (
-          <td
-            key={`cell-${index}-${cellIndex}`}
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: visibleWidths.join(" "),
+        height: "30px",
+        alignItems: "center",
+        backgroundColor: clickedCell.row === index ? "#2B6CC4" : "transparent",
+        color: clickedCell.row === index ? "white" : "inherit",
+      }}
+      className="dark:text-white/50 cursor-pointer not-selectable"
+    >
+      {visibleData.map((cell, visibleIndex) => {
+        const originalIndex = rowData.findIndex(
+          (c, i) =>
+            columnVisibility[i] &&
+            rowData.slice(0, i + 1).filter((_, j) => columnVisibility[j])
+              .length ===
+              visibleIndex + 1,
+        );
+        return (
+          <div
+            key={`cell-${index}-${visibleIndex}`}
             onClick={() =>
-              handleCellClick(index, cellIndex, cell.toString(), row)
+              handleCellClick(index, originalIndex, cell.toString(), row)
             }
             style={{
-              width: columnWidths[cellIndex],
               border: "1px solid #ddd",
               padding: "6px 8px",
-              textAlign: columnAlignments[cellIndex],
+              textAlign: visibleAlignments[visibleIndex] as any,
               overflow: "hidden",
               whiteSpace: "nowrap",
-              minWidth: columnWidths[cellIndex],
-              height: "30px",
-              backgroundColor:
-                clickedCell.row === index ? "#2B6CC4" : "transparent",
-              color: clickedCell.row === index ? "white" : "inherit",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
             }}
-            className="dark:text-white/50 cursor-pointer"
+            className="dark:text-white text-xs"
           >
             <ContextTableMenu data={cell}>
-              <TruncatedCell
-                text={cell?.toString()}
-                width={columnWidths[cellIndex]}
-              />
+              <TruncatedCell text={cell?.toString()} width="100%" />
             </ContextTableMenu>
-          </td>
-        ) : null,
-      )}
-    </>
+          </div>
+        );
+      })}
+    </div>
   );
 };
 
@@ -240,7 +288,7 @@ const ColumnPicker = ({
 }: ColumnPickerProps) => {
   const handleToggle = useCallback(
     (index: number) => {
-      setColumnVisibility((prev) => {
+      setColumnVisibility((prev: boolean[]) => {
         const newVisibility = [...prev];
         newVisibility[index] = !newVisibility[index];
         return newVisibility;
@@ -275,7 +323,7 @@ const ColumnPicker = ({
 const TableCrawl = ({
   tabName,
   rows,
-  rowHeight = 5,
+  rowHeight = 35,
   overscan = 10,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
@@ -300,7 +348,6 @@ const TableCrawl = ({
 
     if (rows.length > 3000) {
       toast.info("Getting your data ready...");
-
       await exportSEODataCSV(rows);
     } else {
       setIsGeneratingExcel(true);
@@ -321,7 +368,7 @@ const TableCrawl = ({
         });
 
         if (filePath) {
-          await writeFile(filePath, new Uint8Array(fileBuffer));
+          await writeFile(filePath, new Uint8Array(fileBuffer as any));
           toast.success("Excel file saved successfully!");
         } else {
           console.log("User canceled the save dialog.");
@@ -354,6 +401,7 @@ const TableCrawl = ({
     rowIndex: number,
     cellIndex: number,
     cellContent: string,
+    row: any,
   ) => {
     setClickedCell((prevClickedCell) => {
       if (
@@ -368,125 +416,96 @@ const TableCrawl = ({
 
     if (cellIndex === 1) {
       const urlData = filterTableURL(rows, cellContent, rowIndex);
-
-      // SET THE FILETERED DATA FOR THE SUBTABLES
       setSelectedTableURL(urlData);
 
-      const findInLinkedObjects = (rows, selectedUrl, linkType) => {
-        // Normalize URLs for consistent comparison
-        const normalizeUrl = (url) => {
+      const findInLinkedObjects = (
+        rows: any[],
+        selectedUrl: string,
+        linkType: string,
+      ) => {
+        const normalizeUrl = (url: string) => {
           if (!url) return "";
 
           if (!url.startsWith("http")) {
             url = "https://" + url;
           }
 
-          // If URL does not start with "https://www.", add it
           if (!url.startsWith("https://www.")) {
-            // Check if the URL starts with "https://" but not "https://www."
             if (url.startsWith("https://")) {
-              // If it starts with "https://", replace it with "https://www."
               url = "https://www." + url.substring(8);
             } else {
-              // Otherwise, prepend "https://www."
               url = "https://www." + url;
             }
           }
 
-          return url
-            .toString() // Ensure it's a string
-            .trim() // Remove whitespace
-            .toLowerCase(); // Case-insensitive
-          // .replace(/(https?:\/)?(www\.)?/, ""); // Remove protocol & www
-          // .replace(/\/+$/, ""); // Remove trailing slashes
+          return url.toString().trim().toLowerCase();
         };
 
         const targetUrl = cellContent;
 
         return rows.filter((row) => {
-          // Check if row has internal links (defensive check)
           const internalLinks = row?.inoutlinks_status_codes?.[linkType] || [];
-
-          // Check each link for a match
-          return internalLinks.some((link) => {
+          return internalLinks.some((link: any) => {
             const linkUrl = normalizeUrl(link?.url);
-
             return linkUrl === normalizeUrl(targetUrl);
           });
         });
       };
 
-      // Match the selected URL with internal and external links
       const innerLinksMatched = findInLinkedObjects(
         rows,
         cellContent,
         "internal",
       );
 
-      // SET THE SEPARATE STATE
-
       setInlinks([{ url: cellContent }, innerLinksMatched]);
 
-      // FILTER FOR THE OULINKS ON PAGES THAT ARE CONTAINED INSIOE THE INNERLINKS OF OTHER PAGHES
-      const findOutLinkedObjects = (rows, selectedUrl, linkType) => {
-        // Normalize URLs for consistent comparison
-        const normalizeUrl = (url) => {
+      const findOutLinkedObjects = (
+        rows: any[],
+        selectedUrl: string,
+        linkType: string,
+      ) => {
+        const normalizeUrl = (url: string) => {
           if (!url) return "";
 
           if (!url.startsWith("http")) {
             url = "https://" + url;
           }
 
-          // If URL does not start with "https://www.", add it
           if (!url.startsWith("https://www.")) {
-            // Check if the URL starts with "https://" but not "https://www."
             if (url.startsWith("https://")) {
-              // If it starts with "https://", replace it with "https://www."
               url = "https://www." + url.substring(8);
             } else {
-              // Otherwise, prepend "https://www."
               url = "https://www." + url;
             }
           }
 
-          return url
-            .toString() // Ensure it's a string
-            .trim() // Remove whitespace
-            .toLowerCase(); // Case-insensitive
-          // .replace(/(https?:\/)?(www\.)?/, ""); // Remove protocol & www
-          // .replace(/\/+$/, ""); // Remove trailing slashes
+          return url.toString().trim().toLowerCase();
         };
 
         const targetUrl = cellContent;
 
         return rows.filter((row) => {
-          // Check if row has internal links (defensive check)
           const internalLinks = row?.inoutlinks_status_codes?.internal || [];
-
-          // Check each link for a match
-          return internalLinks.some((link) => {
+          return internalLinks.some((link: any) => {
             const linkUrl = normalizeUrl(link?.url);
-
             return linkUrl === normalizeUrl(targetUrl);
           });
         });
       };
 
-      // Match the selected URL with internal and external links
       const outLinksMatched = findOutLinkedObjects(
         rows,
         cellContent,
         "external",
       );
 
-      // SET THE SEPARATE STATE
       setOutlinks([{ url: cellContent }, outLinksMatched]);
     }
   };
 
   const startXRef = useRef(0);
   const parentRef = useRef<HTMLDivElement>(null);
-  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   const filteredRows = useMemo(() => {
     if (!rows || !Array.isArray(rows)) return [];
@@ -506,29 +525,13 @@ const TableCrawl = ({
       : rows;
   }, [rows, searchTerm]);
 
-  // TODO: Fix THIs, it should be the ROWS?
-  // const rowVirtualizer = useVirtualizer({
-  //   count: filteredRows.length,
-  //   getScrollElement: () => parentRef.current,
-  //   estimateSize: useCallback(() => rowHeight, [rowHeight]),
-  //   overscan,
-  //   getItemKey: useCallback(
-  //     (index) => filteredRows[index]?.url || index,
-  //     [filteredRows],
-  //   ),
-  // });
-
-  // TODO: NEW CONFIGS HERE - CHECK IF THE CONTAINER HEIGHT INFLUENCES OR NOT
-  // Then in your virtualizer config:
+  // Fixed virtualizer configuration
   const rowVirtualizer = useVirtualizer({
-    count: rows?.length,
+    count: filteredRows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
-    overscan: 25,
+    overscan,
     getItemKey: (index) => filteredRows[index]?.url || index,
-    paddingStart: 0,
-    paddingEnd: 0,
-    scrollMargin: 0,
   });
 
   const debouncedSearch = useMemo(
@@ -558,7 +561,7 @@ const TableCrawl = ({
       const delta = event.clientX - startXRef.current;
       setColumnWidths((prevWidths) => {
         const newWidths = [...prevWidths];
-        const currentWidth = parseInt(newWidths[isResizing]);
+        const currentWidth = Number.parseInt(newWidths[isResizing]);
         newWidths[isResizing] = `${Math.max(50, currentWidth + delta)}px`;
         return newWidths;
       });
@@ -583,21 +586,6 @@ const TableCrawl = ({
     }
   }, [isResizing, handleMouseMove, handleMouseUp]);
 
-  const totalWidth = useMemo(
-    () =>
-      columnWidths.reduce((acc, width) => {
-        if (typeof width === "string") {
-          if (width.endsWith("px")) {
-            return acc + parseFloat(width);
-          } else if (width.endsWith("rem")) {
-            return acc + parseFloat(width) * 16;
-          }
-        }
-        return acc + 100;
-      }, 0),
-    [columnWidths],
-  );
-
   const toggleColumnAlignment = useCallback((index: number) => {
     setColumnAlignments((prev) => {
       const newAlignments = [...prev];
@@ -609,21 +597,9 @@ const TableCrawl = ({
 
   const virtualRows = rowVirtualizer.getVirtualItems();
 
-  useEffect(() => {
-  console.log('Virtualizer debug:', {
-    totalSize: rowVirtualizer.getTotalSize(),
-    virtualItems: rowVirtualizer.getVirtualItems(),
-    scrollElement: parentRef.current,
-    measurements: rowVirtualizer.measurementsCache,
-    filteredRowsCount: filteredRows?.length
-  });
-
-  
-}, [rowVirtualizer, filteredRows]);
-
   return (
     <>
-      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1 not-selectable">
+      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1 not-selectable z-20">
         <input
           type="text"
           placeholder="Search..."
@@ -644,53 +620,59 @@ const TableCrawl = ({
           />
         </div>
       </div>
+
       <div
         ref={parentRef}
         className="w-full h-[calc(100%-1.4rem)] overflow-auto relative"
       >
+        {/* Fixed Header */}
+        <div className="sticky top-0 z-10">
+          <TableHeader
+            headers={headerTitles}
+            columnWidths={columnWidths}
+            columnAlignments={columnAlignments}
+            onResize={handleMouseDown}
+            onAlignToggle={toggleColumnAlignment}
+            columnVisibility={columnVisibility}
+          />
+        </div>
+
+        {/* Virtualized Body */}
         <div
-          ref={tableContainerRef}
-          style={{ height: `${rowVirtualizer.getTotalSize()}px` }}
-          className="domainCrawlParent sticky top-0"
+          style={{
+            height: `${rowVirtualizer.getTotalSize()}px`,
+            position: "relative",
+          }}
+          className="domainCrawlParent"
         >
-          <table className="w-full text-xs border-collapse domainCrawlParent h-10">
-            <TableHeader
-              headers={headerTitles}
-              columnWidths={columnWidths}
-              columnAlignments={columnAlignments}
-              onResize={handleMouseDown}
-              onAlignToggle={toggleColumnAlignment}
-              columnVisibility={columnVisibility}
-            />
-            <tbody className="not-selectable">
-              {rows.length > 0 ? (
-                <>
-                  {virtualRows.map((virtualRow) => (
-                    <tr key={virtualRow.key} style={{ height: "20px" }}>
-                      <TableRow
-                        row={filteredRows[virtualRow.index]}
-                        index={virtualRow.index}
-                        columnWidths={columnWidths}
-                        columnAlignments={columnAlignments}
-                        columnVisibility={columnVisibility}
-                        clickedCell={clickedCell}
-                        handleCellClick={handleCellClick}
-                      />
-                    </tr>
-                  ))}
-                </>
-              ) : (
-                <tr>
-                  <td
-                    colSpan={headerTitles.length}
-                    className="text-center py-4"
-                  >
-                    No data available.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          {filteredRows.length > 0 ? (
+            virtualRows.map((virtualRow) => (
+              <div
+                key={virtualRow.key}
+                style={{
+                  position: "absolute",
+                  top: `${virtualRow.start}px`,
+                  left: 0,
+                  width: "100%",
+                  height: `${virtualRow.size}px`,
+                }}
+              >
+                <TableRow
+                  row={filteredRows[virtualRow.index]}
+                  index={virtualRow.index}
+                  columnWidths={columnWidths}
+                  columnAlignments={columnAlignments}
+                  columnVisibility={columnVisibility}
+                  clickedCell={clickedCell}
+                  handleCellClick={handleCellClick}
+                />
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-4 text-gray-500">
+              No data available.
+            </div>
+          )}
         </div>
       </div>
     </>
