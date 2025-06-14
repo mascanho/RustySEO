@@ -212,7 +212,7 @@ const TableRow = ({
               overflow: "hidden",
               whiteSpace: "nowrap",
               minWidth: columnWidths[cellIndex],
-              height: "10px",
+              height: "auto",
               backgroundColor:
                 clickedCell.row === index ? "#2B6CC4" : "transparent",
               color: clickedCell.row === index ? "white" : "inherit",
@@ -274,8 +274,8 @@ const ColumnPicker = ({
 const TableCrawl = ({
   tabName,
   rows,
-  rowHeight = 10,
-  overscan = 30,
+  rowHeight = 3,
+  overscan = 20,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
   const [columnAlignments, setColumnAlignments] = useState(
@@ -520,7 +520,7 @@ const TableCrawl = ({
   // TODO: NEW CONFIGS HERE - CHECK IF THE CONTAINER HEIGHT INFLUENCES OR NOT
   // Then in your virtualizer config:
   const rowVirtualizer = useVirtualizer({
-    count: filteredRows?.length,
+    count: rows?.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
     overscan,
@@ -643,7 +643,7 @@ const TableCrawl = ({
       </div>
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-1.8rem)] overflow-auto relative"
+        className="w-full h-[calc(100%-1.5rem)] overflow-auto relative"
       >
         <table className="w-full text-xs border-collapse domainCrawlParent h-10">
           <TableHeader
@@ -658,7 +658,7 @@ const TableCrawl = ({
             {rows.length > 0 ? (
               <>
                 {virtualRows.map((virtualRow) => (
-                  <tr key={virtualRow.key} style={{ height: "10px" }}>
+                  <tr key={virtualRow.key} style={{ height: "5px" }}>
                     <TableRow
                       row={filteredRows[virtualRow.index]}
                       index={virtualRow.index}
