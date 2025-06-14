@@ -275,8 +275,8 @@ const ColumnPicker = ({
 const TableCrawl = ({
   tabName,
   rows,
-  rowHeight = 15,
-  overscan = 35,
+  rowHeight = 5,
+  overscan = 10,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
   const [columnAlignments, setColumnAlignments] = useState(
@@ -524,7 +524,7 @@ const TableCrawl = ({
     count: rows?.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
-    overscan,
+    overscan: 25,
     getItemKey: (index) => filteredRows[index]?.url || index,
     paddingStart: 0,
     paddingEnd: 0,
@@ -610,14 +610,16 @@ const TableCrawl = ({
   const virtualRows = rowVirtualizer.getVirtualItems();
 
   useEffect(() => {
-    console.log("Virtualizer debug:", {
-      totalSize: rowVirtualizer.getTotalSize(),
-      virtualItems: rowVirtualizer.getVirtualItems(),
-      scrollElement: parentRef.current,
-      measurements: rowVirtualizer.measurementsCache,
-      filteredRowsCount: filteredRows?.length,
-    });
-  }, [rowVirtualizer, filteredRows]);
+  console.log('Virtualizer debug:', {
+    totalSize: rowVirtualizer.getTotalSize(),
+    virtualItems: rowVirtualizer.getVirtualItems(),
+    scrollElement: parentRef.current,
+    measurements: rowVirtualizer.measurementsCache,
+    filteredRowsCount: filteredRows?.length
+  });
+
+  
+}, [rowVirtualizer, filteredRows]);
 
   return (
     <>
@@ -646,41 +648,50 @@ const TableCrawl = ({
         ref={parentRef}
         className="w-full h-[calc(100%-1.4rem)] overflow-auto relative"
       >
-        <table className="w-full text-xs border-collapse domainCrawlParent h-10">
-          <TableHeader
-            headers={headerTitles}
-            columnWidths={columnWidths}
-            columnAlignments={columnAlignments}
-            onResize={handleMouseDown}
-            onAlignToggle={toggleColumnAlignment}
-            columnVisibility={columnVisibility}
-          />
-          <tbody className="not-selectable">
-            {rows.length > 0 ? (
-              <>
-                {virtualRows.map((virtualRow) => (
-                  <tr key={virtualRow.key} style={{ height: "20px" }}>
-                    <TableRow
-                      row={filteredRows[virtualRow.index]}
-                      index={virtualRow.index}
-                      columnWidths={columnWidths}
-                      columnAlignments={columnAlignments}
-                      columnVisibility={columnVisibility}
-                      clickedCell={clickedCell}
-                      handleCellClick={handleCellClick}
-                    />
-                  </tr>
-                ))}
-              </>
-            ) : (
-              <tr>
-                <td colSpan={headerTitles.length} className="text-center py-4">
-                  No data available.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        <div
+          ref={tableContainerRef}
+          style={{ height: `${rowVirtualizer.getTotalSize()}px` }}
+          className="domainCrawlParent sticky top-0"
+        >
+          <table className="w-full text-xs border-collapse domainCrawlParent h-10">
+            <TableHeader
+              headers={headerTitles}
+              columnWidths={columnWidths}
+              columnAlignments={columnAlignments}
+              onResize={handleMouseDown}
+              onAlignToggle={toggleColumnAlignment}
+              columnVisibility={columnVisibility}
+            />
+            <tbody className="not-selectable">
+              {rows.length > 0 ? (
+                <>
+                  {virtualRows.map((virtualRow) => (
+                    <tr key={virtualRow.key} style={{ height: "20px" }}>
+                      <TableRow
+                        row={filteredRows[virtualRow.index]}
+                        index={virtualRow.index}
+                        columnWidths={columnWidths}
+                        columnAlignments={columnAlignments}
+                        columnVisibility={columnVisibility}
+                        clickedCell={clickedCell}
+                        handleCellClick={handleCellClick}
+                      />
+                    </tr>
+                  ))}
+                </>
+              ) : (
+                <tr>
+                  <td
+                    colSpan={headerTitles.length}
+                    className="text-center py-4"
+                  >
+                    No data available.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </>
   );
