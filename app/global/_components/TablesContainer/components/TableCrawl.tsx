@@ -662,6 +662,9 @@ const TableCrawl = ({
                   left: 0,
                   width: "100%",
                   height: `${virtualRow.size}px`,
+
+                  backgroundColor:
+                    virtualRow.index % 2 === 1 ? "#f5f5f5" : "transparent", // Zebra
                 }}
               >
                 <TableRow
