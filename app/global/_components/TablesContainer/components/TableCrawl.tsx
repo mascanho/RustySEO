@@ -239,15 +239,8 @@ const TableRow = ({
       style={{
         display: "grid",
         gridTemplateColumns: visibleWidths.join(" "),
-        // height: "30px", This was the default, change it back if it starts playing up
         height: "100%",
         alignItems: "center",
-        backgroundColor:
-          clickedCell.row === index
-            ? "#2B6CC4"
-            : index % 2 === 0
-              ? "transparent"
-              : "#f5f5f5", // Light gray for odd rows
         color: clickedCell.row === index ? "white" : "inherit",
       }}
       className="dark:text-white/50 cursor-pointer not-selectable"
@@ -276,7 +269,13 @@ const TableRow = ({
               display: "flex",
               alignItems: "center",
             }}
-            className="dark:text-white text-xs dark:border dark:border-brand-dark border"
+            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${
+              clickedCell.row === index
+                ? "bg-blue-600"
+                : index % 2 === 0
+                  ? "bg-white dark:bg-brand-darker"
+                  : "bg-gray-50 dark:bg-brand-dark/30"
+            }`}
           >
             <ContextTableMenu data={cell}>
               <TruncatedCell text={cell?.toString()} width="100%" />
@@ -662,10 +661,8 @@ const TableCrawl = ({
                   left: 0,
                   width: "100%",
                   height: `${virtualRow.size}px`,
-
-                  backgroundColor:
-                    virtualRow.index % 2 === 1 ? "#f5f5f5" : "transparent", // Zebra
                 }}
+                className=""
               >
                 <TableRow
                   row={filteredRows[virtualRow.index]}
