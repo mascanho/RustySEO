@@ -146,8 +146,10 @@ const TableHeader = ({
       style={{
         display: "grid",
         gridTemplateColumns: visibleWidths.join(" "),
-        height: "40px",
+        height: "30px",
         alignItems: "center",
+        fontSize: "12px",
+        width: "100%",
       }}
     >
       {visibleHeaders.map((header, visibleIndex) => {
@@ -163,18 +165,17 @@ const TableHeader = ({
             key={header}
             style={{
               position: "relative",
-              border: "1px solid #ddd",
+              // border: "1px solid #ddd",
               padding: "8px",
               userSelect: "none",
               textAlign: visibleAlignments[visibleIndex] as any,
-              backgroundColor: "var(--background, white)",
-              height: "100%",
+              height: "30px",
               display: "flex",
               alignItems: "center",
               fontWeight: "bold",
             }}
             onClick={() => onAlignToggle(originalIndex)}
-            className="dark:text-white"
+            className="dark:text-white dark:bg-brand-darker dark:border-brand-dark dark:border bg-white shadow"
           >
             {header}
             <ResizableDivider onMouseDown={(e) => onResize(originalIndex, e)} />
@@ -238,9 +239,15 @@ const TableRow = ({
       style={{
         display: "grid",
         gridTemplateColumns: visibleWidths.join(" "),
-        height: "30px",
+        // height: "30px", This was the default, change it back if it starts playing up
+        height: "100%",
         alignItems: "center",
-        backgroundColor: clickedCell.row === index ? "#2B6CC4" : "transparent",
+        backgroundColor:
+          clickedCell.row === index
+            ? "#2B6CC4"
+            : index % 2 === 0
+              ? "transparent"
+              : "#f5f5f5", // Light gray for odd rows
         color: clickedCell.row === index ? "white" : "inherit",
       }}
       className="dark:text-white/50 cursor-pointer not-selectable"
@@ -260,7 +267,7 @@ const TableRow = ({
               handleCellClick(index, originalIndex, cell.toString(), row)
             }
             style={{
-              border: "1px solid #ddd",
+              // border: "1px solid #ddd",
               padding: "6px 8px",
               textAlign: visibleAlignments[visibleIndex] as any,
               overflow: "hidden",
@@ -269,7 +276,7 @@ const TableRow = ({
               display: "flex",
               alignItems: "center",
             }}
-            className="dark:text-white text-xs"
+            className="dark:text-white text-xs dark:border dark:border-brand-dark border"
           >
             <ContextTableMenu data={cell}>
               <TruncatedCell text={cell?.toString()} width="100%" />
@@ -323,7 +330,7 @@ const ColumnPicker = ({
 const TableCrawl = ({
   tabName,
   rows,
-  rowHeight = 35,
+  rowHeight = 25,
   overscan = 10,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
@@ -623,7 +630,7 @@ const TableCrawl = ({
 
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-1.4rem)] overflow-auto relative"
+        className="w-full h-[calc(100%-1.7rem)] overflow-auto relative"
       >
         {/* Fixed Header */}
         <div className="sticky top-0 z-10">
