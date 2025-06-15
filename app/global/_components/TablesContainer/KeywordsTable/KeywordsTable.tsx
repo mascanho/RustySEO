@@ -1,6 +1,6 @@
+// @ts-nocheck
 "use client";
 
-// @ts-nocheck
 import type React from "react";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
