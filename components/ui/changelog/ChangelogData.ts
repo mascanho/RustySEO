@@ -1,8 +1,17 @@
 export const changelogData = [
   {
+    version: "0.2.6",
+    date: "2025-06-15",
+    type: "fix",
+    changes: [
+      "Table rows not rendering correctly",
+      "Better status code colouring",
+    ],
+  },
+  {
     version: "0.2.5",
     date: "2025-06-01",
-    type: "fix",
+    type: "update",
     changes: [
       "Performance Improvements",
       "Inlinks & Outlinks improvements",

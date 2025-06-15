@@ -1,11 +1,8 @@
 // @ts-nocheck
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  useMemo,
-} from "react";
+"use client";
+
+import type React from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import debounce from "lodash/debounce";
 import {
@@ -33,7 +30,7 @@ interface TableCrawlProps {
 }
 
 interface TruncatedCellProps {
-  text: string;
+  text: string | React.ReactNode;
   maxLength?: number;
   width?: string;
 }
@@ -75,6 +72,7 @@ const TruncatedCell = ({
 }: TruncatedCellProps) => {
   const truncatedText = useMemo(() => {
     if (!text) return "";
+    if (typeof text !== "string") return text;
     return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
   }, [text, maxLength]);
 
@@ -138,7 +136,8 @@ const TableHeader = ({
                   padding: "8px",
                   userSelect: "none",
                   minWidth: columnWidths[index],
-                  textAlign: columnAlignments[index],
+                  maxWidth: columnWidths[index],
+                  textAlign: columnAlignments[index] as any,
                   backgroundColor: "var(--background, white)",
                 }}
                 onClick={() => onAlignToggle(index)}
@@ -171,6 +170,7 @@ const TableRow = ({
   clickedRow,
   handleRowClick,
   keywordColumns,
+  rowHeight,
 }: TableRowProps) => {
   const isRowClicked = clickedRow === index;
 
@@ -183,37 +183,46 @@ const TableRow = ({
             ? "bg-[#2B6CC4] text-black dark:text-white" // Blue background for clicked row
             : " dark:text-white"
         }`}
+        style={{ height: `${rowHeight}px` }}
       >
         {/* ID Column */}
-        <td
-          key={`cell-${index}-id`}
-          style={{
-            width: columnWidths[0],
-            minWidth: columnWidths[0],
-          }}
-          className={`p-2 pl-5 border border-gray-300 dark:border-gray-700 ${
-            columnAlignments[0] === "center" ? "text-center" : "text-left"
-          }`}
-        >
-          <TruncatedCell
-            text={(index + 1).toString()}
-            width={columnWidths[0]}
-          />
-        </td>
+        {columnVisibility[0] && (
+          <td
+            key={`cell-${index}-id`}
+            style={{
+              width: columnWidths[0],
+              minWidth: columnWidths[0],
+              maxWidth: columnWidths[0],
+              height: rowHeight,
+            }}
+            className={`p-2 pl-5 border border-gray-300 dark:border-gray-700 ${
+              columnAlignments[0] === "center" ? "text-center" : "text-left"
+            }`}
+          >
+            <TruncatedCell
+              text={(index + 1).toString()}
+              width={columnWidths[0]}
+            />
+          </td>
+        )}
 
         {/* URL Column */}
-        <td
-          key={`cell-${index}-url`}
-          style={{
-            width: columnWidths[1],
-            minWidth: columnWidths[1],
-          }}
-          className={`p-2 pl-5 border border-gray-300 dark:border-gray-700 ${
-            columnAlignments[1] === "center" ? "text-center" : "text-left"
-          }`}
-        >
-          <TruncatedCell text={row.url || ""} width={columnWidths[1]} />
-        </td>
+        {columnVisibility[1] && (
+          <td
+            key={`cell-${index}-url`}
+            style={{
+              width: columnWidths[1],
+              minWidth: columnWidths[1],
+              maxWidth: columnWidths[1],
+              height: rowHeight,
+            }}
+            className={`p-1 pl-5 border border-gray-300 dark:border-gray-700 ${
+              columnAlignments[1] === "center" ? "text-center" : "text-left"
+            }`}
+          >
+            <TruncatedCell text={row.url || ""} width={columnWidths[1]} />
+          </td>
+        )}
 
         {/* Keyword Columns */}
         {keywordColumns.map((_, cellIndex) => {
@@ -227,8 +236,10 @@ const TableRow = ({
               style={{
                 width: columnWidths[cellIndex + 2],
                 minWidth: columnWidths[cellIndex + 2],
+                maxWidth: columnWidths[cellIndex + 2],
+                height: rowHeight,
               }}
-              className={`p-2 border border-gray-300 dark:border-gray-700 ${
+              className={` border border-gray-300 dark:border-gray-700 ${
                 columnAlignments[cellIndex + 2] === "center"
                   ? "text-center"
                   : "text-left"
@@ -244,6 +255,7 @@ const TableRow = ({
                           ? "text-brand-bright" // Gold color for clicked row
                           : "text-brand-bright" // Orange color for non-clicked row
                       }
+                      style={{ height: "100px" }}
                     >
                       ({count})
                     </span>
@@ -314,7 +326,7 @@ const ColumnPicker = ({
 
 const KeywordsTable = ({
   rows,
-  rowHeight = 41,
+  rowHeight = 20,
   overscan = 18,
   tabName,
 }: TableCrawlProps) => {
@@ -324,6 +336,7 @@ const KeywordsTable = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [columnVisibility, setColumnVisibility] = useState<boolean[]>([]);
   const { isGeneratingExcel, setIsGeneratingExcel } = useGlobalCrawlStore();
+  const startXRef = useRef(0);
 
   // Determine the maximum number of keywords across all URLs
   const maxKeywords = useMemo(() => {
@@ -338,8 +351,8 @@ const KeywordsTable = ({
   // Initialize column widths and alignments
   useEffect(() => {
     const initialWidths = [
-      "50px",
-      "200px",
+      "60px",
+      "300px",
       ...keywordColumns.map(() => "150px"),
     ];
     const initialAlignments = [
@@ -371,7 +384,7 @@ const KeywordsTable = ({
       const delta = event.clientX - startXRef.current;
       setColumnWidths((prevWidths) => {
         const newWidths = [...prevWidths];
-        const currentWidth = parseInt(newWidths[isResizing]);
+        const currentWidth = Number.parseInt(newWidths[isResizing]);
         newWidths[isResizing] = `${Math.max(50, currentWidth + delta)}px`;
         return newWidths;
       });
@@ -403,9 +416,9 @@ const KeywordsTable = ({
       columnWidths.reduce((acc, width) => {
         if (typeof width === "string") {
           if (width.endsWith("px")) {
-            return acc + parseFloat(width);
+            return acc + Number.parseFloat(width);
           } else if (width.endsWith("rem")) {
-            return acc + parseFloat(width) * 16;
+            return acc + Number.parseFloat(width) * 16;
           }
         }
         return acc + 100;
@@ -457,6 +470,9 @@ const KeywordsTable = ({
       : rows;
   }, [rows, searchTerm]);
 
+  const parentRef = useRef<HTMLDivElement>(null);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+
   // Initialize virtualizer
   const rowVirtualizer = useVirtualizer({
     count: filteredRows.length,
@@ -479,8 +495,6 @@ const KeywordsTable = ({
   }, [debouncedSearch]);
 
   const virtualRows = rowVirtualizer.getVirtualItems();
-  const parentRef = useRef<HTMLDivElement>(null);
-  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Define the handleDownload function
   const handleDownload = async () => {
@@ -527,7 +541,7 @@ const KeywordsTable = ({
 
   return (
     <>
-      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1">
+      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1 z-20">
         <input
           type="text"
           placeholder="Search..."
@@ -535,7 +549,7 @@ const KeywordsTable = ({
           className="w-full p-1 pl-2 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
         />
         <DownloadButton
-          download={handleDownload} // Pass the handleDownload function
+          download={handleDownload}
           loading={isGeneratingExcel}
           setLoading={setIsGeneratingExcel}
         />
@@ -543,22 +557,27 @@ const KeywordsTable = ({
           <ColumnPicker
             columnVisibility={columnVisibility}
             setColumnVisibility={setColumnVisibility}
-            headerTitles={["ID", "URL", ...keywordColumns]} // Add keyword columns to headers
+            headerTitles={["ID", "URL", ...keywordColumns]}
           />
         </div>
       </div>
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-1.9rem)] overflow-scroll relative"
+        className="w-full h-[calc(100%-1.9rem)] overflow-auto relative"
       >
         <div
-          ref={tableContainerRef}
-          style={{ minWidth: `${totalWidth}px` }}
-          className="domainCrawlParent sticky top-0"
+          style={{
+            minWidth: `${totalWidth}px`,
+            height: `${rowVirtualizer.getTotalSize() + 41}px`, // +41 for header height
+            position: "relative",
+          }}
         >
-          <table className="w-full text-xs border-collapse domainCrawlParent h-full">
+          <table
+            className="w-full text-xs border-collapse"
+            style={{ minWidth: `${totalWidth}px`, tableLayout: "fixed" }}
+          >
             <TableHeader
-              headers={["ID", "URL", ...keywordColumns]} // Add keyword columns to headers
+              headers={["ID", "URL", ...keywordColumns]}
               columnWidths={columnWidths}
               columnAlignments={columnAlignments}
               onResize={handleMouseDown}
@@ -568,11 +587,17 @@ const KeywordsTable = ({
             <tbody>
               {filteredRows.length > 0 ? (
                 <>
-                  <tr
-                    style={{
-                      height: `${rowVirtualizer.getVirtualItems()[0]?.start || 0}px`,
-                    }}
-                  />
+                  {/* Spacer for virtual start */}
+                  {virtualRows[0] && (
+                    <tr style={{ height: `${virtualRows[0].start}px` }}>
+                      <td
+                        colSpan={keywordColumns.length + 2}
+                        style={{ padding: 0, border: "none" }}
+                      />
+                    </tr>
+                  )}
+
+                  {/* Virtual rows */}
                   {virtualRows.map((virtualRow) => (
                     <TableRow
                       key={virtualRow.key}
@@ -584,18 +609,28 @@ const KeywordsTable = ({
                       clickedRow={clickedRow}
                       handleRowClick={handleRowClick}
                       keywordColumns={keywordColumns}
+                      rowHeight={rowHeight}
                     />
                   ))}
-                  <tr
-                    style={{
-                      height: `${Math.max(0, rowVirtualizer.getTotalSize() - (virtualRows[virtualRows.length - 1]?.end || 0))}px`,
-                    }}
-                  />
+
+                  {/* Spacer for virtual end */}
+                  {virtualRows.length > 0 && (
+                    <tr
+                      style={{
+                        height: `${Math.max(0, rowVirtualizer.getTotalSize() - (virtualRows[virtualRows.length - 1]?.end || 0))}px`,
+                      }}
+                    >
+                      <td
+                        colSpan={keywordColumns.length + 2}
+                        style={{ padding: 0, border: "none" }}
+                      />
+                    </tr>
+                  )}
                 </>
               ) : (
                 <tr>
                   <td
-                    colSpan={keywordColumns.length + 2} // +2 for ID and URL columns
+                    colSpan={keywordColumns.length + 2}
                     className="text-center py-4"
                   >
                     No data available.
