@@ -116,7 +116,7 @@ export default function SystemInfo() {
   }
 
   return (
-    <Card className="w-[320px] h-[510px] overflow-hidden border-0 m-0 p-0 bg-brand-dark">
+    <Card className="w-[320px] h-[510px] overflow-hidden border-0 m-0 p-0 dark:bg-brand-dark">
       <ScrollArea className="p-3 h-96 pb-10 pt-3 pr-6 dark:bg-brand-darker">
         <div className="mb-4">
           <div className="font-bold text-sm">

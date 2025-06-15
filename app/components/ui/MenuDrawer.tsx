@@ -163,6 +163,10 @@ function MenuDrawer() {
       if (event.ctrlKey && event.key === "k") {
         router.push("/serverlogs");
       }
+
+      if (event.ctrlKey && event.key === "g") {
+        router.push("/ppc");
+      }
     };
 
     console.log("Current onboarding completed state:", completed);
