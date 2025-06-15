@@ -1,11 +1,8 @@
+"use client";
+
 // @ts-nocheck
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  useMemo,
-} from "react";
+import type React from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import debounce from "lodash/debounce";
 import {
@@ -37,7 +34,9 @@ interface TableCrawlProps {
     word_count?: number;
     mobile?: boolean;
     meta_robots?: { meta_robots: string[] };
+    psi_results?: any;
   }>;
+  tabName?: string;
   rowHeight?: number;
   overscan?: number;
 }
@@ -68,7 +67,12 @@ interface TableRowProps {
   columnAlignments: string[];
   columnVisibility: boolean[];
   clickedCell: { row: number | null; cell: number | null };
-  handleCellClick: (rowIndex: number, cellIndex: number) => void;
+  handleCellClick: (
+    rowIndex: number,
+    cellIndex: number,
+    cellContent: string,
+    row: any,
+  ) => void;
 }
 
 interface ColumnPickerProps {
@@ -142,6 +146,7 @@ const TableHeader = ({
                 minWidth: columnWidths[index],
                 textAlign: columnAlignments[index],
                 backgroundColor: "var(--background, white)",
+                height: "32px",
               }}
               onClick={() => onAlignToggle(index)}
             >
@@ -185,31 +190,31 @@ const TableRow = ({
       row?.psi_results?.Ok?.[1]?.audits?.["first-contentful-paint"]?.score ??
         "n/a",
 
-      // Interactive
       row?.psi_results?.Ok?.[0]?.audits?.["interactive"]?.score ?? "n/a",
       row?.psi_results?.Ok?.[1]?.audits?.["interactive"]?.score ?? "n/a",
 
-      // Redirects
       row?.psi_results?.Ok?.[0]?.audits?.["redirects"]?.score ?? "n/a",
 
-      // Server Response Time
       row?.psi_results?.Ok?.[0]?.audits?.["server-response-time"]?.numericValue
         ? `${row?.psi_results?.Ok?.[0]?.audits?.["server-response-time"]?.numericValue} ms`
         : "n/a",
 
-      //  Total Blocking Time
       row?.psi_results?.Ok?.[0]?.audits?.["total-blocking-time"]?.numericValue
         ? `${row?.psi_results?.Ok?.[0]?.audits?.["total-blocking-time"]?.numericValue.toFixed(0)} ms`
         : "n/a",
 
-      // dom size
       row?.psi_results?.Ok?.[0]?.audits?.["dom-size"]?.numericValue ?? "n/a",
     ],
     [row, index],
   );
 
+  const isOddRow = index % 2 === 1;
+  const zebraBackground = isOddRow
+    ? "var(--zebra-odd, #f8f9fa)"
+    : "var(--zebra-even, transparent)";
+
   return (
-    <>
+    <tr style={{ height: "25px", backgroundColor: zebraBackground }}>
       {rowData.map((cell, cellIndex) =>
         columnVisibility[cellIndex] ? (
           <td
@@ -225,8 +230,9 @@ const TableRow = ({
               overflow: "hidden",
               whiteSpace: "nowrap",
               minWidth: columnWidths[cellIndex],
+              height: "25px",
               backgroundColor:
-                clickedCell.row === index ? "#2B6CC4" : "transparent",
+                clickedCell.row === index ? "#2B6CC4" : "inherit",
               color: clickedCell.row === index ? "white" : "inherit",
             }}
             className="dark:text-white/50 cursor-pointer"
@@ -238,7 +244,7 @@ const TableRow = ({
           </td>
         ) : null,
       )}
-    </>
+    </tr>
   );
 };
 
@@ -284,7 +290,7 @@ const ColumnPicker = ({
 const CoreWebVitalsTable = ({
   tabName,
   rows,
-  rowHeight = 41,
+  rowHeight = 25,
   overscan = 18,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
@@ -303,8 +309,6 @@ const CoreWebVitalsTable = ({
     if (!rows.length) {
       toast.error("No data to download");
     }
-
-    // TODO: Implement Excel export functionality
 
     if (rows.length > 0) {
       toast.info("Getting your data ready...");
@@ -361,6 +365,7 @@ const CoreWebVitalsTable = ({
     rowIndex: number,
     cellIndex: number,
     cellContent: string,
+    row: any,
   ) => {
     setClickedCell((prevClickedCell) => {
       if (
@@ -404,8 +409,9 @@ const CoreWebVitalsTable = ({
   const rowVirtualizer = useVirtualizer({
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: useCallback(() => rowHeight, [rowHeight]),
-    overscan,
+    estimateSize: useCallback(() => 25, []), // Fixed 25px height
+    overscan: 5, // Reduced overscan for better performance
+    getItemKey: useCallback((index) => `row-${index}`, []),
   });
 
   const debouncedSearch = useMemo(
@@ -435,7 +441,7 @@ const CoreWebVitalsTable = ({
       const delta = event.clientX - startXRef.current;
       setColumnWidths((prevWidths) => {
         const newWidths = [...prevWidths];
-        const currentWidth = parseInt(newWidths[isResizing]);
+        const currentWidth = Number.parseInt(newWidths[isResizing]);
         newWidths[isResizing] = `${Math.max(50, currentWidth + delta)}px`;
         return newWidths;
       });
@@ -465,9 +471,9 @@ const CoreWebVitalsTable = ({
       columnWidths.reduce((acc, width) => {
         if (typeof width === "string") {
           if (width.endsWith("px")) {
-            return acc + parseFloat(width);
+            return acc + Number.parseFloat(width);
           } else if (width.endsWith("rem")) {
-            return acc + parseFloat(width) * 16;
+            return acc + Number.parseFloat(width) * 16;
           }
         }
         return acc + 100;
@@ -488,6 +494,17 @@ const CoreWebVitalsTable = ({
 
   return (
     <>
+      <style jsx>{`
+        :root {
+          --zebra-odd: #f8f9fa;
+          --zebra-even: transparent;
+        }
+
+        .dark {
+          --zebra-odd: rgba(55, 65, 81, 0.3);
+          --zebra-even: transparent;
+        }
+      `}</style>
       <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1">
         <input
           type="text"
@@ -530,29 +547,55 @@ const CoreWebVitalsTable = ({
             <tbody>
               {filteredRows.length > 0 ? (
                 <>
-                  <tr
-                    style={{
-                      height: `${rowVirtualizer.getVirtualItems()[0]?.start || 0}px`,
-                    }}
-                  />
-                  {virtualRows.map((virtualRow) => (
-                    <tr key={virtualRow.key}>
-                      <TableRow
-                        row={filteredRows[virtualRow.index]}
-                        index={virtualRow.index}
-                        columnWidths={columnWidths}
-                        columnAlignments={columnAlignments}
-                        columnVisibility={columnVisibility}
-                        clickedCell={clickedCell}
-                        handleCellClick={handleCellClick}
+                  {/* Top spacer */}
+                  {virtualRows.length > 0 && virtualRows[0].start > 0 && (
+                    <tr>
+                      <td
+                        colSpan={
+                          headerTitles.filter(
+                            (_, index) => columnVisibility[index],
+                          ).length
+                        }
+                        style={{
+                          height: `${virtualRows[0].start}px`,
+                          padding: 0,
+                          border: "none",
+                        }}
                       />
                     </tr>
+                  )}
+
+                  {/* Render all virtual rows */}
+                  {virtualRows.map((virtualRow) => (
+                    <TableRow
+                      key={virtualRow.key}
+                      row={filteredRows[virtualRow.index]}
+                      index={virtualRow.index}
+                      columnWidths={columnWidths}
+                      columnAlignments={columnAlignments}
+                      columnVisibility={columnVisibility}
+                      clickedCell={clickedCell}
+                      handleCellClick={handleCellClick}
+                    />
                   ))}
-                  <tr
-                    style={{
-                      height: `${Math.max(0, rowVirtualizer.getTotalSize() - (virtualRows[virtualRows.length - 1]?.end || 0))}px`,
-                    }}
-                  />
+
+                  {/* Bottom spacer */}
+                  {virtualRows.length > 0 && (
+                    <tr>
+                      <td
+                        colSpan={
+                          headerTitles.filter(
+                            (_, index) => columnVisibility[index],
+                          ).length
+                        }
+                        style={{
+                          height: `${Math.max(0, rowVirtualizer.getTotalSize() - (virtualRows[virtualRows.length - 1]?.end || 0))}px`,
+                          padding: 0,
+                          border: "none",
+                        }}
+                      />
+                    </tr>
+                  )}
                 </>
               ) : (
                 <tr>

@@ -244,7 +244,14 @@ const TableRow = ({
 
   return useMemo(
     () => (
-      <tr style={{ ...style, height: `${rowHeight}px`, position: "relative" }}>
+      <tr
+        style={{
+          ...style,
+          height: `${rowHeight}px`,
+          position: "relative",
+        }}
+        className={index % 2 === 1 ? "bg-gray-100 dark:bg-gray-800/30" : ""}
+      >
         {rowData.map((cell, cellIndex) =>
           columnVisibility[cellIndex] ? (
             <td
@@ -260,16 +267,14 @@ const TableRow = ({
                 overflow: "hidden",
                 whiteSpace: "nowrap",
                 minWidth: columnWidths[cellIndex],
-                backgroundColor:
-                  clickedCell.row === index && clickedCell.cell === cellIndex
-                    ? "#2B6CC4"
-                    : "transparent",
-                color:
-                  clickedCell.row === index && clickedCell.cell === cellIndex
-                    ? "white"
-                    : "inherit",
               }}
-              className="dark:text-white/50 cursor-pointer"
+              className={`dark:text-white cursor-pointer ${
+                clickedCell.row === index && clickedCell.cell === cellIndex
+                  ? "bg-blue-600 text-white"
+                  : index % 2 === 1
+                    ? "bg-gray-100 dark:bg-gray-800/30"
+                    : "bg-transparent"
+              }`}
             >
               <TruncatedCell
                 text={cell?.toString()}
@@ -340,7 +345,7 @@ const ColumnPicker = ({
 
 const LinksTable = ({
   rows,
-  rowHeight = 30,
+  rowHeight = 25, // Changed from 30 to 25
   overscan = 5,
   tabName,
 }: TableCrawlProps) => {
