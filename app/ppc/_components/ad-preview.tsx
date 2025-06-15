@@ -179,7 +179,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
 
   return (
     <div className="space-y-6 w-full">
-      <Card className="w-full flex-1 flex-col dark:bg-brand-darker dark:border-brand-dark h-[calc(100vh-60vh)] overflow-auto">
+      <Card className="w-full flex-1 flex-col dark:bg-brand-darker dark:border-brand-dark h-[calc(100vh-40vh)] overflow-auto">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Ad Preview</CardTitle>
           <div className="flex items-center gap-2">
@@ -402,7 +402,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
           <CardHeader>
             <CardTitle>Ad Details</CardTitle>
           </CardHeader>
-          <CardContent className="px-6  overflow-y-auto pb-10">
+          <CardContent className="px-6  overflow-y-auto pb-10 h-96 overflow-auto">
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-medium">Ad Type:</h3>

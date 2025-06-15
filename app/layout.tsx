@@ -84,7 +84,7 @@ export default function RootLayout({
           </section>
           <main className="mt-9   rounded-md  ">
             {children}
-            {pathname === "/ppc" ? "" : <Toaster />}
+            <Toaster />
           </main>
           <Footer />
         </MantineProvider>

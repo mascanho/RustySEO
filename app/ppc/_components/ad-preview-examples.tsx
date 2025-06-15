@@ -93,7 +93,7 @@ export function YoutubePreview({
   displayUrl,
 }: PreviewProps) {
   return (
-    <div className="border rounded-lg p-4 shadow-sm w-full mx-auto bg-gray-100 dark:bg-brand-darker dark:border-brand-dark">
+    <div className="border rounded-lg p-4 shadow-sm w-full max-w-[500px] mx-auto bg-gray-100 dark:bg-brand-darker dark:border-brand-dark">
       <div className="flex items-start gap-3">
         <div className="w-32 h-20 bg-gray-300 rounded flex items-center justify-center text-gray-500 text-xs">
           Video Thumbnail
