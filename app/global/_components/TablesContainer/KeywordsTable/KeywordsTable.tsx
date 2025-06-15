@@ -179,7 +179,7 @@ const TableRow = ({
   // Determine row background based on zebra striping and click state
   const getRowClassName = () => {
     if (isRowClicked) {
-      return "bg-[#2B6CC4] text-black dark:text-white"; // Blue background for clicked row
+      return "bg-brand-bright text-white text-black dark:text-white"; // Blue background for clicked row
     }
     if (isZebraRow) {
       return "bg-gray-50 dark:bg-gray-800/50 dark:text-white"; // Zebra striping for odd rows
@@ -203,7 +203,7 @@ const TableRow = ({
               minWidth: columnWidths[0],
               maxWidth: columnWidths[0],
             }}
-            className={`p-1 pl-3 border border-gray-300 dark:border-gray-700 ${
+            className={`not-selectable p-1 pl-3 border border-gray-300 dark:border-gray-700 ${
               columnAlignments[0] === "center" ? "text-center" : "text-left"
             }`}
           >
@@ -262,7 +262,7 @@ const TableRow = ({
                           : "text-brand-bright" // Orange color for non-clicked row
                       }
                     >
-                      ({count})
+                      <span className="text-blue-900">({count})</span>
                     </span>
                   </>
                 }
@@ -546,7 +546,7 @@ const KeywordsTable = ({
 
   return (
     <>
-      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1 z-20">
+      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1 z-20 not-selectable">
         <input
           type="text"
           placeholder="Search..."
@@ -568,7 +568,7 @@ const KeywordsTable = ({
       </div>
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-1.9rem)] overflow-auto relative"
+        className="w-full h-[calc(100%-1.9rem)] overflow-auto relative not-selectable"
       >
         <div
           style={{
