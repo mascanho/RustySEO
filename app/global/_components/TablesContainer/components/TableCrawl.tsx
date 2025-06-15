@@ -175,7 +175,7 @@ const TableHeader = ({
               fontWeight: "bold",
             }}
             onClick={() => onAlignToggle(originalIndex)}
-            className="dark:text-white dark:bg-brand-darker dark:border-brand-dark dark:border bg-white shadow"
+            className="dark:text-white dark:bg-brand-darker dark:border-brand-dark  bg-white shadow dark:border"
           >
             {header}
             <ResizableDivider onMouseDown={(e) => onResize(originalIndex, e)} />
