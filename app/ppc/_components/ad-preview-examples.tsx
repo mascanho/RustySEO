@@ -23,7 +23,7 @@ export function SearchPreview({
     .slice(0, 4);
 
   return (
-    <div className="border dark:border-brand-dark rounded-lg p-4 shadow-sm w-full mx-auto">
+    <div className="border dark:border-brand-dark rounded-lg p-4 shadow-sm w-full max-w-[700px] mx-auto overflow-scroll">
       <div className="flex items-center text-sm text-green-700 mb-1">
         <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded mr-2">
           Ad

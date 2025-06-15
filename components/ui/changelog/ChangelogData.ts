@@ -6,6 +6,7 @@ export const changelogData = [
     changes: [
       "Table rows not rendering correctly",
       "Better status code colouring",
+      "Fixed Google Ads Simulator ",
     ],
   },
   {
