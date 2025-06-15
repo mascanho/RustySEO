@@ -232,7 +232,7 @@ const TableRow = ({
 
   return useMemo(
     () => (
-      <tr style={{ height: `5px`, position: "relative" }}>
+      <tr style={{ height: `30px`, position: "relative" }}>
         {rowData.map((cell, cellIndex) =>
           columnVisibility[cellIndex] ? (
             <td
@@ -327,7 +327,7 @@ const ColumnPicker = ({
 
 const LinksTable = ({
   rows,
-  rowHeight = 41,
+  rowHeight = 3,
   overscan = 20,
   tabName,
 }: TableCrawlProps) => {
