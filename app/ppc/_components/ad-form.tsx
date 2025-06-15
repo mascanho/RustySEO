@@ -20,6 +20,7 @@ import { Plus, Trash, Eye } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { KeywordValidator } from "./keyword-validator";
 import { SitelinksEditor } from "./sitelinks-editor";
+import { toast } from "sonner";
 
 interface AdFormProps {
   ad: Ad;
@@ -147,6 +148,7 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
 
     // set the data into local storage
     localStorage.setItem("Ads", JSON.stringify(formData));
+    toast.success("Ad saved");
   };
 
   return (
@@ -409,7 +411,12 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
           <Eye className="h-4 w-4 mr-2" />
           Preview Ad
         </Button>
-        <Button onClick={handleSave}>Save Ad</Button>
+        <Button
+          className="dark:bg-brand-bright dark:text-white dark:border-brand-dark dark:hover:bg-brand-bright/80 active:scale-95 "
+          onClick={handleSave}
+        >
+          Save Ad
+        </Button>
       </div>
     </div>
   );

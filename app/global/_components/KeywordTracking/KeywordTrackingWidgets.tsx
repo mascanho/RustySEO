@@ -28,7 +28,7 @@ export function StatsWidgets() {
   // Use the hook directly to subscribe to state updates
   const { keywords } = useKeywordsStore();
 
-  console.log(keywords, "keywords from store");
+  // console.log(keywords, "keywords from store");
 
   // Calculate stats based on keywords from store
   const totalImpressions = keywords.reduce(

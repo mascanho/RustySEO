@@ -179,7 +179,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
 
   return (
     <div className="space-y-6 w-full">
-      <Card className="w-full flex-1 flex-col dark:bg-brand-darker dark:border-brand-dark">
+      <Card className="w-full flex-1 flex-col dark:bg-brand-darker dark:border-brand-dark h-[calc(100vh-40vh)] overflow-auto">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle>Ad Preview</CardTitle>
           <div className="flex items-center gap-2">
@@ -276,7 +276,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mt-4">
+              <div className="grid grid-cols-2 gap-4 mt-4 overflow-auto">
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-sm font-medium">Headlines</div>
@@ -323,7 +323,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
                       )}
                     </div>
                   </div>
-                  <div className="text-sm space-y-1">
+                  <div className="text-sm space-y-1 hidden">
                     {currentHeadlines.map((headline, i) => (
                       <div
                         key={i}
@@ -367,7 +367,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
                       </Button>
                     </div>
                   </div>
-                  <div className="text-sm">
+                  <div className="text-sm hidden">
                     {currentDescription ? (
                       <div className="p-2 bg-gray-50 dark:bg-brand-darker dark:border dark:border-brand-dark rounded">
                         {currentDescription}
@@ -402,7 +402,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
           <CardHeader>
             <CardTitle>Ad Details</CardTitle>
           </CardHeader>
-          <CardContent className="px-6">
+          <CardContent className="px-6  overflow-y-auto pb-10 h-96 overflow-auto">
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-medium">Ad Type:</h3>

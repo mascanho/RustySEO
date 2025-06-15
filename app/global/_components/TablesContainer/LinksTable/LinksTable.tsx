@@ -1,11 +1,8 @@
 // @ts-nocheck
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  useMemo,
-} from "react";
+"use client";
+
+import type React from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import debounce from "lodash/debounce";
 import {
@@ -21,10 +18,8 @@ import {
   initialColumnAlignments,
   headerTitles,
 } from "./tableLayout";
-import SelectFilter from "../components/SelectFilter";
 import { TbColumns3 } from "react-icons/tb";
 import DownloadButton from "./DownloadButton";
-import useFilterTableURL from "@/app/Hooks/useFilterTableUrl";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { toast } from "sonner";
 import { writeFile } from "@tauri-apps/plugin-fs";
@@ -83,12 +78,27 @@ interface TableRowProps {
   ) => void;
   rowHeight: number;
   onRowResize: (index: number, e: React.MouseEvent) => void;
+  style?: React.CSSProperties;
 }
 
 interface ColumnPickerProps {
   columnVisibility: boolean[];
   setColumnVisibility: (visibility: boolean[]) => void;
   headerTitles: string[];
+}
+
+function getStatusCodeColor(statusCode: number) {
+  if (statusCode >= 200 && statusCode < 300) {
+    return "green";
+  } else if (statusCode >= 300 && statusCode < 400) {
+    return "blue";
+  } else if (statusCode >= 400 && statusCode < 500) {
+    return "yellow";
+  } else if (statusCode >= 500 && statusCode < 600) {
+    return "red";
+  } else {
+    return;
+  }
 }
 
 const TruncatedCell = ({
@@ -109,6 +119,7 @@ const TruncatedCell = ({
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
+          color: getStatusCodeColor(text as any),
         }}
       >
         {truncatedText}
@@ -215,6 +226,7 @@ const TableRow = ({
   handleCellClick,
   rowHeight,
   onRowResize,
+  style,
 }: TableRowProps) => {
   const rowData = useMemo(
     () => [
@@ -232,7 +244,14 @@ const TableRow = ({
 
   return useMemo(
     () => (
-      <tr style={{ height: `5px`, position: "relative" }}>
+      <tr
+        style={{
+          ...style,
+          height: `${rowHeight}px`,
+          position: "relative",
+        }}
+        className={index % 2 === 1 ? "bg-gray-100 dark:bg-gray-800/30" : ""}
+      >
         {rowData.map((cell, cellIndex) =>
           columnVisibility[cellIndex] ? (
             <td
@@ -248,16 +267,14 @@ const TableRow = ({
                 overflow: "hidden",
                 whiteSpace: "nowrap",
                 minWidth: columnWidths[cellIndex],
-                backgroundColor:
-                  clickedCell.row === index && clickedCell.cell === cellIndex
-                    ? "#2B6CC4"
-                    : "transparent",
-                color:
-                  clickedCell.row === index && clickedCell.cell === cellIndex
-                    ? "white"
-                    : "inherit",
               }}
-              className="dark:text-white/50 cursor-pointer"
+              className={`dark:text-white cursor-pointer ${
+                clickedCell.row === index && clickedCell.cell === cellIndex
+                  ? "bg-blue-600 text-white"
+                  : index % 2 === 1
+                    ? "bg-gray-100 dark:bg-gray-800/30"
+                    : "bg-transparent"
+              }`}
             >
               <TruncatedCell
                 text={cell?.toString()}
@@ -279,6 +296,7 @@ const TableRow = ({
       handleCellClick,
       rowHeight,
       onRowResize,
+      style,
     ],
   );
 };
@@ -327,8 +345,8 @@ const ColumnPicker = ({
 
 const LinksTable = ({
   rows,
-  rowHeight = 41,
-  overscan = 20,
+  rowHeight = 25, // Changed from 30 to 25
+  overscan = 5,
   tabName,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
@@ -424,11 +442,9 @@ const LinksTable = ({
       const delta = event.clientX - startXRef.current;
       setColumnWidths((prevWidths) => {
         const newWidths = [...prevWidths];
-        const currentWidth = parseInt(newWidths[isResizingColumn]);
-        newWidths[isResizingColumn] = `${Math.max(
-          isResizingColumn === 0 ? 40 : 50,
-          currentWidth + delta,
-        )}px`;
+        const currentWidth = Number.parseInt(newWidths[isResizingColumn]);
+        newWidths[isResizingColumn] =
+          `${Math.max(isResizingColumn === 0 ? 40 : 50, currentWidth + delta)}px`;
         return newWidths;
       });
       startXRef.current = event.clientX;
@@ -503,9 +519,9 @@ const LinksTable = ({
       columnWidths.reduce((acc, width, index) => {
         if (typeof width === "string") {
           if (width.endsWith("px")) {
-            return acc + parseFloat(width);
+            return acc + Number.parseFloat(width);
           } else if (width.endsWith("rem")) {
-            return acc + parseFloat(width) * 16;
+            return acc + Number.parseFloat(width) * 16;
           }
         }
         return acc + (index === 0 ? 40 : 100);
@@ -568,9 +584,22 @@ const LinksTable = ({
       : rows;
   }, [rows, searchTerm]);
 
-  // Initialize virtualizer
+  // Filter table based on status code
+  const filteredTable = useMemo(() => {
+    if (!rows || !Array.isArray(filteredRows)) return [];
+
+    return filteredRows.filter((row) => {
+      if (!row || typeof row !== "object") return false;
+      return statusFilter.length === 0 || statusFilter.includes(row.status);
+    });
+  }, [filteredRows, statusFilter]);
+
+  const parentRef = useRef<HTMLDivElement>(null);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+
+  // Initialize virtualizer with proper configuration
   const rowVirtualizer = useVirtualizer({
-    count: filteredRows.length,
+    count: filteredTable.length,
     getScrollElement: () => parentRef.current,
     estimateSize: useCallback(
       (index: number) => rowHeights[index] || rowHeight,
@@ -592,19 +621,7 @@ const LinksTable = ({
     };
   }, [debouncedSearch]);
 
-  // Filter table based on status code
-  const filteredTable = useMemo(() => {
-    if (!rows || !Array.isArray(filteredRows)) return [];
-
-    return filteredRows.filter((row) => {
-      if (!row || typeof row !== "object") return false;
-      return statusFilter.length === 0 || statusFilter.includes(row.status);
-    });
-  }, [filteredRows, statusFilter]);
-
   const virtualRows = rowVirtualizer.getVirtualItems();
-  const parentRef = useRef<HTMLDivElement>(null);
-  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   return (
     <>
@@ -621,7 +638,7 @@ const LinksTable = ({
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className="flex gap-2 bg-transparent font-normal dark:bg-brand-darker dark:text-white dark:border-brand-dark h-6 w-40"
+              className="flex gap-2 bg-transparent font-normal dark:bg-brand-darker dark:text-white/50  dark:border-brand-dark h-6 w-40"
             >
               <Filter size={2} className="h-3 w-3 text-xs p-[2px]" />
               Status
@@ -634,7 +651,7 @@ const LinksTable = ({
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="left"
-            className="w-44 ml-0 text-center m-0 bg-white dark:bg-brand-darker dark:text-white dark:border-brand-dark"
+            className="w-30 ml-0 text-center m-0 bg-white dark:bg-brand-darker dark:text-white dark:border-brand-dark"
           >
             <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -683,65 +700,87 @@ const LinksTable = ({
       </div>
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-1.9rem)] overflow-scroll relative"
+        className="w-full h-[calc(100%-1.9rem)] overflow-auto relative"
       >
         <div
           ref={tableContainerRef}
-          style={{ minWidth: `${totalWidth}px` }}
-          className="domainCrawlParent sticky top-0"
+          style={{
+            minWidth: `${totalWidth}px`,
+            height: `${rowVirtualizer.getTotalSize() + 40}px`, // Add header height
+            position: "relative",
+          }}
+          className="domainCrawlParent"
         >
-          <table
-            style={{ tableLayout: "fixed" }}
-            className="w-full text-xs border-collapse domainCrawlParent h-full"
+          {/* Sticky Header */}
+          <div
+            style={{
+              position: "sticky",
+              top: 0,
+              zIndex: 10,
+              backgroundColor: "var(--background, white)",
+            }}
           >
-            <TableHeader
-              headers={headerTitles}
-              columnWidths={columnWidths}
-              columnAlignments={columnAlignments}
-              onResize={handleColumnMouseDown}
-              onAlignToggle={toggleColumnAlignment}
-              columnVisibility={columnVisibility}
-            />
-            <tbody>
-              {filteredTable.length > 0 ? (
-                <>
-                  <tr
+            <table
+              style={{
+                tableLayout: "fixed",
+                width: "100%",
+              }}
+              className="text-xs border-collapse domainCrawlParent"
+            >
+              <TableHeader
+                headers={headerTitles}
+                columnWidths={columnWidths}
+                columnAlignments={columnAlignments}
+                onResize={handleColumnMouseDown}
+                onAlignToggle={toggleColumnAlignment}
+                columnVisibility={columnVisibility}
+              />
+            </table>
+          </div>
+
+          {/* Virtual rows container */}
+          <div style={{ position: "relative" }}>
+            {filteredTable.length > 0 ? (
+              virtualRows.map((virtualRow) => (
+                <div
+                  key={virtualRow.key}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: `${virtualRow.size}px`,
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <table
                     style={{
-                      height: `${rowVirtualizer.getVirtualItems()[0]?.start || 0}px`,
+                      tableLayout: "fixed",
+                      width: "100%",
+                      height: "100%",
                     }}
-                  />
-                  {virtualRows.map((virtualRow) => (
-                    <TableRow
-                      key={virtualRow.key}
-                      row={filteredTable[virtualRow.index]}
-                      index={virtualRow.index}
-                      columnWidths={columnWidths}
-                      columnAlignments={columnAlignments}
-                      columnVisibility={columnVisibility}
-                      clickedCell={clickedCell}
-                      handleCellClick={handleCellClick}
-                      rowHeight={rowHeights[virtualRow.index] || rowHeight}
-                      onRowResize={handleRowMouseDown}
-                    />
-                  ))}
-                  <tr
-                    style={{
-                      height: `${Math.max(0, rowVirtualizer.getTotalSize() - (virtualRows[virtualRows.length - 1]?.end || 0))}px`,
-                    }}
-                  />
-                </>
-              ) : (
-                <tr>
-                  <td
-                    colSpan={headerTitles.length}
-                    className="text-center py-2"
+                    className="text-xs border-collapse"
                   >
-                    No data available.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                    <tbody>
+                      <TableRow
+                        row={filteredTable[virtualRow.index]}
+                        index={virtualRow.index}
+                        columnWidths={columnWidths}
+                        columnAlignments={columnAlignments}
+                        columnVisibility={columnVisibility}
+                        clickedCell={clickedCell}
+                        handleCellClick={handleCellClick}
+                        rowHeight={rowHeights[virtualRow.index] || rowHeight}
+                        onRowResize={handleRowMouseDown}
+                      />
+                    </tbody>
+                  </table>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-4">No data available.</div>
+            )}
+          </div>
         </div>
       </div>
     </>

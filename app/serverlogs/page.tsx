@@ -77,7 +77,6 @@ export default function Page() {
       ) {
         setShortcutActivated(true);
         // Your action here
-        console.log("Ctrl+L+C pressed!");
         // Perform your specific action
         performCustomAction();
       }

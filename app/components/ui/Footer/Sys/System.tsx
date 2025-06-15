@@ -15,8 +15,6 @@ function System() {
 
   async function handleClick() {
     const sys = await invoke("get_system", {});
-
-    console.log(sys);
   }
 
   return (

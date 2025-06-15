@@ -23,7 +23,7 @@ export function SearchPreview({
     .slice(0, 4);
 
   return (
-    <div className="border dark:border-brand-dark rounded-lg p-4 shadow-sm w-full mx-auto">
+    <div className="border dark:border-brand-dark rounded-lg p-4 shadow-sm w-full max-w-[700px] mx-auto overflow-scroll">
       <div className="flex items-center text-sm text-green-700 mb-1">
         <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded mr-2">
           Ad
@@ -56,7 +56,7 @@ export function SearchPreview({
       )}
 
       {validSitelinks.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-gray-200">
+        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-t-gray-700">
           <div className="grid grid-cols-2 gap-x-4 gap-y-2">
             {validSitelinks.map((sitelink) => (
               <div key={sitelink.id} className="text-sm">
@@ -93,7 +93,7 @@ export function YoutubePreview({
   displayUrl,
 }: PreviewProps) {
   return (
-    <div className="border rounded-lg p-4 shadow-sm w-full mx-auto bg-gray-100 dark:bg-brand-darker dark:border-brand-dark">
+    <div className="border rounded-lg p-4 shadow-sm w-full max-w-[500px] mx-auto bg-gray-100 dark:bg-brand-darker dark:border-brand-dark">
       <div className="flex items-start gap-3">
         <div className="w-32 h-20 bg-gray-300 rounded flex items-center justify-center text-gray-500 text-xs">
           Video Thumbnail

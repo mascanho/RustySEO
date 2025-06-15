@@ -1,4 +1,5 @@
 // @ts-nocheck
+// BOTTOM OUTLINKS TABLE
 import React, { useEffect, useRef, useCallback } from "react";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
@@ -163,11 +164,9 @@ const OuterLinksSubTable: React.FC<InlinksSubTableProps> = ({
     }
   }, [makeResizable]);
 
-  // Move localStorage access into useEffect to avoid re-renders
-  useEffect(() => {
-    const isDark = localStorage.getItem("dark-mode");
-    console.log("Dark mode:", isDark); // Example usage
-  }, []);
+  // useEffect(() => {
+  //   const isDark = localStorage.getItem("dark-mode");
+  // }, []);
 
   if (data?.length === 0) {
     return (
@@ -217,7 +216,21 @@ const OuterLinksSubTable: React.FC<InlinksSubTableProps> = ({
       })
       .map((item) => item.status);
 
-    return statusCodes;
+    return (
+      <span
+        className={` font-semibold
+
+${statusCodes?.[0] === 200 && "text-green-700"}
+
+${statusCodes?.[0] === 404 && "text-red-700"}
+
+${statusCodes?.[0] === 403 && "text-orange-700"}
+
+`}
+      >
+        {statusCodes}
+      </span>
+    );
   }
 
   return (
@@ -305,7 +318,7 @@ const OuterLinksSubTable: React.FC<InlinksSubTableProps> = ({
                 <td className="pl-3 border border-l ">
                   {getAnchorText(item, data?.[0].url)}
                 </td>
-                <td className="pl-3 text-center">
+                <td className={`pl-3 text-center font-semibold`}>
                   {getStatusCode(item, data?.[0].url)}
                 </td>
               </tr>

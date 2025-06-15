@@ -96,7 +96,6 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
     setIsLoading(true);
     try {
       const data = await invoke("read_logs_from_db");
-      console.log(data, "Data from logs DB");
       setLogsFromDB(data);
     } catch (error) {
       console.error(error);

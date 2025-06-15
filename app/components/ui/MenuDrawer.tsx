@@ -163,6 +163,10 @@ function MenuDrawer() {
       if (event.ctrlKey && event.key === "k") {
         router.push("/serverlogs");
       }
+
+      if (event.ctrlKey && event.key === "g") {
+        router.push("/ppc");
+      }
     };
 
     console.log("Current onboarding completed state:", completed);
@@ -248,7 +252,7 @@ function MenuDrawer() {
         />
         <img
           src="rustyLight.png"
-          className="object-contain h-auto  -ml-1"
+          className="object-contain h-auto  -ml-1 w-32"
           alt=""
         />
       </a>

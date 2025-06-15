@@ -112,7 +112,7 @@ export function DashboardLayout({
           <div className="p-2 pt-1">
             {onAddNew && (
               <Button
-                className="w-full bg-brand-bright dark:bg-brand-bright dark:text-white"
+                className="w-full dark:hover:bg-brand-bright/80  bg-brand-bright dark:bg-brand-bright dark:text-white"
                 size="sm"
                 onClick={onAddNew}
               >

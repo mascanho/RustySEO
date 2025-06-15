@@ -89,9 +89,48 @@ const formatResponseSize = (bytes: number): string => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+interface LogEntry {
+  ip: string;
+  timestamp: string;
+  method: string;
+  path: string;
+  status: number;
+  user_agent: string;
+  referer: string;
+  response_size: number;
+  country?: string;
+  is_crawler: boolean;
+  crawler_type: string;
+  browser: string;
+  file_type: string;
+  frequency: number;
+  verified: boolean;
+}
+
 interface WidgetTableProps {
   data: any;
 }
+
+const ensureUniqueUrls = (logs: LogEntry[]): LogEntry[] => {
+  const urlMap = new Map<string, LogEntry>();
+
+  logs.forEach((log) => {
+    if (urlMap.has(log.path)) {
+      const existingLog = urlMap.get(log.path);
+      if (existingLog) {
+        existingLog.frequency += log.frequency;
+        existingLog.response_size += log.response_size;
+        if (new Date(log.timestamp) < new Date(existingLog.timestamp)) {
+          existingLog.timestamp = log.timestamp;
+        }
+      }
+    } else {
+      urlMap.set(log.path, { ...log });
+    }
+  });
+
+  return Array.from(urlMap.values());
+};
 
 const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
   const [initialLogs, setInitialLogs] = useState<LogEntry[]>([]);
@@ -106,13 +145,12 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "ascending" | "descending";
-  } | null>({ key: "frequency", direction: "descending" }); // Changed this line
+  } | null>({ key: "frequency", direction: "descending" });
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [domain, setDomain] = useState("");
   const [showOnTables, setShowOnTables] = useState(false);
   const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
 
-  // GET THE domain from the local storage to use on the table to complement the path
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedDomain = localStorage.getItem("domain");
@@ -130,7 +168,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
   useEffect(() => {
     if (!data?.totals?.google_bot_page_frequencies) return;
 
-    const logs: LogEntry[] = [];
+    let logs: LogEntry[] = [];
     Object.entries(data.totals.google_bot_page_frequencies).forEach(
       ([path, entries]) => {
         (entries as any[]).forEach((entry: any) => {
@@ -142,8 +180,9 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
       },
     );
 
-    setInitialLogs(logs);
-    setFilteredLogs(logs);
+    const uniqueLogs = ensureUniqueUrls(logs);
+    setInitialLogs(uniqueLogs);
+    setFilteredLogs(uniqueLogs);
   }, [data]);
 
   useEffect(() => {
@@ -248,6 +287,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     setExpandedRow(null);
     setFilteredLogs(initialLogs);
     setBotTypeFilter(null);
+    setFileTypeFilter([]);
+
+
+    console.log("resetting filters")
   };
 
   const exportCSV = async () => {
@@ -264,7 +307,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
       "Google Verified",
     ];
 
-    const dataToExport = filteredLogs.length > 0 ? filteredLogs : data;
+    const dataToExport = filteredLogs.length > 0 ? filteredLogs : initialLogs;
 
     const csvData = dataToExport.map((log) => [
       log.ip || "",
@@ -306,8 +349,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     }
   };
 
-  // Get the fileType and add the icon
-  const getFileIcon = (path) => {
+  const getFileIcon = (path: string) => {
     switch (path) {
       case "HTML":
         return <FileCode type="html" size={14} />;
@@ -325,7 +367,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
         return <FileCode type="css" size={14} />;
       case "JS":
         return <FileCode type="javascript" size={14} />;
-      case "Document": // PDF
+      case "Document":
         return <FileText size={14} />;
       case "Archive":
         return <Package size={14} />;
@@ -336,52 +378,70 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     }
   };
 
-  // Handle the dates and the timings hits
-  function timings(data, log) {
-    const initialDate = new Date(log?.timestamp);
-    const finishDate = new Date(data?.log_finish_time);
+  // CALCULATE THE TIMINGS
 
-    const elapsedTimeMs = Math.abs(
-      finishDate.getTime() - initialDate.getTime(),
-    );
+  const oldestEntry =
+    initialLogs.length > 0
+      ? initialLogs.reduce((oldest, log) =>
+          new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+        )
+      : null;
 
-    // Calculate hours, minutes, seconds (FIXED: Math.floor for minutes)
+  const newestEntry =
+    initialLogs.length > 0
+      ? initialLogs.reduce((newest, log) =>
+          new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+        )
+      : null;
+
+  const totalTimeBetweenNewAndOldest = () => {
+    if (newestEntry && oldestEntry) {
+      const start = new Date(oldestEntry.timestamp);
+      const end = new Date(newestEntry.timestamp);
+      const diff = Math.abs(end.getTime() - start.getTime());
+      return diff;
+    }
+    return 0;
+  };
+
+  const elapsedTimeMs = totalTimeBetweenNewAndOldest();
+
+  const timings = (log: LogEntry) => {
+    if (!oldestEntry || !newestEntry) {
+      return {
+        elapsedTime: "0h 0m 0s",
+        frequency: {
+          total: 0,
+          perHour: "0.00",
+          perMinute: "0.00/minute",
+          perSecond: "0.00/second",
+        },
+      };
+    }
+
+    const frequency = log?.frequency || 0;
+    const elapsedTimeMs = totalTimeBetweenNewAndOldest();
+    const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60);
+
+    const perHour =
+      elapsedTimeHours > 0 ? (frequency / elapsedTimeHours).toFixed(1) : "0.0";
+
     const hours = Math.floor(elapsedTimeMs / (1000 * 60 * 60));
     const minutes = Math.floor(
       (elapsedTimeMs % (1000 * 60 * 60)) / (1000 * 60),
     );
     const seconds = Math.floor((elapsedTimeMs % (1000 * 60)) / 1000);
 
-    // Calculate elapsed time in different units for frequency
-    const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60);
-    const elapsedTimeMinutes = elapsedTimeMs / (1000 * 60);
-    const elapsedTimeSeconds = elapsedTimeMs / 1000;
-
-    // Handle missing frequency (default to 0)
-    const frequency = log?.frequency || 0;
-
-    // Calculate rates (avoid division by zero)
-    const perHour =
-      elapsedTimeHours > 0 ? (frequency / elapsedTimeHours).toFixed(1) : "0.00";
-    const perMinute =
-      elapsedTimeMinutes > 0
-        ? (frequency / elapsedTimeMinutes).toFixed(2)
-        : "0.00";
-    const perSecond =
-      elapsedTimeSeconds > 0
-        ? (frequency / elapsedTimeSeconds).toFixed(2)
-        : "0.00";
-
     return {
       elapsedTime: `${hours}h ${minutes}m ${seconds}s`,
       frequency: {
         total: frequency,
-        perHour: `${perHour}`,
-        perMinute: `${perMinute}/minute`,
-        perSecond: `${perSecond}/second`,
+        perHour: perHour,
+        perMinute: `${(frequency / (elapsedTimeMs / (1000 * 60))).toFixed(2)}/minute`,
+        perSecond: `${(frequency / (elapsedTimeMs / 1000)).toFixed(2)}/second`,
       },
     };
-  }
+  };
 
   return (
     <div className="space-y-4 h-full pb-0 -mb-4">
@@ -398,12 +458,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
         </div>
 
         <div className="flex flex-1 gap-1">
-          {/* FileType Filter */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark"
+                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-32"
               >
                 <Filter className="h-4 w-4" />
                 File Type
@@ -416,7 +475,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="bg-white dark:border-brand-dark dark:text-white   dark:bg-brand-darker z-[999999999999] hover:text-black active:text-black hover:bg-brand-brigh"
+              className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999]"
             >
               <DropdownMenuLabel>Filter by File Type</DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -434,9 +493,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                 "Font",
               ].map((fileType) => (
                 <DropdownMenuCheckboxItem
-                  className={
-                    "bg-white active:bg-brand-bright  dark:bg-brand-darker dark:hover:bg-brand-bright active:text-white hover:bg-brand-bright hover:text-white"
-                  }
+                  className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
                   key={fileType}
                   checked={fileTypeFilter.includes(fileType)}
                   onCheckedChange={(checked) => {
@@ -456,22 +513,6 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
           </DropdownMenu>
 
           {/* <Select
-            value={botFilter || "all"}
-            onValueChange={(value) =>
-              setBotFilter(value === "all" ? null : value)
-            }
-          >
-            <SelectTrigger className="w-[130px] dark:bg-brand-darker font-medium dark:text-white">
-              <SelectValue placeholder="Bot/Human" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="bot">Bots</SelectItem>
-              <SelectItem value="Human">Humans</SelectItem>
-            </SelectContent>
-          </Select> */}
-
-          <Select
             value={
               verifiedFilter === null
                 ? "all"
@@ -507,16 +548,15 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                 Unverified
               </SelectItem>
             </SelectContent>
-          </Select>
+          </Select> */}
 
-          {/* SELECT BOT TYPE (DESKTOP OR MOBILE) */}
-          <Select
+          {/* <Select
             value={botTypeFilter === null ? "all" : botTypeFilter}
             onValueChange={(value) =>
               setBotTypeFilter(value === "all" ? null : value)
             }
           >
-            <SelectTrigger className="w-[120px] dark:bg-brand-darker dark:text-white ">
+            <SelectTrigger className="w-[120px] dark:bg-brand-darker dark:text-white">
               <SelectValue placeholder="Bot/Human" />
             </SelectTrigger>
             <SelectContent className="z-[999999999999999]">
@@ -539,7 +579,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                 Mobile
               </SelectItem>
             </SelectContent>
-          </Select>
+          </Select> */}
 
           <Button
             variant="outline"
@@ -576,27 +616,12 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[80px] text-center">#</TableHead>
-                    <TableHead
-                      className="cursor-pointer max-w-[20px] truncate"
-                      onClick={() => requestSort("timestamp")}
-                    >
-                      Timestamp
-                      {sortConfig?.key === "timestamp" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      )}
-                    </TableHead>
                     {/* <TableHead */}
-                    {/*   className="cursor-pointer w-[90px] text-center" */}
-                    {/*   onClick={() => requestSort("method")} */}
+                    {/*   className="cursor-pointer w-[200px] truncate" */}
+                    {/*   onClick={() => requestSort("timestamp")} */}
                     {/* > */}
-                    {/*   Method */}
-                    {/*   {sortConfig?.key === "method" && ( */}
+                    {/*   Timestamp */}
+                    {/*   {sortConfig?.key === "timestamp" && ( */}
                     {/*     <ChevronDown */}
                     {/*       className={`ml-1 h-4 w-4 inline-block ${ */}
                     {/*         sortConfig.direction === "descending" */}
@@ -655,7 +680,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       className="cursor-pointer min-w-10 max-w-[50px] text-center"
                       onClick={() => requestSort("frequency")}
                     >
-                      ∑ Frequency
+                      Total Hits
                       {sortConfig?.key === "frequency" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${
@@ -666,6 +691,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                         />
                       )}
                     </TableHead>
+                    <TableHead>Hourly Hits</TableHead>
                     <TableHead>Crawler Type</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -676,7 +702,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                         key={`${log.ip}-${log.timestamp}-${index}`}
                       >
                         <TableRow
-                          className="group cursor-pointer"
+                          className="group cursor-pointer "
                           onClick={() =>
                             setExpandedRow(expandedRow === index ? null : index)
                           }
@@ -684,37 +710,22 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                           <TableCell className="font-medium text-center max-w-[40px]">
                             {indexOfFirstItem + index + 1}
                           </TableCell>
-                          {/* <TableCell className="max-w-[160px] w-[180px] truncate"> */}
-                          {/*   <div className="flex items-center gap-1"> */}
-                          {/*     {log.ip} */}
-                          {/*   </div> */}
+                          {/* <TableCell className="w-[200px] pl-2"> */}
+                          {/*   {formatDate(log.timestamp)} */}
                           {/* </TableCell> */}
-                          <TableCell className="w-[200px] pl-2">
-                            {formatDate(log.timestamp)}
-                          </TableCell>
-                          {/* <TableCell className="text-center max-w-[150px]"> */}
-                          {/*   <Badge */}
-                          {/*     variant="outline" */}
-                          {/*     className={ */}
-                          {/*       log.method === "GET" */}
-                          {/*         ? "bg-green-100 dark:bg-green-400 text-green-800 border-green-200" */}
-                          {/*         : log.method === "POST" */}
-                          {/*           ? "bg-blue-100 dark:bg-blue-400 text-blue-800 border-blue-200" */}
-                          {/*           : log.method === "PUT" */}
-                          {/*             ? "bg-yellow-100 dark:bg-yellow-400 text-yellow-800 border-yellow-200" */}
-                          {/*             : "bg-red-100 dark:bg-red-400 text-red-800 border-red-200" */}
-                          {/*     } */}
-                          {/*   > */}
-                          {/*     {log.method} */}
-                          {/*   </Badge> */}
-                          {/* </TableCell> */}
-                          <TableCell className="inline-block truncate max-w-[600px]">
-                            <span className="mr-2 inline-block pl-2">
+                          <TableCell className="inline-block truncate max-w-[600px]  ">
+                            <div className="flex items-center w-full m-auto">
+
+                            
+                            <span className="mr-2  pl-2">
                               {getFileIcon(log.file_type)}
                             </span>
-                            {showOnTables && domain
-                              ? "https://" + domain + log.path
-                              : log?.path}
+                            <span className="leading-[28px] m-auto flex items-center">
+                              {showOnTables && domain
+                                ? "https://" + domain + log.path
+                                : log?.path}
+                            </span>
+                            </div>
                           </TableCell>
                           <TableCell className="min-w-[30px] truncate">
                             <Badge variant="outline">{log.file_type}</Badge>
@@ -722,11 +733,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                           <TableCell className="text-center">
                             {formatResponseSize(log.response_size)}
                           </TableCell>
-                          <TableCell
-                            size={80}
-                            className="text-center min-w-[90px]"
-                          >
-                            {log.frequency}
+                          <TableCell className="text-center min-w-[90px]">
+                            {timings(log)?.frequency?.total}
+                          </TableCell>
+                          <TableCell className="text-center w-[90px]">
+                            {timings(log)?.frequency?.perHour}
                           </TableCell>
                           <TableCell width={100} className="max-w-[100px]">
                             <Badge
@@ -748,19 +759,18 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                         {expandedRow === index && (
                           <TableRow>
                             <TableCell
-                              colSpan={10}
-                              className="bg-gray-50 dark:bg-gray-800 p-4 "
+                              colSpan={7}
+                              className="bg-gray-50 dark:bg-gray-800 p-4"
                             >
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* User Agent */}
                                 <div className="flex flex-col max-w-[70rem] w-full">
                                   <div className="flex mb-2 space-x-2 items-center justify-between">
-                                    <h4 className=" font-bold">Timespan</h4>
+                                    <h4 className="font-bold">Timespan</h4>
                                     {log.verified && (
                                       <div className="flex items-center space-x-1 py-1 bg-red-200 dark:bg-red-400 px-2 text-xs rounded-md">
                                         <BadgeCheck
                                           size={18}
-                                          className="text-blue-800 pr-1 dark:text-blue-900 "
+                                          className="text-blue-800 pr-1 dark:text-blue-900"
                                         />
                                         {log?.crawler_type}
                                       </div>
@@ -768,31 +778,29 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                   </div>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                                     <p className="text-sm font-mono break-all">
-                                      {timings(data, log)?.elapsedTime}
+                                      {timings(log)?.elapsedTime}
                                     </p>
                                   </div>
                                 </div>
-
-                                {/* Referer */}
                                 <div className="flex flex-col">
                                   <h4 className="mb-2 font-bold">
                                     Hits per Hour
                                   </h4>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                                     <p className="text-sm break-all">
-                                      {timings(data, log)?.frequency?.perHour}
+                                      {timings(log)?.frequency?.perHour}
                                     </p>
                                   </div>
                                 </div>
                               </div>
                             </TableCell>
                           </TableRow>
-                        )}{" "}
+                        )}
                       </React.Fragment>
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={10} className="h-24 text-center">
+                      <TableCell colSpan={7} className="text-center h-24">
                         No log entries found.
                       </TableCell>
                     </TableRow>
@@ -903,13 +911,6 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
             </PaginationItem>
           </PaginationContent>
         </Pagination>
-        <div>
-          {/* <span className="flex justify-end text-muted-foreground dark:text-white/50 w-[180px] flex-nowrap -ml-16 text-right pr-2.5 -mt-1.5 text-xs text-black/50"> */}
-          {/*   {indexOfFirstItem + 1}- */}
-          {/*   {Math.min(indexOfLastItem, filteredLogs.length)} of{" "} */}
-          {/*   {filteredLogs.length} logs */}
-          {/* </span> */}
-        </div>
       </div>
     </div>
   );

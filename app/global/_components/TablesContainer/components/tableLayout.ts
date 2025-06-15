@@ -2,10 +2,10 @@
 export const initialColumnWidths = [
   "40px", // ID
   "500px", // URL
-  "300px", // Page Title
+  "400px", // Page Title
   "70px", // Page title length
   "300px", // Page Description
-  "70px", // Page Description Length
+  "80px", // Page Description Length
   "350px", // H1
   "70px", // H1 Length
   "350px", // H2
@@ -19,8 +19,8 @@ export const initialColumnWidths = [
   "90px", // Meta Robots
   "120px", // CONTENT TYPE
   "100px", //  Indexability
-  "50px", //  Language
-  "50px", //  Schema
+  "70px", //  Language
+  "70px", //  Schema
 ];
 
 export const initialColumnAlignments = [

@@ -880,7 +880,7 @@ export function LogAnalyzer() {
                         />
                       )}
                     </TableHead>
-                    <TableHead>Crawler Type</TableHead>
+                    <TableHead align="center" className="text-center">Crawler Type</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -906,7 +906,7 @@ export function LogAnalyzer() {
                     <TableRow>
                       <TableCell
                         colSpan={10}
-                        className="h-24 text-center text-black/50 dark:text-white/50"
+                        className="h-24 max-h-24  text-center text-black/50 dark:text-white/50"
                       >
                         No log entries found.
                       </TableCell>
@@ -952,7 +952,7 @@ function LogRow({
   return (
     <>
       <TableRow
-        className="group cursor-pointer max-h-2"
+        className="group cursor-pointer max-h-[30px] h-[30px]"
         onClick={() => {
           setExpandedRow(expandedRow === index ? null : index);
         }}
@@ -1000,8 +1000,8 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
         >
           {log?.browser}
         </TableCell>
-        <TableCell className="max-w-44">{formatDate(log.timestamp)}</TableCell>
-        <TableCell className="max-w-[480px] truncate mr-2">
+        <TableCell className="max-w-44 ">{formatDate(log.timestamp)}</TableCell>
+        <TableCell className="max-w-[980px] min-w-[500px] w-[800px] truncate mr-2">
           <span className="mr-1 inline-block" style={{ paddingTop: "" }}>
             {getFileIcon(log.file_type)}
           </span>
@@ -1016,7 +1016,7 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
           </Badge>
         </TableCell>
         <TableCell>{formatResponseSize(log.response_size)}</TableCell>
-        <TableCell>
+        <TableCell className="max-w-[180px] w-1 truncate text-center">
           <Badge
             variant="outline"
             className={
