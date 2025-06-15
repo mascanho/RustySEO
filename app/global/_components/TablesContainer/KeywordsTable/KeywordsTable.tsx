@@ -1,6 +1,6 @@
-// @ts-nocheck
 "use client";
 
+// @ts-nocheck
 import type React from "react";
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -57,6 +57,7 @@ interface TableRowProps {
   clickedRow: number | null;
   handleRowClick: (rowIndex: number) => void;
   keywordColumns: string[]; // List of keyword columns
+  isZebraRow: boolean; // For zebra striping
 }
 
 interface ColumnPickerProps {
@@ -133,12 +134,13 @@ const TableHeader = ({
                   width: columnWidths[index],
                   position: "relative",
                   border: "1px solid #ddd",
-                  padding: "8px",
+                  padding: "8px 8px 2px 8px",
                   userSelect: "none",
                   minWidth: columnWidths[index],
                   maxWidth: columnWidths[index],
                   textAlign: columnAlignments[index] as any,
                   backgroundColor: "var(--background, white)",
+                  height: "10px",
                 }}
                 onClick={() => onAlignToggle(index)}
               >
@@ -170,20 +172,27 @@ const TableRow = ({
   clickedRow,
   handleRowClick,
   keywordColumns,
-  rowHeight,
+  isZebraRow,
 }: TableRowProps) => {
   const isRowClicked = clickedRow === index;
+
+  // Determine row background based on zebra striping and click state
+  const getRowClassName = () => {
+    if (isRowClicked) {
+      return "bg-[#2B6CC4] text-black dark:text-white"; // Blue background for clicked row
+    }
+    if (isZebraRow) {
+      return "bg-gray-50 dark:bg-gray-800/50 dark:text-white"; // Zebra striping for odd rows
+    }
+    return "bg-white dark:bg-transparent dark:text-white"; // Default background
+  };
 
   return useMemo(
     () => (
       <tr
         onClick={() => handleRowClick(index)}
-        className={` ${
-          isRowClicked
-            ? "bg-[#2B6CC4] text-black dark:text-white" // Blue background for clicked row
-            : " dark:text-white"
-        }`}
-        style={{ height: `${rowHeight}px` }}
+        className={getRowClassName()}
+        style={{ height: `25px` }} // Fixed row height
       >
         {/* ID Column */}
         {columnVisibility[0] && (
@@ -193,9 +202,8 @@ const TableRow = ({
               width: columnWidths[0],
               minWidth: columnWidths[0],
               maxWidth: columnWidths[0],
-              height: rowHeight,
             }}
-            className={`p-2 pl-5 border border-gray-300 dark:border-gray-700 ${
+            className={`p-1 pl-3 border border-gray-300 dark:border-gray-700 ${
               columnAlignments[0] === "center" ? "text-center" : "text-left"
             }`}
           >
@@ -214,9 +222,8 @@ const TableRow = ({
               width: columnWidths[1],
               minWidth: columnWidths[1],
               maxWidth: columnWidths[1],
-              height: rowHeight,
             }}
-            className={`p-1 pl-5 border border-gray-300 dark:border-gray-700 ${
+            className={`p-1 pl-3 border border-gray-300 dark:border-gray-700 ${
               columnAlignments[1] === "center" ? "text-center" : "text-left"
             }`}
           >
@@ -237,9 +244,8 @@ const TableRow = ({
                 width: columnWidths[cellIndex + 2],
                 minWidth: columnWidths[cellIndex + 2],
                 maxWidth: columnWidths[cellIndex + 2],
-                height: rowHeight,
               }}
-              className={` border border-gray-300 dark:border-gray-700 ${
+              className={`p-1 border border-gray-300 dark:border-gray-700 ${
                 columnAlignments[cellIndex + 2] === "center"
                   ? "text-center"
                   : "text-left"
@@ -255,7 +261,6 @@ const TableRow = ({
                           ? "text-brand-bright" // Gold color for clicked row
                           : "text-brand-bright" // Orange color for non-clicked row
                       }
-                      style={{ height: "100px" }}
                     >
                       ({count})
                     </span>
@@ -278,6 +283,7 @@ const TableRow = ({
       handleRowClick,
       keywordColumns,
       isRowClicked,
+      isZebraRow,
     ],
   );
 };
@@ -326,8 +332,8 @@ const ColumnPicker = ({
 
 const KeywordsTable = ({
   rows,
-  rowHeight = 20,
-  overscan = 18,
+  rowHeight = 25,
+  overscan = 5, // Reduced overscan for better performance
   tabName,
 }: TableCrawlProps) => {
   const [columnWidths, setColumnWidths] = useState<string[]>([]);
@@ -471,13 +477,12 @@ const KeywordsTable = ({
   }, [rows, searchTerm]);
 
   const parentRef = useRef<HTMLDivElement>(null);
-  const tableContainerRef = useRef<HTMLDivElement>(null);
 
-  // Initialize virtualizer
+  // Initialize virtualizer with proper configuration
   const rowVirtualizer = useVirtualizer({
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: useCallback(() => rowHeight, [rowHeight]),
+    estimateSize: () => rowHeight,
     overscan,
   });
 
@@ -568,77 +573,104 @@ const KeywordsTable = ({
         <div
           style={{
             minWidth: `${totalWidth}px`,
-            height: `${rowVirtualizer.getTotalSize() + 41}px`, // +41 for header height
+            height: `${rowVirtualizer.getTotalSize()}px`,
             position: "relative",
           }}
         >
-          <table
-            className="w-full text-xs border-collapse"
-            style={{ minWidth: `${totalWidth}px`, tableLayout: "fixed" }}
+          {/* Fixed Header */}
+          <div
+            style={{
+              position: "sticky",
+              top: 0,
+              zIndex: 10,
+              minWidth: `${totalWidth}px`,
+            }}
           >
-            <TableHeader
-              headers={["ID", "URL", ...keywordColumns]}
-              columnWidths={columnWidths}
-              columnAlignments={columnAlignments}
-              onResize={handleMouseDown}
-              onAlignToggle={toggleColumnAlignment}
-              columnVisibility={columnVisibility}
-            />
-            <tbody>
-              {filteredRows.length > 0 ? (
-                <>
-                  {/* Spacer for virtual start */}
-                  {virtualRows[0] && (
-                    <tr style={{ height: `${virtualRows[0].start}px` }}>
-                      <td
-                        colSpan={keywordColumns.length + 2}
-                        style={{ padding: 0, border: "none" }}
-                      />
-                    </tr>
-                  )}
+            <table
+              className="w-full text-xs border-collapse"
+              style={{ minWidth: `${totalWidth}px`, tableLayout: "fixed" }}
+            >
+              <TableHeader
+                headers={["ID", "URL", ...keywordColumns]}
+                columnWidths={columnWidths}
+                columnAlignments={columnAlignments}
+                onResize={handleMouseDown}
+                onAlignToggle={toggleColumnAlignment}
+                columnVisibility={columnVisibility}
+              />
+            </table>
+          </div>
 
-                  {/* Virtual rows */}
-                  {virtualRows.map((virtualRow) => (
-                    <TableRow
-                      key={virtualRow.key}
-                      row={filteredRows[virtualRow.index]}
-                      index={virtualRow.index}
-                      columnWidths={columnWidths}
-                      columnAlignments={columnAlignments}
-                      columnVisibility={columnVisibility}
-                      clickedRow={clickedRow}
-                      handleRowClick={handleRowClick}
-                      keywordColumns={keywordColumns}
-                      rowHeight={rowHeight}
-                    />
-                  ))}
+          {/* Virtual Rows Container */}
+          <div
+            style={{
+              position: "relative",
+              minWidth: `${totalWidth}px`,
+            }}
+          >
+            {filteredRows.length > 0 ? (
+              virtualRows.map((virtualRow) => {
+                const isZebraRow = virtualRow.index % 2 === 1; // Odd rows get zebra styling
 
-                  {/* Spacer for virtual end */}
-                  {virtualRows.length > 0 && (
-                    <tr
+                return (
+                  <div
+                    key={virtualRow.key}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: `${virtualRow.size}px`,
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                  >
+                    <table
+                      className="w-full text-xs border-collapse"
                       style={{
-                        height: `${Math.max(0, rowVirtualizer.getTotalSize() - (virtualRows[virtualRows.length - 1]?.end || 0))}px`,
+                        minWidth: `${totalWidth}px`,
+                        tableLayout: "fixed",
                       }}
                     >
+                      <tbody>
+                        <TableRow
+                          row={filteredRows[virtualRow.index]}
+                          index={virtualRow.index}
+                          columnWidths={columnWidths}
+                          columnAlignments={columnAlignments}
+                          columnVisibility={columnVisibility}
+                          clickedRow={clickedRow}
+                          handleRowClick={handleRowClick}
+                          keywordColumns={keywordColumns}
+                          isZebraRow={isZebraRow}
+                        />
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })
+            ) : (
+              <div
+                className="text-center py-4"
+                style={{ minWidth: `${totalWidth}px` }}
+              >
+                <table
+                  className="w-full text-xs border-collapse"
+                  style={{ minWidth: `${totalWidth}px`, tableLayout: "fixed" }}
+                >
+                  <tbody>
+                    <tr>
                       <td
                         colSpan={keywordColumns.length + 2}
-                        style={{ padding: 0, border: "none" }}
-                      />
+                        className="text-center py-4"
+                      >
+                        No data available.
+                      </td>
                     </tr>
-                  )}
-                </>
-              ) : (
-                <tr>
-                  <td
-                    colSpan={keywordColumns.length + 2}
-                    className="text-center py-4"
-                  >
-                    No data available.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>
