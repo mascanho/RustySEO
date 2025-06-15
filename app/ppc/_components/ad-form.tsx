@@ -411,7 +411,12 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
           <Eye className="h-4 w-4 mr-2" />
           Preview Ad
         </Button>
-        <Button onClick={handleSave}>Save Ad</Button>
+        <Button
+          className="dark:bg-brand-bright dark:text-white dark:border-brand-dark dark:hover:bg-brand-bright/80 active:scale-95 "
+          onClick={handleSave}
+        >
+          Save Ad
+        </Button>
       </div>
     </div>
   );

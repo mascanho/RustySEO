@@ -7,7 +7,7 @@ import { AdList } from "./ad-list";
 import { AdPreview } from "./ad-preview";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardLayout } from "./dashboard-layout";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "./hooks/use-toast";
 
 export function AdDashboard() {
   const [ads, setAds] = useState<Ad[]>([]);
@@ -62,9 +62,9 @@ export function AdDashboard() {
     setSidebarView("ads");
     saveAdsToLocalStorage(updatedAds); // Save to localStorage
 
-    toast.info({
-      title: "Ad added",
-      description: "New ad has been added successfully",
+    toast({
+      title: "Ad created",
+      description: `"${newAd.name}" has been created successfully`,
     });
   };
 

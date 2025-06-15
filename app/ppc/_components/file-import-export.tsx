@@ -21,8 +21,10 @@ import {
 import { Download, Upload, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Ad } from "@/types/ad";
-import { readTextFile } from '@tauri-apps/plugin-fs';
-import { open } from '@tauri-apps/plugin-dialog';
+import { readTextFile } from "@tauri-apps/plugin-fs";
+import { open } from "@tauri-apps/plugin-dialog";
+import { writeTextFile, BaseDirectory } from "@tauri-apps/plugin-fs";
+import { save } from "@tauri-apps/plugin-dialog";
 
 // Utility functions
 const adsToJson = (ads: Ad[]): string => JSON.stringify(ads, null, 2);
@@ -31,10 +33,10 @@ const adsToCsv = (ads: Ad[]): string => {
   if (ads.length === 0) return "";
 
   const headers = Object.keys(ads[0]).join(",");
-  const rows = ads.map(ad =>
+  const rows = ads.map((ad) =>
     Object.values(ad)
-      .map(value => `"${String(value).replace(/"/g, '""')}"`)
-      .join(",")
+      .map((value) => `"${String(value).replace(/"/g, '""')}"`)
+      .join(","),
   );
 
   return [headers, ...rows].join("\n");
@@ -44,27 +46,55 @@ const csvToAds = (csv: string): Ad[] => {
   const lines = csv.split("\n");
   if (lines.length < 2) return [];
 
-  const headers = lines[0].split(",").map(h => h.trim());
-  return lines.slice(1).map(line => {
+  const headers = lines[0].split(",").map((h) => h.trim());
+  return lines.slice(1).map((line) => {
     const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
     const ad = {} as Ad;
     headers.forEach((header, i) => {
-      ad[header as keyof Ad] = values[i] ? values[i].replace(/^"|"$/g, '') : '';
+      ad[header as keyof Ad] = values[i] ? values[i].replace(/^"|"$/g, "") : "";
     });
     return ad;
   });
 };
 
-const downloadFile = (content: string, filename: string, mimeType: string) => {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+const downloadFile = async (content: string, filename: string) => {
+  try {
+    // Use Tauri API if available
+    if (window.__TAURI__) {
+      const filePath = await save({
+        defaultPath: filename,
+        filters: [
+          {
+            name: filename.endsWith(".json") ? "JSON" : "CSV",
+            extensions: [filename.split(".").pop() || ""],
+          },
+        ],
+      });
+
+      if (filePath) {
+        await writeTextFile(filePath, content);
+        return filePath;
+      }
+      return null;
+    } else {
+      // Fallback for web environment
+      const blob = new Blob([content], {
+        type: filename.endsWith(".json") ? "application/json" : "text/csv",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      return filename;
+    }
+  } catch (error) {
+    console.error("Error saving file:", error);
+    throw error;
+  }
 };
 
 interface FileImportExportProps {
@@ -119,10 +149,12 @@ export function FileImportExport({ ads, onImport }: FileImportExportProps) {
         console.log("Using Tauri filesystem API");
         const selected = await open({
           multiple: false,
-          filters: [{
-            name: 'Data Files',
-            extensions: ['json', 'csv']
-          }]
+          filters: [
+            {
+              name: "Data Files",
+              extensions: ["json", "csv"],
+            },
+          ],
         });
 
         if (!selected) {
@@ -271,10 +303,7 @@ export function FileImportExport({ ads, onImport }: FileImportExportProps) {
                 className="hidden"
                 id="file-upload"
               />
-              <Button
-                variant="secondary"
-                onClick={handleFileChange}
-              >
+              <Button variant="secondary" onClick={handleFileChange}>
                 Browse Files
               </Button>
             </div>
