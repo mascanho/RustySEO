@@ -220,7 +220,6 @@ const InnerLinksDetailsTable: React.FC<InlinksSubTableProps> = ({
       })
       .map((item) => item.status);
 
-    console.log(statusCodes);
 
     return (
       <span
