@@ -185,15 +185,15 @@ const TableRow = ({
                 height: "25px",
               }}
               className={`
-                cursor-pointer 
+                select-none
                 border-gray-200 dark:border-gray-700 
                 transition-colors
                 ${
                   clickedCell.row === index && clickedCell.cell === cellIndex
-                    ? "bg-blue-600 dark:bg-blue-700 text-white" // Selected cell
+                    ? "bg-blue-600 dark:bg-blue-700 text-white hover:bg-brand-bright" // Selected cell
                     : isOdd
-                      ? "bg-gray-100 dark:bg-gray-800/90" // Odd row (darker)
-                      : "bg-white dark:bg-gray-900" // Even row (lighter)
+                      ? "bg-gray-100 dark:bg-brand-dark/20" // Odd row (darker)
+                      : "bg-white dark:bg-brand-darker" // Even row (lighter)
                 }
                 hover:bg-blue-50 dark:hover:bg-blue-900/30
               `}
