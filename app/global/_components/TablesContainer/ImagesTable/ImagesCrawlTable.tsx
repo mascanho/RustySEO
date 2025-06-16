@@ -1,71 +1,83 @@
 // @ts-nocheck
-"use client"
-import type React from "react"
-import { useState, useRef, useEffect, useCallback, useMemo } from "react"
-import { useVirtualizer } from "@tanstack/react-virtual"
-import debounce from "lodash/debounce"
+"use client";
+import type React from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import debounce from "lodash/debounce";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
-} from "@/components/ui/dropdown-menu"
-import { initialColumnWidths, initialColumnAlignments, headerTitles } from "./tableLayout"
-import { TbColumns3 } from "react-icons/tb"
-import DownloadButton from "./DownloadButton"
-import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore"
-import { invoke } from "@tauri-apps/api/core"
-import { save } from "@tauri-apps/plugin-dialog"
-import { writeFile } from "@tauri-apps/plugin-fs"
-import { toast } from "sonner"
+} from "@/components/ui/dropdown-menu";
+import {
+  initialColumnWidths,
+  initialColumnAlignments,
+  headerTitles,
+} from "./tableLayout";
+import { TbColumns3 } from "react-icons/tb";
+import DownloadButton from "./DownloadButton";
+import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import { invoke } from "@tauri-apps/api/core";
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeFile } from "@tauri-apps/plugin-fs";
+import { toast } from "sonner";
 
 interface TruncatedCellProps {
-  text: string
-  maxLength?: number
-  width?: string
+  text: string;
+  maxLength?: number;
+  width?: string;
 }
 
 interface ResizableDividerProps {
-  onMouseDown: (event: React.MouseEvent) => void
+  onMouseDown: (event: React.MouseEvent) => void;
 }
 
 interface TableHeaderProps {
-  headers: string[]
-  columnWidths: string[]
-  columnAlignments: string[]
-  onResize: (index: number, event: React.MouseEvent) => void
-  onAlignToggle: (index: number) => void
-  columnVisibility: boolean[]
+  headers: string[];
+  columnWidths: string[];
+  columnAlignments: string[];
+  onResize: (index: number, event: React.MouseEvent) => void;
+  onAlignToggle: (index: number) => void;
+  columnVisibility: boolean[];
 }
 
 interface TableRowProps {
-  row: any[]
-  index: number
-  columnWidths: string[]
-  columnAlignments: string[]
-  columnVisibility: boolean[]
-  clickedCell: { row: number | null; cell: number | null }
-  handleCellClick: (rowIndex: number, cellIndex: number, cellContent: string) => void
+  row: any[];
+  index: number;
+  columnWidths: string[];
+  columnAlignments: string[];
+  columnVisibility: boolean[];
+  clickedCell: { row: number | null; cell: number | null };
+  handleCellClick: (
+    rowIndex: number,
+    cellIndex: number,
+    cellContent: string,
+  ) => void;
 }
 
 interface ColumnPickerProps {
-  columnVisibility: boolean[]
-  setColumnVisibility: (visibility: boolean[]) => void
-  headerTitles: string[]
+  columnVisibility: boolean[];
+  setColumnVisibility: (visibility: boolean[]) => void;
+  headerTitles: string[];
 }
 
 interface TableCrawlProps {
-  rows: any[]
-  rowHeight?: number
-  overscan?: number
-  tabName: string
+  rows: any[];
+  rowHeight?: number;
+  overscan?: number;
+  tabName: string;
 }
 
-const TruncatedCell = ({ text, maxLength = 140, width = "auto" }: TruncatedCellProps) => {
+const TruncatedCell = ({
+  text,
+  maxLength = 140,
+  width = "auto",
+}: TruncatedCellProps) => {
   const truncatedText = useMemo(() => {
-    if (!text) return ""
-    return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text
-  }, [text, maxLength])
+    if (!text) return "";
+    return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+  }, [text, maxLength]);
 
   return useMemo(
     () => (
@@ -81,8 +93,8 @@ const TruncatedCell = ({ text, maxLength = 140, width = "auto" }: TruncatedCellP
       </div>
     ),
     [width, truncatedText],
-  )
-}
+  );
+};
 
 const ResizableDivider = ({ onMouseDown }: ResizableDividerProps) => {
   return useMemo(
@@ -101,8 +113,8 @@ const ResizableDivider = ({ onMouseDown }: ResizableDividerProps) => {
       />
     ),
     [onMouseDown],
-  )
-}
+  );
+};
 
 const TableHeader = ({
   headers,
@@ -115,7 +127,10 @@ const TableHeader = ({
   return useMemo(
     () => (
       <div className="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
-        <table className="w-full text-xs border-collapse" style={{ tableLayout: "fixed" }}>
+        <table
+          className="w-full text-xs border-collapse"
+          style={{ tableLayout: "fixed" }}
+        >
           <thead>
             <tr>
               {headers.map((header, index) =>
@@ -123,12 +138,12 @@ const TableHeader = ({
                   <th
                     key={header}
                     style={{
-                      width: index === 0 ? "20px" : columnWidths[index],
+                      width: columnWidths[index],
                       position: "relative",
                       border: "1px solid #ddd",
                       padding: "8px",
                       userSelect: "none",
-                      minWidth: index === 0 ? "20px" : columnWidths[index],
+                      minWidth: columnWidths[index],
                       textAlign: columnAlignments[index],
                       backgroundColor: "var(--background, white)",
                     }}
@@ -145,9 +160,16 @@ const TableHeader = ({
         </table>
       </div>
     ),
-    [headers, columnWidths, columnAlignments, onResize, onAlignToggle, columnVisibility],
-  )
-}
+    [
+      headers,
+      columnWidths,
+      columnAlignments,
+      onResize,
+      onAlignToggle,
+      columnVisibility,
+    ],
+  );
+};
 
 const TableRow = ({
   row,
@@ -159,11 +181,18 @@ const TableRow = ({
   handleCellClick,
 }: TableRowProps) => {
   const rowData = useMemo(
-    () => [index + 1, row[1] || "", row[0] || "", row[2] + " KB" || "", row[3] || "", row[4] || ""],
+    () => [
+      index + 1,
+      row[1] || "",
+      row[0] || "",
+      row[2] + " KB" || "",
+      row[3] || "",
+      row[4] || "",
+    ],
     [row, index],
-  )
+  );
 
-  const isOdd = index % 2 === 1
+  const isOdd = index % 2 === 1;
 
   return useMemo(
     () => (
@@ -174,14 +203,13 @@ const TableRow = ({
               key={`cell-${index}-${cellIndex}`}
               onClick={() => handleCellClick(index, cellIndex, cell.toString())}
               style={{
-                width: cellIndex === 0 ? "30px" : columnWidths[cellIndex],
+                width: columnWidths[cellIndex],
                 border: "1px solid #ddd",
                 padding: "8px",
-                paddingLeft: cellIndex === 0 ? "20px" : "0px",
                 textAlign: columnAlignments[cellIndex],
                 overflow: "hidden",
                 whiteSpace: "nowrap",
-                minWidth: cellIndex === 0 ? "30px" : columnWidths[cellIndex],
+                minWidth: columnWidths[cellIndex],
                 height: "25px",
               }}
               className={`
@@ -198,26 +226,43 @@ const TableRow = ({
                 hover:bg-blue-50 dark:hover:bg-blue-900/30
               `}
             >
-              <TruncatedCell text={cell?.toString()} width={cellIndex === 0 ? "30px" : columnWidths[cellIndex]} />
+              <TruncatedCell
+                text={cell?.toString()}
+                width={columnWidths[cellIndex]}
+              />
             </td>
           ) : null,
         )}
       </>
     ),
-    [rowData, columnWidths, columnAlignments, columnVisibility, index, clickedCell, handleCellClick, isOdd],
-  )
-}
-const ColumnPicker = ({ columnVisibility, setColumnVisibility, headerTitles }: ColumnPickerProps) => {
+    [
+      rowData,
+      columnWidths,
+      columnAlignments,
+      columnVisibility,
+      index,
+      clickedCell,
+      handleCellClick,
+      isOdd,
+    ],
+  );
+};
+
+const ColumnPicker = ({
+  columnVisibility,
+  setColumnVisibility,
+  headerTitles,
+}: ColumnPickerProps) => {
   const handleToggle = useCallback(
     (index: number) => {
       setColumnVisibility((prev) => {
-        const newVisibility = [...prev]
-        newVisibility[index] = !newVisibility[index]
-        return newVisibility
-      })
+        const newVisibility = [...prev];
+        newVisibility[index] = !newVisibility[index];
+        return newVisibility;
+      });
     },
     [setColumnVisibility],
-  )
+  );
 
   return useMemo(
     () => (
@@ -242,26 +287,35 @@ const ColumnPicker = ({ columnVisibility, setColumnVisibility, headerTitles }: C
       </DropdownMenu>
     ),
     [columnVisibility, handleToggle, headerTitles],
-  )
-}
+  );
+};
 
-const ImagesCrawlTable = ({ rows, rowHeight = 25, overscan = 18, tabName }: TableCrawlProps) => {
-  const [columnWidths, setColumnWidths] = useState(initialColumnWidths)
-  const [columnAlignments, setColumnAlignments] = useState(initialColumnAlignments)
-  const [isResizing, setIsResizing] = useState<number | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [columnVisibility, setColumnVisibility] = useState(headerTitles.map(() => true))
+const ImagesCrawlTable = ({
+  rows,
+  rowHeight = 25,
+  overscan = 18,
+  tabName,
+}: TableCrawlProps) => {
+  const [columnWidths, setColumnWidths] = useState(initialColumnWidths);
+  const [columnAlignments, setColumnAlignments] = useState(
+    initialColumnAlignments,
+  );
+  const [isResizing, setIsResizing] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [columnVisibility, setColumnVisibility] = useState(
+    headerTitles.map(() => true),
+  );
 
   const handleDownload = async () => {
     try {
       // Call the backend command to generate the Excel file
 
       if (!rows.length) {
-        toast.error("No data to download, crawl something first")
-        return
+        toast.error("No data to download, crawl something first");
+        return;
       }
 
-      const fileBuffer = await invoke("create_excel", { data: rows })
+      const fileBuffer = await invoke("create_excel", { data: rows });
 
       // Prompt the user to choose a file path to save the Excel file
       const filePath = await save({
@@ -272,45 +326,52 @@ const ImagesCrawlTable = ({ rows, rowHeight = 25, overscan = 18, tabName }: Tabl
           },
         ],
         defaultPath: `RustySEO-${tabName}`, // Default file name
-      })
+      });
 
       if (filePath) {
         // Convert the Uint8Array to a binary file and save it
-        await writeFile(filePath, new Uint8Array(fileBuffer))
+        await writeFile(filePath, new Uint8Array(fileBuffer));
       } else {
-        console.log("User canceled the save dialog.")
+        console.log("User canceled the save dialog.");
       }
     } catch (error) {
-      console.error("Error generating or saving Excel file:", error)
+      console.error("Error generating or saving Excel file:", error);
     }
-  }
+  };
 
   // State to track the clicked cell (rowIndex, cellIndex)
   const [clickedCell, setClickedCell] = useState<{
-    row: number | null
-    cell: number | null
+    row: number | null;
+    cell: number | null;
   }>({
     row: null,
     cell: null,
-  })
-  const { setSelectedTableURL } = useGlobalCrawlStore()
+  });
+  const { setSelectedTableURL } = useGlobalCrawlStore();
 
   const filterTableURL = (arr: { url: string }[], url: string) => {
-    if (!arr || arr.length === 0) return []
-    return arr.filter((item) => item.url === url)
-  }
+    if (!arr || arr.length === 0) return [];
+    return arr.filter((item) => item.url === url);
+  };
 
   // Handle cell click
-  const handleCellClick = (rowIndex: number, cellIndex: number, cellContent: string) => {
+  const handleCellClick = (
+    rowIndex: number,
+    cellIndex: number,
+    cellContent: string,
+  ) => {
     setClickedCell((prevClickedCell) => {
-      if (prevClickedCell.row === rowIndex && prevClickedCell.cell === cellIndex) {
+      if (
+        prevClickedCell.row === rowIndex &&
+        prevClickedCell.cell === cellIndex
+      ) {
         // If the clicked cell is already highlighted, unhighlight it
-        return { row: null, cell: null }
+        return { row: null, cell: null };
       } else {
         // Otherwise, highlight the clicked cell
-        return { row: rowIndex, cell: cellIndex }
+        return { row: rowIndex, cell: cellIndex };
       }
-    })
+    });
 
     if (cellIndex === 1) {
       // const urlData = filterTableURL(rows, cellContent);
@@ -319,27 +380,30 @@ const ImagesCrawlTable = ({ rows, rowHeight = 25, overscan = 18, tabName }: Tabl
     }
 
     // console.log(cellContent, rowIndex, cellIndex);
-  }
+  };
 
-  const startXRef = useRef(0)
-  const parentRef = useRef<HTMLDivElement>(null)
-  const tableContainerRef = useRef<HTMLDivElement>(null)
+  const startXRef = useRef(0);
+  const parentRef = useRef<HTMLDivElement>(null);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
   // Memoize filtered rows
   const filteredRows = useMemo(() => {
-    if (!rows || !Array.isArray(rows)) return []
+    if (!rows || !Array.isArray(rows)) return [];
 
-    const normalizeText = (text: string) => text?.toString().toLowerCase().replace(/-/g, "") ?? ""
+    const normalizeText = (text: string) =>
+      text?.toString().toLowerCase().replace(/-/g, "") ?? "";
 
-    const searchTermNormalized = normalizeText(searchTerm)
+    const searchTermNormalized = normalizeText(searchTerm);
 
     return searchTerm
       ? rows.filter((row) => {
-          if (!row || typeof row !== "object") return false
-          return Object.values(row).some((value) => normalizeText(value?.toString()).includes(searchTermNormalized))
+          if (!row || typeof row !== "object") return false;
+          return Object.values(row).some((value) =>
+            normalizeText(value?.toString()).includes(searchTermNormalized),
+          );
         })
-      : rows
-  }, [rows, searchTerm])
+      : rows;
+  }, [rows, searchTerm]);
 
   // Initialize virtualizer with proper sizing
   const rowVirtualizer = useVirtualizer({
@@ -348,60 +412,67 @@ const ImagesCrawlTable = ({ rows, rowHeight = 25, overscan = 18, tabName }: Tabl
     estimateSize: () => rowHeight,
     overscan,
     measureElement:
-      typeof window !== "undefined" && navigator.userAgent.indexOf("Firefox") === -1
+      typeof window !== "undefined" &&
+      navigator.userAgent.indexOf("Firefox") === -1
         ? (element) => element?.getBoundingClientRect().height
         : undefined,
-  })
+  });
 
   // Debounced search handler
-  const debouncedSearch = useMemo(() => debounce((value: string) => setSearchTerm(value), 300), [])
+  const debouncedSearch = useMemo(
+    () => debounce((value: string) => setSearchTerm(value), 300),
+    [],
+  );
 
   // Cleanup
   useEffect(() => {
     return () => {
-      debouncedSearch.cancel()
-    }
-  }, [debouncedSearch])
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
 
   // Column resizing handlers
-  const handleMouseDown = useCallback((index: number, event: React.MouseEvent) => {
-    setIsResizing(index)
-    startXRef.current = event.clientX
-    event.preventDefault()
-  }, [])
+  const handleMouseDown = useCallback(
+    (index: number, event: React.MouseEvent) => {
+      setIsResizing(index);
+      startXRef.current = event.clientX;
+      event.preventDefault();
+    },
+    [],
+  );
 
   const handleMouseMove = useCallback(
     (event: MouseEvent) => {
-      if (isResizing === null) return
+      if (isResizing === null) return;
 
-      const delta = event.clientX - startXRef.current
+      const delta = event.clientX - startXRef.current;
       setColumnWidths((prevWidths) => {
-        const newWidths = [...prevWidths]
-        const currentWidth = Number.parseInt(newWidths[isResizing])
-        newWidths[isResizing] = `${Math.max(isResizing === 0 ? 40 : 50, currentWidth + delta)}px`
-        return newWidths
-      })
-      startXRef.current = event.clientX
+        const newWidths = [...prevWidths];
+        const currentWidth = Number.parseInt(newWidths[isResizing]);
+        newWidths[isResizing] = `${Math.max(50, currentWidth + delta)}px`;
+        return newWidths;
+      });
+      startXRef.current = event.clientX;
     },
     [isResizing],
-  )
+  );
 
   const handleMouseUp = useCallback(() => {
-    setIsResizing(null)
-  }, [])
+    setIsResizing(null);
+  }, []);
 
   // Event listeners for resizing
   useEffect(() => {
     if (isResizing !== null) {
-      window.addEventListener("mousemove", handleMouseMove)
-      window.addEventListener("mouseup", handleMouseUp)
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
 
       return () => {
-        window.removeEventListener("mousemove", handleMouseMove)
-        window.removeEventListener("mouseup", handleMouseUp)
-      }
+        window.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("mouseup", handleMouseUp);
+      };
     }
-  }, [isResizing, handleMouseMove, handleMouseUp])
+  }, [isResizing, handleMouseMove, handleMouseUp]);
 
   // Calculate total table width
   const totalWidth = useMemo(
@@ -409,25 +480,26 @@ const ImagesCrawlTable = ({ rows, rowHeight = 25, overscan = 18, tabName }: Tabl
       columnWidths.reduce((acc, width, index) => {
         if (typeof width === "string") {
           if (width.endsWith("px")) {
-            return acc + Number.parseFloat(width)
+            return acc + Number.parseFloat(width);
           } else if (width.endsWith("rem")) {
-            return acc + Number.parseFloat(width) * 16
+            return acc + Number.parseFloat(width) * 16;
           }
         }
-        return acc + (index === 0 ? 40 : 100)
+        return acc + 100;
       }, 0),
     [columnWidths],
-  )
+  );
 
   const toggleColumnAlignment = useCallback((index: number) => {
     setColumnAlignments((prev) => {
-      const newAlignments = [...prev]
-      newAlignments[index] = newAlignments[index] === "center" ? "left" : "center"
-      return newAlignments
-    })
-  }, [])
+      const newAlignments = [...prev];
+      newAlignments[index] =
+        newAlignments[index] === "center" ? "left" : "center";
+      return newAlignments;
+    });
+  }, []);
 
-  const virtualRows = rowVirtualizer.getVirtualItems()
+  const virtualRows = rowVirtualizer.getVirtualItems();
 
   return (
     <>
@@ -475,7 +547,7 @@ const ImagesCrawlTable = ({ rows, rowHeight = 25, overscan = 18, tabName }: Tabl
           <div style={{ position: "relative", paddingTop: "0px" }}>
             {filteredRows.length > 0 ? (
               virtualRows.map((virtualRow) => {
-                const isOdd = virtualRow.index % 2 === 1
+                const isOdd = virtualRow.index % 2 === 1;
                 return (
                   <div
                     key={virtualRow.key}
@@ -511,18 +583,20 @@ const ImagesCrawlTable = ({ rows, rowHeight = 25, overscan = 18, tabName }: Tabl
                       </tbody>
                     </table>
                   </div>
-                )
+                );
               })
             ) : (
               <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-white dark:bg-gray-900">
-                <div className="text-center py-4 text-gray-500 dark:text-gray-400">No data available.</div>
+                <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                  No data available.
+                </div>
               </div>
             )}
           </div>
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default ImagesCrawlTable
+export default ImagesCrawlTable;

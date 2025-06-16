@@ -1,6 +1,6 @@
 // Column configurations
 export const initialColumnWidths = [
-  "30px", // ID
+  "40px", // ID
   "120px", // URL
   "800px", // Image Size
   "100px", // Image Type
