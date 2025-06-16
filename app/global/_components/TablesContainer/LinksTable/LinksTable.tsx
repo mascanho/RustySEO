@@ -783,7 +783,7 @@ const LinksTable = ({
                 </div>
               ))
             ) : (
-              <div className="text-center py-4">No data available.</div>
+              <div className="text-center py-4 text-xs">No data available.</div>
             )}
           </div>
         </div>
