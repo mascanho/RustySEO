@@ -114,32 +114,36 @@ const TableHeader = ({
 }: TableHeaderProps) => {
   return useMemo(
     () => (
-      <thead className="sticky top-0 z-10 domainCrawl border">
-        <tr>
-          {headers.map((header, index) =>
-            columnVisibility[index] ? (
-              <th
-                key={header}
-                style={{
-                  width: index === 0 ? "20px" : columnWidths[index],
-                  position: "relative",
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  userSelect: "none",
-                  minWidth: index === 0 ? "20px" : columnWidths[index],
-                  textAlign: columnAlignments[index],
-                  backgroundColor: "var(--background, white)",
-                }}
-                className="dark:border-gray-600 dark:bg-gray-800 bg-gray-50"
-                onClick={() => onAlignToggle(index)}
-              >
-                {header}
-                <ResizableDivider onMouseDown={(e) => onResize(index, e)} />
-              </th>
-            ) : null,
-          )}
-        </tr>
-      </thead>
+      <div className="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+        <table className="w-full text-xs border-collapse" style={{ tableLayout: "fixed" }}>
+          <thead>
+            <tr>
+              {headers.map((header, index) =>
+                columnVisibility[index] ? (
+                  <th
+                    key={header}
+                    style={{
+                      width: index === 0 ? "20px" : columnWidths[index],
+                      position: "relative",
+                      border: "1px solid #ddd",
+                      padding: "8px",
+                      userSelect: "none",
+                      minWidth: index === 0 ? "20px" : columnWidths[index],
+                      textAlign: columnAlignments[index],
+                      backgroundColor: "var(--background, white)",
+                    }}
+                    className="dark:border-gray-600 dark:bg-gray-800 bg-gray-50 font-medium text-gray-900 dark:text-gray-100"
+                    onClick={() => onAlignToggle(index)}
+                  >
+                    {header}
+                    <ResizableDivider onMouseDown={(e) => onResize(index, e)} />
+                  </th>
+                ) : null,
+              )}
+            </tr>
+          </thead>
+        </table>
+      </div>
     ),
     [headers, columnWidths, columnAlignments, onResize, onAlignToggle, columnVisibility],
   )
@@ -179,13 +183,20 @@ const TableRow = ({
                 whiteSpace: "nowrap",
                 minWidth: cellIndex === 0 ? "30px" : columnWidths[cellIndex],
                 height: "25px",
-                backgroundColor:
-                  clickedCell.row === index && clickedCell.cell === cellIndex ? "#2B6CC4" : "transparent",
-                color: clickedCell.row === index && clickedCell.cell === cellIndex ? "white" : "inherit",
               }}
-              className={`dark:text-white/50 cursor-pointer dark:border-gray-600 ${
-                isOdd ? "bg-gray-50 dark:bg-gray-800/50" : "bg-white dark:bg-gray-900"
-              } hover:bg-blue-50 dark:hover:bg-blue-900/20`}
+              className={`
+                cursor-pointer 
+                border-gray-200 dark:border-gray-700 
+                transition-colors
+                ${
+                  clickedCell.row === index && clickedCell.cell === cellIndex
+                    ? "bg-blue-600 dark:bg-blue-700 text-white" // Selected cell
+                    : isOdd
+                      ? "bg-gray-100 dark:bg-gray-800/90" // Odd row (darker)
+                      : "bg-white dark:bg-gray-900" // Even row (lighter)
+                }
+                hover:bg-blue-50 dark:hover:bg-blue-900/30
+              `}
             >
               <TruncatedCell text={cell?.toString()} width={cellIndex === 0 ? "30px" : columnWidths[cellIndex]} />
             </td>
@@ -196,7 +207,6 @@ const TableRow = ({
     [rowData, columnWidths, columnAlignments, columnVisibility, index, clickedCell, handleCellClick, isOdd],
   )
 }
-
 const ColumnPicker = ({ columnVisibility, setColumnVisibility, headerTitles }: ColumnPickerProps) => {
   const handleToggle = useCallback(
     (index: number) => {
@@ -331,12 +341,16 @@ const ImagesCrawlTable = ({ rows, rowHeight = 25, overscan = 18, tabName }: Tabl
       : rows
   }, [rows, searchTerm])
 
-  // Initialize virtualizer
+  // Initialize virtualizer with proper sizing
   const rowVirtualizer = useVirtualizer({
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: useCallback(() => rowHeight, [rowHeight]),
+    estimateSize: () => rowHeight,
     overscan,
+    measureElement:
+      typeof window !== "undefined" && navigator.userAgent.indexOf("Firefox") === -1
+        ? (element) => element?.getBoundingClientRect().height
+        : undefined,
   })
 
   // Debounced search handler
@@ -433,61 +447,78 @@ const ImagesCrawlTable = ({ rows, rowHeight = 25, overscan = 18, tabName }: Tabl
           />
         </div>
       </div>
-      <div ref={parentRef} className="w-full h-[calc(100%-1.9rem)] overflow-scroll relative">
-        <div ref={tableContainerRef} style={{ minWidth: `${totalWidth}px` }} className="domainCrawlParent sticky top-0">
-          <table className="w-full text-xs border-collapse domainCrawlParent h-full">
-            <TableHeader
-              headers={headerTitles}
-              columnWidths={columnWidths}
-              columnAlignments={columnAlignments}
-              onResize={handleMouseDown}
-              onAlignToggle={toggleColumnAlignment}
-              columnVisibility={columnVisibility}
-            />
-            <tbody>
-              {filteredRows.length > 0 ? (
-                <>
-                  {virtualRows.length > 0 && (
-                    <tr
+      <div
+        ref={parentRef}
+        className="w-full h-[calc(100%-1.9rem)] overflow-auto relative bg-white dark:bg-gray-900"
+        style={{ contain: "strict" }}
+      >
+        <div
+          ref={tableContainerRef}
+          style={{
+            minWidth: `${totalWidth}px`,
+            height: `${rowVirtualizer.getTotalSize() + 41}px`, // Add header height
+            position: "relative",
+          }}
+          className="domainCrawlParent"
+        >
+          {/* Sticky Header */}
+          <TableHeader
+            headers={headerTitles}
+            columnWidths={columnWidths}
+            columnAlignments={columnAlignments}
+            onResize={handleMouseDown}
+            onAlignToggle={toggleColumnAlignment}
+            columnVisibility={columnVisibility}
+          />
+
+          {/* Virtual rows container */}
+          <div style={{ position: "relative", paddingTop: "0px" }}>
+            {filteredRows.length > 0 ? (
+              virtualRows.map((virtualRow) => {
+                const isOdd = virtualRow.index % 2 === 1
+                return (
+                  <div
+                    key={virtualRow.key}
+                    style={{
+                      position: "absolute",
+                      top: `${virtualRow.start}px`,
+                      left: 0,
+                      height: `${virtualRow.size}px`,
+                      width: "100%",
+                    }}
+                    className={`${isOdd ? "bg-gray-100 dark:bg-gray-800" : "bg-white dark:bg-gray-900"}`}
+                  >
+                    <table
+                      className="w-full text-xs border-collapse"
                       style={{
-                        height: `${virtualRows[0]?.start || 0}px`,
+                        width: "100%",
+                        tableLayout: "fixed",
+                        height: "100%",
                       }}
                     >
-                      <td colSpan={headerTitles.length} style={{ padding: 0, border: "none" }} />
-                    </tr>
-                  )}
-                  {virtualRows.map((virtualRow) => (
-                    <tr key={virtualRow.key} style={{ height: `${rowHeight}px` }}>
-                      <TableRow
-                        row={filteredRows[virtualRow.index]}
-                        index={virtualRow.index}
-                        columnWidths={columnWidths}
-                        columnAlignments={columnAlignments}
-                        columnVisibility={columnVisibility}
-                        clickedCell={clickedCell}
-                        handleCellClick={handleCellClick}
-                      />
-                    </tr>
-                  ))}
-                  {virtualRows.length > 0 && (
-                    <tr
-                      style={{
-                        height: `${Math.max(0, rowVirtualizer.getTotalSize() - (virtualRows[virtualRows.length - 1]?.end || 0))}px`,
-                      }}
-                    >
-                      <td colSpan={headerTitles.length} style={{ padding: 0, border: "none" }} />
-                    </tr>
-                  )}
-                </>
-              ) : (
-                <tr>
-                  <td colSpan={headerTitles.length} className="text-center py-4">
-                    No data available.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                      <tbody>
+                        <tr style={{ height: `${rowHeight}px` }}>
+                          <TableRow
+                            row={filteredRows[virtualRow.index]}
+                            index={virtualRow.index}
+                            columnWidths={columnWidths}
+                            columnAlignments={columnAlignments}
+                            columnVisibility={columnVisibility}
+                            clickedCell={clickedCell}
+                            handleCellClick={handleCellClick}
+                          />
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                )
+              })
+            ) : (
+              <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-white dark:bg-gray-900">
+                <div className="text-center py-4 text-gray-500 dark:text-gray-400">No data available.</div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>
