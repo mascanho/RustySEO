@@ -11,6 +11,7 @@ import KeywordSerp from "./TopMenuBar/KeywordSerp";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import Onboarding from "../Onboarding";
 import { useOnboardingStore } from "@/store/OnboardingStore";
+import { toast } from "sonner";
 
 function MenuDrawer() {
   const [opened, setOpened] = useState(false);
@@ -167,9 +168,18 @@ function MenuDrawer() {
       if (event.ctrlKey && event.key === "g") {
         router.push("/ppc");
       }
-    };
 
-    console.log("Current onboarding completed state:", completed);
+      // clear cache with ctrl + shift + d
+      if (event.ctrlKey && event.key === "/") {
+        try {
+          localStorage.clear();
+          console.log("Clear successful");
+          toast.success("Cleared RustySEO cache");
+        } catch (error) {
+          console.error("Clear failed:", error);
+        }
+      }
+    };
 
     // Add the event listener
     window.addEventListener("keydown", handleKeyDown);
