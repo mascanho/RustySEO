@@ -676,7 +676,7 @@ const TableCrawl = ({
               </div>
             ))
           ) : (
-            <div className="text-center py-4 text-gray-500">
+            <div className="text-center py-4 text-xs text-gray-500">
               No data available.
             </div>
           )}

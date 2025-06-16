@@ -521,7 +521,7 @@ const ImagesCrawlTable = ({
       </div>
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-1.9rem)] overflow-auto relative bg-white dark:bg-gray-900"
+        className="w-full h-[calc(100%-1.9rem)] overflow-auto relative bg-white dark:bg-brand-darker"
         style={{ contain: "strict" }}
       >
         <div
@@ -586,8 +586,8 @@ const ImagesCrawlTable = ({
                 );
               })
             ) : (
-              <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center bg-white dark:bg-gray-900">
-                <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+              <div className="absolute top-4 left-0 w-full h-full flex items-center justify-center bg-white">
+                <div className="text-center py-4 text-xs text-gray-500 dark:text-gray-400">
                   No data available.
                 </div>
               </div>

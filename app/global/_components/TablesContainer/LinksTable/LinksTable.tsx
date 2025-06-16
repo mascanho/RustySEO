@@ -88,9 +88,6 @@ interface ColumnPickerProps {
 }
 
 function getStatusCodeColor(statusCode: number) {
-
-
-
   if (statusCode >= 200 && statusCode < 300) {
     return "green";
   } else if (statusCode >= 300 && statusCode < 400) {
@@ -122,7 +119,6 @@ const TruncatedCell = ({
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
-        
         }}
       >
         {truncatedText}
@@ -270,8 +266,7 @@ const TableRow = ({
                 overflow: "hidden",
                 whiteSpace: "nowrap",
                 minWidth: columnWidths[cellIndex],
-                color: getStatusCodeColor(
-                cellIndex === 6 ? cell : "")
+                color: getStatusCodeColor(cellIndex === 6 ? cell : ""),
               }}
               className={`dark:text-white cursor-pointer ${
                 clickedCell.row === index && clickedCell.cell === cellIndex
@@ -783,7 +778,9 @@ const LinksTable = ({
                 </div>
               ))
             ) : (
-              <div className="text-center py-4 text-xs">No data available.</div>
+              <div className="text-center py-4 text-xs dark:text-white/50">
+                No data available.
+              </div>
             )}
           </div>
         </div>

@@ -563,7 +563,7 @@ const TableCrawlCSS = ({
                 <tr>
                   <td
                     colSpan={headerTitles.length}
-                    className="text-center py-4"
+                    className="text-center py-4 text-xs"
                   >
                     No data available.
                   </td>
