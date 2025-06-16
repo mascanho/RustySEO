@@ -1,6 +1,5 @@
-"use client"
-
 // @ts-nocheck
+"use client"
 import type React from "react"
 import { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import { useVirtualizer } from "@tanstack/react-virtual"
