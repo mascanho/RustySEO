@@ -93,11 +93,12 @@ function UploadButton() {
         </DialogTrigger>
         <DialogContent className="p-9 overflow-hidden pl-6 max-w-[700px] h-[560px] dark:bg-brand-darker">
           <Tabs>
-            <TabsList className="grid w-full grid-cols-4 bg-gray-100 dark:bg-brand-dark">
+            <TabsList className="grid w-full grid-cols-5 bg-gray-100 dark:bg-brand-dark">
               <TabsTrigger value="domain">Domain</TabsTrigger>
               <TabsTrigger value="taxonomy">Content Taxonomies</TabsTrigger>
               <TabsTrigger value="ips">Google IPs</TabsTrigger>
               <TabsTrigger value="logs">Stored Logs</TabsTrigger>
+              <TabsTrigger value="projects">Projects</TabsTrigger>
             </TabsList>
 
             {/* SEPARATOR */}
