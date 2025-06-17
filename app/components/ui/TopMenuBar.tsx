@@ -67,7 +67,7 @@ import { Settings } from "lucide-react";
 import PowerBi from "./MSClarityModal/PowerBi";
 import { useOnboardingStore } from "@/store/OnboardingStore";
 import { BiDoorOpen, BiLogoSlackOld } from "react-icons/bi";
-import { CiSettings } from "react-icons/ci";
+import { CiFolderOn, CiSettings } from "react-icons/ci";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -266,6 +266,17 @@ const TopMenuBar = () => {
     localStorage.setItem("onboarding", String(newValue));
     useOnboardingStore.setState({ completed: newValue });
   };
+
+  // handle the click to openm the settings folder
+  const handleOpenSettingsFolder = useCallback(async () => {
+    try {
+      await invoke("open_config_folder_command");
+      console.log("Settings folder opened successfully");
+    } catch (error) {
+      console.error("Failed to open the settings folder", error);
+    }
+  }
+  , []);
 
   return (
     <>
@@ -476,6 +487,13 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-4 text-xs">File</MenubarTrigger>
             <MenubarContent className="z-[999999999999999]">
+               <MenubarItem onClick={handleOpenSettingsFolder}>
+                <CiFolderOn
+                  className=" text-sm mr-1.5 "
+                  style={{ marginLeft: "-1px" }}
+                />
+                Open Settings Folder
+              </MenubarItem>
             <MenubarItem onClick={handleOpenConfigFile}>
                 <CiSettings
                   className=" text-sm mr-1.5 "

@@ -5,7 +5,8 @@ export const changelogData = [
     type: "feature",
     changes: [
 
-       "Support for partial and full App reset"
+       "Support for partial and full App reset",
+       "Better handling of configuration folders & files"
 
     ],
 },
@@ -27,7 +28,7 @@ export const changelogData = [
     changes: [
       "Performance Improvements",
       "Inlinks & Outlinks improvements",
-      "Improved log analysis",
+      "Improved incremental log analysis",
       "Log analyser: improved search",
       "Global system info",
       "Deep Crawl: context menus added to tables",

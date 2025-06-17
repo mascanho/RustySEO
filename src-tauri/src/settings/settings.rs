@@ -346,21 +346,51 @@ pub fn get_system() -> Result<Value, String> {
     }))
 }
 
-
 // REMOVE ALL THE FOLDERS IN THE CONFIG PATH
 #[tauri::command]
 pub async fn delete_config_folders_command() -> Result<(), String> {
     let config_path = directories::ProjectDirs::from("", "", "rustyseo")
         .ok_or("Failed to determine config directory".to_string())?
         .config_dir()
-        .to_path_buf(); 
+        .to_path_buf();
     if config_path.exists() {
         fs::remove_dir_all(&config_path)
             .await
-            .map_err(|e| format!("Failed to delete config directory: {}", e))?;         
+            .map_err(|e| format!("Failed to delete config directory: {}", e))?;
         println!("✅ Config directory deleted at {:?}", config_path);
     } else {
         println!("⚠️ Config directory does not exist at {:?}", config_path);
-    }   
+    }
     Ok(())
+}
+
+// OPEN THE CONFIG FOLDER IN THE FILE EXPLORER
+#[tauri::command]
+pub fn open_config_folder_command() -> Result<(), String> {
+    let config_path = directories::ProjectDirs::from("", "", "rustyseo")
+        .ok_or("Failed to determine config directory".to_string())?
+        .config_dir()
+        .to_path_buf();
+
+    if config_path.exists() {
+        if cfg!(target_os = "windows") {
+            std::process::Command::new("explorer")
+                .arg(config_path)
+                .spawn()
+                .map_err(|e| format!("Failed to open config folder: {}", e))?;
+        } else if cfg!(target_os = "macos") {
+            std::process::Command::new("open")
+                .arg(config_path)
+                .spawn()
+                .map_err(|e| format!("Failed to open config folder: {}", e))?;
+        } else if cfg!(target_os = "linux") {
+            std::process::Command::new("xdg-open")
+                .arg(config_path)
+                .spawn()
+                .map_err(|e| format!("Failed to open config folder: {}", e))?;
+        }
+        Ok(())
+    } else {
+        Err("Config folder does not exist".to_string())
+    }
 }

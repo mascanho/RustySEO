@@ -11,8 +11,9 @@ use crawler::{
 use directories::ProjectDirs;
 use globals::actions;
 use serde::{Deserialize, Deserializer, Serialize};
-use settings::settings::get_system;
 use settings::settings::delete_config_folders_command;
+use settings::settings::get_system;
+use settings::settings::open_config_folder_command;
 use settings::settings::Settings;
 use std::io::Write;
 use std::sync::Arc;
@@ -248,7 +249,8 @@ async fn main() {
             loganalyser::database::read_logs_from_db,
             loganalyser::database::delete_log_from_db,
             get_system,
-            delete_config_folders_command
+            delete_config_folders_command,
+            open_config_folder_command
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
