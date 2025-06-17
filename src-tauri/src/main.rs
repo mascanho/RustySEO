@@ -12,6 +12,7 @@ use directories::ProjectDirs;
 use globals::actions;
 use serde::{Deserialize, Deserializer, Serialize};
 use settings::settings::get_system;
+use settings::settings::delete_config_folders_command;
 use settings::settings::Settings;
 use std::io::Write;
 use std::sync::Arc;
@@ -246,7 +247,8 @@ async fn main() {
             remove_all_logs_from_serverlog_db,
             loganalyser::database::read_logs_from_db,
             loganalyser::database::delete_log_from_db,
-            get_system
+            get_system,
+            delete_config_folders_command
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

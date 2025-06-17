@@ -32,6 +32,19 @@ function MenuDrawer() {
     { name: "PPC Simulator", route: "/ppc" },
   ];
 
+async function fullReset() {
+  try {
+    await invoke("delete_config_folders_command");
+    // Optionally: toast.success("Reset successful");
+    localStorage.clear();
+    toast.success("RustySEO has been reset to default settings.");
+  } catch (error) {
+    console.error("Error during full reset:", error);
+    toast.error("Failed to reset RustySEO. Please try again.");
+  }
+}
+
+
   useEffect(() => {
     const widgetselement = document.querySelector(".widgets");
     if (widgetselement) {
@@ -169,7 +182,7 @@ function MenuDrawer() {
         router.push("/ppc");
       }
 
-      // clear cache with ctrl + shift + d
+      // clear cache with ctrl + /
       if (event.ctrlKey && event.key === "/") {
         try {
           localStorage.clear();
@@ -179,6 +192,13 @@ function MenuDrawer() {
           console.error("Clear failed:", error);
         }
       }
+
+
+        // Reset RustySEO with ctrl + shift + "/"
+      if (event.ctrlKey && event.shiftKey && event.code === "Slash") {
+        fullReset();
+      }
+
     };
 
     // Add the event listener
