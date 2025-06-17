@@ -1,15 +1,14 @@
 export const changelogData = [
-{
+  {
     version: "0.2.7",
-    date: "2025-07-01",
-    type: "feature",
+    date: "2025-06-17",
+    type: "fix",
     changes: [
-
-       "Support for partial and full App reset",
-       "Better handling of configuration folders & files"
-
+      "Support for partial and full App reset",
+      "Better handling of configuration folders & files",
+      "Improved tables on Deep crawler",
     ],
-},
+  },
 
   {
     version: "0.2.6",
