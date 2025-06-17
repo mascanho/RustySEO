@@ -13,9 +13,11 @@ use uuid::Uuid;
 
 use crate::domain_crawler::{self, user_agents};
 use crate::loganalyser::log_state::set_taxonomies;
+use crate::version::local_version;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Settings {
+    pub version: String,
     pub crawl_timeout: u64,
     pub client_timeout: u64,
     pub client_connect_timeout: u64,
@@ -43,6 +45,7 @@ pub struct Settings {
 impl Settings {
     pub fn new() -> Self {
         Self {
+            version: local_version(),
             crawl_timeout: 28800,
             client_timeout: 60,
             client_connect_timeout: 15,
@@ -142,6 +145,7 @@ pub async fn init_settings() -> Result<Settings, String> {
 
 pub fn print_settings(settings: &Settings) {
     // Use the settings
+    println!("Version: {}", settings.version);
     println!("Crawl Timeout: {:?}", settings.crawl_timeout);
     println!("Client Timeout: {:?}", settings.client_timeout);
     println!(
@@ -179,9 +183,6 @@ pub fn print_settings(settings: &Settings) {
     println!("")
 }
 
-// Rewrite the settings file with only the ones that need to be overridden
-
-// Rewrite the settings file with only the ones that need to be overridden
 // Rewrite the settings file with only the ones that need to be overridden
 pub async fn override_settings(updates: &str) -> Result<Settings, String> {
     // Load current settings or create new ones
