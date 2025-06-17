@@ -2,7 +2,10 @@ use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::crawler::db::open_db_connection;
+use crate::{
+    crawler::db::open_db_connection,
+    loganalyser::{analyser::analyse_log, log_commands::check_logs_command},
+};
 
 use super::analyser::{LogAnalysisResult, LogInput};
 
@@ -128,4 +131,52 @@ pub fn delete_log_from_db(id: i32) {
     let _ = db
         .conn
         .execute("DELETE FROM server_logs WHERE id = ?1", params![id]);
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct StoredLogsData {
+    pub id: i64,
+    pub date: String,
+    pub filename: String,
+    pub log: String,
+}
+
+// Get the logs, convert them from strings and store them in a vec
+#[tauri::command]
+pub fn get_stored_logs_command() -> Result<Vec<serde_json::Value>, String> {
+    let db = Database::new("serverlog.db").map_err(|e| e.to_string())?;
+    let mut stmt = db
+        .conn
+        .prepare("SELECT id, date, filename, log FROM server_logs") // Only select needed columns
+        .map_err(|e| e.to_string())?;
+
+    let rows = stmt
+        .query_map([], |row| {
+            Ok(StoredLogsData {
+                id: row.get(0)?,
+                date: row.get(1)?,
+                filename: row.get(2)?,
+                log: row.get(3)?,
+            })
+        })
+        .map_err(|e| e.to_string())?;
+
+    let mut results = Vec::new();
+    for row in rows {
+        results.push(row.map_err(|e| e.to_string())?);
+    }
+
+    let mut deserialised_logs = Vec::new();
+    for mut log in results.iter_mut() {
+        let log_json: serde_json::Value = serde_json::from_str(&log.log).unwrap();
+
+        deserialised_logs.push(log_json)
+    }
+
+    // Stream each log to the frontend
+    for log in deserialised_logs.iter() {
+        println!("{:?}", log);
+    }
+
+    Ok(deserialised_logs)
 }

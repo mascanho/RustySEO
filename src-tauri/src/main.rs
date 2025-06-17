@@ -248,6 +248,7 @@ async fn main() {
             remove_all_logs_from_serverlog_db,
             loganalyser::database::read_logs_from_db,
             loganalyser::database::delete_log_from_db,
+            loganalyser::database::get_stored_logs_command,
             get_system,
             delete_config_folders_command,
             open_config_folder_command
@@ -257,7 +258,7 @@ async fn main() {
 }
 
 #[tauri::command]
-fn add_api_key(key: String, api_type: String) -> Result<String, String> {
+async fn add_api_key(key: String, api_type: String) -> Result<String, String> {
     // Create config directory
     let project_dirs = ProjectDirs::from("", "", "rustyseo")
         .ok_or_else(|| "Failed to get project directories".to_string())?;

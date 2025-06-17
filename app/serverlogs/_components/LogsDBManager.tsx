@@ -133,6 +133,18 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
     return () => clearTimeout(timer);
   }, []);
 
+  // Handle the logs being displayed from the storage
+  const handleDisplayLogs = async () => {
+    try {
+      const data = await invoke("get_stored_logs_command");
+      console.log(data);
+      toast.success("Logs have been retrieved from the database");
+    } catch (error) {
+      console.error(error);
+      toast.error(error);
+    }
+  };
+
   return (
     <section className="w-[650px] max-w-5xl mx-auto h-[670px] pt-2">
       <CardContent className="grid grid-cols-1 gap-6 h-[380px]">
@@ -271,7 +283,7 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
       <CardFooter className="flex justify-between mt-8">
         <Button
           variant="outline"
-          onClick={() => toast.info("Feature coming soon...")}
+          onClick={handleDisplayLogs}
           className="dark:bg-brand-bright dark:border-brand-darker dark:text-white"
         >
           Display saved Logs
