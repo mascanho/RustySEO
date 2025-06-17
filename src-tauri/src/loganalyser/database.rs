@@ -115,7 +115,6 @@ pub fn read_logs_from_db() -> Result<Vec<LogMetadata>, String> {
     Ok(results)
 }
 
-// Add this struct near your DatabaseResults struct
 #[derive(Debug, serde::Serialize)]
 pub struct LogMetadata {
     pub id: i64,
