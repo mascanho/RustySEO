@@ -1,4 +1,15 @@
 export const changelogData = [
+{
+    version: "0.2.7",
+    date: "2025-07-01",
+    type: "feature",
+    changes: [
+
+       "Support for partial and full App reset"
+
+    ],
+},
+
   {
     version: "0.2.6",
     date: "2025-06-15",

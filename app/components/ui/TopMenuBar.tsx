@@ -410,7 +410,7 @@ const TopMenuBar = () => {
         size={"800px"}
         opened={openedConfs}
         onClose={closeConfs}
-        title="Configurations"
+        title="Connector Settings"
         centered
       >
         <Configurations close={closeConfs} />
@@ -475,9 +475,12 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-4 text-xs">File</MenubarTrigger>
             <MenubarContent className="z-[999999999999999]">
-              <MenubarItem onClick={openConfs}>
-                <FiTool className="mr-2" />
-                Configurations
+            <MenubarItem onClick={handleOpenConfigFile}>
+                <CiSettings
+                  className=" text-sm mr-1.5 "
+                  style={{ marginLeft: "-1px" }}
+                />
+                Crawl Settings
               </MenubarItem>
               <MenubarItem onClick={() => getCurrentWindow().close()}>
                 <FiLogOut className="mr-2" />
@@ -489,13 +492,7 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-4 text-xs">View</MenubarTrigger>
             <MenubarContent className="z-[999999999999999]">
-              <MenubarItem onClick={handleOpenConfigFile}>
-                <CiSettings
-                  className=" text-sm mr-1.5 "
-                  style={{ marginLeft: "-1px" }}
-                />
-                Crawl Settings
-              </MenubarItem>
+             
               <MenubarItem
                 disabled={pathname === "/global"}
                 onClick={openPanes}
@@ -617,6 +614,11 @@ const TopMenuBar = () => {
               <MenubarItem className="flex items-center" onClick={openGemini}>
                 <FiZap className="mr-2" />
                 Google Gemini
+              </MenubarItem>
+              <MenubarSeparator />
+                 <MenubarItem onClick={openConfs}>
+                <FiTool className="mr-2" />
+                Connector Settings
               </MenubarItem>
             </MenubarContent>
           </MenubarMenu>
