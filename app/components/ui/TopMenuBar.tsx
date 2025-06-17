@@ -413,6 +413,7 @@ const TopMenuBar = () => {
         title="Connector Settings"
         centered
       >
+
         <Configurations close={closeConfs} />
       </Modal>
 
@@ -480,7 +481,7 @@ const TopMenuBar = () => {
                   className=" text-sm mr-1.5 "
                   style={{ marginLeft: "-1px" }}
                 />
-                Crawl Settings
+                Crawler settings
               </MenubarItem>
               <MenubarItem onClick={() => getCurrentWindow().close()}>
                 <FiLogOut className="mr-2" />
