@@ -880,7 +880,9 @@ export function LogAnalyzer() {
                         />
                       )}
                     </TableHead>
-                    <TableHead align="center" className="text-center">Crawler Type</TableHead>
+                    <TableHead align="center" className="text-center">
+                      Crawler Type
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1001,7 +1003,7 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
           {log?.browser}
         </TableCell>
         <TableCell className="max-w-44 ">{formatDate(log.timestamp)}</TableCell>
-        <TableCell className="max-w-[980px] min-w-[500px] w-[800px] truncate mr-2">
+        <TableCell className="max-w-[980px] min-w-[500px]    truncate mr-2">
           <span className="mr-1 inline-block" style={{ paddingTop: "" }}>
             {getFileIcon(log.file_type)}
           </span>
