@@ -255,7 +255,7 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
     // Extract Google bot pages in parallel
     let (google_bot_pages, google_bot_entries): (Vec<_>, Vec<_>) = entries
         .par_iter()
-        .filter(|e| e.crawler_type.to_lowercase().contains("google"))
+        .filter(|e| e.crawler_type.to_lowercase().contains("google") && e.verified)
         .map(|e| (e.path.clone(), e))
         .unzip();
 
@@ -297,6 +297,7 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
 fn calculate_url_frequencies(entries: Vec<&LogEntry>) -> HashMap<String, Vec<BotPageDetails>> {
     entries
         .into_par_iter()
+        .filter(|entry| entry.verified)
         .fold(
             || HashMap::new(),
             |mut map, entry| {

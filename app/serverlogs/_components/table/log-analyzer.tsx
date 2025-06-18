@@ -414,10 +414,12 @@ export function LogAnalyzer() {
       log.verified || "false",
     ]);
 
+    // Use platform-appropriate line endings
+    const lineEnding = process.platform === "win32" ? "\r\n" : "\n";
     const csvContent = [
       headers.join(","),
       ...csvData.map((row) => row.join(",")),
-    ].join("\n");
+    ].join(lineEnding);
 
     try {
       setIsExporting(true);
@@ -432,7 +434,8 @@ export function LogAnalyzer() {
       });
 
       if (filePath) {
-        await writeTextFile(filePath, csvContent);
+        // Ensure proper encoding for Windows
+        await writeTextFile(filePath, csvContent, { encoding: "utf8" });
         await message("CSV file saved successfully!", {
           title: "Export Complete",
           type: "info",
@@ -740,24 +743,24 @@ export function LogAnalyzer() {
             Reset
           </Button>
 
-      <Button
-  variant="outline"
-  onClick={exportCSV}
-  disabled={isExporting}
-  className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white"
->
-  {isExporting ? (
-    <>
-      <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-      Exporting...
-    </>
-  ) : (
-    <>
-      <Download className="h-4 w-4" />
-      Export CSV
-    </>
-  )}
-</Button>
+          <Button
+            variant="outline"
+            onClick={exportCSV}
+            disabled={isExporting}
+            className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white"
+          >
+            {isExporting ? (
+              <>
+                <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+                Exporting...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4" />
+                Export CSV
+              </>
+            )}
+          </Button>
         </div>
       </div>
 
