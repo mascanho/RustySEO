@@ -117,6 +117,7 @@ export function LogAnalyzer() {
   const searchTermRef = useRef("");
   // SET the input search to be based on button click
   const [inputValue, setInputValue] = useState(""); // stores what's typed in the input
+  const [isExporting, setIsExporting] = useState(false);
 
   // Helper functions
   const formatDate = useCallback((dateString: string) => {
@@ -419,6 +420,7 @@ export function LogAnalyzer() {
     ].join("\n");
 
     try {
+      setIsExporting(true);
       const filePath = await save({
         defaultPath: `RustySEO - Server Logs - ${new Date().toISOString().slice(0, 10)}.csv`,
         filters: [
@@ -436,12 +438,14 @@ export function LogAnalyzer() {
           type: "info",
         });
       }
+      setIsExporting(false);
     } catch (error) {
       console.error("Export failed:", error);
       await message(`Failed to export CSV: ${error}`, {
         title: "Export Error",
         type: "error",
       });
+      setIsExporting(false);
     }
   }, [filteredLogs, entries, domain, showOnTables]);
 
@@ -736,14 +740,24 @@ export function LogAnalyzer() {
             Reset
           </Button>
 
-          <Button
-            variant="outline"
-            onClick={exportCSV}
-            className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white"
-          >
-            <Download className="h-4 w-4" />
-            Export CSV
-          </Button>
+      <Button
+  variant="outline"
+  onClick={exportCSV}
+  disabled={isExporting}
+  className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white"
+>
+  {isExporting ? (
+    <>
+      <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+      Exporting...
+    </>
+  ) : (
+    <>
+      <Download className="h-4 w-4" />
+      Export CSV
+    </>
+  )}
+</Button>
         </div>
       </div>
 
