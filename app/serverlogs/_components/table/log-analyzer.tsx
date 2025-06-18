@@ -433,14 +433,14 @@ export function LogAnalyzer() {
       );
 
       // 6. Process data in batches with validation
-      const batchSize = 6000;
+      const batchSize = 50000;
       for (let i = 0; i < dataToExport.length; i += batchSize) {
         let batchContent = "";
         const batch = dataToExport.slice(i, i + batchSize);
 
         for (const log of batch) {
           const row = [
-            sanitizeForCSV(log.ip),
+            // sanitizeForCSV(log.ip),
             sanitizeForCSV(log.country),
             sanitizeForCSV(log.browser),
             sanitizeForCSV(log.timestamp),
