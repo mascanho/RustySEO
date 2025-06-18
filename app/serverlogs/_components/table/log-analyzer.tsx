@@ -417,7 +417,7 @@ export function LogAnalyzer() {
 
       // 4. Create file with BOM for Excel
       const filePath = await save({
-        defaultPath: `Server-Logs-${new Date().toISOString().slice(0, 10)}.csv`,
+        defaultPath: `RustySEO - Server-Logs-${new Date().toISOString().slice(0, 10)}.csv`,
         filters: [{ name: "CSV", extensions: ["csv"] }],
       });
 
@@ -433,7 +433,7 @@ export function LogAnalyzer() {
       );
 
       // 6. Process data in batches with validation
-      const batchSize = 1000;
+      const batchSize = 6000;
       for (let i = 0; i < dataToExport.length; i += batchSize) {
         let batchContent = "";
         const batch = dataToExport.slice(i, i + batchSize);
@@ -473,6 +473,7 @@ export function LogAnalyzer() {
 
       setIsExporting(false);
       toast.success("CSV exported successfully!");
+      message("CSV exported successfully!");
     } catch (error) {
       setIsExporting(false);
       console.error("Export failed:", error);
