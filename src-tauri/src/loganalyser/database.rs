@@ -1,6 +1,7 @@
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use tauri::{Emitter, Window};
 
 use crate::{
     crawler::db::open_db_connection,
@@ -143,11 +144,11 @@ pub struct StoredLogsData {
 
 // Get the logs, convert them from strings and store them in a vec
 #[tauri::command]
-pub fn get_stored_logs_command() -> Result<Vec<serde_json::Value>, String> {
+pub fn get_stored_logs_command(window: Window) -> Result<(), String> {
     let db = Database::new("serverlog.db").map_err(|e| e.to_string())?;
     let mut stmt = db
         .conn
-        .prepare("SELECT id, date, filename, log FROM server_logs") // Only select needed columns
+        .prepare("SELECT id, date, filename, log FROM server_logs")
         .map_err(|e| e.to_string())?;
 
     let rows = stmt
@@ -161,22 +162,21 @@ pub fn get_stored_logs_command() -> Result<Vec<serde_json::Value>, String> {
         })
         .map_err(|e| e.to_string())?;
 
-    let mut results = Vec::new();
     for row in rows {
-        results.push(row.map_err(|e| e.to_string())?);
+        let log_data = row.map_err(|e| e.to_string())?;
+        let log_json: serde_json::Value =
+            serde_json::from_str(&log_data.log).map_err(|e| e.to_string())?;
+
+        println!(
+            "Log ID: {}, Date: {}, Filename: {}",
+            log_data.id, log_data.date, log_data.filename
+        );
+
+        // Emit the log as an event
+        window
+            .emit("log-stream", &log_json)
+            .map_err(|e| e.to_string())?;
     }
 
-    let mut deserialised_logs = Vec::new();
-    for mut log in results.iter_mut() {
-        let log_json: serde_json::Value = serde_json::from_str(&log.log).unwrap();
-
-        deserialised_logs.push(log_json)
-    }
-
-    // Stream each log to the frontend
-    for log in deserialised_logs.iter() {
-        println!("{:?}", log);
-    }
-
-    Ok(deserialised_logs)
+    Ok(())
 }
