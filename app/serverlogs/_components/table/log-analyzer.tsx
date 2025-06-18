@@ -376,6 +376,7 @@ export function LogAnalyzer() {
   }, []);
 
   // Export logs as CSV
+
   const exportCSV = useCallback(async () => {
     const headers = [
       "IP",
@@ -395,47 +396,52 @@ export function LogAnalyzer() {
     ];
 
     const dataToExport = filteredLogs.length > 0 ? filteredLogs : entries;
-
-    const csvData = dataToExport.map((log) => [
-      log.ip || "",
-      log.country || "",
-      log.browser || "",
-      log.timestamp || "",
-      log.method || "",
-      (domain && showOnTables ? "https://" + domain + log.path : log.path) ||
-        "",
-      log.taxonomy || "",
-      log.file_type || "",
-      log.status || "",
-      log.response_size || "",
-      `"${(log.user_agent || "").replace(/"/g, '""')}"`,
-      log.referer || "-",
-      log.crawler_type || "",
-      log.verified || "false",
-    ]);
-
-    // Use platform-appropriate line endings
-    const lineEnding = process.platform === "win32" ? "\r\n" : "\n";
-    const csvContent = [
-      headers.join(","),
-      ...csvData.map((row) => row.join(",")),
-    ].join(lineEnding);
+    const CHUNK_SIZE = 5000; // Adjust based on what works
 
     try {
       setIsExporting(true);
       const filePath = await save({
         defaultPath: `RustySEO - Server Logs - ${new Date().toISOString().slice(0, 10)}.csv`,
-        filters: [
-          {
-            name: "CSV",
-            extensions: ["csv"],
-          },
-        ],
+        filters: [{ name: "CSV", extensions: ["csv"] }],
       });
 
       if (filePath) {
-        // Ensure proper encoding for Windows
-        await writeTextFile(filePath, csvContent, { encoding: "utf8" });
+        // Write headers first
+        await writeTextFile(filePath, headers.join(",") + "\r\n", {
+          encoding: "utf8",
+        });
+
+        // Process in chunks
+        for (let i = 0; i < dataToExport.length; i += CHUNK_SIZE) {
+          const chunk = dataToExport.slice(i, i + CHUNK_SIZE);
+          const csvChunk =
+            chunk
+              .map((log) =>
+                [
+                  log.ip || "",
+                  log.country || "",
+                  log.browser || "",
+                  log.timestamp || "",
+                  log.method || "",
+                  log.path || "",
+                  log.taxonomy || "",
+                  log.file_type || "",
+                  log.status || "",
+                  formatResponseSize(log.response_size) || "",
+                  `"${(log.user_agent || "").replace(/"/g, '""')}"`,
+                  log.referer || "-",
+                  log.crawler_type || "",
+                  log.verified || "false",
+                ].join(","),
+              )
+              .join("\r\n") + "\r\n";
+
+          await writeTextFile(filePath, csvChunk, {
+            append: true,
+            encoding: "utf8",
+          });
+        }
+
         await message("CSV file saved successfully!", {
           title: "Export Complete",
           type: "info",
