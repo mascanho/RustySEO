@@ -376,8 +376,8 @@ export function LogAnalyzer() {
   }, []);
 
   // Export logs as CSV
-
   const exportCSV = useCallback(async () => {
+    // 1. Define headers
     const headers = [
       "IP",
       "Country",
@@ -395,68 +395,90 @@ export function LogAnalyzer() {
       "Google Verified",
     ];
 
+    // 2. Prepare data
     const dataToExport = filteredLogs.length > 0 ? filteredLogs : entries;
-    const CHUNK_SIZE = 5000; // Adjust based on what works
+
+    // 3. Robust CSV sanitizer
+    const sanitizeForCSV = (value: any): string => {
+      if (value === null || value === undefined) return "";
+
+      // Convert to string and normalize
+      let str = String(value)
+        .replace(/"/g, '""') // Escape existing quotes
+        .replace(/\r?\n/g, " ") // Replace newlines with spaces
+        .replace(/,/g, ";") // Replace commas with semicolons
+        .trim();
+
+      return `"${str}"`; // Always wrap in quotes
+    };
 
     try {
       setIsExporting(true);
+
+      // 4. Create file with BOM for Excel
       const filePath = await save({
-        defaultPath: `RustySEO - Server Logs - ${new Date().toISOString().slice(0, 10)}.csv`,
+        defaultPath: `Server-Logs-${new Date().toISOString().slice(0, 10)}.csv`,
         filters: [{ name: "CSV", extensions: ["csv"] }],
       });
 
-      if (filePath) {
-        // Write headers first
-        await writeTextFile(filePath, headers.join(",") + "\r\n", {
+      if (!filePath) return;
+
+      // 5. Write UTF-8 BOM and headers
+      await writeTextFile(
+        filePath,
+        "\uFEFF" + headers.map(sanitizeForCSV).join(",") + "\r\n",
+        {
           encoding: "utf8",
-        });
+        },
+      );
 
-        // Process in chunks
-        for (let i = 0; i < dataToExport.length; i += CHUNK_SIZE) {
-          const chunk = dataToExport.slice(i, i + CHUNK_SIZE);
-          const csvChunk =
-            chunk
-              .map((log) =>
-                [
-                  log.ip || "",
-                  log.country || "",
-                  log.browser || "",
-                  log.timestamp || "",
-                  log.method || "",
-                  log.path || "",
-                  log.taxonomy || "",
-                  log.file_type || "",
-                  log.status || "",
-                  formatResponseSize(log.response_size) || "",
-                  `"${(log.user_agent || "").replace(/"/g, '""')}"`,
-                  log.referer || "-",
-                  log.crawler_type || "",
-                  log.verified || "false",
-                ].join(","),
-              )
-              .join("\r\n") + "\r\n";
+      // 6. Process data in batches with validation
+      const batchSize = 1000;
+      for (let i = 0; i < dataToExport.length; i += batchSize) {
+        let batchContent = "";
+        const batch = dataToExport.slice(i, i + batchSize);
 
-          await writeTextFile(filePath, csvChunk, {
-            append: true,
-            encoding: "utf8",
-          });
+        for (const log of batch) {
+          const row = [
+            sanitizeForCSV(log.ip),
+            sanitizeForCSV(log.country),
+            sanitizeForCSV(log.browser),
+            sanitizeForCSV(log.timestamp),
+            sanitizeForCSV(log.method),
+            sanitizeForCSV(log.path),
+            sanitizeForCSV(log.taxonomy),
+            sanitizeForCSV(log.file_type),
+            sanitizeForCSV(log.status),
+            sanitizeForCSV(formatResponseSize(log.response_size)),
+            sanitizeForCSV(log.user_agent),
+            sanitizeForCSV(log.referer || "-"),
+            sanitizeForCSV(log.crawler_type),
+            sanitizeForCSV(log.verified ? "true" : "false"),
+          ];
+
+          // Validate column count
+          if (row.length !== 14) {
+            console.error("Invalid row detected:", log);
+            continue;
+          }
+
+          batchContent += row.join(",") + "\r\n";
         }
 
-        await message("CSV file saved successfully!", {
-          title: "Export Complete",
-          type: "info",
+        await writeTextFile(filePath, batchContent, {
+          append: true,
+          encoding: "utf8",
         });
       }
+
       setIsExporting(false);
+      toast.success("CSV exported successfully!");
     } catch (error) {
-      console.error("Export failed:", error);
-      await message(`Failed to export CSV: ${error}`, {
-        title: "Export Error",
-        type: "error",
-      });
       setIsExporting(false);
+      console.error("Export failed:", error);
+      toast.error(`Export failed: ${error.message}`);
     }
-  }, [filteredLogs, entries, domain, showOnTables]);
+  }, [filteredLogs, entries, formatResponseSize]);
 
   const handleIP = useCallback((ip: string) => {
     setIpModal(true);
