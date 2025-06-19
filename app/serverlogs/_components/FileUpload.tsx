@@ -332,9 +332,12 @@ export function FileUpload({
       // Set the state for the popup modal
       setUploadedLogFiles(logEntry);
 
+      const project = "jarbas";
+
       const result = await invoke("check_logs_command", {
         data: { log_contents: logContents },
         storingLogs,
+        project,
       });
 
       if (!result || !result.overview) {

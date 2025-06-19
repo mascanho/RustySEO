@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { X, Loader2, FolderOpen, Plus, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import { SkeletonLoader } from "./SkeletonLoader";
 import type { ProjectEntry } from "@/types/ProjectEntry"; // Declare ProjectEntry here
 import { MdDownloading } from "react-icons/md";
 import { IoPlayCircleOutline } from "react-icons/io5";
+import { forEach } from "lodash";
 
 // Mock data for demonstration
 const mockProjectsData: ProjectEntry[] = [
@@ -321,11 +322,12 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
   const { setStoringProjects, storedProjectsFromDBStore } =
     useMockProjectsStore();
   const [projectsFromDB, setProjectsFromDB] = React.useState<ProjectEntry[]>(
-    storedProjectsFromDBStore
+    storedProjectsFromDBStore,
   );
   const [openDropdowns, setOpenDropdowns] = React.useState<Set<string>>(
-    new Set()
+    new Set(),
   );
+  const [DBprojects, setDBprojects] = useState([]);
 
   useEffect(() => {
     const storedProjects = localStorage.getItem("projectsData");
@@ -340,7 +342,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
       new StorageEvent("storage", {
         key: "projectsStorage",
         newValue: JSON.stringify(saveProjects),
-      })
+      }),
     );
 
     if (saveProjects) {
@@ -387,7 +389,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
       await new Promise((resolve) => setTimeout(resolve, 300));
 
       const updatedProjects = mockProjectsData.filter(
-        (project) => project.id !== id
+        (project) => project.id !== id,
       );
       mockProjectsData.length = 0;
       mockProjectsData.push(...updatedProjects);
@@ -399,6 +401,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
     }
   };
 
+  // CREATE PROJECT LOGIC
   const handleCreateProject = async () => {
     if (!newProjectName.trim()) {
       toast.error("Please enter a project name");
@@ -410,18 +413,19 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       const newProject: ProjectEntry = {
-        id: `proj_${Date.now()}`,
         name: newProjectName.trim(),
-        status: "active",
-        createdAt: new Date().toISOString(),
-        logCount: 0,
-        description: "New project created",
       };
+
+      // CALL THE BACKEND
+      await invoke("create_project_command", {
+        name: newProject.name,
+      });
 
       mockProjectsData.unshift(newProject);
       setProjectsFromDB([...mockProjectsData]);
       setNewProjectName("");
       toast.success("Project created successfully");
+      toast.success(<>Project created: {newProject.name}</>);
     } catch (error) {
       console.error(error);
       toast.error("Failed to create project");
@@ -491,6 +495,47 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
     }
   };
 
+  const handleFindProject = async (project) => {
+    try {
+      const data = await invoke("get_logs_by_project_name_command", {
+        name,
+      });
+      console.log(data);
+      toast.success("Projects have been retrieved from the database");
+    } catch (error) {
+      console.error(error);
+      toast.error(error);
+    }
+  };
+
+  const handleGetAllProjects = async () => {
+    try {
+      const allProjects = await invoke("get_all_projects_command");
+      console.log(allProjects);
+
+      const allProjData = [];
+
+      for (const proj of allProjects) {
+        const data = await invoke("get_logs_by_project_name_command", {
+          project: proj.name,
+        });
+        console.log(data, "data");
+        allProjData.push(data); // Accumulate data
+      }
+
+      console.log(allProjData, "All proj Data");
+      setDBprojects(allProjData); // Update state once after collecting all data
+      toast.success("Projects have been retrieved from the database");
+    } catch (error) {
+      console.error(error);
+      toast.error(String(error));
+    }
+  };
+
+  useEffect(() => {
+    console.log(DBprojects, "DBprojects");
+  }, [handleGetAllProjects]);
+
   return (
     <section className="w-[650px] max-w-5xl mx-auto h-[670px] pt-2">
       <CardContent className="grid grid-cols-1 gap-6 h-[380px]">
@@ -505,21 +550,6 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
                   </h3>
 
                   <div className="space-y-4 p-4 border rounded-md bg-muted h-[23.1rem] dark:border-brand-dark">
-                    {/* <div className="flex items-center space-x-2">
-                      <Switch
-                        id="save-projects"
-                        checked={saveProjects}
-                        onCheckedChange={setSaveProjects}
-                        className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700"
-                      />
-                      <Label htmlFor="save-projects" className="dark:text-white">
-                        Store Projects in DB
-                      </Label>
-                    </div> */}
-                    {/* <p className="text-xs text-muted-foreground dark:text-white/50">
-                      When enabled, projects and their logs will be stored in your local database.
-                    </p> */}
-
                     <div className="py-1">
                       <h4 className="text-sm font-medium mb-2 dark:text-white">
                         Create New Project
@@ -545,39 +575,6 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
                         </Button>
                       </div>
                     </div>
-                    {/* 
-                    <div className="py-1">
-                      <h4 className="text-sm font-medium mb-2 dark:text-white">Project retention options</h4>
-                      <div className="space-y-2 dark:text-white/50 pt-2">
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            id="auto-archive"
-                            className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700"
-                          />
-                          <Label htmlFor="auto-archive" className="text-xs">
-                            Auto-archive completed projects
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            id="keep-recent"
-                            className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700"
-                          />
-                          <Label className="text-xs" htmlFor="keep-recent">
-                            Keep only recent 50 projects
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            id="backup-logs"
-                            className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700"
-                          />
-                          <Label htmlFor="backup-logs" className="text-xs">
-                            Backup project logs monthly
-                          </Label>
-                        </div>
-                      </div>
-                    </div> */}
                     <div className="bg-gray-200 dark:bg-brand-dark dark:text-white p-2 rounded-md mt-3 ">
                       <span className="text-xs leading-none">
                         Manage your projects and their associated logs. Each
@@ -597,8 +594,8 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
                 <div className="border dark:border-brand-dark dark:border-brand rounded-lg h-[370px] overflow-y-auto">
                   {isLoading ? (
                     <SkeletonLoader />
-                  ) : projectsFromDB.length > 0 ? (
-                    projectsFromDB.map((project) => (
+                  ) : DBprojects.length > 0 ? (
+                    DBprojects.map((project) => (
                       <div
                         key={project.id}
                         className="border-b dark:border-gray-700"
@@ -608,7 +605,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
                             <div className="flex items-center text-sm mb-2">
                               <FaProjectDiagram className="mr-2 text-blue-500 dark:text-blue-400" />
                               <p className="text-sm text-brand-bright font-semibold dark:text-brand-bright truncate w-full ">
-                                {project?.name}
+                                {project?.[0]?.project}
                               </p>
                               {/* <Badge className={`ml-2 text-xs ${getStatusColor(project?.status || "active")}`}>
                                 {project?.status || "active"}
@@ -673,11 +670,10 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
                         {openDropdowns.has(project.id) && (
                           <div className="px-4 pb-3 bg-gray-50 dark:bg-gray-800/50">
                             <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                              Project Logs (
-                              {mockLogsData[project.id]?.length || 0})
+                              Project Logs ({project.name})
                             </div>
                             <div className="space-y-1 max-h-32 overflow-y-auto">
-                              {mockLogsData[project.id]?.map((log) => (
+                              {project[project.id]?.map((log) => (
                                 <div
                                   key={log.id}
                                   className="flex items-start gap-2 p-2 rounded text-xs border dark:border-gray-700"
@@ -722,13 +718,21 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
         </div>
       </CardContent>
       <CardFooter className="flex justify-end mt-8">
-        {/* <Button
+        <Button
           variant="outline"
-          onClick={handleDisplayProjects}
+          onClick={handleGetAllProjects}
           className="dark:bg-brand-bright dark:border-brand-darker dark:text-white"
         >
-          Display saved Projects
-        </Button> */}
+          All
+        </Button>
+
+        <Button
+          variant="outline"
+          onClick={() => handleFindProject("marco")}
+          className="dark:bg-brand-bright dark:border-brand-darker dark:text-white"
+        >
+          TESTING
+        </Button>
         <div className="flex gap-2">
           <Button
             onClick={handleRefreshProjects}

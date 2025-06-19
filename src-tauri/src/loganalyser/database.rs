@@ -41,12 +41,11 @@ impl Database {
         )
         .map_err(|e| e.to_string())?;
 
-     conn.execute(
+        conn.execute(
             "CREATE TABLE IF NOT EXISTS projects (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL UNIQUE,
-                created_date TEXT NOT NULL,
-                last_accessed_date TEXT NOT NULL
+                date TEXT NOT NULL
             )",
             [],
         )
@@ -57,8 +56,6 @@ impl Database {
             db_name: db_name.to_string(),
         })
     }
-
-
 }
 
 // CREATE THE DB
@@ -68,23 +65,8 @@ pub fn create_serverlog_db(db_name: &str) {
     }
 }
 
-// CREATE THE PROJECT IN DB
-pub fn create_project_in_db(db_name: &str, project_name: &str) {
-
-    // CREATE THE DB IF IT DOESN'T EXIST
-    
-
-    let db = Database::new(db_name).unwrap();
-    if let Err(e) = db.conn.execute(
-        "INSERT INTO server_logs (date, project, filename, log) VALUES (?1, ?2, ?3, ?4)",
-        params!["none", project_name, "none", "none"],
-    ) {
-        eprintln!("Failed to insert project into server_logs: {}", e);
-    }
-}
-
 // ADD LOGS TO THE DB
-pub fn add_data_to_serverlog_db(db_name: &str, data: &LogInput) {
+pub fn add_data_to_serverlog_db(db_name: &str, data: &LogInput, project: &str) {
     let today_date = chrono::Utc::now().to_rfc3339().to_string();
     let mut db = Database::new(db_name).unwrap();
 
@@ -95,7 +77,7 @@ pub fn add_data_to_serverlog_db(db_name: &str, data: &LogInput) {
             "INSERT INTO server_logs (date, project, filename, log) VALUES (?1, ?2, ?3, ?4)",
             params![
                 today_date,
-                "none".to_string(),
+                project,
                 filename,
                 serde_json::to_string(&content).unwrap()
             ],
@@ -212,68 +194,106 @@ pub fn get_stored_logs_command(window: Window) -> Result<(), String> {
     Ok(())
 }
 
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Project {
     pub id: i32,
     pub name: String,
-    pub created_date: String,
-    pub last_accessed_date: String,
 }
 
+// PROJECTS GO HERE
 // Project-related functions
-pub fn create_project(conn: &Connection, name: &str) -> Result<(), String> {
+#[tauri::command]
+pub fn create_project_command(name: &str) -> Result<(), String> {
+    // Validate input first
+    if name.trim().is_empty() {
+        return Err("Project name cannot be empty".to_string());
+    }
+
+    // Initialize database (this creates tables if they don't exist)
+    let db = Database::new("serverlog.db")
+        .map_err(|e| format!("Database initialization failed: {}", e))?;
+
     let now = chrono::Utc::now().to_rfc3339();
-    conn.execute(
-        "INSERT INTO projects (name, created_date, last_accessed_date) VALUES (?1, ?2, ?3)",
-        params![name, now, now],
-    )
-    .map_err(|e| e.to_string())?;
-    Ok(())
+
+    // Insert project with proper error handling
+    match db.conn.execute(
+        "INSERT INTO projects (name, date) VALUES (?1, ?2)",
+        params![name, now],
+    ) {
+        Ok(_) => Ok(()),
+        Err(e) => {
+            if e.to_string().contains("UNIQUE constraint failed") {
+                Err(format!("Project '{}' already exists", name))
+            } else {
+                Err(format!("Failed to create project: {}", e))
+            }
+        }
+    }
 }
 
-pub fn get_all_projects(conn: &Connection) -> Result<Vec<Project>, String> {
-    let mut stmt = conn
-        .prepare("SELECT id, name, created_date, last_accessed_date FROM projects")
-        .map_err(|e| e.to_string())?;
+// GET ALL THE PROJECTS INSIDE THE DB
 
+#[tauri::command]
+pub fn get_all_projects_command() -> Result<Vec<Project>, String> {
+    // Initialize database
+    let db = Database::new("serverlog.db")
+        .map_err(|e| format!("Database initialization failed: {}", e))?;
+
+    // Prepare the query to fetch all projects from the projects table
+    let mut stmt = db
+        .conn
+        .prepare("SELECT id, name FROM projects")
+        .map_err(|e| format!("Failed to prepare query: {}", e))?;
+
+    // Execute the query and map the results
     let projects = stmt
         .query_map([], |row| {
             Ok(Project {
                 id: row.get(0)?,
                 name: row.get(1)?,
-                created_date: row.get(2)?,
-                last_accessed_date: row.get(3)?,
             })
         })
-        .map_err(|e| e.to_string())?
+        .map_err(|e| format!("Query execution failed: {}", e))?
         .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| format!("Result collection failed: {}", e))?;
 
     Ok(projects)
 }
 
-pub fn update_project_access_time(conn: &Connection, project_id: i32) -> Result<(), String> {
-    let now = chrono::Utc::now().to_rfc3339();
-    conn.execute(
-        "UPDATE projects SET last_accessed_date = ?1 WHERE id = ?2",
-        params![now, project_id],
-    )
-    .map_err(|e| e.to_string())?;
-    Ok(())
-}
+// FIND THE LOGS WITH THE PROJECT NAME
+#[tauri::command]
+pub fn get_logs_by_project_name_command(project: &str) -> Result<Vec<DatabaseResults>, String> {
+    // Initialize database (creates tables if needed)
+    let db = Database::new("serverlog.db")
+        .map_err(|e| format!("Database initialization failed: {}", e))?;
 
-pub fn delete_project(conn: &Connection, project_id: i32) -> Result<(), String> {
-    // First delete all logs associated with this project
-    conn.execute(
-        "DELETE FROM server_logs WHERE project = (SELECT name FROM projects WHERE id = ?1)",
-        params![project_id],
-    )
-    .map_err(|e| e.to_string())?;
+    let mut stmt = db
+        .conn
+        .prepare("SELECT id, date, filename, log FROM server_logs WHERE project = ?1")
+        .map_err(|e| format!("Failed to prepare query: {}", e))?;
 
-    // Then delete the project itself
-    conn.execute("DELETE FROM projects WHERE id = ?1", params![project_id])
-        .map_err(|e| e.to_string())?;
+    let logs = stmt
+        .query_map([project], |row| {
+            let log_text: String = row.get(3)?;
+            let log_value: serde_json::Value = serde_json::from_str(&log_text).map_err(|e| {
+                rusqlite::Error::FromSqlConversionFailure(
+                    3,
+                    rusqlite::types::Type::Text,
+                    Box::new(e),
+                )
+            })?;
 
-    Ok(())
+            Ok(DatabaseResults {
+                id: row.get(0)?,
+                date: row.get(1)?,
+                project: project.to_string(),
+                filename: row.get(2)?,
+                log: log_value,
+            })
+        })
+        .map_err(|e| format!("Query execution failed: {}", e))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Result collection failed: {}", e))?;
+
+    Ok(logs)
 }

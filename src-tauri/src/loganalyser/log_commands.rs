@@ -9,6 +9,7 @@ pub fn check_logs_command(
     data: LogInput,
     app: tauri::AppHandle,
     storing_logs: bool,
+    project: String,
 ) -> Result<LogResult, String> {
     let log_count = data.log_contents.len() as i32;
 
@@ -17,7 +18,7 @@ pub fn check_logs_command(
         // Create the DB
         let _create_table = create_serverlog_db("serverlog.db");
         // Add the data to the debug_assert!
-        let _add_data = add_data_to_serverlog_db("serverlog.db", &data);
+        let _add_data = add_data_to_serverlog_db("serverlog.db", &data, &project);
 
         println!("Stored logs in serverlog.db");
     } else {
