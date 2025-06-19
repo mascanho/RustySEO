@@ -30,7 +30,7 @@ const statuses: Status[] = [
   },
   {
     value: "todo",
-    label: "Todo",
+    label: "www.algarvewonders.com",
   },
   {
     value: "in progress",
@@ -59,7 +59,7 @@ function LogAnalyserFooter() {
         <PopoverTrigger asChild>
           <Button
             variant="default"
-            className="w-fit inset-1 bg-brand-bright rounded-sm dark;border dark:bg-brand-bright dark:text-white text-white dark:hover:bg-brand-bright/80  justify-start truncate text-xs px-2 m-0 h-5"
+            className="w-fit max-w-[200px]  inset-1 bg-brand-bright rounded-sm dark;border dark:bg-brand-bright dark:text-white text-white dark:hover:bg-brand-bright/80  justify-start truncate text-xs px-2 m-0 h-5"
           >
             {selectedStatus ? (
               <div className="">{selectedStatus?.label}</div>
