@@ -14,6 +14,7 @@ use super::analyser::{LogAnalysisResult, LogInput};
 pub struct DatabaseResults {
     pub id: i32,
     pub date: String,
+    pub project: String,
     pub filename: String,
     pub log: serde_json::Value,
 }
@@ -32,6 +33,7 @@ impl Database {
             "CREATE TABLE IF NOT EXISTS server_logs (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 date TEXT NOT NULL,
+                project TEXT NOT NULL,
                 filename TEXT NOT NULL,
                 log TEXT NOT NULL
             )",
@@ -62,9 +64,10 @@ pub fn add_data_to_serverlog_db(db_name: &str, data: &LogInput) {
 
     for (filename, content) in &data.log_contents {
         if let Err(e) = tx.execute(
-            "INSERT INTO server_logs (date, filename, log) VALUES (?1, ?2, ?3)",
+            "INSERT INTO server_logs (date, project, filename, log) VALUES (?1, ?2, ?3, ?4)",
             params![
                 today_date,
+                "none".to_string(),
                 filename,
                 serde_json::to_string(&content).unwrap()
             ],
