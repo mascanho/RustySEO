@@ -58,6 +58,14 @@ export function FileUpload({
   const { storingLogs, setStoringLogs } = useServerLogsStore();
   const { uploadedLogFiles, setUploadedLogFiles } = useServerLogsStore();
 
+  // Get the initial state of storing logs from the localStorage
+  useEffect(() => {
+    const storedValue = localStorage.getItem("storingLogs");
+    if (storedValue !== null) {
+      setStoringLogs(storedValue === "true");
+    }
+  }, [setStoringLogs]);
+
   useEffect(() => {
     const unlisten = listen("progress-update", (event) => {
       const payload = event.payload as ProgressUpdate;
@@ -532,7 +540,7 @@ export function FileUpload({
 
           <section className="flex mt-3 -mb-4 w-full items-center justify-center">
             <FaDatabase
-              className={`text-xs ${storingLogs ? "pulse text-green-500" : "text-red-600 pulse"}`}
+              className={`text-xs ${storingLogs ? "text-green-500" : "text-red-600"}`}
             />
             <span className="ml-2 text-[10px]">
               {storingLogs
