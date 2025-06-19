@@ -42,6 +42,7 @@ import { FaInfoCircle } from "react-icons/fa";
 import PopOverParsedLogs from "@/app/serverlogs/_components/PopOverParsedLogs";
 import ChangeLogContainer from "@/components/ui/changelog/ChangeLogContainer";
 import System from "./Footer/Sys/System";
+import LogAnalyserFooter from "./Footer/Loganalyserfooter/LoganalyserFooter";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -104,13 +105,13 @@ const Footer = () => {
 
     window.addEventListener(
       "sessionStorageUpdated",
-      handleSessionStorageUpdate,
+      handleSessionStorageUpdate
     );
 
     return () => {
       window.removeEventListener(
         "sessionStorageUpdated",
-        handleSessionStorageUpdate,
+        handleSessionStorageUpdate
       );
     };
   }, []);
@@ -118,7 +119,7 @@ const Footer = () => {
   const updateTasks = () => {
     try {
       const storedTasks = JSON.parse(
-        localStorage?.getItem("tasks") || "[]",
+        localStorage?.getItem("tasks") || "[]"
       ) as Task[];
       const filteredTasks = storedTasks.filter((task) => !task.completed);
       setTasks(filteredTasks);
@@ -175,7 +176,7 @@ const Footer = () => {
       visibility.sidebar,
       hideSidebar,
       showSidebar,
-    ],
+    ]
   );
 
   useEffect(() => {
@@ -190,7 +191,7 @@ const Footer = () => {
   useEffect(() => {
     // Initial load
     const logStorageValue = JSON.parse(
-      localStorage.getItem("logsStorage") || "false",
+      localStorage.getItem("logsStorage") || "false"
     );
     setLogStorage(logStorageValue);
     setStoringLogs(logStorageValue);
@@ -214,14 +215,14 @@ const Footer = () => {
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener(
       "localStorageChange",
-      handleCustomStorageChange as EventListener,
+      handleCustomStorageChange as EventListener
     );
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener(
         "localStorageChange",
-        handleCustomStorageChange as EventListener,
+        handleCustomStorageChange as EventListener
       );
     };
   }, []);
@@ -282,12 +283,13 @@ const Footer = () => {
                     <PopOverParsedLogs />
                   </PopoverContent>
                 </Popover>
-                <section className="min-w-24 flex items-center ml-2.5">
+                <section className="flex items-center ml-2.5">
                   <FaDatabase
                     className={`${logSorage ? "text-green-700" : "text-red-700"} mr-1.5 `}
                   />{" "}
-                  {logSorage ? "Storing logs" : "Not storing logs"}
+                  {logSorage ? "" : ""}
                 </section>
+                <LogAnalyserFooter />
               </div>
             )}
           </div>
