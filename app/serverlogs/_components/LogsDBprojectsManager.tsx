@@ -33,247 +33,15 @@ const mockProjectsData: ProjectEntry[] = [
     logCount: 23,
     description: "Complete overhaul of the shopping experience",
   },
-  {
-    id: "proj_002",
-    name: "www.scpclub.com",
-    status: "completed",
-    createdAt: "2024-01-10T14:20:00Z",
-    logCount: 15,
-    description: "Implement secure login and registration",
-  },
-  {
-    id: "proj_003",
-    name: "www.chainanalytics.com",
-    status: "paused",
-    createdAt: "2024-01-08T09:15:00Z",
-    logCount: 8,
-    description: "Automated migration from legacy systems",
-  },
-  {
-    id: "proj_004",
-    name: "www.algarvewonders.com",
-    status: "active",
-    createdAt: "2024-01-20T16:45:00Z",
-    logCount: 31,
-    description: "WebSocket-based messaging system",
-  },
-  {
-    id: "proj_005",
-    name: "www.rustyseo.com",
-    status: "completed",
-    createdAt: "2024-01-05T11:00:00Z",
-    logCount: 12,
-    description: "Interactive API documentation with examples",
-  },
-  {
-    id: "proj_006",
-    name: "Performance Optimization",
-    status: "active",
-    createdAt: "2024-01-22T13:30:00Z",
-    logCount: 19,
-    description: "Improve application load times and responsiveness",
-  },
-  {
-    id: "proj_007",
-    name: "Security Audit Implementation",
-    status: "paused",
-    createdAt: "2024-01-12T08:20:00Z",
-    logCount: 6,
-    description: "Address security vulnerabilities and compliance",
-  },
-  {
-    id: "proj_008",
-    name: "User Analytics Dashboard",
-    status: "active",
-    createdAt: "2024-01-25T15:10:00Z",
-    logCount: 27,
-    description: "Comprehensive user behavior tracking and insights",
-  },
 ];
 
 const mockLogsData = {
   proj_001: [
     {
-      id: "log_001_1",
-      message: "Started frontend redesign phase",
-      level: "info",
-      timestamp: "2024-01-15T10:35:00Z",
-    },
-    {
-      id: "log_001_2",
-      message: "Updated shopping cart component",
-      level: "info",
-      timestamp: "2024-01-15T11:20:00Z",
-    },
-    {
-      id: "log_001_3",
-      message: "Fixed checkout validation error",
-      level: "error",
-      timestamp: "2024-01-15T14:15:00Z",
-    },
-    {
-      id: "log_001_4",
-      message: "Deployed to staging environment",
-      level: "info",
-      timestamp: "2024-01-15T16:30:00Z",
-    },
-    {
       id: "log_001_5",
       message: "Performance optimization completed",
       level: "info",
       timestamp: "2024-01-16T09:45:00Z",
-    },
-  ],
-  proj_002: [
-    {
-      id: "log_002_1",
-      message: "Implemented OAuth2 integration",
-      level: "info",
-      timestamp: "2024-01-10T14:25:00Z",
-    },
-    {
-      id: "log_002_2",
-      message: "Added biometric authentication",
-      level: "info",
-      timestamp: "2024-01-10T15:10:00Z",
-    },
-    {
-      id: "log_002_3",
-      message: "Security testing completed",
-      level: "info",
-      timestamp: "2024-01-10T16:45:00Z",
-    },
-  ],
-  proj_003: [
-    {
-      id: "log_003_1",
-      message: "Database schema analysis started",
-      level: "info",
-      timestamp: "2024-01-08T09:20:00Z",
-    },
-    {
-      id: "log_003_2",
-      message: "Migration script validation failed",
-      level: "error",
-      timestamp: "2024-01-08T11:30:00Z",
-    },
-    {
-      id: "log_003_3",
-      message: "Project paused pending review",
-      level: "warn",
-      timestamp: "2024-01-08T14:00:00Z",
-    },
-  ],
-  proj_004: [
-    {
-      id: "log_004_1",
-      message: "WebSocket server setup completed",
-      level: "info",
-      timestamp: "2024-01-20T16:50:00Z",
-    },
-    {
-      id: "log_004_2",
-      message: "Real-time message delivery tested",
-      level: "info",
-      timestamp: "2024-01-20T17:15:00Z",
-    },
-    {
-      id: "log_004_3",
-      message: "Connection timeout issue detected",
-      level: "warn",
-      timestamp: "2024-01-20T18:30:00Z",
-    },
-    {
-      id: "log_004_4",
-      message: "Implemented message encryption",
-      level: "info",
-      timestamp: "2024-01-21T10:20:00Z",
-    },
-  ],
-  proj_005: [
-    {
-      id: "log_005_1",
-      message: "API documentation structure created",
-      level: "info",
-      timestamp: "2024-01-05T11:05:00Z",
-    },
-    {
-      id: "log_005_2",
-      message: "Interactive examples added",
-      level: "info",
-      timestamp: "2024-01-05T13:20:00Z",
-    },
-    {
-      id: "log_005_3",
-      message: "Documentation portal deployed",
-      level: "info",
-      timestamp: "2024-01-05T15:45:00Z",
-    },
-  ],
-  proj_006: [
-    {
-      id: "log_006_1",
-      message: "Performance baseline established",
-      level: "info",
-      timestamp: "2024-01-22T13:35:00Z",
-    },
-    {
-      id: "log_006_2",
-      message: "Code splitting implementation started",
-      level: "info",
-      timestamp: "2024-01-22T14:20:00Z",
-    },
-    {
-      id: "log_006_3",
-      message: "Bundle size reduced by 40%",
-      level: "info",
-      timestamp: "2024-01-22T16:10:00Z",
-    },
-  ],
-  proj_007: [
-    {
-      id: "log_007_1",
-      message: "Security audit initiated",
-      level: "info",
-      timestamp: "2024-01-12T08:25:00Z",
-    },
-    {
-      id: "log_007_2",
-      message: "Critical vulnerability found",
-      level: "error",
-      timestamp: "2024-01-12T10:15:00Z",
-    },
-    {
-      id: "log_007_3",
-      message: "Audit paused for remediation",
-      level: "warn",
-      timestamp: "2024-01-12T11:30:00Z",
-    },
-  ],
-  proj_008: [
-    {
-      id: "log_008_1",
-      message: "Analytics tracking setup completed",
-      level: "info",
-      timestamp: "2024-01-25T15:15:00Z",
-    },
-    {
-      id: "log_008_2",
-      message: "Dashboard UI components created",
-      level: "info",
-      timestamp: "2024-01-25T16:30:00Z",
-    },
-    {
-      id: "log_008_3",
-      message: "Data visualization charts added",
-      level: "info",
-      timestamp: "2024-01-25T17:45:00Z",
-    },
-    {
-      id: "log_008_4",
-      message: "Real-time data sync implemented",
-      level: "info",
-      timestamp: "2024-01-26T09:20:00Z",
     },
   ],
 };
@@ -445,12 +213,12 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
     }
   };
 
-  const toggleDropdown = (projectId: string) => {
+  const toggleDropdown = (projectName: string) => {
     const newOpenDropdowns = new Set(openDropdowns);
-    if (newOpenDropdowns.has(projectId)) {
-      newOpenDropdowns.delete(projectId);
+    if (newOpenDropdowns.has(projectName)) {
+      newOpenDropdowns.delete(projectName);
     } else {
-      newOpenDropdowns.add(projectId);
+      newOpenDropdowns.add(projectName);
     }
     setOpenDropdowns(newOpenDropdowns);
   };
@@ -534,7 +302,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
 
   useEffect(() => {
     console.log(DBprojects, "DBprojects");
-  }, [handleGetAllProjects]);
+  }, [DBprojects]);
 
   return (
     <section className="w-[650px] max-w-5xl mx-auto h-[670px] pt-2">
@@ -595,113 +363,114 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
                   {isLoading ? (
                     <SkeletonLoader />
                   ) : DBprojects.length > 0 ? (
-                    DBprojects.map((project) => (
-                      <div
-                        key={project.id}
-                        className="border-b dark:border-gray-700"
-                      >
-                        <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center text-sm mb-2">
-                              <FaProjectDiagram className="mr-2 text-blue-500 dark:text-blue-400" />
-                              <p className="text-sm text-brand-bright font-semibold dark:text-brand-bright truncate w-full ">
-                                {project?.[0]?.project}
-                              </p>
-                              {/* <Badge className={`ml-2 text-xs ${getStatusColor(project?.status || "active")}`}>
-                                {project?.status || "active"}
-                              </Badge> */}
+                    DBprojects.map((projectGroup, index) => {
+                      if (projectGroup.length === 0) return null;
+                      const projectName = projectGroup[0]?.project;
+                      return (
+                        <div
+                          key={`${projectName}-${index}`}
+                          className="border-b dark:border-gray-700"
+                        >
+                          <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center text-sm mb-2">
+                                <FaProjectDiagram className="mr-2 text-blue-500 dark:text-blue-400" />
+                                <p className="text-sm text-brand-bright font-semibold dark:text-brand-bright truncate w-full ">
+                                  {projectName}
+                                </p>
+                              </div>
+
+                              <div className="flex items-center gap-2 mb-1">
+                                <FaCalendarAlt className="inline-block text-xs ml-[1px] text-black dark:text-white" />
+                                <span className="text-[10px] -ml-[2px] font-mono text-gray-500">
+                                  {projectGroup[0]?.date
+                                    ? formatTimestamp(projectGroup[0].date)
+                                    : "No date"}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <FaFolder className="inline-block text-xs ml-[1px] text-gray-600 dark:text-gray-400" />
+                                <span className="text-[10px] -ml-[2px] text-gray-500">
+                                  {projectGroup.length} logs
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => toggleDropdown(projectName)}
+                                  className="h-5 w-5 p-0 ml-2 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                >
+                                  <ChevronDown
+                                    className={`h-3 w-3 transition-transform duration-200 ${
+                                      openDropdowns.has(projectName)
+                                        ? "rotate-180"
+                                        : ""
+                                    }`}
+                                  />
+                                </Button>
+                              </div>
                             </div>
 
-                            <div className="flex items-center gap-2 mb-1">
-                              <FaCalendarAlt className="inline-block text-xs ml-[1px] text-black dark:text-white" />
-                              <span className="text-[10px] -ml-[2px] font-mono text-gray-500">
-                                {formatTimestamp(project?.createdAt)}
-                              </span>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                              <FaFolder className="inline-block text-xs ml-[1px] text-gray-600 dark:text-gray-400" />
-                              <span className="text-[10px] -ml-[2px] text-gray-500">
-                                {project?.logCount || 0} logs assigned
-                              </span>
+                            <div className="flex items-center ">
                               <Button
                                 variant="ghost"
-                                size="sm"
-                                onClick={() => toggleDropdown(project.id)}
-                                className="h-5 w-5 p-0 ml-2 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                size="icon"
+                                aria-label="Remove project"
+                                disabled={isLoading}
+                                className="h-6 w-6 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors duration-200 "
+                                onClick={() => handleDeleteProject(projectName)}
                               >
-                                <ChevronDown
-                                  className={`h-3 w-3 transition-transform duration-200 ${
-                                    openDropdowns.has(project.id)
-                                      ? "rotate-180"
-                                      : ""
-                                  }`}
-                                />
+                                <IoPlayCircleOutline className="h-2 w-2 text-gray-500 dark:text-red-400" />
+                              </Button>
+
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Remove project"
+                                disabled={isLoading}
+                                className="h-6 w-6  hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors duration-200"
+                                onClick={() => handleDeleteProject(projectName)}
+                              >
+                                <X className="h-4 w-4 text-gray-500 dark:text-red-400" />
                               </Button>
                             </div>
                           </div>
 
-                          <div className="flex items-center ">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              aria-label="Remove project"
-                              disabled={isLoading}
-                              className="h-6 w-6 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors duration-200 "
-                              onClick={() => handleDeleteProject(project.id)}
-                            >
-                              <IoPlayCircleOutline className="h-2 w-2 text-gray-500 dark:text-red-400" />
-                            </Button>
-
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              aria-label="Remove project"
-                              disabled={isLoading}
-                              className="h-6 w-6  hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors duration-200"
-                              onClick={() => handleDeleteProject(project.id)}
-                            >
-                              <X className="h-4 w-4 text-gray-500 dark:text-red-400" />
-                            </Button>
-                          </div>
-                        </div>
-
-                        {/* Logs Dropdown */}
-                        {openDropdowns.has(project.id) && (
-                          <div className="px-4 pb-3 bg-gray-50 dark:bg-gray-800/50">
-                            <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-                              Project Logs ({project.name})
-                            </div>
-                            <div className="space-y-1 max-h-32 overflow-y-auto">
-                              {project[project.id]?.map((log) => (
-                                <div
-                                  key={log.id}
-                                  className="flex items-start gap-2 p-2 rounded text-xs border dark:border-gray-700"
-                                >
-                                  <Badge
-                                    className={`text-[10px] px-1 py-0 ${getLogLevelColor(log.level)}`}
+                          {/* Logs Dropdown */}
+                          {openDropdowns.has(projectName) && (
+                            <div className="px-4 pb-3 bg-gray-50 dark:bg-gray-800/50">
+                              <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                                Project Logs ({projectName})
+                              </div>
+                              <div className="space-y-1 max-h-32 overflow-y-auto">
+                                {projectGroup.map((log, logIndex) => (
+                                  <div
+                                    key={`${projectName}-log-${logIndex}`}
+                                    className="flex items-start gap-2 p-2 rounded text-xs border dark:border-gray-700"
                                   >
-                                    {log.level}
-                                  </Badge>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-gray-800 dark:text-gray-200 truncate">
-                                      {log.message}
-                                    </p>
-                                    <p className="text-gray-500 dark:text-gray-400 text-[10px]">
-                                      {formatLogTimestamp(log.timestamp)}
-                                    </p>
+                                    <Badge
+                                      className={`text-[10px] px-1 py-0 ${getLogLevelColor("info")}`}
+                                    >
+                                      info
+                                    </Badge>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-gray-800 dark:text-gray-200 truncate">
+                                        {log.filename}
+                                      </p>
+                                      <p className="text-gray-500 dark:text-gray-400 text-[10px]">
+                                        {log.date
+                                          ? formatLogTimestamp(log.date)
+                                          : "No timestamp"}
+                                      </p>
+                                    </div>
                                   </div>
-                                </div>
-                              )) || (
-                                <p className="text-gray-500 dark:text-gray-400 text-xs italic">
-                                  No logs available for this project
-                                </p>
-                              )}
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
-                    ))
+                          )}
+                        </div>
+                      );
+                    })
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
                       <FolderOpen className="h-8 w-8 mb-2" />
