@@ -413,7 +413,7 @@ export function LogAnalyzer() {
     };
 
     try {
-      setIsExporting(true);
+     
 
       // 4. Create file with BOM for Excel
       const filePath = await save({
@@ -421,7 +421,14 @@ export function LogAnalyzer() {
         filters: [{ name: "CSV", extensions: ["csv"] }],
       });
 
-      if (!filePath) return;
+      if (!filePath) {
+        setIsExporting(false);
+        toast.error("Export cancelled.");
+        return;
+      };
+
+      // Set the loader spinning
+       setIsExporting(true);
 
       // 5. Write UTF-8 BOM and headers
       await writeTextFile(
