@@ -60,11 +60,11 @@ export function FileUpload({
 
   // Get the initial state of storing logs from the localStorage
   useEffect(() => {
-    const storedValue = localStorage.getItem("storingLogs");
+    const storedValue = localStorage.getItem("logsStorage");
     if (storedValue !== null) {
-      setStoringLogs(storedValue === "true");
+      setStoringLogs(true);
     }
-  }, [setStoringLogs]);
+  }, []);
 
   useEffect(() => {
     const unlisten = listen("progress-update", (event) => {
