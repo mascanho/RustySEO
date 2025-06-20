@@ -22,6 +22,7 @@ import type { ProjectEntry } from "@/types/ProjectEntry"; // Declare ProjectEntr
 import { MdDownloading } from "react-icons/md";
 import { IoPlayCircleOutline } from "react-icons/io5";
 import { forEach } from "lodash";
+import { useProjectsLogs } from "@/store/logFilterStore";
 
 // Mock data for demonstration
 const mockProjectsData: ProjectEntry[] = [
@@ -90,12 +91,18 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
   const { setStoringProjects, storedProjectsFromDBStore } =
     useMockProjectsStore();
   const [projectsFromDB, setProjectsFromDB] = React.useState<ProjectEntry[]>(
-    storedProjectsFromDBStore,
+    storedProjectsFromDBStore
   );
   const [openDropdowns, setOpenDropdowns] = React.useState<Set<string>>(
-    new Set(),
+    new Set()
   );
+
+  // DATA FROM DB
   const [DBprojects, setDBprojects] = useState([]);
+
+  // GLOBAL STORE
+  const projectsFromStore = useProjectsLogs((state) => state.projects);
+  const setProjectsFromStore = useProjectsLogs((state) => state.setProjects);
 
   useEffect(() => {
     const storedProjects = localStorage.getItem("projectsData");
@@ -110,7 +117,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
       new StorageEvent("storage", {
         key: "projectsStorage",
         newValue: JSON.stringify(saveProjects),
-      }),
+      })
     );
 
     if (saveProjects) {
@@ -157,7 +164,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
       await new Promise((resolve) => setTimeout(resolve, 300));
 
       const updatedProjects = mockProjectsData.filter(
-        (project) => project.id !== id,
+        (project) => project.id !== id
       );
       mockProjectsData.length = 0;
       mockProjectsData.push(...updatedProjects);
@@ -252,6 +259,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
     return () => clearTimeout(timer);
   }, []);
 
+  // GET ALL THE PROJECTS NAMES ONLY FROM THE DATABASED
   const handleDisplayProjects = async () => {
     try {
       const data = await invoke("get_stored_projects_command");

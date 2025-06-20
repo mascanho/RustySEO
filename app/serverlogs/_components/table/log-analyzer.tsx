@@ -196,7 +196,7 @@ export function LogAnalyzer() {
             (log) =>
               log.ip.toLowerCase().includes(lowerCaseSearch) ||
               log.path.toLowerCase().includes(lowerCaseSearch) ||
-              log.user_agent.toLowerCase().includes(lowerCaseSearch),
+              log.user_agent.toLowerCase().includes(lowerCaseSearch)
           );
         }
 
@@ -213,7 +213,7 @@ export function LogAnalyzer() {
         // Apply file type filter
         if (fileTypeFilter.length > 0) {
           result = result.filter((log) =>
-            fileTypeFilter.includes(log.file_type),
+            fileTypeFilter.includes(log.file_type)
           );
         }
 
@@ -221,7 +221,7 @@ export function LogAnalyzer() {
         if (botFilter !== null) {
           if (botFilter === "bot") {
             result = result.filter(
-              (log) => log?.crawler_type && log.crawler_type !== "Human",
+              (log) => log?.crawler_type && log.crawler_type !== "Human"
             );
           } else if (botFilter === "Human") {
             result = result.filter((log) => log?.crawler_type === "Human");
@@ -234,7 +234,7 @@ export function LogAnalyzer() {
             result = result.filter((log) => log?.user_agent.includes("Mobile"));
           } else if (botTypeFilter === "Desktop") {
             result = result.filter(
-              (log) => !log?.user_agent.includes("Mobile"),
+              (log) => !log?.user_agent.includes("Mobile")
             );
           }
         }
@@ -287,7 +287,7 @@ export function LogAnalyzer() {
       sortConfig,
       verifiedFilter,
       botTypeFilter,
-    ],
+    ]
   );
 
   const [searchInput, setSearchInput] = useState("");
@@ -298,7 +298,7 @@ export function LogAnalyzer() {
         searchTermRef.current = term;
         applyFilters(term, entries);
       }, 300),
-    [entries, applyFilters],
+    [entries, applyFilters]
   );
 
   const handleSearchChange = useCallback(
@@ -307,7 +307,7 @@ export function LogAnalyzer() {
       setSearchInput(value);
       debouncedSearch(value);
     },
-    [debouncedSearch],
+    [debouncedSearch]
   );
 
   // Apply filters when search term or entries change
@@ -413,8 +413,6 @@ export function LogAnalyzer() {
     };
 
     try {
-     
-
       // 4. Create file with BOM for Excel
       const filePath = await save({
         defaultPath: `RustySEO - Server-Logs-${new Date().toISOString().slice(0, 10)}.csv`,
@@ -425,10 +423,10 @@ export function LogAnalyzer() {
         setIsExporting(false);
         toast.error("Export cancelled.");
         return;
-      };
+      }
 
       // Set the loader spinning
-       setIsExporting(true);
+      setIsExporting(true);
 
       // 5. Write UTF-8 BOM and headers
       await writeTextFile(
@@ -436,7 +434,7 @@ export function LogAnalyzer() {
         "\uFEFF" + headers.map(sanitizeForCSV).join(",") + "\r\n",
         {
           encoding: "utf8",
-        },
+        }
       );
 
       // 6. Process data in batches with validation
@@ -581,9 +579,7 @@ export function LogAnalyzer() {
                   checked={statusFilter.includes(code)}
                   onCheckedChange={(checked) => {
                     setStatusFilter((prev) =>
-                      checked
-                        ? [...prev, code]
-                        : prev.filter((c) => c !== code),
+                      checked ? [...prev, code] : prev.filter((c) => c !== code)
                     );
                   }}
                 >
@@ -636,7 +632,7 @@ export function LogAnalyzer() {
                     setMethodFilter((prev) =>
                       checked
                         ? [...prev, method]
-                        : prev.filter((m) => m !== method),
+                        : prev.filter((m) => m !== method)
                     );
                   }}
                 >
@@ -689,7 +685,7 @@ export function LogAnalyzer() {
                     setFileTypeFilter((prev) =>
                       checked
                         ? [...prev, fileType]
-                        : prev.filter((m) => m !== fileType),
+                        : prev.filter((m) => m !== fileType)
                     );
                   }}
                 >
@@ -933,7 +929,7 @@ export function LogAnalyzer() {
                         />
                       )}
                     </TableHead>
-                    <TableHead align="center" className="text-center">
+                    <TableHead align="center" className="text-left w-[120px]">
                       Crawler Type
                     </TableHead>
                   </TableRow>
@@ -1078,8 +1074,8 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
             variant="outline"
             className={
               log.crawler_type !== "Human"
-                ? "bg-red-100 dark:bg-red-400 dark:text-white"
-                : "bg-blue-100 dark:bg-blue-500 dark:text-white text-blue-800 border-blue-200"
+                ? "bg-red-100 dark:bg-red-400 dark:text-white w-[100px] "
+                : "bg-blue-100 text-center dark:bg-blue-500 pl-7 dark:text-white w-[100px] text-blue-800 border-blue-200"
             }
           >
             {log.crawler_type && log.crawler_type.length > 16
@@ -1235,7 +1231,7 @@ function PaginationControls({
           {indexOfFirstItem + 1}-
           {Math.min(
             indexOfLastItem,
-            filteredLogs.length > 0 ? filteredLogs.length : entries.length,
+            filteredLogs.length > 0 ? filteredLogs.length : entries.length
           )}{" "}
           of {filteredLogs.length > 0 ? filteredLogs.length : entries.length}{" "}
           logs
