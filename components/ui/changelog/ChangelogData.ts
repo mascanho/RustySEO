@@ -1,5 +1,15 @@
 export const changelogData = [
   {
+    version: "0.2.8",
+    date: "2025-07-01",
+    type: "feature",
+    changes: [
+      "Log analyser - Project segmentation",
+      "Log analyser - Improved search",
+      "Log analyser - Better data handling",
+    ],
+  },
+  {
     version: "0.2.7",
     date: "2025-06-17",
     type: "fix",
