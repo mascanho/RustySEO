@@ -101,6 +101,8 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
     new Set(),
   );
 
+  const [inputValue, setInputValue] = useState("");
+
   // DATA FROM DB
   const [DBprojects, setDBprojects] = useState([]);
 
@@ -183,8 +185,8 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
   };
 
   // CREATE PROJECT LOGIC
-  const handleCreateProject = async () => {
-    if (!newProjectName.trim()) {
+  const handleCreateProject = async (projectName: string) => {
+    if (!projectName.trim()) {
       toast.error("Please enter a project name");
       return;
     }
@@ -194,7 +196,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
       await new Promise((resolve) => setTimeout(resolve, 500));
 
       const newProject: ProjectEntry = {
-        name: newProjectName.trim(),
+        name: projectName.trim(),
       };
 
       // CALL THE BACKEND
@@ -206,8 +208,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
 
       mockProjectsData.unshift(newProject);
       setProjectsFromDB([...mockProjectsData]);
-      setNewProjectName("");
-      // toast.success("Project created successfully");
+      setInputValue(""); // Clear the input
       toast.success(<>Project created: {newProject.name}</>);
     } catch (error) {
       console.error(error);
@@ -369,25 +370,23 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
                       <div className="space-y-2 mt-2">
                         <Input
                           placeholder="Enter project name..."
-                          value={newProjectName}
-                          onChange={(e) =>
-                            debounce(setNewProjectName, 1000)(e.target.value)
-                          }
+                          value={inputValue}
+                          onChange={(e) => setInputValue(e.target.value)}
                           className="text-xs dark:text-white"
                           onKeyPress={(e) =>
-                            e.key === "Enter" && handleCreateProject()
+                            e.key === "Enter" && handleCreateProject(inputValue)
                           }
                         />
                         <Button
-                          onClick={handleCreateProject}
+                          onClick={() => handleCreateProject(inputValue)}
                           size="sm"
                           className="w-full text-xs"
-                          disabled={!newProjectName.trim()}
+                          disabled={!inputValue.trim()}
                         >
                           <Plus className="h-3 w-3 mr-1" />
                           Create Project
                         </Button>
-                      </div>
+                      </div>{" "}
                     </div>
 
                     {/* PROJECTS AVAILABLE - IMPROVED SECTION */}
