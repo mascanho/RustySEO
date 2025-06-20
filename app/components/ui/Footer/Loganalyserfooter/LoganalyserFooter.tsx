@@ -1,7 +1,6 @@
 // @ts-nocheck
 "use client";
 
-import * as React from "react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -17,9 +16,14 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { FaFolder } from "react-icons/fa";
-import { useProjectsLogs } from "@/store/logFilterStore";
+import {
+  useCurrentProject,
+  useProjectsLogs,
+  useSelectedProject,
+} from "@/store/logFilterStore";
 import { toast } from "sonner";
 import { invoke } from "@tauri-apps/api/core";
+import { useEffect, useState } from "react";
 
 type Project = {
   id: number;
@@ -32,20 +36,19 @@ type Status = {
 };
 
 function LogAnalyserFooter() {
-  const [open, setOpen] = React.useState(false);
-  const [selectedStatus, setSelectedStatus] = React.useState<Status | null>(
-    null
-  );
-  const [loading, setLoading] = React.useState(false);
-  const [localProjects, setLocalProjects] = React.useState<Status[]>([]);
+  const [open, setOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<Status | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [localProjects, setLocalProjects] = useState<Status[]>([]);
   const { setProjects } = useProjectsLogs();
+  const { selectedProject, setSelectedProject } = useSelectedProject();
 
   const fetchProjects = async () => {
     setLoading(true);
     try {
       console.log("Fetching projects...");
       const data = await invoke<Project[]>("get_all_projects_command");
-      console.log("Received projects data:", data); // Debug log
+      console.log("Received projects data:", data);
 
       if (!data || !Array.isArray(data)) {
         throw new Error("Invalid projects data");
@@ -56,8 +59,6 @@ function LogAnalyserFooter() {
         label: project.name,
       }));
 
-      console.log("Formatted projects:", formattedProjects); // Debug log
-
       setLocalProjects(formattedProjects);
       setProjects(formattedProjects);
 
@@ -67,17 +68,33 @@ function LogAnalyserFooter() {
     } catch (error) {
       console.error("Failed to fetch projects:", error);
       toast.error("Failed to load projects");
-      setLocalProjects([]); // Reset on error
+      setLocalProjects([]);
     } finally {
       setLoading(false);
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (open) {
       fetchProjects();
     }
   }, [open]);
+
+  useEffect(() => {
+    const savedProject = localStorage.getItem("selectedProject");
+    if (savedProject && localProjects.length > 0) {
+      const found = localProjects.find((p) => p.label === savedProject);
+      if (found) {
+        setSelectedStatus(found);
+        setSelectedProject(found.label);
+      }
+    }
+  }, []);
+
+  const handleCurrentProjectActions = (projectName: string) => {
+    localStorage.setItem("selectedProject", projectName);
+    setSelectedProject(projectName);
+  };
 
   return (
     <div className="flex items-center space-x-4 text-xs mt-[1px] ml-1">
@@ -88,20 +105,16 @@ function LogAnalyserFooter() {
             variant="default"
             className="w-fit max-w-[200px] bg-gray-800 border border-t-gray-700 border-l-gray-700 border-r-gray-900 border-b-gray-900 rounded-sm shadow-[inset_1px_1px_2px_rgba(0,0,0,0.5)] dark:border-t-gray-600 dark:border-l-gray-600 dark:border-r-gray-900 dark:border-b-gray-900 dark:bg-brand-bright dark:text-white text-white dark:hover:bg-brand-bright/80 justify-start truncate text-[10px] px-2 m-0 h-3 transform scale-[0.98]"
           >
-            {selectedStatus ? (
-              <div className="truncate">{selectedStatus.label}</div>
-            ) : (
-              "Select project..."
-            )}
+            {selectedStatus?.label || selectedProject || "Select project..."}
           </Button>
         </PopoverTrigger>
         <PopoverContent
           className="p-0 mb-10 w-[200px]"
           side="left"
           align="start"
-          forceMount // Ensures content is always rendered
+          forceMount
         >
-          <Command>
+          <Command shouldFilter={true}>
             <CommandInput placeholder="Search projects..." />
             <CommandList>
               {loading ? (
@@ -119,12 +132,10 @@ function LogAnalyserFooter() {
                     {localProjects.map((project) => (
                       <CommandItem
                         key={project.value}
-                        value={project.value}
-                        onSelect={(value) => {
-                          const selected = localProjects.find(
-                            (p) => p.value === value
-                          );
-                          setSelectedStatus(selected || null);
+                        value={`${project.label} ${project.value}`}
+                        onSelect={() => {
+                          setSelectedStatus(project);
+                          handleCurrentProjectActions(project.label);
                           setOpen(false);
                         }}
                       >

@@ -11,6 +11,11 @@ interface ProjectsState {
   setProjects: (projects: []) => void;
 }
 
+interface SelectedProject {
+  selectedProject: [];
+  setSelectedProject: (name: []) => void;
+}
+
 export const useCurrentLogs = create<CurrentLogsState>((set) => ({
   currentLogs: [],
   setCurrentLogs: (logs) => set({ currentLogs: logs }),
@@ -18,5 +23,10 @@ export const useCurrentLogs = create<CurrentLogsState>((set) => ({
 
 export const useProjectsLogs = create<ProjectsState>((set) => ({
   projects: [],
-  setProjects: (projects) => set({ prohects: projects }),
+  setProjects: (projects) => set({ projects: projects }),
+}));
+
+export const useSelectedProject = create<SelectedProject>((set) => ({
+  selectedProject: [],
+  setSelectedProject: (name) => set({ selectedProject: name }),
 }));
