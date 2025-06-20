@@ -1074,8 +1074,8 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
             variant="outline"
             className={
               log.crawler_type !== "Human"
-                ? "bg-red-100 dark:bg-red-400 dark:text-white w-[100px] "
-                : "bg-blue-100 text-center dark:bg-blue-500 pl-7 dark:text-white w-[100px] text-blue-800 border-blue-200"
+                ? "bg-red-100 dark:bg-red-400 dark:text-white w-[100px] truncate "
+                : "bg-blue-100 text-center truncate dark:bg-blue-500 pl-7 dark:text-white w-[100px] text-blue-800 border-blue-200"
             }
           >
             {log.crawler_type && log.crawler_type.length > 16
