@@ -13,6 +13,7 @@ import { getOS } from "../util";
 import { listen } from "@tauri-apps/api/event";
 import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
 import { FaDatabase } from "react-icons/fa";
+import { useSelectedProject } from "@/store/logFilterStore";
 
 interface FileUploadProps {
   maxSizeMB?: number;
@@ -55,13 +56,23 @@ export function FileUpload({
     filename: "",
     status: "",
   });
-  const { storingLogs, setStoringLogs } = useServerLogsStore();
   const { uploadedLogFiles, setUploadedLogFiles } = useServerLogsStore();
+  const { selectedProject } = useSelectedProject();
+  // local storing logs
+  const [storingLogs, setStoringLogs] = useState(false);
 
   // Get the initial state of storing logs from the localStorage
   useEffect(() => {
     const storedValue = localStorage.getItem("logsStorage");
-    if (storedValue !== null) {
+    console.log("storedValue", storedValue);
+    if (
+      !storedValue ||
+      storedValue === "false" ||
+      storedValue === false ||
+      storedValue === null
+    ) {
+      setStoringLogs(false);
+    } else {
       setStoringLogs(true);
     }
   }, []);
@@ -332,7 +343,7 @@ export function FileUpload({
       // Set the state for the popup modal
       setUploadedLogFiles(logEntry);
 
-      const project = "jarbas";
+      const project = selectedProject;
 
       const result = await invoke("check_logs_command", {
         data: { log_contents: logContents },

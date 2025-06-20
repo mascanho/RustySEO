@@ -310,10 +310,13 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
   };
 
   useEffect(() => {
-    console.log(DBprojects, "DBprojects");
-  }, [DBprojects]);
+    const timer = setTimeout(() => {
+      handleGetAllProjects();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
-  console.log(projectsFromDB, "projectsFromDB");
+  console.log(DBprojects, "#########################");
 
   return (
     <section className="w-[650px] max-w-5xl mx-auto h-[670px] pt-2">
@@ -384,7 +387,9 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
                 <div className="border dark:border-brand-dark dark:border-brand rounded-lg h-[370px] overflow-y-auto">
                   {isLoading ? (
                     <SkeletonLoader />
-                  ) : DBprojects.length > 0 ? (
+                  ) : DBprojects.some(
+                      (projectGroup) => projectGroup.length > 0,
+                    ) ? (
                     DBprojects.map((projectGroup, index) => {
                       if (projectGroup.length === 0) return null;
                       const projectName = projectGroup[0]?.project;
