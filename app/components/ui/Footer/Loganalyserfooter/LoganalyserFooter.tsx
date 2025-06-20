@@ -59,11 +59,31 @@ function LogAnalyserFooter() {
         label: project.name,
       }));
 
+      console.log("Formatted projects:", formattedProjects);
+
       setLocalProjects(formattedProjects);
       setProjects(formattedProjects);
 
-      if (formattedProjects.length > 0 && !selectedStatus) {
+      // Check localStorage after projects are loaded
+      const savedProject = localStorage.getItem("selectedProject");
+      if (savedProject) {
+        const found = formattedProjects.find((p) => p.label === savedProject);
+        if (found) {
+          setSelectedStatus(found);
+          setSelectedProject(found.label);
+          return; // Exit early if we found a saved project
+        }
+      }
+
+      // Fallback to first project if no saved project found
+      if (formattedProjects.length > 0) {
         setSelectedStatus(formattedProjects[0]);
+        setSelectedProject(formattedProjects[0].label);
+      }
+
+      if (formattedProjects.length === 0) {
+        setSelectedStatus("No projects found");
+        setSelectedProject("");
       }
     } catch (error) {
       console.error("Failed to fetch projects:", error);
@@ -80,20 +100,15 @@ function LogAnalyserFooter() {
     }
   }, [open]);
 
+  // Initial load when component mounts
   useEffect(() => {
-    const savedProject = localStorage.getItem("selectedProject");
-    if (savedProject && localProjects.length > 0) {
-      const found = localProjects.find((p) => p.label === savedProject);
-      if (found) {
-        setSelectedStatus(found);
-        setSelectedProject(found.label);
-      }
-    }
+    fetchProjects();
   }, []);
 
   const handleCurrentProjectActions = (projectName: string) => {
     localStorage.setItem("selectedProject", projectName);
     setSelectedProject(projectName);
+    console.log("Selected project:", projectName);
   };
 
   return (

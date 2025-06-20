@@ -22,7 +22,7 @@ import type { ProjectEntry } from "@/types/ProjectEntry"; // Declare ProjectEntr
 import { MdDownloading } from "react-icons/md";
 import { IoPlayCircleOutline } from "react-icons/io5";
 import { forEach } from "lodash";
-import { useProjectsLogs } from "@/store/logFilterStore";
+import { useProjectsLogs, useSelectedProject } from "@/store/logFilterStore";
 
 // Mock data for demonstration
 const mockProjectsData: ProjectEntry[] = [
@@ -91,10 +91,10 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
   const { setStoringProjects, storedProjectsFromDBStore } =
     useMockProjectsStore();
   const [projectsFromDB, setProjectsFromDB] = React.useState<ProjectEntry[]>(
-    storedProjectsFromDBStore
+    storedProjectsFromDBStore,
   );
   const [openDropdowns, setOpenDropdowns] = React.useState<Set<string>>(
-    new Set()
+    new Set(),
   );
 
   // DATA FROM DB
@@ -103,6 +103,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
   // GLOBAL STORE
   const projectsFromStore = useProjectsLogs((state) => state.projects);
   const setProjectsFromStore = useProjectsLogs((state) => state.setProjects);
+  const { selectedProject } = useSelectedProject((state) => state);
 
   useEffect(() => {
     const storedProjects = localStorage.getItem("projectsData");
@@ -117,7 +118,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
       new StorageEvent("storage", {
         key: "projectsStorage",
         newValue: JSON.stringify(saveProjects),
-      })
+      }),
     );
 
     if (saveProjects) {
@@ -164,7 +165,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
       await new Promise((resolve) => setTimeout(resolve, 300));
 
       const updatedProjects = mockProjectsData.filter(
-        (project) => project.id !== id
+        (project) => project.id !== id,
       );
       mockProjectsData.length = 0;
       mockProjectsData.push(...updatedProjects);
@@ -312,6 +313,8 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
     console.log(DBprojects, "DBprojects");
   }, [DBprojects]);
 
+  console.log(projectsFromDB, "projectsFromDB");
+
   return (
     <section className="w-[650px] max-w-5xl mx-auto h-[670px] pt-2">
       <CardContent className="grid grid-cols-1 gap-6 h-[380px]">
@@ -358,6 +361,17 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
                         progress and issues.
                       </span>
                     </div>
+
+                    {projects.map((project, index) => (
+                      <div
+                        key={project.id}
+                        className="bg-gray-200 dark:bg-brand-dark dark:text-white p-2 rounded-md mt-3 "
+                      >
+                        <span className="text-xs leading-none">
+                          {project.project}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
