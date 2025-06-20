@@ -22,7 +22,11 @@ import type { ProjectEntry } from "@/types/ProjectEntry"; // Declare ProjectEntr
 import { MdDownloading } from "react-icons/md";
 import { IoPlayCircleOutline } from "react-icons/io5";
 import { forEach } from "lodash";
-import { useProjectsLogs, useSelectedProject } from "@/store/logFilterStore";
+import {
+  useAllProjects,
+  useProjectsLogs,
+  useSelectedProject,
+} from "@/store/logFilterStore";
 
 // Mock data for demonstration
 const mockProjectsData: ProjectEntry[] = [
@@ -104,6 +108,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
   const projectsFromStore = useProjectsLogs((state) => state.projects);
   const setProjectsFromStore = useProjectsLogs((state) => state.setProjects);
   const { selectedProject } = useSelectedProject((state) => state);
+  const { allProjects, setAllProjects } = useAllProjects(); // STORE THE NAMES ONLY OF PROJECTS
 
   useEffect(() => {
     const storedProjects = localStorage.getItem("projectsData");
@@ -150,7 +155,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
       // Simulate API delay
       await new Promise((resolve) => setTimeout(resolve, 800));
       setProjectsFromDB(mockProjectsData);
-      toast.success("Projects refreshed successfully");
+      // toast.success("Projects refreshed successfully");
     } catch (error) {
       console.error(error);
       toast.error("Failed to refresh projects");
@@ -197,10 +202,12 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
         name: newProject.name,
       });
 
+      handleGetAllProjects();
+
       mockProjectsData.unshift(newProject);
       setProjectsFromDB([...mockProjectsData]);
       setNewProjectName("");
-      toast.success("Project created successfully");
+      // toast.success("Project created successfully");
       toast.success(<>Project created: {newProject.name}</>);
     } catch (error) {
       console.error(error);
@@ -261,16 +268,16 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
   }, []);
 
   // GET ALL THE PROJECTS NAMES ONLY FROM THE DATABASED
-  const handleDisplayProjects = async () => {
-    try {
-      const data = await invoke("get_stored_projects_command");
-      console.log(data);
-      toast.success("Projects have been retrieved from the database");
-    } catch (error) {
-      console.error(error);
-      toast.error(error);
-    }
-  };
+  // const handleDisplayProjects = async () => {
+  //   try {
+  //     const data = await invoke("get_stored_projects_command");
+  //     console.log(data, "Display Projects");
+  //     // toast.success("Projects have been retrieved from the database");
+  //   } catch (error) {
+  //     console.error(error);
+  //     toast.error(error);
+  //   }
+  // };
 
   const handleFindProject = async (project) => {
     try {
@@ -278,7 +285,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
         name,
       });
       console.log(data);
-      toast.success("Projects have been retrieved from the database");
+      // toast.success("Projects have been retrieved from the database");
     } catch (error) {
       console.error(error);
       toast.error(error);
@@ -289,6 +296,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
     try {
       const allProjects = await invoke("get_all_projects_command");
       console.log(allProjects);
+      setAllProjects(allProjects);
 
       const allProjData = [];
 
@@ -302,7 +310,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
 
       console.log(allProjData, "All proj Data");
       setDBprojects(allProjData); // Update state once after collecting all data
-      toast.success("Projects have been retrieved from the database");
+      // toast.success("Projects have been retrieved from the database");
     } catch (error) {
       console.error(error);
       toast.error(String(error));
@@ -316,7 +324,32 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
     return () => clearTimeout(timer);
   }, []);
 
-  console.log(DBprojects, "#########################");
+  console.log(allProjects, "#########################");
+
+  const handleCheckLogs = async () => {
+    try {
+      const logs = DBprojects.some((arr) => arr.length > 0);
+      console.log(logs, "SOME LOGS ===============");
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  handleCheckLogs();
+
+  const handleLoadProject = (data) => {
+    toast.info(<>{data}</>);
+  };
+
+  // DEBOUNCE THE INPUT
+  // Add debounce function
+  const debounce = (func, delay) => {
+    let timer;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => func.apply(this, args), delay);
+    };
+  };
 
   return (
     <section className="w-[650px] max-w-5xl mx-auto h-[670px] pt-2">
@@ -325,23 +358,22 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
           <div className="rounded-md h-[580px] overflow-y-auto">
             <div className="grid grid-cols-2 gap-4">
               {/* Left Column - Project Settings */}
-              <div className="space-y-6">
+              <div className="space-y-6 overflow-hidden">
                 <div>
                   <h3 className="text-sm font-medium mb-2 text-left dark:text-white">
-                    Project Settings
+                    Add projects
                   </h3>
 
-                  <div className="space-y-4 p-4 border rounded-md bg-muted h-[23.1rem] dark:border-brand-dark">
-                    <div className="py-1">
-                      <h4 className="text-sm font-medium mb-2 dark:text-white">
-                        Create New Project
-                      </h4>
-                      <div className="space-y-2">
+                  <div className="space-y-3 border rounded-md bg-muted h-[23.1rem] dark:border-brand-dark">
+                    <div className="py-1 p-4">
+                      <div className="space-y-2 mt-2">
                         <Input
                           placeholder="Enter project name..."
                           value={newProjectName}
-                          onChange={(e) => setNewProjectName(e.target.value)}
-                          className="text-xs"
+                          onChange={(e) =>
+                            debounce(setNewProjectName, 1000)(e.target.value)
+                          }
+                          className="text-xs dark:text-white"
                           onKeyPress={(e) =>
                             e.key === "Enter" && handleCreateProject()
                           }
@@ -357,32 +389,64 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
                         </Button>
                       </div>
                     </div>
-                    <div className="bg-gray-200 dark:bg-brand-dark dark:text-white p-2 rounded-md mt-3 ">
-                      <span className="text-xs leading-none">
-                        Manage your projects and their associated logs. Each
-                        project can have multiple logs assigned to track
-                        progress and issues.
-                      </span>
-                    </div>
 
-                    {projects.map((project, index) => (
-                      <div
-                        key={project.id}
-                        className="bg-gray-200 dark:bg-brand-dark dark:text-white p-2 rounded-md mt-3 "
-                      >
-                        <span className="text-xs leading-none">
-                          {project.project}
-                        </span>
+                    {/* PROJECTS AVAILABLE - IMPROVED SECTION */}
+                    <section className="h-full">
+                      <div className="">
+                        <h4 className="text-xs h-6 border-b dark:border-brand-dark shadow  font-medium  px-4 dark:text-white sticky bg-white dark:bg-brand-darker">
+                          Your Projects ({allProjects.length})
+                        </h4>
+                        <div className="space-y-2 p-3 h-[14.5em]  overflow-y-auto">
+                          {allProjects.map((project) => (
+                            <div
+                              key={project.id}
+                              className="flex items-center justify-between p-2 rounded-md transition-colors duration-200
+                          hover:bg-gray-100 dark:hover:bg-gray-700 border dark:border-gray-700"
+                            >
+                              <div className="flex flex-col  space-y-0.5 ">
+                                <div className="flex items-center justify-start">
+                                  <FaProjectDiagram className="h-3 w-3 mr-1 text-blue-500 dark:text-blue-400" />
+                                  <div>
+                                    <span className="text-xs font-medium dark:text-white truncate max-w-[120px]">
+                                      {project?.name}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-1">
+                                  <FaCalendarAlt className="text-xs text-brand-bright" />
+                                  <span className="text-[10px]  text-black/50 dark:text-white/50">
+                                    added: {formatTimestamp(project?.date)}
+                                  </span>
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-5 w-5 hover:bg-gray-200 dark:hover:bg-gray-600"
+                                onClick={() =>
+                                  handleDeleteProject(project.name)
+                                }
+                              >
+                                <X className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+                              </Button>
+                            </div>
+                          ))}
+                          {allProjects.length === 0 && (
+                            <div className="text-center py-4 text-xs text-gray-500 dark:text-gray-400">
+                              No projects created yet
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    ))}
+                    </section>
                   </div>
                 </div>
               </div>
 
-              {/* Right Column - Project List */}
+              {/* Right Column - Project List (unchanged) */}
               <div>
                 <h3 className="text-lg dark:text-white font-semibold text-left">
-                  Local Projects
+                  Assigned Logs
                 </h3>
                 <div className="border dark:border-brand-dark dark:border-brand rounded-lg h-[370px] overflow-y-auto">
                   {isLoading ? (
@@ -398,7 +462,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
                           key={`${projectName}-${index}`}
                           className="border-b dark:border-gray-700"
                         >
-                          <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors duration-200">
+                          <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors duration-200 dark:bg-slate-900/50">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center text-sm mb-2">
                                 <FaProjectDiagram className="mr-2 text-blue-500 dark:text-blue-400" />
@@ -428,7 +492,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
                                   className="h-5 w-5 p-0 ml-2 hover:bg-gray-200 dark:hover:bg-gray-700"
                                 >
                                   <ChevronDown
-                                    className={`h-3 w-3 transition-transform duration-200 ${
+                                    className={`h-3 w-3 transition-transform duration-200 dark:text-white/50 ${
                                       openDropdowns.has(projectName)
                                         ? "rotate-180"
                                         : ""
@@ -445,7 +509,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
                                 aria-label="Remove project"
                                 disabled={isLoading}
                                 className="h-6 w-6 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors duration-200 "
-                                onClick={() => handleDeleteProject(projectName)}
+                                onClick={() => handleLoadProject(projectName)}
                               >
                                 <IoPlayCircleOutline className="h-2 w-2 text-gray-500 dark:text-red-400" />
                               </Button>
@@ -465,7 +529,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
 
                           {/* Logs Dropdown */}
                           {openDropdowns.has(projectName) && (
-                            <div className="px-4 pb-3 bg-gray-50 dark:bg-gray-800/50">
+                            <div className="px-4 pb-3 bg-gray-50 dark:bg-slate-900/40">
                               <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
                                 Project Logs ({projectName})
                               </div>
@@ -501,9 +565,11 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
                       <FolderOpen className="h-8 w-8 mb-2" />
-                      <p className="text-xs">No projects available.</p>
                       <p className="text-xs">
-                        Enable DB storage and create your first project.
+                        No projects with logs available.
+                      </p>
+                      <p className="text-xs px-4 text-center">
+                        Enable log storage and create a new project.
                       </p>
                     </div>
                   )}
@@ -514,21 +580,6 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }: any) {
         </div>
       </CardContent>
       <CardFooter className="flex justify-end mt-8">
-        <Button
-          variant="outline"
-          onClick={handleGetAllProjects}
-          className="dark:bg-brand-bright dark:border-brand-darker dark:text-white"
-        >
-          All
-        </Button>
-
-        <Button
-          variant="outline"
-          onClick={() => handleFindProject("marco")}
-          className="dark:bg-brand-bright dark:border-brand-darker dark:text-white"
-        >
-          TESTING
-        </Button>
         <div className="flex gap-2">
           <Button
             onClick={handleRefreshProjects}

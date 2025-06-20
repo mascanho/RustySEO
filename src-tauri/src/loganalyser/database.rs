@@ -16,7 +16,7 @@ pub struct DatabaseResults {
     pub date: String,
     pub project: String,
     pub filename: String,
-    pub log: serde_json::Value,
+    // pub log: serde_json::Value,
 }
 
 pub struct Database {
@@ -198,6 +198,7 @@ pub fn get_stored_logs_command(window: Window) -> Result<(), String> {
 pub struct Project {
     pub id: i32,
     pub name: String,
+    pub date: String,
 }
 
 // PROJECTS GO HERE
@@ -242,7 +243,7 @@ pub fn get_all_projects_command() -> Result<Vec<Project>, String> {
     // Prepare the query to fetch all projects from the projects table
     let mut stmt = db
         .conn
-        .prepare("SELECT id, name FROM projects")
+        .prepare("SELECT id, name, date FROM projects")
         .map_err(|e| format!("Failed to prepare query: {}", e))?;
 
     // Execute the query and map the results
@@ -251,6 +252,7 @@ pub fn get_all_projects_command() -> Result<Vec<Project>, String> {
             Ok(Project {
                 id: row.get(0)?,
                 name: row.get(1)?,
+                date: row.get(2)?,
             })
         })
         .map_err(|e| format!("Query execution failed: {}", e))?
@@ -288,7 +290,7 @@ pub fn get_logs_by_project_name_command(project: &str) -> Result<Vec<DatabaseRes
                 date: row.get(1)?,
                 project: project.to_string(),
                 filename: row.get(2)?,
-                log: log_value,
+                // log: log_value,
             })
         })
         .map_err(|e| format!("Query execution failed: {}", e))?
