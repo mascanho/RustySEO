@@ -1,14 +1,14 @@
+use super::helpers::browser_trim_name;
+use super::helpers::country_extractor::extract_country;
+use super::helpers::crawler_type::is_crawler;
+use super::helpers::parse_logs::parse_log_entries;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::mpsc;
 use std::thread;
+use std::time::Duration;
 use tauri::{Emitter, Manager};
-
-use super::helpers::browser_trim_name;
-use super::helpers::country_extractor::extract_country;
-use super::helpers::crawler_type::is_crawler;
-use super::helpers::parse_logs::parse_log_entries;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LogEntry {
@@ -30,7 +30,7 @@ pub struct LogEntry {
     pub filename: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct LogAnalysisResult {
     pub message: String,
     pub line_count: usize,
@@ -61,7 +61,7 @@ pub struct BotPageDetails {
     pub filename: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Totals {
     pub google: usize,
     pub bing: usize,
@@ -75,7 +75,7 @@ pub struct Totals {
     pub google_bot_page_frequencies: HashMap<String, Vec<BotPageDetails>>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct LogResult {
     pub overview: LogAnalysisResult,
     pub entries: Vec<LogEntry>,
@@ -86,7 +86,7 @@ pub struct LogInput {
     pub log_contents: Vec<(String, String)>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProgressUpdate {
     pub current_file: usize,
     pub total_files: usize,
@@ -95,30 +95,26 @@ pub struct ProgressUpdate {
     pub phase: String,
 }
 
-/// Main analysis function with parallel processing and memory optimizations
 pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogResult, String> {
     let file_count = data.log_contents.len();
     let (progress_tx, progress_rx) = mpsc::channel();
 
-    // Spawn progress emitter thread with bounded channel to prevent memory buildup
     let app_handle_clone = app_handle.clone();
-    thread::Builder::new()
-        .name("progress-emitter".into())
-        .spawn(move || {
-            for update in progress_rx {
+    thread::spawn(move || {
+        let mut last_emitted = std::time::Instant::now();
+        for update in progress_rx {
+            if last_emitted.elapsed() >= Duration::from_millis(100) {
                 let _ = app_handle_clone.emit("progress-update", update);
-                thread::yield_now();
+                last_emitted = std::time::Instant::now();
             }
-        })
-        .expect("Failed to spawn progress thread");
+        }
+    });
 
-    // Process files in parallel with Rayon
     let entries: Vec<LogEntry> = data
         .log_contents
         .into_par_iter()
         .enumerate()
         .flat_map(|(index, (filename, log_content))| {
-            // Send start progress update
             let _ = progress_tx.send(ProgressUpdate {
                 current_file: index + 1,
                 total_files: file_count,
@@ -127,7 +123,6 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
                 phase: "started".to_string(),
             });
 
-            // Process log entries
             let entries = parse_log_entries(&log_content)
                 .into_iter()
                 .map(|e| {
@@ -153,12 +148,11 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
                 })
                 .collect::<Vec<_>>();
 
-            // Send completion progress update
             let _ = progress_tx.send(ProgressUpdate {
                 current_file: index + 1,
                 total_files: file_count,
                 percentage: ((index + 1) as f32 / file_count as f32) * 100.0,
-                filename,
+                filename: filename,
                 phase: "completed".to_string(),
             });
 
@@ -166,7 +160,6 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
         })
         .collect();
 
-    // Early return if no entries found
     if entries.is_empty() {
         return Ok(LogResult {
             overview: LogAnalysisResult {
@@ -185,7 +178,6 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
         });
     }
 
-    // Calculate basic statistics
     let log_start_time = entries
         .first()
         .map(|e| e.timestamp.clone())
@@ -195,15 +187,11 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
         .map(|e| e.timestamp.clone())
         .unwrap_or_default();
     let total_requests = entries.len();
-
-    // Use parallel iterators for counting operations
     let crawler_count = entries.par_iter().filter(|e| e.is_crawler).count();
     let success_count = entries
         .par_iter()
         .filter(|e| e.status >= 200 && e.status < 300)
         .count();
-
-    // Use HashSet for unique counts with parallel processing
     let unique_ips = entries
         .par_iter()
         .map(|e| &e.ip)
@@ -215,7 +203,6 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
         .collect::<HashSet<_>>()
         .len();
 
-    // Calculate bot totals in parallel
     let bot_counts = entries
         .par_iter()
         .fold(
@@ -252,7 +239,6 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
             },
         );
 
-    // Extract Google bot pages in parallel
     let (google_bot_pages, google_bot_entries): (Vec<_>, Vec<_>) = entries
         .par_iter()
         .filter(|e| e.crawler_type.to_lowercase().contains("google") && e.verified)
@@ -261,7 +247,7 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
 
     let google_bot_page_frequencies = calculate_url_frequencies(google_bot_entries);
 
-    Ok(LogResult {
+    let result = LogResult {
         overview: LogAnalysisResult {
             message: "Log analysis completed".to_string(),
             line_count: total_requests,
@@ -290,10 +276,24 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
             file_count,
         },
         entries,
-    })
+    };
+
+    // Chunking the data to send to the frontend
+    let chunk_size = 500; // Define a reasonable chunk size
+    for chunk in result.entries.chunks(chunk_size) {
+        let chunked_result = LogResult {
+            overview: result.overview.clone(),
+            entries: chunk.to_vec(),
+        };
+        let _ = app_handle.emit("log-analysis-chunk", chunked_result);
+        thread::sleep(Duration::from_millis(100)); // Sleep to control the rate
+    }
+
+    let _ = app_handle.emit("log-analysis-complete", result.clone());
+
+    Ok(result)
 }
 
-/// Optimized frequency calculation using parallel processing
 fn calculate_url_frequencies(entries: Vec<&LogEntry>) -> HashMap<String, Vec<BotPageDetails>> {
     entries
         .into_par_iter()
