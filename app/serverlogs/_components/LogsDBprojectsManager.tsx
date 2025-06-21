@@ -19,6 +19,8 @@ import {
   useProjectsLogs,
   useSelectedProject,
 } from "@/store/logFilterStore";
+import { useLogAnalysis } from "@/store/ServerLogsStore";
+import Spinner from "@/app/components/ui/Sidebar/checks/_components/Spinner";
 
 // Mock data for demonstration
 const mockProjectsData: ProjectEntry[] = [
@@ -85,9 +87,13 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
   const [isLoading, setIsLoading] = useState(false);
   const [openDropdowns, setOpenDropdowns] = useState(new Set());
   const [DBprojects, setDBprojects] = useState([]);
+  const [loadingProjects, setLoadingProjects] = useState<
+    Record<string, boolean>
+  >({});
 
   // Global store
   const { allProjects, setAllProjects } = useAllProjects();
+  const { setLogData, resetAll } = useLogAnalysis();
 
   // Memoized filtered projects
   const filteredProjects = useMemo(() => {
@@ -206,44 +212,82 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
     }
   }, []);
 
+  // ###########################################
+  // Handle all the logic to bring the data to the frontend
   // GET THE SELECTED LOG FROM THE PROJECT NAME TO ANALYSE THE LOGS
   const getSelectedLogForAnalysis = async (projectName: string) => {
+    if (!projectName) {
+      toast.error("Please select a project");
+      return;
+    }
+
     try {
+      setLoadingProjects((prev) => ({ ...prev, [projectName]: true }));
       const log = await invoke(
         "get_logs_by_project_name_for_processing_command",
         {
           project: projectName,
         },
       );
-      console.log(log, "SELECTED LOG");
-      toast.success(projectName);
 
       // Process the logs into the backend
-      const processedLogs = await processLogs(log);
+      const result = await processLogs(log);
 
-      // console.log(processedLogs, "PROCESSED LOGS");
+      // Clear existing  data first
+      resetAll();
+
+      setLogData({
+        entries: result.entries || [],
+        overview: result.overview || {
+          message: "",
+          line_count: 0,
+          unique_ips: 0,
+          unique_user_agents: 0,
+          crawler_count: 0,
+          success_rate: 0,
+          totals: {
+            google: 0,
+            bing: 0,
+            semrush: 0,
+            hrefs: 0,
+            moz: 0,
+            uptime: 0,
+            openai: 0,
+            claude: 0,
+            google_bot_pages: [],
+            google_bot_pages_frequency: {},
+          },
+          log_start_time: "",
+          log_finish_time: "",
+        },
+      });
+
+      setLoadingProjects((prev) => ({ ...prev, [projectName]: false }));
+      toast.success("Project " + projectName + " processed successfully");
     } catch (err) {
       console.error(err);
-      toast.error(err);
+      toast.error(<section className="w-full">{err}</section>);
     }
   };
 
   // Processing logs function
   const processLogs = async (logData: any[]) => {
-    const logs = logData.map((log) => ({
-      name: log.name,
-      log: log.log,
-    }));
+    console.log(logData, "log data");
 
-    const result = await invoke<LogAnalysisResult>("check_logs_command", {
-      data: {
-        log_contents: logs,
-      },
-      app: window, // or your app handle
-      storing_logs: false, // or true if needed
-      project: "your-project-name",
-    });
+    try {
+      return await invoke<LogAnalysisResult>("check_logs_command", {
+        data: {
+          log_contents: logData.map((item) => [item.project, item.log]),
+        },
+        storingLogs: false, // or true if needed
+        project: "your-project-name",
+      });
+    } catch (error) {
+      console.error(error);
+    }
   };
+
+  // ##############################################
 
   return (
     <section className="w-[650px] max-w-5xl mx-auto h-[670px] pt-2">
@@ -375,7 +419,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => toggleDropdown(projectName)}
-                                  className="h-5 w-5 p-0 ml-2 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                  className="h-5 w-5 p-0 pt-[2px] hover:bg-gray-200 dark:hover:bg-gray-700"
                                 >
                                   <ChevronDown
                                     className={`h-3 w-3 transition-transform duration-200 dark:text-white/50 ${
@@ -389,35 +433,40 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                             </div>
 
                             <div className="flex items-center">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                disabled={isLoading}
-                                className="h-6 w-6 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors duration-200"
-                                onClick={() =>
-                                  getSelectedLogForAnalysis(projectName)
-                                }
-                              >
-                                <IoPlayCircleOutline className="h-2 w-2 text-gray-500 dark:text-brand-bright" />
-                              </Button>
+                              {projectName !== DBprojects?.project && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors duration-200"
+                                  onClick={() =>
+                                    getSelectedLogForAnalysis(projectName)
+                                  }
+                                >
+                                  {loadingProjects[projectName] ? (
+                                    <Spinner size="sm" />
+                                  ) : (
+                                    <IoPlayCircleOutline className="h-2 w-2 text-gray-500 dark:text-brand-bright" />
+                                  )}
+                                </Button>
+                              )}{" "}
                             </div>
                           </div>
 
                           {openDropdowns.has(projectName) && (
-                            <div className="px-4 pb-3 bg-gray-50 dark:bg-slate-900/40">
+                            <div className="px-4  pt-2 pb-3 bg-gray-100 dark:bg-brand-bright/20  border-dashed border-brand-bright border-tr">
                               <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
                                 Project Logs ({projectName})
                               </div>
-                              <div className="space-y-1 max-h-32 overflow-y-auto">
+                              <div className="space-y-2 max-h-32 overflow-y-auto">
                                 {projectGroup.map((log, logIndex) => (
                                   <div
                                     key={`${projectName}-log-${logIndex}`}
-                                    className="flex items-start gap-2 p-2 rounded text-xs border dark:border-gray-700"
+                                    className="flex items-center gap-2 p-1 rounded text-xs border border-black/10 dark:border-gray-700"
                                   >
                                     <Badge
-                                      className={`text-[10px] px-1 py-0 ${getLogLevelColor(log.level || "info")}`}
+                                      className={`text-[10px] px-1 dark:text-white py-0 ${getLogLevelColor(log.level || "info")}`}
                                     >
-                                      {log.level || "info"}
+                                      {log.level || "LOG"}
                                     </Badge>
                                     <div className="flex-1 min-w-0">
                                       <p className="text-gray-800 dark:text-gray-200 truncate">
@@ -462,13 +511,6 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
               <Loader2 className="h-4 w-4 animate-spin mr-2" />
             ) : null}
             Refresh
-          </Button>
-          <Button
-            onClick={() => toast.info("Clear database functionality")}
-            variant="destructive"
-            disabled={isLoading}
-          >
-            Clear database
           </Button>
         </div>
       </CardFooter>

@@ -306,7 +306,7 @@ pub struct SelectedLogs {
     pub date: String,
     pub project: String,
     pub filename: String,
-    pub log: String,
+    pub log: serde_json::Value,
 }
 
 #[tauri::command]
@@ -327,27 +327,27 @@ pub fn get_logs_by_project_name_for_processing_command(
             let date: String = row.get(1)?;
             let project: String = row.get(2)?;
             let filename: String = row.get(3)?;
-            let log: String = row.get(4)?;
+            let log_text: String = row.get(4)?;
 
             // Debug output
             println!("Processing log ID {}: {}", id, filename);
 
             // Parse with better error handling
-            // let log_value = serde_json::from_str(&log_text).map_err(|e| {
-            //     eprintln!("JSON parse error for log {}: {}", id, e);
-            //     rusqlite::Error::FromSqlConversionFailure(
-            //         4,
-            //         rusqlite::types::Type::Text,
-            //         Box::new(e),
-            //     )
-            // })?;
+            let log_value = serde_json::from_str(&log_text).map_err(|e| {
+                eprintln!("JSON parse error for log {}: {}", id, e);
+                rusqlite::Error::FromSqlConversionFailure(
+                    4,
+                    rusqlite::types::Type::Text,
+                    Box::new(e),
+                )
+            })?;
 
             Ok(SelectedLogs {
                 id,
                 date,
                 project,
                 filename,
-                log,
+                log: log_value,
             })
         })
         .map_err(|e| format!("Query execution failed: {}", e))?

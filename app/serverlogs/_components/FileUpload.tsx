@@ -345,6 +345,8 @@ export function FileUpload({
 
       const project = selectedProject;
 
+      console.log(logContents, "LOG CONTENTS");
+
       const result = await invoke("check_logs_command", {
         data: { log_contents: logContents },
         storingLogs,

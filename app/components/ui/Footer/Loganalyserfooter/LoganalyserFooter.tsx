@@ -124,7 +124,7 @@ function LogAnalyserFooter() {
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="p-0 mb-10 w-[200px]"
+          className="p-0 mb-10 w-[200px] z-[9999999999]"
           side="left"
           align="start"
           forceMount
