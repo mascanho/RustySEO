@@ -279,7 +279,7 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
     };
 
     // Chunking the data to send to the frontend
-    let chunk_size = 5000; // Define a reasonable chunk size
+    let chunk_size = 500; // Define a reasonable chunk size
     for chunk in result.entries.chunks(chunk_size) {
         let chunked_result = LogResult {
             overview: result.overview.clone(),

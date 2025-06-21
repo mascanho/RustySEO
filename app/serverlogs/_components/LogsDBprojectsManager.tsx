@@ -1,104 +1,159 @@
 // @ts-nocheck
-import React, { useEffect, useState, useCallback } from "react";
+"use client";
+
+import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { X, Loader2, FolderOpen, Plus, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
-import { Loader2, Plus, ChevronDown, FolderOpen } from "lucide-react";
-import { FaProjectDiagram, FaCalendarAlt, FaFolder } from "react-icons/fa";
-import { FixedSizeList as List } from "react-window";
-import { invoke } from "@tauri-apps/api/core";
-import { IoPlayCircleOutline } from "react-icons/io5";
 import { Button } from "@/components/ui/button";
+import { CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { invoke } from "@tauri-apps/api/core";
+import { FixedSizeList as List } from "react-window";
+import { FaCalendarAlt, FaFolder, FaProjectDiagram } from "react-icons/fa";
+import { SkeletonLoader } from "./SkeletonLoader";
+import type { ProjectEntry } from "@/types/ProjectEntry";
+import { IoPlayCircleOutline } from "react-icons/io5";
+import {
+  useAllProjects,
+  useProjectsLogs,
+  useSelectedProject,
+} from "@/store/logFilterStore";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
+import Spinner from "@/app/components/ui/Sidebar/checks/_components/Spinner";
 
-// Mock types and interfaces
-interface ProjectEntry {
-  id: string;
-  name: string;
-  status?: string;
-  createdAt?: string;
-  logCount?: number;
-  description?: string;
-}
+// Mock data for demonstration
+const mockProjectsData: ProjectEntry[] = [
+  {
+    id: "proj_001",
+    name: "www.slimstock.com",
+    status: "active",
+    createdAt: "2024-01-15T10:30:00Z",
+    logCount: 23,
+    description: "Complete overhaul of the shopping experience",
+  },
+];
 
-interface LogEntry {
-  project: string;
-  log: string;
-  level?: string;
-  date?: string;
-  filename?: string;
-}
+// Memoized Project Item Component
+const ProjectItem = React.memo(({ project, onDelete, onLoad }) => {
+  const formatTimestamp = useCallback((timestamp) => {
+    if (!timestamp) return "No date";
+    const date = new Date(timestamp);
+    return isNaN(date.getTime())
+      ? "Invalid Date"
+      : date.toLocaleString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+  }, []);
 
-const ProjectItem = React.memo(({ project, onDelete }) => {
   return (
-    <div className="p-2 border-b dark:border-gray-700">
-      <div className="flex justify-between items-center">
-        <span className="text-xs">{project.name}</span>
-        <button
-          onClick={() => onDelete(project.id)}
-          className="text-red-500 hover:text-red-700"
-        >
-          Delete
-        </button>
+    <div className="flex items-center justify-between p-2 rounded-md transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 border dark:border-gray-700">
+      <div className="flex flex-col space-y-0.5">
+        <div className="flex items-center justify-start">
+          <FaProjectDiagram className="h-3 w-3 mr-1 text-blue-500 dark:text-blue-400" />
+          <span className="text-xs font-medium dark:text-white truncate max-w-[120px]">
+            {project?.name}
+          </span>
+        </div>
+        <div className="flex items-center space-x-1">
+          <FaCalendarAlt className="text-xs text-brand-bright" />
+          <span className="text-[10px] text-black/50 dark:text-white/50">
+            added: {formatTimestamp(project?.date)}
+          </span>
+        </div>
       </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-5 w-5 hover:bg-gray-200 dark:hover:bg-gray-600"
+        onClick={() => onDelete(project.id)}
+      >
+        <X className="h-3 w-3 text-gray-500 dark:text-gray-400" />
+      </Button>
     </div>
   );
 });
 
 ProjectItem.displayName = "ProjectItem";
 
-const SkeletonLoader = () => (
-  <div className="flex flex-col space-y-3 p-4">
-    <div className="h-4 w-full bg-gray-200 rounded animate-pulse"></div>
-    <div className="h-4 w-full bg-gray-200 rounded animate-pulse"></div>
-    <div className="h-4 w-full bg-gray-200 rounded animate-pulse"></div>
-  </div>
-);
-
-const ProjectsDBManager = () => {
-  const [allProjects, setAllProjects] = useState<ProjectEntry[]>([]);
-  const [DBprojects, setDBprojects] = useState<LogEntry[][]>([]);
-  const [filteredProjects, setFilteredProjects] = useState<ProjectEntry[]>([]);
+// Main Component
+export default function ProjectsDBManager({ closeDialog, dbProjects }) {
+  // State management
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [openDropdowns, setOpenDropdowns] = useState(new Set());
+  const [DBprojects, setDBprojects] = useState([]);
   const [loadingProjects, setLoadingProjects] = useState<
     Record<string, boolean>
   >({});
-  const [openDropdowns, setOpenDropdowns] = useState<Set<string>>(new Set());
-  const { setLogData } = useLogAnalysis();
 
+  // Global store
+  const { allProjects, setAllProjects } = useAllProjects();
+  const { setLogData, resetAll } = useLogAnalysis();
+
+  // Memoized filtered projects
+  const filteredProjects = useMemo(() => {
+    if (!inputValue.trim()) return allProjects;
+    return allProjects.filter((project) =>
+      project.name.toLowerCase().includes(inputValue.toLowerCase()),
+    );
+  }, [allProjects, inputValue]);
+
+  // Format timestamp utility
+  const formatTimestamp = useCallback((timestamp) => {
+    if (!timestamp) return "No date";
+    const date = new Date(timestamp);
+    return isNaN(date.getTime())
+      ? "Invalid Date"
+      : date.toLocaleString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+  }, []);
+
+  // Optimized project fetching
   const handleGetAllProjects = useCallback(async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      const allProjects = await invoke<ProjectEntry[]>(
-        "get_all_projects_command",
-      );
+      const allProjects = await invoke("get_all_projects_command");
       setAllProjects(allProjects);
+
       const allProjData = await Promise.all(
         allProjects.map((proj) =>
-          invoke<LogEntry[]>("get_logs_by_project_name_command", {
-            project: proj.name,
-          }),
+          invoke("get_logs_by_project_name_command", { project: proj.name }),
         ),
       );
+
       setDBprojects(allProjData);
     } catch (error) {
       toast.error(String(error));
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [setAllProjects]);
 
+  // Project creation
   const handleCreateProject = useCallback(
     async (projectName: string) => {
       if (!projectName.trim()) {
         toast.error("Please enter a project name");
         return;
       }
+
       try {
         setIsLoading(true);
         const newProject = { name: projectName.trim() };
+
         await invoke("create_project_command", { name: newProject.name });
         await handleGetAllProjects();
+
         setInputValue("");
         toast.success(`Project created: ${newProject.name}`);
       } catch (error) {
@@ -110,6 +165,7 @@ const ProjectsDBManager = () => {
     [handleGetAllProjects],
   );
 
+  // Project deletion
   const handleDeleteProject = useCallback(
     async (id: string) => {
       try {
@@ -126,6 +182,7 @@ const ProjectsDBManager = () => {
     [handleGetAllProjects],
   );
 
+  // Toggle dropdown
   const toggleDropdown = useCallback((projectName: string) => {
     setOpenDropdowns((prev) => {
       const newSet = new Set(prev);
@@ -136,6 +193,12 @@ const ProjectsDBManager = () => {
     });
   }, []);
 
+  // Initial data load
+  useEffect(() => {
+    handleGetAllProjects();
+  }, [handleGetAllProjects]);
+
+  // Log level color
   const getLogLevelColor = useCallback((level: string) => {
     switch (level) {
       case "error":
@@ -149,31 +212,15 @@ const ProjectsDBManager = () => {
     }
   }, []);
 
-  const formatTimestamp = (timestamp: string) => {
-    if (!timestamp) return "No date";
-    try {
-      return new Date(timestamp).toLocaleString("en-US", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch (error) {
-      console.error("Error formatting timestamp:", error);
-      return "Invalid date";
-    }
-  };
-
-  useEffect(() => {
-    handleGetAllProjects();
-  }, [handleGetAllProjects]);
-
+  // ###########################################
+  // Handle all the logic to bring the data to the frontend
+  // GET THE SELECTED LOG FROM THE PROJECT NAME TO ANALYSE THE LOGS
   const getSelectedLogForAnalysis = async (projectName: string) => {
     if (!projectName) {
       toast.error("Please select a project");
       return;
     }
+
     try {
       setLoadingProjects((prev) => ({ ...prev, [projectName]: true }));
       const log = await invoke(
@@ -182,7 +229,12 @@ const ProjectsDBManager = () => {
           project: projectName,
         },
       );
+
+      // Process the logs into the backend
       const result = await processLogs(log);
+
+      // Clear existing  data first
+      resetAll();
 
       setLogData({
         entries: result.entries || [],
@@ -210,41 +262,46 @@ const ProjectsDBManager = () => {
         },
       });
 
-      toast.success(`Project ${projectName} processed successfully`);
+      setLoadingProjects((prev) => ({ ...prev, [projectName]: false }));
+      toast.success("Project " + projectName + " processed successfully");
     } catch (err) {
       console.error(err);
-      toast.error(String(err));
-    } finally {
-      setLoadingProjects((prev) => ({ ...prev, [projectName]: false }));
+      toast.error(<section className="w-full">{err}</section>);
     }
   };
 
-  const processLogs = async (logData: LogEntry[]) => {
+  // Processing logs function
+  const processLogs = async (logData: any[]) => {
+    console.log(logData, "log data");
+
     try {
-      return await invoke<LogEntry[]>("check_logs_command", {
+      return await invoke<LogAnalysisResult>("check_logs_command", {
         data: {
           log_contents: logData.map((item) => [item.project, item.log]),
         },
-        storingLogs: false,
+        storingLogs: false, // or true if needed
         project: "your-project-name",
       });
     } catch (error) {
       console.error(error);
-      throw error;
     }
   };
 
+  // ##############################################
+
   return (
     <section className="w-[650px] max-w-5xl mx-auto h-[670px] pt-2">
-      <div className="grid grid-cols-1 gap-6 h-[380px]">
+      <CardContent className="grid grid-cols-1 gap-6 h-[380px]">
         <div className="space-y-4">
           <div className="rounded-md h-[580px] overflow-y-auto">
             <div className="grid grid-cols-2 gap-4">
+              {/* Left Column - Project Settings */}
               <div className="space-y-6 overflow-hidden">
                 <div>
                   <h3 className="text-sm font-medium mb-2 text-left dark:text-white">
                     Projects
                   </h3>
+
                   <div className="space-y-3 border rounded-md bg-muted h-[23.1rem] dark:border-brand-dark">
                     <div className="py-1 p-4">
                       <div className="space-y-2 mt-2">
@@ -272,8 +329,10 @@ const ProjectsDBManager = () => {
                         </Button>
                       </div>
                     </div>
+
+                    {/* Projects List */}
                     <section className="h-full">
-                      <div>
+                      <div className="">
                         <h4 className="text-xs h-6 border-b dark:border-brand-dark shadow font-medium px-4 dark:text-white sticky bg-white dark:bg-brand-darker">
                           Your Projects ({filteredProjects.length})
                         </h4>
@@ -316,6 +375,8 @@ const ProjectsDBManager = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Right Column - Project Logs */}
               <div>
                 <h3 className="text-lg dark:text-white font-semibold text-left">
                   Assigned Logs
@@ -327,6 +388,7 @@ const ProjectsDBManager = () => {
                     DBprojects.map((projectGroup, index) => {
                       if (projectGroup.length === 0) return null;
                       const projectName = projectGroup[0]?.project;
+
                       return (
                         <div
                           key={`${projectName}-${index}`}
@@ -340,12 +402,14 @@ const ProjectsDBManager = () => {
                                   {projectName}
                                 </p>
                               </div>
+
                               <div className="flex items-center gap-2 mb-1">
                                 <FaCalendarAlt className="inline-block text-xs ml-[1px] text-black dark:text-white" />
                                 <span className="text-[10px] -ml-[2px] font-mono text-gray-500">
                                   {formatTimestamp(projectGroup[0]?.date)}
                                 </span>
                               </div>
+
                               <div className="flex items-center gap-2">
                                 <FaFolder className="inline-block text-xs ml-[1px] text-gray-600 dark:text-gray-400" />
                                 <span className="text-[10px] -ml-[2px] text-gray-500">
@@ -367,8 +431,9 @@ const ProjectsDBManager = () => {
                                 </Button>
                               </div>
                             </div>
+
                             <div className="flex items-center">
-                              {projectName && (
+                              {projectName !== DBprojects?.project && (
                                 <Button
                                   variant="ghost"
                                   size="icon"
@@ -378,16 +443,17 @@ const ProjectsDBManager = () => {
                                   }
                                 >
                                   {loadingProjects[projectName] ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <Spinner size="sm" />
                                   ) : (
                                     <IoPlayCircleOutline className="h-2 w-2 text-gray-500 dark:text-brand-bright" />
                                   )}
                                 </Button>
-                              )}
+                              )}{" "}
                             </div>
                           </div>
+
                           {openDropdowns.has(projectName) && (
-                            <div className="px-4 pt-2 pb-6 bg-gray-100 dark:bg-brand-bright/20 border-dashed border-brand-bright border-t">
+                            <div className="px-4  pt-2 pb-6 bg-gray-100 dark:bg-brand-bright/20  border-dashed border-brand-bright border-tr">
                               <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
                                 Project Logs ({projectName})
                               </div>
@@ -397,11 +463,11 @@ const ProjectsDBManager = () => {
                                     key={`${projectName}-log-${logIndex}`}
                                     className="flex items-center gap-2 p-1 rounded text-xs border border-black/10 dark:border-gray-700"
                                   >
-                                    <div
-                                      className={`text-[10px] px-1 py-0 ${getLogLevelColor(log.level || "info")}`}
+                                    <Badge
+                                      className={`text-[10px] px-1 dark:text-white py-0 ${getLogLevelColor(log.level || "info")}`}
                                     >
                                       {log.level || "LOG"}
-                                    </div>
+                                    </Badge>
                                     <div className="flex-1 min-w-0">
                                       <p className="text-gray-800 dark:text-gray-200 truncate">
                                         {log.filename}
@@ -423,8 +489,8 @@ const ProjectsDBManager = () => {
                       <FolderOpen className="h-8 w-8 mb-2" />
                       <p className="text-xs">No projects with logs assigned.</p>
                       <p className="text-xs px-4 text-center">
-                        Enable log storage and create a new project or analyze
-                        logs from an existing project.
+                        Enable log storage and create a new project or analyse
+                        logs from an existing projects.
                       </p>
                     </div>
                   )}
@@ -433,19 +499,21 @@ const ProjectsDBManager = () => {
             </div>
           </div>
         </div>
-      </div>
-      <div className="flex justify-end mt-8">
-        <Button
-          onClick={handleGetAllProjects}
-          variant="secondary"
-          disabled={isLoading}
-        >
-          {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-          Refresh
-        </Button>
-      </div>
+      </CardContent>
+      <CardFooter className="flex justify-end mt-8">
+        <div className="flex gap-2">
+          <Button
+            onClick={handleGetAllProjects}
+            variant="secondary"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : null}
+            Refresh
+          </Button>
+        </div>
+      </CardFooter>
     </section>
   );
-};
-
-export default ProjectsDBManager;
+}
