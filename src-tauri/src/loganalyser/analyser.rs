@@ -203,6 +203,7 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
         .collect::<HashSet<_>>()
         .len();
 
+    // TODO: Make this scalable to be added to the crawler settings
     let bot_counts = entries
         .par_iter()
         .fold(
