@@ -253,6 +253,7 @@ async fn main() {
             loganalyser::database::get_logs_by_project_name_command,
             loganalyser::database::get_all_projects_command,
             loganalyser::database::delete_project_command,
+            loganalyser::database::get_logs_by_project_name_for_processing_command,
             get_system,
             delete_config_folders_command,
             open_config_folder_command

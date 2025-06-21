@@ -81,7 +81,7 @@ pub struct LogResult {
     pub entries: Vec<LogEntry>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct LogInput {
     pub log_contents: Vec<(String, String)>,
 }

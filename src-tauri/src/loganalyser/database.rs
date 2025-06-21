@@ -299,6 +299,65 @@ pub fn get_logs_by_project_name_command(project: &str) -> Result<Vec<DatabaseRes
     Ok(logs)
 }
 
+// GET THE LOGS FROM THE PROJECTS TO BE Processed
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SelectedLogs {
+    pub id: i32,
+    pub date: String,
+    pub project: String,
+    pub filename: String,
+    pub log: serde_json::Value,
+}
+
+#[tauri::command]
+pub fn get_logs_by_project_name_for_processing_command(
+    project: &str,
+) -> Result<Vec<SelectedLogs>, String> {
+    let db = Database::new("serverlog.db")
+        .map_err(|e| format!("Database initialization failed: {}", e))?;
+
+    let mut stmt = db
+        .conn
+        .prepare("SELECT id, date, project, filename, log FROM server_logs WHERE project = ?1")
+        .map_err(|e| format!("Failed to prepare query: {}", e))?;
+
+    let logs = stmt
+        .query_map([project], |row| {
+            let id: i32 = row.get(0)?;
+            let date: String = row.get(1)?;
+            let project: String = row.get(2)?;
+            let filename: String = row.get(3)?;
+            let log_text: String = row.get(4)?;
+
+            // Debug output
+            println!("Processing log ID {}: {}", id, filename);
+
+            // Parse with better error handling
+            let log_value = serde_json::from_str(&log_text).map_err(|e| {
+                eprintln!("JSON parse error for log {}: {}", id, e);
+                rusqlite::Error::FromSqlConversionFailure(
+                    4,
+                    rusqlite::types::Type::Text,
+                    Box::new(e),
+                )
+            })?;
+
+            Ok(SelectedLogs {
+                id,
+                date,
+                project,
+                filename,
+                log: log_value,
+            })
+        })
+        .map_err(|e| format!("Query execution failed: {}", e))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Result collection failed: {}", e))?;
+
+    println!("Returning {} logs for project {}", logs.len(), project);
+    Ok(logs)
+}
+
 // DELETE A SPECIFIC PROJECT NAME USING THE ID
 #[tauri::command]
 pub fn delete_project_command(id: i32) {
