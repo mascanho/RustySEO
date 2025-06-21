@@ -122,6 +122,8 @@ Use at your own risk, this software is new and under development.
 |     CTRL + L     | Toggle Side Task Manager |
 |     CTRL + T     | Create TODO/Task         |
 | CTRL + Shift + C | Delete Logs From DB      |
+| CTRL + /         | Clear cache              |
+| CTRL + Shift + / | Full app reset           |
 
 # Setting up Google Search Console
 
