@@ -408,7 +408,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                           key={`${projectName}-${index}`}
                           className="border-b dark:border-gray-700"
                         >
-                          <div className="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors duration-200 dark:bg-slate-900/50">
+                          <div className="flex items-center justify-between px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors duration-200 dark:bg-slate-900/50">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center text-sm mb-2">
                                 <FaProjectDiagram className="mr-2 text-blue-500 dark:text-blue-400" />
@@ -457,7 +457,10 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                   }
                                 >
                                   {loadingProjects[projectName] ? (
-                                    <Spinner className="h-2 w-2 text-gray-500 dark:text-brand-bright" />
+                                    <Spinner
+                                      className="h-2 w-2 text-gray-500 dark:text-brand-bright"
+                                      bg-gray-200
+                                    />
                                   ) : (
                                     <IoPlayCircleOutline className="h-2 w-2 text-gray-500 dark:text-brand-bright" />
                                   )}
@@ -471,7 +474,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                               <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
                                 Project Logs ({projectName})
                               </div>
-                              <div className="space-y-2 max-h-80 overflow-y-auto pb-1">
+                              <div className="space-y-2 max-h-80 overflow-y-auto pb-1 pr-1 ">
                                 {projectGroup.map((log, logIndex) => (
                                   <div
                                     key={`${projectName}-log-${logIndex}`}
