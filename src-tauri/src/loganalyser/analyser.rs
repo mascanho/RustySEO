@@ -279,14 +279,15 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
     };
 
     // Chunking the data to send to the frontend
-    let chunk_size = 500; // Define a reasonable chunk size
+    // TODO: Add this to the settings that the user can tweak
+    let chunk_size = 150000; // Define a reasonable chunk size, see how it behaves
     for chunk in result.entries.chunks(chunk_size) {
         let chunked_result = LogResult {
             overview: result.overview.clone(),
             entries: chunk.to_vec(),
         };
         let _ = app_handle.emit("log-analysis-chunk", chunked_result);
-        thread::sleep(Duration::from_millis(100)); // Sleep to control the rate
+        thread::sleep(Duration::from_millis(10)); // Sleep to control the rate
     }
 
     let _ = app_handle.emit("log-analysis-complete", result.clone());

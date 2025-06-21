@@ -7,6 +7,7 @@ export const changelogData = [
       "Log analyser - Project segmentation",
       "Log analyser - Improved search",
       "Log analyser - Better data handling",
+      "Log analyser - IP masking",
     ],
   },
   {

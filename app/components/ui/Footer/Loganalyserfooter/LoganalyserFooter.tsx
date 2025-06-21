@@ -120,7 +120,7 @@ function LogAnalyserFooter() {
             variant="default"
             className="w-fit max-w-[200px] bg-brand-bright rounded-r-full  border-t-gray-700 border-l-gray-700 border-r-gray-900 border-b-gray-900  shadow-[inset_0_0_1px_1px_rgba(0,0,0,0.3)]  dark:border-l-gray-600 dark:border-r-gray-900 dark:border-b-gray-900 dark:bg-brand-bright dark:text-white text-white dark:hover:bg-brand-bright/80 justify-start truncate text-[10px] px-2 pr-4 m-0 h-3 transform scale-[0.98]"
           >
-            {selectedStatus?.label || selectedProject || "Select project..."}
+            {selectedProject || selectedStatus?.label || "Select project..."}
           </Button>
         </PopoverTrigger>
         <PopoverContent

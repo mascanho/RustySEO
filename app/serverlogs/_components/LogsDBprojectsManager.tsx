@@ -21,6 +21,7 @@ import {
 } from "@/store/logFilterStore";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import Spinner from "@/app/components/ui/Sidebar/checks/_components/Spinner";
+import { listen } from "@tauri-apps/api/event";
 
 // Mock data for demonstration
 const mockProjectsData: ProjectEntry[] = [
@@ -94,6 +95,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
   // Global store
   const { allProjects, setAllProjects } = useAllProjects();
   const { setLogData, resetAll } = useLogAnalysis();
+  const { setSelectedProject } = useSelectedProject();
 
   // Memoized filtered projects
   const filteredProjects = useMemo(() => {
@@ -221,66 +223,78 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
       return;
     }
 
+    // Listen for log batches (setup BEFORE invoking the command)
+    const allLogs: LogResult[] = [];
+    const unlistenBatch = await listen<LogResult[]>(
+      "project-logs-batch",
+      (event) => {
+        allLogs.push(...event.payload);
+        console.log("Current batch received. Total logs:", allLogs.length);
+      },
+    );
+
+    // Listen for completion/errors
+    const unlistenComplete = await listen<void>("project-logs-complete", () => {
+      console.log("Streaming complete. Final count:", allLogs.length);
+    });
+
     try {
       setLoadingProjects((prev) => ({ ...prev, [projectName]: true }));
-      const log = await invoke(
-        "get_logs_by_project_name_for_processing_command",
-        {
-          project: projectName,
-        },
-      );
 
-      // Process the logs into the backend
-      const result = await processLogs(log);
-
-      // Clear existing  data first
-      resetAll();
-
-      setLogData({
-        entries: result.entries || [],
-        overview: result.overview || {
-          message: "",
-          line_count: 0,
-          unique_ips: 0,
-          unique_user_agents: 0,
-          crawler_count: 0,
-          success_rate: 0,
-          totals: {
-            google: 0,
-            bing: 0,
-            semrush: 0,
-            hrefs: 0,
-            moz: 0,
-            uptime: 0,
-            openai: 0,
-            claude: 0,
-            google_bot_pages: [],
-            google_bot_pages_frequency: {},
-          },
-          log_start_time: "",
-          log_finish_time: "",
-        },
+      // Start streaming (use the STREAMING command, not the blocking one)
+      await invoke("get_logs_by_project_name_for_processing_command", {
+        project: projectName,
       });
 
-      setLoadingProjects((prev) => ({ ...prev, [projectName]: false }));
-      toast.success("Project " + projectName + " processed successfully");
+      // Process logs ONLY after streaming finishes
+      const result = await processLogs(allLogs);
+
+      resetAll(); // Clear existing data upfront
+      // Update UI
+      setLogData({
+        entries: result.entries || [],
+        overview: result.overview || getDefaultOverview(), // Extract to a helper
+      });
+
+      toast.success(`Project ${projectName} processed successfully`);
     } catch (err) {
-      console.error(err);
-      toast.error(<section className="w-full">{err}</section>);
+      console.error("Processing failed:", err);
+      toast.error(
+        <section className="w-full">
+          {err instanceof Error ? err.message : String(err)}
+        </section>,
+      );
+    } finally {
+      // Cleanup listeners and loading state
+      unlistenBatch?.();
+      unlistenComplete?.();
+      setLoadingProjects((prev) => ({ ...prev, [projectName]: false }));
+      console.log("finished all the bull;shit");
+      setSelectedProject(projectName);
     }
   };
 
+  // Helper for default overview
+  const getDefaultOverview = (): Overview => ({
+    message: "",
+    line_count: 0,
+    unique_ips: 0,
+    unique_user_agents: 0,
+    crawler_count: 0,
+    success_rate: 0,
+    totals: { google: 0, bing: 0 /* ... */ },
+    log_start_time: "",
+    log_finish_time: "",
+  });
   // Processing logs function
   const processLogs = async (logData: any[]) => {
-    console.log(logData, "log data");
-
     try {
       return await invoke<LogAnalysisResult>("check_logs_command", {
         data: {
           log_contents: logData.map((item) => [item.project, item.log]),
         },
         storingLogs: false, // or true if needed
-        project: "your-project-name",
+        project: "",
       });
     } catch (error) {
       console.error(error);
@@ -443,7 +457,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                   }
                                 >
                                   {loadingProjects[projectName] ? (
-                                    <Spinner size="sm" />
+                                    <Spinner className="h-2 w-2 text-gray-500 dark:text-brand-bright" />
                                   ) : (
                                     <IoPlayCircleOutline className="h-2 w-2 text-gray-500 dark:text-brand-bright" />
                                   )}
