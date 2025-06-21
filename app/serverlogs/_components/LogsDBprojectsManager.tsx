@@ -68,7 +68,7 @@ const ProjectItem = React.memo(({ project, onDelete, onLoad }) => {
         variant="ghost"
         size="icon"
         className="h-5 w-5 hover:bg-gray-200 dark:hover:bg-gray-600"
-        onClick={() => onDelete(project.name)}
+        onClick={() => onDelete(project.id)}
       >
         <X className="h-3 w-3 text-gray-500 dark:text-gray-400" />
       </Button>
@@ -216,7 +216,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
               <div className="space-y-6 overflow-hidden">
                 <div>
                   <h3 className="text-sm font-medium mb-2 text-left dark:text-white">
-                    Add projects
+                    Projects
                   </h3>
 
                   <div className="space-y-3 border rounded-md bg-muted h-[23.1rem] dark:border-brand-dark">
@@ -357,18 +357,18 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                 className="h-6 w-6 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors duration-200"
                                 onClick={() => toast.info(projectName)}
                               >
-                                <IoPlayCircleOutline className="h-2 w-2 text-gray-500 dark:text-red-400" />
+                                <IoPlayCircleOutline className="h-2 w-2 text-gray-500 dark:text-brand-bright" />
                               </Button>
 
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                disabled={isLoading}
-                                className="h-6 w-6 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors duration-200"
-                                onClick={() => handleDeleteProject(projectName)}
-                              >
-                                <X className="h-4 w-4 text-gray-500 dark:text-red-400" />
-                              </Button>
+                              {/* <Button */}
+                              {/*   variant="ghost" */}
+                              {/*   size="icon" */}
+                              {/*   disabled={isLoading} */}
+                              {/*   className="h-6 w-6 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors duration-200" */}
+                              {/*   onClick={() => handleDeleteProject(projectName)} */}
+                              {/* > */}
+                              {/*   <X className="h-4 w-4 text-gray-500 dark:text-red-400" /> */}
+                              {/* </Button> */}
                             </div>
                           </div>
 
@@ -407,11 +407,10 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
                       <FolderOpen className="h-8 w-8 mb-2" />
-                      <p className="text-xs">
-                        No projects with logs available.
-                      </p>
+                      <p className="text-xs">No projects with logs assigned.</p>
                       <p className="text-xs px-4 text-center">
-                        Enable log storage and create a new project.
+                        Enable log storage and create a new project or analyse
+                        logs from an existing projects.
                       </p>
                     </div>
                   )}

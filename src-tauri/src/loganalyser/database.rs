@@ -233,7 +233,6 @@ pub fn create_project_command(name: &str) -> Result<(), String> {
 }
 
 // GET ALL THE PROJECTS INSIDE THE DB
-
 #[tauri::command]
 pub fn get_all_projects_command() -> Result<Vec<Project>, String> {
     // Initialize database
@@ -298,4 +297,13 @@ pub fn get_logs_by_project_name_command(project: &str) -> Result<Vec<DatabaseRes
         .map_err(|e| format!("Result collection failed: {}", e))?;
 
     Ok(logs)
+}
+
+// DELETE A SPECIFIC PROJECT NAME USING THE ID
+#[tauri::command]
+pub fn delete_project_command(id: i32) {
+    let db = Database::new("serverlog.db").unwrap();
+    let _ = db
+        .conn
+        .execute("DELETE FROM projects WHERE id = ?1", params![id]);
 }
