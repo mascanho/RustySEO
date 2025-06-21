@@ -453,11 +453,11 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                           </div>
 
                           {openDropdowns.has(projectName) && (
-                            <div className="px-4  pt-2 pb-3 bg-gray-100 dark:bg-brand-bright/20  border-dashed border-brand-bright border-tr">
+                            <div className="px-4  pt-2 pb-6 bg-gray-100 dark:bg-brand-bright/20  border-dashed border-brand-bright border-tr">
                               <div className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
                                 Project Logs ({projectName})
                               </div>
-                              <div className="space-y-2 max-h-32 overflow-y-auto">
+                              <div className="space-y-2 max-h-80 overflow-y-auto pb-2">
                                 {projectGroup.map((log, logIndex) => (
                                   <div
                                     key={`${projectName}-log-${logIndex}`}

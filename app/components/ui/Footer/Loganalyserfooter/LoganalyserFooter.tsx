@@ -113,18 +113,18 @@ function LogAnalyserFooter() {
 
   return (
     <div className="flex items-center space-x-4 text-xs mt-[1px] ml-1">
-      <FaFolder className="-mr-2 text-sm text-brand-bright" />
+      <FaFolder className="-mr-3 text-sm text-brand-bright" />
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="default"
-            className="w-fit max-w-[200px] bg-brand-bright rounded-sm border border-t-gray-700 border-l-gray-700 border-r-gray-900 border-b-gray-900  shadow-[inset_0_0_2px_2px_rgba(0,0,0,0.3)] dark:border-t-gray-600 dark:border-l-gray-600 dark:border-r-gray-900 dark:border-b-gray-900 dark:bg-brand-bright dark:text-white text-white dark:hover:bg-brand-bright/80 justify-start truncate text-[10px] px-2 m-0 h-3 transform scale-[0.98]"
+            className="w-fit max-w-[200px] bg-brand-bright rounded-r-full  border-t-gray-700 border-l-gray-700 border-r-gray-900 border-b-gray-900  shadow-[inset_0_0_1px_1px_rgba(0,0,0,0.3)]  dark:border-l-gray-600 dark:border-r-gray-900 dark:border-b-gray-900 dark:bg-brand-bright dark:text-white text-white dark:hover:bg-brand-bright/80 justify-start truncate text-[10px] px-2 pr-4 m-0 h-3 transform scale-[0.98]"
           >
             {selectedStatus?.label || selectedProject || "Select project..."}
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          className="p-0 mb-10 w-[200px] z-[9999999999]"
+          className="p-0 mb-10 w-[200px] absolute -bottom-8 z-[9999999999]"
           side="left"
           align="start"
           forceMount

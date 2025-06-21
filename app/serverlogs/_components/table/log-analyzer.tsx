@@ -78,7 +78,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useCurrentLogs } from "@/store/logFilterStore";
 import { IoClose } from "react-icons/io5";
-import { FaApper } from "react-icons/fa";
+import { FaApper, FaEye } from "react-icons/fa";
 
 export function LogAnalyzer() {
   const {
@@ -118,6 +118,7 @@ export function LogAnalyzer() {
   // SET the input search to be based on button click
   const [inputValue, setInputValue] = useState(""); // stores what's typed in the input
   const [isExporting, setIsExporting] = useState(false);
+  const [showIp, setShowIp] = useState(false);
 
   // Helper functions
   const formatDate = useCallback((dateString: string) => {
@@ -196,7 +197,7 @@ export function LogAnalyzer() {
             (log) =>
               log.ip.toLowerCase().includes(lowerCaseSearch) ||
               log.path.toLowerCase().includes(lowerCaseSearch) ||
-              log.user_agent.toLowerCase().includes(lowerCaseSearch)
+              log.user_agent.toLowerCase().includes(lowerCaseSearch),
           );
         }
 
@@ -213,7 +214,7 @@ export function LogAnalyzer() {
         // Apply file type filter
         if (fileTypeFilter.length > 0) {
           result = result.filter((log) =>
-            fileTypeFilter.includes(log.file_type)
+            fileTypeFilter.includes(log.file_type),
           );
         }
 
@@ -221,7 +222,7 @@ export function LogAnalyzer() {
         if (botFilter !== null) {
           if (botFilter === "bot") {
             result = result.filter(
-              (log) => log?.crawler_type && log.crawler_type !== "Human"
+              (log) => log?.crawler_type && log.crawler_type !== "Human",
             );
           } else if (botFilter === "Human") {
             result = result.filter((log) => log?.crawler_type === "Human");
@@ -234,7 +235,7 @@ export function LogAnalyzer() {
             result = result.filter((log) => log?.user_agent.includes("Mobile"));
           } else if (botTypeFilter === "Desktop") {
             result = result.filter(
-              (log) => !log?.user_agent.includes("Mobile")
+              (log) => !log?.user_agent.includes("Mobile"),
             );
           }
         }
@@ -287,7 +288,7 @@ export function LogAnalyzer() {
       sortConfig,
       verifiedFilter,
       botTypeFilter,
-    ]
+    ],
   );
 
   const [searchInput, setSearchInput] = useState("");
@@ -298,7 +299,7 @@ export function LogAnalyzer() {
         searchTermRef.current = term;
         applyFilters(term, entries);
       }, 300),
-    [entries, applyFilters]
+    [entries, applyFilters],
   );
 
   const handleSearchChange = useCallback(
@@ -307,7 +308,7 @@ export function LogAnalyzer() {
       setSearchInput(value);
       debouncedSearch(value);
     },
-    [debouncedSearch]
+    [debouncedSearch],
   );
 
   // Apply filters when search term or entries change
@@ -434,7 +435,7 @@ export function LogAnalyzer() {
         "\uFEFF" + headers.map(sanitizeForCSV).join(",") + "\r\n",
         {
           encoding: "utf8",
-        }
+        },
       );
 
       // 6. Process data in batches with validation
@@ -579,7 +580,9 @@ export function LogAnalyzer() {
                   checked={statusFilter.includes(code)}
                   onCheckedChange={(checked) => {
                     setStatusFilter((prev) =>
-                      checked ? [...prev, code] : prev.filter((c) => c !== code)
+                      checked
+                        ? [...prev, code]
+                        : prev.filter((c) => c !== code),
                     );
                   }}
                 >
@@ -632,7 +635,7 @@ export function LogAnalyzer() {
                     setMethodFilter((prev) =>
                       checked
                         ? [...prev, method]
-                        : prev.filter((m) => m !== method)
+                        : prev.filter((m) => m !== method),
                     );
                   }}
                 >
@@ -685,7 +688,7 @@ export function LogAnalyzer() {
                     setFileTypeFilter((prev) =>
                       checked
                         ? [...prev, fileType]
-                        : prev.filter((m) => m !== fileType)
+                        : prev.filter((m) => m !== fileType),
                     );
                   }}
                 >
@@ -809,20 +812,25 @@ export function LogAnalyzer() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[60px] text-center">#</TableHead>
-                    <TableHead
-                      className="cursor-pointer"
-                      onClick={() => requestSort("ip")}
-                    >
-                      IP Address
-                      {sortConfig?.key === "ip" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                    <TableHead className="cursor-pointer">
+                      <div className="flex space-x-2 items-center">
+                        <span onClick={() => requestSort("ip")}>
+                          IP Address
+                        </span>
+                        {sortConfig?.key === "ip" && (
+                          <ChevronDown
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        )}
+                        <FaEye
+                          className="ml-2"
+                          onClick={() => setShowIp(!showIp)}
                         />
-                      )}
+                      </div>
                     </TableHead>
                     <TableHead
                       className="cursor-pointer"
@@ -951,6 +959,7 @@ export function LogAnalyzer() {
                         getFileIcon={getFileIcon}
                         getStatusCodeColor={getStatusCodeColor}
                         formatResponseSize={formatResponseSize}
+                        showIp={showIp}
                       />
                     ))
                   ) : (
@@ -999,7 +1008,10 @@ function LogRow({
   getFileIcon,
   getStatusCodeColor,
   formatResponseSize,
+  showIp,
 }) {
+  console.log(showIp, "show IP");
+
   return (
     <>
       <TableRow
@@ -1023,7 +1035,16 @@ function LogRow({
               className="mr-2 text-blue-400 dark:text-blue-300/50 hover:scale-110 cursor-pointer"
               size={13}
             />
-            {log.ip}
+            {!showIp ? (
+              <p className="text-xs truncate">{log.ip}</p>
+            ) : (
+              <p className="text-xs -gray-500 truncate">
+                {log?.ip
+                  .split(".")
+                  .map((part, i) => (i < 2 ? part : "***"))
+                  .join(".")}
+              </p>
+            )}
           </div>
         </TableCell>
         <TableCell>
@@ -1231,7 +1252,7 @@ function PaginationControls({
           {indexOfFirstItem + 1}-
           {Math.min(
             indexOfLastItem,
-            filteredLogs.length > 0 ? filteredLogs.length : entries.length
+            filteredLogs.length > 0 ? filteredLogs.length : entries.length,
           )}{" "}
           of {filteredLogs.length > 0 ? filteredLogs.length : entries.length}{" "}
           logs

@@ -106,7 +106,7 @@ export default function Page() {
     // REMOVE ALL THE LOGS FROM DB
     handleRemoveAllLogs();
 
-    toast.message("All logs have been removed from databse");
+    toast.message("All logs have been removed from database");
   };
 
   const handleRemoveAllLogs = () => {
