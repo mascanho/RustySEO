@@ -206,33 +206,8 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
     }
   }, []);
 
-  // Custom replacer function for JSON.stringify
-  function circularReplacer() {
-    const seen = new WeakSet();
-    return (key, value) => {
-      if (typeof value === "object" && value !== null) {
-        if (seen.has(value)) {
-          console.log(`Circular reference detected at key: ${key}`);
-          return; // Omit circular references
-        }
-        seen.add(value);
-      }
-      return value;
-    };
-  }
-
-  // Function to safely stringify objects
-  function safeStringify(obj) {
-    try {
-      return JSON.stringify(obj, circularReplacer(), 2);
-    } catch (err) {
-      console.error("Failed to stringify object:", err);
-      return "Failed to stringify object due to circular references";
-    }
-  }
-
   // GET THE SELECTED LOG FROM THE PROJECT NAME TO ANALYSE THE LOGS
-  const getSelectedLogForAnalysis = async (projectName) => {
+  const getSelectedLogForAnalysis = async (projectName: string) => {
     try {
       const log = await invoke(
         "get_logs_by_project_name_for_processing_command",
@@ -240,50 +215,34 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
           project: projectName,
         },
       );
-
-      console.log("Initial log data:", safeStringify(log));
-
-      // Safely stringify the log object to handle circular references
-      const safeLogString = safeStringify(log);
-      const safeLog = JSON.parse(safeLogString);
-      console.log("Safe log data:", safeStringify(safeLog));
-
+      console.log(log, "SELECTED LOG");
       toast.success(projectName);
 
       // Process the logs into the backend
-      await processLogs(safeLog);
+      const processedLogs = await processLogs(log);
+
+      // console.log(processedLogs, "PROCESSED LOGS");
     } catch (err) {
-      console.error("Error in getSelectedLogForAnalysis:", safeStringify(err));
-      toast.error(safeStringify(err));
+      console.error(err);
+      toast.error(err);
     }
   };
 
   // Processing logs function
-  const processLogs = async (logData) => {
-    try {
-      console.log("Processing log data:", safeStringify(logData));
+  const processLogs = async (logData: any[]) => {
+    const logs = logData.map((log) => ({
+      name: log.name,
+      log: log.log,
+    }));
 
-      const logs = logData.map((log) => ({
-        name: log.name,
-        log: log.log,
-      }));
-
-      console.log("Mapped logs:", safeStringify(logs));
-
-      const result = await invoke("check_logs_command", {
-        data: {
-          log_contents: logs,
-        },
-        app: window, // or your app handle
-        storing_logs: false, // or true if needed
-        project: "your-project-name",
-      });
-
-      console.log("Result from check_logs_command:", safeStringify(result));
-    } catch (error) {
-      console.error("Error in processLogs:", safeStringify(error));
-      throw error;
-    }
+    const result = await invoke<LogAnalysisResult>("check_logs_command", {
+      data: {
+        log_contents: logs,
+      },
+      app: window, // or your app handle
+      storing_logs: false, // or true if needed
+      project: "your-project-name",
+    });
   };
 
   return (
