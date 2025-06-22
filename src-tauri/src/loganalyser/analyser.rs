@@ -1,4 +1,4 @@
-use crate::settings::settings::{load_settings, Settings};
+use crate::settings;
 
 use super::helpers::browser_trim_name;
 use super::helpers::country_extractor::extract_country;
@@ -47,6 +47,20 @@ pub struct LogAnalysisResult {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Totals {
+    pub google: usize,
+    pub bing: usize,
+    pub semrush: usize,
+    pub hrefs: usize,
+    pub moz: usize,
+    pub uptime: usize,
+    pub openai: usize,
+    pub claude: usize,
+    pub google_bot_pages: Vec<String>,
+    pub google_bot_page_frequencies: HashMap<String, Vec<BotPageDetails>>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BotPageDetails {
     pub crawler_type: String,
     pub file_type: String,
@@ -63,26 +77,6 @@ pub struct BotPageDetails {
     pub filename: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Totals {
-    pub google: usize,
-    pub bing: usize,
-    pub semrush: usize,
-    pub hrefs: usize,
-    pub moz: usize,
-    pub uptime: usize,
-    pub openai: usize,
-    pub claude: usize,
-    pub google_bot_pages: Vec<String>,
-    pub google_bot_page_frequencies: HashMap<String, Vec<BotPageDetails>>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct LogResult {
-    pub overview: LogAnalysisResult,
-    pub entries: Vec<LogEntry>,
-}
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct LogInput {
     pub log_contents: Vec<(String, String)>,
@@ -95,6 +89,12 @@ pub struct ProgressUpdate {
     pub percentage: f32,
     pub filename: String,
     pub phase: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct LogResult {
+    pub overview: LogAnalysisResult,
+    pub entries: Vec<LogEntry>,
 }
 
 pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<(), String> {
@@ -180,18 +180,9 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<(), S
         .par_iter()
         .filter(|e| e.status >= 200 && e.status < 300)
         .count();
-    let unique_ips = entries
-        .par_iter()
-        .map(|e| &e.ip)
-        .collect::<HashSet<_>>()
-        .len();
-    let unique_user_agents = entries
-        .par_iter()
-        .map(|e| &e.user_agent)
-        .collect::<HashSet<_>>()
-        .len();
+    let unique_ips: HashSet<_> = entries.par_iter().map(|e| e.ip.clone()).collect();
+    let unique_user_agents: HashSet<_> = entries.par_iter().map(|e| e.user_agent.clone()).collect();
 
-    // TODO: Make this scalable to be added to the crawler settings
     let bot_counts = entries
         .par_iter()
         .fold(
@@ -240,8 +231,8 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<(), S
         overview: LogAnalysisResult {
             message: "Log analysis completed".to_string(),
             line_count: total_requests,
-            unique_ips,
-            unique_user_agents,
+            unique_ips: unique_ips.len(),
+            unique_user_agents: unique_user_agents.len(),
             crawler_count,
             success_rate: if total_requests > 0 {
                 (success_count as f32 / total_requests as f32) * 100.0
@@ -262,31 +253,26 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<(), S
             },
             log_start_time,
             log_finish_time,
-            file_count,
+            file_count: file_count,
         },
         entries,
     };
 
-    // Chunking the data to send to the frontend
-    // TODO: Add this to the settings that the user can tweak
-    let settings =
-        tokio::task::block_in_place(|| tauri::async_runtime::block_on(load_settings())).unwrap();
-    let chunk_size = settings.log_chunk_size; // Comes from the configuration in HD
-
+    let settings = tokio::task::block_in_place(|| {
+        tauri::async_runtime::block_on(settings::settings::load_settings())
+    })
+    .unwrap();
+    let chunk_size = settings.log_chunk_size;
     for chunk in result.entries.chunks(chunk_size) {
         let chunked_result = LogResult {
             overview: result.overview.clone(),
             entries: chunk.to_vec(),
         };
         let _ = app_handle.emit("log-analysis-chunk", chunked_result);
-
         thread::sleep(Duration::from_millis(settings.log_sleep_stream_duration));
-
-        // Comes from the configuration in the settings file in the HD
     }
 
     let _ = app_handle.emit("log-analysis-complete", result.clone());
-
     Ok(())
 }
 
