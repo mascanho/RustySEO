@@ -29,7 +29,7 @@ interface CrawlResult {
 export default function Page() {
   const [keysPressed, setKeysPressed] = useState(new Set());
   const [shortcutActivated, setShortcutActivated] = useState(false);
-  const { setLogData } = useLogAnalysis();
+  const { setLogData, logData } = useLogAnalysis();
 
   // ALWAYS CHECK THE TAXONOMIES FROM THE LOCALSTORAGE AND SEND THEM TO THE TAURI COMMAND ON FIRST RUN
   useEffect(() => {
@@ -124,46 +124,64 @@ export default function Page() {
   };
 
   // Listen to TAURI EVENTS STREAMING THE DATA FROM THE BACKEND
-  let chunks: any[] = [];
   useEffect(() => {
-    listen("log-analysis-chunk", (event) => {
-      chunks.push(event.payload); // Append the chunk to a local array or process as needed
-      const result = event?.payload;
+    let isMounted = true;
 
-      setLogData({
-        entries: result?.entries || [],
-        overview: result?.overview || {
-          message: "",
-          line_count: 0,
-          unique_ips: 0,
-          unique_user_agents: 0,
-          crawler_count: 0,
-          success_rate: 0,
-          totals: {
-            google: 0,
-            bing: 0,
-            semrush: 0,
-            hrefs: 0,
-            moz: 0,
-            uptime: 0,
-            openai: 0,
-            claude: 0,
-            google_bot_pages: [],
-            google_bot_pages_frequency: {},
+    const setupListeners = async () => {
+      try {
+        const unlistenProgress = await listen<ProgressUpdate>(
+          "progress-update",
+          ({ payload }) => isMounted && setProgress(payload),
+        );
+
+        const unlistenChunk = await listen<LogResult>(
+          "log-analysis-chunk",
+          ({ payload }) => {
+            if (!isMounted) return;
+            console.log("Received chunk", payload);
+            if (payload.entries?.length) {
+              setLogData({ entries: payload.entries });
+            }
+            if (payload.overview) {
+              setLogData({ overview: payload.overview });
+            }
           },
-          log_start_time: "",
-          log_finish_time: "",
-        },
-      });
-    });
+        );
 
-    listen("log-analysis-complete", (event) => {
-      console.log("Analysis complete:", event.payload);
+        // const unlistenComplete = await listen<LogResult>(
+        //   "log-analysis-complete",
+        //   ({ payload }) => {
+        //     if (!isMounted) return;
+        //     console.log("Analysis complete", payload);
+        //     if (payload.overview) {
+        //       setLogData({ overview: payload.entries });
+        //     }
+        //   },
+        // );
 
-      // Optionally process final result or finalize UI
-      // e.g., you might want to use `chunks` to build the full log
-    });
-  }, []);
+        return () => {
+          unlistenProgress();
+          unlistenChunk();
+          // unlistenComplete();
+        };
+      } catch (error) {
+        console.error("Listener error:", error);
+      }
+    };
+
+    setupListeners();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [setLogData]);
+
+  // Debug store changes
+  useEffect(() => {
+    console.log("Zustand logData updated:", logData);
+  }, [logData]);
+
+  console.log(logData, "FROM OUTSIDE THE USEFFECT");
 
   return (
     <section className="flex flex-col dark:bg-brand-darker   w-[100%] pt-[4rem] h-[calc(100vh - 20-rem)] overflow-hidden  ">

@@ -1,18 +1,24 @@
-use crate::settings;
-
-use super::helpers::browser_trim_name;
-use super::helpers::country_extractor::extract_country;
-use super::helpers::crawler_type::is_crawler;
-use super::helpers::parse_logs::parse_log_entries;
+use chrono::NaiveDateTime;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::sync::mpsc;
 use std::thread;
 use std::time::Duration;
-use tauri::{Emitter, Manager};
+use tauri::{AppHandle, Emitter};
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+use crate::loganalyser::helpers::browser_trim_name;
+use crate::loganalyser::helpers::country_extractor::extract_country;
+use crate::loganalyser::helpers::crawler_type::is_crawler;
+use crate::loganalyser::helpers::parse_logs::parse_log_entries;
+use crate::settings;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LogInput {
+    pub log_contents: Vec<(String, String)>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogEntry {
     pub ip: String,
     pub timestamp: String,
@@ -20,33 +26,33 @@ pub struct LogEntry {
     pub path: String,
     pub status: u16,
     pub user_agent: String,
-    pub referer: String,
+    pub referer: Option<String>,
     pub response_size: u64,
     pub country: Option<String>,
-    pub is_crawler: bool,
     pub crawler_type: String,
-    pub browser: String,
+    pub is_crawler: bool,
     pub file_type: String,
+    pub browser: String,
     pub verified: bool,
-    pub taxonomy: String,
+    pub taxonomy: Option<String>,
     pub filename: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct LogAnalysisResult {
     pub message: String,
     pub line_count: usize,
     pub unique_ips: usize,
     pub unique_user_agents: usize,
     pub crawler_count: usize,
-    pub totals: Totals,
     pub success_rate: f32,
+    pub totals: Totals,
     pub log_start_time: String,
     pub log_finish_time: String,
     pub file_count: usize,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Totals {
     pub google: usize,
     pub bing: usize,
@@ -60,29 +66,24 @@ pub struct Totals {
     pub google_bot_page_frequencies: HashMap<String, Vec<BotPageDetails>>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BotPageDetails {
     pub crawler_type: String,
     pub file_type: String,
     pub response_size: u64,
     pub timestamp: String,
     pub ip: String,
-    pub referer: String,
+    pub referer: Option<String>,
     pub browser: String,
     pub user_agent: String,
     pub frequency: usize,
     pub method: String,
     pub verified: bool,
-    pub taxonomy: String,
+    pub taxonomy: Option<String>,
     pub filename: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct LogInput {
-    pub log_contents: Vec<(String, String)>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProgressUpdate {
     pub current_file: usize,
     pub total_files: usize,
@@ -91,16 +92,23 @@ pub struct ProgressUpdate {
     pub phase: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogResult {
     pub overview: LogAnalysisResult,
     pub entries: Vec<LogEntry>,
 }
 
-pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<(), String> {
+enum StreamEntry {
+    LogEntry(LogEntry),
+    Overview(LogAnalysisResult),
+}
+
+pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> {
     let file_count = data.log_contents.len();
     let (progress_tx, progress_rx) = mpsc::channel();
+    let (entry_tx, entry_rx) = mpsc::channel();
 
+    // Progress reporting thread
     let app_handle_clone = app_handle.clone();
     thread::spawn(move || {
         let mut last_emitted = std::time::Instant::now();
@@ -112,167 +120,201 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<(), S
         }
     });
 
-    let entries: Vec<LogEntry> = data
-        .log_contents
-        .into_par_iter()
-        .enumerate()
-        .flat_map(|(index, (filename, log_content))| {
-            let _ = progress_tx.send(ProgressUpdate {
-                current_file: index + 1,
-                total_files: file_count,
-                percentage: (index as f32 / file_count as f32) * 100.0,
-                filename: filename.clone(),
-                phase: "started".to_string(),
-            });
+    // Entry streaming thread
+    let app_handle_stream = app_handle.clone();
+    thread::spawn(move || {
+        let settings = match tokio::task::block_in_place(|| {
+            tauri::async_runtime::block_on(settings::settings::load_settings())
+        }) {
+            Ok(s) => s,
+            Err(_) => return,
+        };
 
-            let entries = parse_log_entries(&log_content)
-                .into_iter()
-                .map(|e| {
-                    let is_crawler = is_crawler(&e.user_agent);
-                    LogEntry {
-                        ip: e.ip.clone(),
-                        timestamp: e.timestamp.format("%Y-%m-%d %H:%M:%S").to_string(),
-                        method: e.method,
-                        path: e.path,
-                        status: e.status,
-                        user_agent: e.user_agent,
-                        referer: e.referer.unwrap_or_default(),
-                        response_size: e.response_size,
-                        country: extract_country(&e.ip),
-                        crawler_type: e.crawler_type,
-                        is_crawler,
-                        file_type: e.file_type,
-                        browser: browser_trim_name::trim_browser_name(&e.browser),
-                        verified: e.verified,
-                        taxonomy: e.taxonomy,
-                        filename: filename.clone(),
+        let mut entries_buffer = Vec::new();
+        let mut overview: Option<LogAnalysisResult> = None;
+
+        for entry in entry_rx {
+            match entry {
+                StreamEntry::LogEntry(e) => {
+                    entries_buffer.push(e);
+
+                    if entries_buffer.len() >= settings.log_chunk_size {
+                        let chunk = LogResult {
+                            overview: overview.clone().unwrap_or_default(),
+                            entries: entries_buffer.drain(..).collect(),
+                        };
+                        let _ = app_handle_stream.emit("log-analysis-chunk", chunk);
+                        thread::sleep(Duration::from_millis(settings.log_sleep_stream_duration));
                     }
-                })
-                .collect::<Vec<_>>();
+                }
+                StreamEntry::Overview(o) => {
+                    overview = Some(o);
+                }
+            }
+        }
 
-            let _ = progress_tx.send(ProgressUpdate {
-                current_file: index + 1,
-                total_files: file_count,
-                percentage: ((index + 1) as f32 / file_count as f32) * 100.0,
-                filename: filename,
-                phase: "completed".to_string(),
-            });
+        if !entries_buffer.is_empty() {
+            let chunk = LogResult {
+                overview: overview.clone().unwrap_or_default(),
+                entries: entries_buffer,
+            };
+            let _ = app_handle_stream.emit("log-analysis-chunk", chunk);
+        }
 
-            entries
-        })
-        .collect();
+        if let Some(overview) = overview {
+            let _ = app_handle_stream.emit(
+                "log-analysis-complete",
+                LogResult {
+                    overview,
+                    entries: Vec::new(),
+                },
+            );
+        }
+    });
 
-    if entries.is_empty() {
+    // Main processing
+    let mut all_entries = Vec::new();
+    let mut unique_ips = HashSet::new();
+    let mut unique_user_agents = HashSet::new();
+    let mut crawler_count = 0;
+    let mut success_count = 0;
+    let mut bot_counts = [0; 8];
+    let mut google_bot_entries = Vec::new();
+    let mut google_bot_pages = Vec::new();
+
+    for (index, (filename, log_content)) in data.log_contents.into_iter().enumerate() {
+        let _ = progress_tx.send(ProgressUpdate {
+            current_file: index + 1,
+            total_files: file_count,
+            percentage: (index as f32 / file_count as f32) * 100.0,
+            filename: filename.clone(),
+            phase: "started".to_string(),
+        });
+
+        let entries = parse_log_entries(&log_content)
+            .into_iter()
+            .map(|e| {
+                let is_crawler = is_crawler(&e.user_agent);
+                let entry = LogEntry {
+                    ip: e.ip.clone(),
+                    timestamp: e.timestamp.format("%Y-%m-%d %H:%M:%S").to_string(),
+                    method: e.method,
+                    path: e.path,
+                    status: e.status,
+                    user_agent: e.user_agent,
+                    referer: e.referer, // Keep as Option<String>
+                    response_size: e.response_size,
+                    country: extract_country(&e.ip),
+                    crawler_type: e.crawler_type,
+                    is_crawler,
+                    file_type: e.file_type,
+                    browser: browser_trim_name::trim_browser_name(&e.browser),
+                    verified: e.verified,
+                    taxonomy: Some(e.taxonomy),
+                    filename: filename.clone(),
+                };
+
+                // Update statistics
+                unique_ips.insert(entry.ip.clone());
+                unique_user_agents.insert(entry.user_agent.clone());
+                if entry.is_crawler {
+                    crawler_count += 1;
+                }
+                if entry.status >= 200 && entry.status < 300 {
+                    success_count += 1;
+                }
+
+                // Update bot counts
+                let crawler_type = entry.crawler_type.to_lowercase();
+                if crawler_type.starts_with("google") {
+                    bot_counts[0] += 1;
+                    if entry.verified {
+                        google_bot_pages.push(entry.path.clone());
+                        google_bot_entries.push(entry.clone());
+                    }
+                } else if crawler_type.starts_with("bing") {
+                    bot_counts[1] += 1;
+                } else if crawler_type.starts_with("semrush") {
+                    bot_counts[2] += 1;
+                } else if crawler_type.starts_with("hrefs") {
+                    bot_counts[3] += 1;
+                } else if crawler_type.starts_with("moz") {
+                    bot_counts[4] += 1;
+                } else if crawler_type.starts_with("uptime") {
+                    bot_counts[5] += 1;
+                } else if crawler_type.starts_with("chat") {
+                    bot_counts[6] += 1;
+                } else if crawler_type.starts_with("claude") {
+                    bot_counts[7] += 1;
+                }
+
+                // Stream the entry
+                let _ = entry_tx.send(StreamEntry::LogEntry(entry.clone()));
+
+                entry
+            })
+            .collect::<Vec<_>>();
+
+        all_entries.extend(entries);
+
+        let _ = progress_tx.send(ProgressUpdate {
+            current_file: index + 1,
+            total_files: file_count,
+            percentage: ((index + 1) as f32 / file_count as f32) * 100.0,
+            filename,
+            phase: "completed".to_string(),
+        });
+    }
+
+    if all_entries.is_empty() {
         return Err("No logs found".to_string());
     }
 
-    let log_start_time = entries
+    // Calculate overview data
+    let log_start_time = all_entries
         .first()
         .map(|e| e.timestamp.clone())
         .unwrap_or_default();
-    let log_finish_time = entries
+    let log_finish_time = all_entries
         .last()
         .map(|e| e.timestamp.clone())
         .unwrap_or_default();
-    let total_requests = entries.len();
-    let crawler_count = entries.par_iter().filter(|e| e.is_crawler).count();
-    let success_count = entries
-        .par_iter()
-        .filter(|e| e.status >= 200 && e.status < 300)
-        .count();
-    let unique_ips: HashSet<_> = entries.par_iter().map(|e| e.ip.clone()).collect();
-    let unique_user_agents: HashSet<_> = entries.par_iter().map(|e| e.user_agent.clone()).collect();
+    let total_requests = all_entries.len();
 
-    let bot_counts = entries
-        .par_iter()
-        .fold(
-            || [0; 8],
-            |mut counts, entry| {
-                let crawler_type = entry.crawler_type.to_lowercase();
-                if crawler_type.starts_with("google") {
-                    counts[0] += 1;
-                } else if crawler_type.starts_with("bing") {
-                    counts[1] += 1;
-                } else if crawler_type.starts_with("semrush") {
-                    counts[2] += 1;
-                } else if crawler_type.starts_with("hrefs") {
-                    counts[3] += 1;
-                } else if crawler_type.starts_with("moz") {
-                    counts[4] += 1;
-                } else if crawler_type.starts_with("uptime") {
-                    counts[5] += 1;
-                } else if crawler_type.starts_with("chat") {
-                    counts[6] += 1;
-                } else if crawler_type.starts_with("claude") {
-                    counts[7] += 1;
-                }
-                counts
-            },
-        )
-        .reduce(
-            || [0; 8],
-            |mut a, b| {
-                for i in 0..8 {
-                    a[i] += b[i];
-                }
-                a
-            },
-        );
+    let google_bot_page_frequencies =
+        calculate_url_frequencies(google_bot_entries.iter().collect());
 
-    let (google_bot_pages, google_bot_entries): (Vec<_>, Vec<_>) = entries
-        .par_iter()
-        .filter(|e| e.crawler_type.to_lowercase().contains("google") && e.verified)
-        .map(|e| (e.path.clone(), e))
-        .unzip();
-
-    let google_bot_page_frequencies = calculate_url_frequencies(google_bot_entries);
-
-    let result = LogResult {
-        overview: LogAnalysisResult {
-            message: "Log analysis completed".to_string(),
-            line_count: total_requests,
-            unique_ips: unique_ips.len(),
-            unique_user_agents: unique_user_agents.len(),
-            crawler_count,
-            success_rate: if total_requests > 0 {
-                (success_count as f32 / total_requests as f32) * 100.0
-            } else {
-                0.0
-            },
-            totals: Totals {
-                google: bot_counts[0],
-                bing: bot_counts[1],
-                semrush: bot_counts[2],
-                hrefs: bot_counts[3],
-                moz: bot_counts[4],
-                uptime: bot_counts[5],
-                openai: bot_counts[6],
-                claude: bot_counts[7],
-                google_bot_pages,
-                google_bot_page_frequencies,
-            },
-            log_start_time,
-            log_finish_time,
-            file_count: file_count,
+    let overview = LogAnalysisResult {
+        message: "Log analysis completed".to_string(),
+        line_count: total_requests,
+        unique_ips: unique_ips.len(),
+        unique_user_agents: unique_user_agents.len(),
+        crawler_count,
+        success_rate: if total_requests > 0 {
+            (success_count as f32 / total_requests as f32) * 100.0
+        } else {
+            0.0
         },
-        entries,
+        totals: Totals {
+            google: bot_counts[0],
+            bing: bot_counts[1],
+            semrush: bot_counts[2],
+            hrefs: bot_counts[3],
+            moz: bot_counts[4],
+            uptime: bot_counts[5],
+            openai: bot_counts[6],
+            claude: bot_counts[7],
+            google_bot_pages,
+            google_bot_page_frequencies,
+        },
+        log_start_time,
+        log_finish_time,
+        file_count,
     };
 
-    let settings = tokio::task::block_in_place(|| {
-        tauri::async_runtime::block_on(settings::settings::load_settings())
-    })
-    .unwrap();
-    let chunk_size = settings.log_chunk_size;
-    for chunk in result.entries.chunks(chunk_size) {
-        let chunked_result = LogResult {
-            overview: result.overview.clone(),
-            entries: chunk.to_vec(),
-        };
-        let _ = app_handle.emit("log-analysis-chunk", chunked_result);
-        thread::sleep(Duration::from_millis(settings.log_sleep_stream_duration));
-    }
+    // Send the overview
+    let _ = entry_tx.send(StreamEntry::Overview(overview));
 
-    let _ = app_handle.emit("log-analysis-complete", result.clone());
     Ok(())
 }
 

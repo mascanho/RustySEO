@@ -352,6 +352,33 @@ export function FileUpload({
         project,
       });
 
+      // NOTE: MIGHT BE NEEDED LATER
+      // setLogData({
+      //   entries: result?.entries || [],
+      //   overview: result.overview || {
+      //     message: "",
+      //     line_count: 0,
+      //     unique_ips: 0,
+      //     unique_user_agents: 0,
+      //     crawler_count: 0,
+      //     success_rate: 0,
+      //     totals: {
+      //       google: 0,
+      //       bing: 0,
+      //       semrush: 0,
+      //       hrefs: 0,
+      //       moz: 0,
+      //       uptime: 0,
+      //       openai: 0,
+      //       claude: 0,
+      //       google_bot_pages: [],
+      //       google_bot_pages_frequency: {},
+      //     },
+      //     log_start_time: "",
+      //     log_finish_time: "",
+      //   },
+      // });
+
       setOverallProgress(95);
       await delay(300);
 
