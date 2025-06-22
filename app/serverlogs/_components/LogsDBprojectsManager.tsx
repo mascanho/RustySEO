@@ -240,6 +240,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
 
     try {
       setLoadingProjects((prev) => ({ ...prev, [projectName]: true }));
+      toast.info(`Processing logs for ${projectName}...`);
 
       // Start streaming (use the STREAMING command, not the blocking one)
       await invoke("get_logs_by_project_name_for_processing_command", {
