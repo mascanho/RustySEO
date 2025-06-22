@@ -95,7 +95,7 @@ pub struct ProgressUpdate {
     pub phase: String,
 }
 
-pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogResult, String> {
+pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<(), String> {
     let file_count = data.log_contents.len();
     let (progress_tx, progress_rx) = mpsc::channel();
 
@@ -161,21 +161,7 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
         .collect();
 
     if entries.is_empty() {
-        return Ok(LogResult {
-            overview: LogAnalysisResult {
-                message: "No log entries found".to_string(),
-                line_count: 0,
-                unique_ips: 0,
-                unique_user_agents: 0,
-                crawler_count: 0,
-                success_rate: 0.0,
-                totals: Totals::default(),
-                log_start_time: String::new(),
-                log_finish_time: String::new(),
-                file_count,
-            },
-            entries: Vec::new(),
-        });
+        return Err("No logs found".to_string());
     }
 
     let log_start_time = entries
@@ -293,7 +279,7 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<LogRe
 
     let _ = app_handle.emit("log-analysis-complete", result.clone());
 
-    Ok(result)
+    Ok(())
 }
 
 fn calculate_url_frequencies(entries: Vec<&LogEntry>) -> HashMap<String, Vec<BotPageDetails>> {

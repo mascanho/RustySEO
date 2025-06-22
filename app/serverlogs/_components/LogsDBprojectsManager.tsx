@@ -248,14 +248,12 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
       });
 
       // Process logs ONLY after streaming finishes
-      const result = await processLogs(allLogs);
 
-      resetAll(); // Clear existing data upfront
-      // Update UI
-      setLogData({
-        entries: result.entries || [],
-        overview: result.overview || getDefaultOverview(), // Extract to a helper
-      });
+      // RESET THE PREVIOUS LOGS TO LOAD THE NEW LOGS
+      resetAll();
+
+      // SEND THE LOGS TO THE BE
+      await processLogs(allLogs);
 
       toast.success(`Project ${projectName} processed successfully`);
     } catch (err) {
@@ -275,18 +273,6 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
     }
   };
 
-  // Helper for default overview
-  const getDefaultOverview = (): Overview => ({
-    message: "",
-    line_count: 0,
-    unique_ips: 0,
-    unique_user_agents: 0,
-    crawler_count: 0,
-    success_rate: 0,
-    totals: { google: 0, bing: 0 /* ... */ },
-    log_start_time: "",
-    log_finish_time: "",
-  });
   // Processing logs function
   const processLogs = async (logData: any[]) => {
     try {
@@ -303,7 +289,8 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
   };
 
   // ##############################################
-
+  //
+  //
   return (
     <section className="w-[650px] max-w-5xl mx-auto h-[670px] pt-2">
       <CardContent className="grid grid-cols-1 gap-6 h-[380px]">

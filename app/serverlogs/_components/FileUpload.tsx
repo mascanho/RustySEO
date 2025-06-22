@@ -345,43 +345,11 @@ export function FileUpload({
 
       const project = selectedProject;
 
-      console.log(logContents, "LOG CONTENTS");
-
-      const result = await invoke("check_logs_command", {
+      // SEND THE DATA TO THE BE
+      await invoke("check_logs_command", {
         data: { log_contents: logContents },
         storingLogs,
         project,
-      });
-
-      if (!result || !result.overview) {
-        console.error("Invalid result structure:", result);
-        throw new Error("Invalid server response: Missing overview data");
-      }
-
-      setLogData({
-        entries: result.entries || [],
-        overview: result.overview || {
-          message: "",
-          line_count: 0,
-          unique_ips: 0,
-          unique_user_agents: 0,
-          crawler_count: 0,
-          success_rate: 0,
-          totals: {
-            google: 0,
-            bing: 0,
-            semrush: 0,
-            hrefs: 0,
-            moz: 0,
-            uptime: 0,
-            openai: 0,
-            claude: 0,
-            google_bot_pages: [],
-            google_bot_pages_frequency: {},
-          },
-          log_start_time: "",
-          log_finish_time: "",
-        },
       });
 
       setOverallProgress(95);

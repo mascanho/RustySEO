@@ -1010,8 +1010,6 @@ function LogRow({
   formatResponseSize,
   showIp,
 }) {
-  console.log(showIp, "show IP");
-
   return (
     <>
       <TableRow

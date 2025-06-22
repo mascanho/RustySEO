@@ -11,7 +11,7 @@ pub fn check_logs_command(
     storing_logs: bool,
     project: String,
     app: tauri::AppHandle,
-) -> Result<LogResult, String> {
+) -> Result<(), String> {
     let app = app.clone();
 
     // IF THE USER HAS CHOOSEN TO STORE THE LOGS IN A DB
@@ -27,9 +27,9 @@ pub fn check_logs_command(
     }
 
     match analyse_log(data, app) {
-        Ok(result) => {
+        Ok(()) => {
             // Optional: You could include the current total in the result
-            Ok(result)
+            Ok(())
         }
         Err(e) => Err(e),
     }
