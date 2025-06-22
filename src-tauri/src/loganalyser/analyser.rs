@@ -153,6 +153,11 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
             }
         }
 
+        println!(
+            "[BACKEND] Emitting chunk of {} entries (buffer size: {})",
+            entries_buffer.len(),
+            settings.log_chunk_size
+        );
         if !entries_buffer.is_empty() {
             let chunk = LogResult {
                 overview: overview.clone().unwrap_or_default(),
@@ -251,9 +256,20 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                 // Stream the entry
                 let _ = entry_tx.send(StreamEntry::LogEntry(entry.clone()));
 
+                // NOTE: GOOD DEBUGGING
+                //println!(
+                //    "[BACKEND] Processing entry from {} - sending to channel",
+                //    filename
+                //);
+                let _ = entry_tx.send(StreamEntry::LogEntry(entry.clone()));
+
                 entry
             })
             .collect::<Vec<_>>();
+
+        // DEBUGGING
+        println!("Processing file {} of {}", index + 1, file_count);
+        println!("Sending {} entries from {}", &entries.len(), filename);
 
         all_entries.extend(entries);
 

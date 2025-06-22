@@ -137,6 +137,14 @@ export default function Page() {
         const unlistenChunk = await listen<LogResult>(
           "log-analysis-chunk",
           ({ payload }) => {
+            console.log(
+              `[FRONTEND] Received ${payload.entries?.length || 0} entries ` +
+                `at ${new Date().toISOString()}`,
+            );
+
+            // Add performance marker
+            performance.mark(`chunk-received-${Date.now()}`);
+
             if (!isMounted) return;
             console.log("Received chunk", payload);
             if (payload.entries?.length) {
