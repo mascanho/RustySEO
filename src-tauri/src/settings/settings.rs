@@ -40,6 +40,8 @@ pub struct Settings {
     pub page_speed_bulk: bool,
     pub page_speed_bulk_api_key: Option<Option<String>>,
     pub log_batchsize: usize,
+    pub log_chunk_size: usize,
+    pub log_sleep_stream_duration: u64,
 }
 
 impl Settings {
@@ -68,6 +70,8 @@ impl Settings {
             page_speed_bulk: false,
             page_speed_bulk_api_key: None,
             log_batchsize: 2,
+            log_chunk_size: 450000,
+            log_sleep_stream_duration: 10,
         }
     }
 
@@ -180,6 +184,14 @@ pub fn print_settings(settings: &Settings) {
     } else {
         println!("Page Speed Bulk API Key: None");
     }
+
+    println!("Log Batchsize: {}", settings.log_batchsize);
+    println!("Log Chunksize: {}", settings.log_chunk_size);
+    println!(
+        "Log Sleep Stream Duration: {}",
+        settings.log_sleep_stream_duration
+    );
+
     println!("")
 }
 
@@ -305,6 +317,22 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
             .collect();
     }
 
+    // Add the new settings
+    if let Some(val) = updates.get("log_batchsize").and_then(|v| v.as_integer()) {
+        settings.log_batchsize = val as usize;
+    }
+
+    if let Some(val) = updates.get("log_chunk_size").and_then(|v| v.as_integer()) {
+        settings.log_chunk_size = val as usize;
+    }
+
+    if let Some(val) = updates
+        .get("log_sleep_stream_duration")
+        .and_then(|v| v.as_integer())
+    {
+        settings.log_sleep_stream_duration = val as u64;
+    }
+
     // Explicit file writing with flush
     let config_path = Settings::config_path()?;
     let toml_str = toml::to_string_pretty(&settings) // prettier formatting
@@ -324,7 +352,6 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
 
     Ok(settings)
 }
-
 #[tauri::command]
 pub fn get_system() -> Result<Value, String> {
     let mut sys = System::new_all();

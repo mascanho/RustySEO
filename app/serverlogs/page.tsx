@@ -127,10 +127,8 @@ export default function Page() {
   let chunks: any[] = [];
   useEffect(() => {
     listen("log-analysis-chunk", (event) => {
-      console.log("Received chunk:", event.payload);
       chunks.push(event.payload); // Append the chunk to a local array or process as needed
       const result = event?.payload;
-      console.log(result, "THIS IS THE RESULT");
 
       setLogData({
         entries: result?.entries || [],

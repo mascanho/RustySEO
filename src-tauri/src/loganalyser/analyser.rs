@@ -1,3 +1,5 @@
+use crate::settings::settings::{load_settings, Settings};
+
 use super::helpers::browser_trim_name;
 use super::helpers::country_extractor::extract_country;
 use super::helpers::crawler_type::is_crawler;
@@ -267,14 +269,20 @@ pub fn analyse_log(data: LogInput, app_handle: tauri::AppHandle) -> Result<(), S
 
     // Chunking the data to send to the frontend
     // TODO: Add this to the settings that the user can tweak
-    let chunk_size = 150000; // Define a reasonable chunk size, see how it behaves
+    let settings =
+        tokio::task::block_in_place(|| tauri::async_runtime::block_on(load_settings())).unwrap();
+    let chunk_size = settings.log_chunk_size; // Comes from the configuration in HD
+
     for chunk in result.entries.chunks(chunk_size) {
         let chunked_result = LogResult {
             overview: result.overview.clone(),
             entries: chunk.to_vec(),
         };
         let _ = app_handle.emit("log-analysis-chunk", chunked_result);
-        thread::sleep(Duration::from_millis(10)); // Sleep to control the rate
+
+        thread::sleep(Duration::from_millis(settings.log_sleep_stream_duration));
+
+        // Comes from the configuration in the settings file in the HD
     }
 
     let _ = app_handle.emit("log-analysis-complete", result.clone());
