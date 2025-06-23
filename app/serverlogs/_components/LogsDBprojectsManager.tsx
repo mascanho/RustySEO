@@ -277,10 +277,11 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
   const processLogs = async (logData: any[]) => {
     console.log("logDATA length", logData.length);
 
-    const CHUNK_SIZE = 5;
+    const CHUNK_SIZE = 2;
     for (let i = 0; i < logData.length; i += CHUNK_SIZE) {
       const chunk = logData.slice(i, i + CHUNK_SIZE);
       try {
+        console.log("Processing chunk:", chunk);
         await invoke<LogAnalysisResult>("check_logs_command", {
           data: {
             log_contents: chunk.map((item) => [item.project, item.log]),

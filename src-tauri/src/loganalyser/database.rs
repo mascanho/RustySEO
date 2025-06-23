@@ -335,7 +335,7 @@ pub async fn get_logs_by_project_name_for_processing_command(
         .map_err(|e| format!("Query execution failed: {}", e))?;
 
     // TODO: Add this to the settings that the user can tweak
-    let mut batch = Vec::with_capacity(20000); // Adjust batch size as needed
+    let mut batch = Vec::with_capacity(5); // Adjust batch size as needed
     for row in rows {
         let (id, date, project, filename, log_text) =
             row.map_err(|e| format!("Row error: {}", e))?;
