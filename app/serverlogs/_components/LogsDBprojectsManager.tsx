@@ -101,7 +101,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
   const filteredProjects = useMemo(() => {
     if (!inputValue.trim()) return allProjects;
     return allProjects.filter((project) =>
-      project.name.toLowerCase().includes(inputValue.toLowerCase()),
+      project.name.toLowerCase().includes(inputValue.toLowerCase())
     );
   }, [allProjects, inputValue]);
 
@@ -129,8 +129,8 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
 
       const allProjData = await Promise.all(
         allProjects.map((proj) =>
-          invoke("get_logs_by_project_name_command", { project: proj.name }),
-        ),
+          invoke("get_logs_by_project_name_command", { project: proj.name })
+        )
       );
 
       setDBprojects(allProjData);
@@ -164,7 +164,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
         setIsLoading(false);
       }
     },
-    [handleGetAllProjects],
+    [handleGetAllProjects]
   );
 
   // Project deletion
@@ -181,7 +181,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
         setIsLoading(false);
       }
     },
-    [handleGetAllProjects],
+    [handleGetAllProjects]
   );
 
   // Toggle dropdown
@@ -230,7 +230,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
       (event) => {
         allLogs.push(...event.payload);
         console.log("Current batch received. Total logs:", allLogs.length);
-      },
+      }
     );
 
     // Listen for completion/errors
@@ -261,7 +261,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
       toast.error(
         <section className="w-full">
           {err instanceof Error ? err.message : String(err)}
-        </section>,
+        </section>
       );
     } finally {
       // Cleanup listeners and loading state
@@ -275,16 +275,25 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
 
   // Processing logs function
   const processLogs = async (logData: any[]) => {
-    try {
-      return await invoke<LogAnalysisResult>("check_logs_command", {
-        data: {
-          log_contents: logData.map((item) => [item.project, item.log]),
-        },
-        storingLogs: false, // or true if needed
-        project: "",
-      });
-    } catch (error) {
-      console.error(error);
+    console.log("logDATA length", logData.length);
+
+    const CHUNK_SIZE = 5;
+    for (let i = 0; i < logData.length; i += CHUNK_SIZE) {
+      const chunk = logData.slice(i, i + CHUNK_SIZE);
+      try {
+        await invoke<LogAnalysisResult>("check_logs_command", {
+          data: {
+            log_contents: chunk.map((item) => [item.project, item.log]),
+          },
+          storingLogs: false,
+          project: "",
+        });
+        // Optional: Add slight delay between chunks
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      } catch (error) {
+        console.error("Failed to process chunk:", error);
+        throw error; // Or handle gracefully
+      }
     }
   };
 

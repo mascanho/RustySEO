@@ -11,7 +11,7 @@ use crate::loganalyser::helpers::browser_trim_name;
 use crate::loganalyser::helpers::country_extractor::extract_country;
 use crate::loganalyser::helpers::crawler_type::is_crawler;
 use crate::loganalyser::helpers::parse_logs::parse_log_entries;
-use crate::settings::{self, settings};
+use crate::settings::{settings};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogInput {
@@ -124,7 +124,7 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     let app_handle_stream = app_handle.clone();
     thread::spawn(move || {
         let settings = match tokio::task::block_in_place(|| {
-            tauri::async_runtime::block_on(settings::settings::load_settings())
+            tauri::async_runtime::block_on(settings::load_settings())
         }) {
             Ok(s) => s,
             Err(_) => return,
