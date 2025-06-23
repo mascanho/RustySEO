@@ -11,7 +11,7 @@ use crate::loganalyser::helpers::browser_trim_name;
 use crate::loganalyser::helpers::country_extractor::extract_country;
 use crate::loganalyser::helpers::crawler_type::is_crawler;
 use crate::loganalyser::helpers::parse_logs::parse_log_entries;
-use crate::settings;
+use crate::settings::{self, settings};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogInput {
@@ -261,15 +261,17 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                 //    "[BACKEND] Processing entry from {} - sending to channel",
                 //    filename
                 //);
-                let _ = entry_tx.send(StreamEntry::LogEntry(entry.clone()));
+              
 
                 entry
             })
             .collect::<Vec<_>>();
 
         // DEBUGGING
+       
         println!("Processing file {} of {}", index + 1, file_count);
         println!("Sending {} entries from {}", &entries.len(), filename);
+        println!("Total entries so far: {}", &all_entries.len());
 
         all_entries.extend(entries);
 
