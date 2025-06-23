@@ -311,8 +311,8 @@ pub struct SelectedLogs {
 
 #[tauri::command]
 pub async fn get_logs_by_project_name_for_processing_command(
-    project: String,              // Changed from `&str` to `String` for async safety
-    app_handle: tauri::AppHandle, // Required to emit events
+    project: String,
+    app_handle: tauri::AppHandle,
 ) -> Result<(), String> {
     let db = Database::new("serverlog.db")
         .map_err(|e| format!("Database initialization failed: {}", e))?;
@@ -322,23 +322,17 @@ pub async fn get_logs_by_project_name_for_processing_command(
         .prepare("SELECT id, date, project, filename, log FROM server_logs WHERE project = ?1")
         .map_err(|e| format!("Failed to prepare query: {}", e))?;
 
-    let rows = stmt
-        .query_map([project.as_str()], |row| {
-            Ok((
-                row.get::<_, i32>(0)?,
-                row.get::<_, String>(1)?,
-                row.get::<_, String>(2)?,
-                row.get::<_, String>(3)?,
-                row.get::<_, String>(4)?,
-            ))
-        })
+    let mut rows = stmt
+        .query([project.as_str()])
         .map_err(|e| format!("Query execution failed: {}", e))?;
 
-    // TODO: Add this to the settings that the user can tweak
-    let mut batch = Vec::with_capacity(5); // Adjust batch size as needed
-    for row in rows {
-        let (id, date, project, filename, log_text) =
-            row.map_err(|e| format!("Row error: {}", e))?;
+    let mut batch = Vec::with_capacity(5);
+    while let Some(row) = rows.next().map_err(|e| format!("Row error: {}", e))? {
+        let id = row.get::<_, i32>(0).map_err(|e| format!("Failed to get id: {}", e))?;
+        let date = row.get::<_, String>(1).map_err(|e| format!("Failed to get date: {}", e))?;
+        let project = row.get::<_, String>(2).map_err(|e| format!("Failed to get project: {}", e))?;
+        let filename = row.get::<_, String>(3).map_err(|e| format!("Failed to get filename: {}", e))?;
+        let log_text = row.get::<_, String>(4).map_err(|e| format!("Failed to get log text: {}", e))?;
 
         let log_value: Value = serde_json::from_str(&log_text)
             .map_err(|e| format!("JSON parse error for log {}: {}", id, e))?;
@@ -351,8 +345,7 @@ pub async fn get_logs_by_project_name_for_processing_command(
             log: log_value,
         });
 
-        // Send logs in batches (e.g., every 100 logs)
-        if batch.len() >= 100 {
+        if batch.len() >= 5 {
             app_handle
                 .emit("project-logs-batch", &batch)
                 .map_err(|e| format!("Failed to emit batch: {}", e))?;
@@ -360,14 +353,12 @@ pub async fn get_logs_by_project_name_for_processing_command(
         }
     }
 
-    // Send remaining logs (if any)
     if !batch.is_empty() {
         app_handle
             .emit("project-logs-batch", &batch)
             .map_err(|e| format!("Failed to emit final batch: {}", e))?;
     }
 
-    // Signal completion
     app_handle
         .emit("project-logs-complete", true)
         .map_err(|e| format!("Failed to emit completion: {}", e))?;
