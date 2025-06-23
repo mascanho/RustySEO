@@ -71,7 +71,7 @@ impl Settings {
             page_speed_bulk_api_key: None,
             log_batchsize: 2,
             log_chunk_size: 500000,
-            log_sleep_stream_duration: 10,
+            log_sleep_stream_duration: 1,
         }
     }
 
