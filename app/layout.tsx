@@ -60,10 +60,14 @@ export default function RootLayout({
             toast(
               <span>
                 RustySEO has a new release. Please update it{" "}
-                <a href="https://github.com/mascanho/rustyseo/releases/">
+                <a
+                  target="_blank"
+                  href="https://github.com/mascanho/rustyseo/releases/"
+                  className="text-brand-bright hover:text-brand-bright/80"
+                >
                   here
                 </a>
-              </span>
+              </span>,
             );
           }
         }, 50000);
