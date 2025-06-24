@@ -319,59 +319,71 @@ pub async fn get_logs_by_project_name_for_processing_command(
     let log_capacity = settings::settings::load_settings().await?.log_capacity;
     println!("Log capacity: {}", log_capacity);
 
-    let db = Database::new("serverlog.db")
-        .map_err(|e| format!("Database initialization failed: {}", e))?;
+    // Move all database operations to a blocking thread
+    let logs_result = tokio::task::spawn_blocking(move || {
+        let db = Database::new("serverlog.db")
+            .map_err(|e| format!("Database initialization failed: {}", e))?;
 
-    let mut stmt = db
-        .conn
-        .prepare("SELECT id, date, project, filename, log FROM server_logs WHERE project = ?1")
-        .map_err(|e| format!("Failed to prepare query: {}", e))?;
+        let mut stmt = db
+            .conn
+            .prepare("SELECT id, date, project, filename, log FROM server_logs WHERE project = ?1")
+            .map_err(|e| format!("Failed to prepare query: {}", e))?;
 
-    let mut rows = stmt
-        .query([project.as_str()])
-        .map_err(|e| format!("Query execution failed: {}", e))?;
+        let mut rows = stmt
+            .query([project.as_str()])
+            .map_err(|e| format!("Query execution failed: {}", e))?;
 
-    let mut batch = Vec::with_capacity(log_capacity);
-    while let Some(row) = rows.next().map_err(|e| format!("Row error: {}", e))? {
-        let id = row
-            .get::<_, i32>(0)
-            .map_err(|e| format!("Failed to get id: {}", e))?;
-        let date = row
-            .get::<_, String>(1)
-            .map_err(|e| format!("Failed to get date: {}", e))?;
-        let project = row
-            .get::<_, String>(2)
-            .map_err(|e| format!("Failed to get project: {}", e))?;
-        let filename = row
-            .get::<_, String>(3)
-            .map_err(|e| format!("Failed to get filename: {}", e))?;
-        let log_text = row
-            .get::<_, String>(4)
-            .map_err(|e| format!("Failed to get log text: {}", e))?;
+        let mut batch = Vec::with_capacity(log_capacity);
+        let mut all_logs = Vec::new();
 
-        let log_value: Value = serde_json::from_str(&log_text)
-            .map_err(|e| format!("JSON parse error for log {}: {}", id, e))?;
+        while let Some(row) = rows.next().map_err(|e| format!("Row error: {}", e))? {
+            let id = row
+                .get::<_, i32>(0)
+                .map_err(|e| format!("Failed to get id: {}", e))?;
+            let date = row
+                .get::<_, String>(1)
+                .map_err(|e| format!("Failed to get date: {}", e))?;
+            let project = row
+                .get::<_, String>(2)
+                .map_err(|e| format!("Failed to get project: {}", e))?;
+            let filename = row
+                .get::<_, String>(3)
+                .map_err(|e| format!("Failed to get filename: {}", e))?;
+            let log_text = row
+                .get::<_, String>(4)
+                .map_err(|e| format!("Failed to get log text: {}", e))?;
 
-        batch.push(SelectedLogs {
-            id,
-            date,
-            project,
-            filename,
-            log: log_value,
-        });
+            let log_value: Value = serde_json::from_str(&log_text)
+                .map_err(|e| format!("JSON parse error for log {}: {}", id, e))?;
 
-        if batch.len() >= log_capacity {
-            app_handle
-                .emit("project-logs-batch", &batch)
-                .map_err(|e| format!("Failed to emit batch: {}", e))?;
-            batch.clear();
+            batch.push(SelectedLogs {
+                id,
+                date,
+                project,
+                filename,
+                log: log_value,
+            });
+
+            if batch.len() >= log_capacity {
+                all_logs.push(batch);
+                batch = Vec::with_capacity(log_capacity);
+            }
         }
-    }
 
-    if !batch.is_empty() {
+        if !batch.is_empty() {
+            all_logs.push(batch);
+        }
+
+        Ok::<_, String>(all_logs)
+    })
+    .await
+    .map_err(|e| format!("Blocking task failed: {}", e))??;
+
+    // Emit batches from the async context
+    for batch in logs_result {
         app_handle
             .emit("project-logs-batch", &batch)
-            .map_err(|e| format!("Failed to emit final batch: {}", e))?;
+            .map_err(|e| format!("Failed to emit batch: {}", e))?;
     }
 
     app_handle
