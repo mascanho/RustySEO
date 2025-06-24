@@ -326,7 +326,7 @@ pub async fn get_logs_by_project_name_for_processing_command(
         .query([project.as_str()])
         .map_err(|e| format!("Query execution failed: {}", e))?;
 
-    let mut batch = Vec::with_capacity(5);
+    let mut batch = Vec::with_capacity(1);
     while let Some(row) = rows.next().map_err(|e| format!("Row error: {}", e))? {
         let id = row.get::<_, i32>(0).map_err(|e| format!("Failed to get id: {}", e))?;
         let date = row.get::<_, String>(1).map_err(|e| format!("Failed to get date: {}", e))?;
@@ -345,7 +345,7 @@ pub async fn get_logs_by_project_name_for_processing_command(
             log: log_value,
         });
 
-        if batch.len() >= 5 {
+        if batch.len() >= 1 {
             app_handle
                 .emit("project-logs-batch", &batch)
                 .map_err(|e| format!("Failed to emit batch: {}", e))?;
