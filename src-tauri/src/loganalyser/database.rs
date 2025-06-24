@@ -315,6 +315,7 @@ pub async fn get_logs_by_project_name_for_processing_command(
     project: String,
     app_handle: tauri::AppHandle,
 ) -> Result<(), String> {
+    // NOTE: set the number of logs to stream to the front end
     let log_capacity = settings::settings::load_settings().await?.log_capacity;
     println!("Log capacity: {}", log_capacity);
 
