@@ -6,6 +6,7 @@ use tauri::{Emitter, Window};
 use crate::{
     crawler::db::open_db_connection,
     loganalyser::{analyser::analyse_log, log_commands::check_logs_command},
+    settings,
 };
 
 use super::analyser::{LogAnalysisResult, LogInput};
@@ -314,6 +315,9 @@ pub async fn get_logs_by_project_name_for_processing_command(
     project: String,
     app_handle: tauri::AppHandle,
 ) -> Result<(), String> {
+    let log_capacity = settings::settings::load_settings().await?.log_capacity;
+    println!("Log capacity: {}", log_capacity);
+
     let db = Database::new("serverlog.db")
         .map_err(|e| format!("Database initialization failed: {}", e))?;
 
@@ -326,13 +330,23 @@ pub async fn get_logs_by_project_name_for_processing_command(
         .query([project.as_str()])
         .map_err(|e| format!("Query execution failed: {}", e))?;
 
-    let mut batch = Vec::with_capacity(1);
+    let mut batch = Vec::with_capacity(log_capacity);
     while let Some(row) = rows.next().map_err(|e| format!("Row error: {}", e))? {
-        let id = row.get::<_, i32>(0).map_err(|e| format!("Failed to get id: {}", e))?;
-        let date = row.get::<_, String>(1).map_err(|e| format!("Failed to get date: {}", e))?;
-        let project = row.get::<_, String>(2).map_err(|e| format!("Failed to get project: {}", e))?;
-        let filename = row.get::<_, String>(3).map_err(|e| format!("Failed to get filename: {}", e))?;
-        let log_text = row.get::<_, String>(4).map_err(|e| format!("Failed to get log text: {}", e))?;
+        let id = row
+            .get::<_, i32>(0)
+            .map_err(|e| format!("Failed to get id: {}", e))?;
+        let date = row
+            .get::<_, String>(1)
+            .map_err(|e| format!("Failed to get date: {}", e))?;
+        let project = row
+            .get::<_, String>(2)
+            .map_err(|e| format!("Failed to get project: {}", e))?;
+        let filename = row
+            .get::<_, String>(3)
+            .map_err(|e| format!("Failed to get filename: {}", e))?;
+        let log_text = row
+            .get::<_, String>(4)
+            .map_err(|e| format!("Failed to get log text: {}", e))?;
 
         let log_value: Value = serde_json::from_str(&log_text)
             .map_err(|e| format!("JSON parse error for log {}: {}", id, e))?;
@@ -345,7 +359,7 @@ pub async fn get_logs_by_project_name_for_processing_command(
             log: log_value,
         });
 
-        if batch.len() >= 1 {
+        if batch.len() >= log_capacity {
             app_handle
                 .emit("project-logs-batch", &batch)
                 .map_err(|e| format!("Failed to emit batch: {}", e))?;

@@ -1,10 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use crate::crawler::content::scrape_google_headings_command;
 use crate::domain_crawler::db_deep::db;
 use crate::domain_crawler::domain_commands;
 use crate::loganalyser::database::remove_all_logs_from_serverlog_db;
-use crate::loganalyser::helpers::parse_logs;
 use crawler::{
     CrawlResult, LinkResult, PageSpeedResponse, SEOLighthouseResponse, SeoPageSpeedResponse,
 };
@@ -12,6 +10,7 @@ use directories::ProjectDirs;
 use globals::actions;
 use serde::{Deserialize, Deserializer, Serialize};
 use settings::settings::delete_config_folders_command;
+use settings::settings::get_project_chunk_size_command;
 use settings::settings::get_system;
 use settings::settings::open_config_folder_command;
 use settings::settings::Settings;
@@ -255,6 +254,7 @@ async fn main() {
             loganalyser::database::delete_project_command,
             loganalyser::database::get_logs_by_project_name_for_processing_command,
             get_system,
+            get_project_chunk_size_command,
             delete_config_folders_command,
             open_config_folder_command
         ])

@@ -181,43 +181,43 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
                       local database.
                     </p>
 
-                    <div className="py-1">
-                      <h4 className="text-sm font-medium mb-2 dark:text-white">
-                        Log storage options
-                      </h4>
-                      <div className="space-y-2 dark:text-white/50 pt-2">
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            id="show-errors"
-                            className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700"
-                            // defaultChecked
-                          />
-                          <Label htmlFor="show-errors" className="text-xs">
-                            Keep latest 10 logs only
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            id="show-warnings"
-                            // defaultChecked
-                            className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700"
-                          />
-                          <Label className="text-xs" htmlFor="show-warnings">
-                            Keep latest 20 logs only
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Switch
-                            id="show-info"
-                            // defaultChecked
-                            className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700"
-                          />
-                          <Label htmlFor="show-info" className="text-xs">
-                            Keep last 2 months only
-                          </Label>
-                        </div>
-                      </div>
-                    </div>
+                    {/* <div className="py-1"> */}
+                    {/*   <h4 className="text-sm font-medium mb-2 dark:text-white"> */}
+                    {/*     Log storage options */}
+                    {/*   </h4> */}
+                    {/*   <div className="space-y-2 dark:text-white/50 pt-2"> */}
+                    {/*     <div className="flex items-center space-x-2"> */}
+                    {/*       <Switch */}
+                    {/*         id="show-errors" */}
+                    {/*         className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700" */}
+                    {/*         // defaultChecked */}
+                    {/*       /> */}
+                    {/*       <Label htmlFor="show-errors" className="text-xs"> */}
+                    {/*         Keep latest 10 logs only */}
+                    {/*       </Label> */}
+                    {/*     </div> */}
+                    {/*     <div className="flex items-center space-x-2"> */}
+                    {/*       <Switch */}
+                    {/*         id="show-warnings" */}
+                    {/*         // defaultChecked */}
+                    {/*         className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700" */}
+                    {/*       /> */}
+                    {/*       <Label className="text-xs" htmlFor="show-warnings"> */}
+                    {/*         Keep latest 20 logs only */}
+                    {/*       </Label> */}
+                    {/*     </div> */}
+                    {/*     <div className="flex items-center space-x-2"> */}
+                    {/*       <Switch */}
+                    {/*         id="show-info" */}
+                    {/*         // defaultChecked */}
+                    {/*         className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700" */}
+                    {/*       /> */}
+                    {/*       <Label htmlFor="show-info" className="text-xs"> */}
+                    {/*         Keep last 2 months only */}
+                    {/*       </Label> */}
+                    {/*     </div> */}
+                    {/*   </div> */}
+                    {/* </div> */}
                   </div>
                 </div>
               </div>
@@ -280,27 +280,27 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between mt-8">
-        <Button
-          variant="outline"
-          onClick={handleDisplayLogs}
-          className="dark:bg-brand-bright dark:border-brand-darker dark:text-white"
-        >
-          Display saved Logs
-        </Button>
+      <CardFooter className="flex justify-end mt-8">
+        {/* <Button */}
+        {/*   variant="outline" */}
+        {/*   onClick={handleDisplayLogs} */}
+        {/*   className="dark:bg-brand-bright dark:border-brand-darker dark:text-white" */}
+        {/* > */}
+        {/*   Display saved Logs */}
+        {/* </Button> */}
         <div className="flex gap-2">
-          <Button
-            onClick={handleRefreshLogs}
-            variant="secondary"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : null}
-            Refresh
-          </Button>
+          {/* <Button */}
+          {/*   onClick={handleRefreshLogs} */}
+          {/*   variant="secondary" */}
+          {/*   disabled={isLoading} */}
+          {/* > */}
+          {/*   {isLoading ? ( */}
+          {/*     <Loader2 className="h-4 w-4 animate-spin mr-2" /> */}
+          {/*   ) : null} */}
+          {/*   Refresh */}
+          {/* </Button> */}
           <Button onClick={handleRemoveAllLogs} variant="destructive">
-            Clear database
+            Delete all logs
           </Button>
         </div>
       </CardFooter>

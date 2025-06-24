@@ -42,6 +42,8 @@ pub struct Settings {
     pub log_batchsize: usize,
     pub log_chunk_size: usize,
     pub log_sleep_stream_duration: u64,
+    pub log_capacity: usize,
+    pub log_project_chunk_size: usize,
 }
 
 impl Settings {
@@ -72,6 +74,8 @@ impl Settings {
             log_batchsize: 2,
             log_chunk_size: 500000,
             log_sleep_stream_duration: 1,
+            log_capacity: 1,
+            log_project_chunk_size: 1,
         }
     }
 
@@ -192,10 +196,15 @@ pub fn print_settings(settings: &Settings) {
         settings.log_sleep_stream_duration
     );
 
+    println!("Log Capacity: {}", settings.log_capacity);
+    println!(
+        "Log Chunk Size Project: {}",
+        settings.log_project_chunk_size
+    );
+
     println!("")
 }
 
-// Rewrite the settings file with only the ones that need to be overridden
 pub async fn override_settings(updates: &str) -> Result<Settings, String> {
     // Load current settings or create new ones
     let mut settings = init_settings().await?;
@@ -333,6 +342,17 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
         settings.log_sleep_stream_duration = val as u64;
     }
 
+    if let Some(val) = updates.get("log_capacity").and_then(|v| v.as_integer()) {
+        settings.log_capacity = val as usize;
+    }
+
+    if let Some(val) = updates
+        .get("log_chunk_size_project")
+        .and_then(|v| v.as_integer())
+    {
+        settings.log_project_chunk_size = val as usize;
+    }
+
     // Explicit file writing with flush
     let config_path = Settings::config_path()?;
     let toml_str = toml::to_string_pretty(&settings) // prettier formatting
@@ -352,6 +372,13 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
 
     Ok(settings)
 }
+
+#[tauri::command]
+pub async fn get_project_chunk_size_command() -> Result<usize, String> {
+    let settings = load_settings().await?;
+    Ok(settings.log_project_chunk_size)
+}
+
 #[tauri::command]
 pub fn get_system() -> Result<Value, String> {
     let mut sys = System::new_all();
