@@ -531,13 +531,13 @@ export function LogAnalyzer() {
       // Likely IPv6
       return ip
         .split(":")
-        .map((part, i) => (i < 2 ? part : "***"))
+        .map((part, i) => (i < 2 ? part : "###"))
         .join(":");
     } else if (ip.includes(".")) {
       // Likely IPv4
       return ip
         .split(".")
-        .map((part, i) => (i < 2 ? part : "***"))
+        .map((part, i) => (i < 2 ? part : "###"))
         .join(".");
     }
 
