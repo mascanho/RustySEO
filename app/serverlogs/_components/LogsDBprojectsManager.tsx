@@ -22,6 +22,7 @@ import {
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import Spinner from "@/app/components/ui/Sidebar/checks/_components/Spinner";
 import { listen } from "@tauri-apps/api/event";
+import { TbAdCircle, TbReplace } from "react-icons/tb";
 
 // Mock data for demonstration
 const mockProjectsData: ProjectEntry[] = [
@@ -217,7 +218,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
   // ###########################################
   // Handle all the logic to bring the data to the frontend
   // GET THE SELECTED LOG FROM THE PROJECT NAME TO ANALYSE THE LOGS
-  const getSelectedLogForAnalysis = async (projectName: string) => {
+  const getSelectedLogForAnalysis = async (projectName: string, action) => {
     if (!projectName) {
       toast.error("Please select a project");
       return;
@@ -239,7 +240,10 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
     });
 
     try {
-      setLoadingProjects((prev) => ({ ...prev, [projectName]: true }));
+      setLoadingProjects((prev) => ({
+        ...prev,
+        [`${projectName}-${action}`]: true,
+      }));
       toast.info(`Processing logs for ${projectName}...`);
 
       // Start streaming (use the STREAMING command, not the blocking one)
@@ -248,9 +252,10 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
       });
 
       // Process logs ONLY after streaming finishes
-
-      // RESET THE PREVIOUS LOGS TO LOAD THE NEW LOGS
-      resetAll();
+      // RESET THE PREVIOUS LOGS TO LOAD THE NEW LOGS IF THE USER SELECTED "REPLACE"
+      if (action === "replace") {
+        resetAll();
+      } // IF NOT REPLACE, KEEP THE PREVIOUS LOGS
 
       // SEND THE LOGS TO THE BE
       await processLogs(allLogs);
@@ -269,7 +274,10 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
       unlistenComplete?.();
       setLoadingProjects((prev) => ({ ...prev, [projectName]: false }));
       console.log("finished all the bull;shit");
-      setSelectedProject(projectName);
+      setLoadingProjects((prev) => ({
+        ...prev,
+        [`${projectName}-${action}`]: false,
+      }));
     }
   };
 
@@ -447,28 +455,41 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                 </Button>
                               </div>
                             </div>
-
-                            <div className="flex items-center">
-                              {projectName !== DBprojects?.project && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors duration-200"
-                                  onClick={() =>
-                                    getSelectedLogForAnalysis(projectName)
-                                  }
-                                >
-                                  {loadingProjects[projectName] ? (
-                                    <Spinner
-                                      className="h-2 w-2 text-gray-500 dark:text-brand-bright"
-                                      bg-gray-200
-                                    />
-                                  ) : (
-                                    <IoPlayCircleOutline className="h-2 w-2 text-gray-500 dark:text-brand-bright" />
-                                  )}
-                                </Button>
-                              )}{" "}
-                            </div>
+                            {["append", "replace"].map((action) => (
+                              <div key={action} className="flex items-center">
+                                {projectName !== DBprojects?.project && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors duration-200"
+                                    onClick={() =>
+                                      getSelectedLogForAnalysis(
+                                        projectName,
+                                        action,
+                                      )
+                                    }
+                                    disabled={
+                                      loadingProjects[
+                                        `${projectName}-${action}`
+                                      ]
+                                    }
+                                  >
+                                    {loadingProjects[
+                                      `${projectName}-${action}`
+                                    ] ? (
+                                      <Spinner
+                                        className="h-2 w-2 text-gray-500 dark:text-brand-bright"
+                                        bg-gray-200
+                                      />
+                                    ) : action === "replace" ? (
+                                      <TbReplace className="h-2 w-2 text-gray-500 dark:text-brand-bright" />
+                                    ) : (
+                                      <IoPlayCircleOutline className="h-2 w-2 text-gray-500 dark:text-brand-bright" />
+                                    )}
+                                  </Button>
+                                )}
+                              </div>
+                            ))}{" "}
                           </div>
 
                           {openDropdowns.has(projectName) && (
