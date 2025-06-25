@@ -23,6 +23,7 @@ import { useLogAnalysis } from "@/store/ServerLogsStore";
 import Spinner from "@/app/components/ui/Sidebar/checks/_components/Spinner";
 import { listen } from "@tauri-apps/api/event";
 import { TbAdCircle, TbReplace } from "react-icons/tb";
+import { IoIosAddCircleOutline } from "react-icons/io";
 
 // Mock data for demonstration
 const mockProjectsData: ProjectEntry[] = [
@@ -484,7 +485,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                                     ) : action === "replace" ? (
                                       <TbReplace className="h-2 w-2 text-gray-500 dark:text-brand-bright" />
                                     ) : (
-                                      <IoPlayCircleOutline className="h-2 w-2 text-gray-500 dark:text-brand-bright" />
+                                      <IoIosAddCircleOutline className="h-4 w-4 text-xl text-gray-500 dark:text-brand-bright" />
                                     )}
                                   </Button>
                                 )}
