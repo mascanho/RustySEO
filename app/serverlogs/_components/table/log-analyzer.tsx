@@ -197,7 +197,7 @@ export function LogAnalyzer() {
             (log) =>
               log.ip.toLowerCase().includes(lowerCaseSearch) ||
               log.path.toLowerCase().includes(lowerCaseSearch) ||
-              log.user_agent.toLowerCase().includes(lowerCaseSearch),
+              log.user_agent.toLowerCase().includes(lowerCaseSearch)
           );
         }
 
@@ -214,7 +214,7 @@ export function LogAnalyzer() {
         // Apply file type filter
         if (fileTypeFilter.length > 0) {
           result = result.filter((log) =>
-            fileTypeFilter.includes(log.file_type),
+            fileTypeFilter.includes(log.file_type)
           );
         }
 
@@ -222,7 +222,7 @@ export function LogAnalyzer() {
         if (botFilter !== null) {
           if (botFilter === "bot") {
             result = result.filter(
-              (log) => log?.crawler_type && log.crawler_type !== "Human",
+              (log) => log?.crawler_type && log.crawler_type !== "Human"
             );
           } else if (botFilter === "Human") {
             result = result.filter((log) => log?.crawler_type === "Human");
@@ -235,7 +235,7 @@ export function LogAnalyzer() {
             result = result.filter((log) => log?.user_agent.includes("Mobile"));
           } else if (botTypeFilter === "Desktop") {
             result = result.filter(
-              (log) => !log?.user_agent.includes("Mobile"),
+              (log) => !log?.user_agent.includes("Mobile")
             );
           }
         }
@@ -288,7 +288,7 @@ export function LogAnalyzer() {
       sortConfig,
       verifiedFilter,
       botTypeFilter,
-    ],
+    ]
   );
 
   const [searchInput, setSearchInput] = useState("");
@@ -299,7 +299,7 @@ export function LogAnalyzer() {
         searchTermRef.current = term;
         applyFilters(term, entries);
       }, 300),
-    [entries, applyFilters],
+    [entries, applyFilters]
   );
 
   const handleSearchChange = useCallback(
@@ -308,7 +308,7 @@ export function LogAnalyzer() {
       setSearchInput(value);
       debouncedSearch(value);
     },
-    [debouncedSearch],
+    [debouncedSearch]
   );
 
   // Apply filters when search term or entries change
@@ -435,7 +435,7 @@ export function LogAnalyzer() {
         "\uFEFF" + headers.map(sanitizeForCSV).join(",") + "\r\n",
         {
           encoding: "utf8",
-        },
+        }
       );
 
       // 6. Process data in batches with validation
@@ -511,6 +511,13 @@ export function LogAnalyzer() {
     );
   }
 
+  function formatedNumber(num) {
+    return num.toLocaleString("en-UK", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
+  }
+
   return (
     <div className="space-y-4 flex flex-col flex-1 h-full not-selectable">
       <div className="flex flex-col md:flex-row justify-between relative -mb-4 p-1 h-full">
@@ -580,9 +587,7 @@ export function LogAnalyzer() {
                   checked={statusFilter.includes(code)}
                   onCheckedChange={(checked) => {
                     setStatusFilter((prev) =>
-                      checked
-                        ? [...prev, code]
-                        : prev.filter((c) => c !== code),
+                      checked ? [...prev, code] : prev.filter((c) => c !== code)
                     );
                   }}
                 >
@@ -635,7 +640,7 @@ export function LogAnalyzer() {
                     setMethodFilter((prev) =>
                       checked
                         ? [...prev, method]
-                        : prev.filter((m) => m !== method),
+                        : prev.filter((m) => m !== method)
                     );
                   }}
                 >
@@ -688,7 +693,7 @@ export function LogAnalyzer() {
                     setFileTypeFilter((prev) =>
                       checked
                         ? [...prev, fileType]
-                        : prev.filter((m) => m !== fileType),
+                        : prev.filter((m) => m !== fileType)
                     );
                   }}
                 >
@@ -989,6 +994,7 @@ export function LogAnalyzer() {
         indexOfLastItem={indexOfLastItem}
         filteredLogs={filteredLogs}
         entries={entries}
+        formatedNumber={formatedNumber}
       />
     </div>
   );
@@ -1156,6 +1162,7 @@ function PaginationControls({
   indexOfLastItem,
   filteredLogs,
   entries,
+  formatedNumber,
 }) {
   return (
     <div
@@ -1250,9 +1257,12 @@ function PaginationControls({
           {indexOfFirstItem + 1}-
           {Math.min(
             indexOfLastItem,
-            filteredLogs.length > 0 ? filteredLogs.length : entries.length,
+            filteredLogs.length > 0 ? filteredLogs.length : entries.length
           )}{" "}
-          of {filteredLogs.length > 0 ? filteredLogs.length : entries.length}{" "}
+          of{" "}
+          {filteredLogs.length > 0
+            ? formatedNumber(filteredLogs.length)
+            : entries.length}{" "}
           logs
         </span>
       </div>
