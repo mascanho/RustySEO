@@ -68,7 +68,7 @@ import { CardContent } from "@/components/ui/card";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { ask, message, save } from "@tauri-apps/plugin-dialog";
-import { SiGoogle } from "react-icons/si";
+import { SiGoogle, SiSuperuser } from "react-icons/si";
 import { toast } from "sonner";
 import { IpDisplay } from "./IpCheckModal";
 import {
@@ -78,8 +78,9 @@ import {
 } from "@/components/ui/tooltip";
 import { useCurrentLogs } from "@/store/logFilterStore";
 import { IoClose } from "react-icons/io5";
-import { FaApper, FaEye } from "react-icons/fa";
-import { FaFileCode } from "react-icons/fa6";
+import { FaAngellist, FaApper, FaEye } from "react-icons/fa";
+import { FaFileCode, FaPersonHarassing, FaRobot } from "react-icons/fa6";
+import { ImUserTie } from "react-icons/im";
 
 export function LogAnalyzer() {
   const {
@@ -1141,7 +1142,7 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
           ) : (
             <section className="max-w-[780px]  truncate relative ml-2">
               <span className="absolute">
-                <FaFileCode className="text-brand-bright mr-1 mt-[2px]" />{" "}
+                <ImUserTie className="text-brand-bright mr-1 mt-[2px]" />{" "}
               </span>
               <span className="ml-5">{log?.user_agent}</span>
             </section>
