@@ -79,6 +79,7 @@ import {
 import { useCurrentLogs } from "@/store/logFilterStore";
 import { IoClose } from "react-icons/io5";
 import { FaApper, FaEye } from "react-icons/fa";
+import { FaFileCode } from "react-icons/fa6";
 
 export function LogAnalyzer() {
   const {
@@ -1138,7 +1139,12 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
                 : log?.path}
             </>
           ) : (
-            log?.user_agent
+            <section className="max-w-[780px]  truncate relative ml-2">
+              <span className="absolute">
+                <FaFileCode className="text-brand-bright mr-1 mt-[2px]" />{" "}
+              </span>
+              <span className="ml-5">{log?.user_agent}</span>
+            </section>
           )}
         </TableCell>
         <TableCell className="max-w-[480px] truncate">
