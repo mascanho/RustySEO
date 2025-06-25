@@ -294,10 +294,10 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
           project: "",
         });
         // Optional: Add slight delay between chunks
-        await new Promise((resolve) => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 2));
       } catch (error) {
         console.error("Failed to process chunk:", error);
-        throw error; // Or handle gracefully
+        throw error;
       }
     }
   };

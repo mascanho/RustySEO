@@ -105,13 +105,13 @@ const Footer = () => {
 
     window.addEventListener(
       "sessionStorageUpdated",
-      handleSessionStorageUpdate
+      handleSessionStorageUpdate,
     );
 
     return () => {
       window.removeEventListener(
         "sessionStorageUpdated",
-        handleSessionStorageUpdate
+        handleSessionStorageUpdate,
       );
     };
   }, []);
@@ -119,7 +119,7 @@ const Footer = () => {
   const updateTasks = () => {
     try {
       const storedTasks = JSON.parse(
-        localStorage?.getItem("tasks") || "[]"
+        localStorage?.getItem("tasks") || "[]",
       ) as Task[];
       const filteredTasks = storedTasks.filter((task) => !task.completed);
       setTasks(filteredTasks);
@@ -176,7 +176,7 @@ const Footer = () => {
       visibility.sidebar,
       hideSidebar,
       showSidebar,
-    ]
+    ],
   );
 
   useEffect(() => {
@@ -191,7 +191,7 @@ const Footer = () => {
   useEffect(() => {
     // Initial load
     const logStorageValue = JSON.parse(
-      localStorage.getItem("logsStorage") || "false"
+      localStorage.getItem("logsStorage") || "false",
     );
     setLogStorage(logStorageValue);
     setStoringLogs(logStorageValue);
@@ -215,14 +215,14 @@ const Footer = () => {
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener(
       "localStorageChange",
-      handleCustomStorageChange as EventListener
+      handleCustomStorageChange as EventListener,
     );
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener(
         "localStorageChange",
-        handleCustomStorageChange as EventListener
+        handleCustomStorageChange as EventListener,
       );
     };
   }, []);
@@ -276,7 +276,7 @@ const Footer = () => {
               <div className="flex items-center">
                 <Popover>
                   <PopoverTrigger>
-                    <FaInfoCircle className=" text-sm ml-0.5 text-black dark:text-white/50" />
+                    <FaInfoCircle className=" text-sm ml-0.5 text-black mt-[1px] dark:text-white/50" />
                   </PopoverTrigger>
                   <PopoverContent className="min-w-70 max-w-96 max-h-[400px] py-2 px-0 mb-10 ml-2 relative z-20">
                     {/* <div className="h-5 w-5 absolute -top-2 right-32 bg-white rotate-45 border -z-10" /> */}
@@ -285,7 +285,7 @@ const Footer = () => {
                 </Popover>
                 <section className="flex items-center ml-2.5">
                   <FaDatabase
-                    className={`${logSorage ? "text-green-700" : "text-red-700"} mr-1.5 `}
+                    className={`${logSorage ? "text-green-700 mt-[1px]" : "text-red-700 mt-[1px]"} mr-1.5 `}
                   />{" "}
                   {logSorage ? "" : ""}
                 </section>

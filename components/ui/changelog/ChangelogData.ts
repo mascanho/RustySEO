@@ -4,10 +4,13 @@ export const changelogData = [
     date: "2025-07-01",
     type: "feature",
     changes: [
-      "Log analyser - Project segmentation",
-      "Log analyser - Improved search",
-      "Log analyser - Better data handling",
-      "Log analyser - IP masking",
+      "Added log project segmentation",
+      "Improved log search",
+      "added filter for User Agents",
+      "Added IP masking on logs table",
+      "Improved speed on log processing",
+      "Better log batch upload and reload",
+      "Improved log table UI",
     ],
   },
   {

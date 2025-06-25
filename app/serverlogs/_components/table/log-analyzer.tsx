@@ -119,6 +119,8 @@ export function LogAnalyzer() {
   const [inputValue, setInputValue] = useState(""); // stores what's typed in the input
   const [isExporting, setIsExporting] = useState(false);
   const [showIp, setShowIp] = useState(false);
+  const [showAgent, setShowAgent] = useState(false);
+  const [urlAgentFilter, setUrlAgentFilter] = useState("url");
 
   // Helper functions
   const formatDate = useCallback((dateString: string) => {
@@ -197,7 +199,7 @@ export function LogAnalyzer() {
             (log) =>
               log.ip.toLowerCase().includes(lowerCaseSearch) ||
               log.path.toLowerCase().includes(lowerCaseSearch) ||
-              log.user_agent.toLowerCase().includes(lowerCaseSearch)
+              log.user_agent.toLowerCase().includes(lowerCaseSearch),
           );
         }
 
@@ -214,7 +216,7 @@ export function LogAnalyzer() {
         // Apply file type filter
         if (fileTypeFilter.length > 0) {
           result = result.filter((log) =>
-            fileTypeFilter.includes(log.file_type)
+            fileTypeFilter.includes(log.file_type),
           );
         }
 
@@ -222,7 +224,7 @@ export function LogAnalyzer() {
         if (botFilter !== null) {
           if (botFilter === "bot") {
             result = result.filter(
-              (log) => log?.crawler_type && log.crawler_type !== "Human"
+              (log) => log?.crawler_type && log.crawler_type !== "Human",
             );
           } else if (botFilter === "Human") {
             result = result.filter((log) => log?.crawler_type === "Human");
@@ -235,7 +237,7 @@ export function LogAnalyzer() {
             result = result.filter((log) => log?.user_agent.includes("Mobile"));
           } else if (botTypeFilter === "Desktop") {
             result = result.filter(
-              (log) => !log?.user_agent.includes("Mobile")
+              (log) => !log?.user_agent.includes("Mobile"),
             );
           }
         }
@@ -288,7 +290,7 @@ export function LogAnalyzer() {
       sortConfig,
       verifiedFilter,
       botTypeFilter,
-    ]
+    ],
   );
 
   const [searchInput, setSearchInput] = useState("");
@@ -299,7 +301,7 @@ export function LogAnalyzer() {
         searchTermRef.current = term;
         applyFilters(term, entries);
       }, 300),
-    [entries, applyFilters]
+    [entries, applyFilters],
   );
 
   const handleSearchChange = useCallback(
@@ -308,7 +310,7 @@ export function LogAnalyzer() {
       setSearchInput(value);
       debouncedSearch(value);
     },
-    [debouncedSearch]
+    [debouncedSearch],
   );
 
   // Apply filters when search term or entries change
@@ -374,6 +376,8 @@ export function LogAnalyzer() {
     setFileTypeFilter([]);
     setVerifiedFilter(null);
     setBotTypeFilter(null);
+    setShowAgent(false);
+    setUrlAgentFilter("url");
   }, []);
 
   // Export logs as CSV
@@ -435,7 +439,7 @@ export function LogAnalyzer() {
         "\uFEFF" + headers.map(sanitizeForCSV).join(",") + "\r\n",
         {
           encoding: "utf8",
-        }
+        },
       );
 
       // 6. Process data in batches with validation
@@ -518,6 +522,27 @@ export function LogAnalyzer() {
     });
   }
 
+  function logIpMasking(ip: string): string {
+    if (!ip) return "";
+
+    if (ip.includes(":")) {
+      // Likely IPv6
+      return ip
+        .split(":")
+        .map((part, i) => (i < 2 ? part : "***"))
+        .join(":");
+    } else if (ip.includes(".")) {
+      // Likely IPv4
+      return ip
+        .split(".")
+        .map((part, i) => (i < 2 ? part : "***"))
+        .join(".");
+    }
+
+    // Unknown format, return masked
+    return "***.***.***.***";
+  }
+
   return (
     <div className="space-y-4 flex flex-col flex-1 h-full not-selectable">
       <div className="flex flex-col md:flex-row justify-between relative -mb-4 p-1 h-full">
@@ -587,7 +612,9 @@ export function LogAnalyzer() {
                   checked={statusFilter.includes(code)}
                   onCheckedChange={(checked) => {
                     setStatusFilter((prev) =>
-                      checked ? [...prev, code] : prev.filter((c) => c !== code)
+                      checked
+                        ? [...prev, code]
+                        : prev.filter((c) => c !== code),
                     );
                   }}
                 >
@@ -640,7 +667,7 @@ export function LogAnalyzer() {
                     setMethodFilter((prev) =>
                       checked
                         ? [...prev, method]
-                        : prev.filter((m) => m !== method)
+                        : prev.filter((m) => m !== method),
                     );
                   }}
                 >
@@ -693,7 +720,7 @@ export function LogAnalyzer() {
                     setFileTypeFilter((prev) =>
                       checked
                         ? [...prev, fileType]
-                        : prev.filter((m) => m !== fileType)
+                        : prev.filter((m) => m !== fileType),
                     );
                   }}
                 >
@@ -720,6 +747,23 @@ export function LogAnalyzer() {
             </SelectContent>
           </Select>
 
+          {/* USER AGENT AND URL FILTER */}
+
+          <Select
+            value={urlAgentFilter}
+            onValueChange={(value) => {
+              setUrlAgentFilter(value);
+              setShowAgent(value === "agent");
+            }}
+          >
+            <SelectTrigger className="w-[125px] dark:bg-brand-darker dark:text-white">
+              <SelectValue placeholder="URLs" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="url">URLs</SelectItem>
+              <SelectItem value="agent">Agents</SelectItem>
+            </SelectContent>
+          </Select>
           {/* SELECT BOT TYPE (DESKTOP OR MOBILE) */}
           <Select
             value={botTypeFilter === null ? "all" : botTypeFilter}
@@ -886,7 +930,7 @@ export function LogAnalyzer() {
                       className="cursor-pointer pl-7"
                       onClick={() => requestSort("path")}
                     >
-                      Path
+                      {showAgent ? "User Agent" : "Path"}
                       {sortConfig?.key === "path" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${
@@ -927,21 +971,23 @@ export function LogAnalyzer() {
                         />
                       )}
                     </TableHead>
-                    <TableHead
-                      className="cursor-pointer"
-                      onClick={() => requestSort("responseSize")}
-                    >
-                      Size
-                      {sortConfig?.key === "responseSize" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      )}
-                    </TableHead>
+                    {!showAgent && (
+                      <TableHead
+                        className="cursor-pointer"
+                        onClick={() => requestSort("responseSize")}
+                      >
+                        Size
+                        {sortConfig?.key === "responseSize" && (
+                          <ChevronDown
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        )}
+                      </TableHead>
+                    )}
                     <TableHead align="center" className="text-left w-[120px]">
                       Crawler Type
                     </TableHead>
@@ -965,6 +1011,9 @@ export function LogAnalyzer() {
                         getStatusCodeColor={getStatusCodeColor}
                         formatResponseSize={formatResponseSize}
                         showIp={showIp}
+                        showAgent={showAgent}
+                        setShowAgent={setShowAgent}
+                        logIpMasking={logIpMasking}
                       />
                     ))
                   ) : (
@@ -1015,6 +1064,9 @@ function LogRow({
   getStatusCodeColor,
   formatResponseSize,
   showIp,
+  showAgent,
+  setShowAgent,
+  logIpMasking,
 }) {
   return (
     <>
@@ -1043,10 +1095,7 @@ function LogRow({
               <p className="text-xs truncate">{log.ip}</p>
             ) : (
               <p className="text-xs -gray-500 truncate">
-                {log?.ip
-                  .split(".")
-                  .map((part, i) => (i < 2 ? part : "***"))
-                  .join(".")}
+                {logIpMasking(log?.ip)}
               </p>
             )}
           </div>
@@ -1077,11 +1126,20 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
           {log?.browser}
         </TableCell>
         <TableCell className="max-w-44 ">{formatDate(log.timestamp)}</TableCell>
-        <TableCell className="max-w-[780px]  min-w-[500px]    truncate mr-2">
-          <span className="mr-1 inline-block" style={{ paddingTop: "" }}>
-            {getFileIcon(log.file_type)}
-          </span>
-          {showOnTables && domain ? "https://" + domain + log.path : log?.path}
+
+        <TableCell className="max-w-[780px] min-w-[500px] truncate mr-2">
+          {!showAgent ? (
+            <>
+              <span className="mr-1 inline-block" style={{ paddingTop: "" }}>
+                {getFileIcon(log.file_type)}
+              </span>
+              {showOnTables && domain
+                ? "https://" + domain + log.path
+                : log?.path}
+            </>
+          ) : (
+            log?.user_agent
+          )}
         </TableCell>
         <TableCell className="max-w-[480px] truncate">
           <Badge variant={"outline"}>{log.file_type}</Badge>
@@ -1091,9 +1149,12 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
             {log.status}
           </Badge>
         </TableCell>
-        <TableCell width={70}>
-          {formatResponseSize(log.response_size)}
-        </TableCell>
+
+        {!showAgent && (
+          <TableCell width={70}>
+            {formatResponseSize(log.response_size)}
+          </TableCell>
+        )}
         <TableCell className="max-w-[180px] w-1 truncate text-center">
           <Badge
             variant="outline"
@@ -1118,7 +1179,9 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col max-w-5xl">
                 <div className="flex mb-2 space-x-2 items-center justify-between">
-                  <h4 className="font-bold">User Agent</h4>
+                  <h4 className="font-bold">
+                    {showAgent ? "Path" : "User Agent"}
+                  </h4>
                   {log.verified && (
                     <div className="flex items-center space-x-1 bg-red-200 dark:bg-red-400 p-1 px-2 text-xs rounded-md">
                       <BadgeCheck className="text-blue-700 pr-1" size={18} />
@@ -1128,7 +1191,7 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
                 </div>
                 <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                   <p className="text-sm font-mono break-all">
-                    {log.user_agent}
+                    {!showAgent ? log.user_agent : log?.path}
                   </p>
                 </div>
               </div>
@@ -1257,7 +1320,7 @@ function PaginationControls({
           {indexOfFirstItem + 1}-
           {Math.min(
             indexOfLastItem,
-            filteredLogs.length > 0 ? filteredLogs.length : entries.length
+            filteredLogs.length > 0 ? filteredLogs.length : entries.length,
           )}{" "}
           of{" "}
           {filteredLogs.length > 0

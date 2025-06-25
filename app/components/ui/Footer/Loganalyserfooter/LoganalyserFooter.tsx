@@ -112,7 +112,7 @@ function LogAnalyserFooter() {
   };
 
   return (
-    <div className="flex items-center space-x-4 text-xs mt-[1px] ml-1">
+    <div className="flex items-center space-x-4 text-xs mt-[1px] ml-2">
       <FaFolder className="-mr-3 text-sm text-brand-bright" />
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
