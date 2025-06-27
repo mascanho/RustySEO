@@ -123,6 +123,8 @@ export function LogAnalyzer() {
   const [showIp, setShowIp] = useState(false);
   const [showAgent, setShowAgent] = useState(false);
   const [urlAgentFilter, setUrlAgentFilter] = useState("url");
+  const [activeSearchTerm, setActiveSearchTerm] = useState("");
+  const [searchInput, setSearchInput] = useState("");
 
   // Helper functions
   const formatDate = useCallback((dateString: string) => {
@@ -195,8 +197,8 @@ export function LogAnalyzer() {
         let result = [...entries];
 
         // Apply search
-        if (term) {
-          const lowerCaseSearch = term.toLowerCase();
+        if (activeSearchTerm) {
+          const lowerCaseSearch = activeSearchTerm?.toLowerCase();
           result = result.filter(
             (log) =>
               log.ip.toLowerCase().includes(lowerCaseSearch) ||
@@ -292,28 +294,23 @@ export function LogAnalyzer() {
       sortConfig,
       verifiedFilter,
       botTypeFilter,
+      activeSearchTerm,
     ],
   );
 
-  const [searchInput, setSearchInput] = useState("");
-  // DEBOUNCING SEARCH FUNCTION
-  const debouncedSearch = useMemo(
-    () =>
-      debounce((term: string) => {
-        searchTermRef.current = term;
-        applyFilters(term, entries);
-      }, 300),
-    [entries, applyFilters],
-  );
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchInput(e.target.value);
+  };
 
-  const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e?.target?.value;
-      setSearchInput(value);
-      debouncedSearch(value);
-    },
-    [debouncedSearch],
-  );
+  const handleSearchClick = () => {
+    setActiveSearchTerm(searchInput); // Optional: Add a search button
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      setActiveSearchTerm(searchInput);
+    }
+  };
 
   // Apply filters when search term or entries change
   useEffect(() => {
@@ -369,6 +366,8 @@ export function LogAnalyzer() {
 
   // Reset all filters
   const resetFilters = useCallback(() => {
+    setSearchInput("");
+    setActiveSearchTerm("");
     setSearchTerm("");
     setStatusFilter([]);
     setMethodFilter([]);
@@ -562,26 +561,25 @@ export function LogAnalyzer() {
             className="pl-8 w-full dark:text-white"
             value={searchInput}
             onChange={handleSearchChange}
+            onKeyDown={handleKeyDown}
             onKeyPress={(e) => e.key === "Enter" && setSearchTerm(inputValue)}
           />
-          {/* <button */}
-          {/*   onClick={() => setSearchTerm(inputValue)} */}
-          {/*   className="absolute right-3 bg-brand-bright p-1 top-2 rounded-md px-2 dark:text-white text-xs" */}
-          {/* > */}
-          {/*   search */}
-          {/* </button> */}
-
-          {inputValue && (
+          <button
+            onClick={handleSearchClick}
+            className="absolute right-3 bg-brand-bright p-1 top-2 rounded-md px-2 dark:text-white text-xs"
+          >
+            search
+          </button>
+          {searchInput && (
             <X
               size={14}
-              className="absolute right-3 text-red-500 w-6 dark:text-red-500    top-3 rounded-md  text-xs bg-white dark:bg-brand-darker cursor-pointer "
+              className="absolute right-[70px] text-red-500 w-6 dark:text-red-500 top-3 rounded-md text-xs bg-white dark:bg-brand-darker cursor-pointer"
               onClick={() => {
-                setInputValue("");
-                setSearchTerm("");
-                resetFilters();
+                setSearchInput("");
+                setActiveSearchTerm("");
               }}
             />
-          )}
+          )}{" "}
         </div>
 
         <div className="flex flex-1 gap-1">
@@ -1129,18 +1127,21 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
         </TableCell>
         <TableCell className="max-w-44 ">{formatDate(log.timestamp)}</TableCell>
 
-        <TableCell className="max-w-[780px] min-w-[500px] truncate mr-2">
+        <TableCell className="max-w-[10%] truncate mr-2">
           {!showAgent ? (
-            <>
-              <span className="mr-1 inline-block" style={{ paddingTop: "" }}>
+            <section className="max-w-[99%] truncate">
+              <span
+                className="mr-1 inline-block pt-[1px]"
+                style={{ paddingTop: "" }}
+              >
                 {getFileIcon(log.file_type)}
               </span>
               {showOnTables && domain
                 ? "https://" + domain + log.path
                 : log?.path}
-            </>
+            </section>
           ) : (
-            <section className="max-w-[780px]  truncate relative ml-2">
+            <section className="max-w-[99%]  truncate relative ml-2">
               <span className="absolute">
                 <ImUserTie className="text-brand-bright mr-1 mt-[2px]" />{" "}
               </span>

@@ -219,82 +219,79 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
   // ###########################################
   // Handle all the logic to bring the data to the frontend
   // GET THE SELECTED LOG FROM THE PROJECT NAME TO ANALYSE THE LOGS
-  const getSelectedLogForAnalysis = async (projectName: string, action) => {
-    if (!projectName) {
-      toast.error("Please select a project");
-      return;
-    }
 
-    // Listen for log batches (setup BEFORE invoking the command)
-    const allLogs: LogResult[] = [];
-    const unlistenBatch = await listen<LogResult[]>(
-      "project-logs-batch",
-      (event) => {
-        allLogs.push(...event.payload);
-        console.log("Current batch received. Total logs:", allLogs.length);
-      },
-    );
+  const getSelectedLogForAnalysis = useCallback(
+    async (projectName: string, action: "append" | "replace") => {
+      if (!projectName) {
+        toast.error("Please select a project");
+        return;
+      }
 
-    // Listen for completion/errors
-    const unlistenComplete = await listen<void>("project-logs-complete", () => {
-      console.log("Streaming complete. Final count:", allLogs.length);
-    });
+      // Initialize listeners and logs array
+      const allLogs: LogResult[] = [];
+      let unlistenBatch: () => void;
+      let unlistenComplete: () => void;
 
-    try {
-      setLoadingProjects((prev) => ({
-        ...prev,
-        [`${projectName}-${action}`]: true,
-      }));
-      toast.info(`Processing logs for ${projectName}...`);
+      try {
+        // Setup listeners
+        [unlistenBatch, unlistenComplete] = await Promise.all([
+          listen<LogResult[]>("project-logs-batch", (event) => {
+            allLogs.push(...event.payload);
+          }),
+          listen<void>("project-logs-complete", () => {
+            console.log("Streaming complete. Final count:", allLogs.length);
+          }),
+        ]);
 
-      // Start streaming (use the STREAMING command, not the blocking one)
-      await invoke("get_logs_by_project_name_for_processing_command", {
-        project: projectName,
-      });
+        // Set loading state once
+        setLoadingProjects((prev) => ({
+          ...prev,
+          [projectName]: true,
+          [`${projectName}-${action}`]: true,
+        }));
 
-      // Process logs ONLY after streaming finishes
-      // RESET THE PREVIOUS LOGS TO LOAD THE NEW LOGS IF THE USER SELECTED "REPLACE"
-      if (action === "replace") {
-        resetAll();
-      } // IF NOT REPLACE, KEEP THE PREVIOUS LOGS
+        toast.info(`Processing logs for ${projectName}...`);
 
-      // SEND THE LOGS TO THE BE
-      await processLogs(allLogs);
+        // Start streaming
+        await invoke("get_logs_by_project_name_for_processing_command", {
+          project: projectName,
+        });
 
-      toast.success(`Project ${projectName} processed successfully`);
-    } catch (err) {
-      console.error("Processing failed:", err);
-      toast.error(
-        <section className="w-full">
-          {err instanceof Error ? err.message : String(err)}
-        </section>,
-      );
-    } finally {
-      // Cleanup listeners and loading state
-      unlistenBatch?.();
-      unlistenComplete?.();
-      setLoadingProjects((prev) => ({ ...prev, [projectName]: false }));
-      console.log("finished all the bull;shit");
-      setLoadingProjects((prev) => ({
-        ...prev,
-        [`${projectName}-${action}`]: false,
-      }));
-    }
-  };
+        // Process logs
+        if (action === "replace") {
+          resetAll();
+        }
 
-  // Processing logs function
-  const processLogs = async (logData: any[]) => {
-    console.log("logDATA length", logData.length);
+        await processLogs(allLogs);
+        toast.success(`Project ${projectName} processed successfully`);
+      } catch (err) {
+        console.error("Processing failed:", err);
+        toast.error(
+          <section className="w-full">
+            {err instanceof Error ? err.message : String(err)}
+          </section>,
+        );
+      } finally {
+        // Cleanup
+        unlistenBatch?.();
+        unlistenComplete?.();
+        setLoadingProjects((prev) => ({
+          ...prev,
+          [projectName]: false,
+          [`${projectName}-${action}`]: false,
+        }));
+      }
+    },
+    [resetAll, toast],
+  );
 
-    // GET THE JAVASCRIPT CHUNK SIZE FROM THE BACKEND
+  // Memoize processLogs if it's used elsewhere
+  const processLogs = useCallback(async (logData: LogResult[]) => {
     const CHUNK_SIZE = await invoke("get_project_chunk_size_command");
-
-    console.log("THIS IS THE CHUNK SIZE FROM JS", CHUNK_SIZE);
 
     for (let i = 0; i < logData.length; i += CHUNK_SIZE) {
       const chunk = logData.slice(i, i + CHUNK_SIZE);
       try {
-        console.log("Processing chunk:", chunk);
         await invoke<LogAnalysisResult>("check_logs_command", {
           data: {
             log_contents: chunk.map((item) => [item.project, item.log]),
@@ -302,14 +299,13 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
           storingLogs: false,
           project: "",
         });
-        // Optional: Add slight delay between chunks
         await new Promise((resolve) => setTimeout(resolve, 2));
       } catch (error) {
         console.error("Failed to process chunk:", error);
         throw error;
       }
     }
-  };
+  }, []);
 
   // ##############################################
   //
