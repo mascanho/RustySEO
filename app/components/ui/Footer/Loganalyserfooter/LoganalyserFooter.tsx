@@ -15,7 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { FaFolder } from "react-icons/fa";
+import { FaFolder, FaProjectDiagram } from "react-icons/fa";
 import {
   useCurrentProject,
   useProjectsLogs,
@@ -112,13 +112,15 @@ function LogAnalyserFooter() {
   };
 
   return (
-    <div className="flex items-center space-x-4 text-xs mt-[1px] ml-2">
-      <FaFolder className="-mr-3 text-sm text-brand-bright" />
+    <div className="flex items-center  text-xs mt-[1px] ml-2">
+      <div className="w-6 bg-brand-bright px-1 h-[16px] border-r-brand-dark ">
+        <FaProjectDiagram className=" text-[10px] ml-[3px] mt-[3px] text-white" />
+      </div>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="default"
-            className="w-fit max-w-[200px] bg-brand-bright rounded-r-full  border-t-gray-700 border-l-gray-700 border-r-gray-900 border-b-gray-900  shadow-[inset_0_0_1px_1px_rgba(0,0,0,0.3)]  dark:border-l-gray-600 dark:border-r-gray-900 dark:border-b-gray-900 dark:bg-brand-bright dark:text-white text-white dark:hover:bg-brand-bright/80 justify-start truncate text-[10px] px-2 pr-3 m-0 h-3 transform scale-[0.98]"
+            className="w-fit max-w-[200px] bg-brand-bright rounded-r-full     dark:bg-brand-bright dark:text-white text-white dark:hover:bg-brand-bright/80 justify-start truncate text-[10px] px-2 pr-3 m-0 h-3 transform scale-[0.98] "
           >
             {selectedProject || selectedStatus?.label || "Select project..."}
           </Button>

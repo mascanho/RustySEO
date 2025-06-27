@@ -285,7 +285,7 @@ const Footer = () => {
                 </Popover>
                 <section className="flex items-center ml-2.5">
                   <FaDatabase
-                    className={`${logSorage ? "text-green-700 mt-[1px]" : "text-red-700 mt-[1px]"} mr-1.5 `}
+                    className={`${logSorage ? "text-green-700 mt-[1px]" : "text-red-700 mt-[1px]"} mr-[5px] `}
                   />{" "}
                   {logSorage ? "" : ""}
                 </section>
