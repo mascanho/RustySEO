@@ -543,6 +543,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
             onClick={handleGetAllProjects}
             variant="secondary"
             disabled={isLoading}
+            className="rounded-none"
           >
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin mr-2" />

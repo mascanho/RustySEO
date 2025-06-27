@@ -566,14 +566,14 @@ export function LogAnalyzer() {
           />
           <button
             onClick={handleSearchClick}
-            className="absolute right-3 bg-brand-bright p-1 top-2 rounded-md px-2 dark:text-white text-xs"
+            className="absolute right-1 border-brand-bright border hover:bg-brand-bright hover:text-white text-black bg-white dark:bg-brand-darker  p-1 h-8 min-w-16   top-1 rounded-l-md px-2 dark:text-white text-xs dark:hover:bg-brand-bright"
           >
             search
           </button>
           {searchInput && (
             <X
               size={14}
-              className="absolute right-[70px] text-red-500 w-6 dark:text-red-500 top-3 rounded-md text-xs bg-white dark:bg-brand-darker cursor-pointer"
+              className="absolute right-[75px] text-red-500 w-6 dark:text-red-500 top-3 rounded-md text-xs bg-white dark:bg-brand-darker cursor-pointer"
               onClick={() => {
                 setSearchInput("");
                 setActiveSearchTerm("");
@@ -1127,9 +1127,9 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
         </TableCell>
         <TableCell className="max-w-44 ">{formatDate(log.timestamp)}</TableCell>
 
-        <TableCell className="max-w-[10%] truncate mr-2">
+        <TableCell className="max-w-[100%] truncate mr-2">
           {!showAgent ? (
-            <section className="max-w-[99%] truncate">
+            <section className="max-w-[800px] truncate">
               <span
                 className="mr-1 inline-block pt-[1px]"
                 style={{ paddingTop: "" }}
@@ -1141,7 +1141,7 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
                 : log?.path}
             </section>
           ) : (
-            <section className="max-w-[99%]  truncate relative ml-2">
+            <section className="max-w-[99%] w-[850px]  truncate relative ml-2">
               <span className="absolute">
                 <ImUserTie className="text-brand-bright mr-1 mt-[2px]" />{" "}
               </span>

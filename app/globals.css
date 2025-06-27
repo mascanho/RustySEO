@@ -922,3 +922,22 @@ tbody tr {
   max-height: 28px !important;
   height: 1px !important;
 }
+
+/* NATIVE BUTTON  */
+.native-button {
+  @apply px-4 py-1.5 
+  bg-brand-bright text-white dark:bg-[#2d2d2d]
+  border border-[#adadad] dark:border-[#4a4a4a]
+  rounded-sm
+   dark:text-[#e6e6e6]
+  text-xs
+  font-sans
+  shadow-sm
+  active:bg-brand-bright/90 dark:active:bg-[#424242]
+  active:border-[#7e7e7e] dark:active:border-[#5a5a5a]
+  active:shadow-none
+  focus:outline-none focus:ring-1 focus:ring-[#0078d7]
+  transition-all duration-75
+  disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
