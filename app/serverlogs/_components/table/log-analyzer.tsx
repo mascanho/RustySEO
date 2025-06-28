@@ -553,7 +553,7 @@ export function LogAnalyzer() {
           </div>
         )}
         <div className="relative w-full mr-1">
-          <Search className="absolute dark:text-white/50 left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute dark:text-white/50 left-2.5 top-3 h-4 w-4 text-muted-foreground" />
           <Input
             reset={resetFilters}
             type="search"
@@ -566,14 +566,14 @@ export function LogAnalyzer() {
           />
           <button
             onClick={handleSearchClick}
-            className="absolute right-1 border-brand-bright border hover:bg-brand-bright hover:text-white text-black bg-white dark:bg-brand-darker  p-1 h-8 min-w-16   top-1 rounded-l-md px-2 dark:text-white text-xs dark:hover:bg-brand-bright"
+            className="absolute right-2 border-brand-bright border hover:bg-brand-bright hover:text-white text-black bg-white dark:bg-brand-darker   h-6 min-w-16   top-2 rounded-l-md px-2 dark:text-white text-xs dark:hover:bg-brand-bright"
           >
             search
           </button>
           {searchInput && (
             <X
               size={14}
-              className="absolute right-[75px] text-red-500 w-6 dark:text-red-500 top-3 rounded-md text-xs bg-white dark:bg-brand-darker cursor-pointer"
+              className="absolute right-[75px] text-red-500 w-6 dark:text-red-500 top-[13px] rounded-md text-xs bg-white dark:bg-brand-darker cursor-pointer"
               onClick={() => {
                 setSearchInput("");
                 setActiveSearchTerm("");
@@ -1141,7 +1141,7 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
                 : log?.path}
             </section>
           ) : (
-            <section className="max-w-[99%] w-[750px]  truncate relative ml-2">
+            <section className="max-w-[99%] w-[750px] 3xl:w-[950px]  truncate relative ml-2">
               <span className="absolute">
                 <ImUserTie className="text-brand-bright mr-1 mt-[2px]" />{" "}
               </span>
