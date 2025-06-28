@@ -113,7 +113,7 @@ export default function WidgetLogs() {
           ([name, value]) => ({
             name: `${name} ${getStatusText(name)}`,
             value,
-          })
+          }),
         ),
         Crawlers: crawlerData.length > 0 ? crawlerData : "",
       }[activeTab] || []
@@ -167,7 +167,7 @@ export default function WidgetLogs() {
         <PopoverTrigger className="absolute top-3 font-bold text-black/20 dark:text-white/50 text-xl">
           <div className="flex flex-col items-start justify-start">
             <span className="hover:text-brand-bright">
-              {formatNumber(currentLogs?.length)} Entries
+              {formatNumber(currentLogs?.length)} entries
             </span>
           </div>
         </PopoverTrigger>
@@ -272,7 +272,7 @@ export default function WidgetLogs() {
                   formatter={(value, name, props) => {
                     const total = chartData.reduce(
                       (sum, item) => sum + item.value,
-                      0
+                      0,
                     );
                     const percentage =
                       total > 0 ? Math.round((Number(value) / total) * 100) : 0;
@@ -368,9 +368,9 @@ export default function WidgetLogs() {
                                 (entry.value /
                                   chartData.reduce(
                                     (sum, item) => sum + item.value,
-                                    0
+                                    0,
                                   )) *
-                                  100
+                                  100,
                               )}
                               %
                             </span>
@@ -412,7 +412,7 @@ export default function WidgetLogs() {
                     <span className="font-medium text-sm tabular-nums">
                       {formatNumber(overview.crawler_count)} (
                       {Math.round(
-                        (overview.crawler_count / overview.line_count) * 100
+                        (overview.crawler_count / overview.line_count) * 100,
                       )}
                       %)
                     </span>
@@ -458,7 +458,7 @@ export default function WidgetLogs() {
               <div className="space-y-2">
                 {crawlerData.map((crawler, index) => {
                   const percentage = Math.round(
-                    (crawler.value / overview.line_count) * 100
+                    (crawler.value / overview.line_count) * 100,
                   );
                   return (
                     <div key={crawler.name} className="space-y-1">
