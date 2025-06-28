@@ -44,6 +44,7 @@ pub struct Settings {
     pub log_sleep_stream_duration: u64,
     pub log_capacity: usize,
     pub log_project_chunk_size: usize,
+    pub log_file_upload_size: usize,
 }
 
 impl Settings {
@@ -76,6 +77,7 @@ impl Settings {
             log_sleep_stream_duration: 1,
             log_capacity: 1,
             log_project_chunk_size: 1,
+            log_file_upload_size: 75, // THE DEFAULT VALUE TO FILE UPLOADING
         }
     }
 
@@ -201,6 +203,8 @@ pub fn print_settings(settings: &Settings) {
         "Log Chunk Size Project: {}",
         settings.log_project_chunk_size
     );
+
+    println!("Log File Upload Size: {}", settings.log_file_upload_size);
 
     println!("")
 }
@@ -353,6 +357,13 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
         settings.log_project_chunk_size = val as usize;
     }
 
+    if let Some(val) = updates
+        .get("log_file_upload_size")
+        .and_then(|v| v.as_integer())
+    {
+        settings.log_file_upload_size = val as usize;
+    }
+
     // Explicit file writing with flush
     let config_path = Settings::config_path()?;
     let toml_str = toml::to_string_pretty(&settings) // prettier formatting
@@ -377,6 +388,12 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
 pub async fn get_project_chunk_size_command() -> Result<usize, String> {
     let settings = load_settings().await?;
     Ok(settings.log_project_chunk_size)
+}
+
+#[tauri::command]
+pub async fn get_log_file_upload_size_command() -> Result<usize, String> {
+    let settings = load_settings().await?;
+    Ok(settings.log_file_upload_size)
 }
 
 #[tauri::command]

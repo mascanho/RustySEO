@@ -10,6 +10,7 @@ use directories::ProjectDirs;
 use globals::actions;
 use serde::{Deserialize, Deserializer, Serialize};
 use settings::settings::delete_config_folders_command;
+use settings::settings::get_log_file_upload_size_command;
 use settings::settings::get_project_chunk_size_command;
 use settings::settings::get_system;
 use settings::settings::open_config_folder_command;
@@ -254,6 +255,7 @@ async fn main() {
             loganalyser::database::delete_project_command,
             loganalyser::database::get_logs_by_project_name_for_processing_command,
             get_system,
+            get_log_file_upload_size_command,
             get_project_chunk_size_command,
             delete_config_folders_command,
             open_config_folder_command

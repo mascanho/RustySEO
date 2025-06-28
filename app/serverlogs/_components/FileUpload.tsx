@@ -37,7 +37,7 @@ interface ProgressUpdate {
 }
 
 export function FileUpload({
-  maxSizeMB = 75,
+  // maxSizeMB = 75,
   acceptedFileTypes = ["text/plain", ".log", ".txt"],
   className,
   closeDialog,
@@ -60,6 +60,23 @@ export function FileUpload({
   const { selectedProject } = useSelectedProject();
   // local storing logs
   const [storingLogs, setStoringLogs] = useState(false);
+  const [maxSizeMB, setMaxSizeMB] = useState(0);
+
+  async function getFileUploadLimit() {
+    const result = await invoke("get_log_file_upload_size_command");
+    console.log("result for the filesize", result);
+
+    if (result) {
+      setMaxSizeMB(result);
+    }
+  }
+
+  useEffect(() => {
+    // GET THE FILE UPOLOAD LIMIE FROM THE FILE IN THE SETTINGS
+    getFileUploadLimit();
+  }, []);
+
+  console.log("maxSizeMB", maxSizeMB);
 
   // Get the initial state of storing logs from the localStorage
   useEffect(() => {
