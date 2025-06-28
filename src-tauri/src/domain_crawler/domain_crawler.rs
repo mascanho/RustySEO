@@ -369,6 +369,7 @@ async fn process_url(
             eprintln!("Failed to emit crawl result: {}", err);
         }
 
+        //TODO: SINGLE URL OBJECT CAN ALSO BE ADDED TO DB HERE
         let percentage = (state.crawled_urls as f32 / state.total_urls as f32) * 100.0;
         print!(
             "\r{}: {:.2}% {}",
@@ -378,7 +379,6 @@ async fn process_url(
         );
         std::io::stdout().flush().unwrap();
     }
-
     Ok(result)
 }
 
@@ -504,6 +504,7 @@ pub async fn crawl_domain(
                     let mut state = state.lock().await;
                     if !state.visited.contains(&url.to_string()) {
                         state.results.push(result.clone());
+                        println!("Batch size is: {}", batch_counter);
 
                         // Handle database insertion
                         if let Some(db) = &state.db {
@@ -601,6 +602,8 @@ pub async fn crawl_domain(
         Ok(()) => println!("Successfully cloned batched crawl into persistent db"),
         Err(e) => eprintln!("Failed to clone batched crawl into persistent db: {}", e),
     }
+
+    //TODO: Consider not returning any results here since they are already streamed to FE
 
     Ok(unique_results)
 }
