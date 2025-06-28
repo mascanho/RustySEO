@@ -1141,7 +1141,7 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
                 : log?.path}
             </section>
           ) : (
-            <section className="max-w-[99%] w-[850px]  truncate relative ml-2">
+            <section className="max-w-[99%] w-[750px]  truncate relative ml-2">
               <span className="absolute">
                 <ImUserTie className="text-brand-bright mr-1 mt-[2px]" />{" "}
               </span>
