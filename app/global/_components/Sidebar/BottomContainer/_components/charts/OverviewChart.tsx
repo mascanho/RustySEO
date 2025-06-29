@@ -73,7 +73,7 @@ function OverviewChart() {
     debounce((crawled_urls, total_urls) => {
       setStreamedCrawledPages(crawled_urls);
       setStreamedTotalPages(total_urls);
-    }, 100),
+    }, 300),
     [setStreamedCrawledPages, setStreamedTotalPages],
   );
 
