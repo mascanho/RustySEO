@@ -57,7 +57,7 @@ const MAX_DELAY: u64 = 8000;
 const CONCURRENT_REQUESTS: usize = 150;
 const CRAWL_TIMEOUT: Duration = Duration::from_secs(28800); // 8 hours
 const BATCH_SIZE: usize = 20;
-const DB_BATCH_SIZE: usize = 10; // Reduced to ensure more frequent writes for testing
+const DB_BATCH_SIZE: usize = 100; // Increased for better database write efficiency
 
 // Progress tracking structure
 #[derive(Clone, Serialize)]
