@@ -1,24 +1,21 @@
 use colored::*;
-use futures::stream::{self, StreamExt};
+use futures::stream::StreamExt;
 use rand::Rng;
 use reqwest::Client;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::collections::{HashSet, VecDeque};
 use std::io::Write;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use std::time::Instant;
-use tauri::{Emitter, Manager};
+use tauri::Emitter;
 use tokio::sync::{Mutex, Semaphore};
-use tokio::task;
 use tokio::time::{sleep, Duration};
 use url::Url;
 
-use crate::crawler::get_page_speed_insights;
 use crate::domain_crawler::database::{Database, DatabaseResults};
 use crate::domain_crawler::extractors::html::extract_html;
 use crate::domain_crawler::helpers::https_checker::valid_https;
 use crate::domain_crawler::models::Extractor;
-use crate::domain_crawler::user_agents;
 use crate::settings::settings::Settings;
 use crate::AppState;
 
@@ -30,36 +27,18 @@ use super::helpers::hreflang_selector::select_hreflang;
 use super::helpers::html_size_calculator::calculate_html_size;
 use super::helpers::keyword_selector::extract_keywords;
 use super::helpers::language_selector::detect_language;
-use super::helpers::links_status_code_checker::get_links_status_code;
 use super::helpers::meta_robots_selector::{get_meta_robots, MetaRobots};
 use super::helpers::text_ratio::{get_text_ratio, TextRatio};
 use super::helpers::{
-    alt_tags, anchor_links, check_html_page,
-    css_selector::{self, extract_css},
-    domain_checker::url_check,
+    alt_tags, anchor_links, check_html_page, css_selector, domain_checker::url_check,
     headings_selector, iframe_selector, images_selector, indexability, javascript_selector,
-    links_selector,
-    mobile_checker::is_mobile,
-    page_description,
-    pdf_selector::extract_pdf_links,
-    schema_selector, title_selector,
-    word_count::{self, get_word_count},
+    links_selector, mobile_checker::is_mobile, page_description, schema_selector, title_selector,
+    word_count::get_word_count,
 };
-use super::helpers::{pdf_checker, pdf_selector};
+
 use super::models::DomainCrawlResults;
 use super::page_speed::bulk::fetch_psi_bulk;
-use super::page_speed::model::Crawler;
 
-// Constants for crawler behavior
-const MAX_RETRIES: usize = 5;
-const BASE_DELAY: u64 = 500;
-const MAX_DELAY: u64 = 8000;
-const CONCURRENT_REQUESTS: usize = 150;
-const CRAWL_TIMEOUT: Duration = Duration::from_secs(28800); // 8 hours
-const BATCH_SIZE: usize = 20;
-const DB_BATCH_SIZE: usize = 10; // Reduced to ensure more frequent writes for testing
-
-// Progress tracking structure
 #[derive(Clone, Serialize)]
 struct ProgressData {
     total_urls: usize,
@@ -68,13 +47,11 @@ struct ProgressData {
     failed_urls: usize,
 }
 
-// Crawl result structure
 #[derive(Clone, Serialize)]
 struct CrawlResultData {
     result: DomainCrawlResults,
 }
 
-// Structure to track crawler state
 pub struct CrawlerState {
     pub visited: HashSet<String>,
     pub failed_urls: HashSet<String>,
@@ -99,7 +76,6 @@ impl CrawlerState {
     }
 }
 
-// Helper to convert crawl results to database format
 fn to_database_results(result: &DomainCrawlResults) -> DatabaseResults {
     DatabaseResults {
         url: result.url.clone(),
@@ -107,7 +83,6 @@ fn to_database_results(result: &DomainCrawlResults) -> DatabaseResults {
     }
 }
 
-// Fetch URL with exponential backoff
 async fn fetch_with_exponential_backoff(
     client: &Client,
     url: &str,
@@ -148,7 +123,6 @@ async fn fetch_with_exponential_backoff(
     }
 }
 
-// Process single URL
 async fn process_url(
     url: Url,
     client: &Client,
@@ -178,10 +152,7 @@ async fn process_url(
     };
 
     let final_url = response.url().clone();
-
-    // check if the url is https or not
     let https = valid_https(&final_url);
-
     let status_code = response.status().as_u16();
     let content_type = response
         .headers()
@@ -205,13 +176,6 @@ async fn process_url(
         .iter()
         .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or("").to_string()))
         .collect::<Vec<_>>();
-
-    if response.headers().contains_key("cf-ray")
-        || response.headers().contains_key("x-cdn")
-        || response.headers().contains_key("x-cache")
-    {
-        sleep(Duration::from_secs(2)).await;
-    }
 
     let body = match response.text().await {
         Ok(body) => body,
@@ -238,42 +202,15 @@ async fn process_url(
         });
     }
 
-    let internal_external_links = anchor_links::extract_internal_external_links(&body, base_url);
-
-    let check_links_status_code = get_links_status_code(
-        internal_external_links,
-        base_url,
-        final_url.to_string(),
-        //settings,
-    )
-    .await;
-
-    // let check_url_with_page_speed = get_page_speed_insights_bulk(url, settings).await;
-
-    // Cross-origin checker funtion
     let cross_origin = analyze_cross_origin_security(&body, base_url);
 
-    // Page Speed Insights Checker
-    // Check if the key exists to make the call otherwise return an empty vector
-    // Attempt to fetch PSI results, but if there's an error, use an empty Vec
-    // Start PSI fetch as a separate task
-    // Start PSI fetch as a separate task
-    // Start PSI fetch as a separate task
-    let psi_future = if settings.page_speed_bulk {
+    if settings.page_speed_bulk {
         let url_clone = url.clone();
         let settings_clone = settings.clone();
-        Some(tokio::spawn(async move {
-            fetch_psi_bulk(url_clone, &settings_clone).await
-        }))
-    } else {
-        None
-    };
-
-    // Do all other processing while PSI is fetching
-    let psi_results = match psi_future {
-        Some(fut) => fut.await.map_err(|e| e.to_string())?, // Handle task join error
-        None => Ok(Vec::new()),                             // No PSI requested
-    };
+        tokio::spawn(async move {
+            let _ = fetch_psi_bulk(url_clone, &settings_clone).await;
+        });
+    }
 
     let result = DomainCrawlResults {
         url: final_url.to_string(),
@@ -285,7 +222,6 @@ async fn process_url(
         images: images_selector::extract_images_with_sizes_and_alts(&body, base_url).await,
         status_code,
         anchor_links: anchor_links::extract_internal_external_links(&body, base_url),
-        inoutlinks_status_codes: check_links_status_code,
         indexability: indexability::extract_indexability(&body),
         alt_tags: alt_tags::get_alt_tags(&body),
         schema: schema_selector::get_schema(&body),
@@ -313,7 +249,6 @@ async fn process_url(
         hreflangs: select_hreflang(&body),
         language: detect_language(&body),
         flesch: get_flesch_score(&body),
-        psi_results,
         extractor: Extractor {
             html: extract_html(&body).await,
             css: false,
@@ -366,7 +301,6 @@ async fn process_url(
             eprintln!("Failed to emit crawl result: {}", err);
         }
 
-        //TODO: SINGLE URL OBJECT CAN ALSO BE ADDED TO DB HERE
         let percentage = (state.crawled_urls as f32 / state.total_urls as f32) * 100.0;
         print!(
             "\r{}: {:.2}% {}",
@@ -389,21 +323,15 @@ pub async fn crawl_domain(
     db: Result<Database, DatabaseError>,
     settings_state: tauri::State<'_, AppState>,
 ) -> Result<(), String> {
-    // Import the user agents from another module to use across domain crawler
-    // // Using the ones from global state/memory that are placed in the HD
-    // let user_agents = user_agents::agents();
-
     let settings = Arc::new(settings_state.settings.read().await.clone());
 
     let client = Client::builder()
-        // .user_agent(&user_agents[rand::thread_rng().gen_range(0..user_agents.len())])
-        // Instead use the user agents in the configuration files
         .user_agent(
             &settings.user_agents[rand::thread_rng().gen_range(0..settings.user_agents.len())],
         )
-        .timeout(Duration::from_secs(settings.client_timeout)) // 60 seconds
-        .connect_timeout(Duration::from_secs(settings.client_connect_timeout)) // 15
-        .redirect(reqwest::redirect::Policy::limited(settings.redirect_policy)) // 5
+        .timeout(Duration::from_secs(settings.client_timeout))
+        .connect_timeout(Duration::from_secs(settings.client_connect_timeout))
+        .redirect(reqwest::redirect::Policy::limited(settings.redirect_policy))
         .build()
         .map_err(|e| e.to_string())?;
 
@@ -426,42 +354,39 @@ pub async fn crawl_domain(
         state.pending_urls.insert(base_url.to_string());
     }
 
-    // Using the settings here to replace the hardcoded concurrent requests
-    // let semaphore = Arc::new(Semaphore::new(CONCURRENT_REQUESTS));
     let semaphore = Arc::new(Semaphore::new(settings.concurrent_requests));
     let crawl_start_time = Instant::now();
-    let mut batch_counter = 0;
 
     loop {
         let current_batch: Vec<Url> = {
             let mut state = state.lock().await;
-            if state.queue.is_empty() {
-                if state.crawled_urls + state.failed_urls.len() >= state.total_urls {
-                    break;
-                }
+            if state.queue.is_empty() && state.pending_urls.is_empty() {
                 break;
             }
             let batch_size = std::cmp::min(settings.batch_size, state.queue.len());
             state.queue.drain(..batch_size).collect()
         };
 
-        let mut handles = Vec::with_capacity(current_batch.len());
-        for url in current_batch.clone() {
+        if current_batch.is_empty() && !state.lock().await.pending_urls.is_empty() {
+            sleep(Duration::from_millis(100)).await;
+            continue;
+        }
+
+        let handles = current_batch.into_iter().map(|url| {
             let client = client.clone();
             let base_url = base_url.clone();
             let state = state.clone();
             let app_handle = app_handle.clone();
             let semaphore = semaphore.clone();
-
             let settings_clone = settings.clone();
 
-            let handle = tokio::spawn(async move {
+            tokio::spawn(async move {
                 let _permit = semaphore.acquire().await.unwrap();
                 let jitter = rand::thread_rng().gen_range(500..2000);
                 sleep(Duration::from_millis(jitter)).await;
 
                 let mut retries = 0;
-                let result: Result<DomainCrawlResults, String> = loop {
+                loop {
                     match process_url(
                         url.clone(),
                         &client,
@@ -472,37 +397,32 @@ pub async fn crawl_domain(
                     )
                     .await
                     {
-                        Ok(result) => break Ok(result),
+                        Ok(result) => return (url, Ok(result)),
                         Err(e) => {
-                            eprintln!("Error processing URL: {}", e);
                             if retries >= settings_clone.max_retries {
+                                eprintln!("Error processing URL after max retries: {}", e);
                                 let mut state = state.lock().await;
                                 state.failed_urls.insert(url.to_string());
-                                break Ok(DomainCrawlResults {
-                                    url: url.to_string(),
-                                    status_code: 0,
-                                    ..Default::default()
-                                });
+                                return (url, Err(e));
                             }
                             retries += 1;
                             sleep(Duration::from_secs(1)).await;
                         }
                     }
-                };
-                (url, result)
-            });
+                }
+            })
+        });
 
-            handles.push(handle);
-        }
+        let results = futures::future::join_all(handles).await;
 
         let mut batch_results = Vec::new();
         let mut unique_urls_in_batch = HashSet::new();
 
-        for handle in handles {
-            match handle.await {
-                Ok((_url, Ok(result))) => {
-                    if unique_urls_in_batch.insert(result.url.clone()) {
-                        batch_results.push(result);
+        for result in results {
+            match result {
+                Ok((_url, Ok(crawl_result))) => {
+                    if unique_urls_in_batch.insert(crawl_result.url.clone()) {
+                        batch_results.push(crawl_result);
                     }
                 }
                 Ok((url, Err(_e))) => {
@@ -549,7 +469,6 @@ pub async fn crawl_domain(
 
     println!("Crawl completed.");
 
-    // CREATE THE DATABSES FOR THE DIFF TABLES
     match database::create_diff_tables() {
         Ok(()) => println!("Successfully created diff tables"),
         Err(e) => eprintln!("Failed to create diff tables: {}", e),

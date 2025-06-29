@@ -46,7 +46,6 @@ pub struct DomainCrawlResults {
     pub images: Result<Vec<(String, String, u64, String, u16, bool)>, String>,
     pub status_code: u16,
     pub anchor_links: Option<InternalExternalLinks>,
-    pub inoutlinks_status_codes: LinkCheckResults,
     pub indexability: Indexability,
     pub alt_tags: AltTags,
     pub schema: Option<String>,
@@ -71,7 +70,6 @@ pub struct DomainCrawlResults {
     pub pdf_files: Vec<String>,
     pub https: bool,
     pub cross_origin: SecuritySummary,
-    pub psi_results: Result<Vec<Value>, String>,
 }
 
 // Implement Default for DomainCrawlResults
@@ -86,12 +84,6 @@ impl Default for DomainCrawlResults {
             images: Ok(Vec::new()),
             status_code: 0, // Default to 0 for failed URLs
             anchor_links: None,
-            inoutlinks_status_codes: LinkCheckResults {
-                page: String::new(),
-                base_url: Url::parse("https://www.site.com").expect("failed to set default url"),
-                internal: Vec::new(),
-                external: Vec::new(),
-            },
             indexability: Indexability::default(),
             alt_tags: AltTags::default(),
             schema: None,
@@ -122,7 +114,6 @@ impl Default for DomainCrawlResults {
                 total_missing_cors: 0,
                 total_inline_scripts: 0,
             },
-            psi_results: Ok(Vec::new()),
         }
     }
 }
