@@ -168,7 +168,12 @@ const TableHeader = ({
               // border: "1px solid #ddd",
               padding: "8px",
               userSelect: "none",
-              textAlign: visibleAlignments[visibleIndex] as any,
+              justifyContent:
+                visibleAlignments[visibleIndex] === "center"
+                  ? "center"
+                  : visibleAlignments[visibleIndex] === "right"
+                  ? "flex-end"
+                  : "flex-start",
               height: "30px",
               display: "flex",
               alignItems: "center",
@@ -262,7 +267,12 @@ const TableRow = ({
             style={{
               // border: "1px solid #ddd",
               padding: "6px 8px",
-              textAlign: visibleAlignments[visibleIndex] as any,
+              justifyContent:
+                visibleAlignments[visibleIndex] === "center"
+                  ? "center"
+                  : visibleAlignments[visibleIndex] === "right"
+                  ? "flex-end"
+                  : "flex-start",
               overflow: "hidden",
               whiteSpace: "nowrap",
               height: "100%",
