@@ -99,12 +99,13 @@ impl CrawlerState {
     }
 }
 
-// Helper to convert crawl results to database format
-fn to_database_results(result: &DomainCrawlResults) -> DatabaseResults {
-    DatabaseResults {
+fn to_database_results(
+    result: &DomainCrawlResults,
+) -> Result<DatabaseResults, serde_json::Error> {
+    Ok(DatabaseResults {
         url: result.url.clone(),
-        data: serde_json::to_value(result).expect("Failed to serialize crawl results"),
-    }
+        data: serde_json::to_value(result)?,
+    })
 }
 
 // Fetch URL with exponential backoff
@@ -520,17 +521,23 @@ pub async fn crawl_domain(
         if !batch_results.is_empty() {
             let state = state.lock().await;
             if let Some(db) = &state.db {
-                let db_results = batch_results
+                let db_results: Vec<DatabaseResults> = batch_results
                     .iter()
-                    .map(to_database_results)
-                    .collect::<Vec<_>>();
+                    .filter_map(|result| {
+                        to_database_results(result).map_err(|e| {
+                            eprintln!("Failed to serialize result for DB for url {}: {}", result.url, e);
+                        }).ok()
+                    })
+                    .collect();
 
-                match database::insert_bulk_crawl_data(db.get_pool(), db_results).await {
-                    Ok(()) => println!(
-                        "Successfully inserted batch of {} results",
-                        batch_results.len()
-                    ),
-                    Err(e) => eprintln!("Failed to batch insert results: {}", e),
+                if !db_results.is_empty() {
+                    match database::insert_bulk_crawl_data(db.get_pool(), db_results).await {
+                        Ok(()) => println!(
+                            "Successfully inserted batch of {} results",
+                            batch_results.len()
+                        ),
+                        Err(e) => eprintln!("Failed to batch insert results: {}", e),
+                    }
                 }
             }
         }
