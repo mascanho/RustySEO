@@ -13,17 +13,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { ArrowUpDown, Search, X, ArrowUp, ArrowDown } from "lucide-react";
 import { addDays, format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
-import { DateRange } from "react-day-picker";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -42,17 +36,37 @@ export default function AnalyticsTable() {
   const [sortKey, setSortKey] = useState<string>("sessions");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [search, setSearch] = useState("");
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(2022, 0, 1),
-    to: addDays(new Date(2024, 12, 1), 20),
-  });
+  const [startDate, setStartDate] = useState<Date>(new Date(2022, 0, 1));
+  const [endDate, setEndDate] = useState<Date>(
+    addDays(new Date(2024, 12, 1), 20)
+  );
   const [selectedDimension, setSelectedDimension] = useState("general");
   const [analyticsDate, setAnalyticsDate] = useState<DateRange | undefined>(
-    undefined,
+    undefined
   );
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const rowsPerPage = 100;
+
+  // Custom input component for the date picker
+  const CustomInput = ({
+    value,
+    onClick,
+  }: {
+    value?: string;
+    onClick?: () => void;
+  }) => (
+    <button
+      onClick={onClick}
+      className={cn(
+        "w-[150px] justify-start text-left font-normal text-xs h-8 px-3 rounded-md border",
+        "bg-white dark:bg-brand-darker border-gray-300 dark:border-brand-dark",
+        "text-gray-900 dark:text-white/50 hover:bg-gray-50 dark:hover:bg-brand-dark"
+      )}
+    >
+      {value || "Select date"}
+    </button>
+  );
 
   // Handle the fetching of analytics data
   const handleFilteredAnalytics = async (value: string) => {
@@ -60,8 +74,8 @@ export default function AnalyticsTable() {
     setSelectedDimension(value);
     setAnalyticsDate([
       {
-        start_date: date?.from,
-        end_date: date?.to?.toISOString(),
+        start_date: startDate,
+        end_date: endDate.toISOString(),
       },
     ]);
 
@@ -71,8 +85,8 @@ export default function AnalyticsTable() {
       landings: {
         dateRanges: [
           {
-            startDate: date?.from?.toISOString()?.split("T")[0],
-            endDate: date?.to?.toISOString()?.split("T")[0],
+            startDate: startDate?.toISOString()?.split("T")[0],
+            endDate: endDate?.toISOString()?.split("T")[0],
           },
         ],
         dimensions: [
@@ -90,8 +104,8 @@ export default function AnalyticsTable() {
       general: {
         dateRanges: [
           {
-            startDate: date?.from?.toISOString()?.split("T")[0],
-            endDate: date?.to?.toISOString()?.split("T")[0],
+            startDate: startDate?.toISOString()?.split("T")[0],
+            endDate: endDate?.toISOString()?.split("T")[0],
           },
         ],
         dimensions: [{ name: "fullPageUrl" }],
@@ -106,8 +120,8 @@ export default function AnalyticsTable() {
       country: {
         dateRanges: [
           {
-            startDate: date?.from?.toISOString()?.split("T")[0],
-            endDate: date?.to?.toISOString()?.split("T")[0],
+            startDate: startDate?.toISOString()?.split("T")[0],
+            endDate: endDate?.toISOString()?.split("T")[0],
           },
         ],
         dimensions: [{ name: "country" }],
@@ -123,8 +137,8 @@ export default function AnalyticsTable() {
       city: {
         dateRanges: [
           {
-            startDate: date?.from?.toISOString()?.split("T")[0],
-            endDate: date?.to?.toISOString()?.split("T")[0],
+            startDate: startDate?.toISOString()?.split("T")[0],
+            endDate: endDate?.toISOString()?.split("T")[0],
           },
         ],
         dimensions: [{ name: "city" }],
@@ -140,8 +154,8 @@ export default function AnalyticsTable() {
       device: {
         dateRanges: [
           {
-            startDate: date?.from?.toISOString()?.split("T")[0],
-            endDate: date?.to?.toISOString()?.split("T")[0],
+            startDate: startDate?.toISOString()?.split("T")[0],
+            endDate: endDate?.toISOString()?.split("T")[0],
           },
         ],
         dimensions: [{ name: "deviceCategory" }],
@@ -199,14 +213,14 @@ export default function AnalyticsTable() {
   };
 
   useEffect(() => {
-    if (date?.from && date?.to) {
+    if (startDate && endDate) {
       console.log("Selected date range:", {
-        from: format(date.from, "yyyy-MM-dd"),
-        to: format(date.to, "yyyy-MM-dd"),
+        from: format(startDate, "yyyy-MM-dd"),
+        to: format(endDate, "yyyy-MM-dd"),
       });
       handleFilteredAnalytics(selectedDimension);
     }
-  }, [date]);
+  }, [startDate, endDate]);
 
   const sortData = (data: any[], key: string, order: "asc" | "desc") => {
     return [...data].sort((a, b) => {
@@ -246,14 +260,14 @@ export default function AnalyticsTable() {
     ? sortData(analyticsData.response[0].rows, sortKey, sortOrder).filter(
         (item) =>
           item?.dimensionValues?.some((d: any) =>
-            d?.value?.toLowerCase().includes(search.toLowerCase()),
-          ),
+            d?.value?.toLowerCase().includes(search.toLowerCase())
+          )
       )
     : [];
 
   const paginatedData = sortedData.slice(
     (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage,
+    currentPage * rowsPerPage
   );
 
   const totalPages = Math.ceil(sortedData.length / rowsPerPage);
@@ -271,7 +285,7 @@ export default function AnalyticsTable() {
       const newSortedRows = sortData(
         analyticsData.response[0].rows,
         key,
-        key === sortKey ? (sortOrder === "asc" ? "desc" : "asc") : "desc",
+        key === sortKey ? (sortOrder === "asc" ? "desc" : "asc") : "desc"
       );
       setAnalyticsData((prevData: any) => ({
         ...prevData,
@@ -296,7 +310,7 @@ export default function AnalyticsTable() {
       const sortedRows = sortData(
         analyticsData.response[0].rows,
         sortKey,
-        sortOrder,
+        sortOrder
       );
       setAnalyticsData((prevData: any) => ({
         ...prevData,
@@ -319,13 +333,13 @@ export default function AnalyticsTable() {
   return (
     <div className="mx-auto py-1 z-10 text-xs overflow-y-hidden w-[calc(100vw-21rem)]">
       <div className="mb-2 flex items-center space-x-4 mt-1.5">
-        <div className="relative flex-grow  rounded-md dark:border-brand-dark dark:bg-brand-darker">
+        <div className="relative flex-grow rounded-md dark:border-brand-dark dark:bg-brand-darker">
           <Search className="absolute left-3 top-2.5 h-3 w-3 text-muted-foreground dark:text-white/50" />
           <Input
             placeholder="Search URLs..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-8 h-8 text-xs dark:bg-brand-darker w-full dark:text-white "
+            className="pl-9 pr-8 h-8 text-xs dark:bg-brand-darker w-full dark:text-white"
           />
           {search && (
             <button
@@ -336,46 +350,37 @@ export default function AnalyticsTable() {
             </button>
           )}
         </div>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              id="date"
-              variant={"outline"}
-              className={cn(
-                "w-[300px] justify-start text-left font-normal dark:text-white/50 dark:bg-brand-darker border dark:border-brand-dark text-xs h-8",
-                !date && "text-muted-foreground",
-              )}
-            >
-              <CalendarIcon className="mr-2 h-3 w-3 dark:text-white/50" />
-              {date?.from ? (
-                date?.to ? (
-                  <>
-                    {format(date.from, "LLL dd, y")} -{" "}
-                    {format(date.to, "LLL dd, y")}
-                  </>
-                ) : (
-                  format(date.from, "LLL dd, y")
-                )
-              ) : (
-                <span>Pick a date</span>
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent
-            className="w-auto p-0 dark:text-white/50"
-            align="start"
-          >
-            <Calendar
-              className="dark:text-white/50"
-              initialFocus
-              mode="range"
-              defaultMonth={date?.from}
-              selected={date}
-              onSelect={setDate}
-              numberOfMonths={2}
-            />
-          </PopoverContent>
-        </Popover>
+        <div className="flex items-center space-x-2 relative z-[1000]">
+          <DatePicker
+            selected={startDate}
+            onChange={(date: Date) => setStartDate(date)}
+            selectsStart
+            startDate={startDate}
+            endDate={endDate}
+            maxDate={endDate}
+            customInput={<CustomInput />}
+            className="react-datepicker z-[1000]"
+            popperClassName="react-datepicker-popper z-[1000]"
+            calendarClassName="react-datepicker-calendar z-[1000]"
+            wrapperClassName="react-datepicker-wrapper z-[1000]"
+            dateFormat="MMM d, yyyy"
+          />
+          <span className="text-gray-500 dark:text-white/50">to</span>
+          <DatePicker
+            selected={endDate}
+            onChange={(date: Date) => setEndDate(date)}
+            selectsEnd
+            startDate={startDate}
+            endDate={endDate}
+            minDate={startDate}
+            customInput={<CustomInput />}
+            className="react-datepicker z-[1000]"
+            popperClassName="react-datepicker-popper z-[1000]"
+            calendarClassName="react-datepicker-calendar z-[1000]"
+            wrapperClassName="react-datepicker-wrapper z-[1000]"
+            dateFormat="MMM d, yyyy"
+          />
+        </div>
         <Select
           onValueChange={handleFilteredAnalytics}
           value={selectedDimension}
@@ -383,7 +388,7 @@ export default function AnalyticsTable() {
           <SelectTrigger className="w-[180px] text-xs h-8 dark:text-white/50">
             <SelectValue placeholder="Select dimension" />
           </SelectTrigger>
-          <SelectContent className="dark:text-white text-xs ">
+          <SelectContent className="dark:text-white text-xs">
             <SelectItem value="general">General</SelectItem>
             <SelectItem value="landings">Landings</SelectItem>
             <SelectItem value="country">Country</SelectItem>
@@ -392,7 +397,7 @@ export default function AnalyticsTable() {
           </SelectContent>
         </Select>
         {totalPages > 1 && (
-          <div className="flex justify-center items-center ">
+          <div className="flex justify-center items-center">
             <button
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
@@ -423,7 +428,7 @@ export default function AnalyticsTable() {
         ) : (
           <div className="h-full w-full overflow-auto">
             <Table className="relative w-full text-xs">
-              <TableHeader className="sticky top-0 bg-white z-10 shadow">
+              <TableHeader className="sticky top-0 bg-white dark:bg-gray-800 z-10 shadow">
                 <TableRow>
                   {analyticsData?.response?.[0]?.dimensionHeaders?.map(
                     (header, index) => (
@@ -438,10 +443,9 @@ export default function AnalyticsTable() {
                               .slice(1)
                               .replace(/([A-Z])/g, " $1")
                               .trim()}
-                          {/* {getSortIcon(header.name)} */}
                         </Button>
                       </TableHead>
-                    ),
+                    )
                   )}
                   {analyticsData?.response?.[0]?.metricHeaders?.map(
                     (header, index) => (
@@ -455,10 +459,9 @@ export default function AnalyticsTable() {
                               .slice(1)
                               .replace(/([A-Z])/g, " $1")
                               .trim()}
-                          {/* {getSortIcon(header.name)} */}
                         </div>
                       </TableHead>
-                    ),
+                    )
                   )}
                 </TableRow>
               </TableHeader>
@@ -471,7 +474,7 @@ export default function AnalyticsTable() {
                         className="font-medium text-xs text-left"
                       >
                         <div
-                          className="truncate max-w-[400px] p-0 pl-4 "
+                          className="truncate max-w-[400px] p-0 pl-4"
                           title={dimension?.value}
                         >
                           {dimension?.value || "N/A"}
@@ -495,6 +498,73 @@ export default function AnalyticsTable() {
           </div>
         )}
       </div>
+      <style jsx global>{`
+        .react-datepicker {
+          font-family: inherit;
+          border: 1px solid #e2e8f0;
+          border-radius: 0.375rem;
+          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+          z-index: 1000;
+        }
+
+        .react-datepicker__header {
+          background-color: #f8fafc;
+          border-bottom: 1px solid #e2e8f0;
+        }
+
+        .react-datepicker__current-month,
+        .react-datepicker__day-name,
+        .react-datepicker__day {
+          color: #1e293b;
+        }
+
+        .react-datepicker__day--selected,
+        .react-datepicker__day--keyboard-selected {
+          background-color: #3b82f6;
+          color: white;
+        }
+
+        .react-datepicker__day:hover {
+          background-color: #f1f5f9;
+        }
+
+        .react-datepicker__day--selected:hover {
+          background-color: #2563eb;
+        }
+
+        /* Dark mode styles */
+        .dark .react-datepicker {
+          background-color: #1e293b;
+          border-color: #334155;
+        }
+
+        .dark .react-datepicker__header {
+          background-color: #1e293b;
+          border-bottom-color: #334155;
+        }
+
+        .dark .react-datepicker__current-month,
+        .dark .react-datepicker__day-name,
+        .dark .react-datepicker__day {
+          color: #e2e8f0;
+        }
+
+        .dark .react-datepicker__day:hover {
+          background-color: #334155;
+        }
+
+        .dark .react-datepicker__day--outside-month {
+          color: #64748b;
+        }
+
+        .dark .react-datepicker__day--disabled {
+          color: #475569;
+        }
+
+        .react-datepicker-popper {
+          z-index: 1000 !important;
+        }
+      `}</style>
     </div>
   );
 }
