@@ -47,6 +47,12 @@ pub enum DatabaseError {
     QueryError(String), // Added
     #[error("IO error: {0}")]
     JoinError(String), // Added
+
+    #[error("Serialization Error")]
+    SerializationError(String),
+
+    #[error("Unknown error: {0}")]
+    TransactionError(String),
 }
 
 #[derive(Serialize, Clone)]
@@ -286,46 +292,62 @@ pub async fn insert_bulk_crawl_data(
         return Ok(());
     }
 
-    let entries: Vec<(String, String)> = data
-        .into_iter()
-        .map(|d| {
-            let json = serde_json::to_string(&d.data).expect("Failed to serialize data");
-            (d.url, json)
-        })
-        .collect();
+    const CHUNK_SIZE: usize = 500;
 
-    tokio::task::spawn_blocking(move || {
+    let data_len = data.len(); // Only keep the length
+    let result = tokio::task::spawn_blocking(move || -> Result<usize, DatabaseError> {
         let mut conn = pool.get().map_err(|e| {
             DatabaseError::ConnectionError(format!(
                 "Failed to get connection for bulk insert: {}",
                 e
             ))
         })?;
-        let tx = conn.transaction()?;
+
+        let tx = conn.transaction().map_err(|e| {
+            DatabaseError::TransactionError(format!("Failed to start transaction: {}", e))
+        })?;
 
         let mut total_rows = 0;
-        {
-            let mut stmt = tx.prepare_cached(
-                "INSERT OR REPLACE INTO domain_crawl (url, data) VALUES (?1, ?2)",
-            )?;
 
-            for (url, data_json) in &entries {
-                let rows = stmt.execute(params![url, data_json])?;
-                total_rows += rows;
+        {
+            let mut stmt = tx
+                .prepare_cached("INSERT OR REPLACE INTO domain_crawl (url, data) VALUES (?1, ?2)")
+                .map_err(|e| {
+                    DatabaseError::QueryError(format!("Failed to prepare statement: {}", e))
+                })?;
+
+            for chunk in data.chunks(CHUNK_SIZE) {
+                let mut chunk_entries = Vec::with_capacity(chunk.len());
+
+                for item in chunk {
+                    let json = serde_json::to_string(&item.data)
+                        .map_err(|e| DatabaseError::SerializationError(e.to_string()))?;
+                    chunk_entries.push((item.url.clone(), json));
+                }
+
+                for (url, data_json) in &chunk_entries {
+                    let rows = stmt
+                        .execute(params![url, data_json])
+                        .map_err(|e| DatabaseError::QueryError(e.to_string()))?;
+                    total_rows += rows;
+                }
             }
         }
 
-        tx.commit()?;
+        tx.commit().map_err(|e| {
+            DatabaseError::TransactionError(format!("Failed to commit transaction: {}", e))
+        })?;
 
-        println!(
-            "Bulk insert completed: {} entries, {} rows affected",
-            entries.len(),
-            total_rows
-        );
-
-        Ok(())
+        Ok(total_rows)
     })
-    .await?
+    .await??;
+
+    println!(
+        "Bulk insert completed: {} entries total, {} rows affected",
+        data_len, result
+    );
+
+    Ok(())
 }
 
 pub fn create_diff_tables() -> Result<(), DatabaseError> {

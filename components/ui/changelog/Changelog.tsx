@@ -57,7 +57,7 @@ export default function Changelog() {
                   {getTypeLabel(entry.type)}
                 </Badge>
               </div>
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-brand-bright">
                 {new Date(entry.date).toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",

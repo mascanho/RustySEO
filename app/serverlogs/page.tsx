@@ -16,6 +16,8 @@ import WidgetLogs from "./_components/WidgetLogs";
 import { toast, Toaster } from "sonner";
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { useLogAnalysis } from "@/store/ServerLogsStore";
 
 interface CrawlResult {
   url: string;
@@ -27,6 +29,7 @@ interface CrawlResult {
 export default function Page() {
   const [keysPressed, setKeysPressed] = useState(new Set());
   const [shortcutActivated, setShortcutActivated] = useState(false);
+  const { setLogData, logData } = useLogAnalysis();
 
   // ALWAYS CHECK THE TAXONOMIES FROM THE LOCALSTORAGE AND SEND THEM TO THE TAURI COMMAND ON FIRST RUN
   useEffect(() => {
@@ -37,7 +40,7 @@ export default function Page() {
         if (taxonomies) {
           const parsedTaxonomies = JSON.parse(taxonomies);
           const taxonomyNames = parsedTaxonomies.map(
-            (tax: { name: string }) => tax.name,
+            (tax: { name: string }) => tax.name
           );
           await invoke("set_taxonomies", { newTaxonomies: taxonomyNames });
         } else {
@@ -106,7 +109,7 @@ export default function Page() {
     // REMOVE ALL THE LOGS FROM DB
     handleRemoveAllLogs();
 
-    toast.message("All logs have been removed from databse");
+    toast.message("All logs have been removed from database");
   };
 
   const handleRemoveAllLogs = () => {
@@ -119,6 +122,74 @@ export default function Page() {
       toast.error(error);
     }
   };
+
+  // Listen to TAURI EVENTS STREAMING THE DATA FROM THE BACKEND
+  useEffect(() => {
+    let isMounted = true;
+
+    const setupListeners = async () => {
+      try {
+        //TODO: IMPLEMENT A LOADER HERE
+        const unlistenProgress = await listen<ProgressUpdate>(
+          "progress-update",
+          ({ payload }) => isMounted && setProgress(payload)
+        );
+
+        const unlistenChunk = await listen<LogResult>(
+          "log-analysis-chunk",
+          ({ payload }) => {
+            console.log(
+              `[FRONTEND] Received ${payload.entries?.length || 0} entries ` +
+                `at ${new Date().toISOString()}`
+            );
+
+            // Add performance marker
+            performance.mark(`chunk-received-${Date.now()}`);
+
+            if (!isMounted) return;
+            // console.log("Received chunk", payload);
+            if (payload.entries?.length) {
+              setLogData({ entries: payload.entries });
+            }
+            if (payload.overview) {
+              setLogData({ overview: payload.overview });
+            }
+          }
+        );
+
+        const unlistenComplete = await listen<LogResult>(
+          "log-analysis-complete",
+          ({ payload }) => {
+            if (!isMounted) return;
+            console.log("Analysis complete", payload);
+            if (payload.overview) {
+              setLogData({ overview: payload });
+            }
+          }
+          // TODO: DO SOMETHIG HERE ON COMPLETE - A LOADER MAYBE
+        );
+
+        return () => {
+          unlistenProgress();
+          unlistenChunk();
+          unlistenComplete();
+        };
+      } catch (error) {
+        console.error("Listener error:", error);
+      }
+    };
+
+    setupListeners();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [setLogData]);
+
+  // Debug store changes
+  useEffect(() => {
+    console.log("Zustand logData updated:", logData);
+  }, [logData]);
 
   return (
     <section className="flex flex-col dark:bg-brand-darker   w-[100%] pt-[4rem] h-[calc(100vh - 20-rem)] overflow-hidden  ">

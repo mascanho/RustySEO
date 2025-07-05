@@ -167,7 +167,7 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
           </h3>
           <div className="border dark:border-brand-dark rounded-md h-[330px] overflow-y-auto">
             {taxonomies.length === 0 ? (
-              <div className="text-sm text-muted-foreground py-4 text-center h-full flex items-center justify-center">
+              <div className="text-sm text-muted-foreground py-4 text-center h-full flex items-center justify-center dark:text-white/50">
                 No taxonomies added yet
               </div>
             ) : (

@@ -464,7 +464,6 @@ pub async fn set_search_console_credentials(credentials: Credentials) -> Result<
         installed: InstalledInfo {
             aggregationType: "byPage".to_string(),
             client_id: credentials_client_id.to_string(),
-            // project_id: "110933103965834828344".to_string(), // project ID backup
             project_id: credentials_project_id.to_string(),
             client_secret: credentials_client_secret.to_string(),
             // client_secret: "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".to_string(),   // CLIENT SECRET BACKUP

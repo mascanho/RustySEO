@@ -1,11 +1,7 @@
 // @ts-nocheck
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  useMemo,
-} from "react";
+"use client";
+import type React from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import debounce from "lodash/debounce";
 import {
@@ -19,18 +15,59 @@ import {
   initialColumnAlignments,
   headerTitles,
 } from "./tableLayout";
-import SelectFilter from "../components/SelectFilter";
 import { TbColumns3 } from "react-icons/tb";
 import DownloadButton from "./DownloadButton";
-import useFilterTableURL from "@/app/Hooks/useFilterTableUrl";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { invoke } from "@tauri-apps/api/core";
-import { writeFileXLSX, utils } from "xlsx";
-
-import { ask } from "@tauri-apps/plugin-dialog";
 import { save } from "@tauri-apps/plugin-dialog";
-import { writeFile, BaseDirectory } from "@tauri-apps/plugin-fs";
+import { writeFile } from "@tauri-apps/plugin-fs";
 import { toast } from "sonner";
+
+interface TruncatedCellProps {
+  text: string;
+  maxLength?: number;
+  width?: string;
+}
+
+interface ResizableDividerProps {
+  onMouseDown: (event: React.MouseEvent) => void;
+}
+
+interface TableHeaderProps {
+  headers: string[];
+  columnWidths: string[];
+  columnAlignments: string[];
+  onResize: (index: number, event: React.MouseEvent) => void;
+  onAlignToggle: (index: number) => void;
+  columnVisibility: boolean[];
+}
+
+interface TableRowProps {
+  row: any[];
+  index: number;
+  columnWidths: string[];
+  columnAlignments: string[];
+  columnVisibility: boolean[];
+  clickedCell: { row: number | null; cell: number | null };
+  handleCellClick: (
+    rowIndex: number,
+    cellIndex: number,
+    cellContent: string,
+  ) => void;
+}
+
+interface ColumnPickerProps {
+  columnVisibility: boolean[];
+  setColumnVisibility: (visibility: boolean[]) => void;
+  headerTitles: string[];
+}
+
+interface TableCrawlProps {
+  rows: any[];
+  rowHeight?: number;
+  overscan?: number;
+  tabName: string;
+}
 
 const TruncatedCell = ({
   text,
@@ -89,31 +126,39 @@ const TableHeader = ({
 }: TableHeaderProps) => {
   return useMemo(
     () => (
-      <thead className="sticky top-0 z-10 domainCrawl border">
-        <tr>
-          {headers.map((header, index) =>
-            columnVisibility[index] ? (
-              <th
-                key={header}
-                style={{
-                  width: index === 0 ? "20px" : columnWidths[index],
-                  position: "relative",
-                  border: "1px solid #ddd",
-                  padding: "8px",
-                  userSelect: "none",
-                  minWidth: index === 0 ? "20px" : columnWidths[index],
-                  textAlign: columnAlignments[index],
-                  backgroundColor: "var(--background, white)",
-                }}
-                onClick={() => onAlignToggle(index)}
-              >
-                {header}
-                <ResizableDivider onMouseDown={(e) => onResize(index, e)} />
-              </th>
-            ) : null,
-          )}
-        </tr>
-      </thead>
+      <div className="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+        <table
+          className="w-full text-xs border-collapse"
+          style={{ tableLayout: "fixed" }}
+        >
+          <thead>
+            <tr>
+              {headers.map((header, index) =>
+                columnVisibility[index] ? (
+                  <th
+                    key={header}
+                    style={{
+                      width: columnWidths[index],
+                      position: "relative",
+                      border: "1px solid #ddd",
+                      padding: "8px",
+                      userSelect: "none",
+                      minWidth: columnWidths[index],
+                      textAlign: columnAlignments[index],
+                      backgroundColor: "var(--background, white)",
+                    }}
+                    className="dark:border-gray-600 dark:bg-gray-800 bg-gray-50 font-medium text-gray-900 dark:text-gray-100"
+                    onClick={() => onAlignToggle(index)}
+                  >
+                    {header}
+                    <ResizableDivider onMouseDown={(e) => onResize(index, e)} />
+                  </th>
+                ) : null,
+              )}
+            </tr>
+          </thead>
+        </table>
+      </div>
     ),
     [
       headers,
@@ -147,6 +192,8 @@ const TableRow = ({
     [row, index],
   );
 
+  const isOdd = index % 2 === 1;
+
   return useMemo(
     () => (
       <>
@@ -156,28 +203,32 @@ const TableRow = ({
               key={`cell-${index}-${cellIndex}`}
               onClick={() => handleCellClick(index, cellIndex, cell.toString())}
               style={{
-                width: cellIndex === 0 ? "30px" : columnWidths[cellIndex],
+                width: columnWidths[cellIndex],
                 border: "1px solid #ddd",
                 padding: "8px",
-                paddingLeft: cellIndex === 0 ? "20px" : "0px",
                 textAlign: columnAlignments[cellIndex],
                 overflow: "hidden",
                 whiteSpace: "nowrap",
-                minWidth: cellIndex === 0 ? "30px" : columnWidths[cellIndex],
-                backgroundColor:
-                  clickedCell.row === index && clickedCell.cell === cellIndex
-                    ? "#2B6CC4"
-                    : "transparent",
-                color:
-                  clickedCell.row === index && clickedCell.cell === cellIndex
-                    ? "white"
-                    : "inherit",
+                minWidth: columnWidths[cellIndex],
+                height: "25px",
               }}
-              className="dark:text-white/50 cursor-pointer"
+              className={`
+                select-none
+                border-gray-200 dark:border-gray-700 
+                transition-colors
+                ${
+                  clickedCell.row === index && clickedCell.cell === cellIndex
+                    ? "bg-blue-600 dark:bg-blue-700 text-white hover:bg-brand-bright" // Selected cell
+                    : isOdd
+                      ? "bg-gray-100 dark:bg-brand-dark/20" // Odd row (darker)
+                      : "bg-white dark:bg-brand-darker" // Even row (lighter)
+                }
+                hover:bg-blue-50 dark:hover:bg-blue-900/30
+              `}
             >
               <TruncatedCell
                 text={cell?.toString()}
-                width={cellIndex === 0 ? "30px" : columnWidths[cellIndex]}
+                width={columnWidths[cellIndex]}
               />
             </td>
           ) : null,
@@ -192,6 +243,7 @@ const TableRow = ({
       index,
       clickedCell,
       handleCellClick,
+      isOdd,
     ],
   );
 };
@@ -240,7 +292,7 @@ const ColumnPicker = ({
 
 const ImagesCrawlTable = ({
   rows,
-  rowHeight = 31,
+  rowHeight = 25,
   overscan = 18,
   tabName,
 }: TableCrawlProps) => {
@@ -353,12 +405,17 @@ const ImagesCrawlTable = ({
       : rows;
   }, [rows, searchTerm]);
 
-  // Initialize virtualizer
+  // Initialize virtualizer with proper sizing
   const rowVirtualizer = useVirtualizer({
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: useCallback(() => rowHeight, [rowHeight]),
+    estimateSize: () => rowHeight,
     overscan,
+    measureElement:
+      typeof window !== "undefined" &&
+      navigator.userAgent.indexOf("Firefox") === -1
+        ? (element) => element?.getBoundingClientRect().height
+        : undefined,
   });
 
   // Debounced search handler
@@ -391,11 +448,8 @@ const ImagesCrawlTable = ({
       const delta = event.clientX - startXRef.current;
       setColumnWidths((prevWidths) => {
         const newWidths = [...prevWidths];
-        const currentWidth = parseInt(newWidths[isResizing]);
-        newWidths[isResizing] = `${Math.max(
-          isResizing === 0 ? 40 : 50,
-          currentWidth + delta,
-        )}px`;
+        const currentWidth = Number.parseInt(newWidths[isResizing]);
+        newWidths[isResizing] = `${Math.max(50, currentWidth + delta)}px`;
         return newWidths;
       });
       startXRef.current = event.clientX;
@@ -426,12 +480,12 @@ const ImagesCrawlTable = ({
       columnWidths.reduce((acc, width, index) => {
         if (typeof width === "string") {
           if (width.endsWith("px")) {
-            return acc + parseFloat(width);
+            return acc + Number.parseFloat(width);
           } else if (width.endsWith("rem")) {
-            return acc + parseFloat(width) * 16;
+            return acc + Number.parseFloat(width) * 16;
           }
         }
-        return acc + (index === 0 ? 40 : 100);
+        return acc + 100;
       }, 0),
     [columnWidths],
   );
@@ -467,61 +521,78 @@ const ImagesCrawlTable = ({
       </div>
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-1.9rem)] overflow-scroll relative"
+        className="w-full h-[calc(100%-1.9rem)] overflow-auto relative bg-white dark:bg-brand-darker"
+        style={{ contain: "strict" }}
       >
         <div
           ref={tableContainerRef}
-          style={{ minWidth: `${totalWidth}px` }}
-          className="domainCrawlParent sticky top-0"
+          style={{
+            minWidth: `${totalWidth}px`,
+            height: `${rowVirtualizer.getTotalSize() + 41}px`, // Add header height
+            position: "relative",
+          }}
+          className="domainCrawlParent"
         >
-          <table className="w-full text-xs border-collapse domainCrawlParent h-full">
-            <TableHeader
-              headers={headerTitles}
-              columnWidths={columnWidths}
-              columnAlignments={columnAlignments}
-              onResize={handleMouseDown}
-              onAlignToggle={toggleColumnAlignment}
-              columnVisibility={columnVisibility}
-            />
-            <tbody>
-              {filteredRows.length > 0 ? (
-                <>
-                  <tr
+          {/* Sticky Header */}
+          <TableHeader
+            headers={headerTitles}
+            columnWidths={columnWidths}
+            columnAlignments={columnAlignments}
+            onResize={handleMouseDown}
+            onAlignToggle={toggleColumnAlignment}
+            columnVisibility={columnVisibility}
+          />
+
+          {/* Virtual rows container */}
+          <div style={{ position: "relative", paddingTop: "0px" }}>
+            {filteredRows.length > 0 ? (
+              virtualRows.map((virtualRow) => {
+                const isOdd = virtualRow.index % 2 === 1;
+                return (
+                  <div
+                    key={virtualRow.key}
                     style={{
-                      height: `${rowVirtualizer.getVirtualItems()[0]?.start || 0}px`,
+                      position: "absolute",
+                      top: `${virtualRow.start}px`,
+                      left: 0,
+                      height: `${virtualRow.size}px`,
+                      width: "100%",
                     }}
-                  />
-                  {virtualRows.map((virtualRow) => (
-                    <tr key={virtualRow.key}>
-                      <TableRow
-                        row={filteredRows[virtualRow.index]}
-                        index={virtualRow.index}
-                        columnWidths={columnWidths}
-                        columnAlignments={columnAlignments}
-                        columnVisibility={columnVisibility}
-                        clickedCell={clickedCell}
-                        handleCellClick={handleCellClick}
-                      />
-                    </tr>
-                  ))}
-                  <tr
-                    style={{
-                      height: `${Math.max(0, rowVirtualizer.getTotalSize() - (virtualRows[virtualRows.length - 1]?.end || 0))}px`,
-                    }}
-                  />{" "}
-                </>
-              ) : (
-                <tr>
-                  <td
-                    colSpan={headerTitles.length}
-                    className="text-center py-4"
+                    className={`${isOdd ? "bg-gray-100 dark:bg-gray-800" : "bg-white dark:bg-gray-900"}`}
                   >
-                    No data available.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                    <table
+                      className="w-full text-xs border-collapse"
+                      style={{
+                        width: "100%",
+                        tableLayout: "fixed",
+                        height: "100%",
+                      }}
+                    >
+                      <tbody>
+                        <tr style={{ height: `${rowHeight}px` }}>
+                          <TableRow
+                            row={filteredRows[virtualRow.index]}
+                            index={virtualRow.index}
+                            columnWidths={columnWidths}
+                            columnAlignments={columnAlignments}
+                            columnVisibility={columnVisibility}
+                            clickedCell={clickedCell}
+                            handleCellClick={handleCellClick}
+                          />
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="absolute top-4 left-0 w-full h-full flex items-center justify-center bg-white">
+                <div className="text-center py-4 text-xs text-gray-500 dark:text-gray-400">
+                  No data available.
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>

@@ -1,5 +1,30 @@
 export const changelogData = [
   {
+    version: "0.2.8",
+    date: "2025-07-01",
+    type: "feature",
+    changes: [
+      "Added log project segmentation",
+      "Improved log search",
+      "added filter for User Agents",
+      "Added IP masking on logs table",
+      "Improved speed on log processing",
+      "Better log batch upload and reload",
+      "Improved log table UI",
+    ],
+  },
+  {
+    version: "0.2.7",
+    date: "2025-06-17",
+    type: "fix",
+    changes: [
+      "Support for partial and full App reset",
+      "Better handling of configuration folders & files",
+      "Improved tables on Deep crawler",
+    ],
+  },
+
+  {
     version: "0.2.6",
     date: "2025-06-15",
     type: "fix",
@@ -16,7 +41,7 @@ export const changelogData = [
     changes: [
       "Performance Improvements",
       "Inlinks & Outlinks improvements",
-      "Improved log analysis",
+      "Improved incremental log analysis",
       "Log analyser: improved search",
       "Global system info",
       "Deep Crawl: context menus added to tables",

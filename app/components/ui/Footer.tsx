@@ -42,6 +42,7 @@ import { FaInfoCircle } from "react-icons/fa";
 import PopOverParsedLogs from "@/app/serverlogs/_components/PopOverParsedLogs";
 import ChangeLogContainer from "@/components/ui/changelog/ChangeLogContainer";
 import System from "./Footer/Sys/System";
+import LogAnalyserFooter from "./Footer/Loganalyserfooter/LoganalyserFooter";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -275,19 +276,20 @@ const Footer = () => {
               <div className="flex items-center">
                 <Popover>
                   <PopoverTrigger>
-                    <FaInfoCircle className=" text-sm ml-0.5 text-black dark:text-white/50" />
+                    <FaInfoCircle className=" text-sm ml-0.5 text-black mt-[1px] dark:text-white/50" />
                   </PopoverTrigger>
                   <PopoverContent className="min-w-70 max-w-96 max-h-[400px] py-2 px-0 mb-10 ml-2 relative z-20">
                     {/* <div className="h-5 w-5 absolute -top-2 right-32 bg-white rotate-45 border -z-10" /> */}
                     <PopOverParsedLogs />
                   </PopoverContent>
                 </Popover>
-                <section className="min-w-24 flex items-center ml-2.5">
+                <section className="flex items-center ml-2.5">
                   <FaDatabase
-                    className={`${logSorage ? "text-green-700" : "text-red-700"} mr-1.5 `}
+                    className={`${logSorage ? "text-green-700 mt-[1px]" : "text-red-700 mt-[1px]"} mr-[5px] `}
                   />{" "}
-                  {logSorage ? "Storing logs" : "Not storing logs"}
+                  {logSorage ? "" : ""}
                 </section>
+                <LogAnalyserFooter />
               </div>
             )}
           </div>

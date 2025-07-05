@@ -650,7 +650,7 @@ const KeywordsTable = ({
               })
             ) : (
               <div
-                className="text-center py-4"
+                className="text-center "
                 style={{ minWidth: `${totalWidth}px` }}
               >
                 <table
@@ -661,7 +661,7 @@ const KeywordsTable = ({
                     <tr>
                       <td
                         colSpan={keywordColumns.length + 2}
-                        className="text-center py-4"
+                        className="text-center text-xs dark:text-white/50 "
                       >
                         No data available.
                       </td>

@@ -168,14 +168,19 @@ const TableHeader = ({
               // border: "1px solid #ddd",
               padding: "8px",
               userSelect: "none",
-              textAlign: visibleAlignments[visibleIndex] as any,
+              justifyContent:
+                visibleAlignments[visibleIndex] === "center"
+                  ? "center"
+                  : visibleAlignments[visibleIndex] === "right"
+                  ? "flex-end"
+                  : "flex-start",
               height: "30px",
               display: "flex",
               alignItems: "center",
               fontWeight: "bold",
             }}
             onClick={() => onAlignToggle(originalIndex)}
-            className="dark:text-white dark:bg-brand-darker dark:border-brand-dark  bg-white shadow dark:border"
+            className="dark:text-white/50 dark:bg-brand-darker text-black/50 dark:border-brand-dark  bg-white shadow dark:border"
           >
             {header}
             <ResizableDivider onMouseDown={(e) => onResize(originalIndex, e)} />
@@ -262,7 +267,12 @@ const TableRow = ({
             style={{
               // border: "1px solid #ddd",
               padding: "6px 8px",
-              textAlign: visibleAlignments[visibleIndex] as any,
+              justifyContent:
+                visibleAlignments[visibleIndex] === "center"
+                  ? "center"
+                  : visibleAlignments[visibleIndex] === "right"
+                  ? "flex-end"
+                  : "flex-start",
               overflow: "hidden",
               whiteSpace: "nowrap",
               height: "100%",
@@ -676,7 +686,7 @@ const TableCrawl = ({
               </div>
             ))
           ) : (
-            <div className="text-center py-4 text-gray-500">
+            <div className="text-center py-4 text-xs text-gray-500">
               No data available.
             </div>
           )}

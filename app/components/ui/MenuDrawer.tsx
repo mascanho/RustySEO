@@ -11,6 +11,7 @@ import KeywordSerp from "./TopMenuBar/KeywordSerp";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import Onboarding from "../Onboarding";
 import { useOnboardingStore } from "@/store/OnboardingStore";
+import { toast } from "sonner";
 
 function MenuDrawer() {
   const [opened, setOpened] = useState(false);
@@ -30,6 +31,22 @@ function MenuDrawer() {
     { name: "Log Analyser", route: "/serverlogs" },
     { name: "PPC Simulator", route: "/ppc" },
   ];
+
+  async function fullReset() {
+    try {
+      await invoke("delete_config_folders_command");
+      // Optionally: toast.success("Reset successful");
+      localStorage.clear();
+      toast.success("Full reset! RustySEO will reload in 3 seconds");
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
+    } catch (error) {
+      console.error("Error during full reset:", error);
+      toast.error("Failed to reset RustySEO. Please try again.");
+    }
+  }
 
   useEffect(() => {
     const widgetselement = document.querySelector(".widgets");
@@ -167,9 +184,23 @@ function MenuDrawer() {
       if (event.ctrlKey && event.key === "g") {
         router.push("/ppc");
       }
-    };
 
-    console.log("Current onboarding completed state:", completed);
+      // clear cache with ctrl + /
+      if (event.ctrlKey && event.key === "/") {
+        try {
+          localStorage.clear();
+          console.log("Clear successful");
+          toast.success("Cleared RustySEO cache");
+        } catch (error) {
+          console.error("Clear failed:", error);
+        }
+      }
+
+      // Reset RustySEO with ctrl + shift + "/"
+      if (event.ctrlKey && event.shiftKey && event.code === "Slash") {
+        fullReset();
+      }
+    };
 
     // Add the event listener
     window.addEventListener("keydown", handleKeyDown);

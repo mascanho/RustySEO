@@ -67,7 +67,7 @@ import { Settings } from "lucide-react";
 import PowerBi from "./MSClarityModal/PowerBi";
 import { useOnboardingStore } from "@/store/OnboardingStore";
 import { BiDoorOpen, BiLogoSlackOld } from "react-icons/bi";
-import { CiSettings } from "react-icons/ci";
+import { CiFolderOn, CiSettings } from "react-icons/ci";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -267,6 +267,17 @@ const TopMenuBar = () => {
     useOnboardingStore.setState({ completed: newValue });
   };
 
+  // handle the click to openm the settings folder
+  const handleOpenSettingsFolder = useCallback(async () => {
+    try {
+      await invoke("open_config_folder_command");
+      console.log("Settings folder opened successfully");
+    } catch (error) {
+      console.error("Failed to open the settings folder", error);
+    }
+  }
+  , []);
+
   return (
     <>
       {/* Panes Insights Modal */}
@@ -410,9 +421,10 @@ const TopMenuBar = () => {
         size={"800px"}
         opened={openedConfs}
         onClose={closeConfs}
-        title="Configurations"
+        title="Connector Settings"
         centered
       >
+
         <Configurations close={closeConfs} />
       </Modal>
 
@@ -475,9 +487,19 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-4 text-xs">File</MenubarTrigger>
             <MenubarContent className="z-[999999999999999]">
-              <MenubarItem onClick={openConfs}>
-                <FiTool className="mr-2" />
-                Configurations
+               <MenubarItem onClick={handleOpenSettingsFolder}>
+                <CiFolderOn
+                  className=" text-sm mr-1.5 "
+                  style={{ marginLeft: "-1px" }}
+                />
+                Open Settings Folder
+              </MenubarItem>
+            <MenubarItem onClick={handleOpenConfigFile}>
+                <CiSettings
+                  className=" text-sm mr-1.5 "
+                  style={{ marginLeft: "-1px" }}
+                />
+                Crawler settings
               </MenubarItem>
               <MenubarItem onClick={() => getCurrentWindow().close()}>
                 <FiLogOut className="mr-2" />
@@ -489,13 +511,7 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-4 text-xs">View</MenubarTrigger>
             <MenubarContent className="z-[999999999999999]">
-              <MenubarItem onClick={handleOpenConfigFile}>
-                <CiSettings
-                  className=" text-sm mr-1.5 "
-                  style={{ marginLeft: "-1px" }}
-                />
-                Crawl Settings
-              </MenubarItem>
+             
               <MenubarItem
                 disabled={pathname === "/global"}
                 onClick={openPanes}
@@ -617,6 +633,11 @@ const TopMenuBar = () => {
               <MenubarItem className="flex items-center" onClick={openGemini}>
                 <FiZap className="mr-2" />
                 Google Gemini
+              </MenubarItem>
+              <MenubarSeparator />
+                 <MenubarItem onClick={openConfs}>
+                <FiTool className="mr-2" />
+                Connector Settings
               </MenubarItem>
             </MenubarContent>
           </MenubarMenu>

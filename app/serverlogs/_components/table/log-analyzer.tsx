@@ -68,7 +68,7 @@ import { CardContent } from "@/components/ui/card";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { ask, message, save } from "@tauri-apps/plugin-dialog";
-import { SiGoogle } from "react-icons/si";
+import { SiGoogle, SiSuperuser } from "react-icons/si";
 import { toast } from "sonner";
 import { IpDisplay } from "./IpCheckModal";
 import {
@@ -78,7 +78,9 @@ import {
 } from "@/components/ui/tooltip";
 import { useCurrentLogs } from "@/store/logFilterStore";
 import { IoClose } from "react-icons/io5";
-import { FaApper } from "react-icons/fa";
+import { FaAngellist, FaApper, FaEye } from "react-icons/fa";
+import { FaFileCode, FaPersonHarassing, FaRobot } from "react-icons/fa6";
+import { ImUserTie } from "react-icons/im";
 
 export function LogAnalyzer() {
   const {
@@ -117,6 +119,12 @@ export function LogAnalyzer() {
   const searchTermRef = useRef("");
   // SET the input search to be based on button click
   const [inputValue, setInputValue] = useState(""); // stores what's typed in the input
+  const [isExporting, setIsExporting] = useState(false);
+  const [showIp, setShowIp] = useState(false);
+  const [showAgent, setShowAgent] = useState(false);
+  const [urlAgentFilter, setUrlAgentFilter] = useState("url");
+  const [activeSearchTerm, setActiveSearchTerm] = useState("");
+  const [searchInput, setSearchInput] = useState("");
 
   // Helper functions
   const formatDate = useCallback((dateString: string) => {
@@ -189,8 +197,8 @@ export function LogAnalyzer() {
         let result = [...entries];
 
         // Apply search
-        if (term) {
-          const lowerCaseSearch = term.toLowerCase();
+        if (activeSearchTerm) {
+          const lowerCaseSearch = activeSearchTerm?.toLowerCase();
           result = result.filter(
             (log) =>
               log.ip.toLowerCase().includes(lowerCaseSearch) ||
@@ -286,28 +294,23 @@ export function LogAnalyzer() {
       sortConfig,
       verifiedFilter,
       botTypeFilter,
+      activeSearchTerm,
     ],
   );
 
-  const [searchInput, setSearchInput] = useState("");
-  // DEBOUNCING SEARCH FUNCTION
-  const debouncedSearch = useMemo(
-    () =>
-      debounce((term: string) => {
-        searchTermRef.current = term;
-        applyFilters(term, entries);
-      }, 300),
-    [entries, applyFilters],
-  );
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchInput(e.target.value);
+  };
 
-  const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e?.target?.value;
-      setSearchInput(value);
-      debouncedSearch(value);
-    },
-    [debouncedSearch],
-  );
+  const handleSearchClick = () => {
+    setActiveSearchTerm(searchInput); // Optional: Add a search button
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      setActiveSearchTerm(searchInput);
+    }
+  };
 
   // Apply filters when search term or entries change
   useEffect(() => {
@@ -363,6 +366,8 @@ export function LogAnalyzer() {
 
   // Reset all filters
   const resetFilters = useCallback(() => {
+    setSearchInput("");
+    setActiveSearchTerm("");
     setSearchTerm("");
     setStatusFilter([]);
     setMethodFilter([]);
@@ -372,10 +377,13 @@ export function LogAnalyzer() {
     setFileTypeFilter([]);
     setVerifiedFilter(null);
     setBotTypeFilter(null);
+    setShowAgent(false);
+    setUrlAgentFilter("url");
   }, []);
 
   // Export logs as CSV
   const exportCSV = useCallback(async () => {
+    // 1. Define headers
     const headers = [
       "IP",
       "Country",
@@ -393,57 +401,96 @@ export function LogAnalyzer() {
       "Google Verified",
     ];
 
+    // 2. Prepare data
     const dataToExport = filteredLogs.length > 0 ? filteredLogs : entries;
 
-    const csvData = dataToExport.map((log) => [
-      log.ip || "",
-      log.country || "",
-      log.browser || "",
-      log.timestamp || "",
-      log.method || "",
-      (domain && showOnTables ? "https://" + domain + log.path : log.path) ||
-        "",
-      log.taxonomy || "",
-      log.file_type || "",
-      log.status || "",
-      log.response_size || "",
-      `"${(log.user_agent || "").replace(/"/g, '""')}"`,
-      log.referer || "-",
-      log.crawler_type || "",
-      log.verified || "false",
-    ]);
+    // 3. Robust CSV sanitizer
+    const sanitizeForCSV = (value: any): string => {
+      if (value === null || value === undefined) return "";
 
-    const csvContent = [
-      headers.join(","),
-      ...csvData.map((row) => row.join(",")),
-    ].join("\n");
+      // Convert to string and normalize
+      let str = String(value)
+        .replace(/"/g, '""') // Escape existing quotes
+        .replace(/\r?\n/g, " ") // Replace newlines with spaces
+        .replace(/,/g, ";") // Replace commas with semicolons
+        .trim();
+
+      return `"${str}"`; // Always wrap in quotes
+    };
 
     try {
+      // 4. Create file with BOM for Excel
       const filePath = await save({
-        defaultPath: `RustySEO - Server Logs - ${new Date().toISOString().slice(0, 10)}.csv`,
-        filters: [
-          {
-            name: "CSV",
-            extensions: ["csv"],
-          },
-        ],
+        defaultPath: `RustySEO - Server-Logs-${new Date().toISOString().slice(0, 10)}.csv`,
+        filters: [{ name: "CSV", extensions: ["csv"] }],
       });
 
-      if (filePath) {
-        await writeTextFile(filePath, csvContent);
-        await message("CSV file saved successfully!", {
-          title: "Export Complete",
-          type: "info",
+      if (!filePath) {
+        setIsExporting(false);
+        toast.error("Export cancelled.");
+        return;
+      }
+
+      // Set the loader spinning
+      setIsExporting(true);
+
+      // 5. Write UTF-8 BOM and headers
+      await writeTextFile(
+        filePath,
+        "\uFEFF" + headers.map(sanitizeForCSV).join(",") + "\r\n",
+        {
+          encoding: "utf8",
+        },
+      );
+
+      // 6. Process data in batches with validation
+      const batchSize = 10000;
+      for (let i = 0; i < dataToExport.length; i += batchSize) {
+        let batchContent = "";
+        const batch = dataToExport.slice(i, i + batchSize);
+
+        for (const log of batch) {
+          const row = [
+            sanitizeForCSV(log.ip),
+            sanitizeForCSV(log.country),
+            sanitizeForCSV(log.browser),
+            sanitizeForCSV(log.timestamp),
+            sanitizeForCSV(log.method),
+            sanitizeForCSV(log.path),
+            sanitizeForCSV(log.taxonomy),
+            sanitizeForCSV(log.file_type),
+            sanitizeForCSV(log.status),
+            sanitizeForCSV(formatResponseSize(log.response_size)),
+            sanitizeForCSV(log.user_agent),
+            sanitizeForCSV(log.referer || "-"),
+            sanitizeForCSV(log.crawler_type),
+            sanitizeForCSV(log.verified ? "true" : "false"),
+          ];
+
+          // Validate column count
+          if (row.length !== 14) {
+            console.error("Invalid row detected:", log);
+            continue;
+          }
+
+          batchContent += row.join(",") + "\r\n";
+        }
+
+        await writeTextFile(filePath, batchContent, {
+          append: true,
+          encoding: "utf8",
         });
       }
+
+      setIsExporting(false);
+      toast.success("CSV exported successfully!");
+      message("CSV exported successfully!");
     } catch (error) {
+      setIsExporting(false);
       console.error("Export failed:", error);
-      await message(`Failed to export CSV: ${error}`, {
-        title: "Export Error",
-        type: "error",
-      });
+      toast.error(`Export failed: ${error.message}`);
     }
-  }, [filteredLogs, entries, domain, showOnTables]);
+  }, [filteredLogs, entries, formatResponseSize]);
 
   const handleIP = useCallback((ip: string) => {
     setIpModal(true);
@@ -469,6 +516,34 @@ export function LogAnalyzer() {
     );
   }
 
+  function formatedNumber(num) {
+    return num.toLocaleString("en-UK", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
+  }
+
+  function logIpMasking(ip: string): string {
+    if (!ip) return "";
+
+    if (ip.includes(":")) {
+      // Likely IPv6
+      return ip
+        .split(":")
+        .map((part, i) => (i < 2 ? part : "###"))
+        .join(":");
+    } else if (ip.includes(".")) {
+      // Likely IPv4
+      return ip
+        .split(".")
+        .map((part, i) => (i < 2 ? part : "###"))
+        .join(".");
+    }
+
+    // Unknown format, return masked
+    return "***.***.***.***";
+  }
+
   return (
     <div className="space-y-4 flex flex-col flex-1 h-full not-selectable">
       <div className="flex flex-col md:flex-row justify-between relative -mb-4 p-1 h-full">
@@ -478,7 +553,7 @@ export function LogAnalyzer() {
           </div>
         )}
         <div className="relative w-full mr-1">
-          <Search className="absolute dark:text-white/50 left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute dark:text-white/50 left-2.5 top-3 h-4 w-4 text-muted-foreground" />
           <Input
             reset={resetFilters}
             type="search"
@@ -486,26 +561,25 @@ export function LogAnalyzer() {
             className="pl-8 w-full dark:text-white"
             value={searchInput}
             onChange={handleSearchChange}
+            onKeyDown={handleKeyDown}
             onKeyPress={(e) => e.key === "Enter" && setSearchTerm(inputValue)}
           />
-          {/* <button */}
-          {/*   onClick={() => setSearchTerm(inputValue)} */}
-          {/*   className="absolute right-3 bg-brand-bright p-1 top-2 rounded-md px-2 dark:text-white text-xs" */}
-          {/* > */}
-          {/*   search */}
-          {/* </button> */}
-
-          {inputValue && (
+          <button
+            onClick={handleSearchClick}
+            className="absolute right-2 border-brand-bright border hover:bg-brand-bright hover:text-white text-black bg-white dark:bg-brand-darker   h-6 min-w-16   top-2 rounded-l-md px-2 dark:text-white text-xs dark:hover:bg-brand-bright"
+          >
+            search
+          </button>
+          {searchInput && (
             <X
               size={14}
-              className="absolute right-3 text-red-500 w-6 dark:text-red-500    top-3 rounded-md  text-xs bg-white dark:bg-brand-darker cursor-pointer "
+              className="absolute right-[75px] text-red-500 w-6 dark:text-red-500 top-[13px] rounded-md text-xs bg-white dark:bg-brand-darker cursor-pointer"
               onClick={() => {
-                setInputValue("");
-                setSearchTerm("");
-                resetFilters();
+                setSearchInput("");
+                setActiveSearchTerm("");
               }}
             />
-          )}
+          )}{" "}
         </div>
 
         <div className="flex flex-1 gap-1">
@@ -673,6 +747,23 @@ export function LogAnalyzer() {
             </SelectContent>
           </Select>
 
+          {/* USER AGENT AND URL FILTER */}
+
+          <Select
+            value={urlAgentFilter}
+            onValueChange={(value) => {
+              setUrlAgentFilter(value);
+              setShowAgent(value === "agent");
+            }}
+          >
+            <SelectTrigger className="w-[125px] dark:bg-brand-darker dark:text-white">
+              <SelectValue placeholder="URLs" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="url">URLs</SelectItem>
+              <SelectItem value="agent">Agents</SelectItem>
+            </SelectContent>
+          </Select>
           {/* SELECT BOT TYPE (DESKTOP OR MOBILE) */}
           <Select
             value={botTypeFilter === null ? "all" : botTypeFilter}
@@ -739,10 +830,20 @@ export function LogAnalyzer() {
           <Button
             variant="outline"
             onClick={exportCSV}
+            disabled={isExporting}
             className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white"
           >
-            <Download className="h-4 w-4" />
-            Export CSV
+            {isExporting ? (
+              <>
+                <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+                Exporting...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4" />
+                Export CSV
+              </>
+            )}
           </Button>
         </div>
       </div>
@@ -760,20 +861,25 @@ export function LogAnalyzer() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[60px] text-center">#</TableHead>
-                    <TableHead
-                      className="cursor-pointer"
-                      onClick={() => requestSort("ip")}
-                    >
-                      IP Address
-                      {sortConfig?.key === "ip" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                    <TableHead className="cursor-pointer">
+                      <div className="flex space-x-2 items-center">
+                        <span onClick={() => requestSort("ip")}>
+                          IP Address
+                        </span>
+                        {sortConfig?.key === "ip" && (
+                          <ChevronDown
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        )}
+                        <FaEye
+                          className="ml-2"
+                          onClick={() => setShowIp(!showIp)}
                         />
-                      )}
+                      </div>
                     </TableHead>
                     <TableHead
                       className="cursor-pointer"
@@ -824,7 +930,7 @@ export function LogAnalyzer() {
                       className="cursor-pointer pl-7"
                       onClick={() => requestSort("path")}
                     >
-                      Path
+                      {showAgent ? "User Agent" : "Path"}
                       {sortConfig?.key === "path" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${
@@ -865,22 +971,26 @@ export function LogAnalyzer() {
                         />
                       )}
                     </TableHead>
-                    <TableHead
-                      className="cursor-pointer"
-                      onClick={() => requestSort("responseSize")}
-                    >
-                      Size
-                      {sortConfig?.key === "responseSize" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      )}
+                    {!showAgent && (
+                      <TableHead
+                        className="cursor-pointer"
+                        onClick={() => requestSort("responseSize")}
+                      >
+                        Size
+                        {sortConfig?.key === "responseSize" && (
+                          <ChevronDown
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        )}
+                      </TableHead>
+                    )}
+                    <TableHead align="center" className="text-left w-[120px]">
+                      Crawler Type
                     </TableHead>
-                    <TableHead align="center" className="text-center">Crawler Type</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -900,6 +1010,10 @@ export function LogAnalyzer() {
                         getFileIcon={getFileIcon}
                         getStatusCodeColor={getStatusCodeColor}
                         formatResponseSize={formatResponseSize}
+                        showIp={showIp}
+                        showAgent={showAgent}
+                        setShowAgent={setShowAgent}
+                        logIpMasking={logIpMasking}
                       />
                     ))
                   ) : (
@@ -929,6 +1043,7 @@ export function LogAnalyzer() {
         indexOfLastItem={indexOfLastItem}
         filteredLogs={filteredLogs}
         entries={entries}
+        formatedNumber={formatedNumber}
       />
     </div>
   );
@@ -948,6 +1063,10 @@ function LogRow({
   getFileIcon,
   getStatusCodeColor,
   formatResponseSize,
+  showIp,
+  showAgent,
+  setShowAgent,
+  logIpMasking,
 }) {
   return (
     <>
@@ -972,7 +1091,13 @@ function LogRow({
               className="mr-2 text-blue-400 dark:text-blue-300/50 hover:scale-110 cursor-pointer"
               size={13}
             />
-            {log.ip}
+            {!showIp ? (
+              <p className="text-xs truncate">{log.ip}</p>
+            ) : (
+              <p className="text-xs -gray-500 truncate">
+                {logIpMasking(log?.ip)}
+              </p>
+            )}
           </div>
         </TableCell>
         <TableCell>
@@ -1001,11 +1126,28 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
           {log?.browser}
         </TableCell>
         <TableCell className="max-w-44 ">{formatDate(log.timestamp)}</TableCell>
-        <TableCell className="max-w-[980px] min-w-[500px] w-[800px] truncate mr-2">
-          <span className="mr-1 inline-block" style={{ paddingTop: "" }}>
-            {getFileIcon(log.file_type)}
-          </span>
-          {showOnTables && domain ? "https://" + domain + log.path : log?.path}
+
+        <TableCell className="max-w-[100%] truncate mr-2">
+          {!showAgent ? (
+            <section className="max-w-[800px] truncate">
+              <span
+                className="mr-1 inline-block pt-[1px]"
+                style={{ paddingTop: "" }}
+              >
+                {getFileIcon(log.file_type)}
+              </span>
+              {showOnTables && domain
+                ? "https://" + domain + log.path
+                : log?.path}
+            </section>
+          ) : (
+            <section className="max-w-[99%] w-[750px] 3xl:w-[950px]  truncate relative ml-2">
+              <span className="absolute">
+                <ImUserTie className="text-brand-bright mr-1 mt-[2px]" />{" "}
+              </span>
+              <span className="ml-5">{log?.user_agent}</span>
+            </section>
+          )}
         </TableCell>
         <TableCell className="max-w-[480px] truncate">
           <Badge variant={"outline"}>{log.file_type}</Badge>
@@ -1015,14 +1157,19 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
             {log.status}
           </Badge>
         </TableCell>
-        <TableCell>{formatResponseSize(log.response_size)}</TableCell>
+
+        {!showAgent && (
+          <TableCell width={70}>
+            {formatResponseSize(log.response_size)}
+          </TableCell>
+        )}
         <TableCell className="max-w-[180px] w-1 truncate text-center">
           <Badge
             variant="outline"
             className={
               log.crawler_type !== "Human"
-                ? "bg-red-100 dark:bg-red-400 dark:text-white"
-                : "bg-blue-100 dark:bg-blue-500 dark:text-white text-blue-800 border-blue-200"
+                ? "bg-red-100 dark:bg-red-400 dark:text-white w-[100px] truncate overflow-hidden text-center flex items-center justify-center"
+                : "bg-blue-100 truncate dark:bg-blue-500 dark:text-white overflow-hidden w-[100px] text-blue-800 border-blue-200 flex items-center justify-center text-center"
             }
           >
             {log.crawler_type && log.crawler_type.length > 16
@@ -1031,7 +1178,7 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
             {log.verified && (
               <BadgeCheck className="text-blue-800 pl-1" size={18} />
             )}
-          </Badge>{" "}
+          </Badge>
         </TableCell>
       </TableRow>
       {expandedRow === index && (
@@ -1040,7 +1187,9 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col max-w-5xl">
                 <div className="flex mb-2 space-x-2 items-center justify-between">
-                  <h4 className="font-bold">User Agent</h4>
+                  <h4 className="font-bold">
+                    {showAgent ? "Path" : "User Agent"}
+                  </h4>
                   {log.verified && (
                     <div className="flex items-center space-x-1 bg-red-200 dark:bg-red-400 p-1 px-2 text-xs rounded-md">
                       <BadgeCheck className="text-blue-700 pr-1" size={18} />
@@ -1050,7 +1199,7 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
                 </div>
                 <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                   <p className="text-sm font-mono break-all">
-                    {log.user_agent}
+                    {!showAgent ? log.user_agent : log?.path}
                   </p>
                 </div>
               </div>
@@ -1084,6 +1233,7 @@ function PaginationControls({
   indexOfLastItem,
   filteredLogs,
   entries,
+  formatedNumber,
 }) {
   return (
     <div
@@ -1180,7 +1330,10 @@ function PaginationControls({
             indexOfLastItem,
             filteredLogs.length > 0 ? filteredLogs.length : entries.length,
           )}{" "}
-          of {filteredLogs.length > 0 ? filteredLogs.length : entries.length}{" "}
+          of{" "}
+          {filteredLogs.length > 0
+            ? formatedNumber(filteredLogs.length)
+            : entries.length}{" "}
           logs
         </span>
       </div>

@@ -152,32 +152,22 @@ export default function WidgetLogs() {
     .map((log) => log?.names?.length)
     .reduce((a, b) => a + b, 0);
 
+  const formatedNumber = (num) => {
+    const f = Intl.NumberFormat("en-UK", {
+      notation: "compact",
+      compactDisplay: "short",
+      maximumFractionDigits: 1,
+    });
+    return f.format(num);
+  };
+
   return (
     <div className="bg-white border dark:border-brand-dark shadow rounded-none p-2 pr-1 w-1/2  mx-auto dark:bg-slate-950 dark:text-white h-64 relative">
-      <Popover>
-        <PopoverTrigger className="absolute bottom-1 left-3 flex cursor-pointer">
-          <FaInfoCircle className=" h-4 w-4 text-brand-bright" />
-
-          <div className="flex items-center space-x-0.5 text-brand-bright/50 cursor-pointer -mt-1 ml-1.5">
-            <span className="text-xs inline-block">
-              {totalLogsAnalysed || 0} logs
-            </span>
-            <span>/</span>
-            <span className="text-xs inline-block">
-              {uploadedLogFiles ? uploadedLogFiles?.length : 0} batches
-            </span>
-          </div>
-        </PopoverTrigger>
-        <PopoverContent className="min-w-[300px] max-w-96 py-2 px-0 mt-2 relative z-20">
-          <PopOverParsedLogs />
-        </PopoverContent>
-      </Popover>
-
       <Popover>
         <PopoverTrigger className="absolute top-3 font-bold text-black/20 dark:text-white/50 text-xl">
           <div className="flex flex-col items-start justify-start">
             <span className="hover:text-brand-bright">
-              {currentLogs.length} Entries
+              {formatNumber(currentLogs?.length)} entries
             </span>
           </div>
         </PopoverTrigger>
@@ -187,7 +177,29 @@ export default function WidgetLogs() {
         </PopoverContent>
       </Popover>
 
-      {/* <Popover> */}
+      <Popover>
+        <PopoverTrigger className="absolute bottom-1 left-3 flex cursor-pointer">
+          {uploadedLogFiles.length > 0 && (
+            <>
+              <FaInfoCircle className=" h-4 w-4 text-brand-bright" />
+
+              <div className="flex items-center space-x-0.5 text-brand-bright/50 cursor-pointer -mt-1 ml-1.5">
+                <span className="text-xs inline-block">
+                  {totalLogsAnalysed || 0} logs
+                </span>
+                <span>/</span>
+                <span className="text-xs inline-block">
+                  {uploadedLogFiles ? uploadedLogFiles?.length : 0} batches
+                </span>
+              </div>
+            </>
+          )}
+        </PopoverTrigger>
+        <PopoverContent className="min-w-[300px] max-w-96 py-2 px-0 mt-2 relative z-20">
+          <PopOverParsedLogs />
+        </PopoverContent>
+      </Popover>
+
       {/*   <PopoverTrigger className="absolute top-[7.8rem] left-[9.8rem] font-bold text-black/20 dark:text-white/50 text-xl z-[999999]"> */}
       {/*     <div className="flex flex-col items-start justify-start"> */}
       {/*       <div className="flex flex-col justify-center items-left  text-gray-500/50 -mt-2 text-xs"> */}

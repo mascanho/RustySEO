@@ -57,7 +57,18 @@ export default function RootLayout({
 
         setTimeout(() => {
           if (version.local !== version.github) {
-            toast("RustySEO has a new version. Please update");
+            toast(
+              <span>
+                RustySEO has a new release. Please update it{" "}
+                <a
+                  target="_blank"
+                  href="https://github.com/mascanho/rustyseo/releases/"
+                  className="text-brand-bright hover:text-brand-bright/80"
+                >
+                  here
+                </a>
+              </span>,
+            );
           }
         }, 50000);
 

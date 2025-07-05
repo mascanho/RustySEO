@@ -93,7 +93,7 @@ function getStatusCodeColor(statusCode: number) {
   } else if (statusCode >= 300 && statusCode < 400) {
     return "blue";
   } else if (statusCode >= 400 && statusCode < 500) {
-    return "yellow";
+    return "orange";
   } else if (statusCode >= 500 && statusCode < 600) {
     return "red";
   } else {
@@ -119,7 +119,6 @@ const TruncatedCell = ({
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
-          color: getStatusCodeColor(text as any),
         }}
       >
         {truncatedText}
@@ -267,6 +266,7 @@ const TableRow = ({
                 overflow: "hidden",
                 whiteSpace: "nowrap",
                 minWidth: columnWidths[cellIndex],
+                color: getStatusCodeColor(cellIndex === 6 ? cell : ""),
               }}
               className={`dark:text-white cursor-pointer ${
                 clickedCell.row === index && clickedCell.cell === cellIndex
@@ -778,7 +778,9 @@ const LinksTable = ({
                 </div>
               ))
             ) : (
-              <div className="text-center py-4">No data available.</div>
+              <div className="text-center py-4 text-xs dark:text-white/50">
+                No data available.
+              </div>
             )}
           </div>
         </div>

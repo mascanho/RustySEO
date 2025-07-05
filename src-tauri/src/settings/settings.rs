@@ -13,9 +13,11 @@ use uuid::Uuid;
 
 use crate::domain_crawler::{self, user_agents};
 use crate::loganalyser::log_state::set_taxonomies;
+use crate::version::local_version;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Settings {
+    pub version: String,
     pub crawl_timeout: u64,
     pub client_timeout: u64,
     pub client_connect_timeout: u64,
@@ -38,11 +40,17 @@ pub struct Settings {
     pub page_speed_bulk: bool,
     pub page_speed_bulk_api_key: Option<Option<String>>,
     pub log_batchsize: usize,
+    pub log_chunk_size: usize,
+    pub log_sleep_stream_duration: u64,
+    pub log_capacity: usize,
+    pub log_project_chunk_size: usize,
+    pub log_file_upload_size: usize,
 }
 
 impl Settings {
     pub fn new() -> Self {
         Self {
+            version: local_version(),
             crawl_timeout: 28800,
             client_timeout: 60,
             client_connect_timeout: 15,
@@ -50,7 +58,7 @@ impl Settings {
             max_retries: 5,
             base_delay: 500,
             max_delay: 8000,
-            concurrent_requests: 200,
+            concurrent_requests: 20,
             batch_size: 20,
             db_batch_size: 10,
             user_agents: user_agents::agents(),
@@ -65,6 +73,11 @@ impl Settings {
             page_speed_bulk: false,
             page_speed_bulk_api_key: None,
             log_batchsize: 2,
+            log_chunk_size: 500000,
+            log_sleep_stream_duration: 1,
+            log_capacity: 1,
+            log_project_chunk_size: 1,
+            log_file_upload_size: 75, // THE DEFAULT VALUE TO FILE UPLOADING
         }
     }
 
@@ -142,6 +155,7 @@ pub async fn init_settings() -> Result<Settings, String> {
 
 pub fn print_settings(settings: &Settings) {
     // Use the settings
+    println!("Version: {}", settings.version);
     println!("Crawl Timeout: {:?}", settings.crawl_timeout);
     println!("Client Timeout: {:?}", settings.client_timeout);
     println!(
@@ -176,13 +190,25 @@ pub fn print_settings(settings: &Settings) {
     } else {
         println!("Page Speed Bulk API Key: None");
     }
+
+    println!("Log Batchsize: {}", settings.log_batchsize);
+    println!("Log Chunksize: {}", settings.log_chunk_size);
+    println!(
+        "Log Sleep Stream Duration: {}",
+        settings.log_sleep_stream_duration
+    );
+
+    println!("Log Capacity: {}", settings.log_capacity);
+    println!(
+        "Log Chunk Size Project: {}",
+        settings.log_project_chunk_size
+    );
+
+    println!("Log File Upload Size: {}", settings.log_file_upload_size);
+
     println!("")
 }
 
-// Rewrite the settings file with only the ones that need to be overridden
-
-// Rewrite the settings file with only the ones that need to be overridden
-// Rewrite the settings file with only the ones that need to be overridden
 pub async fn override_settings(updates: &str) -> Result<Settings, String> {
     // Load current settings or create new ones
     let mut settings = init_settings().await?;
@@ -304,6 +330,40 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
             .collect();
     }
 
+    // Add the new settings
+    if let Some(val) = updates.get("log_batchsize").and_then(|v| v.as_integer()) {
+        settings.log_batchsize = val as usize;
+    }
+
+    if let Some(val) = updates.get("log_chunk_size").and_then(|v| v.as_integer()) {
+        settings.log_chunk_size = val as usize;
+    }
+
+    if let Some(val) = updates
+        .get("log_sleep_stream_duration")
+        .and_then(|v| v.as_integer())
+    {
+        settings.log_sleep_stream_duration = val as u64;
+    }
+
+    if let Some(val) = updates.get("log_capacity").and_then(|v| v.as_integer()) {
+        settings.log_capacity = val as usize;
+    }
+
+    if let Some(val) = updates
+        .get("log_chunk_size_project")
+        .and_then(|v| v.as_integer())
+    {
+        settings.log_project_chunk_size = val as usize;
+    }
+
+    if let Some(val) = updates
+        .get("log_file_upload_size")
+        .and_then(|v| v.as_integer())
+    {
+        settings.log_file_upload_size = val as usize;
+    }
+
     // Explicit file writing with flush
     let config_path = Settings::config_path()?;
     let toml_str = toml::to_string_pretty(&settings) // prettier formatting
@@ -325,6 +385,18 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
 }
 
 #[tauri::command]
+pub async fn get_project_chunk_size_command() -> Result<usize, String> {
+    let settings = load_settings().await?;
+    Ok(settings.log_project_chunk_size)
+}
+
+#[tauri::command]
+pub async fn get_log_file_upload_size_command() -> Result<usize, String> {
+    let settings = load_settings().await?;
+    Ok(settings.log_file_upload_size)
+}
+
+#[tauri::command]
 pub fn get_system() -> Result<Value, String> {
     let mut sys = System::new_all();
     sys.refresh_all();
@@ -343,4 +415,53 @@ pub fn get_system() -> Result<Value, String> {
         "cpus": sys.cpus().len(),
 
     }))
+}
+
+// REMOVE ALL THE FOLDERS IN THE CONFIG PATH
+#[tauri::command]
+pub async fn delete_config_folders_command() -> Result<(), String> {
+    let config_path = directories::ProjectDirs::from("", "", "rustyseo")
+        .ok_or("Failed to determine config directory".to_string())?
+        .config_dir()
+        .to_path_buf();
+    if config_path.exists() {
+        fs::remove_dir_all(&config_path)
+            .await
+            .map_err(|e| format!("Failed to delete config directory: {}", e))?;
+        println!("✅ Config directory deleted at {:?}", config_path);
+    } else {
+        println!("⚠️ Config directory does not exist at {:?}", config_path);
+    }
+    Ok(())
+}
+
+// OPEN THE CONFIG FOLDER IN THE FILE EXPLORER
+#[tauri::command]
+pub fn open_config_folder_command() -> Result<(), String> {
+    let config_path = directories::ProjectDirs::from("", "", "rustyseo")
+        .ok_or("Failed to determine config directory".to_string())?
+        .config_dir()
+        .to_path_buf();
+
+    if config_path.exists() {
+        if cfg!(target_os = "windows") {
+            std::process::Command::new("explorer")
+                .arg(config_path)
+                .spawn()
+                .map_err(|e| format!("Failed to open config folder: {}", e))?;
+        } else if cfg!(target_os = "macos") {
+            std::process::Command::new("open")
+                .arg(config_path)
+                .spawn()
+                .map_err(|e| format!("Failed to open config folder: {}", e))?;
+        } else if cfg!(target_os = "linux") {
+            std::process::Command::new("xdg-open")
+                .arg(config_path)
+                .spawn()
+                .map_err(|e| format!("Failed to open config folder: {}", e))?;
+        }
+        Ok(())
+    } else {
+        Err("Config folder does not exist".to_string())
+    }
 }

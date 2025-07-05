@@ -3,9 +3,14 @@ use semver::Version;
 use serde::Serialize;
 use std::error::Error;
 
+pub fn local_version() -> String {
+    let version = "0.2.8".to_string();
+    version
+}
+
 pub async fn get_version() -> Result<(Version, Version), Box<dyn Error>> {
     // Local software version (replace with actual version or fetch dynamically)
-    let local_version = Version::parse("0.2.6")?;
+    let local_version = Version::parse(&local_version())?;
 
     // GitHub repository details
     let owner = "mascanho"; // Replace with the repo owner

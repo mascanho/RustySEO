@@ -22,7 +22,7 @@ pub async fn domain_crawl_command(
     domain: String,
     app_handle: tauri::AppHandle,
     settings_state: tauri::State<'_, AppState>,
-) -> Result<Vec<DomainCrawlResults>, String> {
+) -> Result<(), String> {
     // Create and initialize the database
     let mut db = match database::Database::new("deep_crawl_batches.db") {
         Ok(db) => db,
@@ -49,22 +49,14 @@ pub async fn domain_crawl_command(
 
     // Call the crawl_domain function with a clone of the database
     match domain_crawler::crawl_domain(&domain, app_handle, Ok(db.clone()), settings_state).await {
-        Ok(links) => {
-            println!("Discovered {} links", links.len());
-            for data in &links {
-                println!(
-                    "URL: {:?}, Title: {:?}, Description: {:?}",
-                    data.url, data.title, data.description
-                );
-            }
-
+        Ok(_) => {
+            println!("Crawl finished successfully.");
             // Verify database contents using the original db
             match db.count_rows().await {
                 Ok(count) => println!("Database contains {} rows after crawl", count),
                 Err(e) => eprintln!("Failed to count rows: {}", e),
             }
-
-            Ok(links)
+            Ok(())
         }
         Err(e) => {
             eprintln!("Crawl error: {}", e);

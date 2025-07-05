@@ -1,6 +1,6 @@
 {
   "name": "nextjs-tauri",
-  "version": "0.2.6",
+  "version": "0.2.8",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -67,13 +67,12 @@
     "jsonld": "^8.3.2",
     "jspdf": "^2.5.2",
     "lucide-react": "^0.396.0",
-    "next": "15.3",
+    "next": "15.3.4",
     "next-themes": "^0.3.0",
     "ollama": "^0.5.6",
     "ollama-ai-provider": "^0.10.0",
     "prettier": "^3.3.2",
     "prismjs": "^1.29.0",
-    "puppeteer": "^22.12.1",
     "react": "19.0.0",
     "react-beautiful-dnd": "^13.1.1",
     "react-code-blocks": "^0.1.6",

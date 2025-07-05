@@ -6,7 +6,7 @@ export const initialColumnWidths = [
   "600px", // Rel
   "100px", // Title
   "100px", // Target
-  "80px", // Status Code
+  "100px", // Status Code
   "320px", // Page
 ];
 

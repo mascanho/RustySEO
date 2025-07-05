@@ -57,7 +57,7 @@ const MAX_DELAY: u64 = 8000;
 const CONCURRENT_REQUESTS: usize = 150;
 const CRAWL_TIMEOUT: Duration = Duration::from_secs(28800); // 8 hours
 const BATCH_SIZE: usize = 20;
-const DB_BATCH_SIZE: usize = 10; // Reduced to ensure more frequent writes for testing
+const DB_BATCH_SIZE: usize = 100; // Increased for better database write efficiency
 
 // Progress tracking structure
 #[derive(Clone, Serialize)]
@@ -79,7 +79,6 @@ pub struct CrawlerState {
     pub visited: HashSet<String>,
     pub failed_urls: HashSet<String>,
     pub pending_urls: HashSet<String>,
-    pub results: Vec<DomainCrawlResults>,
     pub queue: VecDeque<Url>,
     pub total_urls: usize,
     pub crawled_urls: usize,
@@ -92,7 +91,6 @@ impl CrawlerState {
             visited: HashSet::new(),
             failed_urls: HashSet::new(),
             pending_urls: HashSet::new(),
-            results: Vec::new(),
             queue: VecDeque::new(),
             total_urls: 0,
             crawled_urls: 0,
@@ -101,12 +99,13 @@ impl CrawlerState {
     }
 }
 
-// Helper to convert crawl results to database format
-fn to_database_results(result: &DomainCrawlResults) -> DatabaseResults {
-    DatabaseResults {
+fn to_database_results(
+    result: &DomainCrawlResults,
+) -> Result<DatabaseResults, serde_json::Error> {
+    Ok(DatabaseResults {
         url: result.url.clone(),
-        data: serde_json::to_value(result).expect("Failed to serialize crawl results"),
-    }
+        data: serde_json::to_value(result)?,
+    })
 }
 
 // Fetch URL with exponential backoff
@@ -329,7 +328,6 @@ async fn process_url(
 
     {
         let mut state = state.lock().await;
-        state.results.push(result.clone());
         state.crawled_urls += 1;
         state.visited.insert(url.to_string());
         state.pending_urls.remove(url.as_str());
@@ -369,6 +367,7 @@ async fn process_url(
             eprintln!("Failed to emit crawl result: {}", err);
         }
 
+        //TODO: SINGLE URL OBJECT CAN ALSO BE ADDED TO DB HERE
         let percentage = (state.crawled_urls as f32 / state.total_urls as f32) * 100.0;
         print!(
             "\r{}: {:.2}% {}",
@@ -378,7 +377,6 @@ async fn process_url(
         );
         std::io::stdout().flush().unwrap();
     }
-
     Ok(result)
 }
 
@@ -391,7 +389,7 @@ pub async fn crawl_domain(
     app_handle: tauri::AppHandle,
     db: Result<Database, DatabaseError>,
     settings_state: tauri::State<'_, AppState>,
-) -> Result<Vec<DomainCrawlResults>, String> {
+) -> Result<(), String> {
     // Import the user agents from another module to use across domain crawler
     // // Using the ones from global state/memory that are placed in the HD
     // let user_agents = user_agents::agents();
@@ -498,42 +496,17 @@ pub async fn crawl_domain(
             handles.push(handle);
         }
 
+        let mut batch_results = Vec::new();
+        let mut unique_urls_in_batch = HashSet::new();
+
         for handle in handles {
             match handle.await {
-                Ok((url, Ok(result))) => {
-                    let mut state = state.lock().await;
-                    if !state.visited.contains(&url.to_string()) {
-                        state.results.push(result.clone());
-
-                        // Handle database insertion
-                        if let Some(db) = &state.db {
-                            batch_counter += 1;
-
-                            let batch_start = state.results.len().saturating_sub(batch_counter);
-                            let recent_results = &state.results[batch_start..];
-                            let db_results = recent_results
-                                .iter()
-                                .map(to_database_results)
-                                .collect::<Vec<_>>();
-
-                            // Insert every DB_BATCH_SIZE or if we have any results
-                            if batch_counter >= settings.db_batch_size || !recent_results.is_empty()
-                            {
-                                match database::insert_bulk_crawl_data(db.get_pool(), db_results)
-                                    .await
-                                {
-                                    Ok(()) => println!(
-                                        "Successfully inserted batch of {} results",
-                                        recent_results.len()
-                                    ),
-                                    Err(e) => eprintln!("Failed to batch insert results: {}", e),
-                                }
-                                batch_counter = 0;
-                            }
-                        }
+                Ok((_url, Ok(result))) => {
+                    if unique_urls_in_batch.insert(result.url.clone()) {
+                        batch_results.push(result);
                     }
                 }
-                Ok((url, Err(e))) => {
+                Ok((url, Err(_e))) => {
                     let mut state = state.lock().await;
                     if !state.failed_urls.contains(url.as_str())
                         && !state.visited.contains(url.as_str())
@@ -545,6 +518,30 @@ pub async fn crawl_domain(
             }
         }
 
+        if !batch_results.is_empty() {
+            let state = state.lock().await;
+            if let Some(db) = &state.db {
+                let db_results: Vec<DatabaseResults> = batch_results
+                    .iter()
+                    .filter_map(|result| {
+                        to_database_results(result).map_err(|e| {
+                            eprintln!("Failed to serialize result for DB for url {}: {}", result.url, e);
+                        }).ok()
+                    })
+                    .collect();
+
+                if !db_results.is_empty() {
+                    match database::insert_bulk_crawl_data(db.get_pool(), db_results).await {
+                        Ok(()) => println!(
+                            "Successfully inserted batch of {} results",
+                            batch_results.len()
+                        ),
+                        Err(e) => eprintln!("Failed to batch insert results: {}", e),
+                    }
+                }
+            }
+        }
+
         if crawl_start_time.elapsed() > Duration::from_secs(settings.crawl_timeout) {
             if let Err(err) = app_handle.emit("crawl_interrupted", ()) {
                 eprintln!("Failed to emit crawl interruption event: {}", err);
@@ -553,43 +550,11 @@ pub async fn crawl_domain(
         }
     }
 
-    // Insert any remaining results
-    let final_state = state.lock().await;
-    if let Some(db) = &final_state.db {
-        if !final_state.results.is_empty() {
-            let db_results = final_state
-                .results
-                .iter()
-                .map(to_database_results)
-                .collect::<Vec<_>>();
-
-            match database::insert_bulk_crawl_data(db.get_pool(), db_results).await {
-                Ok(()) => println!(
-                    "Successfully inserted final batch of {} results",
-                    final_state.results.len()
-                ),
-                Err(e) => eprintln!("Failed to insert final batch: {}", e),
-            }
-        }
-    }
-
-    // Remove duplicates from the results
-    let mut unique_results = Vec::new();
-    let mut seen_urls = HashSet::new();
-    for result in final_state.results.clone() {
-        if seen_urls.insert(result.url.clone()) {
-            unique_results.push(result);
-        }
-    }
-
     if let Err(err) = app_handle.emit("crawl_complete", ()) {
         eprintln!("Failed to emit crawl completion event: {}", err);
     }
 
-    println!(
-        "Crawl completed with {} unique results",
-        unique_results.len()
-    );
+    println!("Crawl completed.");
 
     // CREATE THE DATABSES FOR THE DIFF TABLES
     match database::create_diff_tables() {
@@ -602,5 +567,5 @@ pub async fn crawl_domain(
         Err(e) => eprintln!("Failed to clone batched crawl into persistent db: {}", e),
     }
 
-    Ok(unique_results)
+    Ok(())
 }
