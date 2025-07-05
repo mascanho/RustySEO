@@ -11,6 +11,8 @@ export const changelogData = [
       "Improved speed on log processing",
       "Better log batch upload and reload",
       "Improved log table UI",
+      "Better date selection for GA4",
+      "Improved error handling of APIs",
     ],
   },
   {
