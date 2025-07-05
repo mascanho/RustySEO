@@ -333,7 +333,7 @@ export default function AnalyticsTable() {
   return (
     <div className="mx-auto py-1 z-10 text-xs overflow-y-hidden w-[calc(100vw-21rem)]">
       <div className="mb-2 flex items-center space-x-4 mt-1.5">
-        <div className="relative flex-grow rounded-md dark:border-brand-dark dark:bg-brand-darker">
+        <div className="relative flex-grow w-full rounded-md dark:border-brand-dark dark:bg-brand-darker">
           <Search className="absolute left-3 top-2.5 h-3 w-3 text-muted-foreground dark:text-white/50" />
           <Input
             placeholder="Search URLs..."
@@ -350,36 +350,40 @@ export default function AnalyticsTable() {
             </button>
           )}
         </div>
-        <div className="flex items-center space-x-2 relative z-[1000]">
-          <DatePicker
-            selected={startDate}
-            onChange={(date: Date) => setStartDate(date)}
-            selectsStart
-            startDate={startDate}
-            endDate={endDate}
-            maxDate={endDate}
-            customInput={<CustomInput />}
-            className="react-datepicker z-[1000]"
-            popperClassName="react-datepicker-popper z-[1000]"
-            calendarClassName="react-datepicker-calendar z-[1000]"
-            wrapperClassName="react-datepicker-wrapper z-[1000]"
-            dateFormat="MMM d, yyyy"
-          />
+        <div className="flex items-center space-x-2 w-[400px] relative z-[1000]">
+          <div>
+            <DatePicker
+              selected={startDate}
+              onChange={(date: Date) => setStartDate(date)}
+              selectsStart
+              startDate={startDate}
+              endDate={endDate}
+              maxDate={endDate}
+              customInput={<CustomInput />}
+              className="react-datepicker z-[1000]"
+              popperClassName="react-datepicker-popper z-[1000]"
+              calendarClassName="react-datepicker-calendar z-[1000]"
+              wrapperClassName="react-datepicker-wrapper z-[1000]"
+              dateFormat="MMM d, yyyy"
+            />
+          </div>
           <span className="text-gray-500 dark:text-white/50">to</span>
-          <DatePicker
-            selected={endDate}
-            onChange={(date: Date) => setEndDate(date)}
-            selectsEnd
-            startDate={startDate}
-            endDate={endDate}
-            minDate={startDate}
-            customInput={<CustomInput />}
-            className="react-datepicker z-[1000]"
-            popperClassName="react-datepicker-popper z-[1000]"
-            calendarClassName="react-datepicker-calendar z-[1000]"
-            wrapperClassName="react-datepicker-wrapper z-[1000]"
-            dateFormat="MMM d, yyyy"
-          />
+          <div>
+            <DatePicker
+              selected={endDate}
+              onChange={(date: Date) => setEndDate(date)}
+              selectsEnd
+              startDate={startDate}
+              endDate={endDate}
+              minDate={startDate}
+              customInput={<CustomInput />}
+              className="react-datepicker z-[1000]"
+              popperClassName="react-datepicker-popper z-[1000]"
+              calendarClassName="react-datepicker-calendar z-[1000]"
+              wrapperClassName="react-datepicker-wrapper z-[1000]"
+              dateFormat="MMM d, yyyy"
+            />
+          </div>
         </div>
         <Select
           onValueChange={handleFilteredAnalytics}
@@ -397,7 +401,7 @@ export default function AnalyticsTable() {
           </SelectContent>
         </Select>
         {totalPages > 1 && (
-          <div className="flex justify-center items-center">
+          <div className="flex justify-center items-center w-[230px]">
             <button
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
