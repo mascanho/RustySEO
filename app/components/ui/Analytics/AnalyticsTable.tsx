@@ -513,6 +513,7 @@ export default function AnalyticsTable() {
 
         .react-datepicker__header {
           background-color: #f8fafc;
+          color: white;
           border-bottom: 1px solid #e2e8f0;
         }
 
@@ -530,6 +531,7 @@ export default function AnalyticsTable() {
 
         .react-datepicker__day:hover {
           background-color: #f1f5f9;
+          color: white;
         }
 
         .react-datepicker__day--selected:hover {
