@@ -9,7 +9,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { invoke } from "@tauri-apps/api/core";
 import HeadingsTableAI from "./HeadingsTableAI";
 import { v4 as uuidv4 } from "uuid";
-import { debounce } from "lodash"; // Import debounce from lodash
+
 
 const HeadingsTable = ({
   headings,
@@ -22,56 +22,48 @@ const HeadingsTable = ({
 }) => {
   const { Visible } = useStore();
   const setRepeatedHeadings = useOnPageSeo((state) => state.setHeadings);
-  const [viewAIHeadings, setViewAIHeadings] = useState(false);
+  
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false); // State for custom dropdown
-  const previousHeadingsRef = useRef<string[]>(headings);
+  
 
-  const aiHeadings = headings.toString();
-  let headingsLen = [];
-
-  // Debounced function to fetch AI headings
-  const debouncedFetchAiHeadings = useRef(
-    debounce(async (aiHeadings: string) => {
-      try {
-        const headingsKey = aiHeadings;
-        const existingUuid = sessionStorage.getItem(headingsKey);
-        const storedResponse =
-          existingUuid && sessionStorage.getItem(`${existingUuid}_response`);
-
-        // If no stored response exists, fetch new headings
-        if (!storedResponse) {
-          const uuid = uuidv4();
-          sessionStorage.setItem(headingsKey, uuid);
-
-          const response: any = await invoke("get_headings_command", {
-            aiHeadings,
-          });
-
-          if (response) {
-            setViewAIHeadings(response);
-            sessionStorage.setItem(
-              `${uuid}_response`,
-              JSON.stringify(response),
-            );
-          }
-        } else {
-          // Use stored response
-          setViewAIHeadings(JSON.parse(storedResponse));
-        }
-      } catch (error) {
-        console.error("Failed to get AI headings:", error);
-      }
-    }, 300), // 300ms debounce delay
-  ).current;
+  const [aiHeadings, setAiHeadings] = useState(null);
 
   useEffect(() => {
-    debouncedFetchAiHeadings(aiHeadings);
+    if (dialogOpen && !aiHeadings) {
+      const fetchAiHeadings = async () => {
+        try {
+          const headingsKey = headings.toString();
+          const existingUuid = sessionStorage.getItem(headingsKey);
+          const storedResponse =
+            existingUuid && sessionStorage.getItem(`${existingUuid}_response`);
 
-    return () => {
-      debouncedFetchAiHeadings.cancel(); // Cancel debounce on unmount
-    };
-  }, [headings, aiHeadings, debouncedFetchAiHeadings]);
+          if (!storedResponse) {
+            const uuid = uuidv4();
+            sessionStorage.setItem(headingsKey, uuid);
+
+            const response: any = await invoke("get_headings_command", {
+              aiHeadings: headings.toString(),
+            });
+
+            if (response) {
+              setAiHeadings(response);
+              sessionStorage.setItem(
+                `${uuid}_response`,
+                JSON.stringify(response),
+              );
+            }
+          } else {
+            setAiHeadings(JSON.parse(storedResponse));
+          }
+        } catch (error) {
+          console.error("Failed to get AI headings:", error);
+        }
+      };
+
+      fetchAiHeadings();
+    }
+  }, [dialogOpen, headings, aiHeadings]);
 
   const findDuplicates = (array: string[]) => {
     const count: Record<string, number> = {};
@@ -198,7 +190,7 @@ const HeadingsTable = ({
           {/*     /> */}
           {/*   </svg> */}
           {/* </button> */}
-          <HeadingsTableAI aiHeadings={viewAIHeadings} headings={headings} />
+          <HeadingsTableAI aiHeadings={aiHeadings} headings={headings} />
         </DialogContent>
       </Dialog>
 

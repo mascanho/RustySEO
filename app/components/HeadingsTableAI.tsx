@@ -14,14 +14,9 @@ const HeadingsTableAI = ({
   aiHeadings: string;
   headings: string[];
 }) => {
-  // make the string into an array of objects while filtering empties
-  const headingsData = (aiHeadings || "")
-    .split("\n")
-    .filter((heading) => heading?.trim() !== "")
-    .map((heading) => {
-      const [type = "", text = ""] = (heading || "").split(": ");
-      return { type, text };
-    });
+  if (!aiHeadings) {
+    return <div className="p-4">Click &quot;Improve Headings&quot; to generate AI-powered suggestions.</div>;
+  }
 
   function processLink(link: string) {
     if (!link) {
