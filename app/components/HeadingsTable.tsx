@@ -23,9 +23,9 @@ const HeadingsTable = ({
   const { Visible } = useStore();
   const setRepeatedHeadings = useOnPageSeo((state) => state.setHeadings);
 
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [viewAIHeadings, setViewAIHeadings] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false); // State for custom dropdown
   const previousHeadingsRef = useRef<string[]>(headings);
 
   const aiHeadings = headings.toString();
