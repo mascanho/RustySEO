@@ -367,7 +367,6 @@ async fn process_url(
             eprintln!("Failed to emit crawl result: {}", err);
         }
 
-        //TODO: SINGLE URL OBJECT CAN ALSO BE ADDED TO DB HERE
         let percentage = (state.crawled_urls as f32 / state.total_urls as f32) * 100.0;
         print!(
             "\r{}: {:.2}% {}",
@@ -390,181 +389,147 @@ pub async fn crawl_domain(
     db: Result<Database, DatabaseError>,
     settings_state: tauri::State<'_, AppState>,
 ) -> Result<(), String> {
-    // Import the user agents from another module to use across domain crawler
-    // // Using the ones from global state/memory that are placed in the HD
-    // let user_agents = user_agents::agents();
-
     let settings = Arc::new(settings_state.settings.read().await.clone());
 
     let client = Client::builder()
-        // .user_agent(&user_agents[rand::thread_rng().gen_range(0..user_agents.len())])
-        // Instead use the user agents in the configuration files
         .user_agent(
             &settings.user_agents[rand::thread_rng().gen_range(0..settings.user_agents.len())],
         )
-        .timeout(Duration::from_secs(settings.client_timeout)) // 60 seconds
-        .connect_timeout(Duration::from_secs(settings.client_connect_timeout)) // 15
-        .redirect(reqwest::redirect::Policy::limited(settings.redirect_policy)) // 5
+        .timeout(Duration::from_secs(settings.client_timeout))
+        .connect_timeout(Duration::from_secs(settings.client_connect_timeout))
+        .redirect(reqwest::redirect::Policy::limited(settings.redirect_policy))
         .build()
         .map_err(|e| e.to_string())?;
 
     let url_checked = url_check(domain);
     let base_url = Url::parse(&url_checked).map_err(|_| "Invalid URL")?;
 
-    let db_option = match db {
-        Ok(database) => Some(database),
-        Err(e) => {
-            eprintln!("Database connection failed: {}", e);
-            None
-        }
+    let (db_tx, mut db_rx) = tokio::sync::mpsc::channel(DB_BATCH_SIZE);
+
+    let db_handle = if let Ok(database) = db {
+        let db_pool = database.get_pool();
+        let handle = tokio::spawn(async move {
+            let mut batch_results = Vec::with_capacity(DB_BATCH_SIZE);
+            while let Some(result) = db_rx.recv().await {
+                batch_results.push(result);
+                if batch_results.len() >= DB_BATCH_SIZE {
+                    if let Err(e) =
+                        database::insert_bulk_crawl_data(db_pool.clone(), batch_results.drain(..).collect()).await
+                    {
+                        eprintln!("Failed to batch insert results: {}", e);
+                    }
+                }
+            }
+            if !batch_results.is_empty() {
+                if let Err(e) =
+                    database::insert_bulk_crawl_data(db_pool, batch_results).await
+                {
+                    eprintln!("Failed to insert remaining results: {}", e);
+                }
+            }
+        });
+        Some(handle)
+    } else {
+        eprintln!("Database connection failed");
+        None
     };
 
-    let state = Arc::new(Mutex::new(CrawlerState::new(db_option)));
+    let state = Arc::new(Mutex::new(CrawlerState::new(None))); // DB is handled separately
     {
-        let mut state = state.lock().await;
-        state.queue.push_back(base_url.clone());
-        state.total_urls = 1;
-        state.pending_urls.insert(base_url.to_string());
+        let mut state_guard = state.lock().await;
+        state_guard.queue.push_back(base_url.clone());
+        state_guard.total_urls = 1;
+        state_guard.pending_urls.insert(base_url.to_string());
     }
 
-    // Using the settings here to replace the hardcoded concurrent requests
-    // let semaphore = Arc::new(Semaphore::new(CONCURRENT_REQUESTS));
     let semaphore = Arc::new(Semaphore::new(settings.concurrent_requests));
     let crawl_start_time = Instant::now();
-    let mut batch_counter = 0;
 
     loop {
         let current_batch: Vec<Url> = {
-            let mut state = state.lock().await;
-            if state.queue.is_empty() {
-                if state.crawled_urls + state.failed_urls.len() >= state.total_urls {
-                    break;
-                }
+            let mut state_guard = state.lock().await;
+            if state_guard.queue.is_empty() && state_guard.pending_urls.is_empty() {
                 break;
             }
-            let batch_size = std::cmp::min(settings.batch_size, state.queue.len());
-            state.queue.drain(..batch_size).collect()
+            let batch_size = std::cmp::min(settings.batch_size, state_guard.queue.len());
+            state_guard.queue.drain(..batch_size).collect()
         };
 
-        let mut handles = Vec::with_capacity(current_batch.len());
-        for url in current_batch.clone() {
-            let client = client.clone();
-            let base_url = base_url.clone();
-            let state = state.clone();
-            let app_handle = app_handle.clone();
-            let semaphore = semaphore.clone();
+        if current_batch.is_empty() && Arc::strong_count(&state) == 1 {
+            let state_guard = state.lock().await;
+            if state_guard.pending_urls.is_empty() {
+                break;
+            }
+        }
 
+        let mut handles = Vec::with_capacity(current_batch.len());
+        for url in current_batch {
+            let client_clone = client.clone();
+            let base_url_clone = base_url.clone();
+            let state_clone = state.clone();
+            let app_handle_clone = app_handle.clone();
+            let semaphore_clone = semaphore.clone();
             let settings_clone = settings.clone();
+            let db_tx_clone = db_tx.clone();
 
             let handle = tokio::spawn(async move {
-                let _permit = semaphore.acquire().await.unwrap();
+                let _permit = semaphore_clone.acquire().await.unwrap();
                 let jitter = rand::thread_rng().gen_range(500..2000);
                 sleep(Duration::from_millis(jitter)).await;
 
-                let mut retries = 0;
-                let result: Result<DomainCrawlResults, String> = loop {
-                    match process_url(
-                        url.clone(),
-                        &client,
-                        &base_url,
-                        state.clone(),
-                        &app_handle,
-                        &settings_clone,
-                    )
-                    .await
-                    {
-                        Ok(result) => break Ok(result),
-                        Err(e) => {
-                            eprintln!("Error processing URL: {}", e);
-                            if retries >= settings_clone.max_retries {
-                                let mut state = state.lock().await;
-                                state.failed_urls.insert(url.to_string());
-                                break Ok(DomainCrawlResults {
-                                    url: url.to_string(),
-                                    status_code: 0,
-                                    ..Default::default()
-                                });
-                            }
-                            retries += 1;
-                            sleep(Duration::from_secs(1)).await;
+                let result = process_url(
+                    url.clone(),
+                    &client_clone,
+                    &base_url_clone,
+                    state_clone.clone(),
+                    &app_handle_clone,
+                    &settings_clone,
+                )
+                .await;
+
+                if let Ok(crawl_result) = &result {
+                    if let Ok(db_result) = to_database_results(crawl_result) {
+                        if let Err(e) = db_tx_clone.send(db_result).await {
+                            eprintln!("Failed to send result to DB thread: {}", e);
                         }
                     }
-                };
+                }
                 (url, result)
             });
-
             handles.push(handle);
         }
 
-        let mut batch_results = Vec::new();
-        let mut unique_urls_in_batch = HashSet::new();
-
         for handle in handles {
-            match handle.await {
-                Ok((_url, Ok(result))) => {
-                    if unique_urls_in_batch.insert(result.url.clone()) {
-                        batch_results.push(result);
-                    }
-                }
-                Ok((url, Err(_e))) => {
-                    let mut state = state.lock().await;
-                    if !state.failed_urls.contains(url.as_str())
-                        && !state.visited.contains(url.as_str())
-                    {
-                        state.queue.push_back(url.clone());
-                    }
-                }
-                Err(e) => eprintln!("Task failed: {:?}", e),
-            }
-        }
-
-        if !batch_results.is_empty() {
-            let state = state.lock().await;
-            if let Some(db) = &state.db {
-                let db_results: Vec<DatabaseResults> = batch_results
-                    .iter()
-                    .filter_map(|result| {
-                        to_database_results(result).map_err(|e| {
-                            eprintln!("Failed to serialize result for DB for url {}: {}", result.url, e);
-                        }).ok()
-                    })
-                    .collect();
-
-                if !db_results.is_empty() {
-                    match database::insert_bulk_crawl_data(db.get_pool(), db_results).await {
-                        Ok(()) => println!(
-                            "Successfully inserted batch of {} results",
-                            batch_results.len()
-                        ),
-                        Err(e) => eprintln!("Failed to batch insert results: {}", e),
-                    }
+            if let Ok((url, Err(_))) = handle.await {
+                let mut state_guard = state.lock().await;
+                if !state_guard.failed_urls.contains(url.as_str())
+                    && !state_guard.visited.contains(url.as_str())
+                {
+                    // Re-queue or handle failure
                 }
             }
         }
 
         if crawl_start_time.elapsed() > Duration::from_secs(settings.crawl_timeout) {
-            if let Err(err) = app_handle.emit("crawl_interrupted", ()) {
-                eprintln!("Failed to emit crawl interruption event: {}", err);
-            }
+            app_handle.emit("crawl_interrupted", ()).unwrap_or_default();
             break;
         }
     }
 
-    if let Err(err) = app_handle.emit("crawl_complete", ()) {
-        eprintln!("Failed to emit crawl completion event: {}", err);
+    drop(db_tx);
+    if let Some(handle) = db_handle {
+        handle.await.unwrap_or_default();
     }
 
+    app_handle.emit("crawl_complete", ()).unwrap_or_default();
     println!("Crawl completed.");
 
-    // CREATE THE DATABSES FOR THE DIFF TABLES
-    match database::create_diff_tables() {
-        Ok(()) => println!("Successfully created diff tables"),
-        Err(e) => eprintln!("Failed to create diff tables: {}", e),
-    };
+    if let Err(e) = database::create_diff_tables() {
+        eprintln!("Failed to create diff tables: {}", e);
+    }
 
-    match database::clone_batched_crawl_into_persistent_db().await {
-        Ok(()) => println!("Successfully cloned batched crawl into persistent db"),
-        Err(e) => eprintln!("Failed to clone batched crawl into persistent db: {}", e),
+    if let Err(e) = database::clone_batched_crawl_into_persistent_db().await {
+        eprintln!("Failed to clone batched crawl into persistent db: {}", e);
     }
 
     Ok(())
