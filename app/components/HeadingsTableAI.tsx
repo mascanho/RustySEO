@@ -22,6 +22,14 @@ const HeadingsTableAI = ({
       </div>
     );
   }
+  // make the string into an array of objects while filtering empties
+  const headingsData = (aiHeadings || "")
+    .split("\n")
+    .filter((heading) => heading?.trim() !== "")
+    .map((heading) => {
+      const [type = "", text = ""] = (heading || "").split(": ");
+      return { type, text };
+    });
 
   function processLink(link: string) {
     if (!link) {
