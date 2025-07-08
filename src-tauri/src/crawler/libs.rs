@@ -816,7 +816,7 @@ pub async fn get_google_analytics(
     if let Some(rows) = response["rows"].as_array() {
         for row in rows {
             let page = &row["dimensionValues"][0]["value"];
-            let views = &row["metricValues"][0]["value"];
+            let _views = &row["metricValues"][0]["value"];
             // println!("Page: {}, Views: {}", page, views);
         }
     }

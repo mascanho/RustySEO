@@ -38,7 +38,7 @@ async fn fetch_and_update_cache() -> Result<(), String> {
 
 pub async fn extract_html(body: &str) -> bool {
     // Fetch and update the cache if necessary
-    if let Err(e) = fetch_and_update_cache().await {
+    if let Err(_e) = fetch_and_update_cache().await {
         // eprintln!("Error updating cache: {}", e);
         return false;
     }
