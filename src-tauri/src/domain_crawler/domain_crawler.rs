@@ -99,9 +99,7 @@ impl CrawlerState {
     }
 }
 
-fn to_database_results(
-    result: &DomainCrawlResults,
-) -> Result<DatabaseResults, serde_json::Error> {
+fn to_database_results(result: &DomainCrawlResults) -> Result<DatabaseResults, serde_json::Error> {
     Ok(DatabaseResults {
         url: result.url.clone(),
         data: serde_json::to_value(result)?,
@@ -258,8 +256,7 @@ async fn process_url(
     // Check if the key exists to make the call otherwise return an empty vector
     // Attempt to fetch PSI results, but if there's an error, use an empty Vec
     // Start PSI fetch as a separate task
-    // Start PSI fetch as a separate task
-    // Start PSI fetch as a separate task
+
     let psi_future = if settings.page_speed_bulk {
         let url_clone = url.clone();
         let settings_clone = settings.clone();
@@ -270,12 +267,14 @@ async fn process_url(
         None
     };
 
+    println!("Settings of PSI: {}", settings.page_speed_bulk);
+
     let psi_results = match psi_future {
         Some(fut) => fut
             .await
             .map_err(|e| e.to_string())? // Handle JoinError
             .map_err(|e| e.to_string()), // Handle PsiError
-        None => Ok(Vec::new()),         // No PSI requested
+        None => Ok(Vec::new()), // No PSI requested
     };
 
     let result = DomainCrawlResults {
@@ -415,17 +414,18 @@ pub async fn crawl_domain(
             while let Some(result) = db_rx.recv().await {
                 batch_results.push(result);
                 if batch_results.len() >= DB_BATCH_SIZE {
-                    if let Err(e) =
-                        database::insert_bulk_crawl_data(db_pool.clone(), batch_results.drain(..).collect()).await
+                    if let Err(e) = database::insert_bulk_crawl_data(
+                        db_pool.clone(),
+                        batch_results.drain(..).collect(),
+                    )
+                    .await
                     {
                         eprintln!("Failed to batch insert results: {}", e);
                     }
                 }
             }
             if !batch_results.is_empty() {
-                if let Err(e) =
-                    database::insert_bulk_crawl_data(db_pool, batch_results).await
-                {
+                if let Err(e) = database::insert_bulk_crawl_data(db_pool, batch_results).await {
                     eprintln!("Failed to insert remaining results: {}", e);
                 }
             }

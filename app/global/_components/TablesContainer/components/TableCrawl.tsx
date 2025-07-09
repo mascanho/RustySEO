@@ -635,7 +635,7 @@ const TableCrawl = ({
             headerTitles={headerTitles}
           />
         </div>
-        <div className="h-[5px] border-b  bg-white dark:bg-brand-darker w-full absolute -bottom-[0] -mb-1 z-50" />
+        <div className="h-[5px] border-b dark:border-b-brand-dark  bg-white dark:bg-brand-darker w-full absolute -bottom-[0] -mb-1 z-50" />
       </div>
 
       <div

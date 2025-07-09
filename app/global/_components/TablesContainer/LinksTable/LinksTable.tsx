@@ -698,7 +698,7 @@ const LinksTable = ({
           />
         </div>
       </div>
-      <div className="h-[5px] border-b  bg-white dark:bg-brand-darker w-full sticky -top-[2px] -mb-1 z-50" />
+      <div className="h-[5px] border-b dark:border-b-brand-dark  bg-white dark:bg-brand-darker w-full sticky -top-[2px] -mb-1 z-50" />
       <div
         ref={parentRef}
         className="w-full h-[calc(100%-2rem)] overflow-auto relative"
