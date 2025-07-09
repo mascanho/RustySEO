@@ -214,7 +214,7 @@ const TableRow = ({
               }}
               className={`
                 select-none
-                border-gray-200 dark:border-gray-700 
+                border-gray-200 dark:border-gray-700
                 transition-colors
                 ${
                   clickedCell.row === index && clickedCell.cell === cellIndex
@@ -503,12 +503,12 @@ const ImagesCrawlTable = ({
 
   return (
     <>
-      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1">
+      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1 pb-1">
         <input
           type="text"
           placeholder="Search..."
           onChange={(e) => debouncedSearch(e.target.value)}
-          className="w-full p-1 pl-2 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
+          className="w-full p-1 pl-3 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded relative"
         />
         <DownloadButton download={handleDownload} />
         <div className="mr-1.5">
@@ -519,6 +519,8 @@ const ImagesCrawlTable = ({
           />
         </div>
       </div>
+      <div className="h-[50px] border-b dark:border-b-brand-dark  bg-red-500 dark:bg-brand-darker w-full bottom-0 -mb-1  z-50 absolute" />
+
       <div
         ref={parentRef}
         className="w-full h-[calc(100%-1.9rem)] overflow-auto relative bg-white dark:bg-brand-darker"
