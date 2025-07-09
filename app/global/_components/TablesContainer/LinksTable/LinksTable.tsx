@@ -630,7 +630,7 @@ const LinksTable = ({
           type="text"
           placeholder="Search..."
           onChange={(e) => debouncedSearch(e.target.value)}
-          className="w-full p-1 pl-3 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded-r"
+          className="w-full p-1 pl-2 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white  rounded-r"
         />
 
         {/* Status Code Filter */}
