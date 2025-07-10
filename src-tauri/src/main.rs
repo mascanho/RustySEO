@@ -3,7 +3,9 @@
 use crate::domain_crawler::db_deep::db;
 use crate::domain_crawler::domain_commands;
 use crate::loganalyser::database::remove_all_logs_from_serverlog_db;
-use crawler::{CrawlResult, LinkResult, PageSpeedResponse, SeoPageSpeedResponse};
+use crawler::{
+    CrawlResult, LinkResult, PageSpeedResponse, SEOLighthouseResponse, SeoPageSpeedResponse,
+};
 use directories::ProjectDirs;
 use globals::actions;
 use serde::{Deserialize, Deserializer, Serialize};

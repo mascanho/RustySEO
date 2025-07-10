@@ -256,7 +256,8 @@ async fn process_url(
     // Check if the key exists to make the call otherwise return an empty vector
     // Attempt to fetch PSI results, but if there's an error, use an empty Vec
     // Start PSI fetch as a separate task
-
+    // Start PSI fetch as a separate task
+    // Start PSI fetch as a separate task
     let psi_future = if settings.page_speed_bulk {
         let url_clone = url.clone();
         let settings_clone = settings.clone();
@@ -267,14 +268,10 @@ async fn process_url(
         None
     };
 
-    println!("Settings of PSI: {}", settings.page_speed_bulk);
-
+    // Do all other processing while PSI is fetching
     let psi_results = match psi_future {
-        Some(fut) => fut
-            .await
-            .map_err(|e| e.to_string())? // Handle JoinError
-            .map_err(|e| e.to_string()), // Handle PsiError
-        None => Ok(Vec::new()), // No PSI requested
+        Some(fut) => fut.await.map_err(|e| e.to_string())?, // Handle task join error
+        None => Ok(Vec::new()),                             // No PSI requested
     };
 
     let result = DomainCrawlResults {
@@ -503,7 +500,7 @@ pub async fn crawl_domain(
 
         for handle in handles {
             if let Ok((url, Err(_))) = handle.await {
-                let state_guard = state.lock().await;
+                let mut state_guard = state.lock().await;
                 if !state_guard.failed_urls.contains(url.as_str())
                     && !state_guard.visited.contains(url.as_str())
                 {

@@ -20,14 +20,15 @@ use tokio::time::{sleep, timeout};
 use crate::domain_crawler::{helpers::anchor_links::InternalExternalLinks, user_agents};
 
 // Constants configuration
-const MAX_CONCURRENT_REQUESTS: usize = 15; //Increased slightly
-const MIN_DELAY_MS: u64 = 500; // Decreased for faster but still safe crawling
+const MAX_CONCURRENT_REQUESTS: usize = 8;
+const MIN_DELAY_MS: u64 = 800;
 const MAX_DELAY_MS: u64 = 3000;
 const MAX_RETRIES: usize = 3;
 const REQUEST_TIMEOUT_SECS: u64 = 15;
 const JITTER_FACTOR: f32 = 0.3;
 const MAX_REQUESTS_PER_DOMAIN: usize = 50;
-const INITIAL_TASK_CAPACITY: usize = 200;
+const INITIAL_TASK_CAPACITY: usize = 100;
+const RETRY_DELAY_MS: u64 = 500;
 const CONNECTION_TIMEOUT_SECS: u64 = 5;
 const POOL_IDLE_TIMEOUT_SECS: u64 = 60;
 const POOL_MAX_IDLE_PER_HOST: usize = 10;
@@ -53,68 +54,55 @@ pub struct LinkCheckResults {
     pub external: Vec<LinkStatus>,
 }
 
-// New DomainState struct
-struct DomainState {
-    last_request: Instant,
-    delay: Duration,
-    request_count: usize,
-}
-
-impl Default for DomainState {
-    fn default() -> Self {
-        Self {
-            // Set last_request in the past to allow the first request to be immediate
-            last_request: Instant::now()
-                .checked_sub(Duration::from_secs(60))
-                .unwrap_or_else(Instant::now),
-            delay: Duration::from_millis(MIN_DELAY_MS),
-            request_count: 0,
-        }
-    }
-}
-
-// Rewritten DomainTracker
 struct DomainTracker {
-    domains: Mutex<HashMap<String, DomainState>>,
+    last_request: Mutex<HashMap<String, Instant>>,
+    delays: Mutex<HashMap<String, Duration>>,
+    request_counts: Mutex<HashMap<String, usize>>,
 }
 
 impl DomainTracker {
     fn new() -> Self {
         DomainTracker {
-            domains: Mutex::new(HashMap::new()),
+            last_request: Mutex::new(HashMap::new()),
+            delays: Mutex::new(HashMap::new()),
+            request_counts: Mutex::new(HashMap::new()),
         }
     }
 
-    async fn wait_for_domain(&self, domain: &str) {
-        let mut domains = self.domains.lock().await;
-        let state = domains.entry(domain.to_string()).or_default();
-
-        let elapsed = state.last_request.elapsed();
-        if elapsed < state.delay {
-            sleep(state.delay - elapsed).await;
-        }
-        // Update last request time after waiting
-        state.last_request = Instant::now();
+    async fn get_delay_for(&self, domain: &str) -> Duration {
+        let delays = self.delays.lock().await;
+        delays
+            .get(domain)
+            .copied()
+            .unwrap_or(Duration::from_millis(MIN_DELAY_MS))
     }
 
     async fn update_delay_for(&self, domain: &str, response: &reqwest::Response) {
-        let mut domains = self.domains.lock().await;
-        let state = domains.entry(domain.to_string()).or_default();
-
+        let mut delays = self.delays.lock().await;
         if response.status() == 429 {
-            // Increase delay exponentially on "Too Many Requests"
-            state.delay = (state.delay * 2).min(Duration::from_millis(MAX_DELAY_MS));
+            // Increase delay for this domain
+            let current = delays
+                .entry(domain.to_string())
+                .or_insert(Duration::from_millis(MIN_DELAY_MS));
+            *current = (*current * 2).min(Duration::from_secs(5));
         } else if response.status().is_success() {
             // Gradually decrease delay for well-behaved domains
-            state.delay = (state.delay / 2).max(Duration::from_millis(MIN_DELAY_MS));
+            if let Some(delay) = delays.get_mut(domain) {
+                *delay = (*delay / 2).max(Duration::from_millis(500));
+            }
         }
     }
 
     async fn should_throttle(&self, domain: &str) -> bool {
-        let mut domains = self.domains.lock().await;
-        let state = domains.entry(domain.to_string()).or_default();
-        state.request_count += 1;
-        state.request_count > MAX_REQUESTS_PER_DOMAIN
+        let mut counts = self.request_counts.lock().await;
+        let count = counts.entry(domain.to_string()).or_insert(0);
+        *count += 1;
+        *count > MAX_REQUESTS_PER_DOMAIN
+    }
+
+    async fn record_request(&self, domain: &str) {
+        let mut last_request = self.last_request.lock().await;
+        last_request.insert(domain.to_string(), Instant::now());
     }
 }
 
@@ -125,7 +113,7 @@ pub async fn get_links_status_code(
 ) -> LinkCheckResults {
     let client = build_client();
     let client = Arc::new(client);
-    let domain_tracker = Arc::new(DomainTracker::new()); // Using the new tracker
+    let domain_tracker = Arc::new(DomainTracker::new());
 
     let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_REQUESTS));
     let base_url_arc = Arc::new(base_url.clone());
@@ -264,7 +252,9 @@ fn spawn_link_check_task(
             }
         }
 
+        // Check if we should throttle this domain
         if domain_tracker.should_throttle(&domain).await {
+            //eprintln!("Throttling requests to domain: {}", domain);
             return None;
         }
 
@@ -286,11 +276,12 @@ fn spawn_link_check_task(
         )
         .await;
 
+        domain_tracker.record_request(&domain).await;
+
         Some((result, is_internal))
     }));
 }
 
-// Updated fetch_with_retry
 async fn fetch_with_retry(
     client: &Client,
     url: &str,
@@ -308,8 +299,9 @@ async fn fetch_with_retry(
     let mut last_error = None;
 
     loop {
-        // Wait for the domain-specific delay before acquiring a global semaphore permit
-        domain_tracker.wait_for_domain(domain).await;
+        // Get domain-specific delay
+        let delay = domain_tracker.get_delay_for(domain).await;
+        sleep(delay).await;
 
         let permit = match Semaphore::acquire_owned(semaphore.clone()).await {
             Ok(p) => p,
@@ -327,7 +319,7 @@ async fn fetch_with_retry(
         {
             Ok(Ok(response)) => {
                 domain_tracker.update_delay_for(domain, &response).await;
-                drop(permit); // Release semaphore permit
+                drop(permit);
                 return handle_success_response(
                     response,
                     base_url,
@@ -347,16 +339,13 @@ async fn fetch_with_retry(
             }
         }
 
-        // Drop permit if not already dropped
-        drop(permit);
-
         attempt += 1;
         if attempt >= MAX_RETRIES {
             break;
         }
 
-        // Exponential backoff with jitter for retries
-        let base_delay = MIN_DELAY_MS * 2u64.pow(attempt as u32);
+        // Exponential backoff with jitter
+        let base_delay = MIN_DELAY_MS * 2u64.pow(attempt as u32 - 1);
         let jitter =
             (base_delay as f32 * JITTER_FACTOR * rand::thread_rng().gen_range(-1.0..1.0)) as i64;
         let delay = (base_delay as i64 + jitter).max(0) as u64;
@@ -406,10 +395,13 @@ async fn try_head_then_get(
 ) -> Result<reqwest::Response, reqwest::Error> {
     // Try HEAD request first
     match client.head(url).send().await {
-        Ok(response) if response.status().is_success() => Ok(response),
-        _ => {
-            // Fallback to GET if HEAD fails or returns a non-success status
-            client.get(url).send().await
+        Ok(response) => Ok(response),
+        Err(head_err) => {
+            // Fallback to GET if HEAD fails
+            match client.get(url).send().await {
+                Ok(response) => Ok(response),
+                Err(get_err) => Err(get_err),
+            }
         }
     }
 }
