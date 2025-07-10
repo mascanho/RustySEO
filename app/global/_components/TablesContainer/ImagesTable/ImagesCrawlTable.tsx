@@ -141,11 +141,12 @@ const TableHeader = ({
                       width: columnWidths[index],
                       position: "relative",
                       border: "1px solid #ddd",
-                      padding: "8px",
+                      // padding: "20px 0 10px 40px",
                       userSelect: "none",
                       minWidth: columnWidths[index],
                       textAlign: columnAlignments[index],
                       backgroundColor: "var(--background, white)",
+                      height: "30px",
                     }}
                     className="dark:border-gray-600 dark:bg-gray-800 bg-gray-50 font-medium text-gray-900 dark:text-gray-100"
                     onClick={() => onAlignToggle(index)}
