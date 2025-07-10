@@ -4,6 +4,7 @@ export const changelogData = [
     date: "2025-07-01",
     type: "feature",
     changes: [
+      "Other fixes",
       "Deep crawl tables MacOSX bug fix",
       "Improved concurrent processing of links",
       "Better link check concurrency",
