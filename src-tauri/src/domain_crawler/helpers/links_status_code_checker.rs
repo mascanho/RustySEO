@@ -20,14 +20,14 @@ use tokio::time::{sleep, timeout};
 use crate::domain_crawler::{helpers::anchor_links::InternalExternalLinks, user_agents};
 
 // Constants configuration
-const MAX_CONCURRENT_REQUESTS: usize = 10; // Increased slightly
+const MAX_CONCURRENT_REQUESTS: usize = 15; //Increased slightly
 const MIN_DELAY_MS: u64 = 500; // Decreased for faster but still safe crawling
-const MAX_DELAY_MS: u64 = 5000; // Increased to handle aggressive rate limiting
+const MAX_DELAY_MS: u64 = 3000;
 const MAX_RETRIES: usize = 3;
 const REQUEST_TIMEOUT_SECS: u64 = 15;
 const JITTER_FACTOR: f32 = 0.3;
 const MAX_REQUESTS_PER_DOMAIN: usize = 50;
-const INITIAL_TASK_CAPACITY: usize = 100;
+const INITIAL_TASK_CAPACITY: usize = 200;
 const CONNECTION_TIMEOUT_SECS: u64 = 5;
 const POOL_IDLE_TIMEOUT_SECS: u64 = 60;
 const POOL_MAX_IDLE_PER_HOST: usize = 10;
@@ -117,7 +117,6 @@ impl DomainTracker {
         state.request_count > MAX_REQUESTS_PER_DOMAIN
     }
 }
-
 
 pub async fn get_links_status_code(
     links: Option<InternalExternalLinks>,
@@ -376,7 +375,6 @@ async fn fetch_with_retry(
         target,
     }
 }
-
 
 fn process_results(
     results: Vec<Result<Option<(LinkStatus, bool)>, JoinError>>,

@@ -3,17 +3,6 @@ import { useEffect, useState, useCallback, memo } from "react";
 import { listen } from "@tauri-apps/api/event";
 import useCrawlStore from "@/store/GlobalCrawlDataStore";
 
-// Debounce utility function
-const debounce = (func, delay) => {
-  let timeoutId;
-  return (...args) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => {
-      func.apply(this, args);
-    }, delay);
-  };
-};
-
 const FooterLoader = () => {
   const [progress, setProgress] = useState({
     crawledPages: 0,
@@ -52,21 +41,15 @@ const FooterLoader = () => {
     [setTotalUrlsCrawled],
   );
 
-  // Debounce the event handler with a delay of 300ms
-  const debouncedHandleProgressUpdate = debounce(handleProgressUpdate, 300);
-
   useEffect(() => {
-    // Set up the event listener with the debounced handler
-    const unlistenPromise = listen(
-      "progress_update",
-      debouncedHandleProgressUpdate,
-    );
+    // Set up the event listener with the direct handler (no debounce)
+    const unlistenPromise = listen("progress_update", handleProgressUpdate);
 
     // Cleanup the event listener on unmount
     return () => {
       unlistenPromise.then((unlisten) => unlisten());
     };
-  }, [debouncedHandleProgressUpdate]);
+  }, [handleProgressUpdate]);
 
   return (
     <div className="flex items-center justify-center w-full h-full">
