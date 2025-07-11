@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from "react";
 import { toast } from "sonner";
 import { CopyIcon } from "@radix-ui/react-icons";
@@ -14,6 +15,13 @@ const HeadingsTableAI = ({
   aiHeadings: string;
   headings: string[];
 }) => {
+  if (!aiHeadings) {
+    return (
+      <div className="p-4">
+        Click &quot;Improve Headings&quot; to generate AI-powered suggestions.
+      </div>
+    );
+  }
   // make the string into an array of objects while filtering empties
   const headingsData = (aiHeadings || "")
     .split("\n")

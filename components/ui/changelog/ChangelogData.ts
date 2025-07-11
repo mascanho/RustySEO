@@ -4,6 +4,11 @@ export const changelogData = [
     date: "2025-07-01",
     type: "feature",
     changes: [
+      "Other fixes",
+      "Deep crawl tables MacOSX bug fix",
+      "Improved concurrent processing of links",
+      "Better link check concurrency",
+      "Improved Page Speed Bulk Analysis",
       "Added log project segmentation",
       "Improved log search",
       "added filter for User Agents",
@@ -11,6 +16,8 @@ export const changelogData = [
       "Improved speed on log processing",
       "Better log batch upload and reload",
       "Improved log table UI",
+      "Better date selection for GA4",
+      "Improved error handling of APIs",
     ],
   },
   {

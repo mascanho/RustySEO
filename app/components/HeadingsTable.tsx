@@ -1,5 +1,5 @@
 // @ts-nocheck
-// "use client";
+"use client";
 import useStore from "@/store/Panes";
 import { BsThreeDotsVertical } from "react-icons/bs";
 import useOnPageSeo from "@/store/storeOnPageSeo";
@@ -22,6 +22,7 @@ const HeadingsTable = ({
 }) => {
   const { Visible } = useStore();
   const setRepeatedHeadings = useOnPageSeo((state) => state.setHeadings);
+
   const [viewAIHeadings, setViewAIHeadings] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false); // State for custom dropdown

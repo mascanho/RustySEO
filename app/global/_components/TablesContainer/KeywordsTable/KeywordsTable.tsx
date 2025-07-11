@@ -133,14 +133,14 @@ const TableHeader = ({
                 style={{
                   width: columnWidths[index],
                   position: "relative",
-                  border: "1px solid #ddd",
-                  padding: "8px 8px 2px 8px",
+                  // border: "1px solid #ddd",
+                  padding: "8px 0 0 0 ",
                   userSelect: "none",
                   minWidth: columnWidths[index],
                   maxWidth: columnWidths[index],
                   textAlign: columnAlignments[index] as any,
                   backgroundColor: "var(--background, white)",
-                  height: "10px",
+                  height: "0px",
                 }}
                 onClick={() => onAlignToggle(index)}
               >
@@ -546,12 +546,12 @@ const KeywordsTable = ({
 
   return (
     <>
-      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1 z-20 not-selectable">
+      <div className="text-xs dark:bg-brand-darker relative top-0 flex gap-1 z-20 not-selectable pb-1">
         <input
           type="text"
           placeholder="Search..."
           onChange={(e) => debouncedSearch(e.target.value)}
-          className="w-full p-1 pl-2 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
+          className="w-full p-1 pl-2 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white  rounded-r"
         />
         <DownloadButton
           download={handleDownload}
@@ -565,6 +565,8 @@ const KeywordsTable = ({
             headerTitles={["ID", "URL", ...keywordColumns]}
           />
         </div>
+
+        <div className="h-[5px] border-b dark:border-b-brand-dark  bg-white dark:bg-brand-darker w-full absolute -bottom-[0] -mb-1 z-50" />
       </div>
       <div
         ref={parentRef}

@@ -172,8 +172,8 @@ const TableHeader = ({
                 visibleAlignments[visibleIndex] === "center"
                   ? "center"
                   : visibleAlignments[visibleIndex] === "right"
-                  ? "flex-end"
-                  : "flex-start",
+                    ? "flex-end"
+                    : "flex-start",
               height: "30px",
               display: "flex",
               alignItems: "center",
@@ -271,8 +271,8 @@ const TableRow = ({
                 visibleAlignments[visibleIndex] === "center"
                   ? "center"
                   : visibleAlignments[visibleIndex] === "right"
-                  ? "flex-end"
-                  : "flex-start",
+                    ? "flex-end"
+                    : "flex-start",
               overflow: "hidden",
               whiteSpace: "nowrap",
               height: "100%",
@@ -615,12 +615,12 @@ const TableCrawl = ({
 
   return (
     <>
-      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1 not-selectable z-20">
+      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1 not-selectable z-20 pb-1 ">
         <input
           type="text"
           placeholder="Search..."
           onChange={(e) => debouncedSearch(e.target.value)}
-          className="w-full p-1 pl-2 h-6 bg-white dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
+          className="w-full p-1 pl-2 h-6 bg-white dark:bg-brand-darker border dark:border-brand-dark dark:text-white rounded-r"
         />
         <DownloadButton
           data={"data"}
@@ -635,11 +635,12 @@ const TableCrawl = ({
             headerTitles={headerTitles}
           />
         </div>
+        <div className="h-[5px] border-b dark:border-b-brand-dark  bg-white dark:bg-brand-darker w-full absolute -bottom-[0] -mb-1 z-50" />
       </div>
 
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-1.7rem)] overflow-auto relative"
+        className="w-full h-[calc(100%-2rem)] overflow-auto relative"
       >
         {/* Fixed Header */}
         <div className="sticky top-0 z-10">

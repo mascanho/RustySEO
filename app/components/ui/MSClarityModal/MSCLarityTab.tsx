@@ -190,8 +190,8 @@ export default function ClarityDashboard() {
   const browsers = browserMetric?.information || [];
 
   return (
-    <div className="min-h-screen">
-      <div className="container mx-auto py-2 px-4 space-y-3">
+    <div className="min-h-screen w-full">
+      <div className=" mx-auto py-2 pb-8 px-2   w-full space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h1 className="text-xs font-bold text-gray-900 dark:text-white">

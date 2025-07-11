@@ -36,7 +36,7 @@ const adsToCsv = (ads: Ad[]): string => {
   const rows = ads.map((ad) =>
     Object.values(ad)
       .map((value) => `"${String(value).replace(/"/g, '""')}"`)
-      .join(","),
+      .join(",")
   );
 
   return [headers, ...rows].join("\n");
@@ -241,7 +241,7 @@ export function FileImportExport({ ads, onImport }: FileImportExportProps) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
-            className="dark:text-white/50 dark:bg-brand-darker border-0"
+            className="dark:text-white/50 dark:bg-brand-darker border"
             variant="outline"
             size="sm"
           >

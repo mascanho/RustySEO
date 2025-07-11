@@ -188,11 +188,11 @@ const TableHeader = ({
                   width: columnWidths[index],
                   position: "relative",
                   border: "1px solid #ddd",
-                  padding: "8px",
                   userSelect: "none",
                   minWidth: columnWidths[index],
                   textAlign: columnAlignments[index],
                   backgroundColor: "var(--background, white)",
+                  height: "30px",
                 }}
                 onClick={() => onAlignToggle(index)}
               >
@@ -625,12 +625,12 @@ const LinksTable = ({
 
   return (
     <>
-      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1">
+      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1 pb-1">
         <input
           type="text"
           placeholder="Search..."
           onChange={(e) => debouncedSearch(e.target.value)}
-          className="w-full p-1 pl-2 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
+          className="w-full p-1 pl-2 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white  rounded-r"
         />
 
         {/* Status Code Filter */}
@@ -698,9 +698,10 @@ const LinksTable = ({
           />
         </div>
       </div>
+      <div className="h-[5px] border-b dark:border-b-brand-dark  bg-white dark:bg-brand-darker w-full sticky -top-[2px] -mb-1 z-50" />
       <div
         ref={parentRef}
-        className="w-full h-[calc(100%-1.9rem)] overflow-auto relative"
+        className="w-full h-[calc(100%-2rem)] overflow-auto relative"
       >
         <div
           ref={tableContainerRef}

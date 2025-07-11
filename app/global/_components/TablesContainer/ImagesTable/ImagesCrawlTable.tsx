@@ -141,11 +141,12 @@ const TableHeader = ({
                       width: columnWidths[index],
                       position: "relative",
                       border: "1px solid #ddd",
-                      padding: "8px",
+                      // padding: "20px 0 10px 40px",
                       userSelect: "none",
                       minWidth: columnWidths[index],
                       textAlign: columnAlignments[index],
                       backgroundColor: "var(--background, white)",
+                      height: "30px",
                     }}
                     className="dark:border-gray-600 dark:bg-gray-800 bg-gray-50 font-medium text-gray-900 dark:text-gray-100"
                     onClick={() => onAlignToggle(index)}
@@ -214,7 +215,7 @@ const TableRow = ({
               }}
               className={`
                 select-none
-                border-gray-200 dark:border-gray-700 
+                border-gray-200 dark:border-gray-700
                 transition-colors
                 ${
                   clickedCell.row === index && clickedCell.cell === cellIndex
@@ -503,12 +504,12 @@ const ImagesCrawlTable = ({
 
   return (
     <>
-      <div className="text-xs dark:bg-brand-darker sticky top-0 flex gap-1">
+      <div className="text-xs dark:bg-brand-darker relative top-0 flex gap-1 pb-1">
         <input
           type="text"
           placeholder="Search..."
           onChange={(e) => debouncedSearch(e.target.value)}
-          className="w-full p-1 pl-2 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white border-gray-300 rounded"
+          className="w-full p-1 pl-3 h-6 dark:bg-brand-darker border dark:border-brand-dark dark:text-white  rounded-r relative"
         />
         <DownloadButton download={handleDownload} />
         <div className="mr-1.5">
@@ -518,7 +519,9 @@ const ImagesCrawlTable = ({
             headerTitles={headerTitles}
           />
         </div>
+        <div className="h-[5px] border-b dark:border-b-brand-dark  bg-white dark:bg-brand-darker w-full -bottom-1 z-[60]  absolute" />
       </div>
+
       <div
         ref={parentRef}
         className="w-full h-[calc(100%-1.9rem)] overflow-auto relative bg-white dark:bg-brand-darker"

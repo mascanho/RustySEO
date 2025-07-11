@@ -66,7 +66,7 @@ export function KeywordsTableDeep() {
 
       console.log(response, "reponse KWs");
     } catch (error) {
-      toast.error("Failed to fetch data");
+      // toast.error("Failed to fetch data");
       console.error("Error fetching data:", error);
     } finally {
       setIsLoading(false);
