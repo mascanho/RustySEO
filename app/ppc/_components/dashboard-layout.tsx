@@ -35,21 +35,25 @@ export function DashboardLayout({
   onViewChange,
 }: DashboardLayoutProps) {
   return (
-    <div className="flex flex-col h-screen w-full"> {/* Changed to flex-col and h-screen */}
+    <div className="flex flex-col h-screen w-full">
+      {" "}
+      {/* Changed to flex-col and h-screen */}
       {/* Fixed Top Header */}
       <header className="h-14 border-b dark:border-brand-dark bg-white dark:bg-brand-darker flex items-center px-4 z-10">
-        <SidebarTrigger className="mr-4 dark:text-white/50" /> {/* Moved trigger here */}
+        <SidebarTrigger className="mr-4 dark:text-white/50" />{" "}
+        {/* Moved trigger here */}
         <div className="font-bold text-lg text-brand-bright">
           Google Ads Simulator
         </div>
         {/* Add more header elements here if needed, e.g., user profile, notifications */}
       </header>
-
       {/* Main content area: Sidebar + Children */}
-      <div className="flex flex-1 overflow-hidden"> {/* flex-1 to take remaining height, overflow-hidden for internal scrolling */}
+      <div className="flex flex-1 overflow-hidden">
+        {" "}
+        {/* flex-1 to take remaining height, overflow-hidden for internal scrolling */}
         <Sidebar>
           <SidebarHeader className="dark:border-brand-dark">
-            <div className className="flex items-center px-2 py-3">
+            <div className="flex items-center px-2 py-3">
               <div className="flex items-center gap-2">
                 {/* <div className="h-8 w-8 rounded-full bg-primary dark:bg-brand-bright flex items-center justify-center text-primary-foreground font-bold"> */}
                 {/*   A */}
@@ -127,7 +131,9 @@ export function DashboardLayout({
             </div>
           </SidebarFooter>
         </Sidebar>
-        <main className="flex-1 overflow-auto p-4 md:p-6"> {/* flex-1 to take remaining width, overflow-auto for content scrolling */}
+        <main className="flex-1 overflow-auto p-4 md:p-6">
+          {" "}
+          {/* flex-1 to take remaining width, overflow-auto for content scrolling */}
           {children}
         </main>
       </div>
