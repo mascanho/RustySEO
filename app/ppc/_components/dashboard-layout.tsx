@@ -35,7 +35,7 @@ export function DashboardLayout({
   onViewChange,
 }: DashboardLayoutProps) {
   return (
-    <div className="flex flex-col h-screen w-full">
+    <div className="flex flex-col h-[calc(100vh-26px)] w-full">
       {" "}
       {/* Changed to flex-col and h-screen */}
       {/* Fixed Top Header */}
@@ -62,7 +62,7 @@ export function DashboardLayout({
               </div>
             </div>
           </SidebarHeader>
-          <SidebarContent className="pl-2">
+          <SidebarContent className="pl-0">
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton

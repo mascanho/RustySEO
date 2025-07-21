@@ -31,9 +31,21 @@ interface AdFormProps {
 export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
   const [formData, setFormData] = useState<Ad>(() => ({
     ...ad,
-    headlines: Array.isArray(ad.headlines) ? ad.headlines : (typeof ad.headlines === 'string' ? ad.headlines.split('\n') : []),
-    descriptions: Array.isArray(ad.descriptions) ? ad.descriptions : (typeof ad.descriptions === 'string' ? ad.descriptions.split('\n') : []),
-    keywords: Array.isArray(ad.keywords) ? ad.keywords : (typeof ad.keywords === 'string' ? ad.keywords.split('\n') : []),
+    headlines: Array.isArray(ad.headlines)
+      ? ad.headlines
+      : typeof ad.headlines === "string"
+        ? ad.headlines.split("\n")
+        : [],
+    descriptions: Array.isArray(ad.descriptions)
+      ? ad.descriptions
+      : typeof ad.descriptions === "string"
+        ? ad.descriptions.split("\n")
+        : [],
+    keywords: Array.isArray(ad.keywords)
+      ? ad.keywords
+      : typeof ad.keywords === "string"
+        ? ad.keywords.split("\n")
+        : [],
   }));
   const [keywordInput, setKeywordInput] = useState("");
   const [validationResults, setValidationResults] = useState<{
@@ -158,7 +170,7 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
 
   return (
     <div className="space-y-6 w-full max-w-full relative">
-      <Card className="w-fit right-[0rem] h-20  p-0 -top-[5.8rem] px-3 absolute bg-white dark:bg-brand-darker rounded-md dark:border-brand-dark">
+      <Card className="w-fit right-[0rem] h-20  p-0 -top-[7.1rem] px-3 absolute bg-white dark:bg-brand-darker rounded-md dark:border-brand-dark">
         <CardHeader className="p-3 m-0">
           <CardTitle className="dark:text-white/50 p-0 m-0 pt-2">
             Ad Type
@@ -407,7 +419,7 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
         </Card>
       )}
 
-      <div className="flex justify-between">
+      <div className="flex justify-between pt-4">
         <Button
           variant="outline"
           onClick={onPreview}
@@ -417,7 +429,7 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
           Preview Ad
         </Button>
         <Button
-          className="dark:bg-brand-bright dark:text-white dark:border-brand-dark dark:hover:bg-brand-bright/80 active:scale-95 "
+          className="dark:bg-brand-bright h-8 w-28 mt-1.5 rounded dark:text-white dark:border-brand-dark dark:hover:bg-brand-bright/80 active:scale-95 "
           onClick={handleSave}
         >
           Save Ad

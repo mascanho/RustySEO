@@ -112,9 +112,30 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
   }
 
   // Now safe to use ad and allAds since we've returned early if they're invalid
-  const validHeadlines = ad.headlines ? (Array.isArray(ad.headlines) ? ad.headlines : (typeof ad.headlines === 'string' ? ad.headlines.split('\n') : [])).filter((h) => h.trim()) : [];
-  const validDescriptions = ad.descriptions ? (Array.isArray(ad.descriptions) ? ad.descriptions : (typeof ad.descriptions === 'string' ? ad.descriptions.split('\n') : [])).filter((d) => d.trim()) : [];
-  const validKeywords = ad.keywords ? (Array.isArray(ad.keywords) ? ad.keywords : (typeof ad.keywords === 'string' ? ad.keywords.split('\n') : [])).filter((k) => k.trim()) : [];
+  const validHeadlines = ad.headlines
+    ? (Array.isArray(ad.headlines)
+        ? ad.headlines
+        : typeof ad.headlines === "string"
+          ? ad.headlines.split("\n")
+          : []
+      ).filter((h) => h.trim())
+    : [];
+  const validDescriptions = ad.descriptions
+    ? (Array.isArray(ad.descriptions)
+        ? ad.descriptions
+        : typeof ad.descriptions === "string"
+          ? ad.descriptions.split("\n")
+          : []
+      ).filter((d) => d.trim())
+    : [];
+  const validKeywords = ad.keywords
+    ? (Array.isArray(ad.keywords)
+        ? ad.keywords
+        : typeof ad.keywords === "string"
+          ? ad.keywords.split("\n")
+          : []
+      ).filter((k) => k.trim())
+    : [];
 
   // Calculate max indices for cycling
   const maxHeadlineIndex = Math.max(
@@ -180,9 +201,11 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
 
   return (
     <div className="space-y-6 w-full">
-      <Card className="w-full flex-1 flex-col bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm h-[calc(100vh-40vh)] overflow-auto">
+      <Card className="w-full flex-1 flex-col bg-white dark:bg-brand-darker border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm h-[calc(100vh-40vh)] overflow-auto">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 border-b border-gray-200 dark:border-gray-700">
-          <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">Ad Preview</CardTitle>
+          <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
+            Ad Preview
+          </CardTitle>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -290,7 +313,9 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Headlines</div>
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Headlines
+                    </div>
                     <div className="flex items-center gap-1">
                       <Button
                         variant="outline"
@@ -344,7 +369,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
                       </div>
                     ))}
                     {currentHeadlines.length === 0 && (
-                      <div className="p-2 bg-gray-50 rounded-md text-gray-400 dark:bg-gray-700">
+                      <div className="p-2 bg-gray-50 rounded-md text-gray-400 dark:bg-brand-darker">
                         No headlines to display
                       </div>
                     )}
@@ -353,7 +378,9 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Description</div>
+                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Description
+                    </div>
                     <div className="flex items-center gap-1">
                       <Button
                         variant="outline"
@@ -409,15 +436,21 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
       </Card>
 
       {viewMode === "single" && (
-        <Card className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
+        <Card className="w-full bg-white dark:bg-brand-darker border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
           <CardHeader className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">Ad Details</CardTitle>
+            <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
+              Ad Details
+            </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 overflow-y-auto h-96">
+          <CardContent className="p-4 overflow-y-auto h-96 pb-20">
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Ad Type:</h3>
-                <span className="text-sm capitalize text-gray-800 dark:text-gray-200">{ad.type}</span>
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Ad Type:
+                </h3>
+                <span className="text-sm capitalize text-gray-800 dark:text-gray-200">
+                  {ad.type}
+                </span>
               </div>
 
               <div>
@@ -444,7 +477,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
                   Descriptions ({validDescriptions.length}/4)
                 </h3>
                 {validDescriptions.length > 0 ? (
-                  <ul className="mt-1 space-y-1 list-disc list-inside text-gray-800 dark:text-gray-200">
+                  <ul className="mt-1 space-y-1 list-none list-inside text-gray-800 dark:text-gray-200">
                     {validDescriptions.map((desc, i) => (
                       <li key={i} className="text-sm">
                         {i + 1}. {desc}
@@ -465,7 +498,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
                     <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Sitelinks ({ad.sitelinks.length})
                     </h3>
-                    <ul className="mt-1 space-y-1 list-disc list-inside text-gray-800 dark:text-gray-200">
+                    <ul className="mt-1 space-y-1 list-none text-gray-800 dark:text-gray-200">
                       {ad.sitelinks.map((sitelink, i) => (
                         <li key={i} className="text-sm">
                           {i + 1}. {sitelink.title} - {sitelink.url}
@@ -486,12 +519,14 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
                 )}
 
               <div>
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Keywords</h3>
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Keywords ({validKeywords.length})
+                </h3>
                 {validKeywords.length > 0 ? (
                   <ul className="mt-1 space-y-1 list-disc list-inside text-gray-800 dark:text-gray-200">
                     {validKeywords.map((keyword, i) => (
                       <li key={i} className="text-sm">
-                        • {keyword}
+                        {keyword}
                       </li>
                     ))}
                   </ul>

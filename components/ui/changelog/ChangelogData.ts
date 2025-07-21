@@ -1,5 +1,14 @@
 export const changelogData = [
   {
+    version: "0.2.9",
+    date: "2025-08-17",
+    type: "fix",
+    changes: [
+      "PPC Ads simulator with better export CSV",
+      "PPC Improved UI & UX",
+    ],
+  },
+  {
     version: "0.2.8",
     date: "2025-07-01",
     type: "feature",
