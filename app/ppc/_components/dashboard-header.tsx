@@ -28,19 +28,19 @@ export function DashboardHeader({
   showImportExport = false,
 }: DashboardHeaderProps) {
   return (
-    <div className="flex items-center justify-between mb-4">
+    <div className="flex items-center justify-between py-4 border-b dark:border-brand-dark mb-6"> {/* Added padding and bottom border */}
       <div className="flex items-center gap-3">
         {showBackButton && (
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="h-7 w-7 bg-brand-bright text-white text-xl" />
+          <Button variant="ghost" size="icon" onClick={onBack} className="text-muted-foreground hover:bg-gray-100 dark:hover:bg-brand-dark">
+            <ArrowLeft className="h-5 w-5" /> {/* Adjusted icon size */}
           </Button>
         )}
         <div>
-          <h1 className="text-2xl font-bold tracking-tight dark:text-white/50">
+          <h1 className="text-2xl font-medium text-gray-800 dark:text-white"> {/* Adjusted font size and weight */}
             {heading}
           </h1>
           {description && (
-            <p className="text-muted-foreground dark:text-white/50">
+            <p className="text-sm text-gray-500 dark:text-gray-400"> {/* Adjusted font size and color */}
               {description}
             </p>
           )}
@@ -53,7 +53,7 @@ export function DashboardHeader({
         {onAddNew && (
           <Button
             onClick={onAddNew}
-            className="h-8 dark:text-white bg-brand-bright dark:bg-brand-bright dark:hover:bg-brand-bright active:scale-95"
+            className="h-9 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-700 dark:hover:bg-blue-800" // Google Ads-like primary button
           >
             <PlusCircle className="mr-2 h-4 w-4" />
             Add New Ad

@@ -100,12 +100,12 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 w-full">
           {filteredAds.map((ad) => (
-            <Card key={ad.id} className="overflow-hidden dark:bg-brand-dark">
-              <CardHeader className="pb-2 pt-3">
+            <Card key={ad.id} className="overflow-hidden border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
+              <CardHeader className="p-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-lg">{ad.name}</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">{ad.name}</CardTitle>
+                    <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
                       {ad.headlines.filter((h) => h.trim()).length} headlines,{" "}
                       {ad.descriptions.filter((d) => d.trim()).length}{" "}
                       descriptions
@@ -119,48 +119,47 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
                           ? "secondary"
                           : "outline"
                     }
-                    className="capitalize"
+                    className="capitalize px-2 py-1 text-xs font-medium rounded-full"
                   >
                     {ad.type}
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="pb-2 px-6">
-                <div className="space-y-2">
-                  <div>
-                    <h4 className="text-sm font-medium">Headlines:</h4>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {ad.headlines
-                        .filter((h) => h.trim())
-                        .slice(0, 4)
-                        .join(" | ")}
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium">Keywords:</h4>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {ad.keywords.slice(0, 3).map((keyword, i) => (
-                        <span
-                          key={i}
-                          className="text-xs bg-brand-bright text-white rounded-full p-0.5 px-2"
-                        >
-                          {keyword}
-                        </span>
-                      ))}
-                      {ad.keywords.length > 3 && (
-                        <Badge variant="outline">
-                          +{ad.keywords.length - 3}
-                        </Badge>
-                      )}
-                    </div>
+              <CardContent className="p-4 space-y-3">
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Headlines:</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                    {ad.headlines
+                      .filter((h) => h.trim())
+                      .slice(0, 4)
+                      .join(" | ")}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Keywords:</h4>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {ad.keywords.slice(0, 3).map((keyword, i) => (
+                      <span
+                        key={i}
+                        className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-200"
+                      >
+                        {keyword}
+                      </span>
+                    ))}
+                    {ad.keywords.length > 3 && (
+                      <Badge variant="outline" className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                        +{ad.keywords.length - 3}
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-between px-5 pb-3">
+              <CardFooter className="flex justify-between p-4 border-t border-gray-200 dark:border-gray-700">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => onSelect(ad)}
+                  className="text-blue-600 border-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-gray-700"
                 >
                   <Edit className="h-4 w-4 mr-1" /> Edit
                 </Button>
@@ -173,6 +172,7 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
                       e.preventDefault();
                       onClone(ad);
                     }}
+                    className="text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
                   >
                     <Copy className="h-4 w-4" />
                     <span className="sr-only">Clone</span>
@@ -181,7 +181,7 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
                     variant={confirmDelete === ad.id ? "destructive" : "ghost"}
                     size="sm"
                     onClick={(e) => handleDeleteClick(ad.id, e)}
-                    className={confirmDelete === ad.id ? "w-24" : ""}
+                    className={confirmDelete === ad.id ? "w-24 bg-red-500 hover:bg-red-600 text-white" : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"}
                   >
                     <Trash className="h-4 w-4" />
                     <span

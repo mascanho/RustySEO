@@ -102,7 +102,14 @@ export function AdDashboard() {
   };
 
   const handleSelectAd = (ad) => {
-    setSelectedAd(ad);
+    const processedAd = {
+      ...ad,
+      headlines: Array.isArray(ad.headlines) ? ad.headlines : (typeof ad.headlines === 'string' ? ad.headlines.split('\n') : []),
+      descriptions: Array.isArray(ad.descriptions) ? ad.descriptions : (typeof ad.descriptions === 'string' ? ad.descriptions.split('\n') : []),
+      keywords: Array.isArray(ad.keywords) ? ad.keywords : (typeof ad.keywords === 'string' ? ad.keywords.split('\n') : []),
+      sitelinks: Array.isArray(ad.sitelinks) ? ad.sitelinks : [],
+    };
+    setSelectedAd(processedAd);
     setSidebarView("ads");
   };
 

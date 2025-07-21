@@ -39,6 +39,20 @@ const adsToCsv = (ads: Ad[]): string => {
         let csvValue;
         if (key === "headlines" || key === "descriptions" || key === "keywords") {
           csvValue = Array.isArray(value) ? value.join("\n") : value;
+        } else if (key === "sitelinks") {
+          csvValue = Array.isArray(value)
+            ? value
+                .map((sitelink) => {
+                  const parts = [
+                    `Title: ${sitelink.title || ""}`,
+                    `URL: ${sitelink.url || ""}`,
+                  ];
+                  if (sitelink.description1) parts.push(`Desc1: ${sitelink.description1}`);
+                  if (sitelink.description2) parts.push(`Desc2: ${sitelink.description2}`);
+                  return parts.join(" | ");
+                })
+                .join("\n")
+            : "";
         } else {
           csvValue = value;
         }
@@ -93,6 +107,17 @@ const csvToAds = (csv: string): Ad[] => {
 
       if ((header === "headlines" || header === "descriptions" || header === "keywords") && value) {
         ad[header as keyof Ad] = value.split("\n");
+      } else if (header === "sitelinks" && value) {
+        ad[header as keyof Ad] = value.split("\n").map((sitelinkString) => {
+          const sitelink: Sitelink = { title: "", url: "" };
+          sitelinkString.split(" | ").forEach((part) => {
+            if (part.startsWith("Title: ")) sitelink.title = part.replace("Title: ", "");
+            else if (part.startsWith("URL: ")) sitelink.url = part.replace("URL: ", "");
+            else if (part.startsWith("Desc1: ")) sitelink.description1 = part.replace("Desc1: ", "");
+            else if (part.startsWith("Desc2: ")) sitelink.description2 = part.replace("Desc2: ", "");
+          });
+          return sitelink;
+        });
       } else {
         ad[header as keyof Ad] = value;
       }
