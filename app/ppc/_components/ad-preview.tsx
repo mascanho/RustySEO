@@ -227,26 +227,26 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
               <Tabs
                 value={previewType}
                 onValueChange={(v) => setPreviewType(v as any)}
-                className="bg-gray-100 rounded-md p-1 dark:bg-gray-700"
+                className="bg-gray-100 rounded-md p-0.5 px-2 dark:bg-brand-dark"
               >
                 <TabsList className="bg-transparent p-0">
                   <TabsTrigger
                     value="search"
-                    className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-600 dark:data-[state=active]:text-white text-gray-600 dark:text-gray-300"
+                    className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-800 dark:data-[state=active]:text-white text-gray-600 dark:text-gray-300 data-[state=active]:py-1"
                   >
                     <Monitor className="h-4 w-4 mr-2" />
                     Search
                   </TabsTrigger>
                   <TabsTrigger
                     value="youtube"
-                    className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-600 dark:data-[state=active]:text-white text-gray-600 dark:text-gray-300"
+                    className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-800 dark:data-[state=active]:text-white text-gray-600 dark:text-gray-300 data-[state=active]:py-1"
                   >
                     <Youtube className="h-4 w-4 mr-2" />
                     YouTube
                   </TabsTrigger>
                   <TabsTrigger
                     value="mobile"
-                    className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-600 dark:data-[state=active]:text-white text-gray-600 dark:text-gray-300"
+                    className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-800 dark:data-[state=active]:text-white text-gray-600 dark:text-gray-300 data-[state=active]:py-1"
                   >
                     <Smartphone className="h-4 w-4 mr-2" />
                     Mobile
@@ -442,7 +442,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
               Ad Details
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 overflow-y-auto h-96 pb-20">
+          <CardContent className="p-4 overflow-y-auto h-80 pb-5">
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
