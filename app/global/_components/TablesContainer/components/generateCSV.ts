@@ -12,6 +12,7 @@ export const exportSEODataCSV = async (data) => {
   }
 
   // Define headers (same as your Excel version)
+  //FIX: Check if this is really outputting all the URLs in the table
   const headers = [
     "URL",
     "Page Title",
