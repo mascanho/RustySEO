@@ -29,7 +29,12 @@ interface AdFormProps {
 }
 
 export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
-  const [formData, setFormData] = useState<Ad>(ad);
+  const [formData, setFormData] = useState<Ad>(() => ({
+    ...ad,
+    headlines: Array.isArray(ad.headlines) ? ad.headlines : (typeof ad.headlines === 'string' ? ad.headlines.split('\n') : []),
+    descriptions: Array.isArray(ad.descriptions) ? ad.descriptions : (typeof ad.descriptions === 'string' ? ad.descriptions.split('\n') : []),
+    keywords: Array.isArray(ad.keywords) ? ad.keywords : (typeof ad.keywords === 'string' ? ad.keywords.split('\n') : []),
+  }));
   const [keywordInput, setKeywordInput] = useState("");
   const [validationResults, setValidationResults] = useState<{
     valid: boolean;

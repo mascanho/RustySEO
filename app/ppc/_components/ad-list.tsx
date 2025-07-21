@@ -29,7 +29,14 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
   const [adTypeFilter, setAdTypeFilter] = useState<AdType | "all">("all");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
-  if (ads.length === 0) {
+  const processedAds = ads.map(ad => ({
+    ...ad,
+    headlines: Array.isArray(ad.headlines) ? ad.headlines : (typeof ad.headlines === 'string' ? ad.headlines.split('\n') : []),
+    descriptions: Array.isArray(ad.descriptions) ? ad.descriptions : (typeof ad.descriptions === 'string' ? ad.descriptions.split('\n') : []),
+    keywords: Array.isArray(ad.keywords) ? ad.keywords : (typeof ad.keywords === 'string' ? ad.keywords.split('\n') : []),
+  }));
+
+  if (processedAds.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <h3 className="text-lg font-medium dark:text-white/50">
@@ -44,12 +51,12 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
 
   // Filter ads by type
   const filteredAds =
-    adTypeFilter === "all" ? ads : ads.filter((ad) => ad.type === adTypeFilter);
+    adTypeFilter === "all" ? processedAds : processedAds.filter((ad) => ad.type === adTypeFilter);
 
   // Count ads by type
-  const searchAdsCount = ads.filter((ad) => ad.type === "search").length;
-  const pmaxAdsCount = ads.filter((ad) => ad.type === "pmax").length;
-  const displayAdsCount = ads.filter((ad) => ad.type === "display").length;
+  const searchAdsCount = processedAds.filter((ad) => ad.type === "search").length;
+  const pmaxAdsCount = processedAds.filter((ad) => ad.type === "pmax").length;
+  const displayAdsCount = processedAds.filter((ad) => ad.type === "display").length;
 
   const handleDeleteClick = (adId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -74,7 +81,7 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
         className="w-full"
       >
         <TabsList>
-          <TabsTrigger value="all">All Ads ({ads.length})</TabsTrigger>
+          <TabsTrigger value="all">All Ads ({processedAds.length})</TabsTrigger>
           <TabsTrigger value="search">Search ({searchAdsCount})</TabsTrigger>
           <TabsTrigger value="pmax">
             Performance Max ({pmaxAdsCount})
@@ -174,6 +181,7 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
                     variant={confirmDelete === ad.id ? "destructive" : "ghost"}
                     size="sm"
                     onClick={(e) => handleDeleteClick(ad.id, e)}
+                    className={confirmDelete === ad.id ? "w-24" : ""}
                   >
                     <Trash className="h-4 w-4" />
                     <span
