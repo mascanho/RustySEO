@@ -10,6 +10,8 @@ import { invoke } from "@tauri-apps/api/core";
 import { format } from "date-fns";
 import { GiSpiderBot } from "react-icons/gi";
 
+// FIX: This component is not working properly, the url being compared is wrong. Also the modal is not displaying the information corrently when resizing the window
+
 export default function DiffChecker() {
   const { diff, setBulkDiffData, setLoading, setError } = useDiffStore();
 
