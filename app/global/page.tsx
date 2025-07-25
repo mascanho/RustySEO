@@ -103,7 +103,7 @@ export default function Page() {
       setIsGlobalCrawling(true);
 
       const result = await invoke("domain_crawl_command", { domain: url });
-      console.log("%cCrawl Result:", "color: red;", result);
+      // console.log("%cCrawl Result:", "color: red;", result);
     } catch (error) {
       console.error("Failed to execute domain crawl command:", error);
     } finally {
@@ -113,8 +113,6 @@ export default function Page() {
 
       // Get the differences between crawls
       const diff = await invoke("get_url_diff_command");
-      console.log("Diff:", diff);
-
       setBulkDiffData(diff);
 
       const crawledLinks =

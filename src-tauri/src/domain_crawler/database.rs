@@ -431,6 +431,7 @@ pub struct Differential {
     timestamp: Option<String>,
 }
 
+//NOTE: This is the function that analyses the diffs
 pub async fn analyse_diffs() -> Result<DiffAnalysis, DatabaseError> {
     println!("Analyzing diffs");
 

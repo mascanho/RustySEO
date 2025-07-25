@@ -40,9 +40,20 @@ export default function DiffChecker() {
     return format(new Date(timestamp), "MMM dd, yyyy - h:mm a");
   };
 
-  console.log(diff, "Diff Data from the modal");
+  // GET THE DOMAIN FROM THE URL
+  const getDomain = (url: string) => {
+    if (!url) {
+      return null;
+    }
 
-  if (diff?.added?.url !== diff?.removed?.url) {
+    const parsedUrl = new URL(url);
+    return parsedUrl.hostname;
+  };
+
+  const addedBaseUrl = getDomain(diff?.added?.url);
+  const removedBaseUrl = getDomain(diff?.removed?.url);
+
+  if (addedBaseUrl && addedBaseUrl !== removedBaseUrl && removedBaseUrl) {
     return (
       <section className="flex flex-col justify-center items-center min-h-screen p-6  transition-colors duration-300 -mt-64">
         <div className="bg-white p-8 w-full max-w-lg text-center dark:bg-brand-darker">
