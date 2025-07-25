@@ -76,7 +76,7 @@ export default function DiffChecker() {
                 >
                   {diff?.removed?.url === null
                     ? "No website crawled previously"
-                    : diff?.removed?.url}
+                    : removedBaseUrl}
                 </span>
               </div>
             </div>
@@ -87,7 +87,7 @@ export default function DiffChecker() {
                   Current Crawl:
                 </span>
                 <span className="ml-2 text-gray-600 dark:text-gray-400 break-all underline">
-                  {diff?.added?.url}
+                  {addedBaseUrl}
                 </span>
               </div>
             </div>
