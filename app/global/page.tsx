@@ -143,6 +143,7 @@ export default function Page() {
 
       addDomainCrawlResult(result);
       setFinishedDeepCrawl(true);
+      setIsFinishedDeepCrawl(true);
     };
 
     const unlistenPromise = listen("crawl_result", handleCrawlResult);
@@ -151,22 +152,10 @@ export default function Page() {
       isMounted = false;
       unlistenPromise.then((unlisten) => unlisten());
     };
-  }, [addDomainCrawlResult, setFinishedDeepCrawl]);
+  }, [addDomainCrawlResult, setFinishedDeepCrawl, setIsFinishedDeepCrawl]);
 
   // TODO: Keep an eye on the crawl size and warn the user if it is too big
   const crawlDataLength = crawlData.length;
-
-  useEffect(() => {
-    if (crawlDataLength === 10) {
-      console.warn(
-        "You have crawled more than 13,000 URLs. RustySEO has not been configured for large website crawls.",
-      );
-    }
-
-    if (crawlDataLength === 20) {
-      console.warn("You have crawled more than 26,000 URLs.");
-    }
-  }, [crawlDataLength]);
 
   // POWERBI eMBED HANDLING FROM LOCALSTORAGE
   useEffect(() => {

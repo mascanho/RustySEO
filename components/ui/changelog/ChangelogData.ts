@@ -6,6 +6,7 @@ export const changelogData = [
     changes: [
       "PPC Ads simulator with better export CSV",
       "PPC Improved UI & UX",
+      "Better deep crawl finish notification",
     ],
   },
   {
