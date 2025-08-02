@@ -365,7 +365,12 @@ async fn process_url(
             eprintln!("Failed to emit crawl result: {}", err);
         }
 
-        let percentage = (state.crawled_urls as f32 / state.total_urls as f32) * 100.0;
+        let percentage = if state.total_urls > 0 {
+            let completed = state.crawled_urls + state.failed_urls.len();
+            (completed as f32 / state.total_urls as f32) * 100.0
+        } else {
+            0.0
+        };
         print!(
             "\r{}: {:.2}% {}",
             "Progress".green().bold(),
@@ -373,6 +378,17 @@ async fn process_url(
             "complete".green().bold()
         );
         std::io::stdout().flush().unwrap();
+
+        // Periodic status logging
+        if state.crawled_urls % 50 == 0 {
+            println!(
+                "Status - Crawled: {}, Pending: {}, Queue: {}, Failed: {}",
+                state.crawled_urls,
+                state.pending_urls.len(),
+                state.queue.len(),
+                state.failed_urls.len()
+            );
+        }
     }
     Ok(result)
 }
@@ -500,7 +516,7 @@ pub async fn crawl_domain(
 
         for handle in handles {
             if let Ok((url, Err(_))) = handle.await {
-                let mut state_guard = state.lock().await;
+                let state_guard = state.lock().await;
                 if !state_guard.failed_urls.contains(url.as_str())
                     && !state_guard.visited.contains(url.as_str())
                 {
