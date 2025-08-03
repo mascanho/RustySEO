@@ -3,7 +3,7 @@ use futures::stream::{self, StreamExt};
 use rand::Rng;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashSet, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::io::Write;
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
@@ -59,6 +59,12 @@ const CRAWL_TIMEOUT: Duration = Duration::from_secs(28800); // 8 hours
 const BATCH_SIZE: usize = 20;
 const DB_BATCH_SIZE: usize = 100; // Increased for better database write efficiency
 
+// New constants to prevent infinite crawling
+const MAX_URLS_PER_DOMAIN: usize = 10000; // Maximum URLs to crawl per domain
+const MAX_DEPTH: usize = 10; // Maximum crawl depth
+const MAX_PENDING_TIME: Duration = Duration::from_secs(300); // 5 minutes max pending time
+const STALL_CHECK_INTERVAL: Duration = Duration::from_secs(30); // Check for stalls every 30s
+
 // Progress tracking structure
 #[derive(Clone, Serialize)]
 struct ProgressData {
@@ -78,11 +84,13 @@ struct CrawlResultData {
 pub struct CrawlerState {
     pub visited: HashSet<String>,
     pub failed_urls: HashSet<String>,
-    pub pending_urls: HashSet<String>,
-    pub queue: VecDeque<Url>,
+    pub pending_urls: HashMap<String, Instant>, // Track when URLs were added to pending
+    pub queue: VecDeque<(Url, usize)>,          // Include depth tracking
     pub total_urls: usize,
     pub crawled_urls: usize,
     pub db: Option<Database>,
+    pub last_activity: Instant,        // Track last crawling activity
+    pub url_patterns: HashSet<String>, // Track URL patterns to avoid duplicates
 }
 
 impl CrawlerState {
@@ -90,12 +98,27 @@ impl CrawlerState {
         CrawlerState {
             visited: HashSet::new(),
             failed_urls: HashSet::new(),
-            pending_urls: HashSet::new(),
+            pending_urls: HashMap::new(),
             queue: VecDeque::new(),
             total_urls: 0,
             crawled_urls: 0,
             db,
+            last_activity: Instant::now(),
+            url_patterns: HashSet::new(),
         }
+    }
+
+    // Clean up stale pending URLs
+    fn cleanup_stale_pending(&mut self) {
+        let now = Instant::now();
+        self.pending_urls
+            .retain(|_, &mut added_time| now.duration_since(added_time) < MAX_PENDING_TIME);
+    }
+
+    // Check if we should continue crawling
+    fn should_continue(&self) -> bool {
+        self.total_urls < MAX_URLS_PER_DOMAIN
+            && (!self.queue.is_empty() || !self.pending_urls.is_empty())
     }
 }
 
@@ -150,6 +173,7 @@ async fn fetch_with_exponential_backoff(
 // Process single URL
 async fn process_url(
     url: Url,
+    depth: usize,
     client: &Client,
     base_url: &Url,
     state: Arc<Mutex<CrawlerState>>,
@@ -167,11 +191,13 @@ async fn process_url(
         Ok(Err(e)) => {
             let mut state = state.lock().await;
             state.failed_urls.insert(url.to_string());
+            state.pending_urls.remove(url.as_str());
             return Err(format!("Failed to fetch {}: {}", url, e));
         }
         Err(_) => {
             let mut state = state.lock().await;
             state.failed_urls.insert(url.to_string());
+            state.pending_urls.remove(url.as_str());
             return Err(format!("Timeout fetching {}", url));
         }
     };
@@ -229,6 +255,7 @@ async fn process_url(
         state.crawled_urls += 1;
         state.visited.insert(url.to_string());
         state.pending_urls.remove(url.as_str());
+        state.last_activity = Instant::now();
         return Ok(DomainCrawlResults {
             url: final_url.to_string(),
             status_code,
@@ -329,21 +356,40 @@ async fn process_url(
         state.crawled_urls += 1;
         state.visited.insert(url.to_string());
         state.pending_urls.remove(url.as_str());
+        state.last_activity = Instant::now();
 
-        let links = links_selector::extract_links(&body, base_url);
-        for link in links {
-            let link_str = link.as_str();
-            if should_skip_url(link_str) {
-                continue;
-            }
+        // Only process links if we haven't reached limits and depth allows
+        if depth < MAX_DEPTH && state.total_urls < MAX_URLS_PER_DOMAIN {
+            let links = links_selector::extract_links(&body, base_url);
+            for link in links {
+                let link_str = link.as_str();
 
-            if !state.visited.contains(link_str)
-                && !state.queue.contains(&link)
-                && !state.pending_urls.contains(link_str)
-            {
-                state.queue.push_back(link.clone());
-                state.total_urls += 1;
-                state.pending_urls.insert(link_str.to_string());
+                // Enhanced URL filtering
+                if should_skip_url(link_str) {
+                    continue;
+                }
+
+                // Normalize URL to avoid duplicates
+                let normalized_url = normalize_url(link_str);
+                let url_pattern = extract_url_pattern(&normalized_url);
+
+                // Skip if we've seen this pattern before
+                if state.url_patterns.contains(&url_pattern) {
+                    continue;
+                }
+
+                if !state.visited.contains(link_str)
+                    && !state.queue.iter().any(|(q_url, _)| q_url == &link)
+                    && !state.pending_urls.contains_key(link_str)
+                    && state.total_urls < MAX_URLS_PER_DOMAIN
+                {
+                    state.queue.push_back((link.clone(), depth + 1));
+                    state.total_urls += 1;
+                    state
+                        .pending_urls
+                        .insert(link_str.to_string(), Instant::now());
+                    state.url_patterns.insert(url_pattern);
+                }
             }
         }
 
@@ -394,7 +440,140 @@ async fn process_url(
 }
 
 fn should_skip_url(url: &str) -> bool {
-    url.contains('#') || url.contains("login")
+    // Skip fragments
+    if url.contains('#') {
+        return true;
+    }
+
+    // Skip common problematic patterns
+    let skip_patterns = [
+        "login",
+        "logout",
+        "register",
+        "signup",
+        "signin",
+        "admin",
+        "dashboard",
+        "profile",
+        "account",
+        "cart",
+        "checkout",
+        "payment",
+        "order",
+        "search?",
+        "filter?",
+        "sort=",
+        "page=",
+        "calendar",
+        "date=",
+        "month=",
+        "year=",
+        "print",
+        "pdf",
+        "download",
+        "javascript:",
+        "mailto:",
+        "tel:",
+        "wp-admin",
+        "wp-login",
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".gif",
+        ".svg",
+        ".ico",
+        ".css",
+        ".js",
+        ".xml",
+        ".txt",
+        ".zip",
+        ".pdf",
+    ];
+
+    let url_lower = url.to_lowercase();
+    for pattern in &skip_patterns {
+        if url_lower.contains(pattern) {
+            return true;
+        }
+    }
+
+    // Skip URLs with too many query parameters (likely dynamic)
+    if url.matches('&').count() > 3 {
+        return true;
+    }
+
+    // Skip very long URLs (likely dynamic)
+    if url.len() > 200 {
+        return true;
+    }
+
+    false
+}
+
+// Normalize URLs to reduce duplicates
+fn normalize_url(url: &str) -> String {
+    let mut normalized = url.to_lowercase();
+
+    // Remove trailing slash
+    if normalized.ends_with('/') && normalized.len() > 1 {
+        normalized.pop();
+    }
+
+    // Remove common tracking parameters
+    let tracking_params = [
+        "utm_source",
+        "utm_medium",
+        "utm_campaign",
+        "fbclid",
+        "gclid",
+    ];
+    for param in &tracking_params {
+        if let Some(pos) = normalized.find(&format!("{}=", param)) {
+            let before = &normalized[..pos];
+            if let Some(after_pos) = normalized[pos..].find('&') {
+                let after = &normalized[pos + after_pos..];
+                normalized = format!(
+                    "{}{}",
+                    before.trim_end_matches('?').trim_end_matches('&'),
+                    after
+                );
+            } else {
+                normalized = before
+                    .trim_end_matches('?')
+                    .trim_end_matches('&')
+                    .to_string();
+            }
+        }
+    }
+
+    normalized
+}
+
+// Extract URL pattern to identify similar URLs
+fn extract_url_pattern(url: &str) -> String {
+    let mut pattern = url.to_string();
+
+    // Replace numbers with placeholder using simple string replacement
+    let mut chars: Vec<char> = pattern.chars().collect();
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i].is_ascii_digit() {
+            chars[i] = 'N';
+            // Skip consecutive digits
+            while i + 1 < chars.len() && chars[i + 1].is_ascii_digit() {
+                chars.remove(i + 1);
+            }
+        }
+        i += 1;
+    }
+    pattern = chars.into_iter().collect::<String>();
+
+    // Remove query parameters
+    if let Some(pos) = pattern.find('?') {
+        pattern = pattern[..pos].to_string();
+    }
+
+    pattern
 }
 
 pub async fn crawl_domain(
@@ -452,33 +631,66 @@ pub async fn crawl_domain(
     let state = Arc::new(Mutex::new(CrawlerState::new(None))); // DB is handled separately
     {
         let mut state_guard = state.lock().await;
-        state_guard.queue.push_back(base_url.clone());
+        state_guard.queue.push_back((base_url.clone(), 0)); // Start at depth 0
         state_guard.total_urls = 1;
-        state_guard.pending_urls.insert(base_url.to_string());
+        state_guard
+            .pending_urls
+            .insert(base_url.to_string(), Instant::now());
     }
 
     let semaphore = Arc::new(Semaphore::new(settings.concurrent_requests));
     let crawl_start_time = Instant::now();
+    let mut last_stall_check = Instant::now();
+    let mut last_crawled_count = 0;
 
     loop {
-        let current_batch: Vec<Url> = {
+        let current_batch: Vec<(Url, usize)> = {
             let mut state_guard = state.lock().await;
-            if state_guard.queue.is_empty() && state_guard.pending_urls.is_empty() {
+
+            // Clean up stale pending URLs
+            state_guard.cleanup_stale_pending();
+
+            // Check if we should continue
+            if !state_guard.should_continue() {
                 break;
             }
+
+            // Check for stalling
+            if last_stall_check.elapsed() > STALL_CHECK_INTERVAL {
+                if state_guard.crawled_urls == last_crawled_count
+                    && state_guard.last_activity.elapsed() > MAX_PENDING_TIME
+                {
+                    println!("Crawler appears to be stalled, terminating...");
+                    break;
+                }
+                last_crawled_count = state_guard.crawled_urls;
+                last_stall_check = Instant::now();
+            }
+
+            if state_guard.queue.is_empty() {
+                // Wait a bit for pending operations to complete
+                drop(state_guard);
+                sleep(Duration::from_secs(2)).await;
+                continue;
+            }
+
             let batch_size = std::cmp::min(settings.batch_size, state_guard.queue.len());
             state_guard.queue.drain(..batch_size).collect()
         };
 
-        if current_batch.is_empty() && Arc::strong_count(&state) == 1 {
+        if current_batch.is_empty() {
+            // Check if there are truly no more URLs to process
             let state_guard = state.lock().await;
             if state_guard.pending_urls.is_empty() {
                 break;
             }
+            drop(state_guard);
+            sleep(Duration::from_secs(1)).await;
+            continue;
         }
 
         let mut handles = Vec::with_capacity(current_batch.len());
-        for url in current_batch {
+        for (url, depth) in current_batch {
             let client_clone = client.clone();
             let base_url_clone = base_url.clone();
             let state_clone = state.clone();
@@ -494,6 +706,7 @@ pub async fn crawl_domain(
 
                 let result = process_url(
                     url.clone(),
+                    depth,
                     &client_clone,
                     &base_url_clone,
                     state_clone.clone(),
@@ -515,20 +728,35 @@ pub async fn crawl_domain(
         }
 
         for handle in handles {
-            if let Ok((url, Err(_))) = handle.await {
-                let state_guard = state.lock().await;
-                if !state_guard.failed_urls.contains(url.as_str())
-                    && !state_guard.visited.contains(url.as_str())
-                {
-                    // Re-queue or handle failure
+            if let Ok((url, result)) = handle.await {
+                match result {
+                    Err(_) => {
+                        let mut state_guard = state.lock().await;
+                        state_guard.pending_urls.remove(url.as_str());
+                        // Don't re-queue failed URLs to prevent infinite loops
+                    }
+                    Ok(_) => {
+                        // Success case is already handled in process_url
+                    }
                 }
             }
         }
 
         if crawl_start_time.elapsed() > Duration::from_secs(settings.crawl_timeout) {
+            println!("Crawl timeout reached, terminating...");
             app_handle.emit("crawl_interrupted", ()).unwrap_or_default();
             break;
         }
+    }
+
+    // Final cleanup and status report
+    {
+        let state_guard = state.lock().await;
+        println!("\nCrawl completed - Final stats:");
+        println!("  Total URLs discovered: {}", state_guard.total_urls);
+        println!("  URLs successfully crawled: {}", state_guard.crawled_urls);
+        println!("  URLs failed: {}", state_guard.failed_urls.len());
+        println!("  URLs still pending: {}", state_guard.pending_urls.len());
     }
 
     drop(db_tx);
