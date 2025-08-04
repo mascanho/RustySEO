@@ -50,6 +50,7 @@ use super::models::DomainCrawlResults;
 use super::page_speed::bulk::fetch_psi_bulk;
 use super::page_speed::model::Crawler;
 
+// TODO: Clean this up and implement the constants from settings crate
 // Constants for crawler behavior
 const MAX_RETRIES: usize = 5;
 const BASE_DELAY: u64 = 500;
@@ -61,7 +62,7 @@ const DB_BATCH_SIZE: usize = 100; // Increased for better database write efficie
 
 // New constants to prevent infinite crawling
 const MAX_URLS_PER_DOMAIN: usize = 10000; // Maximum URLs to crawl per domain
-const MAX_DEPTH: usize = 10; // Maximum crawl depth
+const MAX_DEPTH: usize = 20; // Maximum crawl depth
 const MAX_PENDING_TIME: Duration = Duration::from_secs(300); // 5 minutes max pending time
 const STALL_CHECK_INTERVAL: Duration = Duration::from_secs(30); // Check for stalls every 30s
 
@@ -181,7 +182,7 @@ async fn process_url(
     settings: &Settings,
 ) -> Result<DomainCrawlResults, String> {
     let response_result = tokio::time::timeout(
-        Duration::from_secs(60),
+        Duration::from_secs(30),
         fetch_with_exponential_backoff(client, url.as_str(), settings),
     )
     .await;
@@ -503,7 +504,7 @@ fn should_skip_url(url: &str) -> bool {
     }
 
     // Skip very long URLs (likely dynamic)
-    if url.len() > 200 {
+    if url.len() > 250 {
         return true;
     }
 
