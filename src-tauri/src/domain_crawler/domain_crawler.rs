@@ -61,9 +61,9 @@ const BATCH_SIZE: usize = 20;
 const DB_BATCH_SIZE: usize = 100; // Increased for better database write efficiency
 
 // New constants to prevent infinite crawling
-const MAX_URLS_PER_DOMAIN: usize = 10000; // Maximum URLs to crawl per domain
-const MAX_DEPTH: usize = 20; // Maximum crawl depth
-const MAX_PENDING_TIME: Duration = Duration::from_secs(300); // 5 minutes max pending time
+const MAX_URLS_PER_DOMAIN: usize = 50000; // Maximum URLs to crawl per domain (increased)
+const MAX_DEPTH: usize = 50; // Maximum crawl depth (increased)
+const MAX_PENDING_TIME: Duration = Duration::from_secs(900); // 15 minutes max pending time (increased)
 const STALL_CHECK_INTERVAL: Duration = Duration::from_secs(30); // Check for stalls every 30s
 
 // Progress tracking structure
@@ -362,6 +362,10 @@ async fn process_url(
         // Only process links if we haven't reached limits and depth allows
         if depth < MAX_DEPTH && state.total_urls < MAX_URLS_PER_DOMAIN {
             let links = links_selector::extract_links(&body, base_url);
+            let links_found = links.len();
+            if links_found > 0 && state.crawled_urls % 100 == 0 {
+                println!("Found {} links on {} at depth {}", links_found, url, depth);
+            }
             for link in links {
                 let link_str = link.as_str();
 
@@ -374,8 +378,31 @@ async fn process_url(
                 let normalized_url = normalize_url(link_str);
                 let url_pattern = extract_url_pattern(&normalized_url);
 
-                // Skip if we've seen this pattern before
-                if state.url_patterns.contains(&url_pattern) {
+                // More sophisticated pattern checking to reduce over-deduplication
+                let pattern_count = state
+                    .url_patterns
+                    .iter()
+                    .filter(|p| *p == &url_pattern)
+                    .count();
+
+                let should_skip_pattern = if state.url_patterns.len() > 5000 {
+                    // Only skip if we've seen this exact pattern many times
+                    pattern_count > 10
+                } else if state.url_patterns.len() > 1000 {
+                    // Be more selective about pattern matching
+                    pattern_count > 5
+                } else {
+                    // Allow all patterns until we have a reasonable collection
+                    pattern_count > 20
+                };
+
+                if should_skip_pattern {
+                    if state.crawled_urls % 200 == 0 {
+                        println!(
+                            "Skipping URL due to pattern: {} (pattern: {})",
+                            link_str, url_pattern
+                        );
+                    }
                     continue;
                 }
 
@@ -426,14 +453,15 @@ async fn process_url(
         );
         std::io::stdout().flush().unwrap();
 
-        // Periodic status logging
+        // Enhanced periodic status logging
         if state.crawled_urls % 50 == 0 {
             println!(
-                "Status - Crawled: {}, Pending: {}, Queue: {}, Failed: {}",
+                "Status - Crawled: {}, Pending: {}, Queue: {}, Failed: {}, Patterns: {}",
                 state.crawled_urls,
                 state.pending_urls.len(),
                 state.queue.len(),
-                state.failed_urls.len()
+                state.failed_urls.len(),
+                state.url_patterns.len()
             );
         }
     }
@@ -446,32 +474,16 @@ fn should_skip_url(url: &str) -> bool {
         return true;
     }
 
-    // Skip common problematic patterns
+    // Skip common problematic patterns (made less restrictive)
     let skip_patterns = [
         "login",
         "logout",
-        "register",
-        "signup",
         "signin",
         "admin",
         "dashboard",
-        "profile",
-        "account",
         "cart",
         "checkout",
         "payment",
-        "order",
-        "search?",
-        "filter?",
-        "sort=",
-        "page=",
-        "calendar",
-        "date=",
-        "month=",
-        "year=",
-        "print",
-        "pdf",
-        "download",
         "javascript:",
         "mailto:",
         "tel:",
@@ -498,13 +510,13 @@ fn should_skip_url(url: &str) -> bool {
         }
     }
 
-    // Skip URLs with too many query parameters (likely dynamic)
-    if url.matches('&').count() > 3 {
+    // Skip URLs with too many query parameters (made less restrictive)
+    if url.matches('&').count() > 8 {
         return true;
     }
 
-    // Skip very long URLs (likely dynamic)
-    if url.len() > 250 {
+    // Skip very long URLs (made less restrictive)
+    if url.len() > 500 {
         return true;
     }
 
@@ -554,24 +566,51 @@ fn normalize_url(url: &str) -> String {
 fn extract_url_pattern(url: &str) -> String {
     let mut pattern = url.to_string();
 
-    // Replace numbers with placeholder using simple string replacement
+    // More conservative number replacement to preserve URL uniqueness
     let mut chars: Vec<char> = pattern.chars().collect();
     let mut i = 0;
     while i < chars.len() {
         if chars[i].is_ascii_digit() {
-            chars[i] = 'N';
-            // Skip consecutive digits
-            while i + 1 < chars.len() && chars[i + 1].is_ascii_digit() {
-                chars.remove(i + 1);
+            let start = i;
+            let mut digit_count = 0;
+            while i < chars.len() && chars[i].is_ascii_digit() {
+                digit_count += 1;
+                i += 1;
             }
+
+            // Only replace sequences of 4+ digits (very likely to be IDs)
+            // AND if they're not part of a year (1900-2099)
+            if digit_count >= 4 {
+                let digit_str: String = chars[start..i].iter().collect();
+                if let Ok(num) = digit_str.parse::<u32>() {
+                    // Don't replace years or common numbers
+                    if !(1900..=2099).contains(&num) && num > 999 {
+                        for j in start..i {
+                            chars[j] = 'N';
+                        }
+                        // Keep only one 'N'
+                        for _ in start..(i - 1) {
+                            if start < chars.len() {
+                                chars.remove(start);
+                            }
+                        }
+                        i = start + 1;
+                    }
+                }
+            }
+        } else {
+            i += 1;
         }
-        i += 1;
     }
     pattern = chars.into_iter().collect::<String>();
 
-    // Remove query parameters
+    // Only remove query parameters with many parameters (likely filters/pagination)
     if let Some(pos) = pattern.find('?') {
-        pattern = pattern[..pos].to_string();
+        let query_part = &pattern[pos..];
+        // Keep URLs with simple query parameters
+        if query_part.matches('&').count() > 2 {
+            pattern = pattern[..pos].to_string();
+        }
     }
 
     pattern
@@ -656,10 +695,13 @@ pub async fn crawl_domain(
                 break;
             }
 
-            // Check for stalling
+            // Check for stalling (made less aggressive)
             if last_stall_check.elapsed() > STALL_CHECK_INTERVAL {
+                // Only consider it stalled if no progress AND no pending URLs AND empty queue
                 if state_guard.crawled_urls == last_crawled_count
                     && state_guard.last_activity.elapsed() > MAX_PENDING_TIME
+                    && state_guard.pending_urls.is_empty()
+                    && state_guard.queue.is_empty()
                 {
                     println!("Crawler appears to be stalled, terminating...");
                     break;
@@ -758,6 +800,9 @@ pub async fn crawl_domain(
         println!("  URLs successfully crawled: {}", state_guard.crawled_urls);
         println!("  URLs failed: {}", state_guard.failed_urls.len());
         println!("  URLs still pending: {}", state_guard.pending_urls.len());
+        println!("  Unique URL patterns: {}", state_guard.url_patterns.len());
+        println!("  Max depth reached: {}", MAX_DEPTH);
+        println!("  Max URLs limit: {}", MAX_URLS_PER_DOMAIN);
     }
 
     drop(db_tx);
