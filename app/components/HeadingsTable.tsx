@@ -26,48 +26,114 @@ const HeadingsTable = ({
   const [viewAIHeadings, setViewAIHeadings] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false); // State for custom dropdown
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
   const previousHeadingsRef = useRef<string[]>(headings);
 
-  const aiHeadings = headings.toString();
+  const aiHeadings = headings.join("\n");
   let headingsLen = [];
 
   // Debounced function to fetch AI headings
   const debouncedFetchAiHeadings = useRef(
-    debounce(async (aiHeadings: string) => {
+    debounce(async (headingsString: string) => {
       try {
-        const headingsKey = aiHeadings;
+        // Don't fetch if headings are empty
+        if (!headingsString || headingsString.trim() === "") {
+          console.log("❌ No headings to process");
+          return;
+        }
+
+        console.log("🚀 Starting AI headings generation...");
+        console.log("📝 Headings to process:", headingsString);
+        console.log("📊 Number of headings:", headings.length);
+
+        const headingsKey = `headings_${headingsString.length}_${headingsString.slice(0, 50)}`;
         const existingUuid = sessionStorage.getItem(headingsKey);
         const storedResponse =
           existingUuid && sessionStorage.getItem(`${existingUuid}_response`);
 
         // If no stored response exists, fetch new headings
         if (!storedResponse) {
+          console.log("🔄 Fetching new AI headings from backend...");
+          setIsLoadingAI(true);
           const uuid = uuidv4();
           sessionStorage.setItem(headingsKey, uuid);
 
-          const response: any = await invoke("get_headings_command", {
-            aiHeadings,
+          console.log("📡 Calling Tauri command: get_headings_command");
+          const response: string = await invoke("get_headings_command", {
+            aiHeadings: headingsString,
           });
 
-          if (response) {
+          console.log("✅ AI headings response received:", {
+            length: response?.length || 0,
+            type: typeof response,
+            preview:
+              response?.slice(0, 200) + (response?.length > 200 ? "..." : ""),
+          });
+
+          if (response && response.trim() !== "") {
             setViewAIHeadings(response);
             sessionStorage.setItem(
               `${uuid}_response`,
               JSON.stringify(response),
             );
+            console.log("💾 Cached AI response");
+          } else {
+            console.error("❌ Empty response from AI headings command");
+            setViewAIHeadings(
+              "No AI headings were generated. Please check your API key and try again.",
+            );
           }
         } else {
           // Use stored response
+          console.log("📋 Using cached AI headings");
           setViewAIHeadings(JSON.parse(storedResponse));
         }
+        setIsLoadingAI(false);
       } catch (error) {
-        console.error("Failed to get AI headings:", error);
+        console.error("💥 Failed to get AI headings:", {
+          error: error,
+          message: error?.message || "Unknown error",
+          stack: error?.stack || "No stack trace",
+        });
+
+        // Show user-friendly error with more details
+        let errorMessage = "Error generating AI headings. ";
+        if (error?.message?.includes("not found")) {
+          errorMessage +=
+            "Command not found - please check backend is running.";
+        } else if (error?.message?.includes("API")) {
+          errorMessage += "API error - please check your API key.";
+        } else {
+          errorMessage += "Please try again or check console for details.";
+        }
+
+        setViewAIHeadings(errorMessage);
+        setIsLoadingAI(false);
       }
-    }, 300), // 300ms debounce delay
+    }, 500), // Increased debounce delay to 500ms
   ).current;
 
   useEffect(() => {
-    debouncedFetchAiHeadings(aiHeadings);
+    // Only fetch if we have headings and they've changed
+    if (
+      aiHeadings &&
+      aiHeadings.trim() !== "" &&
+      JSON.stringify(headings) !== JSON.stringify(previousHeadingsRef.current)
+    ) {
+      console.log("🔄 Headings changed, preparing to fetch AI suggestions...");
+      console.log("📝 Previous headings:", previousHeadingsRef.current);
+      console.log("📝 New headings:", headings);
+      debouncedFetchAiHeadings(aiHeadings);
+      previousHeadingsRef.current = headings;
+    } else {
+      console.log("⏭️ Skipping AI fetch:", {
+        hasAiHeadings: !!aiHeadings,
+        hasContent: aiHeadings?.trim() !== "",
+        headingsChanged:
+          JSON.stringify(headings) !==
+          JSON.stringify(previousHeadingsRef.current),
+      });
+    }
 
     return () => {
       debouncedFetchAiHeadings.cancel(); // Cancel debounce on unmount
@@ -163,10 +229,27 @@ const HeadingsTable = ({
               onClick={() => {
                 setDialogOpen(true);
                 setDropdownOpen(false);
+                // Trigger AI generation when opening the dialog
+                if (headings && headings.length > 0) {
+                  console.log(
+                    "🚀 Triggering AI generation on Improve Headings click",
+                  );
+                  // Clear cache to force fresh generation
+                  setViewAIHeadings("");
+                  const headingsString = headings.join("\n");
+                  const headingsKey = `headings_${headingsString.length}_${headingsString.slice(0, 50)}`;
+                  const existingUuid = sessionStorage.getItem(headingsKey);
+                  if (existingUuid) {
+                    sessionStorage.removeItem(`${existingUuid}_response`);
+                    sessionStorage.removeItem(headingsKey);
+                  }
+                  debouncedFetchAiHeadings(headingsString);
+                }
               }}
-              className="w-full text-left px-2 py-1 text-xs text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-brand-dark cursor-pointer rounded-sm"
+              className="w-full text-left px-2 py-1 text-xs text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-brand-dark cursor-pointer rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!headings || headings.length === 0 || isLoadingAI}
             >
-              Improve Headings
+              {isLoadingAI ? "Generating..." : "Improve Headings"}
             </button>
           </div>
         </div>
@@ -199,7 +282,29 @@ const HeadingsTable = ({
           {/*     /> */}
           {/*   </svg> */}
           {/* </button> */}
-          <HeadingsTableAI aiHeadings={viewAIHeadings} headings={headings} />
+          <HeadingsTableAI
+            aiHeadings={viewAIHeadings}
+            headings={headings}
+            isLoading={isLoadingAI}
+            onRegenerate={() => {
+              console.log("🔄 Regenerate button clicked from AI table");
+              if (headings && headings.length > 0) {
+                console.log("📝 Regenerating AI headings for:", headings);
+                setViewAIHeadings("");
+                // Clear cache to force fresh generation
+                const headingsString = headings.join("\n");
+                const headingsKey = `headings_${headingsString.length}_${headingsString.slice(0, 50)}`;
+                const existingUuid = sessionStorage.getItem(headingsKey);
+                if (existingUuid) {
+                  sessionStorage.removeItem(`${existingUuid}_response`);
+                  sessionStorage.removeItem(headingsKey);
+                }
+                debouncedFetchAiHeadings(headingsString);
+              } else {
+                console.log("❌ No headings available for regeneration");
+              }
+            }}
+          />
         </DialogContent>
       </Dialog>
 

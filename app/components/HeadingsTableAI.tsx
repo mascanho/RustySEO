@@ -11,11 +11,20 @@ type HeadingData = {
 const HeadingsTableAI = ({
   aiHeadings = "",
   headings = [],
+  isLoading = false,
+  onRegenerate,
 }: {
-  aiHeadings: string;
+  aiHeadings: string | boolean;
   headings: string[];
+  isLoading?: boolean;
+  onRegenerate?: () => void;
 }) => {
-  if (!aiHeadings) {
+  // Only show the message if there are no original headings AND no AI headings AND not loading
+  if (
+    (!aiHeadings || aiHeadings === false || aiHeadings === "") &&
+    (!headings || headings.length === 0) &&
+    !isLoading
+  ) {
     return (
       <div className="p-4">
         Click &quot;Improve Headings&quot; to generate AI-powered suggestions.
@@ -23,13 +32,25 @@ const HeadingsTableAI = ({
     );
   }
   // make the string into an array of objects while filtering empties
-  const headingsData = (aiHeadings || "")
-    .split("\n")
-    .filter((heading) => heading?.trim() !== "")
-    .map((heading) => {
-      const [type = "", text = ""] = (heading || "").split(": ");
-      return { type, text };
-    });
+  const headingsData =
+    typeof aiHeadings === "string" && aiHeadings.trim() !== ""
+      ? aiHeadings
+          .split("\n")
+          .filter((heading) => heading?.trim() !== "")
+          .map((heading) => {
+            const trimmedHeading = heading.trim();
+            const colonIndex = trimmedHeading.indexOf(":");
+
+            if (colonIndex === -1) {
+              // If no colon, treat the whole thing as text with unknown type
+              return { type: "", text: trimmedHeading };
+            }
+
+            const type = trimmedHeading.substring(0, colonIndex).trim();
+            const text = trimmedHeading.substring(colonIndex + 1).trim();
+            return { type, text };
+          })
+      : [];
 
   function processLink(link: string) {
     if (!link) {
@@ -99,7 +120,7 @@ const HeadingsTableAI = ({
               Type
             </th>
             <th className="w-1/2 py-3 px-4 font-semibold border-b border-l text-left">
-              Recommended Text
+              {isLoading ? "Generating..." : "Recommended Text"}
             </th>
           </tr>
         </thead>
@@ -124,14 +145,33 @@ const HeadingsTableAI = ({
                 {(paddedAI[index] || {}).type || ""}
               </td>
               <td className="w-1/2 py-3 px-4 border-b border-l group relative">
-                {(paddedAI[index] || {}).text || ""}
-                {(paddedAI[index] || {}).text && (
-                  <button
-                    onClick={() => handleCopy(paddedAI[index].text)}
-                    className="invisible group-hover:visible absolute right-2 top-1/2 -translate-y-1/2"
-                  >
-                    <CopyIcon className="w-4 h-4 text-gray-500 hover:text-gray-700" />
-                  </button>
+                {isLoading && index === 0 ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="animate-pulse w-2 h-2 bg-brand-bright rounded-full"></div>
+                    <div
+                      className="animate-pulse w-2 h-2 bg-brand-bright rounded-full"
+                      style={{ animationDelay: "0.2s" }}
+                    ></div>
+                    <div
+                      className="animate-pulse w-2 h-2 bg-brand-bright rounded-full"
+                      style={{ animationDelay: "0.4s" }}
+                    ></div>
+                    <span className="text-gray-500 text-sm">
+                      AI is generating suggestions...
+                    </span>
+                  </div>
+                ) : (
+                  <>
+                    {(paddedAI[index] || {}).text || ""}
+                    {(paddedAI[index] || {}).text && (
+                      <button
+                        onClick={() => handleCopy(paddedAI[index].text)}
+                        className="invisible group-hover:visible absolute right-2 top-1/2 -translate-y-1/2"
+                      >
+                        <CopyIcon className="w-4 h-4 text-gray-500 hover:text-gray-700" />
+                      </button>
+                    )}
+                  </>
                 )}
               </td>
             </tr>

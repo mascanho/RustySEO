@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useEffect } from "react";
-import { FileDiff, Calendar, Worm } from "lucide-react";
+import { FileDiff, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CardHeader, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,18 +32,55 @@ export default function DiffChecker() {
     fetchDiff();
   }, [diff, setBulkDiffData, setLoading, setError]);
 
-  // Format dates for display
-  const formatDate = (timestamp?: number) => {
+  console.log(diff, "THE DIFF DATA");
+
+  const formatDate = (timestamp) => {
     if (!timestamp) return "N/A";
     return format(new Date(timestamp), "MMM dd, yyyy - h:mm a");
   };
 
-  console.log(diff, "Diff Data from the modal");
+  const normalizeUrl = (url) => {
+    if (!url) return "";
+    try {
+      const parsed = new URL(url);
+      return `${parsed.protocol}//${parsed.hostname}${parsed.pathname.replace(/\/+$/, "")}`.toLowerCase();
+    } catch {
+      return url.toLowerCase();
+    }
+  };
 
-  if (diff?.added?.url !== diff?.removed?.url) {
+  const getDomain = (url) => {
+    if (!url) return null;
+    try {
+      const parsedUrl = new URL(url);
+      return parsedUrl.hostname;
+    } catch {
+      return null;
+    }
+  };
+
+  const normalizedAdded =
+    diff?.added?.pages?.map((url) => normalizeUrl(url)) || [];
+  const normalizedRemoved =
+    diff?.removed?.pages?.map((url) => normalizeUrl(url)) || [];
+
+  const uniqueAdded = Array.from(
+    new Set(normalizedAdded.filter((url) => !normalizedRemoved.includes(url))),
+  );
+
+  const uniqueRemoved = Array.from(
+    new Set(normalizedRemoved.filter((url) => !normalizedAdded.includes(url))),
+  );
+
+  const addedBaseUrlIndex = (diff?.added?.pages.length - 1) / 2;
+  const addedBaseUrl = getDomain(diff?.added.pages[addedBaseUrlIndex]);
+  const removedBaseUrlIndex = (diff?.removed?.pages.length - 1) / 2;
+  const removedBaseUrl = getDomain(diff?.removed.pages[removedBaseUrlIndex]);
+
+  if (addedBaseUrl && removedBaseUrl && addedBaseUrl !== removedBaseUrl) {
     return (
-      <section className="flex flex-col justify-center items-center min-h-screen p-6  transition-colors duration-300 -mt-64">
-        <div className="bg-white p-8 w-full max-w-lg text-center dark:bg-brand-darker">
+      <section className="flex flex-col justify-center items-center -mt-10 h-full w-full px-6 transition-colors duration-300 ">
+        <div className="bg-white px-8 w-full max-w-lg text-center dark:bg-brand-darker">
           <h3 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-6 tracking-tight">
             Crawled Website Mismatch
           </h3>
@@ -63,7 +100,7 @@ export default function DiffChecker() {
                 >
                   {diff?.removed?.url === null
                     ? "No website crawled previously"
-                    : diff?.removed?.url}
+                    : removedBaseUrl}
                 </span>
               </div>
             </div>
@@ -74,7 +111,7 @@ export default function DiffChecker() {
                   Current Crawl:
                 </span>
                 <span className="ml-2 text-gray-600 dark:text-gray-400 break-all underline">
-                  {diff?.added?.url}
+                  {addedBaseUrl}
                 </span>
               </div>
             </div>
@@ -100,7 +137,6 @@ export default function DiffChecker() {
             </span>
           </div>
 
-          {/* Date Comparison Section */}
           <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-1 mb-2">
             <div className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
@@ -112,14 +148,13 @@ export default function DiffChecker() {
             </div>
           </div>
 
-          {/* Stats Cards */}
           <div className="grid grid-cols-2 gap-4 mt-1">
-            <div className="flex flex-col items-center justify-center p-3dark:bg-brand-darker  bg-gray-50 dark:bg-brand-darker border dark:border-brand-dark/50 rounded-md">
+            <div className="flex flex-col items-center justify-center p-3 dark:bg-brand-darker bg-gray-50 dark:bg-brand-darker border dark:border-brand-dark/50 rounded-md">
               <div className="text-sm text-gray-500 dark:text-gray-300">
                 Added Pages
               </div>
               <div className="text-2xl font-bold text-gray-800 dark:text-white">
-                {diff?.added?.number_of_pages ?? 0}
+                {uniqueAdded.length}
               </div>
               <div className="text-xs text-gray-500 dark:text-gray-300">
                 pages
@@ -131,7 +166,7 @@ export default function DiffChecker() {
                 Removed Pages
               </div>
               <div className="text-2xl font-bold text-gray-800 dark:text-white">
-                {diff?.removed?.number_of_pages ?? 0}
+                {uniqueRemoved.length}
               </div>
               <div className="text-xs text-gray-500 dark:text-gray-300">
                 pages
@@ -144,13 +179,13 @@ export default function DiffChecker() {
               variant="outline"
               className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800"
             >
-              +{diff?.added?.pages?.length ?? 0} new
+              +{uniqueAdded.length} new
             </Badge>
             <Badge
               variant="outline"
               className="bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800"
             >
-              -{diff?.removed?.pages?.length ?? 0} removed
+              -{uniqueRemoved.length} removed
             </Badge>
           </div>
         </div>
@@ -163,13 +198,13 @@ export default function DiffChecker() {
               value="added"
               className="rounded-none data-[state=active]:bg-green-50 data-[state=active]:dark:bg-green-900/30 data-[state=active]:text-green-500"
             >
-              New URLs ({diff?.added?.pages?.length ?? 0})
+              New URLs ({uniqueAdded.length})
             </TabsTrigger>
             <TabsTrigger
               value="removed"
               className="rounded-none data-[state=active]:bg-red-50 data-[state=active]:dark:bg-red-900/30 data-[state=active]:text-red-500"
             >
-              Removed URLs ({diff?.removed?.pages?.length ?? 0})
+              Removed URLs ({uniqueRemoved.length})
             </TabsTrigger>
           </TabsList>
 
@@ -179,12 +214,12 @@ export default function DiffChecker() {
           >
             <ScrollArea className="h-full w-full">
               <div className="py-2">
-                {!diff?.added?.pages?.length ? (
+                {uniqueAdded.length === 0 ? (
                   <div className="py-8 text-center mt-16 text-gray-500 dark:text-gray-400">
                     No new URLs added since last crawl
                   </div>
                 ) : (
-                  diff.added.pages.sort().map((url) => (
+                  uniqueAdded.sort().map((url) => (
                     <div
                       key={url}
                       className="py-2 px-4 font-mono text-sm border-l-2 border-l-green-500 hover:bg-green-50 dark:hover:bg-green-900/10 flex items-center"
@@ -205,12 +240,12 @@ export default function DiffChecker() {
           >
             <ScrollArea className="h-full w-full">
               <div className="py-2">
-                {!diff?.removed?.pages?.length ? (
+                {uniqueRemoved.length === 0 ? (
                   <div className="py-8 mt-16 text-center text-gray-500 dark:text-gray-400">
                     No removed URLs detected between crawls
                   </div>
                 ) : (
-                  diff.removed.pages.sort().map((url) => (
+                  uniqueRemoved.sort().map((url) => (
                     <div
                       key={url}
                       className="py-2 px-4 font-mono text-sm border-l-2 border-l-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 flex items-center"

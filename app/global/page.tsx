@@ -103,7 +103,7 @@ export default function Page() {
       setIsGlobalCrawling(true);
 
       const result = await invoke("domain_crawl_command", { domain: url });
-      console.log("%cCrawl Result:", "color: red;", result);
+      // console.log("%cCrawl Result:", "color: red;", result);
     } catch (error) {
       console.error("Failed to execute domain crawl command:", error);
     } finally {
@@ -113,8 +113,6 @@ export default function Page() {
 
       // Get the differences between crawls
       const diff = await invoke("get_url_diff_command");
-      console.log("Diff:", diff);
-
       setBulkDiffData(diff);
 
       const crawledLinks =
@@ -145,6 +143,7 @@ export default function Page() {
 
       addDomainCrawlResult(result);
       setFinishedDeepCrawl(true);
+      setIsFinishedDeepCrawl(true);
     };
 
     const unlistenPromise = listen("crawl_result", handleCrawlResult);
@@ -153,22 +152,10 @@ export default function Page() {
       isMounted = false;
       unlistenPromise.then((unlisten) => unlisten());
     };
-  }, [addDomainCrawlResult, setFinishedDeepCrawl]);
+  }, [addDomainCrawlResult, setFinishedDeepCrawl, setIsFinishedDeepCrawl]);
 
   // TODO: Keep an eye on the crawl size and warn the user if it is too big
   const crawlDataLength = crawlData.length;
-
-  useEffect(() => {
-    if (crawlDataLength === 10) {
-      console.warn(
-        "You have crawled more than 13,000 URLs. RustySEO has not been configured for large website crawls.",
-      );
-    }
-
-    if (crawlDataLength === 20) {
-      console.warn("You have crawled more than 26,000 URLs.");
-    }
-  }, [crawlDataLength]);
 
   // POWERBI eMBED HANDLING FROM LOCALSTORAGE
   useEffect(() => {

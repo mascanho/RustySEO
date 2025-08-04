@@ -35,8 +35,14 @@ export function AdDashboard() {
     // Load ads from localStorage when the component mounts
     const savedAds = getAdsFromLocalStorage();
     if (savedAds.length > 0) {
-      setAds(savedAds);
-      setSelectedAd(savedAds[0]);
+      const processedAds = savedAds.map(ad => ({
+        ...ad,
+        headlines: Array.isArray(ad.headlines) ? ad.headlines : (typeof ad.headlines === 'string' ? ad.headlines.split('\n') : []),
+        descriptions: Array.isArray(ad.descriptions) ? ad.descriptions : (typeof ad.descriptions === 'string' ? ad.descriptions.split('\n') : []),
+        keywords: Array.isArray(ad.keywords) ? ad.keywords : (typeof ad.keywords === 'string' ? ad.keywords.split('\n') : []),
+      }));
+      setAds(processedAds);
+      setSelectedAd(processedAds[0]);
     }
 
     return () => {
@@ -96,7 +102,14 @@ export function AdDashboard() {
   };
 
   const handleSelectAd = (ad) => {
-    setSelectedAd(ad);
+    const processedAd = {
+      ...ad,
+      headlines: Array.isArray(ad.headlines) ? ad.headlines : (typeof ad.headlines === 'string' ? ad.headlines.split('\n') : []),
+      descriptions: Array.isArray(ad.descriptions) ? ad.descriptions : (typeof ad.descriptions === 'string' ? ad.descriptions.split('\n') : []),
+      keywords: Array.isArray(ad.keywords) ? ad.keywords : (typeof ad.keywords === 'string' ? ad.keywords.split('\n') : []),
+      sitelinks: Array.isArray(ad.sitelinks) ? ad.sitelinks : [],
+    };
+    setSelectedAd(processedAd);
     setSidebarView("ads");
   };
 

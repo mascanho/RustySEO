@@ -34,9 +34,12 @@ export default function Changelog() {
   const pathname = usePathname();
 
   const logs = pathname === "/serverlogs";
+  const ppc = pathname === "/ppc";
 
   return (
-    <Card className="w-full max-w-[360px] border-0 shadow-none max-h-[calc(100vh-0.8rem)] dark:bg-brand-darker">
+    <Card
+      className={`w-full max-w-[360px] border-0 shadow-none max-h-[calc(100vh-0.8rem)] dark:bg-brand-darker ${ppc && "h-full overflow-clip"}`}
+    >
       <CardHeader className="pb-3 shadow">
         <CardTitle className="text-lg -ml-3 mt-[2px] -mb-2 font-semibold">
           Changelog

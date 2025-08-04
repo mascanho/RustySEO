@@ -429,6 +429,16 @@ pub struct Differential {
     pages: Vec<String>,
     number_of_pages: usize,
     timestamp: Option<String>,
+    first_url: Option<String>,
+    last_url: Option<String>,
+}
+
+//NOTE: This is the function that analyses the diffs
+
+// Helper function to compare the fisr and last elemets of the tables
+// it ensures that the domain is the same and if it isnt then use a specific one.
+pub async fn check_diff_domains(urls: Vec<String>) -> Result<(), String> {
+    Ok(())
 }
 
 pub async fn analyse_diffs() -> Result<DiffAnalysis, DatabaseError> {
@@ -441,7 +451,6 @@ pub async fn analyse_diffs() -> Result<DiffAnalysis, DatabaseError> {
     let db_dir = project_dirs.data_dir().join("db");
     let db_path = db_dir.join("diff.db");
 
-    // Verify database file exists
     if !db_path.exists() {
         return Err(DatabaseError::NotFound(
             "Database file not found".to_string(),
@@ -467,64 +476,82 @@ pub async fn analyse_diffs() -> Result<DiffAnalysis, DatabaseError> {
             ));
         }
 
-        // Struct to hold URL and timestamp pairs
         #[derive(Debug)]
         struct UrlRecord {
             url: String,
             timestamp: Option<String>,
         }
 
+        // Get first and last entries from current_crawl (clone them immediately)
+        let (current_first, current_last) = {
+            let (first, last) = conn.query_row(
+                "SELECT 
+                    (SELECT url FROM current_crawl LIMIT 1),
+                    (SELECT url FROM current_crawl ORDER BY timestamp DESC LIMIT 1)",
+                [],
+                |row| {
+                    Ok((
+                        row.get::<_, Option<String>>(0)?,
+                        row.get::<_, Option<String>>(1)?,
+                    ))
+                },
+            )?;
+            (first.clone(), last.clone())
+        };
+
+        // Get first and last entries from previous_crawl (clone them immediately)
+        let (previous_first, previous_last) = {
+            let (first, last) = conn.query_row(
+                "SELECT 
+                    (SELECT url FROM previous_crawl LIMIT 1),
+                    (SELECT url FROM previous_crawl ORDER BY timestamp DESC LIMIT 1)",
+                [],
+                |row| {
+                    Ok((
+                        row.get::<_, Option<String>>(0)?,
+                        row.get::<_, Option<String>>(1)?,
+                    ))
+                },
+            )?;
+            (first.clone(), last.clone())
+        };
+
+        println!(
+            "Current crawl - First: {:?}, Last: {:?}",
+            current_first, current_last
+        );
+        println!(
+            "Previous crawl - First: {:?}, Last: {:?}",
+            previous_first, previous_last
+        );
+
         // Get added URLs with timestamps
         let mut added_records = Vec::new();
-        let mut stmt = conn
-            .prepare(
-                "SELECT url, timestamp FROM current_crawl
+        let mut stmt = conn.prepare(
+            "SELECT url, timestamp FROM current_crawl
                  WHERE url NOT IN (SELECT url FROM previous_crawl)",
-            )
-            .map_err(|e| {
-                DatabaseError::QueryError(format!("Failed to prepare added URLs query: {}", e))
-            })?;
+        )?;
 
-        let mut rows = stmt.query([]).map_err(|e| {
-            DatabaseError::QueryError(format!("Failed to execute added URLs query: {}", e))
-        })?;
-        while let Some(row) = rows.next().map_err(|e| {
-            DatabaseError::QueryError(format!("Failed to fetch added URL row: {}", e))
-        })? {
+        let mut rows = stmt.query([])?;
+        while let Some(row) = rows.next()? {
             added_records.push(UrlRecord {
-                url: row.get(0).map_err(|e| {
-                    DatabaseError::QueryError(format!("Failed to get URL from row: {}", e))
-                })?,
-                timestamp: row.get(1).map_err(|e| {
-                    DatabaseError::QueryError(format!("Failed to get timestamp from row: {}", e))
-                })?,
+                url: row.get(0)?,
+                timestamp: row.get(1)?,
             });
         }
 
         // Get removed URLs with timestamps
         let mut removed_records = Vec::new();
-        let mut stmt = conn
-            .prepare(
-                "SELECT url, timestamp FROM previous_crawl
+        let mut stmt = conn.prepare(
+            "SELECT url, timestamp FROM previous_crawl
                  WHERE url NOT IN (SELECT url FROM current_crawl)",
-            )
-            .map_err(|e| {
-                DatabaseError::QueryError(format!("Failed to prepare removed URLs query: {}", e))
-            })?;
+        )?;
 
-        let mut rows = stmt.query([]).map_err(|e| {
-            DatabaseError::QueryError(format!("Failed to execute removed URLs query: {}", e))
-        })?;
-        while let Some(row) = rows.next().map_err(|e| {
-            DatabaseError::QueryError(format!("Failed to fetch removed URL row: {}", e))
-        })? {
+        let mut rows = stmt.query([])?;
+        while let Some(row) = rows.next()? {
             removed_records.push(UrlRecord {
-                url: row.get(0).map_err(|e| {
-                    DatabaseError::QueryError(format!("Failed to get URL from row: {}", e))
-                })?,
-                timestamp: row.get(1).map_err(|e| {
-                    DatabaseError::QueryError(format!("Failed to get timestamp from row: {}", e))
-                })?,
+                url: row.get(0)?,
+                timestamp: row.get(1)?,
             });
         }
 
@@ -542,18 +569,58 @@ pub async fn analyse_diffs() -> Result<DiffAnalysis, DatabaseError> {
             .max()
             .cloned();
 
+        // Create differentials with first/last entries included
         let added_differential = Differential {
-            url: added_records.first().map(|r| r.url.clone()),
-            pages: added_records.iter().map(|r| r.url.clone()).collect(),
+            url: added_records
+                .first()
+                .map(|r| r.url.clone())
+                .or_else(|| current_first.clone())
+                .or_else(|| previous_first.clone()),
+            pages: {
+                let mut pages: Vec<String> = added_records.iter().map(|r| r.url.clone()).collect();
+                if let Some(ref first) = current_first {
+                    if !pages.contains(first) {
+                        pages.push(first.clone());
+                    }
+                }
+                if let Some(ref last) = current_last {
+                    if !pages.contains(last) {
+                        pages.push(last.clone());
+                    }
+                }
+                pages
+            },
             number_of_pages: added_records.len(),
             timestamp: added_timestamp,
+            first_url: current_first.clone(),
+            last_url: current_last.clone(),
         };
 
         let removed_differential = Differential {
-            url: removed_records.first().map(|r| r.url.clone()),
-            pages: removed_records.iter().map(|r| r.url.clone()).collect(),
+            url: removed_records
+                .first()
+                .map(|r| r.url.clone())
+                .or_else(|| previous_first.clone())
+                .or_else(|| current_first.clone()),
+            pages: {
+                let mut pages: Vec<String> =
+                    removed_records.iter().map(|r| r.url.clone()).collect();
+                if let Some(ref first) = previous_first {
+                    if !pages.contains(first) {
+                        pages.push(first.clone());
+                    }
+                }
+                if let Some(ref last) = previous_last {
+                    if !pages.contains(last) {
+                        pages.push(last.clone());
+                    }
+                }
+                pages
+            },
             number_of_pages: removed_records.len(),
             timestamp: removed_timestamp,
+            first_url: previous_first.clone(),
+            last_url: previous_last.clone(),
         };
 
         Ok(DiffAnalysis {

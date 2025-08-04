@@ -33,28 +33,98 @@ const adsToCsv = (ads: Ad[]): string => {
   if (ads.length === 0) return "";
 
   const headers = Object.keys(ads[0]).join(",");
-  const rows = ads.map((ad) =>
-    Object.values(ad)
-      .map((value) => `"${String(value).replace(/"/g, '""')}"`)
-      .join(",")
-  );
+  const rows = ads.map((ad) => {
+    return Object.entries(ad)
+      .map(([key, value]) => {
+        let csvValue;
+        if (key === "headlines" || key === "descriptions" || key === "keywords") {
+          csvValue = Array.isArray(value) ? value.join("\n") : value;
+        } else if (key === "sitelinks") {
+          csvValue = Array.isArray(value)
+            ? value
+                .map((sitelink) => {
+                  const parts = [
+                    `Title: ${sitelink.title || ""}`,
+                    `URL: ${sitelink.url || ""}`,
+                  ];
+                  if (sitelink.description1) parts.push(`Desc1: ${sitelink.description1}`);
+                  if (sitelink.description2) parts.push(`Desc2: ${sitelink.description2}`);
+                  return parts.join(" | ");
+                })
+                .join("\n")
+            : "";
+        } else {
+          csvValue = value;
+        }
+        return `"${String(csvValue).replace(/"/g, '""')}"`;
+      })
+      .join(",");
+  });
 
   return [headers, ...rows].join("\n");
 };
 
 const csvToAds = (csv: string): Ad[] => {
-  const lines = csv.split("\n");
-  if (lines.length < 2) return [];
+  const records: string[] = [];
+  let currentRecord = "";
+  let inQuote = false;
 
-  const headers = lines[0].split(",").map((h) => h.trim());
-  return lines.slice(1).map((line) => {
-    const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+  const lines = csv.split('\n');
+
+  for (const line of lines) {
+    currentRecord += line;
+    const quoteCount = (line.match(/"/g) || []).length;
+
+    if (quoteCount % 2 !== 0) {
+      inQuote = !inQuote;
+    }
+
+    if (!inQuote) {
+      records.push(currentRecord);
+      currentRecord = "";
+    } else {
+      currentRecord += '\n';
+    }
+  }
+
+  if (currentRecord.trim().length > 0) {
+    records.push(currentRecord.trim());
+  }
+
+  if (records.length < 2) return [];
+
+  const headers = records[0].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((h) => h.trim().replace(/^"|"$/g, ""));
+
+  const ads: Ad[] = [];
+  for (let i = 1; i < records.length; i++) {
+    const recordLine = records[i];
+    const values = recordLine.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+
     const ad = {} as Ad;
-    headers.forEach((header, i) => {
-      ad[header as keyof Ad] = values[i] ? values[i].replace(/^"|"$/g, "") : "";
+    headers.forEach((header, idx) => {
+      let value = values[idx] ? values[idx].replace(/^"|"$/g, "") : "";
+      value = value.replace(/""/g, '"');
+
+      if ((header === "headlines" || header === "descriptions" || header === "keywords") && value) {
+        ad[header as keyof Ad] = value.split("\n");
+      } else if (header === "sitelinks" && value) {
+        ad[header as keyof Ad] = value.split("\n").map((sitelinkString) => {
+          const sitelink: Sitelink = { title: "", url: "" };
+          sitelinkString.split(" | ").forEach((part) => {
+            if (part.startsWith("Title: ")) sitelink.title = part.replace("Title: ", "");
+            else if (part.startsWith("URL: ")) sitelink.url = part.replace("URL: ", "");
+            else if (part.startsWith("Desc1: ")) sitelink.description1 = part.replace("Desc1: ", "");
+            else if (part.startsWith("Desc2: ")) sitelink.description2 = part.replace("Desc2: ", "");
+          });
+          return sitelink;
+        });
+      } else {
+        ad[header as keyof Ad] = value;
+      }
     });
-    return ad;
-  });
+    ads.push(ad);
+  }
+  return ads;
 };
 
 const downloadFile = async (content: string, filename: string) => {
