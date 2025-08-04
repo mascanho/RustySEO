@@ -2,6 +2,9 @@
 
 <h1>RustySEO</h1>
 
+![Logo](assets/icon.png)
+
+
 ![Tauri](https://img.shields.io/badge/tauri-%2324C8DB.svg?style=for-the-badge&logo=tauri&logoColor=%23FFFFFF)
 [![Rust](https://img.shields.io/badge/Rust-red.svg?style=for-the-badge&logo=rust)](https://www.rust-lang.org/)
 ![SQLite](https://img.shields.io/badge/sqlite-%2307405e.svg?style=for-the-badge&logo=sqlite&logoColor=white)
@@ -13,10 +16,6 @@
 Without crawl limits, start ranking better on search engines.
 
 
-
-
-
-![Logo](assets/icon.png)
 
 </div>
 
