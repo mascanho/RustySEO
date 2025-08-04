@@ -2,14 +2,17 @@
 
 <h1>RustySEO</h1>
 
-##### A modern SEO/GEO toolkit
-
 ![Tauri](https://img.shields.io/badge/tauri-%2324C8DB.svg?style=for-the-badge&logo=tauri&logoColor=%23FFFFFF)
 [![Rust](https://img.shields.io/badge/Rust-red.svg?style=for-the-badge&logo=rust)](https://www.rust-lang.org/)
 ![SQLite](https://img.shields.io/badge/sqlite-%2307405e.svg?style=for-the-badge&logo=sqlite&logoColor=white)
 ![Next JS](https://img.shields.io/badge/Next-black?style=for-the-badge&logo=next.js&logoColor=white)
 ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
 ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white)
+
+##### A free, modern SEO/GEO toolkit to help you crawl and analyse websites and server logs.
+Without crawl limits, start ranking better on search engines.
+
+
 
 
 
