@@ -9,7 +9,7 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { FaClipboard, FaRegClipboard } from "react-icons/fa6";
+import { FaClipboard, FaKey, FaRegClipboard } from "react-icons/fa6";
 import { GoSearch } from "react-icons/go";
 import {
   IoLogoGoogle,
@@ -25,6 +25,7 @@ import { PiGooglePodcastsLogo } from "react-icons/pi";
 import { SiAskfm, SiBrave, SiDuckduckgo, SiEcosia } from "react-icons/si";
 import { toast } from "sonner";
 import { DiYahooSmall } from "react-icons/di";
+import { LiaKeySolid } from "react-icons/lia";
 
 export default function ContextTableMenu({ children, data }) {
   function handleCopyToClipboard() {
@@ -131,6 +132,10 @@ export default function ContextTableMenu({ children, data }) {
           </ContextMenuSubContent>
         </ContextMenuSub>
 
+        <ContextMenuSeparator className="p-0 m-0 dark:bg-brand-dark" />
+        <ContextMenuItem className="text-xs">
+          <LiaKeySolid className="mr-2" /> See Queries
+        </ContextMenuItem>
         <ContextMenuSeparator className="p-0 m-0 dark:bg-brand-dark" />
 
         <ContextMenuItem className="text-xs">
