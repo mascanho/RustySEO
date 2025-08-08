@@ -165,7 +165,8 @@ function OverviewChart() {
               style={{ color: "white" }}
               className="text-3xl dark:fill-white text-white font-bold dark:text-white"
             >
-              {streamedCrawledPages?.toLocaleString()}
+              {/* {streamedCrawledPages?.toLocaleString()} */}
+              {crawlData && crawlData.length}
             </tspan>
             <tspan
               x={viewBox.cx}
