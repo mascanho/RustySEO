@@ -9,8 +9,9 @@ const FooterLoader = () => {
     percentageCrawled: 0,
     crawledPagesCount: 0,
   });
+  const [crawlCompleted, setCrawlCompleted] = useState(false);
 
-  const { setTotalUrlsCrawled } = useCrawlStore();
+  const { setTotalUrlsCrawled, crawlData } = useCrawlStore();
 
   // Memoize the event handler to avoid recreating it on every render
   const handleProgressUpdate = useCallback(
@@ -35,21 +36,45 @@ const FooterLoader = () => {
         };
       });
 
+      // Reset completion state if new crawl starts
+      if (percentage < 100 && crawlCompleted) {
+        setCrawlCompleted(false);
+        console.log("New crawl started - resetting completion state");
+      }
+
       // Update global state only if the total URLs have changed
       setTotalUrlsCrawled((prev) => (prev === total_urls ? prev : total_urls));
     },
-    [setTotalUrlsCrawled],
+    [setTotalUrlsCrawled, crawlCompleted],
   );
 
   useEffect(() => {
     // Set up the event listener with the direct handler (no debounce)
-    const unlistenPromise = listen("progress_update", handleProgressUpdate);
+    const progressUnlistenPromise = listen(
+      "progress_update",
+      handleProgressUpdate,
+    );
 
-    // Cleanup the event listener on unmount
+    // Set up crawl completion listener
+    const completeUnlistenPromise = listen("crawl_complete", () => {
+      // Ensure percentage shows 100% when crawl is complete and use actual crawlData length
+      setProgress((prev) => ({
+        crawledPages: crawlData.length,
+        percentageCrawled: 100,
+        crawledPagesCount: crawlData.length,
+      }));
+      setCrawlCompleted(true);
+      console.log(
+        "Crawl completed - final counts synchronized with actual data",
+      );
+    });
+
+    // Cleanup the event listeners on unmount
     return () => {
-      unlistenPromise.then((unlisten) => unlisten());
+      progressUnlistenPromise.then((unlisten) => unlisten());
+      completeUnlistenPromise.then((unlisten) => unlisten());
     };
-  }, [handleProgressUpdate]);
+  }, [handleProgressUpdate, crawlData.length]);
 
   return (
     <div className="flex items-center justify-center w-full h-full">
@@ -60,9 +85,10 @@ const FooterLoader = () => {
         />
       </div>
       <span className="ml-2">
-        {progress.crawledPages} of {progress.crawledPagesCount} pages crawled (
-        {progress.percentageCrawled.toFixed(0)}
-        %)
+        {crawlCompleted ? crawlData.length : progress.crawledPages} of{" "}
+        {crawlCompleted ? crawlData.length : progress.crawledPagesCount} pages
+        crawled ({progress.percentageCrawled.toFixed(0)}
+        %){crawlCompleted ? " - Complete!" : ""}
       </span>
     </div>
   );

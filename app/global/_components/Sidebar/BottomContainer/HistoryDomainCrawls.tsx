@@ -35,9 +35,10 @@ const HistoryDomainCrawls = () => {
   const [crawledPages, setCrawledPages] = useState<number>(0);
   const [percentageCrawled, setPercentageCrawled] = useState<number>(0);
   const [crawledPagesCount, setCrawledPagesCount] = useState<number>(0);
+  const [crawlCompleted, setCrawlCompleted] = useState<boolean>(false);
 
   useEffect(() => {
-    const unlisten = listen("progress_update", (event) => {
+    const progressUnlisten = listen("progress_update", (event) => {
       const progressData = event.payload as {
         crawled_urls: number;
         percentage: number;
@@ -46,9 +47,25 @@ const HistoryDomainCrawls = () => {
       setCrawledPages(progressData.crawled_urls);
       setPercentageCrawled(progressData.percentage);
       setCrawledPagesCount(progressData.total_urls);
+
+      // Reset completion state if new crawl starts
+      if (progressData.percentage < 100) {
+        setCrawlCompleted(false);
+      }
     });
+
+    const completeUnlisten = listen("crawl_complete", () => {
+      // Ensure percentage shows 100% when crawl is complete and sync with actual data
+      setCrawledPages(crawlData.length);
+      setCrawledPagesCount(crawlData.length);
+      setPercentageCrawled(100);
+      setCrawlCompleted(true);
+      console.log("Crawl completed - data synchronized with actual crawlData");
+    });
+
     return () => {
-      unlisten.then((f) => f());
+      progressUnlisten.then((f) => f());
+      completeUnlisten.then((f) => f());
     };
   }, []);
 

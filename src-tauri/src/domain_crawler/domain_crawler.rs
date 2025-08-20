@@ -67,7 +67,7 @@ const MAX_PENDING_TIME: Duration = Duration::from_secs(900); // 15 minutes max p
 const STALL_CHECK_INTERVAL: Duration = Duration::from_secs(30); // Check for stalls every 30s
 
 // Progress tracking structure
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Copy)]
 struct ProgressData {
     total_urls: usize,
     crawled_urls: usize,
@@ -92,11 +92,12 @@ pub struct CrawlerState {
     pub db: Option<Database>,
     pub last_activity: Instant,        // Track last crawling activity
     pub url_patterns: HashSet<String>, // Track URL patterns to avoid duplicates
+    pub active_tasks: usize,           // Track number of currently processing tasks
 }
 
 impl CrawlerState {
     fn new(db: Option<Database>) -> Self {
-        CrawlerState {
+        Self {
             visited: HashSet::new(),
             failed_urls: HashSet::new(),
             pending_urls: HashMap::new(),
@@ -106,6 +107,7 @@ impl CrawlerState {
             db,
             last_activity: Instant::now(),
             url_patterns: HashSet::new(),
+            active_tasks: 0,
         }
     }
 
@@ -119,7 +121,11 @@ impl CrawlerState {
     // Check if we should continue crawling
     fn should_continue(&self) -> bool {
         self.total_urls < MAX_URLS_PER_DOMAIN
-            && (!self.queue.is_empty() || !self.pending_urls.is_empty())
+            && (!self.queue.is_empty() || !self.pending_urls.is_empty() || self.active_tasks > 0)
+    }
+
+    fn is_truly_complete(&self) -> bool {
+        self.queue.is_empty() && self.pending_urls.is_empty() && self.active_tasks == 0
     }
 }
 
@@ -358,6 +364,7 @@ async fn process_url(
         state.visited.insert(url.to_string());
         state.pending_urls.remove(url.as_str());
         state.last_activity = Instant::now();
+        state.active_tasks = state.active_tasks.saturating_sub(1);
 
         // Only process links if we haven't reached limits and depth allows
         if depth < MAX_DEPTH && state.total_urls < MAX_URLS_PER_DOMAIN {
@@ -421,12 +428,32 @@ async fn process_url(
             }
         }
 
+        // Calculate progress with both crawled and failed URLs considered complete
+        let completed = state.crawled_urls + state.failed_urls.len();
         let progress = ProgressData {
             total_urls: state.total_urls,
-            crawled_urls: state.crawled_urls,
-            percentage: (state.crawled_urls as f32 / state.total_urls as f32) * 100.0,
+            crawled_urls: completed, // Use completed count for consistency
+            percentage: if state.total_urls > 0 {
+                (completed as f32 / state.total_urls as f32) * 100.0
+            } else {
+                0.0
+            },
             failed_urls: state.failed_urls.len(),
         };
+
+        // Log progress every 100 URLs for debugging
+        if state.crawled_urls % 100 == 0 || completed == state.total_urls {
+            println!(
+                "Progress: {}/{} URLs processed ({:.1}%), {} succeeded, {} failed, {} pending, {} active tasks",
+                completed,
+                state.total_urls,
+                progress.percentage,
+                state.crawled_urls,
+                state.failed_urls.len(),
+                state.pending_urls.len(),
+                state.active_tasks
+            );
+        }
 
         if let Err(err) = app_handle.emit("progress_update", progress) {
             eprintln!("Failed to emit progress update: {}", err);
@@ -439,16 +466,10 @@ async fn process_url(
             eprintln!("Failed to emit crawl result: {}", err);
         }
 
-        let percentage = if state.total_urls > 0 {
-            let completed = state.crawled_urls + state.failed_urls.len();
-            (completed as f32 / state.total_urls as f32) * 100.0
-        } else {
-            0.0
-        };
         print!(
             "\r{}: {:.2}% {}",
             "Progress".green().bold(),
-            percentage,
+            progress.percentage,
             "complete".green().bold()
         );
         std::io::stdout().flush().unwrap();
@@ -697,11 +718,10 @@ pub async fn crawl_domain(
 
             // Check for stalling (made less aggressive)
             if last_stall_check.elapsed() > STALL_CHECK_INTERVAL {
-                // Only consider it stalled if no progress AND no pending URLs AND empty queue
+                // Only consider it stalled if no progress AND no pending URLs AND empty queue AND no active tasks
                 if state_guard.crawled_urls == last_crawled_count
                     && state_guard.last_activity.elapsed() > MAX_PENDING_TIME
-                    && state_guard.pending_urls.is_empty()
-                    && state_guard.queue.is_empty()
+                    && state_guard.is_truly_complete()
                 {
                     println!("Crawler appears to be stalled, terminating...");
                     break;
@@ -724,12 +744,19 @@ pub async fn crawl_domain(
         if current_batch.is_empty() {
             // Check if there are truly no more URLs to process
             let state_guard = state.lock().await;
-            if state_guard.pending_urls.is_empty() {
+            if state_guard.is_truly_complete() {
+                println!("All URLs processed, crawl complete");
                 break;
             }
             drop(state_guard);
             sleep(Duration::from_secs(1)).await;
             continue;
+        }
+
+        // Increment active tasks counter before spawning
+        {
+            let mut state_guard = state.lock().await;
+            state_guard.active_tasks += current_batch.len();
         }
 
         let mut handles = Vec::with_capacity(current_batch.len());
@@ -776,10 +803,14 @@ pub async fn crawl_domain(
                     Err(_) => {
                         let mut state_guard = state.lock().await;
                         state_guard.pending_urls.remove(url.as_str());
+                        state_guard.failed_urls.insert(url.to_string());
+                        state_guard.active_tasks = state_guard.active_tasks.saturating_sub(1);
                         // Don't re-queue failed URLs to prevent infinite loops
                     }
                     Ok(_) => {
                         // Success case is already handled in process_url
+                        let mut state_guard = state.lock().await;
+                        state_guard.active_tasks = state_guard.active_tasks.saturating_sub(1);
                     }
                 }
             }
@@ -800,14 +831,47 @@ pub async fn crawl_domain(
         println!("  URLs successfully crawled: {}", state_guard.crawled_urls);
         println!("  URLs failed: {}", state_guard.failed_urls.len());
         println!("  URLs still pending: {}", state_guard.pending_urls.len());
+        println!("  Active tasks remaining: {}", state_guard.active_tasks);
         println!("  Unique URL patterns: {}", state_guard.url_patterns.len());
         println!("  Max depth reached: {}", MAX_DEPTH);
         println!("  Max URLs limit: {}", MAX_URLS_PER_DOMAIN);
+
+        // Calculate final completion percentage
+        let completed = state_guard.crawled_urls + state_guard.failed_urls.len();
+        let final_percentage = if state_guard.total_urls > 0 {
+            (completed as f32 / state_guard.total_urls as f32) * 100.0
+        } else {
+            0.0
+        };
+        println!("  Final completion: {:.2}%", final_percentage);
     }
 
     drop(db_tx);
     if let Some(handle) = db_handle {
         handle.await.unwrap_or_default();
+    }
+
+    // Emit final 100% progress update before completion
+    {
+        let state_guard = state.lock().await;
+        let completed = state_guard.crawled_urls + state_guard.failed_urls.len();
+        let final_progress = ProgressData {
+            total_urls: completed, // Set total to actual completed count for consistency
+            crawled_urls: completed,
+            percentage: 100.0, // Always 100% when truly complete
+            failed_urls: state_guard.failed_urls.len(),
+        };
+
+        println!(
+            "Final crawl stats: {} total processed ({} succeeded, {} failed)",
+            completed,
+            state_guard.crawled_urls,
+            state_guard.failed_urls.len()
+        );
+
+        if let Err(err) = app_handle.emit("progress_update", final_progress) {
+            eprintln!("Failed to emit final progress update: {}", err);
+        }
     }
 
     app_handle.emit("crawl_complete", ()).unwrap_or_default();

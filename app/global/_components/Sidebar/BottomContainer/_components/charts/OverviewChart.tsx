@@ -79,7 +79,7 @@ function OverviewChart() {
 
   // Update the crawled pages in real-time with debounce
   useEffect(() => {
-    const unlisten = listen("progress_update", (event) => {
+    const progressUnlisten = listen("progress_update", (event) => {
       const progressData = event.payload as {
         crawled_urls: number;
         percentage: number;
@@ -87,10 +87,26 @@ function OverviewChart() {
       };
       debouncedUpdate(progressData.crawled_urls, progressData.total_urls);
     });
+
+    const completeUnlisten = listen("crawl_complete", () => {
+      // Ensure chart shows completion state and sync with actual data
+      setStreamedCrawledPages(crawlData.length);
+      setStreamedTotalPages(crawlData.length);
+      console.log(
+        "Crawl completed - overview chart synchronized with actual data",
+      );
+    });
+
     return () => {
-      unlisten.then((f) => f());
+      progressUnlisten.then((f) => f());
+      completeUnlisten.then((f) => f());
     };
-  }, [debouncedUpdate]);
+  }, [
+    debouncedUpdate,
+    crawlData.length,
+    setStreamedCrawledPages,
+    setStreamedTotalPages,
+  ]);
 
   // Memoized chart data
   const chartData = useMemo(
@@ -165,8 +181,7 @@ function OverviewChart() {
               style={{ color: "white" }}
               className="text-3xl dark:fill-white text-white font-bold dark:text-white"
             >
-              {/* {streamedCrawledPages?.toLocaleString()} */}
-              {crawlData && crawlData.length}
+              {crawlData?.length || 0}
             </tspan>
             <tspan
               x={viewBox.cx}
@@ -180,7 +195,7 @@ function OverviewChart() {
       }
       return null;
     },
-    [streamedCrawledPages],
+    [crawlData],
   );
 
   return (
