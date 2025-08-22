@@ -66,6 +66,23 @@ const MAX_DEPTH: usize = 50; // Maximum crawl depth (increased)
 const MAX_PENDING_TIME: Duration = Duration::from_secs(900); // 15 minutes max pending time (increased)
 const STALL_CHECK_INTERVAL: Duration = Duration::from_secs(30); // Check for stalls every 30s
 
+// Track failed URLs and retries
+#[derive(Clone, Hash, Eq, PartialEq)]
+struct FailedUrl {
+    url: String,
+    error: String,
+    retries: usize,
+    depth: usize,
+    timestamp: Instant,
+}
+
+#[derive(Clone, Serialize)]
+struct FailedUrlData {
+    url: String,
+    error: String,
+    depth: usize,
+}
+
 // Progress tracking structure
 #[derive(Clone, Serialize, Copy)]
 struct ProgressData {
@@ -84,7 +101,7 @@ struct CrawlResultData {
 // Structure to track crawler state
 pub struct CrawlerState {
     pub visited: HashSet<String>,
-    pub failed_urls: HashSet<String>,
+    pub failed_urls: HashSet<FailedUrl>,
     pub pending_urls: HashMap<String, Instant>, // Track when URLs were added to pending
     pub queue: VecDeque<(Url, usize)>,          // Include depth tracking
     pub total_urls: usize,
@@ -197,14 +214,27 @@ async fn process_url(
         Ok(Ok((response, time))) => (response, time),
         Ok(Err(e)) => {
             let mut state = state.lock().await;
-            state.failed_urls.insert(url.to_string());
+            state.failed_urls.insert(FailedUrl {
+                url: url.to_string(),
+                error: e.to_string(),
+                retries: 0,
+                depth,
+                timestamp: Instant::now(),
+            });
             state.pending_urls.remove(url.as_str());
             return Err(format!("Failed to fetch {}: {}", url, e));
         }
         Err(_) => {
             let mut state = state.lock().await;
-            state.failed_urls.insert(url.to_string());
+            state.failed_urls.insert(FailedUrl {
+                url: url.to_string(),
+                error: "Timeout fetching".to_string(),
+                retries: 0,
+                depth,
+                timestamp: Instant::now(),
+            });
             state.pending_urls.remove(url.as_str());
+
             return Err(format!("Timeout fetching {}", url));
         }
     };
@@ -249,7 +279,13 @@ async fn process_url(
         Ok(body) => body,
         Err(e) => {
             let mut state = state.lock().await;
-            state.failed_urls.insert(url.to_string());
+            state.failed_urls.insert(FailedUrl {
+                url: url.to_string(),
+                error: e.to_string(),
+                retries: 0,
+                depth,
+                timestamp: Instant::now(),
+            });
             return Err(format!("Failed to read response body: {}", e));
         }
     };
@@ -803,7 +839,13 @@ pub async fn crawl_domain(
                     Err(_) => {
                         let mut state_guard = state.lock().await;
                         state_guard.pending_urls.remove(url.as_str());
-                        state_guard.failed_urls.insert(url.to_string());
+                        state_guard.failed_urls.insert(FailedUrl {
+                            url: url.to_string(),
+                            error: "Processing failed".to_string(),
+                            retries: 0,
+                            depth: 0,
+                            timestamp: Instant::now(),
+                        });
                         state_guard.active_tasks = state_guard.active_tasks.saturating_sub(1);
                         // Don't re-queue failed URLs to prevent infinite loops
                     }
