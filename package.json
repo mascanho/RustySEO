@@ -110,7 +110,8 @@
     "use-debounce": "^10.0.1",
     "uuid": "^10.0.0",
     "vaul": "^0.9.1",
-    "zustand": "^4.5.4"
+    "zustand": "^4.5.4",
+    "jszip": "^3.10.1"
   },
   "devDependencies": {
     "@tauri-apps/api": "^2.4.0",

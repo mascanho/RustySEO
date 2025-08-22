@@ -1,5 +1,9 @@
 export const dynamic = "force-static";
 import MenuDrawer from "../components/ui/MenuDrawer";
+import type React from "react";
+import type { Metadata } from "next";
+import { Playfair_Display, Source_Sans_3 } from "next/font/google";
+import { ThemeProvider } from "./components/theme-provider";
 
 export default function ImagesLayout({ children }: any) {
   return (

@@ -8,6 +8,7 @@ export const changelogData = [
       "PPC Improved UI & UX",
       "Better deep crawl finish notification",
       "Improved deep crawl URL tracking",
+      "Bulk Image resizing Tool",
     ],
   },
   {

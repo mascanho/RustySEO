@@ -86,7 +86,7 @@ const FooterLoader = () => {
       </div>
       <span className="ml-2">
         {crawlCompleted ? crawlData.length : progress.crawledPages} of{" "}
-        {crawlCompleted ? crawlData.length : progress.crawledPagesCount} pages
+        {crawlCompleted ? crawlData.length : progress.crawledPagesCount} URLs
         crawled ({progress.percentageCrawled.toFixed(0)}
         %){crawlCompleted ? " - Complete!" : ""}
       </span>

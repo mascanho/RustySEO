@@ -16,7 +16,11 @@ use url::Url;
 use crate::crawler::get_page_speed_insights;
 use crate::domain_crawler::database::{Database, DatabaseResults};
 use crate::domain_crawler::extractors::html::extract_html;
+use crate::domain_crawler::helpers::extract_url_pattern::extract_url_pattern;
+use crate::domain_crawler::helpers::fetch_with_exponential::fetch_with_exponential_backoff;
 use crate::domain_crawler::helpers::https_checker::valid_https;
+use crate::domain_crawler::helpers::normalize_url::{self, normalize_url};
+use crate::domain_crawler::helpers::skip_url::should_skip_url;
 use crate::domain_crawler::models::Extractor;
 use crate::domain_crawler::user_agents;
 use crate::settings::settings::Settings;
@@ -76,20 +80,14 @@ struct FailedUrl {
     timestamp: Instant,
 }
 
-#[derive(Clone, Serialize)]
-struct FailedUrlData {
-    url: String,
-    error: String,
-    depth: usize,
-}
-
 // Progress tracking structure
-#[derive(Clone, Serialize, Copy)]
+#[derive(Clone, Serialize)]
 struct ProgressData {
     total_urls: usize,
     crawled_urls: usize,
     percentage: f32,
-    failed_urls: usize,
+    failed_urls_count: usize,
+    failed_urls: Vec<String>,
 }
 
 // Crawl result structure
@@ -151,47 +149,6 @@ fn to_database_results(result: &DomainCrawlResults) -> Result<DatabaseResults, s
         url: result.url.clone(),
         data: serde_json::to_value(result)?,
     })
-}
-
-// Fetch URL with exponential backoff
-async fn fetch_with_exponential_backoff(
-    client: &Client,
-    url: &str,
-    settings: &Settings,
-) -> Result<(reqwest::Response, f64), reqwest::Error> {
-    let mut attempt = 0;
-    loop {
-        let start = Instant::now();
-        match client.get(url).send().await {
-            Ok(response) => {
-                let duration = start.elapsed().as_secs_f64();
-                if response.status() == reqwest::StatusCode::TOO_MANY_REQUESTS {
-                    if attempt >= settings.max_retries {
-                        return Ok((response, duration));
-                    }
-                    let delay = std::cmp::min(
-                        settings.max_delay,
-                        settings.base_delay * 2u64.pow(attempt as u32),
-                    );
-                    sleep(Duration::from_millis(delay)).await;
-                    attempt += 1;
-                    continue;
-                }
-                return Ok((response, duration));
-            }
-            Err(e) => {
-                if attempt >= settings.max_retries {
-                    return Err(e);
-                }
-                let delay = std::cmp::min(
-                    settings.max_delay,
-                    settings.base_delay * 2u64.pow(attempt as u32),
-                );
-                sleep(Duration::from_millis(delay)).await;
-                attempt += 1;
-            }
-        }
-    }
 }
 
 // Process single URL
@@ -325,8 +282,6 @@ async fn process_url(
     // Page Speed Insights Checker
     // Check if the key exists to make the call otherwise return an empty vector
     // Attempt to fetch PSI results, but if there's an error, use an empty Vec
-    // Start PSI fetch as a separate task
-    // Start PSI fetch as a separate task
     // Start PSI fetch as a separate task
     let psi_future = if settings.page_speed_bulk {
         let url_clone = url.clone();
@@ -469,13 +424,17 @@ async fn process_url(
         let progress = ProgressData {
             total_urls: state.total_urls,
             crawled_urls: completed, // Use completed count for consistency
+            failed_urls: state.failed_urls.iter().map(|f| f.url.clone()).collect(),
             percentage: if state.total_urls > 0 {
                 (completed as f32 / state.total_urls as f32) * 100.0
             } else {
                 0.0
             },
-            failed_urls: state.failed_urls.len(),
+            failed_urls_count: state.failed_urls.len(),
         };
+
+        // Isolate percentage for easier access downstream
+        let percentage = progress.percentage;
 
         // Log progress every 100 URLs for debugging
         if state.crawled_urls % 100 == 0 || completed == state.total_urls {
@@ -505,7 +464,7 @@ async fn process_url(
         print!(
             "\r{}: {:.2}% {}",
             "Progress".green().bold(),
-            progress.percentage,
+            percentage,
             "complete".green().bold()
         );
         std::io::stdout().flush().unwrap();
@@ -523,154 +482,6 @@ async fn process_url(
         }
     }
     Ok(result)
-}
-
-fn should_skip_url(url: &str) -> bool {
-    // Skip fragments
-    if url.contains('#') {
-        return true;
-    }
-
-    // Skip common problematic patterns (made less restrictive)
-    let skip_patterns = [
-        "login",
-        "logout",
-        "signin",
-        "admin",
-        "dashboard",
-        "cart",
-        "checkout",
-        "payment",
-        "javascript:",
-        "mailto:",
-        "tel:",
-        "wp-admin",
-        "wp-login",
-        ".jpg",
-        ".jpeg",
-        ".png",
-        ".gif",
-        ".svg",
-        ".ico",
-        ".css",
-        ".js",
-        ".xml",
-        ".txt",
-        ".zip",
-        ".pdf",
-    ];
-
-    let url_lower = url.to_lowercase();
-    for pattern in &skip_patterns {
-        if url_lower.contains(pattern) {
-            return true;
-        }
-    }
-
-    // Skip URLs with too many query parameters (made less restrictive)
-    if url.matches('&').count() > 8 {
-        return true;
-    }
-
-    // Skip very long URLs (made less restrictive)
-    if url.len() > 500 {
-        return true;
-    }
-
-    false
-}
-
-// Normalize URLs to reduce duplicates
-fn normalize_url(url: &str) -> String {
-    let mut normalized = url.to_lowercase();
-
-    // Remove trailing slash
-    if normalized.ends_with('/') && normalized.len() > 1 {
-        normalized.pop();
-    }
-
-    // Remove common tracking parameters
-    let tracking_params = [
-        "utm_source",
-        "utm_medium",
-        "utm_campaign",
-        "fbclid",
-        "gclid",
-    ];
-    for param in &tracking_params {
-        if let Some(pos) = normalized.find(&format!("{}=", param)) {
-            let before = &normalized[..pos];
-            if let Some(after_pos) = normalized[pos..].find('&') {
-                let after = &normalized[pos + after_pos..];
-                normalized = format!(
-                    "{}{}",
-                    before.trim_end_matches('?').trim_end_matches('&'),
-                    after
-                );
-            } else {
-                normalized = before
-                    .trim_end_matches('?')
-                    .trim_end_matches('&')
-                    .to_string();
-            }
-        }
-    }
-
-    normalized
-}
-
-// Extract URL pattern to identify similar URLs
-fn extract_url_pattern(url: &str) -> String {
-    let mut pattern = url.to_string();
-
-    // More conservative number replacement to preserve URL uniqueness
-    let mut chars: Vec<char> = pattern.chars().collect();
-    let mut i = 0;
-    while i < chars.len() {
-        if chars[i].is_ascii_digit() {
-            let start = i;
-            let mut digit_count = 0;
-            while i < chars.len() && chars[i].is_ascii_digit() {
-                digit_count += 1;
-                i += 1;
-            }
-
-            // Only replace sequences of 4+ digits (very likely to be IDs)
-            // AND if they're not part of a year (1900-2099)
-            if digit_count >= 4 {
-                let digit_str: String = chars[start..i].iter().collect();
-                if let Ok(num) = digit_str.parse::<u32>() {
-                    // Don't replace years or common numbers
-                    if !(1900..=2099).contains(&num) && num > 999 {
-                        for j in start..i {
-                            chars[j] = 'N';
-                        }
-                        // Keep only one 'N'
-                        for _ in start..(i - 1) {
-                            if start < chars.len() {
-                                chars.remove(start);
-                            }
-                        }
-                        i = start + 1;
-                    }
-                }
-            }
-        } else {
-            i += 1;
-        }
-    }
-    pattern = chars.into_iter().collect::<String>();
-
-    // Only remove query parameters with many parameters (likely filters/pagination)
-    if let Some(pos) = pattern.find('?') {
-        let query_part = &pattern[pos..];
-        // Keep URLs with simple query parameters
-        if query_part.matches('&').count() > 2 {
-            pattern = pattern[..pos].to_string();
-        }
-    }
-
-    pattern
 }
 
 pub async fn crawl_domain(
@@ -900,8 +711,13 @@ pub async fn crawl_domain(
         let final_progress = ProgressData {
             total_urls: completed, // Set total to actual completed count for consistency
             crawled_urls: completed,
+            failed_urls: state_guard
+                .failed_urls
+                .iter()
+                .map(|f| f.url.clone())
+                .collect(),
             percentage: 100.0, // Always 100% when truly complete
-            failed_urls: state_guard.failed_urls.len(),
+            failed_urls_count: state_guard.failed_urls.len(),
         };
 
         println!(
