@@ -80,14 +80,16 @@ const FooterLoader = () => {
     <div className="flex items-center justify-center w-full h-full">
       <div className="relative w-32 h-2 bg-gray-200 dark:bg-transparent rounded-full dark:divide-brand-dark dark:border-brand-dark dark:border">
         <div
-          className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full"
-          style={{ width: `${progress.percentageCrawled}%` }}
+          className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-300"
+          style={{ width: `${Math.min(progress.percentageCrawled, 100)}%` }}
         />
       </div>
       <span className="ml-2">
         {crawlCompleted ? crawlData.length : progress.crawledPages} of{" "}
-        {crawlCompleted ? crawlData.length : progress.crawledPagesCount} URLs
-        crawled ({progress.percentageCrawled.toFixed(0)}
+        {crawlCompleted
+          ? crawlData.length
+          : Math.max(progress.discoveredUrls, progress.crawledPages)}{" "}
+        URLs crawled ({Math.min(progress.percentageCrawled, 100).toFixed(0)}
         %){crawlCompleted ? " - Complete!" : ""}
       </span>
     </div>

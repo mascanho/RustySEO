@@ -88,6 +88,7 @@ struct ProgressData {
     percentage: f32,
     failed_urls_count: usize,
     failed_urls: Vec<String>,
+    discovered_urls: usize,
 }
 
 // Crawl result structure
@@ -409,40 +410,57 @@ async fn process_url(
                     && !state.pending_urls.contains_key(link_str)
                     && state.total_urls < MAX_URLS_PER_DOMAIN
                 {
+                    // Only increment total_urls when we actually add a new URL
+                    let queue_length_before = state.queue.len();
                     state.queue.push_back((link.clone(), depth + 1));
-                    state.total_urls += 1;
-                    state
-                        .pending_urls
-                        .insert(link_str.to_string(), Instant::now());
-                    state.url_patterns.insert(url_pattern);
+
+                    // Only increment if we successfully added to queue
+                    if state.queue.len() > queue_length_before {
+                        state.total_urls += 1;
+                        state
+                            .pending_urls
+                            .insert(link_str.to_string(), Instant::now());
+                        state.url_patterns.insert(url_pattern);
+                    }
                 }
             }
         }
 
-        // Calculate progress with both crawled and failed URLs considered complete
-        let completed = state.crawled_urls + state.failed_urls.len();
-        let progress = ProgressData {
-            total_urls: state.total_urls,
-            crawled_urls: completed, // Use completed count for consistency
-            failed_urls: state.failed_urls.iter().map(|f| f.url.clone()).collect(),
-            percentage: if state.total_urls > 0 {
-                (completed as f32 / state.total_urls as f32) * 100.0
+        // Calculate progress - use a stable approach for dynamic crawling
+        let completed_urls = state.crawled_urls + state.failed_urls.len();
+        let total_discovered = state.total_urls;
+        let active_pending = state.pending_urls.len() + state.active_tasks;
+
+        // For progress calculation, consider both completed and in-progress work
+        let progress_denominator = total_discovered + active_pending;
+        let percentage = if progress_denominator > 0 {
+            let base_progress = (completed_urls as f32 / progress_denominator as f32) * 100.0;
+            // Cap at 95% during active crawling, only show 100% when truly complete
+            if active_pending > 0 {
+                base_progress.min(95.0)
             } else {
-                0.0
-            },
-            failed_urls_count: state.failed_urls.len(),
+                base_progress.min(100.0)
+            }
+        } else {
+            0.0
         };
 
-        // Isolate percentage for easier access downstream
-        let percentage = progress.percentage;
+        let progress = ProgressData {
+            total_urls: total_discovered,
+            crawled_urls: completed_urls,
+            failed_urls: state.failed_urls.iter().map(|f| f.url.clone()).collect(),
+            percentage,
+            failed_urls_count: state.failed_urls.len(),
+            discovered_urls: total_discovered,
+        };
 
-        // Log progress every 100 URLs for debugging
-        if state.crawled_urls % 100 == 0 || completed == state.total_urls {
+        // Log progress every 50 URLs for better tracking
+        if state.crawled_urls % 50 == 0 || (active_pending == 0 && completed_urls > 0) {
             println!(
-                "Progress: {}/{} URLs processed ({:.1}%), {} succeeded, {} failed, {} pending, {} active tasks",
-                completed,
-                state.total_urls,
-                progress.percentage,
+                "Progress: {}/{} URLs completed ({:.1}%), {} succeeded, {} failed, {} pending, {} active",
+                completed_urls,
+                total_discovered,
+                percentage,
                 state.crawled_urls,
                 state.failed_urls.len(),
                 state.pending_urls.len(),
@@ -718,6 +736,7 @@ pub async fn crawl_domain(
                 .collect(),
             percentage: 100.0, // Always 100% when truly complete
             failed_urls_count: state_guard.failed_urls.len(),
+            discovered_urls: state_guard.total_urls,
         };
 
         println!(
