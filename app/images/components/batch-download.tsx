@@ -10,6 +10,8 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeFile, WriteFileOptions } from "@tauri-apps/plugin-fs";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Archive, Download, CheckSquare, Square } from "lucide-react";
@@ -65,17 +67,34 @@ export function BatchDownload({
     );
   };
 
-  const downloadImage = (image: ImageFile) => {
+  const downloadImage = async (image: ImageFile) => {
     if (!image.processedBlob) return;
 
-    const url = URL.createObjectURL(image.processedBlob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = generateFileName(image.file.name, resizeSettings);
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    try {
+      const fileName = generateFileName(image.file.name, resizeSettings);
+      const savePath = await save({
+        filters: [
+          {
+            name: "Image",
+            extensions: [resizeSettings.format.toLowerCase()],
+          },
+        ],
+        defaultPath: fileName,
+      });
+
+      if (savePath) {
+        const arrayBuffer = await image.processedBlob.arrayBuffer();
+        await writeFile(
+          {
+            path: savePath,
+            contents: Array.from(new Uint8Array(arrayBuffer)),
+          },
+          arrayBuffer,
+        );
+      }
+    } catch (error) {
+      console.error("Failed to save image:", error);
+    }
   };
 
   const createZipFile = async (
@@ -109,15 +128,23 @@ export function BatchDownload({
     setDownloadingZip(true);
     try {
       const zipBlob = await createZipFile(selectedImages);
+      const savePath = await save({
+        filters: [
+          {
+            name: "ZIP Archive",
+            extensions: ["zip"],
+          },
+        ],
+        defaultPath: `resized_images_${new Date().toISOString().split("T")[0]}.zip`,
+      });
 
-      const url = URL.createObjectURL(zipBlob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `resized_images_${new Date().toISOString().split("T")[0]}.zip`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      if (savePath) {
+        const arrayBuffer = await zipBlob.arrayBuffer();
+        await writeFile({
+          path: savePath,
+          contents: Array.from(new Uint8Array(arrayBuffer)),
+        });
+      }
     } catch (error) {
       console.error("Error creating ZIP file:", error);
     } finally {

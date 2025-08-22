@@ -212,27 +212,6 @@ export default function ImageResizerApp() {
 
   return (
     <div className="min-h-screen bg-background transition-colors">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 bg-primary rounded-lg">
-                <ImageIcon className="w-6 h-6 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-serif font-bold text-foreground">
-                  ImageResize Pro
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Professional batch image resizing
-                </p>
-              </div>
-            </div>
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
-
       <div className="container mx-auto px-4 py-8">
         {processing && (
           <div className="mb-6">
