@@ -111,18 +111,14 @@ export default function ContextTableMenu({ children, data }) {
         url,
         queries: result,
       });
-      console.log(result);
 
       // Since we successfully fetched GSC data, refresh the GSC status
       // This will update the ConsoleLog component in real-time
       try {
         const gscCredentials = await invoke("read_credentials_file");
         updateStatus(gscCredentials);
-        console.log(
-          "[Debug] GSC status refreshed after successful query fetch",
-        );
       } catch (gscError) {
-        console.warn("[Debug] Could not refresh GSC status:", gscError);
+        // Silently handle GSC status refresh errors
       }
     } catch (error) {
       console.error("Error fetching queries:", error);

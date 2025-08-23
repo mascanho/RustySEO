@@ -44,45 +44,46 @@ export const useGSCStatus = () => {
   }, [setLoading, updateStatus]);
 
   // Function to test GSC connection by attempting to fetch data
-  const testConnection = useCallback(async (testUrl?: string) => {
-    if (!isConfigured) {
-      return {
-        success: false,
-        error: "GSC is not configured",
-      };
-    }
+  const testConnection = useCallback(
+    async (testUrl?: string) => {
+      if (!isConfigured) {
+        return {
+          success: false,
+          error: "GSC is not configured",
+        };
+      }
 
-    try {
-      setLoading(true);
+      try {
+        setLoading(true);
 
-      // Use a test URL or default
-      const url = testUrl || "example.com";
+        // Use a test URL or default
+        const url = testUrl || "example.com";
 
-      await invoke("call_gsc_match_url", { url });
+        await invoke("call_gsc_match_url", { url });
 
-      return {
-        success: true,
-        message: "GSC connection successful",
-      };
-    } catch (err) {
-      const errorMessage = err?.message || "GSC connection failed";
-      updateStatus(credentials, errorMessage);
+        return {
+          success: true,
+          message: "GSC connection successful",
+        };
+      } catch (err) {
+        const errorMessage = err?.message || "GSC connection failed";
+        updateStatus(credentials, errorMessage);
 
-      return {
-        success: false,
-        error: errorMessage,
-      };
-    } finally {
-      setLoading(false);
-    }
-  }, [isConfigured, setLoading, credentials, updateStatus]);
+        return {
+          success: false,
+          error: errorMessage,
+        };
+      } finally {
+        setLoading(false);
+      }
+    },
+    [isConfigured, setLoading, credentials, updateStatus],
+  );
 
-  // Auto-refresh status on mount
+  // Check status only once on mount
   useEffect(() => {
-    if (!credentials && !isLoading) {
-      checkStatus();
-    }
-  }, [credentials, isLoading, checkStatus]);
+    checkStatus();
+  }, []); // Empty dependency array - runs only once on mount
 
   // Get status summary
   const getStatusSummary = useCallback(() => {

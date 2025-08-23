@@ -95,20 +95,11 @@ const generateLogs = (
   pageSpeedKeys: string[],
   ga4ID: string | null,
   gscCredentials: any,
+  isGscConfigured: boolean,
   clarityApi: string,
 ): LogEntry[] => {
   const now = Date.now();
   const timestamp = new Date();
-
-  // Debug logging for GSC credentials
-  console.log("[Debug] GSC Credentials in generateLogs:", {
-    raw: gscCredentials,
-    type: typeof gscCredentials,
-    hasData: !!gscCredentials,
-    hasClientId: !!gscCredentials?.client_id,
-    hasProjectId: !!gscCredentials?.project_id,
-    keys: gscCredentials ? Object.keys(gscCredentials) : [],
-  });
 
   return [
     {
@@ -127,9 +118,22 @@ const generateLogs = (
     {
       id: now + 3,
       timestamp,
-      level: pageSpeedKeys?.page_speed_key?.length > 0 ? "success" : "error",
+      level: (() => {
+        console.log("[Debug] PSI Status Check:", {
+          pageSpeedKeys,
+          hasPageSpeedKey: !!pageSpeedKeys?.page_speed_key,
+          keyValue: pageSpeedKeys?.page_speed_key,
+          keyLength: pageSpeedKeys?.page_speed_key?.length,
+          isEmpty: pageSpeedKeys?.page_speed_key?.trim() === "",
+        });
+        return pageSpeedKeys?.page_speed_key &&
+          pageSpeedKeys.page_speed_key.trim() !== ""
+          ? "success"
+          : "error";
+      })(),
       message:
-        pageSpeedKeys?.page_speed_key?.length > 0
+        pageSpeedKeys?.page_speed_key &&
+        pageSpeedKeys.page_speed_key.trim() !== ""
           ? "PSI: Enabled"
           : "No PSI Keys configured",
     },
@@ -152,14 +156,8 @@ const generateLogs = (
     {
       id: now + 6,
       timestamp,
-      level:
-        gscCredentials?.client_id && gscCredentials?.project_id
-          ? "success"
-          : "error",
-      message:
-        gscCredentials?.client_id && gscCredentials?.project_id
-          ? "GSC: Enabled"
-          : "GSC is not configured",
+      level: isGscConfigured ? "success" : "error",
+      message: isGscConfigured ? "GSC: Enabled" : "GSC is not configured",
       details: gscCredentials?.project_id
         ? `Project: ${gscCredentials.project_id}`
         : undefined,
@@ -222,7 +220,9 @@ export default function ConsoleLog() {
     aiModelLog,
     setAiModelLog,
   } = useGlobalConsoleStore();
-  const [pageSpeedKeys, setPageSpeedKeys] = useState<string[]>([]);
+  const [pageSpeedKeys, setPageSpeedKeys] = useState<{
+    page_speed_key?: string;
+  } | null>(null);
   const [ga4ID, setGa4ID] = useState<string | null>(null);
   const [clarityApi, setClarityApi] = useState("");
 
@@ -238,74 +238,59 @@ export default function ConsoleLog() {
   // Function to refresh GSC status specifically
   const refreshGscStatus = useCallback(async () => {
     try {
-      console.log("[Debug] Refreshing GSC status...");
       setGscLoading(true);
-
       const gsc = await invoke<any>("read_credentials_file");
-      console.log("[Debug] GSC Status Refresh Response:", {
-        hasCredentials: !!gsc,
-        hasClientId: !!gsc?.client_id,
-        hasProjectId: !!gsc?.project_id,
-        hasClientSecret: !!gsc?.client_secret,
-        timestamp: new Date().toISOString(),
-      });
-
       updateGscStatus(gsc);
-      console.log("[Debug] GSC status updated in store");
     } catch (err) {
       console.error("[Error] Failed to refresh GSC status:", err);
       updateGscStatus(null, err.message || "Failed to fetch GSC credentials");
     }
   }, [setGscLoading, updateGscStatus]);
 
-  // Enhanced data fetching with better error handling and debugging
+  // Initial configuration fetch on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log("[Debug] Starting to fetch configuration...");
-
-        // Fetch other data first
         const [aiModel, aiModelCheck, pageSpeed, ga4, clarity] =
           await Promise.all([
             invoke<string>("get_ai_model"),
             invoke<string>("check_ai_model"),
-            invoke<string[]>("load_api_keys"),
+            invoke<{ page_speed_key: string }>("load_api_keys"),
             invoke<string | null>("get_google_analytics_id"),
             invoke<string>("get_microsoft_clarity_command"),
           ]);
 
-        setAiModelLog(aiModelCheck || aiModel);
+        setAiModelLog(aiModelCheck || aiModel || "none");
         setPageSpeedKeys(pageSpeed);
         setGa4ID(ga4);
-        setClarityApi(clarity);
+        setClarityApi(clarity || "");
 
         // Refresh GSC status separately
         await refreshGscStatus();
-
-        console.log("[Debug] All configuration loaded successfully");
       } catch (err) {
         console.error("[Error] Failed to fetch configuration:", err);
+        // Set safe defaults on error
+        setAiModelLog("none");
+        setPageSpeedKeys(null);
+        setGa4ID(null);
+        setClarityApi("");
       }
     };
 
     fetchData();
   }, [setAiModelLog, refreshGscStatus]);
 
-  // Periodic GSC status refresh
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     refreshGscStatus();
-  //   }, 100000000000); // Check every 10 seconds
+  // Periodic GSC status refresh - every 10 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refreshGscStatus();
+    }, 600000); // Check every 10 minutes (600000ms)
 
-  //   return () => clearInterval(interval);
-  // }, [refreshGscStatus]);
+    return () => clearInterval(interval);
+  }, [refreshGscStatus]);
 
-  // Memoized logs with debug logging
+  // Memoized logs generation
   const memoizedLogs = useMemo(() => {
-    console.log(
-      "[Debug] Generating memoized logs with GSC state:",
-      gscCredentials,
-    );
     return generateLogs(
       crawler,
       isGlobalCrawling,
@@ -315,6 +300,7 @@ export default function ConsoleLog() {
       pageSpeedKeys,
       ga4ID,
       gscCredentials,
+      isGscConfigured,
       clarityApi,
     );
   }, [
@@ -326,6 +312,7 @@ export default function ConsoleLog() {
     pageSpeedKeys,
     ga4ID,
     gscCredentials,
+    isGscConfigured,
     clarityApi,
   ]);
 
