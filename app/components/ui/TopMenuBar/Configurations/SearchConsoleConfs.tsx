@@ -60,8 +60,6 @@ export default function SearchConsoleConfs() {
       });
   }, []);
 
-  console.log(confs, "confs from confs");
-
   if (confs === "" || confs === undefined || Object.keys(confs).length === 0) {
     return (
       <Card className="w-full p-0 h-[24rem] flex items-center justify-center shadow-none border-0 my-auto dark:bg-transparent">

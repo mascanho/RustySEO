@@ -27,12 +27,20 @@ import { toast } from "sonner";
 import { DiYahooSmall } from "react-icons/di";
 import { LiaKeySolid } from "react-icons/lia";
 import { invoke } from "@tauri-apps/api/core";
+import useRankinInfoStore from "@/store/RankingInfoStore";
+import useGSCStatusStore from "@/store/GSCStatusStore";
 
 export default function ContextTableMenu({ children, data }) {
   function handleCopyToClipboard() {
     navigator.clipboard.writeText(data);
     toast.success("Copied to clipboard");
   }
+
+  // GLOBAL RANKING INFO STORE
+  const { addItem } = useRankinInfoStore();
+
+  // GSC STATUS STORE - to refresh status when we successfully fetch data
+  const { updateStatus } = useGSCStatusStore();
 
   const gscURL = `https://search.google.com/search-console/performance/search-analytics?resource_id=sc-domain%3A${data}&page=*${data}`;
 
@@ -99,7 +107,23 @@ export default function ContextTableMenu({ children, data }) {
       const result: MatchedDataItem[] = await invoke("call_gsc_match_url", {
         url,
       });
+      addItem({
+        url,
+        queries: result,
+      });
       console.log(result);
+
+      // Since we successfully fetched GSC data, refresh the GSC status
+      // This will update the ConsoleLog component in real-time
+      try {
+        const gscCredentials = await invoke("read_credentials_file");
+        updateStatus(gscCredentials);
+        console.log(
+          "[Debug] GSC status refreshed after successful query fetch",
+        );
+      } catch (gscError) {
+        console.warn("[Debug] Could not refresh GSC status:", gscError);
+      }
     } catch (error) {
       console.error("Error fetching queries:", error);
     }

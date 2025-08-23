@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle, XCircle, AlertCircle, Info, Clock } from "lucide-react";
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
+import useGSCStatusStore from "@/store/GSCStatusStore";
 import { invoke } from "@tauri-apps/api/core";
 
 type LogLevel = "success" | "error" | "warning" | "info" | "debug";
@@ -98,6 +99,17 @@ const generateLogs = (
 ): LogEntry[] => {
   const now = Date.now();
   const timestamp = new Date();
+
+  // Debug logging for GSC credentials
+  console.log("[Debug] GSC Credentials in generateLogs:", {
+    raw: gscCredentials,
+    type: typeof gscCredentials,
+    hasData: !!gscCredentials,
+    hasClientId: !!gscCredentials?.client_id,
+    hasProjectId: !!gscCredentials?.project_id,
+    keys: gscCredentials ? Object.keys(gscCredentials) : [],
+  });
+
   return [
     {
       id: now + 1,
@@ -141,13 +153,16 @@ const generateLogs = (
       id: now + 6,
       timestamp,
       level:
-        gscCredentials && Object.keys(gscCredentials).length > 0
+        gscCredentials?.client_id && gscCredentials?.project_id
           ? "success"
           : "error",
       message:
-        gscCredentials && Object.keys(gscCredentials).length > 0
+        gscCredentials?.client_id && gscCredentials?.project_id
           ? "GSC: Enabled"
           : "GSC is not configured",
+      details: gscCredentials?.project_id
+        ? `Project: ${gscCredentials.project_id}`
+        : undefined,
     },
     {
       id: now + 7,
@@ -172,7 +187,6 @@ const generateLogs = (
   ];
 };
 
-// Optimized UptimeTimer with useRef for start time
 function UptimeTimer() {
   const [uptime, setUptime] = useState("00:00:00");
   const startTimeRef = useRef(Date.now());
@@ -210,24 +224,89 @@ export default function ConsoleLog() {
   } = useGlobalConsoleStore();
   const [pageSpeedKeys, setPageSpeedKeys] = useState<string[]>([]);
   const [ga4ID, setGa4ID] = useState<string | null>(null);
-  const [gscCredentials, setGscCredentials] = useState<any>(null);
   const [clarityApi, setClarityApi] = useState("");
 
-  // Memoized logs with stable dependencies
-  const memoizedLogs = useMemo(
-    () =>
-      generateLogs(
-        crawler,
-        isGlobalCrawling,
-        isFinishedDeepCrawl,
-        tasks,
-        aiModelLog,
-        pageSpeedKeys,
-        ga4ID,
-        gscCredentials,
-        clarityApi,
-      ),
-    [
+  // Use GSC status store instead of local state
+  const {
+    credentials: gscCredentials,
+    isConfigured: isGscConfigured,
+    setLoading: setGscLoading,
+    updateStatus: updateGscStatus,
+    lastChecked: gscLastChecked,
+  } = useGSCStatusStore();
+
+  // Function to refresh GSC status specifically
+  const refreshGscStatus = useCallback(async () => {
+    try {
+      console.log("[Debug] Refreshing GSC status...");
+      setGscLoading(true);
+
+      const gsc = await invoke<any>("read_credentials_file");
+      console.log("[Debug] GSC Status Refresh Response:", {
+        hasCredentials: !!gsc,
+        hasClientId: !!gsc?.client_id,
+        hasProjectId: !!gsc?.project_id,
+        hasClientSecret: !!gsc?.client_secret,
+        timestamp: new Date().toISOString(),
+      });
+
+      updateGscStatus(gsc);
+      console.log("[Debug] GSC status updated in store");
+    } catch (err) {
+      console.error("[Error] Failed to refresh GSC status:", err);
+      updateGscStatus(null, err.message || "Failed to fetch GSC credentials");
+    }
+  }, [setGscLoading, updateGscStatus]);
+
+  // Enhanced data fetching with better error handling and debugging
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        console.log("[Debug] Starting to fetch configuration...");
+
+        // Fetch other data first
+        const [aiModel, aiModelCheck, pageSpeed, ga4, clarity] =
+          await Promise.all([
+            invoke<string>("get_ai_model"),
+            invoke<string>("check_ai_model"),
+            invoke<string[]>("load_api_keys"),
+            invoke<string | null>("get_google_analytics_id"),
+            invoke<string>("get_microsoft_clarity_command"),
+          ]);
+
+        setAiModelLog(aiModelCheck || aiModel);
+        setPageSpeedKeys(pageSpeed);
+        setGa4ID(ga4);
+        setClarityApi(clarity);
+
+        // Refresh GSC status separately
+        await refreshGscStatus();
+
+        console.log("[Debug] All configuration loaded successfully");
+      } catch (err) {
+        console.error("[Error] Failed to fetch configuration:", err);
+      }
+    };
+
+    fetchData();
+  }, [setAiModelLog, refreshGscStatus]);
+
+  // Periodic GSC status refresh
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     refreshGscStatus();
+  //   }, 100000000000); // Check every 10 seconds
+
+  //   return () => clearInterval(interval);
+  // }, [refreshGscStatus]);
+
+  // Memoized logs with debug logging
+  const memoizedLogs = useMemo(() => {
+    console.log(
+      "[Debug] Generating memoized logs with GSC state:",
+      gscCredentials,
+    );
+    return generateLogs(
       crawler,
       isGlobalCrawling,
       isFinishedDeepCrawl,
@@ -237,49 +316,29 @@ export default function ConsoleLog() {
       ga4ID,
       gscCredentials,
       clarityApi,
-    ],
-  );
+    );
+  }, [
+    crawler,
+    isGlobalCrawling,
+    isFinishedDeepCrawl,
+    tasks,
+    aiModelLog,
+    pageSpeedKeys,
+    ga4ID,
+    gscCredentials,
+    clarityApi,
+  ]);
 
-  // Single useEffect for log updates and scrolling
+  // Update logs and handle scrolling
   useEffect(() => {
     setLogs(memoizedLogs);
     const scrollContainer = scrollAreaRef.current?.querySelector(
       "[data-radix-scroll-area-viewport]",
     );
-    if (scrollContainer)
+    if (scrollContainer) {
       scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    }
   }, [memoizedLogs]);
-
-  // Fetch data once on mount with error boundary
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [aiModel, aiModelCheck, pageSpeed, ga4, gsc, clarity] =
-          await Promise.all([
-            invoke<string>("get_ai_model"),
-            invoke<string>("check_ai_model"),
-            invoke<string[]>("load_api_keys"),
-            invoke<string | null>("get_google_analytics_id"),
-            invoke<any>("read_credentials_file"),
-            invoke<string>("get_microsoft_clarity_command"),
-          ]);
-        setAiModelLog(aiModelCheck || aiModel);
-        setPageSpeedKeys(pageSpeed);
-        setGa4ID(ga4);
-        setGscCredentials(gsc);
-        setClarityApi(clarity);
-      } catch (err) {
-        console.error("Error fetching API config:", err);
-      }
-    };
-    fetchData();
-  }, [setAiModelLog]);
-
-  // Memoized timestamp formatter
-  const formatTimestamp = useCallback(
-    (date: Date) => date.toISOString().slice(11, 23),
-    [],
-  );
 
   return (
     <div className="w-full max-w-[600px] overflow-hidden bg-gray-50 dark:bg-zinc-900 font-mono text-xs h-[calc(100vh-39rem)]">
@@ -306,6 +365,24 @@ export default function ConsoleLog() {
       </ScrollArea>
       <div className="flex items-center text-xs justify-between px-4 py-1 bg-zinc-100 dark:bg-zinc-800 border-t dark:border-zinc-700">
         <UptimeTimer />
+        {/*<div className="flex items-center gap-2">
+          {gscLastChecked && (
+            <span className="text-xs text-gray-500">
+              Last: {new Date(gscLastChecked).toLocaleTimeString()}
+            </span>
+          )}
+          <button
+            onClick={refreshGscStatus}
+            className={`text-xs px-2 py-1 rounded transition-colors ${
+              isGscConfigured
+                ? "bg-green-500/10 hover:bg-green-500/20 text-green-400"
+                : "bg-red-500/10 hover:bg-red-500/20 text-red-400"
+            }`}
+            title={`GSC Status: ${isGscConfigured ? "Configured" : "Not Configured"}`}
+          >
+            GSC {isGscConfigured ? "✓" : "✗"}
+          </button>
+        </div>*/}
       </div>
     </div>
   );

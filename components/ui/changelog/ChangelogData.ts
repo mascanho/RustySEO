@@ -9,6 +9,7 @@ export const changelogData = [
       "Better deep crawl finish notification",
       "Improved deep crawl URL tracking",
       "Bulk Image resizing Tool",
+      "Google Search Console matching in Deep Crawl",
     ],
   },
   {
