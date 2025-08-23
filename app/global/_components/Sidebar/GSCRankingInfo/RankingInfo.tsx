@@ -22,6 +22,8 @@ const RankingInfo = () => {
   // Use the store directly - no need for local state
   const { items } = useRankinInfoStore();
 
+  const [credentials, setCredentials] = useState<InstalledInfo | null>(null);
+
   // Debug logging to see what's happening
   useEffect(() => {
     console.log("Store items updated:", items);
@@ -31,6 +33,20 @@ const RankingInfo = () => {
       console.log("Queries length:", items[0]?.queries?.length);
     }
   }, [items[1]]);
+
+  useEffect(() => {
+    const getCredentials = async () => {
+      try {
+        const credentials = await invoke("get_search_console_credentials");
+        // @ts-ignore
+        setCredentials(credentials);
+      } catch (error) {
+        console.error("Error fetching credentials:", error);
+      }
+    };
+
+    getCredentials();
+  }, []);
 
   return (
     <div className="w-full ranking-table max-w-full h-[calc(38rem-260px)] overflow-auto bg-brand-bright/5 dark:bg-transparent">
@@ -58,9 +74,18 @@ const RankingInfo = () => {
                 `}
               >
                 <td className="py-2 pl-2 truncate text-[9px] max-w-[130px] overflow-hidden text-ellipsis">
-                  <span className="pointer hover:underline hover:text-brand-bright text-[10px] overflow-hidden text-ellipsis">
-                    {item.query}
-                  </span>
+                  <RankingMenus
+                    credentials={credentials}
+                    url={items[0].url}
+                    query={item.query}
+                    impressions={item.impressions}
+                    clicks={item.clicks}
+                    position={item.position}
+                  >
+                    <span className="pointer hover:underline hover:text-brand-bright text-[10px] overflow-hidden text-ellipsis">
+                      {item.query}
+                    </span>
+                  </RankingMenus>
                 </td>
                 <td
                   align="left"
