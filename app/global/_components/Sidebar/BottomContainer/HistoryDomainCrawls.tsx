@@ -44,12 +44,21 @@ const HistoryDomainCrawls = () => {
         percentage: number;
         total_urls: number;
       };
-      setCrawledPages(progressData.crawled_urls);
-      setPercentageCrawled(progressData.percentage);
-      setCrawledPagesCount(progressData.total_urls);
+
+      // Validate and sanitize the received data to prevent NaN
+      const safeCrawledUrls = Math.max(0, progressData.crawled_urls || 0);
+      const safePercentage = Math.min(
+        100,
+        Math.max(0, progressData.percentage || 0),
+      );
+      const safeTotalUrls = Math.max(1, progressData.total_urls || 1);
+
+      setCrawledPages(safeCrawledUrls);
+      setPercentageCrawled(safePercentage);
+      setCrawledPagesCount(safeTotalUrls);
 
       // Reset completion state if new crawl starts
-      if (progressData.percentage < 100) {
+      if (safePercentage < 100) {
         setCrawlCompleted(false);
       }
     });

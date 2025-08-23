@@ -26,6 +26,7 @@ import { SiAskfm, SiBrave, SiDuckduckgo, SiEcosia } from "react-icons/si";
 import { toast } from "sonner";
 import { DiYahooSmall } from "react-icons/di";
 import { LiaKeySolid } from "react-icons/lia";
+import { invoke } from "@tauri-apps/api/core";
 
 export default function ContextTableMenu({ children, data }) {
   function handleCopyToClipboard() {
@@ -89,6 +90,21 @@ export default function ContextTableMenu({ children, data }) {
     },
   ];
 
+  const url = data;
+
+  async function fetchQueries() {
+    // Implement query fetching logic here
+    try {
+      // Fetch queries logic here
+      const result: MatchedDataItem[] = await invoke("call_gsc_match_url", {
+        url,
+      });
+      console.log(result);
+    } catch (error) {
+      console.error("Error fetching queries:", error);
+    }
+  }
+
   return (
     <ContextMenu>
       <ContextMenuTrigger>{children}</ContextMenuTrigger>
@@ -133,7 +149,10 @@ export default function ContextTableMenu({ children, data }) {
         </ContextMenuSub>
 
         <ContextMenuSeparator className="p-0 m-0 dark:bg-brand-dark" />
-        <ContextMenuItem className="text-xs">
+        <ContextMenuItem
+          onClick={fetchQueries}
+          className="text-xs cursor-pointer"
+        >
           <LiaKeySolid className="mr-2" /> See Queries
         </ContextMenuItem>
         <ContextMenuSeparator className="p-0 m-0 dark:bg-brand-dark" />

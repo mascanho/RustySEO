@@ -16,23 +16,32 @@ const FooterLoader = () => {
   // Memoize the event handler to avoid recreating it on every render
   const handleProgressUpdate = useCallback(
     (event: {
-      payload: { crawled_urls: number; percentage: number; total_urls: number };
+      payload: {
+        crawled_urls: number;
+        percentage: number;
+        total_urls: number;
+      };
     }) => {
       const { crawled_urls, percentage, total_urls } = event.payload;
+
+      // Validate and sanitize the received data to prevent NaN
+      const safeCrawledUrls = Math.max(0, crawled_urls || 0);
+      const safePercentage = Math.min(100, Math.max(0, percentage || 0));
+      const safeTotalUrls = Math.max(1, total_urls || 1); // Always at least 1 to prevent division by zero
 
       // Only update state if the values have changed
       setProgress((prev) => {
         if (
-          prev.crawledPages === crawled_urls &&
-          prev.percentageCrawled === percentage &&
-          prev.crawledPagesCount === total_urls
+          prev.crawledPages === safeCrawledUrls &&
+          prev.percentageCrawled === safePercentage &&
+          prev.crawledPagesCount === safeTotalUrls
         ) {
           return prev; // No change, return previous state
         }
         return {
-          crawledPages: crawled_urls,
-          percentageCrawled: percentage,
-          crawledPagesCount: total_urls,
+          crawledPages: safeCrawledUrls,
+          percentageCrawled: safePercentage,
+          crawledPagesCount: safeTotalUrls,
         };
       });
 
@@ -43,7 +52,9 @@ const FooterLoader = () => {
       }
 
       // Update global state only if the total URLs have changed
-      setTotalUrlsCrawled((prev) => (prev === total_urls ? prev : total_urls));
+      setTotalUrlsCrawled((prev) =>
+        prev === safeTotalUrls ? prev : safeTotalUrls,
+      );
     },
     [setTotalUrlsCrawled, crawlCompleted],
   );
@@ -81,18 +92,24 @@ const FooterLoader = () => {
       <div className="relative w-32 h-2 bg-gray-200 dark:bg-transparent rounded-full dark:divide-brand-dark dark:border-brand-dark dark:border">
         <div
           className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-300"
-          style={{ width: `${Math.min(progress.percentageCrawled, 100)}%` }}
+          style={{
+            width: `${Math.min(Math.max(0, progress.percentageCrawled || 0), 100)}%`,
+          }}
         />
       </div>
       <span className="ml-2 flex items-center">
-        {crawlCompleted ? crawlData.length : progress.crawledPages} of{" "}
+        {crawlCompleted ? crawlData.length : progress.crawledPages || 0} of{" "}
         {crawlCompleted
           ? crawlData.length
-          : Math.max(progress.discoveredUrls, progress.crawledPages)}{" "}
-        URLs crawled ({Math.min(progress.percentageCrawled, 100).toFixed(0)}
+          : Math.max(
+              progress.crawledPagesCount || 0,
+              progress.crawledPages || 0,
+            )}{" "}
+        URLs crawled (
+        {Math.min(progress.percentageCrawled || 0, 100).toFixed(0)}
         %){crawlCompleted ? "" : ""}
         <div className="h-5 mx-2  bg-black w-[0.5px] dark:bg-white/50 " />
-        <span className="text-green-500 bg-green-900 px-2 text-[10px] rounded-sm">
+        <span className="text-white bg-brand-bright dark:bg-green-900 px-2 text-[10px] rounded-sm">
           {crawlCompleted ? " Complete!" : ""}
         </span>
       </span>

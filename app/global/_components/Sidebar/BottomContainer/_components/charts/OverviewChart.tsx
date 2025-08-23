@@ -85,7 +85,12 @@ function OverviewChart() {
         percentage: number;
         total_urls: number;
       };
-      debouncedUpdate(progressData.crawled_urls, progressData.total_urls);
+
+      // Validate and sanitize the received data to prevent NaN
+      const safeCrawledUrls = Math.max(0, progressData.crawled_urls || 0);
+      const safeTotalUrls = Math.max(1, progressData.total_urls || 1);
+
+      debouncedUpdate(safeCrawledUrls, safeTotalUrls);
     });
 
     const completeUnlisten = listen("crawl_complete", () => {

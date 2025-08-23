@@ -25,57 +25,57 @@ const RankingInfo = () => {
   const { selectedTableURL } = useGlobalCrawlStore();
 
   // Fetch matched data when selectedTableURL changes
-  // useEffect(() => {
-  //   const fetchMatchedData = async () => {
-  //     try {
-  //       const url = selectedTableURL?.[0]?.url;
-  //
-  //       if (!url) {
-  //         console.error("No URL found in selectedTableURL");
-  //         setMatchedData(null);
-  //         return;
-  //       }
-  //
-  //       console.log("Fetching data for URL:", url);
-  //
-  //       const result: MatchedDataItem[] = await invoke("call_gsc_match_url", {
-  //         url,
-  //       });
-  //
-  //       if (!result || result.length === 0) {
-  //         console.error("No data returned from the backend");
-  //         setMatchedData(null);
-  //         return;
-  //       }
-  //
-  //       // Aggregate data
-  //       const aggregatedData = result.reduce(
-  //         (acc: MatchedDataItem[], current) => {
-  //           const existing = acc.find((item) => item.query === current.query);
-  //           if (existing) {
-  //             existing.clicks += current.clicks;
-  //             existing.impressions += current.impressions;
-  //             existing.position =
-  //               (existing.position * existing.impressions +
-  //                 current.position * current.impressions) /
-  //               (existing.impressions + current.impressions);
-  //           } else {
-  //             acc.push({ ...current });
-  //           }
-  //           return acc;
-  //         },
-  //         [],
-  //       );
-  //
-  //       setMatchedData(aggregatedData);
-  //     } catch (error) {
-  //       console.error("Error fetching matched data:", error);
-  //       setMatchedData(null);
-  //     }
-  //   };
-  //
-  //   fetchMatchedData();
-  // }, []); // Only run when selectedTableURL changes
+  useEffect(() => {
+    const fetchMatchedData = async () => {
+      try {
+        const url = selectedTableURL?.[0]?.url;
+
+        if (!url) {
+          console.error("No URL found in selectedTableURL");
+          setMatchedData(null);
+          return;
+        }
+
+        console.log("Fetching data for URL:", url);
+
+        const result: MatchedDataItem[] = await invoke("call_gsc_match_url", {
+          url,
+        });
+
+        if (!result || result.length === 0) {
+          console.error("No data returned from the backend");
+          setMatchedData(null);
+          return;
+        }
+
+        // Aggregate data
+        const aggregatedData = result.reduce(
+          (acc: MatchedDataItem[], current) => {
+            const existing = acc.find((item) => item.query === current.query);
+            if (existing) {
+              existing.clicks += current.clicks;
+              existing.impressions += current.impressions;
+              existing.position =
+                (existing.position * existing.impressions +
+                  current.position * current.impressions) /
+                (existing.impressions + current.impressions);
+            } else {
+              acc.push({ ...current });
+            }
+            return acc;
+          },
+          [],
+        );
+
+        setMatchedData(aggregatedData);
+      } catch (error) {
+        console.error("Error fetching matched data:", error);
+        setMatchedData(null);
+      }
+    };
+
+    fetchMatchedData();
+  }, []); // Only run when selectedTableURL changes
 
   // Fetch credentials once on component mount
   useEffect(() => {

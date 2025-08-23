@@ -445,14 +445,26 @@ async fn process_url(
             0.0
         };
 
+        // Ensure we never send invalid data that could cause NaN in frontend
+        let safe_total_discovered = std::cmp::max(total_discovered, 1);
+        let safe_completed_urls = completed_urls;
+
         let progress = ProgressData {
-            total_urls: total_discovered,
-            crawled_urls: completed_urls,
+            total_urls: safe_total_discovered,
+            crawled_urls: safe_completed_urls,
             failed_urls: state.failed_urls.iter().map(|f| f.url.clone()).collect(),
             percentage,
             failed_urls_count: state.failed_urls.len(),
-            discovered_urls: total_discovered,
+            discovered_urls: safe_total_discovered,
         };
+
+        // Debug logging for troubleshooting NaN issues
+        if total_discovered == 0 || percentage.is_nan() {
+            println!(
+                "WARNING: Potential invalid progress data - total_discovered: {}, completed_urls: {}, percentage: {}",
+                total_discovered, completed_urls, percentage
+            );
+        }
 
         // Log progress every 50 URLs for better tracking
         if state.crawled_urls % 50 == 0 || (active_pending == 0 && completed_urls > 0) {
@@ -468,8 +480,16 @@ async fn process_url(
             );
         }
 
-        if let Err(err) = app_handle.emit("progress_update", progress) {
-            eprintln!("Failed to emit progress update: {}", err);
+        // Only emit progress update if we have valid data
+        if safe_total_discovered > 0 && !percentage.is_nan() {
+            if let Err(err) = app_handle.emit("progress_update", progress) {
+                eprintln!("Failed to emit progress update: {}", err);
+            }
+        } else {
+            println!(
+                "Skipping invalid progress update: total_discovered={}, percentage={}",
+                safe_total_discovered, percentage
+            );
         }
 
         let result_data = CrawlResultData {
@@ -726,9 +746,10 @@ pub async fn crawl_domain(
     {
         let state_guard = state.lock().await;
         let completed = state_guard.crawled_urls + state_guard.failed_urls.len();
+        let safe_completed = std::cmp::max(completed, 1);
         let final_progress = ProgressData {
-            total_urls: completed, // Set total to actual completed count for consistency
-            crawled_urls: completed,
+            total_urls: safe_completed, // Set total to actual completed count for consistency
+            crawled_urls: safe_completed,
             failed_urls: state_guard
                 .failed_urls
                 .iter()
@@ -736,7 +757,7 @@ pub async fn crawl_domain(
                 .collect(),
             percentage: 100.0, // Always 100% when truly complete
             failed_urls_count: state_guard.failed_urls.len(),
-            discovered_urls: state_guard.total_urls,
+            discovered_urls: std::cmp::max(state_guard.total_urls, 1),
         };
 
         println!(
