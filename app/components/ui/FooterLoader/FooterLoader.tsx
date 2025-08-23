@@ -84,13 +84,17 @@ const FooterLoader = () => {
           style={{ width: `${Math.min(progress.percentageCrawled, 100)}%` }}
         />
       </div>
-      <span className="ml-2">
+      <span className="ml-2 flex items-center">
         {crawlCompleted ? crawlData.length : progress.crawledPages} of{" "}
         {crawlCompleted
           ? crawlData.length
           : Math.max(progress.discoveredUrls, progress.crawledPages)}{" "}
         URLs crawled ({Math.min(progress.percentageCrawled, 100).toFixed(0)}
-        %){crawlCompleted ? " - Complete!" : ""}
+        %){crawlCompleted ? "" : ""}
+        <div className="h-5 mx-2  bg-black w-[0.5px] dark:bg-white/50 " />
+        <span className="text-green-500 bg-green-900 px-2 text-[10px] rounded-sm">
+          {crawlCompleted ? " Complete!" : ""}
+        </span>
       </span>
     </div>
   );
