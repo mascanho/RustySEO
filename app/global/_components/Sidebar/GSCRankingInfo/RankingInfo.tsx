@@ -42,7 +42,7 @@ const RankingInfo = () => {
             </th>
             <th className="py-2 text-center text-[10px]">Clicks</th>
             <th className="py-2 text-right text-[10px]">Imp.</th>
-            <th className="py-2 text-center text-[10px] bg-brand-dark !important">
+            <th className="py-2 text-center text-[10px] bg-brand-dark !important min-w-12">
               Pos.
             </th>
           </tr>
