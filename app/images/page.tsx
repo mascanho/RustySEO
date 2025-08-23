@@ -249,10 +249,10 @@ export default function ImageResizerApp() {
   };
 
   return (
-    <div className="min-h-screen bg-background transition-colors">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background transition-colors mx-0">
+      <div className="container mx-auto py-4">
         {processing && (
-          <div className="mb-6">
+          <div className="mb-6 absolute">
             <Card>
               <CardContent className="pt-6">
                 <div className="space-y-2">
@@ -267,11 +267,9 @@ export default function ImageResizerApp() {
           </div>
         )}
 
-        <div className="mb-6">
+        <div className="mb-6 flex space-x-4">
           <CompressionStats images={images} />
-        </div>
 
-        <div className="mb-6">
           <BatchDownload
             images={images}
             setImages={setImages}
@@ -279,7 +277,7 @@ export default function ImageResizerApp() {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2">
             <FileUpload
               images={images}

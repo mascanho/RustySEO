@@ -449,7 +449,7 @@ export function SettingsPanel({
         </Tabs>
 
         <Button
-          className="w-full mt-6"
+          className=" mt-6 text-xs absolute top-20 right-10 w-40"
           onClick={onProcessImages}
           disabled={images.length === 0 || processing}
         >

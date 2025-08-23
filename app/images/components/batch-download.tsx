@@ -86,7 +86,7 @@ export function BatchDownload({
 
       if (savePath) {
         const arrayBuffer = await image.processedBlob.arrayBuffer();
-        await writeFile(savePath, Array.from(new Uint8Array(arrayBuffer)));
+        await writeFile(savePath, new Uint8Array(arrayBuffer));
         toast.success("Image saved successfully!");
       } else {
         toast.info("Download cancelled");
@@ -140,7 +140,7 @@ export function BatchDownload({
 
       if (savePath) {
         const arrayBuffer = await zipBlob.arrayBuffer();
-        await writeFile(savePath, Array.from(new Uint8Array(arrayBuffer)));
+        await writeFile(savePath, new Uint8Array(arrayBuffer));
         toast.success(
           `Successfully downloaded ${selectedImages.length} images as ZIP!`,
         );
@@ -157,21 +157,7 @@ export function BatchDownload({
   };
 
   return (
-    <>
-      {downloadingZip && (
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Creating ZIP file...</span>
-                <span>{Math.round(zipProgress)}%</span>
-              </div>
-              <Progress value={zipProgress} className="w-full" />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
+    <section className="w-full">
       <Card>
         <CardHeader>
           <CardTitle className="font-serif text-lg flex items-center gap-2">
@@ -225,6 +211,6 @@ export function BatchDownload({
           </div>
         </CardContent>
       </Card>
-    </>
+    </section>
   );
 }

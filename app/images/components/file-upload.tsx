@@ -122,7 +122,7 @@ export function FileUpload({
   };
 
   return (
-    <Card className="border border-red-700 h-[900px] max-h-fit">
+    <Card className=" h-[900px] max-h-fit">
       <CardHeader>
         <CardTitle className="font-serif">Upload Images</CardTitle>
         <CardDescription>

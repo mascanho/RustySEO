@@ -35,7 +35,7 @@ export function CompressionStats({ images }: CompressionStatsProps) {
   const savedSpace = totalOriginalSize - totalProcessedSize;
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
         <CardTitle className="font-serif text-lg">
           Compression Results
