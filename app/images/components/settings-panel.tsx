@@ -102,6 +102,21 @@ export function SettingsPanel({
     }));
   };
 
+  const isPresetActive = (presetKey: keyof typeof PRESETS) => {
+    const preset = PRESETS[presetKey];
+    return (
+      resizeSettings.width === preset.width &&
+      resizeSettings.height === preset.height &&
+      resizeSettings.quality === preset.quality &&
+      resizeSettings.format === preset.format
+    );
+  };
+
+  const isQualityPresetActive = (presetKey: keyof typeof QUALITY_PRESETS) => {
+    const preset = QUALITY_PRESETS[presetKey];
+    return resizeSettings.quality === preset.quality;
+  };
+
   const generateFileName = (originalName: string, settings: ResizeSettings) => {
     const nameWithoutExt = originalName.split(".")[0];
     let fileName = settings.fileNamePattern
@@ -155,16 +170,25 @@ export function SettingsPanel({
               <div className="grid grid-cols-1 gap-2">
                 {Object.entries(PRESETS).map(([key, preset]) => {
                   const IconComponent = preset.icon;
+                  const isActive = isPresetActive(key as keyof typeof PRESETS);
                   return (
                     <Button
                       key={key}
-                      variant="outline"
+                      variant={isActive ? "default" : "outline"}
                       size="sm"
                       onClick={() => applyPreset(key as keyof typeof PRESETS)}
-                      className="justify-start h-auto p-3"
+                      className={`justify-start h-auto p-3 transition-all duration-200 ${
+                        isActive
+                          ? "bg-primary text-primary-foreground shadow-md ring-2 ring-primary/20"
+                          : "hover:bg-primary/10 hover:border-primary/50"
+                      }`}
                       disabled={processing}
                     >
-                      <IconComponent className="w-4 h-4 mr-2 flex-shrink-0" />
+                      <IconComponent
+                        className={`w-4 h-4 mr-2 flex-shrink-0 ${
+                          isActive ? "text-primary-foreground" : ""
+                        }`}
+                      />
                       <div className="text-left">
                         <div className="font-medium text-sm">{preset.name}</div>
                         <div className="text-xs text-muted-foreground">
@@ -185,21 +209,34 @@ export function SettingsPanel({
                 Quality Presets
               </Label>
               <div className="grid grid-cols-1 gap-2">
-                {Object.entries(QUALITY_PRESETS).map(([key, preset]) => (
-                  <Button
-                    key={key}
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      applyQualityPreset(key as keyof typeof QUALITY_PRESETS)
-                    }
-                    className="justify-start"
-                    disabled={processing}
-                  >
-                    <Palette className="w-4 h-4 mr-2" />
-                    {preset.name}
-                  </Button>
-                ))}
+                {Object.entries(QUALITY_PRESETS).map(([key, preset]) => {
+                  const isActive = isQualityPresetActive(
+                    key as keyof typeof QUALITY_PRESETS,
+                  );
+                  return (
+                    <Button
+                      key={key}
+                      variant={isActive ? "default" : "outline"}
+                      size="sm"
+                      onClick={() =>
+                        applyQualityPreset(key as keyof typeof QUALITY_PRESETS)
+                      }
+                      className={`justify-start transition-all duration-200 ${
+                        isActive
+                          ? "bg-primary text-primary-foreground shadow-md ring-2 ring-primary/20"
+                          : "hover:bg-primary/10 hover:border-primary/50"
+                      }`}
+                      disabled={processing}
+                    >
+                      <Palette
+                        className={`w-4 h-4 mr-2 ${
+                          isActive ? "text-primary-foreground" : ""
+                        }`}
+                      />
+                      {preset.name}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
           </TabsContent>
@@ -257,6 +294,19 @@ export function SettingsPanel({
                 disabled={processing}
                 className="mt-2"
               />
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <span>Low</span>
+                <span className="font-medium text-primary">
+                  {resizeSettings.quality <= 60
+                    ? "Low"
+                    : resizeSettings.quality <= 80
+                      ? "Medium"
+                      : resizeSettings.quality <= 90
+                        ? "High"
+                        : "Maximum"}
+                </span>
+                <span>Maximum</span>
+              </div>
             </div>
 
             <div>

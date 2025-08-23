@@ -118,19 +118,11 @@ const generateLogs = (
     {
       id: now + 3,
       timestamp,
-      level: (() => {
-        console.log("[Debug] PSI Status Check:", {
-          pageSpeedKeys,
-          hasPageSpeedKey: !!pageSpeedKeys?.page_speed_key,
-          keyValue: pageSpeedKeys?.page_speed_key,
-          keyLength: pageSpeedKeys?.page_speed_key?.length,
-          isEmpty: pageSpeedKeys?.page_speed_key?.trim() === "",
-        });
-        return pageSpeedKeys?.page_speed_key &&
-          pageSpeedKeys.page_speed_key.trim() !== ""
+      level:
+        pageSpeedKeys?.page_speed_key &&
+        pageSpeedKeys.page_speed_key.trim() !== ""
           ? "success"
-          : "error";
-      })(),
+          : "error",
       message:
         pageSpeedKeys?.page_speed_key &&
         pageSpeedKeys.page_speed_key.trim() !== ""

@@ -11,7 +11,7 @@ export interface ImageFile {
   processedPreview?: string;
   originalDimensions?: { width: number; height: number };
   processedDimensions?: { width: number; height: number };
-  selected?: boolean;
+  selected: boolean;
 }
 
 export interface ResizeSettings {

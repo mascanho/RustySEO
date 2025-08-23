@@ -4,6 +4,7 @@
 import type React from "react";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -85,16 +86,14 @@ export function BatchDownload({
 
       if (savePath) {
         const arrayBuffer = await image.processedBlob.arrayBuffer();
-        await writeFile(
-          {
-            path: savePath,
-            contents: Array.from(new Uint8Array(arrayBuffer)),
-          },
-          arrayBuffer,
-        );
+        await writeFile(savePath, Array.from(new Uint8Array(arrayBuffer)));
+        toast.success("Image saved successfully!");
+      } else {
+        toast.info("Download cancelled");
       }
     } catch (error) {
       console.error("Failed to save image:", error);
+      toast.error("Failed to save image. Please try again.");
     }
   };
 
@@ -141,13 +140,16 @@ export function BatchDownload({
 
       if (savePath) {
         const arrayBuffer = await zipBlob.arrayBuffer();
-        await writeFile({
-          path: savePath,
-          contents: Array.from(new Uint8Array(arrayBuffer)),
-        });
+        await writeFile(savePath, Array.from(new Uint8Array(arrayBuffer)));
+        toast.success(
+          `Successfully downloaded ${selectedImages.length} images as ZIP!`,
+        );
+      } else {
+        toast.info("Download cancelled");
       }
     } catch (error) {
       console.error("Error creating ZIP file:", error);
+      toast.error("Failed to create ZIP file. Please try again.");
     } finally {
       setDownloadingZip(false);
       setZipProgress(0);

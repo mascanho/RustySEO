@@ -5,13 +5,16 @@ import { useState } from "react";
 import { ImageIcon } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeFile } from "@tauri-apps/plugin-fs";
+import { toast } from "sonner";
 import { FileUpload } from "./components/file-upload";
 import { SettingsPanel } from "./components/settings-panel";
 import { CompressionStats } from "./components/compression-stats";
 import { BatchDownload } from "./components/batch-download";
 import { PreviewModal } from "./components/preview-modal";
 import { ThemeToggle } from "./components/theme-toggle";
-import type { ImageFile, ResizeSettings } from "@/types/image";
+import type { ImageFile, ResizeSettings } from "./components/types/image";
 
 export default function ImageResizerApp() {
   const [images, setImages] = useState<ImageFile[]>([]);
@@ -190,17 +193,51 @@ export default function ImageResizerApp() {
     return `${fileName}.${settings.format}`;
   };
 
-  const handleDownload = (image: ImageFile) => {
-    if (!image.processedBlob) return;
+  const handleDownload = async (image: ImageFile) => {
+    if (!image.processedBlob) {
+      console.error("No processed blob available for download");
+      toast.error("No processed image available for download");
+      return;
+    }
 
-    const url = URL.createObjectURL(image.processedBlob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = generateFileName(image.file.name, resizeSettings);
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    try {
+      console.log("Starting download process for image:", image.file.name);
+      const fileName = generateFileName(image.file.name, resizeSettings);
+      console.log("Generated filename:", fileName);
+
+      const savePath = await save({
+        filters: [
+          {
+            name: "Image",
+            extensions: [resizeSettings.format.toLowerCase()],
+          },
+        ],
+        defaultPath: fileName,
+      });
+
+      console.log("Save dialog result:", savePath);
+
+      if (savePath) {
+        console.log("Converting blob to array buffer...");
+        const arrayBuffer = await image.processedBlob.arrayBuffer();
+        const uint8Array = Array.from(new Uint8Array(arrayBuffer));
+
+        console.log(
+          `Writing file to: ${savePath}, size: ${uint8Array.length} bytes`,
+        );
+        await writeFile(savePath, uint8Array);
+
+        console.log("File written successfully");
+        toast.success("Image saved successfully!");
+      } else {
+        console.log("User cancelled the save dialog");
+        toast.info("Download cancelled");
+      }
+    } catch (error) {
+      console.error("Failed to save image:", error);
+      console.error("Error details:", error.message || error);
+      toast.error(`Failed to save image: ${error.message || "Unknown error"}`);
+    }
   };
 
   const handleToggleSelection = (id: string) => {
