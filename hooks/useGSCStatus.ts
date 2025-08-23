@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useCallback, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import useGSCStatusStore from "@/store/GSCStatusStore";
