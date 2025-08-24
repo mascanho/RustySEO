@@ -16,7 +16,11 @@ use url::Url;
 use crate::crawler::get_page_speed_insights;
 use crate::domain_crawler::database::{Database, DatabaseResults};
 use crate::domain_crawler::extractors::html::extract_html;
+use crate::domain_crawler::helpers::extract_url_pattern::extract_url_pattern;
+use crate::domain_crawler::helpers::fetch_with_exponential::fetch_with_exponential_backoff;
 use crate::domain_crawler::helpers::https_checker::valid_https;
+use crate::domain_crawler::helpers::normalize_url::{self, normalize_url};
+use crate::domain_crawler::helpers::skip_url::should_skip_url;
 use crate::domain_crawler::models::Extractor;
 use crate::domain_crawler::user_agents;
 use crate::settings::settings::Settings;
@@ -66,13 +70,25 @@ const MAX_DEPTH: usize = 50; // Maximum crawl depth (increased)
 const MAX_PENDING_TIME: Duration = Duration::from_secs(900); // 15 minutes max pending time (increased)
 const STALL_CHECK_INTERVAL: Duration = Duration::from_secs(30); // Check for stalls every 30s
 
+// Track failed URLs and retries
+#[derive(Clone, Hash, Eq, PartialEq)]
+struct FailedUrl {
+    url: String,
+    error: String,
+    retries: usize,
+    depth: usize,
+    timestamp: Instant,
+}
+
 // Progress tracking structure
 #[derive(Clone, Serialize)]
 struct ProgressData {
     total_urls: usize,
     crawled_urls: usize,
     percentage: f32,
-    failed_urls: usize,
+    failed_urls_count: usize,
+    failed_urls: Vec<String>,
+    discovered_urls: usize,
 }
 
 // Crawl result structure
@@ -84,7 +100,7 @@ struct CrawlResultData {
 // Structure to track crawler state
 pub struct CrawlerState {
     pub visited: HashSet<String>,
-    pub failed_urls: HashSet<String>,
+    pub failed_urls: HashSet<FailedUrl>,
     pub pending_urls: HashMap<String, Instant>, // Track when URLs were added to pending
     pub queue: VecDeque<(Url, usize)>,          // Include depth tracking
     pub total_urls: usize,
@@ -92,11 +108,12 @@ pub struct CrawlerState {
     pub db: Option<Database>,
     pub last_activity: Instant,        // Track last crawling activity
     pub url_patterns: HashSet<String>, // Track URL patterns to avoid duplicates
+    pub active_tasks: usize,           // Track number of currently processing tasks
 }
 
 impl CrawlerState {
     fn new(db: Option<Database>) -> Self {
-        CrawlerState {
+        Self {
             visited: HashSet::new(),
             failed_urls: HashSet::new(),
             pending_urls: HashMap::new(),
@@ -106,6 +123,7 @@ impl CrawlerState {
             db,
             last_activity: Instant::now(),
             url_patterns: HashSet::new(),
+            active_tasks: 0,
         }
     }
 
@@ -119,7 +137,11 @@ impl CrawlerState {
     // Check if we should continue crawling
     fn should_continue(&self) -> bool {
         self.total_urls < MAX_URLS_PER_DOMAIN
-            && (!self.queue.is_empty() || !self.pending_urls.is_empty())
+            && (!self.queue.is_empty() || !self.pending_urls.is_empty() || self.active_tasks > 0)
+    }
+
+    fn is_truly_complete(&self) -> bool {
+        self.queue.is_empty() && self.pending_urls.is_empty() && self.active_tasks == 0
     }
 }
 
@@ -128,47 +150,6 @@ fn to_database_results(result: &DomainCrawlResults) -> Result<DatabaseResults, s
         url: result.url.clone(),
         data: serde_json::to_value(result)?,
     })
-}
-
-// Fetch URL with exponential backoff
-async fn fetch_with_exponential_backoff(
-    client: &Client,
-    url: &str,
-    settings: &Settings,
-) -> Result<(reqwest::Response, f64), reqwest::Error> {
-    let mut attempt = 0;
-    loop {
-        let start = Instant::now();
-        match client.get(url).send().await {
-            Ok(response) => {
-                let duration = start.elapsed().as_secs_f64();
-                if response.status() == reqwest::StatusCode::TOO_MANY_REQUESTS {
-                    if attempt >= settings.max_retries {
-                        return Ok((response, duration));
-                    }
-                    let delay = std::cmp::min(
-                        settings.max_delay,
-                        settings.base_delay * 2u64.pow(attempt as u32),
-                    );
-                    sleep(Duration::from_millis(delay)).await;
-                    attempt += 1;
-                    continue;
-                }
-                return Ok((response, duration));
-            }
-            Err(e) => {
-                if attempt >= settings.max_retries {
-                    return Err(e);
-                }
-                let delay = std::cmp::min(
-                    settings.max_delay,
-                    settings.base_delay * 2u64.pow(attempt as u32),
-                );
-                sleep(Duration::from_millis(delay)).await;
-                attempt += 1;
-            }
-        }
-    }
 }
 
 // Process single URL
@@ -191,14 +172,27 @@ async fn process_url(
         Ok(Ok((response, time))) => (response, time),
         Ok(Err(e)) => {
             let mut state = state.lock().await;
-            state.failed_urls.insert(url.to_string());
+            state.failed_urls.insert(FailedUrl {
+                url: url.to_string(),
+                error: e.to_string(),
+                retries: 0,
+                depth,
+                timestamp: Instant::now(),
+            });
             state.pending_urls.remove(url.as_str());
             return Err(format!("Failed to fetch {}: {}", url, e));
         }
         Err(_) => {
             let mut state = state.lock().await;
-            state.failed_urls.insert(url.to_string());
+            state.failed_urls.insert(FailedUrl {
+                url: url.to_string(),
+                error: "Timeout fetching".to_string(),
+                retries: 0,
+                depth,
+                timestamp: Instant::now(),
+            });
             state.pending_urls.remove(url.as_str());
+
             return Err(format!("Timeout fetching {}", url));
         }
     };
@@ -243,7 +237,13 @@ async fn process_url(
         Ok(body) => body,
         Err(e) => {
             let mut state = state.lock().await;
-            state.failed_urls.insert(url.to_string());
+            state.failed_urls.insert(FailedUrl {
+                url: url.to_string(),
+                error: e.to_string(),
+                retries: 0,
+                depth,
+                timestamp: Instant::now(),
+            });
             return Err(format!("Failed to read response body: {}", e));
         }
     };
@@ -283,8 +283,6 @@ async fn process_url(
     // Page Speed Insights Checker
     // Check if the key exists to make the call otherwise return an empty vector
     // Attempt to fetch PSI results, but if there's an error, use an empty Vec
-    // Start PSI fetch as a separate task
-    // Start PSI fetch as a separate task
     // Start PSI fetch as a separate task
     let psi_future = if settings.page_speed_bulk {
         let url_clone = url.clone();
@@ -358,6 +356,7 @@ async fn process_url(
         state.visited.insert(url.to_string());
         state.pending_urls.remove(url.as_str());
         state.last_activity = Instant::now();
+        state.active_tasks = state.active_tasks.saturating_sub(1);
 
         // Only process links if we haven't reached limits and depth allows
         if depth < MAX_DEPTH && state.total_urls < MAX_URLS_PER_DOMAIN {
@@ -411,25 +410,86 @@ async fn process_url(
                     && !state.pending_urls.contains_key(link_str)
                     && state.total_urls < MAX_URLS_PER_DOMAIN
                 {
+                    // Only increment total_urls when we actually add a new URL
+                    let queue_length_before = state.queue.len();
                     state.queue.push_back((link.clone(), depth + 1));
-                    state.total_urls += 1;
-                    state
-                        .pending_urls
-                        .insert(link_str.to_string(), Instant::now());
-                    state.url_patterns.insert(url_pattern);
+
+                    // Only increment if we successfully added to queue
+                    if state.queue.len() > queue_length_before {
+                        state.total_urls += 1;
+                        state
+                            .pending_urls
+                            .insert(link_str.to_string(), Instant::now());
+                        state.url_patterns.insert(url_pattern);
+                    }
                 }
             }
         }
 
-        let progress = ProgressData {
-            total_urls: state.total_urls,
-            crawled_urls: state.crawled_urls,
-            percentage: (state.crawled_urls as f32 / state.total_urls as f32) * 100.0,
-            failed_urls: state.failed_urls.len(),
+        // Calculate progress - use a stable approach for dynamic crawling
+        let completed_urls = state.crawled_urls + state.failed_urls.len();
+        let total_discovered = state.total_urls;
+        let active_pending = state.pending_urls.len() + state.active_tasks;
+
+        // For progress calculation, consider both completed and in-progress work
+        let progress_denominator = total_discovered + active_pending;
+        let percentage = if progress_denominator > 0 {
+            let base_progress = (completed_urls as f32 / progress_denominator as f32) * 100.0;
+            // Cap at 95% during active crawling, only show 100% when truly complete
+            if active_pending > 0 {
+                base_progress.min(95.0)
+            } else {
+                base_progress.min(100.0)
+            }
+        } else {
+            0.0
         };
 
-        if let Err(err) = app_handle.emit("progress_update", progress) {
-            eprintln!("Failed to emit progress update: {}", err);
+        // Ensure we never send invalid data that could cause NaN in frontend
+        let safe_total_discovered = std::cmp::max(total_discovered, 1);
+        let safe_completed_urls = completed_urls;
+
+        let progress = ProgressData {
+            total_urls: safe_total_discovered,
+            crawled_urls: safe_completed_urls,
+            failed_urls: state.failed_urls.iter().map(|f| f.url.clone()).collect(),
+            percentage,
+            failed_urls_count: state.failed_urls.len(),
+            discovered_urls: safe_total_discovered,
+        };
+
+        // Debug logging for troubleshooting NaN issues
+        if total_discovered == 0 || percentage.is_nan() {
+            println!(
+                "WARNING: Potential invalid progress data - total_discovered: {}, completed_urls: {}, percentage: {}",
+                total_discovered, completed_urls, percentage
+            );
+        }
+
+        // Log progress every 50 URLs for better tracking
+        if state.crawled_urls % 50 == 0 || (active_pending == 0 && completed_urls > 0) {
+            println!(
+                "Progress: {}/{} URLs completed ({:.1}%), {} succeeded, {} failed, {} pending, {} active",
+                completed_urls,
+                total_discovered,
+                percentage,
+                state.crawled_urls,
+                state.failed_urls.len(),
+                state.pending_urls.len(),
+                state.active_tasks
+            );
+        }
+
+        // Only emit progress update if we have valid data
+        if safe_total_discovered > 0 && !percentage.is_nan() {
+            if let Err(err) = app_handle.emit("progress_update", progress) {
+                eprintln!("Failed to emit progress update: {}", err);
+            }
+        } else {
+            println!(
+                "Skipping invalid progress update: total_discovered={}, percentage={}",
+                safe_total_discovered, percentage
+            );
         }
 
         let result_data = CrawlResultData {
@@ -439,12 +499,6 @@ async fn process_url(
             eprintln!("Failed to emit crawl result: {}", err);
         }
 
-        let percentage = if state.total_urls > 0 {
-            let completed = state.crawled_urls + state.failed_urls.len();
-            (completed as f32 / state.total_urls as f32) * 100.0
-        } else {
-            0.0
-        };
         print!(
             "\r{}: {:.2}% {}",
             "Progress".green().bold(),
@@ -466,154 +520,6 @@ async fn process_url(
         }
     }
     Ok(result)
-}
-
-fn should_skip_url(url: &str) -> bool {
-    // Skip fragments
-    if url.contains('#') {
-        return true;
-    }
-
-    // Skip common problematic patterns (made less restrictive)
-    let skip_patterns = [
-        "login",
-        "logout",
-        "signin",
-        "admin",
-        "dashboard",
-        "cart",
-        "checkout",
-        "payment",
-        "javascript:",
-        "mailto:",
-        "tel:",
-        "wp-admin",
-        "wp-login",
-        ".jpg",
-        ".jpeg",
-        ".png",
-        ".gif",
-        ".svg",
-        ".ico",
-        ".css",
-        ".js",
-        ".xml",
-        ".txt",
-        ".zip",
-        ".pdf",
-    ];
-
-    let url_lower = url.to_lowercase();
-    for pattern in &skip_patterns {
-        if url_lower.contains(pattern) {
-            return true;
-        }
-    }
-
-    // Skip URLs with too many query parameters (made less restrictive)
-    if url.matches('&').count() > 8 {
-        return true;
-    }
-
-    // Skip very long URLs (made less restrictive)
-    if url.len() > 500 {
-        return true;
-    }
-
-    false
-}
-
-// Normalize URLs to reduce duplicates
-fn normalize_url(url: &str) -> String {
-    let mut normalized = url.to_lowercase();
-
-    // Remove trailing slash
-    if normalized.ends_with('/') && normalized.len() > 1 {
-        normalized.pop();
-    }
-
-    // Remove common tracking parameters
-    let tracking_params = [
-        "utm_source",
-        "utm_medium",
-        "utm_campaign",
-        "fbclid",
-        "gclid",
-    ];
-    for param in &tracking_params {
-        if let Some(pos) = normalized.find(&format!("{}=", param)) {
-            let before = &normalized[..pos];
-            if let Some(after_pos) = normalized[pos..].find('&') {
-                let after = &normalized[pos + after_pos..];
-                normalized = format!(
-                    "{}{}",
-                    before.trim_end_matches('?').trim_end_matches('&'),
-                    after
-                );
-            } else {
-                normalized = before
-                    .trim_end_matches('?')
-                    .trim_end_matches('&')
-                    .to_string();
-            }
-        }
-    }
-
-    normalized
-}
-
-// Extract URL pattern to identify similar URLs
-fn extract_url_pattern(url: &str) -> String {
-    let mut pattern = url.to_string();
-
-    // More conservative number replacement to preserve URL uniqueness
-    let mut chars: Vec<char> = pattern.chars().collect();
-    let mut i = 0;
-    while i < chars.len() {
-        if chars[i].is_ascii_digit() {
-            let start = i;
-            let mut digit_count = 0;
-            while i < chars.len() && chars[i].is_ascii_digit() {
-                digit_count += 1;
-                i += 1;
-            }
-
-            // Only replace sequences of 4+ digits (very likely to be IDs)
-            // AND if they're not part of a year (1900-2099)
-            if digit_count >= 4 {
-                let digit_str: String = chars[start..i].iter().collect();
-                if let Ok(num) = digit_str.parse::<u32>() {
-                    // Don't replace years or common numbers
-                    if !(1900..=2099).contains(&num) && num > 999 {
-                        for j in start..i {
-                            chars[j] = 'N';
-                        }
-                        // Keep only one 'N'
-                        for _ in start..(i - 1) {
-                            if start < chars.len() {
-                                chars.remove(start);
-                            }
-                        }
-                        i = start + 1;
-                    }
-                }
-            }
-        } else {
-            i += 1;
-        }
-    }
-    pattern = chars.into_iter().collect::<String>();
-
-    // Only remove query parameters with many parameters (likely filters/pagination)
-    if let Some(pos) = pattern.find('?') {
-        let query_part = &pattern[pos..];
-        // Keep URLs with simple query parameters
-        if query_part.matches('&').count() > 2 {
-            pattern = pattern[..pos].to_string();
-        }
-    }
-
-    pattern
 }
 
 pub async fn crawl_domain(
@@ -697,11 +603,10 @@ pub async fn crawl_domain(
 
             // Check for stalling (made less aggressive)
             if last_stall_check.elapsed() > STALL_CHECK_INTERVAL {
-                // Only consider it stalled if no progress AND no pending URLs AND empty queue
+                // Only consider it stalled if no progress AND no pending URLs AND empty queue AND no active tasks
                 if state_guard.crawled_urls == last_crawled_count
                     && state_guard.last_activity.elapsed() > MAX_PENDING_TIME
-                    && state_guard.pending_urls.is_empty()
-                    && state_guard.queue.is_empty()
+                    && state_guard.is_truly_complete()
                 {
                     println!("Crawler appears to be stalled, terminating...");
                     break;
@@ -724,12 +629,19 @@ pub async fn crawl_domain(
         if current_batch.is_empty() {
             // Check if there are truly no more URLs to process
             let state_guard = state.lock().await;
-            if state_guard.pending_urls.is_empty() {
+            if state_guard.is_truly_complete() {
+                println!("All URLs processed, crawl complete");
                 break;
             }
             drop(state_guard);
             sleep(Duration::from_secs(1)).await;
             continue;
+        }
+
+        // Increment active tasks counter before spawning
+        {
+            let mut state_guard = state.lock().await;
+            state_guard.active_tasks += current_batch.len();
         }
 
         let mut handles = Vec::with_capacity(current_batch.len());
@@ -776,10 +688,20 @@ pub async fn crawl_domain(
                     Err(_) => {
                         let mut state_guard = state.lock().await;
                         state_guard.pending_urls.remove(url.as_str());
+                        state_guard.failed_urls.insert(FailedUrl {
+                            url: url.to_string(),
+                            error: "Processing failed".to_string(),
+                            retries: 0,
+                            depth: 0,
+                            timestamp: Instant::now(),
+                        });
+                        state_guard.active_tasks = state_guard.active_tasks.saturating_sub(1);
                         // Don't re-queue failed URLs to prevent infinite loops
                     }
                     Ok(_) => {
                         // Success case is already handled in process_url
+                        let mut state_guard = state.lock().await;
+                        state_guard.active_tasks = state_guard.active_tasks.saturating_sub(1);
                     }
                 }
             }
@@ -800,14 +722,54 @@ pub async fn crawl_domain(
         println!("  URLs successfully crawled: {}", state_guard.crawled_urls);
         println!("  URLs failed: {}", state_guard.failed_urls.len());
         println!("  URLs still pending: {}", state_guard.pending_urls.len());
+        println!("  Active tasks remaining: {}", state_guard.active_tasks);
         println!("  Unique URL patterns: {}", state_guard.url_patterns.len());
         println!("  Max depth reached: {}", MAX_DEPTH);
         println!("  Max URLs limit: {}", MAX_URLS_PER_DOMAIN);
+
+        // Calculate final completion percentage
+        let completed = state_guard.crawled_urls + state_guard.failed_urls.len();
+        let final_percentage = if state_guard.total_urls > 0 {
+            (completed as f32 / state_guard.total_urls as f32) * 100.0
+        } else {
+            0.0
+        };
+        println!("  Final completion: {:.2}%", final_percentage);
     }
 
     drop(db_tx);
     if let Some(handle) = db_handle {
         handle.await.unwrap_or_default();
+    }
+
+    // Emit final 100% progress update before completion
+    {
+        let state_guard = state.lock().await;
+        let completed = state_guard.crawled_urls + state_guard.failed_urls.len();
+        let safe_completed = std::cmp::max(completed, 1);
+        let final_progress = ProgressData {
+            total_urls: safe_completed, // Set total to actual completed count for consistency
+            crawled_urls: safe_completed,
+            failed_urls: state_guard
+                .failed_urls
+                .iter()
+                .map(|f| f.url.clone())
+                .collect(),
+            percentage: 100.0, // Always 100% when truly complete
+            failed_urls_count: state_guard.failed_urls.len(),
+            discovered_urls: std::cmp::max(state_guard.total_urls, 1),
+        };
+
+        println!(
+            "Final crawl stats: {} total processed ({} succeeded, {} failed)",
+            completed,
+            state_guard.crawled_urls,
+            state_guard.failed_urls.len()
+        );
+
+        if let Err(err) = app_handle.emit("progress_update", final_progress) {
+            eprintln!("Failed to emit final progress update: {}", err);
+        }
     }
 
     app_handle.emit("crawl_complete", ()).unwrap_or_default();

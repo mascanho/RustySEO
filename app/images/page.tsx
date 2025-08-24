@@ -1,359 +1,312 @@
 // @ts-nocheck
 "use client";
 
-import {
-  writeFile,
-  BaseDirectory,
-  writeBinaryFile,
-} from "@tauri-apps/plugin-fs";
-import React, { useState, useCallback, useEffect } from "react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
-import { useDropzone } from "react-dropzone";
-import { invoke } from "@tauri-apps/api/core";
-import { UploadIcon } from "lucide-react";
-import Confetti from "react-confetti";
+import { useState } from "react";
+import { ImageIcon } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Card, CardContent } from "@/components/ui/card";
 import { save } from "@tauri-apps/plugin-dialog";
+import { writeFile } from "@tauri-apps/plugin-fs";
 import { toast } from "sonner";
+import { FileUpload } from "./components/file-upload";
+import { SettingsPanel } from "./components/settings-panel";
+import { CompressionStats } from "./components/compression-stats";
+import { BatchDownload } from "./components/batch-download";
+import { PreviewModal } from "./components/preview-modal";
+import { ThemeToggle } from "./components/theme-toggle";
+import type { ImageFile, ResizeSettings } from "./components/types/image";
 
-export default function ImageOptimizer() {
-  const [image, setImage] = useState(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
-  const [originalDimensions, setOriginalDimensions] = useState({
-    width: 800,
-    height: 600,
-  });
-  const [format, setFormat] = useState("jpg");
-  const [quality, setQuality] = useState(80);
-  const [fileSize, setFileSize] = useState(100);
-  const [errors, setErrors] = useState({});
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [maintainAspectRatio, setMaintainAspectRatio] = useState(true);
-  const [cropMode, setCropMode] = useState(false);
-  const [optimizedImages, setOptimizedImages] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [showConfetti, setShowConfetti] = useState(false);
-
-  const onDrop = useCallback((acceptedFiles: any) => {
-    const file = acceptedFiles[0];
-    const img = new Image();
-    img.onload = () => {
-      setOriginalDimensions({ width: img.width, height: img.height });
-      setDimensions({ width: img.width, height: img.height });
-      setImage(Object.assign(file, { preview: URL.createObjectURL(file) }));
-    };
-    img.src = URL.createObjectURL(file);
-  }, []);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: "image/*",
-    multiple: false,
+export default function ImageResizerApp() {
+  const [images, setImages] = useState<ImageFile[]>([]);
+  const [processing, setProcessing] = useState(false);
+  const [overallProgress, setOverallProgress] = useState(0);
+  const [previewImage, setPreviewImage] = useState<ImageFile | null>(null);
+  const [resizeSettings, setResizeSettings] = useState<ResizeSettings>({
+    width: 1920,
+    height: 1080,
+    quality: 80,
+    format: "jpeg",
+    maintainAspectRatio: true,
+    fileNamePattern: "resized_{name}",
+    addPrefix: false,
+    addSuffix: true,
+    prefix: "",
+    suffix: "resized",
   });
 
-  const handleDimensionChange = (e) => {
-    const { name, value } = e.target;
-    const newValue = parseInt(value, 10);
+  const resizeImage = async (
+    file: File,
+    settings: ResizeSettings,
+  ): Promise<{ blob: Blob; dimensions: { width: number; height: number } }> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
 
-    if (maintainAspectRatio) {
-      const aspect = originalDimensions.width / originalDimensions.height;
-      if (name === "width") {
-        setDimensions({
-          width: newValue,
-          height: Math.round(newValue / aspect),
-        });
-      } else {
-        setDimensions({
-          width: Math.round(newValue * aspect),
-          height: newValue,
-        });
-      }
-    } else {
-      setDimensions((prev) => ({ ...prev, [name]: newValue }));
-    }
-  };
-
-  const validateInputs = () => {
-    const newErrors = {};
-    if (dimensions.width < 1 || dimensions.width > 10000)
-      newErrors.width = "Width must be between 1 and 10000 pixels";
-    if (dimensions.height < 1 || dimensions.height > 10000)
-      newErrors.height = "Height must be between 1 and 10000 pixels";
-    if (fileSize < 1 || fileSize > 10000)
-      newErrors.fileSize = "File size must be between 1 and 10000 KB";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleOptimize = async () => {
-    console.log("Clicking Optimize Image");
-
-    if (!validateInputs() || !image) return;
-
-    setIsProcessing(true);
-    setLoading(true);
-
-    try {
-      const reader = new FileReader();
-      reader.readAsDataURL(image);
-      reader.onload = async () => {
-        const base64Image = reader.result.split(",")[1];
-
+      img.onload = () => {
         try {
-          const formats = ["jpg", "png", "webp", "jpeg"];
-          const results = [];
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
 
-          for (const fmt of formats) {
-            const result = await invoke("handle_image_conversion", {
-              image: base64Image,
-              format: fmt,
-              quality,
-              width: dimensions.width,
-              height: dimensions.height,
-            });
-
-            const mimeType = `image/${fmt}`;
-            results.push({
-              src: `data:${mimeType};base64,${result}`,
-              format: fmt,
-            });
+          if (!ctx) {
+            throw new Error("Could not get canvas context");
           }
 
-          setOptimizedImages(results);
-          setShowConfetti(true);
-          setTimeout(() => setShowConfetti(false), 5000);
-        } catch (invokeError) {
-          console.error("Error invoking Tauri command:", invokeError);
-        } finally {
-          setLoading(false);
+          let { width, height } = settings;
+          const originalWidth = img.naturalWidth;
+          const originalHeight = img.naturalHeight;
+
+          if (settings.maintainAspectRatio) {
+            const aspectRatio = originalWidth / originalHeight;
+
+            if (width / height > aspectRatio) {
+              width = height * aspectRatio;
+            } else {
+              height = width / aspectRatio;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const mimeType = `image/${settings.format}`;
+          const quality = settings.quality / 100;
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve({
+                  blob,
+                  dimensions: {
+                    width: Math.round(width),
+                    height: Math.round(height),
+                  },
+                });
+              } else {
+                reject(new Error("Failed to create blob"));
+              }
+            },
+            mimeType,
+            quality,
+          );
+        } catch (error) {
+          reject(error);
         }
       };
 
-      reader.onerror = (error) => {
-        console.error("Error reading file:", error);
-        setLoading(false);
+      img.onerror = () => {
+        reject(new Error("Failed to load image"));
       };
-    } catch (error) {
-      console.error("Error optimizing image:", error);
-      setLoading(false);
-    }
+
+      img.src = URL.createObjectURL(file);
+    });
   };
 
-  useEffect(() => {
-    const estimatedSize = Math.round(
-      (dimensions.width * dimensions.height * 3 * (quality / 100)) / 1024,
+  const updateImageStatus = (id: string, updates: Partial<ImageFile>) => {
+    setImages((prev) =>
+      prev.map((img) => (img.id === id ? { ...img, ...updates } : img)),
     );
-    setFileSize(estimatedSize);
-  }, [dimensions, quality]);
+  };
 
-  const saveImage = async (img) => {
+  const processImages = async () => {
+    if (images.length === 0) return;
+
+    setProcessing(true);
+    setOverallProgress(0);
+
     try {
-      // Extract the base64 data from the image source
-      const base64Data = img.src.split(",")[1];
-      const binaryData = Uint8Array.from(atob(base64Data), (c) =>
-        c.charCodeAt(0),
-      );
+      const totalImages = images.length;
+      let completedImages = 0;
 
-      // Define the default file name
-      const fileName = `optimized_${img.format}.${img.format}`;
+      for (const image of images) {
+        try {
+          updateImageStatus(image.id, {
+            status: "processing",
+            progress: 0,
+          });
 
-      // Prompt the user to select a save location
-      const path = await save({
-        defaultPath: fileName,
-        filters: [
-          {
-            name: "Image Files",
-            extensions: [img.format], // e.g., ['png', 'jpg', 'jpeg']
-          },
-        ],
-      });
+          const { blob: processedBlob, dimensions } = await resizeImage(
+            image.file,
+            resizeSettings,
+          );
 
-      // If the user selected a path, write the file
-      if (path) {
-        await writeFile(path, binaryData);
-        console.log("Image saved successfully at:", path);
-        toast.success("Image saved successfully!");
-      } else {
-        console.log("Image save canceled by the user.");
-        toast.info("Image save canceled by the user.");
+          const processedPreview = URL.createObjectURL(processedBlob);
+
+          updateImageStatus(image.id, {
+            status: "completed",
+            processedBlob,
+            processedSize: processedBlob.size,
+            processedPreview,
+            processedDimensions: dimensions,
+            progress: 100,
+            selected: true,
+          });
+
+          completedImages++;
+          setOverallProgress((completedImages / totalImages) * 100);
+        } catch (error) {
+          updateImageStatus(image.id, {
+            status: "error",
+            errorMessage:
+              error instanceof Error ? error.message : "Processing failed",
+            progress: 0,
+          });
+
+          completedImages++;
+          setOverallProgress((completedImages / totalImages) * 100);
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
     } catch (error) {
-      console.error("Error during save process:", error);
-      toast.error("Error saving image. Please try again.");
+      console.error("Batch processing error:", error);
+    } finally {
+      setProcessing(false);
     }
   };
 
-  const handleReupload = () => {
-    setImage(null);
-    setOptimizedImages([]);
-    setIsProcessing(false);
+  const handlePreview = (image: ImageFile) => {
+    setPreviewImage(image);
+  };
+
+  const generateFileName = (originalName: string, settings: ResizeSettings) => {
+    const nameWithoutExt = originalName.split(".")[0];
+    let fileName = settings.fileNamePattern
+      .replace("{name}", nameWithoutExt)
+      .replace("{width}", settings.width.toString())
+      .replace("{height}", settings.height.toString())
+      .replace("{quality}", settings.quality.toString())
+      .replace("{format}", settings.format);
+
+    if (settings.addPrefix && settings.prefix) {
+      fileName = `${settings.prefix}_${fileName}`;
+    }
+
+    if (settings.addSuffix && settings.suffix) {
+      fileName = `${fileName}_${settings.suffix}`;
+    }
+
+    return `${fileName}.${settings.format}`;
+  };
+
+  const handleDownload = async (image: ImageFile) => {
+    if (!image.processedBlob) {
+      console.error("No processed blob available for download");
+      toast.error("No processed image available for download");
+      return;
+    }
+
+    try {
+      console.log("Starting download process for image:", image.file.name);
+      const fileName = generateFileName(image.file.name, resizeSettings);
+      console.log("Generated filename:", fileName);
+
+      const savePath = await save({
+        filters: [
+          {
+            name: "Image",
+            extensions: [resizeSettings.format.toLowerCase()],
+          },
+        ],
+        defaultPath: fileName,
+      });
+
+      console.log("Save dialog result:", savePath);
+
+      if (savePath) {
+        console.log("Converting blob to array buffer...");
+        const arrayBuffer = await image.processedBlob.arrayBuffer();
+        const uint8Array = Array.from(new Uint8Array(arrayBuffer));
+
+        console.log(
+          `Writing file to: ${savePath}, size: ${uint8Array.length} bytes`,
+        );
+        await writeFile(savePath, uint8Array);
+
+        console.log("File written successfully");
+        toast.success("Image saved successfully!");
+      } else {
+        console.log("User cancelled the save dialog");
+        toast.info("Download cancelled");
+      }
+    } catch (error) {
+      console.error("Failed to save image:", error);
+      console.error("Error details:", error.message || error);
+      toast.error(`Failed to save image: ${error.message || "Unknown error"}`);
+    }
+  };
+
+  const handleToggleSelection = (id: string) => {
+    setImages((prev) =>
+      prev.map((img) =>
+        img.id === id ? { ...img, selected: !img.selected } : img,
+      ),
+    );
   };
 
   return (
-    <section className="w-full z-[0] border-none rounded-none h-full p-10 dark:bg-brand-dark shadow-none">
-      {showConfetti && <Confetti />}
-      <CardTitle className="ml-6">Rusty Multi-Image Optimizer</CardTitle>
-      <CardHeader>
-        <CardDescription className="ml-0">
-          Upload an image and customize its dimensions, format, quality, and
-          more.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex">
-          {/* Left Column: Drag and Drop Area */}
-          <div
-            {...getRootProps()}
-            className="flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-lg cursor-pointer w-1/2"
-          >
-            <input {...getInputProps()} />
-            {image ? (
-              <img
-                src={image.preview}
-                alt="Preview"
-                className="max-w-full max-h-64 object-contain"
-              />
-            ) : isDragActive ? (
-              <p>Drop the image here ...</p>
-            ) : (
-              <>
-                <UploadIcon className="w-12 h-12 mb-4 text-gray-400" />
-                <p>Click to add an image</p>
-              </>
-            )}
+    <div className="min-h-screen bg-background transition-colors mx-0">
+      <div className="container mx-auto py-4">
+        {processing && (
+          <div className="mb-6 absolute">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Processing images...</span>
+                    <span>{Math.round(overallProgress)}%</span>
+                  </div>
+                  <Progress value={overallProgress} className="w-full" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        <div className="mb-6 flex space-x-4">
+          <CompressionStats images={images} />
+
+          <BatchDownload
+            images={images}
+            setImages={setImages}
+            resizeSettings={resizeSettings}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="lg:col-span-2">
+            <FileUpload
+              images={images}
+              setImages={setImages}
+              processing={processing}
+              onPreview={handlePreview}
+              onDownload={handleDownload}
+              onToggleSelection={handleToggleSelection}
+            />
           </div>
 
-          {/* Right Column: All Controls */}
-          <div className="flex flex-col space-y-4 w-1/2 ml-6">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="aspect-ratio"
-                checked={maintainAspectRatio}
-                onCheckedChange={setMaintainAspectRatio}
-              />
-              <Label htmlFor="aspect-ratio">Maintain aspect ratio</Label>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="crop-mode"
-                checked={cropMode}
-                onCheckedChange={setCropMode}
-              />
-              <Label htmlFor="crop-mode">Enable crop mode</Label>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <Label htmlFor="width">Width (px)</Label>
-                <Input
-                  id="width"
-                  name="width"
-                  type="number"
-                  value={dimensions.width}
-                  onChange={handleDimensionChange}
-                  min={1}
-                  max={10000}
-                  aria-invalid={errors.width ? "true" : "false"}
-                />
-                {errors.width && (
-                  <p className="text-red-500 text-sm mt-1">{errors.width}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="height">Height (px)</Label>
-                <Input
-                  id="height"
-                  name="height"
-                  type="number"
-                  value={dimensions.height}
-                  onChange={handleDimensionChange}
-                  min={1}
-                  max={10000}
-                  aria-invalid={errors.height ? "true" : "false"}
-                />
-                {errors.height && (
-                  <p className="text-red-500 text-sm mt-1">{errors.height}</p>
-                )}
-              </div>
-            </div>
-
-            <Label htmlFor="format">Format</Label>
-            <Select value={format} onValueChange={setFormat}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select format" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="jpg">JPG</SelectItem>
-                <SelectItem value="png">PNG</SelectItem>
-                <SelectItem value="webp">WebP</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Label htmlFor="quality">Quality</Label>
-            <Slider
-              id="quality"
-              value={[quality]}
-              onValueChange={(value) => setQuality(value[0])}
-              min={1}
-              max={100}
-              step={1}
-              aria-invalid={errors.quality ? "true" : "false"}
+          <div>
+            <SettingsPanel
+              resizeSettings={resizeSettings}
+              setResizeSettings={setResizeSettings}
+              images={images}
+              processing={processing}
+              onProcessImages={processImages}
             />
-            {errors.quality && (
-              <p className="text-red-500 text-sm mt-1">{errors.quality}</p>
-            )}
-
-            <Label htmlFor="file-size">Estimated File Size (KB)</Label>
-            <Input
-              id="file-size"
-              name="file-size"
-              type="number"
-              value={fileSize}
-              readOnly
-            />
-
-            <Button onClick={handleOptimize} disabled={isProcessing}>
-              {loading ? "Optimizing..." : "Optimize Image"}
-            </Button>
-
-            {optimizedImages.length > 0 && (
-              <Button onClick={handleReupload}>Upload New Image</Button>
-            )}
           </div>
         </div>
 
-        {optimizedImages.length > 0 && (
-          <div className="grid gap-4 sm:grid-cols-2 mt-10">
-            {optimizedImages.map((img, index) => (
-              <div key={index} className="flex flex-col items-center">
-                <Button onClick={() => saveImage(img)} className="mt-2">
-                  Download {img.format.toUpperCase()}
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </section>
+        <PreviewModal
+          previewImage={previewImage}
+          setPreviewImage={setPreviewImage}
+          resizeSettings={resizeSettings}
+          onDownload={handleDownload}
+        />
+      </div>
+    </div>
   );
 }

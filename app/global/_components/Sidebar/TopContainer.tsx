@@ -23,7 +23,7 @@ const TopContainer = () => {
         >
           <Tabs.Tab value="first">General</Tabs.Tab>
           <Tabs.Tab value="issues">Issues</Tabs.Tab>
-          {/* <Tabs.Tab value="gsc">GSC</Tabs.Tab> */}
+          <Tabs.Tab value="queries">Queries</Tabs.Tab>
           <Tabs.Tab value="status">Status</Tabs.Tab>
           {/* <Tabs.Tab value="fourth">Struct</Tabs.Tab>
           <Tabs.Tab value="fifth">Crawls</Tabs.Tab> */}
@@ -38,10 +38,8 @@ const TopContainer = () => {
           <IssuesContainer />
         </Tabs.Panel>
 
-        <Tabs.Panel value="gsc">
-          <section className="h-[23.1rem] overflow-auto">
-            <RankingInfo />
-          </section>
+        <Tabs.Panel value="queries">
+          <RankingInfo />
         </Tabs.Panel>
 
         <Tabs.Panel value="status">

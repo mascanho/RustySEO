@@ -35,20 +35,46 @@ const HistoryDomainCrawls = () => {
   const [crawledPages, setCrawledPages] = useState<number>(0);
   const [percentageCrawled, setPercentageCrawled] = useState<number>(0);
   const [crawledPagesCount, setCrawledPagesCount] = useState<number>(0);
+  const [crawlCompleted, setCrawlCompleted] = useState<boolean>(false);
 
   useEffect(() => {
-    const unlisten = listen("progress_update", (event) => {
+    const progressUnlisten = listen("progress_update", (event) => {
       const progressData = event.payload as {
         crawled_urls: number;
         percentage: number;
         total_urls: number;
       };
-      setCrawledPages(progressData.crawled_urls);
-      setPercentageCrawled(progressData.percentage);
-      setCrawledPagesCount(progressData.total_urls);
+
+      // Validate and sanitize the received data to prevent NaN
+      const safeCrawledUrls = Math.max(0, progressData.crawled_urls || 0);
+      const safePercentage = Math.min(
+        100,
+        Math.max(0, progressData.percentage || 0),
+      );
+      const safeTotalUrls = Math.max(1, progressData.total_urls || 1);
+
+      setCrawledPages(safeCrawledUrls);
+      setPercentageCrawled(safePercentage);
+      setCrawledPagesCount(safeTotalUrls);
+
+      // Reset completion state if new crawl starts
+      if (safePercentage < 100) {
+        setCrawlCompleted(false);
+      }
     });
+
+    const completeUnlisten = listen("crawl_complete", () => {
+      // Ensure percentage shows 100% when crawl is complete and sync with actual data
+      setCrawledPages(crawlData.length);
+      setCrawledPagesCount(crawlData.length);
+      setPercentageCrawled(100);
+      setCrawlCompleted(true);
+      console.log("Crawl completed - data synchronized with actual crawlData");
+    });
+
     return () => {
-      unlisten.then((f) => f());
+      progressUnlisten.then((f) => f());
+      completeUnlisten.then((f) => f());
     };
   }, []);
 
@@ -90,8 +116,8 @@ const HistoryDomainCrawls = () => {
       id: Math.floor(Math.random() * 1000),
       domain: crawlData[0]?.url || "",
       date: new Date().toISOString(),
-      pages: crawledPagesCount || 0,
-      errors: issues || 0,
+      pages: crawlData.length || 0,
+      errors: totalIssueCount,
       status: "completed",
       total_links: summary?.totalLinksFound || 0,
       total_internal_links: summary?.totalInternalLinks || 0,
