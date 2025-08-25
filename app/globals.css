@@ -925,7 +925,7 @@ tbody tr {
 
 /* NATIVE BUTTON  */
 .native-button {
-  @apply px-4 py-1.5 
+  @apply px-4 py-1.5
   bg-brand-bright text-white dark:bg-[#2d2d2d]
   border border-[#adadad] dark:border-[#4a4a4a]
   rounded-sm
@@ -941,3 +941,7 @@ tbody tr {
   disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
+/*THIS CHANGES THE ROBOTS ELEMENT FONT SIZE*/
+code {
+  @apply text-[9px];
+}

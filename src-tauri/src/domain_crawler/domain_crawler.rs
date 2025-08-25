@@ -1,5 +1,7 @@
 use colored::*;
+use defmt::info;
 use futures::stream::{self, StreamExt};
+use html5ever::interface::NodeOrText::AppendNode;
 use rand::Rng;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
@@ -20,6 +22,7 @@ use crate::domain_crawler::helpers::extract_url_pattern::extract_url_pattern;
 use crate::domain_crawler::helpers::fetch_with_exponential::fetch_with_exponential_backoff;
 use crate::domain_crawler::helpers::https_checker::valid_https;
 use crate::domain_crawler::helpers::normalize_url::{self, normalize_url};
+use crate::domain_crawler::helpers::robots::get_domain_robots;
 use crate::domain_crawler::helpers::skip_url::should_skip_url;
 use crate::domain_crawler::models::Extractor;
 use crate::domain_crawler::user_agents;
@@ -542,6 +545,22 @@ pub async fn crawl_domain(
 
     let url_checked = url_check(domain);
     let base_url = Url::parse(&url_checked).map_err(|_| "Invalid URL")?;
+    let domain = base_url.clone();
+
+    let app_handle_clone = app_handle.clone();
+
+    // Spawn a task that checks for the robots files
+    tokio::spawn(async move {
+        let robots_str = get_domain_robots(&domain)
+            .await
+            .unwrap_or_else(|| vec!["No robots.txt found".to_string()]);
+
+        if let Err(err) = app_handle_clone.emit("robots", (&domain, robots_str)) {
+            eprintln!("Failed to emit robots data: {}", err);
+        } else {
+            println!("Robots emitted for {}", &domain);
+        }
+    });
 
     let (db_tx, mut db_rx) = tokio::sync::mpsc::channel(DB_BATCH_SIZE);
 

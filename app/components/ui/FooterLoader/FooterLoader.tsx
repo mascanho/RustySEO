@@ -48,7 +48,6 @@ const FooterLoader = () => {
       // Reset completion state if new crawl starts
       if (percentage < 100 && crawlCompleted) {
         setCrawlCompleted(false);
-        console.log("New crawl started - resetting completion state");
       }
 
       // Update global state only if the total URLs have changed
@@ -75,9 +74,6 @@ const FooterLoader = () => {
         crawledPagesCount: crawlData.length,
       }));
       setCrawlCompleted(true);
-      console.log(
-        "Crawl completed - final counts synchronized with actual data",
-      );
     });
 
     // Cleanup the event listeners on unmount
