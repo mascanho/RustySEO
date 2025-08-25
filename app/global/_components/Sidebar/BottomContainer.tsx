@@ -29,10 +29,7 @@ const BottomContainer = () => {
           <OverviewBottomSidePanel />
         </Tabs.Panel>
 
-        <Tabs.Panel
-          value="robots"
-          className="h-[28rem] overflow-auto  overflow-x-hidden"
-        >
+        <Tabs.Panel value="robots">
           <RobotsDomain />
         </Tabs.Panel>
 
