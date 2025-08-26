@@ -9,23 +9,31 @@ const RobotsDomain = () => {
   const { crawlData, setRobots, robots } = useGlobalCrawlStore();
 
   useEffect(() => {
-    // handle the event from the crawler
-    const unlisten = listen("robots_txt", (event) => {
-      const robots = event.payload;
+    let unlisten: () => void;
+
+    listen<[string, any]>("robots", ({ payload }) => {
+      const [domain, robots] = payload;
+      console.log(robots, "THE ROBOTS");
       setRobots(robots);
+    }).then((fn) => {
+      unlisten = fn;
     });
 
     return () => {
-      unlisten.then((fn) => fn());
+      if (unlisten) unlisten();
     };
-  }, [crawlData]);
+  }, [robots, crawlData]);
 
   return (
-    <div className="h-96  w-[20rem]  bg-trasnparent dark:bg-brand-darker text-black robotsDomain">
-      {robots?.length > 0 && (
+    <div className="h-[calc(100vh-90vh)] w-[20rem] text-[9px] bg-transparent dark:bg-brand-darker text-black robotsDomain">
+      {robots && robots.length > 0 && robots[0] ? (
         <SyntaxHighlighter language="text" style={brownPaper}>
-          {robots}
+          {robots[0]}
         </SyntaxHighlighter>
+      ) : (
+        <section className="w-full items-center justify-center flex flex-col">
+          <span className="p-2 mt-4">No robots.txt loaded yet</span>
+        </section>
       )}
     </div>
   );

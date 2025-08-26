@@ -138,31 +138,44 @@ export function SettingsPanel({
   };
 
   return (
-    <Card className="overflow-auto h-[calc(100vh-1vh)] max-h-[calc(100vh-30vh)]">
+    <Card className="h-[calc(100vh-1vh)] max-h-[calc(100vh-32.5vh)] px-0 mx-0">
       <CardHeader>
         <CardTitle className="font-serif flex items-center gap-2">
           <Settings className="w-5 h-5" />
           Output Settings
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-0">
         <Tabs defaultValue="presets" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="presets" className="flex items-center gap-1">
+          <TabsList className="grid w-full grid-cols-3 border-b -mt-3 ">
+            <TabsTrigger
+              value="presets"
+              className="flex items-center gap-1 rounded-t-lg"
+            >
               <Zap className="w-3 h-3" />
               Presets
             </TabsTrigger>
-            <TabsTrigger value="custom" className="flex items-center gap-1">
+            <TabsTrigger
+              value="custom"
+              className="flex items-center gap-1 rounded-t-lg"
+            >
               <Settings className="w-3 h-3" />
               Custom
             </TabsTrigger>
-            <TabsTrigger value="naming" className="flex items-center gap-1">
+            <TabsTrigger
+              value="naming"
+              className="flex items-center gap-1 rounded-t-lg"
+            >
+              {" "}
               <FileImage className="w-3 h-3" />
               Naming
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="presets" className="space-y-4 mt-4">
+          <TabsContent
+            value="presets"
+            className="space-y-4 mt-4 h-[36rem] pb-6 pt-2 overflow-auto m-0 px-2"
+          >
             <div>
               <Label className="text-sm font-medium mb-3 block">
                 Size Presets
@@ -241,7 +254,7 @@ export function SettingsPanel({
             </div>
           </TabsContent>
 
-          <TabsContent value="custom" className="space-y-4 mt-4">
+          <TabsContent value="custom" className="space-y-4 mt-4 px-2">
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label htmlFor="width">Width (px)</Label>
@@ -303,7 +316,9 @@ export function SettingsPanel({
                       ? "Medium"
                       : resizeSettings.quality <= 90
                         ? "High"
-                        : "Maximum"}
+                        : resizeSettings.quality === 100
+                          ? "Maximum"
+                          : "Custom"}
                 </span>
                 <span>Maximum</span>
               </div>
@@ -349,7 +364,7 @@ export function SettingsPanel({
             </div>
           </TabsContent>
 
-          <TabsContent value="naming" className="space-y-4 mt-4">
+          <TabsContent value="naming" className="space-y-4 mt-4 px-2">
             <div>
               <Label htmlFor="fileNamePattern">File Name Pattern</Label>
               <Input

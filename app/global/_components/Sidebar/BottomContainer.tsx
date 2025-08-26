@@ -19,6 +19,7 @@ const BottomContainer = () => {
           {/* <Tabs.Tab value="sitemaps">Sitemaps</Tabs.Tab> */}
           <Tabs.Tab value="fixes">Fixes</Tabs.Tab>
           <Tabs.Tab value="history">History</Tabs.Tab>
+          <Tabs.Tab value="robots">Robots</Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel
@@ -28,16 +29,13 @@ const BottomContainer = () => {
           <OverviewBottomSidePanel />
         </Tabs.Panel>
 
-        <Tabs.Panel
-          value="robotsTab"
-          className="h-[28rem] overflow-auto  overflow-x-hidden"
-        >
+        <Tabs.Panel value="robots">
           <RobotsDomain />
         </Tabs.Panel>
 
-        <Tabs.Panel value="sitemaps" className="h-[28rem]">
+        {/*<Tabs.Panel value="sitemaps" className="h-[28rem]">
           <SitemapDomain />
-        </Tabs.Panel>
+        </Tabs.Panel>*/}
 
         <Tabs.Panel value="fixes">
           <div className="flex flex-col gap-y-2 dark:bg-gray-900">

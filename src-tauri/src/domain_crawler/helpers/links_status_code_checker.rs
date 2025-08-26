@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use futures::future::join_all;
-use rand::seq::SliceRandom;
+use rand::seq::{IndexedRandom, SliceRandom};
 use rand::Rng;
 use reqwest::{
     header::{
@@ -166,11 +166,7 @@ fn build_client() -> Client {
         .connect_timeout(Duration::from_secs(CONNECTION_TIMEOUT_SECS))
         .pool_idle_timeout(Duration::from_secs(POOL_IDLE_TIMEOUT_SECS))
         .pool_max_idle_per_host(POOL_MAX_IDLE_PER_HOST)
-        .user_agent(
-            user_agents::agents()
-                .choose(&mut rand::thread_rng())
-                .unwrap(),
-        )
+        .user_agent(user_agents::agents().choose(&mut rand::rng()).unwrap())
         .redirect(reqwest::redirect::Policy::limited(5))
         .default_headers(headers)
         .danger_accept_invalid_certs(false)
