@@ -1,5 +1,4 @@
 use colored::*;
-use defmt::info;
 use futures::stream::{self, StreamExt};
 use html5ever::interface::NodeOrText::AppendNode;
 use rand::Rng;

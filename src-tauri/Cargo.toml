@@ -68,7 +68,6 @@ lazy_static = "1.5.0"
 moka = { version = "0.12", features = ["future"] }
 governor = "0.10.0"
 rayon = "1.10.0"
-defmt = "1.0.1"
 
 
 [features]
