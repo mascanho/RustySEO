@@ -43,7 +43,7 @@
     "@tabler/icons-react": "^3.6.0",
     "@tanstack/react-table": "^8.20.1",
     "@tanstack/react-virtual": "^3.12.0",
-    "@tauri-apps/plugin-clipboard-manager": "2.2.0",
+    "@tauri-apps/plugin-clipboard-manager": "2.3.0",
     "@tauri-apps/plugin-dialog": "2.3.0",
     "@tauri-apps/plugin-fs": "2.4.0",
     "@tauri-apps/plugin-global-shortcut": "2.2.0",
