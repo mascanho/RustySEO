@@ -303,10 +303,10 @@ async fn process_url(
     };
 
     // IF CONFIGURED BY THE USER GET THE NGRAMS FROM EACH PAGE
-    let ngrams = if settings.extract_ngrams.unwrap_or(false) {
-        ngrams::check_ngrams(&body, 2, url.as_str())
+    let _ngrams = if settings.extract_ngrams {
+        ngrams::check_ngrams(&body, 2, url.as_str()).unwrap_or_else(|_| Vec::new())
     } else {
-        Some(Vec::new())
+        Vec::new()
     };
 
     let result = DomainCrawlResults {

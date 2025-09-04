@@ -1,4 +1,6 @@
-pub fn check_ngrams(text: &str, n: usize, url: &str) -> Vec<String> {
+pub fn check_ngrams(text: &str, n: usize, url: &str) -> Result<Vec<String>, String> {
+    println!("The URL for the NGRAM is: {}", url);
+
     let words: Vec<&str> = text
         .split_whitespace()
         .map(|word| word.trim_matches(|c: char| !c.is_alphanumeric()))
@@ -11,5 +13,5 @@ pub fn check_ngrams(text: &str, n: usize, url: &str) -> Vec<String> {
         ngrams.push(ngram);
     }
 
-    ngrams
+    Ok(ngrams)
 }
