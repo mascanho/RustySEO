@@ -45,6 +45,7 @@ pub struct Settings {
     pub log_capacity: usize,
     pub log_project_chunk_size: usize,
     pub log_file_upload_size: usize,
+    pub extract_ngrams: bool,
 }
 
 impl Settings {
@@ -78,6 +79,7 @@ impl Settings {
             log_capacity: 1,
             log_project_chunk_size: 1,
             log_file_upload_size: 75, // THE DEFAULT VALUE TO FILE UPLOADING
+            extract_ngrams: false,
         }
     }
 
@@ -205,6 +207,8 @@ pub fn print_settings(settings: &Settings) {
     );
 
     println!("Log File Upload Size: {}", settings.log_file_upload_size);
+
+    println!("Ngrams: {}", settings.extract_ngrams);
 
     println!("")
 }
@@ -362,6 +366,10 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
         .and_then(|v| v.as_integer())
     {
         settings.log_file_upload_size = val as usize;
+    }
+
+    if let Some(val) = updates.get("extract_ngrams").and_then(|v| v.as_bool()) {
+        settings.extract_ngrams = val;
     }
 
     // Explicit file writing with flush

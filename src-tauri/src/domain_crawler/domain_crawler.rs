@@ -46,7 +46,7 @@ use super::helpers::{
     headings_selector, iframe_selector, images_selector, indexability, javascript_selector,
     links_selector,
     mobile_checker::is_mobile,
-    page_description,
+    ngrams, page_description,
     pdf_selector::extract_pdf_links,
     schema_selector, title_selector,
     word_count::{self, get_word_count},
@@ -300,6 +300,13 @@ async fn process_url(
     let psi_results = match psi_future {
         Some(fut) => fut.await.map_err(|e| e.to_string())?, // Handle task join error
         None => Ok(Vec::new()),                             // No PSI requested
+    };
+
+    // IF CONFIGURED BY THE USER GET THE NGRAMS FROM EACH PAGE
+    let ngrams = if settings.extract_ngrams.unwrap_or(false) {
+        ngrams::check_ngrams(&body, 2, url.as_str())
+    } else {
+        Some(Vec::new())
     };
 
     let result = DomainCrawlResults {
