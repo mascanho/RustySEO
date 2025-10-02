@@ -2,9 +2,11 @@ use regex::Regex;
 use scraper::{Html, Selector};
 use std::collections::{HashMap, HashSet};
 
-pub fn extract_keywords(html: &str) -> Vec<(String, usize)> {
-    // Define stop words as a HashSet for efficient lookups
-    let stop_words: HashSet<&str> = vec![
+use crate::settings::settings::Settings;
+
+// Define a function that pre-loads stop words in the configuration file
+pub fn stop_words() -> HashSet<String> {
+    let stop_words: HashSet<String> = vec![
         "the", "and", "is", "in", "it", "to", "of", "for", "on", "with", "as", "at", "by", "an",
         "be", "this", "that", "or", "are", "from", "was", "were", "has", "have", "had", "but",
         "not", "you", "we", "they", "he", "she", "his", "her", "its", "our", "your", "their",
@@ -15,8 +17,13 @@ pub fn extract_keywords(html: &str) -> Vec<(String, usize)> {
         "very", "s", "t", "can", "will", "just", "don", "should", "now",
     ]
     .into_iter()
+    .map(|s| s.to_string())
     .collect();
 
+    stop_words
+}
+
+pub fn extract_keywords(html: &str) -> Vec<(String, usize)> {
     // Parse the HTML document
     let document = Html::parse_document(html);
 
@@ -46,6 +53,13 @@ pub fn extract_keywords(html: &str) -> Vec<(String, usize)> {
 
     // Split into words, filter, and count frequencies
     let mut word_counts: HashMap<String, usize> = HashMap::new();
+
+    // Define stop words as a HashSet for efficient lookups
+    let settings = Settings::new();
+
+    let words = settings.stop_words.clone();
+    println!("{:?}", words);
+
     for word in cleaned_text
         .split_whitespace()
         .map(|w| w.to_lowercase())
@@ -56,7 +70,7 @@ pub fn extract_keywords(html: &str) -> Vec<(String, usize)> {
             // 3. Contains at least one letter
             // 4. Not purely numeric
             word.len() >= 3
-                && !stop_words.contains(word.as_str())
+                && !settings.stop_words.contains(word.as_str())
                 && word.chars().any(|c| c.is_alphabetic())
                 && !word.chars().all(|c| c.is_numeric())
         })
