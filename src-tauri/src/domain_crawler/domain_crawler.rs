@@ -342,7 +342,7 @@ async fn process_url(
                 text_ratio: 0.0,
             })]),
         redirection,
-        keywords: extract_keywords(&body),
+        keywords: extract_keywords(&body, &settings.stop_words),
         page_size: calculate_html_size(content_len),
         hreflangs: select_hreflang(&body),
         language: detect_language(&body),

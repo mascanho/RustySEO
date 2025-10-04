@@ -11,7 +11,7 @@ use tokio::time::Duration;
 use toml;
 use uuid::Uuid;
 
-use crate::domain_crawler::helpers::keyword_selector::stop_words;
+use crate::domain_crawler::helpers::keyword_selector::default_stop_words;
 use crate::domain_crawler::{self, user_agents};
 use crate::loganalyser::log_state::set_taxonomies;
 use crate::version::local_version;
@@ -82,7 +82,7 @@ impl Settings {
             log_project_chunk_size: 1,
             log_file_upload_size: 75, // THE DEFAULT VALUE TO FILE UPLOADING
             extract_ngrams: false,
-            stop_words: stop_words(),
+            stop_words: default_stop_words(),
         }
     }
 
