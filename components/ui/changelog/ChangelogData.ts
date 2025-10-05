@@ -6,6 +6,7 @@ export const changelogData = [
     changes: [
       "Deep Crawl: Configurable stop words",
       "Deep Crawl: GSC queries and metrics",
+      "Deep Crawl: Added robots parsing",
     ],
   },
   {
