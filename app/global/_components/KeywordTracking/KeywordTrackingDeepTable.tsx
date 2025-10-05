@@ -57,14 +57,45 @@ export function KeywordsTableDeep() {
   const fetchKeywordsData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await invoke<KeywordData[]>(
+      const response = await invoke("fetch_tracked_keywords_command");
+      const summaryResponse = await invoke(
         "fetch_keywords_summarized_matched_command",
       );
-      setData(response);
 
-      useKeywordsStore.getState().setKeywords(response);
+      const transformedData = response.map((item) => {
+        const summaryMatch = summaryResponse.find(
+          (s) => s.query === item.query,
+        );
+        return {
+          id: item.id,
+          keyword: item.query,
+          url: item.url,
+          current_impressions: summaryMatch
+            ? summaryMatch.current_impressions
+            : item.impressions,
+          initial_impressions: summaryMatch
+            ? summaryMatch.initial_impressions
+            : item.impressions,
+          current_clicks: summaryMatch
+            ? summaryMatch.current_clicks
+            : item.clicks,
+          initial_clicks: summaryMatch
+            ? summaryMatch.initial_clicks
+            : item.clicks,
+          current_position: summaryMatch
+            ? summaryMatch.current_position
+            : item.position,
+          initial_position: summaryMatch
+            ? summaryMatch.initial_position
+            : item.position,
+          date_added: item.date,
+        };
+      });
 
-      console.log(response, "reponse KWs");
+      setData(transformedData);
+      useKeywordsStore.getState().setKeywords(transformedData);
+
+      console.log(transformedData, "response KWs");
     } catch (error) {
       // toast.error("Failed to fetch data");
       console.error("Error fetching data:", error);
@@ -76,7 +107,7 @@ export function KeywordsTableDeep() {
   const refreshData = useCallback(async () => {
     try {
       setIsRefreshing(true);
-      await invoke("refresh_keywords_data");
+      await invoke("match_tracked_with_gsc_command");
       await fetchKeywordsData();
       toast.success("Data refreshed successfully");
     } catch (error) {
@@ -107,12 +138,10 @@ export function KeywordsTableDeep() {
     return data.filter((item) => {
       const keyword = item.keyword?.toLowerCase() || "";
       const url = item.url?.toLowerCase() || "";
-      const query = item.query?.toLowerCase() || ""; // If you have a query field
 
       // Check all search words against all relevant fields
       return searchWords.every(
-        (word) =>
-          keyword.includes(word) || url.includes(word) || query.includes(word),
+        (word) => keyword.includes(word) || url.includes(word),
       );
 
       // Alternative: Check if all words appear in at least one field (not necessarily same field)
@@ -137,8 +166,8 @@ export function KeywordsTableDeep() {
       await invoke("delete_keyword_command", { id: String(id) });
       await emit("keyword-tracked", { action: "delete", id });
 
-      // Update state properly
-      setData((prev) => prev.filter((item) => item.id !== id));
+      // Refresh data from database to ensure consistency
+      await fetchKeywordsData();
 
       // Handle pagination
       if (currentData.length <= 1 && currentPage > 1) {

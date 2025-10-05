@@ -597,6 +597,43 @@ pub fn add_gsc_data_to_kw_tracking(data: &KwTrackingData) -> Result<()> {
     Ok(())
 }
 
+// ----------- FUNCTION TO SYNC KEYWORD TABLES FOR CONSISTENCY
+pub fn sync_keyword_tables() -> Result<()> {
+    let conn = open_db_connection("keyword_tracking.db")?;
+
+    // Ensure both tables exist with proper structure
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS keywords (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            url TEXT NOT NULL,
+            query TEXT NOT NULL,
+            clicks INTEGER,
+            impressions INTEGER,
+            position REAL,
+            date TEXT
+        )",
+        [],
+    )?;
+
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS summarized_data (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            url TEXT NOT NULL,
+            query TEXT NOT NULL,
+            initial_clicks INTEGER,
+            current_clicks INTEGER,
+            initial_impressions INTEGER,
+            current_impressions INTEGER,
+            initial_position REAL,
+            current_position REAL
+        )",
+        [],
+    )?;
+
+    println!("Keyword tracking tables synchronized");
+    Ok(())
+}
+
 // ----------- FUNCTION TO READ KEYWORD TRACKING DATA FROM THE DB
 pub fn read_tracked_keywords_from_db() -> Result<Vec<KwTrackingData>> {
     let conn = open_db_connection("keyword_tracking.db")?;
@@ -627,7 +664,12 @@ pub fn read_tracked_keywords_from_db() -> Result<Vec<KwTrackingData>> {
 pub fn delete_keyword_from_db(id: &str) -> Result<()> {
     println!("Deleting keyword with id: {}", id);
     let conn = open_db_connection("keyword_tracking.db")?;
+
+    // Delete from both tables to ensure consistency between shallow and deep crawl
     conn.execute("DELETE FROM keywords WHERE id = ?", params![id])?;
+    conn.execute("DELETE FROM summarized_data WHERE id = ?", params![id])?;
+
+    println!("Keyword deleted from both keywords and summarized_data tables");
     Ok(())
 }
 
