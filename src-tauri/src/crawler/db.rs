@@ -578,21 +578,45 @@ pub fn add_gsc_data_to_kw_tracking(data: &KwTrackingData) -> Result<()> {
         [],
     )?;
 
-    // Insert new record into keywords table
-    conn.execute(
-        "INSERT INTO keywords (url, query, clicks, impressions, position, date) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-        params![
-            data.url,
-            data.query,
-            data.clicks,
-            data.impressions,
-            data.position,
-            date
-        ],
-    )?;
+    // Check if keyword already exists to prevent duplicates
+    let mut stmt = conn.prepare("SELECT id FROM keywords WHERE url = ? AND query = ?")?;
+    let existing_keyword = stmt.query_row(params![data.url, data.query], |_row| Ok(()));
 
-    println!("Keyword tracking data inserted successfully");
-    println!("Data Inserted: {:#?}", data);
+    match existing_keyword {
+        Ok(_) => {
+            println!("Keyword already exists, updating instead of inserting");
+            // Update existing record with new data
+            conn.execute(
+                "UPDATE keywords SET clicks = ?, impressions = ?, position = ?, date = ? WHERE url = ? AND query = ?",
+                params![
+                    data.clicks,
+                    data.impressions,
+                    data.position,
+                    date,
+                    data.url,
+                    data.query
+                ],
+            )?;
+            println!("Keyword tracking data updated successfully");
+        }
+        Err(_) => {
+            // Insert new record into keywords table
+            conn.execute(
+                "INSERT INTO keywords (url, query, clicks, impressions, position, date) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                params![
+                    data.url,
+                    data.query,
+                    data.clicks,
+                    data.impressions,
+                    data.position,
+                    date
+                ],
+            )?;
+            println!("Keyword tracking data inserted successfully");
+        }
+    }
+
+    println!("Data Processed: {:#?}", data);
 
     Ok(())
 }

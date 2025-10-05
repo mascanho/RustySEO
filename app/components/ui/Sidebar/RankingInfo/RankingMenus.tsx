@@ -34,6 +34,25 @@ const RankingMenus = ({
   impressions,
   clicks,
 }: any) => {
+  // Debug component initialization
+  console.log("🔧 RankingMenus component initialized with props:", {
+    url,
+    query,
+    credentials: !!credentials,
+    position,
+    impressions,
+    clicks,
+    hasChildren: !!children,
+    propsReceived: { url, query, position, impressions, clicks },
+  });
+
+  // Validate critical props
+  if (!query) {
+    console.warn("⚠️ RankingMenus: No query provided!");
+  }
+  if (!children) {
+    console.warn("⚠️ RankingMenus: No children provided!");
+  }
   useEffect(() => {
     const unlisten = listen("keyword-tracked", (event) => {
       console.log("Keyword tracked event received:", event);
@@ -83,23 +102,122 @@ const RankingMenus = ({
       clicks: number,
       credentials: any,
     ) => {
-      const data = {
-        url,
-        query,
-        position,
-        impressions,
-        clicks,
-      };
-
       try {
-        const result = await invoke("add_gsc_data_to_kw_tracking_command", {
-          data,
+        console.log("🚀 === RANKING MENUS - Adding Keyword to Tracking ===");
+        console.log("🟢 handleTrackKeyword function called successfully");
+        console.log("🔍 Raw parameters received:", {
+          url,
+          query,
+          position,
+          impressions,
+          clicks,
+          credentials: !!credentials,
         });
-        toast.success("Keyword added to Tracking Dashboard");
-        await emit("keyword-tracked", { action: "add", data });
+
+        // Immediate validation and feedback
+        toast.loading("Processing keyword...");
+
+        // Validate required parameters
+        if (!query || query.trim() === "") {
+          toast.error("Cannot add keyword: Query is required");
+          console.error("❌ Invalid query parameter:", query);
+          return;
+        }
+
+        console.log("✅ Query validation passed");
+        console.log("🔍 Step 1: Processing data...");
+
+        // Ensure proper data types and handle missing values
+        const data = {
+          url: String(url || "unknown-domain").trim(),
+          query: String(query || "").trim(),
+          position: (() => {
+            if (typeof position === "number" && !isNaN(position))
+              return position;
+            const parsed = parseFloat(String(position));
+            return !isNaN(parsed) ? parsed : 0.0;
+          })(),
+          impressions: (() => {
+            if (typeof impressions === "number" && !isNaN(impressions))
+              return impressions;
+            const parsed = parseInt(String(impressions));
+            return !isNaN(parsed) && parsed >= 0 ? parsed : 0;
+          })(),
+          clicks: (() => {
+            if (typeof clicks === "number" && !isNaN(clicks)) return clicks;
+            const parsed = parseInt(String(clicks));
+            return !isNaN(parsed) && parsed >= 0 ? parsed : 0;
+          })(),
+        };
+
+        console.log("📊 Processed data:", data);
+        console.log("✅ Step 1 completed");
+
+        // Create timeout protection
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(
+            () => reject(new Error("Operation timed out after 10 seconds")),
+            10000,
+          ),
+        );
+
+        const mainOperation = async () => {
+          console.log("🔍 Step 2: Invoking Tauri command...");
+          toast.loading("Saving to database...");
+
+          const result = await invoke("add_gsc_data_to_kw_tracking_command", {
+            data,
+          });
+
+          console.log("✅ Backend result:", result);
+          console.log("🔍 Step 3: Syncing tracking tables...");
+          toast.loading("Syncing data...");
+
+          // Trigger data refresh to sync tracking tables
+          await invoke("match_tracked_with_gsc_command");
+
+          console.log("✅ Step 3 completed. Tables synced");
+          console.log("🔍 Step 4: Emitting events...");
+
+          toast.success("Keyword added to Tracking Dashboard");
+          await emit("keyword-tracked", { action: "add", data });
+
+          console.log("✅ Step 4 completed");
+          console.log("🎉 === RANKING MENUS - Completed Successfully ===");
+        };
+
+        await Promise.race([mainOperation(), timeoutPromise]);
       } catch (error) {
-        console.error("Error tracking keyword:", error);
-        toast.error("Failed to add keyword to tracking");
+        console.error("❌ === RANKING MENUS - Keyword Addition Failed ===");
+        console.error("🔥 Error details:", error);
+        console.error("💥 Error type:", typeof error);
+
+        if (error && typeof error === "object" && "url" in error) {
+          console.error("📋 Failed data:", error);
+        }
+
+        console.error("🔄 Original parameters:", {
+          url,
+          query,
+          position,
+          impressions,
+          clicks,
+        });
+
+        // More specific error messages
+        const errorMessage = String(error);
+        if (errorMessage.includes("UNIQUE constraint")) {
+          toast.error("Keyword already exists in tracking");
+        } else if (errorMessage.includes("NOT NULL")) {
+          toast.error("Missing required data for keyword tracking");
+        } else if (errorMessage.includes("timed out")) {
+          toast.error("Request timed out - please try again");
+        } else {
+          toast.error(
+            "Failed to add keyword to tracking: " +
+              (error instanceof Error ? error.message : errorMessage),
+          );
+        }
       }
     },
     [],
@@ -116,16 +234,32 @@ const RankingMenus = ({
           <FiClipboard className="mr-2 text-xs" /> Copy
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() =>
-            handleTrackKeyword(
-              url,
-              query,
-              position,
-              impressions,
-              clicks,
-              credentials,
-            )
-          }
+          onClick={() => {
+            try {
+              console.log("🔥 Track Keyword clicked in RankingMenus!");
+              console.log("🔍 Click params:", {
+                url,
+                query,
+                position,
+                impressions,
+                clicks,
+                credentials: !!credentials,
+              });
+              toast.info("Click registered - starting process...");
+
+              handleTrackKeyword(
+                url,
+                query,
+                position,
+                impressions,
+                clicks,
+                credentials,
+              );
+            } catch (error) {
+              console.error("❌ Error in click handler:", error);
+              toast.error("Click handler failed: " + error.message);
+            }
+          }}
           className="hover:bg-brand-bright hover:text-white"
         >
           <IoKey className="mr-2" />
