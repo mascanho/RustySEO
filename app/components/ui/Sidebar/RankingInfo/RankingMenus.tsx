@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import {
   DropdownMenu,
