@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import useRankinInfoStore from "@/store/RankingInfoStore";
+import DeepCrawlQueryContextMenu from "./DeepCrawlQueryContextMenu";
 
 interface MatchedDataItem {
   query: string;
@@ -21,7 +22,17 @@ interface InstalledInfo {
 const RankingInfo = () => {
   // Use the store directly - no need for local state
   const { items } = useRankinInfoStore();
+  const { selectedTableURL } = useGlobalCrawlStore();
   const [error, setError] = useState(null);
+  const [credentials, setCredentials] = useState<InstalledInfo | null>(null);
+
+  // Debug selectedTableURL structure
+  console.log("=== DEEP CRAWL DEBUG ===");
+  console.log("selectedTableURL:", selectedTableURL);
+  console.log("selectedTableURL type:", typeof selectedTableURL);
+  console.log("selectedTableURL length:", selectedTableURL?.length);
+  console.log("selectedTableURL[0]:", selectedTableURL?.[0]);
+  console.log("========================");
 
   // Safe data validation
   const validateData = (data) => {
@@ -83,7 +94,7 @@ const RankingInfo = () => {
   }
 
   return (
-    <div className="w-full ranking-table max-w-full h-[calc(38rem-260px)] overflow-auto bg-brand-bright/5 dark:bg-transparent">
+    <div className="w-full ranking-table max-w-full h-[calc(38rem-260px)] overflow-auto bg-brand-bright/5 dark:bg-transparent relative z-10">
       <table className="w-full text-xs">
         <thead className="bg-gray-100 dark:bg-gray-700 sticky top-0">
           <tr>
@@ -109,10 +120,19 @@ const RankingInfo = () => {
                       transition-colors duration-150
                     `}
                   >
-                    <td className="py-2 pl-2 truncate text-[9px] max-w-[130px] overflow-hidden text-ellipsis">
-                      <span className="pointer hover:underline hover:text-brand-bright text-[10px] overflow-hidden text-ellipsis">
-                        {item?.query || "N/A"}
-                      </span>
+                    <td className="py-2 pl-2 truncate text-[9px] max-w-[130px] overflow-visible text-ellipsis relative">
+                      <DeepCrawlQueryContextMenu
+                        url={selectedTableURL?.[0] || ""}
+                        query={item?.query || ""}
+                        credentials={credentials}
+                        position={item?.position || 0}
+                        impressions={item?.impressions || 0}
+                        clicks={item?.clicks || 0}
+                      >
+                        <span className="pointer hover:underline hover:text-brand-bright text-[10px] cursor-pointer block">
+                          {item?.query || "N/A"}
+                        </span>
+                      </DeepCrawlQueryContextMenu>
                     </td>
                     <td
                       align="left"

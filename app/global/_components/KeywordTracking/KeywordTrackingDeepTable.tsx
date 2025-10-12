@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { invoke } from "@tauri-apps/api/core";
-import { emit } from "@tauri-apps/api/event";
+import { emit, listen } from "@tauri-apps/api/event";
 import { useKeywordsStore } from "@/store/KWTrackingStore";
 
 interface KeywordData {
@@ -56,15 +56,66 @@ export function KeywordsTableDeep() {
 
   const fetchKeywordsData = useCallback(async () => {
     try {
+      console.log(
+        "📊 TRACKING TABLE: fetchKeywordsData called, setting loading...",
+      );
       setIsLoading(true);
-      const response = await invoke<KeywordData[]>(
+
+      console.log(
+        "🔍 TRACKING TABLE: Invoking fetch_tracked_keywords_command...",
+      );
+      const response = await invoke("fetch_tracked_keywords_command");
+      console.log(
+        "✅ TRACKING TABLE: fetch_tracked_keywords_command response:",
+        response,
+      );
+
+      console.log(
+        "🔍 TRACKING TABLE: Invoking fetch_keywords_summarized_matched_command...",
+      );
+      const summaryResponse = await invoke(
         "fetch_keywords_summarized_matched_command",
       );
-      setData(response);
+      console.log(
+        "✅ TRACKING TABLE: fetch_keywords_summarized_matched_command response:",
+        summaryResponse,
+      );
 
-      useKeywordsStore.getState().setKeywords(response);
+      console.log("🔄 TRACKING TABLE: Transforming data...");
+      const transformedData = response.map((item) => {
+        const summaryMatch = summaryResponse.find(
+          (s) => s.query === item.query,
+        );
+        return {
+          id: item.id,
+          keyword: item.query,
+          url: item.url,
+          current_impressions: summaryMatch
+            ? summaryMatch.current_impressions
+            : item.impressions,
+          initial_impressions: summaryMatch
+            ? summaryMatch.initial_impressions
+            : item.impressions,
+          current_clicks: summaryMatch
+            ? summaryMatch.current_clicks
+            : item.clicks,
+          initial_clicks: summaryMatch
+            ? summaryMatch.initial_clicks
+            : item.clicks,
+          current_position: summaryMatch
+            ? summaryMatch.current_position
+            : item.position,
+          initial_position: summaryMatch
+            ? summaryMatch.initial_position
+            : item.position,
+          date_added: item.date,
+        };
+      });
 
-      console.log(response, "reponse KWs");
+      setData(transformedData);
+      useKeywordsStore.getState().setKeywords(transformedData);
+
+      console.log(transformedData, "response KWs");
     } catch (error) {
       // toast.error("Failed to fetch data");
       console.error("Error fetching data:", error);
@@ -76,7 +127,7 @@ export function KeywordsTableDeep() {
   const refreshData = useCallback(async () => {
     try {
       setIsRefreshing(true);
-      await invoke("refresh_keywords_data");
+      await invoke("match_tracked_with_gsc_command");
       await fetchKeywordsData();
       toast.success("Data refreshed successfully");
     } catch (error) {
@@ -89,6 +140,29 @@ export function KeywordsTableDeep() {
 
   useEffect(() => {
     fetchKeywordsData();
+  }, [fetchKeywordsData]);
+
+  // Add event listeners for keyword tracking updates
+  useEffect(() => {
+    const unlistenKeywordTracked = listen("keyword-tracked", (event) => {
+      console.log("🎯 TRACKING TABLE: Keyword tracking event received:", event);
+      console.log("🔄 TRACKING TABLE: Calling fetchKeywordsData to refresh...");
+      fetchKeywordsData(); // Refresh data when keywords are added/deleted
+    });
+
+    const unlistenTrackingUpdated = listen("tracking-data-updated", (event) => {
+      console.log(
+        "🔄 TRACKING TABLE: Tracking data updated event received:",
+        event,
+      );
+      console.log("🔄 TRACKING TABLE: Calling fetchKeywordsData to refresh...");
+      fetchKeywordsData(); // Refresh data when tracking is updated
+    });
+
+    return () => {
+      unlistenKeywordTracked.then((fn) => fn());
+      unlistenTrackingUpdated.then((fn) => fn());
+    };
   }, [fetchKeywordsData]);
 
   const filteredData = useMemo(() => {
@@ -107,12 +181,10 @@ export function KeywordsTableDeep() {
     return data.filter((item) => {
       const keyword = item.keyword?.toLowerCase() || "";
       const url = item.url?.toLowerCase() || "";
-      const query = item.query?.toLowerCase() || ""; // If you have a query field
 
       // Check all search words against all relevant fields
       return searchWords.every(
-        (word) =>
-          keyword.includes(word) || url.includes(word) || query.includes(word),
+        (word) => keyword.includes(word) || url.includes(word),
       );
 
       // Alternative: Check if all words appear in at least one field (not necessarily same field)
@@ -137,8 +209,8 @@ export function KeywordsTableDeep() {
       await invoke("delete_keyword_command", { id: String(id) });
       await emit("keyword-tracked", { action: "delete", id });
 
-      // Update state properly
-      setData((prev) => prev.filter((item) => item.id !== id));
+      // Refresh data from database to ensure consistency
+      await fetchKeywordsData();
 
       // Handle pagination
       if (currentData.length <= 1 && currentPage > 1) {
@@ -226,7 +298,17 @@ export function KeywordsTableDeep() {
   }, [currentPage, totalPages]);
 
   const formatDate = (dateString: string) => {
+    if (!dateString || dateString.trim() === "") {
+      return "N/A";
+    }
+
     const date = new Date(dateString);
+
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return "Invalid Date";
+    }
+
     return date.toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "2-digit",
@@ -345,7 +427,7 @@ export function KeywordsTableDeep() {
                       style={{ height: "12px", padding: 5, paddingLeft: 12 }}
                       className="font-medium truncate text-xs"
                     >
-                      {row?.query}
+                      {row?.keyword}
                     </TableCell>
                     <TableCell
                       style={{ height: "12px", padding: 0 }}
@@ -408,7 +490,7 @@ export function KeywordsTableDeep() {
                       className="hidden md:table-cell"
                     >
                       <span className="text-xs leading-none">
-                        {formatDate(new Date())}
+                        {formatDate(row.date_added)}
                       </span>
                     </TableCell>
                     <TableCell

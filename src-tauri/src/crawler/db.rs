@@ -578,22 +578,83 @@ pub fn add_gsc_data_to_kw_tracking(data: &KwTrackingData) -> Result<()> {
         [],
     )?;
 
-    // Insert new record into keywords table
+    // Check if keyword already exists to prevent duplicates
+    let mut stmt = conn.prepare("SELECT id FROM keywords WHERE url = ? AND query = ?")?;
+    let existing_keyword = stmt.query_row(params![data.url, data.query], |_row| Ok(()));
+
+    match existing_keyword {
+        Ok(_) => {
+            println!("Keyword already exists, updating instead of inserting");
+            // Update existing record with new data
+            conn.execute(
+                "UPDATE keywords SET clicks = ?, impressions = ?, position = ?, date = ? WHERE url = ? AND query = ?",
+                params![
+                    data.clicks,
+                    data.impressions,
+                    data.position,
+                    date,
+                    data.url,
+                    data.query
+                ],
+            )?;
+            println!("Keyword tracking data updated successfully");
+        }
+        Err(_) => {
+            // Insert new record into keywords table
+            conn.execute(
+                "INSERT INTO keywords (url, query, clicks, impressions, position, date) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                params![
+                    data.url,
+                    data.query,
+                    data.clicks,
+                    data.impressions,
+                    data.position,
+                    date
+                ],
+            )?;
+            println!("Keyword tracking data inserted successfully");
+        }
+    }
+
+    println!("Data Processed: {:#?}", data);
+
+    Ok(())
+}
+
+// ----------- FUNCTION TO SYNC KEYWORD TABLES FOR CONSISTENCY
+pub fn sync_keyword_tables() -> Result<()> {
+    let conn = open_db_connection("keyword_tracking.db")?;
+
+    // Ensure both tables exist with proper structure
     conn.execute(
-        "INSERT INTO keywords (url, query, clicks, impressions, position, date) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-        params![
-            data.url,
-            data.query,
-            data.clicks,
-            data.impressions,
-            data.position,
-            date
-        ],
+        "CREATE TABLE IF NOT EXISTS keywords (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            url TEXT NOT NULL,
+            query TEXT NOT NULL,
+            clicks INTEGER,
+            impressions INTEGER,
+            position REAL,
+            date TEXT
+        )",
+        [],
     )?;
 
-    println!("Keyword tracking data inserted successfully");
-    println!("Data Inserted: {:#?}", data);
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS summarized_data (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            url TEXT NOT NULL,
+            query TEXT NOT NULL,
+            initial_clicks INTEGER,
+            current_clicks INTEGER,
+            initial_impressions INTEGER,
+            current_impressions INTEGER,
+            initial_position REAL,
+            current_position REAL
+        )",
+        [],
+    )?;
 
+    println!("Keyword tracking tables synchronized");
     Ok(())
 }
 
@@ -627,7 +688,12 @@ pub fn read_tracked_keywords_from_db() -> Result<Vec<KwTrackingData>> {
 pub fn delete_keyword_from_db(id: &str) -> Result<()> {
     println!("Deleting keyword with id: {}", id);
     let conn = open_db_connection("keyword_tracking.db")?;
+
+    // Delete from both tables to ensure consistency between shallow and deep crawl
     conn.execute("DELETE FROM keywords WHERE id = ?", params![id])?;
+    conn.execute("DELETE FROM summarized_data WHERE id = ?", params![id])?;
+
+    println!("Keyword deleted from both keywords and summarized_data tables");
     Ok(())
 }
 

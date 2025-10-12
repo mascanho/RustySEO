@@ -1,5 +1,15 @@
 export const changelogData = [
   {
+    version: "0.3.0",
+    date: "2025-09-01",
+    type: "feature",
+    changes: [
+      "Deep Crawl: Configurable stop words",
+      "Deep Crawl: GSC queries and metrics",
+      "Deep Crawl: Added robots parsing",
+    ],
+  },
+  {
     version: "0.2.9",
     date: "2025-08-17",
     type: "fix",
