@@ -219,6 +219,16 @@ pub fn delete_keyword_command(id: String) -> Result<(), String> {
     }
 }
 
+// ------- SYNC KEYWORD TABLES FOR CONSISTENCY
+#[tauri::command]
+pub fn sync_keyword_tables_command() -> Result<(), String> {
+    let result = db::sync_keyword_tables();
+    match result {
+        Ok(_) => Ok(()),
+        Err(err) => Err(err.to_string()),
+    }
+}
+
 // ------- MATCH KEYWORDS WITH GSC
 #[tauri::command]
 pub fn match_tracked_with_gsc_command() -> Result<(), String> {

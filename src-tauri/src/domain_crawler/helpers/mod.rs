@@ -23,6 +23,7 @@ pub mod links_selector;
 pub mod links_status_code_checker;
 pub mod meta_robots_selector;
 pub mod mobile_checker;
+pub mod ngrams;
 pub mod normalize_url;
 pub mod page_description;
 pub mod pdf_checker;

@@ -1,7 +1,7 @@
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::format;
 use std::path::PathBuf;
 use sysinfo::{ProcessExt, System, SystemExt};
@@ -11,6 +11,7 @@ use tokio::time::Duration;
 use toml;
 use uuid::Uuid;
 
+use crate::domain_crawler::helpers::keyword_selector::default_stop_words;
 use crate::domain_crawler::{self, user_agents};
 use crate::loganalyser::log_state::set_taxonomies;
 use crate::version::local_version;
@@ -45,6 +46,8 @@ pub struct Settings {
     pub log_capacity: usize,
     pub log_project_chunk_size: usize,
     pub log_file_upload_size: usize,
+    pub extract_ngrams: bool,
+    pub stop_words: HashSet<String>,
 }
 
 impl Settings {
@@ -78,6 +81,8 @@ impl Settings {
             log_capacity: 1,
             log_project_chunk_size: 1,
             log_file_upload_size: 75, // THE DEFAULT VALUE TO FILE UPLOADING
+            extract_ngrams: false,
+            stop_words: default_stop_words(),
         }
     }
 
@@ -205,6 +210,8 @@ pub fn print_settings(settings: &Settings) {
     );
 
     println!("Log File Upload Size: {}", settings.log_file_upload_size);
+
+    println!("Ngrams: {}", settings.extract_ngrams);
 
     println!("")
 }
@@ -362,6 +369,10 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
         .and_then(|v| v.as_integer())
     {
         settings.log_file_upload_size = val as usize;
+    }
+
+    if let Some(val) = updates.get("extract_ngrams").and_then(|v| v.as_bool()) {
+        settings.extract_ngrams = val;
     }
 
     // Explicit file writing with flush

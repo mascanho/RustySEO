@@ -219,6 +219,7 @@ async fn main() {
             commands::add_gsc_data_to_kw_tracking_command,
             commands::fetch_tracked_keywords_command,
             commands::delete_keyword_command,
+            commands::sync_keyword_tables_command,
             commands::match_tracked_with_gsc_command,
             commands::read_tracked_keywords_from_db_command,
             commands::read_gsc_data_from_db_command,

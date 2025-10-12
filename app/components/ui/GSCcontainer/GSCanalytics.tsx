@@ -66,14 +66,14 @@ const GSCanalytics = () => {
 
   // FETCH GOOSLE SEARCH CONSOLE DATA FROM THE DB
 
-  const handleFetchGSCdataFromDB = async () => {
+  const handleFetchGSCdataFromDB = useCallback(async () => {
     try {
       const response = await invoke("read_gsc_data_from_db_command");
       setGscData(response);
     } catch (error) {
       console.error("Failed to fetch GSC URLs from DB:", error);
     }
-  };
+  }, []);
 
   const requestSort = useCallback((key: keyof Keyword) => {
     setSortConfig((prevConfig) => {
@@ -100,6 +100,11 @@ const GSCanalytics = () => {
     }
     return sortableItems;
   }, [keywords, sortConfig]);
+
+  // Load GSC data when component mounts
+  useEffect(() => {
+    handleFetchGSCdataFromDB();
+  }, [handleFetchGSCdataFromDB]);
 
   return (
     <div className="px-2 h-[calc(100vh-90px)]   overflow-x-hidden overflow-y-hidden dark:text-white/50 ">

@@ -46,7 +46,7 @@ use super::helpers::{
     headings_selector, iframe_selector, images_selector, indexability, javascript_selector,
     links_selector,
     mobile_checker::is_mobile,
-    page_description,
+    ngrams, page_description,
     pdf_selector::extract_pdf_links,
     schema_selector, title_selector,
     word_count::{self, get_word_count},
@@ -302,6 +302,13 @@ async fn process_url(
         None => Ok(Vec::new()),                             // No PSI requested
     };
 
+    // IF CONFIGURED BY THE USER GET THE NGRAMS FROM EACH PAGE
+    let _ngrams = if settings.extract_ngrams {
+        ngrams::check_ngrams(&body, 2, url.as_str()).unwrap_or_else(|_| Vec::new())
+    } else {
+        Vec::new()
+    };
+
     let result = DomainCrawlResults {
         url: final_url.to_string(),
         title: title_selector::extract_title(&body),
@@ -335,7 +342,7 @@ async fn process_url(
                 text_ratio: 0.0,
             })]),
         redirection,
-        keywords: extract_keywords(&body),
+        keywords: extract_keywords(&body, &settings.stop_words),
         page_size: calculate_html_size(content_len),
         hreflangs: select_hreflang(&body),
         language: detect_language(&body),
