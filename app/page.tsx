@@ -514,7 +514,7 @@ const Home: React.FC<HomeProps> = () => {
           <Todo url={debouncedURL} close={closeModal} strategy={strategy} />
         </Modal>
         {/* Fixed Input and Crawl Button */}
-        <div className="fixed top-[28px] left-0 right-0 z-[2000] h-11 border-b  bg-white dark:bg-brand-darker flex items-center px-4 dark:border-b-brand-dark">
+        <div className="fixed top-[28px] left-0 right-0 z-[999999] h-11 border-b  bg-white dark:bg-brand-darker flex items-center px-4 dark:border-b-brand-dark">
           <MenuDrawer />
           {/* SEARCH STARTS HERE  */}
           <section className="flex items-center justify-end mx-auto relative w-full max-w-[42.8rem] border-r border-l pl-4 dark:border-l-brand-dark dark:border-r-brand-dark h-full pr-4">
