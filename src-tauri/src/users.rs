@@ -1,27 +1,45 @@
 use reqwest;
 use serde_json::json;
-use uuid::Uuid;
+use std::time::Duration;
 
 pub async fn add_user() -> Result<(), String> {
-    let client = reqwest::Client::new();
-    let settings = crate::settings::settings::load_settings().await?;
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(10))  // Set a 10-second timeout
+        .build()
+        .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
 
-    let response = client
-        .post("https://server.rustyseo.com/users") // Match your curl URL
+    let settings = match crate::settings::settings::load_settings().await {
+        Ok(s) => s,
+        Err(e) => return Err(format!("Failed to load settings: {}", e)),
+    };
+
+    let response = match client
+        .post("https://server.rustyseo.com/users")
         .header("Content-Type", "application/json")
         .json(&json!({
-            "user": settings.rustyid  // UUID will auto-serialize to string
+            "user": settings.rustyid
         }))
         .send()
         .await
-        .map_err(|e| format!("Request failed: {}", e))?;
+    {
+        Ok(resp) => resp,
+        Err(e) => {
+            if e.is_timeout() {
+                return Err("Connection timed out after 10 seconds".to_string());
+            } else if e.is_connect() {
+                return Err("Failed to connect to server".to_string());
+            }
+            return Err(format!("Request failed: {}", e));
+        }
+    };
 
-    if !&response.status().is_success() {
-        return Err(format!(
-            "Server error ({}): {}",
-            response.status(),
-            response.text().await.unwrap_or_default()
-        ));
+    if !response.status().is_success() {
+        let status = response.status();
+        let error_text = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "Unable to read error response".to_string());
+        return Err(format!("Server error ({}): {}", status, error_text));
     }
 
     println!("Successfully added user with ID: {}", settings.rustyid);
