@@ -135,11 +135,14 @@ async fn generate_ai_topics(body: String) -> Result<String, String> {
 
 #[tokio::main]
 async fn main() {
-    // Add RustySEO uuid to DB
-    match users::add_user().await {
-        Ok(_) => println!("User added successfully"),
-        Err(err) => eprintln!("Error adding user: {}", err),
-    };
+    // Add RustySEO uuid to DB on a seaparate async thread to no block UI
+
+    tokio::spawn(async {
+        match users::add_user().await {
+            Ok(_) => println!("User added successfully"),
+            Err(err) => eprintln!("Error adding user: {}", err),
+        };
+    });
 
     // clear the custom_search DB entry
     match db::clear_custom_search() {

@@ -1,5 +1,15 @@
 export const changelogData = [
   {
+    version: "0.3.1",
+    date: "2025-10-01",
+    type: "feature",
+    changes: [
+      "User uuid register spawn to not block UI",
+      "General bugfixes",
+      "Security improvements",
+    ],
+  },
+  {
     version: "0.3.0",
     date: "2025-09-01",
     type: "feature",
