@@ -4,7 +4,7 @@ use serde::Serialize;
 use std::error::Error;
 
 pub fn local_version() -> String {
-    let version = "0.3.1".to_string();
+    let version = "0.3.2".to_string();
     version
 }
 

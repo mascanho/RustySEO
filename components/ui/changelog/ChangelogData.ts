@@ -1,13 +1,19 @@
 export const changelogData = [
   {
-    version: "0.3.1",
-    date: "2025-10-01",
+    version: "0.3.2",
+    date: "2025-09-01",
     type: "feature",
     changes: [
-      "User uuid register spawn to not block UI",
-      "General bugfixes",
-      "Security improvements",
+      "Page Speed Insights Better Rate Limiting",
+      "PSI improved UI",
+      "PSI status log",
     ],
+  },
+  {
+    version: "0.3.1",
+    date: "2025-09-01",
+    type: "feature",
+    changes: ["Bug fixes and improvements"],
   },
   {
     version: "0.3.0",
@@ -16,7 +22,7 @@ export const changelogData = [
     changes: [
       "Deep Crawl: Configurable stop words",
       "Deep Crawl: GSC queries and metrics",
-      "Deep Crawl: Added robots parsing",
+      "Deep Crawl: Added robots parsin",
     ],
   },
   {

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
+import useSettingsStore from "@/store/SettingsStore";
 
 interface APIkey {
   page_speed_key: string;
@@ -20,7 +21,8 @@ interface APIkey {
 
 export default function PagespeedInsightsApi() {
   const [isVisible, setIsVisible] = useState(false);
-  const [apiKey, setApiKey] = useState<string>("");
+  const { pageSpeedKey, refreshSettings } = useSettingsStore();
+  const apiKey = pageSpeedKey || "";
 
   const maskApiKey = (key: string) => {
     if (key.length <= 8) return "*".repeat(key.length);
@@ -31,17 +33,10 @@ export default function PagespeedInsightsApi() {
     setIsVisible(!isVisible);
   };
 
-  // Call Backend to get the API key
+  // Load initial API key from backend via store
   useEffect(() => {
-    invoke<APIkey>("load_api_keys")
-      .then((result) => {
-        console.log("API Key: ", result);
-        setApiKey(result.page_speed_key);
-      })
-      .catch((error) => {
-        console.error("Error fetching API key:", error);
-      });
-  }, []);
+    refreshSettings();
+  }, [refreshSettings]);
 
   return (
     <Card className="w-full mt-8 mx-auto ml-0 dark:bg-brand-darker border-0 shadow-none">
