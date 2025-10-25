@@ -239,23 +239,23 @@ function MenuDrawer() {
   }, [completed]);
 
   return (
-    <section>
+    <>
       <KeywordSerp />
       {!completed && <Onboarding onComplete={handleOnboarding} />}
       <div
         className={`items-center hidden md:flex  z-[50] absolute top-[9px] ${pathname === "/images" ? "pt-1" : ""} left-2`}
       >
         <div className=" items-center flex bg-transparent rounded-tr-lg">
-          <Menu classNames="z-[9999999]">
+          <Menu>
             <Menu.Target>
               <Button className="text-xs bg-gradient-to-r from-brand-bright to-purple-900 px-3 h-6 rounded-tr-2xl text-white">
                 {badge}
               </Button>
             </Menu.Target>
-            <Menu.Dropdown className="z-[999999] dark:bg-brand-darker dark:text-red-500 dark:border-brand-dark mt-10 ">
+            <Menu.Dropdown className="z-[2000] dark:bg-brand-darker dark:text-red-500 dark:border-brand-dark mt-1 ">
               {options.map((option, index) => (
                 <Menu.Item
-                  className="z-[9999999] hover:bg-brand-bright hover:text-white dark:text-white/60"
+                  className="z-[2000] hover:bg-brand-bright hover:text-white dark:text-white/60"
                   key={index}
                   onClick={() => handleOptionClick(option)}
                 >
@@ -287,7 +287,7 @@ function MenuDrawer() {
           alt=""
         />
       </a>
-    </section>
+    </>
   );
 }
 export default MenuDrawer;
