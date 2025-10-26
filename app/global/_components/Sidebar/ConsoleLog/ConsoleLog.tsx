@@ -102,6 +102,16 @@ const generateLogs = (
   const now = Date.now();
   const timestamp = new Date();
 
+  async function get_settings() {
+    const settings = await invoke<any>("get_settings_command");
+    console.log(settings, "These are the settings");
+    return settings;
+  }
+
+  const psiKeys = get_settings().then((settings) => {
+    return settings.page_speed_key;
+  });
+
   return [
     {
       id: now + 1,
@@ -119,11 +129,8 @@ const generateLogs = (
     {
       id: now + 3,
       timestamp,
-      level: pageSpeedKey && pageSpeedKey.trim() !== "" ? "success" : "error",
-      message:
-        pageSpeedKey && pageSpeedKey.trim() !== ""
-          ? "PSI: Enabled"
-          : "No PSI Keys configured",
+      level: psiKeys !== "" ? "success" : "error",
+      message: psiKeys !== "" ? "PSI Key: Found" : "No PSI Keys configured",
     },
     {
       id: now + 4,
@@ -200,7 +207,7 @@ function UptimeTimer() {
 export default function ConsoleLog() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const { crawler, isGlobalCrawling, isFinishedDeepCrawl, tasks } =
+  const { crawler, isGlobalCrawling, isFinishedDeepCrawl, tasks, setCrawler } =
     useGlobalConsoleStore();
 
   // Use stores for reactive state management
@@ -227,10 +234,19 @@ export default function ConsoleLog() {
       await refreshSettings();
       const gsc = await invoke<any>("read_credentials_file").catch(() => null);
       updateGscStatus(gsc);
+
+      // Check localStorage for crawler type
+      const savedCrawlerType = localStorage.getItem("crawlerType");
+      if (
+        savedCrawlerType &&
+        (savedCrawlerType === "Spider" || savedCrawlerType === "Custom Search")
+      ) {
+        setCrawler(savedCrawlerType);
+      }
     } catch (err) {
       console.error("[Error] Failed to refresh configurations:", err);
     }
-  }, [refreshSettings, updateGscStatus]);
+  }, [refreshSettings, updateGscStatus, setCrawler]);
 
   // Function to refresh GSC status specifically
   const refreshGscStatus = useCallback(async () => {
@@ -244,10 +260,20 @@ export default function ConsoleLog() {
     }
   }, [setGscLoading, updateGscStatus]);
 
-  // Initial configuration fetch on mount
+  // Initial configuration fetch on mount and handle storage events
   useEffect(() => {
     refreshAllConfigurations();
-  }, [refreshAllConfigurations]);
+
+    // Listen for localStorage changes
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "crawlerType" && e.newValue) {
+        setCrawler(e.newValue);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [refreshAllConfigurations, setCrawler]);
 
   // Periodic configuration refresh - every 30 seconds for all configs
   useEffect(() => {
@@ -285,6 +311,14 @@ export default function ConsoleLog() {
     clarityApi,
     lastUpdated, // Include lastUpdated to trigger re-render when settings change
   ]);
+
+  // Update logs when crawler type changes in localStorage
+  useEffect(() => {
+    const savedCrawlerType = localStorage.getItem("crawlerType");
+    if (savedCrawlerType !== crawler) {
+      setLogs(memoizedLogs);
+    }
+  }, [crawler, memoizedLogs]);
 
   // Update logs and handle scrolling
   useEffect(() => {

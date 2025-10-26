@@ -22,6 +22,19 @@ const CrawlerType = () => {
   const { setCrawler } = useGlobalConsoleStore();
   const { triggerRefresh } = useSettingsStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Load crawler type from localStorage on mount
+  useEffect(() => {
+    const savedType = localStorage.getItem("crawlerType");
+    if (
+      savedType &&
+      (savedType === CRAWLER_TYPES.SPIDER ||
+        savedType === CRAWLER_TYPES.CUSTOM_SEARCH)
+    ) {
+      setCrawlerType(savedType);
+      setCrawler(savedType);
+    }
+  }, [setCrawlerType, setCrawler]);
   // PSI DETAILS
   const [details, setDetails] = useState({
     apiKey: "",
@@ -76,6 +89,8 @@ const CrawlerType = () => {
         : CRAWLER_TYPES.SPIDER;
     setCrawlerType(newType);
     setCrawler(newType);
+    // Save to localStorage
+    localStorage.setItem("crawlerType", newType);
   };
 
   // Toggle PSI Crawl
