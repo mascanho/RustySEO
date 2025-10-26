@@ -262,7 +262,8 @@ async fn main() {
             get_log_file_upload_size_command,
             get_project_chunk_size_command,
             delete_config_folders_command,
-            open_config_folder_command
+            open_config_folder_command,
+            settings::settings::get_settings_command
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -476,3 +476,10 @@ pub fn open_config_folder_command() -> Result<(), String> {
         Err("Config folder does not exist".to_string())
     }
 }
+
+// COMMAND TO GET ANY SETTINGS INTO THE FRONT END TO BE USED
+#[tauri::command]
+pub async fn get_settings_command() -> Result<Settings, String> {
+    let settings = load_settings().await?;
+    Ok(settings)
+}
