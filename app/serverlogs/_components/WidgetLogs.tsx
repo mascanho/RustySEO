@@ -355,7 +355,7 @@ export default function WidgetLogs() {
                         </Tabs>
                       </DialogContent>
                     ) : (
-                      <DialogContent className="max-w-md dark:text-white  dark:border-brand-bright dark:bg-brand-darker">
+                      <DialogContent className="max-w-md dark:text-white dark:border-brand-bright dark:bg-brand-darker">
                         <DialogHeader>
                           <DialogTitle>{entry.name} Details</DialogTitle>
                         </DialogHeader>
