@@ -243,6 +243,10 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                     }
                 } else if crawler_type.starts_with("bing") {
                     bot_counts[1] += 1;
+                    if entry.verified {
+                        bing_bot_pages.push(entry.path.clone());
+                        bing_bot_entries.push(entry.clone());
+                    }
                 } else if crawler_type.starts_with("semrush") {
                     bot_counts[2] += 1;
                 } else if crawler_type.starts_with("hrefs") {
@@ -306,6 +310,8 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
         calculate_url_frequencies(google_bot_entries.iter().collect());
 
     let bing_bot_page_frequencies = calculate_url_frequencies(bing_bot_entries.iter().collect());
+
+    println!("BING BOT: {}", bing_bot_page_frequencies.len());
 
     let overview = LogAnalysisResult {
         message: "Log analysis completed".to_string(),
