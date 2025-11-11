@@ -313,7 +313,7 @@ export default function WidgetLogs() {
                     }
                   >
                     <DialogTrigger
-                      className={`${entry.name === "Google" ? "cursor-pointer" : "cursor-default"}`}
+                      className={`cursor-pointer hover:scale-105 ease-in transition-all delay-75`}
                     >
                       <div
                         className="flex justify-between items-center border border-gray-100 px-2 py-1 rounded-md text-xs dark:border-brand-dark"
@@ -355,7 +355,7 @@ export default function WidgetLogs() {
                         </Tabs>
                       </DialogContent>
                     ) : (
-                      <DialogContent className="max-w-md dark:text-white dark:border-brand-bright dark:bg-brand-darker">
+                      <DialogContent className="max-w-md dark:text-white  dark:border-brand-bright dark:bg-brand-darker">
                         <DialogHeader>
                           <DialogTitle>{entry.name} Details</DialogTitle>
                         </DialogHeader>
