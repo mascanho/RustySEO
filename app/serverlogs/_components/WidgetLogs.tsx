@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/popover";
 import PopOverParsedLogs from "./PopOverParsedLogs";
 import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
+import { WidgetTableBing } from "./WidgetTables/WidgetCrawlersBingTable.tsx";
+import { WidgetTableOpenAi } from "./WidgetTables/WidgetCrawlersOpenAITable.tsx";
 
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
@@ -394,7 +396,29 @@ export default function WidgetLogs() {
                           </Tabs.List>
 
                           <Tabs.Panel value="overview">
-                            <WidgetTable data={overview} />
+                            <WidgetTableBing data={overview} />
+                          </Tabs.Panel>
+
+                          <Tabs.Panel value="charts">
+                            <div className="h-96" />
+                          </Tabs.Panel>
+                        </Tabs>
+                      </DialogContent>
+                    )}
+
+                    {/*DISPLAY THE DATA FROM OPENAI*/}
+                    {entry?.name === "Openai" && (
+                      <DialogContent className="max-w-[90%] min-h-96 overflow-hidden dark:bg-brand-darker dark:border-brand-bright">
+                        <Tabs defaultValue="overview">
+                          <Tabs.List className="mb-2 mx-1">
+                            <Tabs.Tab value="overview">
+                              Frequency Table
+                            </Tabs.Tab>
+                            {/* <Tabs.Tab value="charts">Charts</Tabs.Tab> */}
+                          </Tabs.List>
+
+                          <Tabs.Panel value="overview">
+                            <WidgetTableOpenAi data={overview} />
                           </Tabs.Panel>
 
                           <Tabs.Panel value="charts">

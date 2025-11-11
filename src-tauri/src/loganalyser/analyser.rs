@@ -66,6 +66,8 @@ pub struct Totals {
     pub google_bot_page_frequencies: HashMap<String, Vec<BotPageDetails>>,
     pub bing_bot_pages: Vec<String>,
     pub bing_bot_page_frequencies: HashMap<String, Vec<BotPageDetails>>,
+    pub openai_bot_pages: Vec<String>,
+    pub openai_bot_page_frequencies: HashMap<String, Vec<BotPageDetails>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -190,6 +192,8 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     let mut google_bot_pages = Vec::new();
     let mut bing_bot_entries = Vec::new();
     let mut bing_bot_pages = Vec::new();
+    let mut openai_bot_entries = Vec::new();
+    let mut openai_bot_pages = Vec::new();
 
     for (index, (filename, log_content)) in data.log_contents.into_iter().enumerate() {
         let _ = progress_tx.send(ProgressUpdate {
@@ -233,31 +237,42 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                     success_count += 1;
                 }
 
-                // Update bot counts
+                // Update bot counts - FIXED: Case insensitive matching and debug output
                 let crawler_type = entry.crawler_type.to_lowercase();
-                if crawler_type.starts_with("google") {
+                println!(
+                    "[DEBUG] Processing crawler type: {} (verified: {})",
+                    crawler_type, entry.verified
+                );
+
+                if crawler_type.contains("google") {
                     bot_counts[0] += 1;
                     if entry.verified {
                         google_bot_pages.push(entry.path.clone());
                         google_bot_entries.push(entry.clone());
+                        println!("[DEBUG] Added Google bot entry: {}", entry.path);
                     }
-                } else if crawler_type.starts_with("bing") {
+                } else if crawler_type.contains("bing") {
                     bot_counts[1] += 1;
-                    if entry.verified {
-                        bing_bot_pages.push(entry.path.clone());
-                        bing_bot_entries.push(entry.clone());
-                    }
-                } else if crawler_type.starts_with("semrush") {
+                    // Temporarily removed verified check for debugging
+                    bing_bot_pages.push(entry.path.clone());
+                    bing_bot_entries.push(entry.clone());
+                    println!(
+                        "[DEBUG] Added Bing bot entry: {} (verified: {})",
+                        entry.path, entry.verified
+                    );
+                } else if crawler_type.contains("semrush") {
                     bot_counts[2] += 1;
-                } else if crawler_type.starts_with("hrefs") {
+                } else if crawler_type.contains("hrefs") {
                     bot_counts[3] += 1;
-                } else if crawler_type.starts_with("moz") {
+                } else if crawler_type.contains("moz") {
                     bot_counts[4] += 1;
-                } else if crawler_type.starts_with("uptime") {
+                } else if crawler_type.contains("uptime") {
                     bot_counts[5] += 1;
-                } else if crawler_type.starts_with("chat") {
+                } else if crawler_type.contains("chatGPT") {
                     bot_counts[6] += 1;
-                } else if crawler_type.starts_with("claude") {
+                    openai_bot_pages.push(entry.path.clone());
+                    openai_bot_entries.push(entry.clone());
+                } else if crawler_type.contains("claude") {
                     bot_counts[7] += 1;
                 }
 
@@ -273,12 +288,6 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                 entry
             })
             .collect::<Vec<_>>();
-
-        // DEBUGGING
-
-        println!("Processing file {} of {}", index + 1, file_count);
-        println!("Sending {} entries from {}", &entries.len(), filename);
-        println!("Total entries so far: {}", &all_entries.len());
 
         all_entries.extend(entries);
 
@@ -308,10 +317,20 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
 
     let google_bot_page_frequencies =
         calculate_url_frequencies(google_bot_entries.iter().collect());
-
     let bing_bot_page_frequencies = calculate_url_frequencies(bing_bot_entries.iter().collect());
 
-    println!("BING BOT: {}", bing_bot_page_frequencies.len());
+    let openai_bot_page_frequencies =
+        calculate_url_frequencies(openai_bot_entries.iter().collect());
+
+    // DEBUG OUTPUT
+    println!("=== DEBUG SUMMARY ===");
+    println!("Total entries: {}", total_requests);
+    println!("Google bot entries: {}", google_bot_entries.len());
+    println!("Bing bot entries: {}", bing_bot_entries.len());
+    println!("Google frequencies: {}", google_bot_page_frequencies.len());
+    println!("Bing frequencies: {}", bing_bot_page_frequencies.len());
+    println!("OpenAI bot entries: {}", openai_bot_entries.len());
+    println!("OpenAI frequencies: {}", openai_bot_page_frequencies.len());
 
     let overview = LogAnalysisResult {
         message: "Log analysis completed".to_string(),
@@ -337,6 +356,8 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
             google_bot_page_frequencies,
             bing_bot_pages,
             bing_bot_page_frequencies,
+            openai_bot_pages,
+            openai_bot_page_frequencies,
         },
         log_start_time,
         log_finish_time,
@@ -350,44 +371,36 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
 }
 
 fn calculate_url_frequencies(entries: Vec<&LogEntry>) -> HashMap<String, Vec<BotPageDetails>> {
-    entries
-        .into_par_iter()
-        .filter(|entry| entry.verified)
-        .fold(
-            || HashMap::new(),
-            |mut map, entry| {
-                let details = BotPageDetails {
-                    crawler_type: entry.crawler_type.clone(),
-                    file_type: entry.file_type.clone(),
-                    response_size: entry.response_size,
-                    timestamp: entry.timestamp.clone(),
-                    ip: entry.ip.clone(),
-                    referer: entry.referer.clone(),
-                    browser: entry.browser.clone(),
-                    user_agent: entry.user_agent.clone(),
-                    frequency: 1,
-                    method: entry.method.clone(),
-                    verified: entry.verified,
-                    taxonomy: entry.taxonomy.clone(),
-                    filename: entry.filename.clone(),
-                };
-                map.entry(entry.path.clone())
-                    .or_insert_with(Vec::new)
-                    .push(details);
-                map
-            },
-        )
-        .reduce(
-            || HashMap::new(),
-            |mut a, b| {
-                for (key, mut values) in b {
-                    a.entry(key).or_insert_with(Vec::new).append(&mut values);
-                }
-                a
-            },
-        )
-        .into_par_iter()
-        .map(|(key, details_vec)| {
+    let mut frequency_map: HashMap<String, Vec<BotPageDetails>> = HashMap::new();
+
+    for entry in entries {
+        // Remove the verified filter to include all entries
+        let details = BotPageDetails {
+            crawler_type: entry.crawler_type.clone(),
+            file_type: entry.file_type.clone(),
+            response_size: entry.response_size,
+            timestamp: entry.timestamp.clone(),
+            ip: entry.ip.clone(),
+            referer: entry.referer.clone(),
+            browser: entry.browser.clone(),
+            user_agent: entry.user_agent.clone(),
+            frequency: 1,
+            method: entry.method.clone(),
+            verified: entry.verified,
+            taxonomy: entry.taxonomy.clone(),
+            filename: entry.filename.clone(),
+        };
+
+        frequency_map
+            .entry(entry.path.clone())
+            .or_insert_with(Vec::new)
+            .push(details);
+    }
+
+    // Aggregate frequencies
+    frequency_map
+        .into_iter()
+        .map(|(path, details_vec)| {
             let first = &details_vec[0];
             let aggregated = BotPageDetails {
                 crawler_type: first.crawler_type.clone(),
@@ -404,7 +417,7 @@ fn calculate_url_frequencies(entries: Vec<&LogEntry>) -> HashMap<String, Vec<Bot
                 taxonomy: first.taxonomy.clone(),
                 filename: first.filename.clone(),
             };
-            (key, vec![aggregated])
+            (path, vec![aggregated])
         })
         .collect()
 }
@@ -424,6 +437,8 @@ impl Default for Totals {
             google_bot_page_frequencies: HashMap::new(),
             bing_bot_pages: Vec::new(),
             bing_bot_page_frequencies: HashMap::new(),
+            openai_bot_pages: Vec::new(),
+            openai_bot_page_frequencies: HashMap::new(),
         }
     }
 }
