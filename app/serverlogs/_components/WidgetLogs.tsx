@@ -161,6 +161,8 @@ export default function WidgetLogs() {
     return f.format(num);
   };
 
+  console.log(overview, "Overview");
+
   return (
     <div className="bg-white border dark:border-brand-dark shadow rounded-none p-2 pr-1 w-1/2  mx-auto dark:bg-slate-950 dark:text-white h-64 relative">
       <Popover>
@@ -330,6 +332,7 @@ export default function WidgetLogs() {
                       </div>
                     </DialogTrigger>
 
+                    {/*DISPLAY THE DATA FROM GOOGLE*/}
                     {entry?.name === "Google" ? (
                       <DialogContent className="max-w-[90%] min-h-96 overflow-hidden dark:bg-brand-darker dark:border-brand-bright">
                         <Tabs defaultValue="overview">
@@ -376,6 +379,28 @@ export default function WidgetLogs() {
                             </span>
                           </div>
                         </div>
+                      </DialogContent>
+                    )}
+
+                    {/*DISPLAY THE DATA FROM BING*/}
+                    {entry?.name === "Bing" && (
+                      <DialogContent className="max-w-[90%] min-h-96 overflow-hidden dark:bg-brand-darker dark:border-brand-bright">
+                        <Tabs defaultValue="overview">
+                          <Tabs.List className="mb-2 mx-1">
+                            <Tabs.Tab value="overview">
+                              Frequency Table
+                            </Tabs.Tab>
+                            {/* <Tabs.Tab value="charts">Charts</Tabs.Tab> */}
+                          </Tabs.List>
+
+                          <Tabs.Panel value="overview">
+                            <WidgetTable data={overview} />
+                          </Tabs.Panel>
+
+                          <Tabs.Panel value="charts">
+                            <div className="h-96" />
+                          </Tabs.Panel>
+                        </Tabs>
                       </DialogContent>
                     )}
                   </Dialog>

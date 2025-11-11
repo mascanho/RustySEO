@@ -11,7 +11,7 @@ use crate::loganalyser::helpers::browser_trim_name;
 use crate::loganalyser::helpers::country_extractor::extract_country;
 use crate::loganalyser::helpers::crawler_type::is_crawler;
 use crate::loganalyser::helpers::parse_logs::parse_log_entries;
-use crate::settings::{settings};
+use crate::settings::settings;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogInput {
@@ -64,6 +64,8 @@ pub struct Totals {
     pub claude: usize,
     pub google_bot_pages: Vec<String>,
     pub google_bot_page_frequencies: HashMap<String, Vec<BotPageDetails>>,
+    pub bing_bot_pages: Vec<String>,
+    pub bing_bot_page_frequencies: HashMap<String, Vec<BotPageDetails>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -186,6 +188,8 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     let mut bot_counts = [0; 8];
     let mut google_bot_entries = Vec::new();
     let mut google_bot_pages = Vec::new();
+    let mut bing_bot_entries = Vec::new();
+    let mut bing_bot_pages = Vec::new();
 
     for (index, (filename, log_content)) in data.log_contents.into_iter().enumerate() {
         let _ = progress_tx.send(ProgressUpdate {
@@ -261,14 +265,13 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                 //    "[BACKEND] Processing entry from {} - sending to channel",
                 //    filename
                 //);
-              
 
                 entry
             })
             .collect::<Vec<_>>();
 
         // DEBUGGING
-       
+
         println!("Processing file {} of {}", index + 1, file_count);
         println!("Sending {} entries from {}", &entries.len(), filename);
         println!("Total entries so far: {}", &all_entries.len());
@@ -302,6 +305,8 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     let google_bot_page_frequencies =
         calculate_url_frequencies(google_bot_entries.iter().collect());
 
+    let bing_bot_page_frequencies = calculate_url_frequencies(bing_bot_entries.iter().collect());
+
     let overview = LogAnalysisResult {
         message: "Log analysis completed".to_string(),
         line_count: total_requests,
@@ -324,6 +329,8 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
             claude: bot_counts[7],
             google_bot_pages,
             google_bot_page_frequencies,
+            bing_bot_pages,
+            bing_bot_page_frequencies,
         },
         log_start_time,
         log_finish_time,
@@ -409,6 +416,8 @@ impl Default for Totals {
             claude: 0,
             google_bot_pages: Vec::new(),
             google_bot_page_frequencies: HashMap::new(),
+            bing_bot_pages: Vec::new(),
+            bing_bot_page_frequencies: HashMap::new(),
         }
     }
 }
