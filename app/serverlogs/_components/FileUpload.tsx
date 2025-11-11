@@ -130,6 +130,7 @@ export function FileUpload({
     setIsDragging(false);
   };
 
+  // FILE SIZE VALIDATION
   const validateFile = (file: File) => {
     const fileSizeMB = file.size / 1024 / 1024;
     if (fileSizeMB > maxSizeMB) {
