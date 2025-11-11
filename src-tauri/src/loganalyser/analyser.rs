@@ -268,7 +268,7 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                     bot_counts[4] += 1;
                 } else if crawler_type.contains("uptime") {
                     bot_counts[5] += 1;
-                } else if crawler_type.contains("chatGPT") {
+                } else if crawler_type.contains("chat") {
                     bot_counts[6] += 1;
                     openai_bot_pages.push(entry.path.clone());
                     openai_bot_entries.push(entry.clone());
