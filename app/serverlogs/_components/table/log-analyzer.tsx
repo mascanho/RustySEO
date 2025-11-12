@@ -545,6 +545,7 @@ export function LogAnalyzer() {
     return "***.***.***.***";
   }
 
+  // Style the crawler type output
   function formatCrawlerType(log: string) {
     if (!log) return "";
 
