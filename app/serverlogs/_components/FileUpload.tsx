@@ -441,7 +441,7 @@ export function FileUpload({
       {files.length === 0 ? (
         <div
           className={cn(
-            "border-2 border-dashed border-brand-bright rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-colors dark:text-white",
+            "border-2 border-dashed  border-brand-bright rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer transition-colors dark:text-white",
             isDragging
               ? "border-primary bg-primary/5"
               : "border-muted-foreground/20 hover:border-primary/50",

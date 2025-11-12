@@ -81,6 +81,7 @@ import { IoClose } from "react-icons/io5";
 import { FaAngellist, FaApper, FaEye } from "react-icons/fa";
 import { FaFileCode, FaPersonHarassing, FaRobot } from "react-icons/fa6";
 import { ImUserTie } from "react-icons/im";
+import CrawlerType from "@/app/components/ui/Footer/CrawlerType";
 
 export function LogAnalyzer() {
   const {
@@ -542,6 +543,29 @@ export function LogAnalyzer() {
 
     // Unknown format, return masked
     return "***.***.***.***";
+  }
+
+  function formatCrawlerType(log: string) {
+    if (!log) return "";
+
+    if (log?.crawler_type === "Human") {
+      return log.crawler_type
+        .split("_")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+    }
+
+    if (log?.crawler_type?.includes("Google")) {
+      return log?.crawler_type;
+    }
+
+    if (log?.crawler_type.length > 14) {
+      return log.crawler_type.slice(0, 14) + "...";
+    }
+
+    return log?.crawler_type;
+
+    console.log(log, "LOG");
   }
 
   return (
@@ -1014,6 +1038,7 @@ export function LogAnalyzer() {
                         showAgent={showAgent}
                         setShowAgent={setShowAgent}
                         logIpMasking={logIpMasking}
+                        formatCrawlerType={formatCrawlerType}
                       />
                     ))
                   ) : (
@@ -1067,6 +1092,7 @@ function LogRow({
   showAgent,
   setShowAgent,
   logIpMasking,
+  formatCrawlerType,
 }) {
   return (
     <>
@@ -1168,16 +1194,11 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
             variant="outline"
             className={
               log.crawler_type !== "Human"
-                ? "bg-red-100 dark:bg-red-400 dark:text-white w-[100px] truncate overflow-hidden text-center flex items-center justify-center"
+                ? "bg-red-100 dark:bg-red-700 dark:text-white w-[100px] truncate overflow-hidden text-center flex items-center justify-center"
                 : "bg-blue-100 truncate dark:bg-blue-500 dark:text-white overflow-hidden w-[100px] text-blue-800 border-blue-200 flex items-center justify-center text-center"
             }
           >
-            {log.crawler_type && log.crawler_type.length > 16
-              ? `${log.crawler_type.substring(0, 13)}...`
-              : log.crawler_type}{" "}
-            {log.verified && (
-              <BadgeCheck className="text-blue-800 pl-1" size={18} />
-            )}
+            {formatCrawlerType(log)}
           </Badge>
         </TableCell>
       </TableRow>

@@ -68,6 +68,8 @@ pub struct Totals {
     pub bing_bot_page_frequencies: HashMap<String, Vec<BotPageDetails>>,
     pub openai_bot_pages: Vec<String>,
     pub openai_bot_page_frequencies: HashMap<String, Vec<BotPageDetails>>,
+    pub claude_bot_pages: Vec<String>,
+    pub claude_bot_page_frequencies: HashMap<String, Vec<BotPageDetails>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -194,6 +196,8 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     let mut bing_bot_pages = Vec::new();
     let mut openai_bot_entries = Vec::new();
     let mut openai_bot_pages = Vec::new();
+    let mut claude_bot_entries = Vec::new();
+    let mut claude_bot_pages = Vec::new();
 
     for (index, (filename, log_content)) in data.log_contents.into_iter().enumerate() {
         let _ = progress_tx.send(ProgressUpdate {
@@ -239,27 +243,16 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
 
                 // Update bot counts - FIXED: Case insensitive matching and debug output
                 let crawler_type = entry.crawler_type.to_lowercase();
-                println!(
-                    "[DEBUG] Processing crawler type: {} (verified: {})",
-                    crawler_type, entry.verified
-                );
 
                 if crawler_type.contains("google") {
                     bot_counts[0] += 1;
-                    if entry.verified {
-                        google_bot_pages.push(entry.path.clone());
-                        google_bot_entries.push(entry.clone());
-                        println!("[DEBUG] Added Google bot entry: {}", entry.path);
-                    }
+                    google_bot_pages.push(entry.path.clone());
+                    google_bot_entries.push(entry.clone());
                 } else if crawler_type.contains("bing") {
                     bot_counts[1] += 1;
                     // Temporarily removed verified check for debugging
                     bing_bot_pages.push(entry.path.clone());
                     bing_bot_entries.push(entry.clone());
-                    println!(
-                        "[DEBUG] Added Bing bot entry: {} (verified: {})",
-                        entry.path, entry.verified
-                    );
                 } else if crawler_type.contains("semrush") {
                     bot_counts[2] += 1;
                 } else if crawler_type.contains("hrefs") {
@@ -274,16 +267,12 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                     openai_bot_entries.push(entry.clone());
                 } else if crawler_type.contains("claude") {
                     bot_counts[7] += 1;
+                    claude_bot_pages.push(entry.path.clone());
+                    claude_bot_entries.push(entry.clone());
                 }
 
                 // Stream the entry
                 let _ = entry_tx.send(StreamEntry::LogEntry(entry.clone()));
-
-                // NOTE: GOOD DEBUGGING
-                //println!(
-                //    "[BACKEND] Processing entry from {} - sending to channel",
-                //    filename
-                //);
 
                 entry
             })
@@ -322,6 +311,9 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     let openai_bot_page_frequencies =
         calculate_url_frequencies(openai_bot_entries.iter().collect());
 
+    let claude_bot_page_frequencies =
+        calculate_url_frequencies(claude_bot_entries.iter().collect());
+
     // DEBUG OUTPUT
     println!("=== DEBUG SUMMARY ===");
     println!("Total entries: {}", total_requests);
@@ -331,6 +323,8 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     println!("Bing frequencies: {}", bing_bot_page_frequencies.len());
     println!("OpenAI bot entries: {}", openai_bot_entries.len());
     println!("OpenAI frequencies: {}", openai_bot_page_frequencies.len());
+    println!("Claude bot entries: {}", claude_bot_entries.len());
+    println!("Claude frequencies: {}", claude_bot_page_frequencies.len());
 
     let overview = LogAnalysisResult {
         message: "Log analysis completed".to_string(),
@@ -358,6 +352,8 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
             bing_bot_page_frequencies,
             openai_bot_pages,
             openai_bot_page_frequencies,
+            claude_bot_pages,
+            claude_bot_page_frequencies,
         },
         log_start_time,
         log_finish_time,
@@ -439,6 +435,8 @@ impl Default for Totals {
             bing_bot_page_frequencies: HashMap::new(),
             openai_bot_pages: Vec::new(),
             openai_bot_page_frequencies: HashMap::new(),
+            claude_bot_pages: Vec::new(),
+            claude_bot_page_frequencies: HashMap::new(),
         }
     }
 }
