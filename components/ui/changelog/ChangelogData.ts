@@ -7,6 +7,8 @@ export const changelogData = [
       "Page Speed Insights Better Rate Limiting",
       "PSI improved UI",
       "PSI status log",
+      "Logs: User agent segments added",
+      "Logs: Improved table UI",
     ],
   },
   {

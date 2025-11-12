@@ -561,7 +561,7 @@ export function LogAnalyzer() {
     }
 
     if (log?.crawler_type.length > 14) {
-      return log.crawler_type.slice(0, 14) + "...";
+      return log.crawler_type.slice(0, 12);
     }
 
     return log?.crawler_type;
