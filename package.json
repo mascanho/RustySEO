@@ -70,7 +70,7 @@
     "jspdf": "^2.5.2",
     "jszip": "^3.10.1",
     "lucide-react": "^0.525.0",
-    "next": "15.4.4",
+    "next": "15.5.4",
     "next-themes": "^0.4.6",
     "ollama": "^0.5.6",
     "ollama-ai-provider": "^0.10.0",
