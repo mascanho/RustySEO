@@ -1,7 +1,7 @@
 export const changelogData = [
   {
     version: "0.3.2",
-    date: "2025-09-01",
+    date: "2025-11-01",
     type: "feature",
     changes: [
       "Page Speed Insights Better Rate Limiting & URL encoding",
@@ -12,7 +12,7 @@ export const changelogData = [
   },
   {
     version: "0.3.1",
-    date: "2025-09-01",
+    date: "2025-10-01",
     type: "feature",
     changes: ["Bug fixes and improvements"],
   },
