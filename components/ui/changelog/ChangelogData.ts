@@ -4,11 +4,10 @@ export const changelogData = [
     date: "2025-09-01",
     type: "feature",
     changes: [
-      "Page Speed Insights Better Rate Limiting",
+      "Page Speed Insights Better Rate Limiting & URL encoding",
       "PSI improved UI",
       "PSI status log",
       "Logs: User agent segments added",
-      "Logs: Improved table UI",
     ],
   },
   {
