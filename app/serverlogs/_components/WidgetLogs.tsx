@@ -205,24 +205,6 @@ export default function WidgetLogs() {
         </PopoverContent>
       </Popover>
 
-      {/*   <PopoverTrigger className="absolute top-[7.8rem] left-[9.8rem] font-bold text-black/20 dark:text-white/50 text-xl z-[999999]"> */}
-      {/*     <div className="flex flex-col items-start justify-start"> */}
-      {/*       <div className="flex flex-col justify-center items-left  text-gray-500/50 -mt-2 text-xs"> */}
-      {/*         <span className="text-sm inline-block"> */}
-      {/*           {totalLogsAnalysed} logs */}
-      {/*         </span> */}
-      {/*         <span className="text-sm inline-block"> */}
-      {/*           {uploadedLogFiles.length} batches */}
-      {/*         </span> */}
-      {/*       </div> */}
-      {/*     </div> */}
-      {/*   </PopoverTrigger> */}
-      {/*   <PopoverContent className="min-w-70 max-w-96 py-2 px-0 mt-2 relative z-20"> */}
-      {/* <div className="h-5 w-5 absolute -top-2 right-32 bg-white rotate-45 border -z-10" /> */}
-      {/*     <PopOverParsedLogs /> */}
-      {/*   </PopoverContent> */}
-      {/* </Popover> */}
-
       {/* Information about the uploaded logs */}
 
       {/* Tabs */}
@@ -303,7 +285,7 @@ export default function WidgetLogs() {
               </PieChart>
 
               <div
-                className={`grid grid-cols-1 ${activeTab === "Status Codes" ? "grid-cols-4 max-w-xl" : "grid-cols-2"} gap-2 w-full max-w-md pl-4`}
+                className={`grid grid-cols-1 ${activeTab === "Status Codes" ? "grid-cols-4 max-w-xl" : "grid-cols-3"} gap-2 w-full max-w-md pl-4`}
               >
                 {chartData.map((entry, idx) => (
                   <Dialog
