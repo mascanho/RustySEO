@@ -1,6 +1,14 @@
 // @ts-nocheck
 import { useState } from "react";
-import { FileText, Server, Bot, BarChart3, PenBox } from "lucide-react";
+import {
+  FileText,
+  Server,
+  Bot,
+  BarChart3,
+  PenBox,
+  ChevronRight,
+  ChevronDown,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { Cell, Pie, PieChart, Tooltip } from "recharts";
@@ -47,6 +55,74 @@ const COLORS = [
   "#14b8a6",
 ];
 
+// Helper component for nested taxonomy display
+const TaxonomyTree = ({ data, level = 0 }) => {
+  const [expanded, setExpanded] = useState({});
+
+  const toggleExpand = (path) => {
+    setExpanded((prev) => ({
+      ...prev,
+      [path]: !prev[path],
+    }));
+  };
+
+  return (
+    <div className="space-y-1">
+      {Object.entries(data).map(([path, count]) => {
+        const hasChildren = Object.keys(data).some(
+          (key) => key !== path && key.startsWith(path + "/"),
+        );
+        const isExpanded = expanded[path];
+
+        return (
+          <div key={path} className="text-sm">
+            <div
+              className={`flex items-center justify-between py-1 px-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer ${level > 0 ? "ml-" + level * 4 : ""}`}
+              onClick={() => hasChildren && toggleExpand(path)}
+            >
+              <div className="flex items-center space-x-2 flex-1">
+                {hasChildren ? (
+                  <button className="text-gray-400 hover:text-gray-600">
+                    {isExpanded ? (
+                      <ChevronDown className="w-3 h-3" />
+                    ) : (
+                      <ChevronRight className="w-3 h-3" />
+                    )}
+                  </button>
+                ) : (
+                  <div className="w-3 h-3" /> // spacer for alignment
+                )}
+                <span className="truncate">
+                  {path.split("/").pop() || path}
+                </span>
+              </div>
+              <span className="font-medium text-xs bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded">
+                {count.toLocaleString()}
+              </span>
+            </div>
+
+            {isExpanded && hasChildren && (
+              <div className="border-l-2 border-gray-200 dark:border-gray-700 ml-3">
+                <TaxonomyTree
+                  data={Object.keys(data).reduce((acc, key) => {
+                    if (key.startsWith(path + "/") && key !== path) {
+                      // Remove the parent path for cleaner display
+                      const childPath = key.substring(path.length + 1);
+                      acc[childPath] = data[key];
+                    }
+                    return acc;
+                  }, {})}
+                  level={level + 1}
+                />
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 export default function WidgetLogs() {
   const [activeTab, setActiveTab] = useState("Filetypes");
   const { entries, overview } = useLogAnalysis();
@@ -61,16 +137,16 @@ export default function WidgetLogs() {
     return acc;
   }, {});
 
-  // Prepare content data from actual entries, grouped by top-level taxonomy
+  // Prepare hierarchical content data from actual entries
   const contentData =
     currentLogs?.reduce((acc, entry) => {
-      const content = entry.taxonomy;
-      if (content === "other") {
+      const taxonomy = entry.taxonomy;
+      if (taxonomy && taxonomy !== "other") {
+        // Store the full taxonomy path
+        acc[taxonomy] = (acc[taxonomy] || 0) + 1;
+      } else {
         acc["other"] = (acc["other"] || 0) + 1;
-        return acc;
       }
-      const topLevelTaxonomy = content.split("/")[1] || content;
-      acc[topLevelTaxonomy] = (acc[topLevelTaxonomy] || 0) + 1;
       return acc;
     }, {}) || {};
 
@@ -105,10 +181,15 @@ export default function WidgetLogs() {
           name: name.toUpperCase(),
           value,
         })),
-        Content: Object.entries(contentData || {}).map(([name, value]) => ({
-          name: name,
-          value,
-        })),
+        Content: Object.entries(contentData || {})
+          .filter(
+            ([name]) => !name.includes("/") || name.split("/").length === 2,
+          ) // Only show top-level for pie chart
+          .map(([name, value]) => ({
+            name: name.split("/").pop() || name,
+            value,
+            fullPath: name, // Store full path for dialog
+          })),
         "Status Codes": Object.entries(statusCodeData || {}).map(
           ([name, value]) => ({
             name: `${name} ${getStatusText(name)}`,
@@ -161,15 +242,21 @@ export default function WidgetLogs() {
     return f.format(num);
   };
 
-  const getContentBreakdown = (topLevelTaxonomy) => {
-    if (!currentLogs) return [];
-    const childrenData = currentLogs.reduce((acc, entry) => {
-      if (entry.taxonomy.startsWith(`/${topLevelTaxonomy}`)) {
-        acc[entry.taxonomy] = (acc[entry.taxonomy] || 0) + 1;
-      }
-      return acc;
-    }, {});
-    return Object.entries(childrenData).map(([name, value]) => ({ name, value }));
+  const getContentBreakdown = (topLevelPath) => {
+    if (!currentLogs || !contentData) return [];
+
+    // Get all taxonomies that start with the top level path
+    const breakdown = Object.entries(contentData).reduce(
+      (acc, [path, count]) => {
+        if (path.startsWith(topLevelPath)) {
+          acc[path] = count;
+        }
+        return acc;
+      },
+      {},
+    );
+
+    return breakdown;
   };
 
   console.log(overview, "Overview");
@@ -185,7 +272,6 @@ export default function WidgetLogs() {
           </div>
         </PopoverTrigger>
         <PopoverContent className="min-w-[300px] max-w-96  py-2 px-0 mt-2 relative z-20">
-          {/* <div className="h-5 w-5 absolute -top-2 right-32 bg-white rotate-45 border -z-10" /> */}
           <PopOverParsedLogs />
         </PopoverContent>
       </Popover>
@@ -212,8 +298,6 @@ export default function WidgetLogs() {
           <PopOverParsedLogs />
         </PopoverContent>
       </Popover>
-
-      {/* Information about the uploaded logs */}
 
       {/* Tabs */}
       <div className="flex space-x-2 pt-1 pb-0 w-full justify-center">
@@ -325,18 +409,19 @@ export default function WidgetLogs() {
                       </div>
                     </DialogTrigger>
 
-                    {activeTab === 'Content' ? (
-                      <DialogContent className="max-w-md dark:text-white dark:border-brand-bright dark:bg-brand-darker">
+                    {activeTab === "Content" ? (
+                      <DialogContent className="max-w-2xl max-h-96 overflow-auto dark:text-white dark:border-brand-bright dark:bg-brand-darker">
                         <DialogHeader>
-                          <DialogTitle>Breakdown for {entry.name}</DialogTitle>
+                          <DialogTitle>
+                            Content Breakdown: {entry.name}
+                          </DialogTitle>
                         </DialogHeader>
-                        <div className="space-y-2 pt-4">
-                          {getContentBreakdown(entry.name).map(breakdownEntry => (
-                            <div key={breakdownEntry.name} className="flex justify-between">
-                              <span>{breakdownEntry.name}</span>
-                              <span className="font-medium">{breakdownEntry.value.toLocaleString()}</span>
-                            </div>
-                          ))}
+                        <div className="pt-4">
+                          <TaxonomyTree
+                            data={getContentBreakdown(
+                              entry.fullPath || entry.name,
+                            )}
+                          />
                         </div>
                       </DialogContent>
                     ) : entry?.name === "Google" ? (
@@ -346,15 +431,10 @@ export default function WidgetLogs() {
                             <Tabs.Tab value="overview">
                               Frequency Table
                             </Tabs.Tab>
-                            {/* <Tabs.Tab value="charts">Charts</Tabs.Tab> */}
                           </Tabs.List>
 
                           <Tabs.Panel value="overview">
                             <WidgetTable data={overview} />
-                          </Tabs.Panel>
-
-                          <Tabs.Panel value="charts">
-                            <div className="h-96" />
                           </Tabs.Panel>
                         </Tabs>
                       </DialogContent>
@@ -396,15 +476,10 @@ export default function WidgetLogs() {
                             <Tabs.Tab value="overview">
                               Frequency Table
                             </Tabs.Tab>
-                            {/* <Tabs.Tab value="charts">Charts</Tabs.Tab> */}
                           </Tabs.List>
 
                           <Tabs.Panel value="overview">
                             <WidgetTableBing data={overview} />
-                          </Tabs.Panel>
-
-                          <Tabs.Panel value="charts">
-                            <div className="h-96" />
                           </Tabs.Panel>
                         </Tabs>
                       </DialogContent>
@@ -418,15 +493,10 @@ export default function WidgetLogs() {
                             <Tabs.Tab value="overview">
                               Frequency Table
                             </Tabs.Tab>
-                            {/* <Tabs.Tab value="charts">Charts</Tabs.Tab> */}
                           </Tabs.List>
 
                           <Tabs.Panel value="overview">
                             <WidgetTableOpenAi data={overview} />
-                          </Tabs.Panel>
-
-                          <Tabs.Panel value="charts">
-                            <div className="h-96" />
                           </Tabs.Panel>
                         </Tabs>
                       </DialogContent>
@@ -439,15 +509,10 @@ export default function WidgetLogs() {
                             <Tabs.Tab value="overview">
                               Frequency Table
                             </Tabs.Tab>
-                            {/* <Tabs.Tab value="charts">Charts</Tabs.Tab> */}
                           </Tabs.List>
 
                           <Tabs.Panel value="overview">
                             <WidgetTableClaude data={overview} />
-                          </Tabs.Panel>
-
-                          <Tabs.Panel value="charts">
-                            <div className="h-96" />
                           </Tabs.Panel>
                         </Tabs>
                       </DialogContent>
@@ -462,7 +527,7 @@ export default function WidgetLogs() {
             className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 overflow-auto"
             style={{ height: "calc(100% - 8px)", marginTop: "0.2em" }}
           >
-            {/* Left Column - Stats */}
+            {/* Analytics content remains the same */}
             <div className="space-y-2">
               <div className="bg-white/50 dark:bg-gray-800/80 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
                 <h3 className="font-medium text-sm text-gray-500 dark:text-gray-400 mb-2">
