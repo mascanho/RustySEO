@@ -52,8 +52,27 @@ pub struct LogAnalysisResult {
     pub file_count: usize,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct StatusCodeCounts {
+    pub counts: HashMap<u16, usize>,
+    pub success_count: usize,
+    pub redirect_count: usize,
+    pub client_error_count: usize,
+    pub server_error_count: usize,
+    pub other_count: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct BotStats {
+    pub count: usize,
+    pub status_codes: StatusCodeCounts,
+    pub pages: Vec<String>,
+    pub page_frequencies: HashMap<String, Vec<BotPageDetails>>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Totals {
+    // Keep original fields for backward compatibility
     pub google: usize,
     pub bing: usize,
     pub semrush: usize,
@@ -62,6 +81,12 @@ pub struct Totals {
     pub uptime: usize,
     pub openai: usize,
     pub claude: usize,
+
+    // New fields for detailed bot stats
+    pub bot_stats: BotStatsMap,
+    pub status_codes: StatusCodeCounts,
+
+    // Keep original page fields
     pub google_bot_pages: Vec<String>,
     pub google_bot_page_frequencies: HashMap<String, Vec<BotPageDetails>>,
     pub bing_bot_pages: Vec<String>,
@@ -70,6 +95,18 @@ pub struct Totals {
     pub openai_bot_page_frequencies: HashMap<String, Vec<BotPageDetails>>,
     pub claude_bot_pages: Vec<String>,
     pub claude_bot_page_frequencies: HashMap<String, Vec<BotPageDetails>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct BotStatsMap {
+    pub google: BotStats,
+    pub bing: BotStats,
+    pub semrush: BotStats,
+    pub hrefs: BotStats,
+    pub moz: BotStats,
+    pub uptime: BotStats,
+    pub openai: BotStats,
+    pub claude: BotStats,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -87,6 +124,7 @@ pub struct BotPageDetails {
     pub verified: bool,
     pub taxonomy: Option<String>,
     pub filename: String,
+    pub status: u16,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -107,6 +145,48 @@ pub struct LogResult {
 enum StreamEntry {
     LogEntry(LogEntry),
     Overview(LogAnalysisResult),
+}
+
+impl StatusCodeCounts {
+    fn new() -> Self {
+        Self {
+            counts: HashMap::new(),
+            success_count: 0,
+            redirect_count: 0,
+            client_error_count: 0,
+            server_error_count: 0,
+            other_count: 0,
+        }
+    }
+
+    fn add_status(&mut self, status: u16) {
+        *self.counts.entry(status).or_insert(0) += 1;
+
+        match status {
+            200..=299 => self.success_count += 1,
+            300..=399 => self.redirect_count += 1,
+            400..=499 => self.client_error_count += 1,
+            500..=599 => self.server_error_count += 1,
+            _ => self.other_count += 1,
+        }
+    }
+}
+
+impl BotStats {
+    fn new() -> Self {
+        Self {
+            count: 0,
+            status_codes: StatusCodeCounts::new(),
+            pages: Vec::new(),
+            page_frequencies: HashMap::new(),
+        }
+    }
+
+    fn add_entry(&mut self, entry: &LogEntry) {
+        self.count += 1;
+        self.status_codes.add_status(entry.status);
+        self.pages.push(entry.path.clone());
+    }
 }
 
 pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> {
@@ -189,14 +269,22 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     let mut unique_user_agents = HashSet::new();
     let mut crawler_count = 0;
     let mut success_count = 0;
-    let mut bot_counts = [0; 8];
+    let mut status_code_counts = StatusCodeCounts::new();
+
+    // Initialize bot stats
+    let mut bot_stats = BotStatsMap::default();
+    let mut bot_counts = [0; 8]; // Keep original counts for backward compatibility
+
+    // For detailed frequency analysis (keep original fields)
     let mut google_bot_entries = Vec::new();
-    let mut google_bot_pages = Vec::new();
     let mut bing_bot_entries = Vec::new();
-    let mut bing_bot_pages = Vec::new();
     let mut openai_bot_entries = Vec::new();
-    let mut openai_bot_pages = Vec::new();
     let mut claude_bot_entries = Vec::new();
+
+    // Keep original page lists
+    let mut google_bot_pages = Vec::new();
+    let mut bing_bot_pages = Vec::new();
+    let mut openai_bot_pages = Vec::new();
     let mut claude_bot_pages = Vec::new();
 
     for (index, (filename, log_content)) in data.log_contents.into_iter().enumerate() {
@@ -241,34 +329,44 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                     success_count += 1;
                 }
 
-                // Update bot counts - FIXED: Case insensitive matching and debug output
+                // Update overall status code counts
+                status_code_counts.add_status(entry.status);
+
+                // Update bot counts and their status codes
                 let crawler_type = entry.crawler_type.to_lowercase();
 
                 if crawler_type.contains("google") {
                     bot_counts[0] += 1;
-                    google_bot_pages.push(entry.path.clone());
+                    bot_stats.google.add_entry(&entry);
                     google_bot_entries.push(entry.clone());
+                    google_bot_pages.push(entry.path.clone());
                 } else if crawler_type.contains("bing") {
                     bot_counts[1] += 1;
-                    // Temporarily removed verified check for debugging
-                    bing_bot_pages.push(entry.path.clone());
+                    bot_stats.bing.add_entry(&entry);
                     bing_bot_entries.push(entry.clone());
+                    bing_bot_pages.push(entry.path.clone());
                 } else if crawler_type.contains("semrush") {
                     bot_counts[2] += 1;
+                    bot_stats.semrush.add_entry(&entry);
                 } else if crawler_type.contains("hrefs") {
                     bot_counts[3] += 1;
+                    bot_stats.hrefs.add_entry(&entry);
                 } else if crawler_type.contains("moz") {
                     bot_counts[4] += 1;
+                    bot_stats.moz.add_entry(&entry);
                 } else if crawler_type.contains("uptime") {
                     bot_counts[5] += 1;
+                    bot_stats.uptime.add_entry(&entry);
                 } else if crawler_type.contains("chat") {
                     bot_counts[6] += 1;
-                    openai_bot_pages.push(entry.path.clone());
+                    bot_stats.openai.add_entry(&entry);
                     openai_bot_entries.push(entry.clone());
+                    openai_bot_pages.push(entry.path.clone());
                 } else if crawler_type.contains("claude") {
                     bot_counts[7] += 1;
-                    claude_bot_pages.push(entry.path.clone());
+                    bot_stats.claude.add_entry(&entry);
                     claude_bot_entries.push(entry.clone());
+                    claude_bot_pages.push(entry.path.clone());
                 }
 
                 // Stream the entry
@@ -304,27 +402,36 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
         .unwrap_or_default();
     let total_requests = all_entries.len();
 
+    // Calculate page frequencies for bots that have detailed entries
     let google_bot_page_frequencies =
         calculate_url_frequencies(google_bot_entries.iter().collect());
     let bing_bot_page_frequencies = calculate_url_frequencies(bing_bot_entries.iter().collect());
-
     let openai_bot_page_frequencies =
         calculate_url_frequencies(openai_bot_entries.iter().collect());
-
     let claude_bot_page_frequencies =
         calculate_url_frequencies(claude_bot_entries.iter().collect());
+
+    // Update bot stats with page frequencies
+    bot_stats.google.page_frequencies = google_bot_page_frequencies.clone();
+    bot_stats.bing.page_frequencies = bing_bot_page_frequencies.clone();
+    bot_stats.openai.page_frequencies = openai_bot_page_frequencies.clone();
+    bot_stats.claude.page_frequencies = claude_bot_page_frequencies.clone();
 
     // DEBUG OUTPUT
     println!("=== DEBUG SUMMARY ===");
     println!("Total entries: {}", total_requests);
-    println!("Google bot entries: {}", google_bot_entries.len());
-    println!("Bing bot entries: {}", bing_bot_entries.len());
-    println!("Google frequencies: {}", google_bot_page_frequencies.len());
-    println!("Bing frequencies: {}", bing_bot_page_frequencies.len());
-    println!("OpenAI bot entries: {}", openai_bot_entries.len());
-    println!("OpenAI frequencies: {}", openai_bot_page_frequencies.len());
-    println!("Claude bot entries: {}", claude_bot_entries.len());
-    println!("Claude frequencies: {}", claude_bot_page_frequencies.len());
+    println!("Google bot entries: {}", bot_counts[0]);
+    println!("Bing bot entries: {}", bot_counts[1]);
+    println!("OpenAI bot entries: {}", bot_counts[6]);
+    println!("Claude bot entries: {}", bot_counts[7]);
+    println!(
+        "Overall status code counts: {:?}",
+        status_code_counts.counts
+    );
+    println!(
+        "Google bot status codes: {:?}",
+        bot_stats.google.status_codes.counts
+    );
 
     let overview = LogAnalysisResult {
         message: "Log analysis completed".to_string(),
@@ -338,6 +445,7 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
             0.0
         },
         totals: Totals {
+            // Original fields for backward compatibility
             google: bot_counts[0],
             bing: bot_counts[1],
             semrush: bot_counts[2],
@@ -346,6 +454,12 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
             uptime: bot_counts[5],
             openai: bot_counts[6],
             claude: bot_counts[7],
+
+            // New fields for detailed stats
+            bot_stats,
+            status_codes: status_code_counts,
+
+            // Original page fields
             google_bot_pages,
             google_bot_page_frequencies,
             bing_bot_pages,
@@ -370,7 +484,6 @@ fn calculate_url_frequencies(entries: Vec<&LogEntry>) -> HashMap<String, Vec<Bot
     let mut frequency_map: HashMap<String, Vec<BotPageDetails>> = HashMap::new();
 
     for entry in entries {
-        // Remove the verified filter to include all entries
         let details = BotPageDetails {
             crawler_type: entry.crawler_type.clone(),
             file_type: entry.file_type.clone(),
@@ -385,6 +498,7 @@ fn calculate_url_frequencies(entries: Vec<&LogEntry>) -> HashMap<String, Vec<Bot
             verified: entry.verified,
             taxonomy: entry.taxonomy.clone(),
             filename: entry.filename.clone(),
+            status: entry.status,
         };
 
         frequency_map
@@ -412,6 +526,7 @@ fn calculate_url_frequencies(entries: Vec<&LogEntry>) -> HashMap<String, Vec<Bot
                 verified: first.verified,
                 taxonomy: first.taxonomy.clone(),
                 filename: first.filename.clone(),
+                status: first.status,
             };
             (path, vec![aggregated])
         })
@@ -429,6 +544,8 @@ impl Default for Totals {
             uptime: 0,
             openai: 0,
             claude: 0,
+            bot_stats: BotStatsMap::default(),
+            status_codes: StatusCodeCounts::new(),
             google_bot_pages: Vec::new(),
             google_bot_page_frequencies: HashMap::new(),
             bing_bot_pages: Vec::new(),
