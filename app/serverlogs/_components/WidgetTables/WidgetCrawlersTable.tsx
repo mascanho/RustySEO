@@ -121,8 +121,6 @@ interface WidgetTableProps {
   data: any;
 }
 
-
-
 const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
   const [initialLogs, setInitialLogs] = useState<LogEntry[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
@@ -612,7 +610,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                         key={`${log.ip}-${log.timestamp}-${index}`}
                       >
                         <TableRow
-                          className="group cursor-pointer "
+                          className={`group cursor-pointer ${expandedRow === index ? "bg-sky-dark/10" : ""}`}
                           onClick={() =>
                             setExpandedRow(expandedRow === index ? null : index)
                           }
@@ -714,11 +712,11 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                                       {/* Success Codes (200-299) */}
-                                      <div className="flex flex-col">
+                                      <div className="flex flex-col ">
                                         <span className="font-semibold text-green-600 dark:text-green-400">
                                           Success (2xx)
                                         </span>
-                                        <div className="flex flex-wrap gap-1 mt-1">
+                                        <div className="flex flex-wrap gap-2 mt-1">
                                           <span className="px-2 py-1 bg-green-100 dark:bg-green-900 rounded text-xs">
                                             200:{" "}
                                             {log.status_codes?.counts?.[200] ||
@@ -746,7 +744,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                         <span className="font-semibold text-blue-600 dark:text-blue-400">
                                           Redirect (3xx)
                                         </span>
-                                        <div className="flex flex-wrap gap-1 mt-1">
+                                        <div className="flex flex-wrap gap-2 mt-1">
                                           <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded text-xs">
                                             301:{" "}
                                             {log.status_codes?.counts?.[301] ||
@@ -775,7 +773,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                         <span className="font-semibold text-yellow-600 dark:text-yellow-400">
                                           Client Error (4xx)
                                         </span>
-                                        <div className="flex flex-wrap gap-1 mt-1">
+                                        <div className="flex flex-wrap gap-2 mt-1">
                                           <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 rounded text-xs">
                                             400:{" "}
                                             {log.status_codes?.counts?.[400] ||
@@ -814,7 +812,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                         <span className="font-semibold text-red-600 dark:text-red-400">
                                           Server Error (5xx)
                                         </span>
-                                        <div className="flex flex-wrap gap-1 mt-1">
+                                        <div className="flex flex-wrap gap-2 mt-1">
                                           <span className="px-2 py-1 bg-red-100 dark:bg-red-900 rounded text-xs">
                                             500:{" "}
                                             {log.status_codes?.counts?.[500] ||

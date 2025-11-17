@@ -2,6 +2,7 @@ use chrono::NaiveDateTime;
 use ipnet::IpNet;
 use once_cell::sync::Lazy;
 use regex::Regex;
+use reqwest; // Add this import
 use serde::{Deserialize, Serialize};
 use std::io::{self, Write};
 use std::net::{AddrParseError, IpAddr};
@@ -10,6 +11,21 @@ use std::sync::Mutex;
 use tauri::{Emitter, Manager};
 
 use super::google_ip_fetcher::get_google_ip_ranges;
+
+#[derive(Debug, Deserialize, Clone)] // Add Clone trait
+pub struct BingBotRanges {
+    #[serde(rename = "creationTime")]
+    pub creation_time: String,
+    pub prefixes: Vec<BingPrefix>,
+}
+
+#[derive(Debug, Deserialize, Clone)] // Add Clone trait
+pub struct BingPrefix {
+    #[serde(rename = "ipv4Prefix")]
+    pub ipv4_prefix: Option<String>,
+    #[serde(rename = "ipv6Prefix")]
+    pub ipv6_prefix: Option<String>,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LogEntry {
@@ -33,6 +49,7 @@ pub struct LogEntry {
 pub enum IpVerificationError {
     InvalidIp(AddrParseError),
     InvalidCidr(ipnet::PrefixLenError),
+    ReqwestError(reqwest::Error),
 }
 
 impl From<AddrParseError> for IpVerificationError {
@@ -44,6 +61,12 @@ impl From<AddrParseError> for IpVerificationError {
 impl From<ipnet::PrefixLenError> for IpVerificationError {
     fn from(err: ipnet::PrefixLenError) -> Self {
         IpVerificationError::InvalidCidr(err)
+    }
+}
+
+impl From<reqwest::Error> for IpVerificationError {
+    fn from(err: reqwest::Error) -> Self {
+        IpVerificationError::ReqwestError(err)
     }
 }
 
@@ -78,52 +101,119 @@ fn classify_taxonomy(path: &str) -> String {
 }
 
 /// Google's verified crawler IP ranges (IPv4 and IPv6)
-/// Updated as of 2024 - always check official sources for changes:
-/// https://developers.google.com/search/docs/crawling-indexing/verifying-googlebot
 static GOOGLE_IP_RANGES: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));
 
 #[tauri::command]
 pub async fn fetch_google_ip_ranges() -> Result<Vec<String>, String> {
-    // If we already have the ranges cached, return them
     {
         let ranges = GOOGLE_IP_RANGES.lock().map_err(|e| e.to_string())?;
         if !ranges.is_empty() {
-            return Ok(ranges.iter().map(|n| n.to_string()).collect());
+            return Ok(ranges.clone());
         }
     }
 
-    // Otherwise fetch them (this is where you'd implement your actual fetching logic)
     let fetched_ranges = get_google_ip_ranges().await.map_err(|e| e.to_string())?;
 
-    // Store them in the global state
     {
         let mut ranges = GOOGLE_IP_RANGES.lock().map_err(|e| e.to_string())?;
         *ranges = fetched_ranges.clone();
     }
 
-    Ok(fetched_ranges.iter().map(|n| n.to_string()).collect())
+    Ok(fetched_ranges)
 }
 
 fn is_google_verified(ip: &str) -> Result<bool, IpVerificationError> {
-    // Parse the input IP address
     let ip_addr = IpAddr::from_str(ip)?;
-
-    // Get a lock on the Mutex to access the ranges
     let ranges = GOOGLE_IP_RANGES.lock().unwrap();
 
-    // Check if the IP is within any of Google's verified CIDR ranges
     for cidr in ranges.iter() {
-        let net = IpNet::from_str(cidr).map_err(|e| {
-            eprintln!("Failed to parse CIDR {}: {}", cidr, e);
-            IpVerificationError::InvalidCidr(ipnet::PrefixLenError)
-        })?;
-
+        let net = IpNet::from_str(cidr)
+            .map_err(|_| IpVerificationError::InvalidCidr(ipnet::PrefixLenError))?;
         if net.contains(&ip_addr) {
             return Ok(true);
         }
     }
 
     Ok(false)
+}
+
+// Store the actual Bing ranges, not just strings
+static BING_IP_RANGES: Lazy<Mutex<Vec<IpNet>>> = Lazy::new(|| Mutex::new(Vec::new()));
+
+/// Fetches the latest Bingbot IP ranges from the official endpoint
+#[tauri::command]
+pub async fn fetch_bingbot_ranges() -> Result<Vec<String>, String> {
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .build()
+        .map_err(|e| e.to_string())?; // Fixed: Added error handling
+
+    let response = client
+        .get("https://www.bing.com/toolbox/bingbot.json")
+        .header("User-Agent", "RustySEO-Bot-Verifier/1.0")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let bing_ranges = response
+        .json::<BingBotRanges>()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Parse and store the IP networks
+    let mut networks = Vec::new();
+    let mut range_strings = Vec::new();
+
+    for prefix in &bing_ranges.prefixes {
+        if let Some(ipv4_prefix) = &prefix.ipv4_prefix {
+            if let Ok(net) = IpNet::from_str(ipv4_prefix) {
+                networks.push(net);
+                range_strings.push(ipv4_prefix.clone());
+            }
+        }
+        if let Some(ipv6_prefix) = &prefix.ipv6_prefix {
+            if let Ok(net) = IpNet::from_str(ipv6_prefix) {
+                networks.push(net);
+                range_strings.push(ipv6_prefix.clone());
+            }
+        }
+    }
+
+    // Store the parsed networks
+    {
+        let mut ranges = BING_IP_RANGES.lock().unwrap();
+        *ranges = networks;
+    }
+
+    println!("Loaded {} Bingbot IP ranges", range_strings.len());
+    Ok(range_strings)
+}
+
+/// Check if an IP is verified as Bingbot
+fn is_bing_verified(ip: &str) -> Result<bool, IpVerificationError> {
+    let ip_addr = IpAddr::from_str(ip)?;
+    let ranges = BING_IP_RANGES.lock().unwrap();
+
+    for net in ranges.iter() {
+        if net.contains(&ip_addr) {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
+}
+
+/// Check if an IP is from any verified search engine
+fn is_verified_crawler(ip: &str, crawler_type: &str) -> bool {
+    let crawler_lower = crawler_type.to_lowercase();
+
+    if crawler_lower.contains("google") {
+        is_google_verified(ip).unwrap_or(false)
+    } else if crawler_lower.contains("bing") {
+        is_bing_verified(ip).unwrap_or(false)
+    } else {
+        false
+    }
 }
 
 fn detect_file_type(path: &str) -> Option<String> {
@@ -164,7 +254,8 @@ fn detect_file_type(path: &str) -> Option<String> {
     } else if lower.ends_with(".html")
         || lower.ends_with(".htm")
         || lower.ends_with("/")
-        || !lower.ends_with("/")
+        || !lower.contains('.')
+    // Assume paths without extensions are HTML
     {
         Some("HTML".to_string())
     } else if lower.ends_with(".zip")
@@ -199,9 +290,22 @@ fn detect_browser(user_agent: &str) -> Option<String> {
 // Detect crawler type from user-agent
 fn detect_bot(user_agent: &str) -> Option<String> {
     let lower = user_agent.to_lowercase();
-    for keyword in [
-        "crawler", "spider", "sistrix", "chat", "uptime", "google", "bot", "ads",
-    ] {
+
+    // Check for specific bots first
+    if lower.contains("googlebot") {
+        return Some("Google".to_string());
+    } else if lower.contains("bingbot") {
+        return Some("Bing".to_string());
+    } else if lower.contains("semrush") {
+        return Some("Semrush".to_string());
+    } else if lower.contains("ahrefs") {
+        return Some("Ahrefs".to_string());
+    } else if lower.contains("moz.com") {
+        return Some("Moz".to_string());
+    }
+
+    // Generic bot detection
+    for keyword in ["crawler", "spider", "sistrix", "chat", "uptime", "bot"] {
         if let Some(pos) = lower.find(keyword) {
             let start = lower[..pos]
                 .rfind(|c: char| !c.is_alphanumeric() && c != '/')
@@ -212,6 +316,7 @@ fn detect_bot(user_agent: &str) -> Option<String> {
             return Some(user_agent[start..end].to_string());
         }
     }
+
     Some("Human".to_string())
 }
 
@@ -233,10 +338,6 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
             continue;
         }
 
-        // Print log file length
-        //print!("\rParsing line {}...", i + 1);
-        //io::stdout().flush().unwrap();
-
         if let Some(caps) = re.captures(line) {
             let timestamp = match NaiveDateTime::parse_from_str(&caps[2], "%d/%b/%Y:%H:%M:%S %z") {
                 Ok(t) => t,
@@ -247,7 +348,7 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
                         &caps[2],
                         e
                     );
-                    NaiveDateTime::from_timestamp_opt(0, 0).unwrap()
+                    continue; // Skip this entry instead of using a default timestamp
                 }
             };
 
@@ -260,7 +361,9 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
             let crawler_type = detect_bot(&user_agent).unwrap_or_default();
             let browser = detect_browser(&user_agent).unwrap_or_default();
             let ip = caps[1].to_string();
-            let verified = is_google_verified(&ip).unwrap_or(false); // Default to false on error
+
+            // Use the new unified verification function
+            let verified = is_verified_crawler(&ip, &crawler_type);
 
             entries.push(LogEntry {
                 ip,
@@ -273,13 +376,13 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
                 response_size: caps[6].parse().unwrap_or(0),
                 crawler_type,
                 browser,
-                file_type: detect_file_type(&caps[4]).unwrap_or_default(),
+                file_type: detect_file_type(&caps[4]).unwrap_or_else(|| "Unknown".to_string()),
                 verified,
                 taxonomy: classify_taxonomy(&caps[4]),
             });
         }
     }
 
-    println!();
+    println!("Parsed {} valid log entries", entries.len());
     entries
 }

@@ -760,6 +760,7 @@ const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data }) => {
                               className="bg-gray-50 dark:bg-gray-800 p-4"
                             >
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Left Column */}
                                 <div className="flex flex-col max-w-[70rem] w-full">
                                   <div className="flex mb-2 space-x-2 items-center justify-between">
                                     <h4 className="font-bold">Timespan</h4>
@@ -769,7 +770,7 @@ const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data }) => {
                                           size={18}
                                           className="text-blue-800 pr-1 dark:text-blue-900"
                                         />
-                                        {/* {log?.crawler_type} */}
+                                        {log?.crawler_type}
                                       </div>
                                     )}
                                   </div>
@@ -779,6 +780,8 @@ const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data }) => {
                                     </p>
                                   </div>
                                 </div>
+
+                                {/* Right Column */}
                                 <div className="flex flex-col">
                                   <h4 className="mb-2 font-bold">
                                     Hits per Hour
@@ -787,6 +790,176 @@ const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data }) => {
                                     <p className="text-sm break-all">
                                       {timings(log)?.frequency?.perHour}
                                     </p>
+                                  </div>
+                                </div>
+
+                                {/* New Response Codes Section */}
+                                <div className="md:col-span-2">
+                                  <h4 className="mb-2 font-bold">
+                                    Response Codes
+                                  </h4>
+                                  <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                                      {/* Success Codes (200-299) */}
+                                      <div className="flex flex-col ">
+                                        <span className="font-semibold text-green-600 dark:text-green-400">
+                                          Success (2xx)
+                                        </span>
+                                        <div className="flex flex-wrap gap-2 mt-1">
+                                          <span className="px-2 py-1 bg-green-100 dark:bg-green-900 rounded text-xs">
+                                            200:{" "}
+                                            {log.status_codes?.counts?.[200] ||
+                                              0}
+                                          </span>
+                                          <span className="px-2 py-1 bg-green-100 dark:bg-green-900 rounded text-xs">
+                                            201:{" "}
+                                            {log.status_codes?.counts?.[201] ||
+                                              0}
+                                          </span>
+                                          <span className="px-2 py-1 bg-green-100 dark:bg-green-900 rounded text-xs">
+                                            204:{" "}
+                                            {log.status_codes?.counts?.[204] ||
+                                              0}
+                                          </span>
+                                        </div>
+                                        <span className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                          Total:{" "}
+                                          {log.status_codes?.success_count || 0}
+                                        </span>
+                                      </div>
+
+                                      {/* Redirect Codes (300-399) */}
+                                      <div className="flex flex-col">
+                                        <span className="font-semibold text-blue-600 dark:text-blue-400">
+                                          Redirect (3xx)
+                                        </span>
+                                        <div className="flex flex-wrap gap-2 mt-1">
+                                          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded text-xs">
+                                            301:{" "}
+                                            {log.status_codes?.counts?.[301] ||
+                                              0}
+                                          </span>
+                                          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded text-xs">
+                                            302:{" "}
+                                            {log.status_codes?.counts?.[302] ||
+                                              0}
+                                          </span>
+                                          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded text-xs">
+                                            304:{" "}
+                                            {log.status_codes?.counts?.[304] ||
+                                              0}
+                                          </span>
+                                        </div>
+                                        <span className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                          Total:{" "}
+                                          {log.status_codes?.redirect_count ||
+                                            0}
+                                        </span>
+                                      </div>
+
+                                      {/* Client Error Codes (400-499) */}
+                                      <div className="flex flex-col">
+                                        <span className="font-semibold text-yellow-600 dark:text-yellow-400">
+                                          Client Error (4xx)
+                                        </span>
+                                        <div className="flex flex-wrap gap-2 mt-1">
+                                          <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 rounded text-xs">
+                                            400:{" "}
+                                            {log.status_codes?.counts?.[400] ||
+                                              0}
+                                          </span>
+                                          <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 rounded text-xs">
+                                            401:{" "}
+                                            {log.status_codes?.counts?.[401] ||
+                                              0}
+                                          </span>
+                                          <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 rounded text-xs">
+                                            403:{" "}
+                                            {log.status_codes?.counts?.[403] ||
+                                              0}
+                                          </span>
+                                          <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 rounded text-xs">
+                                            404:{" "}
+                                            {log.status_codes?.counts?.[404] ||
+                                              0}
+                                          </span>
+                                          <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 rounded text-xs">
+                                            429:{" "}
+                                            {log.status_codes?.counts?.[429] ||
+                                              0}
+                                          </span>
+                                        </div>
+                                        <span className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                          Total:{" "}
+                                          {log.status_codes
+                                            ?.client_error_count || 0}
+                                        </span>
+                                      </div>
+
+                                      {/* Server Error Codes (500-599) */}
+                                      <div className="flex flex-col">
+                                        <span className="font-semibold text-red-600 dark:text-red-400">
+                                          Server Error (5xx)
+                                        </span>
+                                        <div className="flex flex-wrap gap-2 mt-1">
+                                          <span className="px-2 py-1 bg-red-100 dark:bg-red-900 rounded text-xs">
+                                            500:{" "}
+                                            {log.status_codes?.counts?.[500] ||
+                                              0}
+                                          </span>
+                                          <span className="px-2 py-1 bg-red-100 dark:bg-red-900 rounded text-xs">
+                                            502:{" "}
+                                            {log.status_codes?.counts?.[502] ||
+                                              0}
+                                          </span>
+                                          <span className="px-2 py-1 bg-red-100 dark:bg-red-900 rounded text-xs">
+                                            503:{" "}
+                                            {log.status_codes?.counts?.[503] ||
+                                              0}
+                                          </span>
+                                          <span className="px-2 py-1 bg-red-100 dark:bg-red-900 rounded text-xs">
+                                            504:{" "}
+                                            {log.status_codes?.counts?.[504] ||
+                                              0}
+                                          </span>
+                                        </div>
+                                        <span className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                          Total:{" "}
+                                          {log.status_codes
+                                            ?.server_error_count || 0}
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {/* Other Status Codes */}
+                                    {(log.status_codes?.other_count || 0) >
+                                      0 && (
+                                      <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
+                                        <span className="font-semibold text-gray-600 dark:text-gray-400">
+                                          Other Codes:{" "}
+                                          {log.status_codes?.other_count || 0}
+                                        </span>
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                          {Object.entries(
+                                            log.status_codes?.counts || {},
+                                          )
+                                            .filter(([code]) => {
+                                              const status = parseInt(code);
+                                              return (
+                                                status < 200 || status >= 600
+                                              );
+                                            })
+                                            .map(([code, count]) => (
+                                              <span
+                                                key={code}
+                                                className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs"
+                                              >
+                                                {code}: {count}
+                                              </span>
+                                            ))}
+                                        </div>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>

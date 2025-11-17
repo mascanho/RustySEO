@@ -126,6 +126,8 @@ pub struct BotPageDetails {
     pub taxonomy: Option<String>,
     pub filename: String,
     pub status: u16,
+    #[serde(default)]
+    pub status_codes: StatusCodeCounts,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -494,52 +496,44 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
 }
 
 fn calculate_url_frequencies(entries: Vec<&LogEntry>) -> HashMap<String, Vec<BotPageDetails>> {
-    let mut frequency_map: HashMap<String, Vec<BotPageDetails>> = HashMap::new();
+    let mut frequency_map: HashMap<String, Vec<&LogEntry>> = HashMap::new();
 
     for entry in entries {
-        let details = BotPageDetails {
-            crawler_type: entry.crawler_type.clone(),
-            file_type: entry.file_type.clone(),
-            response_size: entry.response_size,
-            timestamp: entry.timestamp.clone(),
-            ip: entry.ip.clone(),
-            referer: entry.referer.clone(),
-            browser: entry.browser.clone(),
-            user_agent: entry.user_agent.clone(),
-            frequency: 1,
-            method: entry.method.clone(),
-            verified: entry.verified,
-            taxonomy: entry.taxonomy.clone(),
-            filename: entry.filename.clone(),
-            status: entry.status,
-        };
-
         frequency_map
             .entry(entry.path.clone())
             .or_insert_with(Vec::new)
-            .push(details);
+            .push(entry);
     }
 
-    // Aggregate frequencies
     frequency_map
         .into_iter()
-        .map(|(path, details_vec)| {
-            let first = &details_vec[0];
+        .map(|(path, entries_vec)| {
+            if entries_vec.is_empty() {
+                return (path, Vec::new());
+            }
+
+            let first = entries_vec[0];
+            let mut status_codes = StatusCodeCounts::new();
+            for entry in &entries_vec {
+                status_codes.add_status(entry.status);
+            }
+
             let aggregated = BotPageDetails {
                 crawler_type: first.crawler_type.clone(),
                 file_type: first.file_type.clone(),
-                response_size: details_vec.iter().map(|d| d.response_size).sum(),
+                response_size: entries_vec.iter().map(|d| d.response_size).sum(),
                 timestamp: first.timestamp.clone(),
                 ip: first.ip.clone(),
                 referer: first.referer.clone(),
                 browser: first.browser.clone(),
                 user_agent: first.user_agent.clone(),
-                frequency: details_vec.len(),
+                frequency: entries_vec.len(),
                 method: first.method.clone(),
                 verified: first.verified,
                 taxonomy: first.taxonomy.clone(),
                 filename: first.filename.clone(),
                 status: first.status,
+                status_codes,
             };
             (path, vec![aggregated])
         })

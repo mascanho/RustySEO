@@ -40,7 +40,7 @@ export default function Page() {
         if (taxonomies) {
           const parsedTaxonomies = JSON.parse(taxonomies);
           const taxonomyNames = parsedTaxonomies.map(
-            (tax: { name: string }) => tax.name
+            (tax: { name: string }) => tax.name,
           );
           await invoke("set_taxonomies", { newTaxonomies: taxonomyNames });
         } else {
@@ -59,6 +59,7 @@ export default function Page() {
   useEffect(() => {
     try {
       invoke("fetch_google_ip_ranges", {});
+      invoke("fetch_bingbot_ranges", {});
     } catch (error) {
       console.error("Error loading taxonomies:", error);
       toast.error("RustySEO failed to load Google's IP ranges");
@@ -132,7 +133,7 @@ export default function Page() {
         //TODO: IMPLEMENT A LOADER HERE
         const unlistenProgress = await listen<ProgressUpdate>(
           "progress-update",
-          ({ payload }) => isMounted && setProgress(payload)
+          ({ payload }) => isMounted && setProgress(payload),
         );
 
         const unlistenChunk = await listen<LogResult>(
@@ -140,7 +141,7 @@ export default function Page() {
           ({ payload }) => {
             console.log(
               `[FRONTEND] Received ${payload.entries?.length || 0} entries ` +
-                `at ${new Date().toISOString()}`
+                `at ${new Date().toISOString()}`,
             );
 
             // Add performance marker
@@ -154,7 +155,7 @@ export default function Page() {
             if (payload.overview) {
               setLogData({ overview: payload.overview });
             }
-          }
+          },
         );
 
         const unlistenComplete = await listen<LogResult>(
@@ -165,7 +166,7 @@ export default function Page() {
             if (payload.overview) {
               setLogData({ overview: payload });
             }
-          }
+          },
           // TODO: DO SOMETHIG HERE ON COMPLETE - A LOADER MAYBE
         );
 
