@@ -85,13 +85,19 @@ impl From<reqwest::Error> for IpVerificationError {
     }
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct TaxonomyInfo {
+    path: String,
+    match_type: String,
+}
+
 // Use a static variable to cache taxonomies
-static TAXONOMIES: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));
+static TAXONOMIES: Lazy<Mutex<Vec<TaxonomyInfo>>> = Lazy::new(|| Mutex::new(Vec::new()));
 static LOG_NUMBER: Lazy<Mutex<i32>> = Lazy::new(|| Mutex::new(0));
 
 // Tauri command to set taxonomies from frontend
 #[tauri::command]
-pub fn set_taxonomies(new_taxonomies: Vec<String>) -> Result<(), String> {
+pub fn set_taxonomies(new_taxonomies: Vec<TaxonomyInfo>) -> Result<(), String> {
     let mut taxonomies = TAXONOMIES.lock().map_err(|e| e.to_string())?;
     *taxonomies = new_taxonomies;
     Ok(())
@@ -99,7 +105,7 @@ pub fn set_taxonomies(new_taxonomies: Vec<String>) -> Result<(), String> {
 
 // Tauri command to get current taxonomies
 #[tauri::command]
-pub fn get_taxonomies() -> Vec<String> {
+pub fn get_taxonomies() -> Vec<TaxonomyInfo> {
     let taxonomies = TAXONOMIES.lock().unwrap();
     taxonomies.clone()
 }
@@ -108,15 +114,22 @@ pub fn get_taxonomies() -> Vec<String> {
 fn classify_taxonomy(path: &str) -> String {
     let taxonomies = TAXONOMIES.lock().unwrap();
     let mut sorted_taxonomies = taxonomies.clone();
-    sorted_taxonomies.sort_by(|a, b| b.len().cmp(&a.len())); // Sort by length descending
+    sorted_taxonomies.sort_by(|a, b| b.path.len().cmp(&a.path.len())); // Sort by length descending
 
     for taxonomy in sorted_taxonomies.iter() {
-        if path.contains(taxonomy) {
-            return taxonomy.clone();
+        let matches = match taxonomy.match_type.as_str() {
+            "startsWith" => path.starts_with(&taxonomy.path),
+            "contains" => path.contains(&taxonomy.path),
+            _ => path.starts_with(&taxonomy.path), // Default to startsWith
+        };
+
+        if matches {
+            return taxonomy.path.clone();
         }
     }
     "other".to_string()
 }
+
 
 /// Google's verified crawler IP ranges (IPv4 and IPv6)
 static GOOGLE_IP_RANGES: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));

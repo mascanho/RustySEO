@@ -93,7 +93,7 @@ function UploadButton() {
             Settings
           </button>
         </DialogTrigger>
-        <DialogContent className="p-9 overflow-hidden pl-6 max-w-[700px] h-[560px] dark:bg-brand-darker">
+        <DialogContent className="p-9 overflow-hidden pl-6 max-w-[700px] h-[660px] dark:bg-brand-darker">
           <Tabs>
             <TabsList className="grid w-full grid-cols-4 bg-gray-100 dark:bg-brand-dark">
               <TabsTrigger
@@ -114,11 +114,6 @@ function UploadButton() {
 
             <TabsContent value="taxonomy" className="mt-4">
               <TaxonomyManager closeDialog={() => setSettingsOpen(false)} />
-            </TabsContent>
-
-            <TabsContent value="ips" className="mt-4">
-              {/* Add your settings content here */}
-              <IPManager closeDialog={() => setSettingsOpen(false)} />
             </TabsContent>
 
             <TabsContent value="domain" className="mt-4">

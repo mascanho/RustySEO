@@ -43,12 +43,12 @@ export default function Page() {
             (tax: { name: string }) => tax.name,
           );
           await invoke("set_taxonomies", { newTaxonomies: taxonomyNames });
-        } else {
-          // toast.error("No taxonomies found");
         }
+        // No else block needed - it's normal to have no taxonomies
       } catch (error) {
         console.error("Error loading taxonomies:", error);
-        toast.error("Failed to load taxonomies");
+        // Don't show error toast - it's normal for taxonomies to not exist yet
+        // toast.error("Failed to load taxonomies");
       }
     };
 

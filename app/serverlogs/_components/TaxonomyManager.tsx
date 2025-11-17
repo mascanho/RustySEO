@@ -21,12 +21,17 @@ interface Taxonomy {
   id: string;
   name: string;
   children: Taxonomy[];
+  matchType: "startsWith" | "contains";
 }
 
 interface TaxonomyNodeProps {
   taxonomy: Taxonomy;
   onRemove: (id: string) => void;
-  onAddChild: (parentId: string, name: string) => void;
+  onAddChild: (
+    parentId: string,
+    name: string,
+    matchType: "startsWith" | "contains",
+  ) => void;
   isSubmitting: boolean;
 }
 
@@ -38,11 +43,14 @@ const TaxonomyNode: React.FC<TaxonomyNodeProps> = ({
 }) => {
   const [isAddingChild, setIsAddingChild] = useState(false);
   const [newChildName, setNewChildName] = useState("");
+  const [newChildMatchType, setNewChildMatchType] = useState<
+    "startsWith" | "contains"
+  >("startsWith");
   const [isExpanded, setIsExpanded] = useState(true);
 
   const handleAdd = () => {
     if (newChildName.trim()) {
-      onAddChild(taxonomy.id, newChildName);
+      onAddChild(taxonomy.id, newChildName, newChildMatchType);
       setNewChildName("");
       setIsAddingChild(false);
     } else {
@@ -79,6 +87,7 @@ const TaxonomyNode: React.FC<TaxonomyNodeProps> = ({
           <span className="px-3 dark:text-white/80 py-1 text-sm">
             {taxonomy.name}
           </span>
+          <span className="text-xs text-gray-500">({taxonomy.matchType})</span>
         </div>
         <div className="flex items-center">
           <Button
@@ -113,6 +122,17 @@ const TaxonomyNode: React.FC<TaxonomyNodeProps> = ({
             disabled={isSubmitting}
             autoFocus
           />
+          <Button
+            variant="outline"
+            className="w-[120px] h-8"
+            onClick={() =>
+              setNewChildMatchType((prev) =>
+                prev === "startsWith" ? "contains" : "startsWith",
+              )
+            }
+          >
+            {newChildMatchType === "startsWith" ? "Starts with" : "Contains"}
+          </Button>
           <Button onClick={handleAdd} className="h-8">
             Add
           </Button>
@@ -150,7 +170,11 @@ interface TaxonomyManagerProps {
 export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
   const [taxonomies, setTaxonomies] = useState<Taxonomy[]>([]);
   const [newTaxonomy, setNewTaxonomy] = useState("");
+  const [newTaxonomyMatchType, setNewTaxonomyMatchType] = useState<
+    "startsWith" | "contains"
+  >("startsWith");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const isDuplicate = (taxonomies: Taxonomy[], name: string): boolean => {
     const cleanName = name.trim().replace(/^\/|\/$/g, "");
@@ -162,7 +186,10 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
   };
 
   const handleAddRootTaxonomy = () => {
-    const cleanName = newTaxonomy.trim().replace(/^\/|\/$/g, "");
+    const cleanName = newTaxonomy
+      .trim()
+      .replace(/^\/|\/$/g, "")
+      .toLowerCase();
     if (!cleanName) {
       toast.error("Taxonomy name cannot be empty");
       return;
@@ -177,15 +204,28 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
       id: crypto.randomUUID(),
       name: cleanName,
       children: [],
+      matchType: newTaxonomyMatchType,
     };
 
-    setTaxonomies([...taxonomies, newTax]);
+    const newTaxonomies = [...taxonomies, newTax];
+    setTaxonomies(newTaxonomies);
+
+    // Update localStorage immediately when adding
+    localStorage.setItem("taxonomies", JSON.stringify(newTaxonomies));
+
     setNewTaxonomy("");
     toast.success(`Taxonomy "${cleanName}" has been added`);
   };
 
-  const handleAddChildTaxonomy = (parentId: string, childName: string) => {
-    const cleanName = childName.trim().replace(/^\/|\/$/g, "");
+  const handleAddChildTaxonomy = (
+    parentId: string,
+    childName: string,
+    matchType: "startsWith" | "contains",
+  ) => {
+    const cleanName = childName
+      .trim()
+      .replace(/^\/|\/$/g, "")
+      .toLowerCase();
     if (!cleanName) {
       toast.error("Taxonomy name cannot be empty");
       return;
@@ -200,6 +240,7 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
       id: crypto.randomUUID(),
       name: cleanName,
       children: [],
+      matchType: matchType,
     };
 
     const addChildRecursive = (
@@ -221,7 +262,12 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
       });
     };
 
-    setTaxonomies((prev) => addChildRecursive(prev, parentId, newChild));
+    const newTaxonomies = addChildRecursive(taxonomies, parentId, newChild);
+    setTaxonomies(newTaxonomies);
+
+    // Update localStorage immediately when adding child
+    localStorage.setItem("taxonomies", JSON.stringify(newTaxonomies));
+
     toast.success(`Taxonomy "${cleanName}" has been added`);
   };
 
@@ -249,6 +295,17 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
 
     if (removedTaxonomy) {
       setTaxonomies(newTaxonomies);
+
+      // Update localStorage immediately when removing
+      if (newTaxonomies.length === 0) {
+        // Remove taxonomies completely from localStorage when last one is removed
+        localStorage.removeItem("taxonomies");
+        console.log("All taxonomies removed - cleared from localStorage");
+      } else {
+        // Update localStorage with remaining taxonomies
+        localStorage.setItem("taxonomies", JSON.stringify(newTaxonomies));
+      }
+
       toast(`Taxonomy "${removedTaxonomy.name}" has been removed`, {
         description: "You can add it again if needed",
       });
@@ -262,23 +319,152 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
     }
   };
 
-  const buildPaths = (taxonomies: Taxonomy[], parentPath: string): string[] => {
-    let paths: string[] = [];
+  const buildTaxonomyInfo = (
+    taxonomies: Taxonomy[],
+    parentPath: string,
+  ): { path: string; match_type: string }[] => {
+    let info: { path: string; match_type: string }[] = [];
     taxonomies.forEach((tax) => {
       const currentPath = parentPath + tax.name;
       if (tax.children.length > 0) {
-        paths.push(currentPath + "/");
-        paths.push(...buildPaths(tax.children, currentPath + "/"));
+        info.push({
+          path: currentPath + "/",
+          match_type: tax.matchType,
+        });
+        info.push(...buildTaxonomyInfo(tax.children, currentPath + "/"));
       } else {
-        paths.push(currentPath);
+        info.push({ path: currentPath, match_type: tax.matchType });
       }
     });
-    return paths;
+    return info;
+  };
+
+  // Convert backend taxonomy format to frontend format
+  const parseTaxonomiesFromBackend = (backendTaxonomies: any[]): Taxonomy[] => {
+    if (!Array.isArray(backendTaxonomies)) {
+      console.log("Backend taxonomies is not an array:", backendTaxonomies);
+      return [];
+    }
+
+    console.log("Parsing backend taxonomies:", backendTaxonomies);
+
+    // Create a map to store taxonomies by their full path
+    const taxonomyMap = new Map();
+    const rootTaxonomies: Taxonomy[] = [];
+
+    // First pass: create all taxonomy nodes
+    backendTaxonomies.forEach((item) => {
+      if (!item.path) {
+        console.log("Skipping item with no path:", item);
+        return;
+      }
+
+      // Remove leading and trailing slashes and split into segments
+      const cleanPath = item.path.replace(/^\/+|\/+$/g, "");
+      const segments = cleanPath.split("/").filter(Boolean);
+
+      if (segments.length === 0) {
+        console.log("Skipping empty path after cleaning");
+        return;
+      }
+
+      const fullPath = segments.join("/");
+
+      // Create taxonomy node
+      const taxonomy: Taxonomy = {
+        id: crypto.randomUUID(),
+        name: segments[segments.length - 1],
+        children: [],
+        matchType: item.match_type || "startsWith",
+      };
+
+      taxonomyMap.set(fullPath, taxonomy);
+    });
+
+    // Second pass: build hierarchy
+    backendTaxonomies.forEach((item) => {
+      if (!item.path) return;
+
+      const cleanPath = item.path.replace(/^\/+|\/+$/g, "");
+      const segments = cleanPath.split("/").filter(Boolean);
+
+      if (segments.length === 0) return;
+
+      const fullPath = segments.join("/");
+      const currentTaxonomy = taxonomyMap.get(fullPath);
+
+      if (segments.length === 1) {
+        // This is a root taxonomy
+        if (
+          currentTaxonomy &&
+          !rootTaxonomies.find((tax) => tax.name === currentTaxonomy.name)
+        ) {
+          rootTaxonomies.push(currentTaxonomy);
+        }
+      } else {
+        // This is a child taxonomy - find its parent
+        const parentPath = segments.slice(0, -1).join("/");
+        const parentTaxonomy = taxonomyMap.get(parentPath);
+
+        if (parentTaxonomy && currentTaxonomy) {
+          const existingChild = parentTaxonomy.children.find(
+            (child: Taxonomy) => child.name === currentTaxonomy.name,
+          );
+          if (!existingChild) {
+            parentTaxonomy.children.push(currentTaxonomy);
+          }
+        }
+      }
+    });
+
+    console.log("Parsed root taxonomies:", rootTaxonomies);
+    return rootTaxonomies;
+  };
+
+  const loadTaxonomiesFromBackend = async (): Promise<Taxonomy[]> => {
+    try {
+      console.log("Attempting to load taxonomies from backend...");
+
+      const backendTaxonomies = await invoke("get_taxonomies");
+      console.log("Raw backend taxonomies response:", backendTaxonomies);
+
+      if (!backendTaxonomies) {
+        console.log("No taxonomies returned from backend");
+        return [];
+      }
+
+      if (Array.isArray(backendTaxonomies) && backendTaxonomies.length > 0) {
+        const parsed = parseTaxonomiesFromBackend(backendTaxonomies);
+        console.log("Successfully parsed taxonomies from backend:", parsed);
+        return parsed;
+      } else {
+        console.log("Backend returned empty or invalid taxonomies array");
+        return [];
+      }
+    } catch (error) {
+      console.log(
+        "No taxonomies found in backend (this is normal for first use):",
+        error,
+      );
+      return [];
+    }
   };
 
   const handleSubmitTaxonomies = async () => {
     if (taxonomies.length === 0) {
-      toast.error("No taxonomies to submit");
+      // If no taxonomies, remove them from backend and localStorage
+      setIsSubmitting(true);
+      try {
+        await invoke("set_taxonomies", { newTaxonomies: [] });
+        localStorage.removeItem("taxonomies");
+        toast.success("All taxonomies removed from database");
+      } catch (error) {
+        toast.error("Failed to remove taxonomies");
+        console.error("Error removing taxonomies:", error);
+      } finally {
+        closeDialog();
+        setIsSubmitting(false);
+      }
       return;
     }
 
@@ -290,16 +476,16 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
     setIsSubmitting(true);
 
     try {
-      const taxonomyPaths = buildPaths(taxonomies, "/");
+      const taxonomyInfo = buildTaxonomyInfo(taxonomies, "/");
 
-      console.log(taxonomyPaths);
+      console.log("Submitting taxonomies:", taxonomyInfo);
 
-      await invoke("set_taxonomies", { newTaxonomies: taxonomyPaths });
+      await invoke("set_taxonomies", { newTaxonomies: taxonomyInfo });
 
       localStorage.setItem("taxonomies", JSON.stringify(taxonomies));
 
       toast.success("Taxonomies saved to database", {
-        description: `Successfully saved ${taxonomyPaths.length} taxonomies`,
+        description: `Successfully saved ${taxonomyInfo.length} taxonomies`,
       });
     } catch (error) {
       toast.error("Failed to save taxonomies", {
@@ -313,25 +499,86 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
   };
 
   useEffect(() => {
-    const getTaxonomies = () => {
-      const storedTaxonomies = localStorage.getItem("taxonomies");
-      if (storedTaxonomies) {
-        const parsed = JSON.parse(storedTaxonomies);
-        const ensureChildren = (items: any[]): Taxonomy[] => {
-          return items.map((item) => ({
-            ...item,
-            children: item.children ? ensureChildren(item.children) : [],
-          }));
-        };
-        setTaxonomies(ensureChildren(parsed));
+    const loadTaxonomies = async () => {
+      setIsLoading(true);
+      let loadedTaxonomies: Taxonomy[] = [];
+
+      try {
+        // First try localStorage
+        const storedTaxonomies = localStorage.getItem("taxonomies");
+
+        if (storedTaxonomies) {
+          try {
+            const parsed = JSON.parse(storedTaxonomies);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const ensureDataShape = (items: any[]): Taxonomy[] => {
+                return items.map((item) => ({
+                  ...item,
+                  matchType: item.matchType || "startsWith",
+                  children: Array.isArray(item.children)
+                    ? ensureDataShape(item.children)
+                    : [],
+                }));
+              };
+              loadedTaxonomies = ensureDataShape(parsed);
+              console.log(
+                "Loaded taxonomies from localStorage:",
+                loadedTaxonomies,
+              );
+            }
+          } catch (e) {
+            console.log(
+              "Failed to parse taxonomies from localStorage, clearing...",
+              e,
+            );
+            localStorage.removeItem("taxonomies");
+          }
+        }
+
+        // If localStorage fails or is empty, try backend
+        if (loadedTaxonomies.length === 0) {
+          console.log("No taxonomies in localStorage, trying backend...");
+          loadedTaxonomies = await loadTaxonomiesFromBackend();
+          if (loadedTaxonomies.length > 0) {
+            console.log("Loaded taxonomies from backend:", loadedTaxonomies);
+            // Also save to localStorage for next time
+            localStorage.setItem(
+              "taxonomies",
+              JSON.stringify(loadedTaxonomies),
+            );
+          }
+        }
+
+        setTaxonomies(loadedTaxonomies);
+      } catch (error) {
+        console.log("Error during taxonomy loading (starting fresh):", error);
+        setTaxonomies([]);
+      } finally {
+        setIsLoading(false);
       }
     };
-    getTaxonomies();
+
+    loadTaxonomies();
   }, []);
 
+  if (isLoading) {
+    return (
+      <section className="w-[650px] max-w-5xl mx-auto h-full pt-4 flex flex-col">
+        <CardContent className="grid grid-cols-1 md:grid-cols-1 gap-6 h-[360px] flex items-center justify-center">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm text-muted-foreground">
+              Loading taxonomies...
+            </span>
+          </div>
+        </CardContent>
+      </section>
+    );
+  }
+
   return (
-    <section className="w-[650px] max-w-5xl mx-auto h-[650px] pt-4">
-      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[380px]">
+    <section className="w-[650px] max-w-5xl mx-auto h-full pt-4 flex flex-col">
+      <CardContent className="grid grid-cols-1 md:grid-cols-1 gap-6 h-[360px]">
         {/* Left Column - Add Taxonomy Form */}
         <div className="space-y-4">
           <h3 className="text-sm font-medium dark:text-white">
@@ -346,6 +593,19 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
               className="flex-1 h-8 dark:text-white"
               disabled={isSubmitting}
             />
+            <Button
+              variant="outline"
+              className="w-[120px] h-8"
+              onClick={() =>
+                setNewTaxonomyMatchType((prev) =>
+                  prev === "startsWith" ? "contains" : "startsWith",
+                )
+              }
+            >
+              {newTaxonomyMatchType === "startsWith"
+                ? "Starts with"
+                : "Contains"}
+            </Button>
             <Button
               onClick={handleAddRootTaxonomy}
               className="flex items-center gap-1 h-8 bg-brand-bright dark:hover:bg-brand-bright dark:bg-brand-bright dark:text-white hover:bg-brand-bright"
@@ -370,10 +630,10 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
           <h3 className="text-sm font-medium dark:text-white">
             Current Taxonomies
           </h3>
-          <div className="border dark:border-brand-dark rounded-md h-[330px] overflow-y-auto">
+          <div className="border dark:border-brand-dark rounded-md h-[270px] overflow-y-auto">
             {taxonomies.length === 0 ? (
               <div className="text-sm text-muted-foreground py-4 text-center h-full flex items-center justify-center dark:text-white/50">
-                No taxonomies added yet
+                No taxonomies added yet. Start by adding a root taxonomy.
               </div>
             ) : (
               <div className="grid gap-1 pr-2 mt-2 w-full mb-2">
@@ -391,12 +651,12 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
           </div>
         </div>
       </CardContent>
-      <CardFooter>
+      <CardFooter className="mt-32">
         <Button
           onClick={handleSubmitTaxonomies}
           className="w-full flex items-center gap-2 bg-brand-bright hover:bg-brand-bright dark:bg-brand-bright dark:hover:bg-brand-bright dark:text-white"
           size="lg"
-          disabled={taxonomies.length === 0 || isSubmitting}
+          disabled={isSubmitting}
         >
           {isSubmitting ? (
             <>
@@ -406,7 +666,11 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
           ) : (
             <>
               <Save className="h-4 w-4" />
-              <span>Save content taxonomies</span>
+              <span>
+                {taxonomies.length === 0
+                  ? "Clear Taxonomies"
+                  : "Save content taxonomies"}
+              </span>
             </>
           )}
         </Button>

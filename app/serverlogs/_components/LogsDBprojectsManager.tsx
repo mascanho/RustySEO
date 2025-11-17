@@ -312,7 +312,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
   //
   return (
     <section className="w-[650px] max-w-5xl mx-auto h-[670px] pt-2">
-      <CardContent className="grid grid-cols-1 gap-6 h-[380px]">
+      <CardContent className="grid grid-cols-1 gap-6 h-[480px]">
         <div className="space-y-4">
           <div className="rounded-md h-[580px] overflow-y-auto">
             <div className="grid grid-cols-2 gap-4">
@@ -323,7 +323,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                     Projects
                   </h3>
 
-                  <div className="space-y-3 border rounded-md bg-muted h-[23.1rem] dark:border-brand-dark">
+                  <div className="space-y-3 border rounded-md bg-muted h-[29rem] dark:border-brand-dark">
                     <div className="py-1 p-4">
                       <div className="space-y-2 mt-2">
                         <Input
@@ -402,7 +402,7 @@ export default function ProjectsDBManager({ closeDialog, dbProjects }) {
                 <h3 className="text-lg dark:text-white font-semibold text-left">
                   Assigned Logs
                 </h3>
-                <div className="border dark:border-brand-dark dark:border-brand rounded-lg h-[370px] overflow-y-auto">
+                <div className="border dark:border-brand-dark dark:border-brand rounded-lg h-[29rem] overflow-y-auto">
                   {isLoading ? (
                     <SkeletonLoader />
                   ) : DBprojects.some((group) => group.length > 0) ? (
