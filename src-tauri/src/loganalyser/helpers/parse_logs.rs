@@ -107,7 +107,10 @@ pub fn get_taxonomies() -> Vec<String> {
 // Filter the path to see if it matches any taxonomy
 fn classify_taxonomy(path: &str) -> String {
     let taxonomies = TAXONOMIES.lock().unwrap();
-    for taxonomy in taxonomies.iter() {
+    let mut sorted_taxonomies = taxonomies.clone();
+    sorted_taxonomies.sort_by(|a, b| b.len().cmp(&a.len())); // Sort by length descending
+
+    for taxonomy in sorted_taxonomies.iter() {
         if path.contains(taxonomy) {
             return taxonomy.clone();
         }

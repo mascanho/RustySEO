@@ -2,7 +2,14 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { PlusCircle, X, Save, Loader2 } from "lucide-react";
+import {
+  PlusCircle,
+  X,
+  Save,
+  Loader2,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +20,128 @@ import { invoke } from "@tauri-apps/api/core";
 interface Taxonomy {
   id: string;
   name: string;
+  children: Taxonomy[];
 }
+
+interface TaxonomyNodeProps {
+  taxonomy: Taxonomy;
+  onRemove: (id: string) => void;
+  onAddChild: (parentId: string, name: string) => void;
+  isSubmitting: boolean;
+}
+
+const TaxonomyNode: React.FC<TaxonomyNodeProps> = ({
+  taxonomy,
+  onRemove,
+  onAddChild,
+  isSubmitting,
+}) => {
+  const [isAddingChild, setIsAddingChild] = useState(false);
+  const [newChildName, setNewChildName] = useState("");
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  const handleAdd = () => {
+    if (newChildName.trim()) {
+      onAddChild(taxonomy.id, newChildName);
+      setNewChildName("");
+      setIsAddingChild(false);
+    } else {
+      toast.error("Taxonomy name cannot be empty");
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAdd();
+    }
+  };
+
+  return (
+    <div className="ml-2">
+      <div className="flex items-center justify-between border dark:border-slate-500 mt-1 px-3 bg-muted rounded-md">
+        <div className="flex items-center">
+          {taxonomy.children.length > 0 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="mr-1"
+            >
+              {isExpanded ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronRight className="h-4 w-4" />
+              )}
+            </Button>
+          )}
+          <BiSolidCategoryAlt className="dark:text-white" size={12} />
+          <span className="px-3 dark:text-white/80 py-1 text-sm">
+            {taxonomy.name}
+          </span>
+        </div>
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsAddingChild(true)}
+            aria-label={`Add child to ${taxonomy.name}`}
+            disabled={isSubmitting}
+          >
+            <PlusCircle className="h-4 w-4 text-green-500" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onRemove(taxonomy.id)}
+            aria-label={`Remove ${taxonomy.name}`}
+            disabled={isSubmitting}
+          >
+            <X className="h-4 w-4 text-red-500" />
+          </Button>
+        </div>
+      </div>
+
+      {isAddingChild && (
+        <div className="flex gap-2 mt-2 ml-4 mb-2">
+          <Input
+            placeholder="Enter child taxonomy name"
+            value={newChildName}
+            onChange={(e) => setNewChildName(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="flex-1 h-8 dark:text-white"
+            disabled={isSubmitting}
+            autoFocus
+          />
+          <Button onClick={handleAdd} className="h-8">
+            Add
+          </Button>
+          <Button
+            onClick={() => setIsAddingChild(false)}
+            variant="outline"
+            className="h-8"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      {isExpanded && taxonomy.children.length > 0 && (
+        <div className="mt-1">
+          {taxonomy.children.map((child) => (
+            <TaxonomyNode
+              key={child.id}
+              taxonomy={child}
+              onRemove={onRemove}
+              onAddChild={onAddChild}
+              isSubmitting={isSubmitting}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface TaxonomyManagerProps {
   closeDialog: () => void;
@@ -24,41 +152,104 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
   const [newTaxonomy, setNewTaxonomy] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAddTaxonomy = () => {
-    if (!newTaxonomy.trim()) {
+  const isDuplicate = (taxonomies: Taxonomy[], name: string): boolean => {
+    const cleanName = name.trim().replace(/^\/|\/$/g, "");
+    for (const tax of taxonomies) {
+      if (tax.name.toLowerCase() === cleanName.toLowerCase()) return true;
+      if (tax.children && isDuplicate(tax.children, cleanName)) return true;
+    }
+    return false;
+  };
+
+  const handleAddRootTaxonomy = () => {
+    const cleanName = newTaxonomy.trim().replace(/^\/|\/$/g, "");
+    if (!cleanName) {
       toast.error("Taxonomy name cannot be empty");
       return;
     }
 
-    // Check for duplicates
-    if (
-      taxonomies.some(
-        (tax) => tax.name.toLowerCase() === newTaxonomy.toLowerCase(),
-      )
-    ) {
+    if (isDuplicate(taxonomies, cleanName)) {
       toast.error("This taxonomy already exists");
       return;
     }
 
-    // Add new taxonomy with a unique ID
     const newTax: Taxonomy = {
-      id: crypto.randomUUID(), // Use crypto.randomUUID() for unique IDs
-      name: newTaxonomy.toLowerCase().trim(),
+      id: crypto.randomUUID(),
+      name: cleanName,
+      children: [],
     };
 
     setTaxonomies([...taxonomies, newTax]);
-
     setNewTaxonomy("");
+    toast.success(`Taxonomy "${cleanName}" has been added`);
+  };
 
-    toast.success(`Taxonomy "${newTaxonomy}" has been added`);
+  const handleAddChildTaxonomy = (parentId: string, childName: string) => {
+    const cleanName = childName.trim().replace(/^\/|\/$/g, "");
+    if (!cleanName) {
+      toast.error("Taxonomy name cannot be empty");
+      return;
+    }
+
+    if (isDuplicate(taxonomies, cleanName)) {
+      toast.error("This taxonomy already exists");
+      return;
+    }
+
+    const newChild: Taxonomy = {
+      id: crypto.randomUUID(),
+      name: cleanName,
+      children: [],
+    };
+
+    const addChildRecursive = (
+      items: Taxonomy[],
+      pId: string,
+      child: Taxonomy,
+    ): Taxonomy[] => {
+      return items.map((item) => {
+        if (item.id === pId) {
+          return { ...item, children: [...item.children, child] };
+        }
+        if (item.children.length > 0) {
+          return {
+            ...item,
+            children: addChildRecursive(item.children, pId, child),
+          };
+        }
+        return item;
+      });
+    };
+
+    setTaxonomies((prev) => addChildRecursive(prev, parentId, newChild));
+    toast.success(`Taxonomy "${cleanName}" has been added`);
   };
 
   const handleRemoveTaxonomy = (id: string) => {
-    const taxonomyToRemove = taxonomies.find((tax) => tax.id === id);
-    setTaxonomies(taxonomies.filter((tax) => tax.id !== id));
+    let removedTaxonomy: Taxonomy | null = null;
 
-    if (taxonomyToRemove) {
-      toast(`Taxonomy "${taxonomyToRemove.name}" has been removed`, {
+    function recursiveRemove(list: Taxonomy[], idToRemove: string): Taxonomy[] {
+      return list.reduce((acc, item) => {
+        if (item.id === idToRemove) {
+          removedTaxonomy = item;
+          return acc;
+        }
+        const children = item.children
+          ? recursiveRemove(item.children, idToRemove)
+          : [];
+        if (item.children && children.length < item.children.length) {
+          // A child was removed
+        }
+        acc.push({ ...item, children });
+        return acc;
+      }, [] as Taxonomy[]);
+    }
+
+    const newTaxonomies = recursiveRemove(taxonomies, id);
+
+    if (removedTaxonomy) {
+      setTaxonomies(newTaxonomies);
+      toast(`Taxonomy "${removedTaxonomy.name}" has been removed`, {
         description: "You can add it again if needed",
       });
     }
@@ -67,8 +258,22 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      handleAddTaxonomy();
+      handleAddRootTaxonomy();
     }
+  };
+
+  const buildPaths = (taxonomies: Taxonomy[], parentPath: string): string[] => {
+    let paths: string[] = [];
+    taxonomies.forEach((tax) => {
+      const currentPath = parentPath + tax.name;
+      if (tax.children.length > 0) {
+        paths.push(currentPath + "/");
+        paths.push(...buildPaths(tax.children, currentPath + "/"));
+      } else {
+        paths.push(currentPath);
+      }
+    });
+    return paths;
   };
 
   const handleSubmitTaxonomies = async () => {
@@ -78,30 +283,24 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
     }
 
     if (taxonomies.length > 8) {
-      toast.error("Maximum of 8 taxonomies allowed");
+      toast.error("Maximum of 8 root taxonomies allowed");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Convert taxonomies to an array of names
-      const taxonomyNames = taxonomies.map((tax) => tax.name);
+      const taxonomyPaths = buildPaths(taxonomies, "/");
 
-      console.log(taxonomyNames);
+      console.log(taxonomyPaths);
 
-      // Send the array to the Tauri command with the correct argument name
-      await invoke("set_taxonomies", { newTaxonomies: taxonomyNames });
+      await invoke("set_taxonomies", { newTaxonomies: taxonomyPaths });
 
-      // STORE THE INFORMATION INSIDE LOCALSTORAGE
       localStorage.setItem("taxonomies", JSON.stringify(taxonomies));
 
       toast.success("Taxonomies saved to database", {
-        description: `Successfully saved ${taxonomies.length} taxonomies`,
+        description: `Successfully saved ${taxonomyPaths.length} taxonomies`,
       });
-
-      // Optionally clear the list after successful submission
-      // setTaxonomies([])
     } catch (error) {
       toast.error("Failed to save taxonomies", {
         description: "Please try again later",
@@ -114,11 +313,17 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
   };
 
   useEffect(() => {
-    // GET THE TAXONOMIES FROM LOCALSTORAGE
     const getTaxonomies = () => {
       const storedTaxonomies = localStorage.getItem("taxonomies");
       if (storedTaxonomies) {
-        setTaxonomies(JSON.parse(storedTaxonomies));
+        const parsed = JSON.parse(storedTaxonomies);
+        const ensureChildren = (items: any[]): Taxonomy[] => {
+          return items.map((item) => ({
+            ...item,
+            children: item.children ? ensureChildren(item.children) : [],
+          }));
+        };
+        setTaxonomies(ensureChildren(parsed));
       }
     };
     getTaxonomies();
@@ -130,7 +335,7 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
         {/* Left Column - Add Taxonomy Form */}
         <div className="space-y-4">
           <h3 className="text-sm font-medium dark:text-white">
-            Add New Taxonomy
+            Add New Root Taxonomy
           </h3>
           <div className="flex gap-2">
             <Input
@@ -142,7 +347,7 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
               disabled={isSubmitting}
             />
             <Button
-              onClick={handleAddTaxonomy}
+              onClick={handleAddRootTaxonomy}
               className="flex items-center gap-1 h-8 bg-brand-bright dark:hover:bg-brand-bright dark:bg-brand-bright dark:text-white hover:bg-brand-bright"
               disabled={isSubmitting}
             >
@@ -171,31 +376,15 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
                 No taxonomies added yet
               </div>
             ) : (
-              <div className="grid gap-2 px-3 mt-2">
+              <div className="grid gap-1 pr-2 mt-2 w-full mb-2">
                 {taxonomies.map((tax) => (
-                  <div
+                  <TaxonomyNode
                     key={tax.id}
-                    className="flex items-center justify-between border dark:border-slate-500 mt-1 px-3 bg-muted rounded-md"
-                  >
-                    <div className="flex items-center">
-                      <BiSolidCategoryAlt
-                        className="dark:text-white"
-                        size={12}
-                      />
-                      <span className="px-3 dark:text-white/80 py-1 text-sm border-red-500">
-                        {tax.name}
-                      </span>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveTaxonomy(tax.id)}
-                      aria-label={`Remove ${tax.name}`}
-                      disabled={isSubmitting}
-                    >
-                      <X className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </div>
+                    taxonomy={tax}
+                    onRemove={handleRemoveTaxonomy}
+                    onAddChild={handleAddChildTaxonomy}
+                    isSubmitting={isSubmitting}
+                  />
                 ))}
               </div>
             )}
@@ -225,3 +414,4 @@ export default function TaxonomyManager({ closeDialog }: TaxonomyManagerProps) {
     </section>
   );
 }
+

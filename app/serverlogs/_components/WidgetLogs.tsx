@@ -61,21 +61,18 @@ export default function WidgetLogs() {
     return acc;
   }, {});
 
-  // Prepare content data from actual entries or use dummy data
-  const contentData = currentLogs?.reduce((acc, entry) => {
-    const content = entry.taxonomy;
-    acc[content] = (acc[content] || 0) + 1;
-    return acc;
-  }, {}) || {
-    Home: 1200,
-    Blog: 850,
-    Events: 420,
-    Solutions: 680,
-    Customers: 320,
-    Industries: 540,
-    Products: 610,
-    About: 290,
-  };
+  // Prepare content data from actual entries, grouped by top-level taxonomy
+  const contentData =
+    currentLogs?.reduce((acc, entry) => {
+      const content = entry.taxonomy;
+      if (content === "other") {
+        acc["other"] = (acc["other"] || 0) + 1;
+        return acc;
+      }
+      const topLevelTaxonomy = content.split("/")[1] || content;
+      acc[topLevelTaxonomy] = (acc[topLevelTaxonomy] || 0) + 1;
+      return acc;
+    }, {}) || {};
 
   // Prepare status code data from actual entries
   const statusCodeData = currentLogs?.reduce((acc, entry) => {
@@ -162,6 +159,17 @@ export default function WidgetLogs() {
       maximumFractionDigits: 1,
     });
     return f.format(num);
+  };
+
+  const getContentBreakdown = (topLevelTaxonomy) => {
+    if (!currentLogs) return [];
+    const childrenData = currentLogs.reduce((acc, entry) => {
+      if (entry.taxonomy.startsWith(`/${topLevelTaxonomy}`)) {
+        acc[entry.taxonomy] = (acc[entry.taxonomy] || 0) + 1;
+      }
+      return acc;
+    }, {});
+    return Object.entries(childrenData).map(([name, value]) => ({ name, value }));
   };
 
   console.log(overview, "Overview");
@@ -317,8 +325,21 @@ export default function WidgetLogs() {
                       </div>
                     </DialogTrigger>
 
-                    {/*DISPLAY THE DATA FROM GOOGLE*/}
-                    {entry?.name === "Google" ? (
+                    {activeTab === 'Content' ? (
+                      <DialogContent className="max-w-md dark:text-white dark:border-brand-bright dark:bg-brand-darker">
+                        <DialogHeader>
+                          <DialogTitle>Breakdown for {entry.name}</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-2 pt-4">
+                          {getContentBreakdown(entry.name).map(breakdownEntry => (
+                            <div key={breakdownEntry.name} className="flex justify-between">
+                              <span>{breakdownEntry.name}</span>
+                              <span className="font-medium">{breakdownEntry.value.toLocaleString()}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </DialogContent>
+                    ) : entry?.name === "Google" ? (
                       <DialogContent className="max-w-[90%] min-h-96 overflow-hidden dark:bg-brand-darker dark:border-brand-bright">
                         <Tabs defaultValue="overview">
                           <Tabs.List className="mb-2 mx-1">
