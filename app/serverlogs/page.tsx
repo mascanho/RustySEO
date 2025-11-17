@@ -58,8 +58,8 @@ export default function Page() {
   // FETCH THE GOOGLE'S IP AND HAVE IT READY TO BE USED BY THE BE
   useEffect(() => {
     try {
-      invoke("fetch_google_ip_ranges", {});
-      invoke("fetch_bingbot_ranges", {});
+      // Fetch all IP ranges to verify IPs from Google, OpenAI and BING
+      invoke("fetch_all_bot_ranges", {});
     } catch (error) {
       console.error("Error loading taxonomies:", error);
       toast.error("RustySEO failed to load Google's IP ranges");

@@ -2,7 +2,7 @@ use chrono::NaiveDateTime;
 use ipnet::IpNet;
 use once_cell::sync::Lazy;
 use regex::Regex;
-use reqwest; // Add this import
+use reqwest;
 use serde::{Deserialize, Serialize};
 use std::io::{self, Write};
 use std::net::{AddrParseError, IpAddr};
@@ -12,15 +12,30 @@ use tauri::{Emitter, Manager};
 
 use super::google_ip_fetcher::get_google_ip_ranges;
 
-#[derive(Debug, Deserialize, Clone)] // Add Clone trait
+#[derive(Debug, Deserialize, Clone)]
 pub struct BingBotRanges {
     #[serde(rename = "creationTime")]
     pub creation_time: String,
     pub prefixes: Vec<BingPrefix>,
 }
 
-#[derive(Debug, Deserialize, Clone)] // Add Clone trait
+#[derive(Debug, Deserialize, Clone)]
 pub struct BingPrefix {
+    #[serde(rename = "ipv4Prefix")]
+    pub ipv4_prefix: Option<String>,
+    #[serde(rename = "ipv6Prefix")]
+    pub ipv6_prefix: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct OpenAIBotRanges {
+    #[serde(rename = "creationTime")]
+    pub creation_time: String,
+    pub prefixes: Vec<OpenAIPrefix>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct OpenAIPrefix {
     #[serde(rename = "ipv4Prefix")]
     pub ipv4_prefix: Option<String>,
     #[serde(rename = "ipv6Prefix")]
@@ -146,7 +161,7 @@ pub async fn fetch_bingbot_ranges() -> Result<Vec<String>, String> {
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(10))
         .build()
-        .map_err(|e| e.to_string())?; // Fixed: Added error handling
+        .map_err(|e| e.to_string())?;
 
     let response = client
         .get("https://www.bing.com/toolbox/bingbot.json")
@@ -203,6 +218,72 @@ fn is_bing_verified(ip: &str) -> Result<bool, IpVerificationError> {
     Ok(false)
 }
 
+// Store the actual OpenAI ranges
+static OPENAI_IP_RANGES: Lazy<Mutex<Vec<IpNet>>> = Lazy::new(|| Mutex::new(Vec::new()));
+
+/// Fetches the latest OpenAI Searchbot IP ranges from the official endpoint
+#[tauri::command]
+pub async fn fetch_openai_ranges() -> Result<Vec<String>, String> {
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    let response = client
+        .get("https://openai.com/searchbot.json")
+        .header("User-Agent", "RustySEO-Bot-Verifier/1.0")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let openai_ranges = response
+        .json::<OpenAIBotRanges>()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // Parse and store the IP networks
+    let mut networks = Vec::new();
+    let mut range_strings = Vec::new();
+
+    for prefix in &openai_ranges.prefixes {
+        if let Some(ipv4_prefix) = &prefix.ipv4_prefix {
+            if let Ok(net) = IpNet::from_str(ipv4_prefix) {
+                networks.push(net);
+                range_strings.push(ipv4_prefix.clone());
+            }
+        }
+        if let Some(ipv6_prefix) = &prefix.ipv6_prefix {
+            if let Ok(net) = IpNet::from_str(ipv6_prefix) {
+                networks.push(net);
+                range_strings.push(ipv6_prefix.clone());
+            }
+        }
+    }
+
+    // Store the parsed networks
+    {
+        let mut ranges = OPENAI_IP_RANGES.lock().unwrap();
+        *ranges = networks;
+    }
+
+    println!("Loaded {} OpenAI Searchbot IP ranges", range_strings.len());
+    Ok(range_strings)
+}
+
+/// Check if an IP is verified as OpenAI Searchbot
+fn is_openai_verified(ip: &str) -> Result<bool, IpVerificationError> {
+    let ip_addr = IpAddr::from_str(ip)?;
+    let ranges = OPENAI_IP_RANGES.lock().unwrap();
+
+    for net in ranges.iter() {
+        if net.contains(&ip_addr) {
+            return Ok(true);
+        }
+    }
+
+    Ok(false)
+}
+
 /// Check if an IP is from any verified search engine
 fn is_verified_crawler(ip: &str, crawler_type: &str) -> bool {
     let crawler_lower = crawler_type.to_lowercase();
@@ -211,6 +292,8 @@ fn is_verified_crawler(ip: &str, crawler_type: &str) -> bool {
         is_google_verified(ip).unwrap_or(false)
     } else if crawler_lower.contains("bing") {
         is_bing_verified(ip).unwrap_or(false)
+    } else if crawler_lower.contains("openai") || crawler_lower.contains("chatgpt") {
+        is_openai_verified(ip).unwrap_or(false)
     } else {
         false
     }
@@ -296,6 +379,8 @@ fn detect_bot(user_agent: &str) -> Option<String> {
         return Some("Google".to_string());
     } else if lower.contains("bingbot") {
         return Some("Bing".to_string());
+    } else if lower.contains("openai") || lower.contains("chatgpt") {
+        return Some("OpenAI".to_string());
     } else if lower.contains("semrush") {
         return Some("Semrush".to_string());
     } else if lower.contains("ahrefs") {
@@ -385,4 +470,30 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
 
     println!("Parsed {} valid log entries", entries.len());
     entries
+}
+
+// Tauri command to fetch all bot IP ranges at once
+#[tauri::command]
+pub async fn fetch_all_bot_ranges() -> Result<Vec<String>, String> {
+    let mut results = Vec::new();
+
+    // Fetch Google ranges
+    match fetch_google_ip_ranges().await {
+        Ok(ranges) => results.push(format!("Google: {} ranges loaded", ranges.len())),
+        Err(e) => results.push(format!("Google: Failed - {}", e)),
+    }
+
+    // Fetch Bing ranges
+    match fetch_bingbot_ranges().await {
+        Ok(ranges) => results.push(format!("Bing: {} ranges loaded", ranges.len())),
+        Err(e) => results.push(format!("Bing: Failed - {}", e)),
+    }
+
+    // Fetch OpenAI ranges
+    match fetch_openai_ranges().await {
+        Ok(ranges) => results.push(format!("OpenAI: {} ranges loaded", ranges.len())),
+        Err(e) => results.push(format!("OpenAI: Failed - {}", e)),
+    }
+
+    Ok(results)
 }
