@@ -68,6 +68,7 @@ pub struct BotStats {
     pub status_codes: StatusCodeCounts,
     pub pages: Vec<String>,
     pub page_frequencies: HashMap<String, Vec<BotPageDetails>>,
+    pub page_status_codes: HashMap<String, StatusCodeCounts>, // New: status codes per page
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -170,6 +171,17 @@ impl StatusCodeCounts {
             _ => self.other_count += 1,
         }
     }
+
+    fn merge(&mut self, other: &StatusCodeCounts) {
+        for (&status, &count) in &other.counts {
+            *self.counts.entry(status).or_insert(0) += count;
+        }
+        self.success_count += other.success_count;
+        self.redirect_count += other.redirect_count;
+        self.client_error_count += other.client_error_count;
+        self.server_error_count += other.server_error_count;
+        self.other_count += other.other_count;
+    }
 }
 
 impl BotStats {
@@ -179,6 +191,7 @@ impl BotStats {
             status_codes: StatusCodeCounts::new(),
             pages: Vec::new(),
             page_frequencies: HashMap::new(),
+            page_status_codes: HashMap::new(),
         }
     }
 
@@ -186,6 +199,13 @@ impl BotStats {
         self.count += 1;
         self.status_codes.add_status(entry.status);
         self.pages.push(entry.path.clone());
+
+        // Update page-specific status codes
+        let page_status = self
+            .page_status_codes
+            .entry(entry.path.clone())
+            .or_insert_with(StatusCodeCounts::new);
+        page_status.add_status(entry.status);
     }
 }
 
@@ -417,21 +437,14 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     bot_stats.openai.page_frequencies = openai_bot_page_frequencies.clone();
     bot_stats.claude.page_frequencies = claude_bot_page_frequencies.clone();
 
-    // DEBUG OUTPUT
-    println!("=== DEBUG SUMMARY ===");
-    println!("Total entries: {}", total_requests);
-    println!("Google bot entries: {}", bot_counts[0]);
-    println!("Bing bot entries: {}", bot_counts[1]);
-    println!("OpenAI bot entries: {}", bot_counts[6]);
-    println!("Claude bot entries: {}", bot_counts[7]);
-    println!(
-        "Overall status code counts: {:?}",
-        status_code_counts.counts
-    );
-    println!(
-        "Google bot status codes: {:?}",
-        bot_stats.google.status_codes.counts
-    );
+    // DEBUG OUTPUT - Show page status code examples
+    println!("=== DEBUG PAGE STATUS CODES ===");
+    for (page, status_codes) in bot_stats.google.page_status_codes.iter().take(5) {
+        println!(
+            "Google Page: {} - Status codes: {:?}",
+            page, status_codes.counts
+        );
+    }
 
     let overview = LogAnalysisResult {
         message: "Log analysis completed".to_string(),
