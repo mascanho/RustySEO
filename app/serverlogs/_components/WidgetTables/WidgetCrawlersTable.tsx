@@ -89,6 +89,15 @@ const formatResponseSize = (bytes: number): string => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
+interface StatusCodeCounts {
+  counts: { [key: number]: number };
+  success_count: number;
+  redirect_count: number;
+  client_error_count: number;
+  server_error_count: number;
+  other_count: number;
+}
+
 interface LogEntry {
   ip: string;
   timestamp: string;
@@ -105,32 +114,14 @@ interface LogEntry {
   file_type: string;
   frequency: number;
   verified: boolean;
+  status_codes?: StatusCodeCounts; // Added this line
 }
 
 interface WidgetTableProps {
   data: any;
 }
 
-const ensureUniqueUrls = (logs: LogEntry[]): LogEntry[] => {
-  const urlMap = new Map<string, LogEntry>();
 
-  logs.forEach((log) => {
-    if (urlMap.has(log.path)) {
-      const existingLog = urlMap.get(log.path);
-      if (existingLog) {
-        existingLog.frequency += log.frequency;
-        existingLog.response_size += log.response_size;
-        if (new Date(log.timestamp) < new Date(existingLog.timestamp)) {
-          existingLog.timestamp = log.timestamp;
-        }
-      }
-    } else {
-      urlMap.set(log.path, { ...log });
-    }
-  });
-
-  return Array.from(urlMap.values());
-};
 
 const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
   const [initialLogs, setInitialLogs] = useState<LogEntry[]>([]);
@@ -166,23 +157,26 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
   }, [data.length]);
 
   useEffect(() => {
-    if (!data?.totals?.google_bot_page_frequencies) return;
+    if (!data?.totals?.bot_stats?.google?.page_frequencies) return;
 
     let logs: LogEntry[] = [];
-    Object.entries(data.totals.google_bot_page_frequencies).forEach(
+    const pageStatus = data.totals.bot_stats.google.page_status_codes || {};
+
+    Object.entries(data.totals.bot_stats.google.page_frequencies).forEach(
       ([path, entries]) => {
-        (entries as any[]).forEach((entry: any) => {
+        if (entries.length > 0) {
+          const aggregatedEntry = entries[0];
           logs.push({
-            ...entry,
+            ...aggregatedEntry,
             path,
+            status_codes: pageStatus[path],
           });
-        });
+        }
       },
     );
 
-    const uniqueLogs = ensureUniqueUrls(logs);
-    setInitialLogs(uniqueLogs);
-    setFilteredLogs(uniqueLogs);
+    setInitialLogs(logs);
+    setFilteredLogs(logs);
   }, [data]);
 
   useEffect(() => {
