@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { PlusCircle, X, Save, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -9,23 +9,29 @@ import { Input } from "@/components/ui/input";
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { BiSolidCategoryAlt } from "react-icons/bi";
 import { invoke } from "@tauri-apps/api/core";
+import { useLogAnalysis } from "@/store/ServerLogsStore";
 
-interface Taxonomy {
-  id: string;
-  name: string;
-  paths: string[];
-  matchType: "startsWith" | "contains";
-}
-
-function Segment({ taxonomy, onUpdate, onRemove }) {
+function Segment({ taxonomy, allTaxonomies, onUpdate, onRemove }) {
   const [newPath, setNewPath] = useState("");
 
   const handleAddPath = () => {
-    if (newPath && !taxonomy.paths.includes(newPath)) {
-      const updatedPaths = [...taxonomy.paths, newPath];
-      onUpdate({ ...taxonomy, paths: updatedPaths });
-      setNewPath("");
+    if (!newPath) return;
+
+    if (taxonomy.paths.includes(newPath)) {
+      toast.error("This path already exists in this segment.");
+      return;
     }
+
+    const pathExistsInOtherSegment = allTaxonomies.some(tax => 
+      tax.id !== taxonomy.id && tax.paths.includes(newPath)
+    );
+    if (pathExistsInOtherSegment) {
+      toast.warning("This path is already used in another segment.");
+    }
+
+    const updatedPaths = [...taxonomy.paths, newPath];
+    onUpdate({ ...taxonomy, paths: updatedPaths });
+    setNewPath("");
   };
 
   const handleRemovePath = (pathToRemove) => {
@@ -105,10 +111,9 @@ function Segment({ taxonomy, onUpdate, onRemove }) {
 }
 
 export default function TaxonomyManager({ closeDialog }) {
-  const [taxonomies, setTaxonomies] = useState<Taxonomy[]>([]);
+  const { taxonomies, setTaxonomies } = useLogAnalysis();
   const [newTaxonomyName, setNewTaxonomyName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   const handleAddSegment = () => {
     const cleanName = newTaxonomyName.trim();
@@ -121,7 +126,7 @@ export default function TaxonomyManager({ closeDialog }) {
       return;
     }
 
-    const newTaxonomy: Taxonomy = {
+    const newTaxonomy = {
       id: crypto.randomUUID(),
       name: cleanName,
       paths: [],
@@ -155,8 +160,7 @@ export default function TaxonomyManager({ closeDialog }) {
       );
 
       await invoke("set_taxonomies", { newTaxonomies: taxonomyInfo });
-      localStorage.setItem("taxonomies", JSON.stringify(taxonomies));
-
+      // The store already saves to localStorage in the setTaxonomies action
       toast.success("Segments saved to database");
     } catch (error) {
       toast.error("Failed to save segments");
@@ -166,63 +170,6 @@ export default function TaxonomyManager({ closeDialog }) {
       setIsSubmitting(false);
     }
   };
-
-  useEffect(() => {
-    const loadTaxonomies = async () => {
-      setIsLoading(true);
-      let loadedTaxonomies: Taxonomy[] = [];
-      const storedTaxonomies = localStorage.getItem("taxonomies");
-
-      if (storedTaxonomies) {
-        try {
-          const parsed = JSON.parse(storedTaxonomies);
-          if (Array.isArray(parsed)) {
-            loadedTaxonomies = parsed;
-          }
-        } catch (e) {
-          console.error("Failed to parse taxonomies from localStorage", e);
-          localStorage.removeItem("taxonomies");
-        }
-      } else {
-        try {
-          const backendTaxonomies = await invoke("get_taxonomies");
-          if (Array.isArray(backendTaxonomies) && backendTaxonomies.length > 0) {
-            const grouped = backendTaxonomies.reduce((acc, item) => {
-              if (!acc[item.name]) {
-                acc[item.name] = {
-                  id: crypto.randomUUID(),
-                  name: item.name,
-                  paths: [],
-                  matchType: item.match_type || 'startsWith',
-                };
-              }
-              acc[item.name].paths.push(item.path);
-              return acc;
-            }, {});
-            loadedTaxonomies = Object.values(grouped);
-            localStorage.setItem("taxonomies", JSON.stringify(loadedTaxonomies));
-          }
-        } catch (error) {
-          console.log("No taxonomies found in backend:", error);
-        }
-      }
-      
-      setTaxonomies(loadedTaxonomies);
-      setIsLoading(false);
-    };
-
-    loadTaxonomies();
-  }, []);
-
-  if (isLoading) {
-    return (
-      <section className="w-[650px] max-w-5xl mx-auto h-full pt-4 flex flex-col">
-        <CardContent className="flex items-center justify-center h-[360px]">
-          <Loader2 className="h-6 w-6 animate-spin" />
-        </CardContent>
-      </section>
-    );
-  }
 
   return (
     <section className="w-[650px] max-w-5xl mx-auto h-full pt-4 flex flex-col">
@@ -256,6 +203,7 @@ export default function TaxonomyManager({ closeDialog }) {
                 <Segment
                   key={tax.id}
                   taxonomy={tax}
+                  allTaxonomies={taxonomies}
                   onUpdate={handleUpdateSegment}
                   onRemove={handleRemoveSegment}
                 />
