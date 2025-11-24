@@ -40,11 +40,13 @@ function Segment({ taxonomy, onUpdate, onRemove }) {
   };
 
   return (
-    <div className="border dark:border-slate-700 rounded-md p-3 space-y-2">
+    <div className="border dark:border-slate-700 rounded-md p-3 space-y-2 dark:text-white">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BiSolidCategoryAlt className="dark:text-white" size={14} />
-          <span className="font-semibold dark:text-white/90">{taxonomy.name}</span>
+          <span className="font-semibold dark:text-white/90">
+            {taxonomy.name}
+          </span>
         </div>
         <div className="flex items-center gap-1">
           <Button
@@ -66,7 +68,9 @@ function Segment({ taxonomy, onUpdate, onRemove }) {
         </div>
       </div>
       <div className="space-y-1 pl-2">
-        <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400">Paths</h4>
+        <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400">
+          Paths
+        </h4>
         {taxonomy.paths.length > 0 ? (
           taxonomy.paths.map((path) => (
             <div
@@ -85,7 +89,9 @@ function Segment({ taxonomy, onUpdate, onRemove }) {
             </div>
           ))
         ) : (
-          <p className="text-xs text-gray-500 dark:text-gray-400 pl-2">No paths added yet.</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 pl-2">
+            No paths added yet.
+          </p>
         )}
       </div>
       <div className="flex gap-2 pt-2 pl-2">
@@ -93,10 +99,13 @@ function Segment({ taxonomy, onUpdate, onRemove }) {
           placeholder="Add a new path (e.g., /blog/)"
           value={newPath}
           onChange={(e) => setNewPath(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleAddPath()}
+          onKeyDown={(e) => e.key === "Enter" && handleAddPath()}
           className="h-8 dark:text-white"
         />
-        <Button onClick={handleAddPath} className="h-8">
+        <Button
+          onClick={handleAddPath}
+          className="h-8 dark:bg-brand-bright dark:text-white"
+        >
           Add Path
         </Button>
       </div>
@@ -116,7 +125,11 @@ export default function TaxonomyManager({ closeDialog }) {
       toast.error("Segment name cannot be empty");
       return;
     }
-    if (taxonomies.some((tax) => tax.name.toLowerCase() === cleanName.toLowerCase())) {
+    if (
+      taxonomies.some(
+        (tax) => tax.name.toLowerCase() === cleanName.toLowerCase(),
+      )
+    ) {
       toast.error("A segment with this name already exists");
       return;
     }
@@ -134,7 +147,7 @@ export default function TaxonomyManager({ closeDialog }) {
 
   const handleUpdateSegment = (updatedTaxonomy) => {
     const newTaxonomies = taxonomies.map((tax) =>
-      tax.id === updatedTaxonomy.id ? updatedTaxonomy : tax
+      tax.id === updatedTaxonomy.id ? updatedTaxonomy : tax,
     );
     setTaxonomies(newTaxonomies);
   };
@@ -146,12 +159,12 @@ export default function TaxonomyManager({ closeDialog }) {
   const handleSubmitTaxonomies = async () => {
     setIsSubmitting(true);
     try {
-      const taxonomyInfo = taxonomies.flatMap(tax =>
-        tax.paths.map(path => ({
+      const taxonomyInfo = taxonomies.flatMap((tax) =>
+        tax.paths.map((path) => ({
           path: path,
           match_type: tax.matchType,
           name: tax.name,
-        }))
+        })),
       );
 
       await invoke("set_taxonomies", { newTaxonomies: taxonomyInfo });
@@ -186,27 +199,33 @@ export default function TaxonomyManager({ closeDialog }) {
       } else {
         try {
           const backendTaxonomies = await invoke("get_taxonomies");
-          if (Array.isArray(backendTaxonomies) && backendTaxonomies.length > 0) {
+          if (
+            Array.isArray(backendTaxonomies) &&
+            backendTaxonomies.length > 0
+          ) {
             const grouped = backendTaxonomies.reduce((acc, item) => {
               if (!acc[item.name]) {
                 acc[item.name] = {
                   id: crypto.randomUUID(),
                   name: item.name,
                   paths: [],
-                  matchType: item.match_type || 'startsWith',
+                  matchType: item.match_type || "startsWith",
                 };
               }
               acc[item.name].paths.push(item.path);
               return acc;
             }, {});
             loadedTaxonomies = Object.values(grouped);
-            localStorage.setItem("taxonomies", JSON.stringify(loadedTaxonomies));
+            localStorage.setItem(
+              "taxonomies",
+              JSON.stringify(loadedTaxonomies),
+            );
           }
         } catch (error) {
           console.log("No taxonomies found in backend:", error);
         }
       }
-      
+
       setTaxonomies(loadedTaxonomies);
       setIsLoading(false);
     };
@@ -228,16 +247,21 @@ export default function TaxonomyManager({ closeDialog }) {
     <section className="w-[650px] max-w-5xl mx-auto h-full pt-4 flex flex-col">
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <h3 className="text-sm font-medium dark:text-white">Add New Segment</h3>
+          <h3 className="text-sm font-medium dark:text-white">
+            Add New Segment
+          </h3>
           <div className="flex gap-2">
             <Input
               placeholder="New Segment Name (e.g., Blog)"
               value={newTaxonomyName}
               onChange={(e) => setNewTaxonomyName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddSegment()}
+              onKeyDown={(e) => e.key === "Enter" && handleAddSegment()}
               className="h-8 dark:text-white"
             />
-            <Button onClick={handleAddSegment} className="h-8">
+            <Button
+              onClick={handleAddSegment}
+              className="h-8 dark:bg-brand-bright dark:text-white"
+            >
               <PlusCircle className="h-4 w-4 mr-2" />
               Add Segment
             </Button>
@@ -245,8 +269,10 @@ export default function TaxonomyManager({ closeDialog }) {
         </div>
 
         <div className="space-y-2">
-          <h3 className="text-sm font-medium dark:text-white">Current Segments</h3>
-          <div className="border dark:border-brand-dark rounded-md h-[300px] overflow-y-auto p-2 space-y-3">
+          <h3 className="text-sm font-medium dark:text-white">
+            Current Segments
+          </h3>
+          <div className="border dark:border-brand-dark rounded-md h-[370px] overflow-y-auto p-2 space-y-3">
             {taxonomies.length === 0 ? (
               <div className="text-sm text-muted-foreground py-4 text-center dark:text-white/50">
                 No segments added yet.
@@ -282,4 +308,3 @@ export default function TaxonomyManager({ closeDialog }) {
     </section>
   );
 }
-
