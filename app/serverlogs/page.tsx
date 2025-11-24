@@ -39,10 +39,14 @@ export default function Page() {
 
         if (taxonomies) {
           const parsedTaxonomies = JSON.parse(taxonomies);
-          const taxonomyNames = parsedTaxonomies.map(
-            (tax: { name: string }) => tax.name,
-          );
-          await invoke("set_taxonomies", { newTaxonomies: taxonomyNames });
+          if (Array.isArray(parsedTaxonomies)) {
+            const taxonomyInfo = parsedTaxonomies.map(tax => ({
+              path: tax.path,
+              match_type: tax.matchType,
+              name: tax.name,
+            }));
+            await invoke("set_taxonomies", { newTaxonomies: taxonomyInfo });
+          }
         }
         // No else block needed - it's normal to have no taxonomies
       } catch (error) {
