@@ -53,10 +53,33 @@ const COLORS = [
 
 export default function WidgetLogs() {
   const [activeTab, setActiveTab] = useState("Filetypes");
-  const { overview, taxonomyNameMap } = useLogAnalysis();
+  const { overview } = useLogAnalysis();
   const [openDialogs, setOpenDialogs] = useState({});
   const { currentLogs } = useCurrentLogs();
   const { uploadedLogFiles } = useServerLogsStore();
+  const [taxonomyNameMap, setTaxonomyNameMap] = useState({});
+
+  useEffect(() => {
+    const storedTaxonomies = localStorage.getItem("taxonomies");
+    if (storedTaxonomies) {
+      try {
+        const parsed = JSON.parse(storedTaxonomies);
+        if (Array.isArray(parsed)) {
+          const newMap = parsed.reduce((acc, tax) => {
+            if (tax.paths) {
+              tax.paths.forEach(path => {
+                acc[path] = tax.name;
+              });
+            }
+            return acc;
+          }, {});
+          setTaxonomyNameMap(newMap);
+        }
+      } catch (e) {
+        console.error("Failed to parse taxonomies from localStorage", e);
+      }
+    }
+  }, []);
 
   // Prepare filetype data from actual entries
   const fileTypeData = currentLogs?.reduce((acc, entry) => {
@@ -99,17 +122,12 @@ export default function WidgetLogs() {
   const getChartData = () => {
     if (activeTab === "Content") {
       const contentBySegment = Object.entries(contentData || {}).reduce((acc, [path, value]) => {
-        const names = taxonomyNameMap[path] || ["Other"];
-        names.forEach(name => {
-          if (!acc[name]) {
-            acc[name] = { value: 0, paths: {} };
-          }
-          acc[name].value += value;
-          if (!acc[name].paths[path]) {
-            acc[name].paths[path] = 0;
-          }
-          acc[name].paths[path] += value;
-        });
+        const name = taxonomyNameMap[path] || "Other";
+        if (!acc[name]) {
+          acc[name] = { value: 0, paths: {} };
+        }
+        acc[name].value += value;
+        acc[name].paths[path] = value;
         return acc;
       }, {});
 

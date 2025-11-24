@@ -29,11 +29,35 @@ interface CrawlResult {
 export default function Page() {
   const [keysPressed, setKeysPressed] = useState(new Set());
   const [shortcutActivated, setShortcutActivated] = useState(false);
-  const { setLogData, logData, loadTaxonomies } = useLogAnalysis();
+  const { setLogData, logData } = useLogAnalysis();
 
+  // ALWAYS CHECK THE TAXONOMIES FROM THE LOCALSTORAGE AND SEND THEM TO THE TAURI COMMAND ON FIRST RUN
   useEffect(() => {
-    loadTaxonomies();
-  }, [loadTaxonomies]);
+    const getTaxonomies = async () => {
+      try {
+        const taxonomies = localStorage.getItem("taxonomies");
+
+        if (taxonomies) {
+          const parsedTaxonomies = JSON.parse(taxonomies);
+          if (Array.isArray(parsedTaxonomies)) {
+            const taxonomyInfo = parsedTaxonomies.map(tax => ({
+              path: tax.path,
+              match_type: tax.matchType,
+              name: tax.name,
+            }));
+            await invoke("set_taxonomies", { newTaxonomies: taxonomyInfo });
+          }
+        }
+        // No else block needed - it's normal to have no taxonomies
+      } catch (error) {
+        console.error("Error loading taxonomies:", error);
+        // Don't show error toast - it's normal for taxonomies to not exist yet
+        // toast.error("Failed to load taxonomies");
+      }
+    };
+
+    getTaxonomies();
+  }, []);
 
   // FETCH THE GOOGLE'S IP AND HAVE IT READY TO BE USED BY THE BE
   useEffect(() => {
