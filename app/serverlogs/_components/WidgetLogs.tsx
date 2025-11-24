@@ -58,6 +58,7 @@ export default function WidgetLogs() {
   const { currentLogs } = useCurrentLogs();
   const { uploadedLogFiles } = useServerLogsStore();
   const [taxonomyNameMap, setTaxonomyNameMap] = useState({});
+  const [sortedTaxonomyPaths, setSortedTaxonomyPaths] = useState([]);
 
   useEffect(() => {
     const storedTaxonomies = localStorage.getItem("taxonomies");
@@ -74,6 +75,11 @@ export default function WidgetLogs() {
             return acc;
           }, {});
           setTaxonomyNameMap(newMap);
+
+          // Create and sort the paths for efficient prefix matching
+          const sortedPaths = Object.entries(newMap)
+            .sort((a, b) => b[0].length - a[0].length); // Sort by path string length in descending order
+          setSortedTaxonomyPaths(sortedPaths);
         }
       } catch (e) {
         console.error("Failed to parse taxonomies from localStorage", e);
@@ -121,13 +127,21 @@ export default function WidgetLogs() {
   // Get chart data for active tab
   const getChartData = () => {
     if (activeTab === "Content") {
-      const contentBySegment = Object.entries(contentData || {}).reduce((acc, [path, value]) => {
-        const name = taxonomyNameMap[path] || "Other";
-        if (!acc[name]) {
-          acc[name] = { value: 0, paths: {} };
+      const contentBySegment = Object.entries(contentData || {}).reduce((acc, [logPath, value]) => {
+        let segmentName = "Other";
+        // Find the most specific segment name using sortedTaxonomyPaths
+        for (const [taxPath, name] of sortedTaxonomyPaths) {
+          if (logPath.startsWith(taxPath)) {
+            segmentName = name;
+            break; // Found the most specific match, so break
+          }
         }
-        acc[name].value += value;
-        acc[name].paths[path] = value;
+
+        if (!acc[segmentName]) {
+          acc[segmentName] = { value: 0, paths: {} };
+        }
+        acc[segmentName].value += value;
+        acc[segmentName].paths[logPath] = value;
         return acc;
       }, {});
 
