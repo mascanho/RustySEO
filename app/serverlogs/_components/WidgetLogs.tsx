@@ -60,25 +60,56 @@ export default function WidgetLogs() {
   const [taxonomyNameMap, setTaxonomyNameMap] = useState({});
 
   useEffect(() => {
-    const storedTaxonomies = localStorage.getItem("taxonomies");
-    if (storedTaxonomies) {
-      try {
-        const parsed = JSON.parse(storedTaxonomies);
-        if (Array.isArray(parsed)) {
-          const newMap = parsed.reduce((acc, tax) => {
-            if (tax.paths) {
-              tax.paths.forEach(path => {
-                acc[path] = tax.name;
-              });
-            }
-            return acc;
-          }, {});
-          setTaxonomyNameMap(newMap);
+    const loadTaxonomies = () => {
+      const storedTaxonomies = localStorage.getItem("taxonomies");
+      if (storedTaxonomies) {
+        try {
+          const parsed = JSON.parse(storedTaxonomies);
+          if (Array.isArray(parsed)) {
+            const newMap = {};
+            parsed.forEach(tax => {
+              if (tax.paths) {
+                // Ensure paths are in the format expected by PathConfig, accounting for old string format
+                tax.paths.forEach(p => {
+                  const pathString = typeof p === 'string' ? p : p.path;
+                  if (pathString) {
+                    newMap[pathString] = tax.name;
+                  }
+                });
+              }
+            });
+            setTaxonomyNameMap(newMap);
+
+            const sortedPaths = Object.entries(newMap)
+              .sort((a, b) => b[0].length - a[0].length);
+            setSortedTaxonomyPaths(sortedPaths);
+          }
+        } catch (e) {
+          console.error("Failed to parse taxonomies from localStorage", e);
+          // If parsing fails, clear localStorage and current taxonomies
+          localStorage.removeItem("taxonomies");
+          setTaxonomyNameMap({});
+          setSortedTaxonomyPaths([]);
         }
-      } catch (e) {
-        console.error("Failed to parse taxonomies from localStorage", e);
+      } else {
+        // If no stored taxonomies, clear current ones
+        setTaxonomyNameMap({});
+        setSortedTaxonomyPaths([]);
       }
-    }
+    };
+
+    // Load taxonomies initially and whenever the custom event fires
+    loadTaxonomies();
+
+    const handleTaxonomiesUpdate = () => {
+      loadTaxonomies();
+    };
+
+    window.addEventListener('taxonomiesUpdated', handleTaxonomiesUpdate);
+
+    return () => {
+      window.removeEventListener('taxonomiesUpdated', handleTaxonomiesUpdate);
+    };
   }, []);
 
   // Prepare filetype data from actual entries

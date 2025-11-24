@@ -10,33 +10,144 @@ import { CardContent, CardFooter } from "@/components/ui/card";
 import { BiSolidCategoryAlt } from "react-icons/bi";
 import { invoke } from "@tauri-apps/api/core";
 
+interface PathConfig {
+  path: string;
+  matchType: "startsWith" | "contains";
+}
+
 interface Taxonomy {
   id: string;
   name: string;
-  paths: string[];
-  matchType: "startsWith" | "contains";
+  paths: PathConfig[];
+}
+
+function PathItem({ pathConfig, onUpdate, onRemove }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedPath, setEditedPath] = useState(pathConfig.path);
+
+  const handleMatchTypeChange = () => {
+    const newMatchType =
+      pathConfig.matchType === "startsWith" ? "contains" : "startsWith";
+    onUpdate({ ...pathConfig, matchType: newMatchType });
+  };
+
+  const handlePathUpdate = () => {
+    if (editedPath.trim() && editedPath !== pathConfig.path) {
+      onUpdate({ ...pathConfig, path: editedPath.trim() });
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditedPath(pathConfig.path);
+    setIsEditing(false);
+  };
+
+  return (
+    <div className="flex items-center justify-between text-sm bg-muted dark:bg-slate-800/50 rounded-md px-2 py-1">
+      <div className="flex items-center gap-2 flex-1">
+        {isEditing ? (
+          <Input
+            value={editedPath}
+            onChange={(e) => setEditedPath(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handlePathUpdate();
+              if (e.key === "Escape") handleCancelEdit();
+            }}
+            className="h-6 text-xs font-mono flex-1"
+            autoFocus
+          />
+        ) : (
+          <span
+            className="font-mono text-xs cursor-pointer hover:bg-slate-700/50 rounded px-1 py-0.5 flex-1"
+            onClick={() => setIsEditing(true)}
+            title="Click to edit path"
+          >
+            {pathConfig.path}
+          </span>
+        )}
+
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-6 text-xs"
+          onClick={handleMatchTypeChange}
+        >
+          {pathConfig.matchType === "startsWith" ? "Starts with" : "Contains"}
+        </Button>
+      </div>
+
+      <div className="flex items-center gap-1 ml-2">
+        {isEditing ? (
+          <>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5 text-green-500"
+              onClick={handlePathUpdate}
+            >
+              <Save className="h-3 w-3" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-5 w-5"
+              onClick={handleCancelEdit}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-5 w-5"
+            onClick={() => onRemove(pathConfig.path)}
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function Segment({ taxonomy, onUpdate, onRemove }) {
   const [newPath, setNewPath] = useState("");
+  const [newPathMatchType, setNewPathMatchType] = useState<
+    "startsWith" | "contains"
+  >("startsWith");
 
   const handleAddPath = () => {
-    if (newPath && !taxonomy.paths.includes(newPath)) {
-      const updatedPaths = [...taxonomy.paths, newPath];
-      onUpdate({ ...taxonomy, paths: updatedPaths });
-      setNewPath("");
+    const cleanPath = newPath.trim();
+    if (!cleanPath) return;
+
+    const pathExists = taxonomy.paths.some((p) => p.path === cleanPath);
+    if (pathExists) {
+      toast.error("This path already exists in the segment");
+      return;
     }
+
+    const newPathConfig: PathConfig = {
+      path: cleanPath,
+      matchType: newPathMatchType,
+    };
+
+    const updatedPaths = [...taxonomy.paths, newPathConfig];
+    onUpdate({ ...taxonomy, paths: updatedPaths });
+    setNewPath("");
   };
 
-  const handleRemovePath = (pathToRemove) => {
-    const updatedPaths = taxonomy.paths.filter((p) => p !== pathToRemove);
+  const handleRemovePath = (pathToRemove: string) => {
+    const updatedPaths = taxonomy.paths.filter((p) => p.path !== pathToRemove);
     onUpdate({ ...taxonomy, paths: updatedPaths });
   };
 
-  const handleMatchTypeChange = () => {
-    const newMatchType =
-      taxonomy.matchType === "startsWith" ? "contains" : "startsWith";
-    onUpdate({ ...taxonomy, matchType: newMatchType });
+  const handleUpdatePath = (updatedPathConfig: PathConfig) => {
+    const updatedPaths = taxonomy.paths.map((p) =>
+      p.path === updatedPathConfig.path ? updatedPathConfig : p,
+    );
+    onUpdate({ ...taxonomy, paths: updatedPaths });
   };
 
   return (
@@ -48,60 +159,56 @@ function Segment({ taxonomy, onUpdate, onRemove }) {
             {taxonomy.name}
           </span>
         </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7"
-            onClick={handleMatchTypeChange}
-          >
-            {taxonomy.matchType === "startsWith" ? "Starts with" : "Contains"}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-red-500"
-            onClick={() => onRemove(taxonomy.id)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7 text-red-500"
+          onClick={() => onRemove(taxonomy.id)}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
+
       <div className="space-y-1 pl-2">
         <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400">
           Paths
         </h4>
         {taxonomy.paths.length > 0 ? (
-          taxonomy.paths.map((path) => (
-            <div
-              key={path}
-              className="flex items-center justify-between text-sm bg-muted dark:bg-slate-800/50 rounded-md px-2 py-1"
-            >
-              <span className="font-mono text-xs">{path}</span>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6"
-                onClick={() => handleRemovePath(path)}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          ))
+          <div className="space-y-1">
+            {taxonomy.paths.map((pathConfig) => (
+              <PathItem
+                key={pathConfig.path}
+                pathConfig={pathConfig}
+                onUpdate={handleUpdatePath}
+                onRemove={handleRemovePath}
+              />
+            ))}
+          </div>
         ) : (
           <p className="text-xs text-gray-500 dark:text-gray-400 pl-2">
             No paths added yet.
           </p>
         )}
       </div>
+
       <div className="flex gap-2 pt-2 pl-2">
         <Input
           placeholder="Add a new path (e.g., /blog/)"
           value={newPath}
           onChange={(e) => setNewPath(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleAddPath()}
-          className="h-8 dark:text-white"
+          className="h-8 dark:text-white flex-1"
         />
+        <select
+          value={newPathMatchType}
+          onChange={(e) =>
+            setNewPathMatchType(e.target.value as "startsWith" | "contains")
+          }
+          className="h-8 px-2 border rounded-md bg-background dark:bg-slate-800 dark:text-white dark:border-slate-600 text-sm"
+        >
+          <option value="startsWith">Starts with</option>
+          <option value="contains">Contains</option>
+        </select>
         <Button
           onClick={handleAddPath}
           className="h-8 dark:bg-brand-bright dark:text-white"
@@ -138,7 +245,6 @@ export default function TaxonomyManager({ closeDialog }) {
       id: crypto.randomUUID(),
       name: cleanName,
       paths: [],
-      matchType: "startsWith",
     };
 
     setTaxonomies([...taxonomies, newTaxonomy]);
@@ -160,15 +266,18 @@ export default function TaxonomyManager({ closeDialog }) {
     setIsSubmitting(true);
     try {
       const taxonomyInfo = taxonomies.flatMap((tax) =>
-        tax.paths.map((path) => ({
-          path: path,
-          match_type: tax.matchType,
+        tax.paths.map((pathConfig) => ({
+          path: pathConfig.path,
+          match_type: pathConfig.matchType,
           name: tax.name,
         })),
       );
 
       await invoke("set_taxonomies", { newTaxonomies: taxonomyInfo });
       localStorage.setItem("taxonomies", JSON.stringify(taxonomies));
+
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new Event('taxonomiesUpdated'));
 
       toast.success("Segments saved to database");
     } catch (error) {
@@ -190,7 +299,17 @@ export default function TaxonomyManager({ closeDialog }) {
         try {
           const parsed = JSON.parse(storedTaxonomies);
           if (Array.isArray(parsed)) {
-            loadedTaxonomies = parsed;
+            // Convert old format to new format if needed
+            loadedTaxonomies = parsed.map((tax) => ({
+              ...tax,
+              paths: Array.isArray(tax.paths)
+                ? tax.paths.map((p) =>
+                    typeof p === "string"
+                      ? { path: p, matchType: tax.matchType || "startsWith" }
+                      : p,
+                  )
+                : [],
+            }));
           }
         } catch (e) {
           console.error("Failed to parse taxonomies from localStorage", e);
@@ -209,10 +328,12 @@ export default function TaxonomyManager({ closeDialog }) {
                   id: crypto.randomUUID(),
                   name: item.name,
                   paths: [],
-                  matchType: item.match_type || "startsWith",
                 };
               }
-              acc[item.name].paths.push(item.path);
+              acc[item.name].paths.push({
+                path: item.path,
+                matchType: item.match_type || "startsWith",
+              });
               return acc;
             }, {});
             loadedTaxonomies = Object.values(grouped);
