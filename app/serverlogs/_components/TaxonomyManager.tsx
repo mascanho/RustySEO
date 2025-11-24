@@ -112,6 +112,21 @@ function PathItem({ pathConfig, onUpdate, onRemove }) {
   );
 }
 
+function MatchTypeToggle({ matchType, onChange, className = "" }) {
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      className={`h-8 text-xs ${className}`}
+      onClick={() =>
+        onChange(matchType === "startsWith" ? "contains" : "startsWith")
+      }
+    >
+      {matchType === "startsWith" ? "Starts with" : "Contains"}
+    </Button>
+  );
+}
+
 function Segment({ taxonomy, onUpdate, onRemove }) {
   const [newPath, setNewPath] = useState("");
   const [newPathMatchType, setNewPathMatchType] = useState<
@@ -199,16 +214,10 @@ function Segment({ taxonomy, onUpdate, onRemove }) {
           onKeyDown={(e) => e.key === "Enter" && handleAddPath()}
           className="h-8 dark:text-white flex-1"
         />
-        <select
-          value={newPathMatchType}
-          onChange={(e) =>
-            setNewPathMatchType(e.target.value as "startsWith" | "contains")
-          }
-          className="h-8 px-2 border rounded-md bg-background dark:bg-slate-800 dark:text-white dark:border-slate-600 text-sm"
-        >
-          <option value="startsWith">Starts with</option>
-          <option value="contains">Contains</option>
-        </select>
+        <MatchTypeToggle
+          matchType={newPathMatchType}
+          onChange={setNewPathMatchType}
+        />
         <Button
           onClick={handleAddPath}
           className="h-8 dark:bg-brand-bright dark:text-white"
@@ -277,7 +286,7 @@ export default function TaxonomyManager({ closeDialog }) {
       localStorage.setItem("taxonomies", JSON.stringify(taxonomies));
 
       // Dispatch custom event to notify other components
-      window.dispatchEvent(new Event('taxonomiesUpdated'));
+      window.dispatchEvent(new Event("taxonomiesUpdated"));
 
       toast.success("Segments saved to database");
     } catch (error) {

@@ -1,11 +1,6 @@
 // @ts-nocheck
 import { useState, useEffect } from "react";
-import {
-  FileText,
-  Server,
-  Bot,
-  PenBox,
-} from "lucide-react";
+import { FileText, Server, Bot, PenBox } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { Cell, Pie, PieChart, Tooltip } from "recharts";
@@ -68,11 +63,11 @@ export default function WidgetLogs() {
           const parsed = JSON.parse(storedTaxonomies);
           if (Array.isArray(parsed)) {
             const newMap = {};
-            parsed.forEach(tax => {
+            parsed.forEach((tax) => {
               if (tax.paths) {
                 // Ensure paths are in the format expected by PathConfig, accounting for old string format
-                tax.paths.forEach(p => {
-                  const pathString = typeof p === 'string' ? p : p.path;
+                tax.paths.forEach((p) => {
+                  const pathString = typeof p === "string" ? p : p.path;
                   if (pathString) {
                     newMap[pathString] = tax.name;
                   }
@@ -81,8 +76,9 @@ export default function WidgetLogs() {
             });
             setTaxonomyNameMap(newMap);
 
-            const sortedPaths = Object.entries(newMap)
-              .sort((a, b) => b[0].length - a[0].length);
+            const sortedPaths = Object.entries(newMap).sort(
+              (a, b) => b[0].length - a[0].length,
+            );
             setSortedTaxonomyPaths(sortedPaths);
           }
         } catch (e) {
@@ -106,10 +102,10 @@ export default function WidgetLogs() {
       loadTaxonomies();
     };
 
-    window.addEventListener('taxonomiesUpdated', handleTaxonomiesUpdate);
+    window.addEventListener("taxonomiesUpdated", handleTaxonomiesUpdate);
 
     return () => {
-      window.removeEventListener('taxonomiesUpdated', handleTaxonomiesUpdate);
+      window.removeEventListener("taxonomiesUpdated", handleTaxonomiesUpdate);
     };
   }, []);
 
@@ -153,15 +149,18 @@ export default function WidgetLogs() {
   // Get chart data for active tab
   const getChartData = () => {
     if (activeTab === "Content") {
-      const contentBySegment = Object.entries(contentData || {}).reduce((acc, [path, value]) => {
-        const name = taxonomyNameMap[path] || "Other";
-        if (!acc[name]) {
-          acc[name] = { value: 0, paths: {} };
-        }
-        acc[name].value += value;
-        acc[name].paths[path] = value;
-        return acc;
-      }, {});
+      const contentBySegment = Object.entries(contentData || {}).reduce(
+        (acc, [path, value]) => {
+          const name = taxonomyNameMap[path] || "Other";
+          if (!acc[name]) {
+            acc[name] = { value: 0, paths: {} };
+          }
+          acc[name].value += value;
+          acc[name].paths[path] = value;
+          return acc;
+        },
+        {},
+      );
 
       return Object.entries(contentBySegment).map(([name, data]) => ({
         name: name,
@@ -369,22 +368,39 @@ export default function WidgetLogs() {
                     <DialogContent className="max-w-md dark:text-white dark:border-brand-bright dark:bg-brand-darker">
                       <DialogHeader>
                         <DialogTitle>
-                          Segment Breakdown: {entry.name}
+                          Segment Breakdown:
+                          <span className="text-brand-bright ml-1">
+                            {entry.name}
+                          </span>
                         </DialogTitle>
                       </DialogHeader>
-                      <div className="pt-4 space-y-2">
-                        <div className="flex justify-between font-bold">
-                          <span>Total Entries:</span>
-                          <span>{entry.value.toLocaleString()}</span>
-                        </div>
-                        <h4 className="font-medium pt-2">Paths in this segment:</h4>
+                      <div className="pt-2 space-y-1">
+                        <h3 className="font-medium dark:text-white/50 text-black/50">
+                          Paths in this segment:
+                        </h3>
                         <div className="max-h-60 overflow-y-auto space-y-1">
-                          {entry.paths && Object.entries(entry.paths).map(([path, count]) => (
-                            <div key={path} className="flex justify-between text-sm p-1 rounded-md bg-muted dark:bg-slate-800/50">
-                              <span className="font-mono text-xs">{path}</span>
-                              <span className="font-medium">{count.toLocaleString()}</span>
-                            </div>
-                          ))}
+                          {entry.paths &&
+                            Object.entries(entry.paths).map(([path, count]) => (
+                              <div
+                                key={path}
+                                className="flex pt-2 justify-between text-sm p-1 rounded-md bg-brand-bright/10 dark:bg-slate-800/50 px-2"
+                              >
+                                <span className="font-mono text-xs text-brand-bright">
+                                  {path}
+                                </span>
+                                <span className="font-medium text-brand-bright">
+                                  {count.toLocaleString()}
+                                </span>
+                              </div>
+                            ))}
+                          <div className="flex justify-between font-bold pt-4">
+                            <span className="text-black/50 dark:text-white/50">
+                              Total Entries:
+                            </span>
+                            <span className="text-brand-bright pr-1">
+                              {entry.value.toLocaleString()}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </DialogContent>
@@ -392,9 +408,7 @@ export default function WidgetLogs() {
                     <DialogContent className="max-w-[90%] min-h-96 overflow-hidden dark:bg-brand-darker dark:border-brand-bright">
                       <Tabs defaultValue="overview">
                         <Tabs.List className="mb-2 mx-1">
-                          <Tabs.Tab value="overview">
-                            Frequency Table
-                          </Tabs.Tab>
+                          <Tabs.Tab value="overview">Frequency Table</Tabs.Tab>
                         </Tabs.List>
 
                         <Tabs.Panel value="overview">
@@ -437,9 +451,7 @@ export default function WidgetLogs() {
                     <DialogContent className="max-w-[90%] min-h-96 overflow-hidden dark:bg-brand-darker dark:border-brand-bright">
                       <Tabs defaultValue="overview">
                         <Tabs.List className="mb-2 mx-1">
-                          <Tabs.Tab value="overview">
-                            Frequency Table
-                          </Tabs.Tab>
+                          <Tabs.Tab value="overview">Frequency Table</Tabs.Tab>
                         </Tabs.List>
 
                         <Tabs.Panel value="overview">
@@ -454,9 +466,7 @@ export default function WidgetLogs() {
                     <DialogContent className="max-w-[90%] min-h-96 overflow-hidden dark:bg-brand-darker dark:border-brand-bright">
                       <Tabs defaultValue="overview">
                         <Tabs.List className="mb-2 mx-1">
-                          <Tabs.Tab value="overview">
-                            Frequency Table
-                          </Tabs.Tab>
+                          <Tabs.Tab value="overview">Frequency Table</Tabs.Tab>
                         </Tabs.List>
 
                         <Tabs.Panel value="overview">
@@ -470,9 +480,7 @@ export default function WidgetLogs() {
                     <DialogContent className="max-w-[90%] min-h-96 overflow-hidden dark:bg-brand-darker dark:border-brand-bright">
                       <Tabs defaultValue="overview">
                         <Tabs.List className="mb-2 mx-1">
-                          <Tabs.Tab value="overview">
-                            Frequency Table
-                          </Tabs.Tab>
+                          <Tabs.Tab value="overview">Frequency Table</Tabs.Tab>
                         </Tabs.List>
 
                         <Tabs.Panel value="overview">
