@@ -58,6 +58,7 @@ export default function WidgetLogs() {
   const { currentLogs } = useCurrentLogs();
   const { uploadedLogFiles } = useServerLogsStore();
   const [taxonomyNameMap, setTaxonomyNameMap] = useState({});
+  const [sortedTaxonomyPaths, setSortedTaxonomyPaths] = useState([]);
 
   useEffect(() => {
     const loadTaxonomies = () => {
