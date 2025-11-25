@@ -403,10 +403,12 @@ fn detect_bot(user_agent: &str) -> Option<String> {
         return Some("Ahrefs".to_string());
     } else if lower.contains("moz.com") {
         return Some("Moz".to_string());
+    } else if lower.contains("rocket") {
+        return Some("WP Rocket".to_string());
     }
 
     // Generic bot detection
-    for keyword in ["crawler", "spider", "sistrix", "chat", "uptime", "bot"] {
+    for keyword in ["crawler", "spider", "sistrix", "chat", "uptime", "bot", "google", "rocket "] {
         if let Some(pos) = lower.find(keyword) {
             let start = lower[..pos]
                 .rfind(|c: char| !c.is_alphanumeric() && c != '/')

@@ -565,9 +565,9 @@ export function LogAnalyzer() {
     }
 
     return log?.crawler_type;
-
-    console.log(log, "LOG");
   }
+
+  console.log(entries, "ENTRIES");
 
   return (
     <div className="space-y-4 flex flex-col flex-1 h-full not-selectable">

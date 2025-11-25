@@ -379,7 +379,16 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                 } else if crawler_type.contains("uptime") {
                     bot_counts[5] += 1;
                     bot_stats.uptime.add_entry(&entry);
-                } else if crawler_type.contains("chat") {
+                } else if crawler_type.contains("open")
+                    || crawler_type.contains("openai")
+                    || crawler_type.contains("gpt")
+                    || entry.user_agent.contains("OAI-SearchBot")
+                    || entry.user_agent.contains("ChatGPT-User")
+                    || entry.user_agent.contains("GPTBot")
+                    || entry.user_agent.contains("openai.com/searchbot")
+                    || entry.user_agent.contains("openai.com/bot")
+                    || entry.user_agent.contains("openai.com/gptbot")
+                {
                     bot_counts[6] += 1;
                     bot_stats.openai.add_entry(&entry);
                     openai_bot_entries.push(entry.clone());
