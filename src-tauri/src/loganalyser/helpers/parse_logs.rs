@@ -130,7 +130,6 @@ fn classify_taxonomy(path: &str) -> String {
     "other".to_string()
 }
 
-
 /// Google's verified crawler IP ranges (IPv4 and IPv6)
 static GOOGLE_IP_RANGES: Lazy<Mutex<Vec<String>>> = Lazy::new(|| Mutex::new(Vec::new()));
 
@@ -391,8 +390,35 @@ fn detect_bot(user_agent: &str) -> Option<String> {
     let lower = user_agent.to_lowercase();
 
     // Check for specific bots first
-    if lower.contains("googlebot") {
-        return Some("Google".to_string());
+    // // START WITH GOOGLE BOTS
+    if lower.contains("googlebot/") {
+        return Some("Google Bot".to_string());
+    } else if lower.contains("adsbot-google") {
+        return Some("Google AdsBot".to_string());
+    } else if lower.contains("mediapartners-google") {
+        return Some("Google MediaPartners".to_string());
+    } else if lower.contains("googleweblight") {
+        return Some("Google WebLight".to_string());
+    } else if lower.contains("googlebot-image") {
+        return Some("Google Img Bot".to_string());
+    } else if lower.contains("googlebot-video") {
+        return Some("Google video Bot".to_string());
+    } else if lower.contains("googlebot-news") {
+        return Some("Google News Bot".to_string());
+    } else if lower.contains("storebot-google") {
+        return Some("Google StoreBot".to_string());
+    } else if lower.contains("google-inspectiontool") {
+        return Some("Google Inspection Tool".to_string());
+    } else if lower.contains("googleother") {
+        return Some("Google Other".to_string());
+    } else if lower.contains("googleother-image") {
+        return Some("Google Other Image".to_string());
+    } else if lower.contains("googleother-video") {
+        return Some("Google Other Video".to_string());
+    } else if lower.contains("google-clouvertexbot") {
+        return Some("Google Cloud Vertex Bot".to_string());
+    } else if lower.contains("google-extended") {
+        return Some("Google Extended".to_string());
     } else if lower.contains("bingbot") {
         return Some("Bing".to_string());
     } else if lower.contains("openai") || lower.contains("chatgpt") {
@@ -406,9 +432,10 @@ fn detect_bot(user_agent: &str) -> Option<String> {
     } else if lower.contains("rocket") {
         return Some("WP Rocket".to_string());
     }
-
     // Generic bot detection
-    for keyword in ["crawler", "spider", "sistrix", "chat", "uptime", "bot", "google", "rocket "] {
+    for keyword in [
+        "crawler", "spider", "sistrix", "chat", "uptime", "bot", "google", "rocket ",
+    ] {
         if let Some(pos) = lower.find(keyword) {
             let start = lower[..pos]
                 .rfind(|c: char| !c.is_alphanumeric() && c != '/')
