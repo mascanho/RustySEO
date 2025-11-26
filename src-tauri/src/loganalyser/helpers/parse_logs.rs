@@ -408,19 +408,21 @@ fn detect_bot(user_agent: &str) -> Option<String> {
     } else if lower.contains("storebot-google") {
         return Some("Google StoreBot".to_string());
     } else if lower.contains("google-inspectiontool") {
-        return Some("Google Inspection Tool".to_string());
+        return Some("Google Insp. Tool".to_string());
     } else if lower.contains("googleother") {
         return Some("Google Other".to_string());
     } else if lower.contains("googleother-image") {
-        return Some("Google Other Image".to_string());
+        return Some("Google Other Img".to_string());
     } else if lower.contains("googleother-video") {
         return Some("Google Other Video".to_string());
     } else if lower.contains("google-clouvertexbot") {
-        return Some("Google Cloud Vertex Bot".to_string());
+        return Some("Google Cloud Vertex".to_string());
     } else if lower.contains("google-extended") {
         return Some("Google Extended".to_string());
     } else if lower.contains("bingbot") {
         return Some("Bing".to_string());
+    } else if lower.contains("googleimageproxy") {
+        return Some("Google Img Proxy".to_string());
     } else if lower.contains("openai") || lower.contains("chatgpt") {
         return Some("OpenAI".to_string());
     } else if lower.contains("semrush") {
