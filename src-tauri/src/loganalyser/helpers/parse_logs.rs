@@ -434,12 +434,18 @@ fn detect_bot(user_agent: &str) -> Option<String> {
         return Some("Moz".to_string());
     } else if lower.contains("rocket") {
         return Some("WP Rocket".to_string());
-    } else if lower.contains("-") {
-        return Some("Unknown Bot".to_string());
     } else if lower.contains("dompdf") {
-        return Some("Dompdf bot".to_string());
+        return Some("DomPdf bot".to_string());
     } else if lower.contains("wordpress") {
         return Some("Wordpress Bot".to_string());
+    } else if lower.contains("meta-") {
+        return Some("Meta Bot".to_string());
+    } else if lower.contains("dalvik") {
+        return Some("Human".to_string());
+    } else if lower == "-" {
+        return Some("Unknown Bot".to_string());
+    } else if lower == "" {
+        return Some("No User Agent".to_string());
     }
 
     // Generic bot detection
