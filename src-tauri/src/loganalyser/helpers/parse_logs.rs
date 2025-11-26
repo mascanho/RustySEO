@@ -439,7 +439,7 @@ fn detect_bot(user_agent: &str) -> Option<String> {
     } else if lower.contains("dompdf") {
         return Some("Dompdf bot".to_string());
     } else if lower.contains("wordpress") {
-        return Some("Wordpres Bot".to_string());
+        return Some("Wordpress Bot".to_string());
     }
 
     // Generic bot detection
