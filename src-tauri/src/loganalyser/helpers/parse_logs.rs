@@ -89,6 +89,7 @@ impl From<reqwest::Error> for IpVerificationError {
 pub struct TaxonomyInfo {
     path: String,
     match_type: String,
+    name: String,
 }
 
 // Use a static variable to cache taxonomies
@@ -100,6 +101,7 @@ static LOG_NUMBER: Lazy<Mutex<i32>> = Lazy::new(|| Mutex::new(0));
 pub fn set_taxonomies(new_taxonomies: Vec<TaxonomyInfo>) -> Result<(), String> {
     let mut taxonomies = TAXONOMIES.lock().map_err(|e| e.to_string())?;
     *taxonomies = new_taxonomies;
+    println!("Taxonomies: {:#?}", taxonomies);
     Ok(())
 }
 

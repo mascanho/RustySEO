@@ -40,10 +40,10 @@ export default function Page() {
         if (taxonomies) {
           const parsedTaxonomies = JSON.parse(taxonomies);
           if (Array.isArray(parsedTaxonomies)) {
-            const taxonomyInfo = parsedTaxonomies.map(tax => ({
-              path: tax.path,
-              match_type: tax.matchType,
-              name: tax.name,
+            const taxonomyInfo = parsedTaxonomies.map((tax) => ({
+              path: tax.path || "",
+              match_type: tax.matchType || "contains",
+              name: tax.name || "",
             }));
             await invoke("set_taxonomies", { newTaxonomies: taxonomyInfo });
           }
