@@ -656,11 +656,9 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                   : "bg-green-100 text-green-800 border-green-200"
                               }
                             >
-                              {log.crawler_type.startsWith("Goo")
-                                ? "Google 🤖"
-                                : log.crawler_type.length > 20
-                                  ? log.crawler_type.slice(0, 10) + "..."
-                                  : log.crawler_type}
+                              {log.crawler_type.length > 10
+                                ? log.crawler_type.trim().slice(0, 10)
+                                : log.crawler_type}
                             </Badge>
                           </TableCell>
                         </TableRow>
