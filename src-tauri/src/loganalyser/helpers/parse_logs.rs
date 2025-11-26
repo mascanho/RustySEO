@@ -434,7 +434,14 @@ fn detect_bot(user_agent: &str) -> Option<String> {
         return Some("Moz".to_string());
     } else if lower.contains("rocket") {
         return Some("WP Rocket".to_string());
+    } else if lower.contains("-") {
+        return Some("Unknown Bot".to_string());
+    } else if lower.contains("dompdf") {
+        return Some("Dompdf bot".to_string());
+    } else if lower.contains("wordpress") {
+        return Some("Wordpres Bot".to_string());
     }
+
     // Generic bot detection
     for keyword in [
         "crawler", "spider", "sistrix", "chat", "uptime", "bot", "google", "rocket ",
