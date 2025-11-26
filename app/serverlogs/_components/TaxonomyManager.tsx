@@ -12,7 +12,7 @@ import { invoke } from "@tauri-apps/api/core";
 
 interface PathConfig {
   path: string;
-  matchType: "startsWith" | "contains";
+  matchType: "startsWith" | "contains" | "exactMatch";
 }
 
 interface Taxonomy {
@@ -26,9 +26,21 @@ function PathItem({ pathConfig, onUpdate, onRemove }) {
   const [editedPath, setEditedPath] = useState(pathConfig.path);
 
   const handleMatchTypeChange = () => {
-    const newMatchType =
-      pathConfig.matchType === "startsWith" ? "contains" : "startsWith";
+    let newMatchType: "startsWith" | "contains" | "exactMatch";
+    if (pathConfig.matchType === "startsWith") {
+      newMatchType = "contains";
+    } else if (pathConfig.matchType === "contains") {
+      newMatchType = "exactMatch";
+    } else {
+      newMatchType = "startsWith";
+    }
     onUpdate({ ...pathConfig, matchType: newMatchType });
+  };
+
+  const getButtonText = (currentType: "startsWith" | "contains" | "exactMatch") => {
+    if (currentType === "startsWith") return "Starts with";
+    if (currentType === "contains") return "Contains";
+    return "Exact match";
   };
 
   const handlePathUpdate = () => {
@@ -73,7 +85,7 @@ function PathItem({ pathConfig, onUpdate, onRemove }) {
           className="h-6 text-xs"
           onClick={handleMatchTypeChange}
         >
-          {pathConfig.matchType === "startsWith" ? "Starts with" : "Contains"}
+          {getButtonText(pathConfig.matchType)}
         </Button>
       </div>
 
@@ -113,16 +125,26 @@ function PathItem({ pathConfig, onUpdate, onRemove }) {
 }
 
 function MatchTypeToggle({ matchType, onChange, className = "" }) {
+  const getNextMatchType = (currentType: "startsWith" | "contains" | "exactMatch") => {
+    if (currentType === "startsWith") return "contains";
+    if (currentType === "contains") return "exactMatch";
+    return "startsWith";
+  };
+
+  const getButtonText = (currentType: "startsWith" | "contains" | "exactMatch") => {
+    if (currentType === "startsWith") return "Starts with";
+    if (currentType === "contains") return "Contains";
+    return "Exact match";
+  };
+
   return (
     <Button
       variant="outline"
       size="sm"
       className={`h-8 text-xs ${className}`}
-      onClick={() =>
-        onChange(matchType === "startsWith" ? "contains" : "startsWith")
-      }
+      onClick={() => onChange(getNextMatchType(matchType))}
     >
-      {matchType === "startsWith" ? "Starts with" : "Contains"}
+      {getButtonText(matchType)}
     </Button>
   );
 }

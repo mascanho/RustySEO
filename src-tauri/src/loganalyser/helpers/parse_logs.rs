@@ -120,6 +120,7 @@ fn classify_taxonomy(path: &str) -> String {
         let matches = match taxonomy.match_type.as_str() {
             "startsWith" => path.starts_with(&taxonomy.path),
             "contains" => path.contains(&taxonomy.path),
+            "exactMatch" => path == taxonomy.path, // New exactMatch case
             _ => path.starts_with(&taxonomy.path), // Default to startsWith
         };
 

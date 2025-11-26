@@ -1,5 +1,16 @@
 export const changelogData = [
   {
+    version: "0.3.3",
+    date: "2025-12-01",
+    type: "feature",
+    changes: [
+      "Log Analyser: More content segments",
+      "Log analyser: OpenAI bot validation",
+      "Log Analyser: Bing bot validation ",
+    ],
+  },
+
+  {
     version: "0.3.2",
     date: "2025-11-01",
     type: "feature",
