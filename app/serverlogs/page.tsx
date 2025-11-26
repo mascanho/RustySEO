@@ -32,6 +32,7 @@ export default function Page() {
   const { setLogData, logData } = useLogAnalysis();
 
   // ALWAYS CHECK THE TAXONOMIES FROM THE LOCALSTORAGE AND SEND THEM TO THE TAURI COMMAND ON FIRST RUN
+  // In your main Page component
   useEffect(() => {
     const getTaxonomies = async () => {
       try {
@@ -40,19 +41,25 @@ export default function Page() {
         if (taxonomies) {
           const parsedTaxonomies = JSON.parse(taxonomies);
           if (Array.isArray(parsedTaxonomies)) {
-            const taxonomyInfo = parsedTaxonomies.map((tax) => ({
-              path: tax.path || "",
-              match_type: tax.matchType || "contains",
-              name: tax.name || "",
-            }));
-            await invoke("set_taxonomies", { newTaxonomies: taxonomyInfo });
+            const taxonomyInfo = parsedTaxonomies.flatMap((tax) =>
+              tax.paths.map((pathConfig) => ({
+                path: pathConfig.path || "",
+                match_type: pathConfig.matchType || "contains",
+                name: tax.name || "",
+              })),
+            );
+
+            // Only send if we have actual taxonomies
+            if (taxonomyInfo.length > 0) {
+              await invoke("set_taxonomies", { newTaxonomies: taxonomyInfo });
+              console.log(
+                "Taxonomies loaded from localStorage and sent to backend",
+              );
+            }
           }
         }
-        // No else block needed - it's normal to have no taxonomies
       } catch (error) {
         console.error("Error loading taxonomies:", error);
-        // Don't show error toast - it's normal for taxonomies to not exist yet
-        // toast.error("Failed to load taxonomies");
       }
     };
 
