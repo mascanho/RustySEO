@@ -1,6 +1,5 @@
 // @ts-nocheck
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { debounce } from "lodash";
 import {
   AlertCircle,
   BadgeCheck,
@@ -95,7 +94,6 @@ export function LogAnalyzer() {
     resetAll,
   } = useLogAnalysis();
 
-  const [searchTerm, setSearchTerm] = useState("");
   const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(100);
@@ -117,17 +115,16 @@ export function LogAnalyzer() {
   const [showOnTables, setShowOnTables] = useState(false);
   const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
   const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
-  const searchTermRef = useRef("");
-  // SET the input search to be based on button click
-  const [inputValue, setInputValue] = useState(""); // stores what's typed in the input
+
+  // Search state - only filters when button is pressed
+  const [searchInput, setSearchInput] = useState("");
+  const [activeSearchTerm, setActiveSearchTerm] = useState("");
   const [isExporting, setIsExporting] = useState(false);
   const [showIp, setShowIp] = useState(false);
   const [showAgent, setShowAgent] = useState(false);
   const [urlAgentFilter, setUrlAgentFilter] = useState("url");
-  const [activeSearchTerm, setActiveSearchTerm] = useState("");
-  const [searchInput, setSearchInput] = useState("");
 
-  // Helper functions
+  // Helper functions - memoized for performance
   const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat("en-US", {
@@ -186,125 +183,120 @@ export function LogAnalyzer() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }, []);
 
-  // Debounced filter function
-  const applyFilters = useMemo(
-    () =>
-      debounce((term: string, entries: LogEntry[]) => {
-        if (!entries.length) {
-          setFilteredLogs([]);
-          return;
+  // Optimized filter function - only applies when explicitly called
+  const applyFilters = useCallback(() => {
+    if (!entries.length) {
+      setFilteredLogs([]);
+      return;
+    }
+
+    let result = [...entries];
+
+    // Apply search filter only when activeSearchTerm is set
+    if (activeSearchTerm.trim()) {
+      const lowerCaseSearch = activeSearchTerm.toLowerCase();
+      result = result.filter(
+        (log) =>
+          log.ip.toLowerCase().includes(lowerCaseSearch) ||
+          log.path.toLowerCase().includes(lowerCaseSearch) ||
+          log.user_agent.toLowerCase().includes(lowerCaseSearch),
+      );
+    }
+
+    // Apply status filter
+    if (statusFilter.length > 0) {
+      result = result.filter((log) => statusFilter.includes(log.status));
+    }
+
+    // Apply method filter
+    if (methodFilter.length > 0) {
+      result = result.filter((log) => methodFilter.includes(log.method));
+    }
+
+    // Apply file type filter
+    if (fileTypeFilter.length > 0) {
+      result = result.filter((log) => fileTypeFilter.includes(log.file_type));
+    }
+
+    // Apply bot filter
+    if (botFilter !== null) {
+      if (botFilter === "bot") {
+        result = result.filter(
+          (log) => log?.crawler_type && log.crawler_type !== "Human",
+        );
+      } else if (botFilter === "Human") {
+        result = result.filter((log) => log?.crawler_type === "Human");
+      }
+    }
+
+    // Apply Bot type filter (Mobile or Desktop)
+    if (botTypeFilter !== null) {
+      if (botTypeFilter === "Mobile") {
+        result = result.filter((log) => log?.user_agent.includes("Mobile"));
+      } else if (botTypeFilter === "Desktop") {
+        result = result.filter((log) => !log?.user_agent.includes("Mobile"));
+      }
+    }
+
+    // Apply verified filter
+    if (verifiedFilter !== null) {
+      result = result.filter((log) => log.verified === verifiedFilter);
+    }
+
+    // Apply sorting
+    if (sortConfig) {
+      result.sort((a, b) => {
+        const aValue = a[sortConfig.key as keyof LogEntry];
+        const bValue = b[sortConfig.key as keyof LogEntry];
+
+        // Special case for timestamp sorting
+        if (sortConfig.key === "timestamp") {
+          const aDate = new Date(aValue as string).getTime();
+          const bDate = new Date(bValue as string).getTime();
+          return sortConfig.direction === "ascending"
+            ? aDate - bDate
+            : bDate - aDate;
         }
 
-        let result = [...entries];
-
-        // Apply search
-        if (activeSearchTerm) {
-          const lowerCaseSearch = activeSearchTerm?.toLowerCase();
-          result = result.filter(
-            (log) =>
-              log.ip.toLowerCase().includes(lowerCaseSearch) ||
-              log.path.toLowerCase().includes(lowerCaseSearch) ||
-              log.user_agent.toLowerCase().includes(lowerCaseSearch),
-          );
+        // Normal string sorting
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          return sortConfig.direction === "ascending"
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
         }
 
-        // Apply status filter
-        if (statusFilter.length > 0) {
-          result = result.filter((log) => statusFilter.includes(log.status));
+        // Fallback for other types
+        if (aValue < bValue) {
+          return sortConfig.direction === "ascending" ? -1 : 1;
         }
-
-        // Apply method filter
-        if (methodFilter.length > 0) {
-          result = result.filter((log) => methodFilter.includes(log.method));
+        if (aValue > bValue) {
+          return sortConfig.direction === "ascending" ? 1 : -1;
         }
+        return 0;
+      });
+    }
 
-        // Apply file type filter
-        if (fileTypeFilter.length > 0) {
-          result = result.filter((log) =>
-            fileTypeFilter.includes(log.file_type),
-          );
-        }
+    setFilteredLogs(result);
+    setCurrentPage(1);
+  }, [
+    entries,
+    activeSearchTerm,
+    statusFilter,
+    methodFilter,
+    fileTypeFilter,
+    botFilter,
+    verifiedFilter,
+    botTypeFilter,
+    sortConfig,
+  ]);
 
-        // Apply bot filter
-        if (botFilter !== null) {
-          if (botFilter === "bot") {
-            result = result.filter(
-              (log) => log?.crawler_type && log.crawler_type !== "Human",
-            );
-          } else if (botFilter === "Human") {
-            result = result.filter((log) => log?.crawler_type === "Human");
-          }
-        }
-
-        // Apply Bot type filter (Mobile or Desktop)
-        if (botTypeFilter !== null) {
-          if (botTypeFilter === "Mobile") {
-            result = result.filter((log) => log?.user_agent.includes("Mobile"));
-          } else if (botTypeFilter === "Desktop") {
-            result = result.filter(
-              (log) => !log?.user_agent.includes("Mobile"),
-            );
-          }
-        }
-
-        // Apply verified filter
-        if (verifiedFilter !== null) {
-          result = result.filter((log) => log.verified === verifiedFilter);
-        }
-        // Apply sorting
-        if (sortConfig) {
-          result.sort((a, b) => {
-            const aValue = a[sortConfig.key as keyof LogEntry];
-            const bValue = b[sortConfig.key as keyof LogEntry];
-
-            // Special case for timestamp sorting
-            if (sortConfig.key === "timestamp") {
-              const aDate = new Date(aValue as string).getTime();
-              const bDate = new Date(bValue as string).getTime();
-              return sortConfig.direction === "ascending"
-                ? aDate - bDate
-                : bDate - aDate;
-            }
-
-            // Normal string sorting
-            if (typeof aValue === "string" && typeof bValue === "string") {
-              return sortConfig.direction === "ascending"
-                ? aValue.localeCompare(bValue)
-                : bValue.localeCompare(aValue);
-            }
-
-            // Fallback for other types
-            if (aValue < bValue) {
-              return sortConfig.direction === "ascending" ? -1 : 1;
-            }
-            if (aValue > bValue) {
-              return sortConfig.direction === "ascending" ? 1 : -1;
-            }
-            return 0;
-          });
-        }
-
-        setFilteredLogs(result);
-        setCurrentPage(1);
-      }, 300),
-    [
-      statusFilter,
-      methodFilter,
-      fileTypeFilter,
-      botFilter,
-      sortConfig,
-      verifiedFilter,
-      botTypeFilter,
-      activeSearchTerm,
-    ],
-  );
-
+  // Search handlers - no debouncing, immediate response
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(e.target.value);
   };
 
   const handleSearchClick = () => {
-    setActiveSearchTerm(searchInput); // Optional: Add a search button
+    setActiveSearchTerm(searchInput);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -313,17 +305,27 @@ export function LogAnalyzer() {
     }
   };
 
-  // Apply filters when search term or entries change
+  // Apply filters when activeSearchTerm changes OR when other filters change
   useEffect(() => {
-    applyFilters(searchTerm, entries);
-  }, [searchTerm, entries, applyFilters]);
+    applyFilters();
+  }, [
+    activeSearchTerm,
+    statusFilter,
+    methodFilter,
+    fileTypeFilter,
+    botFilter,
+    verifiedFilter,
+    botTypeFilter,
+    sortConfig,
+    applyFilters,
+  ]);
 
-  // Clean up debounce on unmount
+  // Initial filter application when entries load
   useEffect(() => {
-    return () => {
-      applyFilters.cancel();
-    };
-  }, [applyFilters]);
+    if (entries.length > 0) {
+      applyFilters();
+    }
+  }, [entries.length, applyFilters]);
 
   // GET THE domain from the local storage
   useEffect(() => {
@@ -369,7 +371,6 @@ export function LogAnalyzer() {
   const resetFilters = useCallback(() => {
     setSearchInput("");
     setActiveSearchTerm("");
-    setSearchTerm("");
     setStatusFilter([]);
     setMethodFilter([]);
     setBotFilter("all");
@@ -587,7 +588,6 @@ export function LogAnalyzer() {
             value={searchInput}
             onChange={handleSearchChange}
             onKeyDown={handleKeyDown}
-            onKeyPress={(e) => e.key === "Enter" && setSearchTerm(inputValue)}
           />
           <button
             onClick={handleSearchClick}
