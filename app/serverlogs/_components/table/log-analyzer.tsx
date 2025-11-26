@@ -584,23 +584,24 @@ export function LogAnalyzer() {
             type="search"
             placeholder="Search by IP, path, user agent..."
             className="pl-8 w-full dark:text-white"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={searchInput}
+            onChange={handleSearchChange}
+            onKeyDown={handleKeyDown}
+            onKeyPress={(e) => e.key === "Enter" && setSearchTerm(inputValue)}
           />
           <button
-            onClick={() => applyFilters.cancel() || applyFilters(searchTerm, entries)} // Trigger immediate filter on click
+            onClick={handleSearchClick}
             className="absolute right-2 border-brand-bright border hover:bg-brand-bright hover:text-white text-black bg-white dark:bg-brand-darker   h-6 min-w-16   top-2 rounded-l-md px-2 dark:text-white text-xs dark:hover:bg-brand-bright"
           >
             search
           </button>
-          {searchTerm && (
+          {searchInput && (
             <X
               size={14}
               className="absolute right-[75px] text-red-500 w-6 dark:text-red-500 top-[13px] rounded-md text-xs bg-white dark:bg-brand-darker cursor-pointer"
               onClick={() => {
-                setSearchTerm("");
-                applyFilters.cancel();
-                applyFilters("", entries); // Clear filters immediately
+                setSearchInput("");
+                setActiveSearchTerm("");
               }}
             />
           )}{" "}
