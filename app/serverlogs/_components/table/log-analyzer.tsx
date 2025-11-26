@@ -588,9 +588,7 @@ export function LogAnalyzer() {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <button
-            onClick={() =>
-              applyFilters.cancel() || applyFilters(searchTerm, entries)
-            } // Trigger immediate filter on click
+            onClick={() => applyFilters.cancel() || applyFilters(searchTerm, entries)} // Trigger immediate filter on click
             className="absolute right-2 border-brand-bright border hover:bg-brand-bright hover:text-white text-black bg-white dark:bg-brand-darker   h-6 min-w-16   top-2 rounded-l-md px-2 dark:text-white text-xs dark:hover:bg-brand-bright"
           >
             search
