@@ -330,26 +330,17 @@ export default function TaxonomyManager({ closeDialog }) {
         try {
           const parsed = JSON.parse(storedTaxonomies);
           if (Array.isArray(parsed)) {
+            // Convert old format to new format if needed
             loadedTaxonomies = parsed.map((tax) => ({
               ...tax,
               paths: Array.isArray(tax.paths)
                 ? tax.paths.map((p) =>
                     typeof p === "string"
-                      ? { path: p, matchType: "startsWith" } // Default to startsWith for old string paths
+                      ? { path: p, matchType: tax.matchType || "startsWith" }
                       : p,
                   )
                 : [],
             }));
-
-            // Immediately send to backend
-            const taxonomyInfo = loadedTaxonomies.flatMap((tax) =>
-              tax.paths.map((pathConfig) => ({
-                path: pathConfig.path,
-                match_type: pathConfig.matchType,
-                name: tax.name,
-              })),
-            );
-            await invoke("set_taxonomies", { newTaxonomies: taxonomyInfo });
           }
         } catch (e) {
           console.error("Failed to parse taxonomies from localStorage", e);
@@ -381,16 +372,6 @@ export default function TaxonomyManager({ closeDialog }) {
               "taxonomies",
               JSON.stringify(loadedTaxonomies),
             );
-
-            // Immediately send to backend after loading from backend and storing in local storage
-            const taxonomyInfo = loadedTaxonomies.flatMap((tax) =>
-              tax.paths.map((pathConfig) => ({
-                path: pathConfig.path,
-                match_type: pathConfig.matchType,
-                name: tax.name,
-              })),
-            );
-            await invoke("set_taxonomies", { newTaxonomies: taxonomyInfo });
           }
         } catch (error) {
           console.log("No taxonomies found in backend:", error);

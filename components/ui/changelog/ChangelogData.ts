@@ -7,7 +7,6 @@ export const changelogData = [
       "Log Analyser: More content segments",
       "Log analyser: OpenAI bot validation",
       "Log Analyser: Bing bot validation ",
-      "Log Analyser: WP Rocket detection",
     ],
   },
 
