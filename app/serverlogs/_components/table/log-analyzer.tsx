@@ -577,7 +577,7 @@ export function LogAnalyzer() {
 
     // IF THE USER CLICKED ONCE ON THE SAME URL, open URL
     if (click.button === 0) {
-      openBrowserWindow(`https://${domain}`);
+      openBrowserWindow(`https://${domain}${url}`);
     }
 
     if (click.button === 2) {
