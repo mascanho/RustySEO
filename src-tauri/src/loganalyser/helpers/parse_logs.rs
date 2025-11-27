@@ -425,7 +425,7 @@ fn detect_bot(user_agent: &str) -> Option<String> {
     } else if lower.contains("bingbot") {
         return Some("Bing".to_string());
     } else if lower.contains("googleimageproxy") {
-        return Some("Google Img Proxy".to_string());
+        return Some("Goog. Img Proxy".to_string());
     } else if lower.contains("openai") || lower.contains("chatgpt") {
         return Some("OpenAI".to_string());
     } else if lower.contains("semrush") {
