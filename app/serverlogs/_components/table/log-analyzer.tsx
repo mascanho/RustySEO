@@ -26,6 +26,7 @@ import {
   FileType2,
   BadgeInfo,
   X,
+  CopyIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -81,6 +82,7 @@ import { FaAngellist, FaApper, FaEye } from "react-icons/fa";
 import { FaFileCode, FaPersonHarassing, FaRobot } from "react-icons/fa6";
 import { ImUserTie } from "react-icons/im";
 import CrawlerType from "@/app/components/ui/Footer/CrawlerType";
+import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 
 export function LogAnalyzer() {
   const {
@@ -568,6 +570,32 @@ export function LogAnalyzer() {
     return log?.crawler_type;
   }
 
+  function handleURLClick(url, click) {
+    click.preventDefault();
+    click.stopPropagation();
+    console.log(url, click);
+
+    // IF THE USER CLICKED ONCE ON THE SAME URL, open URL
+    if (click.button === 0) {
+      openBrowserWindow(`https://${domain}`);
+    }
+
+    if (click.button === 2) {
+      // ELSE, clicked twice copy the URL
+      navigator.clipboard.writeText(url);
+      toast.success("URL copied to clipboard!");
+    }
+    setExpandedRow(null);
+  }
+
+  // HANDLES COPYING STUFF ON THE TABLE LIKE THE RUSER AGENT, URL OR REFERER
+  function handleCopyClick(text, click, name) {
+    click.preventDefault();
+    click.stopPropagation();
+    navigator.clipboard.writeText(text);
+    toast.success(`${name} copied to clipboard!`);
+  }
+
   console.log(entries, "ENTRIES");
 
   return (
@@ -1040,6 +1068,8 @@ export function LogAnalyzer() {
                         setShowAgent={setShowAgent}
                         logIpMasking={logIpMasking}
                         formatCrawlerType={formatCrawlerType}
+                        handleURLClick={handleURLClick}
+                        handleCopyClick={handleCopyClick}
                       />
                     ))
                   ) : (
@@ -1094,11 +1124,13 @@ function LogRow({
   setShowAgent,
   logIpMasking,
   formatCrawlerType,
+  handleURLClick,
+  handleCopyClick,
 }) {
   return (
     <>
       <TableRow
-        className="group cursor-pointer max-h-[30px] h-[30px]"
+        className="group max-h-[30px] h-[30px]"
         onClick={() => {
           setExpandedRow(expandedRow === index ? null : index);
         }}
@@ -1163,9 +1195,14 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
               >
                 {getFileIcon(log.file_type)}
               </span>
-              {showOnTables && domain
-                ? "https://" + domain + log.path
-                : log?.path}
+              <span
+                onClick={(click) => handleURLClick(log.path, click)}
+                className="cursor-pointer hover:underline"
+              >
+                {showOnTables && domain
+                  ? "https://" + domain + log.path
+                  : log?.path}
+              </span>
             </section>
           ) : (
             <section className="max-w-[99%] w-[750px] 3xl:w-[950px]  truncate relative ml-2">
@@ -1209,9 +1246,18 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col max-w-5xl">
                 <div className="flex mb-2 space-x-2 items-center justify-between">
-                  <h4 className="font-bold">
-                    {showAgent ? "Path" : "User Agent"}
-                  </h4>
+                  <div className="flex items-center space-x-1">
+                    <h4 className="font-bold">
+                      {showAgent ? "Path" : "User Agent"}
+                    </h4>
+                    <CopyIcon
+                      className="cursor-pointer hover:scale-105 active:scale-95"
+                      onClick={(e) =>
+                        handleCopyClick(log?.user_agent, e, "User Agent")
+                      }
+                      size={12}
+                    />
+                  </div>
                   {log.verified && (
                     <div className="flex items-center space-x-1 bg-red-200 dark:bg-red-400 p-1 px-2 text-xs rounded-md">
                       <BadgeCheck className="text-blue-700 pr-1" size={18} />
@@ -1227,7 +1273,18 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
               </div>
 
               <div className="flex flex-col">
-                <h4 className="mb-2 font-bold">Referer</h4>
+                <div className="flex space-x-2 items-center mb-2">
+                  <h4 className="font-bold">Referer</h4>
+                  {log?.referer && (
+                    <CopyIcon
+                      className="cursor-pointer hover:scale-105 active:scale-95"
+                      onClick={(e) =>
+                        handleCopyClick(log?.referer, e, "Referer")
+                      }
+                      size={12}
+                    />
+                  )}
+                </div>
                 <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                   <p className="text-sm break-all">
                     {log.referer || (

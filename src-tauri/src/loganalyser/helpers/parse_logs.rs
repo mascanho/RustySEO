@@ -426,8 +426,10 @@ fn detect_bot(user_agent: &str) -> Option<String> {
         return Some("Bing".to_string());
     } else if lower.contains("googleimageproxy") {
         return Some("Goog. Img Proxy".to_string());
-    } else if lower.contains("openai") || lower.contains("chatgpt") {
-        return Some("OpenAI".to_string());
+    } else if lower.contains("GPTBot") {
+        return Some("GPTBot".to_string());
+    } else if lower.contains("ChatGPT") {
+        return Some("ChatGPT-User".to_string());
     } else if lower.contains("semrush") {
         return Some("Semrush".to_string());
     } else if lower.contains("ahrefs") {
