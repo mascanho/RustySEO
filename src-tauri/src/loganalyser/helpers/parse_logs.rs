@@ -10,87 +10,11 @@ use std::str::FromStr;
 use std::sync::Mutex;
 use tauri::{Emitter, Manager};
 
+use crate::loganalyser::helpers::modeling::{
+    BingBotRanges, IpVerificationError, LogEntry, OpenAIBotRanges, TaxonomyInfo,
+};
+
 use super::google_ip_fetcher::get_google_ip_ranges;
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct BingBotRanges {
-    #[serde(rename = "creationTime")]
-    pub creation_time: String,
-    pub prefixes: Vec<BingPrefix>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct BingPrefix {
-    #[serde(rename = "ipv4Prefix")]
-    pub ipv4_prefix: Option<String>,
-    #[serde(rename = "ipv6Prefix")]
-    pub ipv6_prefix: Option<String>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct OpenAIBotRanges {
-    #[serde(rename = "creationTime")]
-    pub creation_time: String,
-    pub prefixes: Vec<OpenAIPrefix>,
-}
-
-#[derive(Debug, Deserialize, Clone)]
-pub struct OpenAIPrefix {
-    #[serde(rename = "ipv4Prefix")]
-    pub ipv4_prefix: Option<String>,
-    #[serde(rename = "ipv6Prefix")]
-    pub ipv6_prefix: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct LogEntry {
-    pub ip: String,
-    pub timestamp: NaiveDateTime,
-    pub method: String,
-    pub path: String,
-    pub status: u16,
-    pub user_agent: String,
-    pub referer: Option<String>,
-    pub response_size: u64,
-    pub crawler_type: String,
-    pub browser: String,
-    pub file_type: String,
-    pub verified: bool,
-    pub taxonomy: String,
-}
-
-/// Custom error type for IP verification
-#[derive(Debug)]
-pub enum IpVerificationError {
-    InvalidIp(AddrParseError),
-    InvalidCidr(ipnet::PrefixLenError),
-    ReqwestError(reqwest::Error),
-}
-
-impl From<AddrParseError> for IpVerificationError {
-    fn from(err: AddrParseError) -> Self {
-        IpVerificationError::InvalidIp(err)
-    }
-}
-
-impl From<ipnet::PrefixLenError> for IpVerificationError {
-    fn from(err: ipnet::PrefixLenError) -> Self {
-        IpVerificationError::InvalidCidr(err)
-    }
-}
-
-impl From<reqwest::Error> for IpVerificationError {
-    fn from(err: reqwest::Error) -> Self {
-        IpVerificationError::ReqwestError(err)
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct TaxonomyInfo {
-    path: String,
-    match_type: String,
-    name: String,
-}
 
 // Use a static variable to cache taxonomies
 static TAXONOMIES: Lazy<Mutex<Vec<TaxonomyInfo>>> = Lazy::new(|| Mutex::new(Vec::new()));
@@ -131,6 +55,50 @@ fn classify_taxonomy(path: &str) -> String {
         }
     }
     "other".to_string()
+}
+
+/// Classify the segment of the path based on taxonomy configuration
+fn classify_segment_name(path: &str) -> String {
+    let taxonomies = TAXONOMIES.lock().unwrap();
+    let mut sorted_taxonomies = taxonomies.clone();
+    sorted_taxonomies.sort_by(|a, b| b.path.len().cmp(&a.path.len())); // Sort by length descending
+
+    for taxonomy in sorted_taxonomies.iter() {
+        let matches = match taxonomy.match_type.as_str() {
+            "startsWith" => path.starts_with(&taxonomy.path),
+            "contains" => path.contains(&taxonomy.path),
+            "exactMatch" => path == taxonomy.path,
+            _ => path.starts_with(&taxonomy.path), // Default to startsWith
+        };
+
+        if matches {
+            // Return the taxonomy name instead of the path
+            // Assuming TaxonomyInfo has a 'name' field based on your frontend data
+            return taxonomy.name.clone(); // This should return "Blogs", "Industries", etc.
+        }
+    }
+    "Other".to_string() // Default to "Other" when no taxonomy matches
+}
+
+/// Get the match type of the segment based on taxonomy configuration
+fn classify_segment_match(path: &str) -> Option<String> {
+    let taxonomies = TAXONOMIES.lock().unwrap();
+    let mut sorted_taxonomies = taxonomies.clone();
+    sorted_taxonomies.sort_by(|a, b| b.path.len().cmp(&a.path.len())); // Sort by length descending
+
+    for taxonomy in sorted_taxonomies.iter() {
+        let matches = match taxonomy.match_type.as_str() {
+            "startsWith" => path.starts_with(&taxonomy.path),
+            "contains" => path.contains(&taxonomy.path),
+            "exactMatch" => path == taxonomy.path,
+            _ => path.starts_with(&taxonomy.path), // Default to startsWith
+        };
+
+        if matches {
+            return Some(taxonomy.match_type.clone());
+        }
+    }
+    None
 }
 
 /// Google's verified crawler IP ranges (IPv4 and IPv6)
@@ -636,6 +604,7 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
             let crawler_type = detect_bot(&user_agent).unwrap_or_default();
             let browser = detect_browser(&user_agent).unwrap_or_default();
             let ip = caps[1].to_string();
+            let path = &caps[4];
 
             // Use the new unified verification function
             let verified = is_verified_crawler(&ip, &crawler_type);
@@ -647,13 +616,16 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
                 path: caps[4].to_string(),
                 status: caps[5].parse().unwrap_or(0),
                 user_agent,
+                country: None,
                 referer,
                 response_size: caps[6].parse().unwrap_or(0),
                 crawler_type,
                 browser,
                 file_type: detect_file_type(&caps[4]).unwrap_or_else(|| "Unknown".to_string()),
                 verified,
-                taxonomy: classify_taxonomy(&caps[4]),
+                segment: classify_segment_name(path),
+                segment_match: classify_segment_match(path),
+                taxonomy: classify_taxonomy(path),
             });
         }
     }

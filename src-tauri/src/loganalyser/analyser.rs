@@ -13,6 +13,48 @@ use crate::loganalyser::helpers::crawler_type::is_crawler;
 use crate::loganalyser::helpers::parse_logs::parse_log_entries;
 use crate::settings::settings;
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Segmentation {
+    pub name: String,
+    pub match_type: String,
+    pub urls: Vec<String>,
+    pub count: usize,
+    pub unique_ips: usize,
+    pub status_codes: StatusCodeCounts,
+    pub bot_breakdown: HashMap<String, usize>, // Bot types in this segment
+}
+
+impl Segmentation {
+    pub fn new() -> Self {
+        Segmentation {
+            name: "".to_string(),
+            match_type: "".to_string(),
+            urls: Vec::new(),
+            count: 0,
+            unique_ips: 0,
+            status_codes: StatusCodeCounts::new(),
+            bot_breakdown: HashMap::new(),
+        }
+    }
+
+    pub fn add_url(&mut self, url: String) {
+        if !self.urls.contains(&url) {
+            self.urls.push(url);
+        }
+    }
+
+    pub fn add_entry(&mut self, entry: &LogEntry) {
+        self.count += 1;
+        self.status_codes.add_status(entry.status);
+
+        // Track bot types in this segment
+        if entry.is_crawler {
+            let crawler_type = entry.crawler_type.to_lowercase();
+            *self.bot_breakdown.entry(crawler_type).or_insert(0) += 1;
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LogInput {
     pub log_contents: Vec<(String, String)>,
@@ -34,6 +76,8 @@ pub struct LogEntry {
     pub file_type: String,
     pub browser: String,
     pub verified: bool,
+    pub segment: String,
+    pub segment_match: Option<String>,
     pub taxonomy: Option<String>,
     pub filename: String,
 }
@@ -50,6 +94,15 @@ pub struct LogAnalysisResult {
     pub log_start_time: String,
     pub log_finish_time: String,
     pub file_count: usize,
+    pub segmentations: Vec<Segmentation>,
+    pub segment_summary: SegmentSummary,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SegmentSummary {
+    pub total_segments: usize,
+    pub total_segment_requests: usize,
+    pub average_requests_per_segment: f32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -309,6 +362,10 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
     let mut openai_bot_pages = Vec::new();
     let mut claude_bot_pages = Vec::new();
 
+    // SEGMENTATION - Initialize segment tracking
+    let mut segments: HashMap<String, Segmentation> = HashMap::new();
+    let mut segment_ips: HashMap<String, HashSet<String>> = HashMap::new();
+
     for (index, (filename, log_content)) in data.log_contents.into_iter().enumerate() {
         let _ = progress_tx.send(ProgressUpdate {
             current_file: index + 1,
@@ -337,9 +394,32 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
                     file_type: e.file_type,
                     browser: browser_trim_name::trim_browser_name(&e.browser),
                     verified: e.verified,
+                    segment: e.segment.clone(),
+                    segment_match: e.segment_match.clone(),
                     taxonomy: Some(e.taxonomy),
                     filename: filename.clone(),
                 };
+
+                // Update segment statistics
+                if !entry.segment.is_empty() {
+                    let segment = segments.entry(entry.segment.clone()).or_insert_with(|| {
+                        let mut seg = Segmentation::new();
+                        seg.name = entry.segment.clone();
+                        seg.match_type = entry.segment_match.clone().unwrap_or_default();
+                        seg
+                    });
+
+                    segment.add_entry(&entry);
+
+                    // Track unique IPs per segment
+                    let segment_ip_set = segment_ips
+                        .entry(entry.segment.clone())
+                        .or_insert_with(HashSet::new);
+                    segment_ip_set.insert(entry.ip.clone());
+
+                    // Add URL if not already present
+                    segment.add_url(entry.path.clone());
+                }
 
                 // Update statistics
                 unique_ips.insert(entry.ip.clone());
@@ -422,6 +502,28 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
         return Err("No logs found".to_string());
     }
 
+    // Update segment counts with unique IPs
+    for (segment_name, ip_set) in segment_ips {
+        if let Some(segment) = segments.get_mut(&segment_name) {
+            segment.unique_ips = ip_set.len();
+        }
+    }
+
+    // Convert segments HashMap to Vec for the result
+    let segmentations: Vec<Segmentation> = segments.into_values().collect();
+
+    // Calculate segment summary
+    let total_segment_requests: usize = segmentations.iter().map(|s| s.count).sum();
+    let segment_summary = SegmentSummary {
+        total_segments: segmentations.len(),
+        total_segment_requests,
+        average_requests_per_segment: if !segmentations.is_empty() {
+            total_segment_requests as f32 / segmentations.len() as f32
+        } else {
+            0.0
+        },
+    };
+
     // Calculate overview data
     let log_start_time = all_entries
         .first()
@@ -454,6 +556,18 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
         println!(
             "Google Page: {} - Status codes: {:?}",
             page, status_codes.counts
+        );
+    }
+
+    // DEBUG OUTPUT - Show segment information
+    println!("=== DEBUG SEGMENT INFORMATION ===");
+    for segment in &segmentations {
+        println!(
+            "Segment: {} - Requests: {} - Unique IPs: {} - URLs: {}",
+            segment.name,
+            segment.count,
+            segment.unique_ips,
+            segment.urls.len()
         );
     }
 
@@ -496,6 +610,8 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
         log_start_time,
         log_finish_time,
         file_count,
+        segmentations,
+        segment_summary,
     };
 
     // Send the overview
@@ -549,6 +665,67 @@ fn calculate_url_frequencies(entries: Vec<&LogEntry>) -> HashMap<String, Vec<Bot
         .collect()
 }
 
+// Enhanced segment_log function for detailed segment analysis
+pub fn segment_log_enhanced(data: &LogInput) -> Vec<Segmentation> {
+    let mut segments: HashMap<String, Segmentation> = HashMap::new();
+    let mut segment_ips: HashMap<String, HashSet<String>> = HashMap::new();
+
+    for (_filename, log_content) in &data.log_contents {
+        let entries = parse_log_entries(log_content);
+
+        for entry in entries {
+            if !entry.segment.is_empty() {
+                let segment = segments.entry(entry.segment.clone()).or_insert_with(|| {
+                    let mut seg = Segmentation::new();
+                    seg.name = entry.segment.clone();
+                    seg.match_type = entry.segment_match.clone().unwrap_or_default();
+                    seg
+                });
+
+                // Add entry data
+                segment.add_entry(&LogEntry {
+                    ip: entry.ip.clone(),
+                    timestamp: entry.timestamp.format("%Y-%m-%d %H:%M:%S").to_string(),
+                    method: entry.method.clone(),
+                    path: entry.path.clone(),
+                    status: entry.status,
+                    user_agent: entry.user_agent.clone(),
+                    referer: entry.referer.clone(),
+                    response_size: entry.response_size,
+                    country: extract_country(&entry.ip),
+                    crawler_type: entry.crawler_type.clone(),
+                    is_crawler: is_crawler(&entry.user_agent),
+                    file_type: entry.file_type.clone(),
+                    browser: browser_trim_name::trim_browser_name(&entry.browser),
+                    verified: entry.verified,
+                    segment: entry.segment.clone(),
+                    segment_match: entry.segment_match.clone(),
+                    taxonomy: Some(entry.taxonomy.clone()),
+                    filename: "".to_string(), // Not needed for this analysis
+                });
+
+                // Add URL if not already present
+                segment.add_url(entry.path.clone());
+
+                // Track unique IPs
+                let segment_ip_set = segment_ips
+                    .entry(entry.segment.clone())
+                    .or_insert_with(HashSet::new);
+                segment_ip_set.insert(entry.ip.clone());
+            }
+        }
+    }
+
+    // Update segment counts with unique IPs
+    for (segment_name, ip_set) in segment_ips {
+        if let Some(segment) = segments.get_mut(&segment_name) {
+            segment.unique_ips = ip_set.len();
+        }
+    }
+
+    segments.into_values().collect()
+}
+
 impl Default for Totals {
     fn default() -> Self {
         Self {
@@ -570,6 +747,16 @@ impl Default for Totals {
             openai_bot_page_frequencies: HashMap::new(),
             claude_bot_pages: Vec::new(),
             claude_bot_page_frequencies: HashMap::new(),
+        }
+    }
+}
+
+impl Default for SegmentSummary {
+    fn default() -> Self {
+        Self {
+            total_segments: 0,
+            total_segment_requests: 0,
+            average_requests_per_segment: 0.0,
         }
     }
 }
