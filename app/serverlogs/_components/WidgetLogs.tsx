@@ -370,7 +370,7 @@ export default function WidgetLogs() {
 
                   {activeTab === "Content" ? (
                     <DialogContent className="max-w-7xl  dark:text-white dark:border-brand-bright dark:bg-brand-darker">
-                      <Tabs defaultValue="content">
+                      <Tabs defaultValue="overview">
                         <Tabs.List>
                           <Tabs.Tab value="overview">Overview</Tabs.Tab>
                           <Tabs.Tab value="logs">URLs</Tabs.Tab>

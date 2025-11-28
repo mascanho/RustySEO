@@ -139,7 +139,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "ascending" | "descending";
-  } | null>({ key: "frequency", direction: "descending" });
+  } | null>({ key: "timestamp", direction: "descending" });
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
   const [domain, setDomain] = useState("");
   const [showOnTables, setShowOnTables] = useState(false);
@@ -223,54 +223,27 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     return logs.filter((log) => pathMatchesTaxonomy(log.path, taxonomy));
   };
 
-  // Process entries to aggregate data and calculate frequencies
+  // Process entries WITHOUT aggregation - keep all individual entries
   const processEntries = (entries: LogEntry[]): ProcessedLogEntry[] => {
-    const pathMap = new Map();
+    return entries.map((entry) => {
+      // For individual entries, we don't aggregate status codes across multiple entries
+      // Each entry shows its own status code
+      const statusCode = entry.status || 0;
+      const status_codes = {
+        counts: { [statusCode]: 1 },
+        success_count: statusCode >= 200 && statusCode < 300 ? 1 : 0,
+        redirect_count: statusCode >= 300 && statusCode < 400 ? 1 : 0,
+        client_error_count: statusCode >= 400 && statusCode < 500 ? 1 : 0,
+        server_error_count: statusCode >= 500 && statusCode < 600 ? 1 : 0,
+        other_count: statusCode < 200 || statusCode >= 600 ? 1 : 0,
+      };
 
-    entries.forEach((entry) => {
-      if (!pathMap.has(entry.path)) {
-        pathMap.set(entry.path, {
-          ...entry,
-          total_frequency: 0,
-          status_codes: {
-            counts: {},
-            success_count: 0,
-            redirect_count: 0,
-            client_error_count: 0,
-            server_error_count: 0,
-            other_count: 0,
-          },
-        });
-      }
-
-      const aggregated = pathMap.get(entry.path);
-      aggregated.total_frequency += entry.frequency || 1;
-
-      // Aggregate status codes
-      if (entry.status && aggregated.status_codes) {
-        const status = entry.status;
-        aggregated.status_codes.counts[status] =
-          (aggregated.status_codes.counts[status] || 0) + 1;
-
-        // Categorize status codes
-        if (status >= 200 && status < 300) {
-          aggregated.status_codes.success_count += 1;
-        } else if (status >= 300 && status < 400) {
-          aggregated.status_codes.redirect_count += 1;
-        } else if (status >= 400 && status < 500) {
-          aggregated.status_codes.client_error_count += 1;
-        } else if (status >= 500 && status < 600) {
-          aggregated.status_codes.server_error_count += 1;
-        } else {
-          aggregated.status_codes.other_count += 1;
-        }
-      }
+      return {
+        ...entry,
+        status_codes,
+        total_frequency: entry.frequency || 1,
+      };
     });
-
-    return Array.from(pathMap.values()).map((entry) => ({
-      ...entry,
-      frequency: entry.total_frequency,
-    }));
   };
 
   // Initialize logs with raw entries data
@@ -281,7 +254,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
       return;
     }
 
-    // Process the raw entries to aggregate data
+    // Process the raw entries WITHOUT aggregation
     const processedLogs = processEntries(entries);
 
     // Apply segment filter to processed logs
@@ -320,7 +293,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
 
     if (botFilter !== null) {
       if (botFilter === "bot") {
-        result = result.filter((log) => log.crawler_type !== "Human");
+        result = result.filter((log) => log.crawler_type === "Human");
       } else if (botFilter === "Human") {
         result = result.filter((log) => log.crawler_type === "Human");
       }
@@ -402,7 +375,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     setMethodFilter([]);
     setBotFilter("all");
     setVerifiedFilter(null);
-    setSortConfig({ key: "frequency", direction: "descending" });
+    setSortConfig({ key: "timestamp", direction: "descending" });
     setExpandedRow(null);
     setSelectedTaxonomy("all");
     setBotTypeFilter(null);
@@ -418,6 +391,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
       "Path",
       "File Type",
       "Response Size",
+      "Status Code",
       "Frequency",
       "User Agent",
       "Crawler Type",
@@ -434,6 +408,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
       showOnTables ? "https://" + domain + log.path : log.path || "",
       log.file_type || "",
       log.response_size || "",
+      log.status || "",
       log.frequency || "",
       `"${(log.user_agent || "").replace(/"/g, '""')}"`,
       log.crawler_type || "",
@@ -529,7 +504,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
       return {
         elapsedTime: "0h 0m 0s",
         frequency: {
-          total: 0,
+          total: log.frequency || 0,
           perHour: "0.00",
           perMinute: "0.00/minute",
           perSecond: "0.00/second",
@@ -743,6 +718,21 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                     <TableHead className="w-[80px] text-center">#</TableHead>
                     <TableHead
                       className="cursor-pointer"
+                      onClick={() => requestSort("timestamp")}
+                    >
+                      Timestamp
+                      {sortConfig?.key === "timestamp" && (
+                        <ChevronDown
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
+                        />
+                      )}
+                    </TableHead>
+                    <TableHead
+                      className="cursor-pointer"
                       onClick={() => requestSort("path")}
                     >
                       Path
@@ -788,10 +778,25 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                       )}
                     </TableHead>
                     <TableHead
+                      className="cursor-pointer text-center"
+                      onClick={() => requestSort("status")}
+                    >
+                      Status
+                      {sortConfig?.key === "status" && (
+                        <ChevronDown
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
+                        />
+                      )}
+                    </TableHead>
+                    <TableHead
                       className="cursor-pointer min-w-10 max-w-[50px] text-center"
                       onClick={() => requestSort("frequency")}
                     >
-                      Total Hits
+                      Hits
                       {sortConfig?.key === "frequency" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${
@@ -802,7 +807,6 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                         />
                       )}
                     </TableHead>
-                    <TableHead>Hourly Hits</TableHead>
                     <TableHead>Crawler Type</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -813,7 +817,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                         key={`${log.ip}-${log.timestamp}-${index}-${log.path}`}
                       >
                         <TableRow
-                          className={`group cursor-pointer ${expandedRow === index ? "bg-sky-dark/10" : ""}`}
+                          className={`group h-2 cursor-pointer ${expandedRow === index ? "bg-sky-dark/10" : ""}`}
                           onClick={() =>
                             setExpandedRow(expandedRow === index ? null : index)
                           }
@@ -821,7 +825,10 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                           <TableCell className="font-medium text-center max-w-[40px]">
                             {indexOfFirstItem + index + 1}
                           </TableCell>
-                          <TableCell className="inline-block truncate max-w-[600px]">
+                          <TableCell className="min-w-[150px]">
+                            {formatDate(log.timestamp)}
+                          </TableCell>
+                          <TableCell className="inline-block truncate max-w-[400px]">
                             <div className="flex items-center w-full m-auto">
                               <span className="mr-2 pl-2">
                                 {getFileIcon(log.file_type)}
@@ -844,19 +851,36 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                           <TableCell className="text-center">
                             {formatResponseSize(log.response_size)}
                           </TableCell>
-                          <TableCell className="text-center min-w-[90px]">
-                            {timings(log)?.frequency?.total}
+                          <TableCell className="text-center">
+                            <Badge
+                              variant="outline"
+                              className={
+                                log.status
+                                  ? log.status >= 200 && log.status < 300
+                                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                    : log.status >= 300 && log.status < 400
+                                      ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                      : log.status >= 400 && log.status < 500
+                                        ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                                        : log.status >= 500
+                                          ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                                          : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                                  : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                              }
+                            >
+                              {log.status || "N/A"}
+                            </Badge>
                           </TableCell>
-                          <TableCell className="text-center w-[90px]">
-                            {timings(log)?.frequency?.perHour}
+                          <TableCell className="text-center min-w-[90px]">
+                            {log.frequency || 1}
                           </TableCell>
                           <TableCell width={100} className="max-w-[100px]">
                             <Badge
                               variant="outline"
                               className={
                                 log.crawler_type !== "Human"
-                                  ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
-                                  : "bg-green-100 text-green-800 border-green-200"
+                                  ? "bg-red-600 dark:bg-red-400 border-purple-200 text-black dark:text-white"
+                                  : "bg-blue-600 text-white border-blue-200"
                               }
                             >
                               {log.crawler_type.length > 10
@@ -875,7 +899,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                                 {/* Left Column */}
                                 <div className="flex flex-col max-w-[70rem] w-full">
                                   <div className="flex mb-2 space-x-2 items-center justify-between">
-                                    <h4 className="font-bold">Timespan</h4>
+                                    <h4 className="font-bold">Details</h4>
                                     {log.verified && (
                                       <div className="flex items-center space-x-1 py-1 bg-red-200 dark:bg-red-400 px-2 text-xs rounded-md">
                                         <BadgeCheck
@@ -887,21 +911,73 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                                     )}
                                   </div>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-                                    <p className="text-sm font-mono break-all">
-                                      {timings(log)?.elapsedTime}
-                                    </p>
+                                    <div className="space-y-2 text-sm">
+                                      <div>
+                                        <span className="font-semibold">
+                                          IP:
+                                        </span>{" "}
+                                        {log.ip}
+                                      </div>
+                                      <div>
+                                        <span className="font-semibold">
+                                          Method:
+                                        </span>{" "}
+                                        {log.method}
+                                      </div>
+                                      <div>
+                                        <span className="font-semibold">
+                                          User Agent:
+                                        </span>{" "}
+                                        <span className="font-mono text-xs break-all">
+                                          {log.user_agent}
+                                        </span>
+                                      </div>
+                                      {log.referer && (
+                                        <div>
+                                          <span className="font-semibold">
+                                            Referer:
+                                          </span>{" "}
+                                          <span className="font-mono text-xs break-all">
+                                            {log.referer}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
 
                                 {/* Right Column */}
                                 <div className="flex flex-col">
                                   <h4 className="mb-2 font-bold">
-                                    Hits per Hour
+                                    Frequency Analysis
                                   </h4>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-                                    <p className="text-sm break-all">
-                                      {timings(log)?.frequency?.perHour}
-                                    </p>
+                                    <div className="space-y-2 text-sm">
+                                      <div>
+                                        <span className="font-semibold">
+                                          Total Hits:
+                                        </span>{" "}
+                                        {log.frequency || 1}
+                                      </div>
+                                      <div>
+                                        <span className="font-semibold">
+                                          Per Hour:
+                                        </span>{" "}
+                                        {timings(log)?.frequency?.perHour}
+                                      </div>
+                                      <div>
+                                        <span className="font-semibold">
+                                          Per Minute:
+                                        </span>{" "}
+                                        {timings(log)?.frequency?.perMinute}
+                                      </div>
+                                      <div>
+                                        <span className="font-semibold">
+                                          Per Second:
+                                        </span>{" "}
+                                        {timings(log)?.frequency?.perSecond}
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
 
@@ -953,170 +1029,38 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                                 {/* Response Codes Section */}
                                 <div className="md:col-span-2">
                                   <h4 className="mb-2 font-bold">
-                                    Response Codes
+                                    Response Code Details
                                   </h4>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                                      {/* Success Codes (200-299) */}
-                                      <div className="flex flex-col ">
-                                        <span className="font-semibold text-green-600 dark:text-green-400">
-                                          Success (2xx)
-                                        </span>
-                                        <div className="flex flex-wrap gap-2 mt-1">
-                                          <span className="px-2 py-1 bg-green-100 dark:bg-green-900 rounded text-xs">
-                                            200:{" "}
-                                            {log.status_codes?.counts?.[200] ||
-                                              0}
-                                          </span>
-                                          <span className="px-2 py-1 bg-green-100 dark:bg-green-900 rounded text-xs">
-                                            201:{" "}
-                                            {log.status_codes?.counts?.[201] ||
-                                              0}
-                                          </span>
-                                          <span className="px-2 py-1 bg-green-100 dark:bg-green-900 rounded text-xs">
-                                            204:{" "}
-                                            {log.status_codes?.counts?.[204] ||
-                                              0}
-                                          </span>
-                                        </div>
-                                        <span className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                          Total:{" "}
-                                          {log.status_codes?.success_count || 0}
-                                        </span>
-                                      </div>
-
-                                      {/* Redirect Codes (300-399) */}
-                                      <div className="flex flex-col">
-                                        <span className="font-semibold text-blue-600 dark:text-blue-400">
-                                          Redirect (3xx)
-                                        </span>
-                                        <div className="flex flex-wrap gap-2 mt-1">
-                                          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded text-xs">
-                                            301:{" "}
-                                            {log.status_codes?.counts?.[301] ||
-                                              0}
-                                          </span>
-                                          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded text-xs">
-                                            302:{" "}
-                                            {log.status_codes?.counts?.[302] ||
-                                              0}
-                                          </span>
-                                          <span className="px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded text-xs">
-                                            304:{" "}
-                                            {log.status_codes?.counts?.[304] ||
-                                              0}
-                                          </span>
-                                        </div>
-                                        <span className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                          Total:{" "}
-                                          {log.status_codes?.redirect_count ||
-                                            0}
-                                        </span>
-                                      </div>
-
-                                      {/* Client Error Codes (400-499) */}
-                                      <div className="flex flex-col">
-                                        <span className="font-semibold text-yellow-600 dark:text-yellow-400">
-                                          Client Error (4xx)
-                                        </span>
-                                        <div className="flex flex-wrap gap-2 mt-1">
-                                          <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 rounded text-xs">
-                                            400:{" "}
-                                            {log.status_codes?.counts?.[400] ||
-                                              0}
-                                          </span>
-                                          <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 rounded text-xs">
-                                            401:{" "}
-                                            {log.status_codes?.counts?.[401] ||
-                                              0}
-                                          </span>
-                                          <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 rounded text-xs">
-                                            403:{" "}
-                                            {log.status_codes?.counts?.[403] ||
-                                              0}
-                                          </span>
-                                          <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 rounded text-xs">
-                                            404:{" "}
-                                            {log.status_codes?.counts?.[404] ||
-                                              0}
-                                          </span>
-                                          <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900 rounded text-xs">
-                                            429:{" "}
-                                            {log.status_codes?.counts?.[429] ||
-                                              0}
-                                          </span>
-                                        </div>
-                                        <span className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                          Total:{" "}
-                                          {log.status_codes
-                                            ?.client_error_count || 0}
-                                        </span>
-                                      </div>
-
-                                      {/* Server Error Codes (500-599) */}
-                                      <div className="flex flex-col">
-                                        <span className="font-semibold text-red-600 dark:text-red-400">
-                                          Server Error (5xx)
-                                        </span>
-                                        <div className="flex flex-wrap gap-2 mt-1">
-                                          <span className="px-2 py-1 bg-red-100 dark:bg-red-900 rounded text-xs">
-                                            500:{" "}
-                                            {log.status_codes?.counts?.[500] ||
-                                              0}
-                                          </span>
-                                          <span className="px-2 py-1 bg-red-100 dark:bg-red-900 rounded text-xs">
-                                            502:{" "}
-                                            {log.status_codes?.counts?.[502] ||
-                                              0}
-                                          </span>
-                                          <span className="px-2 py-1 bg-red-100 dark:bg-red-900 rounded text-xs">
-                                            503:{" "}
-                                            {log.status_codes?.counts?.[503] ||
-                                              0}
-                                          </span>
-                                          <span className="px-2 py-1 bg-red-100 dark:bg-red-900 rounded text-xs">
-                                            504:{" "}
-                                            {log.status_codes?.counts?.[504] ||
-                                              0}
-                                          </span>
-                                        </div>
-                                        <span className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                          Total:{" "}
-                                          {log.status_codes
-                                            ?.server_error_count || 0}
-                                        </span>
+                                    <div className="flex items-center justify-center">
+                                      <div className="text-center">
+                                        <Badge
+                                          variant="outline"
+                                          className={
+                                            log.status
+                                              ? log.status >= 200 &&
+                                                log.status < 300
+                                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-lg px-4 py-2"
+                                                : log.status >= 300 &&
+                                                    log.status < 400
+                                                  ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-lg px-4 py-2"
+                                                  : log.status >= 400 &&
+                                                      log.status < 500
+                                                    ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 text-lg px-4 py-2"
+                                                    : log.status >= 500
+                                                      ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 text-lg px-4 py-2"
+                                                      : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 text-lg px-4 py-2"
+                                              : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 text-lg px-4 py-2"
+                                          }
+                                        >
+                                          Status: {log.status || "N/A"}
+                                        </Badge>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                                          This individual request returned
+                                          status code {log.status}
+                                        </p>
                                       </div>
                                     </div>
-
-                                    {/* Other Status Codes */}
-                                    {(log.status_codes?.other_count || 0) >
-                                      0 && (
-                                      <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
-                                        <span className="font-semibold text-gray-600 dark:text-gray-400">
-                                          Other Codes:{" "}
-                                          {log.status_codes?.other_count || 0}
-                                        </span>
-                                        <div className="flex flex-wrap gap-1 mt-1">
-                                          {Object.entries(
-                                            log.status_codes?.counts || {},
-                                          )
-                                            .filter(([code]) => {
-                                              const status = parseInt(code);
-                                              return (
-                                                status < 200 || status >= 600
-                                              );
-                                            })
-                                            .map(([code, count]) => (
-                                              <span
-                                                key={code}
-                                                className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs"
-                                              >
-                                                {code}: {count}
-                                              </span>
-                                            ))}
-                                        </div>
-                                      </div>
-                                    )}
                                   </div>
                                 </div>
                               </div>
