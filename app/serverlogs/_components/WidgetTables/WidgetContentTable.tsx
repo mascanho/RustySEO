@@ -588,10 +588,10 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-32"
+                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-full"
               >
                 <FolderTree className="h-4 w-4" />
-                Taxonomy
+                Segment
                 {selectedTaxonomy !== "all" && (
                   <Badge variant="secondary" className="ml-1">
                     {taxonomies.find((t) => t.id === selectedTaxonomy)?.name}
@@ -603,14 +603,14 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
               align="end"
               className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999]"
             >
-              <DropdownMenuLabel>Filter by Taxonomy</DropdownMenuLabel>
+              <DropdownMenuLabel>Filter by Segment</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuCheckboxItem
                 className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
                 checked={selectedTaxonomy === "all"}
                 onCheckedChange={() => setSelectedTaxonomy("all")}
               >
-                All Taxonomies
+                All Segments
               </DropdownMenuCheckboxItem>
               {taxonomies.map((taxonomy) => (
                 <DropdownMenuCheckboxItem
@@ -761,7 +761,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                         />
                       )}
                     </TableHead>
-                    <TableHead>Taxonomy</TableHead>
+                    <TableHead>Segment</TableHead>
                     <TableHead
                       className="cursor-pointer text-center w-20"
                       onClick={() => requestSort("response_size")}
@@ -874,16 +874,16 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                           <TableCell className="text-center min-w-[90px]">
                             {log.frequency || 1}
                           </TableCell>
-                          <TableCell width={100} className="max-w-[100px]">
+                          <TableCell width={110} className="max-w-[100px]">
                             <Badge
                               variant="outline"
                               className={
                                 log.crawler_type !== "Human"
-                                  ? "bg-red-600 dark:bg-red-400 border-purple-200 text-black dark:text-white"
-                                  : "bg-blue-600 text-white border-blue-200"
+                                  ? "w-[95px] p-0 flex justify-center text-[10px] bg-red-600 dark:bg-red-400 border-purple-200 text-black dark:text-white"
+                                  : "w-[95px] p-0 flex justify-center text-[11px] text-center bg-blue-600 text-white border-blue-200"
                               }
                             >
-                              {log.crawler_type.length > 10
+                              {log.crawler_type.length > 12
                                 ? log.crawler_type.trim().slice(0, 10)
                                 : log.crawler_type}
                             </Badge>

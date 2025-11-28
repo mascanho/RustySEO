@@ -369,7 +369,7 @@ export default function WidgetLogs() {
                   </DialogTrigger>
 
                   {activeTab === "Content" ? (
-                    <DialogContent className="max-w-7xl  dark:text-white dark:border-brand-bright dark:bg-brand-darker">
+                    <DialogContent className="max-w-7xl w-calc(100%)   dark:text-white dark:border-brand-bright dark:bg-brand-darker">
                       <Tabs defaultValue="overview">
                         <Tabs.List>
                           <Tabs.Tab value="overview">Overview</Tabs.Tab>
@@ -377,45 +377,47 @@ export default function WidgetLogs() {
                         </Tabs.List>
 
                         <Tabs.Panel value="overview">
-                          <DialogHeader className="mt-5">
-                            <DialogTitle>
-                              Segment Breakdown:
-                              <span className="text-brand-bright ml-1">
-                                {entry.name}
-                              </span>
-                            </DialogTitle>
-                          </DialogHeader>
-                          <div className="pt-2 space-y-1">
-                            <h3 className="font-medium dark:text-white/50 text-black/50">
-                              Paths in this segment:
-                            </h3>
-                            <div className="max-h-60 overflow-y-auto space-y-1">
-                              {entry.paths &&
-                                Object.entries(entry.paths).map(
-                                  ([path, count]) => (
-                                    <div
-                                      key={path}
-                                      className="flex pt-2 justify-between text-sm p-1 rounded-md bg-brand-bright/10 dark:bg-slate-800/50 px-2"
-                                    >
-                                      <span className="font-mono text-xs text-brand-bright">
-                                        {path}
-                                      </span>
-                                      <span className="font-medium text-brand-bright">
-                                        {count.toLocaleString()}
-                                      </span>
-                                    </div>
-                                  ),
-                                )}
-                              <div className="flex justify-between font-bold pt-4">
-                                <span className="text-black/50 dark:text-white/50">
-                                  Total Entries:
+                          <section className="mt-5 min-h-[583px] flex flex-col justify-around">
+                            <DialogHeader>
+                              <DialogTitle>
+                                Segment Breakdown:
+                                <span className="text-brand-bright ml-1">
+                                  {entry.name}
                                 </span>
-                                <span className="text-brand-bright pr-1">
-                                  {entry.value.toLocaleString()}
-                                </span>
+                              </DialogTitle>
+                            </DialogHeader>
+                            <div className="pt-2 space-y-1">
+                              <h3 className="font-medium dark:text-white/50 text-black/50">
+                                Paths in this segment:
+                              </h3>
+                              <div className="max-h-60 overflow-y-auto space-y-1">
+                                {entry.paths &&
+                                  Object.entries(entry.paths).map(
+                                    ([path, count]) => (
+                                      <div
+                                        key={path}
+                                        className="flex pt-2 justify-between text-sm p-1 rounded-md bg-brand-bright/10 dark:bg-slate-800/50 px-2"
+                                      >
+                                        <span className="font-mono text-xs text-brand-bright">
+                                          {path}
+                                        </span>
+                                        <span className="font-medium text-brand-bright">
+                                          {count.toLocaleString()}
+                                        </span>
+                                      </div>
+                                    ),
+                                  )}
+                                <div className="flex justify-between font-bold pt-4">
+                                  <span className="text-black/50 dark:text-white/50">
+                                    Total Entries:
+                                  </span>
+                                  <span className="text-brand-bright pr-1">
+                                    {entry.value.toLocaleString()}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          </div>
+                          </section>
                         </Tabs.Panel>
 
                         {/*CONTENT SEGMENTS WITH THEIR DATA GO HERE*/}
