@@ -70,6 +70,9 @@ interface LogEntry {
   user_agent: string;
   path: string;
   verified: boolean;
+  status?: number;
+  country?: string;
+  is_crawler?: boolean;
 }
 
 interface Taxonomy {
@@ -79,6 +82,26 @@ interface Taxonomy {
     path: string;
     matchType: "contains" | "exactMatch";
   }>;
+}
+
+interface StatusCodeCounts {
+  counts: { [key: number]: number };
+  success_count: number;
+  redirect_count: number;
+  client_error_count: number;
+  server_error_count: number;
+  other_count: number;
+}
+
+interface ProcessedLogEntry extends LogEntry {
+  status_codes?: StatusCodeCounts;
+  total_frequency?: number;
+}
+
+interface WidgetTableProps {
+  data: any;
+  entries: LogEntry[];
+  segment: string;
 }
 
 const formatDate = (dateString: string): string => {
@@ -99,45 +122,13 @@ const formatResponseSize = (bytes: number): string => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-interface StatusCodeCounts {
-  counts: { [key: number]: number };
-  success_count: number;
-  redirect_count: number;
-  client_error_count: number;
-  server_error_count: number;
-  other_count: number;
-}
-
-interface LogEntry {
-  ip: string;
-  timestamp: string;
-  method: string;
-  path: string;
-  status: number;
-  user_agent: string;
-  referer: string;
-  response_size: number;
-  country?: string;
-  is_crawler: boolean;
-  crawler_type: string;
-  browser: string;
-  file_type: string;
-  frequency: number;
-  verified: boolean;
-  status_codes?: StatusCodeCounts;
-}
-
-interface WidgetTableProps {
-  data: any;
-}
-
 const WidgetContentTable: React.FC<WidgetTableProps> = ({
   data,
   entries,
   segment,
 }) => {
-  const [initialLogs, setInitialLogs] = useState<LogEntry[]>([]);
-  const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
+  const [initialLogs, setInitialLogs] = useState<ProcessedLogEntry[]>([]);
+  const [filteredLogs, setFilteredLogs] = useState<ProcessedLogEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(100);
@@ -179,29 +170,6 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     }
   }, [data?.length]);
 
-  useEffect(() => {
-    if (!data?.totals?.bot_stats?.google?.page_frequencies) return;
-
-    let logs: LogEntry[] = [];
-    const pageStatus = data.totals.bot_stats.google.page_status_codes || {};
-
-    Object.entries(data.totals.bot_stats.google.page_frequencies).forEach(
-      ([path, entries]) => {
-        if (entries.length > 0) {
-          const aggregatedEntry = entries[0];
-          logs.push({
-            ...aggregatedEntry,
-            path,
-            status_codes: pageStatus[path],
-          });
-        }
-      },
-    );
-
-    setInitialLogs(logs);
-    setFilteredLogs(logs);
-  }, [data]);
-
   // Function to check if a path matches taxonomy criteria
   const pathMatchesTaxonomy = (path: string, taxonomy: Taxonomy): boolean => {
     return taxonomy.paths.some((taxPath) => {
@@ -222,9 +190,9 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
 
   // Filter logs based on selected taxonomy
   const filterLogsByTaxonomy = (
-    logs: LogEntry[],
+    logs: ProcessedLogEntry[],
     taxonomyId: string,
-  ): LogEntry[] => {
+  ): ProcessedLogEntry[] => {
     if (taxonomyId === "all") {
       return logs;
     }
@@ -237,10 +205,96 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     return logs.filter((log) => pathMatchesTaxonomy(log.path, taxonomy));
   };
 
+  // Filter logs based on segment name (taxonomy name)
+  const filterLogsBySegment = (
+    logs: ProcessedLogEntry[],
+    segmentName: string,
+  ): ProcessedLogEntry[] => {
+    if (!segmentName || segmentName === "all") {
+      return logs;
+    }
+
+    const taxonomy = taxonomies.find((tax) => tax.name === segmentName);
+    if (!taxonomy) {
+      console.warn(`No taxonomy found for segment: ${segmentName}`);
+      return logs;
+    }
+
+    return logs.filter((log) => pathMatchesTaxonomy(log.path, taxonomy));
+  };
+
+  // Process entries to aggregate data and calculate frequencies
+  const processEntries = (entries: LogEntry[]): ProcessedLogEntry[] => {
+    const pathMap = new Map();
+
+    entries.forEach((entry) => {
+      if (!pathMap.has(entry.path)) {
+        pathMap.set(entry.path, {
+          ...entry,
+          total_frequency: 0,
+          status_codes: {
+            counts: {},
+            success_count: 0,
+            redirect_count: 0,
+            client_error_count: 0,
+            server_error_count: 0,
+            other_count: 0,
+          },
+        });
+      }
+
+      const aggregated = pathMap.get(entry.path);
+      aggregated.total_frequency += entry.frequency || 1;
+
+      // Aggregate status codes
+      if (entry.status && aggregated.status_codes) {
+        const status = entry.status;
+        aggregated.status_codes.counts[status] =
+          (aggregated.status_codes.counts[status] || 0) + 1;
+
+        // Categorize status codes
+        if (status >= 200 && status < 300) {
+          aggregated.status_codes.success_count += 1;
+        } else if (status >= 300 && status < 400) {
+          aggregated.status_codes.redirect_count += 1;
+        } else if (status >= 400 && status < 500) {
+          aggregated.status_codes.client_error_count += 1;
+        } else if (status >= 500 && status < 600) {
+          aggregated.status_codes.server_error_count += 1;
+        } else {
+          aggregated.status_codes.other_count += 1;
+        }
+      }
+    });
+
+    return Array.from(pathMap.values()).map((entry) => ({
+      ...entry,
+      frequency: entry.total_frequency,
+    }));
+  };
+
+  // Initialize logs with raw entries data
+  useEffect(() => {
+    if (!entries || entries.length === 0) {
+      setInitialLogs([]);
+      setFilteredLogs([]);
+      return;
+    }
+
+    // Process the raw entries to aggregate data
+    const processedLogs = processEntries(entries);
+
+    // Apply segment filter to processed logs
+    const segmentFilteredLogs = filterLogsBySegment(processedLogs, segment);
+
+    setInitialLogs(segmentFilteredLogs);
+    setFilteredLogs(segmentFilteredLogs);
+  }, [entries, segment, taxonomies]);
+
   useEffect(() => {
     let result = [...initialLogs];
 
-    // Apply taxonomy filter first
+    // Apply taxonomy filter first (if user selects a specific taxonomy)
     if (selectedTaxonomy !== "all") {
       result = filterLogsByTaxonomy(result, selectedTaxonomy);
     }
@@ -286,13 +340,19 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
 
     if (sortConfig) {
       result.sort((a, b) => {
-        const aValue = a[sortConfig.key as keyof LogEntry];
-        const bValue = b[sortConfig.key as keyof LogEntry];
+        const aValue = a[sortConfig.key as keyof ProcessedLogEntry];
+        const bValue = b[sortConfig.key as keyof ProcessedLogEntry];
 
         if (typeof aValue === "string" && typeof bValue === "string") {
           return sortConfig.direction === "ascending"
             ? aValue.localeCompare(bValue)
             : bValue.localeCompare(aValue);
+        }
+
+        if (typeof aValue === "number" && typeof bValue === "number") {
+          return sortConfig.direction === "ascending"
+            ? aValue - bValue
+            : bValue - aValue;
         }
 
         if (aValue < bValue) {
@@ -342,7 +402,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     setMethodFilter([]);
     setBotFilter("all");
     setVerifiedFilter(null);
-    setSortConfig(null);
+    setSortConfig({ key: "frequency", direction: "descending" });
     setExpandedRow(null);
     setSelectedTaxonomy("all");
     setBotTypeFilter(null);
@@ -388,7 +448,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
 
     try {
       const filePath = await save({
-        defaultPath: `RustySEO - Google Bot Frequency -${new Date().toISOString().slice(0, 10)}.csv`,
+        defaultPath: `RustySEO - ${segment || "All"} - Google Bot Frequency -${new Date().toISOString().slice(0, 10)}.csv`,
         filters: [{ name: "CSV", extensions: ["csv"] }],
       });
 
@@ -408,46 +468,46 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     }
   };
 
-  const getFileIcon = (path: string) => {
-    switch (path) {
+  const getFileIcon = (fileType: string) => {
+    switch (fileType) {
       case "HTML":
-        return <FileCode type="html" size={14} />;
+        return <FileCode className="text-blue-500" size={14} />;
       case "Image":
-        return <Image size={14} />;
+        return <Image className="text-green-500" size={14} />;
       case "Video":
-        return <FileVideo size={14} />;
+        return <FileVideo className="text-purple-500" size={14} />;
       case "Audio":
-        return <FileAudio size={14} />;
+        return <FileAudio className="text-yellow-500" size={14} />;
       case "PHP":
-        return <FileCode type="php" size={14} />;
+        return <FileCode className="text-indigo-500" size={14} />;
       case "TXT":
-        return <FileType size={14} />;
+        return <FileType className="text-gray-500" size={14} />;
       case "CSS":
-        return <FileCode type="css" size={14} />;
+        return <FileCode className="text-pink-500" size={14} />;
       case "JS":
-        return <FileCode type="javascript" size={14} />;
+        return <FileCode className="text-yellow-600" size={14} />;
       case "Document":
-        return <FileText size={14} />;
+        return <FileText className="text-red-500" size={14} />;
       case "Archive":
-        return <Package size={14} />;
+        return <Package className="text-orange-500" size={14} />;
       case "Font":
-        return <FileType2 size={14} />;
+        return <FileType2 className="text-teal-500" size={14} />;
       default:
-        return <FileCode size={14} />;
+        return <FileCode className="text-gray-400" size={14} />;
     }
   };
 
-  // Calculate timings
+  // Calculate timings based on actual entries
   const oldestEntry =
-    initialLogs.length > 0
-      ? initialLogs.reduce((oldest, log) =>
+    entries.length > 0
+      ? entries.reduce((oldest, log) =>
           new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
         )
       : null;
 
   const newestEntry =
-    initialLogs.length > 0
-      ? initialLogs.reduce((newest, log) =>
+    entries.length > 0
+      ? entries.reduce((newest, log) =>
           new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
         )
       : null;
@@ -464,7 +524,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
 
   const elapsedTimeMs = totalTimeBetweenNewAndOldest();
 
-  const timings = (log: LogEntry) => {
+  const timings = (log: ProcessedLogEntry) => {
     if (!oldestEntry || !newestEntry) {
       return {
         elapsedTime: "0h 0m 0s",
@@ -501,10 +561,40 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     };
   };
 
-  console.log("Segment:", segment);
+  // Get current segment taxonomy for display
+  const currentSegmentTaxonomy = taxonomies.find((tax) => tax.name === segment);
 
   return (
     <div className="space-y-4 h-full pb-0 -mb-4">
+      {/* Segment Header */}
+      {segment && segment !== "all" && currentSegmentTaxonomy && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-blue-800 dark:text-blue-300">
+                Viewing: {segment}
+              </h3>
+              <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                Showing Google bot activity for {segment.toLowerCase()} section
+                {currentSegmentTaxonomy.paths.length > 0 && (
+                  <span className="ml-1">
+                    (matches:{" "}
+                    {currentSegmentTaxonomy.paths.map((p) => p.path).join(", ")}
+                    )
+                  </span>
+                )}
+              </p>
+            </div>
+            <Badge
+              variant="outline"
+              className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
+            >
+              {filteredLogs.length} entries
+            </Badge>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row justify-between -mb-4 p-1">
         <div className="relative w-full mr-1">
           <Search className="absolute dark:text-white/50 left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -518,7 +608,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
         </div>
 
         <div className="flex flex-1 gap-1">
-          {/* Taxonomy Filter */}
+          {/* Taxonomy Filter - Always show for further filtering within segment */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -720,7 +810,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                   {currentLogs.length > 0 ? (
                     currentLogs.map((log, index) => (
                       <React.Fragment
-                        key={`${log.ip}-${log.timestamp}-${index}`}
+                        key={`${log.ip}-${log.timestamp}-${index}-${log.path}`}
                       >
                         <TableRow
                           className={`group cursor-pointer ${expandedRow === index ? "bg-sky-dark/10" : ""}`}
@@ -731,12 +821,12 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                           <TableCell className="font-medium text-center max-w-[40px]">
                             {indexOfFirstItem + index + 1}
                           </TableCell>
-                          <TableCell className="inline-block truncate max-w-[600px]  ">
+                          <TableCell className="inline-block truncate max-w-[600px]">
                             <div className="flex items-center w-full m-auto">
-                              <span className="mr-2  pl-2">
+                              <span className="mr-2 pl-2">
                                 {getFileIcon(log.file_type)}
                               </span>
-                              <span className="leading-[28px] m-auto flex items-center">
+                              <span className="leading-[28px] m-auto flex items-center truncate">
                                 {showOnTables && domain
                                   ? "https://" + domain + log.path
                                   : log?.path}
@@ -1038,7 +1128,9 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                   ) : (
                     <TableRow>
                       <TableCell colSpan={9} className="text-center h-24">
-                        No log entries found.
+                        {segment && segment !== "all"
+                          ? `No log entries found for ${segment}`
+                          : "No log entries found."}
                       </TableCell>
                     </TableRow>
                   )}
