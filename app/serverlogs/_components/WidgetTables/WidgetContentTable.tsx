@@ -16,6 +16,7 @@ import {
   Package,
   RefreshCw,
   Search,
+  FolderTree,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -71,6 +72,15 @@ interface LogEntry {
   verified: boolean;
 }
 
+interface Taxonomy {
+  id: string;
+  name: string;
+  paths: Array<{
+    path: string;
+    matchType: "contains" | "exactMatch";
+  }>;
+}
+
 const formatDate = (dateString: string): string => {
   const date = new Date(dateString);
   return new Intl.DateTimeFormat("en-US", {
@@ -114,14 +124,18 @@ interface LogEntry {
   file_type: string;
   frequency: number;
   verified: boolean;
-  status_codes?: StatusCodeCounts; // Added this line
+  status_codes?: StatusCodeCounts;
 }
 
 interface WidgetTableProps {
   data: any;
 }
 
-const WidgetContentTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
+const WidgetContentTable: React.FC<WidgetTableProps> = ({
+  data,
+  entries,
+  segment,
+}) => {
   const [initialLogs, setInitialLogs] = useState<LogEntry[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -139,7 +153,10 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
   const [domain, setDomain] = useState("");
   const [showOnTables, setShowOnTables] = useState(false);
   const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
-  const [taxonomies, setTaxonomies] = useState<string[]>([]);
+  const [taxonomies, setTaxonomies] = useState<Taxonomy[]>([]);
+  const [selectedTaxonomy, setSelectedTaxonomy] = useState<string | "all">(
+    "all",
+  );
 
   useEffect(() => {
     const tax = localStorage.getItem("taxonomies");
@@ -185,8 +202,48 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
     setFilteredLogs(logs);
   }, [data]);
 
+  // Function to check if a path matches taxonomy criteria
+  const pathMatchesTaxonomy = (path: string, taxonomy: Taxonomy): boolean => {
+    return taxonomy.paths.some((taxPath) => {
+      if (taxPath.matchType === "exactMatch") {
+        return path === taxPath.path;
+      } else if (taxPath.matchType === "contains") {
+        return path.includes(taxPath.path);
+      }
+      return false;
+    });
+  };
+
+  // Function to get taxonomy name for a path
+  const getTaxonomyForPath = (path: string): string => {
+    const taxonomy = taxonomies.find((tax) => pathMatchesTaxonomy(path, tax));
+    return taxonomy?.name || "Uncategorized";
+  };
+
+  // Filter logs based on selected taxonomy
+  const filterLogsByTaxonomy = (
+    logs: LogEntry[],
+    taxonomyId: string,
+  ): LogEntry[] => {
+    if (taxonomyId === "all") {
+      return logs;
+    }
+
+    const taxonomy = taxonomies.find((tax) => tax.id === taxonomyId);
+    if (!taxonomy) {
+      return logs;
+    }
+
+    return logs.filter((log) => pathMatchesTaxonomy(log.path, taxonomy));
+  };
+
   useEffect(() => {
     let result = [...initialLogs];
+
+    // Apply taxonomy filter first
+    if (selectedTaxonomy !== "all") {
+      result = filterLogsByTaxonomy(result, selectedTaxonomy);
+    }
 
     if (searchTerm) {
       const lowerCaseSearch = searchTerm.toLowerCase();
@@ -248,7 +305,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
       });
     }
 
-    setFilteredLogs(entries);
+    setFilteredLogs(result);
     setCurrentPage(1);
   }, [
     searchTerm,
@@ -259,7 +316,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
     initialLogs,
     fileTypeFilter,
     botTypeFilter,
-    entries,
+    selectedTaxonomy,
+    taxonomies,
   ]);
 
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -286,11 +344,10 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
     setVerifiedFilter(null);
     setSortConfig(null);
     setExpandedRow(null);
-    setFilteredLogs(initialLogs);
+    setSelectedTaxonomy("all");
     setBotTypeFilter(null);
     setFileTypeFilter([]);
-
-    console.log("resetting filters");
+    setFilteredLogs(initialLogs);
   };
 
   const exportCSV = async () => {
@@ -305,6 +362,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
       "User Agent",
       "Crawler Type",
       "Google Verified",
+      "Taxonomy",
     ];
 
     const dataToExport = filteredLogs.length > 0 ? filteredLogs : initialLogs;
@@ -320,6 +378,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
       `"${(log.user_agent || "").replace(/"/g, '""')}"`,
       log.crawler_type || "",
       log.verified ? "Yes" : "No",
+      getTaxonomyForPath(log.path),
     ]);
 
     const csvContent = [
@@ -378,8 +437,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
     }
   };
 
-  // CALCULATE THE TIMINGS
-
+  // Calculate timings
   const oldestEntry =
     initialLogs.length > 0
       ? initialLogs.reduce((oldest, log) =>
@@ -443,6 +501,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
     };
   };
 
+  console.log("Segment:", segment);
+
   return (
     <div className="space-y-4 h-full pb-0 -mb-4">
       <div className="flex flex-col md:flex-row justify-between -mb-4 p-1">
@@ -458,6 +518,50 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
         </div>
 
         <div className="flex flex-1 gap-1">
+          {/* Taxonomy Filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-32"
+              >
+                <FolderTree className="h-4 w-4" />
+                Taxonomy
+                {selectedTaxonomy !== "all" && (
+                  <Badge variant="secondary" className="ml-1">
+                    {taxonomies.find((t) => t.id === selectedTaxonomy)?.name}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999]"
+            >
+              <DropdownMenuLabel>Filter by Taxonomy</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuCheckboxItem
+                className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                checked={selectedTaxonomy === "all"}
+                onCheckedChange={() => setSelectedTaxonomy("all")}
+              >
+                All Taxonomies
+              </DropdownMenuCheckboxItem>
+              {taxonomies.map((taxonomy) => (
+                <DropdownMenuCheckboxItem
+                  className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                  key={taxonomy.id}
+                  checked={selectedTaxonomy === taxonomy.id}
+                  onCheckedChange={(checked) => {
+                    setSelectedTaxonomy(checked ? taxonomy.id : "all");
+                  }}
+                >
+                  {taxonomy.name}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -547,7 +651,6 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[80px] text-center">#</TableHead>
-
                     <TableHead
                       className="cursor-pointer"
                       onClick={() => requestSort("path")}
@@ -578,6 +681,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
                         />
                       )}
                     </TableHead>
+                    <TableHead>Taxonomy</TableHead>
                     <TableHead
                       className="cursor-pointer text-center w-20"
                       onClick={() => requestSort("response_size")}
@@ -627,9 +731,6 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
                           <TableCell className="font-medium text-center max-w-[40px]">
                             {indexOfFirstItem + index + 1}
                           </TableCell>
-                          {/* <TableCell className="w-[200px] pl-2"> */}
-                          {/*   {formatDate(log.timestamp)} */}
-                          {/* </TableCell> */}
                           <TableCell className="inline-block truncate max-w-[600px]  ">
                             <div className="flex items-center w-full m-auto">
                               <span className="mr-2  pl-2">
@@ -645,11 +746,14 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
                           <TableCell className="min-w-[30px] truncate">
                             <Badge variant="outline">{log.file_type}</Badge>
                           </TableCell>
-
+                          <TableCell className="min-w-[100px]">
+                            <Badge variant="secondary" className="text-xs">
+                              {getTaxonomyForPath(log.path)}
+                            </Badge>
+                          </TableCell>
                           <TableCell className="text-center">
                             {formatResponseSize(log.response_size)}
                           </TableCell>
-
                           <TableCell className="text-center min-w-[90px]">
                             {timings(log)?.frequency?.total}
                           </TableCell>
@@ -674,7 +778,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
                         {expandedRow === index && (
                           <TableRow>
                             <TableCell
-                              colSpan={8}
+                              colSpan={9}
                               className="bg-gray-50 dark:bg-gray-800 p-4"
                             >
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -711,7 +815,52 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
                                   </div>
                                 </div>
 
-                                {/* New Response Codes Section */}
+                                {/* Taxonomy Information */}
+                                <div className="md:col-span-2">
+                                  <h4 className="mb-2 font-bold">
+                                    Taxonomy Information
+                                  </h4>
+                                  <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
+                                    <div className="flex items-center gap-4">
+                                      <div>
+                                        <span className="font-semibold">
+                                          Category:
+                                        </span>
+                                        <Badge
+                                          variant="secondary"
+                                          className="ml-2"
+                                        >
+                                          {getTaxonomyForPath(log.path)}
+                                        </Badge>
+                                      </div>
+                                      <div>
+                                        <span className="font-semibold">
+                                          Matching Rules:
+                                        </span>
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                          {taxonomies
+                                            .find(
+                                              (tax) =>
+                                                tax.name ===
+                                                getTaxonomyForPath(log.path),
+                                            )
+                                            ?.paths.map((pathRule, idx) => (
+                                              <Badge
+                                                key={idx}
+                                                variant="outline"
+                                                className="text-xs"
+                                              >
+                                                {pathRule.path} (
+                                                {pathRule.matchType})
+                                              </Badge>
+                                            ))}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Response Codes Section */}
                                 <div className="md:col-span-2">
                                   <h4 className="mb-2 font-bold">
                                     Response Codes
@@ -888,7 +1037,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({ data, entries }) => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center h-24">
+                      <TableCell colSpan={9} className="text-center h-24">
                         No log entries found.
                       </TableCell>
                     </TableRow>

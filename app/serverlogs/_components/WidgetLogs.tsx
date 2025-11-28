@@ -423,7 +423,7 @@ export default function WidgetLogs() {
                           <WidgetContentTable
                             data={overview}
                             entries={entries}
-                            segment={""}
+                            segment={entry?.name}
                           />
                         </Tabs.Panel>
                       </Tabs>
