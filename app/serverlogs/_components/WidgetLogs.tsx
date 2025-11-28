@@ -27,6 +27,8 @@ import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
 import { WidgetTableBing } from "./WidgetTables/WidgetCrawlersBingTable.tsx";
 import { WidgetTableOpenAi } from "./WidgetTables/WidgetCrawlersOpenAITable.tsx";
 import { WidgetTableClaude } from "./WidgetTables/WidgetCrawlersClaudeTable.tsx";
+import { WidgetContentTable } from "./WidgetTables/WidgetContentTable.tsx";
+import { over } from "lodash";
 
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
@@ -48,7 +50,7 @@ const COLORS = [
 
 export default function WidgetLogs() {
   const [activeTab, setActiveTab] = useState("Filetypes");
-  const { overview } = useLogAnalysis();
+  const { overview, entries } = useLogAnalysis();
   const [openDialogs, setOpenDialogs] = useState({});
   const { currentLogs } = useCurrentLogs();
   const { uploadedLogFiles } = useServerLogsStore();
@@ -367,46 +369,67 @@ export default function WidgetLogs() {
                   </DialogTrigger>
 
                   {activeTab === "Content" ? (
-                    <DialogContent className="max-w-md dark:text-white dark:border-brand-bright dark:bg-brand-darker">
-                      <DialogHeader>
-                        <DialogTitle>
-                          Segment Breakdown:
-                          <span className="text-brand-bright ml-1">
-                            {entry.name}
-                          </span>
-                        </DialogTitle>
-                      </DialogHeader>
-                      <div className="pt-2 space-y-1">
-                        <h3 className="font-medium dark:text-white/50 text-black/50">
-                          Paths in this segment:
-                        </h3>
-                        <div className="max-h-60 overflow-y-auto space-y-1">
-                          {entry.paths &&
-                            Object.entries(entry.paths).map(([path, count]) => (
-                              <div
-                                key={path}
-                                className="flex pt-2 justify-between text-sm p-1 rounded-md bg-brand-bright/10 dark:bg-slate-800/50 px-2"
-                              >
-                                <span className="font-mono text-xs text-brand-bright">
-                                  {path}
+                    <DialogContent className="max-w-7xl  dark:text-white dark:border-brand-bright dark:bg-brand-darker">
+                      <Tabs defaultValue="content">
+                        <Tabs.List>
+                          <Tabs.Tab value="overview">Overview</Tabs.Tab>
+                          <Tabs.Tab value="logs">URLs</Tabs.Tab>
+                        </Tabs.List>
+
+                        <Tabs.Panel value="overview">
+                          <DialogHeader className="mt-5">
+                            <DialogTitle>
+                              Segment Breakdown:
+                              <span className="text-brand-bright ml-1">
+                                {entry.name}
+                              </span>
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="pt-2 space-y-1">
+                            <h3 className="font-medium dark:text-white/50 text-black/50">
+                              Paths in this segment:
+                            </h3>
+                            <div className="max-h-60 overflow-y-auto space-y-1">
+                              {entry.paths &&
+                                Object.entries(entry.paths).map(
+                                  ([path, count]) => (
+                                    <div
+                                      key={path}
+                                      className="flex pt-2 justify-between text-sm p-1 rounded-md bg-brand-bright/10 dark:bg-slate-800/50 px-2"
+                                    >
+                                      <span className="font-mono text-xs text-brand-bright">
+                                        {path}
+                                      </span>
+                                      <span className="font-medium text-brand-bright">
+                                        {count.toLocaleString()}
+                                      </span>
+                                    </div>
+                                  ),
+                                )}
+                              <div className="flex justify-between font-bold pt-4">
+                                <span className="text-black/50 dark:text-white/50">
+                                  Total Entries:
                                 </span>
-                                <span className="font-medium text-brand-bright">
-                                  {count.toLocaleString()}
+                                <span className="text-brand-bright pr-1">
+                                  {entry.value.toLocaleString()}
                                 </span>
                               </div>
-                            ))}
-                          <div className="flex justify-between font-bold pt-4">
-                            <span className="text-black/50 dark:text-white/50">
-                              Total Entries:
-                            </span>
-                            <span className="text-brand-bright pr-1">
-                              {entry.value.toLocaleString()}
-                            </span>
+                            </div>
                           </div>
-                        </div>
-                      </div>
+                        </Tabs.Panel>
+
+                        {/*CONTENT SEGMENTS WITH THEIR DATA GO HERE*/}
+                        <Tabs.Panel value="logs">
+                          <WidgetContentTable
+                            data={overview}
+                            entries={entries}
+                            segment={""}
+                          />
+                        </Tabs.Panel>
+                      </Tabs>
                     </DialogContent>
-                  ) : entry?.name === "Google" ? (
+                  ) : // GOOGLE AND OTHER CRAWLERS START HERE
+                  entry?.name === "Google" ? (
                     <DialogContent className="max-w-[90%] min-h-96 overflow-hidden dark:bg-brand-darker dark:border-brand-bright">
                       <Tabs defaultValue="overview">
                         <Tabs.List className="mb-2 mx-1">
@@ -457,7 +480,7 @@ export default function WidgetLogs() {
                         </Tabs.List>
 
                         <Tabs.Panel value="overview">
-                          <WidgetTableBing data={overview} />
+                          <WidgetTableBing data={currentLogs} />
                         </Tabs.Panel>
                       </Tabs>
                     </DialogContent>
