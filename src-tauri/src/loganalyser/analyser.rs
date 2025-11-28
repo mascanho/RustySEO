@@ -68,7 +68,7 @@ pub struct BotStats {
     pub status_codes: StatusCodeCounts,
     pub pages: Vec<String>,
     pub page_frequencies: HashMap<String, Vec<BotPageDetails>>,
-    pub page_status_codes: HashMap<String, StatusCodeCounts>, // New: status codes per page
+    pub page_status_codes: HashMap<String, StatusCodeCounts>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -295,7 +295,7 @@ pub fn analyse_log(data: LogInput, app_handle: AppHandle) -> Result<(), String> 
 
     // Initialize bot stats
     let mut bot_stats = BotStatsMap::default();
-    let mut bot_counts = [0; 8]; // Keep original counts for backward compatibility
+    let mut bot_counts = [0; 8];
 
     // For detailed frequency analysis (keep original fields)
     let mut google_bot_entries = Vec::new();
