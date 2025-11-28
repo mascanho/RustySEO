@@ -423,7 +423,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
 
     try {
       const filePath = await save({
-        defaultPath: `RustySEO - ${segment || "All"} - Google Bot Frequency -${new Date().toISOString().slice(0, 10)}.csv`,
+        defaultPath: `RustySEO - ${segment || "All"} -  URLs Frequency -${new Date().toISOString().slice(0, 10)}.csv`,
         filters: [{ name: "CSV", extensions: ["csv"] }],
       });
 
