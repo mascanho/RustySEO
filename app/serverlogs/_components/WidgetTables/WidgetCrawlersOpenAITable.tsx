@@ -511,75 +511,6 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* <Select
-            value={
-              verifiedFilter === null
-                ? "all"
-                : verifiedFilter
-                  ? "verified"
-                  : "unverified"
-            }
-            onValueChange={(value) => {
-              if (value === "all") setVerifiedFilter(null);
-              else setVerifiedFilter(value === "verified");
-            }}
-          >
-            <SelectTrigger className="w-[150px] dark:bg-brand-darker dark:text-white">
-              <SelectValue placeholder="Verification" />
-            </SelectTrigger>
-            <SelectContent className="z-[999999999999999]">
-              <SelectItem
-                className="hover:bg-brand-bright hover:text-white"
-                value="all"
-              >
-                All IPs
-              </SelectItem>
-              <SelectItem
-                className="hover:bg-brand-bright hover:text-white"
-                value="verified"
-              >
-                Verified
-              </SelectItem>
-              <SelectItem
-                className="hover:bg-brand-bright hover:text-white"
-                value="unverified"
-              >
-                Unverified
-              </SelectItem>
-            </SelectContent>
-          </Select> */}
-
-          {/* <Select
-            value={botTypeFilter === null ? "all" : botTypeFilter}
-            onValueChange={(value) =>
-              setBotTypeFilter(value === "all" ? null : value)
-            }
-          >
-            <SelectTrigger className="w-[120px] dark:bg-brand-darker dark:text-white">
-              <SelectValue placeholder="Bot/Human" />
-            </SelectTrigger>
-            <SelectContent className="z-[999999999999999]">
-              <SelectItem
-                className="hover:bg-brand-bright hover:text-white"
-                value="all"
-              >
-                All devices
-              </SelectItem>
-              <SelectItem
-                className="hover:bg-brand-bright hover:text-white"
-                value="Desktop"
-              >
-                Desktop
-              </SelectItem>
-              <SelectItem
-                className="hover:bg-brand-bright hover:text-white"
-                value="Mobile"
-              >
-                Mobile
-              </SelectItem>
-            </SelectContent>
-          </Select> */}
-
           <Button
             variant="outline"
             onClick={resetFilters}
@@ -615,21 +546,6 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[80px] text-center">#</TableHead>
-                    {/* <TableHead */}
-                    {/*   className="cursor-pointer w-[200px] truncate" */}
-                    {/*   onClick={() => requestSort("timestamp")} */}
-                    {/* > */}
-                    {/*   Timestamp */}
-                    {/*   {sortConfig?.key === "timestamp" && ( */}
-                    {/*     <ChevronDown */}
-                    {/*       className={`ml-1 h-4 w-4 inline-block ${ */}
-                    {/*         sortConfig.direction === "descending" */}
-                    {/*           ? "rotate-180" */}
-                    {/*           : "" */}
-                    {/*       }`} */}
-                    {/*     /> */}
-                    {/*   )} */}
-                    {/* </TableHead> */}
                     <TableHead
                       className="cursor-pointer"
                       onClick={() => requestSort("path")}
@@ -736,12 +652,12 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
                           <TableCell className="text-center w-[90px]">
                             {timings(log)?.frequency?.perHour}
                           </TableCell>
-                          <TableCell width={100} className="max-w-[100px]">
+                          <TableCell width={105} className="max-w-[100px]">
                             <Badge
                               variant="outline"
                               className={
                                 log.crawler_type !== "Human"
-                                  ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
+                                  ? "bg-red-200 w-[95px] flex justify-center text-[10px]  dark:bg-red-400 border-purple-200 text-black dark:text-white"
                                   : "bg-green-100 text-green-800 border-green-200"
                               }
                             >

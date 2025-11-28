@@ -884,7 +884,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                               }
                             >
                               {log.crawler_type.length > 12
-                                ? log.crawler_type.trim().slice(0, 10)
+                                ? log.crawler_type.trim().slice(0, 15)
                                 : log.crawler_type}
                             </Badge>
                           </TableCell>

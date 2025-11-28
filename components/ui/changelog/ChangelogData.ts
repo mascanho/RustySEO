@@ -1,5 +1,11 @@
 export const changelogData = [
   {
+    version: "0.3.4",
+    date: "2025-12-25",
+    type: "feature",
+    changes: ["Log analyser: Table segments"],
+  },
+  {
     version: "0.3.3",
     date: "2025-12-01",
     type: "feature",
