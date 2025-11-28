@@ -596,8 +596,6 @@ export function LogAnalyzer() {
     toast.success(`${name} copied to clipboard!`);
   }
 
-  console.log(entries, "ENTRIES");
-
   return (
     <div className="space-y-4 flex flex-col flex-1 h-full not-selectable">
       <div className="flex flex-col md:flex-row justify-between relative -mb-4 p-1 h-full">
