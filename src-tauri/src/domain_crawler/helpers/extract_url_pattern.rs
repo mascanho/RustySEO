@@ -44,7 +44,7 @@ pub fn extract_url_pattern(url: &str) -> String {
     if let Some(pos) = pattern.find('?') {
         let query_part = &pattern[pos..];
         // Keep URLs with simple query parameters
-        if query_part.matches('&').count() > 2 {
+        if query_part.matches('&').count() > 5 {
             pattern = pattern[..pos].to_string();
         }
     }

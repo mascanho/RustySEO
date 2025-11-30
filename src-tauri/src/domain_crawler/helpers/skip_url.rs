@@ -35,7 +35,15 @@ pub fn should_skip_url(url: &str) -> bool {
 
     let url_lower = url.to_lowercase();
     for pattern in &skip_patterns {
-        if url_lower.contains(pattern) {
+        // Check if the pattern is a path segment (surrounded by /) or a query parameter
+        if url_lower.contains(&format!("/{}", pattern)) 
+            || url_lower.contains(&format!("{}?", pattern))
+            || url_lower.contains(&format!("={}", pattern))
+            || url_lower.ends_with(pattern) 
+            // Keep original check for file extensions and protocols
+            || (pattern.starts_with('.') && url_lower.contains(pattern))
+            || (pattern.ends_with(':') && url_lower.contains(pattern))
+        {
             return true;
         }
     }
