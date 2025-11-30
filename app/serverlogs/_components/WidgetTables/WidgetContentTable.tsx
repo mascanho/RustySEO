@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   AlertCircle,
   BadgeCheck,
@@ -127,8 +127,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
   entries,
   segment,
 }) => {
-  const [initialLogs, setInitialLogs] = useState<ProcessedLogEntry[]>([]);
-  const [filteredLogs, setFilteredLogs] = useState<ProcessedLogEntry[]>([]);
+  // Removed redundant state: initialLogs, filteredLogs
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(100);
@@ -188,46 +187,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     return taxonomy?.name || "Uncategorized";
   };
 
-  // Filter logs based on selected taxonomy
-  const filterLogsByTaxonomy = (
-    logs: ProcessedLogEntry[],
-    taxonomyId: string,
-  ): ProcessedLogEntry[] => {
-    if (taxonomyId === "all") {
-      return logs;
-    }
+  // Memoize processed logs to avoid recalculation on every render
+  const processedLogs = useMemo(() => {
+    if (!entries || entries.length === 0) return [];
 
-    const taxonomy = taxonomies.find((tax) => tax.id === taxonomyId);
-    if (!taxonomy) {
-      return logs;
-    }
-
-    return logs.filter((log) => pathMatchesTaxonomy(log.path, taxonomy));
-  };
-
-  // Filter logs based on segment name (taxonomy name)
-  const filterLogsBySegment = (
-    logs: ProcessedLogEntry[],
-    segmentName: string,
-  ): ProcessedLogEntry[] => {
-    if (!segmentName || segmentName === "all") {
-      return logs;
-    }
-
-    const taxonomy = taxonomies.find((tax) => tax.name === segmentName);
-    if (!taxonomy) {
-      console.warn(`No taxonomy found for segment: ${segmentName}`);
-      return logs;
-    }
-
-    return logs.filter((log) => pathMatchesTaxonomy(log.path, taxonomy));
-  };
-
-  // Process entries WITHOUT aggregation - keep all individual entries
-  const processEntries = (entries: LogEntry[]): ProcessedLogEntry[] => {
-    return entries.map((entry) => {
-      // For individual entries, we don't aggregate status codes across multiple entries
-      // Each entry shows its own status code
+    const processed = entries.map((entry) => {
       const statusCode = entry.status || 0;
       const status_codes = {
         counts: { [statusCode]: 1 },
@@ -244,32 +208,30 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
         total_frequency: entry.frequency || 1,
       };
     });
-  };
 
-  // Initialize logs with raw entries data
-  useEffect(() => {
-    if (!entries || entries.length === 0) {
-      setInitialLogs([]);
-      setFilteredLogs([]);
-      return;
+    // Apply segment filter immediately as it's a prop
+    if (!segment || segment === "all") {
+      return processed;
     }
 
-    // Process the raw entries WITHOUT aggregation
-    const processedLogs = processEntries(entries);
+    const taxonomy = taxonomies.find((tax) => tax.name === segment);
+    if (!taxonomy) {
+      return processed;
+    }
 
-    // Apply segment filter to processed logs
-    const segmentFilteredLogs = filterLogsBySegment(processedLogs, segment);
-
-    setInitialLogs(segmentFilteredLogs);
-    setFilteredLogs(segmentFilteredLogs);
+    return processed.filter((log) => pathMatchesTaxonomy(log.path, taxonomy));
   }, [entries, segment, taxonomies]);
 
-  useEffect(() => {
-    let result = [...initialLogs];
+  // Derived state for filtered logs using useMemo
+  const filteredLogs = useMemo(() => {
+    let result = processedLogs;
 
     // Apply taxonomy filter first (if user selects a specific taxonomy)
     if (selectedTaxonomy !== "all") {
-      result = filterLogsByTaxonomy(result, selectedTaxonomy);
+      const taxonomy = taxonomies.find((tax) => tax.id === selectedTaxonomy);
+      if (taxonomy) {
+        result = result.filter((log) => pathMatchesTaxonomy(log.path, taxonomy));
+      }
     }
 
     if (searchTerm) {
@@ -312,7 +274,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     }
 
     if (sortConfig) {
-      result.sort((a, b) => {
+      // Create a shallow copy before sorting to avoid mutating the original array
+      result = [...result].sort((a, b) => {
         const aValue = a[sortConfig.key as keyof ProcessedLogEntry];
         const bValue = b[sortConfig.key as keyof ProcessedLogEntry];
 
@@ -338,24 +301,39 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
       });
     }
 
-    setFilteredLogs(result);
-    setCurrentPage(1);
+    return result;
   }, [
+    processedLogs,
     searchTerm,
     methodFilter,
     botFilter,
     verifiedFilter,
     sortConfig,
-    initialLogs,
     fileTypeFilter,
     botTypeFilter,
     selectedTaxonomy,
     taxonomies,
   ]);
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    searchTerm,
+    methodFilter,
+    botFilter,
+    verifiedFilter,
+    fileTypeFilter,
+    botTypeFilter,
+    selectedTaxonomy,
+  ]);
+
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentLogs = filteredLogs.slice(indexOfFirstItem, indexOfLastItem);
+  const currentLogs = useMemo(() => 
+    filteredLogs.slice(indexOfFirstItem, indexOfLastItem),
+    [filteredLogs, indexOfFirstItem, indexOfLastItem]
+  );
   const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
 
   const requestSort = (key: string) => {
@@ -380,7 +358,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     setSelectedTaxonomy("all");
     setBotTypeFilter(null);
     setFileTypeFilter([]);
-    setFilteredLogs(initialLogs);
+    // Removed setFilteredLogs as it is now derived
   };
 
   const exportCSV = async () => {
@@ -399,9 +377,10 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
       "Taxonomy",
     ];
 
-    const dataToExport = filteredLogs.length > 0 ? filteredLogs : initialLogs;
+    const dataToExport = filteredLogs.length > 0 ? filteredLogs : processedLogs;
 
-    const csvData = dataToExport.map((log) => [
+    // Use map and join instead of spreading large array
+    const csvRows = dataToExport.map((log) => [
       log.ip || "",
       log.timestamp || "",
       log.method || "",
@@ -414,12 +393,9 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
       log.crawler_type || "",
       log.verified ? "Yes" : "No",
       getTaxonomyForPath(log.path),
-    ]);
+    ].join(","));
 
-    const csvContent = [
-      headers.join(","),
-      ...csvData.map((row) => row.join(",")),
-    ].join("\n");
+    const csvContent = [headers.join(","), ...csvRows].join("\n");
 
     try {
       const filePath = await save({
@@ -473,19 +449,23 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
   };
 
   // Calculate timings based on actual entries
-  const oldestEntry =
+  const oldestEntry = useMemo(() => 
     entries.length > 0
       ? entries.reduce((oldest, log) =>
           new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
         )
-      : null;
+      : null,
+    [entries]
+  );
 
-  const newestEntry =
+  const newestEntry = useMemo(() => 
     entries.length > 0
       ? entries.reduce((newest, log) =>
           new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
         )
-      : null;
+      : null,
+    [entries]
+  );
 
   const totalTimeBetweenNewAndOldest = () => {
     if (newestEntry && oldestEntry) {
