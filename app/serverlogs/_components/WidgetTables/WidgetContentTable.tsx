@@ -84,20 +84,6 @@ interface Taxonomy {
   }>;
 }
 
-interface StatusCodeCounts {
-  counts: { [key: number]: number };
-  success_count: number;
-  redirect_count: number;
-  client_error_count: number;
-  server_error_count: number;
-  other_count: number;
-}
-
-interface ProcessedLogEntry extends LogEntry {
-  status_codes?: StatusCodeCounts;
-  total_frequency?: number;
-}
-
 interface WidgetTableProps {
   data: any;
   entries: LogEntry[];
@@ -127,7 +113,6 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
   entries,
   segment,
 }) => {
-  // Removed redundant state: initialLogs, filteredLogs
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(100);
@@ -187,46 +172,21 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     return taxonomy?.name || "Uncategorized";
   };
 
-  // Memoize processed logs to avoid recalculation on every render
-  const processedLogs = useMemo(() => {
-    if (!entries || entries.length === 0) return [];
-
-    const processed = entries.map((entry) => {
-      const statusCode = entry.status || 0;
-      const status_codes = {
-        counts: { [statusCode]: 1 },
-        success_count: statusCode >= 200 && statusCode < 300 ? 1 : 0,
-        redirect_count: statusCode >= 300 && statusCode < 400 ? 1 : 0,
-        client_error_count: statusCode >= 400 && statusCode < 500 ? 1 : 0,
-        server_error_count: statusCode >= 500 && statusCode < 600 ? 1 : 0,
-        other_count: statusCode < 200 || statusCode >= 600 ? 1 : 0,
-      };
-
-      return {
-        ...entry,
-        status_codes,
-        total_frequency: entry.frequency || 1,
-      };
-    });
-
-    // Apply segment filter immediately as it's a prop
-    if (!segment || segment === "all") {
-      return processed;
-    }
-
-    const taxonomy = taxonomies.find((tax) => tax.name === segment);
-    if (!taxonomy) {
-      return processed;
-    }
-
-    return processed.filter((log) => pathMatchesTaxonomy(log.path, taxonomy));
-  }, [entries, segment, taxonomies]);
-
-  // Derived state for filtered logs using useMemo
+  // Derived state for filtered logs using useMemo on raw entries
   const filteredLogs = useMemo(() => {
-    let result = processedLogs;
+    if (!entries) return [];
 
-    // Apply taxonomy filter first (if user selects a specific taxonomy)
+    let result = entries;
+
+    // Apply segment filter first (from props)
+    if (segment && segment !== "all") {
+      const taxonomy = taxonomies.find((tax) => tax.name === segment);
+      if (taxonomy) {
+        result = result.filter((log) => pathMatchesTaxonomy(log.path, taxonomy));
+      }
+    }
+
+    // Apply taxonomy filter (user selection)
     if (selectedTaxonomy !== "all") {
       const taxonomy = taxonomies.find((tax) => tax.id === selectedTaxonomy);
       if (taxonomy) {
@@ -276,8 +236,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     if (sortConfig) {
       // Create a shallow copy before sorting to avoid mutating the original array
       result = [...result].sort((a, b) => {
-        const aValue = a[sortConfig.key as keyof ProcessedLogEntry];
-        const bValue = b[sortConfig.key as keyof ProcessedLogEntry];
+        const aValue = a[sortConfig.key as keyof LogEntry];
+        const bValue = b[sortConfig.key as keyof LogEntry];
 
         if (typeof aValue === "string" && typeof bValue === "string") {
           return sortConfig.direction === "ascending"
@@ -303,7 +263,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
 
     return result;
   }, [
-    processedLogs,
+    entries,
+    segment,
     searchTerm,
     methodFilter,
     botFilter,
@@ -326,11 +287,12 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     fileTypeFilter,
     botTypeFilter,
     selectedTaxonomy,
+    segment
   ]);
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentLogs = useMemo(() => 
+  const currentLogs = useMemo(() =>
     filteredLogs.slice(indexOfFirstItem, indexOfLastItem),
     [filteredLogs, indexOfFirstItem, indexOfLastItem]
   );
@@ -358,7 +320,6 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     setSelectedTaxonomy("all");
     setBotTypeFilter(null);
     setFileTypeFilter([]);
-    // Removed setFilteredLogs as it is now derived
   };
 
   const exportCSV = async () => {
@@ -377,9 +338,9 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
       "Taxonomy",
     ];
 
-    const dataToExport = filteredLogs.length > 0 ? filteredLogs : processedLogs;
+    // Use filteredLogs directly, it contains LogEntry items
+    const dataToExport = filteredLogs.length > 0 ? filteredLogs : entries;
 
-    // Use map and join instead of spreading large array
     const csvRows = dataToExport.map((log) => [
       log.ip || "",
       log.timestamp || "",
@@ -449,20 +410,20 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
   };
 
   // Calculate timings based on actual entries
-  const oldestEntry = useMemo(() => 
+  const oldestEntry = useMemo(() =>
     entries.length > 0
       ? entries.reduce((oldest, log) =>
-          new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-        )
+        new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+      )
       : null,
     [entries]
   );
 
-  const newestEntry = useMemo(() => 
+  const newestEntry = useMemo(() =>
     entries.length > 0
       ? entries.reduce((newest, log) =>
-          new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-        )
+        new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+      )
       : null,
     [entries]
   );
@@ -477,43 +438,41 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     return 0;
   };
 
-  const elapsedTimeMs = totalTimeBetweenNewAndOldest();
+  // Helper to calculate details on the fly for a single log entry
+  const getLogDetails = (log: LogEntry) => {
+    const frequency = log.frequency || 1;
+    const elapsedTimeMs = totalTimeBetweenNewAndOldest();
 
-  const timings = (log: ProcessedLogEntry) => {
-    if (!oldestEntry || !newestEntry) {
-      return {
-        elapsedTime: "0h 0m 0s",
+    let timings = {
+      elapsedTime: "0h 0m 0s",
+      frequency: {
+        total: frequency,
+        perHour: "0.00",
+        perMinute: "0.00/minute",
+        perSecond: "0.00/second",
+      },
+    };
+
+    if (oldestEntry && newestEntry && elapsedTimeMs > 0) {
+      const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60);
+      const perHour = elapsedTimeHours > 0 ? (frequency / elapsedTimeHours).toFixed(1) : "0.0";
+
+      const hours = Math.floor(elapsedTimeMs / (1000 * 60 * 60));
+      const minutes = Math.floor((elapsedTimeMs % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((elapsedTimeMs % (1000 * 60)) / 1000);
+
+      timings = {
+        elapsedTime: `${hours}h ${minutes}m ${seconds}s`,
         frequency: {
-          total: log.frequency || 0,
-          perHour: "0.00",
-          perMinute: "0.00/minute",
-          perSecond: "0.00/second",
+          total: frequency,
+          perHour: perHour,
+          perMinute: `${(frequency / (elapsedTimeMs / (1000 * 60))).toFixed(2)}/minute`,
+          perSecond: `${(frequency / (elapsedTimeMs / 1000)).toFixed(2)}/second`,
         },
       };
     }
 
-    const frequency = log?.frequency || 0;
-    const elapsedTimeMs = totalTimeBetweenNewAndOldest();
-    const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60);
-
-    const perHour =
-      elapsedTimeHours > 0 ? (frequency / elapsedTimeHours).toFixed(1) : "0.0";
-
-    const hours = Math.floor(elapsedTimeMs / (1000 * 60 * 60));
-    const minutes = Math.floor(
-      (elapsedTimeMs % (1000 * 60 * 60)) / (1000 * 60),
-    );
-    const seconds = Math.floor((elapsedTimeMs % (1000 * 60)) / 1000);
-
-    return {
-      elapsedTime: `${hours}h ${minutes}m ${seconds}s`,
-      frequency: {
-        total: frequency,
-        perHour: perHour,
-        perMinute: `${(frequency / (elapsedTimeMs / (1000 * 60))).toFixed(2)}/minute`,
-        perSecond: `${(frequency / (elapsedTimeMs / 1000)).toFixed(2)}/second`,
-      },
-    };
+    return { timings };
   };
 
   // Get current segment taxonomy for display
@@ -703,11 +662,10 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                       Timestamp
                       {sortConfig?.key === "timestamp" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -718,11 +676,10 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                       Path
                       {sortConfig?.key === "path" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -733,11 +690,10 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                       File Type
                       {sortConfig?.key === "file_type" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -749,11 +705,10 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                       Size
                       {sortConfig?.key === "response_size" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -764,11 +719,10 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                       Status
                       {sortConfig?.key === "status" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -779,11 +733,10 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                       Hits
                       {sortConfig?.key === "frequency" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -792,263 +745,268 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                 </TableHeader>
                 <TableBody>
                   {currentLogs.length > 0 ? (
-                    currentLogs.map((log, index) => (
-                      <React.Fragment
-                        key={`${log.ip}-${log.timestamp}-${index}-${log.path}`}
-                      >
-                        <TableRow
-                          className={`group h-2 cursor-pointer ${expandedRow === index ? "bg-sky-dark/10" : ""}`}
-                          onClick={() =>
-                            setExpandedRow(expandedRow === index ? null : index)
-                          }
+                    currentLogs.map((log, index) => {
+                      // Calculate details only for visible rows
+                      const { timings } = getLogDetails(log);
+
+                      return (
+                        <React.Fragment
+                          key={`${log.ip}-${log.timestamp}-${index}-${log.path}`}
                         >
-                          <TableCell className="font-medium text-center max-w-[40px]">
-                            {indexOfFirstItem + index + 1}
-                          </TableCell>
-                          <TableCell className="min-w-[150px]">
-                            {formatDate(log.timestamp)}
-                          </TableCell>
-                          <TableCell className="inline-block truncate max-w-[400px]">
-                            <div className="flex items-center w-full m-auto">
-                              <span className="mr-2 pl-2">
-                                {getFileIcon(log.file_type)}
-                              </span>
-                              <span className="leading-[28px] m-auto flex items-center truncate">
-                                {showOnTables && domain
-                                  ? "https://" + domain + log.path
-                                  : log?.path}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="min-w-[30px] truncate">
-                            <Badge variant="outline">{log.file_type}</Badge>
-                          </TableCell>
-                          <TableCell className="min-w-[100px]">
-                            <Badge variant="secondary" className="text-xs">
-                              {getTaxonomyForPath(log.path)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {formatResponseSize(log.response_size)}
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Badge
-                              variant="outline"
-                              className={
-                                log.status
-                                  ? log.status >= 200 && log.status < 300
-                                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                    : log.status >= 300 && log.status < 400
-                                      ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                                      : log.status >= 400 && log.status < 500
-                                        ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                                        : log.status >= 500
-                                          ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                                          : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-                                  : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-                              }
-                            >
-                              {log.status || "N/A"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-center min-w-[90px]">
-                            {log.frequency || 1}
-                          </TableCell>
-                          <TableCell width={110} className="max-w-[100px]">
-                            <Badge
-                              variant="outline"
-                              className={
-                                log.crawler_type !== "Human"
-                                  ? "w-[95px] p-0 flex justify-center text-[10px] bg-red-600 dark:bg-red-400 border-purple-200 text-black dark:text-white"
-                                  : "w-[95px] p-0 flex justify-center text-[11px] text-center bg-blue-600 text-white border-blue-200"
-                              }
-                            >
-                              {log.crawler_type.length > 12
-                                ? log.crawler_type.trim().slice(0, 15)
-                                : log.crawler_type}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                        {expandedRow === index && (
-                          <TableRow>
-                            <TableCell
-                              colSpan={9}
-                              className="bg-gray-50 dark:bg-gray-800 p-4"
-                            >
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {/* Left Column */}
-                                <div className="flex flex-col max-w-[70rem] w-full">
-                                  <div className="flex mb-2 space-x-2 items-center justify-between">
-                                    <h4 className="font-bold">Details</h4>
-                                    {log.verified && (
-                                      <div className="flex items-center space-x-1 py-1 bg-red-200 dark:bg-red-400 px-2 text-xs rounded-md">
-                                        <BadgeCheck
-                                          size={18}
-                                          className="text-blue-800 pr-1 dark:text-blue-900"
-                                        />
-                                        {log?.crawler_type}
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-                                    <div className="space-y-2 text-sm">
-                                      <div>
-                                        <span className="font-semibold">
-                                          IP:
-                                        </span>{" "}
-                                        {log.ip}
-                                      </div>
-                                      <div>
-                                        <span className="font-semibold">
-                                          Method:
-                                        </span>{" "}
-                                        {log.method}
-                                      </div>
-                                      <div>
-                                        <span className="font-semibold">
-                                          User Agent:
-                                        </span>{" "}
-                                        <span className="font-mono text-xs break-all">
-                                          {log.user_agent}
-                                        </span>
-                                      </div>
-                                      {log.referer && (
-                                        <div>
-                                          <span className="font-semibold">
-                                            Referer:
-                                          </span>{" "}
-                                          <span className="font-mono text-xs break-all">
-                                            {log.referer}
-                                          </span>
+                          <TableRow
+                            className={`group h-2 cursor-pointer ${expandedRow === index ? "bg-sky-dark/10" : ""}`}
+                            onClick={() =>
+                              setExpandedRow(expandedRow === index ? null : index)
+                            }
+                          >
+                            <TableCell className="font-medium text-center max-w-[40px]">
+                              {indexOfFirstItem + index + 1}
+                            </TableCell>
+                            <TableCell className="min-w-[150px]">
+                              {formatDate(log.timestamp)}
+                            </TableCell>
+                            <TableCell className="inline-block truncate max-w-[400px]">
+                              <div className="flex items-center w-full m-auto">
+                                <span className="mr-2 pl-2">
+                                  {getFileIcon(log.file_type)}
+                                </span>
+                                <span className="leading-[28px] m-auto flex items-center truncate">
+                                  {showOnTables && domain
+                                    ? "https://" + domain + log.path
+                                    : log?.path}
+                                </span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="min-w-[30px] truncate">
+                              <Badge variant="outline">{log.file_type}</Badge>
+                            </TableCell>
+                            <TableCell className="min-w-[100px]">
+                              <Badge variant="secondary" className="text-xs">
+                                {getTaxonomyForPath(log.path)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center">
+                              {formatResponseSize(log.response_size)}
+                            </TableCell>
+                            <TableCell className="text-center">
+                              <Badge
+                                variant="outline"
+                                className={
+                                  log.status
+                                    ? log.status >= 200 && log.status < 300
+                                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                      : log.status >= 300 && log.status < 400
+                                        ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                        : log.status >= 400 && log.status < 500
+                                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                                          : log.status >= 500
+                                            ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                                            : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                                    : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                                }
+                              >
+                                {log.status || "N/A"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-center min-w-[90px]">
+                              {log.frequency || 1}
+                            </TableCell>
+                            <TableCell width={110} className="max-w-[100px]">
+                              <Badge
+                                variant="outline"
+                                className={
+                                  log.crawler_type !== "Human"
+                                    ? "w-[95px] p-0 flex justify-center text-[10px] bg-red-600 dark:bg-red-400 border-purple-200 text-black dark:text-white"
+                                    : "w-[95px] p-0 flex justify-center text-[11px] text-center bg-blue-600 text-white border-blue-200"
+                                }
+                              >
+                                {log.crawler_type.length > 12
+                                  ? log.crawler_type.trim().slice(0, 15)
+                                  : log.crawler_type}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                          {expandedRow === index && (
+                            <TableRow>
+                              <TableCell
+                                colSpan={9}
+                                className="bg-gray-50 dark:bg-gray-800 p-4"
+                              >
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {/* Left Column */}
+                                  <div className="flex flex-col max-w-[70rem] w-full">
+                                    <div className="flex mb-2 space-x-2 items-center justify-between">
+                                      <h4 className="font-bold">Details</h4>
+                                      {log.verified && (
+                                        <div className="flex items-center space-x-1 py-1 bg-red-200 dark:bg-red-400 px-2 text-xs rounded-md">
+                                          <BadgeCheck
+                                            size={18}
+                                            className="text-blue-800 pr-1 dark:text-blue-900"
+                                          />
+                                          {log?.crawler_type}
                                         </div>
                                       )}
                                     </div>
-                                  </div>
-                                </div>
-
-                                {/* Right Column */}
-                                <div className="flex flex-col">
-                                  <h4 className="mb-2 font-bold">
-                                    Frequency Analysis
-                                  </h4>
-                                  <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-                                    <div className="space-y-2 text-sm">
-                                      <div>
-                                        <span className="font-semibold">
-                                          Total Hits:
-                                        </span>{" "}
-                                        {log.frequency || 1}
-                                      </div>
-                                      <div>
-                                        <span className="font-semibold">
-                                          Per Hour:
-                                        </span>{" "}
-                                        {timings(log)?.frequency?.perHour}
-                                      </div>
-                                      <div>
-                                        <span className="font-semibold">
-                                          Per Minute:
-                                        </span>{" "}
-                                        {timings(log)?.frequency?.perMinute}
-                                      </div>
-                                      <div>
-                                        <span className="font-semibold">
-                                          Per Second:
-                                        </span>{" "}
-                                        {timings(log)?.frequency?.perSecond}
+                                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                                      <div className="space-y-2 text-sm">
+                                        <div>
+                                          <span className="font-semibold">
+                                            IP:
+                                          </span>{" "}
+                                          {log.ip}
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold">
+                                            Method:
+                                          </span>{" "}
+                                          {log.method}
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold">
+                                            User Agent:
+                                          </span>{" "}
+                                          <span className="font-mono text-xs break-all">
+                                            {log.user_agent}
+                                          </span>
+                                        </div>
+                                        {log.referer && (
+                                          <div>
+                                            <span className="font-semibold">
+                                              Referer:
+                                            </span>{" "}
+                                            <span className="font-mono text-xs break-all">
+                                              {log.referer}
+                                            </span>
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
-                                </div>
 
-                                {/* Taxonomy Information */}
-                                <div className="md:col-span-2">
-                                  <h4 className="mb-2 font-bold">
-                                    Taxonomy Information
-                                  </h4>
-                                  <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
-                                    <div className="flex items-center gap-4">
-                                      <div>
-                                        <span className="font-semibold">
-                                          Category:
-                                        </span>
-                                        <Badge
-                                          variant="secondary"
-                                          className="ml-2"
-                                        >
-                                          {getTaxonomyForPath(log.path)}
-                                        </Badge>
+                                  {/* Right Column */}
+                                  <div className="flex flex-col">
+                                    <h4 className="mb-2 font-bold">
+                                      Frequency Analysis
+                                    </h4>
+                                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                                      <div className="space-y-2 text-sm">
+                                        <div>
+                                          <span className="font-semibold">
+                                            Total Hits:
+                                          </span>{" "}
+                                          {log.frequency || 1}
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold">
+                                            Per Hour:
+                                          </span>{" "}
+                                          {timings?.frequency?.perHour}
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold">
+                                            Per Minute:
+                                          </span>{" "}
+                                          {timings?.frequency?.perMinute}
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold">
+                                            Per Second:
+                                          </span>{" "}
+                                          {timings?.frequency?.perSecond}
+                                        </div>
                                       </div>
-                                      <div>
-                                        <span className="font-semibold">
-                                          Matching Rules:
-                                        </span>
-                                        <div className="flex flex-wrap gap-1 mt-1">
-                                          {taxonomies
-                                            .find(
-                                              (tax) =>
-                                                tax.name ===
-                                                getTaxonomyForPath(log.path),
-                                            )
-                                            ?.paths.map((pathRule, idx) => (
-                                              <Badge
-                                                key={idx}
-                                                variant="outline"
-                                                className="text-xs"
-                                              >
-                                                {pathRule.path} (
-                                                {pathRule.matchType})
-                                              </Badge>
-                                            ))}
+                                    </div>
+                                  </div>
+
+                                  {/* Taxonomy Information */}
+                                  <div className="md:col-span-2">
+                                    <h4 className="mb-2 font-bold">
+                                      Taxonomy Information
+                                    </h4>
+                                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
+                                      <div className="flex items-center gap-4">
+                                        <div>
+                                          <span className="font-semibold">
+                                            Category:
+                                          </span>
+                                          <Badge
+                                            variant="secondary"
+                                            className="ml-2"
+                                          >
+                                            {getTaxonomyForPath(log.path)}
+                                          </Badge>
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold">
+                                            Matching Rules:
+                                          </span>
+                                          <div className="flex flex-wrap gap-1 mt-1">
+                                            {taxonomies
+                                              .find(
+                                                (tax) =>
+                                                  tax.name ===
+                                                  getTaxonomyForPath(log.path),
+                                              )
+                                              ?.paths.map((pathRule, idx) => (
+                                                <Badge
+                                                  key={idx}
+                                                  variant="outline"
+                                                  className="text-xs"
+                                                >
+                                                  {pathRule.path} (
+                                                  {pathRule.matchType})
+                                                </Badge>
+                                              ))}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Response Codes Section */}
+                                  <div className="md:col-span-2">
+                                    <h4 className="mb-2 font-bold">
+                                      Response Code Details
+                                    </h4>
+                                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
+                                      <div className="flex items-center justify-center">
+                                        <div className="text-center">
+                                          <Badge
+                                            variant="outline"
+                                            className={
+                                              log.status
+                                                ? log.status >= 200 &&
+                                                  log.status < 300
+                                                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-lg px-4 py-2"
+                                                  : log.status >= 300 &&
+                                                    log.status < 400
+                                                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-lg px-4 py-2"
+                                                    : log.status >= 400 &&
+                                                      log.status < 500
+                                                      ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 text-lg px-4 py-2"
+                                                      : log.status >= 500
+                                                        ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 text-lg px-4 py-2"
+                                                        : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 text-lg px-4 py-2"
+                                                : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 text-lg px-4 py-2"
+                                            }
+                                          >
+                                            Status: {log.status || "N/A"}
+                                          </Badge>
+                                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                                            This individual request returned
+                                            status code {log.status}
+                                          </p>
                                         </div>
                                       </div>
                                     </div>
                                   </div>
                                 </div>
-
-                                {/* Response Codes Section */}
-                                <div className="md:col-span-2">
-                                  <h4 className="mb-2 font-bold">
-                                    Response Code Details
-                                  </h4>
-                                  <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
-                                    <div className="flex items-center justify-center">
-                                      <div className="text-center">
-                                        <Badge
-                                          variant="outline"
-                                          className={
-                                            log.status
-                                              ? log.status >= 200 &&
-                                                log.status < 300
-                                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-lg px-4 py-2"
-                                                : log.status >= 300 &&
-                                                    log.status < 400
-                                                  ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-lg px-4 py-2"
-                                                  : log.status >= 400 &&
-                                                      log.status < 500
-                                                    ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 text-lg px-4 py-2"
-                                                    : log.status >= 500
-                                                      ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 text-lg px-4 py-2"
-                                                      : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 text-lg px-4 py-2"
-                                              : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 text-lg px-4 py-2"
-                                          }
-                                        >
-                                          Status: {log.status || "N/A"}
-                                        </Badge>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                                          This individual request returned
-                                          status code {log.status}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </React.Fragment>
-                    ))
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </React.Fragment>
+                      );
+                    })
                   ) : (
                     <TableRow>
                       <TableCell colSpan={9} className="text-center h-24">
