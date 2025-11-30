@@ -175,9 +175,6 @@ fn resolve_url(href: &str, base_url: &Url) -> Url {
 /// # Returns
 /// `true` if the URL is internal, `false` otherwise.
 fn is_internal_link(url: &Url, base_url: &Url) -> bool {
-    url.domain().map_or(false, |domain| {
-        let base_domain = base_url.domain().unwrap_or("").trim_start_matches("www.");
-        let check_domain = domain.trim_start_matches("www.");
-        check_domain == base_domain || check_domain.ends_with(&format!(".{}", base_domain))
-    })
+    url.domain()
+        .map_or(false, |domain| domain == base_url.domain().unwrap_or(""))
 }

@@ -393,15 +393,15 @@ async fn process_url(
                     .filter(|p| *p == &url_pattern)
                     .count();
 
-                let should_skip_pattern = if state.url_patterns.len() > 50000 {
+                let should_skip_pattern = if state.url_patterns.len() > 5000 {
                     // Only skip if we've seen this exact pattern many times
-                    pattern_count > 1000
-                } else if state.url_patterns.len() > 10000 {
+                    pattern_count > 10
+                } else if state.url_patterns.len() > 1000 {
                     // Be more selective about pattern matching
-                    pattern_count > 500
+                    pattern_count > 5
                 } else {
                     // Allow all patterns until we have a reasonable collection
-                    pattern_count > 500
+                    pattern_count > 20
                 };
 
                 if should_skip_pattern {

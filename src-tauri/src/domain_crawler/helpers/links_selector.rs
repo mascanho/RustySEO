@@ -31,8 +31,8 @@ pub fn extract_links(html: &str, base_url: &Url) -> Vec<Url> {
         })
         .filter(|next_url: &Url| {
             // Filter by domain: ensure the link belongs to the same domain or subdomain
-            let base_domain = base_url.domain().unwrap_or("").trim_start_matches("www.");
-            let next_domain = next_url.domain().unwrap_or("").trim_start_matches("www.");
+            let base_domain = base_url.domain().unwrap_or("");
+            let next_domain = next_url.domain().unwrap_or("");
             next_domain.ends_with(base_domain)
         })
         .collect()
@@ -58,8 +58,8 @@ fn validate_and_normalize_url(base_url: &Url, url: &Url) -> Option<Url> {
     }
 
     // Ensure the URL belongs to the same domain or subdomain as the base URL
-    let base_domain = base_url.domain().unwrap_or("").trim_start_matches("www.");
-    let url_domain = url.domain().unwrap_or("").trim_start_matches("www.");
+    let base_domain = base_url.domain().unwrap_or("");
+    let url_domain = url.domain().unwrap_or("");
     if !url_domain.ends_with(base_domain) {
         return None; // Skip URLs from external domains
     }

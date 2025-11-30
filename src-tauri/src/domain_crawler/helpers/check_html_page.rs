@@ -23,20 +23,6 @@ pub async fn is_html_page(body: &str, content_type: Option<&str>) -> bool {
         })
     };
 
-    // If content-type is explicitly NOT html (e.g. image, pdf, zip), trust it
-    if let Some(ct) = content_type {
-        if !ct.contains("text/html") && !ct.contains("application/xhtml+xml") && (
-            ct.contains("image/") || 
-            ct.contains("video/") || 
-            ct.contains("audio/") ||
-            ct.contains("application/pdf") ||
-            ct.contains("application/zip") ||
-            ct.contains("application/octet-stream")
-        ) {
-            return false;
-        }
-    }
-
-    // Otherwise, if header says HTML, or if body looks like HTML, accept it
-    is_html_header || is_html_body
+    // CONSIDER THE PAGE HTML ONLY IF BOTH THE HEADER AND BODY SUGGEST IT
+    is_html_header && is_html_body
 }
