@@ -248,8 +248,6 @@ async fn fetch_openai_ranges_internal(
     storage: &Lazy<Mutex<Vec<IpNet>>>,
     bot_type: &str,
 ) -> Result<Vec<String>, String> {
-    println!("DEBUG: Fetching {} ranges from: {}", bot_type, url);
-
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(10))
         .build()
@@ -275,8 +273,6 @@ async fn fetch_openai_ranges_internal(
         println!("DEBUG: {} JSON parse failed: {}", bot_type, e);
         e.to_string()
     })?;
-
-    println!("DEBUG: Successfully parsed {} ranges JSON", bot_type);
 
     // Parse and store the IP networks
     let mut networks = Vec::new();
@@ -315,11 +311,6 @@ async fn fetch_openai_ranges_internal(
         *ranges = networks;
     }
 
-    println!(
-        "DEBUG: Loaded {} {} IP ranges",
-        range_strings.len(),
-        bot_type
-    );
     Ok(range_strings)
 }
 

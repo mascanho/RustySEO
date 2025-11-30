@@ -102,7 +102,7 @@ function UploadButton() {
               >
                 Domain
               </TabsTrigger>
-              <TabsTrigger value="taxonomy">Content Taxonomies</TabsTrigger>
+              <TabsTrigger value="taxonomy">Content Segments</TabsTrigger>
               {/* <TabsTrigger value="ips">Google IPs</TabsTrigger> */}
               <TabsTrigger value="logs">Stored Logs</TabsTrigger>
               <TabsTrigger value="projects">Projects</TabsTrigger>
