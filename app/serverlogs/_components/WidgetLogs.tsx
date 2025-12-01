@@ -221,8 +221,7 @@ export default function WidgetLogs() {
     .map((log) => log?.names?.length)
     .reduce((a, b) => a + b, 0);
 
-  console.log(overview, "Overview");
-  console.log(chartData, "ChartData");
+  console.log(entries, "Overview");
 
   return (
     <div className="bg-white border dark:border-brand-dark shadow rounded-none p-2 pr-1 w-1/2  mx-auto dark:bg-slate-950 dark:text-white h-64 relative">

@@ -141,6 +141,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
   const [statusFilter, setStatusFilter] = useState<number[]>([]);
   const [crawlerTypeFilter, setCrawlerTypeFilter] = useState<string[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [availableFileTypes, setAvailableFileTypes] = useState<string[]>([]);
 
   useEffect(() => {
     const tax = localStorage.getItem("taxonomies");
@@ -163,13 +164,58 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
     }
   }, [data?.length]);
 
+  // Get all unique file types from entries
+  useEffect(() => {
+    if (entries && entries.length > 0) {
+      const types = new Set<string>();
+      entries.forEach((log) => {
+        if (log.file_type && log.file_type.trim() !== "") {
+          types.add(log.file_type);
+        }
+      });
+      const sortedTypes = Array.from(types).sort();
+      setAvailableFileTypes(sortedTypes);
+
+      // Debug: Log available file types
+      console.log("Available file types:", sortedTypes);
+    }
+  }, [entries]);
+
   // Initialize file type filter when selectedFileType is provided
   useEffect(() => {
-    if (selectedFileType && !isInitialized) {
-      setFileTypeFilter([selectedFileType]);
+    if (selectedFileType && !isInitialized && availableFileTypes.length > 0) {
+      // Check if the selectedFileType exists in available file types
+      const normalizedSelectedType = selectedFileType.trim();
+      const existsInData = availableFileTypes.some(
+        (type) => type.toLowerCase() === normalizedSelectedType.toLowerCase(),
+      );
+
+      console.log("Initializing filter:", {
+        selectedFileType,
+        normalizedSelectedType,
+        availableFileTypes,
+        existsInData,
+      });
+
+      if (existsInData) {
+        // Find the exact case from available file types
+        const exactType = availableFileTypes.find(
+          (type) => type.toLowerCase() === normalizedSelectedType.toLowerCase(),
+        );
+        if (exactType) {
+          setFileTypeFilter([exactType]);
+          setIsInitialized(true);
+        }
+      } else if (selectedFileType !== "") {
+        // If not found, still set it (might be a new file type)
+        setFileTypeFilter([selectedFileType]);
+        setIsInitialized(true);
+      }
+    } else if (!selectedFileType && !isInitialized) {
+      // No file type selected, initialize as empty
       setIsInitialized(true);
     }
-  }, [selectedFileType, isInitialized]);
+  }, [selectedFileType, availableFileTypes, isInitialized]);
 
   // Function to check if a path matches taxonomy criteria
   const pathMatchesTaxonomy = (path: string, taxonomy: Taxonomy): boolean => {
@@ -211,22 +257,19 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
     return Array.from(types).sort();
   }, [entries]);
 
-  // Get unique file types from entries
-  const uniqueFileTypes = useMemo(() => {
-    const types = new Set<string>();
-    entries.forEach((log) => {
-      if (log.file_type) {
-        types.add(log.file_type);
-      }
-    });
-    return Array.from(types).sort();
-  }, [entries]);
-
   // Derived state for filtered logs using useMemo on raw entries
   const filteredLogs = useMemo(() => {
-    if (!entries) return [];
+    if (!entries || entries.length === 0) return [];
 
-    let result = entries;
+    console.log("Filtering logs with:", {
+      totalEntries: entries.length,
+      fileTypeFilter,
+      selectedFileType,
+      availableFileTypes,
+      segment,
+    });
+
+    let result = [...entries]; // Create a copy to avoid mutations
 
     // Apply segment filter first (from props)
     if (segment && segment !== "all") {
@@ -250,7 +293,15 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
 
     // Apply file type filter (this is the main filter for this component)
     if (fileTypeFilter.length > 0) {
-      result = result.filter((log) => fileTypeFilter.includes(log.file_type));
+      console.log("Applying file type filter:", fileTypeFilter);
+      result = result.filter((log) => {
+        const logFileType = log.file_type || "";
+        return fileTypeFilter.some(
+          (filterType) =>
+            filterType.toLowerCase() === logFileType.toLowerCase(),
+        );
+      });
+      console.log("After file type filter:", result.length);
     }
 
     if (searchTerm) {
@@ -304,8 +355,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
     }
 
     if (sortConfig) {
-      // Create a shallow copy before sorting to avoid mutating the original array
-      result = [...result].sort((a, b) => {
+      result.sort((a, b) => {
         const aValue = a[sortConfig.key as keyof LogEntry];
         const bValue = b[sortConfig.key as keyof LogEntry];
 
@@ -331,6 +381,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
       });
     }
 
+    console.log("Final filtered logs:", result.length);
     return result;
   }, [
     entries,
@@ -346,6 +397,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
     taxonomies,
     statusFilter,
     crawlerTypeFilter,
+    selectedFileType,
   ]);
 
   // Reset page when filters change
@@ -395,8 +447,17 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
     setBotTypeFilter(null);
     setStatusFilter([]);
     setCrawlerTypeFilter([]);
-    // Don't reset fileTypeFilter if selectedFileType is provided
-    if (!selectedFileType) {
+    // Reset fileTypeFilter based on selectedFileType
+    if (selectedFileType && availableFileTypes.length > 0) {
+      const exactType = availableFileTypes.find(
+        (type) => type.toLowerCase() === selectedFileType.toLowerCase(),
+      );
+      if (exactType) {
+        setFileTypeFilter([exactType]);
+      } else {
+        setFileTypeFilter([]);
+      }
+    } else {
       setFileTypeFilter([]);
     }
   };
@@ -485,6 +546,8 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
         return <Package className="text-orange-500 mt-[3px]" size={12} />;
       case "Font":
         return <FileType2 className="text-teal-500 mt-[3px]" size={12} />;
+      case "Unknown":
+        return <AlertCircle className="text-gray-400 mt-[3px]" size={12} />;
       default:
         return <FileCode className="text-gray-400 mt-[3px]" size={12} />;
     }
@@ -710,28 +773,42 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999]"
+              className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999] max-h-[400px] overflow-y-auto"
             >
               <DropdownMenuLabel>Filter by File Type</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {uniqueFileTypes.map((fileType) => (
+              {availableFileTypes.map((fileType) => (
                 <DropdownMenuCheckboxItem
                   className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
                   key={fileType}
-                  checked={fileTypeFilter.includes(fileType)}
+                  checked={fileTypeFilter.some(
+                    (ft) => ft.toLowerCase() === fileType.toLowerCase(),
+                  )}
                   onCheckedChange={(checked) => {
                     if (checked) {
+                      // Add the exact type from availableFileTypes
                       setFileTypeFilter([...fileTypeFilter, fileType]);
                     } else {
+                      // Remove by case-insensitive comparison
                       setFileTypeFilter(
-                        fileTypeFilter.filter((m) => m !== fileType),
+                        fileTypeFilter.filter(
+                          (m) => m.toLowerCase() !== fileType.toLowerCase(),
+                        ),
                       );
                     }
                   }}
                 >
-                  {fileType}
+                  <div className="flex items-center gap-2">
+                    {getFileIcon(fileType)}
+                    <span>{fileType}</span>
+                  </div>
                 </DropdownMenuCheckboxItem>
               ))}
+              {availableFileTypes.length === 0 && (
+                <div className="px-2 py-2 text-sm text-gray-500">
+                  No file types available
+                </div>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -994,9 +1071,9 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                               {formatDate(log.timestamp)}
                             </TableCell>
                             <TableCell className="truncate max-w-[400px] align-middle">
-                              <span className=" flex items-start truncate">
-                                <span className="mr-1 ">
-                                  {getFileIcon(log.file_type)} {""}
+                              <span className="flex items-start truncate">
+                                <span className="mr-1">
+                                  {getFileIcon(log.file_type || "Unknown")} {""}
                                 </span>
                                 {showOnTables && domain
                                   ? "https://" + domain + log.path
@@ -1004,7 +1081,9 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                               </span>
                             </TableCell>
                             <TableCell className="min-w-[30px] truncate align-middle">
-                              <Badge variant="outline">{log.file_type}</Badge>
+                              <Badge variant="outline">
+                                {log.file_type || "Unknown"}
+                              </Badge>
                             </TableCell>
                             <TableCell className="min-w-[100px] align-middle">
                               <Badge variant="secondary" className="text-xs">
@@ -1043,9 +1122,10 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                                     : "w-[95px] p-0 flex justify-center text-[11px] text-center bg-blue-600 text-white border-blue-200"
                                 }
                               >
-                                {log.crawler_type.length > 12
+                                {log.crawler_type &&
+                                log.crawler_type.length > 12
                                   ? log.crawler_type.trim().slice(0, 15)
-                                  : log.crawler_type}
+                                  : log.crawler_type || "Unknown"}
                               </Badge>
                             </TableCell>
                           </TableRow>
@@ -1234,7 +1314,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                     <TableRow>
                       <TableCell colSpan={9} className="text-center h-24">
                         {fileTypeFilter.length > 0
-                          ? `No log entries found for ${fileTypeFilter.join(", ")} file type${fileTypeFilter.length > 1 ? "s" : ""}`
+                          ? `No log entries found for ${fileTypeFilter.join(", ")} file type${fileTypeFilter.length > 1 ? "s" : ""}. Available types: ${availableFileTypes.join(", ")}`
                           : segment && segment !== "all"
                             ? `No log entries found for ${segment}`
                             : "No log entries found."}

@@ -992,6 +992,7 @@ export function LogAnalyzer() {
                         />
                       )}
                     </TableHead>
+                    <TableHead>Segment</TableHead>
                     <TableHead
                       className="cursor-pointer"
                       onClick={() => requestSort("file_type")}
@@ -1217,6 +1218,7 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
             </section>
           )}
         </TableCell>
+        <TableCell>{log?.segment}</TableCell>
         <TableCell className="max-w-[480px] truncate">
           <Badge variant={"outline"}>{log.file_type}</Badge>
         </TableCell>
