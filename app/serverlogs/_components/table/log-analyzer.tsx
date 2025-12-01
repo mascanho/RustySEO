@@ -1138,8 +1138,8 @@ function LogRow({
           {indexOfFirstItem + index + 1}
         </TableCell>
 
-        <TableCell className="w-[60px] align-middle">
-          <div className="flex items-center">
+        <TableCell className="w-fit inline-block align-middle">
+          <div className="flex items-center align-middle mt-[2.5px]">
             <Waypoints
               onClick={(e) => {
                 e.stopPropagation();
@@ -1158,7 +1158,7 @@ function LogRow({
             )}
           </div>
         </TableCell>
-        <TableCell className="w-[60px] align-middle">
+        <TableCell className="w-[60px] align-middle pb-[9px]">
           <Badge
             variant="outline"
             className={
