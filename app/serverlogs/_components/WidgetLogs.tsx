@@ -29,6 +29,7 @@ import { WidgetTableOpenAi } from "./WidgetTables/WidgetCrawlersOpenAITable.tsx"
 import { WidgetTableClaude } from "./WidgetTables/WidgetCrawlersClaudeTable.tsx";
 import { WidgetContentTable } from "./WidgetTables/WidgetContentTable.tsx";
 import { over } from "lodash";
+import { WidgetFileType } from "./WidgetTables/WidgetFileType.tsx";
 
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
@@ -447,32 +448,38 @@ export default function WidgetLogs() {
                       </Tabs>
                     </DialogContent>
                   ) : (
-                    <DialogContent className="max-w-md dark:text-white dark:border-brand-bright dark:bg-brand-darker">
-                      <DialogHeader>
-                        <DialogTitle>{entry.name} Details</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="flex justify-between">
-                          <span>Total Requests:</span>
-                          <span className="font-medium">
-                            {entry.value.toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Percentage:</span>
-                          <span className="font-medium">
-                            {Math.round(
-                              (entry.value /
-                                chartData.reduce(
-                                  (sum, item) => sum + item.value,
-                                  0,
-                                )) *
-                                100,
-                            )}
-                            %
-                          </span>
-                        </div>
-                      </div>
+                    <DialogContent className="max-w-7xl dark:text-white dark:border-brand-bright dark:bg-brand-darker">
+                      {/* <DialogHeader> */}
+                      {/*   <DialogTitle>{entry.name} Details</DialogTitle> */}
+                      {/* </DialogHeader> */}
+                      {/* <div className="space-y-4"> */}
+                      {/*   <div className="flex justify-between"> */}
+                      {/*     <span>Total Requests:</span> */}
+                      {/*     <span className="font-medium"> */}
+                      {/*       {entry.value.toLocaleString()} */}
+                      {/*     </span> */}
+                      {/*   </div> */}
+                      {/*   <div className="flex justify-between"> */}
+                      {/*     <span>Percentage:</span> */}
+                      {/*     <span className="font-medium"> */}
+                      {/*       {Math.round( */}
+                      {/*         (entry.value / */}
+                      {/*           chartData.reduce( */}
+                      {/*             (sum, item) => sum + item.value, */}
+                      {/*             0, */}
+                      {/*           )) * */}
+                      {/*           100, */}
+                      {/*       )} */}
+                      {/*       % */}
+                      {/*     </span> */}
+                      {/*   </div> */}
+                      {/* </div> */}
+                      <WidgetFileType
+                        data={overview}
+                        entries={entries}
+                        chartData={chartData}
+                        selectedFileType={entry?.name}
+                      />
                     </DialogContent>
                   )}
 
