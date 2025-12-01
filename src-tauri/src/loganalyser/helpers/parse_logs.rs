@@ -519,6 +519,7 @@ fn detect_bot(user_agent: &str) -> Option<String> {
         ("php/", "PHP Bot"),
         ("-", "Unknown Bot"),
         ("typhoeus", "Typhoeus Bot"),
+        ("hubspot", "Hubspot Bot"),
     ];
 
     // Iterate over the array and check for matches returning the bot name
