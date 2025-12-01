@@ -596,8 +596,6 @@ export function LogAnalyzer() {
     toast.success(`${name} copied to clipboard!`);
   }
 
-  console.log(entries, "overview");
-
   return (
     <div className="space-y-4 flex flex-col flex-1 h-full not-selectable">
       <div className="flex flex-col md:flex-row justify-between relative -mb-4 p-1 h-full">
@@ -810,11 +808,11 @@ export function LogAnalyzer() {
             }}
           >
             <SelectTrigger className="w-[125px] dark:bg-brand-darker dark:text-white">
-              <SelectValue placeholder="URLs" />
+              <SelectValue placeholder="Paths" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="url">URLs</SelectItem>
-              <SelectItem value="agent">Agents</SelectItem>
+              <SelectItem value="url">Path / URL</SelectItem>
+              <SelectItem value="agent">User Agent</SelectItem>
             </SelectContent>
           </Select>
           {/* SELECT BOT TYPE (DESKTOP OR MOBILE) */}
@@ -1190,7 +1188,8 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
           {!showAgent ? (
             <section className="max-w-[800px] truncate">
               <span
-                className="mr-1 inline-block pt-[1px]"
+                onClick={(e) => handleCopyClick(log.path, e, "URL PATH")}
+                className="mr-1 inline-block pt-[1px] "
                 style={{ paddingTop: "" }}
               >
                 {getFileIcon(log.file_type)}
@@ -1207,7 +1206,12 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
           ) : (
             <section className="max-w-[99%] w-[750px] 3xl:w-[950px]  truncate relative ml-2">
               <span className="absolute">
-                <ImUserTie className="text-brand-bright mr-1 mt-[2px]" />{" "}
+                <ImUserTie
+                  onClick={(e) =>
+                    handleCopyClick(log.user_agent, e, "User Agent")
+                  }
+                  className="text-brand-bright mr-1 mt-[2px]"
+                />{" "}
               </span>
               <span className="ml-5">{log?.user_agent}</span>
             </section>
@@ -1250,13 +1254,21 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
                     <h4 className="font-bold">
                       {showAgent ? "Path" : "User Agent"}
                     </h4>
-                    <CopyIcon
-                      className="cursor-pointer hover:scale-105 active:scale-95"
-                      onClick={(e) =>
-                        handleCopyClick(log?.user_agent, e, "User Agent")
-                      }
-                      size={12}
-                    />
+                    {showAgent === "Path" ? (
+                      <CopyIcon
+                        className="cursor-pointer hover:scale-105 active:scale-95"
+                        onClick={(e) =>
+                          handleCopyClick(log?.user_agent, e, "User Agent")
+                        }
+                        size={12}
+                      />
+                    ) : (
+                      <CopyIcon
+                        className="cursor-pointer hover:scale-105 active:scale-95"
+                        onClick={(e) => handleCopyClick(log?.path, e, "Path")}
+                        size={12}
+                      />
+                    )}
                   </div>
                   {log.verified && (
                     <div className="flex items-center space-x-1 bg-red-200 dark:bg-red-400 p-1 px-2 text-xs rounded-md">

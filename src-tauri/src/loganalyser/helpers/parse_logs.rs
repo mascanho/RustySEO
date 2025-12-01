@@ -478,62 +478,54 @@ fn detect_bot(user_agent: &str) -> Option<String> {
 
     // Check for specific bots first
     // START WITH GOOGLE BOTS
-    if lower.contains("googlebot/") {
-        return Some("Google Bot".to_string());
-    } else if lower.contains("adsbot-google") {
-        return Some("Google AdsBot".to_string());
-    } else if lower.contains("mediapartners-google") {
-        return Some("Google MediaPartners".to_string());
-    } else if lower.contains("googleweblight") {
-        return Some("Google WebLight".to_string());
-    } else if lower.contains("googlebot-image") {
-        return Some("Google Img Bot".to_string());
-    } else if lower.contains("googlebot-video") {
-        return Some("Google video Bot".to_string());
-    } else if lower.contains("googlebot-news") {
-        return Some("Google News Bot".to_string());
-    } else if lower.contains("storebot-google") {
-        return Some("Google StoreBot".to_string());
-    } else if lower.contains("google-inspectiontool") {
-        return Some("Google Insp. Tool".to_string());
-    } else if lower.contains("googleother") {
-        return Some("Google Other".to_string());
-    } else if lower.contains("googleother-image") {
-        return Some("Google Other Img".to_string());
-    } else if lower.contains("googleother-video") {
-        return Some("Google Other Video".to_string());
-    } else if lower.contains("google-clouvertexbot") {
-        return Some("Google Cloud Vertex".to_string());
-    } else if lower.contains("google-extended") {
-        return Some("Google Extended".to_string());
-    } else if lower.contains("bingbot") {
-        return Some("Bing".to_string());
-    } else if lower.contains("googleimageproxy") {
-        return Some("Goog. Img Proxy".to_string());
-    } else if lower.contains("gptbot") {
-        return Some("GPTBot".to_string());
-    } else if lower.contains("chatgpt") {
-        return Some("ChatGPT-User".to_string());
-    } else if lower.contains("semrush") {
-        return Some("Semrush".to_string());
-    } else if lower.contains("ahrefs") {
-        return Some("Ahrefs".to_string());
-    } else if lower.contains("moz.com") {
-        return Some("Moz".to_string());
-    } else if lower.contains("rocket") {
-        return Some("WP Rocket".to_string());
-    } else if lower.contains("dompdf") {
-        return Some("DomPdf bot".to_string());
-    } else if lower.contains("wordpress") {
-        return Some("Wordpress Bot".to_string());
-    } else if lower.contains("meta-") {
-        return Some("Meta Bot".to_string());
-    } else if lower.contains("dalvik") {
-        return Some("Human".to_string());
-    } else if lower == "-" {
-        return Some("Unknown Bot".to_string());
-    } else if lower == "" {
-        return Some("No User Agent".to_string());
+
+    // USE an array instead of a big long If/else
+    // Array of (substring, bot name)
+    let bots = [
+        ("googlebot/", "Google Bot"),
+        ("adsbot-google", "Google AdsBot"),
+        ("mediapartners-google", "Google MediaPartners"),
+        ("googleweblight", "Google WebLight"),
+        ("googlebot-image", "Google Img Bot"),
+        ("googlebot-video", "Google Video Bot"),
+        ("googlebot-news", "Google News Bot"),
+        ("storebot-google", "Google StoreBot"),
+        ("google-inspectiontool", "Google Insp. Tool"),
+        ("googleother", "Google Other"),
+        ("googleother-image", "Google Other Img"),
+        ("googleother-video", "Google Other Video"),
+        ("google-clouvertexbot", "Google Cloud Vertex"),
+        ("google-extended", "Google Extended"),
+        ("bingbot", "Bing"),
+        ("googleimageproxy", "Goog. Img Proxy"),
+        ("gptbot", "GPTBot"),
+        ("chatgpt", "ChatGPT-User"),
+        ("semrush", "Semrush"),
+        ("ahrefs", "Ahrefs"),
+        ("moz.com", "Moz"),
+        ("rocket", "WP Rocket"),
+        ("dompdf", "DomPdf bot"),
+        ("wordpress", "Wordpress Bot"),
+        ("meta-", "Meta Bot"),
+        ("cortex", "Cortex"),
+        ("aiohttp", "AioHttp"),
+        ("scala", "Scala Bot"),
+        ("facebook", "Meta Bot"),
+        ("python", "Python Bot"),
+        ("httpx", "Httpx Bot"),
+        ("node", "Node Bot"),
+        ("iframely", "Iframely Bot"),
+        ("networkingextension", "Network Bot"),
+        ("php/", "PHP Bot"),
+        ("-", "Unknown Bot"),
+        ("typhoeus", "Typhoeus Bot"),
+    ];
+
+    // Iterate over the array and check for matches returning the bot name
+    for (key, name) in bots {
+        if lower.contains(key) || lower == key {
+            return Some(name.to_string());
+        }
     }
 
     // Generic bot detection
