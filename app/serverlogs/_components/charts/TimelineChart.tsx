@@ -45,6 +45,7 @@ export function TimelineChart() {
   React.useEffect(() => {}, [currentLogs]);
 
   // Process the log entries to create chart data
+  // Process the log entries to create chart data
   const processData = () => {
     if (entries.length === 0) return [];
 
@@ -52,7 +53,11 @@ export function TimelineChart() {
     const allDates: Date[] = [];
 
     // First pass: collect all dates and count entries
-    currentLogs.forEach((entry) => {
+    // Use currentLogs instead of entries for filtered data
+    const logsToProcess =
+      currentLogs && currentLogs.length > 0 ? currentLogs : entries;
+
+    logsToProcess.forEach((entry) => {
       const date = new Date(entry.timestamp);
       allDates.push(date);
 
@@ -69,7 +74,9 @@ export function TimelineChart() {
       }
 
       const counts = dateMap.get(key)!;
-      if (entry.is_crawler) {
+
+      // FIX: Check crawler_type instead of is_crawler
+      if (entry.crawler_type && entry.crawler_type !== "Human") {
         counts.crawler += 1;
       } else {
         counts.human += 1;
@@ -95,7 +102,6 @@ export function TimelineChart() {
       startDate = new Date(endDate);
       startDate.setDate(startDate.getDate() - 90);
     }
-    // "all" keeps the original minDate
 
     // Convert to array and filter by date range
     return Array.from(dateMap.entries())
