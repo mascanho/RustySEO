@@ -182,7 +182,9 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     if (segment && segment !== "all") {
       const taxonomy = taxonomies.find((tax) => tax.name === segment);
       if (taxonomy) {
-        result = result.filter((log) => pathMatchesTaxonomy(log.path, taxonomy));
+        result = result.filter((log) =>
+          pathMatchesTaxonomy(log.path, taxonomy),
+        );
       }
     }
 
@@ -190,7 +192,9 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     if (selectedTaxonomy !== "all") {
       const taxonomy = taxonomies.find((tax) => tax.id === selectedTaxonomy);
       if (taxonomy) {
-        result = result.filter((log) => pathMatchesTaxonomy(log.path, taxonomy));
+        result = result.filter((log) =>
+          pathMatchesTaxonomy(log.path, taxonomy),
+        );
       }
     }
 
@@ -287,14 +291,14 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     fileTypeFilter,
     botTypeFilter,
     selectedTaxonomy,
-    segment
+    segment,
   ]);
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentLogs = useMemo(() =>
-    filteredLogs.slice(indexOfFirstItem, indexOfLastItem),
-    [filteredLogs, indexOfFirstItem, indexOfLastItem]
+  const currentLogs = useMemo(
+    () => filteredLogs.slice(indexOfFirstItem, indexOfLastItem),
+    [filteredLogs, indexOfFirstItem, indexOfLastItem],
   );
   const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
 
@@ -341,20 +345,22 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     // Use filteredLogs directly, it contains LogEntry items
     const dataToExport = filteredLogs.length > 0 ? filteredLogs : entries;
 
-    const csvRows = dataToExport.map((log) => [
-      log.ip || "",
-      log.timestamp || "",
-      log.method || "",
-      showOnTables ? "https://" + domain + log.path : log.path || "",
-      log.file_type || "",
-      log.response_size || "",
-      log.status || "",
-      log.frequency || "",
-      `"${(log.user_agent || "").replace(/"/g, '""')}"`,
-      log.crawler_type || "",
-      log.verified ? "Yes" : "No",
-      getTaxonomyForPath(log.path),
-    ].join(","));
+    const csvRows = dataToExport.map((log) =>
+      [
+        log.ip || "",
+        log.timestamp || "",
+        log.method || "",
+        showOnTables ? "https://" + domain + log.path : log.path || "",
+        log.file_type || "",
+        log.response_size || "",
+        log.status || "",
+        log.frequency || "",
+        `"${(log.user_agent || "").replace(/"/g, '""')}"`,
+        log.crawler_type || "",
+        log.verified ? "Yes" : "No",
+        getTaxonomyForPath(log.path),
+      ].join(","),
+    );
 
     const csvContent = [headers.join(","), ...csvRows].join("\n");
 
@@ -410,22 +416,24 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
   };
 
   // Calculate timings based on actual entries
-  const oldestEntry = useMemo(() =>
-    entries.length > 0
-      ? entries.reduce((oldest, log) =>
-        new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-      )
-      : null,
-    [entries]
+  const oldestEntry = useMemo(
+    () =>
+      entries.length > 0
+        ? entries.reduce((oldest, log) =>
+            new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+          )
+        : null,
+    [entries],
   );
 
-  const newestEntry = useMemo(() =>
-    entries.length > 0
-      ? entries.reduce((newest, log) =>
-        new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-      )
-      : null,
-    [entries]
+  const newestEntry = useMemo(
+    () =>
+      entries.length > 0
+        ? entries.reduce((newest, log) =>
+            new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+          )
+        : null,
+    [entries],
   );
 
   const totalTimeBetweenNewAndOldest = () => {
@@ -455,10 +463,15 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
 
     if (oldestEntry && newestEntry && elapsedTimeMs > 0) {
       const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60);
-      const perHour = elapsedTimeHours > 0 ? (frequency / elapsedTimeHours).toFixed(1) : "0.0";
+      const perHour =
+        elapsedTimeHours > 0
+          ? (frequency / elapsedTimeHours).toFixed(1)
+          : "0.0";
 
       const hours = Math.floor(elapsedTimeMs / (1000 * 60 * 60));
-      const minutes = Math.floor((elapsedTimeMs % (1000 * 60 * 60)) / (1000 * 60));
+      const minutes = Math.floor(
+        (elapsedTimeMs % (1000 * 60 * 60)) / (1000 * 60),
+      );
       const seconds = Math.floor((elapsedTimeMs % (1000 * 60)) / 1000);
 
       timings = {
@@ -489,10 +502,12 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                 Viewing: {segment}
               </h3>
               <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
-                Showing Google bot activity for {segment.toLowerCase()} section
+                Showing request activity for{" "}
+                <span className="font-bold">{segment.toLowerCase()}</span>
+                {""} segment
                 {currentSegmentTaxonomy.paths.length > 0 && (
                   <span className="ml-1">
-                    (matches:{" "}
+                    (<span className="font-bold">matches: {""}</span>
                     {currentSegmentTaxonomy.paths.map((p) => p.path).join(", ")}
                     )
                   </span>
@@ -662,10 +677,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                       Timestamp
                       {sortConfig?.key === "timestamp" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                            }`}
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -676,10 +692,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                       Path
                       {sortConfig?.key === "path" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                            }`}
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -690,10 +707,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                       File Type
                       {sortConfig?.key === "file_type" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                            }`}
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -705,10 +723,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                       Size
                       {sortConfig?.key === "response_size" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                            }`}
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -719,10 +738,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                       Status
                       {sortConfig?.key === "status" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                            }`}
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -733,10 +753,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                       Hits
                       {sortConfig?.key === "frequency" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                            }`}
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -756,7 +777,9 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                           <TableRow
                             className={`group h-2 cursor-pointer ${expandedRow === index ? "bg-sky-dark/10" : ""}`}
                             onClick={() =>
-                              setExpandedRow(expandedRow === index ? null : index)
+                              setExpandedRow(
+                                expandedRow === index ? null : index,
+                              )
                             }
                           >
                             <TableCell className="font-medium text-center max-w-[40px]">
@@ -979,10 +1002,10 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                                                   log.status < 300
                                                   ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-lg px-4 py-2"
                                                   : log.status >= 300 &&
-                                                    log.status < 400
+                                                      log.status < 400
                                                     ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-lg px-4 py-2"
                                                     : log.status >= 400 &&
-                                                      log.status < 500
+                                                        log.status < 500
                                                       ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 text-lg px-4 py-2"
                                                       : log.status >= 500
                                                         ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 text-lg px-4 py-2"
