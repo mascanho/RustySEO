@@ -1128,16 +1128,16 @@ function LogRow({
   return (
     <>
       <TableRow
-        className="group max-h-[30px] h-[30px]"
+        className="group max-h-[10px] h-[10px] align-middle"
         onClick={() => {
           setExpandedRow(expandedRow === index ? null : index);
         }}
       >
-        <TableCell className="font-medium text-center">
+        <TableCell className="font-medium text-center align-middle ">
           {indexOfFirstItem + index + 1}
         </TableCell>
 
-        <TableCell className="w-[60px]">
+        <TableCell className="w-[60px] align-middle">
           <div className="flex items-center">
             <Waypoints
               onClick={(e) => {
@@ -1157,7 +1157,7 @@ function LogRow({
             )}
           </div>
         </TableCell>
-        <TableCell>
+        <TableCell className="w-[60px] align-middle">
           <Badge
             variant="outline"
             className={
