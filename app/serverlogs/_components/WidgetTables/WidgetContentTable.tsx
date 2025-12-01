@@ -746,21 +746,6 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                         />
                       )}
                     </TableHead>
-                    <TableHead
-                      className="cursor-pointer min-w-10 max-w-[50px] text-center"
-                      onClick={() => requestSort("frequency")}
-                    >
-                      Hits
-                      {sortConfig?.key === "frequency" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      )}
-                    </TableHead>
                     <TableHead>Crawler Type</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -830,9 +815,6 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                               >
                                 {log.status || "N/A"}
                               </Badge>
-                            </TableCell>
-                            <TableCell className="text-center min-w-[90px]">
-                              {log.frequency || 1}
                             </TableCell>
                             <TableCell width={110} className="max-w-[100px]">
                               <Badge
