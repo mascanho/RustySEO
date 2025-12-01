@@ -113,13 +113,13 @@ th:not(.issues) {
 tr {
   @apply dark:border-white/20 !important;
   /* padding: 20px 0; */
-  vertical-align: center;
+  vertical-align: initial;
   z-index: 0;
 }
 
 td {
   padding: 2px 0;
-  vertical-align: center;
+  vertical-align: initial;
   @apply text-sm dark:border-brand-dark !important;
   z-index: 0;
   font-size: 0.8rem !important;
@@ -944,4 +944,9 @@ tbody tr {
 /*THIS CHANGES THE ROBOTS ELEMENT FONT SIZE*/
 code {
   @apply text-[9px];
+}
+
+/* TABLE ROW ALIGN AT THE TOP */
+.align-middle {
+  vertical-align: initial !important;
 }

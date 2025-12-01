@@ -709,7 +709,7 @@ export function LogAnalyzer() {
             >
               <DropdownMenuLabel>Filter by Method</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {["GET", "POST", "PUT", "DELETE"].map((method) => (
+              {["GET", "POST", "PUT", "DELETE", "HEAD"].map((method) => (
                 <DropdownMenuCheckboxItem
                   className="bg-white active:bg-gray-100 hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
                   key={method}

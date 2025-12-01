@@ -132,6 +132,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
   const [selectedTaxonomy, setSelectedTaxonomy] = useState<string | "all">(
     "all",
   );
+  const [statusCodeFilter, setStatusCodeFilter] = useState<number[]>([]);
 
   useEffect(() => {
     const tax = localStorage.getItem("taxonomies");
@@ -172,6 +173,21 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     return taxonomy?.name || "Uncategorized";
   };
 
+  const availableStatusCodes = useMemo(() => {
+    const codes = new Set<number>();
+    entries.forEach((log) => {
+      if (log.status !== undefined) {
+        codes.add(log.status);
+      }
+    });
+    return Array.from(codes).sort((a, b) => a - b);
+  }, [entries]);
+
+  const currentSegmentTaxonomy = useMemo(
+    () => taxonomies.find((tax) => pathMatchesTaxonomy(segment, tax)),
+    [taxonomies, segment],
+  );
+
   // Derived state for filtered logs using useMemo on raw entries
   const filteredLogs = useMemo(() => {
     if (!entries) return [];
@@ -179,13 +195,10 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     let result = entries;
 
     // Apply segment filter first (from props)
-    if (segment && segment !== "all") {
-      const taxonomy = taxonomies.find((tax) => tax.name === segment);
-      if (taxonomy) {
-        result = result.filter((log) =>
-          pathMatchesTaxonomy(log.path, taxonomy),
-        );
-      }
+    if (segment && segment !== "all" && currentSegmentTaxonomy) {
+      result = result.filter((log) =>
+        pathMatchesTaxonomy(log.path, currentSegmentTaxonomy),
+      );
     }
 
     // Apply taxonomy filter (user selection)
@@ -237,6 +250,12 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
       }
     }
 
+    if (statusCodeFilter.length > 0) {
+      result = result.filter(
+        (log) => log.status && statusCodeFilter.includes(log.status),
+      );
+    }
+
     if (sortConfig) {
       // Create a shallow copy before sorting to avoid mutating the original array
       result = [...result].sort((a, b) => {
@@ -268,7 +287,6 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     return result;
   }, [
     entries,
-    segment,
     searchTerm,
     methodFilter,
     botFilter,
@@ -278,6 +296,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     botTypeFilter,
     selectedTaxonomy,
     taxonomies,
+    currentSegmentTaxonomy,
+    statusCodeFilter,
   ]);
 
   // Reset page when filters change
@@ -324,6 +344,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     setSelectedTaxonomy("all");
     setBotTypeFilter(null);
     setFileTypeFilter([]);
+    setStatusCodeFilter([]);
   };
 
   const exportCSV = async () => {
@@ -488,9 +509,6 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     return { timings };
   };
 
-  // Get current segment taxonomy for display
-  const currentSegmentTaxonomy = taxonomies.find((tax) => tax.name === segment);
-
   return (
     <div className="space-y-4 h-full pb-0 -mb-4">
       {/* Segment Header */}
@@ -499,11 +517,13 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-semibold text-blue-800 dark:text-blue-300">
-                Viewing: {segment}
+                Viewing: {currentSegmentTaxonomy.name}
               </h3>
               <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
                 Showing request activity for{" "}
-                <span className="font-bold">{segment.toLowerCase()}</span>
+                <span className="font-bold">
+                  {currentSegmentTaxonomy.name.toLowerCase()}
+                </span>
                 {""} segment
                 {currentSegmentTaxonomy.paths.length > 0 && (
                   <span className="ml-1">
@@ -635,6 +655,48 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
             </DropdownMenuContent>
           </DropdownMenu>
 
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-full"
+              >
+                <Filter className="h-4 w-4" />
+                Status Code
+                {statusCodeFilter.length > 0 && (
+                  <Badge variant="secondary" className="ml-1">
+                    {statusCodeFilter.length}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999]"
+            >
+              <DropdownMenuLabel>Filter by Status Code</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {availableStatusCodes.map((statusCode) => (
+                <DropdownMenuCheckboxItem
+                  className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                  key={statusCode}
+                  checked={statusCodeFilter.includes(statusCode)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setStatusCodeFilter([...statusCodeFilter, statusCode]);
+                    } else {
+                      setStatusCodeFilter(
+                        statusCodeFilter.filter((s) => s !== statusCode),
+                      );
+                    }
+                  }}
+                >
+                  {statusCode}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button
             variant="outline"
             onClick={resetFilters}
@@ -760,7 +822,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                           key={`${log.ip}-${log.timestamp}-${index}-${log.path}`}
                         >
                           <TableRow
-                            className={`group h-2 cursor-pointer ${expandedRow === index ? "bg-sky-dark/10" : ""}`}
+                            className={`group h-[1px] cursor-pointer ${expandedRow === index ? "bg-sky-dark/10" : ""}`}
                             onClick={() =>
                               setExpandedRow(
                                 expandedRow === index ? null : index,
@@ -773,7 +835,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                             <TableCell className="min-w-[150px]">
                               {formatDate(log.timestamp)}
                             </TableCell>
-                            <TableCell className="inline-block truncate max-w-[400px]">
+                            <TableCell className=" truncate max-w-[400px]">
                               <div className="flex items-center w-full m-auto">
                                 <span className="mr-2 pl-2">
                                   {getFileIcon(log.file_type)}
