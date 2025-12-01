@@ -948,5 +948,5 @@ code {
 
 /* TABLE ROW ALIGN AT THE TOP */
 .align-middle {
-  vertical-align: initial !important;
+  vertical-align: start !important;
 }
