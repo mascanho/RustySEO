@@ -990,7 +990,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                                 variant="outline"
                                 className={
                                   log.crawler_type !== "Human"
-                                    ? "w-[95px] p-0 flex justify-center text-[10px] bg-red-600 dark:bg-red-400 border-purple-200 text-black dark:text-white"
+                                    ? "w-[95px] p-0 flex justify-center text-[10px] bg-red-600 text-white dark:bg-red-400 border-purple-200  dark:text-white"
                                     : "w-[95px] p-0 flex justify-center text-[11px] text-center bg-blue-600 text-white border-blue-200"
                                 }
                               >

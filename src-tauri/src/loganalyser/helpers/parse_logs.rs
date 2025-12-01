@@ -517,14 +517,18 @@ fn detect_bot(user_agent: &str) -> Option<String> {
         ("iframely", "Iframely Bot"),
         ("networkingextension", "Network Bot"),
         ("php/", "PHP Bot"),
-        ("-", "Unknown Bot"),
         ("typhoeus", "Typhoeus Bot"),
         ("hubspot", "Hubspot Bot"),
     ];
 
+    // Check for empty or dash user agent first
+    if user_agent.trim() == "-" || user_agent.trim().is_empty() {
+        return Some("No User Agent".to_string());
+    }
+
     // Iterate over the array and check for matches returning the bot name
     for (key, name) in bots {
-        if lower.contains(key) || lower == key {
+        if lower.contains(key) {
             return Some(name.to_string());
         }
     }

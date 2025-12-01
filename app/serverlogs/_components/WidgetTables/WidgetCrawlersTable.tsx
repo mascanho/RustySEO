@@ -610,56 +610,83 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                         key={`${log.ip}-${log.timestamp}-${index}`}
                       >
                         <TableRow
-                          className={`group cursor-pointer ${expandedRow === index ? "bg-sky-dark/10" : ""}`}
+                          className={`group cursor-pointer align-middle ${expandedRow === index ? "bg-sky-dark/10" : ""}`}
                           onClick={() =>
                             setExpandedRow(expandedRow === index ? null : index)
                           }
                         >
-                          <TableCell className="font-medium text-center max-w-[40px]">
-                            {indexOfFirstItem + index + 1}
+                          <TableCell className="font-medium text-center max-w-[40px] align-middle">
+                            <div className="flex items-center justify-center h-full">
+                              {indexOfFirstItem + index + 1}
+                            </div>
                           </TableCell>
-                          {/* <TableCell className="w-[200px] pl-2"> */}
-                          {/*   {formatDate(log.timestamp)} */}
-                          {/* </TableCell> */}
-                          <TableCell className="inline-block truncate max-w-[600px]  ">
-                            <div className="flex items-center w-full m-auto">
-                              <span className="mr-2  pl-2">
+
+                          <TableCell className="truncate max-w-[600px] align-middle">
+                            <div className="flex items-center h-full">
+                              <span className="mr-2 pl-2 flex items-center">
                                 {getFileIcon(log.file_type)}
                               </span>
-                              <span className="leading-[28px] m-auto flex items-center">
+                              <span className="flex items-center">
                                 {showOnTables && domain
                                   ? "https://" + domain + log.path
                                   : log?.path}
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell className="min-w-[30px] truncate">
-                            <Badge variant="outline">{log.file_type}</Badge>
+
+                          <TableCell className="min-w-[30px] truncate align-middle">
+                            <div className="flex items-center h-full relative">
+                              <Badge
+                                variant="outline"
+                                className="flex items-center absolute"
+                              >
+                                {log.file_type}
+                              </Badge>
+                            </div>
                           </TableCell>
 
-                          <TableCell className="text-center">
-                            {formatResponseSize(log.response_size)}
+                          <TableCell className="text-center align-middle">
+                            <div className="flex items-center justify-center align-middle relative h-full">
+                              <span className="absolute">
+                                {formatResponseSize(log.response_size)}
+                              </span>
+                            </div>
                           </TableCell>
 
-                          <TableCell className="text-center min-w-[90px]">
-                            {timings(log)?.frequency?.total}
+                          <TableCell className="text-center min-w-[90px] align-middle">
+                            <div className="flex items-center justify-center align-middle relative h-full">
+                              <span className="absolute">
+                                {timings(log)?.frequency?.total}
+                              </span>
+                            </div>
                           </TableCell>
-                          <TableCell className="text-center w-[90px]">
-                            {timings(log)?.frequency?.perHour}
+
+                          <TableCell className="text-center w-[90px] align-middle">
+                            <div className="flex items-center justify-center align-middle relative h-full">
+                              <span className="absolute">
+                                {timings(log)?.frequency?.perHour}
+                              </span>
+                            </div>
                           </TableCell>
-                          <TableCell width={100} className="max-w-[100px]">
-                            <Badge
-                              variant="outline"
-                              className={
-                                log.crawler_type !== "Human"
-                                  ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
-                                  : "bg-green-100 text-green-800 border-green-200"
-                              }
-                            >
-                              {log.crawler_type.length > 10
-                                ? log.crawler_type.trim().slice(0, 10)
-                                : log.crawler_type}
-                            </Badge>
+
+                          <TableCell
+                            width={100}
+                            className="max-w-[100px] align-middle"
+                          >
+                            <div className="flex items-center h-full relative">
+                              <Badge
+                                variant="outline"
+                                className={`flex items-center align-middle absolute justify-center ${
+                                  log.crawler_type !== "Human"
+                                    ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
+                                    : "bg-green-100 text-green-800 border-green-200"
+                                }`}
+                              >
+                                {log.crawler_type.length > 10
+                                  ? log.crawler_type.trim().slice(0, 10)
+                                  : log.crawler_type}
+                              </Badge>
+                            </div>
                           </TableCell>
                         </TableRow>
                         {expandedRow === index && (

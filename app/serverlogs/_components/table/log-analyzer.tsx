@@ -992,7 +992,9 @@ export function LogAnalyzer() {
                         />
                       )}
                     </TableHead>
-                    <TableHead>Segment</TableHead>
+                    <TableHead className="w-[90px] text-left">
+                      Segment
+                    </TableHead>
                     <TableHead
                       className="cursor-pointer"
                       onClick={() => requestSort("file_type")}
@@ -1134,12 +1136,12 @@ function LogRow({
           setExpandedRow(expandedRow === index ? null : index);
         }}
       >
-        <TableCell className="font-medium text-center align-middle ">
+        <TableCell className="font-medium text-center align-middle">
           {indexOfFirstItem + index + 1}
         </TableCell>
 
-        <TableCell className="w-fit inline-block align-middle">
-          <div className="flex items-center align-middle mt-[2.5px]">
+        <TableCell className="w-fit align-middle">
+          <div className="flex items-center">
             <Waypoints
               onClick={(e) => {
                 e.stopPropagation();
@@ -1158,7 +1160,8 @@ function LogRow({
             )}
           </div>
         </TableCell>
-        <TableCell className="w-[60px] align-middle pb-[9px]">
+
+        <TableCell className="w-[60px] align-middle">
           <Badge
             variant="outline"
             className={
@@ -1174,24 +1177,26 @@ function LogRow({
             {log.method}
           </Badge>
         </TableCell>
+
         <TableCell
-          className={` pl-3  ${log?.browser === "Chrome" ? "text-red-400" : ""}
+          className={`align-middle ${log?.browser === "Chrome" ? "text-red-400" : ""}
           ${log?.browser === "Firefox" ? "text-green-500" : ""}
-${log?.browser === "Safari" ? "text-blue-400" : ""}
-`}
+          ${log?.browser === "Safari" ? "text-blue-400" : ""}`}
           width={12}
         >
           {log?.browser}
         </TableCell>
-        <TableCell className="max-w-44 ">{formatDate(log.timestamp)}</TableCell>
 
-        <TableCell className="max-w-[100%] truncate mr-2">
+        <TableCell className="max-w-44 align-middle">
+          {formatDate(log.timestamp)}
+        </TableCell>
+
+        <TableCell className="max-w-[100%] truncate mr-2 align-middle">
           {!showAgent ? (
-            <section className="max-w-[800px] truncate">
+            <section className="max-w-[800px] truncate flex items-center">
               <span
                 onClick={(e) => handleCopyClick(log.path, e, "URL PATH")}
-                className="mr-1 inline-block pt-[1px] "
-                style={{ paddingTop: "" }}
+                className="mr-1 inline-block"
               >
                 {getFileIcon(log.file_type)}
               </span>
@@ -1205,41 +1210,52 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
               </span>
             </section>
           ) : (
-            <section className="max-w-[99%] w-[750px] 3xl:w-[950px]  truncate relative ml-2">
+            <section className="max-w-[99%] w-[750px] 3xl:w-[950px] truncate relative ml-2 flex items-center">
               <span className="absolute">
                 <ImUserTie
                   onClick={(e) =>
                     handleCopyClick(log.user_agent, e, "User Agent")
                   }
-                  className="text-brand-bright mr-1 mt-[2px]"
+                  className="text-brand-bright mr-1"
                 />{" "}
               </span>
               <span className="ml-5">{log?.user_agent}</span>
             </section>
           )}
         </TableCell>
-        <TableCell>{log?.segment}</TableCell>
-        <TableCell className="max-w-[480px] truncate">
-          <Badge variant={"outline"}>{log.file_type}</Badge>
+
+        <TableCell className="w-[90px] text-center">
+          <span className="border border-brand-bright/50 rounded-full  px-2 py-1">
+            {log?.segment}
+          </span>
         </TableCell>
-        <TableCell>
+
+        <TableCell className="max-w-[480px] truncate align-middle">
+          <Badge className="pb-1" variant={"outline"}>
+            {log.file_type}
+          </Badge>
+        </TableCell>
+
+        <TableCell className="align-middle">
           <Badge className={`${getStatusCodeColor(log.status)}`}>
             {log.status}
           </Badge>
         </TableCell>
 
         {!showAgent && (
-          <TableCell width={70}>
+          <TableCell className="align-middle" width={70}>
             {formatResponseSize(log.response_size)}
           </TableCell>
         )}
-        <TableCell className="max-w-[180px] w-1 truncate text-center">
+
+        <TableCell className="max-w-[180px] w-1 truncate text-center align-middle">
+          <div className="align-middle flex relative items-center "></div>
           <Badge
             variant="outline"
             className={
               log.crawler_type !== "Human"
-                ? "bg-red-100 dark:bg-red-700 dark:text-white w-[100px] truncate overflow-hidden text-center flex items-center justify-center"
-                : "bg-blue-100 truncate dark:bg-blue-500 dark:text-white overflow-hidden w-[100px] text-blue-800 border-blue-200 flex items-center justify-center text-center"
+                ? "absolute bg-red-100 dark:bg-red-700 dark:text-white w-[100px] truncate overflow-hidden text-center flex items-center justify-center"
+                : "absolute bg-blue-100 truncate dark:bg-blue-500 dark:text-white overflow-hidden w-[100px] text-blue-800 border-blue-200 flex items-center justify-center text-center"
             }
           >
             {formatCrawlerType(log)}
@@ -1248,7 +1264,7 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
       </TableRow>
       {expandedRow === index && (
         <TableRow>
-          <TableCell colSpan={10} className="bg-gray-50 dark:bg-gray-800 p-4">
+          <TableCell colSpan={11} className="bg-gray-50 dark:bg-gray-800 p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col max-w-5xl">
                 <div className="flex mb-2 space-x-2 items-center justify-between">

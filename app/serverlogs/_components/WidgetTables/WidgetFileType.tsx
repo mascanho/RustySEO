@@ -640,16 +640,9 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                 Viewing: {fileTypeFilter.join(", ")} Files
               </h3>
               <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
-                Showing {filteredLogs.length} log entries for{" "}
+                Showing {filteredLogs.length} log entries with{" "}
                 <span className="font-bold">{fileTypeFilter.join(", ")}</span>{" "}
                 file type{fileTypeFilter.length > 1 ? "s" : ""}
-                {selectedFileType && (
-                  <span>
-                    {" "}
-                    (clicked from parent:{" "}
-                    <span className="font-bold">{selectedFileType}</span>)
-                  </span>
-                )}
               </p>
             </div>
             <Badge
@@ -729,7 +722,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999]"
+              className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999] w-[200px]"
             >
               <DropdownMenuLabel>Filter by Segment</DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -760,7 +753,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-32"
+                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-full"
               >
                 <Filter className="h-4 w-4" />
                 File Type
@@ -1118,7 +1111,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                                 variant="outline"
                                 className={
                                   log.crawler_type !== "Human"
-                                    ? "w-[95px] p-0 flex justify-center text-[10px] bg-red-600 dark:bg-red-400 border-purple-200 text-black dark:text-white"
+                                    ? "w-[95px] p-0 flex justify-center text-[10px] bg-red-600 text-white dark:bg-red-400 border-purple-200  dark:text-white"
                                     : "w-[95px] p-0 flex justify-center text-[11px] text-center bg-blue-600 text-white border-blue-200"
                                 }
                               >

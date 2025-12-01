@@ -424,6 +424,7 @@ export default function WidgetLogs() {
                         </Tabs.Panel>
 
                         {/*CONTENT SEGMENTS WITH THEIR DATA GO HERE*/}
+
                         <Tabs.Panel value="logs">
                           <WidgetContentTable
                             data={overview}
@@ -473,12 +474,43 @@ export default function WidgetLogs() {
                       {/*     </span> */}
                       {/*   </div> */}
                       {/* </div> */}
-                      <WidgetFileType
-                        data={overview}
-                        entries={entries}
-                        chartData={chartData}
-                        selectedFileType={entry?.name}
-                      />
+
+                      {activeTab === "Filetypes" ? (
+                        <WidgetFileType
+                          data={overview}
+                          entries={entries}
+                          chartData={chartData}
+                          selectedFileType={entry?.name}
+                        />
+                      ) : (
+                        <>
+                          <DialogHeader>
+                            <DialogTitle>{entry.name} Details</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="flex justify-between">
+                              <span>Total Requests:</span>
+                              <span className="font-medium">
+                                {entry.value.toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Percentage:</span>
+                              <span className="font-medium">
+                                {Math.round(
+                                  (entry.value /
+                                    chartData.reduce(
+                                      (sum, item) => sum + item.value,
+                                      0,
+                                    )) *
+                                    100,
+                                )}
+                                %
+                              </span>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </DialogContent>
                   )}
 
