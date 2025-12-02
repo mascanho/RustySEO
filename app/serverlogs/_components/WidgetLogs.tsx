@@ -30,12 +30,16 @@ import { WidgetTableClaude } from "./WidgetTables/WidgetCrawlersClaudeTable.tsx"
 import { WidgetContentTable } from "./WidgetTables/WidgetContentTable.tsx";
 import { over } from "lodash";
 import { WidgetFileType } from "./WidgetTables/WidgetFileType.tsx";
+import { FaAccessibleIcon } from "react-icons/fa6";
+import { GiPoliceOfficerHead } from "react-icons/gi";
 
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
   { label: "Content", icon: <PenBox className="w-4 h-4" /> },
   { label: "Status Codes", icon: <Server className="w-4 h-4" /> },
   { label: "Crawlers", icon: <Bot className="w-4 h-4" /> },
+  { label: "User Agents", icon: <GiPoliceOfficerHead className="w-4 h-4" /> },
+  { label: "Referrers", icon: <GiPoliceOfficerHead className="w-4 h-4" /> },
 ];
 
 const COLORS = [
@@ -149,6 +153,98 @@ export default function WidgetLogs() {
         .sort((a, b) => b.value - a.value)
     : [];
 
+  // Helper function to categorize user agents
+  const categorizeUserAgent = (userAgent: string): string => {
+    const ua = userAgent.toLowerCase();
+
+    // Browser detection
+    if (ua.includes("chrome")) {
+      return ua.includes("mobile") ? "Chrome Mobile" : "Chrome";
+    }
+    if (ua.includes("firefox")) {
+      return ua.includes("mobile") ? "Firefox Mobile" : "Firefox";
+    }
+    if (ua.includes("safari") && !ua.includes("chrome")) {
+      return ua.includes("mobile") ||
+        ua.includes("iphone") ||
+        ua.includes("ipad")
+        ? "Safari Mobile"
+        : "Safari";
+    }
+    if (ua.includes("edge")) return "Microsoft Edge";
+    if (ua.includes("opera")) return "Opera";
+    if (ua.includes("trident") || ua.includes("msie"))
+      return "Internet Explorer";
+
+    // Bot/Crawler detection
+    if (ua.includes("googlebot")) return "Googlebot";
+    if (ua.includes("bingbot")) return "Bingbot";
+    if (ua.includes("slurp")) return "Yahoo Slurp";
+    if (ua.includes("duckduckbot")) return "DuckDuckGo Bot";
+    if (ua.includes("baiduspider")) return "Baidu Spider";
+    if (ua.includes("yandexbot")) return "Yandex Bot";
+    if (ua.includes("facebookexternalhit")) return "Facebook Bot";
+    if (ua.includes("twitterbot")) return "Twitter Bot";
+    if (ua.includes("linkedinbot")) return "LinkedIn Bot";
+    if (ua.includes("applebot")) return "Apple Bot";
+
+    // Generic bot patterns
+    if (ua.includes("bot") || ua.includes("crawler") || ua.includes("spider")) {
+      return "Other Bots";
+    }
+
+    // Mobile device detection
+    if (ua.includes("android")) return "Android Browser";
+    if (ua.includes("iphone") || ua.includes("ipad") || ua.includes("ipod"))
+      return "iOS Browser";
+
+    // Operating System detection
+    if (ua.includes("windows")) return "Windows";
+    if (ua.includes("mac os")) return "macOS";
+    if (ua.includes("linux")) return "Linux";
+
+    // Tools and libraries
+    if (ua.includes("curl")) return "cURL";
+    if (ua.includes("wget")) return "Wget";
+    if (ua.includes("postman")) return "Postman";
+    if (ua.includes("python")) return "Python Requests";
+
+    // Check if it's empty or very short
+    if (
+      !userAgent ||
+      userAgent.trim() === "" ||
+      userAgent === "-" ||
+      userAgent === "Unknown"
+    ) {
+      return "Unknown/Empty";
+    }
+
+    return "Other";
+  };
+  // Prepare User Agents Data
+  const userAgentData = currentLogs?.reduce((acc, entry) => {
+    const userAgent = entry.user_agent || "Unknown";
+
+    // Categorize user agents to make the data more manageable
+    const categorizedAgent = categorizeUserAgent(userAgent);
+
+    if (!acc[categorizedAgent]) {
+      acc[categorizedAgent] = { count: 0, examples: [] };
+    }
+
+    acc[categorizedAgent].count += 1;
+
+    // Keep a few examples of user agents in this category (max 5)
+    if (
+      acc[categorizedAgent].examples.length < 5 &&
+      !acc[categorizedAgent].examples.includes(userAgent)
+    ) {
+      acc[categorizedAgent].examples.push(userAgent);
+    }
+
+    return acc;
+  }, {});
+
   // Get chart data for active tab
   const getChartData = () => {
     if (activeTab === "Content") {
@@ -170,6 +266,20 @@ export default function WidgetLogs() {
         value: data.value,
         paths: data.paths,
       }));
+    }
+
+    if (activeTab === "User Agents") {
+      // Convert userAgentData to chart format
+      if (!userAgentData) return [];
+
+      return Object.entries(userAgentData)
+        .map(([name, data]) => ({
+          name: name,
+          value: data.count,
+          examples: data.examples,
+        }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 20); // Limit to top 20 for readability
     }
 
     return (
@@ -221,8 +331,6 @@ export default function WidgetLogs() {
     .map((log) => log?.names?.length)
     .reduce((a, b) => a + b, 0);
 
-  console.log(entries, "Overview");
-
   return (
     <div className="bg-white border dark:border-brand-dark shadow rounded-none p-2 pr-1 w-1/2  mx-auto dark:bg-slate-950 dark:text-white h-64 relative">
       <Popover>
@@ -262,7 +370,7 @@ export default function WidgetLogs() {
       </Popover>
 
       {/* Tabs */}
-      <div className="flex space-x-2 pt-1 pb-0 w-full justify-center">
+      <div className="flex space-x-2 pt-1 pb-0 w-full ml-20 justify-center">
         {tabs.map(({ label, icon }) => (
           <button
             key={label}
@@ -337,7 +445,13 @@ export default function WidgetLogs() {
             </PieChart>
 
             <div
-              className={`grid grid-cols-1 ${activeTab === "Status Codes" ? "grid-cols-4 max-w-xl" : "grid-cols-3"} gap-2 w-full max-w-md pl-4`}
+              className={`grid gap-2 w-full max-w-2xl pl-4 ${
+                activeTab === "User Agents"
+                  ? "grid-cols-5 max-w-6xl  "
+                  : activeTab === "Status Codes"
+                    ? "grid-cols-4 max-w-xl"
+                    : "grid-cols-3"
+              }`}
             >
               {chartData.map((entry, idx) => (
                 <Dialog
@@ -434,6 +548,52 @@ export default function WidgetLogs() {
                         </Tabs.Panel>
                       </Tabs>
                     </DialogContent>
+                  ) : activeTab === "User Agents" ? (
+                    <DialogContent className="max-w-4xl dark:text-white dark:border-brand-bright dark:bg-brand-darker">
+                      <DialogHeader>
+                        <DialogTitle>
+                          User Agent Category: {entry.name}
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="flex justify-between">
+                          <span>Total Requests:</span>
+                          <span className="font-medium">
+                            {entry.value.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Percentage:</span>
+                          <span className="font-medium">
+                            {Math.round(
+                              (entry.value /
+                                chartData.reduce(
+                                  (sum, item) => sum + item.value,
+                                  0,
+                                )) *
+                                100,
+                            )}
+                            %
+                          </span>
+                        </div>
+                        <div className="mt-4">
+                          <h4 className="font-medium mb-2">
+                            Example User Agents:
+                          </h4>
+                          <div className="space-y-2 max-h-60 overflow-y-auto">
+                            {entry.examples &&
+                              entry.examples.map((example, idx) => (
+                                <div
+                                  key={idx}
+                                  className="p-2 bg-gray-50 dark:bg-gray-800 rounded text-xs font-mono break-all"
+                                >
+                                  {example}
+                                </div>
+                              ))}
+                          </div>
+                        </div>
+                      </div>
+                    </DialogContent>
                   ) : // GOOGLE AND OTHER CRAWLERS START HERE
                   entry?.name === "Google" ? (
                     <DialogContent className="max-w-[90%] min-h-96 overflow-hidden dark:bg-brand-darker dark:border-brand-bright">
@@ -449,32 +609,6 @@ export default function WidgetLogs() {
                     </DialogContent>
                   ) : (
                     <DialogContent className="max-w-7xl dark:text-white dark:border-brand-bright dark:bg-brand-darker">
-                      {/* <DialogHeader> */}
-                      {/*   <DialogTitle>{entry.name} Details</DialogTitle> */}
-                      {/* </DialogHeader> */}
-                      {/* <div className="space-y-4"> */}
-                      {/*   <div className="flex justify-between"> */}
-                      {/*     <span>Total Requests:</span> */}
-                      {/*     <span className="font-medium"> */}
-                      {/*       {entry.value.toLocaleString()} */}
-                      {/*     </span> */}
-                      {/*   </div> */}
-                      {/*   <div className="flex justify-between"> */}
-                      {/*     <span>Percentage:</span> */}
-                      {/*     <span className="font-medium"> */}
-                      {/*       {Math.round( */}
-                      {/*         (entry.value / */}
-                      {/*           chartData.reduce( */}
-                      {/*             (sum, item) => sum + item.value, */}
-                      {/*             0, */}
-                      {/*           )) * */}
-                      {/*           100, */}
-                      {/*       )} */}
-                      {/*       % */}
-                      {/*     </span> */}
-                      {/*   </div> */}
-                      {/* </div> */}
-
                       {activeTab === "Filetypes" ? (
                         <WidgetFileType
                           data={overview}

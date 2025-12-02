@@ -906,7 +906,7 @@ export function LogAnalyzer() {
         >
           <div className="rounded-md border dark:border-brand-dark h-full logs">
             <div className="relative w-full h-full overflow-auto">
-              <Table className="h-full [&_tr]:p-10 logs">
+              <Table className="h-full [&_tr]:p-10 logs relative">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[60px] text-center">#</TableHead>
@@ -1045,7 +1045,7 @@ export function LogAnalyzer() {
                     </TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody className="relative">
                   {filteredLogs.length > 0 ? (
                     currentLogs.map((log, index) => (
                       <LogRow
@@ -1086,6 +1086,7 @@ export function LogAnalyzer() {
             </div>
           </div>
         </CardContent>
+        <div className="h-5 dark:bg-brand-darker bg-white dark:border-t border-l dark:border-l-brand-dark dark:border-r-brand-dark border-r border-t-0 border-t-brand-dark w-full absolute  top-[22.9rem]  -z-1" />
       </div>
 
       <PaginationControls
@@ -1139,20 +1140,20 @@ function LogRow({
         </TableCell>
 
         <TableCell className="w-fit align-middle">
-          <div className="flex items-center">
+          <div className="flex items-center relative">
             <Waypoints
               onClick={(e) => {
                 e.stopPropagation();
                 handleIP(log.ip);
               }}
               title="Click to inspect IP"
-              className="mr-2 text-blue-400 dark:text-blue-300/50 hover:scale-110 cursor-pointer"
+              className="absolute mr-2 text-blue-400 dark:text-blue-300/50 hover:scale-110 cursor-pointer"
               size={13}
             />
             {!showIp ? (
-              <p className="text-xs truncate">{log.ip}</p>
+              <p className="text-xs truncate ml-4">{log.ip}</p>
             ) : (
-              <p className="text-xs -gray-500 truncate">
+              <p className="text-xs text-gray-300 truncate ml-4">
                 {logIpMasking(log?.ip)}
               </p>
             )}
@@ -1191,16 +1192,16 @@ function LogRow({
 
         <TableCell className="max-w-[100%] truncate mr-2 align-middle">
           {!showAgent ? (
-            <section className="max-w-[800px] truncate flex items-center">
+            <section className="max-w-[800px] truncate flex items-center relative">
               <span
                 onClick={(e) => handleCopyClick(log.path, e, "URL PATH")}
-                className="mr-1 inline-block"
+                className="absolute "
               >
                 {getFileIcon(log.file_type)}
               </span>
               <span
                 onClick={(click) => handleURLClick(log.path, click)}
-                className="cursor-pointer hover:underline"
+                className="cursor-pointer hover:underline ml-5"
               >
                 {showOnTables && domain
                   ? "https://" + domain + log.path
@@ -1223,7 +1224,7 @@ function LogRow({
         </TableCell>
 
         <TableCell className="w-[90px] text-center">
-          <span className="border border-brand-bright/50 rounded-full  px-2 py-1">
+          <span className="border border-brand-bright/50 rounded-full  px-2 py-0.5 text-xs">
             {log?.segment}
           </span>
         </TableCell>
