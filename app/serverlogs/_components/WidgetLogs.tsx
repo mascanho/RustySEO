@@ -28,10 +28,11 @@ import { WidgetTableBing } from "./WidgetTables/WidgetCrawlersBingTable.tsx";
 import { WidgetTableOpenAi } from "./WidgetTables/WidgetCrawlersOpenAITable.tsx";
 import { WidgetTableClaude } from "./WidgetTables/WidgetCrawlersClaudeTable.tsx";
 import { WidgetContentTable } from "./WidgetTables/WidgetContentTable.tsx";
-import { over } from "lodash";
 import { WidgetFileType } from "./WidgetTables/WidgetFileType.tsx";
-import { FaAccessibleIcon } from "react-icons/fa6";
 import { GiPoliceOfficerHead } from "react-icons/gi";
+import { WidgetUserAgentsTable } from "./WidgetTables/WidgetUserAgentsTable.tsx";
+import { WidgetReferrersTable } from "./WidgetTables/WidgetReferrersTable.tsx";
+import { GiHypersonicBolt } from "react-icons/gi";
 
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
@@ -39,7 +40,7 @@ const tabs = [
   { label: "Status Codes", icon: <Server className="w-4 h-4" /> },
   { label: "Crawlers", icon: <Bot className="w-4 h-4" /> },
   { label: "User Agents", icon: <GiPoliceOfficerHead className="w-4 h-4" /> },
-  { label: "Referrers", icon: <GiPoliceOfficerHead className="w-4 h-4" /> },
+  { label: "Referrers", icon: <GiHypersonicBolt className="w-3 h-3" /> },
 ];
 
 const COLORS = [
@@ -221,6 +222,100 @@ export default function WidgetLogs() {
 
     return "Other";
   };
+
+  // Helper function to categorize referrers
+  const categorizeReferrer = (referrer: string): string => {
+    if (!referrer || referrer.trim() === "" || referrer === "-") {
+      return "Direct/None";
+    }
+
+    const ref = referrer.toLowerCase();
+
+    // Search engines
+    if (ref.includes("google.com") || ref.includes("google.co")) {
+      return "Google";
+    }
+    if (ref.includes("bing.com")) {
+      return "Bing";
+    }
+    if (ref.includes("yahoo.com")) {
+      return "Yahoo";
+    }
+    if (ref.includes("duckduckgo.com")) {
+      return "DuckDuckGo";
+    }
+    if (ref.includes("baidu.com")) {
+      return "Baidu";
+    }
+    if (ref.includes("yandex.com") || ref.includes("yandex.ru")) {
+      return "Yandex";
+    }
+
+    // Social media
+    if (ref.includes("facebook.com") || ref.includes("fb.com")) {
+      return "Facebook";
+    }
+    if (ref.includes("twitter.com") || ref.includes("x.com")) {
+      return "Twitter/X";
+    }
+    if (ref.includes("linkedin.com")) {
+      return "LinkedIn";
+    }
+    if (ref.includes("instagram.com")) {
+      return "Instagram";
+    }
+    if (ref.includes("pinterest.com")) {
+      return "Pinterest";
+    }
+    if (ref.includes("reddit.com")) {
+      return "Reddit";
+    }
+    if (ref.includes("tiktok.com")) {
+      return "TikTok";
+    }
+
+    // Common internal/same domain
+    if (
+      ref.includes("localhost") ||
+      ref.includes("127.0.0.1") ||
+      ref.includes("::1")
+    ) {
+      return "Local/Internal";
+    }
+
+    // Check if it's from the same domain
+    if (typeof window !== "undefined") {
+      const domain = localStorage.getItem("domain");
+      if (domain && ref.includes(domain.toLowerCase())) {
+        return "Internal Referral";
+      }
+    }
+
+    // Try to extract domain
+    try {
+      const url = new URL(referrer);
+      const hostname = url.hostname.replace(/^www\./, "");
+      const parts = hostname.split(".");
+      if (parts.length >= 2) {
+        return `${parts[parts.length - 2].charAt(0).toUpperCase() + parts[parts.length - 2].slice(1)}`;
+      }
+      return hostname;
+    } catch (e) {
+      // If not a valid URL, check common patterns
+      const match = ref.match(/https?:\/\/([^\/]+)/);
+      if (match && match[1]) {
+        const hostname = match[1].replace(/^www\./, "");
+        const parts = hostname.split(".");
+        if (parts.length >= 2) {
+          return `${parts[parts.length - 2].charAt(0).toUpperCase() + parts[parts.length - 2].slice(1)}`;
+        }
+        return hostname;
+      }
+    }
+
+    return "Other External";
+  };
+
   // Prepare User Agents Data
   const userAgentData = currentLogs?.reduce((acc, entry) => {
     const userAgent = entry.user_agent || "Unknown";
@@ -240,6 +335,30 @@ export default function WidgetLogs() {
       !acc[categorizedAgent].examples.includes(userAgent)
     ) {
       acc[categorizedAgent].examples.push(userAgent);
+    }
+
+    return acc;
+  }, {});
+
+  // Prepare Referrers Data
+  const referrerData = currentLogs?.reduce((acc, entry) => {
+    const referrer = entry.referer || "Direct/None";
+
+    // Categorize referrers to make the data more manageable
+    const categorizedReferrer = categorizeReferrer(referrer);
+
+    if (!acc[categorizedReferrer]) {
+      acc[categorizedReferrer] = { count: 0, referrers: [] };
+    }
+
+    acc[categorizedReferrer].count += 1;
+
+    // Keep a few examples of referrers in this category (max 5)
+    if (
+      acc[categorizedReferrer].referrers.length < 5 &&
+      !acc[categorizedReferrer].referrers.includes(referrer)
+    ) {
+      acc[categorizedReferrer].referrers.push(referrer);
     }
 
     return acc;
@@ -282,6 +401,20 @@ export default function WidgetLogs() {
         .slice(0, 20); // Limit to top 20 for readability
     }
 
+    if (activeTab === "Referrers") {
+      // Convert referrerData to chart format
+      if (!referrerData) return [];
+
+      return Object.entries(referrerData)
+        .map(([name, data]) => ({
+          name: name,
+          value: data.count,
+          referrers: data.referrers,
+        }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 20); // Limit to top 20 for readability
+    }
+
     return (
       {
         Filetypes: Object.entries(fileTypeData || {}).map(([name, value]) => ({
@@ -294,7 +427,7 @@ export default function WidgetLogs() {
             value,
           }),
         ),
-        Crawlers: crawlerData.length > 0 ? crawlerData : "",
+        Crawlers: crawlerData.length > 0 ? crawlerData : [],
       }[activeTab] || []
     );
   };
@@ -446,8 +579,8 @@ export default function WidgetLogs() {
 
             <div
               className={`grid gap-2 w-full max-w-2xl pl-4 ${
-                activeTab === "User Agents"
-                  ? "grid-cols-5 max-w-6xl  "
+                activeTab === "User Agents" || activeTab === "Referrers"
+                  ? "grid-cols-5 max-w-6xl"
                   : activeTab === "Status Codes"
                     ? "grid-cols-4 max-w-xl"
                     : "grid-cols-3"
@@ -483,8 +616,75 @@ export default function WidgetLogs() {
                     </div>
                   </DialogTrigger>
 
-                  {activeTab === "Content" ? (
-                    <DialogContent className="max-w-7xl w-calc(100%)   dark:text-white dark:border-brand-bright dark:bg-brand-darker">
+                  {activeTab === "Referrers" ? (
+                    <DialogContent className="max-w-[90%] min-h-96 overflow-hidden dark:bg-brand-darker dark:border-brand-bright">
+                      <Tabs defaultValue="detailed">
+                        <Tabs.List className="mb-2 mx-1">
+                          {/* <Tabs.Tab value="overview">Summary</Tabs.Tab> */}
+                          <Tabs.Tab value="detailed">
+                            Detailed Analysis
+                          </Tabs.Tab>
+                        </Tabs.List>
+
+                        <Tabs.Panel value="overview">
+                          <DialogHeader>
+                            <DialogTitle>
+                              Referrer Category: {entry.name}
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="flex justify-between">
+                              <span>Total Requests:</span>
+                              <span className="font-medium">
+                                {entry.value.toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Percentage:</span>
+                              <span className="font-medium">
+                                {Math.round(
+                                  (entry.value /
+                                    chartData.reduce(
+                                      (sum, item) => sum + item.value,
+                                      0,
+                                    )) *
+                                    100,
+                                )}
+                                %
+                              </span>
+                            </div>
+                            <div className="mt-4">
+                              <h4 className="font-medium mb-2">
+                                Example Referrers:
+                              </h4>
+                              <div className="space-y-2 max-h-60 overflow-y-auto">
+                                {entry.referrers &&
+                                  entry.referrers.map((referrer, idx) => (
+                                    <div
+                                      key={idx}
+                                      className="p-2 bg-gray-50 dark:bg-gray-800 rounded text-xs font-mono break-all"
+                                    >
+                                      {referrer}
+                                    </div>
+                                  ))}
+                              </div>
+                            </div>
+                          </div>
+                        </Tabs.Panel>
+
+                        <Tabs.Panel value="detailed">
+                          <WidgetReferrersTable
+                            data={overview}
+                            entries={currentLogs}
+                            segment={
+                              entry?.name === "Other" ? "all" : entry?.name
+                            }
+                          />
+                        </Tabs.Panel>
+                      </Tabs>
+                    </DialogContent>
+                  ) : activeTab === "Content" ? (
+                    <DialogContent className="max-w-7xl w-calc(100%) dark:text-white dark:border-brand-bright dark:bg-brand-darker">
                       <Tabs defaultValue="overview">
                         <Tabs.List>
                           <Tabs.Tab value="overview">Overview</Tabs.Tab>
@@ -537,8 +737,6 @@ export default function WidgetLogs() {
                           </section>
                         </Tabs.Panel>
 
-                        {/*CONTENT SEGMENTS WITH THEIR DATA GO HERE*/}
-
                         <Tabs.Panel value="logs">
                           <WidgetContentTable
                             data={overview}
@@ -549,53 +747,26 @@ export default function WidgetLogs() {
                       </Tabs>
                     </DialogContent>
                   ) : activeTab === "User Agents" ? (
-                    <DialogContent className="max-w-4xl dark:text-white dark:border-brand-bright dark:bg-brand-darker">
-                      <DialogHeader>
-                        <DialogTitle>
-                          User Agent Category: {entry.name}
-                        </DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="flex justify-between">
-                          <span>Total Requests:</span>
-                          <span className="font-medium">
-                            {entry.value.toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Percentage:</span>
-                          <span className="font-medium">
-                            {Math.round(
-                              (entry.value /
-                                chartData.reduce(
-                                  (sum, item) => sum + item.value,
-                                  0,
-                                )) *
-                                100,
-                            )}
-                            %
-                          </span>
-                        </div>
-                        <div className="mt-4">
-                          <h4 className="font-medium mb-2">
-                            Example User Agents:
-                          </h4>
-                          <div className="space-y-2 max-h-60 overflow-y-auto">
-                            {entry.examples &&
-                              entry.examples.map((example, idx) => (
-                                <div
-                                  key={idx}
-                                  className="p-2 bg-gray-50 dark:bg-gray-800 rounded text-xs font-mono break-all"
-                                >
-                                  {example}
-                                </div>
-                              ))}
-                          </div>
-                        </div>
-                      </div>
+                    <DialogContent className="max-w-[90%] min-h-96 overflow-hidden dark:bg-brand-darker dark:border-brand-bright">
+                      <Tabs defaultValue="overview">
+                        <Tabs.List className="mb-2 mx-1">
+                          <Tabs.Tab value="overview">
+                            User Agents Analysis
+                          </Tabs.Tab>
+                        </Tabs.List>
+
+                        <Tabs.Panel value="overview">
+                          <WidgetUserAgentsTable
+                            data={overview}
+                            entries={currentLogs}
+                            segment={
+                              entry?.name === "Other" ? "all" : entry?.name
+                            }
+                          />
+                        </Tabs.Panel>
+                      </Tabs>
                     </DialogContent>
-                  ) : // GOOGLE AND OTHER CRAWLERS START HERE
-                  entry?.name === "Google" ? (
+                  ) : entry?.name === "Google" ? (
                     <DialogContent className="max-w-[90%] min-h-96 overflow-hidden dark:bg-brand-darker dark:border-brand-bright">
                       <Tabs defaultValue="overview">
                         <Tabs.List className="mb-2 mx-1">
