@@ -590,7 +590,9 @@ export function LogAnalyzer() {
   function handleCopyClick(text, click, name) {
     click.preventDefault();
     click.stopPropagation();
-    navigator.clipboard.writeText(text);
+
+    const textToCopy = domain ? "https://" + domain + text : text;
+    navigator.clipboard.writeText(textToCopy);
     toast.success(`${name} copied to clipboard!`);
   }
 

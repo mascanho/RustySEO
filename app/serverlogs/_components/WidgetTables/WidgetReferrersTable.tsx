@@ -128,7 +128,7 @@ const categorizeReferrer = (referrer: string): string => {
     return "Google";
   }
   if (ref.includes("bing.com")) {
-    return "Bing";
+    return "MS Bing";
   }
   if (ref.includes("yahoo.com")) {
     return "Yahoo";
