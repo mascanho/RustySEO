@@ -60,6 +60,7 @@ import { Badge } from "@/components/ui/badge";
 import { CardContent } from "@/components/ui/card";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
 
 interface LogEntry {
   browser: string;
@@ -1065,12 +1066,24 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                             </TableCell>
                             <TableCell className="truncate max-w-[400px] align-middle">
                               <span className="flex items-start truncate">
-                                <span className="mr-1">
+                                <span
+                                  onClick={(e) =>
+                                    handleCopyClick(log?.path, e, "URL / PATH")
+                                  }
+                                  className="mr-1 hover:scale-105 active:scale-95 cursor-pointer"
+                                >
                                   {getFileIcon(log.file_type || "Unknown")} {""}
                                 </span>
-                                {showOnTables && domain
-                                  ? "https://" + domain + log.path
-                                  : log?.path}
+                                <span
+                                  onClick={(click) =>
+                                    handleURLClick(log?.path, click)
+                                  }
+                                  className="hover:underline"
+                                >
+                                  {showOnTables && domain
+                                    ? "https://" + domain + log.path
+                                    : log?.path}
+                                </span>
                               </span>
                             </TableCell>
                             <TableCell className="min-w-[30px] truncate align-middle">

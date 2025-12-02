@@ -257,16 +257,18 @@ export default function WidgetLogs() {
 
     return (
       {
-        Filetypes: Object.entries(fileTypeData || {}).map(([name, value]) => ({
-          name: name.toUpperCase(),
-          value,
-        })),
-        "Status Codes": Object.entries(statusCodeData || {}).map(
-          ([name, value]) => ({
+        Filetypes: Object.entries(fileTypeData || {})
+          .map(([name, value]) => ({
+            name: name.toUpperCase(),
+            value,
+          }))
+          .sort((a, b) => b.value - a.value), // Add this sort
+        "Status Codes": Object.entries(statusCodeData || {})
+          .map(([name, value]) => ({
             name: `${name} ${getStatusText(name)}`,
             value,
-          }),
-        ),
+          }))
+          .sort((a, b) => b.value - a.value), // Add this sort too if you want
         Crawlers: crawlerData.length > 0 ? crawlerData : [],
       }[activeTab] || []
     );
