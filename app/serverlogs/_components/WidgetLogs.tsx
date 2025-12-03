@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { FileText, Server, Bot, PenBox } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
@@ -56,6 +56,17 @@ const COLORS = [
   "#ec4899",
   "#14b8a6",
 ];
+
+// Helper function to get status code text
+const getStatusText = (code) => {
+  const codes = {
+    "200": "OK",
+    "301": "Redirect",
+    "404": "Not Found",
+    "500": "Server Error",
+  };
+  return codes[code] || "";
+};
 
 export default function WidgetLogs() {
   const [activeTab, setActiveTab] = useState("Filetypes");
@@ -121,92 +132,115 @@ export default function WidgetLogs() {
   }, []);
 
   // Prepare filetype data from actual entries
-  const fileTypeData = currentLogs?.reduce((acc, entry) => {
-    const type = entry.file_type || "Other";
-    acc[type] = (acc[type] || 0) + 1;
-    return acc;
-  }, {});
+  const fileTypeData = useMemo(
+    () =>
+      currentLogs?.reduce((acc, entry) => {
+        const type = entry.file_type || "Other";
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {}),
+    [currentLogs],
+  );
 
   // Prepare content data from actual entries
-  const contentData =
-    currentLogs?.reduce((acc, entry) => {
-      const taxonomy = entry.taxonomy;
-      if (taxonomy && taxonomy !== "other") {
-        acc[taxonomy] = (acc[taxonomy] || 0) + 1;
-      } else {
-        acc["other"] = (acc["other"] || 0) + 1;
-      }
-      return acc;
-    }, {}) || {};
+  const contentData = useMemo(
+    () =>
+      currentLogs?.reduce((acc, entry) => {
+        const taxonomy = entry.taxonomy;
+        if (taxonomy && taxonomy !== "other") {
+          acc[taxonomy] = (acc[taxonomy] || 0) + 1;
+        } else {
+          acc["other"] = (acc["other"] || 0) + 1;
+        }
+        return acc;
+      }, {}) || {},
+    [currentLogs],
+  );
 
   // Prepare status code data from actual entries
-  const statusCodeData = currentLogs?.reduce((acc, entry) => {
-    const code = entry.status;
-    acc[code] = (acc[code] || 0) + 1;
-    return acc;
-  }, {});
+  const statusCodeData = useMemo(
+    () =>
+      currentLogs?.reduce((acc, entry) => {
+        const code = entry.status;
+        acc[code] = (acc[code] || 0) + 1;
+        return acc;
+      }, {}),
+    [currentLogs],
+  );
 
   // Prepare crawler data
-  const crawlerData = overview?.totals
-    ? Object.entries(overview.totals)
-        .filter(([_, value]) => value > 0)
-        .map(([name, value]) => ({
-          name: name.charAt(0).toUpperCase() + name.slice(1),
-          value,
-        }))
-        .sort((a, b) => b.value - a.value)
-    : [];
+  const crawlerData = useMemo(
+    () =>
+      overview?.totals
+        ? Object.entries(overview.totals)
+            .filter(([_, value]) => value > 0)
+            .map(([name, value]) => ({
+              name: name.charAt(0).toUpperCase() + name.slice(1),
+              value,
+            }))
+            .sort((a, b) => b.value - a.value)
+        : [],
+    [overview],
+  );
 
   // Prepare User Agents Data
-  const userAgentData = currentLogs?.reduce((acc, entry) => {
-    const userAgent = entry.user_agent || "Unknown";
+  const userAgentData = useMemo(
+    () =>
+      currentLogs?.reduce((acc, entry) => {
+        const userAgent = entry.user_agent || "Unknown";
 
-    // Categorize user agents to make the data more manageable
-    const categorizedAgent = categorizeUserAgent(userAgent);
+        // Categorize user agents to make the data more manageable
+        const categorizedAgent = categorizeUserAgent(userAgent);
 
-    if (!acc[categorizedAgent]) {
-      acc[categorizedAgent] = { count: 0, examples: [] };
-    }
+        if (!acc[categorizedAgent]) {
+          acc[categorizedAgent] = { count: 0, examples: [] };
+        }
 
-    acc[categorizedAgent].count += 1;
+        acc[categorizedAgent].count += 1;
 
-    // Keep a few examples of user agents in this category (max 5)
-    if (
-      acc[categorizedAgent].examples.length < 5 &&
-      !acc[categorizedAgent].examples.includes(userAgent)
-    ) {
-      acc[categorizedAgent].examples.push(userAgent);
-    }
+        // Keep a few examples of user agents in this category (max 5)
+        if (
+          acc[categorizedAgent].examples.length < 5 &&
+          !acc[categorizedAgent].examples.includes(userAgent)
+        ) {
+          acc[categorizedAgent].examples.push(userAgent);
+        }
 
-    return acc;
-  }, {});
+        return acc;
+      }, {}),
+    [currentLogs],
+  );
 
   // Prepare Referrers Data
-  const referrerData = currentLogs?.reduce((acc, entry) => {
-    const referrer = entry.referer || "Direct/None";
+  const referrerData = useMemo(
+    () =>
+      currentLogs?.reduce((acc, entry) => {
+        const referrer = entry.referer || "Direct/None";
 
-    // Categorize referrers to make the data more manageable
-    const categorizedReferrer = categorizeReferrer(referrer);
+        // Categorize referrers to make the data more manageable
+        const categorizedReferrer = categorizeReferrer(referrer);
 
-    if (!acc[categorizedReferrer]) {
-      acc[categorizedReferrer] = { count: 0, referrers: [] };
-    }
+        if (!acc[categorizedReferrer]) {
+          acc[categorizedReferrer] = { count: 0, referrers: [] };
+        }
 
-    acc[categorizedReferrer].count += 1;
+        acc[categorizedReferrer].count += 1;
 
-    // Keep a few examples of referrers in this category (max 5)
-    if (
-      acc[categorizedReferrer].referrers.length < 5 &&
-      !acc[categorizedReferrer].referrers.includes(referrer)
-    ) {
-      acc[categorizedReferrer].referrers.push(referrer);
-    }
+        // Keep a few examples of referrers in this category (max 5)
+        if (
+          acc[categorizedReferrer].referrers.length < 5 &&
+          !acc[categorizedReferrer].referrers.includes(referrer)
+        ) {
+          acc[categorizedReferrer].referrers.push(referrer);
+        }
 
-    return acc;
-  }, {});
+        return acc;
+      }, {}),
+    [currentLogs],
+  );
 
   // Get chart data for active tab
-  const getChartData = () => {
+  const chartData = useMemo(() => {
     if (activeTab === "Content") {
       const contentBySegment = Object.entries(contentData || {}).reduce(
         (acc, [path, value]) => {
@@ -273,20 +307,16 @@ export default function WidgetLogs() {
         Crawlers: crawlerData.length > 0 ? crawlerData : [],
       }[activeTab] || []
     );
-  };
-
-  // Helper function to get status code text
-  const getStatusText = (code) => {
-    const codes = {
-      "200": "OK",
-      "301": "Redirect",
-      "404": "Not Found",
-      "500": "Server Error",
-    };
-    return codes[code] || "";
-  };
-
-  const chartData = getChartData();
+  }, [
+    activeTab,
+    contentData,
+    taxonomyNameMap,
+    userAgentData,
+    referrerData,
+    fileTypeData,
+    statusCodeData,
+    crawlerData,
+  ]);
 
   if (!overview) {
     return (
@@ -303,9 +333,13 @@ export default function WidgetLogs() {
     setOpenDialogs((prev) => ({ ...prev, [name]: isOpen }));
   };
 
-  const totalLogsAnalysed = uploadedLogFiles
-    .map((log) => log?.names?.length)
-    .reduce((a, b) => a + b, 0);
+  const totalLogsAnalysed = useMemo(
+    () =>
+      uploadedLogFiles
+        .map((log) => log?.names?.length || 0)
+        .reduce((a, b) => a + b, 0),
+    [uploadedLogFiles],
+  );
 
   return (
     <div className="bg-white border dark:border-brand-dark shadow rounded-none p-2 pr-1 w-1/2 mx-auto dark:bg-slate-950 dark:text-white h-64 relative">
