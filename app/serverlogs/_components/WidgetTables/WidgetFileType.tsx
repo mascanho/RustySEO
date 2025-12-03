@@ -1,5 +1,11 @@
 // @ts-nocheck
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import {
   AlertCircle,
   BadgeCheck,
@@ -93,7 +99,7 @@ interface WidgetTableProps {
   data: any;
   entries: LogEntry[];
   segment: string;
-  selectedFileType?: string; // Add this prop
+  selectedFileType?: string;
 }
 
 const formatDate = (dateString: string): string => {
@@ -112,6 +118,63 @@ const formatResponseSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const formatElapsedTime = (ms: number): string => {
+  const hours = Math.floor(ms / (1000 * 60 * 60));
+  const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((ms % (1000 * 60)) / 1000);
+  return `${hours}h ${minutes}m ${seconds}s`;
+};
+
+// Helper function for sorting
+const sortData = (
+  data: LogEntry[],
+  sortConfig: { key: string; direction: "ascending" | "descending" },
+): LogEntry[] => {
+  if (!sortConfig) return data;
+
+  return [...data].sort((a, b) => {
+    const aValue = a[sortConfig.key as keyof LogEntry];
+    const bValue = b[sortConfig.key as keyof LogEntry];
+
+    if (typeof aValue === "string" && typeof bValue === "string") {
+      return sortConfig.direction === "ascending"
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    }
+
+    if (typeof aValue === "number" && typeof bValue === "number") {
+      return sortConfig.direction === "ascending"
+        ? aValue - bValue
+        : bValue - aValue;
+    }
+
+    if (aValue < bValue) {
+      return sortConfig.direction === "ascending" ? -1 : 1;
+    }
+    if (aValue > bValue) {
+      return sortConfig.direction === "ascending" ? 1 : -1;
+    }
+    return 0;
+  });
+};
+
+// Debounce hook for search
+const useDebounce = <T,>(value: T, delay: number): T => {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
 };
 
 const WidgetFileType: React.FC<WidgetTableProps> = ({
@@ -144,141 +207,213 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
   const [isInitialized, setIsInitialized] = useState(false);
   const [availableFileTypes, setAvailableFileTypes] = useState<string[]>([]);
 
-  useEffect(() => {
-    const tax = localStorage.getItem("taxonomies");
-    if (tax) {
-      setTaxonomies(JSON.parse(tax));
+  // Use debounced search term
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+
+  // Cache for path taxonomy lookups
+  const taxonomyCache = useRef<Map<string, string>>(new Map());
+
+  // Precompute entries metadata
+  const {
+    oldestEntry,
+    newestEntry,
+    elapsedTimeMs,
+    uniqueStatusCodes,
+    uniqueCrawlerTypes,
+  } = useMemo(() => {
+    if (!entries || entries.length === 0) {
+      return {
+        oldestEntry: null,
+        newestEntry: null,
+        elapsedTimeMs: 0,
+        uniqueStatusCodes: [] as number[],
+        uniqueCrawlerTypes: [] as string[],
+      };
     }
-  }, []);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedDomain = localStorage.getItem("domain");
-      if (storedDomain) {
-        setDomain(storedDomain);
-      }
+    // Single pass to compute multiple values
+    let oldest = entries[0];
+    let newest = entries[0];
+    const statusCodes = new Set<number>();
+    const crawlerTypes = new Set<string>();
 
-      const isShowing = localStorage.getItem("showOnTables");
-      if (isShowing === "true") {
-        setShowOnTables(true);
-      }
+    for (const log of entries) {
+      const logTime = new Date(log.timestamp).getTime();
+      const oldestTime = new Date(oldest.timestamp).getTime();
+      const newestTime = new Date(newest.timestamp).getTime();
+
+      if (logTime < oldestTime) oldest = log;
+      if (logTime > newestTime) newest = log;
+
+      if (log.status) statusCodes.add(log.status);
+      if (log.crawler_type) crawlerTypes.add(log.crawler_type);
     }
-  }, [data?.length]);
 
-  // Get all unique file types from entries
-  useEffect(() => {
-    if (entries && entries.length > 0) {
-      const types = new Set<string>();
-      entries.forEach((log) => {
-        if (log.file_type && log.file_type.trim() !== "") {
-          types.add(log.file_type);
-        }
-      });
-      const sortedTypes = Array.from(types).sort();
-      setAvailableFileTypes(sortedTypes);
+    const elapsedTimeMs = Math.abs(
+      new Date(newest.timestamp).getTime() -
+        new Date(oldest.timestamp).getTime(),
+    );
 
-      // Debug: Log available file types
-      console.log("Available file types:", sortedTypes);
-    }
+    return {
+      oldestEntry: oldest,
+      newestEntry: newest,
+      elapsedTimeMs,
+      uniqueStatusCodes: Array.from(statusCodes).sort((a, b) => a - b),
+      uniqueCrawlerTypes: Array.from(crawlerTypes).sort(),
+    };
   }, [entries]);
 
-  // Initialize file type filter when selectedFileType is provided
+  // Initialize component once
   useEffect(() => {
-    if (selectedFileType && !isInitialized && availableFileTypes.length > 0) {
-      // Check if the selectedFileType exists in available file types
-      const normalizedSelectedType = selectedFileType.trim();
-      const existsInData = availableFileTypes.some(
-        (type) => type.toLowerCase() === normalizedSelectedType.toLowerCase(),
-      );
+    const initialize = async () => {
+      // Load from localStorage
+      const tax = localStorage.getItem("taxonomies");
+      if (tax) {
+        try {
+          const parsedTax = JSON.parse(tax);
+          setTaxonomies(parsedTax);
 
-      console.log("Initializing filter:", {
-        selectedFileType,
-        normalizedSelectedType,
-        availableFileTypes,
-        existsInData,
-      });
-
-      if (existsInData) {
-        // Find the exact case from available file types
-        const exactType = availableFileTypes.find(
-          (type) => type.toLowerCase() === normalizedSelectedType.toLowerCase(),
-        );
-        if (exactType) {
-          setFileTypeFilter([exactType]);
-          setIsInitialized(true);
+          // Pre-populate taxonomy cache
+          parsedTax.forEach((taxonomy: Taxonomy) => {
+            taxonomy.paths.forEach((pathRule) => {
+              const cacheKey = `${taxonomy.id}_${pathRule.path}_${pathRule.matchType}`;
+              taxonomyCache.current.set(cacheKey, taxonomy.name);
+            });
+          });
+        } catch (e) {
+          console.error("Failed to parse taxonomies:", e);
         }
-      } else if (selectedFileType !== "") {
-        // If not found, still set it (might be a new file type)
-        setFileTypeFilter([selectedFileType]);
-        setIsInitialized(true);
       }
-    } else if (!selectedFileType && !isInitialized) {
-      // No file type selected, initialize as empty
+
+      if (typeof window !== "undefined") {
+        const storedDomain = localStorage.getItem("domain");
+        if (storedDomain) {
+          setDomain(storedDomain);
+        }
+
+        const isShowing = localStorage.getItem("showOnTables");
+        if (isShowing === "true") {
+          setShowOnTables(true);
+        }
+      }
+
+      // Get unique file types
+      if (entries && entries.length > 0) {
+        const types = new Set<string>();
+        for (const log of entries) {
+          if (log.file_type && log.file_type.trim() !== "") {
+            types.add(log.file_type);
+          }
+        }
+        const sortedTypes = Array.from(types).sort();
+        setAvailableFileTypes(sortedTypes);
+
+        // Initialize file type filter if selectedFileType is provided
+        if (selectedFileType && sortedTypes.length > 0) {
+          const normalizedSelectedType = selectedFileType.trim();
+          const exactType = sortedTypes.find(
+            (type) =>
+              type.toLowerCase() === normalizedSelectedType.toLowerCase(),
+          );
+
+          if (exactType) {
+            setFileTypeFilter([exactType]);
+          } else if (selectedFileType !== "") {
+            setFileTypeFilter([selectedFileType]);
+          }
+        }
+      }
+
       setIsInitialized(true);
-    }
-  }, [selectedFileType, availableFileTypes, isInitialized]);
+    };
 
-  // Function to check if a path matches taxonomy criteria
-  const pathMatchesTaxonomy = (path: string, taxonomy: Taxonomy): boolean => {
-    return taxonomy.paths.some((taxPath) => {
-      if (taxPath.matchType === "exactMatch") {
-        return path === taxPath.path;
-      } else if (taxPath.matchType === "contains") {
-        return path.includes(taxPath.path);
+    initialize();
+  }, []); // Run once on mount
+
+  // Function to get taxonomy name for a path (with caching)
+  const getTaxonomyForPath = useCallback(
+    (path: string): string => {
+      // Check cache first
+      for (const [cacheKey, taxonomyName] of taxonomyCache.current.entries()) {
+        const [taxId, taxPath, matchType] = cacheKey.split("_");
+        const taxonomy = taxonomies.find((t) => t.id === taxId);
+        if (taxonomy) {
+          if (matchType === "exactMatch" && path === taxPath) {
+            return taxonomyName;
+          } else if (matchType === "contains" && path.includes(taxPath)) {
+            return taxonomyName;
+          }
+        }
       }
-      return false;
-    });
-  };
 
-  // Function to get taxonomy name for a path
-  const getTaxonomyForPath = (path: string): string => {
-    const taxonomy = taxonomies.find((tax) => pathMatchesTaxonomy(path, tax));
-    return taxonomy?.name || "Uncategorized";
-  };
+      // If not in cache, find and cache it
+      for (const taxonomy of taxonomies) {
+        for (const pathRule of taxonomy.paths) {
+          let matches = false;
+          if (pathRule.matchType === "exactMatch") {
+            matches = path === pathRule.path;
+          } else if (pathRule.matchType === "contains") {
+            matches = path.includes(pathRule.path);
+          }
 
-  // Get unique status codes from entries
-  const uniqueStatusCodes = useMemo(() => {
-    const codes = new Set<number>();
-    entries.forEach((log) => {
-      if (log.status) {
-        codes.add(log.status);
+          if (matches) {
+            const cacheKey = `${taxonomy.id}_${pathRule.path}_${pathRule.matchType}`;
+            taxonomyCache.current.set(cacheKey, taxonomy.name);
+            return taxonomy.name;
+          }
+        }
       }
-    });
-    return Array.from(codes).sort((a, b) => a - b);
-  }, [entries]);
 
-  // Get unique crawler types from entries
-  const uniqueCrawlerTypes = useMemo(() => {
-    const types = new Set<string>();
-    entries.forEach((log) => {
-      if (log.crawler_type) {
-        types.add(log.crawler_type);
-      }
-    });
-    return Array.from(types).sort();
-  }, [entries]);
+      return "Uncategorized";
+    },
+    [taxonomies],
+  );
 
-  // Derived state for filtered logs using useMemo on raw entries
+  // Optimized filtered logs with early returns
   const filteredLogs = useMemo(() => {
     if (!entries || entries.length === 0) return [];
 
-    console.log("Filtering logs with:", {
-      totalEntries: entries.length,
-      fileTypeFilter,
-      selectedFileType,
-      availableFileTypes,
-      segment,
-    });
+    // Check if we can return early
+    const hasNoFilters =
+      !debouncedSearchTerm &&
+      methodFilter.length === 0 &&
+      fileTypeFilter.length === 0 &&
+      botFilter === "all" &&
+      verifiedFilter === null &&
+      botTypeFilter === null &&
+      selectedTaxonomy === "all" &&
+      statusFilter.length === 0 &&
+      crawlerTypeFilter.length === 0 &&
+      (!segment || segment === "all");
 
-    let result = [...entries]; // Create a copy to avoid mutations
+    // If no filters and no sorting needed, return original entries
+    if (hasNoFilters && !sortConfig) {
+      return entries;
+    }
+
+    let result = entries;
 
     // Apply segment filter first (from props)
     if (segment && segment !== "all") {
       const taxonomy = taxonomies.find((tax) => tax.name === segment);
       if (taxonomy) {
-        result = result.filter((log) =>
-          pathMatchesTaxonomy(log.path, taxonomy),
-        );
+        result = result.filter((log) => {
+          for (const pathRule of taxonomy.paths) {
+            if (
+              pathRule.matchType === "exactMatch" &&
+              log.path === pathRule.path
+            ) {
+              return true;
+            }
+            if (
+              pathRule.matchType === "contains" &&
+              log.path.includes(pathRule.path)
+            ) {
+              return true;
+            }
+          }
+          return false;
+        });
       }
     }
 
@@ -286,27 +421,38 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
     if (selectedTaxonomy !== "all") {
       const taxonomy = taxonomies.find((tax) => tax.id === selectedTaxonomy);
       if (taxonomy) {
-        result = result.filter((log) =>
-          pathMatchesTaxonomy(log.path, taxonomy),
-        );
+        result = result.filter((log) => {
+          for (const pathRule of taxonomy.paths) {
+            if (
+              pathRule.matchType === "exactMatch" &&
+              log.path === pathRule.path
+            ) {
+              return true;
+            }
+            if (
+              pathRule.matchType === "contains" &&
+              log.path.includes(pathRule.path)
+            ) {
+              return true;
+            }
+          }
+          return false;
+        });
       }
     }
 
-    // Apply file type filter (this is the main filter for this component)
+    // Apply file type filter
     if (fileTypeFilter.length > 0) {
-      console.log("Applying file type filter:", fileTypeFilter);
+      const lowerCaseFilters = fileTypeFilter.map((ft) => ft.toLowerCase());
       result = result.filter((log) => {
-        const logFileType = log.file_type || "";
-        return fileTypeFilter.some(
-          (filterType) =>
-            filterType.toLowerCase() === logFileType.toLowerCase(),
-        );
+        const logFileType = (log.file_type || "").toLowerCase();
+        return lowerCaseFilters.includes(logFileType);
       });
-      console.log("After file type filter:", result.length);
     }
 
-    if (searchTerm) {
-      const lowerCaseSearch = searchTerm.toLowerCase();
+    // Apply search filter
+    if (debouncedSearchTerm) {
+      const lowerCaseSearch = debouncedSearchTerm.toLowerCase();
       result = result.filter(
         (log) =>
           log.ip.toLowerCase().includes(lowerCaseSearch) ||
@@ -316,22 +462,22 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
       );
     }
 
+    // Apply method filter
     if (methodFilter.length > 0) {
       result = result.filter((log) => methodFilter.includes(log.method));
     }
 
-    if (botFilter !== null) {
-      if (botFilter === "bot") {
-        result = result.filter((log) => log.crawler_type === "Human");
-      } else if (botFilter === "Human") {
-        result = result.filter((log) => log.crawler_type === "Human");
-      }
+    // Apply bot filter
+    if (botFilter !== null && botFilter !== "all") {
+      result = result.filter((log) => log.crawler_type === botFilter);
     }
 
+    // Apply verified filter
     if (verifiedFilter !== null) {
       result = result.filter((log) => log.verified === verifiedFilter);
     }
 
+    // Apply bot type filter
     if (botTypeFilter !== null) {
       if (botTypeFilter === "Mobile") {
         result = result.filter((log) => log.user_agent.includes("Mobile"));
@@ -355,39 +501,16 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
       );
     }
 
+    // Apply sorting
     if (sortConfig) {
-      result.sort((a, b) => {
-        const aValue = a[sortConfig.key as keyof LogEntry];
-        const bValue = b[sortConfig.key as keyof LogEntry];
-
-        if (typeof aValue === "string" && typeof bValue === "string") {
-          return sortConfig.direction === "ascending"
-            ? aValue.localeCompare(bValue)
-            : bValue.localeCompare(aValue);
-        }
-
-        if (typeof aValue === "number" && typeof bValue === "number") {
-          return sortConfig.direction === "ascending"
-            ? aValue - bValue
-            : bValue - aValue;
-        }
-
-        if (aValue < bValue) {
-          return sortConfig.direction === "ascending" ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === "ascending" ? 1 : -1;
-        }
-        return 0;
-      });
+      result = sortData(result, sortConfig);
     }
 
-    console.log("Final filtered logs:", result.length);
     return result;
   }, [
     entries,
     segment,
-    searchTerm,
+    debouncedSearchTerm,
     methodFilter,
     botFilter,
     verifiedFilter,
@@ -398,14 +521,13 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
     taxonomies,
     statusFilter,
     crawlerTypeFilter,
-    selectedFileType,
   ]);
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [
-    searchTerm,
+    debouncedSearchTerm,
     methodFilter,
     botFilter,
     verifiedFilter,
@@ -417,13 +539,16 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
     crawlerTypeFilter,
   ]);
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentLogs = useMemo(
-    () => filteredLogs.slice(indexOfFirstItem, indexOfLastItem),
-    [filteredLogs, indexOfFirstItem, indexOfLastItem],
-  );
-  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+  // Pre-calculate pagination values
+  const { indexOfLastItem, indexOfFirstItem, currentLogs, totalPages } =
+    useMemo(() => {
+      const indexOfLastItem = currentPage * itemsPerPage;
+      const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+      const currentLogs = filteredLogs.slice(indexOfFirstItem, indexOfLastItem);
+      const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
+
+      return { indexOfLastItem, indexOfFirstItem, currentLogs, totalPages };
+    }, [filteredLogs, currentPage, itemsPerPage]);
 
   const requestSort = (key: string) => {
     let direction: "ascending" | "descending" = "ascending";
@@ -554,44 +679,18 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
     }
   };
 
-  // Calculate timings based on actual entries
-  const oldestEntry = useMemo(
-    () =>
-      entries.length > 0
-        ? entries.reduce((oldest, log) =>
-            new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-          )
-        : null,
-    [entries],
-  );
+  // Pre-calculate timings once
+  const elapsedHours = useMemo(() => {
+    return elapsedTimeMs > 0 ? elapsedTimeMs / (1000 * 60 * 60) : 0;
+  }, [elapsedTimeMs]);
 
-  const newestEntry = useMemo(
-    () =>
-      entries.length > 0
-        ? entries.reduce((newest, log) =>
-            new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-          )
-        : null,
-    [entries],
-  );
-
-  const elapsedTimeMs = useMemo(() => {
-    if (newestEntry && oldestEntry) {
-      const start = new Date(oldestEntry.timestamp);
-      const end = new Date(newestEntry.timestamp);
-      const diff = Math.abs(end.getTime() - start.getTime());
-      return diff;
-    }
-    return 0;
-  }, [newestEntry, oldestEntry]);
-
-  // Helper to calculate details on the fly for a single log entry
+  // Helper to calculate details on the fly for a single log entry (optimized)
   const getLogDetails = useCallback(
     (log: LogEntry) => {
       const frequency = log.frequency || 1;
 
       let timings = {
-        elapsedTime: "0h 0m 0s",
+        elapsedTime: formatElapsedTime(elapsedTimeMs),
         frequency: {
           total: frequency,
           perHour: "0.00",
@@ -600,41 +699,39 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
         },
       };
 
-      if (oldestEntry && newestEntry && elapsedTimeMs > 0) {
-        const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60);
-        const perHour =
-          elapsedTimeHours > 0
-            ? (frequency / elapsedTimeHours).toFixed(1)
-            : "0.0";
-
-        const hours = Math.floor(elapsedTimeMs / (1000 * 60 * 60));
-        const minutes = Math.floor(
-          (elapsedTimeMs % (1000 * 60 * 60)) / (1000 * 60),
+      if (elapsedHours > 0) {
+        const perHour = (frequency / elapsedHours).toFixed(1);
+        const perMinute = (frequency / (elapsedTimeMs / (1000 * 60))).toFixed(
+          2,
         );
-        const seconds = Math.floor((elapsedTimeMs % (1000 * 60)) / 1000);
+        const perSecond = (frequency / (elapsedTimeMs / 1000)).toFixed(2);
 
         timings = {
-          elapsedTime: `${hours}h ${minutes}m ${seconds}s`,
+          elapsedTime: formatElapsedTime(elapsedTimeMs),
           frequency: {
             total: frequency,
             perHour: perHour,
-            perMinute: `${(frequency / (elapsedTimeMs / (1000 * 60))).toFixed(
-              2,
-            )}/minute`,
-            perSecond: `${(frequency / (elapsedTimeMs / 1000)).toFixed(
-              2,
-            )}/second`,
+            perMinute: `${perMinute}/minute`,
+            perSecond: `${perSecond}/second`,
           },
         };
       }
 
       return { timings };
     },
-    [elapsedTimeMs, oldestEntry, newestEntry],
+    [elapsedTimeMs, elapsedHours],
   );
 
   // Get current segment taxonomy for display
   const currentSegmentTaxonomy = taxonomies.find((tax) => tax.name === segment);
+
+  if (!isInitialized && entries.length > 0) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 h-full pb-0 -mb-4">

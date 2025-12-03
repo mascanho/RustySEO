@@ -318,6 +318,14 @@ export default function WidgetLogs() {
     crawlerData,
   ]);
 
+  const totalLogsAnalysed = useMemo(
+    () =>
+      uploadedLogFiles
+        .map((log) => log?.names?.length || 0)
+        .reduce((a, b) => a + b, 0),
+    [uploadedLogFiles],
+  );
+
   if (!overview) {
     return (
       <div className="bg-white shadow rounded-lg p-4 w-full h-64 flex items-center justify-center dark:bg-brand-darker">
@@ -332,14 +340,6 @@ export default function WidgetLogs() {
   const handleOpenChange = (name, isOpen) => {
     setOpenDialogs((prev) => ({ ...prev, [name]: isOpen }));
   };
-
-  const totalLogsAnalysed = useMemo(
-    () =>
-      uploadedLogFiles
-        .map((log) => log?.names?.length || 0)
-        .reduce((a, b) => a + b, 0),
-    [uploadedLogFiles],
-  );
 
   return (
     <div className="bg-white border dark:border-brand-dark shadow rounded-none p-2 pr-1 w-1/2 mx-auto dark:bg-slate-950 dark:text-white h-64 relative">
