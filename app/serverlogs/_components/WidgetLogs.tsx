@@ -35,6 +35,7 @@ import { WidgetReferrersTable } from "./WidgetTables/WidgetReferrersTable.tsx";
 import { GiHypersonicBolt } from "react-icons/gi";
 import { categorizeUserAgent } from "./WidgetTables/helpers/useCategoriseUserAgents.ts";
 import { categorizeReferrer } from "./WidgetTables/helpers/useCategoriseReferrer.ts";
+import { WidgetStatusCodesTable } from "./WidgetTables/WidgetStatusCodesTable.tsx";
 
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
@@ -457,6 +458,25 @@ export default function WidgetLogs() {
                       </span>
                     </div>
                   </DialogTrigger>
+
+                  <DialogContent className="max-w-7xl dark:text-white dark:border-brand-bright dark:bg-brand-darker">
+                    {activeTab === "Filetypes" ? (
+                      <WidgetFileType
+                        data={overview}
+                        entries={entries}
+                        chartData={chartData}
+                        selectedFileType={entry?.name}
+                      />
+                    ) : (
+                      activeTab === "Status Codes" && (
+                        <WidgetStatusCodesTable
+                          data={overview}
+                          entries={currentLogs}
+                          segment={entry?.name}
+                        />
+                      )
+                    )}
+                  </DialogContent>
 
                   {activeTab === "Referrers" ? (
                     <DialogContent className="max-w-[90%] min-h-96 overflow-hidden dark:bg-brand-darker dark:border-brand-bright">
