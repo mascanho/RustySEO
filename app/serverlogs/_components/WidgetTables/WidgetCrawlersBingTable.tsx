@@ -55,6 +55,7 @@ import { Badge } from "@/components/ui/badge";
 import { CardContent } from "@/components/ui/card";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
 
 interface LogEntry {
   browser: string;
@@ -630,10 +631,24 @@ const WidgetTableBing: React.FC<WidgetTableProps> = ({ data }) => {
 
                           <TableCell className="truncate max-w-[600px] align-middle">
                             <div className="flex items-center h-full">
-                              <span className="mr-2 pl-2 flex items-center">
+                              <span
+                                onClick={(click) =>
+                                  handleCopyClick(
+                                    log?.path,
+                                    click,
+                                    "URL / PATH",
+                                  )
+                                }
+                                className="mr-2 pl-2 flex items-center hover:scale-105 active:scale-95"
+                              >
                                 {getFileIcon(log.file_type)}
                               </span>
-                              <span className="flex items-center">
+                              <span
+                                onClick={(click) =>
+                                  handleURLClick(log?.path, click)
+                                }
+                                className="flex items-center hover:underline cursor-pointer"
+                              >
                                 {showOnTables && domain
                                   ? "https://" + domain + log.path
                                   : log?.path}

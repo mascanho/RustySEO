@@ -55,6 +55,7 @@ import { Badge } from "@/components/ui/badge";
 import { CardContent } from "@/components/ui/card";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
 
 interface LogEntry {
   browser: string;
@@ -546,21 +547,6 @@ const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data }) => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[80px] text-center">#</TableHead>
-                    {/* <TableHead */}
-                    {/*   className="cursor-pointer w-[200px] truncate" */}
-                    {/*   onClick={() => requestSort("timestamp")} */}
-                    {/* > */}
-                    {/*   Timestamp */}
-                    {/*   {sortConfig?.key === "timestamp" && ( */}
-                    {/*     <ChevronDown */}
-                    {/*       className={`ml-1 h-4 w-4 inline-block ${ */}
-                    {/*         sortConfig.direction === "descending" */}
-                    {/*           ? "rotate-180" */}
-                    {/*           : "" */}
-                    {/*       }`} */}
-                    {/*     /> */}
-                    {/*   )} */}
-                    {/* </TableHead> */}
                     <TableHead
                       className="cursor-pointer"
                       onClick={() => requestSort("path")}
@@ -621,7 +607,7 @@ const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data }) => {
                         />
                       )}
                     </TableHead>
-                    <TableHead>Hourly Hits</TableHead>
+                    <TableHead className="text-center">Hourly Hits</TableHead>
                     <TableHead>Crawler Type</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -632,62 +618,107 @@ const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data }) => {
                         key={`${log.ip}-${log.timestamp}-${index}`}
                       >
                         <TableRow
-                          className="group cursor-pointer "
+                          className={`group cursor-pointer align-middle ${expandedRow === index ? "bg-sky-dark/10" : ""}`}
                           onClick={() =>
                             setExpandedRow(expandedRow === index ? null : index)
                           }
                         >
-                          <TableCell className="font-medium text-center max-w-[40px]">
-                            {indexOfFirstItem + index + 1}
+                          <TableCell className="font-medium text-center max-w-[40px] align-middle">
+                            <div className="flex items-center justify-center h-full">
+                              {indexOfFirstItem + index + 1}
+                            </div>
                           </TableCell>
-                          {/* <TableCell className="w-[200px] pl-2"> */}
-                          {/*   {formatDate(log.timestamp)} */}
-                          {/* </TableCell> */}
-                          <TableCell className="inline-block truncate max-w-[600px]  ">
-                            <div className="flex items-center w-full m-auto">
-                              <span className="mr-2  pl-2">
+
+                          <TableCell className="truncate max-w-[600px] align-middle">
+                            <div className="flex items-center h-full">
+                              <span
+                                onClick={(click) =>
+                                  handleCopyClick(
+                                    log?.path,
+                                    click,
+                                    "URL / PATH",
+                                  )
+                                }
+                                className="mr-2 pl-2 flex items-center hover:scale-105 active:scale-95"
+                              >
                                 {getFileIcon(log.file_type)}
                               </span>
-                              <span className="leading-[28px] m-auto flex items-center">
+                              <span
+                                onClick={(click) =>
+                                  handleURLClick(log?.path, click)
+                                }
+                                className="flex items-center hover:underline cursor-pointer"
+                              >
                                 {showOnTables && domain
                                   ? "https://" + domain + log.path
                                   : log?.path}
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell className="min-w-[30px] truncate">
-                            <Badge variant="outline">{log.file_type}</Badge>
+
+                          <TableCell className="min-w-[30px] truncate align-middle">
+                            <div className="flex items-center h-full relative">
+                              <Badge
+                                variant="outline"
+                                className="flex items-center absolute"
+                              >
+                                {log.file_type}
+                              </Badge>
+                            </div>
                           </TableCell>
-                          <TableCell className="text-center">
-                            {formatResponseSize(log.response_size)}
+
+                          <TableCell className="text-center align-middle">
+                            <div className="flex items-center justify-center align-middle relative h-full">
+                              <span className="absolute">
+                                {formatResponseSize(log.response_size)}
+                              </span>
+                            </div>
                           </TableCell>
-                          <TableCell className="text-center min-w-[90px]">
-                            {timings(log)?.frequency?.total}
+
+                          <TableCell className="text-center min-w-[90px] align-middle">
+                            <div className="flex items-center justify-center align-middle relative h-full">
+                              <span className="absolute">
+                                {timings(log)?.frequency?.total}
+                              </span>
+                            </div>
                           </TableCell>
-                          <TableCell className="text-center w-[90px]">
-                            {timings(log)?.frequency?.perHour}
+
+                          <TableCell className="text-center w-[90px] align-middle">
+                            <div className="flex items-center justify-center align-middle relative h-full">
+                              <span className="absolute">
+                                {timings(log)?.frequency?.perHour}
+                              </span>
+                            </div>
                           </TableCell>
-                          <TableCell width={100} className="max-w-[100px]">
-                            <Badge
-                              variant="outline"
-                              className={
-                                log.crawler_type !== "Human"
-                                  ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
-                                  : "bg-green-100 text-green-800 border-green-200"
-                              }
-                            >
-                              {/* Make the crawler name shorter */}
-                              {/* Make the crawler name shorter */}
-                              {log?.crawler_type &&
-                                log.crawler_type.length > 2 &&
-                                log.crawler_type.slice(0, 9)}
-                            </Badge>
+
+                          <TableCell
+                            width={100}
+                            className="max-w-[100px] align-middle"
+                          >
+                            <div className="flex items-center h-full relative">
+                              <Badge
+                                variant="outline"
+                                className={`flex items-center align-middle absolute justify-center ${
+                                  log.crawler_type !== "Human"
+                                    ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
+                                    : "bg-green-100 text-green-800 border-green-200"
+                                }`}
+                              >
+                                {/* Make the crawler name shorter */}
+                                {log?.crawler_type &&
+                                  log.crawler_type.length > 2 &&
+                                  (log.crawler_type.length > 9
+                                    ? log.crawler_type.slice(0, 9)
+                                    : log.crawler_type)}
+                              </Badge>
+                            </div>
                           </TableCell>
                         </TableRow>
+
                         {expandedRow === index && (
                           <TableRow>
                             <TableCell
-                              colSpan={7}
+                              colSpan={8}
                               className="bg-gray-50 dark:bg-gray-800 p-4"
                             >
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -901,13 +932,16 @@ const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data }) => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center h-24">
+                      <TableCell
+                        colSpan={8}
+                        className="text-center h-24 align-middle"
+                      >
                         No log entries found.
                       </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
-              </Table>
+              </Table>{" "}
             </div>
           </div>
         </CardContent>

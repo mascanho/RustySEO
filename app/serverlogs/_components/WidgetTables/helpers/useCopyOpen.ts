@@ -2,7 +2,7 @@
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import { toast } from "sonner";
 
-export function handleURLClick(url, click) {
+function handleURLClick(url, click) {
   click.preventDefault();
   click.stopPropagation();
   console.log(url, click);
@@ -22,7 +22,7 @@ export function handleURLClick(url, click) {
 }
 
 // HANDLES COPYING STUFF ON THE TABLE LIKE THE RUSER AGENT, URL OR REFERER
-export function handleCopyClick(text, click, name) {
+function handleCopyClick(text, click, name) {
   click.preventDefault();
   click.stopPropagation();
 

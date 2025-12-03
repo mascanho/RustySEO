@@ -451,7 +451,7 @@ export default function WidgetLogs() {
                 </DialogTrigger>
 
                 {/* SINGLE DialogContent with conditional rendering */}
-                <DialogContent className="max-w-11/12 w-10/12  dark:text-white dark:border-brand-bright dark:bg-brand-darker max-h-[90vh] overflow-hidden">
+                <DialogContent className="max-w-11/12 w-11/12  dark:text-white dark:border-brand-bright dark:bg-brand-darker max-h-[90vh] overflow-hidden">
                   {activeTab === "Filetypes" ? (
                     <WidgetFileType
                       data={overview}
