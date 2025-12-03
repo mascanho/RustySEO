@@ -60,6 +60,7 @@ import { Badge } from "@/components/ui/badge";
 import { CardContent } from "@/components/ui/card";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
 
 interface LogEntry {
   browser: string;
@@ -925,7 +926,7 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-32"
+                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-full"
               >
                 <Filter className="h-4 w-4" />
                 Status Code
@@ -1228,12 +1229,28 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                             </TableCell>
                             <TableCell className="truncate max-w-[400px] align-middle">
                               <span className="flex items-start truncate">
-                                <span className="mr-1">
+                                <span
+                                  onClick={(click) =>
+                                    handleCopyClick(
+                                      log?.path,
+                                      click,
+                                      "URL / PATH",
+                                    )
+                                  }
+                                  className="hover:scale-105 active:scale-95 mr-1"
+                                >
                                   {getFileIcon(log.file_type || "Unknown")} {""}
                                 </span>
-                                {showOnTables && domain
-                                  ? "https://" + domain + log.path
-                                  : log?.path}
+                                <span
+                                  className="hover:underline"
+                                  onClick={(click) =>
+                                    handleURLClick(log?.path, click)
+                                  }
+                                >
+                                  {showOnTables && domain
+                                    ? "https://" + domain + log.path
+                                    : log?.path}
+                                </span>
                               </span>
                             </TableCell>
                             <TableCell className="text-center align-middle">

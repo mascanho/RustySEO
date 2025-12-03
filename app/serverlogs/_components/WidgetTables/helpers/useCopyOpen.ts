@@ -19,7 +19,6 @@ export function handleURLClick(url, click) {
     navigator.clipboard.writeText(url);
     toast.success("URL copied to clipboard!");
   }
-  setExpandedRow(null);
 }
 
 // HANDLES COPYING STUFF ON THE TABLE LIKE THE RUSER AGENT, URL OR REFERER
