@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   AlertCircle,
   BadgeCheck,
@@ -372,21 +372,27 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
 
   // CALCULATE THE TIMINGS
 
-  const oldestEntry =
-    initialLogs.length > 0
-      ? initialLogs.reduce((oldest, log) =>
-          new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-        )
-      : null;
+  const oldestEntry = useMemo(
+    () =>
+      initialLogs.length > 0
+        ? initialLogs.reduce((oldest, log) =>
+            new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+          )
+        : null,
+    [initialLogs],
+  );
 
-  const newestEntry =
-    initialLogs.length > 0
-      ? initialLogs.reduce((newest, log) =>
-          new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-        )
-      : null;
+  const newestEntry = useMemo(
+    () =>
+      initialLogs.length > 0
+        ? initialLogs.reduce((newest, log) =>
+            new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+          )
+        : null,
+    [initialLogs],
+  );
 
-  const totalTimeBetweenNewAndOldest = () => {
+  const elapsedTimeMs = useMemo(() => {
     if (newestEntry && oldestEntry) {
       const start = new Date(oldestEntry.timestamp);
       const end = new Date(newestEntry.timestamp);
@@ -394,46 +400,52 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
       return diff;
     }
     return 0;
-  };
+  }, [newestEntry, oldestEntry]);
 
-  const elapsedTimeMs = totalTimeBetweenNewAndOldest();
+  const timings = useCallback(
+    (log: LogEntry) => {
+      if (!oldestEntry || !newestEntry) {
+        return {
+          elapsedTime: "0h 0m 0s",
+          frequency: {
+            total: 0,
+            perHour: "0.00",
+            perMinute: "0.00/minute",
+            perSecond: "0.00/second",
+          },
+        };
+      }
 
-  const timings = (log: LogEntry) => {
-    if (!oldestEntry || !newestEntry) {
+      const frequency = log?.frequency || 0;
+      const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60);
+
+      const perHour =
+        elapsedTimeHours > 0
+          ? (frequency / elapsedTimeHours).toFixed(1)
+          : "0.0";
+
+      const hours = Math.floor(elapsedTimeMs / (1000 * 60 * 60));
+      const minutes = Math.floor(
+        (elapsedTimeMs % (1000 * 60 * 60)) / (1000 * 60),
+      );
+      const seconds = Math.floor((elapsedTimeMs % (1000 * 60)) / 1000);
+
       return {
-        elapsedTime: "0h 0m 0s",
+        elapsedTime: `${hours}h ${minutes}m ${seconds}s`,
         frequency: {
-          total: 0,
-          perHour: "0.00",
-          perMinute: "0.00/minute",
-          perSecond: "0.00/second",
+          total: frequency,
+          perHour: perHour,
+          perMinute: `${(frequency / (elapsedTimeMs / (1000 * 60))).toFixed(
+            2,
+          )}/minute`,
+          perSecond: `${(frequency / (elapsedTimeMs / 1000)).toFixed(
+            2,
+          )}/second`,
         },
       };
-    }
-
-    const frequency = log?.frequency || 0;
-    const elapsedTimeMs = totalTimeBetweenNewAndOldest();
-    const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60);
-
-    const perHour =
-      elapsedTimeHours > 0 ? (frequency / elapsedTimeHours).toFixed(1) : "0.0";
-
-    const hours = Math.floor(elapsedTimeMs / (1000 * 60 * 60));
-    const minutes = Math.floor(
-      (elapsedTimeMs % (1000 * 60 * 60)) / (1000 * 60),
-    );
-    const seconds = Math.floor((elapsedTimeMs % (1000 * 60)) / 1000);
-
-    return {
-      elapsedTime: `${hours}h ${minutes}m ${seconds}s`,
-      frequency: {
-        total: frequency,
-        perHour: perHour,
-        perMinute: `${(frequency / (elapsedTimeMs / (1000 * 60))).toFixed(2)}/minute`,
-        perSecond: `${(frequency / (elapsedTimeMs / 1000)).toFixed(2)}/second`,
-      },
-    };
-  };
+    },
+    [elapsedTimeMs, oldestEntry, newestEntry],
+  );
 
   return (
     <div className="space-y-4 h-full pb-0 -mb-4">

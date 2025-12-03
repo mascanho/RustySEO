@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   AlertCircle,
   BadgeCheck,
@@ -712,7 +712,7 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
     [entries],
   );
 
-  const totalTimeBetweenNewAndOldest = () => {
+  const elapsedTimeMs = useMemo(() => {
     if (newestEntry && oldestEntry) {
       const start = new Date(oldestEntry.timestamp);
       const end = new Date(newestEntry.timestamp);
@@ -720,49 +720,55 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
       return diff;
     }
     return 0;
-  };
+  }, [newestEntry, oldestEntry]);
 
   // Helper to calculate details on the fly for a single log entry
-  const getLogDetails = (log: LogEntry) => {
-    const frequency = log.frequency || 1;
-    const elapsedTimeMs = totalTimeBetweenNewAndOldest();
+  const getLogDetails = useCallback(
+    (log: LogEntry) => {
+      const frequency = log.frequency || 1;
 
-    let timings = {
-      elapsedTime: "0h 0m 0s",
-      frequency: {
-        total: frequency,
-        perHour: "0.00",
-        perMinute: "0.00/minute",
-        perSecond: "0.00/second",
-      },
-    };
-
-    if (oldestEntry && newestEntry && elapsedTimeMs > 0) {
-      const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60);
-      const perHour =
-        elapsedTimeHours > 0
-          ? (frequency / elapsedTimeHours).toFixed(1)
-          : "0.0";
-
-      const hours = Math.floor(elapsedTimeMs / (1000 * 60 * 60));
-      const minutes = Math.floor(
-        (elapsedTimeMs % (1000 * 60 * 60)) / (1000 * 60),
-      );
-      const seconds = Math.floor((elapsedTimeMs % (1000 * 60)) / 1000);
-
-      timings = {
-        elapsedTime: `${hours}h ${minutes}m ${seconds}s`,
+      let timings = {
+        elapsedTime: "0h 0m 0s",
         frequency: {
           total: frequency,
-          perHour: perHour,
-          perMinute: `${(frequency / (elapsedTimeMs / (1000 * 60))).toFixed(2)}/minute`,
-          perSecond: `${(frequency / (elapsedTimeMs / 1000)).toFixed(2)}/second`,
+          perHour: "0.00",
+          perMinute: "0.00/minute",
+          perSecond: "0.00/second",
         },
       };
-    }
 
-    return { timings };
-  };
+      if (oldestEntry && newestEntry && elapsedTimeMs > 0) {
+        const elapsedTimeHours = elapsedTimeMs / (1000 * 60 * 60);
+        const perHour =
+          elapsedTimeHours > 0
+            ? (frequency / elapsedTimeHours).toFixed(1)
+            : "0.0";
+
+        const hours = Math.floor(elapsedTimeMs / (1000 * 60 * 60));
+        const minutes = Math.floor(
+          (elapsedTimeMs % (1000 * 60 * 60)) / (1000 * 60),
+        );
+        const seconds = Math.floor((elapsedTimeMs % (1000 * 60)) / 1000);
+
+        timings = {
+          elapsedTime: `${hours}h ${minutes}m ${seconds}s`,
+          frequency: {
+            total: frequency,
+            perHour: perHour,
+            perMinute: `${(frequency / (elapsedTimeMs / (1000 * 60))).toFixed(
+              2,
+            )}/minute`,
+            perSecond: `${(frequency / (elapsedTimeMs / 1000)).toFixed(
+              2,
+            )}/second`,
+          },
+        };
+      }
+
+      return { timings };
+    },
+    [elapsedTimeMs, oldestEntry, newestEntry],
+  );
 
   // Get current segment taxonomy for display
   const currentSegmentTaxonomy = taxonomies.find((tax) => tax.name === segment);
