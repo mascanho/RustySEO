@@ -31,6 +31,11 @@ function handleCopyClick(text, click, name) {
   if (name === "URL / PATH") {
     navigator.clipboard.writeText(textToCopy);
   }
+
+  if (name === "Referer") {
+    navigator.clipboard.writeText(text);
+  }
+
   toast.success(`${name} copied to clipboard!`);
 }
 
