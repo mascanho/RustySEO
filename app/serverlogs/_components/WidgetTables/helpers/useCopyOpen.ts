@@ -13,12 +13,6 @@ function handleURLClick(url, click) {
   if (click.button === 0) {
     openBrowserWindow(`https://${domain}${url}`);
   }
-
-  if (click.button === 2) {
-    // ELSE, clicked twice copy the URL
-    navigator.clipboard.writeText(url);
-    toast.success("URL copied to clipboard!");
-  }
 }
 
 // HANDLES COPYING STUFF ON THE TABLE LIKE THE RUSER AGENT, URL OR REFERER
@@ -29,7 +23,14 @@ function handleCopyClick(text, click, name) {
   const domain = localStorage.getItem("domain");
 
   const textToCopy = domain ? "https://" + domain + text : text;
-  navigator.clipboard.writeText(textToCopy);
+
+  if (name === "User Agent") {
+    navigator.clipboard.writeText(text);
+  }
+
+  if (name === "URL / PATH") {
+    navigator.clipboard.writeText(textToCopy);
+  }
   toast.success(`${name} copied to clipboard!`);
 }
 

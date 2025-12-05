@@ -83,6 +83,10 @@ import { FaFileCode, FaPersonHarassing, FaRobot } from "react-icons/fa6";
 import { ImUserTie } from "react-icons/im";
 import CrawlerType from "@/app/components/ui/Footer/CrawlerType";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
+import {
+  handleURLClick,
+  handleCopyClick,
+} from "../WidgetTables/helpers/useCopyOpen";
 
 export function LogAnalyzer() {
   const {
@@ -584,16 +588,6 @@ export function LogAnalyzer() {
       toast.success("URL copied to clipboard!");
     }
     setExpandedRow(null);
-  }
-
-  // HANDLES COPYING STUFF ON THE TABLE LIKE THE RUSER AGENT, URL OR REFERER
-  function handleCopyClick(text, click, name) {
-    click.preventDefault();
-    click.stopPropagation();
-
-    const textToCopy = domain ? "https://" + domain + text : text;
-    navigator.clipboard.writeText(textToCopy);
-    toast.success(`${name} copied to clipboard!`);
   }
 
   return (
@@ -1273,18 +1267,20 @@ function LogRow({
                     <h4 className="font-bold">
                       {showAgent ? "Path" : "User Agent"}
                     </h4>
-                    {showAgent === "Path" ? (
+                    {showAgent ? (
                       <CopyIcon
                         className="cursor-pointer hover:scale-105 active:scale-95"
                         onClick={(e) =>
-                          handleCopyClick(log?.user_agent, e, "User Agent")
+                          handleCopyClick(log?.path, e, "URL / PATH")
                         }
                         size={12}
                       />
                     ) : (
                       <CopyIcon
                         className="cursor-pointer hover:scale-105 active:scale-95"
-                        onClick={(e) => handleCopyClick(log?.path, e, "Path")}
+                        onClick={(e) =>
+                          handleCopyClick(log?.user_agent, e, "User Agent")
+                        }
                         size={12}
                       />
                     )}

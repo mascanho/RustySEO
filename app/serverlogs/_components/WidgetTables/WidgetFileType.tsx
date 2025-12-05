@@ -27,6 +27,7 @@ import {
   Bot,
   CheckCircle,
   XCircle,
+  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -206,12 +207,96 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
   const [crawlerTypeFilter, setCrawlerTypeFilter] = useState<string[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const [availableFileTypes, setAvailableFileTypes] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Use debounced search term
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   // Cache for path taxonomy lookups
   const taxonomyCache = useRef<Map<string, string>>(new Map());
+
+  useEffect(() => {
+    setIsLoading(true);
+  }, []);
+
+  // Initialize component once
+  useEffect(() => {
+    const initialize = async () => {
+      // Show loading immediately
+      setIsLoading(true);
+
+      try {
+        // Load from localStorage
+        const tax = localStorage.getItem("taxonomies");
+        if (tax) {
+          try {
+            const parsedTax = JSON.parse(tax);
+            setTaxonomies(parsedTax);
+
+            // Pre-populate taxonomy cache
+            parsedTax.forEach((taxonomy: Taxonomy) => {
+              taxonomy.paths.forEach((pathRule) => {
+                const cacheKey = `${taxonomy.id}_${pathRule.path}_${pathRule.matchType}`;
+                taxonomyCache.current.set(cacheKey, taxonomy.name);
+              });
+            });
+          } catch (e) {
+            console.error("Failed to parse taxonomies:", e);
+          }
+        }
+
+        if (typeof window !== "undefined") {
+          const storedDomain = localStorage.getItem("domain");
+          if (storedDomain) {
+            setDomain(storedDomain);
+          }
+
+          const isShowing = localStorage.getItem("showOnTables");
+          if (isShowing === "true") {
+            setShowOnTables(true);
+          }
+        }
+
+        // Get unique file types
+        if (entries && entries.length > 0) {
+          const types = new Set<string>();
+          for (const log of entries) {
+            if (log.file_type && log.file_type.trim() !== "") {
+              types.add(log.file_type);
+            }
+          }
+          const sortedTypes = Array.from(types).sort();
+          setAvailableFileTypes(sortedTypes);
+
+          // Initialize file type filter if selectedFileType is provided
+          if (selectedFileType && sortedTypes.length > 0) {
+            const normalizedSelectedType = selectedFileType.trim();
+            const exactType = sortedTypes.find(
+              (type) =>
+                type.toLowerCase() === normalizedSelectedType.toLowerCase(),
+            );
+
+            if (exactType) {
+              setFileTypeFilter([exactType]);
+            } else if (selectedFileType !== "") {
+              setFileTypeFilter([selectedFileType]);
+            }
+          }
+        }
+
+        setIsInitialized(true);
+      } catch (error) {
+        console.error("Initialization error:", error);
+      } finally {
+        // Hide loading after a minimum time to prevent flicker
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 300);
+      }
+    };
+
+    initialize();
+  }, [entries]); // Run once on mount
 
   // Precompute entries metadata
   const {
@@ -262,73 +347,6 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
       uniqueCrawlerTypes: Array.from(crawlerTypes).sort(),
     };
   }, [entries]);
-
-  // Initialize component once
-  useEffect(() => {
-    const initialize = async () => {
-      // Load from localStorage
-      const tax = localStorage.getItem("taxonomies");
-      if (tax) {
-        try {
-          const parsedTax = JSON.parse(tax);
-          setTaxonomies(parsedTax);
-
-          // Pre-populate taxonomy cache
-          parsedTax.forEach((taxonomy: Taxonomy) => {
-            taxonomy.paths.forEach((pathRule) => {
-              const cacheKey = `${taxonomy.id}_${pathRule.path}_${pathRule.matchType}`;
-              taxonomyCache.current.set(cacheKey, taxonomy.name);
-            });
-          });
-        } catch (e) {
-          console.error("Failed to parse taxonomies:", e);
-        }
-      }
-
-      if (typeof window !== "undefined") {
-        const storedDomain = localStorage.getItem("domain");
-        if (storedDomain) {
-          setDomain(storedDomain);
-        }
-
-        const isShowing = localStorage.getItem("showOnTables");
-        if (isShowing === "true") {
-          setShowOnTables(true);
-        }
-      }
-
-      // Get unique file types
-      if (entries && entries.length > 0) {
-        const types = new Set<string>();
-        for (const log of entries) {
-          if (log.file_type && log.file_type.trim() !== "") {
-            types.add(log.file_type);
-          }
-        }
-        const sortedTypes = Array.from(types).sort();
-        setAvailableFileTypes(sortedTypes);
-
-        // Initialize file type filter if selectedFileType is provided
-        if (selectedFileType && sortedTypes.length > 0) {
-          const normalizedSelectedType = selectedFileType.trim();
-          const exactType = sortedTypes.find(
-            (type) =>
-              type.toLowerCase() === normalizedSelectedType.toLowerCase(),
-          );
-
-          if (exactType) {
-            setFileTypeFilter([exactType]);
-          } else if (selectedFileType !== "") {
-            setFileTypeFilter([selectedFileType]);
-          }
-        }
-      }
-
-      setIsInitialized(true);
-    };
-
-    initialize();
-  }, []); // Run once on mount
 
   // Function to get taxonomy name for a path (with caching)
   const getTaxonomyForPath = useCallback(
@@ -724,6 +742,23 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
 
   // Get current segment taxonomy for display
   const currentSegmentTaxonomy = taxonomies.find((tax) => tax.name === segment);
+
+  // Simple loading state
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full min-h-[400px] space-y-4">
+        <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+        <div className="text-center">
+          <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
+            Loading {entries?.length?.toLocaleString()} logs...
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            This may take a moment for large datasets
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isInitialized && entries.length > 0) {
     return (
