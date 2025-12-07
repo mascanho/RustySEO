@@ -337,6 +337,7 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
 
   // Get all unique referrer categories and referrers from entries
   useEffect(() => {
+    if (!isReady) return;
     if (entries && entries.length > 0) {
       const categories = new Set<string>();
       const referrers = new Set<string>();
@@ -358,7 +359,7 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
       setAvailableReferrerCategories(sortedCategories);
       setAvailableReferrers(sortedReferrers);
     }
-  }, [entries]);
+  }, [entries, isReady]);
 
   // Initialize referrer category filter when segment is a referrer category
   useEffect(() => {
@@ -396,6 +397,7 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
 
   // Get unique status codes from entries
   const uniqueStatusCodes = useMemo(() => {
+    if (!isReady) return [];
     const codes = new Set<number>();
     entries.forEach((log) => {
       if (log.status) {
@@ -403,10 +405,11 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
       }
     });
     return Array.from(codes).sort((a, b) => a - b);
-  }, [entries]);
+  }, [entries, isReady]);
 
   // Get unique crawler types from entries
   const uniqueCrawlerTypes = useMemo(() => {
+    if (!isReady) return [];
     const types = new Set<string>();
     entries.forEach((log) => {
       if (log.crawler_type) {
@@ -414,7 +417,7 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
       }
     });
     return Array.from(types).sort();
-  }, [entries]);
+  }, [entries, isReady]);
 
   // useAsyncLogFilter implementation
   const activeSegmentTaxonomy = useMemo(

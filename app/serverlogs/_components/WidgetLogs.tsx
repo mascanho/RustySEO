@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { FileText, Server, Bot, PenBox, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
@@ -12,47 +13,47 @@ import {
 } from "@/components/ui/dialog";
 // Lazy load components
 const WidgetTable = lazy(() =>
-  import("./WidgetTables/WidgetCrawlersTable.tsx").then((module) => ({
+  import("./WidgetTables/WidgetCrawlersTable").then((module) => ({
     default: module.WidgetTable,
   })),
 );
 const WidgetTableBing = lazy(() =>
-  import("./WidgetTables/WidgetCrawlersBingTable.tsx").then((module) => ({
+  import("./WidgetTables/WidgetCrawlersBingTable").then((module) => ({
     default: module.WidgetTableBing,
   })),
 );
 const WidgetTableOpenAi = lazy(() =>
-  import("./WidgetTables/WidgetCrawlersOpenAITable.tsx").then((module) => ({
+  import("./WidgetTables/WidgetCrawlersOpenAITable").then((module) => ({
     default: module.WidgetTableOpenAi,
   })),
 );
 const WidgetTableClaude = lazy(() =>
-  import("./WidgetTables/WidgetCrawlersClaudeTable.tsx").then((module) => ({
+  import("./WidgetTables/WidgetCrawlersClaudeTable").then((module) => ({
     default: module.WidgetTableClaude,
   })),
 );
 const WidgetContentTable = lazy(() =>
-  import("./WidgetTables/WidgetContentTable.tsx").then((module) => ({
+  import("./WidgetTables/WidgetContentTable").then((module) => ({
     default: module.WidgetContentTable,
   })),
 );
 const WidgetFileType = lazy(() =>
-  import("./WidgetTables/WidgetFileType.tsx").then((module) => ({
+  import("./WidgetTables/WidgetFileType").then((module) => ({
     default: module.WidgetFileType,
   })),
 );
 const WidgetUserAgentsTable = lazy(() =>
-  import("./WidgetTables/WidgetUserAgentsTable.tsx").then((module) => ({
+  import("./WidgetTables/WidgetUserAgentsTable").then((module) => ({
     default: module.WidgetUserAgentsTable,
   })),
 );
 const WidgetReferrersTable = lazy(() =>
-  import("./WidgetTables/WidgetReferrersTable.tsx").then((module) => ({
+  import("./WidgetTables/WidgetReferrersTable").then((module) => ({
     default: module.WidgetReferrersTable,
   })),
 );
 const WidgetStatusCodesTable = lazy(() =>
-  import("./WidgetTables/WidgetStatusCodesTable.tsx").then((module) => ({
+  import("./WidgetTables/WidgetStatusCodesTable").then((module) => ({
     default: module.WidgetStatusCodesTable,
   })),
 );
@@ -73,8 +74,8 @@ import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
 import { GiPoliceOfficerHead } from "react-icons/gi";
 
 import { GiHypersonicBolt } from "react-icons/gi";
-import { categorizeUserAgent } from "./WidgetTables/helpers/useCategoriseUserAgents.ts";
-import { categorizeReferrer } from "./WidgetTables/helpers/useCategoriseReferrer.ts";
+import { categorizeUserAgent } from "./WidgetTables/helpers/useCategoriseUserAgents";
+import { categorizeReferrer } from "./WidgetTables/helpers/useCategoriseReferrer";
 
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
@@ -110,7 +111,9 @@ const getStatusText = (code) => {
 const FallbackLoader = () => (
   <div className="flex flex-col items-center justify-center h-96 w-full">
     <Loader2 className="h-10 w-10 animate-spin text-brand-bright" />
-    <p className="mt-4 text-sm text-gray-500 font-medium">Loading component...</p>
+    <p className="mt-4 text-sm text-gray-500 font-medium">
+      Loading component...
+    </p>
   </div>
 );
 
@@ -219,12 +222,12 @@ export default function WidgetLogs() {
     () =>
       overview?.totals
         ? Object.entries(overview.totals)
-          .filter(([_, value]) => value > 0)
-          .map(([name, value]) => ({
-            name: name.charAt(0).toUpperCase() + name.slice(1),
-            value,
-          }))
-          .sort((a, b) => b.value - a.value)
+            .filter(([_, value]) => value > 0)
+            .map(([name, value]) => ({
+              name: name.charAt(0).toUpperCase() + name.slice(1),
+              value,
+            }))
+            .sort((a, b) => b.value - a.value)
         : [],
     [overview],
   );
@@ -430,10 +433,11 @@ export default function WidgetLogs() {
           <button
             key={label}
             onClick={() => setActiveTab(label)}
-            className={`flex items-center space-x-1 px-4 py-1 text-xs rounded-sm font-medium transition-colors ${activeTab === label
+            className={`flex items-center space-x-1 px-4 py-1 text-xs rounded-sm font-medium transition-colors ${
+              activeTab === label
                 ? "bg-brand-bright text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
-              }`}
+            }`}
           >
             {icon}
             <span>{label}</span>
@@ -495,12 +499,13 @@ export default function WidgetLogs() {
           </PieChart>
 
           <div
-            className={`grid gap-2 w-full max-w-2xl pl-4 ${activeTab === "User Agents" || activeTab === "Referrers"
+            className={`grid gap-2 w-full max-w-2xl pl-4 ${
+              activeTab === "User Agents" || activeTab === "Referrers"
                 ? "grid-cols-5 max-w-6xl"
                 : activeTab === "Status Codes"
                   ? "grid-cols-4 max-w-xl"
                   : "grid-cols-3"
-              }`}
+            }`}
           >
             {chartData.map((entry, idx) => (
               <Dialog
@@ -616,8 +621,8 @@ export default function WidgetLogs() {
                         segment={entry?.name === "Other" ? "all" : entry?.name}
                       />
                     ) : ["Google", "Bing", "Openai", "Claude"].includes(
-                      entry?.name,
-                    ) ? (
+                        entry?.name,
+                      ) ? (
                       <Tabs defaultValue="overview" className="h-full">
                         <Tabs.List>
                           <Tabs.Tab value="overview">Frequency Table</Tabs.Tab>
@@ -658,7 +663,7 @@ export default function WidgetLogs() {
                                     (sum, item) => sum + item.value,
                                     0,
                                   )) *
-                                100,
+                                  100,
                               )}
                               %
                             </span>

@@ -308,7 +308,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
     uniqueStatusCodes,
     uniqueCrawlerTypes,
   } = useMemo(() => {
-    if (!entries || entries.length === 0) {
+    if (!isReady || !entries || entries.length === 0) {
       return {
         oldestEntry: null,
         newestEntry: null,
@@ -348,7 +348,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
       uniqueStatusCodes: Array.from(statusCodes).sort((a, b) => a - b),
       uniqueCrawlerTypes: Array.from(crawlerTypes).sort(),
     };
-  }, [entries]);
+  }, [entries, isReady]);
 
   // Function to get taxonomy name for a path (with caching)
   const getTaxonomyForPath = useCallback(

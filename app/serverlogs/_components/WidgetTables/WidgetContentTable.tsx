@@ -193,6 +193,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
 
   // Get unique status codes from entries
   const uniqueStatusCodes = useMemo(() => {
+    if (!isReady) return [];
     const codes = new Set<number>();
     entries.forEach((log) => {
       if (log.status) {
@@ -200,10 +201,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
       }
     });
     return Array.from(codes).sort((a, b) => a - b);
-  }, [entries]);
+  }, [entries, isReady]);
 
   // Get unique crawler types from entries
   const uniqueCrawlerTypes = useMemo(() => {
+    if (!isReady) return [];
     const types = new Set<string>();
     entries.forEach((log) => {
       if (log.crawler_type) {
@@ -211,7 +213,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
       }
     });
     return Array.from(types).sort();
-  }, [entries]);
+  }, [entries, isReady]);
 
   // useAsyncLogFilter implementation
   const activeSegmentTaxonomy = useMemo(

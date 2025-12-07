@@ -128,7 +128,6 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
   // Transform data into logs (memoized)
   const initialLogs = useMemo(() => {
     if (!data?.totals?.bot_stats?.google?.page_frequencies) return [];
-    if (!isReady) return [];
 
     let logs: LogEntry[] = [];
     const pageStatus = data.totals.bot_stats.google.page_status_codes || {};
@@ -146,7 +145,51 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
       },
     );
     return logs;
-  }, [data, isReady]);
+  }, [data]);
+
+  // State definitions
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(100);
+  const [methodFilter, setMethodFilter] = useState<string[]>([]);
+  const [fileTypeFilter, setFileTypeFilter] = useState<string[]>([]);
+  const [botFilter, setBotFilter] = useState<string | null>("all");
+  const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: "ascending" | "descending";
+  } | null>({ key: "frequency", direction: "descending" });
+  const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const [botTypeFilter, setBotTypeFilter] = useState<string | null>(null);
+  const [domain, setDomain] = useState("");
+  const [showOnTables, setShowOnTables] = useState(false);
+
+  // Load domain and showOnTables settings
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedDomain = localStorage.getItem("domain");
+      if (storedDomain) {
+        setDomain(storedDomain);
+      }
+
+      const isShowing = localStorage.getItem("showOnTables");
+      if (isShowing === "true") {
+        setShowOnTables(true);
+      }
+    }
+  }, []);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [
+    searchTerm,
+    methodFilter,
+    fileTypeFilter,
+    botFilter,
+    verifiedFilter,
+    botTypeFilter,
+  ]);
 
   // useAsyncLogFilter implementation
   const lowerCaseSearch = useMemo(
@@ -189,15 +232,9 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
 
       // 6. Bot Type
       if (botTypeFilter !== null) {
-        if (
-          botTypeFilter === "Mobile" &&
-          !log.user_agent.includes("Mobile")
-        )
+        if (botTypeFilter === "Mobile" && !log.user_agent.includes("Mobile"))
           return false;
-        if (
-          botTypeFilter === "Desktop" &&
-          log.user_agent.includes("Mobile")
-        )
+        if (botTypeFilter === "Desktop" && log.user_agent.includes("Mobile"))
           return false;
       }
 
@@ -434,7 +471,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     [elapsedTimeMs, oldestEntry, newestEntry],
   );
 
-  if (!isReady || (isProcessing && initialLogs.length > 0)) {
+  if (isProcessing && initialLogs.length > 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full min-h-[400px] space-y-4">
         <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
@@ -563,8 +600,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       {sortConfig?.key === "path" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
+                              ? "rotate-180"
+                              : ""
                             }`}
                         />
                       )}
@@ -577,8 +614,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       {sortConfig?.key === "file_type" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
+                              ? "rotate-180"
+                              : ""
                             }`}
                         />
                       )}
@@ -591,8 +628,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       {sortConfig?.key === "response_size" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
+                              ? "rotate-180"
+                              : ""
                             }`}
                         />
                       )}
@@ -605,8 +642,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       {sortConfig?.key === "frequency" && (
                         <ChevronDown
                           className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
+                              ? "rotate-180"
+                              : ""
                             }`}
                         />
                       )}
@@ -703,8 +740,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                               <Badge
                                 variant="outline"
                                 className={`flex items-center align-middle absolute justify-center ${log.crawler_type !== "Human"
-                                  ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
-                                  : "bg-green-100 text-green-800 border-green-200"
+                                    ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
+                                    : "bg-green-100 text-green-800 border-green-200"
                                   }`}
                               >
                                 {log.crawler_type.length > 10

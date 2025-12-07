@@ -61,6 +61,8 @@ import { CardContent } from "@/components/ui/card";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
+import { useAsyncLogFilter } from "./hooks/useAsyncLogFilter";
+import { Loader2 } from "lucide-react";
 
 interface LogEntry {
   browser: string;
@@ -276,6 +278,15 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
   const [availableStatusCategories, setAvailableStatusCategories] = useState<
     string[]
   >([]);
+  const [isReady, setIsReady] = useState(false);
+
+  // Use deferred rendering to unblock initial paint
+  useEffect(() => {
+    const timer = requestAnimationFrame(() => {
+      setIsReady(true);
+    });
+    return () => cancelAnimationFrame(timer);
+  }, []);
 
   useEffect(() => {
     const tax = localStorage.getItem("taxonomies");
@@ -300,6 +311,7 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
 
   // Get all unique status categories from entries
   useEffect(() => {
+    if (!isReady) return;
     if (entries && entries.length > 0) {
       const categories = new Set<string>();
       entries.forEach((log) => {
@@ -311,7 +323,7 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
       const sortedCategories = Array.from(categories).sort();
       setAvailableStatusCategories(sortedCategories);
     }
-  }, [entries]);
+  }, [entries, isReady]);
 
   // Initialize status filter when segment is a specific status code
   useEffect(() => {
@@ -344,6 +356,7 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
 
   // Get unique status codes from entries
   const uniqueStatusCodes = useMemo(() => {
+    if (!isReady) return [];
     const codes = new Set<number>();
     entries.forEach((log) => {
       if (log.status) {
@@ -351,10 +364,11 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
       }
     });
     return Array.from(codes).sort((a, b) => a - b);
-  }, [entries]);
+  }, [entries, isReady]);
 
   // Get unique crawler types from entries
   const uniqueCrawlerTypes = useMemo(() => {
+    if (!isReady) return [];
     const types = new Set<string>();
     entries.forEach((log) => {
       if (log.crawler_type) {
@@ -362,142 +376,125 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
       }
     });
     return Array.from(types).sort();
-  }, [entries]);
+  }, [entries, isReady]);
 
-  // Filter logs based on status codes
-  const filteredLogs = useMemo(() => {
-    if (!entries || entries.length === 0) return [];
+  const sortFn = useCallback(
+    (a: LogEntry, b: LogEntry) => {
+      if (!sortConfig) return 0;
+      const { key, direction } = sortConfig;
+      const aValue = a[key as keyof LogEntry];
+      const bValue = b[key as keyof LogEntry];
 
-    let result = [...entries];
-
-    // Apply segment filter first (from props)
-    if (segment && segment !== "all") {
-      const taxonomy = taxonomies.find((tax) => tax.name === segment);
-      if (taxonomy) {
-        result = result.filter((log) =>
-          pathMatchesTaxonomy(log.path, taxonomy),
-        );
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return direction === "ascending"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
       }
-    }
-
-    // Apply taxonomy filter (user selection)
-    if (selectedTaxonomy !== "all") {
-      const taxonomy = taxonomies.find((tax) => tax.id === selectedTaxonomy);
-      if (taxonomy) {
-        result = result.filter((log) =>
-          pathMatchesTaxonomy(log.path, taxonomy),
-        );
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return direction === "ascending" ? aValue - bValue : bValue - aValue;
       }
-    }
+      if (aValue < bValue) return direction === "ascending" ? -1 : 1;
+      if (aValue > bValue) return direction === "ascending" ? 1 : -1;
+      return 0;
+    },
+    [sortConfig],
+  );
 
-    // Apply status category filter
-    if (statusCategoryFilter.length > 0) {
-      result = result.filter((log) => {
+  const filterFn = useCallback(
+    (log: LogEntry) => {
+      // Apply segment filter first (from props)
+      if (segment && segment !== "all") {
+        const taxonomy = taxonomies.find((tax) => tax.name === segment);
+        if (taxonomy && !pathMatchesTaxonomy(log.path, taxonomy)) {
+          return false;
+        }
+      }
+
+      // Apply taxonomy filter (user selection)
+      if (selectedTaxonomy !== "all") {
+        const taxonomy = taxonomies.find((tax) => tax.id === selectedTaxonomy);
+        if (taxonomy && !pathMatchesTaxonomy(log.path, taxonomy)) {
+          return false;
+        }
+      }
+
+      // Apply status category filter
+      if (statusCategoryFilter.length > 0) {
         if (!log.status) return false;
         const info = getStatusCodeInfo(log.status);
-        return statusCategoryFilter.includes(info.category);
-      });
-    }
+        if (!statusCategoryFilter.includes(info.category)) return false;
+      }
 
-    // Apply specific status code filter
-    if (statusFilter.length > 0) {
-      result = result.filter((log) => {
+      // Apply specific status code filter
+      if (statusFilter.length > 0) {
         if (!log.status) return false;
-        return statusFilter.includes(log.status);
-      });
-    }
+        if (!statusFilter.includes(log.status)) return false;
+      }
 
-    if (searchTerm) {
-      const lowerCaseSearch = searchTerm.toLowerCase();
-      result = result.filter(
-        (log) =>
+      if (searchTerm) {
+        const lowerCaseSearch = searchTerm.toLowerCase();
+        const matches =
           log.ip.toLowerCase().includes(lowerCaseSearch) ||
           log.path.toLowerCase().includes(lowerCaseSearch) ||
           (log.user_agent &&
             log.user_agent.toLowerCase().includes(lowerCaseSearch)) ||
-          (log.referer && log.referer.toLowerCase().includes(lowerCaseSearch)),
-      );
-    }
+          (log.referer && log.referer.toLowerCase().includes(lowerCaseSearch));
+        if (!matches) return false;
+      }
 
-    if (methodFilter.length > 0) {
-      result = result.filter((log) => methodFilter.includes(log.method));
-    }
+      if (methodFilter.length > 0) {
+        if (!methodFilter.includes(log.method)) return false;
+      }
 
-    if (fileTypeFilter.length > 0) {
-      result = result.filter((log) =>
-        fileTypeFilter.some(
+      if (fileTypeFilter.length > 0) {
+        const typeMatch = fileTypeFilter.some(
           (filterType) =>
             filterType.toLowerCase() === (log.file_type || "").toLowerCase(),
-        ),
-      );
-    }
-
-    if (verifiedFilter !== null) {
-      result = result.filter((log) => log.verified === verifiedFilter);
-    }
-
-    if (botTypeFilter !== null) {
-      if (botTypeFilter === "Mobile") {
-        result = result.filter(
-          (log) => log.user_agent && log.user_agent.includes("Mobile"),
         );
-      } else if (botTypeFilter === "Desktop") {
-        result = result.filter(
-          (log) => !log.user_agent || !log.user_agent.includes("Mobile"),
-        );
+        if (!typeMatch) return false;
       }
-    }
 
-    // Apply crawler type filter
-    if (crawlerTypeFilter.length > 0) {
-      result = result.filter((log) =>
-        crawlerTypeFilter.includes(log.crawler_type),
-      );
-    }
+      if (verifiedFilter !== null) {
+        if (log.verified !== verifiedFilter) return false;
+      }
 
-    if (sortConfig) {
-      result.sort((a, b) => {
-        const aValue = a[sortConfig.key as keyof LogEntry];
-        const bValue = b[sortConfig.key as keyof LogEntry];
-
-        if (typeof aValue === "string" && typeof bValue === "string") {
-          return sortConfig.direction === "ascending"
-            ? aValue.localeCompare(bValue)
-            : bValue.localeCompare(aValue);
+      if (botTypeFilter !== null) {
+        if (botTypeFilter === "Mobile") {
+          if (!log.user_agent || !log.user_agent.includes("Mobile"))
+            return false;
+        } else if (botTypeFilter === "Desktop") {
+          if (log.user_agent && log.user_agent.includes("Mobile")) return false;
         }
+      }
 
-        if (typeof aValue === "number" && typeof bValue === "number") {
-          return sortConfig.direction === "ascending"
-            ? aValue - bValue
-            : bValue - aValue;
-        }
+      // Apply crawler type filter
+      if (crawlerTypeFilter.length > 0) {
+        if (!crawlerTypeFilter.includes(log.crawler_type)) return false;
+      }
 
-        if (aValue < bValue) {
-          return sortConfig.direction === "ascending" ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === "ascending" ? 1 : -1;
-        }
-        return 0;
-      });
-    }
+      return true;
+    },
+    [
+      segment,
+      searchTerm,
+      methodFilter,
+      verifiedFilter,
+      fileTypeFilter,
+      statusCategoryFilter,
+      statusFilter,
+      botTypeFilter,
+      selectedTaxonomy,
+      taxonomies,
+      crawlerTypeFilter,
+    ],
+  );
 
-    return result;
-  }, [
+  const { filteredData: filteredLogs, isProcessing } = useAsyncLogFilter(
     entries,
-    segment,
-    searchTerm,
-    methodFilter,
-    verifiedFilter,
+    filterFn,
     sortConfig,
-    fileTypeFilter,
-    statusCategoryFilter,
-    statusFilter,
-    botTypeFilter,
-    selectedTaxonomy,
-    taxonomies,
-    crawlerTypeFilter,
-  ]);
+    sortFn,
+  );
 
   // Reset page when filters change
   useEffect(() => {
@@ -632,25 +629,26 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
   // Calculate timings based on actual entries
   const oldestEntry = useMemo(
     () =>
-      entries.length > 0
+      isReady && entries.length > 0
         ? entries.reduce((oldest, log) =>
-            new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-          )
+          new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+        )
         : null,
-    [entries],
+    [entries, isReady],
   );
 
   const newestEntry = useMemo(
     () =>
-      entries.length > 0
+      isReady && entries.length > 0
         ? entries.reduce((newest, log) =>
-            new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-          )
+          new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+        )
         : null,
-    [entries],
+    [entries, isReady],
   );
 
   const elapsedTimeMs = useMemo(() => {
+    if (!isReady) return 0;
     if (newestEntry && oldestEntry) {
       const start = new Date(oldestEntry.timestamp);
       const end = new Date(newestEntry.timestamp);
@@ -658,7 +656,7 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
       return diff;
     }
     return 0;
-  }, [newestEntry, oldestEntry]);
+  }, [newestEntry, oldestEntry, isReady]);
 
   // Helper to calculate details on the fly for a single log entry
   const getLogDetails = useCallback(
@@ -710,6 +708,22 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
 
   // Get current segment taxonomy for display
   const currentSegmentTaxonomy = taxonomies.find((tax) => tax.name === segment);
+
+  if (!isReady || (isProcessing && entries.length > 0)) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full min-h-[400px] space-y-4">
+        <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+        <div className="text-center">
+          <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
+            Loading {entries?.length?.toLocaleString()} logs...
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            This may take a moment for large datasets
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 h-full pb-0 -mb-4">
@@ -901,19 +915,18 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <div
-                      className={`w-3 h-3 rounded-full ${
-                        category === "Success"
-                          ? "bg-green-500"
-                          : category === "Redirection"
-                            ? "bg-yellow-500"
-                            : category === "Client Error"
-                              ? "bg-orange-500"
-                              : category === "Server Error"
-                                ? "bg-red-500"
-                                : category === "Informational"
-                                  ? "bg-blue-500"
-                                  : "bg-gray-500"
-                      }`}
+                      className={`w-3 h-3 rounded-full ${category === "Success"
+                        ? "bg-green-500"
+                        : category === "Redirection"
+                          ? "bg-yellow-500"
+                          : category === "Client Error"
+                            ? "bg-orange-500"
+                            : category === "Server Error"
+                              ? "bg-red-500"
+                              : category === "Informational"
+                                ? "bg-blue-500"
+                                : "bg-gray-500"
+                        }`}
                     />
                     <span>{category}</span>
                   </div>
@@ -1141,11 +1154,10 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                       Timestamp
                       {sortConfig?.key === "timestamp" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -1156,11 +1168,10 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                       Path
                       {sortConfig?.key === "path" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -1171,11 +1182,10 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                       Status Code
                       {sortConfig?.key === "status" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -1188,11 +1198,10 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                       Size
                       {sortConfig?.key === "response_size" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -1208,12 +1217,12 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                       const statusInfo = log.status
                         ? getStatusCodeInfo(log.status)
                         : {
-                            category: "Unknown",
-                            description: "No status code",
-                            color: "bg-gray-500",
-                            textColor: "text-gray-800 dark:text-gray-200",
-                            bgColor: "bg-gray-100 dark:bg-gray-900",
-                          };
+                          category: "Unknown",
+                          description: "No status code",
+                          color: "bg-gray-500",
+                          textColor: "text-gray-800 dark:text-gray-200",
+                          bgColor: "bg-gray-100 dark:bg-gray-900",
+                        };
 
                       return (
                         <React.Fragment
@@ -1295,7 +1304,7 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                                 }
                               >
                                 {log.crawler_type &&
-                                log.crawler_type.length > 12
+                                  log.crawler_type.length > 12
                                   ? log.crawler_type.trim().slice(0, 15)
                                   : log.crawler_type || "Unknown"}
                               </Badge>
