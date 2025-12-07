@@ -68,6 +68,7 @@ import { CardContent } from "@/components/ui/card";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
+import { useAsyncLogFilter } from "./hooks/useAsyncLogFilter";
 
 interface LogEntry {
   browser: string;
@@ -207,7 +208,16 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
   const [crawlerTypeFilter, setCrawlerTypeFilter] = useState<string[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const [availableFileTypes, setAvailableFileTypes] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isReady, setIsReady] = useState(false);
+
+  // Use deferred rendering to unblock initial paint
+  useEffect(() => {
+    const timer = requestAnimationFrame(() => {
+      setIsReady(true);
+    });
+    return () => cancelAnimationFrame(timer);
+  }, []);
+
 
   // Use debounced search term
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
@@ -215,15 +225,12 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
   // Cache for path taxonomy lookups
   const taxonomyCache = useRef<Map<string, string>>(new Map());
 
-  useEffect(() => {
-    setIsLoading(true);
-  }, []);
+
 
   // Initialize component once
   useEffect(() => {
     const initialize = async () => {
-      // Show loading immediately
-      setIsLoading(true);
+
 
       try {
         // Load from localStorage
@@ -287,11 +294,6 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
         setIsInitialized(true);
       } catch (error) {
         console.error("Initialization error:", error);
-      } finally {
-        // Hide loading after a minimum time to prevent flicker
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 300);
       }
     };
 
@@ -336,7 +338,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
 
     const elapsedTimeMs = Math.abs(
       new Date(newest.timestamp).getTime() -
-        new Date(oldest.timestamp).getTime(),
+      new Date(oldest.timestamp).getTime(),
     );
 
     return {
@@ -387,159 +389,163 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
     [taxonomies],
   );
 
-  // Optimized filtered logs with early returns
-  const filteredLogs = useMemo(() => {
-    if (!entries || entries.length === 0) return [];
+  // Optimized filtered logs with async processing to prevent UI freezing
+  const activeSegmentTaxonomy = useMemo(
+    () =>
+      segment && segment !== "all"
+        ? taxonomies.find((t) => t.name === segment)
+        : null,
+    [segment, taxonomies],
+  );
 
-    // Check if we can return early
-    const hasNoFilters =
-      !debouncedSearchTerm &&
-      methodFilter.length === 0 &&
-      fileTypeFilter.length === 0 &&
-      botFilter === "all" &&
-      verifiedFilter === null &&
-      botTypeFilter === null &&
-      selectedTaxonomy === "all" &&
-      statusFilter.length === 0 &&
-      crawlerTypeFilter.length === 0 &&
-      (!segment || segment === "all");
+  const activeSelectedTaxonomyObj = useMemo(
+    () =>
+      selectedTaxonomy !== "all"
+        ? taxonomies.find((t) => t.id === selectedTaxonomy)
+        : null,
+    [selectedTaxonomy, taxonomies],
+  );
 
-    // If no filters and no sorting needed, return original entries
-    if (hasNoFilters && !sortConfig) {
-      return entries;
-    }
+  const lowerCaseFileFilters = useMemo(
+    () => fileTypeFilter.map((ft) => ft.toLowerCase()),
+    [fileTypeFilter],
+  );
 
-    let result = entries;
+  const lowerCaseSearch = useMemo(
+    () => (debouncedSearchTerm ? debouncedSearchTerm.toLowerCase() : ""),
+    [debouncedSearchTerm],
+  );
 
-    // Apply segment filter first (from props)
-    if (segment && segment !== "all") {
-      const taxonomy = taxonomies.find((tax) => tax.name === segment);
-      if (taxonomy) {
-        result = result.filter((log) => {
-          for (const pathRule of taxonomy.paths) {
-            if (
-              pathRule.matchType === "exactMatch" &&
-              log.path === pathRule.path
-            ) {
-              return true;
-            }
-            if (
-              pathRule.matchType === "contains" &&
-              log.path.includes(pathRule.path)
-            ) {
-              return true;
-            }
+  const filterFn = useCallback(
+    (log: LogEntry) => {
+      // 1. Initial Checks (Segment & Taxonomy) - Most restrictive first
+      if (activeSegmentTaxonomy) {
+        let match = false;
+        for (const pathRule of activeSegmentTaxonomy.paths) {
+          if (
+            (pathRule.matchType === "exactMatch" &&
+              log.path === pathRule.path) ||
+            (pathRule.matchType === "contains" &&
+              log.path.includes(pathRule.path))
+          ) {
+            match = true;
+            break;
           }
-          return false;
-        });
+        }
+        if (!match) return false;
       }
-    }
 
-    // Apply taxonomy filter (user selection)
-    if (selectedTaxonomy !== "all") {
-      const taxonomy = taxonomies.find((tax) => tax.id === selectedTaxonomy);
-      if (taxonomy) {
-        result = result.filter((log) => {
-          for (const pathRule of taxonomy.paths) {
-            if (
-              pathRule.matchType === "exactMatch" &&
-              log.path === pathRule.path
-            ) {
-              return true;
-            }
-            if (
-              pathRule.matchType === "contains" &&
-              log.path.includes(pathRule.path)
-            ) {
-              return true;
-            }
+      if (activeSelectedTaxonomyObj) {
+        let match = false;
+        for (const pathRule of activeSelectedTaxonomyObj.paths) {
+          if (
+            (pathRule.matchType === "exactMatch" &&
+              log.path === pathRule.path) ||
+            (pathRule.matchType === "contains" &&
+              log.path.includes(pathRule.path))
+          ) {
+            match = true;
+            break;
           }
-          return false;
-        });
+        }
+        if (!match) return false;
       }
-    }
 
-    // Apply file type filter
-    if (fileTypeFilter.length > 0) {
-      const lowerCaseFilters = fileTypeFilter.map((ft) => ft.toLowerCase());
-      result = result.filter((log) => {
-        const logFileType = (log.file_type || "").toLowerCase();
-        return lowerCaseFilters.includes(logFileType);
-      });
-    }
-
-    // Apply search filter
-    if (debouncedSearchTerm) {
-      const lowerCaseSearch = debouncedSearchTerm.toLowerCase();
-      result = result.filter(
-        (log) =>
+      // 2. Search (Heavy string ops)
+      if (debouncedSearchTerm) {
+        const matches =
           log.ip.toLowerCase().includes(lowerCaseSearch) ||
           log.path.toLowerCase().includes(lowerCaseSearch) ||
           log.user_agent.toLowerCase().includes(lowerCaseSearch) ||
-          (log.referer && log.referer.toLowerCase().includes(lowerCaseSearch)),
-      );
-    }
-
-    // Apply method filter
-    if (methodFilter.length > 0) {
-      result = result.filter((log) => methodFilter.includes(log.method));
-    }
-
-    // Apply bot filter
-    if (botFilter !== null && botFilter !== "all") {
-      result = result.filter((log) => log.crawler_type === botFilter);
-    }
-
-    // Apply verified filter
-    if (verifiedFilter !== null) {
-      result = result.filter((log) => log.verified === verifiedFilter);
-    }
-
-    // Apply bot type filter
-    if (botTypeFilter !== null) {
-      if (botTypeFilter === "Mobile") {
-        result = result.filter((log) => log.user_agent.includes("Mobile"));
-      } else if (botTypeFilter === "Desktop") {
-        result = result.filter((log) => !log.user_agent.includes("Mobile"));
+          (log.referer && log.referer.toLowerCase().includes(lowerCaseSearch));
+        if (!matches) return false;
       }
-    }
 
-    // Apply status code filter
-    if (statusFilter.length > 0) {
-      result = result.filter((log) => {
-        if (!log.status) return false;
-        return statusFilter.includes(log.status);
-      });
-    }
+      // 3. File Type
+      if (fileTypeFilter.length > 0) {
+        const logFileType = (log.file_type || "").toLowerCase();
+        if (!lowerCaseFileFilters.includes(logFileType)) return false;
+      }
 
-    // Apply crawler type filter
-    if (crawlerTypeFilter.length > 0) {
-      result = result.filter((log) =>
-        crawlerTypeFilter.includes(log.crawler_type),
-      );
-    }
+      // 4. Method
+      if (methodFilter.length > 0) {
+        if (!methodFilter.includes(log.method)) return false;
+      }
 
-    // Apply sorting
-    if (sortConfig) {
-      result = sortData(result, sortConfig);
-    }
+      // 5. Bot
+      if (botFilter !== null && botFilter !== "all") {
+        if (log.crawler_type !== botFilter) return false;
+      }
 
-    return result;
-  }, [
+      // 6. Verified
+      if (verifiedFilter !== null) {
+        if (log.verified !== verifiedFilter) return false;
+      }
+
+      // 7. Bot Type
+      if (botTypeFilter !== null) {
+        if (botTypeFilter === "Mobile" && !log.user_agent.includes("Mobile"))
+          return false;
+        if (botTypeFilter === "Desktop" && log.user_agent.includes("Mobile"))
+          return false;
+      }
+
+      // 8. Status
+      if (statusFilter.length > 0) {
+        if (!log.status || !statusFilter.includes(log.status)) return false;
+      }
+
+      // 9. Crawler Type
+      if (crawlerTypeFilter.length > 0) {
+        if (!crawlerTypeFilter.includes(log.crawler_type)) return false;
+      }
+
+      return true;
+    },
+    [
+      activeSegmentTaxonomy,
+      activeSelectedTaxonomyObj,
+      debouncedSearchTerm,
+      lowerCaseSearch,
+      lowerCaseFileFilters,
+      fileTypeFilter,
+      methodFilter,
+      botFilter,
+      verifiedFilter,
+      botTypeFilter,
+      statusFilter,
+      crawlerTypeFilter,
+    ],
+  );
+
+  const sortFn = useCallback(
+    (a: LogEntry, b: LogEntry) => {
+      if (!sortConfig) return 0;
+      const { key, direction } = sortConfig;
+      const aValue = a[key as keyof LogEntry];
+      const bValue = b[key as keyof LogEntry];
+
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return direction === "ascending"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return direction === "ascending" ? aValue - bValue : bValue - aValue;
+      }
+      if (aValue < bValue) return direction === "ascending" ? -1 : 1;
+      if (aValue > bValue) return direction === "ascending" ? 1 : -1;
+      return 0;
+    },
+    [sortConfig],
+  );
+
+  const { filteredData: filteredLogs, isProcessing } = useAsyncLogFilter(
     entries,
-    segment,
-    debouncedSearchTerm,
-    methodFilter,
-    botFilter,
-    verifiedFilter,
+    filterFn,
     sortConfig,
-    fileTypeFilter,
-    botTypeFilter,
-    selectedTaxonomy,
-    taxonomies,
-    statusFilter,
-    crawlerTypeFilter,
-  ]);
+    sortFn, // We pass custom sortFn to handle localeCompare etc
+  );
 
   // Reset page when filters change
   useEffect(() => {
@@ -743,8 +749,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
   // Get current segment taxonomy for display
   const currentSegmentTaxonomy = taxonomies.find((tax) => tax.name === segment);
 
-  // Simple loading state
-  if (isLoading) {
+  if (!isReady || !isInitialized || (isProcessing && entries.length > 0)) {
     return (
       <div className="flex flex-col items-center justify-center h-full min-h-[400px] space-y-4">
         <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
@@ -756,14 +761,6 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
             This may take a moment for large datasets
           </p>
         </div>
-      </div>
-    );
-  }
-
-  if (!isInitialized && entries.length > 0) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
       </div>
     );
   }
@@ -983,17 +980,16 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <div
-                      className={`w-3 h-3 rounded-full ${
-                        statusCode >= 200 && statusCode < 300
-                          ? "bg-green-500"
-                          : statusCode >= 300 && statusCode < 400
-                            ? "bg-blue-500"
-                            : statusCode >= 400 && statusCode < 500
-                              ? "bg-yellow-500"
-                              : statusCode >= 500
-                                ? "bg-red-500"
-                                : "bg-gray-500"
-                      }`}
+                      className={`w-3 h-3 rounded-full ${statusCode >= 200 && statusCode < 300
+                        ? "bg-green-500"
+                        : statusCode >= 300 && statusCode < 400
+                          ? "bg-blue-500"
+                          : statusCode >= 400 && statusCode < 500
+                            ? "bg-yellow-500"
+                            : statusCode >= 500
+                              ? "bg-red-500"
+                              : "bg-gray-500"
+                        }`}
                     />
                     <span>{statusCode}</span>
                   </div>
@@ -1106,11 +1102,10 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                       Timestamp
                       {sortConfig?.key === "timestamp" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -1121,11 +1116,10 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                       Path
                       {sortConfig?.key === "path" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -1136,11 +1130,10 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                       File Type
                       {sortConfig?.key === "file_type" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -1152,11 +1145,10 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                       Size
                       {sortConfig?.key === "response_size" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -1167,11 +1159,10 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                       Status
                       {sortConfig?.key === "status" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -1267,7 +1258,7 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                                 }
                               >
                                 {log.crawler_type &&
-                                log.crawler_type.length > 12
+                                  log.crawler_type.length > 12
                                   ? log.crawler_type.trim().slice(0, 15)
                                   : log.crawler_type || "Unknown"}
                               </Badge>
@@ -1426,10 +1417,10 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                                                   log.status < 300
                                                   ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-lg px-4 py-2"
                                                   : log.status >= 300 &&
-                                                      log.status < 400
+                                                    log.status < 400
                                                     ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-lg px-4 py-2"
                                                     : log.status >= 400 &&
-                                                        log.status < 500
+                                                      log.status < 500
                                                       ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 text-lg px-4 py-2"
                                                       : log.status >= 500
                                                         ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 text-lg px-4 py-2"

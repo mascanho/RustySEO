@@ -1,6 +1,5 @@
-// @ts-nocheck
-import { useState, useEffect, useMemo } from "react";
-import { FileText, Server, Bot, PenBox } from "lucide-react";
+import { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import { FileText, Server, Bot, PenBox, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { Cell, Pie, PieChart, Tooltip } from "recharts";
@@ -11,7 +10,53 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { WidgetTable } from "./WidgetTables/WidgetCrawlersTable.tsx";
+// Lazy load components
+const WidgetTable = lazy(() =>
+  import("./WidgetTables/WidgetCrawlersTable.tsx").then((module) => ({
+    default: module.WidgetTable,
+  })),
+);
+const WidgetTableBing = lazy(() =>
+  import("./WidgetTables/WidgetCrawlersBingTable.tsx").then((module) => ({
+    default: module.WidgetTableBing,
+  })),
+);
+const WidgetTableOpenAi = lazy(() =>
+  import("./WidgetTables/WidgetCrawlersOpenAITable.tsx").then((module) => ({
+    default: module.WidgetTableOpenAi,
+  })),
+);
+const WidgetTableClaude = lazy(() =>
+  import("./WidgetTables/WidgetCrawlersClaudeTable.tsx").then((module) => ({
+    default: module.WidgetTableClaude,
+  })),
+);
+const WidgetContentTable = lazy(() =>
+  import("./WidgetTables/WidgetContentTable.tsx").then((module) => ({
+    default: module.WidgetContentTable,
+  })),
+);
+const WidgetFileType = lazy(() =>
+  import("./WidgetTables/WidgetFileType.tsx").then((module) => ({
+    default: module.WidgetFileType,
+  })),
+);
+const WidgetUserAgentsTable = lazy(() =>
+  import("./WidgetTables/WidgetUserAgentsTable.tsx").then((module) => ({
+    default: module.WidgetUserAgentsTable,
+  })),
+);
+const WidgetReferrersTable = lazy(() =>
+  import("./WidgetTables/WidgetReferrersTable.tsx").then((module) => ({
+    default: module.WidgetReferrersTable,
+  })),
+);
+const WidgetStatusCodesTable = lazy(() =>
+  import("./WidgetTables/WidgetStatusCodesTable.tsx").then((module) => ({
+    default: module.WidgetStatusCodesTable,
+  })),
+);
+
 import { Tabs } from "@mantine/core";
 
 import { useCurrentLogs } from "@/store/logFilterStore";
@@ -24,18 +69,12 @@ import {
 } from "@/components/ui/popover";
 import PopOverParsedLogs from "./PopOverParsedLogs";
 import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
-import { WidgetTableBing } from "./WidgetTables/WidgetCrawlersBingTable.tsx";
-import { WidgetTableOpenAi } from "./WidgetTables/WidgetCrawlersOpenAITable.tsx";
-import { WidgetTableClaude } from "./WidgetTables/WidgetCrawlersClaudeTable.tsx";
-import { WidgetContentTable } from "./WidgetTables/WidgetContentTable.tsx";
-import { WidgetFileType } from "./WidgetTables/WidgetFileType.tsx";
+
 import { GiPoliceOfficerHead } from "react-icons/gi";
-import { WidgetUserAgentsTable } from "./WidgetTables/WidgetUserAgentsTable.tsx";
-import { WidgetReferrersTable } from "./WidgetTables/WidgetReferrersTable.tsx";
+
 import { GiHypersonicBolt } from "react-icons/gi";
 import { categorizeUserAgent } from "./WidgetTables/helpers/useCategoriseUserAgents.ts";
 import { categorizeReferrer } from "./WidgetTables/helpers/useCategoriseReferrer.ts";
-import { WidgetStatusCodesTable } from "./WidgetTables/WidgetStatusCodesTable.tsx";
 
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
@@ -67,6 +106,13 @@ const getStatusText = (code) => {
   };
   return codes[code] || "";
 };
+
+const FallbackLoader = () => (
+  <div className="flex flex-col items-center justify-center h-96 w-full">
+    <Loader2 className="h-10 w-10 animate-spin text-brand-bright" />
+    <p className="mt-4 text-sm text-gray-500 font-medium">Loading component...</p>
+  </div>
+);
 
 export default function WidgetLogs() {
   const [activeTab, setActiveTab] = useState("Filetypes");
@@ -173,12 +219,12 @@ export default function WidgetLogs() {
     () =>
       overview?.totals
         ? Object.entries(overview.totals)
-            .filter(([_, value]) => value > 0)
-            .map(([name, value]) => ({
-              name: name.charAt(0).toUpperCase() + name.slice(1),
-              value,
-            }))
-            .sort((a, b) => b.value - a.value)
+          .filter(([_, value]) => value > 0)
+          .map(([name, value]) => ({
+            name: name.charAt(0).toUpperCase() + name.slice(1),
+            value,
+          }))
+          .sort((a, b) => b.value - a.value)
         : [],
     [overview],
   );
@@ -384,11 +430,10 @@ export default function WidgetLogs() {
           <button
             key={label}
             onClick={() => setActiveTab(label)}
-            className={`flex items-center space-x-1 px-4 py-1 text-xs rounded-sm font-medium transition-colors ${
-              activeTab === label
+            className={`flex items-center space-x-1 px-4 py-1 text-xs rounded-sm font-medium transition-colors ${activeTab === label
                 ? "bg-brand-bright text-white"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300"
-            }`}
+              }`}
           >
             {icon}
             <span>{label}</span>
@@ -450,13 +495,12 @@ export default function WidgetLogs() {
           </PieChart>
 
           <div
-            className={`grid gap-2 w-full max-w-2xl pl-4 ${
-              activeTab === "User Agents" || activeTab === "Referrers"
+            className={`grid gap-2 w-full max-w-2xl pl-4 ${activeTab === "User Agents" || activeTab === "Referrers"
                 ? "grid-cols-5 max-w-6xl"
                 : activeTab === "Status Codes"
                   ? "grid-cols-4 max-w-xl"
                   : "grid-cols-3"
-            }`}
+              }`}
           >
             {chartData.map((entry, idx) => (
               <Dialog
@@ -486,141 +530,143 @@ export default function WidgetLogs() {
 
                 {/* SINGLE DialogContent with conditional rendering */}
                 <DialogContent className="max-w-11/12 w-11/12  dark:text-white dark:border-brand-bright dark:bg-brand-darker max-h-[90vh] overflow-hidden">
-                  {activeTab === "Filetypes" ? (
-                    <WidgetFileType
-                      data={overview}
-                      entries={entries}
-                      chartData={chartData}
-                      selectedFileType={entry?.name}
-                    />
-                  ) : activeTab === "Status Codes" ? (
-                    <WidgetStatusCodesTable
-                      data={overview}
-                      entries={currentLogs}
-                      segment={entry?.name}
-                    />
-                  ) : activeTab === "Referrers" ? (
-                    <WidgetReferrersTable
-                      data={overview}
-                      entries={currentLogs}
-                      segment={entry?.name === "Other" ? "all" : entry?.name}
-                    />
-                  ) : activeTab === "Content" ? (
-                    <Tabs defaultValue="logs" className="h-full">
-                      <Tabs.List>
-                        <Tabs.Tab value="overview">Overview</Tabs.Tab>
-                        <Tabs.Tab value="logs">URLs</Tabs.Tab>
-                      </Tabs.List>
-                      <Tabs.Panel value="overview" className="h-full">
-                        <section className="h-[740px] flex flex-col justify-between">
-                          <div>
-                            <DialogHeader>
-                              <DialogTitle className="mt-4">
-                                Segment Breakdown:{" "}
-                                <span className="text-brand-bright">
-                                  {entry.name}
-                                </span>
-                              </DialogTitle>
-                            </DialogHeader>
-                            <div className="pt-8 space-y-1">
-                              <h3 className="font-medium dark:text-white/50 text-black/50">
-                                Paths in this segment:
-                              </h3>
-                              <div className="max-h-60 overflow-y-auto space-y-1">
-                                {entry.paths &&
-                                  Object.entries(entry.paths).map(
-                                    ([path, count]) => (
-                                      <div
-                                        key={path}
-                                        className="flex pt-2 justify-between text-sm p-1 rounded-md bg-brand-bright/10 dark:bg-slate-800/50 px-2"
-                                      >
-                                        <span className="font-mono text-xs text-brand-bright">
-                                          {path}
-                                        </span>
-                                        <span className="font-medium text-brand-bright">
-                                          {count.toLocaleString()}
-                                        </span>
-                                      </div>
-                                    ),
-                                  )}
+                  <Suspense fallback={<FallbackLoader />}>
+                    {activeTab === "Filetypes" ? (
+                      <WidgetFileType
+                        data={overview}
+                        entries={entries}
+                        chartData={chartData}
+                        selectedFileType={entry?.name}
+                      />
+                    ) : activeTab === "Status Codes" ? (
+                      <WidgetStatusCodesTable
+                        data={overview}
+                        entries={currentLogs}
+                        segment={entry?.name}
+                      />
+                    ) : activeTab === "Referrers" ? (
+                      <WidgetReferrersTable
+                        data={overview}
+                        entries={currentLogs}
+                        segment={entry?.name === "Other" ? "all" : entry?.name}
+                      />
+                    ) : activeTab === "Content" ? (
+                      <Tabs defaultValue="logs" className="h-full">
+                        <Tabs.List>
+                          <Tabs.Tab value="overview">Overview</Tabs.Tab>
+                          <Tabs.Tab value="logs">URLs</Tabs.Tab>
+                        </Tabs.List>
+                        <Tabs.Panel value="overview" className="h-full">
+                          <section className="h-[740px] flex flex-col justify-between">
+                            <div>
+                              <DialogHeader>
+                                <DialogTitle className="mt-4">
+                                  Segment Breakdown:{" "}
+                                  <span className="text-brand-bright">
+                                    {entry.name}
+                                  </span>
+                                </DialogTitle>
+                              </DialogHeader>
+                              <div className="pt-8 space-y-1">
+                                <h3 className="font-medium dark:text-white/50 text-black/50">
+                                  Paths in this segment:
+                                </h3>
+                                <div className="max-h-60 overflow-y-auto space-y-1">
+                                  {entry.paths &&
+                                    Object.entries(entry.paths).map(
+                                      ([path, count]) => (
+                                        <div
+                                          key={path}
+                                          className="flex pt-2 justify-between text-sm p-1 rounded-md bg-brand-bright/10 dark:bg-slate-800/50 px-2"
+                                        >
+                                          <span className="font-mono text-xs text-brand-bright">
+                                            {path}
+                                          </span>
+                                          <span className="font-medium text-brand-bright">
+                                            {count.toLocaleString()}
+                                          </span>
+                                        </div>
+                                      ),
+                                    )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <div className="flex justify-between font-bold pt-4">
-                            <span className="text-black/50 dark:text-white/50">
-                              Total Entries:
-                            </span>
-                            <span className="text-brand-bright pr-1">
+                            <div className="flex justify-between font-bold pt-4">
+                              <span className="text-black/50 dark:text-white/50">
+                                Total Entries:
+                              </span>
+                              <span className="text-brand-bright pr-1">
+                                {entry.value.toLocaleString()}
+                              </span>
+                            </div>
+                          </section>
+                        </Tabs.Panel>
+                        <Tabs.Panel value="logs" className="h-full">
+                          <WidgetContentTable
+                            data={overview}
+                            entries={entries}
+                            segment={entry?.name}
+                          />
+                        </Tabs.Panel>
+                      </Tabs>
+                    ) : activeTab === "User Agents" ? (
+                      <WidgetUserAgentsTable
+                        data={overview}
+                        entries={currentLogs}
+                        segment={entry?.name === "Other" ? "all" : entry?.name}
+                      />
+                    ) : ["Google", "Bing", "Openai", "Claude"].includes(
+                      entry?.name,
+                    ) ? (
+                      <Tabs defaultValue="overview" className="h-full">
+                        <Tabs.List>
+                          <Tabs.Tab value="overview">Frequency Table</Tabs.Tab>
+                        </Tabs.List>
+                        <Tabs.Panel value="overview" className="h-full">
+                          {entry?.name === "Google" && (
+                            <WidgetTable data={overview} />
+                          )}
+                          {entry?.name === "Bing" && (
+                            <WidgetTableBing data={overview} />
+                          )}
+                          {entry?.name === "Openai" && (
+                            <WidgetTableOpenAi data={overview} />
+                          )}
+                          {entry?.name === "Claude" && (
+                            <WidgetTableClaude data={overview} />
+                          )}
+                        </Tabs.Panel>
+                      </Tabs>
+                    ) : activeTab === "Crawlers" ? (
+                      <>
+                        <DialogHeader>
+                          <DialogTitle>{entry.name} Details</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div className="flex justify-between">
+                            <span>Total Requests:</span>
+                            <span className="font-medium">
                               {entry.value.toLocaleString()}
                             </span>
                           </div>
-                        </section>
-                      </Tabs.Panel>
-                      <Tabs.Panel value="logs" className="h-full">
-                        <WidgetContentTable
-                          data={overview}
-                          entries={entries}
-                          segment={entry?.name}
-                        />
-                      </Tabs.Panel>
-                    </Tabs>
-                  ) : activeTab === "User Agents" ? (
-                    <WidgetUserAgentsTable
-                      data={overview}
-                      entries={currentLogs}
-                      segment={entry?.name === "Other" ? "all" : entry?.name}
-                    />
-                  ) : ["Google", "Bing", "Openai", "Claude"].includes(
-                      entry?.name,
-                    ) ? (
-                    <Tabs defaultValue="overview" className="h-full">
-                      <Tabs.List>
-                        <Tabs.Tab value="overview">Frequency Table</Tabs.Tab>
-                      </Tabs.List>
-                      <Tabs.Panel value="overview" className="h-full">
-                        {entry?.name === "Google" && (
-                          <WidgetTable data={overview} />
-                        )}
-                        {entry?.name === "Bing" && (
-                          <WidgetTableBing data={overview} />
-                        )}
-                        {entry?.name === "Openai" && (
-                          <WidgetTableOpenAi data={overview} />
-                        )}
-                        {entry?.name === "Claude" && (
-                          <WidgetTableClaude data={overview} />
-                        )}
-                      </Tabs.Panel>
-                    </Tabs>
-                  ) : activeTab === "Crawlers" ? (
-                    <>
-                      <DialogHeader>
-                        <DialogTitle>{entry.name} Details</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="flex justify-between">
-                          <span>Total Requests:</span>
-                          <span className="font-medium">
-                            {entry.value.toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Percentage:</span>
-                          <span className="font-medium">
-                            {Math.round(
-                              (entry.value /
-                                chartData.reduce(
-                                  (sum, item) => sum + item.value,
-                                  0,
-                                )) *
+                          <div className="flex justify-between">
+                            <span>Percentage:</span>
+                            <span className="font-medium">
+                              {Math.round(
+                                (entry.value /
+                                  chartData.reduce(
+                                    (sum, item) => sum + item.value,
+                                    0,
+                                  )) *
                                 100,
-                            )}
-                            %
-                          </span>
+                              )}
+                              %
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    </>
-                  ) : null}
+                      </>
+                    ) : null}
+                  </Suspense>
                 </DialogContent>
               </Dialog>
             ))}

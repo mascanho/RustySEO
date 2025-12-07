@@ -16,6 +16,7 @@ import {
   Package,
   RefreshCw,
   Search,
+  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,7 @@ import { CardContent } from "@/components/ui/card";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
+import { useAsyncLogFilter } from "./hooks/useAsyncLogFilter";
 
 interface LogEntry {
   browser: string;
@@ -123,40 +125,10 @@ interface WidgetTableProps {
 }
 
 const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
-  const [initialLogs, setInitialLogs] = useState<LogEntry[]>([]);
-  const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const [itemsPerPage, setItemsPerPage] = useState<number>(100);
-  const [methodFilter, setMethodFilter] = useState<string[]>([]);
-  const [fileTypeFilter, setFileTypeFilter] = useState<string[]>([]);
-  const [botFilter, setBotFilter] = useState<string | null>("all");
-  const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
-  const [sortConfig, setSortConfig] = useState<{
-    key: string;
-    direction: "ascending" | "descending";
-  } | null>({ key: "frequency", direction: "descending" });
-  const [expandedRow, setExpandedRow] = useState<number | null>(null);
-  const [domain, setDomain] = useState("");
-  const [showOnTables, setShowOnTables] = useState(false);
-  const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const storedDomain = localStorage.getItem("domain");
-      if (storedDomain) {
-        setDomain(storedDomain);
-      }
-
-      const isShowing = localStorage.getItem("showOnTables");
-      if (isShowing === "true") {
-        setShowOnTables(true);
-      }
-    }
-  }, [data.length]);
-
-  useEffect(() => {
-    if (!data?.totals?.bot_stats?.google?.page_frequencies) return;
+  // Transform data into logs (memoized)
+  const initialLogs = useMemo(() => {
+    if (!data?.totals?.bot_stats?.google?.page_frequencies) return [];
+    if (!isReady) return [];
 
     let logs: LogEntry[] = [];
     const pageStatus = data.totals.bot_stats.google.page_status_codes || {};
@@ -173,86 +145,102 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
         }
       },
     );
+    return logs;
+  }, [data, isReady]);
 
-    setInitialLogs(logs);
-    setFilteredLogs(logs);
-  }, [data]);
+  // useAsyncLogFilter implementation
+  const lowerCaseSearch = useMemo(
+    () => (searchTerm ? searchTerm.toLowerCase() : ""),
+    [searchTerm],
+  );
 
-  useEffect(() => {
-    let result = [...initialLogs];
-
-    if (searchTerm) {
-      const lowerCaseSearch = searchTerm.toLowerCase();
-      result = result.filter(
-        (log) =>
+  const filterFn = useCallback(
+    (log: LogEntry) => {
+      // 1. Search
+      if (lowerCaseSearch) {
+        const matches =
           log.ip.toLowerCase().includes(lowerCaseSearch) ||
           log.path.toLowerCase().includes(lowerCaseSearch) ||
           log.user_agent.toLowerCase().includes(lowerCaseSearch) ||
-          (log.referer && log.referer.toLowerCase().includes(lowerCaseSearch)),
-      );
-    }
-
-    if (methodFilter.length > 0) {
-      result = result.filter((log) => methodFilter.includes(log.method));
-    }
-
-    if (fileTypeFilter.length > 0) {
-      result = result.filter((log) => fileTypeFilter.includes(log.file_type));
-    }
-
-    if (botFilter !== null) {
-      if (botFilter === "bot") {
-        result = result.filter((log) => log.crawler_type !== "Human");
-      } else if (botFilter === "Human") {
-        result = result.filter((log) => log.crawler_type === "Human");
+          (log.referer && log.referer.toLowerCase().includes(lowerCaseSearch));
+        if (!matches) return false;
       }
-    }
 
-    if (verifiedFilter !== null) {
-      result = result.filter((log) => log.verified === verifiedFilter);
-    }
-
-    if (botTypeFilter !== null) {
-      if (botTypeFilter === "Mobile") {
-        result = result.filter((log) => log.user_agent.includes("Mobile"));
-      } else if (botTypeFilter === "Desktop") {
-        result = result.filter((log) => !log.user_agent.includes("Mobile"));
+      // 2. Method
+      if (methodFilter.length > 0) {
+        if (!methodFilter.includes(log.method)) return false;
       }
-    }
 
-    if (sortConfig) {
-      result.sort((a, b) => {
-        const aValue = a[sortConfig.key as keyof LogEntry];
-        const bValue = b[sortConfig.key as keyof LogEntry];
+      // 3. File Type
+      if (fileTypeFilter.length > 0) {
+        if (!fileTypeFilter.includes(log.file_type)) return false;
+      }
 
-        if (typeof aValue === "string" && typeof bValue === "string") {
-          return sortConfig.direction === "ascending"
-            ? aValue.localeCompare(bValue)
-            : bValue.localeCompare(aValue);
-        }
+      // 4. Bot
+      if (botFilter !== null) {
+        if (botFilter === "bot" && log.crawler_type === "Human") return false;
+        if (botFilter === "Human" && log.crawler_type !== "Human") return false;
+      }
 
-        if (aValue < bValue) {
-          return sortConfig.direction === "ascending" ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === "ascending" ? 1 : -1;
-        }
-        return 0;
-      });
-    }
+      // 5. Verified
+      if (verifiedFilter !== null) {
+        if (log.verified !== verifiedFilter) return false;
+      }
 
-    setFilteredLogs(result);
-    setCurrentPage(1);
-  }, [
-    searchTerm,
-    methodFilter,
-    botFilter,
-    verifiedFilter,
-    sortConfig,
+      // 6. Bot Type
+      if (botTypeFilter !== null) {
+        if (
+          botTypeFilter === "Mobile" &&
+          !log.user_agent.includes("Mobile")
+        )
+          return false;
+        if (
+          botTypeFilter === "Desktop" &&
+          log.user_agent.includes("Mobile")
+        )
+          return false;
+      }
+
+      return true;
+    },
+    [
+      lowerCaseSearch,
+      methodFilter,
+      fileTypeFilter,
+      botFilter,
+      verifiedFilter,
+      botTypeFilter,
+    ],
+  );
+
+  const sortFn = useCallback(
+    (a: LogEntry, b: LogEntry) => {
+      if (!sortConfig) return 0;
+      const { key, direction } = sortConfig;
+      const aValue = a[key as keyof LogEntry];
+      const bValue = b[key as keyof LogEntry];
+
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return direction === "ascending"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return direction === "ascending" ? aValue - bValue : bValue - aValue;
+      }
+      if (aValue < bValue) return direction === "ascending" ? -1 : 1;
+      if (aValue > bValue) return direction === "ascending" ? 1 : -1;
+      return 0;
+    },
+    [sortConfig],
+  );
+
+  const { filteredData: filteredLogs, isProcessing } = useAsyncLogFilter(
     initialLogs,
-    fileTypeFilter,
-    botTypeFilter,
-  ]);
+    filterFn,
+    sortConfig,
+    sortFn,
+  );
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -278,7 +266,6 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     setVerifiedFilter(null);
     setSortConfig(null);
     setExpandedRow(null);
-    setFilteredLogs(initialLogs);
     setBotTypeFilter(null);
     setFileTypeFilter([]);
 
@@ -376,8 +363,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     () =>
       initialLogs.length > 0
         ? initialLogs.reduce((oldest, log) =>
-            new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-          )
+          new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+        )
         : null,
     [initialLogs],
   );
@@ -386,8 +373,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     () =>
       initialLogs.length > 0
         ? initialLogs.reduce((newest, log) =>
-            new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-          )
+          new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+        )
         : null,
     [initialLogs],
   );
@@ -446,6 +433,22 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     },
     [elapsedTimeMs, oldestEntry, newestEntry],
   );
+
+  if (!isReady || (isProcessing && initialLogs.length > 0)) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full min-h-[400px] space-y-4">
+        <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+        <div className="text-center">
+          <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
+            Loading crawler data...
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            This may take a moment
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 h-full pb-0 -mb-4">
@@ -559,11 +562,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       Path
                       {sortConfig?.key === "path" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -574,11 +576,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       File Type
                       {sortConfig?.key === "file_type" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -589,11 +590,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       Size
                       {sortConfig?.key === "response_size" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -604,11 +604,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       Total Hits
                       {sortConfig?.key === "frequency" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -703,11 +702,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                             <div className="flex items-center h-full relative">
                               <Badge
                                 variant="outline"
-                                className={`flex items-center align-middle absolute justify-center ${
-                                  log.crawler_type !== "Human"
-                                    ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
-                                    : "bg-green-100 text-green-800 border-green-200"
-                                }`}
+                                className={`flex items-center align-middle absolute justify-center ${log.crawler_type !== "Human"
+                                  ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
+                                  : "bg-green-100 text-green-800 border-green-200"
+                                  }`}
                               >
                                 {log.crawler_type.length > 10
                                   ? log.crawler_type.trim().slice(0, 10)
@@ -897,32 +895,32 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                     {/* Other Status Codes */}
                                     {(log.status_codes?.other_count || 0) >
                                       0 && (
-                                      <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
-                                        <span className="font-semibold text-gray-600 dark:text-gray-400">
-                                          Other Codes:{" "}
-                                          {log.status_codes?.other_count || 0}
-                                        </span>
-                                        <div className="flex flex-wrap gap-1 mt-1">
-                                          {Object.entries(
-                                            log.status_codes?.counts || {},
-                                          )
-                                            .filter(([code]) => {
-                                              const status = parseInt(code);
-                                              return (
-                                                status < 200 || status >= 600
-                                              );
-                                            })
-                                            .map(([code, count]) => (
-                                              <span
-                                                key={code}
-                                                className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs"
-                                              >
-                                                {code}: {count}
-                                              </span>
-                                            ))}
+                                        <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
+                                          <span className="font-semibold text-gray-600 dark:text-gray-400">
+                                            Other Codes:{" "}
+                                            {log.status_codes?.other_count || 0}
+                                          </span>
+                                          <div className="flex flex-wrap gap-1 mt-1">
+                                            {Object.entries(
+                                              log.status_codes?.counts || {},
+                                            )
+                                              .filter(([code]) => {
+                                                const status = parseInt(code);
+                                                return (
+                                                  status < 200 || status >= 600
+                                                );
+                                              })
+                                              .map(([code, count]) => (
+                                                <span
+                                                  key={code}
+                                                  className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs"
+                                                >
+                                                  {code}: {count}
+                                                </span>
+                                              ))}
+                                          </div>
                                         </div>
-                                      </div>
-                                    )}
+                                      )}
                                   </div>
                                 </div>
                               </div>

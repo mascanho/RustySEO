@@ -23,6 +23,7 @@ import {
   XCircle,
   Users,
   Globe,
+  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,7 @@ import { Badge } from "@/components/ui/badge";
 import { CardContent } from "@/components/ui/card";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { useAsyncLogFilter } from "./hooks/useAsyncLogFilter";
 
 interface LogEntry {
   browser: string;
@@ -260,6 +262,15 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
   >([]);
   const [availableUserAgentCategories, setAvailableUserAgentCategories] =
     useState<string[]>([]);
+  const [isReady, setIsReady] = useState(false);
+
+  // Use deferred rendering to unblock initial paint
+  useEffect(() => {
+    const timer = requestAnimationFrame(() => {
+      setIsReady(true);
+    });
+    return () => cancelAnimationFrame(timer);
+  }, []);
 
   useEffect(() => {
     const tax = localStorage.getItem("taxonomies");
@@ -364,150 +375,179 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
     return Array.from(agents).sort();
   }, [entries]);
 
-  // Filter logs to show URLs/paths for selected user agent categories
-  const filteredLogs = useMemo(() => {
-    if (!entries || entries.length === 0) return [];
+  // useAsyncLogFilter implementation
+  const activeSegmentTaxonomy = useMemo(
+    () =>
+      segment && segment !== "all"
+        ? taxonomies.find((t) => t.name === segment)
+        : null,
+    [segment, taxonomies],
+  );
 
-    let result = [...entries];
+  const activeSelectedTaxonomyObj = useMemo(
+    () =>
+      selectedTaxonomy !== "all"
+        ? taxonomies.find((t) => t.id === selectedTaxonomy)
+        : null,
+    [selectedTaxonomy, taxonomies],
+  );
 
-    // Apply segment filter first (from props)
-    if (segment && segment !== "all") {
-      const taxonomy = taxonomies.find((tax) => tax.name === segment);
-      if (taxonomy) {
-        result = result.filter((log) =>
-          pathMatchesTaxonomy(log.path, taxonomy),
-        );
+  const lowerCaseSearch = useMemo(
+    () => (searchTerm ? searchTerm.toLowerCase() : ""),
+    [searchTerm],
+  );
+
+  const lowerCaseFileTypeFilters = useMemo(
+    () => fileTypeFilter.map((t) => t.toLowerCase()),
+    [fileTypeFilter],
+  );
+
+  const filterFn = useCallback(
+    (log: LogEntry) => {
+      // 1. Initial Checks
+      if (activeSegmentTaxonomy) {
+        let match = false;
+        for (const pathRule of activeSegmentTaxonomy.paths) {
+          if (
+            (pathRule.matchType === "exactMatch" &&
+              log.path === pathRule.path) ||
+            (pathRule.matchType === "contains" &&
+              log.path.includes(pathRule.path))
+          ) {
+            match = true;
+            break;
+          }
+        }
+        if (!match) return false;
       }
-    }
 
-    // Apply taxonomy filter (user selection)
-    if (selectedTaxonomy !== "all") {
-      const taxonomy = taxonomies.find((tax) => tax.id === selectedTaxonomy);
-      if (taxonomy) {
-        result = result.filter((log) =>
-          pathMatchesTaxonomy(log.path, taxonomy),
-        );
+      if (activeSelectedTaxonomyObj) {
+        let match = false;
+        for (const pathRule of activeSelectedTaxonomyObj.paths) {
+          if (
+            (pathRule.matchType === "exactMatch" &&
+              log.path === pathRule.path) ||
+            (pathRule.matchType === "contains" &&
+              log.path.includes(pathRule.path))
+          ) {
+            match = true;
+            break;
+          }
+        }
+        if (!match) return false;
       }
-    }
 
-    // Apply user agent category filter
-    if (userAgentCategoryFilter.length > 0) {
-      result = result.filter((log) => {
+      // 2. User Agent Category
+      if (userAgentCategoryFilter.length > 0) {
         if (!log.user_agent) return false;
         const category = categorizeUserAgent(log.user_agent);
-        return userAgentCategoryFilter.some(
-          (filterCategory) => filterCategory === category,
-        );
-      });
-    }
+        if (!userAgentCategoryFilter.some((c) => c === category)) return false;
+      }
 
-    // Apply user agent filter (specific user agents)
-    if (userAgentFilter.length > 0) {
-      result = result.filter((log) =>
-        userAgentFilter.some((agent) => log.user_agent?.includes(agent)),
-      );
-    }
+      // 3. User Agent (Specific)
+      if (userAgentFilter.length > 0) {
+        if (
+          !userAgentFilter.some((agent) =>
+            log.user_agent?.includes(agent),
+          )
+        )
+          return false;
+      }
 
-    if (searchTerm) {
-      const lowerCaseSearch = searchTerm.toLowerCase();
-      result = result.filter(
-        (log) =>
+      // 4. Search
+      if (lowerCaseSearch) {
+        const matches =
           log.ip.toLowerCase().includes(lowerCaseSearch) ||
           log.path.toLowerCase().includes(lowerCaseSearch) ||
           (log.user_agent &&
             log.user_agent.toLowerCase().includes(lowerCaseSearch)) ||
-          (log.referer && log.referer.toLowerCase().includes(lowerCaseSearch)),
-      );
-    }
-
-    if (methodFilter.length > 0) {
-      result = result.filter((log) => methodFilter.includes(log.method));
-    }
-
-    if (fileTypeFilter.length > 0) {
-      result = result.filter((log) =>
-        fileTypeFilter.some(
-          (filterType) =>
-            filterType.toLowerCase() === (log.file_type || "").toLowerCase(),
-        ),
-      );
-    }
-
-    if (verifiedFilter !== null) {
-      result = result.filter((log) => log.verified === verifiedFilter);
-    }
-
-    if (botTypeFilter !== null) {
-      if (botTypeFilter === "Mobile") {
-        result = result.filter(
-          (log) => log.user_agent && log.user_agent.includes("Mobile"),
-        );
-      } else if (botTypeFilter === "Desktop") {
-        result = result.filter(
-          (log) => !log.user_agent || !log.user_agent.includes("Mobile"),
-        );
+          (log.referer && log.referer.toLowerCase().includes(lowerCaseSearch));
+        if (!matches) return false;
       }
-    }
 
-    // Apply status code filter
-    if (statusFilter.length > 0) {
-      result = result.filter((log) => {
-        if (!log.status) return false;
-        return statusFilter.includes(log.status);
-      });
-    }
+      // 5. Method
+      if (methodFilter.length > 0) {
+        if (!methodFilter.includes(log.method)) return false;
+      }
 
-    // Apply crawler type filter
-    if (crawlerTypeFilter.length > 0) {
-      result = result.filter((log) =>
-        crawlerTypeFilter.includes(log.crawler_type),
-      );
-    }
+      // 6. File Type
+      if (fileTypeFilter.length > 0) {
+        const logFileType = (log.file_type || "").toLowerCase();
+        if (!lowerCaseFileTypeFilters.includes(logFileType)) return false;
+      }
 
-    if (sortConfig) {
-      result.sort((a, b) => {
-        const aValue = a[sortConfig.key as keyof LogEntry];
-        const bValue = b[sortConfig.key as keyof LogEntry];
+      // 7. Verified
+      if (verifiedFilter !== null) {
+        if (log.verified !== verifiedFilter) return false;
+      }
 
-        if (typeof aValue === "string" && typeof bValue === "string") {
-          return sortConfig.direction === "ascending"
-            ? aValue.localeCompare(bValue)
-            : bValue.localeCompare(aValue);
-        }
+      // 8. Bot Type
+      if (botTypeFilter !== null) {
+        if (botTypeFilter === "Mobile" && log.user_agent && !log.user_agent.includes("Mobile"))
+          return false;
+        // Note: original logic for "Desktop" was checking !includes("Mobile")
+        // Wait, original logic lines 456-458:
+        // result = result.filter(log => !log.user_agent || !log.user_agent.includes("Mobile"))
+        if (botTypeFilter === "Desktop" && log.user_agent && log.user_agent.includes("Mobile"))
+          return false;
+      }
 
-        if (typeof aValue === "number" && typeof bValue === "number") {
-          return sortConfig.direction === "ascending"
-            ? aValue - bValue
-            : bValue - aValue;
-        }
+      // 9. Status
+      if (statusFilter.length > 0) {
+        if (!log.status || !statusFilter.includes(log.status)) return false;
+      }
 
-        if (aValue < bValue) {
-          return sortConfig.direction === "ascending" ? -1 : 1;
-        }
-        if (aValue > bValue) {
-          return sortConfig.direction === "ascending" ? 1 : -1;
-        }
-        return 0;
-      });
-    }
+      // 10. Crawler Type
+      if (crawlerTypeFilter.length > 0) {
+        if (!crawlerTypeFilter.includes(log.crawler_type)) return false;
+      }
 
-    return result;
-  }, [
+      return true;
+    },
+    [
+      activeSegmentTaxonomy,
+      activeSelectedTaxonomyObj,
+      userAgentCategoryFilter,
+      userAgentFilter,
+      lowerCaseSearch,
+      methodFilter,
+      fileTypeFilter,
+      lowerCaseFileTypeFilters,
+      verifiedFilter,
+      botTypeFilter,
+      statusFilter,
+      crawlerTypeFilter,
+    ],
+  );
+
+  const sortFn = useCallback(
+    (a: LogEntry, b: LogEntry) => {
+      if (!sortConfig) return 0;
+      const { key, direction } = sortConfig;
+      const aValue = a[key as keyof LogEntry];
+      const bValue = b[key as keyof LogEntry];
+
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return direction === "ascending"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return direction === "ascending" ? aValue - bValue : bValue - aValue;
+      }
+      if (aValue < bValue) return direction === "ascending" ? -1 : 1;
+      if (aValue > bValue) return direction === "ascending" ? 1 : -1;
+      return 0;
+    },
+    [sortConfig],
+  );
+
+  const { filteredData: filteredLogs, isProcessing } = useAsyncLogFilter(
     entries,
-    segment,
-    searchTerm,
-    methodFilter,
-    verifiedFilter,
+    filterFn,
     sortConfig,
-    fileTypeFilter,
-    userAgentCategoryFilter,
-    userAgentFilter,
-    botTypeFilter,
-    selectedTaxonomy,
-    taxonomies,
-    statusFilter,
-    crawlerTypeFilter,
-  ]);
+    sortFn,
+  );
 
   // Reset page when filters change
   useEffect(() => {
@@ -643,8 +683,8 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
     () =>
       entries.length > 0
         ? entries.reduce((oldest, log) =>
-            new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-          )
+          new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+        )
         : null,
     [entries],
   );
@@ -653,8 +693,8 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
     () =>
       entries.length > 0
         ? entries.reduce((newest, log) =>
-            new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-          )
+          new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+        )
         : null,
     [entries],
   );
@@ -719,6 +759,22 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
 
   // Get current segment taxonomy for display
   const currentSegmentTaxonomy = taxonomies.find((tax) => tax.name === segment);
+
+  if (!isReady || (isProcessing && entries.length > 0)) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full min-h-[400px] space-y-4">
+        <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
+        <div className="text-center">
+          <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
+            Loading user agent data...
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+            This may take a moment for large datasets
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 h-full pb-0 -mb-4">
@@ -998,17 +1054,16 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <div
-                      className={`w-3 h-3 rounded-full ${
-                        statusCode >= 200 && statusCode < 300
-                          ? "bg-green-500"
-                          : statusCode >= 300 && statusCode < 400
-                            ? "bg-blue-500"
-                            : statusCode >= 400 && statusCode < 500
-                              ? "bg-yellow-500"
-                              : statusCode >= 500
-                                ? "bg-red-500"
-                                : "bg-gray-500"
-                      }`}
+                      className={`w-3 h-3 rounded-full ${statusCode >= 200 && statusCode < 300
+                        ? "bg-green-500"
+                        : statusCode >= 300 && statusCode < 400
+                          ? "bg-blue-500"
+                          : statusCode >= 400 && statusCode < 500
+                            ? "bg-yellow-500"
+                            : statusCode >= 500
+                              ? "bg-red-500"
+                              : "bg-gray-500"
+                        }`}
                     />
                     <span>{statusCode}</span>
                   </div>
@@ -1121,11 +1176,10 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                       Timestamp
                       {sortConfig?.key === "timestamp" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -1136,11 +1190,10 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                       Path
                       {sortConfig?.key === "path" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -1151,11 +1204,10 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                       User Agent
                       {sortConfig?.key === "user_agent" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -1168,11 +1220,10 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                       Size
                       {sortConfig?.key === "response_size" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -1183,11 +1234,10 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                       Status
                       {sortConfig?.key === "status" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            ? "rotate-180"
+                            : ""
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -1284,7 +1334,7 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                                 }
                               >
                                 {log.crawler_type &&
-                                log.crawler_type.length > 12
+                                  log.crawler_type.length > 12
                                   ? log.crawler_type.trim().slice(0, 15)
                                   : log.crawler_type || "Unknown"}
                               </Badge>
