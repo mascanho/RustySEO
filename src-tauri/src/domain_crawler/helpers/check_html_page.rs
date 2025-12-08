@@ -23,6 +23,29 @@ pub async fn is_html_page(body: &str, content_type: Option<&str>) -> bool {
         })
     };
 
-    // CONSIDER THE PAGE HTML ONLY IF BOTH THE HEADER AND BODY SUGGEST IT
-    is_html_header && is_html_body
+    // CONSIDER THE PAGE HTML IF EITHER THE HEADER OR BODY SUGGEST IT
+    // Relaxed check to avoid discarding pages with missing headers or partial bodies
+    is_html_header || is_html_body
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_is_html_page() {
+        // Valid header, valid body
+        assert!(is_html_page("<html><body></body></html>", Some("text/html")).await);
+
+        // Valid header, invalid body (should pass now)
+        assert!(is_html_page("not really html", Some("text/html")).await);
+
+        // Invalid header, valid body (should pass now)
+        assert!(is_html_page("<html><body></body></html>", Some("text/plain")).await);
+        assert!(is_html_page("<html><body></body></html>", None).await);
+
+        // Invalid header, invalid body
+        assert!(!is_html_page("not html", Some("text/plain")).await);
+        assert!(!is_html_page("not html", None).await);
+    }
 }

@@ -84,7 +84,7 @@ pub fn extract_internal_external_links(
          element| {
             if let Some(href) = element.value().attr("href") {
                 // Resolve the URL (handle relative and absolute URLs)
-                let url = resolve_url(href, base_url);
+                let full_url = resolve_url(href, base_url);
 
                 // Get the anchor text
                 let anchor_text = element.text().collect::<String>();
@@ -95,14 +95,14 @@ pub fn extract_internal_external_links(
                 let target = element.value().attr("target").map(|s| s.to_string());
 
                 // Classify as internal or external
-                if is_internal_link(&url, base_url) {
-                    internal_links.push(href.to_string());
+                if is_internal_link(&full_url, base_url) {
+                    internal_links.push(full_url.to_string());
                     internal_anchors.push(anchor_text);
                     internal_rels.push(rel);
                     internal_titles.push(title);
                     internal_targets.push(target);
                 } else {
-                    external_links.push(href.to_string());
+                    external_links.push(full_url.to_string());
                     external_anchors.push(anchor_text);
                     external_rels.push(rel);
                     external_titles.push(title);
@@ -110,7 +110,7 @@ pub fn extract_internal_external_links(
                 }
 
                 // Add the absolute URL to the list
-                absolute_links.push(url.to_string());
+                absolute_links.push(full_url.to_string());
             }
             (
                 internal_links,
@@ -175,6 +175,33 @@ fn resolve_url(href: &str, base_url: &Url) -> Url {
 /// # Returns
 /// `true` if the URL is internal, `false` otherwise.
 fn is_internal_link(url: &Url, base_url: &Url) -> bool {
-    url.domain()
-        .map_or(false, |domain| domain == base_url.domain().unwrap_or(""))
+    let base_domain = base_url.domain().unwrap_or("");
+    let url_domain = url.domain().unwrap_or("");
+    url_domain.ends_with(base_domain)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_internal_link() {
+        let base_url = Url::parse("https://example.com").unwrap();
+
+        // Same domain
+        let url1 = Url::parse("https://example.com/page").unwrap();
+        assert!(is_internal_link(&url1, &base_url));
+
+        // Subdomain (should be internal now)
+        let url2 = Url::parse("https://blog.example.com/post").unwrap();
+        assert!(is_internal_link(&url2, &base_url));
+
+        // External domain
+        let url3 = Url::parse("https://google.com").unwrap();
+        assert!(!is_internal_link(&url3, &base_url));
+
+        // Different TLD
+        let url4 = Url::parse("https://example.org").unwrap();
+        assert!(!is_internal_link(&url4, &base_url));
+    }
 }
