@@ -112,7 +112,7 @@ const FallbackLoader = () => (
   <div className="flex flex-col items-center justify-center h-96 w-full">
     <Loader2 className="h-10 w-10 animate-spin text-brand-bright" />
     <p className="mt-4 text-sm text-gray-500 font-medium">
-      Loading component...
+      Processing component...
     </p>
   </div>
 );
@@ -378,7 +378,7 @@ export default function WidgetLogs() {
   if (!overview) {
     return (
       <div className="bg-white shadow rounded-lg p-4 w-full h-64 flex items-center justify-center dark:bg-brand-darker">
-        <p className="text-gray-500 dark:text-gray-400">Loading data...</p>
+        <p className="text-gray-500 dark:text-gray-400">Processing data...</p>
       </div>
     );
   }
