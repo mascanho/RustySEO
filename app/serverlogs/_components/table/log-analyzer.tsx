@@ -906,18 +906,17 @@ export function LogAnalyzer() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[60px] text-center">#</TableHead>
-                    <TableHead className="cursor-pointer">
+                    <TableHead className="w-[140px] cursor-pointer">
                       <div className="flex space-x-2 items-center">
                         <span onClick={() => requestSort("ip")}>
                           IP Address
                         </span>
                         {sortConfig?.key === "ip" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${
-                              sortConfig.direction === "descending"
+                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                                 ? "rotate-180"
                                 : ""
-                            }`}
+                              }`}
                           />
                         )}
                         <FaEye
@@ -927,47 +926,44 @@ export function LogAnalyzer() {
                       </div>
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="w-[100px] cursor-pointer"
                       onClick={() => requestSort("method")}
                     >
                       Method
                       {sortConfig?.key === "method" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer w-[90px] text-left"
+                      className="w-[100px] cursor-pointer text-left"
                       onClick={() => requestSort("browser")}
                     >
                       Browser
                       {sortConfig?.key === "browser" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer w-[200px] text-left"
+                      className="w-[200px] cursor-pointer text-left"
                       onClick={() => requestSort("timestamp")}
                     >
                       Timestamp
                       {sortConfig?.key === "timestamp" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -978,65 +974,61 @@ export function LogAnalyzer() {
                       {showAgent ? "User Agent" : "Path"}
                       {sortConfig?.key === "path" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
-                    <TableHead className="w-[90px] text-left">
+                    <TableHead className="w-[100px] text-center">
                       Segment
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="w-[100px] cursor-pointer"
                       onClick={() => requestSort("file_type")}
                     >
                       File Type
                       {sortConfig?.key === "file_type" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="w-[100px] cursor-pointer"
                       onClick={() => requestSort("status")}
                     >
                       Status
                       {sortConfig?.key === "status" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
                     {!showAgent && (
                       <TableHead
-                        className="cursor-pointer"
+                        className="w-[100px] cursor-pointer"
                         onClick={() => requestSort("responseSize")}
                       >
                         Size
                         {sortConfig?.key === "responseSize" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${
-                              sortConfig.direction === "descending"
+                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                                 ? "rotate-180"
                                 : ""
-                            }`}
+                              }`}
                           />
                         )}
                       </TableHead>
                     )}
-                    <TableHead align="center" className="text-left w-[120px]">
+                    <TableHead align="center" className="text-center w-[150px]">
                       Crawler Type
                     </TableHead>
                   </TableRow>
@@ -1135,7 +1127,7 @@ function LogRow({
           {indexOfFirstItem + index + 1}
         </TableCell>
 
-        <TableCell className="w-fit align-middle">
+        <TableCell className="align-middle">
           <div className="flex items-center relative">
             <Waypoints
               onClick={(e) => {
@@ -1156,7 +1148,7 @@ function LogRow({
           </div>
         </TableCell>
 
-        <TableCell className="w-[60px] align-middle">
+        <TableCell className="align-middle">
           <Badge
             variant="outline"
             className={
@@ -1177,12 +1169,11 @@ function LogRow({
           className={`align-middle ${log?.browser === "Chrome" ? "text-red-400" : ""}
           ${log?.browser === "Firefox" ? "text-green-500" : ""}
           ${log?.browser === "Safari" ? "text-blue-400" : ""}`}
-          width={12}
         >
           {log?.browser}
         </TableCell>
 
-        <TableCell className="max-w-44 align-middle">
+        <TableCell className="align-middle">
           {formatDate(log.timestamp)}
         </TableCell>
 
@@ -1219,13 +1210,13 @@ function LogRow({
           )}
         </TableCell>
 
-        <TableCell className="w-[90px] text-center">
+        <TableCell className="text-center align-middle">
           <span className="border border-brand-bright/50 rounded-full  px-2 py-0.5 text-xs">
             {log?.segment}
           </span>
         </TableCell>
 
-        <TableCell className="max-w-[480px] truncate align-middle">
+        <TableCell className="truncate align-middle">
           <Badge className="pb-1" variant={"outline"}>
             {log.file_type}
           </Badge>
@@ -1238,19 +1229,18 @@ function LogRow({
         </TableCell>
 
         {!showAgent && (
-          <TableCell className="align-middle" width={70}>
+          <TableCell className="align-middle">
             {formatResponseSize(log.response_size)}
           </TableCell>
         )}
 
-        <TableCell className="max-w-[180px] w-1 truncate text-center align-middle">
-          <div className="align-middle flex relative items-center "></div>
+        <TableCell className="text-center align-middle">
           <Badge
             variant="outline"
             className={
               log.crawler_type !== "Human"
-                ? "absolute bg-red-100 dark:bg-red-700 dark:text-white w-[100px] truncate overflow-hidden text-center flex items-center justify-center"
-                : "absolute bg-blue-100 truncate dark:bg-blue-500 dark:text-white overflow-hidden w-[100px] text-blue-800 border-blue-200 flex items-center justify-center text-center"
+                ? "bg-red-100 dark:bg-red-700 dark:text-white w-full truncate overflow-hidden text-center flex items-center justify-center"
+                : "bg-blue-100 truncate dark:bg-blue-500 dark:text-white overflow-hidden w-full text-blue-800 border-blue-200 flex items-center justify-center text-center"
             }
           >
             {formatCrawlerType(log)}

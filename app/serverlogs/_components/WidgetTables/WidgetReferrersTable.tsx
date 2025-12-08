@@ -731,7 +731,7 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
         <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
         <div className="text-center">
           <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
-            Loading referrer data...
+            Processing referrer data...
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
             This may take a moment
