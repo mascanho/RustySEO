@@ -913,10 +913,11 @@ export function LogAnalyzer() {
                         </span>
                         {sortConfig?.key === "ip" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
                                 ? "rotate-180"
                                 : ""
-                              }`}
+                            }`}
                           />
                         )}
                         <FaEye
@@ -926,30 +927,32 @@ export function LogAnalyzer() {
                       </div>
                     </TableHead>
                     <TableHead
-                      className="w-[100px] cursor-pointer"
+                      className="w-[50px] cursor-pointer"
                       onClick={() => requestSort("method")}
                     >
                       Method
                       {sortConfig?.key === "method" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                            }`}
+                          }`}
                         />
                       )}
                     </TableHead>
                     <TableHead
-                      className="w-[100px] cursor-pointer text-left"
+                      className="cursor-pointer text-center w-[40px]"
                       onClick={() => requestSort("browser")}
                     >
                       Browser
                       {sortConfig?.key === "browser" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                            }`}
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -960,10 +963,11 @@ export function LogAnalyzer() {
                       Timestamp
                       {sortConfig?.key === "timestamp" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                            }`}
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -974,10 +978,11 @@ export function LogAnalyzer() {
                       {showAgent ? "User Agent" : "Path"}
                       {sortConfig?.key === "path" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                            }`}
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -991,10 +996,11 @@ export function LogAnalyzer() {
                       File Type
                       {sortConfig?.key === "file_type" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                            }`}
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -1005,10 +1011,11 @@ export function LogAnalyzer() {
                       Status
                       {sortConfig?.key === "status" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                            }`}
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -1020,10 +1027,11 @@ export function LogAnalyzer() {
                         Size
                         {sortConfig?.key === "responseSize" && (
                           <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
                                 ? "rotate-180"
                                 : ""
-                              }`}
+                            }`}
                           />
                         )}
                       </TableHead>
@@ -1166,7 +1174,7 @@ function LogRow({
         </TableCell>
 
         <TableCell
-          className={`align-middle ${log?.browser === "Chrome" ? "text-red-400" : ""}
+          className={`text-center ${log?.browser === "Chrome" ? "text-red-400" : ""}
           ${log?.browser === "Firefox" ? "text-green-500" : ""}
           ${log?.browser === "Safari" ? "text-blue-400" : ""}`}
         >
