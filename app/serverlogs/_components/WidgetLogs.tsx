@@ -535,143 +535,143 @@ export default function WidgetLogs() {
 
                 {/* SINGLE DialogContent with conditional rendering */}
                 <DialogContent className="max-w-11/12 w-11/12  dark:text-white dark:border-brand-bright dark:bg-brand-darker max-h-[90vh] overflow-hidden">
-                  <Suspense fallback={<FallbackLoader />}>
-                    {activeTab === "Filetypes" ? (
-                      <WidgetFileType
-                        data={overview}
-                        entries={entries}
-                        chartData={chartData}
-                        selectedFileType={entry?.name}
-                      />
-                    ) : activeTab === "Status Codes" ? (
-                      <WidgetStatusCodesTable
-                        data={overview}
-                        entries={currentLogs}
-                        segment={entry?.name}
-                      />
-                    ) : activeTab === "Referrers" ? (
-                      <WidgetReferrersTable
-                        data={overview}
-                        entries={currentLogs}
-                        segment={entry?.name === "Other" ? "all" : entry?.name}
-                      />
-                    ) : activeTab === "Content" ? (
-                      <Tabs defaultValue="logs" className="h-full">
-                        <Tabs.List>
-                          <Tabs.Tab value="overview">Overview</Tabs.Tab>
-                          <Tabs.Tab value="logs">URLs</Tabs.Tab>
-                        </Tabs.List>
-                        <Tabs.Panel value="overview" className="h-full">
-                          <section className="h-[740px] flex flex-col justify-between">
-                            <div>
-                              <DialogHeader>
-                                <DialogTitle className="mt-4">
-                                  Segment Breakdown:{" "}
-                                  <span className="text-brand-bright">
-                                    {entry.name}
-                                  </span>
-                                </DialogTitle>
-                              </DialogHeader>
-                              <div className="pt-8 space-y-1">
-                                <h3 className="font-medium dark:text-white/50 text-black/50">
-                                  Paths in this segment:
-                                </h3>
-                                <div className="max-h-60 overflow-y-auto space-y-1">
-                                  {entry.paths &&
-                                    Object.entries(entry.paths).map(
-                                      ([path, count]) => (
-                                        <div
-                                          key={path}
-                                          className="flex pt-2 justify-between text-sm p-1 rounded-md bg-brand-bright/10 dark:bg-slate-800/50 px-2"
-                                        >
-                                          <span className="font-mono text-xs text-brand-bright">
-                                            {path}
-                                          </span>
-                                          <span className="font-medium text-brand-bright">
-                                            {count.toLocaleString()}
-                                          </span>
-                                        </div>
-                                      ),
-                                    )}
-                                </div>
+                  {/*<Suspense fallback={<FallbackLoader />}>*/}
+                  {activeTab === "Filetypes" ? (
+                    <WidgetFileType
+                      data={overview}
+                      entries={entries}
+                      chartData={chartData}
+                      selectedFileType={entry?.name}
+                    />
+                  ) : activeTab === "Status Codes" ? (
+                    <WidgetStatusCodesTable
+                      data={overview}
+                      entries={currentLogs}
+                      segment={entry?.name}
+                    />
+                  ) : activeTab === "Referrers" ? (
+                    <WidgetReferrersTable
+                      data={overview}
+                      entries={currentLogs}
+                      segment={entry?.name === "Other" ? "all" : entry?.name}
+                    />
+                  ) : activeTab === "Content" ? (
+                    <Tabs defaultValue="logs" className="h-full">
+                      <Tabs.List>
+                        <Tabs.Tab value="overview">Overview</Tabs.Tab>
+                        <Tabs.Tab value="logs">URLs</Tabs.Tab>
+                      </Tabs.List>
+                      <Tabs.Panel value="overview" className="h-full">
+                        <section className="h-[740px] flex flex-col justify-between">
+                          <div>
+                            <DialogHeader>
+                              <DialogTitle className="mt-4">
+                                Segment Breakdown:{" "}
+                                <span className="text-brand-bright">
+                                  {entry.name}
+                                </span>
+                              </DialogTitle>
+                            </DialogHeader>
+                            <div className="pt-8 space-y-1">
+                              <h3 className="font-medium dark:text-white/50 text-black/50">
+                                Paths in this segment:
+                              </h3>
+                              <div className="max-h-60 overflow-y-auto space-y-1">
+                                {entry.paths &&
+                                  Object.entries(entry.paths).map(
+                                    ([path, count]) => (
+                                      <div
+                                        key={path}
+                                        className="flex pt-2 justify-between text-sm p-1 rounded-md bg-brand-bright/10 dark:bg-slate-800/50 px-2"
+                                      >
+                                        <span className="font-mono text-xs text-brand-bright">
+                                          {path}
+                                        </span>
+                                        <span className="font-medium text-brand-bright">
+                                          {count.toLocaleString()}
+                                        </span>
+                                      </div>
+                                    ),
+                                  )}
                               </div>
                             </div>
-                            <div className="flex justify-between font-bold pt-4">
-                              <span className="text-black/50 dark:text-white/50">
-                                Total Entries:
-                              </span>
-                              <span className="text-brand-bright pr-1">
-                                {entry.value.toLocaleString()}
-                              </span>
-                            </div>
-                          </section>
-                        </Tabs.Panel>
-                        <Tabs.Panel value="logs" className="h-full">
-                          <WidgetContentTable
-                            data={overview}
-                            entries={entries}
-                            segment={entry?.name}
-                          />
-                        </Tabs.Panel>
-                      </Tabs>
-                    ) : activeTab === "User Agents" ? (
-                      <WidgetUserAgentsTable
-                        data={overview}
-                        entries={currentLogs}
-                        segment={entry?.name === "Other" ? "all" : entry?.name}
-                      />
-                    ) : ["Google", "Bing", "Openai", "Claude"].includes(
-                        entry?.name,
-                      ) ? (
-                      <Tabs defaultValue="overview" className="h-full">
-                        <Tabs.List>
-                          <Tabs.Tab value="overview">Frequency Table</Tabs.Tab>
-                        </Tabs.List>
-                        <Tabs.Panel value="overview" className="h-full">
-                          {entry?.name === "Google" && (
-                            <WidgetTable data={overview} />
-                          )}
-                          {entry?.name === "Bing" && (
-                            <WidgetTableBing data={overview} />
-                          )}
-                          {entry?.name === "Openai" && (
-                            <WidgetTableOpenAi data={overview} />
-                          )}
-                          {entry?.name === "Claude" && (
-                            <WidgetTableClaude data={overview} />
-                          )}
-                        </Tabs.Panel>
-                      </Tabs>
-                    ) : activeTab === "Crawlers" ? (
-                      <>
-                        <DialogHeader>
-                          <DialogTitle>{entry.name} Details</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div className="flex justify-between">
-                            <span>Total Requests:</span>
-                            <span className="font-medium">
+                          </div>
+                          <div className="flex justify-between font-bold pt-4">
+                            <span className="text-black/50 dark:text-white/50">
+                              Total Entries:
+                            </span>
+                            <span className="text-brand-bright pr-1">
                               {entry.value.toLocaleString()}
                             </span>
                           </div>
-                          <div className="flex justify-between">
-                            <span>Percentage:</span>
-                            <span className="font-medium">
-                              {Math.round(
-                                (entry.value /
-                                  chartData.reduce(
-                                    (sum, item) => sum + item.value,
-                                    0,
-                                  )) *
-                                  100,
-                              )}
-                              %
-                            </span>
-                          </div>
+                        </section>
+                      </Tabs.Panel>
+                      <Tabs.Panel value="logs" className="h-full">
+                        <WidgetContentTable
+                          data={overview}
+                          entries={entries}
+                          segment={entry?.name}
+                        />
+                      </Tabs.Panel>
+                    </Tabs>
+                  ) : activeTab === "User Agents" ? (
+                    <WidgetUserAgentsTable
+                      data={overview}
+                      entries={currentLogs}
+                      segment={entry?.name === "Other" ? "all" : entry?.name}
+                    />
+                  ) : ["Google", "Bing", "Openai", "Claude"].includes(
+                      entry?.name,
+                    ) ? (
+                    <Tabs defaultValue="overview" className="h-full">
+                      <Tabs.List>
+                        <Tabs.Tab value="overview">Frequency Table</Tabs.Tab>
+                      </Tabs.List>
+                      <Tabs.Panel value="overview" className="h-full">
+                        {entry?.name === "Google" && (
+                          <WidgetTable data={overview} />
+                        )}
+                        {entry?.name === "Bing" && (
+                          <WidgetTableBing data={overview} />
+                        )}
+                        {entry?.name === "Openai" && (
+                          <WidgetTableOpenAi data={overview} />
+                        )}
+                        {entry?.name === "Claude" && (
+                          <WidgetTableClaude data={overview} />
+                        )}
+                      </Tabs.Panel>
+                    </Tabs>
+                  ) : activeTab === "Crawlers" ? (
+                    <>
+                      <DialogHeader>
+                        <DialogTitle>{entry.name} Details</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="flex justify-between">
+                          <span>Total Requests:</span>
+                          <span className="font-medium">
+                            {entry.value.toLocaleString()}
+                          </span>
                         </div>
-                      </>
-                    ) : null}
-                  </Suspense>
+                        <div className="flex justify-between">
+                          <span>Percentage:</span>
+                          <span className="font-medium">
+                            {Math.round(
+                              (entry.value /
+                                chartData.reduce(
+                                  (sum, item) => sum + item.value,
+                                  0,
+                                )) *
+                                100,
+                            )}
+                            %
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  ) : null}
+                  {/*</Suspense>*/}
                 </DialogContent>
               </Dialog>
             ))}

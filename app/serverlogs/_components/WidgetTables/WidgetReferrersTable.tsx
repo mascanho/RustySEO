@@ -1252,9 +1252,6 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                           <TableRow
                             className={`group pb-2 cursor-pointer ${expandedRow === index ? "bg-sky-dark/10" : ""}`}
                             onClick={(e) => {
-                              if (e.target.closest(".no-expand-row")) {
-                                return;
-                              }
                               setExpandedRow(
                                 expandedRow === index ? null : index,
                               );
