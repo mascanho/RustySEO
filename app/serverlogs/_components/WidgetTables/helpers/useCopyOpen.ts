@@ -10,9 +10,7 @@ function handleURLClick(url, click) {
   const domain = localStorage.getItem("domain");
 
   // IF THE USER CLICKED ONCE ON THE SAME URL, open URL
-  if (click.button === 0) {
-    openBrowserWindow(`https://${domain}${url}`);
-  }
+  openBrowserWindow(`https://${domain}${url}`);
 }
 
 // HANDLES COPYING STUFF ON THE TABLE LIKE THE RUSER AGENT, URL OR REFERER
