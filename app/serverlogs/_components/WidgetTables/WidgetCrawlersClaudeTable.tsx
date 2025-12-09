@@ -767,6 +767,33 @@ const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data }) => {
                                   </div>
                                 </div>
 
+                                {/* New User Agent Section */}
+                                <div className="md:col-span-2">
+                                  <h4 className="mb-2 font-bold">
+                                    User Agent Details
+                                  </h4>
+                                  <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
+                                    <div className="flex items-center justify-center">
+                                      <div className="text-center">
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                                          <span
+                                            className="font-mono text-xs break-all hover:underline cursor-pointer"
+                                            onClick={(click) =>
+                                              handleCopyClick(
+                                                log.user_agent,
+                                                click,
+                                                "User Agent",
+                                              )
+                                            }
+                                          >
+                                            {log.user_agent}
+                                          </span>
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
                                 {/* New Response Codes Section */}
                                 <div className="md:col-span-2">
                                   <h4 className="mb-2 font-bold">

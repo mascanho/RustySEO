@@ -765,24 +765,62 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* Left Column */}
                                 <div className="flex flex-col max-w-[70rem] w-full">
-                                  <div className="flex mb-2 space-x-2 items-center justify-between">
-                                    <h4 className="font-bold">Timespan</h4>
-                                    {log.verified && (
-                                      <div className="flex items-center space-x-1 py-1 bg-red-200 dark:bg-red-400 px-2 text-xs rounded-md">
-                                        <BadgeCheck
-                                          size={18}
-                                          className="text-blue-800 pr-1 dark:text-blue-900"
-                                        />
-                                        {log?.crawler_type}
+                                    <div className="flex mb-2 space-x-2 items-center justify-between">
+                                      <h4 className="font-bold">Details</h4>
+                                      {log.verified && (
+                                        <div className="flex items-center space-x-1 py-1 bg-red-200 dark:bg-red-400 px-2 text-xs rounded-md">
+                                          <BadgeCheck
+                                            size={18}
+                                            className="text-blue-800 pr-1 dark:text-blue-900"
+                                          />
+                                          {log?.crawler_type}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                                      <div className="space-y-2 text-sm">
+                                        <div>
+                                          <span className="font-semibold">
+                                            IP:
+                                          </span>{" "}
+                                          {log.ip}
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold">
+                                            Method:
+                                          </span>{" "}
+                                          {log.method}
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold">
+                                            User Agent:
+                                          </span>{" "}
+                                          <span
+                                            className="font-mono text-xs break-all hover:underline cursor-pointer"
+                                            onClick={(click) =>
+                                              handleCopyClick(
+                                                log.user_agent,
+                                                click,
+                                                "User Agent",
+                                              )
+                                            }
+                                          >
+                                            {log.user_agent}
+                                          </span>
+                                        </div>
+                                        {log.referer && (
+                                          <div>
+                                            <span className="font-semibold">
+                                              Referer:
+                                            </span>{" "}
+                                            <span className="font-mono text-xs break-all">
+                                              {log.referer}
+                                            </span>
+                                          </div>
+                                        )}
                                       </div>
-                                    )}
+                                    </div>
                                   </div>
-                                  <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-                                    <p className="text-sm font-mono break-all">
-                                      {timings(log)?.elapsedTime}
-                                    </p>
-                                  </div>
-                                </div>
 
                                 {/* Right Column */}
                                 <div className="flex flex-col">
@@ -790,16 +828,33 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                     Hits per Hour
                                   </h4>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-                                    <p className="text-sm break-all">
-                                      {timings(log)?.frequency?.perHour}
+                                    <p className="text-sm font-mono break-all">
+                                      {timings(log)?.elapsedTime}
                                     </p>
+                                  </div>
+                                  <div className="mt-4">
+                                    <h4 className="font-bold mb-2">User Agent</h4>
+                                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
+                                      <span
+                                        className="font-mono text-xs break-all hover:underline cursor-pointer"
+                                        onClick={(click) =>
+                                          handleCopyClick(
+                                            log.user_agent,
+                                            click,
+                                            "User Agent",
+                                          )
+                                        }
+                                      >
+                                        {log.user_agent}
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
 
-                                {/* New Response Codes Section */}
-                                <div className="md:col-span-2">
+                                {/* Right Column */}
+                                <div className="flex flex-col">
                                   <h4 className="mb-2 font-bold">
-                                    Response Codes
+                                    Hits per Hour
                                   </h4>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">

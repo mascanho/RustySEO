@@ -1403,7 +1403,16 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                                           <span className="font-semibold">
                                             User Agent:
                                           </span>{" "}
-                                          <span className="font-mono text-xs break-all">
+                                          <span
+                                            className="font-mono text-xs break-all hover:underline cursor-pointer"
+                                            onClick={(click) =>
+                                              handleCopyClick(
+                                                log.user_agent,
+                                                click,
+                                                "User Agent",
+                                              )
+                                            }
+                                          >
                                             {log.user_agent}
                                           </span>
                                         </div>

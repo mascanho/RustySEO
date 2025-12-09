@@ -64,6 +64,7 @@ import { CardContent } from "@/components/ui/card";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { useAsyncLogFilter } from "./hooks/useAsyncLogFilter";
+import { toast } from "sonner";
 
 interface LogEntry {
   browser: string;
@@ -176,6 +177,20 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
   entries,
   segment,
 }) => {
+  const handleCopyClick = async (
+    textToCopy: string,
+    event: React.MouseEvent<HTMLSpanElement>,
+    label: string,
+  ) => {
+    event.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      toast.success(`${label} copied to clipboard!`);
+    } catch (err) {
+      toast.error(`Failed to copy ${label}.`);
+      console.error("Failed to copy text: ", err);
+    }
+  };
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(100);
@@ -1374,7 +1389,16 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                                           <span className="font-semibold">
                                             User Agent:
                                           </span>{" "}
-                                          <span className="font-mono text-xs break-all">
+                                          <span
+                                            className="font-mono text-xs break-all hover:underline cursor-pointer"
+                                            onClick={(click) =>
+                                              handleCopyClick(
+                                                log.user_agent,
+                                                click,
+                                                "User Agent",
+                                              )
+                                            }
+                                          >
                                             {log.user_agent || "Unknown"}
                                           </span>
                                         </div>
