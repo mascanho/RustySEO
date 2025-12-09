@@ -65,6 +65,7 @@ import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { useAsyncLogFilter } from "./hooks/useAsyncLogFilter";
 import { toast } from "sonner";
+import { handleURLClick } from "./helpers/useCopyOpen";
 
 interface LogEntry {
   browser: string;
@@ -1273,11 +1274,14 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                         >
                           <TableRow
                             className={`group pb-2 cursor-pointer ${expandedRow === index ? "bg-sky-dark/10" : ""}`}
-                            onClick={() =>
+                            onClick={(e) => {
+                              if (e.target.closest(".no-expand-row")) {
+                                return;
+                              }
                               setExpandedRow(
                                 expandedRow === index ? null : index,
-                              )
-                            }
+                              );
+                            }}
                           >
                             <TableCell className="font-medium text-center max-w-[40px] align-middle">
                               {indexOfFirstItem + index + 1}
@@ -1288,13 +1292,17 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                             <TableCell className="truncate max-w-[400px] align-middle">
                               <span className="flex items-start truncate">
                                 <span
-                                  onClick={(e) => handleCopyClick(log.path, e, "URL / PATH")}
+                                  onClick={(e) =>
+                                    handleCopyClick(log.path, e, "URL / PATH")
+                                  }
                                   className="mr-1 hover:scale-105 active:scale-95 cursor-pointer"
                                 >
                                   {getFileIcon(log.file_type || "Unknown")} {""}
                                 </span>
                                 <span
-                                  onClick={(click) => handleURLClick(log?.path, click)}
+                                  onClick={(click) =>
+                                    handleURLClick(log?.path, click)
+                                  }
                                   className="hover:underline cursor-pointer"
                                 >
                                   {showOnTables && domain

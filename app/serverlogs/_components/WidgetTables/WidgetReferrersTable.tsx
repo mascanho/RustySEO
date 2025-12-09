@@ -118,6 +118,7 @@ const formatResponseSize = (bytes: number): string => {
 };
 
 import { categorizeReferrer } from "./helpers/useCategoriseReferrer";
+import { handleURLClick } from "./helpers/useCopyOpen";
 
 // Get icon based on referrer category
 const getReferrerIcon = (category: string) => {
@@ -1250,11 +1251,14 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                         >
                           <TableRow
                             className={`group pb-2 cursor-pointer ${expandedRow === index ? "bg-sky-dark/10" : ""}`}
-                            onClick={() =>
+                            onClick={(e) => {
+                              if (e.target.closest(".no-expand-row")) {
+                                return;
+                              }
                               setExpandedRow(
                                 expandedRow === index ? null : index,
-                              )
-                            }
+                              );
+                            }}
                           >
                             <TableCell className="font-medium text-center max-w-[40px] align-middle">
                               {indexOfFirstItem + index + 1}
@@ -1265,13 +1269,17 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                             <TableCell className="truncate max-w-[400px] align-middle">
                               <span className="flex items-start truncate">
                                 <span
-                                  onClick={(e) => handleCopyClick(log.path, e, "URL / PATH")}
+                                  onClick={(e) =>
+                                    handleCopyClick(log.path, e, "URL / PATH")
+                                  }
                                   className="mr-1 hover:scale-105 active:scale-95 cursor-pointer"
                                 >
                                   {getFileIcon(log.file_type || "Unknown")} {""}
                                 </span>
                                 <span
-                                  onClick={(click) => handleURLClick(log?.path, click)}
+                                  onClick={(click) =>
+                                    handleURLClick(log?.path, click)
+                                  }
                                   className="hover:underline cursor-pointer"
                                 >
                                   {showOnTables && domain
