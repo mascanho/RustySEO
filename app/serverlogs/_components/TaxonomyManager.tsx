@@ -37,7 +37,9 @@ function PathItem({ pathConfig, onUpdate, onRemove }) {
     onUpdate({ ...pathConfig, matchType: newMatchType });
   };
 
-  const getButtonText = (currentType: "startsWith" | "contains" | "exactMatch") => {
+  const getButtonText = (
+    currentType: "startsWith" | "contains" | "exactMatch",
+  ) => {
     if (currentType === "startsWith") return "Starts with";
     if (currentType === "contains") return "Contains";
     return "Exact match";
@@ -125,13 +127,17 @@ function PathItem({ pathConfig, onUpdate, onRemove }) {
 }
 
 function MatchTypeToggle({ matchType, onChange, className = "" }) {
-  const getNextMatchType = (currentType: "startsWith" | "contains" | "exactMatch") => {
+  const getNextMatchType = (
+    currentType: "startsWith" | "contains" | "exactMatch",
+  ) => {
     if (currentType === "startsWith") return "contains";
     if (currentType === "contains") return "exactMatch";
     return "startsWith";
   };
 
-  const getButtonText = (currentType: "startsWith" | "contains" | "exactMatch") => {
+  const getButtonText = (
+    currentType: "startsWith" | "contains" | "exactMatch",
+  ) => {
     if (currentType === "startsWith") return "Starts with";
     if (currentType === "contains") return "Contains";
     return "Exact match";
@@ -242,7 +248,7 @@ function Segment({ taxonomy, onUpdate, onRemove }) {
         />
         <Button
           onClick={handleAddPath}
-          className="h-8 dark:bg-brand-bright dark:text-white"
+          className="h-8 dark:bg-brand-bright dark:text-white dark:hover:bg-brand-bright/50 dark:hover:text-white"
         >
           Add Path
         </Button>
@@ -431,7 +437,7 @@ export default function TaxonomyManager({ closeDialog }) {
             />
             <Button
               onClick={handleAddSegment}
-              className="h-8 dark:bg-brand-bright dark:text-white"
+              className="h-8 dark:bg-brand-bright dark:text-white dark:hover:bg-brand-bright/50 dark:hover:text-white"
             >
               <PlusCircle className="h-4 w-4 mr-2" />
               Add Segment
@@ -464,7 +470,7 @@ export default function TaxonomyManager({ closeDialog }) {
       <CardFooter className="mt-4">
         <Button
           onClick={handleSubmitTaxonomies}
-          className="w-full flex items-center gap-2 bg-brand-bright hover:bg-brand-bright dark:bg-brand-bright dark:hover:bg-brand-bright dark:text-white"
+          className="w-full flex items-center gap-2 bg-brand-bright hover:bg-brand-bright dark:bg-brand-bright dark:hover:bg-brand-bright/50 dark:text-white"
           size="lg"
           disabled={isSubmitting}
         >
