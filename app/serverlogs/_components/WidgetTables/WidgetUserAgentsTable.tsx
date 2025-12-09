@@ -64,6 +64,7 @@ import { CardContent } from "@/components/ui/card";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { useAsyncLogFilter } from "./hooks/useAsyncLogFilter";
+import { toast } from "sonner";
 
 interface LogEntry {
   browser: string;
