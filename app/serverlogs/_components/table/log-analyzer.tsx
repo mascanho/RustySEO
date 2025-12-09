@@ -572,23 +572,7 @@ export function LogAnalyzer() {
     return log?.crawler_type;
   }
 
-  function handleURLClick(url, click) {
-    click.preventDefault();
-    click.stopPropagation();
-    console.log(url, click);
-
-    // IF THE USER CLICKED ONCE ON THE SAME URL, open URL
-    if (click.button === 0) {
-      openBrowserWindow(`https://${domain}${url}`);
-    }
-
-    if (click.button === 2) {
-      // ELSE, clicked twice copy the URL
-      navigator.clipboard.writeText(url);
-      toast.success("URL copied to clipboard!");
-    }
-    setExpandedRow(null);
-  }
+  
 
   return (
     <div className="space-y-4 flex flex-col flex-1 h-full not-selectable">

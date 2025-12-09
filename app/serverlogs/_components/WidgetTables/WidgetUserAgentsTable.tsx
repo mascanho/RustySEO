@@ -1287,12 +1287,20 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                             </TableCell>
                             <TableCell className="truncate max-w-[400px] align-middle">
                               <span className="flex items-start truncate">
-                                <span className="mr-1">
+                                <span
+                                  onClick={(e) => handleCopyClick(log.path, e, "URL / PATH")}
+                                  className="mr-1 hover:scale-105 active:scale-95 cursor-pointer"
+                                >
                                   {getFileIcon(log.file_type || "Unknown")} {""}
                                 </span>
-                                {showOnTables && domain
-                                  ? "https://" + domain + log.path
-                                  : log?.path}
+                                <span
+                                  onClick={(click) => handleURLClick(log?.path, click)}
+                                  className="hover:underline cursor-pointer"
+                                >
+                                  {showOnTables && domain
+                                    ? "https://" + domain + log.path
+                                    : log?.path}
+                                </span>
                               </span>
                             </TableCell>
                             <TableCell className="truncate max-w-[250px] align-middle">
