@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   AlertCircle,
@@ -404,9 +403,7 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
 
       // 3. Referrer (Specific)
       if (referrerFilter.length > 0) {
-        if (
-          !referrerFilter.some((ref) => log.referer?.includes(ref))
-        )
+        if (!referrerFilter.some((ref) => log.referer?.includes(ref)))
           return false;
       }
 
@@ -439,9 +436,17 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
 
       // 8. Bot Type
       if (botTypeFilter !== null) {
-        if (botTypeFilter === "Mobile" && log.user_agent && !log.user_agent.includes("Mobile"))
+        if (
+          botTypeFilter === "Mobile" &&
+          log.user_agent &&
+          !log.user_agent.includes("Mobile")
+        )
           return false;
-        if (botTypeFilter === "Desktop" && log.user_agent && log.user_agent.includes("Mobile"))
+        if (
+          botTypeFilter === "Desktop" &&
+          log.user_agent &&
+          log.user_agent.includes("Mobile")
+        )
           return false;
       }
 
@@ -501,7 +506,9 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
     if (!sortConfig) return null;
     return {
       key: sortConfig.key,
-      direction: (sortConfig.direction === "ascending" ? "asc" : "desc") as "asc" | "desc",
+      direction: (sortConfig.direction === "ascending" ? "asc" : "desc") as
+        | "asc"
+        | "desc",
     };
   }, [sortConfig]);
 
@@ -648,8 +655,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
     () =>
       entries.length > 0
         ? entries.reduce((oldest, log) =>
-          new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-        )
+            new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+          )
         : null,
     [entries],
   );
@@ -658,8 +665,8 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
     () =>
       entries.length > 0
         ? entries.reduce((newest, log) =>
-          new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-        )
+            new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+          )
         : null,
     [entries],
   );
@@ -727,7 +734,7 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
 
   if (!isReady || (isProcessing && entries.length > 0)) {
     return (
-      <div className="flex flex-col items-center justify-center h-full min-h-[400px] space-y-4">
+      <div className="flex flex-col items-center justify-center h-full min-h-[650px] space-y-4">
         <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
         <div className="text-center">
           <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
@@ -1017,16 +1024,17 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <div
-                      className={`w-3 h-3 rounded-full ${statusCode >= 200 && statusCode < 300
-                        ? "bg-green-500"
-                        : statusCode >= 300 && statusCode < 400
-                          ? "bg-blue-500"
-                          : statusCode >= 400 && statusCode < 500
-                            ? "bg-yellow-500"
-                            : statusCode >= 500
-                              ? "bg-red-500"
-                              : "bg-gray-500"
-                        }`}
+                      className={`w-3 h-3 rounded-full ${
+                        statusCode >= 200 && statusCode < 300
+                          ? "bg-green-500"
+                          : statusCode >= 300 && statusCode < 400
+                            ? "bg-blue-500"
+                            : statusCode >= 400 && statusCode < 500
+                              ? "bg-yellow-500"
+                              : statusCode >= 500
+                                ? "bg-red-500"
+                                : "bg-gray-500"
+                      }`}
                     />
                     <span>{statusCode}</span>
                   </div>
@@ -1139,10 +1147,11 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                       Timestamp
                       {sortConfig?.key === "timestamp" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -1153,10 +1162,11 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                       Path
                       {sortConfig?.key === "path" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -1167,10 +1177,11 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                       Referer
                       {sortConfig?.key === "referer" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -1183,10 +1194,11 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                       Size
                       {sortConfig?.key === "response_size" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -1197,10 +1209,11 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                       Status
                       {sortConfig?.key === "status" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -1297,7 +1310,7 @@ const WidgetReferrersTable: React.FC<WidgetTableProps> = ({
                                 }
                               >
                                 {log.crawler_type &&
-                                  log.crawler_type.length > 12
+                                log.crawler_type.length > 12
                                   ? log.crawler_type.trim().slice(0, 15)
                                   : log.crawler_type || "Unknown"}
                               </Badge>

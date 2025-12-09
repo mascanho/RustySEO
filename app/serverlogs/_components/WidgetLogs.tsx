@@ -375,13 +375,13 @@ export default function WidgetLogs() {
     [uploadedLogFiles],
   );
 
-  if (!overview) {
-    return (
-      <div className="bg-white shadow rounded-lg p-4 w-full h-64 flex items-center justify-center dark:bg-brand-darker">
-        <p className="text-gray-500 dark:text-gray-400">Processing data...</p>
-      </div>
-    );
-  }
+  // if (!overview) {
+  //   return (
+  //     <div className="bg-white shadow rounded-lg p-4 w-full h-64 flex items-center justify-center dark:bg-brand-darker">
+  //       <p className="text-gray-500 dark:text-gray-400">Processing data...</p>
+  //     </div>
+  //   );
+  // }
 
   // Format numbers with commas
   const formatNumber = (num: number) => num?.toLocaleString() || "0";

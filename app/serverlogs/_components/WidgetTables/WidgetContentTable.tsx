@@ -305,15 +305,9 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
 
       // 7. Bot Type
       if (botTypeFilter !== null) {
-        if (
-          botTypeFilter === "Mobile" &&
-          !log.user_agent.includes("Mobile")
-        )
+        if (botTypeFilter === "Mobile" && !log.user_agent.includes("Mobile"))
           return false;
-        if (
-          botTypeFilter === "Desktop" &&
-          log.user_agent.includes("Mobile")
-        )
+        if (botTypeFilter === "Desktop" && log.user_agent.includes("Mobile"))
           return false;
       }
 
@@ -516,8 +510,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     () =>
       entries.length > 0
         ? entries.reduce((oldest, log) =>
-          new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-        )
+            new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+          )
         : null,
     [entries],
   );
@@ -526,8 +520,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     () =>
       entries.length > 0
         ? entries.reduce((newest, log) =>
-          new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-        )
+            new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+          )
         : null,
     [entries],
   );
@@ -595,7 +589,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
 
   if (!isReady || (isProcessing && entries.length > 0)) {
     return (
-      <div className="flex flex-col items-center justify-center h-full min-h-[400px] space-y-4">
+      <div className="flex flex-col items-center justify-center h-full min-h-[650px] space-y-4">
         <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
         <div className="text-center">
           <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
@@ -793,16 +787,17 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                 >
                   <div className="flex items-center gap-2">
                     <div
-                      className={`w-3 h-3 rounded-full ${statusCode >= 200 && statusCode < 300
-                        ? "bg-green-500"
-                        : statusCode >= 300 && statusCode < 400
-                          ? "bg-blue-500"
-                          : statusCode >= 400 && statusCode < 500
-                            ? "bg-yellow-500"
-                            : statusCode >= 500
-                              ? "bg-red-500"
-                              : "bg-gray-500"
-                        }`}
+                      className={`w-3 h-3 rounded-full ${
+                        statusCode >= 200 && statusCode < 300
+                          ? "bg-green-500"
+                          : statusCode >= 300 && statusCode < 400
+                            ? "bg-blue-500"
+                            : statusCode >= 400 && statusCode < 500
+                              ? "bg-yellow-500"
+                              : statusCode >= 500
+                                ? "bg-red-500"
+                                : "bg-gray-500"
+                      }`}
                     />
                     <span>{statusCode}</span>
                   </div>
@@ -915,10 +910,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                       Timestamp
                       {sortConfig?.key === "timestamp" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -929,10 +925,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                       Path
                       {sortConfig?.key === "path" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -943,10 +940,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                       File Type
                       {sortConfig?.key === "file_type" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -958,10 +956,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                       Size
                       {sortConfig?.key === "response_size" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -972,10 +971,11 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                       Status
                       {sortConfig?.key === "status" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
-                            ? "rotate-180"
-                            : ""
-                            }`}
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
                         />
                       )}
                     </TableHead>
@@ -1231,10 +1231,10 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                                                   log.status < 300
                                                   ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-lg px-4 py-2"
                                                   : log.status >= 300 &&
-                                                    log.status < 400
+                                                      log.status < 400
                                                     ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-lg px-4 py-2"
                                                     : log.status >= 400 &&
-                                                      log.status < 500
+                                                        log.status < 500
                                                       ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 text-lg px-4 py-2"
                                                       : log.status >= 500
                                                         ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 text-lg px-4 py-2"
