@@ -65,7 +65,7 @@ import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { useAsyncLogFilter } from "./hooks/useAsyncLogFilter";
 import { toast } from "sonner";
-import { handleURLClick } from "./helpers/useCopyOpen";
+import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
 
 interface LogEntry {
   browser: string;
@@ -1313,7 +1313,16 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                                 <span className="mr-1">
                                   {getUserAgentIcon(userAgentCategory)} {""}
                                 </span>
-                                <span className="text-xs">
+                                <span
+                                  className="text-xs hover:underline cursor-pointer"
+                                  onClick={(e) =>
+                                    handleCopyClick(
+                                      log.user_agent,
+                                      e,
+                                      "User Agent",
+                                    )
+                                  }
+                                >
                                   {log.user_agent || "Unknown"}
                                 </span>
                               </span>
