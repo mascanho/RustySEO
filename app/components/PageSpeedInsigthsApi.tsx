@@ -3,10 +3,12 @@ import { invoke } from "@tauri-apps/api/core";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { usePathname } from "next/navigation";
+import useSettingsStore from "@/store/SettingsStore";
 
 const PageSpeedInsigthsApi = ({ close }: any) => {
   const [userInput, setUserInput] = useState("");
   const pathname = usePathname();
+  const { triggerRefresh } = useSettingsStore();
 
   const handleAddApiKey: any = async (key: string) => {
     try {
@@ -17,6 +19,9 @@ const PageSpeedInsigthsApi = ({ close }: any) => {
       console.log(result, "This is the result");
       // Add the API key to the settings
       await invoke("read_page_speed_bulk_api_key");
+
+      // Trigger settings refresh to update UI
+      triggerRefresh();
 
       if (result && pathname === "/") {
         console.log("API key added successfully");

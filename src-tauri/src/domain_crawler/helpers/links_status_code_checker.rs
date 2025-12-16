@@ -431,10 +431,13 @@ fn handle_success_response(
 }
 
 #[allow(dead_code)]
+#[allow(dead_code)]
 fn is_internal(url_to_check: &str, base_url: &Url) -> bool {
     Url::parse(url_to_check)
         .map(|parsed_url| {
-            parsed_url.scheme() == base_url.scheme() && parsed_url.domain() == base_url.domain()
+            let base_domain = base_url.domain().unwrap_or("");
+            let url_domain = parsed_url.domain().unwrap_or("");
+            url_domain.ends_with(base_domain)
         })
         .unwrap_or(false)
 }

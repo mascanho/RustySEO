@@ -12,15 +12,16 @@ import {
 } from "@/components/ui/card";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
+import useSettingsStore from "@/store/SettingsStore";
 
-interface APIkey {
-  page_speed_key: string;
-  result: string;
+interface Settings {
+  page_speed_bulk_api_key: string | null;
 }
 
 export default function PagespeedInsightsApi() {
   const [isVisible, setIsVisible] = useState(false);
-  const [apiKey, setApiKey] = useState<string>("");
+  const { pageSpeedKey, refreshSettings } = useSettingsStore();
+  const [fetchedKey, setFetchedKey] = useState<string | null>(null);
 
   const maskApiKey = (key: string) => {
     if (key.length <= 8) return "*".repeat(key.length);
@@ -31,16 +32,22 @@ export default function PagespeedInsightsApi() {
     setIsVisible(!isVisible);
   };
 
-  // Call Backend to get the API key
+  // Load initial API key from backend via store
   useEffect(() => {
-    invoke<APIkey>("load_api_keys")
-      .then((result) => {
-        console.log("API Key: ", result);
-        setApiKey(result.page_speed_key);
-      })
-      .catch((error) => {
-        console.error("Error fetching API key:", error);
-      });
+    refreshSettings();
+  }, [refreshSettings]);
+
+  function fetchApiKey() {
+    invoke<Settings>("get_settings_command").then((response) => {
+      console.log("Fetched API Key:", response);
+      if (response.page_speed_bulk_api_key) {
+        setFetchedKey(response.page_speed_bulk_api_key);
+      }
+    });
+  }
+
+  useEffect(() => {
+    fetchApiKey();
   }, []);
 
   return (
@@ -50,18 +57,20 @@ export default function PagespeedInsightsApi() {
         <CardDescription>Your secret API key. Keep it safe!</CardDescription>
       </CardHeader>
       <CardContent>
-        {apiKey === "" ? (
-          <div className="bg-gray-100 dark:bg-brand-dark p-4 rounded-md font-mono text-sm break-all">
+        <div className="bg-gray-100 dark:bg-brand-dark p-4 rounded-md font-mono text-sm break-all">
+          {fetchedKey ? (
+            isVisible ? (
+              fetchedKey
+            ) : (
+              maskApiKey(fetchedKey)
+            )
+          ) : (
             <span className="text-gray-500 dark:text-gray-400 text-xs">
               No API key found, falling back to default one. Generate one and
               add it in the connectors menu.
             </span>
-          </div>
-        ) : (
-          <div className="bg-gray-100 dark:bg-brand-dark p-4 rounded-md font-mono text-sm break-all">
-            {isVisible ? apiKey : maskApiKey(apiKey)}
-          </div>
-        )}
+          )}
+        </div>
       </CardContent>
       <CardFooter className="flex justify-end">
         <Button

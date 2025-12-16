@@ -1,6 +1,6 @@
 // @ts-nocheck
-import { useState } from "react";
-import { FileText, Server, Bot, BarChart3, PenBox } from "lucide-react";
+import { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import { FileText, Server, Bot, PenBox, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { Cell, Pie, PieChart, Tooltip } from "recharts";
@@ -11,7 +11,53 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { WidgetTable } from "./WidgetTables/WidgetCrawlersTable.tsx";
+// Lazy load components
+const WidgetTable = lazy(() =>
+  import("./WidgetTables/WidgetCrawlersTable").then((module) => ({
+    default: module.WidgetTable,
+  })),
+);
+const WidgetTableBing = lazy(() =>
+  import("./WidgetTables/WidgetCrawlersBingTable").then((module) => ({
+    default: module.WidgetTableBing,
+  })),
+);
+const WidgetTableOpenAi = lazy(() =>
+  import("./WidgetTables/WidgetCrawlersOpenAITable").then((module) => ({
+    default: module.WidgetTableOpenAi,
+  })),
+);
+const WidgetTableClaude = lazy(() =>
+  import("./WidgetTables/WidgetCrawlersClaudeTable").then((module) => ({
+    default: module.WidgetTableClaude,
+  })),
+);
+const WidgetContentTable = lazy(() =>
+  import("./WidgetTables/WidgetContentTable").then((module) => ({
+    default: module.WidgetContentTable,
+  })),
+);
+const WidgetFileType = lazy(() =>
+  import("./WidgetTables/WidgetFileType").then((module) => ({
+    default: module.WidgetFileType,
+  })),
+);
+const WidgetUserAgentsTable = lazy(() =>
+  import("./WidgetTables/WidgetUserAgentsTable").then((module) => ({
+    default: module.WidgetUserAgentsTable,
+  })),
+);
+const WidgetReferrersTable = lazy(() =>
+  import("./WidgetTables/WidgetReferrersTable").then((module) => ({
+    default: module.WidgetReferrersTable,
+  })),
+);
+const WidgetStatusCodesTable = lazy(() =>
+  import("./WidgetTables/WidgetStatusCodesTable").then((module) => ({
+    default: module.WidgetStatusCodesTable,
+  })),
+);
+
 import { Tabs } from "@mantine/core";
 
 import { useCurrentLogs } from "@/store/logFilterStore";
@@ -25,12 +71,19 @@ import {
 import PopOverParsedLogs from "./PopOverParsedLogs";
 import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
 
+import { GiPoliceOfficerHead } from "react-icons/gi";
+
+import { GiHypersonicBolt } from "react-icons/gi";
+import { categorizeUserAgent } from "./WidgetTables/helpers/useCategoriseUserAgents";
+import { categorizeReferrer } from "./WidgetTables/helpers/useCategoriseReferrer";
+
 const tabs = [
   { label: "Filetypes", icon: <FileText className="w-4 h-4" /> },
   { label: "Content", icon: <PenBox className="w-4 h-4" /> },
   { label: "Status Codes", icon: <Server className="w-4 h-4" /> },
   { label: "Crawlers", icon: <Bot className="w-4 h-4" /> },
-  // { label: "Analytics", icon: <BarChart3 className="w-4 h-4" /> },
+  { label: "User Agents", icon: <GiPoliceOfficerHead className="w-4 h-4" /> },
+  { label: "Referrers", icon: <GiHypersonicBolt className="w-3 h-3" /> },
 ];
 
 const COLORS = [
@@ -44,102 +97,291 @@ const COLORS = [
   "#14b8a6",
 ];
 
+// Helper function to get status code text
+const getStatusText = (code) => {
+  const codes = {
+    "200": "OK",
+    "301": "Redirect",
+    "404": "Not Found",
+    "500": "Server Error",
+  };
+  return codes[code] || "";
+};
+
+const FallbackLoader = () => (
+  <div className="flex flex-col items-center justify-center h-96 w-full">
+    <Loader2 className="h-10 w-10 animate-spin text-brand-bright" />
+    <p className="mt-4 text-sm text-gray-500 font-medium">
+      Processing component...
+    </p>
+  </div>
+);
+
 export default function WidgetLogs() {
   const [activeTab, setActiveTab] = useState("Filetypes");
-  const { entries, overview } = useLogAnalysis();
+  const { overview, entries } = useLogAnalysis();
   const [openDialogs, setOpenDialogs] = useState({});
   const { currentLogs } = useCurrentLogs();
   const { uploadedLogFiles } = useServerLogsStore();
+  const [taxonomyNameMap, setTaxonomyNameMap] = useState({});
+  const [sortedTaxonomyPaths, setSortedTaxonomyPaths] = useState([]);
+
+  useEffect(() => {
+    const loadTaxonomies = () => {
+      const storedTaxonomies = localStorage.getItem("taxonomies");
+      if (storedTaxonomies) {
+        try {
+          const parsed = JSON.parse(storedTaxonomies);
+          if (Array.isArray(parsed)) {
+            const newMap = {};
+            parsed.forEach((tax) => {
+              if (tax.paths) {
+                // Ensure paths are in the format expected by PathConfig, accounting for old string format
+                tax.paths.forEach((p) => {
+                  const pathString = typeof p === "string" ? p : p.path;
+                  if (pathString) {
+                    newMap[pathString] = tax.name;
+                  }
+                });
+              }
+            });
+            setTaxonomyNameMap(newMap);
+
+            const sortedPaths = Object.entries(newMap).sort(
+              (a, b) => b[0].length - a[0].length,
+            );
+            setSortedTaxonomyPaths(sortedPaths);
+          }
+        } catch (e) {
+          console.error("Failed to parse taxonomies from localStorage", e);
+          // If parsing fails, clear localStorage and current taxonomies
+          localStorage.removeItem("taxonomies");
+          setTaxonomyNameMap({});
+          setSortedTaxonomyPaths([]);
+        }
+      } else {
+        // If no stored taxonomies, clear current ones
+        setTaxonomyNameMap({});
+        setSortedTaxonomyPaths([]);
+      }
+    };
+
+    // Load taxonomies initially and whenever the custom event fires
+    loadTaxonomies();
+
+    const handleTaxonomiesUpdate = () => {
+      loadTaxonomies();
+    };
+
+    window.addEventListener("taxonomiesUpdated", handleTaxonomiesUpdate);
+
+    return () => {
+      window.removeEventListener("taxonomiesUpdated", handleTaxonomiesUpdate);
+    };
+  }, []);
 
   // Prepare filetype data from actual entries
-  const fileTypeData = currentLogs?.reduce((acc, entry) => {
-    const type = entry.file_type || "Other";
-    acc[type] = (acc[type] || 0) + 1;
-    return acc;
-  }, {});
+  const fileTypeData = useMemo(
+    () =>
+      currentLogs?.reduce((acc, entry) => {
+        const type = entry.file_type || "Other";
+        acc[type] = (acc[type] || 0) + 1;
+        return acc;
+      }, {}),
+    [currentLogs],
+  );
 
-  // Prepare content data from actual entries or use dummy data
-  const contentData = currentLogs?.reduce((acc, entry) => {
-    const content = entry.taxonomy;
-    acc[content] = (acc[content] || 0) + 1;
-    return acc;
-  }, {}) || {
-    Home: 1200,
-    Blog: 850,
-    Events: 420,
-    Solutions: 680,
-    Customers: 320,
-    Industries: 540,
-    Products: 610,
-    About: 290,
-  };
+  // Prepare content data from actual entries
+  const contentData = useMemo(
+    () =>
+      currentLogs?.reduce((acc, entry) => {
+        const taxonomy = entry.taxonomy;
+        if (taxonomy && taxonomy !== "other") {
+          acc[taxonomy] = (acc[taxonomy] || 0) + 1;
+        } else {
+          acc["other"] = (acc["other"] || 0) + 1;
+        }
+        return acc;
+      }, {}) || {},
+    [currentLogs],
+  );
 
   // Prepare status code data from actual entries
-  const statusCodeData = currentLogs?.reduce((acc, entry) => {
-    const code = entry.status;
-    acc[code] = (acc[code] || 0) + 1;
-    return acc;
-  }, {});
+  const statusCodeData = useMemo(
+    () =>
+      currentLogs?.reduce((acc, entry) => {
+        const code = entry.status;
+        acc[code] = (acc[code] || 0) + 1;
+        return acc;
+      }, {}),
+    [currentLogs],
+  );
 
   // Prepare crawler data
-  const crawlerData = overview?.totals
-    ? Object.entries(overview.totals)
-        .filter(([_, value]) => value > 0)
-        .map(([name, value]) => ({
-          name: name.charAt(0).toUpperCase() + name.slice(1),
-          value,
-        }))
-        .sort((a, b) => b.value - a.value)
-    : [];
+  const crawlerData = useMemo(
+    () =>
+      overview?.totals
+        ? Object.entries(overview.totals)
+            .filter(([_, value]) => value > 0)
+            .map(([name, value]) => ({
+              name: name.charAt(0).toUpperCase() + name.slice(1),
+              value,
+            }))
+            .sort((a, b) => b.value - a.value)
+        : [],
+    [overview],
+  );
+
+  // Prepare User Agents Data
+  const userAgentData = useMemo(
+    () =>
+      currentLogs?.reduce((acc, entry) => {
+        const userAgent = entry.user_agent || "Unknown";
+
+        // Categorize user agents to make the data more manageable
+        const categorizedAgent = categorizeUserAgent(userAgent);
+
+        if (!acc[categorizedAgent]) {
+          acc[categorizedAgent] = { count: 0, examples: [] };
+        }
+
+        acc[categorizedAgent].count += 1;
+
+        // Keep a few examples of user agents in this category (max 5)
+        if (
+          acc[categorizedAgent].examples.length < 5 &&
+          !acc[categorizedAgent].examples.includes(userAgent)
+        ) {
+          acc[categorizedAgent].examples.push(userAgent);
+        }
+
+        return acc;
+      }, {}),
+    [currentLogs],
+  );
+
+  // Prepare Referrers Data
+  const referrerData = useMemo(
+    () =>
+      currentLogs?.reduce((acc, entry) => {
+        const referrer = entry.referer || "Direct/None";
+
+        // Categorize referrers to make the data more manageable
+        const categorizedReferrer = categorizeReferrer(referrer);
+
+        if (!acc[categorizedReferrer]) {
+          acc[categorizedReferrer] = { count: 0, referrers: [] };
+        }
+
+        acc[categorizedReferrer].count += 1;
+
+        // Keep a few examples of referrers in this category (max 5)
+        if (
+          acc[categorizedReferrer].referrers.length < 5 &&
+          !acc[categorizedReferrer].referrers.includes(referrer)
+        ) {
+          acc[categorizedReferrer].referrers.push(referrer);
+        }
+
+        return acc;
+      }, {}),
+    [currentLogs],
+  );
 
   // Get chart data for active tab
-  const getChartData = () => {
-    const totalRequests = overview?.line_count || 1;
-    const crawlerPercentage = overview?.crawler_count
-      ? Math.round((overview.crawler_count / totalRequests) * 100)
-      : 0;
+  const chartData = useMemo(() => {
+    if (activeTab === "Content") {
+      const contentBySegment = Object.entries(contentData || {}).reduce(
+        (acc, [path, value]) => {
+          const name = taxonomyNameMap[path] || "Other";
+          if (!acc[name]) {
+            acc[name] = { value: 0, paths: {} };
+          }
+          acc[name].value += value;
+          acc[name].paths[path] = value;
+          return acc;
+        },
+        {},
+      );
+
+      return Object.entries(contentBySegment).map(([name, data]) => ({
+        name: name,
+        value: data.value,
+        paths: data.paths,
+      }));
+    }
+
+    if (activeTab === "User Agents") {
+      // Convert userAgentData to chart format
+      if (!userAgentData) return [];
+
+      return Object.entries(userAgentData)
+        .map(([name, data]) => ({
+          name: name,
+          value: data.count,
+          examples: data.examples,
+        }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 20); // Limit to top 20 for readability
+    }
+
+    if (activeTab === "Referrers") {
+      // Convert referrerData to chart format
+      if (!referrerData) return [];
+
+      return Object.entries(referrerData)
+        .map(([name, data]) => ({
+          name: name,
+          value: data.count,
+          referrers: data.referrers,
+        }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 20); // Limit to top 20 for readability
+    }
 
     return (
       {
-        Filetypes: Object.entries(fileTypeData || {}).map(([name, value]) => ({
-          name: name.toUpperCase(),
-          value,
-        })),
-        Content: Object.entries(contentData || {}).map(([name, value]) => ({
-          name: name,
-          value,
-        })),
-        "Status Codes": Object.entries(statusCodeData || {}).map(
-          ([name, value]) => ({
+        Filetypes: Object.entries(fileTypeData || {})
+          .map(([name, value]) => ({
+            name: name.toUpperCase(),
+            value,
+          }))
+          .sort((a, b) => b.value - a.value), // Add this sort
+        "Status Codes": Object.entries(statusCodeData || {})
+          .map(([name, value]) => ({
             name: `${name} ${getStatusText(name)}`,
             value,
-          }),
-        ),
-        Crawlers: crawlerData.length > 0 ? crawlerData : "",
+          }))
+          .sort((a, b) => b.value - a.value), // Add this sort too if you want
+        Crawlers: crawlerData.length > 0 ? crawlerData : [],
       }[activeTab] || []
     );
-  };
+  }, [
+    activeTab,
+    contentData,
+    taxonomyNameMap,
+    userAgentData,
+    referrerData,
+    fileTypeData,
+    statusCodeData,
+    crawlerData,
+  ]);
 
-  // Helper function to get status code text
-  const getStatusText = (code) => {
-    const codes = {
-      "200": "OK",
-      "301": "Redirect",
-      "404": "Not Found",
-      "500": "Server Error",
-    };
-    return codes[code] || "";
-  };
+  const totalLogsAnalysed = useMemo(
+    () =>
+      uploadedLogFiles
+        .map((log) => log?.names?.length || 0)
+        .reduce((a, b) => a + b, 0),
+    [uploadedLogFiles],
+  );
 
-  const chartData = getChartData();
-
-  if (!overview) {
-    return (
-      <div className="bg-white shadow rounded-lg p-4 w-full h-64 flex items-center justify-center dark:bg-brand-darker">
-        <p className="text-gray-500 dark:text-gray-400">Loading data...</p>
-      </div>
-    );
-  }
+  // if (!overview) {
+  //   return (
+  //     <div className="bg-white shadow rounded-lg p-4 w-full h-64 flex items-center justify-center dark:bg-brand-darker">
+  //       <p className="text-gray-500 dark:text-gray-400">Processing data...</p>
+  //     </div>
+  //   );
+  // }
 
   // Format numbers with commas
   const formatNumber = (num: number) => num?.toLocaleString() || "0";
@@ -148,21 +390,9 @@ export default function WidgetLogs() {
     setOpenDialogs((prev) => ({ ...prev, [name]: isOpen }));
   };
 
-  const totalLogsAnalysed = uploadedLogFiles
-    .map((log) => log?.names?.length)
-    .reduce((a, b) => a + b, 0);
-
-  const formatedNumber = (num) => {
-    const f = Intl.NumberFormat("en-UK", {
-      notation: "compact",
-      compactDisplay: "short",
-      maximumFractionDigits: 1,
-    });
-    return f.format(num);
-  };
-
   return (
-    <div className="bg-white border dark:border-brand-dark shadow rounded-none p-2 pr-1 w-1/2  mx-auto dark:bg-slate-950 dark:text-white h-64 relative">
+    <div className="bg-white border dark:border-brand-dark shadow rounded-none p-2 pr-1 w-1/2 mx-auto dark:bg-slate-950 dark:text-white h-64 relative">
+      {/* Top Info Popover */}
       <Popover>
         <PopoverTrigger className="absolute top-3 font-bold text-black/20 dark:text-white/50 text-xl">
           <div className="flex flex-col items-start justify-start">
@@ -171,57 +401,34 @@ export default function WidgetLogs() {
             </span>
           </div>
         </PopoverTrigger>
-        <PopoverContent className="min-w-[300px] max-w-96  py-2 px-0 mt-2 relative z-20">
-          {/* <div className="h-5 w-5 absolute -top-2 right-32 bg-white rotate-45 border -z-10" /> */}
-          <PopOverParsedLogs />
-        </PopoverContent>
-      </Popover>
-
-      <Popover>
-        <PopoverTrigger className="absolute bottom-1 left-3 flex cursor-pointer">
-          {uploadedLogFiles.length > 0 && (
-            <>
-              <FaInfoCircle className=" h-4 w-4 text-brand-bright" />
-
-              <div className="flex items-center space-x-0.5 text-brand-bright/50 cursor-pointer -mt-1 ml-1.5">
-                <span className="text-xs inline-block">
-                  {totalLogsAnalysed || 0} logs
-                </span>
-                <span>/</span>
-                <span className="text-xs inline-block">
-                  {uploadedLogFiles ? uploadedLogFiles?.length : 0} batches
-                </span>
-              </div>
-            </>
-          )}
-        </PopoverTrigger>
         <PopoverContent className="min-w-[300px] max-w-96 py-2 px-0 mt-2 relative z-20">
           <PopOverParsedLogs />
         </PopoverContent>
       </Popover>
 
-      {/*   <PopoverTrigger className="absolute top-[7.8rem] left-[9.8rem] font-bold text-black/20 dark:text-white/50 text-xl z-[999999]"> */}
-      {/*     <div className="flex flex-col items-start justify-start"> */}
-      {/*       <div className="flex flex-col justify-center items-left  text-gray-500/50 -mt-2 text-xs"> */}
-      {/*         <span className="text-sm inline-block"> */}
-      {/*           {totalLogsAnalysed} logs */}
-      {/*         </span> */}
-      {/*         <span className="text-sm inline-block"> */}
-      {/*           {uploadedLogFiles.length} batches */}
-      {/*         </span> */}
-      {/*       </div> */}
-      {/*     </div> */}
-      {/*   </PopoverTrigger> */}
-      {/*   <PopoverContent className="min-w-70 max-w-96 py-2 px-0 mt-2 relative z-20"> */}
-      {/* <div className="h-5 w-5 absolute -top-2 right-32 bg-white rotate-45 border -z-10" /> */}
-      {/*     <PopOverParsedLogs /> */}
-      {/*   </PopoverContent> */}
-      {/* </Popover> */}
-
-      {/* Information about the uploaded logs */}
+      {/* Bottom Info Popover */}
+      {uploadedLogFiles.length > 0 && (
+        <Popover>
+          <PopoverTrigger className="absolute bottom-1 left-3 flex cursor-pointer items-center">
+            <FaInfoCircle className="h-4 w-4 text-brand-bright" />
+            <div className="flex items-center space-x-0.5 text-brand-bright/50 cursor-pointer ml-1.5">
+              <span className="text-xs inline-block">
+                {totalLogsAnalysed || 0} logs
+              </span>
+              <span>/</span>
+              <span className="text-xs inline-block">
+                {uploadedLogFiles?.length || 0} batches
+              </span>
+            </div>
+          </PopoverTrigger>
+          <PopoverContent className="min-w-[300px] max-w-96 py-2 px-0 mt-2 relative z-20">
+            <PopOverParsedLogs />
+          </PopoverContent>
+        </Popover>
+      )}
 
       {/* Tabs */}
-      <div className="flex space-x-2 pt-1 pb-0 w-full justify-center">
+      <div className="flex space-x-2 pt-1 pb-0 w-full ml-20 justify-center">
         {tabs.map(({ label, icon }) => (
           <button
             key={label}
@@ -246,249 +453,230 @@ export default function WidgetLogs() {
         transition={{ duration: 0.2 }}
         className="h-[calc(100%-32px)]"
       >
-        {activeTab !== "Analytics" ? (
-          <>
-            <div className="flex flex-col md:flex-row items-center justify-center relative">
-              <PieChart width={200} height={200} className="relative">
-                <Pie
-                  data={chartData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={50}
-                  outerRadius={80}
-                  paddingAngle={2}
-                >
-                  {chartData.map((_, idx) => (
-                    <Cell
-                      key={`cell-${idx}`}
-                      fill={COLORS[idx % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  style={{ backgroundColor: "#1f2937", color: "#f9fafb" }}
-                  formatter={(value, name, props) => {
-                    const total = chartData.reduce(
-                      (sum, item) => sum + item.value,
-                      0,
-                    );
-                    const percentage =
-                      total > 0 ? Math.round((Number(value) / total) * 100) : 0;
-                    return [
-                      `${name}: ${value.toLocaleString()} (${percentage}%)`,
-                      null,
-                    ];
-                  }}
-                  contentStyle={{
-                    backgroundColor: "#1f2937",
-                    borderColor: "#374151",
-                    borderRadius: "0.375rem",
-                    color: "#f9fafb",
-                    height: "30px",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                  itemStyle={{
-                    color: "#f9fafb",
-                    fontSize: "0.75rem",
-                  }}
-                />
-              </PieChart>
+        <div className="flex flex-col md:flex-row items-center justify-center relative">
+          <PieChart width={200} height={200} className="relative">
+            <Pie
+              data={chartData}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              innerRadius={50}
+              outerRadius={80}
+              paddingAngle={2}
+            >
+              {chartData.map((_, idx) => (
+                <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip
+              formatter={(value, name) => {
+                const total = chartData.reduce(
+                  (sum, item) => sum + item.value,
+                  0,
+                );
+                const percentage =
+                  total > 0 ? Math.round((Number(value) / total) * 100) : 0;
+                return [
+                  `${name}: ${value.toLocaleString()} (${percentage}%)`,
+                  null,
+                ];
+              }}
+              contentStyle={{
+                backgroundColor: "#1f2937",
+                borderColor: "#374151",
+                borderRadius: "0.375rem",
+                color: "#f9fafb",
+                height: "30px",
+                display: "flex",
+                alignItems: "center",
+              }}
+              itemStyle={{
+                color: "#f9fafb",
+                fontSize: "0.75rem",
+              }}
+            />
+          </PieChart>
 
-              <div
-                className={`grid grid-cols-1 ${activeTab === "Status Codes" ? "grid-cols-4 max-w-xl" : "grid-cols-2"} gap-2 w-full max-w-md pl-4`}
+          <div
+            className={`grid gap-2 w-full max-w-2xl pl-4 ${
+              activeTab === "User Agents" || activeTab === "Referrers"
+                ? "grid-cols-5 max-w-6xl"
+                : activeTab === "Status Codes"
+                  ? "grid-cols-4 max-w-xl"
+                  : "grid-cols-3"
+            }`}
+          >
+            {chartData.map((entry, idx) => (
+              <Dialog
+                key={`${entry.name}-${idx}`}
+                open={openDialogs[entry.name] || false}
+                onOpenChange={(isOpen) => handleOpenChange(entry.name, isOpen)}
               >
-                {chartData.map((entry, idx) => (
-                  <Dialog
-                    key={`${entry.name}-${idx}`}
-                    open={openDialogs[entry.name] || false}
-                    onOpenChange={(isOpen) =>
-                      handleOpenChange(entry.name, isOpen)
-                    }
+                <DialogTrigger className="cursor-pointer hover:scale-105 ease-in transition-all delay-75">
+                  <div
+                    className="flex justify-between items-center border border-gray-100 px-2 py-1 rounded-md text-xs dark:border-brand-dark"
+                    style={{
+                      borderLeft: `3px solid ${COLORS[idx % COLORS.length]}`,
+                      backgroundColor: `${COLORS[idx % COLORS.length]}10`,
+                    }}
                   >
-                    <DialogTrigger
-                      className={`${entry.name === "Google" ? "cursor-pointer" : "cursor-default"}`}
+                    <span className="truncate dark:text-white">
+                      {entry.name}
+                    </span>
+                    <span
+                      className="font-medium ml-2"
+                      style={{ color: COLORS[idx % COLORS.length] }}
                     >
-                      <div
-                        className="flex justify-between items-center border border-gray-100 px-2 py-1 rounded-md text-xs dark:border-brand-dark"
-                        style={{
-                          borderLeft: `3px solid ${COLORS[idx % COLORS.length]}`,
-                          backgroundColor: `${COLORS[idx % COLORS.length]}10`,
-                        }}
-                      >
-                        <span className="truncate dark:text-white">
-                          {entry.name}
-                        </span>
-                        <span
-                          className="font-medium ml-2"
-                          style={{ color: COLORS[idx % COLORS.length] }}
-                        >
-                          {entry.value.toLocaleString()}
-                        </span>
-                      </div>
-                    </DialogTrigger>
+                      {entry.value.toLocaleString()}
+                    </span>
+                  </div>
+                </DialogTrigger>
 
-                    {entry?.name === "Google" ? (
-                      <DialogContent className="max-w-[90%] min-h-96 overflow-hidden dark:bg-brand-darker dark:border-brand-bright">
-                        <Tabs defaultValue="overview">
-                          <Tabs.List className="mb-2 mx-1">
-                            <Tabs.Tab value="overview">
-                              Frequency Table
-                            </Tabs.Tab>
-                            {/* <Tabs.Tab value="charts">Charts</Tabs.Tab> */}
-                          </Tabs.List>
-
-                          <Tabs.Panel value="overview">
-                            <WidgetTable data={overview} />
-                          </Tabs.Panel>
-
-                          <Tabs.Panel value="charts">
-                            <div className="h-96" />
-                          </Tabs.Panel>
-                        </Tabs>
-                      </DialogContent>
-                    ) : (
-                      <DialogContent className="max-w-md dark:text-white dark:border-brand-bright dark:bg-brand-darker">
-                        <DialogHeader>
-                          <DialogTitle>{entry.name} Details</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4">
-                          <div className="flex justify-between">
-                            <span>Total Requests:</span>
-                            <span className="font-medium">
+                {/* SINGLE DialogContent with conditional rendering */}
+                <DialogContent className="max-w-11/12 w-11/12  dark:text-white dark:border-brand-bright dark:bg-brand-darker max-h-[90vh] overflow-hidden">
+                  {/*<Suspense fallback={<FallbackLoader />}>*/}
+                  {activeTab === "Filetypes" ? (
+                    <WidgetFileType
+                      data={overview}
+                      entries={entries}
+                      chartData={chartData}
+                      selectedFileType={entry?.name}
+                    />
+                  ) : activeTab === "Status Codes" ? (
+                    <WidgetStatusCodesTable
+                      data={overview}
+                      entries={currentLogs}
+                      segment={entry?.name}
+                    />
+                  ) : activeTab === "Referrers" ? (
+                    <WidgetReferrersTable
+                      data={overview}
+                      entries={currentLogs}
+                      segment={entry?.name === "Other" ? "all" : entry?.name}
+                    />
+                  ) : activeTab === "Content" ? (
+                    <Tabs defaultValue="logs" className="h-full">
+                      <Tabs.List>
+                        <Tabs.Tab value="overview">Overview</Tabs.Tab>
+                        <Tabs.Tab value="logs">URLs</Tabs.Tab>
+                      </Tabs.List>
+                      <Tabs.Panel value="overview" className="h-full">
+                        <section className="h-[740px] flex flex-col justify-between">
+                          <div>
+                            <DialogHeader>
+                              <DialogTitle className="mt-4">
+                                Segment Breakdown:{" "}
+                                <span className="text-brand-bright">
+                                  {entry.name}
+                                </span>
+                              </DialogTitle>
+                            </DialogHeader>
+                            <div className="pt-8 space-y-1">
+                              <h3 className="font-medium dark:text-white/50 text-black/50">
+                                Paths in this segment:
+                              </h3>
+                              <div className="max-h-60 overflow-y-auto space-y-1">
+                                {entry.paths &&
+                                  Object.entries(entry.paths).map(
+                                    ([path, count]) => (
+                                      <div
+                                        key={path}
+                                        className="flex pt-2 justify-between text-sm p-1 rounded-md bg-brand-bright/10 dark:bg-slate-800/50 px-2"
+                                      >
+                                        <span className="font-mono text-xs text-brand-bright">
+                                          {path}
+                                        </span>
+                                        <span className="font-medium text-brand-bright">
+                                          {count.toLocaleString()}
+                                        </span>
+                                      </div>
+                                    ),
+                                  )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex justify-between font-bold pt-4">
+                            <span className="text-black/50 dark:text-white/50">
+                              Total Entries:
+                            </span>
+                            <span className="text-brand-bright pr-1">
                               {entry.value.toLocaleString()}
                             </span>
                           </div>
-                          <div className="flex justify-between">
-                            <span>Percentage:</span>
-                            <span className="font-medium">
-                              {Math.round(
-                                (entry.value /
-                                  chartData.reduce(
-                                    (sum, item) => sum + item.value,
-                                    0,
-                                  )) *
-                                  100,
-                              )}
-                              %
-                            </span>
-                          </div>
-                        </div>
-                      </DialogContent>
-                    )}
-                  </Dialog>
-                ))}
-              </div>
-            </div>
-          </>
-        ) : (
-          <div
-            className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 overflow-auto"
-            style={{ height: "calc(100% - 8px)", marginTop: "0.2em" }}
-          >
-            {/* Left Column - Stats */}
-            <div className="space-y-2">
-              <div className="bg-white/50 dark:bg-gray-800/80 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
-                <h3 className="font-medium text-sm text-gray-500 dark:text-gray-400 mb-2">
-                  TRAFFIC OVERVIEW
-                </h3>
-                <div className="space-y-2.5">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Total</span>
-                    <span className="font-medium text-sm tabular-nums">
-                      {formatNumber(overview.line_count)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Success Rate</span>
-                    <span className="font-medium text-sm tabular-nums">
-                      {overview.success_rate?.toFixed(1)}%
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Crawlers</span>
-                    <span className="font-medium text-sm tabular-nums">
-                      {formatNumber(overview.crawler_count)} (
-                      {Math.round(
-                        (overview.crawler_count / overview.line_count) * 100,
-                      )}
-                      %)
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white/50 dark:bg-gray-800/80 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
-                <h3 className="font-medium text-sm text-gray-500 dark:text-gray-400 mb-2">
-                  UNIQUE VALUES
-                </h3>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      IPs
-                    </div>
-                    <div className="font-medium text-sm tabular-nums">
-                      {formatNumber(overview.unique_ips)}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      User Agents
-                    </div>
-                    <div className="font-medium text-sm tabular-nums">
-                      {formatNumber(overview.unique_user_agents)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column - Crawlers */}
-            <div className="bg-white/50 dark:bg-gray-800/80 p-3 rounded-lg border border-gray-100 dark:border-gray-700">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-medium text-sm text-gray-500 dark:text-gray-400">
-                  CRAWLER BREAKDOWN
-                </h3>
-                <span className="text-xs text-gray-400 dark:text-gray-500">
-                  {formatNumber(overview.crawler_count)} total
-                </span>
-              </div>
-              <div className="space-y-2">
-                {crawlerData.map((crawler, index) => {
-                  const percentage = Math.round(
-                    (crawler.value / overview.line_count) * 100,
-                  );
-                  return (
-                    <div key={crawler.name} className="space-y-1">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="truncate pr-2">{crawler.name}</span>
-                        <div className="flex items-center space-x-2">
-                          <span className="font-medium tabular-nums">
-                            {formatNumber(crawler.value)}
-                          </span>
-                          <span className="text-xs text-gray-500 tabular-nums w-8 text-right">
-                            {percentage}%
-                          </span>
-                        </div>
-                      </div>
-                      <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5">
-                        <div
-                          className="h-1.5 rounded-full"
-                          style={{
-                            width: `${percentage}%`,
-                            backgroundColor: COLORS[index % COLORS.length],
-                          }}
+                        </section>
+                      </Tabs.Panel>
+                      <Tabs.Panel value="logs" className="h-full">
+                        <WidgetContentTable
+                          data={overview}
+                          entries={entries}
+                          segment={entry?.name}
                         />
+                      </Tabs.Panel>
+                    </Tabs>
+                  ) : activeTab === "User Agents" ? (
+                    <WidgetUserAgentsTable
+                      data={overview}
+                      entries={currentLogs}
+                      segment={entry?.name === "Other" ? "all" : entry?.name}
+                    />
+                  ) : ["Google", "Bing", "Openai", "Claude"].includes(
+                      entry?.name,
+                    ) ? (
+                    <Tabs defaultValue="overview" className="h-full">
+                      <Tabs.List>
+                        <Tabs.Tab value="overview">Frequency Table</Tabs.Tab>
+                      </Tabs.List>
+                      <Tabs.Panel value="overview" className="h-full">
+                        {entry?.name === "Google" && (
+                          <WidgetTable data={overview} />
+                        )}
+                        {entry?.name === "Bing" && (
+                          <WidgetTableBing data={overview} />
+                        )}
+                        {entry?.name === "Openai" && (
+                          <WidgetTableOpenAi data={overview} />
+                        )}
+                        {entry?.name === "Claude" && (
+                          <WidgetTableClaude data={overview} />
+                        )}
+                      </Tabs.Panel>
+                    </Tabs>
+                  ) : activeTab === "Crawlers" ? (
+                    <>
+                      <DialogHeader>
+                        <DialogTitle>{entry.name} Details</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="flex justify-between">
+                          <span>Total Requests:</span>
+                          <span className="font-medium">
+                            {entry.value.toLocaleString()}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Percentage:</span>
+                          <span className="font-medium">
+                            {Math.round(
+                              (entry.value /
+                                chartData.reduce(
+                                  (sum, item) => sum + item.value,
+                                  0,
+                                )) *
+                                100,
+                            )}
+                            %
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+                    </>
+                  ) : null}
+                  {/*</Suspense>*/}
+                </DialogContent>
+              </Dialog>
+            ))}
           </div>
-        )}
+        </div>
       </motion.div>
     </div>
   );

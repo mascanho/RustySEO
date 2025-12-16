@@ -93,17 +93,17 @@ function UploadButton() {
             Settings
           </button>
         </DialogTrigger>
-        <DialogContent className="p-9 overflow-hidden pl-6 max-w-[700px] h-[560px] dark:bg-brand-darker">
+        <DialogContent className="p-9 overflow-hidden pl-6 max-w-[700px] h-[660px] dark:bg-brand-darker">
           <Tabs>
-            <TabsList className="grid w-full grid-cols-5 bg-gray-100 dark:bg-brand-dark">
+            <TabsList className="grid w-full grid-cols-4 bg-gray-100 dark:bg-brand-dark">
               <TabsTrigger
                 className="hover:bg-brand-bright/70 hover:text-white"
                 value="domain"
               >
                 Domain
               </TabsTrigger>
-              <TabsTrigger value="taxonomy">Content Taxonomies</TabsTrigger>
-              <TabsTrigger value="ips">Google IPs</TabsTrigger>
+              <TabsTrigger value="taxonomy">Content Segments</TabsTrigger>
+              {/* <TabsTrigger value="ips">Google IPs</TabsTrigger> */}
               <TabsTrigger value="logs">Stored Logs</TabsTrigger>
               <TabsTrigger value="projects">Projects</TabsTrigger>
               {/* <TabsTrigger value="gsc">GSC Sync</TabsTrigger> */}
@@ -114,11 +114,6 @@ function UploadButton() {
 
             <TabsContent value="taxonomy" className="mt-4">
               <TaxonomyManager closeDialog={() => setSettingsOpen(false)} />
-            </TabsContent>
-
-            <TabsContent value="ips" className="mt-4">
-              {/* Add your settings content here */}
-              <IPManager closeDialog={() => setSettingsOpen(false)} />
             </TabsContent>
 
             <TabsContent value="domain" className="mt-4">

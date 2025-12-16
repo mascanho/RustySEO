@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle, XCircle, AlertCircle, Info, Clock } from "lucide-react";
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 import useGSCStatusStore from "@/store/GSCStatusStore";
+import useSettingsStore from "@/store/SettingsStore";
 import { invoke } from "@tauri-apps/api/core";
 
 type LogLevel = "success" | "error" | "warning" | "info" | "debug";
@@ -92,7 +93,7 @@ const generateLogs = (
   isFinishedDeepCrawl: boolean,
   tasks: number,
   aiModelLog: string,
-  pageSpeedKeys: string[],
+  pageSpeedKey: string | null,
   ga4ID: string | null,
   gscCredentials: any,
   isGscConfigured: boolean,
@@ -100,6 +101,16 @@ const generateLogs = (
 ): LogEntry[] => {
   const now = Date.now();
   const timestamp = new Date();
+
+  async function get_settings() {
+    const settings = await invoke<any>("get_settings_command");
+    console.log(settings, "These are the settings");
+    return settings;
+  }
+
+  const psiKeys = get_settings().then((settings) => {
+    return settings.page_speed_key;
+  });
 
   return [
     {
@@ -118,16 +129,8 @@ const generateLogs = (
     {
       id: now + 3,
       timestamp,
-      level:
-        pageSpeedKeys?.page_speed_key &&
-        pageSpeedKeys.page_speed_key.trim() !== ""
-          ? "success"
-          : "error",
-      message:
-        pageSpeedKeys?.page_speed_key &&
-        pageSpeedKeys.page_speed_key.trim() !== ""
-          ? "PSI: Enabled"
-          : "No PSI Keys configured",
+      level: psiKeys !== "" ? "success" : "error",
+      message: psiKeys !== "" ? "PSI Key: Found" : "No PSI Keys configured",
     },
     {
       id: now + 4,
@@ -204,21 +207,10 @@ function UptimeTimer() {
 export default function ConsoleLog() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const {
-    crawler,
-    isGlobalCrawling,
-    isFinishedDeepCrawl,
-    tasks,
-    aiModelLog,
-    setAiModelLog,
-  } = useGlobalConsoleStore();
-  const [pageSpeedKeys, setPageSpeedKeys] = useState<{
-    page_speed_key?: string;
-  } | null>(null);
-  const [ga4ID, setGa4ID] = useState<string | null>(null);
-  const [clarityApi, setClarityApi] = useState("");
+  const { crawler, isGlobalCrawling, isFinishedDeepCrawl, tasks, setCrawler } =
+    useGlobalConsoleStore();
 
-  // Use GSC status store instead of local state
+  // Use stores for reactive state management
   const {
     credentials: gscCredentials,
     isConfigured: isGscConfigured,
@@ -226,6 +218,35 @@ export default function ConsoleLog() {
     updateStatus: updateGscStatus,
     lastChecked: gscLastChecked,
   } = useGSCStatusStore();
+
+  const {
+    pageSpeedKey,
+    ga4Id,
+    clarityApi,
+    aiModel,
+    lastUpdated,
+    refreshSettings,
+  } = useSettingsStore();
+
+  // Function to refresh all configuration data
+  const refreshAllConfigurations = useCallback(async () => {
+    try {
+      await refreshSettings();
+      const gsc = await invoke<any>("read_credentials_file").catch(() => null);
+      updateGscStatus(gsc);
+
+      // Check localStorage for crawler type
+      const savedCrawlerType = localStorage.getItem("crawlerType");
+      if (
+        savedCrawlerType &&
+        (savedCrawlerType === "Spider" || savedCrawlerType === "Custom Search")
+      ) {
+        setCrawler(savedCrawlerType);
+      }
+    } catch (err) {
+      console.error("[Error] Failed to refresh configurations:", err);
+    }
+  }, [refreshSettings, updateGscStatus, setCrawler]);
 
   // Function to refresh GSC status specifically
   const refreshGscStatus = useCallback(async () => {
@@ -239,47 +260,29 @@ export default function ConsoleLog() {
     }
   }, [setGscLoading, updateGscStatus]);
 
-  // Initial configuration fetch on mount
+  // Initial configuration fetch on mount and handle storage events
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [aiModel, aiModelCheck, pageSpeed, ga4, clarity] =
-          await Promise.all([
-            invoke<string>("get_ai_model"),
-            invoke<string>("check_ai_model"),
-            invoke<{ page_speed_key: string }>("load_api_keys"),
-            invoke<string | null>("get_google_analytics_id"),
-            invoke<string>("get_microsoft_clarity_command"),
-          ]);
+    refreshAllConfigurations();
 
-        setAiModelLog(aiModelCheck || aiModel || "none");
-        setPageSpeedKeys(pageSpeed);
-        setGa4ID(ga4);
-        setClarityApi(clarity || "");
-
-        // Refresh GSC status separately
-        await refreshGscStatus();
-      } catch (err) {
-        console.error("[Error] Failed to fetch configuration:", err);
-        // Set safe defaults on error
-        setAiModelLog("none");
-        setPageSpeedKeys(null);
-        setGa4ID(null);
-        setClarityApi("");
+    // Listen for localStorage changes
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "crawlerType" && e.newValue) {
+        setCrawler(e.newValue);
       }
     };
 
-    fetchData();
-  }, [setAiModelLog, refreshGscStatus]);
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [refreshAllConfigurations, setCrawler]);
 
-  // Periodic GSC status refresh - every 10 minutes
+  // Periodic configuration refresh - every 30 seconds for all configs
   useEffect(() => {
     const interval = setInterval(() => {
-      refreshGscStatus();
-    }, 600000); // Check every 10 minutes (600000ms)
+      refreshAllConfigurations();
+    }, 30000); // Check every 30 seconds (30000ms)
 
     return () => clearInterval(interval);
-  }, [refreshGscStatus]);
+  }, [refreshAllConfigurations]);
 
   // Memoized logs generation
   const memoizedLogs = useMemo(() => {
@@ -288,9 +291,9 @@ export default function ConsoleLog() {
       isGlobalCrawling,
       isFinishedDeepCrawl,
       tasks,
-      aiModelLog,
-      pageSpeedKeys,
-      ga4ID,
+      aiModel,
+      pageSpeedKey,
+      ga4Id,
       gscCredentials,
       isGscConfigured,
       clarityApi,
@@ -300,13 +303,22 @@ export default function ConsoleLog() {
     isGlobalCrawling,
     isFinishedDeepCrawl,
     tasks,
-    aiModelLog,
-    pageSpeedKeys,
-    ga4ID,
+    aiModel,
+    pageSpeedKey,
+    ga4Id,
     gscCredentials,
     isGscConfigured,
     clarityApi,
+    lastUpdated, // Include lastUpdated to trigger re-render when settings change
   ]);
+
+  // Update logs when crawler type changes in localStorage
+  useEffect(() => {
+    const savedCrawlerType = localStorage.getItem("crawlerType");
+    if (savedCrawlerType !== crawler) {
+      setLogs(memoizedLogs);
+    }
+  }, [crawler, memoizedLogs]);
 
   // Update logs and handle scrolling
   useEffect(() => {

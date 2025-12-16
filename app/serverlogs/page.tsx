@@ -32,6 +32,7 @@ export default function Page() {
   const { setLogData, logData } = useLogAnalysis();
 
   // ALWAYS CHECK THE TAXONOMIES FROM THE LOCALSTORAGE AND SEND THEM TO THE TAURI COMMAND ON FIRST RUN
+  // In your main Page component
   useEffect(() => {
     const getTaxonomies = async () => {
       try {
@@ -39,16 +40,26 @@ export default function Page() {
 
         if (taxonomies) {
           const parsedTaxonomies = JSON.parse(taxonomies);
-          const taxonomyNames = parsedTaxonomies.map(
-            (tax: { name: string }) => tax.name
-          );
-          await invoke("set_taxonomies", { newTaxonomies: taxonomyNames });
-        } else {
-          // toast.error("No taxonomies found");
+          if (Array.isArray(parsedTaxonomies)) {
+            const taxonomyInfo = parsedTaxonomies.flatMap((tax) =>
+              tax.paths.map((pathConfig) => ({
+                path: pathConfig.path || "",
+                match_type: pathConfig.matchType || "contains",
+                name: tax.name || "",
+              })),
+            );
+
+            // Only send if we have actual taxonomies
+            if (taxonomyInfo.length > 0) {
+              await invoke("set_taxonomies", { newTaxonomies: taxonomyInfo });
+              console.log(
+                "Taxonomies loaded from localStorage and sent to backend",
+              );
+            }
+          }
         }
       } catch (error) {
         console.error("Error loading taxonomies:", error);
-        toast.error("Failed to load taxonomies");
       }
     };
 
@@ -58,7 +69,8 @@ export default function Page() {
   // FETCH THE GOOGLE'S IP AND HAVE IT READY TO BE USED BY THE BE
   useEffect(() => {
     try {
-      invoke("fetch_google_ip_ranges", {});
+      // Fetch all IP ranges to verify IPs from Google, OpenAI and BING
+      invoke("fetch_all_bot_ranges", {});
     } catch (error) {
       console.error("Error loading taxonomies:", error);
       toast.error("RustySEO failed to load Google's IP ranges");
@@ -132,7 +144,7 @@ export default function Page() {
         //TODO: IMPLEMENT A LOADER HERE
         const unlistenProgress = await listen<ProgressUpdate>(
           "progress-update",
-          ({ payload }) => isMounted && setProgress(payload)
+          ({ payload }) => isMounted && setProgress(payload),
         );
 
         const unlistenChunk = await listen<LogResult>(
@@ -140,7 +152,7 @@ export default function Page() {
           ({ payload }) => {
             console.log(
               `[FRONTEND] Received ${payload.entries?.length || 0} entries ` +
-                `at ${new Date().toISOString()}`
+                `at ${new Date().toISOString()}`,
             );
 
             // Add performance marker
@@ -154,7 +166,7 @@ export default function Page() {
             if (payload.overview) {
               setLogData({ overview: payload.overview });
             }
-          }
+          },
         );
 
         const unlistenComplete = await listen<LogResult>(
@@ -165,7 +177,7 @@ export default function Page() {
             if (payload.overview) {
               setLogData({ overview: payload });
             }
-          }
+          },
           // TODO: DO SOMETHIG HERE ON COMPLETE - A LOADER MAYBE
         );
 

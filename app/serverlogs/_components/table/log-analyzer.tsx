@@ -1,6 +1,5 @@
 // @ts-nocheck
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { debounce } from "lodash";
 import {
   AlertCircle,
   BadgeCheck,
@@ -27,6 +26,7 @@ import {
   FileType2,
   BadgeInfo,
   X,
+  CopyIcon,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -81,6 +81,12 @@ import { IoClose } from "react-icons/io5";
 import { FaAngellist, FaApper, FaEye } from "react-icons/fa";
 import { FaFileCode, FaPersonHarassing, FaRobot } from "react-icons/fa6";
 import { ImUserTie } from "react-icons/im";
+import CrawlerType from "@/app/components/ui/Footer/CrawlerType";
+import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
+import {
+  handleURLClick,
+  handleCopyClick,
+} from "../WidgetTables/helpers/useCopyOpen";
 
 export function LogAnalyzer() {
   const {
@@ -94,7 +100,6 @@ export function LogAnalyzer() {
     resetAll,
   } = useLogAnalysis();
 
-  const [searchTerm, setSearchTerm] = useState("");
   const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(100);
@@ -116,17 +121,16 @@ export function LogAnalyzer() {
   const [showOnTables, setShowOnTables] = useState(false);
   const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
   const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
-  const searchTermRef = useRef("");
-  // SET the input search to be based on button click
-  const [inputValue, setInputValue] = useState(""); // stores what's typed in the input
+
+  // Search state - only filters when button is pressed
+  const [searchInput, setSearchInput] = useState("");
+  const [activeSearchTerm, setActiveSearchTerm] = useState("");
   const [isExporting, setIsExporting] = useState(false);
   const [showIp, setShowIp] = useState(false);
   const [showAgent, setShowAgent] = useState(false);
   const [urlAgentFilter, setUrlAgentFilter] = useState("url");
-  const [activeSearchTerm, setActiveSearchTerm] = useState("");
-  const [searchInput, setSearchInput] = useState("");
 
-  // Helper functions
+  // Helper functions - memoized for performance
   const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat("en-US", {
@@ -185,125 +189,118 @@ export function LogAnalyzer() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }, []);
 
-  // Debounced filter function
-  const applyFilters = useMemo(
-    () =>
-      debounce((term: string, entries: LogEntry[]) => {
-        if (!entries.length) {
-          setFilteredLogs([]);
-          return;
+  // Optimized filter function - only applies when explicitly called
+  const applyFilters = useCallback(() => {
+    if (!entries.length) {
+      setFilteredLogs([]);
+      return;
+    }
+
+    let result = [...entries];
+
+    // Apply search filter only when activeSearchTerm is set
+    if (activeSearchTerm.trim()) {
+      const lowerCaseSearch = activeSearchTerm.toLowerCase();
+      result = result.filter(
+        (log) =>
+          log.ip.toLowerCase().includes(lowerCaseSearch) ||
+          log.path.toLowerCase().includes(lowerCaseSearch) ||
+          log.user_agent.toLowerCase().includes(lowerCaseSearch),
+      );
+    }
+
+    // Apply status filter
+    if (statusFilter.length > 0) {
+      result = result.filter((log) => statusFilter.includes(log.status));
+    }
+
+    // Apply method filter
+    if (methodFilter.length > 0) {
+      result = result.filter((log) => methodFilter.includes(log.method));
+    }
+
+    // Apply file type filter
+    if (fileTypeFilter.length > 0) {
+      result = result.filter((log) => fileTypeFilter.includes(log.file_type));
+    }
+
+    // Apply bot filter
+    if (botFilter !== null) {
+      if (botFilter === "bot") {
+        result = result.filter((log) => log?.crawler_type !== "Human");
+      } else if (botFilter === "Human") {
+        result = result.filter((log) => log?.crawler_type === "Human");
+      }
+    }
+
+    // Apply Bot type filter (Mobile or Desktop)
+    if (botTypeFilter !== null) {
+      if (botTypeFilter === "Mobile") {
+        result = result.filter((log) => log?.user_agent.includes("Mobile"));
+      } else if (botTypeFilter === "Desktop") {
+        result = result.filter((log) => !log?.user_agent.includes("Mobile"));
+      }
+    }
+
+    // Apply verified filter
+    if (verifiedFilter !== null) {
+      result = result.filter((log) => log.verified === verifiedFilter);
+    }
+
+    // Apply sorting
+    if (sortConfig) {
+      result.sort((a, b) => {
+        const aValue = a[sortConfig.key as keyof LogEntry];
+        const bValue = b[sortConfig.key as keyof LogEntry];
+
+        // Special case for timestamp sorting
+        if (sortConfig.key === "timestamp") {
+          const aDate = new Date(aValue as string).getTime();
+          const bDate = new Date(bValue as string).getTime();
+          return sortConfig.direction === "ascending"
+            ? aDate - bDate
+            : bDate - aDate;
         }
 
-        let result = [...entries];
-
-        // Apply search
-        if (activeSearchTerm) {
-          const lowerCaseSearch = activeSearchTerm?.toLowerCase();
-          result = result.filter(
-            (log) =>
-              log.ip.toLowerCase().includes(lowerCaseSearch) ||
-              log.path.toLowerCase().includes(lowerCaseSearch) ||
-              log.user_agent.toLowerCase().includes(lowerCaseSearch),
-          );
+        // Normal string sorting
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          return sortConfig.direction === "ascending"
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
         }
 
-        // Apply status filter
-        if (statusFilter.length > 0) {
-          result = result.filter((log) => statusFilter.includes(log.status));
+        // Fallback for other types
+        if (aValue < bValue) {
+          return sortConfig.direction === "ascending" ? -1 : 1;
         }
-
-        // Apply method filter
-        if (methodFilter.length > 0) {
-          result = result.filter((log) => methodFilter.includes(log.method));
+        if (aValue > bValue) {
+          return sortConfig.direction === "ascending" ? 1 : -1;
         }
+        return 0;
+      });
+    }
 
-        // Apply file type filter
-        if (fileTypeFilter.length > 0) {
-          result = result.filter((log) =>
-            fileTypeFilter.includes(log.file_type),
-          );
-        }
+    setFilteredLogs(result);
+    setCurrentPage(1);
+  }, [
+    entries,
+    activeSearchTerm,
+    statusFilter,
+    methodFilter,
+    fileTypeFilter,
+    botFilter,
+    verifiedFilter,
+    botTypeFilter,
+    sortConfig,
+  ]);
 
-        // Apply bot filter
-        if (botFilter !== null) {
-          if (botFilter === "bot") {
-            result = result.filter(
-              (log) => log?.crawler_type && log.crawler_type !== "Human",
-            );
-          } else if (botFilter === "Human") {
-            result = result.filter((log) => log?.crawler_type === "Human");
-          }
-        }
-
-        // Apply Bot type filter (Mobile or Desktop)
-        if (botTypeFilter !== null) {
-          if (botTypeFilter === "Mobile") {
-            result = result.filter((log) => log?.user_agent.includes("Mobile"));
-          } else if (botTypeFilter === "Desktop") {
-            result = result.filter(
-              (log) => !log?.user_agent.includes("Mobile"),
-            );
-          }
-        }
-
-        // Apply verified filter
-        if (verifiedFilter !== null) {
-          result = result.filter((log) => log.verified === verifiedFilter);
-        }
-        // Apply sorting
-        if (sortConfig) {
-          result.sort((a, b) => {
-            const aValue = a[sortConfig.key as keyof LogEntry];
-            const bValue = b[sortConfig.key as keyof LogEntry];
-
-            // Special case for timestamp sorting
-            if (sortConfig.key === "timestamp") {
-              const aDate = new Date(aValue as string).getTime();
-              const bDate = new Date(bValue as string).getTime();
-              return sortConfig.direction === "ascending"
-                ? aDate - bDate
-                : bDate - aDate;
-            }
-
-            // Normal string sorting
-            if (typeof aValue === "string" && typeof bValue === "string") {
-              return sortConfig.direction === "ascending"
-                ? aValue.localeCompare(bValue)
-                : bValue.localeCompare(aValue);
-            }
-
-            // Fallback for other types
-            if (aValue < bValue) {
-              return sortConfig.direction === "ascending" ? -1 : 1;
-            }
-            if (aValue > bValue) {
-              return sortConfig.direction === "ascending" ? 1 : -1;
-            }
-            return 0;
-          });
-        }
-
-        setFilteredLogs(result);
-        setCurrentPage(1);
-      }, 300),
-    [
-      statusFilter,
-      methodFilter,
-      fileTypeFilter,
-      botFilter,
-      sortConfig,
-      verifiedFilter,
-      botTypeFilter,
-      activeSearchTerm,
-    ],
-  );
-
+  // Search handlers - no debouncing, immediate response
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(e.target.value);
   };
 
   const handleSearchClick = () => {
-    setActiveSearchTerm(searchInput); // Optional: Add a search button
+    setActiveSearchTerm(searchInput);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -312,17 +309,27 @@ export function LogAnalyzer() {
     }
   };
 
-  // Apply filters when search term or entries change
+  // Apply filters when activeSearchTerm changes OR when other filters change
   useEffect(() => {
-    applyFilters(searchTerm, entries);
-  }, [searchTerm, entries, applyFilters]);
+    applyFilters();
+  }, [
+    activeSearchTerm,
+    statusFilter,
+    methodFilter,
+    fileTypeFilter,
+    botFilter,
+    verifiedFilter,
+    botTypeFilter,
+    sortConfig,
+    applyFilters,
+  ]);
 
-  // Clean up debounce on unmount
+  // Initial filter application when entries load
   useEffect(() => {
-    return () => {
-      applyFilters.cancel();
-    };
-  }, [applyFilters]);
+    if (entries.length > 0) {
+      applyFilters();
+    }
+  }, [entries.length, applyFilters]);
 
   // GET THE domain from the local storage
   useEffect(() => {
@@ -368,7 +375,6 @@ export function LogAnalyzer() {
   const resetFilters = useCallback(() => {
     setSearchInput("");
     setActiveSearchTerm("");
-    setSearchTerm("");
     setStatusFilter([]);
     setMethodFilter([]);
     setBotFilter("all");
@@ -544,6 +550,30 @@ export function LogAnalyzer() {
     return "***.***.***.***";
   }
 
+  // Style the crawler type output
+  function formatCrawlerType(log: string) {
+    if (!log) return "";
+
+    if (log?.crawler_type === "Human") {
+      return log.crawler_type
+        .split("_")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+    }
+
+    if (log?.crawler_type?.includes("Google")) {
+      return log?.crawler_type;
+    }
+
+    if (log?.crawler_type.length > 14) {
+      return log.crawler_type.slice(0, 12);
+    }
+
+    return log?.crawler_type;
+  }
+
+  
+
   return (
     <div className="space-y-4 flex flex-col flex-1 h-full not-selectable">
       <div className="flex flex-col md:flex-row justify-between relative -mb-4 p-1 h-full">
@@ -562,7 +592,6 @@ export function LogAnalyzer() {
             value={searchInput}
             onChange={handleSearchChange}
             onKeyDown={handleKeyDown}
-            onKeyPress={(e) => e.key === "Enter" && setSearchTerm(inputValue)}
           />
           <button
             onClick={handleSearchClick}
@@ -658,7 +687,7 @@ export function LogAnalyzer() {
             >
               <DropdownMenuLabel>Filter by Method</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {["GET", "POST", "PUT", "DELETE"].map((method) => (
+              {["GET", "POST", "PUT", "DELETE", "HEAD"].map((method) => (
                 <DropdownMenuCheckboxItem
                   className="bg-white active:bg-gray-100 hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
                   key={method}
@@ -757,11 +786,11 @@ export function LogAnalyzer() {
             }}
           >
             <SelectTrigger className="w-[125px] dark:bg-brand-darker dark:text-white">
-              <SelectValue placeholder="URLs" />
+              <SelectValue placeholder="Paths" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="url">URLs</SelectItem>
-              <SelectItem value="agent">Agents</SelectItem>
+              <SelectItem value="url">Path / URL</SelectItem>
+              <SelectItem value="agent">User Agent</SelectItem>
             </SelectContent>
           </Select>
           {/* SELECT BOT TYPE (DESKTOP OR MOBILE) */}
@@ -857,11 +886,11 @@ export function LogAnalyzer() {
         >
           <div className="rounded-md border dark:border-brand-dark h-full logs">
             <div className="relative w-full h-full overflow-auto">
-              <Table className="h-full [&_tr]:p-10 logs">
+              <Table className="h-full [&_tr]:p-10 logs relative">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[60px] text-center">#</TableHead>
-                    <TableHead className="cursor-pointer">
+                    <TableHead className="w-[140px] cursor-pointer">
                       <div className="flex space-x-2 items-center">
                         <span onClick={() => requestSort("ip")}>
                           IP Address
@@ -882,7 +911,7 @@ export function LogAnalyzer() {
                       </div>
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="w-[50px] cursor-pointer"
                       onClick={() => requestSort("method")}
                     >
                       Method
@@ -897,7 +926,7 @@ export function LogAnalyzer() {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer w-[90px] text-left"
+                      className="cursor-pointer text-center w-[40px]"
                       onClick={() => requestSort("browser")}
                     >
                       Browser
@@ -912,7 +941,7 @@ export function LogAnalyzer() {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer w-[200px] text-left"
+                      className="w-[200px] cursor-pointer text-left"
                       onClick={() => requestSort("timestamp")}
                     >
                       Timestamp
@@ -941,8 +970,11 @@ export function LogAnalyzer() {
                         />
                       )}
                     </TableHead>
+                    <TableHead className="w-[100px] text-center">
+                      Segment
+                    </TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="w-[100px] cursor-pointer"
                       onClick={() => requestSort("file_type")}
                     >
                       File Type
@@ -957,7 +989,7 @@ export function LogAnalyzer() {
                       )}
                     </TableHead>
                     <TableHead
-                      className="cursor-pointer"
+                      className="w-[100px] cursor-pointer"
                       onClick={() => requestSort("status")}
                     >
                       Status
@@ -973,7 +1005,7 @@ export function LogAnalyzer() {
                     </TableHead>
                     {!showAgent && (
                       <TableHead
-                        className="cursor-pointer"
+                        className="w-[100px] cursor-pointer"
                         onClick={() => requestSort("responseSize")}
                       >
                         Size
@@ -988,12 +1020,12 @@ export function LogAnalyzer() {
                         )}
                       </TableHead>
                     )}
-                    <TableHead align="center" className="text-left w-[120px]">
+                    <TableHead align="center" className="text-left w-[130px]">
                       Crawler Type
                     </TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
+                <TableBody className="relative">
                   {filteredLogs.length > 0 ? (
                     currentLogs.map((log, index) => (
                       <LogRow
@@ -1014,12 +1046,15 @@ export function LogAnalyzer() {
                         showAgent={showAgent}
                         setShowAgent={setShowAgent}
                         logIpMasking={logIpMasking}
+                        formatCrawlerType={formatCrawlerType}
+                        handleURLClick={handleURLClick}
+                        handleCopyClick={handleCopyClick}
                       />
                     ))
                   ) : (
                     <TableRow>
                       <TableCell
-                        colSpan={10}
+                        colSpan={11}
                         className="h-24 max-h-24  text-center text-black/50 dark:text-white/50"
                       >
                         No log entries found.
@@ -1031,6 +1066,7 @@ export function LogAnalyzer() {
             </div>
           </div>
         </CardContent>
+        <div className="h-5 dark:bg-brand-darker bg-white dark:border-t border-l dark:border-l-brand-dark dark:border-r-brand-dark border-r border-t-0 border-t-brand-dark w-full absolute  top-[22.9rem]  -z-1" />
       </div>
 
       <PaginationControls
@@ -1067,40 +1103,44 @@ function LogRow({
   showAgent,
   setShowAgent,
   logIpMasking,
+  formatCrawlerType,
+  handleURLClick,
+  handleCopyClick,
 }) {
   return (
     <>
       <TableRow
-        className="group cursor-pointer max-h-[30px] h-[30px]"
+        className="group max-h-[10px] h-[10px] align-middle"
         onClick={() => {
           setExpandedRow(expandedRow === index ? null : index);
         }}
       >
-        <TableCell className="font-medium text-center">
+        <TableCell className="font-medium text-center align-middle">
           {indexOfFirstItem + index + 1}
         </TableCell>
 
-        <TableCell className="w-[60px]">
-          <div className="flex items-center">
+        <TableCell className="align-middle">
+          <div className="flex items-center relative">
             <Waypoints
               onClick={(e) => {
                 e.stopPropagation();
                 handleIP(log.ip);
               }}
               title="Click to inspect IP"
-              className="mr-2 text-blue-400 dark:text-blue-300/50 hover:scale-110 cursor-pointer"
+              className="absolute mr-2 text-blue-400 dark:text-blue-300/50 hover:scale-110 cursor-pointer"
               size={13}
             />
             {!showIp ? (
-              <p className="text-xs truncate">{log.ip}</p>
+              <p className="text-xs truncate ml-4">{log.ip}</p>
             ) : (
-              <p className="text-xs -gray-500 truncate">
+              <p className="text-xs text-gray-300 truncate ml-4">
                 {logIpMasking(log?.ip)}
               </p>
             )}
           </div>
         </TableCell>
-        <TableCell>
+
+        <TableCell className="align-middle">
           <Badge
             variant="outline"
             className={
@@ -1116,80 +1156,117 @@ function LogRow({
             {log.method}
           </Badge>
         </TableCell>
+
         <TableCell
-          className={` pl-3  ${log?.browser === "Chrome" ? "text-red-400" : ""}
+          className={`text-center ${log?.browser === "Chrome" ? "text-red-400" : ""}
           ${log?.browser === "Firefox" ? "text-green-500" : ""}
-${log?.browser === "Safari" ? "text-blue-400" : ""}
-`}
-          width={12}
+          ${log?.browser === "Safari" ? "text-blue-400" : ""}`}
         >
           {log?.browser}
         </TableCell>
-        <TableCell className="max-w-44 ">{formatDate(log.timestamp)}</TableCell>
 
-        <TableCell className="max-w-[100%] truncate mr-2">
+        <TableCell className="align-middle">
+          {formatDate(log.timestamp)}
+        </TableCell>
+
+        <TableCell className="max-w-[100%] truncate mr-2 align-middle">
           {!showAgent ? (
-            <section className="max-w-[800px] truncate">
+            <section className="max-w-[800px] truncate flex items-center relative">
               <span
-                className="mr-1 inline-block pt-[1px]"
-                style={{ paddingTop: "" }}
+                onClick={(e) => handleCopyClick(log.path, e, "URL PATH")}
+                className="absolute "
               >
                 {getFileIcon(log.file_type)}
               </span>
-              {showOnTables && domain
-                ? "https://" + domain + log.path
-                : log?.path}
+              <span
+                onClick={(click) => handleURLClick(log.path, click)}
+                className="cursor-pointer hover:underline ml-5"
+              >
+                {showOnTables && domain
+                  ? "https://" + domain + log.path
+                  : log?.path}
+              </span>
             </section>
           ) : (
-            <section className="max-w-[99%] w-[750px] 3xl:w-[950px]  truncate relative ml-2">
+            <section className="max-w-[99%] w-[750px] 3xl:w-[950px] truncate relative ml-2 flex items-center">
               <span className="absolute">
-                <ImUserTie className="text-brand-bright mr-1 mt-[2px]" />{" "}
+                <ImUserTie
+                  onClick={(e) =>
+                    handleCopyClick(log.user_agent, e, "User Agent")
+                  }
+                  className="text-brand-bright mr-1"
+                />{" "}
               </span>
               <span className="ml-5">{log?.user_agent}</span>
             </section>
           )}
         </TableCell>
-        <TableCell className="max-w-[480px] truncate">
-          <Badge variant={"outline"}>{log.file_type}</Badge>
+
+        <TableCell className="text-center align-middle">
+          <span className="border border-brand-bright/50 rounded-full  px-2 py-0.5 text-xs">
+            {log?.segment}
+          </span>
         </TableCell>
-        <TableCell>
+
+        <TableCell className="truncate align-middle">
+          <Badge className="pb-1" variant={"outline"}>
+            {log.file_type}
+          </Badge>
+        </TableCell>
+
+        <TableCell className="align-middle">
           <Badge className={`${getStatusCodeColor(log.status)}`}>
             {log.status}
           </Badge>
         </TableCell>
 
         {!showAgent && (
-          <TableCell width={70}>
+          <TableCell className="align-middle">
             {formatResponseSize(log.response_size)}
           </TableCell>
         )}
-        <TableCell className="max-w-[180px] w-1 truncate text-center">
+
+        <TableCell className="align-middle">
           <Badge
             variant="outline"
             className={
               log.crawler_type !== "Human"
-                ? "bg-red-100 dark:bg-red-400 dark:text-white w-[100px] truncate overflow-hidden text-center flex items-center justify-center"
-                : "bg-blue-100 truncate dark:bg-blue-500 dark:text-white overflow-hidden w-[100px] text-blue-800 border-blue-200 flex items-center justify-center text-center"
+                ? "bg-red-100 dark:bg-red-700 dark:text-white w-28 truncate overflow-hidden text-center flex justify-center"
+                : "bg-blue-100 truncate dark:bg-blue-500 dark:text-white overflow-hidden  text-blue-800 border-blue-200 flex items-center justify-center text-center w-28"
             }
           >
-            {log.crawler_type && log.crawler_type.length > 16
-              ? `${log.crawler_type.substring(0, 13)}...`
-              : log.crawler_type}{" "}
-            {log.verified && (
-              <BadgeCheck className="text-blue-800 pl-1" size={18} />
-            )}
+            {formatCrawlerType(log)}
           </Badge>
         </TableCell>
       </TableRow>
       {expandedRow === index && (
         <TableRow>
-          <TableCell colSpan={10} className="bg-gray-50 dark:bg-gray-800 p-4">
+          <TableCell colSpan={11} className="bg-gray-50 dark:bg-gray-800 p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col max-w-5xl">
                 <div className="flex mb-2 space-x-2 items-center justify-between">
-                  <h4 className="font-bold">
-                    {showAgent ? "Path" : "User Agent"}
-                  </h4>
+                  <div className="flex items-center space-x-1">
+                    <h4 className="font-bold">
+                      {showAgent ? "Path" : "User Agent"}
+                    </h4>
+                    {showAgent ? (
+                      <CopyIcon
+                        className="cursor-pointer hover:scale-105 active:scale-95"
+                        onClick={(e) =>
+                          handleCopyClick(log?.path, e, "URL / PATH")
+                        }
+                        size={12}
+                      />
+                    ) : (
+                      <CopyIcon
+                        className="cursor-pointer hover:scale-105 active:scale-95"
+                        onClick={(e) =>
+                          handleCopyClick(log?.user_agent, e, "User Agent")
+                        }
+                        size={12}
+                      />
+                    )}
+                  </div>
                   {log.verified && (
                     <div className="flex items-center space-x-1 bg-red-200 dark:bg-red-400 p-1 px-2 text-xs rounded-md">
                       <BadgeCheck className="text-blue-700 pr-1" size={18} />
@@ -1205,7 +1282,18 @@ ${log?.browser === "Safari" ? "text-blue-400" : ""}
               </div>
 
               <div className="flex flex-col">
-                <h4 className="mb-2 font-bold">Referer</h4>
+                <div className="flex space-x-2 items-center mb-2">
+                  <h4 className="font-bold">Referer</h4>
+                  {log?.referer && (
+                    <CopyIcon
+                      className="cursor-pointer hover:scale-105 active:scale-95"
+                      onClick={(e) =>
+                        handleCopyClick(log?.referer, e, "Referer")
+                      }
+                      size={12}
+                    />
+                  )}
+                </div>
                 <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
                   <p className="text-sm break-all">
                     {log.referer || (

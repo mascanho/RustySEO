@@ -53,7 +53,6 @@ export default function SearchConsoleConfs() {
         } else {
           console.error("No data returned from read_credentials_file");
         }
-        console.log("The useEffect from Confs");
       })
       .catch((error) => {
         console.error("Error reading credentials file:", error);

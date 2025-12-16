@@ -2,13 +2,14 @@
 "use client";
 import useCrawlStore from "@/store/GlobalCrawlDataStore";
 import { FaSpider } from "react-icons/fa6";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 import { emit } from "@tauri-apps/api/event";
 import { IconVolume } from "@tabler/icons-react";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import { GiRobotAntennas, GiRobotHelmet, GiSpiderAlt } from "react-icons/gi";
+import useSettingsStore from "@/store/SettingsStore";
 
 // Constants for crawler types
 const CRAWLER_TYPES = {
@@ -19,74 +20,37 @@ const CRAWLER_TYPES = {
 const CrawlerType = () => {
   const { crawlerType, setCrawlerType } = useCrawlStore();
   const { setCrawler } = useGlobalConsoleStore();
+  const { triggerRefresh } = useSettingsStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Load crawler type from localStorage on mount
+  useEffect(() => {
+    const savedType = localStorage.getItem("crawlerType");
+    if (
+      savedType &&
+      (savedType === CRAWLER_TYPES.SPIDER ||
+        savedType === CRAWLER_TYPES.CUSTOM_SEARCH)
+    ) {
+      setCrawlerType(savedType);
+      setCrawler(savedType);
+    }
+  }, [setCrawlerType, setCrawler]);
   // PSI DETAILS
   const [details, setDetails] = useState({
     apiKey: "",
     psiCrawl: false,
   });
 
-  // Toggle between "Spider" and "Custom Search"
-  const toggleCrawlerType = () => {
-    const newType =
-      crawlerType === CRAWLER_TYPES.SPIDER
-        ? CRAWLER_TYPES.CUSTOM_SEARCH
-        : CRAWLER_TYPES.SPIDER;
-    setCrawlerType(newType);
-    setCrawler(newType);
-  };
-
-  // Toggle PSI Crawl
-  const togglePsiCrawl = async () => {
-    const newPsiCrawlValue = !details.psiCrawl;
-
+  // Load PSI details from localStorage (fallback)
+  const loadPSIDetailsFromLocalStorage = useCallback(() => {
     try {
-      // Call the Tauri command with the new value
-      await invoke("toggle_page_speed_bulk", { value: newPsiCrawlValue });
-
-      // Update local state only after successful invocation
-      setDetails((prev) => ({
-        ...prev,
-        psiCrawl: newPsiCrawlValue,
-      }));
-
-      // Update localStorage immediately with the new value
-      if (details.apiKey) {
-        localStorage.setItem(
-          "PSIdetails",
-          JSON.stringify({
-            apiKey: details.apiKey,
-            page_speed_crawl: newPsiCrawlValue,
-          }),
-        );
-        toast.info("Page Speed Insights toggled, please restart RustySEO");
-      }
-    } catch (error) {
-      console.error(`Failed to toggle page speed bulk: ${error}`);
-    }
-  };
-
-  // Determine icon color based on crawlerType and psiCrawl
-  const iconColorClass = details.psiCrawl
-    ? "text-blue-500 dark:text-blue-500/50 mt-[2px]"
-    : crawlerType === CRAWLER_TYPES.CUSTOM_SEARCH
-      ? "text-red-500 dark:text-red-500/50 mt-[2px]"
-      : "text-black dark:text-white/50 mt-[2px]";
-
-  // HANDLE THE PSI DETAILS TO SHOW THE USER THAT PSI IS ACTIVATED
-  useEffect(() => {
-    try {
-      // Get the PSIdetails from localStorage
       const psidetails = localStorage.getItem("PSIdetails");
-
       if (!psidetails) {
         console.log("No PSI details found in localStorage");
         return;
       }
 
       const parsedPSIdetails = JSON.parse(psidetails);
-
-      // More robust check for true values
       const isPsiCrawlEnabled =
         parsedPSIdetails.page_speed_crawl === "true" ||
         parsedPSIdetails.page_speed_crawl === true ||
@@ -97,17 +61,95 @@ const CrawlerType = () => {
         apiKey: parsedPSIdetails.apiKey || "",
         psiCrawl: isPsiCrawlEnabled,
       });
-
-      // Emit initial state on component mount
-      emit("page-speed-bulk-toggled", isPsiCrawlEnabled).catch((error) => {
-        console.error(
-          `Failed to emit initial page-speed-bulk-toggled event: ${error}`,
-        );
-      });
     } catch (error) {
       console.error("Error parsing PSI details from localStorage:", error);
     }
   }, []);
+
+  // Fetch backend state when modal opens
+  const fetchBackendState = useCallback(async () => {
+    try {
+      const backendDetails = await invoke("check_page_speed_bulk");
+      setDetails({
+        apiKey: backendDetails.apiKey || "",
+        psiCrawl: backendDetails.page_speed_crawl,
+      });
+    } catch (error) {
+      console.error("Error fetching backend state:", error);
+      // Fallback to localStorage if backend fetch fails
+      loadPSIDetailsFromLocalStorage();
+    }
+  }, [loadPSIDetailsFromLocalStorage]);
+
+  // Toggle between "Spider" and "Custom Search"
+  const toggleCrawlerType = () => {
+    const newType =
+      crawlerType === CRAWLER_TYPES.SPIDER
+        ? CRAWLER_TYPES.CUSTOM_SEARCH
+        : CRAWLER_TYPES.SPIDER;
+    setCrawlerType(newType);
+    setCrawler(newType);
+    // Save to localStorage
+    localStorage.setItem("crawlerType", newType);
+  };
+
+  // Toggle PSI Crawl
+  const togglePsiCrawl = async () => {
+    const newPsiCrawlValue = !details.psiCrawl;
+
+    // Update local state immediately for UI responsiveness
+    setDetails((prev) => ({
+      ...prev,
+      psiCrawl: newPsiCrawlValue,
+    }));
+
+    try {
+      // Call the Tauri command with the new value
+      await invoke("toggle_page_speed_bulk", { value: newPsiCrawlValue });
+
+      // Trigger settings refresh to update UI
+      triggerRefresh();
+
+      // Update localStorage with the new value (save as boolean, not string)
+      if (details.apiKey) {
+        localStorage.setItem(
+          "PSIdetails",
+          JSON.stringify({
+            apiKey: details.apiKey,
+            page_speed_crawl: newPsiCrawlValue, // Always save as boolean
+          }),
+        );
+        toast.info("Page Speed Insights toggled, please restart RustySEO");
+      }
+    } catch (error) {
+      console.error(`Failed to toggle page speed bulk: ${error}`);
+      // Revert state on error
+      setDetails((prev) => ({
+        ...prev,
+        psiCrawl: !newPsiCrawlValue,
+      }));
+    }
+  };
+
+  // Determine icon color based on psiCrawl first (highest priority), then crawlerType
+  const iconColorClass =
+    details.psiCrawl && details.apiKey
+      ? "text-blue-500 dark:text-blue-500/50 mt-[2px]"
+      : crawlerType === CRAWLER_TYPES.CUSTOM_SEARCH
+        ? "text-red-500 dark:text-red-500/50 mt-[2px]"
+        : "text-black dark:text-white/50 mt-[2px]";
+  // HANDLE THE PSI DETAILS TO SHOW THE USER THAT PSI IS ACTIVATED
+  // Fetch backend state on component mount to update icon color immediately
+  useEffect(() => {
+    fetchBackendState();
+  }, [fetchBackendState]);
+
+  // Fetch backend state when modal opens (to ensure fresh data)
+  useEffect(() => {
+    if (isModalOpen) {
+      fetchBackendState();
+    }
+  }, [isModalOpen, fetchBackendState]);
 
   return (
     <div className="relative">
@@ -210,22 +252,12 @@ const CrawlerType = () => {
             <div className="mt-4 flex justify-end">
               <button
                 onClick={() => {
-                  // Save PSI settings before closing
-                  if (details.apiKey) {
-                    localStorage.setItem(
-                      "PSIdetails",
-                      JSON.stringify({
-                        apiKey: details.apiKey,
-                        page_speed_crawl: details.psiCrawl,
-                      }),
-                    );
-                  }
                   setIsModalOpen(false);
                 }}
                 className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                 aria-label="Close and save settings"
               >
-                Save & Close
+                Close
               </button>
             </div>
           </div>

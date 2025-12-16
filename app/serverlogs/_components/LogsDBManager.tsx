@@ -147,7 +147,7 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
 
   return (
     <section className="w-[650px] max-w-5xl mx-auto h-[670px] pt-2">
-      <CardContent className="grid grid-cols-1 gap-6 h-[380px]">
+      <CardContent className="grid grid-cols-1 gap-6 h-[480px]">
         <div className="space-y-4">
           <div className="rounded-md h-[580px] overflow-y-auto">
             <div className="grid grid-cols-2 gap-4">
@@ -164,7 +164,7 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
                       incrementally upload them.
                     </span>
                   </div>
-                  <div className="space-y-4 p-4 border rounded-md bg-muted h-[16.9rem] dark:border-brand-dark">
+                  <div className="space-y-4 p-4 border rounded-md bg-muted h-[360px] dark:border-brand-dark">
                     <div className="flex items-center space-x-2">
                       <Switch
                         id="save-logs"
@@ -180,44 +180,6 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
                       When enabled it will incrementally add logs into your
                       local database.
                     </p>
-
-                    {/* <div className="py-1"> */}
-                    {/*   <h4 className="text-sm font-medium mb-2 dark:text-white"> */}
-                    {/*     Log storage options */}
-                    {/*   </h4> */}
-                    {/*   <div className="space-y-2 dark:text-white/50 pt-2"> */}
-                    {/*     <div className="flex items-center space-x-2"> */}
-                    {/*       <Switch */}
-                    {/*         id="show-errors" */}
-                    {/*         className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700" */}
-                    {/*         // defaultChecked */}
-                    {/*       /> */}
-                    {/*       <Label htmlFor="show-errors" className="text-xs"> */}
-                    {/*         Keep latest 10 logs only */}
-                    {/*       </Label> */}
-                    {/*     </div> */}
-                    {/*     <div className="flex items-center space-x-2"> */}
-                    {/*       <Switch */}
-                    {/*         id="show-warnings" */}
-                    {/*         // defaultChecked */}
-                    {/*         className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700" */}
-                    {/*       /> */}
-                    {/*       <Label className="text-xs" htmlFor="show-warnings"> */}
-                    {/*         Keep latest 20 logs only */}
-                    {/*       </Label> */}
-                    {/*     </div> */}
-                    {/*     <div className="flex items-center space-x-2"> */}
-                    {/*       <Switch */}
-                    {/*         id="show-info" */}
-                    {/*         // defaultChecked */}
-                    {/*         className="data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-gray-300 dark:data-[state=checked]:bg-blue-700" */}
-                    {/*       /> */}
-                    {/*       <Label htmlFor="show-info" className="text-xs"> */}
-                    {/*         Keep last 2 months only */}
-                    {/*       </Label> */}
-                    {/*     </div> */}
-                    {/*   </div> */}
-                    {/* </div> */}
                   </div>
                 </div>
               </div>
@@ -227,7 +189,7 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
                 <h3 className="text-lg dark:text-white font-semibold text-left">
                   Stored Server Logs
                 </h3>
-                <div className="border dark:border-brand-dark dark:border-brand rounded-lg h-[370px] overflow-y-auto">
+                <div className="border dark:border-brand-dark dark:border-brand rounded-lg h-[460px] overflow-y-auto">
                   {isLoading ? (
                     <SkeletonLoader />
                   ) : logsFromDB.length > 0 ? (

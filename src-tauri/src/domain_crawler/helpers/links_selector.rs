@@ -23,8 +23,8 @@ pub fn extract_links(html: &str, base_url: &Url) -> Vec<Url> {
                         None
                     }
                 }
-                Err(e) => {
-                    // eprintln!("Failed to build URL from {}: {}", href, e);
+                Err(_) => {
+                    // eprintln!("Failed to build URL from {}", href);
                     None
                 }
             }

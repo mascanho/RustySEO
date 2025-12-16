@@ -135,11 +135,14 @@ async fn generate_ai_topics(body: String) -> Result<String, String> {
 
 #[tokio::main]
 async fn main() {
-    // Add RustySEO uuid to DB
-    match users::add_user().await {
-        Ok(_) => println!("User added successfully"),
-        Err(err) => eprintln!("Error adding user: {}", err),
-    };
+    // Add RustySEO uuid to DB on a seaparate async thread to no block UI
+
+    tokio::spawn(async {
+        match users::add_user().await {
+            Ok(_) => println!("User added successfully"),
+            Err(err) => eprintln!("Error adding user: {}", err),
+        };
+    });
 
     // clear the custom_search DB entry
     match db::clear_custom_search() {
@@ -240,8 +243,8 @@ async fn main() {
             commands::open_configs_with_native_editor,
             loganalyser::log_commands::check_logs_command,
             loganalyser::helpers::parse_logs::set_taxonomies,
-            loganalyser::helpers::parse_logs::fetch_google_ip_ranges,
             loganalyser::helpers::check_hostname::reverse_lookup,
+            loganalyser::helpers::parse_logs::fetch_all_bot_ranges,
             domain_commands::get_url_diff_command,
             domain_crawler::page_speed::store_key::read_page_speed_bulk_api_key,
             domain_crawler::page_speed::store_key::check_page_speed_bulk,
@@ -259,7 +262,8 @@ async fn main() {
             get_log_file_upload_size_command,
             get_project_chunk_size_command,
             delete_config_folders_command,
-            open_config_folder_command
+            open_config_folder_command,
+            settings::settings::get_settings_command
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

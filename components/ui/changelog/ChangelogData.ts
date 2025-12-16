@@ -1,12 +1,47 @@
 export const changelogData = [
   {
+    version: "0.3.4",
+    date: "2025-12-25",
+    type: "feature",
+    changes: ["Log analyser: Table segments"],
+  },
+  {
+    version: "0.3.3",
+    date: "2025-12-01",
+    type: "feature",
+    changes: [
+      "Log Analyser: More content segments",
+      "Log analyser: OpenAI bot validation",
+      "Log Analyser: Bing bot validation ",
+      "Log Analyser: WP Rocket detection",
+    ],
+  },
+
+  {
+    version: "0.3.2",
+    date: "2025-11-01",
+    type: "feature",
+    changes: [
+      "Page Speed Insights Better Rate Limiting & URL encoding",
+      "PSI improved UI",
+      "PSI status log",
+      "Logs: User agent segments added",
+    ],
+  },
+  {
+    version: "0.3.1",
+    date: "2025-10-01",
+    type: "feature",
+    changes: ["Bug fixes and improvements"],
+  },
+  {
     version: "0.3.0",
     date: "2025-09-01",
     type: "feature",
     changes: [
       "Deep Crawl: Configurable stop words",
       "Deep Crawl: GSC queries and metrics",
-      "Deep Crawl: Added robots parsing",
+      "Deep Crawl: Added robots parsin",
     ],
   },
   {

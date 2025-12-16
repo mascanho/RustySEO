@@ -16,7 +16,6 @@ import {
   Package,
   RefreshCw,
   Search,
-  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -57,7 +56,6 @@ import { CardContent } from "@/components/ui/card";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
-import { useAsyncLogFilter } from "./hooks/useAsyncLogFilter";
 
 interface LogEntry {
   browser: string;
@@ -92,15 +90,6 @@ const formatResponseSize = (bytes: number): string => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-interface StatusCodeCounts {
-  counts: { [key: number]: number };
-  success_count: number;
-  redirect_count: number;
-  client_error_count: number;
-  server_error_count: number;
-  other_count: number;
-}
-
 interface LogEntry {
   ip: string;
   timestamp: string;
@@ -117,37 +106,36 @@ interface LogEntry {
   file_type: string;
   frequency: number;
   verified: boolean;
-  status_codes?: StatusCodeCounts; // Added this line
 }
 
 interface WidgetTableProps {
   data: any;
 }
 
-const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
-  // Transform data into logs (memoized)
-  const initialLogs = useMemo(() => {
-    if (!data?.totals?.bot_stats?.google?.page_frequencies) return [];
+const ensureUniqueUrls = (logs: LogEntry[]): LogEntry[] => {
+  const urlMap = new Map<string, LogEntry>();
 
-    let logs: LogEntry[] = [];
-    const pageStatus = data.totals.bot_stats.google.page_status_codes || {};
-
-    Object.entries(data.totals.bot_stats.google.page_frequencies).forEach(
-      ([path, entries]) => {
-        if (entries.length > 0) {
-          const aggregatedEntry = entries[0];
-          logs.push({
-            ...aggregatedEntry,
-            path,
-            status_codes: pageStatus[path],
-          });
+  logs.forEach((log) => {
+    if (urlMap.has(log.path)) {
+      const existingLog = urlMap.get(log.path);
+      if (existingLog) {
+        existingLog.frequency += log.frequency;
+        existingLog.response_size += log.response_size;
+        if (new Date(log.timestamp) < new Date(existingLog.timestamp)) {
+          existingLog.timestamp = log.timestamp;
         }
-      },
-    );
-    return logs;
-  }, [data]);
+      }
+    } else {
+      urlMap.set(log.path, { ...log });
+    }
+  });
 
-  // State definitions
+  return Array.from(urlMap.values());
+};
+
+const WidgetTableClaude: React.FC<WidgetTableProps> = ({ data }) => {
+  const [initialLogs, setInitialLogs] = useState<LogEntry[]>([]);
+  const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(100);
@@ -160,11 +148,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     direction: "ascending" | "descending";
   } | null>({ key: "frequency", direction: "descending" });
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
-  const [botTypeFilter, setBotTypeFilter] = useState<string | null>(null);
   const [domain, setDomain] = useState("");
   const [showOnTables, setShowOnTables] = useState(false);
+  const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
 
-  // Load domain and showOnTables settings
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedDomain = localStorage.getItem("domain");
@@ -177,107 +164,103 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
         setShowOnTables(true);
       }
     }
-  }, []);
+  }, [data.length]);
 
-  // Reset page when filters change
   useEffect(() => {
+    if (!data?.totals?.claude_bot_page_frequencies) return;
+
+    let logs: LogEntry[] = [];
+    Object.entries(data.totals.claude_bot_page_frequencies).forEach(
+      ([path, entries]) => {
+        (entries as any[]).forEach((entry: any) => {
+          logs.push({
+            ...entry,
+            path,
+          });
+        });
+      },
+    );
+
+    const uniqueLogs = ensureUniqueUrls(logs);
+    setInitialLogs(uniqueLogs);
+    setFilteredLogs(uniqueLogs);
+  }, [data]);
+
+  useEffect(() => {
+    let result = [...initialLogs];
+
+    if (searchTerm) {
+      const lowerCaseSearch = searchTerm.toLowerCase();
+      result = result.filter(
+        (log) =>
+          log.ip.toLowerCase().includes(lowerCaseSearch) ||
+          log.path.toLowerCase().includes(lowerCaseSearch) ||
+          log.user_agent.toLowerCase().includes(lowerCaseSearch) ||
+          (log.referer && log.referer.toLowerCase().includes(lowerCaseSearch)),
+      );
+    }
+
+    if (methodFilter.length > 0) {
+      result = result.filter((log) => methodFilter.includes(log.method));
+    }
+
+    if (fileTypeFilter.length > 0) {
+      result = result.filter((log) => fileTypeFilter.includes(log.file_type));
+    }
+
+    if (botFilter !== null) {
+      if (botFilter === "bot") {
+        result = result.filter((log) => log.crawler_type !== "Human");
+      } else if (botFilter === "Human") {
+        result = result.filter((log) => log.crawler_type === "Human");
+      }
+    }
+
+    if (verifiedFilter !== null) {
+      result = result.filter((log) => log.verified === verifiedFilter);
+    }
+
+    if (botTypeFilter !== null) {
+      if (botTypeFilter === "Mobile") {
+        result = result.filter((log) => log.user_agent.includes("Mobile"));
+      } else if (botTypeFilter === "Desktop") {
+        result = result.filter((log) => !log.user_agent.includes("Mobile"));
+      }
+    }
+
+    if (sortConfig) {
+      result.sort((a, b) => {
+        const aValue = a[sortConfig.key as keyof LogEntry];
+        const bValue = b[sortConfig.key as keyof LogEntry];
+
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          return sortConfig.direction === "ascending"
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === "ascending" ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === "ascending" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    setFilteredLogs(result);
     setCurrentPage(1);
   }, [
     searchTerm,
     methodFilter,
-    fileTypeFilter,
     botFilter,
     verifiedFilter,
+    sortConfig,
+    initialLogs,
+    fileTypeFilter,
     botTypeFilter,
   ]);
-
-  // useAsyncLogFilter implementation
-  const lowerCaseSearch = useMemo(
-    () => (searchTerm ? searchTerm.toLowerCase() : ""),
-    [searchTerm],
-  );
-
-  const filterFn = useCallback(
-    (log: LogEntry) => {
-      // 1. Search
-      if (lowerCaseSearch) {
-        const matches =
-          log.ip.toLowerCase().includes(lowerCaseSearch) ||
-          log.path.toLowerCase().includes(lowerCaseSearch) ||
-          log.user_agent.toLowerCase().includes(lowerCaseSearch) ||
-          (log.referer && log.referer.toLowerCase().includes(lowerCaseSearch));
-        if (!matches) return false;
-      }
-
-      // 2. Method
-      if (methodFilter.length > 0) {
-        if (!methodFilter.includes(log.method)) return false;
-      }
-
-      // 3. File Type
-      if (fileTypeFilter.length > 0) {
-        if (!fileTypeFilter.includes(log.file_type)) return false;
-      }
-
-      // 4. Bot
-      if (botFilter !== null) {
-        if (botFilter === "bot" && log.crawler_type === "Human") return false;
-        if (botFilter === "Human" && log.crawler_type !== "Human") return false;
-      }
-
-      // 5. Verified
-      if (verifiedFilter !== null) {
-        if (log.verified !== verifiedFilter) return false;
-      }
-
-      // 6. Bot Type
-      if (botTypeFilter !== null) {
-        if (botTypeFilter === "Mobile" && !log.user_agent.includes("Mobile"))
-          return false;
-        if (botTypeFilter === "Desktop" && log.user_agent.includes("Mobile"))
-          return false;
-      }
-
-      return true;
-    },
-    [
-      lowerCaseSearch,
-      methodFilter,
-      fileTypeFilter,
-      botFilter,
-      verifiedFilter,
-      botTypeFilter,
-    ],
-  );
-
-  const sortFn = useCallback(
-    (a: LogEntry, b: LogEntry) => {
-      if (!sortConfig) return 0;
-      const { key, direction } = sortConfig;
-      const aValue = a[key as keyof LogEntry];
-      const bValue = b[key as keyof LogEntry];
-
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        return direction === "ascending"
-          ? aValue.localeCompare(bValue)
-          : bValue.localeCompare(aValue);
-      }
-      if (typeof aValue === "number" && typeof bValue === "number") {
-        return direction === "ascending" ? aValue - bValue : bValue - aValue;
-      }
-      if (aValue < bValue) return direction === "ascending" ? -1 : 1;
-      if (aValue > bValue) return direction === "ascending" ? 1 : -1;
-      return 0;
-    },
-    [sortConfig],
-  );
-
-  const { filteredData: filteredLogs, isProcessing } = useAsyncLogFilter(
-    initialLogs,
-    filterFn,
-    sortConfig,
-    sortFn,
-  );
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -303,6 +286,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     setVerifiedFilter(null);
     setSortConfig(null);
     setExpandedRow(null);
+    setFilteredLogs(initialLogs);
     setBotTypeFilter(null);
     setFileTypeFilter([]);
 
@@ -345,7 +329,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
 
     try {
       const filePath = await save({
-        defaultPath: `RustySEO - Google Bot Frequency -${new Date().toISOString().slice(0, 10)}.csv`,
+        defaultPath: `RustySEO - Claude Bot Frequency -${new Date().toISOString().slice(0, 10)}.csv`,
         filters: [{ name: "CSV", extensions: ["csv"] }],
       });
 
@@ -471,22 +455,6 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     [elapsedTimeMs, oldestEntry, newestEntry],
   );
 
-  if (isProcessing && initialLogs.length > 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full min-h-[650px] space-y-4">
-        <Loader2 className="h-12 w-12 animate-spin text-blue-600" />
-        <div className="text-center">
-          <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
-            Processing crawler data...
-          </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-            This may take a moment
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4 h-full pb-0 -mb-4">
       <div className="flex flex-col md:flex-row justify-between -mb-4 p-1">
@@ -591,7 +559,6 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[80px] text-center">#</TableHead>
-
                     <TableHead
                       className="cursor-pointer"
                       onClick={() => requestSort("path")}
@@ -652,7 +619,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                         />
                       )}
                     </TableHead>
-                    <TableHead>Hourly Hits</TableHead>
+                    <TableHead className="text-center">Hourly Hits</TableHead>
                     <TableHead>Crawler Type</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -692,7 +659,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                 onClick={(click) =>
                                   handleURLClick(log?.path, click)
                                 }
-                                className="flex items-center hover:underline"
+                                className="flex items-center hover:underline cursor-pointer"
                               >
                                 {showOnTables && domain
                                   ? "https://" + domain + log.path
@@ -749,13 +716,17 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                     : "bg-green-100 text-green-800 border-green-200"
                                 }`}
                               >
-                                {log.crawler_type.length > 10
-                                  ? log.crawler_type.trim().slice(0, 10)
-                                  : log.crawler_type}
+                                {/* Make the crawler name shorter */}
+                                {log?.crawler_type &&
+                                  log.crawler_type.length > 2 &&
+                                  (log.crawler_type.length > 9
+                                    ? log.crawler_type.slice(0, 9)
+                                    : log.crawler_type)}
                               </Badge>
                             </div>
                           </TableCell>
                         </TableRow>
+
                         {expandedRow === index && (
                           <TableRow>
                             <TableCell
@@ -765,36 +736,46 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* Left Column */}
                                 <div className="flex flex-col max-w-[70rem] w-full">
-                                    <div className="flex mb-2 space-x-2 items-center justify-between">
-                                      <h4 className="font-bold">Details</h4>
-                                      {log.verified && (
-                                        <div className="flex items-center space-x-1 py-1 bg-red-200 dark:bg-red-400 px-2 text-xs rounded-md">
-                                          <BadgeCheck
-                                            size={18}
-                                            className="text-blue-800 pr-1 dark:text-blue-900"
-                                          />
-                                          {log?.crawler_type}
-                                        </div>
-                                      )}
-                                    </div>
-                                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-                                      <div className="space-y-2 text-sm">
-                                        <div>
-                                          <span className="font-semibold">
-                                            IP:
-                                          </span>{" "}
-                                          {log.ip}
-                                        </div>
-                                        <div>
-                                          <span className="font-semibold">
-                                            Method:
-                                          </span>{" "}
-                                          {log.method}
-                                        </div>
-                                        <div>
-                                          <span className="font-semibold">
-                                            User Agent:
-                                          </span>{" "}
+                                  <div className="flex mb-2 space-x-2 items-center justify-between">
+                                    <h4 className="font-bold">Timespan</h4>
+                                    {log.verified && (
+                                      <div className="flex items-center space-x-1 py-1 bg-red-200 dark:bg-red-400 px-2 text-xs rounded-md">
+                                        <BadgeCheck
+                                          size={18}
+                                          className="text-blue-800 pr-1 dark:text-blue-900"
+                                        />
+                                        {log?.crawler_type}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                                    <p className="text-sm font-mono break-all">
+                                      {timings(log)?.elapsedTime}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* Right Column */}
+                                <div className="flex flex-col">
+                                  <h4 className="mb-2 font-bold">
+                                    Hits per Hour
+                                  </h4>
+                                  <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                                    <p className="text-sm break-all">
+                                      {timings(log)?.frequency?.perHour}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {/* New User Agent Section */}
+                                <div className="md:col-span-2">
+                                  <h4 className="mb-2 font-bold">
+                                    User Agent Details
+                                  </h4>
+                                  <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
+                                    <div className="flex items-center justify-center">
+                                      <div className="text-center">
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                                           <span
                                             className="font-mono text-xs break-all hover:underline cursor-pointer"
                                             onClick={(click) =>
@@ -807,54 +788,16 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                           >
                                             {log.user_agent}
                                           </span>
-                                        </div>
-                                        {log.referer && (
-                                          <div>
-                                            <span className="font-semibold">
-                                              Referer:
-                                            </span>{" "}
-                                            <span className="font-mono text-xs break-all">
-                                              {log.referer}
-                                            </span>
-                                          </div>
-                                        )}
+                                        </p>
                                       </div>
-                                    </div>
-                                  </div>
-
-                                {/* Right Column */}
-                                <div className="flex flex-col">
-                                  <h4 className="mb-2 font-bold">
-                                    Hits per Hour
-                                  </h4>
-                                  <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-                                    <p className="text-sm font-mono break-all">
-                                      {timings(log)?.elapsedTime}
-                                    </p>
-                                  </div>
-                                  <div className="mt-4">
-                                    <h4 className="font-bold mb-2">User Agent</h4>
-                                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
-                                      <span
-                                        className="font-mono text-xs break-all hover:underline cursor-pointer"
-                                        onClick={(click) =>
-                                          handleCopyClick(
-                                            log.user_agent,
-                                            click,
-                                            "User Agent",
-                                          )
-                                        }
-                                      >
-                                        {log.user_agent}
-                                      </span>
                                     </div>
                                   </div>
                                 </div>
 
-                                {/* Right Column */}
-                                <div className="flex flex-col">
+                                {/* New Response Codes Section */}
+                                <div className="md:col-span-2">
                                   <h4 className="mb-2 font-bold">
-                                    Hits per Hour
+                                    Response Codes
                                   </h4>
                                   <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
@@ -1028,13 +971,16 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center h-24">
+                      <TableCell
+                        colSpan={8}
+                        className="text-center h-24 align-middle"
+                      >
                         No log entries found.
                       </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
-              </Table>
+              </Table>{" "}
             </div>
           </div>
         </CardContent>
@@ -1144,4 +1090,4 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
   );
 };
 
-export { WidgetTable };
+export { WidgetTableClaude };
