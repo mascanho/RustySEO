@@ -15,6 +15,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import { ChatBar } from "./components/Chat/Chatbar";
 import { usePathname } from "next/navigation";
+import { UrlStatusChecker } from "./components/ui/URLchecker/URLchecker";
 
 const roboto = Roboto({
   // weight: ["400"], // Specify weights you need
@@ -93,6 +94,7 @@ export default function RootLayout({
             <TopMenuBar />
             <ChatBar />
           </section>
+          <UrlStatusChecker />
           <main className="mt-9   rounded-md  ">
             {children}
             {pathname === "/ppc" ? "" : <Toaster />}

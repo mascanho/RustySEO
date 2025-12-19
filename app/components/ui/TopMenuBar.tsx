@@ -68,6 +68,7 @@ import PowerBi from "./MSClarityModal/PowerBi";
 import { useOnboardingStore } from "@/store/OnboardingStore";
 import { BiDoorOpen, BiLogoSlackOld } from "react-icons/bi";
 import { CiFolderOn, CiSettings } from "react-icons/ci";
+import { UrlStatusChecker } from "./URLchecker/URLchecker";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -80,6 +81,7 @@ const TopMenuBar = () => {
     showCustomSearch,
     hideCustomSearch,
     showChangelog,
+    showUrlChecker,
   } = useVisibilityStore();
 
   const router = useRouter();
@@ -275,8 +277,7 @@ const TopMenuBar = () => {
     } catch (error) {
       console.error("Failed to open the settings folder", error);
     }
-  }
-  , []);
+  }, []);
 
   return (
     <>
@@ -424,7 +425,6 @@ const TopMenuBar = () => {
         title="Connector Settings"
         centered
       >
-
         <Configurations close={closeConfs} />
       </Modal>
 
@@ -487,14 +487,14 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-4 text-xs">File</MenubarTrigger>
             <MenubarContent className="z-[999999999999999]">
-               <MenubarItem onClick={handleOpenSettingsFolder}>
+              <MenubarItem onClick={handleOpenSettingsFolder}>
                 <CiFolderOn
                   className=" text-sm mr-1.5 "
                   style={{ marginLeft: "-1px" }}
                 />
                 Open Settings Folder
               </MenubarItem>
-            <MenubarItem onClick={handleOpenConfigFile}>
+              <MenubarItem onClick={handleOpenConfigFile}>
                 <CiSettings
                   className=" text-sm mr-1.5 "
                   style={{ marginLeft: "-1px" }}
@@ -511,7 +511,6 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-4 text-xs">View</MenubarTrigger>
             <MenubarContent className="z-[999999999999999]">
-             
               <MenubarItem
                 disabled={pathname === "/global"}
                 onClick={openPanes}
@@ -582,6 +581,10 @@ const TopMenuBar = () => {
                 <FiTool className="mr-2" />
                 Google Ads Sim.
               </MenubarItem>
+              <MenubarItem onClick={showUrlChecker}>
+                <GoFileDiff className="mr-2 font-semibold" />
+                URL checker
+              </MenubarItem>
               <MenubarSeparator />
               <MenubarItem
                 disabled={pathname !== "/global"}
@@ -635,7 +638,7 @@ const TopMenuBar = () => {
                 Google Gemini
               </MenubarItem>
               <MenubarSeparator />
-                 <MenubarItem onClick={openConfs}>
+              <MenubarItem onClick={openConfs}>
                 <FiTool className="mr-2" />
                 Connector Settings
               </MenubarItem>
