@@ -82,6 +82,7 @@ export function UrlStatusChecker() {
   });
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { hideUrlChecker, visibility } = useVisibilityStore();
+  const [urlHits, setUrlHits] = useState<number>(0);
 
   const addLog = (entry: Omit<LogEntry, "timestamp">) => {
     setLogs((prev) =>
