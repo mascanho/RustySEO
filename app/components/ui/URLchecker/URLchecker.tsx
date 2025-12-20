@@ -424,22 +424,22 @@ export function UrlStatusChecker() {
             onClick={hideUrlChecker}
           />
           <div className="flex items-center gap-3 mb-6">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
-              <Activity className="w-5 h-5 text-primary" />
+            <div className="flex pt-4 w-full space-x-2">
+              <section className="flex w-full items-center">
+                <Activity className="w-5 h-5 text-primary" />
+                <h2 className="text-lg font-semibold text-foreground ml-1">
+                  HTTP Status Monitor
+                </h2>
+              </section>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowLogs(!showLogs)}
+                className="flex-shrink-0"
+              >
+                <ScrollText className="h-5 w-5 text-muted-foreground" />
+              </Button>
             </div>
-            <div className="flex-1 pt-4">
-              <h2 className="text-lg font-semibold text-foreground">
-                HTTP Status Monitor
-              </h2>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowLogs(!showLogs)}
-              className="flex-shrink-0"
-            >
-              <ScrollText className="h-5 w-5 text-muted-foreground" />
-            </Button>
           </div>
 
           {/* Response Details Panel - This will be empty since Tauri backend doesn't return headers yet */}
@@ -519,7 +519,7 @@ export function UrlStatusChecker() {
                 value={pollingInterval}
                 onChange={(e) => setPollingInterval(Number(e.target.value))}
                 disabled={isPolling}
-                className="h-8 bg-background border-border text-foreground font-mono text-sm"
+                className="h-8 bg-white text-black disabled:text-red-900 border-border font-mono text-sm"
               />
             </div>
             <div className="flex-1">
