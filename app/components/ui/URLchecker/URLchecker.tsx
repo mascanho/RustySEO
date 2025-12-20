@@ -120,6 +120,7 @@ export function UrlStatusChecker() {
           message: newStatusCode
             ? `${newStatusCode} • ${result.response_time_ms}ms`
             : `Failed: ${result.error || "Unknown error"}`,
+          hits: urlHits + 1,
         });
 
         return {
@@ -128,7 +129,7 @@ export function UrlStatusChecker() {
           statusCode: newStatusCode,
           responseTime: result.response_time_ms,
           lastChecked: new Date(result.timestamp),
-          // Note: Tauri backend doesn't return headers yet, so keep existing ones
+          hits: urlHits + 1,
         };
       });
 
@@ -147,6 +148,7 @@ export function UrlStatusChecker() {
         url: "System",
         status: "offline",
         message: `Error checking URLs: ${error}`,
+        hits: urlHits + 1,
       });
 
       // Reset to unknown status on error
@@ -180,6 +182,7 @@ export function UrlStatusChecker() {
           message: result.status
             ? `${result.status} • ${result.response_time_ms}ms`
             : `Failed: ${result.error || "Unknown error"}`,
+          hits: urlHits + 1,
         });
 
         setUrls((prev) =>
@@ -191,6 +194,7 @@ export function UrlStatusChecker() {
                   statusCode: result.status,
                   responseTime: result.response_time_ms,
                   lastChecked: new Date(result.timestamp),
+                  hits: urlHits + 1,
                 }
               : u,
           ),
@@ -211,6 +215,7 @@ export function UrlStatusChecker() {
         url,
         status: "offline",
         message: `Error: ${error}`,
+        hits: urlHits + 1,
       });
       setUrls((prev) =>
         prev.map((u, i) => (i === index ? { ...u, status: "offline" } : u)),
@@ -563,7 +568,7 @@ export function UrlStatusChecker() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-mono text-foreground truncate">
-                      {urlStatus.url}
+                      {urlStatus.url} {urlStatus.hits}
                     </p>
                     {urlStatus.isSecure && urlStatus.status === "online" && (
                       <Lock className="w-3 h-3 text-success flex-shrink-0" />
