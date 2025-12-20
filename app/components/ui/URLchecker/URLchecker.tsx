@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -24,6 +25,7 @@ import {
 } from "lucide-react";
 import { useVisibilityStore } from "@/store/VisibilityStore";
 import { invoke } from "@tauri-apps/api/core";
+import { toast } from "sonner";
 
 interface UrlStatus {
   url: string;
@@ -95,10 +97,8 @@ export function UrlStatusChecker() {
     try {
       const results = await invoke<TauriUrlCheckResult[]>("check_url", {
         urls: urls.map((u) => u.url),
-        interval: 2, // 2 seconds between each URL check
+        interval: 1,
       });
-
-      console.log("Backend results:", results);
 
       // Update URLs with new results
       const updatedUrls = urls.map((urlStatus) => {
@@ -397,13 +397,6 @@ export function UrlStatusChecker() {
     return categorized;
   };
 
-  const toggleCategory = (category: string) => {
-    setExpandedCategories((prev) => ({
-      ...prev,
-      [category]: !prev[category],
-    }));
-  };
-
   const selectedUrl = selectedUrlIndex !== null ? urls[selectedUrlIndex] : null;
   const categorizedHeaders = selectedUrl?.headers
     ? categorizeHeaders(selectedUrl.headers)
@@ -416,7 +409,7 @@ export function UrlStatusChecker() {
         className="fixed inset-0 bg-black/50 dark:bg-black/70 z-40 backdrop-blur-sm"
         onClick={hideUrlChecker}
       />
-      <Card className="max-w-full bg-card w-[700px] border-border fixed bottom-10 left-2 z-50 dark:bg-brand-bright bg-white h-[calc(100vh-150px)] max-h-full">
+      <Card className="max-w-full bg-card w-[700px] border-border fixed bottom-10 left-2 z-50 dark:bg-brand-darker bg-white h-[calc(100vh-150px)] max-h-full">
         <div className="p-6 relative">
           <X
             size={14}
@@ -446,7 +439,7 @@ export function UrlStatusChecker() {
           {selectedUrl &&
             selectedUrl.status !== "unknown" &&
             selectedUrl.headers && (
-              <div className="mb-2 p-3 rounded-lg bg-secondary/30 border border-border/50 max-h-[400px] overflow-y-auto">
+              <div className="mb-2 p-3 rounded-lg bg-secondary/30 border border-border/50 dark:border/50 max-h-[400px] overflow-y-auto">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                     Response Details
@@ -505,10 +498,10 @@ export function UrlStatusChecker() {
               </div>
             )}
 
-          <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-secondary/50 border border-border/50">
+          <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-secondary/50 border border-border/50 dark:border-white/30">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <label className="text-xs text-muted-foreground font-medium">
+                <label className="text-xs text-black font-medium">
                   Polling Interval (seconds)
                 </label>
               </div>
@@ -518,8 +511,8 @@ export function UrlStatusChecker() {
                 max="300"
                 value={pollingInterval}
                 onChange={(e) => setPollingInterval(Number(e.target.value))}
-                disabled={isPolling}
-                className="h-8 bg-white text-black disabled:text-red-900 border-border font-mono text-sm"
+                // disabled={isPolling}
+                className="dark:text-white h-8 bg-white text-black disabled:text-blue-900 border-border dark:border-white/50 font-mono text-sm  dark:disabled:text-white"
               />
             </div>
             <div className="flex-1">
@@ -531,10 +524,10 @@ export function UrlStatusChecker() {
               <button
                 onClick={() => setStopOnError(!stopOnError)}
                 disabled={isPolling}
-                className={`h-8 w-full rounded-md border text-sm font-medium transition-colors ${
+                className={`h-8 w-full rounded-md border dark:border-white/30 text-sm font-medium transition-colors ${
                   stopOnError
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background text-muted-foreground border-border"
+                    ? "bg-brand-bright text-white border-primary dark:border/50"
+                    : " border-border dark:border/50"
                 }`}
               >
                 {stopOnError ? "Enabled" : "Disabled"}
@@ -548,8 +541,8 @@ export function UrlStatusChecker() {
                 key={index}
                 className={`flex items-center gap-3 p-1 rounded-lg bg-secondary/30 border transition-colors ${
                   selectedUrlIndex === index
-                    ? "border-primary"
-                    : "border-border/50"
+                    ? "border-primary dark:border-white/50"
+                    : "border-border/50 dark:border-white/30"
                 }`}
               >
                 <button
@@ -632,8 +625,8 @@ export function UrlStatusChecker() {
               onClick={togglePolling}
               className={`flex-1 ${
                 isPolling
-                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90 border"
-                  : "bg-success text-success-foreground hover:bg-success/90 border"
+                  ? "bg-red-700 text-white hover:bg-destructive/90 border"
+                  : "bg-green-600 text-white hover:bg-success/90 border"
               }`}
             >
               {isPolling ? (
@@ -663,8 +656,8 @@ export function UrlStatusChecker() {
         {/* LOG CONSOLE OUTPUT */}
 
         {showLogs && (
-          <div className="p-3 rounded-lg bg-gray-200 border border-border/50 max-h-[calc(100%-51vh)] overflow-y-auto mx-4 overflow-clip ">
-            <div className="flex items-center justify-between sticky w-full bg-white rounded-full px-2  ">
+          <div className="p-3 rounded-lg bg-gray-200 dark:bg-brand-darker dark:border-white/30 border border-border/50 min-h-[calc(100%-51vh)] max-h-[calc(100%-51vh)] overflow-y-auto mx-4 overflow-clip ">
+            <div className="flex items-center justify-between sticky w-full bg-white rounded-full px-2  dark:bg-brand-dark">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
                 Activity Log
               </h3>
@@ -687,7 +680,7 @@ export function UrlStatusChecker() {
               ) : (
                 logs.map((log, index) => (
                   <div key={index} className="flex items-start gap-2 text-xs">
-                    <span className="text-muted-foreground font-mono flex-shrink-0">
+                    <span className="text-muted-foreground font-mono flex-shrink-0 dark:text-brand-bright text-blue-900">
                       {formatTime(log.timestamp)}
                     </span>
                     <div
@@ -698,7 +691,7 @@ export function UrlStatusChecker() {
                       }`}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="font-mono text-foreground truncate">
+                      <p className="font-mono text-foreground truncate dark:text-brand-highlight text-brand-bright">
                         {log.url}
                       </p>
                       <p className="font-mono text-muted-foreground">
