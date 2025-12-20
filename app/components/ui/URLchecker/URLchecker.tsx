@@ -100,6 +100,8 @@ export function UrlStatusChecker() {
         interval: 1,
       });
 
+      console.log(results, "Results From HTTP");
+
       // Update URLs with new results
       const updatedUrls = urls.map((urlStatus) => {
         const result = results.find((r) => r.url === urlStatus.url);

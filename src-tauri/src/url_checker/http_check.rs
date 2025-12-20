@@ -10,6 +10,7 @@ pub struct UrlCheckResult {
     error: Option<String>,
     timestamp: u64,
     response_time_ms: Option<u64>,
+    headers: Option<Vec<(String, String)>>,
 }
 
 // Always check once, let frontend handle polling
@@ -30,6 +31,7 @@ pub async fn http_check(urls: Vec<String>, interval: u64) -> Vec<UrlCheckResult>
         match reqwest::get(&url).await {
             Ok(response) => {
                 let status = response.status();
+                let headers = response.headers().clone();
                 let end_time = SystemTime::now();
                 let response_time_ms = end_time
                     .duration_since(start_time)
@@ -42,6 +44,14 @@ pub async fn http_check(urls: Vec<String>, interval: u64) -> Vec<UrlCheckResult>
                     error: None,
                     timestamp,
                     response_time_ms: Some(response_time_ms),
+                    headers: Some(
+                        headers
+                            .iter()
+                            .map(|(k, v)| {
+                                (k.to_string(), v.to_str().unwrap_or_default().to_string())
+                            })
+                            .collect(),
+                    ),
                 });
             }
             Err(err) => {
@@ -57,6 +67,7 @@ pub async fn http_check(urls: Vec<String>, interval: u64) -> Vec<UrlCheckResult>
                     error: Some(err.to_string()),
                     timestamp,
                     response_time_ms: Some(response_time_ms),
+                    headers: None,
                 });
             }
         }
