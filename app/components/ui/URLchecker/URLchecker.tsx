@@ -1015,7 +1015,7 @@ export function UrlStatusChecker() {
               onClick={togglePolling}
               className={`flex-1 ${
                 isPolling
-                  ? "bg-red-700 text-white hover:bg-destructive/90 border"
+                  ? "bg-red-700 text-white hover:bg-destructive/90 border dark:bg-red-900 dark:border-white/20 dark:text-white hover:dark:bg-red-900"
                   : "bg-green-600 text-white hover:bg-success/90 border dark:bg-green-600 dark:border-white/20 dark:text-white dark:hover:bg-green-500"
               }`}
             >
