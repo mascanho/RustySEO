@@ -30,6 +30,7 @@ import {
 import { useVisibilityStore } from "@/store/VisibilityStore";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
+import useLoaderStore from "@/store/loadersStore";
 
 interface UrlStatus {
   url: string;
@@ -71,7 +72,6 @@ export function UrlStatusChecker() {
     { url: "https://vercel.com", status: "unknown" },
   ]);
   const [newUrl, setNewUrl] = useState("");
-  const [isPolling, setIsPolling] = useState(false);
   const [pollingInterval, setPollingInterval] = useState(30);
   const [stopOnError, setStopOnError] = useState(true);
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -88,6 +88,31 @@ export function UrlStatusChecker() {
   });
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { hideUrlChecker, visibility } = useVisibilityStore();
+
+  // Get store state and actions
+  const { loaders } = useLoaderStore();
+
+  // Initialize isPolling from store
+  const [isPolling, setIsPolling] = useState(false);
+
+  // Sync with store when component mounts
+  useEffect(() => {
+    const wasActive = loaders.httpChecker;
+    if (wasActive !== isPolling) {
+      setIsPolling(wasActive);
+    }
+  }, []);
+
+  // Update store when isPolling changes
+  useEffect(() => {
+    if (loaders.httpChecker !== isPolling) {
+      if (isPolling) {
+        useLoaderStore.getState().showLoader("httpChecker");
+      } else {
+        useLoaderStore.getState().hideLoader("httpChecker");
+      }
+    }
+  }, [isPolling, loaders.httpChecker]);
 
   const addLog = (entry: Omit<LogEntry, "timestamp">) => {
     setLogs((prev) =>
@@ -259,17 +284,18 @@ export function UrlStatusChecker() {
 
   // Toggle polling
   const togglePolling = () => {
-    if (isPolling) {
+    const newPollingState = !isPolling;
+    setIsPolling(newPollingState);
+
+    if (!newPollingState) {
       // Stop polling
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
-      setIsPolling(false);
       console.log("Polling stopped");
     } else {
       // Start polling
-      setIsPolling(true);
       console.log("Polling started");
     }
   };
@@ -510,14 +536,14 @@ export function UrlStatusChecker() {
       {/* Overlay background */}
       <div
         className="fixed inset-0 bg-black/50 dark:bg-black/70 z-40 backdrop-blur-sm"
-        onClick={hideUrlChecker}
+        onClick={handleHideHttpChecker}
       />
       <Card className="max-w-full bg-card w-[700px] border-border fixed bottom-10 left-2 z-50 dark:bg-brand-darker bg-white h-[calc(100vh-150px)] max-h-full">
         <div className="p-6 relative">
           <X
             size={14}
             className="text-red-500 absolute top-4 right-4 text-muted-foreground cursor-pointer text-xs"
-            onClick={hideUrlChecker}
+            onClick={handleHideHttpChecker}
           />
           <div className="flex items-center gap-3 mb-6">
             <div className="flex pt-4 w-full space-x-2">
@@ -1111,5 +1137,10 @@ export function UrlStatusChecker() {
       return "text-yellow-700";
     }
     return "text-muted-foreground";
+  }
+
+  function handleHideHttpChecker() {
+    hideUrlChecker();
+    // No need to toggle anything - state is already in sync
   }
 }
