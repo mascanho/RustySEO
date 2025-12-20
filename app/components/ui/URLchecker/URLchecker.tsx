@@ -681,14 +681,17 @@ export function UrlStatusChecker() {
                 </p>
               ) : (
                 logs.map((log, index) => (
-                  <div key={index} className="flex items-start gap-2 text-xs">
+                  <div
+                    key={index}
+                    className="flex items-start gap-2 text-xs pt-2"
+                  >
                     <span className="text-muted-foreground font-mono flex-shrink-0 dark:text-brand-bright text-blue-900">
                       {formatTime(log.timestamp)}
                     </span>
                     <div
                       className={`w-1.5 h-1.5 rounded-full mt-1 flex-shrink-0 ${
                         log.status === "online"
-                          ? "bg-success"
+                          ? "text-green-500"
                           : "bg-destructive"
                       }`}
                     />
@@ -696,7 +699,9 @@ export function UrlStatusChecker() {
                       <p className="font-mono text-foreground truncate dark:text-brand-highlight text-brand-bright">
                         {log.url}
                       </p>
-                      <p className="font-mono text-muted-foreground">
+                      <p
+                        className={`font-mono text-muted-foreground ${colourStatus(log)}`}
+                      >
                         {log.message}
                       </p>
                     </div>
@@ -709,4 +714,14 @@ export function UrlStatusChecker() {
       </Card>
     </section>
   );
+
+  function colourStatus(log) {
+    if (log?.statusCode === 200) {
+      return "text-green-700";
+    } else if (log?.statusCode === 404) {
+      return "text-red-700";
+    } else if (log?.statusCode === 500) {
+      return "text-yellow-700";
+    }
+  }
 }
