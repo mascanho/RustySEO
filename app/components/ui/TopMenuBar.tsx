@@ -69,6 +69,7 @@ import { useOnboardingStore } from "@/store/OnboardingStore";
 import { BiDoorOpen, BiLogoSlackOld } from "react-icons/bi";
 import { CiFolderOn, CiSettings } from "react-icons/ci";
 import { UrlStatusChecker } from "./URLchecker/URLchecker";
+import { MdOutlineHttps } from "react-icons/md";
 
 const TopMenuBar = () => {
   const [download, setDownload] = useState("");
@@ -582,8 +583,8 @@ const TopMenuBar = () => {
                 Google Ads Sim.
               </MenubarItem>
               <MenubarItem onClick={showUrlChecker}>
-                <GoFileDiff className="mr-2 font-semibold" />
-                URL checker
+                <MdOutlineHttps className="mr-2 font-semibold" />
+                HTTP Checker
               </MenubarItem>
               <MenubarSeparator />
               <MenubarItem
