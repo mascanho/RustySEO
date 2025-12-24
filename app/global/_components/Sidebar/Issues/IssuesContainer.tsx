@@ -76,11 +76,11 @@ const IssuesContainer = () => {
   const response404 = useResponseCodes(crawlData, 404);
   const response5xx = useResponseCodes(crawlData, 500);
   const pagetitleBelow30Chars = useMemo(
-    () => crawlData?.filter((page) => page?.title?.length < 30) || [],
+    () => crawlData?.filter((page) => page?.title[0]?.title?.length < 30) || [],
     [crawlData],
   );
   const pageTitlesAbove60Chars = useMemo(
-    () => crawlData?.filter((page) => page?.title?.length > 60) || [],
+    () => crawlData?.filter((page) => page?.title[0]?.title?.length > 60) || [],
     [crawlData],
   );
   const lowContentPages = useMemo(
