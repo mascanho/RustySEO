@@ -64,9 +64,8 @@ fn validate_and_normalize_url(base_url: &Url, url: &Url) -> Option<Url> {
         return None; // Skip URLs from external domains
     }
 
-    // Normalize the URL by removing trailing slashes and fragment identifiers
+    // Normalize the URL by removing fragment identifiers
     let mut normalized_url = url.clone();
-    normalized_url.set_path(url.path().trim_end_matches('/'));
     normalized_url.set_fragment(None); // Remove fragment identifier
 
     Some(normalized_url)
