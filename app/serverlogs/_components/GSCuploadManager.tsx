@@ -59,6 +59,9 @@ export default function GSCuploadManager({ closeDialog }) {
     }));
 
     setUploadedFiles((prev) => [...prev, ...newFiles]);
+
+    console.log(uploadedFiles, "uploaded files");
+
     event.target.value = ""; // Reset input to allow re-upload of same file
   }, []);
 
@@ -207,7 +210,7 @@ export default function GSCuploadManager({ closeDialog }) {
   FileItem.displayName = "FileItem";
 
   return (
-    <section className="w-[650px] max-w-5xl mx-auto h-[670px] pt-2">
+    <section className="w-full max-w-5xl mx-auto h-[670px] pt-2">
       <CardContent className="grid grid-cols-1 gap-6 h-[380px]">
         <div className="space-y-4">
           <div className="rounded-md h-[580px] overflow-y-auto">

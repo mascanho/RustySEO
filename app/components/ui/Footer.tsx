@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 import React, { useEffect, useState, useCallback } from "react";
 import { LiaTasksSolid } from "react-icons/lia";

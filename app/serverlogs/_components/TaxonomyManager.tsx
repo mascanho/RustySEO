@@ -58,7 +58,7 @@ function PathItem({ pathConfig, onUpdate, onRemove }) {
   };
 
   return (
-    <div className="flex items-center justify-between text-sm bg-muted dark:bg-slate-800/50 rounded-md px-2 py-1">
+    <div className="flex items-center w-[] justify-between text-sm bg-muted dark:bg-slate-800/50 rounded-md px-2 py-1">
       <div className="flex items-center gap-2 flex-1">
         {isEditing ? (
           <Input
@@ -421,7 +421,7 @@ export default function TaxonomyManager({ closeDialog }) {
   }
 
   return (
-    <section className="w-[650px] max-w-5xl mx-auto h-full pt-4 flex flex-col">
+    <section className="w-[750px] max-w-5xl mx-auto h-full pt-4 flex flex-col">
       <CardContent className="space-y-4">
         <div className="space-y-2">
           <h3 className="text-sm font-medium dark:text-white">

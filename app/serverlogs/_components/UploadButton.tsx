@@ -93,9 +93,9 @@ function UploadButton() {
             Settings
           </button>
         </DialogTrigger>
-        <DialogContent className="p-9 overflow-hidden pl-6 max-w-[700px] h-[660px] dark:bg-brand-darker">
+        <DialogContent className="p-9 overflow-hidden pl-6 max-w-[800px] h-[660px] dark:bg-brand-darker">
           <Tabs>
-            <TabsList className="grid w-full grid-cols-4 bg-gray-100 dark:bg-brand-dark">
+            <TabsList className="grid w-full grid-cols-5 bg-gray-100 dark:bg-brand-dark">
               <TabsTrigger
                 className="hover:bg-brand-bright/70 hover:text-white"
                 value="domain"
@@ -106,7 +106,7 @@ function UploadButton() {
               {/* <TabsTrigger value="ips">Google IPs</TabsTrigger> */}
               <TabsTrigger value="logs">Stored Logs</TabsTrigger>
               <TabsTrigger value="projects">Projects</TabsTrigger>
-              {/* <TabsTrigger value="gsc">GSC Sync</TabsTrigger> */}
+              <TabsTrigger value="gsc">GSC Sync</TabsTrigger>
             </TabsList>
 
             {/* SEPARATOR */}
