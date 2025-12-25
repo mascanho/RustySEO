@@ -87,6 +87,7 @@ import {
   handleURLClick,
   handleCopyClick,
 } from "../WidgetTables/helpers/useCopyOpen";
+import { useExcelLoading } from "@/store/ServerLogsGlobalStore";
 
 export function LogAnalyzer() {
   const {
@@ -133,6 +134,7 @@ export function LogAnalyzer() {
   const [urlAgentFilter, setUrlAgentFilter] = useState("url");
 
   const [posColumn, setPosColumn] = useState("position");
+  const { ExcelLoaded } = useExcelLoading();
 
   const cyclePosColumn = () => {
     setPosColumn((prev) => {
@@ -999,7 +1001,7 @@ export function LogAnalyzer() {
                     </TableHead>
 
                     {/* HERE CONDITIONALLY RENDER THE HEAD FOR POSITION IF TOGGLED */}
-                    {!showAgent && (
+                    {ExcelLoaded && !showAgent && (
                       <TableHead
                         className="w-[30px] text-center cursor-pointer"
                         onClick={cyclePosColumn}
@@ -1007,8 +1009,8 @@ export function LogAnalyzer() {
                         {posColumn === "position"
                           ? "Position"
                           : posColumn === "clicks"
-                          ? "Clicks"
-                          : "Impressions"}
+                            ? "Clicks"
+                            : "Impressions"}
                       </TableHead>
                     )}
 
@@ -1030,23 +1032,23 @@ export function LogAnalyzer() {
                         />
                       )}
                     </TableHead>
-                    {/* {!showAgent && ( */}
-                    {/*   <TableHead */}
-                    {/*     className="w-[100px] cursor-pointer" */}
-                    {/*     onClick={() => requestSort("responseSize")} */}
-                    {/*   > */}
-                    {/*     Size */}
-                    {/*     {sortConfig?.key === "responseSize" && ( */}
-                    {/*       <ChevronDown */}
-                    {/*         className={`ml-1 h-4 w-4 inline-block ${ */}
-                    {/*           sortConfig.direction === "descending" */}
-                    {/*             ? "rotate-180" */}
-                    {/*             : "" */}
-                    {/*         }`} */}
-                    {/*       /> */}
-                    {/*     )} */}
-                    {/*   </TableHead> */}
-                    {/* )} */}
+                    {!showAgent && (
+                      <TableHead
+                        className="w-[80px] cursor-pointer"
+                        onClick={() => requestSort("responseSize")}
+                      >
+                        Size
+                        {sortConfig?.key === "responseSize" && (
+                          <ChevronDown
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        )}
+                      </TableHead>
+                    )}
                     <TableHead align="center" className="text-left w-[130px]">
                       Crawler Type
                     </TableHead>
@@ -1077,6 +1079,7 @@ export function LogAnalyzer() {
                         handleURLClick={handleURLClick}
                         handleCopyClick={handleCopyClick}
                         posColumn={posColumn}
+                        ExcelLoaded={ExcelLoaded}
                       />
                     ))
                   ) : (
@@ -1135,6 +1138,7 @@ function LogRow({
   handleURLClick,
   handleCopyClick,
   posColumn,
+  ExcelLoaded,
 }) {
   return (
     <>
@@ -1176,10 +1180,10 @@ function LogRow({
               log.method === "GET"
                 ? "bg-green-100 dark:bg-green-700 text-green-800 border-green-200"
                 : log.method === "POST"
-                ? "bg-blue-100 dark:bg-blue-700 text-blue-800 border-blue-200"
-                : log.method === "PUT"
-                ? "bg-yellow-100 dark:bg-yellow-400 text-yellow-800 border-yellow-200"
-                : "bg-red-100 dark:bg-red-700 text-red-800 border-red-200"
+                  ? "bg-blue-100 dark:bg-blue-700 text-blue-800 border-blue-200"
+                  : log.method === "PUT"
+                    ? "bg-yellow-100 dark:bg-yellow-400 text-yellow-800 border-yellow-200"
+                    : "bg-red-100 dark:bg-red-700 text-red-800 border-red-200"
             }
           >
             {log.method}
@@ -1238,14 +1242,14 @@ function LogRow({
         </TableCell>
 
         {/* RENDER THE ROW WITH THE POSITION DATA IF IT HAS BEEN TOGGLED */}
-        {!showAgent && (
+        {ExcelLoaded && !showAgent && (
           <TableCell className="text-center align-middle flex">
             <span className="border flex border-brand-bright/50 rounded-full ml-2 px-2 py-0.5 text-[10px]">
               {posColumn === "position"
                 ? log?.position || "-"
                 : posColumn === "clicks"
-                ? log?.clicks || "-"
-                : log?.impressions || "-"}
+                  ? log?.clicks || "-"
+                  : log?.impressions || "-"}
             </span>
           </TableCell>
         )}
@@ -1262,11 +1266,11 @@ function LogRow({
           </Badge>
         </TableCell>
 
-        {/* {!showAgent && ( */}
-        {/*   <TableCell className="align-middle"> */}
-        {/*     {formatResponseSize(log.response_size)} */}
-        {/*   </TableCell> */}
-        {/* )} */}
+        {!showAgent && (
+          <TableCell className="align-middle">
+            {formatResponseSize(log.response_size)}
+          </TableCell>
+        )}
 
         <TableCell className="align-middle">
           <Badge

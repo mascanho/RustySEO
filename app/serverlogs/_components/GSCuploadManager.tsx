@@ -18,11 +18,13 @@ import { IoPlayCircleOutline } from "react-icons/io5";
 import * as XLSX from "xlsx";
 import useGSCUploadStore from "@/store/GSCUploadStore";
 import { localStorageHandler } from "../util";
+import { useExcelLoading } from "@/store/ServerLogsGlobalStore";
 
 export default function GSCuploadManager() {
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [localStorageExcel, setLocalStorageExcel] = useState(false);
+  const { setExcelLoaded } = useExcelLoading();
 
   // Use global store
   const {
@@ -177,6 +179,8 @@ export default function GSCuploadManager() {
       }
 
       toast.success(message);
+      // TODO: Check THis
+      setExcelLoaded(true);
       console.log("GSC memory load successful:", result);
 
       return result;

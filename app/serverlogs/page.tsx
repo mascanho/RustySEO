@@ -18,6 +18,7 @@ import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 interface CrawlResult {
   url: string;
@@ -30,6 +31,7 @@ export default function Page() {
   const [keysPressed, setKeysPressed] = useState(new Set());
   const [shortcutActivated, setShortcutActivated] = useState(false);
   const { setLogData, logData } = useLogAnalysis();
+  const appWindow = getCurrentWindow();
 
   // ALWAYS CHECK THE TAXONOMIES FROM THE LOCALSTORAGE AND SEND THEM TO THE TAURI COMMAND ON FIRST RUN
   // In your main Page component
@@ -197,6 +199,14 @@ export default function Page() {
       isMounted = false;
     };
   }, [setLogData]);
+
+  useEffect(() => {
+    window.addEventListener("beforeunload", () => {
+      console.log("App closing");
+      localStorage.removeItem("GscExcel");
+      appWindow.close();
+    });
+  }, []);
 
   return (
     <section className="flex flex-col dark:bg-brand-darker   w-[100%] pt-[4rem] h-[calc(100vh - 20-rem)] overflow-hidden  ">
