@@ -132,6 +132,16 @@ export function LogAnalyzer() {
   const [showAgent, setShowAgent] = useState(false);
   const [urlAgentFilter, setUrlAgentFilter] = useState("url");
 
+  const [posColumn, setPosColumn] = useState("position");
+
+  const cyclePosColumn = () => {
+    setPosColumn((prev) => {
+      if (prev === "position") return "clicks";
+      if (prev === "clicks") return "impressions";
+      return "position";
+    });
+  };
+
   // Helper functions - memoized for performance
   const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
@@ -989,9 +999,16 @@ export function LogAnalyzer() {
                     </TableHead>
 
                     {/* HERE CONDITIONALLY RENDER THE HEAD FOR POSITION IF TOGGLED */}
-                    {true && (
-                      <TableHead className="w-[30px] text-center">
-                        Pos
+                    {!showAgent && (
+                      <TableHead
+                        className="w-[30px] text-center cursor-pointer"
+                        onClick={cyclePosColumn}
+                      >
+                        {posColumn === "position"
+                          ? "Position"
+                          : posColumn === "clicks"
+                          ? "Clicks"
+                          : "Impressions"}
                       </TableHead>
                     )}
 
@@ -1059,6 +1076,7 @@ export function LogAnalyzer() {
                         formatCrawlerType={formatCrawlerType}
                         handleURLClick={handleURLClick}
                         handleCopyClick={handleCopyClick}
+                        posColumn={posColumn}
                       />
                     ))
                   ) : (
@@ -1116,6 +1134,7 @@ function LogRow({
   formatCrawlerType,
   handleURLClick,
   handleCopyClick,
+  posColumn,
 }) {
   return (
     <>
@@ -1157,10 +1176,10 @@ function LogRow({
               log.method === "GET"
                 ? "bg-green-100 dark:bg-green-700 text-green-800 border-green-200"
                 : log.method === "POST"
-                  ? "bg-blue-100 dark:bg-blue-700 text-blue-800 border-blue-200"
-                  : log.method === "PUT"
-                    ? "bg-yellow-100 dark:bg-yellow-400 text-yellow-800 border-yellow-200"
-                    : "bg-red-100 dark:bg-red-700 text-red-800 border-red-200"
+                ? "bg-blue-100 dark:bg-blue-700 text-blue-800 border-blue-200"
+                : log.method === "PUT"
+                ? "bg-yellow-100 dark:bg-yellow-400 text-yellow-800 border-yellow-200"
+                : "bg-red-100 dark:bg-red-700 text-red-800 border-red-200"
             }
           >
             {log.method}
@@ -1222,14 +1241,12 @@ function LogRow({
         {true && (
           <TableCell className="text-center align-middle flex">
             <span className="border flex border-brand-bright/50 rounded-full ml-2 px-2 py-0.5 text-[10px]">
-              {log?.position || "-"}
+              {posColumn === "position"
+                ? log?.position || "-"
+                : posColumn === "clicks"
+                ? log?.clicks || "-"
+                : log?.impressions || "-"}
             </span>
-            {/* <span className="border flex border-brand-bright/50 rounded-full ml-2 px-2 py-0.5 text-[10px]"> */}
-            {/*   {log?.clicks || "-"} */}
-            {/* </span> */}
-            {/* <span className="border flex border-brand-bright/50 rounded-full ml-2 px-2 py-0.5 text-[10px]"> */}
-            {/*   {log?.impressions || "-"} */}
-            {/* </span> */}
           </TableCell>
         )}
 
@@ -1334,7 +1351,6 @@ function LogRow({
     </>
   );
 }
-
 // Extracted PaginationControls component
 function PaginationControls({
   currentPage,
