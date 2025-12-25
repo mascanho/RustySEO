@@ -16,15 +16,26 @@ import { CardContent, CardFooter } from "@/components/ui/card";
 import { invoke } from "@tauri-apps/api/core";
 import { IoPlayCircleOutline } from "react-icons/io5";
 import * as XLSX from "xlsx";
+import useGSCUploadStore from "@/store/GSCUploadStore";
 
 export default function GSCuploadManager() {
   const [isLoading, setIsLoading] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState(null);
-  const [workbook, setWorkbook] = useState(null);
-  const [sheets, setSheets] = useState<string[]>([]);
-  const [selectedSheet, setSelectedSheet] = useState<string | null>(null);
-  const [filePreview, setFilePreview] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Use global store
+  const {
+    uploadedFile,
+    workbook,
+    sheets,
+    selectedSheet,
+    filePreview,
+    setUploadedFile,
+    setWorkbook,
+    setSheets,
+    setSelectedSheet,
+    setFilePreview,
+    reset
+  } = useGSCUploadStore();
 
   const handleFileUpload = useCallback(async (event) => {
     const file = event.target.files?.[0];
@@ -37,11 +48,12 @@ export default function GSCuploadManager() {
 
     try {
       setIsLoading(true);
+      // Store serializable info
       setUploadedFile({
         name: file.name,
         size: file.size,
-        file: file,
         type: file.name.endsWith(".csv") ? "csv" : "xlsx",
+        lastModified: file.lastModified,
       });
 
       const arrayBuffer = await file.arrayBuffer();
@@ -56,21 +68,21 @@ export default function GSCuploadManager() {
         setSelectedSheet(null);
         setFilePreview(null);
       }
+
     } catch (error) {
       console.error("Error reading file:", error);
       toast.error(
         `Error reading file: ${error instanceof Error ? error.message : String(error)}`,
       );
-      setUploadedFile(null);
-      setWorkbook(null);
+      reset();
     } finally {
       setIsLoading(false);
       event.target.value = "";
     }
-  }, []);
+  }, [setUploadedFile, setWorkbook, setSheets, setSelectedSheet, setFilePreview, reset]);
 
   const handleSheetSelect = (
-    sheetName,
+    sheetName: string,
     wbInstance = workbook,
     fileName = uploadedFile?.name,
   ) => {
@@ -98,10 +110,10 @@ export default function GSCuploadManager() {
         data: filePreview.data,
       });
 
-      setFilePreview((prev) => ({
-        ...prev,
+      setFilePreview({
+        ...filePreview,
         processedAt: new Date().toISOString(),
-      }));
+      });
       toast.success("File processed and saved successfully");
     } catch (error) {
       console.error("Processing failed:", error);
@@ -111,15 +123,11 @@ export default function GSCuploadManager() {
     } finally {
       setIsProcessing(false);
     }
-  }, [filePreview]);
+  }, [filePreview, setFilePreview]);
 
   const handleRemoveFile = useCallback(() => {
-    setUploadedFile(null);
-    setWorkbook(null);
-    setSheets([]);
-    setSelectedSheet(null);
-    setFilePreview(null);
-  }, []);
+    reset();
+  }, [reset]);
 
   const formatFileSize = useCallback((bytes) => {
     if (bytes === 0) return "0 Bytes";
@@ -199,11 +207,10 @@ export default function GSCuploadManager() {
                       <button
                         key={sheet}
                         onClick={() => handleSheetSelect(sheet)}
-                        className={`text-left text-sm px-3 py-2 rounded-md transition-all flex items-center justify-between ${
-                          selectedSheet === sheet
+                        className={`text-left text-sm px-3 py-2 rounded-md transition-all flex items-center justify-between ${selectedSheet === sheet
                             ? "bg-brand-bright text-white shadow-md shadow-brand-bright/20"
                             : "hover:bg-accent text-foreground"
-                        }`}
+                          }`}
                       >
                         <span className="truncate">{sheet}</span>
                         {selectedSheet === sheet && (

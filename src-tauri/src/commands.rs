@@ -312,13 +312,3 @@ pub async fn open_configs_with_native_editor(
 
     Ok(())
 }
-
-// ------- SAVE GSC DATA FROM FRONTEND
-#[tauri::command]
-pub fn save_gsc_data(data: Vec<serde_json::Value>) -> Result<(), String> {
-    println!("Received GSC data: {} rows", data.len());
-    println!("{:?}", data);
-    // TODO: Add logic to save data to DB if needed.
-    // For now, we just print the count to verify receipt.
-    Ok(())
-}
