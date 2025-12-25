@@ -1,6 +1,7 @@
 use crate::crawler::db::open_db_connection;
 use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
+use std::result::Result;
 
 #[derive(Debug)]
 pub struct Storage {
@@ -30,7 +31,6 @@ impl Storage {
     pub fn create_table(&self) -> Result<(), String> {
         self.conn
             .execute(
-                // CORRECTED: position NOT postiion
                 "CREATE TABLE IF NOT EXISTS gsc_excel_upload (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 date TEXT NOT NULL,
@@ -45,9 +45,17 @@ impl Storage {
         Ok(())
     }
 
-    pub fn add_data(&self, data: &ExcelUpload) -> Result<(), String> {
+    /// Clears all existing data from the table
+    pub fn clear_table(&self) -> Result<(), String> {
+        self.conn
+            .execute("DELETE FROM gsc_excel_upload", [])
+            .map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
+    /// Inserts a single row (for adding to existing data)
+    pub fn insert_single(&self, data: &ExcelUpload) -> Result<(), String> {
         self.conn.execute(
-            // CORRECTED: position NOT postiion
             "INSERT INTO gsc_excel_upload (date, url, position, clicks, impressions) VALUES (?1, ?2, ?3, ?4, ?5)",
             params![
                 data.date,
@@ -59,6 +67,54 @@ impl Storage {
         )
         .map_err(|e| e.to_string())?;
         Ok(())
+    }
+
+    /// Replaces ALL data - clears table then inserts multiple rows
+    pub fn replace_all_data(&self, data_list: &[ExcelUpload]) -> Result<usize, String> {
+        // 1. Clear all existing data
+        self.clear_table()?;
+
+        // 2. Insert all new rows
+        let mut count = 0;
+        for data in data_list {
+            self.insert_single(data)?;
+            count += 1;
+        }
+
+        Ok(count)
+    }
+
+    /// Replaces ALL data using mutable self (for transactions)
+    pub fn replace_all_data_transaction(
+        &mut self,
+        data_list: &[ExcelUpload],
+    ) -> Result<usize, String> {
+        let tx = self.conn.transaction().map_err(|e| e.to_string())?;
+
+        // 1. Clear all existing data
+        tx.execute("DELETE FROM gsc_excel_upload", [])
+            .map_err(|e| e.to_string())?;
+
+        // 2. Insert all new rows
+        let mut count = 0;
+        for data in data_list {
+            tx.execute(
+                "INSERT INTO gsc_excel_upload (date, url, position, clicks, impressions) VALUES (?1, ?2, ?3, ?4, ?5)",
+                params![
+                    data.date,
+                    data.url,
+                    data.position,
+                    data.clicks,
+                    data.impressions
+                ],
+            )
+            .map_err(|e| e.to_string())?;
+            count += 1;
+        }
+
+        // Commit the transaction
+        tx.commit().map_err(|e| e.to_string())?;
+        Ok(count)
     }
 
     pub fn print_table(&self) -> Result<(), String> {
@@ -93,6 +149,15 @@ impl Storage {
 
         println!("Total rows printed: {}", count);
         Ok(())
+    }
+
+    /// Gets total row count
+    pub fn get_row_count(&self) -> Result<i64, String> {
+        self.conn
+            .query_row("SELECT COUNT(*) FROM gsc_excel_upload", [], |row| {
+                row.get(0)
+            })
+            .map_err(|e| e.to_string())
     }
 
     // Helper to drop and recreate the table (for testing)

@@ -38,77 +38,59 @@ pub fn check_logs_command(
 // ------- SAVE GSC DATA FROM FRONTEND
 #[tauri::command]
 pub fn save_gsc_data(data: Vec<serde_json::Value>) -> Result<String, String> {
-    println!("DEBUG: First 2 rows of received data:");
-    for (i, row) in data.iter().take(2).enumerate() {
-        println!(
-            "Row {} keys: {:?}",
-            i,
-            row.as_object().map(|obj| obj.keys().collect::<Vec<_>>())
-        );
-        println!(
-            "Row {} full: {}",
-            i,
-            serde_json::to_string_pretty(row).unwrap_or_default()
-        );
+    println!("DEBUG: Received {} rows", data.len());
+
+    // Extract all data first
+    let mut uploads = Vec::new();
+
+    for (index, row) in data.iter().enumerate() {
+        match extract_excel_upload(row, index) {
+            Ok(upload) => {
+                // Only add if it has actual data
+                if !upload.date.is_empty() || !upload.url.is_empty() {
+                    uploads.push(upload);
+                }
+            }
+            Err(e) => println!("Row {} error: {}", index, e),
+        }
     }
 
-    let db =
+    println!("Extracted {} valid rows", uploads.len());
+
+    if uploads.is_empty() {
+        return Err("No valid data to insert".to_string());
+    }
+
+    // Use mut here since we're creating a new Storage instance
+    let mut db =
         storage::Storage::new("gsc_excel.db").map_err(|e| format!("Failed to open DB: {}", e))?;
 
     // Ensure table exists
     db.create_table()
         .map_err(|e| format!("Failed to create table: {}", e))?;
 
-    // Insert each row with PROPER DATA EXTRACTION
-    let mut inserted = 0;
-    let mut errors = Vec::new();
+    // OPTION 1: Use transaction method (requires mut)
+    let inserted = db
+        .replace_all_data_transaction(&uploads)
+        .map_err(|e| format!("Failed to replace data: {}", e))?;
 
-    for (index, row) in data.iter().enumerate() {
-        // Extract data from JSON - THIS IS THE CRITICAL PART
-        let upload_result = extract_excel_upload(row, index);
+    // OPTION 2: Or use non-transaction method (doesn't require mut)
+    // let inserted = db.replace_all_data(&uploads)
+    //     .map_err(|e| format!("Failed to replace data: {}", e))?;
 
-        match upload_result {
-            Ok(upload) => {
-                // Validate we have actual data (not all zeros/empty)
-                if upload.date.is_empty() && upload.url.is_empty() {
-                    errors.push(format!("Row {}: Both date and url are empty", index));
-                    continue;
-                }
+    // Verify
+    let final_count = db
+        .get_row_count()
+        .map_err(|e| format!("Failed to count rows: {}", e))?;
 
-                db.add_data(&upload)
-                    .map_err(|e| format!("Failed to insert row {}: {}", index, e))?;
-                inserted += 1;
+    println!("=== DATA REPLACEMENT COMPLETE ===");
+    println!("Old data cleared, {} new rows inserted", inserted);
+    println!("Total rows in database: {}", final_count);
 
-                // Print first few successful inserts for verification
-                if inserted <= 3 {
-                    println!("SUCCESS insert {}: {:?}", inserted, upload);
-                }
-            }
-            Err(e) => {
-                errors.push(format!("Row {}: {}", index, e));
-            }
-        }
-    }
-
-    // Print summary
-    println!("=== INSERTION SUMMARY ===");
-    println!("Total rows attempted: {}", data.len());
-    println!("Successfully inserted: {}", inserted);
-    println!("Failed: {}", errors.len());
-
-    if !errors.is_empty() {
-        println!("First 5 errors:");
-        for err in errors.iter().take(5) {
-            println!("  {}", err);
-        }
-    }
-
-    // Debug: Show what's actually in the database
-    println!("\n=== DATABASE CONTENTS (first 5 rows) ===");
-    db.print_table()
-        .map_err(|e| format!("Failed to print table: {}", e))?;
-
-    Ok(format!("Inserted {}/{} rows", inserted, data.len()))
+    Ok(format!(
+        "Replaced all data with {} new rows. Total in DB: {}",
+        inserted, final_count
+    ))
 }
 
 // Helper function to properly extract data from JSON
