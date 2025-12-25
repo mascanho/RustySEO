@@ -124,45 +124,57 @@ export default function GSCuploadManager() {
     try {
       setIsProcessing(true);
 
-      // Send data to backend
+      // Step 1: Save data to database
       await invoke("save_gsc_data", {
         data: filePreview.data,
       });
 
+      // Step 2: Update local state
       setFilePreview({
         ...filePreview,
         processedAt: new Date().toISOString(),
       });
 
-      if ("Pages" in workbook.Sheets) {
-        toast.error("No Pages data found in this file");
-      }
+      // Step 3: Load into Rust memory
+      await loadGscIntoMemory();
 
-      toast.success("File processed and saved successfully");
+      toast.success("File processed and loaded successfully");
     } catch (error) {
       console.error("Processing failed:", error);
       toast.error(
         `Processing failed: ${error instanceof Error ? error.message : String(error)}`,
       );
     } finally {
-      // Load the Data into Rusts Mem ready to match when when logs are parsed
-      try {
-        const data = await invoke("load_gsc_from_database").then((data) => {
-          if (data?.result?.message === "Loaded") {
-            toast.success("File loaded into Rusts Memory");
-          } else {
-            toast.error("File not loaded into Rusts Memory");
-          }
-        });
-        console.log(data, "FUNCIONA?");
-      } catch (error) {
-        console.error(error);
-        toast.error(error);
-      }
-
       setIsProcessing(false);
     }
   }, [filePreview, setFilePreview]);
+
+  // Separate function for loading into memory
+  const loadGscIntoMemory = async () => {
+    try {
+      const result = await invoke("load_gsc_from_database");
+
+      // Handle different response formats
+      let message = "GSC data loaded into memory";
+
+      if (typeof result === "string") {
+        message = result;
+      } else if (result && result.message === "Loaded") {
+        message = `Loaded ${result.count} GSC entries into memory`;
+      } else if (typeof result === "number") {
+        message = `Loaded ${result} GSC entries into memory`;
+      }
+
+      toast.success(message);
+      console.log("GSC memory load successful:", result);
+
+      return result;
+    } catch (error) {
+      console.error("Failed to load GSC into memory:", error);
+      toast.error(`Failed to load into memory: ${error}`);
+      throw error; // Re-throw to be caught by parent
+    }
+  };
 
   const handleRemoveFile = useCallback(() => {
     reset();
