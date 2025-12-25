@@ -8,6 +8,9 @@ use std::sync::Mutex;
 static GSC_CACHE: Lazy<Mutex<HashMap<String, GscMetrics>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
+// Store if GSC data is loaded
+static GSC_LOADED: Lazy<Mutex<bool>> = Lazy::new(|| Mutex::new(false));
+
 #[derive(Debug)]
 struct GscMetrics {
     position: i32,
@@ -24,6 +27,7 @@ pub enum Message {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct GscMessage {
     pub message: Message,
+    pub count: usize,
 }
 
 /// Load GSC data from database and cache it
@@ -55,11 +59,31 @@ pub fn load_gsc_from_database() -> Result<GscMessage, String> {
     match cache.len() {
         0 => Ok(GscMessage {
             message: Message::NotLoaded,
+            count: 0,
         }),
         _ => Ok(GscMessage {
             message: Message::Loaded,
+            count: cache.len(),
         }),
     }
+}
+
+#[tauri::command]
+pub fn unload_gsc_from_memory() -> Result<GscMessage, String> {
+    let mut cache = GSC_CACHE.lock().unwrap();
+    let count = cache.len();
+    cache.clear();
+
+    // Update loaded status
+    let mut loaded = GSC_LOADED.lock().unwrap();
+    *loaded = false;
+
+    println!("Unloaded {} GSC entries from memory", count);
+
+    Ok(GscMessage {
+        message: Message::NotLoaded,
+        count: 0,
+    })
 }
 
 /// Normalize path for GSC matching
