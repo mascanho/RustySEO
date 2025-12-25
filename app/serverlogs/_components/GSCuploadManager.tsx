@@ -34,52 +34,71 @@ export default function GSCuploadManager() {
     setSheets,
     setSelectedSheet,
     setFilePreview,
-    reset
+    reset,
   } = useGSCUploadStore();
 
-  const handleFileUpload = useCallback(async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleFileUpload = useCallback(
+    async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-    if (!file.name.endsWith(".xlsx") && !file.name.endsWith(".csv")) {
-      toast.error("Please upload a .xlsx or .csv file");
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      // Store serializable info
-      setUploadedFile({
-        name: file.name,
-        size: file.size,
-        type: file.name.endsWith(".csv") ? "csv" : "xlsx",
-        lastModified: file.lastModified,
-      });
-
-      const arrayBuffer = await file.arrayBuffer();
-      const wb = XLSX.read(arrayBuffer, { type: "array" });
-
-      setWorkbook(wb);
-      setSheets(wb.SheetNames);
-
-      if (wb.SheetNames.length === 1) {
-        handleSheetSelect(wb.SheetNames[0], wb, file.name);
-      } else {
-        setSelectedSheet(null);
-        setFilePreview(null);
+      if (!file.name.endsWith(".xlsx") && !file.name.endsWith(".csv")) {
+        toast.error("Please upload a .xlsx or .csv file");
+        return;
       }
 
-    } catch (error) {
-      console.error("Error reading file:", error);
-      toast.error(
-        `Error reading file: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      reset();
-    } finally {
-      setIsLoading(false);
-      event.target.value = "";
-    }
-  }, [setUploadedFile, setWorkbook, setSheets, setSelectedSheet, setFilePreview, reset]);
+      try {
+        setIsLoading(true);
+        // Store serializable info
+        setUploadedFile({
+          name: file.name,
+          size: file.size,
+          type: file.name.endsWith(".csv") ? "csv" : "xlsx",
+          lastModified: file.lastModified,
+        });
+
+        const arrayBuffer = await file.arrayBuffer();
+        const wb = XLSX.read(arrayBuffer, { type: "array" });
+
+        setWorkbook(wb);
+        setSheets(wb.SheetNames);
+
+        console.log(wb, "Sheet stuff");
+
+        if ("Pages" in wb.Sheets) {
+          toast.success(
+            "Google Sheets file detected. Please select a sheet to process",
+          );
+        } else {
+          toast.error("No Pages data found in this file");
+        }
+
+        if (wb.SheetNames.length === 1) {
+          handleSheetSelect(wb.SheetNames[0], wb, file.name);
+        } else {
+          setSelectedSheet(null);
+          setFilePreview(null);
+        }
+      } catch (error) {
+        console.error("Error reading file:", error);
+        toast.error(
+          `Error reading file: ${error instanceof Error ? error.message : String(error)}`,
+        );
+        reset();
+      } finally {
+        setIsLoading(false);
+        event.target.value = "";
+      }
+    },
+    [
+      setUploadedFile,
+      setWorkbook,
+      setSheets,
+      setSelectedSheet,
+      setFilePreview,
+      reset,
+    ],
+  );
 
   const handleSheetSelect = (
     sheetName: string,
@@ -114,6 +133,11 @@ export default function GSCuploadManager() {
         ...filePreview,
         processedAt: new Date().toISOString(),
       });
+
+      if ((!"Pages") in workbook.Sheets) {
+        toast.error("No Pages data found in this file");
+      }
+
       toast.success("File processed and saved successfully");
     } catch (error) {
       console.error("Processing failed:", error);
@@ -138,12 +162,12 @@ export default function GSCuploadManager() {
   }, []);
 
   return (
-    <section className="w-full max-w-5xl mx-auto h-[670px] pt-2">
-      <CardContent className="grid grid-cols-1 gap-6 h-[580px] max-h-[400px]">
+    <section className="w-full max-w-5xl mx-auto h-[670px]  dark:ring-0">
+      <CardContent className="grid grid-cols-1 gap-6 h-[580px] max-h-[560px]">
         <div className="grid grid-cols-12 gap-6 h-full">
           {/* Left Column - Upload & Settings */}
-          <div className="col-span-4 flex flex-col gap-4 h-full">
-            <div className="h-full border rounded-lg bg-muted/30 dark:bg-muted/10 p-4 flex flex-col gap-4">
+          <div className="col-span-4 flex flex-col gap-4 h-full dark:text-white">
+            <div className="h-full border dark:border-white/30 rounded-lg bg-muted/30 dark:bg-muted/10 p-4 flex flex-col gap-4">
               <h3 className="text-sm font-medium text-foreground">
                 File Upload
               </h3>
@@ -170,12 +194,12 @@ export default function GSCuploadManager() {
                   />
                 </label>
               ) : (
-                <div className="w-full border rounded-md bg-background p-3 relative group">
+                <div className="w-full border dark:border-white/30 rounded-md bg-background p-3 relative group">
                   <button
                     onClick={handleRemoveFile}
-                    className="absolute top-2 right-2 p-1 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-full transition-colors"
+                    className="absolute bottom-1 right-1 p-1 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-full transition-colors"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-4 h-4 dark:text-red-600" />
                   </button>
 
                   <div className="flex items-center gap-3">
@@ -184,7 +208,7 @@ export default function GSCuploadManager() {
                     </div>
                     <div className="flex flex-col overflow-hidden">
                       <span
-                        className="text-sm font-medium truncate w-40"
+                        className="text-xs font-medium truncate w-40"
                         title={uploadedFile.name}
                       >
                         {uploadedFile.name}
@@ -202,15 +226,16 @@ export default function GSCuploadManager() {
                   <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Select Sheet
                   </span>
-                  <div className="flex flex-col gap-1 max-h-60 overflow-y-auto pr-1">
+                  <div className="flex flex-col gap-1 max-h-80 overflow-y-auto pr-1">
                     {sheets.map((sheet) => (
                       <button
                         key={sheet}
                         onClick={() => handleSheetSelect(sheet)}
-                        className={`text-left text-sm px-3 py-2 rounded-md transition-all flex items-center justify-between ${selectedSheet === sheet
+                        className={`text-left text-sm px-3 py-2 rounded-md transition-all flex items-center justify-between ${
+                          selectedSheet === sheet
                             ? "bg-brand-bright text-white shadow-md shadow-brand-bright/20"
                             : "hover:bg-accent text-foreground"
-                          }`}
+                        }`}
                       >
                         <span className="truncate">{sheet}</span>
                         {selectedSheet === sheet && (
@@ -245,20 +270,20 @@ export default function GSCuploadManager() {
           </div>
 
           {/* Right Column - Preview */}
-          <div className="col-span-8 h-full max-h-[580px] border rounded-lg bg-background flex flex-col overflow-hidden">
-            <div className="p-3 border-b bg-muted/30 dark:bg-muted/10 flex items-center justify-between">
-              <h3 className="text-sm font-medium flex items-center gap-2">
+          <div className="col-span-8 h-full max-h-[560px] border dark:border-white/30 rounded-lg bg-background flex flex-col overflow-hidden">
+            <div className="p-3 border-b dark:border-b-white/30 bg-muted/30 dark:bg-muted/10 flex items-center justify-between">
+              <h3 className="text-sm font-medium flex items-center gap-2 dark:text-white">
                 <FolderOpen className="w-4 h-4 text-brand-bright" />
                 Data Preview
               </h3>
               {filePreview && (
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground dark:text-white">
                   Loaded {filePreview.data?.length || 0} rows
                 </span>
               )}
             </div>
 
-            <div className="flex-1 overflow-auto bg-white dark:bg-zinc-950">
+            <div className="flex-1 overflow-auto bg-white dark:bg-zinc-950/30">
               {filePreview?.data ? (
                 <table className="w-full text-xs text-left">
                   <thead className="sticky top-0 bg-muted/50 text-muted-foreground font-medium z-10 shadow-sm backdrop-blur-sm">
@@ -293,10 +318,10 @@ export default function GSCuploadManager() {
                 </table>
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
-                  <div className="p-4 bg-muted/30 rounded-full">
+                  <div className="p-4 bg-muted/30 dark:text-white/50 rounded-full">
                     <FileSpreadsheet className="w-8 h-8 opacity-50" />
                   </div>
-                  <p className="text-sm">
+                  <p className="text-sm dark:text-white/40">
                     Select a file and sheet to preview data
                   </p>
                 </div>
