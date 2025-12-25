@@ -147,7 +147,14 @@ export default function GSCuploadManager() {
     } finally {
       // Load the Data into Rusts Mem ready to match when when logs are parsed
       try {
-        invoke("load_gsc_from_database");
+        const data = await invoke("load_gsc_from_database").then((data) => {
+          if (data?.result?.message === "Loaded") {
+            toast.success("File loaded into Rusts Memory");
+          } else {
+            toast.error("File not loaded into Rusts Memory");
+          }
+        });
+        console.log(data, "FUNCIONA?");
       } catch (error) {
         console.error(error);
         toast.error(error);

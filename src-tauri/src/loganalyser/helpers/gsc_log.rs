@@ -8,16 +8,27 @@ use std::sync::Mutex;
 static GSC_CACHE: Lazy<Mutex<HashMap<String, GscMetrics>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct GscMetrics {
     position: i32,
     clicks: i32,
     impressions: i32,
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub enum Message {
+    Loaded,
+    NotLoaded,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct GscMessage {
+    pub message: Message,
+}
+
 /// Load GSC data from database and cache it
 #[tauri::command]
-pub fn load_gsc_from_database() -> Result<Vec<String>, String> {
+pub fn load_gsc_from_database() -> Result<GscMessage, String> {
     use crate::uploads::storage::Storage;
 
     let db = Storage::new("gsc_excel.db").map_err(|e| e.to_string())?;
@@ -41,10 +52,14 @@ pub fn load_gsc_from_database() -> Result<Vec<String>, String> {
 
     println!("Loaded {} GSC entries from database", cache.len());
 
-    Ok(vec![format!(
-        "Loaded {} GSC entries from database ready to match",
-        cache.len()
-    )])
+    match cache.len() {
+        0 => Ok(GscMessage {
+            message: Message::NotLoaded,
+        }),
+        _ => Ok(GscMessage {
+            message: Message::Loaded,
+        }),
+    }
 }
 
 /// Normalize path for GSC matching
