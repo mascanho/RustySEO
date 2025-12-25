@@ -1238,7 +1238,7 @@ function LogRow({
         </TableCell>
 
         {/* RENDER THE ROW WITH THE POSITION DATA IF IT HAS BEEN TOGGLED */}
-        {true && (
+        {!showAgent && (
           <TableCell className="text-center align-middle flex">
             <span className="border flex border-brand-bright/50 rounded-full ml-2 px-2 py-0.5 text-[10px]">
               {posColumn === "position"
