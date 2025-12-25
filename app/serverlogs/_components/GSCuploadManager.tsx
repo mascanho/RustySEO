@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   X,
   Loader2,
@@ -17,10 +17,12 @@ import { invoke } from "@tauri-apps/api/core";
 import { IoPlayCircleOutline } from "react-icons/io5";
 import * as XLSX from "xlsx";
 import useGSCUploadStore from "@/store/GSCUploadStore";
+import { localStorageHandler } from "../util";
 
 export default function GSCuploadManager() {
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [localStorageExcel, setLocalStorageExcel] = useState(false);
 
   // Use global store
   const {
@@ -144,6 +146,9 @@ export default function GSCuploadManager() {
       toast.error(
         `Processing failed: ${error instanceof Error ? error.message : String(error)}`,
       );
+
+      const status = false;
+      localStorageHandler(status);
     } finally {
       setIsProcessing(false);
     }
@@ -161,8 +166,14 @@ export default function GSCuploadManager() {
         message = result;
       } else if (result && result.message === "Loaded") {
         message = `Loaded ${result.count} GSC entries into memory`;
+
+        // Handle the local storage stuff
+        localStorageHandler(result);
       } else if (typeof result === "number") {
         message = `Loaded ${result} GSC entries into memory`;
+      } else {
+        const status = true;
+        localStorageHandler(status);
       }
 
       toast.success(message);
@@ -186,6 +197,47 @@ export default function GSCuploadManager() {
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2) + " " + sizes[i]);
+  }, []);
+
+  useEffect(() => {
+    // Fix 1: Check for explicit "true" string
+    const storage = localStorage.getItem("GscExcel");
+    console.log(storage, "From the local storage Excel");
+
+    if (storage === "true") {
+      // Explicit check for "true" string
+      setLocalStorageExcel(true);
+    } else {
+      setLocalStorageExcel(false);
+    }
+
+    // Fix 2: Add polling for same-tab updates
+    const intervalId = setInterval(() => {
+      const currentValue = localStorage.getItem("GscExcel");
+      if (currentValue === "true") {
+        setLocalStorageExcel(true);
+      } else {
+        setLocalStorageExcel(false);
+      }
+    }, 500); // Check every 500ms
+
+    // Listen for storage changes from other tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "GscExcel") {
+        if (e.newValue === "true") {
+          setLocalStorageExcel(true);
+        } else {
+          setLocalStorageExcel(false);
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
 
   return (
@@ -299,10 +351,15 @@ export default function GSCuploadManager() {
           {/* Right Column - Preview */}
           <div className="col-span-8 h-full max-h-[560px] border dark:border-white/30 rounded-lg bg-background flex flex-col overflow-hidden">
             <div className="p-3 border-b dark:border-b-white/30 bg-muted/30 dark:bg-muted/10 flex items-center justify-between">
-              <h3 className="text-sm font-medium flex items-center gap-2 dark:text-white">
-                <FolderOpen className="w-4 h-4 text-brand-bright" />
-                Data Preview
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-medium flex items-center gap-2 dark:text-white">
+                  <FolderOpen className="w-4 h-4 text-brand-bright" />
+                  Data Preview
+                </h3>
+                <div
+                  className={`h-2 w-2 rounded-full bg-${localStorageExcel ? "green" : "red"}-500`}
+                />
+              </div>
               {filePreview && (
                 <span className="text-xs text-muted-foreground dark:text-white">
                   Loaded {filePreview.data?.length || 0} rows

@@ -1,5 +1,16 @@
 export const changelogData = [
   {
+    version: "0.3.5",
+    date: "2025-12-25",
+    type: "feature",
+    changes: [
+      "Log Analyser: GSC upload manager",
+      "Log Analyser: Data Integration",
+      "Deep Crawler: Fixed titles < 30 chars",
+      "General: Bug fixes and improvements",
+    ],
+  },
+  {
     version: "0.3.4",
     date: "2025-12-25",
     type: "feature",

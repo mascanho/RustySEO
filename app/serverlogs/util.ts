@@ -12,3 +12,21 @@ export function getOS() {
 
   return "Unknown";
 }
+
+export function localStorageHandler(status) {
+  let newStatus;
+
+  if (!status) {
+    newStatus = false;
+  } else {
+    newStatus = true;
+  }
+
+  localStorage.setItem("GscExcel", JSON.stringify(newStatus));
+}
+
+export function getLocalStorageLog() {
+  const gscExcel = localStorage.getItem("GscExcel");
+  console.log(gscExcel, "From the local storage");
+  return gscExcel;
+}

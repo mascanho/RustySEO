@@ -955,6 +955,23 @@ export function LogAnalyzer() {
                         />
                       )}
                     </TableHead>
+
+                    <TableHead
+                      className="w-[60px] cursor-pointer"
+                      onClick={() => requestSort("status")}
+                    >
+                      Status
+                      {sortConfig?.key === "status" && (
+                        <ChevronDown
+                          className={`ml-1 h-4 w-4 inline-block ${
+                            sortConfig.direction === "descending"
+                              ? "rotate-180"
+                              : ""
+                          }`}
+                        />
+                      )}
+                    </TableHead>
+
                     <TableHead
                       className="cursor-pointer pl-7"
                       onClick={() => requestSort("path")}
@@ -978,11 +995,11 @@ export function LogAnalyzer() {
                       </TableHead>
                     )}
 
-                    <TableHead className="w-[100px] text-center">
+                    <TableHead className="min-w-[50px] w-[50px] max-w-[100px] text-center">
                       Segment
                     </TableHead>
                     <TableHead
-                      className="w-[100px] cursor-pointer"
+                      className="w-[80px] cursor-pointer"
                       onClick={() => requestSort("file_type")}
                     >
                       File Type
@@ -996,38 +1013,23 @@ export function LogAnalyzer() {
                         />
                       )}
                     </TableHead>
-                    <TableHead
-                      className="w-[100px] cursor-pointer"
-                      onClick={() => requestSort("status")}
-                    >
-                      Status
-                      {sortConfig?.key === "status" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      )}
-                    </TableHead>
-                    {!showAgent && (
-                      <TableHead
-                        className="w-[100px] cursor-pointer"
-                        onClick={() => requestSort("responseSize")}
-                      >
-                        Size
-                        {sortConfig?.key === "responseSize" && (
-                          <ChevronDown
-                            className={`ml-1 h-4 w-4 inline-block ${
-                              sortConfig.direction === "descending"
-                                ? "rotate-180"
-                                : ""
-                            }`}
-                          />
-                        )}
-                      </TableHead>
-                    )}
+                    {/* {!showAgent && ( */}
+                    {/*   <TableHead */}
+                    {/*     className="w-[100px] cursor-pointer" */}
+                    {/*     onClick={() => requestSort("responseSize")} */}
+                    {/*   > */}
+                    {/*     Size */}
+                    {/*     {sortConfig?.key === "responseSize" && ( */}
+                    {/*       <ChevronDown */}
+                    {/*         className={`ml-1 h-4 w-4 inline-block ${ */}
+                    {/*           sortConfig.direction === "descending" */}
+                    {/*             ? "rotate-180" */}
+                    {/*             : "" */}
+                    {/*         }`} */}
+                    {/*       /> */}
+                    {/*     )} */}
+                    {/*   </TableHead> */}
+                    {/* )} */}
                     <TableHead align="center" className="text-left w-[130px]">
                       Crawler Type
                     </TableHead>
@@ -1177,6 +1179,12 @@ function LogRow({
           {formatDate(log.timestamp)}
         </TableCell>
 
+        <TableCell className="align-middle">
+          <Badge className={`${getStatusCodeColor(log.status)}`}>
+            {log.status}
+          </Badge>
+        </TableCell>
+
         <TableCell className="max-w-[100%] truncate mr-2 align-middle">
           {!showAgent ? (
             <section className="max-w-[800px] truncate flex items-center relative">
@@ -1237,17 +1245,11 @@ function LogRow({
           </Badge>
         </TableCell>
 
-        <TableCell className="align-middle">
-          <Badge className={`${getStatusCodeColor(log.status)}`}>
-            {log.status}
-          </Badge>
-        </TableCell>
-
-        {!showAgent && (
-          <TableCell className="align-middle">
-            {formatResponseSize(log.response_size)}
-          </TableCell>
-        )}
+        {/* {!showAgent && ( */}
+        {/*   <TableCell className="align-middle"> */}
+        {/*     {formatResponseSize(log.response_size)} */}
+        {/*   </TableCell> */}
+        {/* )} */}
 
         <TableCell className="align-middle">
           <Badge
