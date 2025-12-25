@@ -973,7 +973,7 @@ export function LogAnalyzer() {
 
                     {/* HERE CONDITIONALLY RENDER THE HEAD FOR POSITION IF TOGGLED */}
                     {true && (
-                      <TableHead className="w-[60px] text-center">
+                      <TableHead className="w-[30px] text-center">
                         Pos
                       </TableHead>
                     )}
@@ -1212,10 +1212,16 @@ function LogRow({
 
         {/* RENDER THE ROW WITH THE POSITION DATA IF IT HAS BEEN TOGGLED */}
         {true && (
-          <TableCell className="text-center align-middle">
-            <span className="border border-brand-bright/50 rounded-full  px-2 py-0.5 text-xs">
+          <TableCell className="text-center align-middle flex">
+            <span className="border flex border-brand-bright/50 rounded-full ml-2 px-2 py-0.5 text-[10px]">
               {log?.position || "-"}
             </span>
+            {/* <span className="border flex border-brand-bright/50 rounded-full ml-2 px-2 py-0.5 text-[10px]"> */}
+            {/*   {log?.clicks || "-"} */}
+            {/* </span> */}
+            {/* <span className="border flex border-brand-bright/50 rounded-full ml-2 px-2 py-0.5 text-[10px]"> */}
+            {/*   {log?.impressions || "-"} */}
+            {/* </span> */}
           </TableCell>
         )}
 
@@ -1258,7 +1264,7 @@ function LogRow({
       </TableRow>
       {expandedRow === index && (
         <TableRow>
-          <TableCell colSpan={11} className="bg-gray-50 dark:bg-gray-800 p-4">
+          <TableCell colSpan={12} className="bg-gray-50 dark:bg-gray-800 p-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col max-w-5xl">
                 <div className="flex mb-2 space-x-2 items-center justify-between">
