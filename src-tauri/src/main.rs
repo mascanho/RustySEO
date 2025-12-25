@@ -265,7 +265,8 @@ async fn main() {
             delete_config_folders_command,
             open_config_folder_command,
             settings::settings::get_settings_command,
-            url_checker::http_check::check_url
+            url_checker::http_check::check_url,
+            commands::save_gsc_data
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
