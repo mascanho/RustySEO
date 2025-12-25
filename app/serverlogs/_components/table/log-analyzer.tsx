@@ -100,6 +100,8 @@ export function LogAnalyzer() {
     resetAll,
   } = useLogAnalysis();
 
+  console.log(entries, overview);
+
   const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(100);
@@ -571,8 +573,6 @@ export function LogAnalyzer() {
 
     return log?.crawler_type;
   }
-
-  
 
   return (
     <div className="space-y-4 flex flex-col flex-1 h-full not-selectable">

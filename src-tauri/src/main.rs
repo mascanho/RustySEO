@@ -268,6 +268,7 @@ async fn main() {
             settings::settings::get_settings_command,
             url_checker::http_check::check_url,
             loganalyser::log_commands::save_gsc_data,
+            loganalyser::helpers::gsc_log::load_gsc_from_database
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

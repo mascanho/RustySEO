@@ -39,6 +39,7 @@ pub struct LogEntry {
     pub method: String,
     pub path: String,
     pub position: Option<i32>,
+    pub gsc_url: Option<String>,
     pub clicks: Option<i32>,
     pub impressions: Option<i32>,
     pub status: u16,

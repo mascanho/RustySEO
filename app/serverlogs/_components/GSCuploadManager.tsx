@@ -134,7 +134,7 @@ export default function GSCuploadManager() {
         processedAt: new Date().toISOString(),
       });
 
-      if ((!"Pages") in workbook.Sheets) {
+      if ("Pages" in workbook.Sheets) {
         toast.error("No Pages data found in this file");
       }
 
@@ -145,6 +145,14 @@ export default function GSCuploadManager() {
         `Processing failed: ${error instanceof Error ? error.message : String(error)}`,
       );
     } finally {
+      // Load the Data into Rusts Mem ready to match when when logs are parsed
+      try {
+        invoke("load_gsc_from_database");
+      } catch (error) {
+        console.error(error);
+        toast.error(error);
+      }
+
       setIsProcessing(false);
     }
   }, [filePreview, setFilePreview]);

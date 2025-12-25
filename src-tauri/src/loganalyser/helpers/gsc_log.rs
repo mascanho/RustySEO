@@ -4,62 +4,47 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 
 // Store GSC data in memory for fast access
-static GSC_CACHE: Lazy<Mutex<HashMap<String, (i32, i32, i32)>>> =
+// Store only metrics, not the URL again
+static GSC_CACHE: Lazy<Mutex<HashMap<String, GscMetrics>>> =
     Lazy::new(|| Mutex::new(HashMap::new()));
+
+#[derive(Debug, Clone)]
+struct GscMetrics {
+    position: i32,
+    clicks: i32,
+    impressions: i32,
+}
 
 /// Load GSC data from database and cache it
 #[tauri::command]
 pub fn load_gsc_from_database() -> Result<Vec<String>, String> {
     use crate::uploads::storage::Storage;
 
-    // Get database connection (adjust based on your setup)
     let db = Storage::new("gsc_excel.db").map_err(|e| e.to_string())?;
-
-    // Fetch all GSC data from database
     let gsc_entries = db.get_all_gsc_data().map_err(|e| e.to_string())?;
 
-    // Store in cache
     let mut cache = GSC_CACHE.lock().unwrap();
     cache.clear();
 
     for entry in gsc_entries {
-        // Use url as key, store (position, clicks, impressions) as value
+        println!("Loaded GSC entry: {:?}", &entry.url);
+
         cache.insert(
-            entry.url.clone(),
-            (entry.position, entry.clicks, entry.impressions),
+            entry.url,
+            GscMetrics {
+                position: entry.position,
+                clicks: entry.clicks,
+                impressions: entry.impressions,
+            },
         );
     }
 
+    println!("Loaded {} GSC entries from database", cache.len());
+
     Ok(vec![format!(
-        "Loaded {} GSC entries from database",
+        "Loaded {} GSC entries from database ready to match",
         cache.len()
     )])
-}
-
-/// Get GSC data for a specific path
-pub fn get_gsc_data_for_path(path: &str) -> (i32, i32, i32) {
-    let cache = GSC_CACHE.lock().unwrap();
-
-    // Try exact match first
-    if let Some(&(pos, clicks, impressions)) = cache.get(path) {
-        return (pos, clicks, impressions);
-    }
-
-    // Try normalizing the path for better matching
-    let normalized_path = normalize_gsc_path(path);
-    if let Some(&(pos, clicks, impressions)) = cache.get(&normalized_path) {
-        return (pos, clicks, impressions);
-    }
-
-    // Try to find partial matches
-    for (key, &value) in cache.iter() {
-        if path.contains(key) || key.contains(path) {
-            return value;
-        }
-    }
-
-    // Default values if no match found
-    (0, 0, 0)
 }
 
 /// Normalize path for GSC matching
@@ -100,8 +85,75 @@ fn normalize_gsc_path(path: &str) -> String {
     normalized
 }
 
-// Your existing gsc_position_match function - now uses database data
-pub fn gsc_position_match(path: &str) -> i32 {
-    let (position, _, _) = get_gsc_data_for_path(path);
-    position
+/// Get GSC data for a specific path
+pub fn get_gsc_data_for_path(path: &str) -> Option<(i32, i32, i32)> {
+    let cache = GSC_CACHE.lock().unwrap();
+
+    // Try exact match first
+    if let Some(metrics) = cache.get(path) {
+        return Some((metrics.position, metrics.clicks, metrics.impressions));
+    }
+
+    // Try normalizing the path
+    let normalized_path = normalize_gsc_path(path);
+    if let Some(metrics) = cache.get(&normalized_path) {
+        return Some((metrics.position, metrics.clicks, metrics.impressions));
+    }
+
+    // Try to find partial matches
+    for (key, metrics) in cache.iter() {
+        if path.contains(key) || key.contains(path) {
+            return Some((metrics.position, metrics.clicks, metrics.impressions));
+        }
+    }
+
+    None
+}
+
+/// Find the matching URL for a path
+pub fn get_matching_url(path: &str) -> Option<String> {
+    let cache = GSC_CACHE.lock().unwrap();
+
+    // Try exact match
+    if cache.contains_key(path) {
+        return Some(path.to_string());
+    }
+
+    // Try normalized path
+    let normalized_path = normalize_gsc_path(path);
+    if cache.contains_key(&normalized_path) {
+        return Some(normalized_path);
+    }
+
+    // Try partial matches
+    for key in cache.keys() {
+        if path.contains(key) || key.contains(path) {
+            return Some(key.clone());
+        }
+    }
+
+    None
+}
+
+pub fn gsc_position_match(path: &str) -> Option<i32> {
+    get_gsc_data_for_path(path).map(|(pos, _, _)| pos)
+}
+
+pub fn gsc_impressions_match(path: &str) -> Option<i32> {
+    get_gsc_data_for_path(path).map(|(_, _, imp)| imp)
+}
+
+pub fn gsc_clicks_match(path: &str) -> Option<i32> {
+    get_gsc_data_for_path(path).map(|(_, clicks, _)| clicks)
+}
+
+// Helper function for log parsing
+pub fn get_all_gsc_metrics(path: &str) -> (Option<i32>, Option<i32>, Option<i32>, Option<String>) {
+    let metrics = get_gsc_data_for_path(path);
+    let url = get_matching_url(path);
+
+    match metrics {
+        Some((pos, clicks, imp)) => (Some(pos), Some(clicks), Some(imp), url),
+        None => (None, None, None, url),
+    }
 }

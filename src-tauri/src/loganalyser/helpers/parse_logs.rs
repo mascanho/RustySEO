@@ -598,17 +598,23 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
             // Use the new unified verification function
             let verified = is_verified_crawler(&ip, &crawler_type);
 
+            let position = gsc_log::gsc_position_match(path);
+            let clicks = gsc_log::gsc_clicks_match(path);
+            let impressions = gsc_log::gsc_impressions_match(path);
+            let gsc_url = gsc_log::get_matching_url(path);
+
             entries.push(LogEntry {
                 ip,
                 timestamp,
                 method: caps[3].to_string(),
                 path: caps[4].to_string(),
-                position: Some(gsc_log::gsc_position_match(&caps[4])),
-                impressions: Some(0),
-                clicks: Some(0),
+                position,
+                impressions,
+                clicks,
                 status: caps[5].parse().unwrap_or(0),
                 user_agent,
                 country: None,
+                gsc_url,
                 referer,
                 response_size: caps[6].parse().unwrap_or(0),
                 crawler_type,

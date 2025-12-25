@@ -198,11 +198,6 @@ export default function Page() {
     };
   }, [setLogData]);
 
-  // Debug store changes
-  useEffect(() => {
-    console.log("Zustand logData updated:", logData);
-  }, [logData]);
-
   return (
     <section className="flex flex-col dark:bg-brand-darker   w-[100%] pt-[4rem] h-[calc(100vh - 20-rem)] overflow-hidden  ">
       <UploadButton />
