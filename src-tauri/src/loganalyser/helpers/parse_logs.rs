@@ -10,6 +10,7 @@ use std::str::FromStr;
 use std::sync::Mutex;
 use tauri::{Emitter, Manager};
 
+use crate::loganalyser::helpers::gsc_log::{self, gsc_position_match};
 use crate::loganalyser::helpers::modeling::{
     BingBotRanges, IpVerificationError, LogEntry, OpenAIBotRanges, TaxonomyInfo,
 };
@@ -602,6 +603,9 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
                 timestamp,
                 method: caps[3].to_string(),
                 path: caps[4].to_string(),
+                position: Some(gsc_log::gsc_position_match(&caps[4])),
+                impressions: Some(0),
+                clicks: Some(0),
                 status: caps[5].parse().unwrap_or(0),
                 user_agent,
                 country: None,
