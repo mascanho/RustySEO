@@ -970,6 +970,14 @@ export function LogAnalyzer() {
                         />
                       )}
                     </TableHead>
+
+                    {/* HERE CONDITIONALLY RENDER THE HEAD FOR POSITION IF TOGGLED */}
+                    {true && (
+                      <TableHead className="w-[60px] text-center">
+                        Pos
+                      </TableHead>
+                    )}
+
                     <TableHead className="w-[100px] text-center">
                       Segment
                     </TableHead>
@@ -1201,6 +1209,15 @@ function LogRow({
             </section>
           )}
         </TableCell>
+
+        {/* RENDER THE ROW WITH THE POSITION DATA IF IT HAS BEEN TOGGLED */}
+        {true && (
+          <TableCell className="text-center align-middle">
+            <span className="border border-brand-bright/50 rounded-full  px-2 py-0.5 text-xs">
+              {log?.position || "-"}
+            </span>
+          </TableCell>
+        )}
 
         <TableCell className="text-center align-middle">
           <span className="border border-brand-bright/50 rounded-full  px-2 py-0.5 text-xs">
