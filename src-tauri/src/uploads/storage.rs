@@ -167,4 +167,36 @@ impl Storage {
             .map_err(|e| e.to_string())?;
         self.create_table()
     }
+
+    // GET ALL THE DATA FROM THE DATABASE
+    pub fn get_all_gsc_data(&self) -> Result<Vec<ExcelUpload>, String> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT * FROM gsc_excel_upload")
+            .map_err(|e| e.to_string())?;
+
+        let rows = stmt
+            .query_map([], |row| {
+                Ok(ExcelUpload {
+                    id: row.get(0)?,
+                    date: row.get(1)?,
+                    url: row.get(2)?,
+                    position: row.get(3)?,
+                    clicks: row.get(4)?,
+                    impressions: row.get(5)?,
+                })
+            })
+            .map_err(|e| e.to_string())?;
+
+        let mut result = Vec::new();
+        for row_result in rows {
+            match row_result {
+                Ok(row) => {
+                    result.push(row);
+                }
+                Err(e) => println!("Error reading row: {}", e),
+            }
+        }
+        Ok(result)
+    }
 }
