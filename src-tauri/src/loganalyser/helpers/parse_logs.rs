@@ -520,6 +520,7 @@ fn detect_bot(user_agent: &str) -> Option<String> {
         ("php/", "PHP Bot"),
         ("typhoeus", "Typhoeus Bot"),
         ("hubspot", "Hubspot Bot"),
+        ("expanse", "Expanse Bot"),
     ];
 
     // Check for empty or dash user agent first

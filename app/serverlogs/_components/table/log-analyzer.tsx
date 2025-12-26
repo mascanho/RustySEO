@@ -1800,7 +1800,7 @@ function LogRow({
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
-                  className={`border flex rounded-full ml-2 px-2 py-0.5 text-[10px] cursor-default ${
+                  className={`border flex justify-center items-center rounded-full ml-2 w-8 h-5 text-[10px] cursor-default ${
                     posColumn === "position" ? getPositionBadgeColor(log?.position) : "border-brand-bright/50"
                   }`}
                 >
