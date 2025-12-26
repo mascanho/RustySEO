@@ -145,6 +145,23 @@ export function LogAnalyzer() {
     });
   };
 
+  const getPositionBadgeColor = useCallback((position: any) => {
+    const posNum = typeof position === 'string' ? parseFloat(position) : position;
+
+    if (posNum === undefined || posNum === null || isNaN(posNum)) {
+      return "border-brand-bright/50"; // Default border if not a valid number
+    }
+    if (posNum < 5) {
+      return "bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 border-green-300 dark:border-green-700"; // Muted green
+    } else if (posNum <= 10) { // position > 5 and <= 10
+      return "bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 border-yellow-300 dark:border-yellow-700"; // Yellow
+    } else if (posNum <= 20) { // position > 10 and <= 20
+      return "bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200 border-orange-300 dark:border-orange-700"; // Orange
+    } else { // position > 20
+      return "bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200 border-red-300 dark:border-red-700"; // Red
+    }
+  }, []);
+
   // Helper functions - memoized for performance
   const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString);
@@ -1531,53 +1548,55 @@ export function LogAnalyzer() {
 
                         currentLogs.map((log, index) => (
 
-                          <LogRow
+                                                      <LogRow
 
-                            key={`${log.ip}-${log.timestamp}-${index}`}
+                                                        key={`${log.ip}-${log.timestamp}-${index}`}
 
-                            log={log}
+                                                        log={log}
 
-                            index={index}
+                                                        index={index}
 
-                            indexOfFirstItem={indexOfFirstItem}
+                                                        indexOfFirstItem={indexOfFirstItem}
 
-                            expandedRow={expandedRow}
+                                                        expandedRow={expandedRow}
 
-                            setExpandedRow={setExpandedRow}
+                                                        setExpandedRow={setExpandedRow}
 
-                            handleIP={handleIP}
+                                                        handleIP={handleIP}
 
-                            showOnTables={showOnTables}
+                                                        showOnTables={showOnTables}
 
-                            domain={domain}
+                                                        domain={domain}
 
-                            formatDate={formatDate}
+                                                        formatDate={formatDate}
 
-                            getFileIcon={getFileIcon}
+                                                        getFileIcon={getFileIcon}
 
-                            getStatusCodeColor={getStatusCodeColor}
+                                                        getStatusCodeColor={getStatusCodeColor}
 
-                            formatResponseSize={formatResponseSize}
+                                                        formatResponseSize={formatResponseSize}
 
-                            showIp={showIp}
+                                                        showIp={showIp}
 
-                            showAgent={showAgent}
+                                                        showAgent={showAgent}
 
-                            setShowAgent={setShowAgent}
+                                                        setShowAgent={setShowAgent}
 
-                            logIpMasking={logIpMasking}
+                                                        logIpMasking={logIpMasking}
 
-                            formatCrawlerType={formatCrawlerType}
+                                                        formatCrawlerType={formatCrawlerType}
 
-                            handleURLClick={handleURLClick}
+                                                        handleURLClick={handleURLClick}
 
-                            handleCopyClick={handleCopyClick}
+                                                        handleCopyClick={handleCopyClick}
 
-                            posColumn={posColumn}
+                                                        posColumn={posColumn}
 
-                            ExcelLoaded={ExcelLoaded}
+                                                        ExcelLoaded={ExcelLoaded}
 
-                          />
+                                                        getPositionBadgeColor={getPositionBadgeColor}
+
+                                                      />
 
                         ))
 
@@ -1672,6 +1691,7 @@ function LogRow({
   handleCopyClick,
   posColumn,
   ExcelLoaded,
+  getPositionBadgeColor,
 }) {
   return (
     <>
@@ -1779,7 +1799,11 @@ function LogRow({
           <TableCell className="text-center align-middle flex">
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="border flex border-brand-bright/50 rounded-full ml-2 px-2 py-0.5 text-[10px] cursor-default">
+                <span
+                  className={`border flex rounded-full ml-2 px-2 py-0.5 text-[10px] cursor-default ${
+                    posColumn === "position" ? getPositionBadgeColor(log?.position) : "border-brand-bright/50"
+                  }`}
+                >
                   {posColumn === "position"
                     ? log?.position || "-"
                     : posColumn === "clicks"
