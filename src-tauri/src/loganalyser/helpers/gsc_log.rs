@@ -42,10 +42,12 @@ pub fn load_gsc_from_database() -> Result<GscMessage, String> {
     cache.clear();
 
     for entry in gsc_entries {
-        println!("Loaded GSC entry: {:?}", &entry.url);
+        // Normalize the URL when loading into cache
+        let normalized_url = normalize_gsc_path(&entry.url);
+        println!("Loaded GSC entry: {} -> {}", &entry.url, normalized_url);
 
         cache.insert(
-            entry.url,
+            normalized_url,
             GscMetrics {
                 position: entry.position,
                 clicks: entry.clicks,
@@ -55,6 +57,10 @@ pub fn load_gsc_from_database() -> Result<GscMessage, String> {
     }
 
     println!("Loaded {} GSC entries from database", cache.len());
+
+    // Update loaded status
+    let mut loaded = GSC_LOADED.lock().unwrap();
+    *loaded = true;
 
     match cache.len() {
         0 => Ok(GscMessage {
@@ -87,8 +93,26 @@ pub fn unload_gsc_from_memory() -> Result<GscMessage, String> {
 }
 
 /// Normalize path for GSC matching
+/// This removes protocol, domain, query parameters, fragments, and normalizes slashes
 fn normalize_gsc_path(path: &str) -> String {
-    let mut normalized = path.to_string();
+    let mut normalized = path.trim().to_string();
+
+    // Convert to lowercase for case-insensitive matching
+    normalized = normalized.to_lowercase();
+
+    // Remove protocol and domain if present
+    if normalized.contains("://") {
+        if let Some(scheme_end) = normalized.find("://") {
+            let after_scheme = &normalized[scheme_end + 3..];
+            // Find the first slash after domain or end of string
+            if let Some(path_start) = after_scheme.find('/') {
+                normalized = after_scheme[path_start..].to_string();
+            } else {
+                // No path after domain, return root
+                normalized = "/".to_string();
+            }
+        }
+    }
 
     // Remove query parameters
     if let Some(pos) = normalized.find('?') {
@@ -98,17 +122,6 @@ fn normalize_gsc_path(path: &str) -> String {
     // Remove fragments
     if let Some(pos) = normalized.find('#') {
         normalized = normalized[..pos].to_string();
-    }
-
-    // Remove protocol and domain if present
-    if let Some(pos) = normalized.find("://") {
-        normalized = normalized
-            .split_at(pos + 3)
-            .1
-            .splitn(2, '/')
-            .nth(1)
-            .unwrap_or("")
-            .to_string();
     }
 
     // Ensure it starts with /
@@ -121,57 +134,90 @@ fn normalize_gsc_path(path: &str) -> String {
         normalized = normalized.trim_end_matches('/').to_string();
     }
 
-    normalized
+    // Remove duplicate slashes (except at start)
+    normalized = normalized.replace("//", "/");
+
+    // Trim any whitespace
+    normalized.trim().to_string()
 }
 
-/// Get GSC data for a specific path
+/// Get GSC data for a specific path using exact matching
 pub fn get_gsc_data_for_path(path: &str) -> Option<(i32, i32, i32)> {
     let cache = GSC_CACHE.lock().unwrap();
 
-    // Try exact match first
-    if let Some(metrics) = cache.get(path) {
-        return Some((metrics.position, metrics.clicks, metrics.impressions));
-    }
-
-    // Try normalizing the path
+    // Normalize the input path
     let normalized_path = normalize_gsc_path(path);
-    if let Some(metrics) = cache.get(&normalized_path) {
-        return Some((metrics.position, metrics.clicks, metrics.impressions));
-    }
 
-    // Try to find partial matches
-    for (key, metrics) in cache.iter() {
-        if path.contains(key) || key.contains(path) {
-            return Some((metrics.position, metrics.clicks, metrics.impressions));
-        }
-    }
-
-    None
+    // Try exact match on normalized path
+    cache
+        .get(&normalized_path)
+        .map(|metrics| (metrics.position, metrics.clicks, metrics.impressions))
 }
 
-/// Find the matching URL for a path
+/// Find the matching URL for a path using exact matching
 pub fn get_matching_url(path: &str) -> Option<String> {
     let cache = GSC_CACHE.lock().unwrap();
 
-    // Try exact match
-    if cache.contains_key(path) {
-        return Some(path.to_string());
-    }
-
-    // Try normalized path
+    // Normalize the input path
     let normalized_path = normalize_gsc_path(path);
+
+    // Try exact match
     if cache.contains_key(&normalized_path) {
         return Some(normalized_path);
     }
 
-    // Try partial matches
-    for key in cache.keys() {
-        if path.contains(key) || key.contains(path) {
-            return Some(key.clone());
+    None
+}
+
+/// Alternative: Get GSC data with more flexible matching options
+pub fn get_gsc_data_for_path_with_options(
+    path: &str,
+    exact_match: bool,
+) -> Option<(i32, i32, i32)> {
+    let cache = GSC_CACHE.lock().unwrap();
+    let normalized_path = normalize_gsc_path(path);
+
+    if exact_match {
+        // Strict exact matching
+        cache
+            .get(&normalized_path)
+            .map(|metrics| (metrics.position, metrics.clicks, metrics.impressions))
+    } else {
+        // Try exact match first
+        if let Some(metrics) = cache.get(&normalized_path) {
+            return Some((metrics.position, metrics.clicks, metrics.impressions));
         }
+
+        // Fallback: Try to match with or without www
+        let alternatives = generate_path_alternatives(&normalized_path);
+        for alt_path in alternatives {
+            if let Some(metrics) = cache.get(&alt_path) {
+                return Some((metrics.position, metrics.clicks, metrics.impressions));
+            }
+        }
+
+        None
+    }
+}
+
+/// Generate alternative path representations for matching
+fn generate_path_alternatives(path: &str) -> Vec<String> {
+    let mut alternatives = Vec::new();
+
+    if path.starts_with("/www.") {
+        // Remove www prefix
+        alternatives.push(path.replacen("/www.", "/", 1));
+    } else if let Some(stripped) = path.strip_prefix('/') {
+        // Add www prefix if not present
+        alternatives.push(format!("/www.{}", stripped));
     }
 
-    None
+    // Add root alternative if path has multiple segments
+    if path != "/" && path.contains('/') {
+        alternatives.push("/".to_string());
+    }
+
+    alternatives
 }
 
 pub fn gsc_position_match(path: &str) -> Option<i32> {
@@ -188,11 +234,44 @@ pub fn gsc_clicks_match(path: &str) -> Option<i32> {
 
 // Helper function for log parsing
 pub fn get_all_gsc_metrics(path: &str) -> (Option<i32>, Option<i32>, Option<i32>, Option<String>) {
-    let metrics = get_gsc_data_for_path(path);
-    let url = get_matching_url(path);
+    let cache = GSC_CACHE.lock().unwrap();
+    let normalized_path = normalize_gsc_path(path);
 
-    match metrics {
-        Some((pos, clicks, imp)) => (Some(pos), Some(clicks), Some(imp), url),
-        None => (None, None, None, url),
+    if let Some(metrics) = cache.get(&normalized_path) {
+        (
+            Some(metrics.position),
+            Some(metrics.clicks),
+            Some(metrics.impressions),
+            Some(normalized_path),
+        )
+    } else {
+        (None, None, None, None)
+    }
+}
+
+/// Check if GSC data is loaded
+#[tauri::command]
+pub fn is_gsc_loaded() -> bool {
+    let loaded = GSC_LOADED.lock().unwrap();
+    *loaded
+}
+
+/// Get all cached GSC URLs (for debugging)
+#[tauri::command]
+pub fn get_cached_gsc_urls() -> Vec<String> {
+    let cache = GSC_CACHE.lock().unwrap();
+    cache.keys().cloned().collect()
+}
+
+/// Test URL matching function
+#[tauri::command]
+pub fn test_gsc_matching(test_url: &str) -> String {
+    let normalized = normalize_gsc_path(test_url);
+    let cache = GSC_CACHE.lock().unwrap();
+
+    if cache.contains_key(&normalized) {
+        format!("Exact match found for normalized path: {}", normalized)
+    } else {
+        format!("No exact match for normalized path: {}", normalized)
     }
 }

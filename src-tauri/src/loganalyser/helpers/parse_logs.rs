@@ -187,7 +187,6 @@ pub async fn fetch_bingbot_ranges() -> Result<Vec<String>, String> {
         *ranges = networks;
     }
 
-    println!("Loaded {} Bingbot IP ranges", range_strings.len());
     Ok(range_strings)
 }
 
@@ -259,21 +258,12 @@ async fn fetch_openai_ranges_internal(
         .header("User-Agent", "RustySEO-Bot-Verifier/1.0")
         .send()
         .await
-        .map_err(|e| {
-            println!("DEBUG: {} fetch failed: {}", bot_type, e);
-            e.to_string()
-        })?;
+        .map_err(|e| e.to_string())?;
 
-    println!(
-        "DEBUG: {} fetch response status: {}",
-        bot_type,
-        response.status()
-    );
-
-    let openai_ranges = response.json::<OpenAIBotRanges>().await.map_err(|e| {
-        println!("DEBUG: {} JSON parse failed: {}", bot_type, e);
-        e.to_string()
-    })?;
+    let openai_ranges = response
+        .json::<OpenAIBotRanges>()
+        .await
+        .map_err(|e| e.to_string())?;
 
     // Parse and store the IP networks
     let mut networks = Vec::new();
@@ -284,7 +274,6 @@ async fn fetch_openai_ranges_internal(
             if let Ok(net) = IpNet::from_str(ipv4_prefix) {
                 networks.push(net);
                 range_strings.push(ipv4_prefix.clone());
-                println!("DEBUG: Added {} IPv4 range: {}", bot_type, ipv4_prefix);
             } else {
                 println!(
                     "DEBUG: Failed to parse {} IPv4 range: {}",
@@ -296,7 +285,6 @@ async fn fetch_openai_ranges_internal(
             if let Ok(net) = IpNet::from_str(ipv6_prefix) {
                 networks.push(net);
                 range_strings.push(ipv6_prefix.clone());
-                println!("DEBUG: Added {} IPv6 range: {}", bot_type, ipv6_prefix);
             } else {
                 println!(
                     "DEBUG: Failed to parse {} IPv6 range: {}",
@@ -339,13 +327,6 @@ fn verify_ip_against_ranges(
     let ip_addr = IpAddr::from_str(ip)?;
     let ranges = storage.lock().unwrap();
 
-    println!(
-        "DEBUG: Checking IP {} against {} {} ranges",
-        ip,
-        ranges.len(),
-        bot_type
-    );
-
     if ranges.is_empty() {
         println!(
             "WARNING: {} IP ranges are empty! Call fetch function first.",
@@ -356,7 +337,6 @@ fn verify_ip_against_ranges(
 
     for net in ranges.iter() {
         if net.contains(&ip_addr) {
-            println!("✓ VERIFIED: IP {} matches {} range {}", ip, bot_type, net);
             return Ok(true);
         }
     }
@@ -372,33 +352,23 @@ fn verify_ip_against_ranges(
 fn is_verified_crawler(ip: &str, crawler_type: &str) -> bool {
     let crawler_lower = crawler_type.to_lowercase();
 
-    println!(
-        "DEBUG: Checking verification for IP: {}, Crawler: '{}'",
-        ip, crawler_type
-    );
-
     let result = if crawler_lower.contains("google") {
         is_google_verified(ip).unwrap_or(false)
     } else if crawler_lower.contains("bing") {
         is_bing_verified(ip).unwrap_or(false)
     } else if crawler_lower == "chatgpt-user" || crawler_lower.contains("chatgpt") {
         // Specifically check ChatGPT-User against its own ranges
-        println!("DEBUG: Checking against ChatGPT-User ranges");
         is_openai_chatgpt_user_verified(ip).unwrap_or(false)
     } else if crawler_lower == "gptbot" {
         // Specifically check GPTBot against its own ranges
-        println!("DEBUG: Checking against GPTBot ranges");
         is_openai_gptbot_verified(ip).unwrap_or(false)
     } else if crawler_lower.contains("openai") || crawler_lower.contains("oai-searchbot") {
         // Check OpenAI SearchBot
-        println!("DEBUG: Checking against OpenAI SearchBot ranges");
         is_openai_searchbot_verified(ip).unwrap_or(false)
     } else {
-        println!("DEBUG: Not a verifiable bot type");
         false
     };
 
-    println!("DEBUG: Final verification result: {}", result);
     result
 }
 
