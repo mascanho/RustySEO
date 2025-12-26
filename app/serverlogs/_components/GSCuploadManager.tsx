@@ -140,6 +140,15 @@ export default function GSCuploadManager() {
       });
 
       // Step 3: Load into Rust memory
+
+      if (selectedSheet !== "Pages") {
+        toast.error(
+          "Please select a sheet with the right data. 'Pages' is required",
+        );
+        return;
+      }
+
+      console.log(selectedSheet, "Selected sheet");
       await loadGscIntoMemory();
 
       toast.success("File processed and loaded successfully");

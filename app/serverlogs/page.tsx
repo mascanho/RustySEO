@@ -31,7 +31,7 @@ export default function Page() {
   const [keysPressed, setKeysPressed] = useState(new Set());
   const [shortcutActivated, setShortcutActivated] = useState(false);
   const { setLogData, logData } = useLogAnalysis();
-  const appWindow = getCurrentWindow();
+  // const appWindow = getCurrentWindow();
 
   // ALWAYS CHECK THE TAXONOMIES FROM THE LOCALSTORAGE AND SEND THEM TO THE TAURI COMMAND ON FIRST RUN
   // In your main Page component
@@ -200,12 +200,21 @@ export default function Page() {
     };
   }, [setLogData]);
 
+  // useEffect(() => {
+  //   if (window) {
+  //     window?.addEventListener("beforeunload", () => {
+  //       console.log("App closing");
+  //       localStorage.removeItem("GscExcel");
+  //       appWindow.close();
+  //     });
+  //   }
+  // }, []);
+
+  // HANDLE REMOVING THE LOCALSTORAGE EXCEL WHEN THE COMPONENT MOUNTS
   useEffect(() => {
-    window.addEventListener("beforeunload", () => {
-      console.log("App closing");
+    if (localStorage.getItem("GscExcel")) {
       localStorage.removeItem("GscExcel");
-      appWindow.close();
-    });
+    }
   }, []);
 
   return (
