@@ -235,6 +235,7 @@ const TopMenuBar = () => {
       console.log("Config file opened successfuylly");
     } catch (error) {
       console.error("failed to open the file", error);
+      // TODO: Implement better UI error handling
     }
   }
 
