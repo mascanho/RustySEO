@@ -68,7 +68,7 @@ const FooterLoader = ({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="m-auto flex items-center gap-2 cursor-pointer select-none mt-[2.5px] ">
+          <div className="m-auto flex items-center gap-2 cursor-pointer select-none ">
             {/* Flashing indicator - maintains your original styling */}
             <div
               className={cn(
@@ -124,9 +124,6 @@ const FooterLoader = ({
                 <span className={isActive ? "text-red-400" : "text-gray-400"}>
                   {isActive ? "ACTIVE" : "INACTIVE"}
                 </span>
-              </p>
-              <p className="text-xs text-gray-400 mt-1">
-                Click to {isActive ? "disable" : "enable"}
               </p>
             </div>
           </div>

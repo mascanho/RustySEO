@@ -248,19 +248,19 @@ export function UrlStatusChecker() {
           prev.map((u, i) =>
             i === index
               ? {
-                ...u,
-                status: newStatus,
-                statusCode: result.status,
-                responseTime: result.response_time_ms,
-                lastChecked: new Date(result.timestamp),
-                headers,
-                rawHeaders: result.headers,
-                contentType:
-                  headers?.["content-type"] || headers?.["Content-Type"],
-                server: headers?.["server"] || headers?.["Server"],
-                isSecure: url.startsWith("https://"),
-                securityHeaders: extractSecurityHeaders(headers),
-              }
+                  ...u,
+                  status: newStatus,
+                  statusCode: result.status,
+                  responseTime: result.response_time_ms,
+                  lastChecked: new Date(result.timestamp),
+                  headers,
+                  rawHeaders: result.headers,
+                  contentType:
+                    headers?.["content-type"] || headers?.["Content-Type"],
+                  server: headers?.["server"] || headers?.["Server"],
+                  isSecure: url.startsWith("https://"),
+                  securityHeaders: extractSecurityHeaders(headers),
+                }
               : u,
           ),
         );
@@ -543,9 +543,9 @@ export function UrlStatusChecker() {
         className="fixed inset-0 bg-black/20 dark:bg-black/60 z-40 backdrop-blur-[2px] transition-all duration-300"
         onClick={handleHideHttpChecker}
       />
-      <Card className="max-w-full bg-white dark:bg-brand-darker w-[650px] border-border fixed bottom-9 left-2 z-50 h-[calc(100vh-120px)] max-h-[900px] flex flex-col shadow-2xl rounded-xl overflow-hidden animate-in slide-in-from-left-4 fade-in duration-300">
+      <Card className="max-w-full bg-white dark:bg-brand-darker w-[750px] border-border fixed bottom-9 left-2 z-50 h-[calc(100vh-120px)] max-h-[900px] flex flex-col shadow-2xl rounded-xl overflow-hidden animate-in slide-in-from-left-4 fade-in duration-300">
         {/* Header */}
-        <div className="p-4 border-b border-border/50 flex items-center justify-between flex-shrink-0 bg-secondary/5 dark:bg-card">
+        <div className="p-4 border-b dark:border-white/20 border-border/50 flex items-center justify-between flex-shrink-0 bg-secondary/5 dark:bg-card">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-primary/10">
               <Activity className="w-4 h-4 text-primary" />
@@ -586,7 +586,7 @@ export function UrlStatusChecker() {
           {selectedUrl &&
             selectedUrl.status !== "unknown" &&
             selectedUrl.headers && (
-              <div className="flex-shrink-0 p-4 border-b border-border/50 bg-primary/5 dark:bg-primary/10 animate-in slide-in-from-top-2 duration-200 overflow-y-auto max-h-[45%]">
+              <div className="flex-shrink-0 p-4 dark:border-white/10 border-b border-border/50 bg-primary/5 dark:bg-primary/10 animate-in slide-in-from-top-2 duration-200 overflow-y-auto max-h-[45%]">
                 <div className="flex items-center justify-between mb-3">
                   <div className="min-w-0">
                     <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5 truncate">
@@ -646,6 +646,8 @@ export function UrlStatusChecker() {
                         <div
                           className={`w-1.5 h-1.5 rounded-full ${getStatusColor(selectedUrl.status)}`}
                         />
+
+                        <Zap className="w-3 h-3 text-amber-500 -ml-3" />
                         <span className="text-xs font-bold">
                           {selectedUrl.statusCode || "---"}
                         </span>
@@ -795,9 +797,10 @@ export function UrlStatusChecker() {
                   onClick={() => setStopOnError(!stopOnError)}
                   disabled={isPolling}
                   className={`h-8 w-full rounded-md border text-[10px] font-bold transition-all duration-200 flex items-center justify-center gap-1.5 shadow-sm
-                    ${stopOnError
-                      ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/20"
-                      : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
+                    ${
+                      stopOnError
+                        ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/20"
+                        : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
                     }`}
                 >
                   <AlertCircle className="w-3 h-3" />
@@ -836,9 +839,10 @@ export function UrlStatusChecker() {
                   <div
                     key={index}
                     className={`group flex items-center gap-3 p-2.5 rounded-xl border transition-all duration-200 hover:shadow-md
-                      ${selectedUrlIndex === index
-                        ? "bg-primary/5 dark:bg-primary/10 border-primary shadow-sm"
-                        : "bg-background dark:bg-card border-border/40 dark:border-white/5 hover:border-primary/30"
+                      ${
+                        selectedUrlIndex === index
+                          ? "bg-primary/5 dark:bg-primary/10 border-brand-bright shadow-sm"
+                          : "bg-background dark:bg-card border-border/40 dark:border-white/5 hover:border-primary/30"
                       }`}
                   >
                     <button
@@ -848,12 +852,13 @@ export function UrlStatusChecker() {
                     >
                       <div
                         className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors
-                        ${urlStatus.status === "online"
+                        ${
+                          urlStatus.status === "online"
                             ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                             : urlStatus.status === "offline"
                               ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
                               : "bg-secondary/50 dark:bg-white/10 text-muted-foreground"
-                          }`}
+                        }`}
                       >
                         <Activity
                           className={`w-4 h-4 ${urlStatus.status === "checking" ? "animate-pulse" : ""}`}
@@ -878,12 +883,13 @@ export function UrlStatusChecker() {
                       <div className="flex items-center gap-2 mt-0.5">
                         <span
                           className={`text-[10px] font-bold px-1.5 py-0.5 rounded bg-secondary/50 dark:bg-secondary/20
-                          ${urlStatus.statusCode === 200
+                          ${
+                            urlStatus.statusCode === 200
                               ? "text-emerald-600 dark:text-emerald-400"
                               : urlStatus.statusCode
                                 ? "text-rose-600 dark:text-rose-400"
                                 : "text-muted-foreground"
-                            }`}
+                          }`}
                         >
                           {urlStatus.statusCode || "---"}{" "}
                           {getStatusText(urlStatus)}
@@ -1040,9 +1046,10 @@ export function UrlStatusChecker() {
             <Button
               onClick={togglePolling}
               className={`flex-[2] h-10 font-bold transition-all duration-300 shadow-md transform hover:scale-[1.01] active:scale-[0.99]
-                ${isPolling
-                  ? "bg-rose-600 hover:bg-rose-700 text-white shadow-rose-200"
-                  : "bg-primary hover:bg-primary/90 text-white shadow-primary/20 dark:bg-brand-bright dark:text-white"
+                ${
+                  isPolling
+                    ? "bg-rose-600 hover:bg-rose-700 text-white  dark:bg-rose-600 dark:text-white"
+                    : "bg-brand-bright text-white shadow-lg shadow-brand-bright/20"
                 }`}
             >
               {isPolling ? (

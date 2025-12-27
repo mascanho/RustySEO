@@ -112,7 +112,7 @@ function LogAnalyserFooter() {
   };
 
   return (
-    <div className="flex items-center  text-xs mt-[1px] ml-2">
+    <div className="flex items-center  text-xs mt-[1px] ml-2 pr-3">
       <div className="w-6 bg-brand-bright px-1 h-[16px] border-r-brand-dark ">
         <FaProjectDiagram className=" text-[10px] ml-[3px] mt-[3px] text-white" />
       </div>
