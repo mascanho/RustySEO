@@ -24,7 +24,7 @@ interface FooterLoaderProps {
 const FooterLoader = ({
   loaderName = "httpChecker",
   featureName = "HTTP Checker running in the background",
-  description = "HTTP requests are being monitored. Click to toggle.",
+  description = "HTTP requests are being monitored.",
   size = "md",
   className,
   showLabel = true,
@@ -68,11 +68,11 @@ const FooterLoader = ({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="m-auto flex items-center gap-2 cursor-pointer select-none mt-[3px]">
+          <div className="m-auto flex items-center gap-2 cursor-pointer select-none mt-[2.5px] ">
             {/* Flashing indicator - maintains your original styling */}
             <div
               className={cn(
-                "rounded-full flex items-center m-auto transition-all duration-300 ml-2 text-xs",
+                "rounded-full flex items-center m-auto transition-all duration-300  text-xs",
                 sizeClasses[size],
                 className,
                 isActive

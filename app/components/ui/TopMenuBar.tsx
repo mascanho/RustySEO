@@ -677,6 +677,15 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-3 text-xs">Help</MenubarTrigger>
             <MenubarContent className="z-[999999999999999]">
+              <MenubarItem
+                onClick={() =>
+                  openBrowserWindow("https://github.com/mascanho/Ruddit-Client")
+                }
+              >
+                <FiHelpCircle className="mr-2" />
+                Ruddit
+              </MenubarItem>
+              <MenubarSeparator />
               <MenubarItem onClick={handleOnboarding}>
                 <BiDoorOpen className="mr-2" />
                 Onboarding
