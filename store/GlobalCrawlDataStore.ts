@@ -129,8 +129,8 @@ interface CrawlStore {
 // Utility function to create setters dynamically
 const createSetter =
   <T>(key: keyof CrawlStore) =>
-  (value: T) =>
-    useGlobalCrawlStore.setState({ [key]: value } as any);
+    (value: T) =>
+      useGlobalCrawlStore.setState({ [key]: value } as any);
 
 // Create the Zustand store
 const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
@@ -260,7 +260,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           set((state) => ({
             crawlData:
               update.result &&
-              !state.crawlData.some((item) => item.url === update.result.url)
+                !state.crawlData.some((item) => item.url === update.result.url)
                 ? [...state.crawlData, update.result]
                 : state.crawlData,
             streamedCrawledPages:
@@ -285,6 +285,39 @@ export const useCrawlLoading = () => {
     [],
   );
   return useGlobalCrawlStore(selector);
+};
+
+export const useIsGeneratingExcel = () => {
+  const selector = useCallback(
+    (state: CrawlStore) => state.isGeneratingExcel,
+    [],
+  );
+  return useGlobalCrawlStore(selector);
+};
+
+export const useIssuesView = () => {
+  const selector = useCallback((state: CrawlStore) => state.issuesView, []);
+  return useGlobalCrawlStore(selector);
+};
+
+export const useIssuesData = () => {
+  const selector = useCallback((state: CrawlStore) => state.issuesData, []);
+  return useGlobalCrawlStore(selector, shallow);
+};
+
+export const useSelectedTableURL = () => {
+  const selector = useCallback((state: CrawlStore) => state.selectedTableURL, []);
+  return useGlobalCrawlStore(selector, shallow);
+};
+
+export const useInlinks = () => {
+  const selector = useCallback((state: CrawlStore) => state.inlinks, []);
+  return useGlobalCrawlStore(selector, shallow);
+};
+
+export const useOutlinks = () => {
+  const selector = useCallback((state: CrawlStore) => state.outlinks, []);
+  return useGlobalCrawlStore(selector, shallow);
 };
 
 export const useStreamingProgress = () => {

@@ -1,8 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import type React from "react";
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo, memo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import debounce from "lodash/debounce";
 import {
@@ -20,6 +19,7 @@ import { TbColumns3 } from "react-icons/tb";
 import DownloadButton from "./DownloadButton";
 import useGlobalCrawlStore, {
   useDataActions,
+  useIsGeneratingExcel,
 } from "@/store/GlobalCrawlDataStore";
 import { invoke } from "@tauri-apps/api/core";
 import { save } from "@tauri-apps/plugin-dialog";
@@ -79,18 +79,18 @@ interface TableRowProps {
 
 interface ColumnPickerProps {
   columnVisibility: boolean[];
-  setColumnVisibility: (visibility: boolean[]) => void;
+  setColumnVisibility: (visibility: any) => void;
   headerTitles: string[];
 }
 
-const TruncatedCell = ({
+const TruncatedCell = memo(({
   text,
   maxLength = 90,
   width = "auto",
 }: TruncatedCellProps) => {
   const truncatedText = useMemo(() => {
     if (!text) return "";
-    return text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+    return text.toString().length > maxLength ? `${text.toString().slice(0, maxLength)}...` : text;
   }, [text, maxLength]);
 
   return (
@@ -105,9 +105,9 @@ const TruncatedCell = ({
       {truncatedText}
     </div>
   );
-};
+});
 
-const ResizableDivider = ({ onMouseDown }: ResizableDividerProps) => {
+const ResizableDivider = memo(({ onMouseDown }: ResizableDividerProps) => {
   return (
     <div
       onMouseDown={onMouseDown}
@@ -122,9 +122,9 @@ const ResizableDivider = ({ onMouseDown }: ResizableDividerProps) => {
       }}
     />
   );
-};
+});
 
-const TableHeader = ({
+const TableHeader = memo(({
   headers,
   columnWidths,
   columnAlignments,
@@ -132,66 +132,59 @@ const TableHeader = ({
   onAlignToggle,
   columnVisibility,
 }: TableHeaderProps) => {
-  const visibleHeaders = headers.filter((_, index) => columnVisibility[index]);
-  const visibleWidths = columnWidths.filter(
-    (_, index) => columnVisibility[index],
-  );
-  const visibleAlignments = columnAlignments.filter(
-    (_, index) => columnVisibility[index],
-  );
+  const visibleItems = useMemo(() => {
+    return headers.map((header, index) => ({
+      header,
+      width: columnWidths[index],
+      alignment: columnAlignments[index],
+      visible: columnVisibility[index],
+      originalIndex: index,
+    })).filter(item => item.visible);
+  }, [headers, columnWidths, columnAlignments, columnVisibility]);
 
   return (
     <div
       className="domainCrawl border-b bg-white dark:bg-brand-darker"
       style={{
         display: "grid",
-        gridTemplateColumns: visibleWidths.join(" "),
+        gridTemplateColumns: visibleItems.map(item => item.width).join(" "),
         height: "30px",
         alignItems: "center",
         fontSize: "12px",
         width: "100%",
       }}
     >
-      {visibleHeaders.map((header, visibleIndex) => {
-        const originalIndex = headers.findIndex(
-          (h, i) =>
-            columnVisibility[i] &&
-            headers.slice(0, i + 1).filter((_, j) => columnVisibility[j])
-              .length ===
-              visibleIndex + 1,
-        );
-        return (
-          <div
-            key={header}
-            style={{
-              position: "relative",
-              // border: "1px solid #ddd",
-              padding: "8px",
-              userSelect: "none",
-              justifyContent:
-                visibleAlignments[visibleIndex] === "center"
-                  ? "center"
-                  : visibleAlignments[visibleIndex] === "right"
-                    ? "flex-end"
-                    : "flex-start",
-              height: "30px",
-              display: "flex",
-              alignItems: "center",
-              fontWeight: "bold",
-            }}
-            onClick={() => onAlignToggle(originalIndex)}
-            className="dark:text-white/50 dark:bg-brand-darker text-black/50 dark:border-brand-dark  bg-white shadow dark:border"
-          >
-            {header}
-            <ResizableDivider onMouseDown={(e) => onResize(originalIndex, e)} />
-          </div>
-        );
-      })}
+      {visibleItems.map((item) => (
+        <div
+          key={item.header}
+          style={{
+            position: "relative",
+            padding: "8px",
+            userSelect: "none",
+            justifyContent:
+              item.alignment === "center"
+                ? "center"
+                : item.alignment === "right"
+                  ? "flex-end"
+                  : "flex-start",
+            height: "30px",
+            display: "flex",
+            alignItems: "center",
+            fontWeight: "bold",
+            cursor: "pointer",
+          }}
+          onClick={() => onAlignToggle(item.originalIndex)}
+          className="dark:text-white/50 dark:bg-brand-darker text-black/50 dark:border-brand-dark  bg-white shadow dark:border"
+        >
+          {item.header}
+          <ResizableDivider onMouseDown={(e) => onResize(item.originalIndex, e)} />
+        </div>
+      ))}
     </div>
   );
-};
+});
 
-const TableRow = ({
+const TableRow = memo(({
   row,
   index,
   columnWidths,
@@ -229,75 +222,66 @@ const TableRow = ({
     [row, index],
   );
 
-  const visibleData = rowData.filter(
-    (_, cellIndex) => columnVisibility[cellIndex],
-  );
-  const visibleWidths = columnWidths.filter(
-    (_, cellIndex) => columnVisibility[cellIndex],
-  );
-  const visibleAlignments = columnAlignments.filter(
-    (_, cellIndex) => columnVisibility[cellIndex],
-  );
+  const visibleItems = useMemo(() => {
+    return rowData.map((cell, i) => ({
+      cell,
+      width: columnWidths[i],
+      alignment: columnAlignments[i],
+      visible: columnVisibility[i],
+      originalIndex: i,
+    })).filter(item => item.visible);
+  }, [rowData, columnWidths, columnAlignments, columnVisibility]);
+
+  const isRowClicked = clickedCell.row === index;
 
   return (
     <div
       style={{
         display: "grid",
-        gridTemplateColumns: visibleWidths.join(" "),
+        gridTemplateColumns: visibleItems.map(item => item.width).join(" "),
         height: "100%",
         alignItems: "center",
-        color: clickedCell.row === index ? "white" : "inherit",
+        color: isRowClicked ? "white" : "inherit",
       }}
       className="dark:text-white/50 cursor-pointer not-selectable"
     >
-      {visibleData.map((cell, visibleIndex) => {
-        const originalIndex = rowData.findIndex(
-          (c, i) =>
-            columnVisibility[i] &&
-            rowData.slice(0, i + 1).filter((_, j) => columnVisibility[j])
-              .length ===
-              visibleIndex + 1,
-        );
-        return (
-          <div
-            key={`cell-${index}-${visibleIndex}`}
-            onClick={() =>
-              handleCellClick(index, originalIndex, cell.toString(), row)
-            }
-            style={{
-              // border: "1px solid #ddd",
-              padding: "6px 8px",
-              justifyContent:
-                visibleAlignments[visibleIndex] === "center"
-                  ? "center"
-                  : visibleAlignments[visibleIndex] === "right"
-                    ? "flex-end"
-                    : "flex-start",
-              overflow: "hidden",
-              whiteSpace: "nowrap",
-              height: "100%",
-              display: "flex",
-              alignItems: "center",
-            }}
-            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${
-              clickedCell.row === index
-                ? "bg-blue-600"
-                : index % 2 === 0
-                  ? "bg-white dark:bg-brand-darker"
-                  : "bg-gray-50 dark:bg-brand-dark/30"
+      {visibleItems.map((item, visibleIdx) => (
+        <div
+          key={`cell-${index}-${item.originalIndex}`}
+          onClick={() =>
+            handleCellClick(index, item.originalIndex, item.cell.toString(), row)
+          }
+          style={{
+            padding: "6px 8px",
+            justifyContent:
+              item.alignment === "center"
+                ? "center"
+                : item.alignment === "right"
+                  ? "flex-end"
+                  : "flex-start",
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+          }}
+          className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${isRowClicked
+            ? "bg-blue-600"
+            : index % 2 === 0
+              ? "bg-white dark:bg-brand-darker"
+              : "bg-gray-50 dark:bg-brand-dark/30"
             }`}
-          >
-            <ContextTableMenu data={cell}>
-              <TruncatedCell text={cell?.toString()} width="100%" />
-            </ContextTableMenu>
-          </div>
-        );
-      })}
+        >
+          <ContextTableMenu data={item.cell}>
+            <TruncatedCell text={item.cell?.toString()} width="100%" />
+          </ContextTableMenu>
+        </div>
+      ))}
     </div>
   );
-};
+});
 
-const ColumnPicker = ({
+const ColumnPicker = memo(({
   columnVisibility,
   setColumnVisibility,
   headerTitles,
@@ -316,7 +300,7 @@ const ColumnPicker = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <div className="border dark:border-white/20 w-8 flex justify-center items-center rounded h-6">
+        <div className="border dark:border-white/20 w-8 flex justify-center items-center rounded h-6 cursor-pointer hover:bg-gray-100 dark:hover:bg-brand-dark">
           <TbColumns3 className="w-5 h-5 dark:text-white/50 p-1" />
         </div>
       </DropdownMenuTrigger>
@@ -326,7 +310,7 @@ const ColumnPicker = ({
             key={header}
             checked={columnVisibility[index] ?? true}
             onCheckedChange={() => handleToggle(index)}
-            className="p-2 hover:bg-gray-100 w-fit dark:hover:bg-brand-dark space-x-6 dark:text-white text-brand-bright"
+            className="p-2 hover:bg-gray-100 w-full dark:hover:bg-brand-dark space-x-6 dark:text-white text-brand-bright"
           >
             <span className="ml-5 dark:text-brand-bright">{header}</span>
           </DropdownMenuCheckboxItem>
@@ -334,7 +318,7 @@ const ColumnPicker = ({
       </DropdownMenuContent>
     </DropdownMenu>
   );
-};
+});
 
 const TableCrawl = ({
   tabName,
@@ -348,15 +332,16 @@ const TableCrawl = ({
   );
   const [isResizing, setIsResizing] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [columnVisibility, setColumnVisibility] = useState(
+  const [columnVisibility, setColumnVisibility] = useState(() =>
     headerTitles.map(() => true),
   );
-  const { isGeneratingExcel, setIsGeneratingExcel, setIssuesView } =
-    useGlobalCrawlStore();
 
-  const { setInlinks, setOutlinks } = useDataActions();
+  // Use granular selectors to avoid unnecessary re-renders
+  const isGeneratingExcel = useIsGeneratingExcel();
+  const setIsGeneratingExcel = useGlobalCrawlStore(s => s.setIsGeneratingExcel);
+  const { setInlinks, setOutlinks, setSelectedTableURL } = useDataActions();
 
-  const handleDownload = async () => {
+  const handleDownload = useCallback(async () => {
     if (!rows.length) {
       toast.error("No data to download");
       return;
@@ -386,14 +371,13 @@ const TableCrawl = ({
         if (filePath) {
           await writeFile(filePath, new Uint8Array(fileBuffer as any));
           toast.success("Excel file saved successfully!");
-        } else {
-          console.log("User canceled the save dialog.");
         }
       } catch (error) {
         console.error("Error generating or saving Excel file:", error);
+        setIsGeneratingExcel(false);
       }
     }
-  };
+  }, [rows, tabName, setIsGeneratingExcel]);
 
   const [clickedCell, setClickedCell] = useState<{
     row: number | null;
@@ -402,18 +386,8 @@ const TableCrawl = ({
     row: null,
     cell: null,
   });
-  const { setSelectedTableURL } = useGlobalCrawlStore();
 
-  const filterTableURL = (
-    arr: { url: string }[],
-    url: string,
-    rowIndex: number,
-  ) => {
-    if (!arr || arr.length === 0) return [];
-    return arr.filter((item) => item.url === url);
-  };
-
-  const handleCellClick = (
+  const handleCellClick = useCallback((
     rowIndex: number,
     cellIndex: number,
     cellContent: string,
@@ -431,123 +405,66 @@ const TableCrawl = ({
     });
 
     if (cellIndex === 1) {
-      const urlData = filterTableURL(rows, cellContent, rowIndex);
+      const urlData = rows.filter((item) => item.url === cellContent);
       setSelectedTableURL(urlData);
 
-      const findInLinkedObjects = (
-        rows: any[],
-        selectedUrl: string,
-        linkType: string,
-      ) => {
-        const normalizeUrl = (url: string) => {
-          if (!url) return "";
-
-          if (!url.startsWith("http")) {
-            url = "https://" + url;
+      const normalizeUrl = (url: string) => {
+        if (!url) return "";
+        if (!url.startsWith("http")) url = "https://" + url;
+        if (!url.startsWith("https://www.")) {
+          if (url.startsWith("https://")) {
+            url = "https://www." + url.substring(8);
+          } else {
+            url = "https://www." + url;
           }
-
-          if (!url.startsWith("https://www.")) {
-            if (url.startsWith("https://")) {
-              url = "https://www." + url.substring(8);
-            } else {
-              url = "https://www." + url;
-            }
-          }
-
-          return url.toString().trim().toLowerCase();
-        };
-
-        const targetUrl = cellContent;
-
-        return rows.filter((row) => {
-          const internalLinks = row?.inoutlinks_status_codes?.[linkType] || [];
-          return internalLinks.some((link: any) => {
-            const linkUrl = normalizeUrl(link?.url);
-            return linkUrl === normalizeUrl(targetUrl);
-          });
-        });
+        }
+        return url.toString().trim().toLowerCase();
       };
 
-      const innerLinksMatched = findInLinkedObjects(
-        rows,
-        cellContent,
-        "internal",
-      );
+      const targetUrlNormalized = normalizeUrl(cellContent);
+
+      const innerLinksMatched = rows.filter((r) => {
+        const internalLinks = r?.inoutlinks_status_codes?.internal || [];
+        return internalLinks.some((link: any) => normalizeUrl(link?.url) === targetUrlNormalized);
+      });
 
       setInlinks([{ url: cellContent }, innerLinksMatched]);
 
-      const findOutLinkedObjects = (
-        rows: any[],
-        selectedUrl: string,
-        linkType: string,
-      ) => {
-        const normalizeUrl = (url: string) => {
-          if (!url) return "";
-
-          if (!url.startsWith("http")) {
-            url = "https://" + url;
-          }
-
-          if (!url.startsWith("https://www.")) {
-            if (url.startsWith("https://")) {
-              url = "https://www." + url.substring(8);
-            } else {
-              url = "https://www." + url;
-            }
-          }
-
-          return url.toString().trim().toLowerCase();
-        };
-
-        const targetUrl = cellContent;
-
-        return rows.filter((row) => {
-          const internalLinks = row?.inoutlinks_status_codes?.internal || [];
-          return internalLinks.some((link: any) => {
-            const linkUrl = normalizeUrl(link?.url);
-            return linkUrl === normalizeUrl(targetUrl);
-          });
-        });
-      };
-
-      const outLinksMatched = findOutLinkedObjects(
-        rows,
-        cellContent,
-        "external",
-      );
+      const outLinksMatched = rows.filter((r) => {
+        const externalLinks = r?.inoutlinks_status_codes?.external || [];
+        return externalLinks.some((link: any) => normalizeUrl(link?.url) === targetUrlNormalized);
+      });
 
       setOutlinks([{ url: cellContent }, outLinksMatched]);
     }
-  };
+  }, [rows, setInlinks, setOutlinks, setSelectedTableURL]);
 
   const startXRef = useRef(0);
   const parentRef = useRef<HTMLDivElement>(null);
 
   const filteredRows = useMemo(() => {
     if (!rows || !Array.isArray(rows)) return [];
+    if (!searchTerm) return rows;
 
     const normalizeText = (text: string) =>
       text?.toString().toLowerCase().replace(/-/g, "") ?? "";
 
     const searchTermNormalized = normalizeText(searchTerm);
 
-    return searchTerm
-      ? rows.filter((row) => {
-          if (!row || typeof row !== "object") return false;
-          return Object.values(row).some((value) =>
-            normalizeText(value?.toString()).includes(searchTermNormalized),
-          );
-        })
-      : rows;
+    return rows.filter((row) => {
+      if (!row || typeof row !== "object") return false;
+      return Object.values(row).some((value) =>
+        normalizeText(value?.toString()).includes(searchTermNormalized),
+      );
+    });
   }, [rows, searchTerm]);
 
-  // Fixed virtualizer configuration
   const rowVirtualizer = useVirtualizer({
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
     overscan,
-    getItemKey: (index) => filteredRows[index]?.url || index,
+    getItemKey: useCallback((index: number) => filteredRows[index]?.url || index, [filteredRows]),
   });
 
   const debouncedSearch = useMemo(
@@ -620,7 +537,7 @@ const TableCrawl = ({
           type="text"
           placeholder="Search..."
           onChange={(e) => debouncedSearch(e.target.value)}
-          className="w-full p-1 pl-2 h-6 bg-white dark:bg-brand-darker border dark:border-brand-dark dark:text-white rounded-r"
+          className="w-full p-1 pl-2 h-6 bg-white dark:bg-brand-darker border dark:border-brand-dark dark:text-white rounded-r outline-none focus:border-blue-500"
         />
         <DownloadButton
           data={"data"}
@@ -642,7 +559,6 @@ const TableCrawl = ({
         ref={parentRef}
         className="w-full h-[calc(100%-2rem)] overflow-auto relative"
       >
-        {/* Fixed Header */}
         <div className="sticky top-0 z-10">
           <TableHeader
             headers={headerTitles}
@@ -654,7 +570,6 @@ const TableCrawl = ({
           />
         </div>
 
-        {/* Virtualized Body */}
         <div
           style={{
             height: `${rowVirtualizer.getTotalSize()}px`,
@@ -673,7 +588,6 @@ const TableCrawl = ({
                   width: "100%",
                   height: `${virtualRow.size}px`,
                 }}
-                className=""
               >
                 <TableRow
                   row={filteredRows[virtualRow.index]}
@@ -697,4 +611,4 @@ const TableCrawl = ({
   );
 };
 
-export default TableCrawl;
+export default memo(TableCrawl);

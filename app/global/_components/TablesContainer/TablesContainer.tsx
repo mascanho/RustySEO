@@ -315,7 +315,7 @@ export default function Home() {
               value="crawledPages"
               className="flex-grow overflow-hidden"
             >
-              <TableCrawl tabName={"AllData"} rows={crawlData} />
+              <TableCrawl tabName={"AllData"} rows={debouncedCrawlData} />
             </TabsContent>
 
             <TabsContent className="flex-grow overflow-hidden" value="css">
@@ -373,7 +373,7 @@ export default function Home() {
                 className="flex-grow overflow-hidden"
               >
                 {/* {renderIssuesViewContent()} */}
-                <TableCrawl tabName={issuesView} rows={issuesData} />
+                <TableCrawl tabName={issuesView} rows={issuesData || []} />
               </TabsContent>
             )}
           </Tabs>
