@@ -248,19 +248,19 @@ export function UrlStatusChecker() {
           prev.map((u, i) =>
             i === index
               ? {
-                  ...u,
-                  status: newStatus,
-                  statusCode: result.status,
-                  responseTime: result.response_time_ms,
-                  lastChecked: new Date(result.timestamp),
-                  headers,
-                  rawHeaders: result.headers,
-                  contentType:
-                    headers?.["content-type"] || headers?.["Content-Type"],
-                  server: headers?.["server"] || headers?.["Server"],
-                  isSecure: url.startsWith("https://"),
-                  securityHeaders: extractSecurityHeaders(headers),
-                }
+                ...u,
+                status: newStatus,
+                statusCode: result.status,
+                responseTime: result.response_time_ms,
+                lastChecked: new Date(result.timestamp),
+                headers,
+                rawHeaders: result.headers,
+                contentType:
+                  headers?.["content-type"] || headers?.["Content-Type"],
+                server: headers?.["server"] || headers?.["Server"],
+                isSecure: url.startsWith("https://"),
+                securityHeaders: extractSecurityHeaders(headers),
+              }
               : u,
           ),
         );
@@ -543,9 +543,9 @@ export function UrlStatusChecker() {
         className="fixed inset-0 bg-black/20 dark:bg-black/60 z-40 backdrop-blur-[2px] transition-all duration-300"
         onClick={handleHideHttpChecker}
       />
-      <Card className="max-w-full bg-card w-[650px] border-border fixed bottom-9 left-2 z-50 dark:bg-brand-darker bg-white h-[calc(100vh-120px)] max-h-[900px] flex flex-col shadow-2xl rounded-xl overflow-hidden animate-in slide-in-from-left-4 fade-in duration-300">
+      <Card className="max-w-full bg-card w-[650px] border-border fixed bottom-9 left-2 z-50 dark:bg-brand-darker h-[calc(100vh-120px)] max-h-[900px] flex flex-col shadow-2xl rounded-xl overflow-hidden animate-in slide-in-from-left-4 fade-in duration-300">
         {/* Header */}
-        <div className="p-4 border-b border-border/50 flex items-center justify-between flex-shrink-0 bg-secondary/5 dark:bg-white/5">
+        <div className="p-4 border-b border-border/50 flex items-center justify-between flex-shrink-0 bg-secondary/5 dark:bg-card">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-primary/10">
               <Activity className="w-4 h-4 text-primary" />
@@ -581,12 +581,12 @@ export function UrlStatusChecker() {
         </div>
 
         {/* Scrollable Content Wrapper */}
-        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-background dark:bg-brand-darker">
           {/* Response Details Panel - Slim version */}
           {selectedUrl &&
             selectedUrl.status !== "unknown" &&
             selectedUrl.headers && (
-              <div className="flex-shrink-0 p-4 border-b border-border/50 bg-primary/5 animate-in slide-in-from-top-2 duration-200 overflow-y-auto max-h-[45%]">
+              <div className="flex-shrink-0 p-4 border-b border-border/50 bg-primary/5 dark:bg-primary/10 animate-in slide-in-from-top-2 duration-200 overflow-y-auto max-h-[45%]">
                 <div className="flex items-center justify-between mb-3">
                   <div className="min-w-0">
                     <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5 truncate">
@@ -594,7 +594,7 @@ export function UrlStatusChecker() {
                       {selectedUrl.url}
                     </h3>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] font-medium text-muted-foreground bg-secondary/50 px-1.5 py-0.5 rounded">
+                      <span className="text-[10px] font-medium text-muted-foreground bg-secondary/50 dark:bg-secondary/20 px-1.5 py-0.5 rounded">
                         {totalHeadersCount} headers • {securityHeadersCount}{" "}
                         security
                       </span>
@@ -619,7 +619,7 @@ export function UrlStatusChecker() {
                           ),
                         )
                       }
-                      className="h-7 px-2 text-[10px] font-semibold"
+                      className="h-7 px-2 text-[10px] font-semibold dark:border-white/10 dark:hover:bg-white/5"
                     >
                       <Copy className="h-3 w-3 mr-1" />
                       Copy JSON
@@ -628,7 +628,7 @@ export function UrlStatusChecker() {
                       variant="ghost"
                       size="icon"
                       onClick={() => setSelectedUrlIndex(null)}
-                      className="h-7 w-7 text-muted-foreground hover:bg-secondary"
+                      className="h-7 w-7 text-muted-foreground hover:bg-secondary dark:hover:bg-white/5"
                     >
                       <X className="h-3.5 w-3.5" />
                     </Button>
@@ -638,7 +638,7 @@ export function UrlStatusChecker() {
                 <div className="space-y-3">
                   {/* Basic Info Row */}
                   <div className="grid grid-cols-3 gap-2">
-                    <div className="p-2 rounded-lg bg-background border border-border/40 shadow-sm">
+                    <div className="p-2 rounded-lg bg-background dark:bg-card border border-border/40 dark:border-white/5 shadow-sm">
                       <p className="text-[9px] text-muted-foreground uppercase font-bold mb-1">
                         Status
                       </p>
@@ -652,7 +652,7 @@ export function UrlStatusChecker() {
                       </div>
                     </div>
                     {selectedUrl.responseTime && (
-                      <div className="p-2 rounded-lg bg-background border border-border/40 shadow-sm">
+                      <div className="p-2 rounded-lg bg-background dark:bg-card border border-border/40 dark:border-white/5 shadow-sm">
                         <p className="text-[9px] text-muted-foreground uppercase font-bold mb-1">
                           Latency
                         </p>
@@ -665,7 +665,7 @@ export function UrlStatusChecker() {
                       </div>
                     )}
                     {selectedUrl.contentType && (
-                      <div className="p-2 rounded-lg bg-background border border-border/40 shadow-sm min-w-0">
+                      <div className="p-2 rounded-lg bg-background dark:bg-card border border-border/40 dark:border-white/5 shadow-sm min-w-0">
                         <p className="text-[9px] text-muted-foreground uppercase font-bold mb-1">
                           Type
                         </p>
@@ -713,11 +713,11 @@ export function UrlStatusChecker() {
                           Object.keys(cat.data).length > 0 && (
                             <div
                               key={cat.id}
-                              className="border border-border/30 rounded-lg overflow-hidden bg-background/50"
+                              className="border border-border/30 dark:border-white/5 rounded-lg overflow-hidden bg-background/50 dark:bg-card/50"
                             >
                               <button
                                 onClick={() => toggleCategory(cat.id)}
-                                className="w-full flex items-center justify-between p-2 hover:bg-secondary/30 transition-colors"
+                                className="w-full flex items-center justify-between p-2 hover:bg-secondary/30 dark:hover:bg-white/5 transition-colors"
                               >
                                 <div className="flex items-center gap-2">
                                   <cat.icon
@@ -734,19 +734,19 @@ export function UrlStatusChecker() {
                                 )}
                               </button>
                               {expandedCategories[cat.id] && (
-                                <div className="px-2 pb-2 space-y-1 divide-y divide-border/20">
+                                <div className="px-2 pb-2 space-y-1 divide-y divide-border/20 dark:divide-white/5">
                                   {Object.entries(cat.data).map(
                                     ([key, value], idx) => (
                                       <div key={idx} className="py-1.5 group">
                                         <div className="flex items-center justify-between mb-0.5">
-                                          <code className="text-[10px] font-bold text-primary/80">
+                                          <code className="text-[10px] font-bold text-primary/80 dark:text-primary">
                                             {key}
                                           </code>
                                           <button
                                             onClick={() =>
                                               copyToClipboard(value as string)
                                             }
-                                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-secondary rounded"
+                                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-secondary dark:hover:bg-white/10 rounded"
                                           >
                                             <Copy className="h-2.5 w-2.5 text-muted-foreground" />
                                           </button>
@@ -769,7 +769,7 @@ export function UrlStatusChecker() {
             )}
 
           {/* Controls section - Condensed Grid */}
-          <div className="p-3 bg-secondary/5 border-b border-border/50">
+          <div className="p-3 bg-secondary/5 dark:bg-secondary/10 border-b border-border/50 dark:border-white/5">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-0.5">
@@ -782,7 +782,7 @@ export function UrlStatusChecker() {
                     max="300"
                     value={pollingInterval}
                     onChange={(e) => setPollingInterval(Number(e.target.value))}
-                    className="h-8 pl-8 text-xs font-bold bg-background border-border/50 focus-visible:ring-primary/20"
+                    className="h-8 pl-8 text-xs font-bold bg-background dark:bg-card border-border/50 dark:border-white/10 focus-visible:ring-primary/20 text-foreground"
                   />
                   <RefreshCw className="absolute left-2.5 top-2 w-3 h-3 text-muted-foreground" />
                 </div>
@@ -795,10 +795,9 @@ export function UrlStatusChecker() {
                   onClick={() => setStopOnError(!stopOnError)}
                   disabled={isPolling}
                   className={`h-8 w-full rounded-md border text-[10px] font-bold transition-all duration-200 flex items-center justify-center gap-1.5 shadow-sm
-                    ${
-                      stopOnError
-                        ? "bg-rose-500/10 text-rose-600 border-rose-500/30 hover:bg-rose-500/20"
-                        : "bg-emerald-500/10 text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/20"
+                    ${stopOnError
+                      ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/20"
+                      : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
                     }`}
                 >
                   <AlertCircle className="w-3 h-3" />
@@ -825,7 +824,7 @@ export function UrlStatusChecker() {
 
               {urls.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-40 text-center space-y-3 opacity-50">
-                  <div className="p-4 rounded-full bg-secondary/50">
+                  <div className="p-4 rounded-full bg-secondary/50 dark:bg-white/5">
                     <Globe className="w-8 h-8 text-muted-foreground" />
                   </div>
                   <p className="text-xs font-medium text-muted-foreground">
@@ -837,10 +836,9 @@ export function UrlStatusChecker() {
                   <div
                     key={index}
                     className={`group flex items-center gap-3 p-2.5 rounded-xl border transition-all duration-200 hover:shadow-md
-                      ${
-                        selectedUrlIndex === index
-                          ? "bg-primary/5 border-primary shadow-sm"
-                          : "bg-background border-border/40 hover:border-primary/30"
+                      ${selectedUrlIndex === index
+                        ? "bg-primary/5 dark:bg-primary/10 border-primary shadow-sm"
+                        : "bg-background dark:bg-card border-border/40 dark:border-white/5 hover:border-primary/30"
                       }`}
                   >
                     <button
@@ -850,20 +848,19 @@ export function UrlStatusChecker() {
                     >
                       <div
                         className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors
-                        ${
-                          urlStatus.status === "online"
-                            ? "bg-emerald-500/10 text-emerald-600"
+                        ${urlStatus.status === "online"
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                             : urlStatus.status === "offline"
-                              ? "bg-rose-500/10 text-rose-600"
-                              : "bg-secondary/50 text-muted-foreground"
-                        }`}
+                              ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                              : "bg-secondary/50 dark:bg-white/10 text-muted-foreground"
+                          }`}
                       >
                         <Activity
                           className={`w-4 h-4 ${urlStatus.status === "checking" ? "animate-pulse" : ""}`}
                         />
                       </div>
                       <div
-                        className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background
+                        className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background dark:border-brand-darker
                         ${getStatusColor(urlStatus.status)} ${urlStatus.status === "checking" ? "animate-ping" : ""}`}
                       />
                     </button>
@@ -880,14 +877,13 @@ export function UrlStatusChecker() {
                       </div>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span
-                          className={`text-[10px] font-bold px-1.5 py-0.5 rounded bg-secondary/50
-                          ${
-                            urlStatus.statusCode === 200
-                              ? "text-emerald-600"
+                          className={`text-[10px] font-bold px-1.5 py-0.5 rounded bg-secondary/50 dark:bg-secondary/20
+                          ${urlStatus.statusCode === 200
+                              ? "text-emerald-600 dark:text-emerald-400"
                               : urlStatus.statusCode
-                                ? "text-rose-600"
+                                ? "text-rose-600 dark:text-rose-400"
                                 : "text-muted-foreground"
-                          }`}
+                            }`}
                         >
                           {urlStatus.statusCode || "---"}{" "}
                           {getStatusText(urlStatus)}
@@ -915,7 +911,7 @@ export function UrlStatusChecker() {
                               other: false,
                             });
                           }}
-                          className="h-8 w-8 text-primary hover:bg-primary/10"
+                          className="h-8 w-8 text-primary hover:bg-primary/10 dark:hover:bg-primary/20"
                         >
                           <ChevronRight size={16} />
                         </Button>
@@ -923,7 +919,7 @@ export function UrlStatusChecker() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                        className="h-8 w-8 text-muted-foreground hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
                         onClick={() => removeUrl(index)}
                         disabled={isPolling}
                       >
@@ -937,8 +933,8 @@ export function UrlStatusChecker() {
 
             {/* Log Console - Sticky Bottom with flex distribution */}
             {showLogs && (
-              <div className="flex-1 min-h-[120px] max-h-[40%] border-t border-border/50 bg-secondary/5 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
-                <div className="flex items-center justify-between p-2 px-4 bg-background/50 border-b border-border/20">
+              <div className="flex-1 min-h-[120px] max-h-[40%] border-t border-border/50 dark:border-white/10 bg-secondary/5 dark:bg-card flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+                <div className="flex items-center justify-between p-2 px-4 bg-background/50 dark:bg-white/5 border-b border-border/20 dark:border-white/5">
                   <div className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                     <h3 className="text-[10px] font-bold text-foreground uppercase tracking-widest">
@@ -960,7 +956,7 @@ export function UrlStatusChecker() {
                       variant="ghost"
                       size="icon"
                       onClick={() => setShowLogs(false)}
-                      className="h-6 w-6 text-muted-foreground hover:bg-secondary"
+                      className="h-6 w-6 text-muted-foreground hover:bg-secondary dark:hover:bg-white/10"
                     >
                       <ChevronDown className="h-4 w-4" />
                     </Button>
@@ -977,7 +973,7 @@ export function UrlStatusChecker() {
                     logs.map((log, index) => (
                       <div
                         key={index}
-                        className="flex items-start gap-3 py-1 group border-l-2 border-transparent hover:border-primary/30 hover:bg-primary/5 px-2 rounded-r transition-all"
+                        className="flex items-start gap-3 py-1 group border-l-2 border-transparent hover:border-primary/30 hover:bg-primary/5 dark:hover:bg-primary/10 px-2 rounded-r transition-all"
                       >
                         <span className="text-[9px] font-bold text-muted-foreground/60 w-14 flex-shrink-0">
                           {formatTime(log.timestamp).split(" ")[0]}
@@ -987,11 +983,13 @@ export function UrlStatusChecker() {
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold text-foreground group-hover:text-primary transition-colors truncate">
+                            <span
+                              className={`text-[10px] font-bold text-foreground group-hover:text-primary transition-colors truncate`}
+                            >
                               {log.url}
                             </span>
                             <span
-                              className={`text-[9px] font-bold uppercase ${log.status === "online" ? "text-emerald-600" : "text-rose-600"}`}
+                              className={`text-[9px] font-bold uppercase ${log.status === "online" ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}
                             >
                               {log.status}
                             </span>
@@ -1012,7 +1010,7 @@ export function UrlStatusChecker() {
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 border-t border-border/50 bg-background flex-shrink-0 space-y-3">
+        <div className="p-4 border-t border-border/50 dark:border-white/10 bg-background dark:bg-brand-darker flex-shrink-0 space-y-3">
           {/* Add URL Row */}
           <div className="flex gap-2">
             <div className="relative flex-1 group">
@@ -1023,13 +1021,13 @@ export function UrlStatusChecker() {
                 onChange={(e) => setNewUrl(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && addUrl()}
                 disabled={isPolling}
-                className="h-9 pl-9 text-xs font-bold bg-secondary/30 border-border/50 focus-visible:ring-primary/20 rounded-lg"
+                className="h-9 pl-9 text-xs font-bold bg-secondary/30 dark:bg-card border-border/50 dark:border-white/10 focus-visible:ring-primary/20 rounded-lg text-foreground"
               />
             </div>
             <Button
               onClick={addUrl}
               size="sm"
-              className="px-4 font-bold shadow-lg shadow-primary/10 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="px-4 font-bold shadow-lg shadow-primary/10 transition-all hover:scale-[1.02] active:scale-[0.98] dark:bg-primary dark:text-white"
               disabled={isPolling || !newUrl}
             >
               <Plus className="h-4 w-4 mr-1.5" />
@@ -1041,11 +1039,10 @@ export function UrlStatusChecker() {
           <div className="flex gap-2.5">
             <Button
               onClick={togglePolling}
-              className={`flex-[2] h-10 font-bold transition-all duration-300 shadow-md bg-brand-bright text-black transform hover:scale-[1.01] active:scale-[0.99]
-                ${
-                  isPolling
-                    ? "bg-rose-600 hover:bg-rose-700 text-white shadow-rose-200"
-                    : "bg-primary hover:bg-primary/90 text-white shadow-primary/20 bg-brand-bright dark:bg-brand-bright dark:text-white"
+              className={`flex-[2] h-10 font-bold transition-all duration-300 shadow-md transform hover:scale-[1.01] active:scale-[0.99]
+                ${isPolling
+                  ? "bg-rose-600 hover:bg-rose-700 text-white shadow-rose-200"
+                  : "bg-primary hover:bg-primary/90 text-white shadow-primary/20 dark:bg-brand-bright dark:text-white"
                 }`}
             >
               {isPolling ? (
@@ -1063,7 +1060,7 @@ export function UrlStatusChecker() {
             <Button
               onClick={handleCheckAll}
               variant="outline"
-              className="flex-1 h-10 font-bold border-2 hover:bg-secondary/50 transition-all"
+              className="flex-1 h-10 font-bold border-2 dark:border-white/10 dark:hover:bg-white/5 transition-all text-foreground"
               disabled={isPolling}
             >
               <RefreshCw className="h-4 w-4 mr-2" />
@@ -1077,11 +1074,11 @@ export function UrlStatusChecker() {
 
   function colourStatus(log) {
     if (log?.statusCode === 200) {
-      return "text-green-700";
+      return "text-green-700 dark:text-emerald-400";
     } else if (log?.statusCode === 404) {
-      return "text-red-700";
+      return "text-red-700 dark:text-rose-400";
     } else if (log?.statusCode === 500) {
-      return "text-yellow-700";
+      return "text-yellow-700 dark:text-amber-400";
     }
     return "text-muted-foreground";
   }
