@@ -23,9 +23,10 @@ struct Row {
 pub async fn check_google_search_console() {
     // Hardcoded client ID and client secret (for testing purposes only)
     let client_id = ClientId::new(
-        "616986262649-oub9ts4pcjujcabmtn5e8n2jkur5borp.apps.googleusercontent.com".to_string(),
+        "616986262649-oub9ts4pcjujcabmtn5fdkljsdhfklje8n2jkur5borp.apps.googleusercontent.com"
+            .to_string(),
     );
-    let client_secret = ClientSecret::new("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".to_string());
+    let client_secret = ClientSecret::new("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JaQh".to_string());
 
     let auth_url = AuthUrl::new("https://accounts.google.com/o/oauth2/auth".to_string())
         .expect("Invalid authorization endpoint URL");
