@@ -1,73 +1,120 @@
 use scraper::{Html, Selector};
 use url::Url;
+use std::collections::HashSet;
 
-/// Extracts links from the HTML content using the `scraper` crate
-pub fn extract_links(html: &str, base_url: &Url) -> Vec<Url> {
+/// Extracts and normalizes links from HTML
+pub fn extract_links(html: &str, base_url: &Url) -> HashSet<Url> {
     let document = Html::parse_document(html);
-    let selector = Selector::parse("a[href]").unwrap(); // Select all <a> tags with an href attribute
+    let selector = Selector::parse("a[href]").unwrap();
 
-    document
-        .select(&selector)
-        .filter_map(|element| {
-            // Get the href attribute value
-            let href = element.value().attr("href")?;
+    let mut unique_urls = HashSet::new();
 
-            // Build a full URL from the base URL and the href
-            match build_full_url(base_url, href) {
-                Ok(url) => {
-                    // Validate and normalize the URL
-                    if let Some(valid_url) = validate_and_normalize_url(base_url, &url) {
-                        Some(valid_url)
-                    } else {
-                        // eprintln!("Skipping invalid URL: {}", url);
-                        None
-                    }
-                }
-                Err(_) => {
-                    // eprintln!("Failed to build URL from {}", href);
-                    None
-                }
+    for element in document.select(&selector) {
+        if let Some(href) = element.value().attr("href") {
+            if let Some(url) = process_link(base_url, href) {
+                unique_urls.insert(url);
             }
-        })
-        .filter(|next_url: &Url| {
-            // Filter by domain: ensure the link belongs to the same domain or subdomain
-            let base_domain = base_url.domain().unwrap_or("");
-            let next_domain = next_url.domain().unwrap_or("");
-            next_domain.ends_with(base_domain)
-        })
-        .collect()
+        }
+    }
+
+    unique_urls
 }
 
-/// Builds a full URL from a base URL and a relative or absolute href
+/// Process a single link
+fn process_link(base_url: &Url, href: &str) -> Option<Url> {
+    // Skip problematic hrefs early
+    if href.is_empty() || href.starts_with('#') || href.starts_with("javascript:") {
+        return None;
+    }
+
+    // Build URL
+    let url = build_full_url(base_url, href).ok()?;
+
+    // Validate and normalize
+    validate_and_normalize_url(base_url, &url)
+}
+
+/// Build URL with better relative path handling
 fn build_full_url(base_url: &Url, href: &str) -> Result<Url, url::ParseError> {
-    // Handle relative URLs (e.g., "/about", "about", "../page")
-    if href.starts_with('/') || !href.contains("://") {
-        // Resolve relative URLs using the base URL
-        base_url.join(href)
-    } else {
-        // Parse absolute URLs directly
-        Url::parse(href)
+    // Handle common cases
+    match href {
+        // Absolute URLs
+        s if s.starts_with("http://") || s.starts_with("https://") => {
+            Url::parse(s)
+        }
+        // Root-relative URLs
+        s if s.starts_with('/') => {
+            let mut new_url = base_url.clone();
+            new_url.set_path(s);
+            Ok(new_url)
+        }
+        // Protocol-relative URLs (//example.com/path)
+        s if s.starts_with("//") => {
+            let mut new_url = base_url.clone();
+            let full = format!("{}:{}", base_url.scheme(), s);
+            Url::parse(&full)
+        }
+        // Everything else is relative
+        _ => base_url.join(href),
     }
 }
 
-/// Validates and normalizes a URL
+/// Validate and normalize with PROPER domain checking
 fn validate_and_normalize_url(base_url: &Url, url: &Url) -> Option<Url> {
-    // Ensure the URL has a valid domain
-    if url.domain().is_none() {
-        return None; // Skip URLs without a domain
+    // Must be http/https
+    if url.scheme() != "http" && url.scheme() != "https" {
+        return None;
     }
 
-    // Ensure the URL belongs to the same domain or subdomain as the base URL
-    let base_domain = base_url.domain().unwrap_or("");
-    let url_domain = url.domain().unwrap_or("");
-    if !url_domain.ends_with(base_domain) {
-        return None; // Skip URLs from external domains
+    // Must have domain
+    let base_domain = base_url.domain()?;
+    let url_domain = url.domain()?;
+
+    // SECURE domain check (not just ends_with!)
+    if !is_same_or_subdomain(url_domain, base_domain) {
+        return None;
     }
 
-    // Normalize the URL by removing trailing slashes and fragment identifiers
-    let mut normalized_url = url.clone();
-    normalized_url.set_path(url.path().trim_end_matches('/'));
-    normalized_url.set_fragment(None); // Remove fragment identifier
+    // Normalize
+    let mut normalized = url.clone();
 
-    Some(normalized_url)
+    // Remove fragment and query
+    normalized.set_fragment(None);
+    // normalized.set_query(None); // Optional: remove query params
+
+    // Handle path normalization
+    normalize_path(&mut normalized);
+
+    Some(normalized)
+}
+
+/// Proper domain checking
+fn is_same_or_subdomain(url_domain: &str, base_domain: &str) -> bool {
+    if url_domain == base_domain {
+        return true;
+    }
+
+    // Check if url_domain is a subdomain of base_domain
+    // Properly handles cases like: api.example.com is subdomain of example.com
+    // But NOT: evil-example.com
+    url_domain.ends_with(&format!(".{}", base_domain))
+}
+
+/// Comprehensive path normalization
+fn normalize_path(url: &mut Url) {
+    let path = url.path();
+
+    // Remove trailing slash unless it's root
+    let new_path = if path == "/" {
+        "/".to_string()
+    } else {
+        path.trim_end_matches('/').to_string()
+    };
+
+    // Also handle multiple slashes and ./
+    let cleaned_path = new_path
+        .replace("//", "/")  // Remove double slashes
+        .replace("/./", "/"); // Remove ./
+
+    url.set_path(&cleaned_path);
 }

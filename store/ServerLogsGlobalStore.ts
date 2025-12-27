@@ -12,6 +12,10 @@ interface ServerLogSettings {
   setUploadedLogFiles: (files: File[]) => void;
 
   reset: () => void;
+
+  // Actions
+  ExcelLoaded: boolean;
+  setExcelLoaded: () => void;
 }
 
 export const useServerLogsStore = create<ServerLogSettings>((set) => ({
@@ -33,4 +37,9 @@ export const useServerLogsStore = create<ServerLogSettings>((set) => ({
       storedLogsFromDBStore: [],
       uploadedLogFiles: [],
     }),
+}));
+
+export const useExcelLoading = create((set) => ({
+  ExcelLoaded: false,
+  setExcelLoaded: () => set({ ExcelLoaded: true }),
 }));

@@ -14,6 +14,7 @@ use uuid::Uuid;
 use crate::domain_crawler::helpers::keyword_selector::default_stop_words;
 use crate::domain_crawler::{self, user_agents};
 use crate::loganalyser::log_state::set_taxonomies;
+use crate::settings::utils::user_bots::generate_default_user_bots;
 use crate::version::local_version;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -48,6 +49,7 @@ pub struct Settings {
     pub log_file_upload_size: usize,
     pub extract_ngrams: bool,
     pub stop_words: HashSet<String>,
+    pub log_bots: Vec<(String, String)>,
 }
 
 impl Settings {
@@ -83,6 +85,7 @@ impl Settings {
             log_file_upload_size: 75, // THE DEFAULT VALUE TO FILE UPLOADING
             extract_ngrams: false,
             stop_words: default_stop_words(),
+            log_bots: generate_default_user_bots(),
         }
     }
 
@@ -212,6 +215,8 @@ pub fn print_settings(settings: &Settings) {
     println!("Log File Upload Size: {}", settings.log_file_upload_size);
 
     println!("Ngrams: {}", settings.extract_ngrams);
+
+    println!("Log Bots: {:#?}", settings.log_bots);
 
     println!("")
 }

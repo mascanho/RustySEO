@@ -15,7 +15,8 @@ const useLoaderStore = create<LoaderStore>((set) => ({
   loaders: {
     links: false,
     seoLoader: false,
-  }, // Initial state with no loaders
+    httpChecker: false, // This tracks if HTTP checker is active
+  },
 
   showLoader: (loaderName: string) =>
     set((state) => ({

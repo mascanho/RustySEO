@@ -1,74 +1,209 @@
 // @ts-nocheck
 "use client";
 
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   X,
   Loader2,
   FolderOpen,
-  Plus,
-  ChevronDown,
   Upload,
+  FileSpreadsheet,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardFooter } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { invoke } from "@tauri-apps/api/core";
-import { FixedSizeList as List } from "react-window";
-import { FaCalendarAlt, FaFolder, FaProjectDiagram } from "react-icons/fa";
-import { SkeletonLoader } from "./SkeletonLoader";
-import type { ProjectEntry } from "@/types/ProjectEntry";
 import { IoPlayCircleOutline } from "react-icons/io5";
-import {
-  useAllProjects,
-  useProjectsLogs,
-  useSelectedProject,
-} from "@/store/logFilterStore";
-import { useLogAnalysis } from "@/store/ServerLogsStore";
-import Spinner from "@/app/components/ui/Sidebar/checks/_components/Spinner";
-import { listen } from "@tauri-apps/api/event";
+import * as XLSX from "xlsx";
+import useGSCUploadStore from "@/store/GSCUploadStore";
+import { localStorageHandler } from "../util";
+import { useExcelLoading } from "@/store/ServerLogsGlobalStore";
 
-// Main Component
-export default function GSCuploadManager({ closeDialog }) {
-  // State management
+export default function GSCuploadManager() {
   const [isLoading, setIsLoading] = useState(false);
-  const [openDropdowns, setOpenDropdowns] = useState(new Set());
-  const [uploadedFiles, setUploadedFiles] = useState([]);
-  const [processingFiles, setProcessingFiles] = useState<
-    Record<string, boolean>
-  >({});
-  const [filePreview, setFilePreview] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [localStorageExcel, setLocalStorageExcel] = useState(false);
+  const { setExcelLoaded } = useExcelLoading();
 
-  // Global store
-  const { setLogData, resetAll } = useLogAnalysis();
+  // Use global store
+  const {
+    uploadedFile,
+    workbook,
+    sheets,
+    selectedSheet,
+    filePreview,
+    setUploadedFile,
+    setWorkbook,
+    setSheets,
+    setSelectedSheet,
+    setFilePreview,
+    reset,
+  } = useGSCUploadStore();
 
-  // Handle file upload
-  const handleFileUpload = useCallback(async (event) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
+  const handleFileUpload = useCallback(
+    async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
 
-    const newFiles = Array.from(files).map((file) => ({
-      id: `${file.name}-${Date.now()}`,
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      lastModified: file.lastModified,
-      file, // Store the actual File object
-    }));
+      if (!file.name.endsWith(".xlsx") && !file.name.endsWith(".csv")) {
+        toast.error("Please upload a .xlsx or .csv file");
+        return;
+      }
 
-    setUploadedFiles((prev) => [...prev, ...newFiles]);
-    event.target.value = ""; // Reset input to allow re-upload of same file
-  }, []);
+      try {
+        setIsLoading(true);
+        // Store serializable info
+        setUploadedFile({
+          name: file.name,
+          size: file.size,
+          type: file.name.endsWith(".csv") ? "csv" : "xlsx",
+          lastModified: file.lastModified,
+        });
 
-  // Handle file removal
-  const handleRemoveFile = useCallback((id: string) => {
-    setUploadedFiles((prev) => prev.filter((file) => file.id !== id));
-    setFilePreview(null);
-  }, []);
+        const arrayBuffer = await file.arrayBuffer();
+        const wb = XLSX.read(arrayBuffer, { type: "array" });
 
-  // Format file size
+        setWorkbook(wb);
+        setSheets(wb.SheetNames);
+
+        console.log(wb, "Sheet stuff");
+
+        if ("Pages" in wb.Sheets) {
+          toast.success(
+            "Google Sheets file detected. Please select a sheet to process",
+          );
+        } else {
+          toast.error("No Pages data found in this file");
+        }
+
+        if (wb.SheetNames.length === 1) {
+          handleSheetSelect(wb.SheetNames[0], wb, file.name);
+        } else {
+          setSelectedSheet(null);
+          setFilePreview(null);
+        }
+      } catch (error) {
+        console.error("Error reading file:", error);
+        toast.error(
+          `Error reading file: ${error instanceof Error ? error.message : String(error)}`,
+        );
+        reset();
+      } finally {
+        setIsLoading(false);
+        event.target.value = "";
+      }
+    },
+    [
+      setUploadedFile,
+      setWorkbook,
+      setSheets,
+      setSelectedSheet,
+      setFilePreview,
+      reset,
+    ],
+  );
+
+  const handleSheetSelect = (
+    sheetName: string,
+    wbInstance = workbook,
+    fileName = uploadedFile?.name,
+  ) => {
+    if (!wbInstance) return;
+
+    setSelectedSheet(sheetName);
+    const sheet = wbInstance.Sheets[sheetName];
+    const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+    setFilePreview({
+      fileName: fileName || "File",
+      data: jsonData,
+      processedAt: null,
+    });
+  };
+
+  const handleProcessFile = useCallback(async () => {
+    if (!filePreview?.data) return;
+
+    try {
+      setIsProcessing(true);
+
+      // Step 1: Save data to database
+      await invoke("save_gsc_data", {
+        data: filePreview.data,
+      });
+
+      // Step 2: Update local state
+      setFilePreview({
+        ...filePreview,
+        processedAt: new Date().toISOString(),
+      });
+
+      // Step 3: Load into Rust memory
+
+      if (selectedSheet !== "Pages") {
+        toast.error(
+          "Please select a sheet with the right data. 'Pages' is required",
+        );
+        return;
+      }
+
+      console.log(selectedSheet, "Selected sheet");
+      await loadGscIntoMemory();
+
+      toast.success("File processed and loaded successfully");
+    } catch (error) {
+      console.error("Processing failed:", error);
+      toast.error(
+        `Processing failed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+
+      const status = false;
+      localStorageHandler(status);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [filePreview, setFilePreview]);
+
+  // Separate function for loading into memory
+  const loadGscIntoMemory = async () => {
+    try {
+      const result = await invoke("load_gsc_from_database");
+
+      // Handle different response formats
+      let message = "GSC data loaded into memory";
+
+      if (typeof result === "string") {
+        message = result;
+      } else if (result && result.message === "Loaded") {
+        message = `Loaded ${result.count} GSC entries into memory`;
+
+        // Handle the local storage stuff
+        localStorageHandler(result);
+      } else if (typeof result === "number") {
+        message = `Loaded ${result} GSC entries into memory`;
+      } else {
+        const status = true;
+        localStorageHandler(status);
+      }
+
+      toast.success(message);
+      // TODO: Check THis
+      setExcelLoaded(true);
+      console.log("GSC memory load successful:", result);
+
+      return result;
+    } catch (error) {
+      console.error("Failed to load GSC into memory:", error);
+      toast.error(`Failed to load into memory: ${error}`);
+      throw error; // Re-throw to be caught by parent
+    }
+  };
+
+  const handleRemoveFile = useCallback(() => {
+    reset();
+  }, [reset]);
+
   const formatFileSize = useCallback((bytes) => {
     if (bytes === 0) return "0 Bytes";
     const k = 1024;
@@ -77,332 +212,221 @@ export default function GSCuploadManager({ closeDialog }) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2) + " " + sizes[i]);
   }, []);
 
-  // Format timestamp
-  const formatTimestamp = useCallback((timestamp) => {
-    if (!timestamp) return "No date";
-    const date = new Date(timestamp);
-    return isNaN(date.getTime())
-      ? "Invalid Date"
-      : date.toLocaleString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+  useEffect(() => {
+    // Fix 1: Check for explicit "true" string
+    const storage = localStorage.getItem("GscExcel");
+    console.log(storage, "From the local storage Excel");
+
+    if (storage === "true") {
+      // Explicit check for "true" string
+      setLocalStorageExcel(true);
+    } else {
+      setLocalStorageExcel(false);
+    }
+
+    // Fix 2: Add polling for same-tab updates
+    const intervalId = setInterval(() => {
+      const currentValue = localStorage.getItem("GscExcel");
+      if (currentValue === "true") {
+        setLocalStorageExcel(true);
+      } else {
+        setLocalStorageExcel(false);
+      }
+    }, 500); // Check every 500ms
+
+    // Listen for storage changes from other tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "GscExcel") {
+        if (e.newValue === "true") {
+          setLocalStorageExcel(true);
+        } else {
+          setLocalStorageExcel(false);
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
 
-  // Process Excel file
-  const processExcelFile = useCallback(
-    async (fileId: string) => {
-      const fileToProcess = uploadedFiles.find((f) => f.id === fileId);
-      if (!fileToProcess) return;
-
-      try {
-        setProcessingFiles((prev) => ({ ...prev, [fileId]: true }));
-        toast.info(`Processing ${fileToProcess.name}...`);
-
-        // Read file content as ArrayBuffer
-        const arrayBuffer = await fileToProcess.file.arrayBuffer();
-        const uint8Array = new Uint8Array(arrayBuffer);
-
-        // Process file in Rust backend
-        const result = await invoke("process_excel_file", {
-          fileData: Array.from(uint8Array),
-          fileName: fileToProcess.name,
-        });
-
-        // Handle the processed data
-        if (result && result.data) {
-          setFilePreview({
-            fileName: fileToProcess.name,
-            data: result.data,
-            processedAt: new Date().toISOString(),
-          });
-          toast.success(`File processed successfully`);
-        }
-      } catch (error) {
-        console.error("Processing failed:", error);
-        toast.error(
-          <section className="w-full">
-            {error instanceof Error ? error.message : String(error)}
-          </section>,
-        );
-      } finally {
-        setProcessingFiles((prev) => ({ ...prev, [fileId]: false }));
-      }
-    },
-    [uploadedFiles],
-  );
-
-  // Preview file content
-  const previewFileContent = useCallback(
-    (fileId: string) => {
-      const file = uploadedFiles.find((f) => f.id === fileId);
-      if (!file) return;
-
-      setFilePreview({
-        fileName: file.name,
-        data: null, // Will be populated after processing
-        processedAt: null,
-      });
-    },
-    [uploadedFiles],
-  );
-
-  // Memoized file items
-  const FileItem = React.memo(({ file, onRemove, onProcess, onPreview }) => {
-    return (
-      <div className="flex items-center justify-between p-2 rounded-md transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700 border dark:border-gray-700">
-        <div className="flex flex-col space-y-0.5 w-full">
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center">
-              <FaFolder className="h-3 w-3 mr-1 text-blue-500 dark:text-blue-400" />
-              <span className="text-xs font-medium dark:text-white truncate max-w-[120px]">
-                {file.name}
-              </span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 hover:bg-gray-200 dark:hover:bg-gray-600"
-                onClick={() => onPreview(file.id)}
-                disabled={processingFiles[file.id]}
-              >
-                <FolderOpen className="h-3 w-3 text-gray-500 dark:text-gray-400" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 hover:bg-gray-200 dark:hover:bg-gray-600"
-                onClick={() => onProcess(file.id)}
-                disabled={processingFiles[file.id]}
-              >
-                {processingFiles[file.id] ? (
-                  <Spinner className="h-3 w-3 text-gray-500 dark:text-brand-bright" />
-                ) : (
-                  <IoPlayCircleOutline className="h-3 w-3 text-gray-500 dark:text-brand-400" />
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-5 w-5 hover:bg-gray-200 dark:hover:bg-gray-600"
-                onClick={() => onRemove(file.id)}
-              >
-                <X className="h-3 w-3 text-gray-500 dark:text-gray-400" />
-              </Button>
-            </div>
-          </div>
-          <div className="flex items-center justify-between text-[10px] text-gray-500 dark:text-gray-400">
-            <span>{formatFileSize(file.size)}</span>
-            <span>{formatTimestamp(file.lastModified)}</span>
-          </div>
-        </div>
-      </div>
-    );
-  });
-
-  FileItem.displayName = "FileItem";
-
   return (
-    <section className="w-[650px] max-w-5xl mx-auto h-[670px] pt-2">
-      <CardContent className="grid grid-cols-1 gap-6 h-[380px]">
-        <div className="space-y-4">
-          <div className="rounded-md h-[580px] overflow-y-auto">
-            <div className="grid grid-cols-2 gap-4">
-              {/* Left Column - File Upload */}
-              <div className="space-y-6 overflow-hidden">
-                <div>
-                  <h3 className="text-sm font-medium mb-2 text-left dark:text-white">
-                    Upload Excel Files
-                  </h3>
+    <section className="w-full max-w-5xl mx-auto h-[670px]  dark:ring-0">
+      <CardContent className="grid grid-cols-1 gap-6 h-[580px] max-h-[560px]">
+        <div className="grid grid-cols-12 gap-6 h-full">
+          {/* Left Column - Upload & Settings */}
+          <div className="col-span-4 flex flex-col gap-4 h-full dark:text-white">
+            <div className="h-full border dark:border-white/30 rounded-lg bg-muted/30 dark:bg-muted/10 p-4 flex flex-col gap-4">
+              <h3 className="text-sm font-medium text-foreground">
+                File Upload
+              </h3>
 
-                  <div className="space-y-3 border rounded-md bg-muted h-[23.1rem] dark:border-brand-dark">
-                    <div className="py-1 p-4">
-                      <div className="space-y-2 mt-2">
-                        <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-lg cursor-pointer bg-background hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors duration-200">
-                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <Upload className="w-6 h-6 mb-2 text-gray-500 dark:text-gray-400" />
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              <span className="font-semibold">
-                                Click to upload
-                              </span>{" "}
-                              or drag and drop
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              .xlsx files only
-                            </p>
-                          </div>
-                          <input
-                            type="file"
-                            className="hidden"
-                            accept=".xlsx"
-                            onChange={handleFileUpload}
-                            multiple
-                          />
-                        </label>
-                      </div>
+              {!uploadedFile ? (
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-background hover:bg-accent/50 transition-colors border-muted-foreground/25 hover:border-brand-bright">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">
+                      <span className="font-semibold text-foreground">
+                        Click to upload
+                      </span>{" "}
+                      or drag and drop
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mt-1">
+                      .xlsx or .csv
+                    </p>
+                  </div>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept=".xlsx,.csv"
+                    onChange={handleFileUpload}
+                  />
+                </label>
+              ) : (
+                <div className="w-full border dark:border-white/30 rounded-md bg-background p-3 relative group">
+                  <button
+                    onClick={handleRemoveFile}
+                    className="absolute bottom-1 right-1 p-1 hover:bg-destructive/10 text-muted-foreground hover:text-destructive rounded-full transition-colors"
+                  >
+                    <X className="w-4 h-4 dark:text-red-600" />
+                  </button>
+
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-brand-bright/10 rounded-md">
+                      <FileSpreadsheet className="w-5 h-5 text-brand-bright" />
                     </div>
-
-                    {/* Files List */}
-                    <section className="h-full">
-                      <div className="">
-                        <h4 className="text-xs h-6 border-b dark:border-brand-dark shadow font-medium px-4 dark:text-white sticky bg-white dark:bg-brand-darker">
-                          Uploaded Files ({uploadedFiles.length})
-                        </h4>
-                        <div className="space-y-2 p-3 h-[14.5em] overflow-y-auto">
-                          {uploadedFiles.length > 50 ? (
-                            <List
-                              height={300}
-                              itemCount={uploadedFiles.length}
-                              itemSize={60}
-                              width="100%"
-                            >
-                              {({ index, style }) => (
-                                <div style={style}>
-                                  <FileItem
-                                    file={uploadedFiles[index]}
-                                    onRemove={handleRemoveFile}
-                                    onProcess={processExcelFile}
-                                    onPreview={previewFileContent}
-                                  />
-                                </div>
-                              )}
-                            </List>
-                          ) : (
-                            uploadedFiles.map((file) => (
-                              <FileItem
-                                key={file.id}
-                                file={file}
-                                onRemove={handleRemoveFile}
-                                onProcess={processExcelFile}
-                                onPreview={previewFileContent}
-                              />
-                            ))
-                          )}
-                          {uploadedFiles.length === 0 && (
-                            <div className="text-center py-4 text-xs text-gray-500 dark:text-gray-400">
-                              No files uploaded yet
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </section>
+                    <div className="flex flex-col overflow-hidden">
+                      <span
+                        className="text-xs font-medium truncate w-40"
+                        title={uploadedFile.name}
+                      >
+                        {uploadedFile.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatFileSize(uploadedFile.size)}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Right Column - File Preview */}
-              <div>
-                <h3 className="text-lg dark:text-white font-semibold text-left">
-                  File Preview
-                </h3>
-                <div className="border dark:border-brand-dark dark:border-brand rounded-lg h-[370px] overflow-y-auto">
-                  {isLoading ? (
-                    <SkeletonLoader />
-                  ) : filePreview ? (
-                    <div className="p-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                            {filePreview.fileName}
-                          </h4>
-                          {filePreview.processedAt && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              Processed:{" "}
-                              {formatTimestamp(filePreview.processedAt)}
-                            </p>
-                          )}
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setFilePreview(null)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-
-                      {filePreview.data ? (
-                        <div className="overflow-x-auto">
-                          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-xs">
-                            <thead className="bg-gray-50 dark:bg-gray-800">
-                              <tr>
-                                {Object.keys(filePreview.data[0] || {}).map(
-                                  (key) => (
-                                    <th
-                                      key={key}
-                                      scope="col"
-                                      className="px-2 py-1 text-left font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                                    >
-                                      {key}
-                                    </th>
-                                  ),
-                                )}
-                              </tr>
-                            </thead>
-                            <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-                              {filePreview.data.slice(0, 10).map((row, i) => (
-                                <tr key={i}>
-                                  {Object.values(row).map((value, j) => (
-                                    <td
-                                      key={j}
-                                      className="px-2 py-1 whitespace-nowrap text-gray-900 dark:text-gray-200"
-                                    >
-                                      {String(value)}
-                                    </td>
-                                  ))}
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                          {filePreview.data.length > 10 && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                              Showing first 10 rows of {filePreview.data.length}
-                            </p>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center h-40 text-gray-500 dark:text-gray-400">
-                          <p className="text-sm">
-                            File not processed yet. Click the play button to
-                            process.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
-                      <FolderOpen className="h-8 w-8 mb-2" />
-                      <p className="text-xs">No file selected for preview</p>
-                      <p className="text-xs px-4 text-center">
-                        Upload a file and click the preview button to view its
-                        contents.
-                      </p>
-                    </div>
-                  )}
+              {uploadedFile && sheets.length > 0 && (
+                <div className="flex flex-col gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                    Select Sheet
+                  </span>
+                  <div className="flex flex-col gap-1 max-h-80 overflow-y-auto pr-1">
+                    {sheets.map((sheet) => (
+                      <button
+                        key={sheet}
+                        onClick={() => handleSheetSelect(sheet)}
+                        className={`text-left text-sm px-3 py-2 rounded-md transition-all flex items-center justify-between ${
+                          selectedSheet === sheet
+                            ? "bg-brand-bright text-white shadow-md shadow-brand-bright/20"
+                            : "hover:bg-accent text-foreground"
+                        }`}
+                      >
+                        <span className="truncate">{sheet}</span>
+                        {selectedSheet === sheet && (
+                          <Check className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
                 </div>
+              )}
+
+              <div className="mt-auto">
+                <Button
+                  className="w-full"
+                  onClick={handleProcessFile}
+                  disabled={!selectedSheet || isProcessing}
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <IoPlayCircleOutline className="mr-2 h-4 w-4" />
+                      Process Data
+                    </>
+                  )}
+                </Button>
               </div>
+            </div>
+          </div>
+
+          {/* Right Column - Preview */}
+          <div className="col-span-8 h-full max-h-[560px] border dark:border-white/30 rounded-lg bg-background flex flex-col overflow-hidden">
+            <div className="p-3 border-b dark:border-b-white/30 bg-muted/30 dark:bg-muted/10 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-medium flex items-center gap-2 dark:text-white">
+                  <FolderOpen className="w-4 h-4 text-brand-bright" />
+                  Data Preview
+                </h3>
+                <div
+                  className={`h-2 w-2 rounded-full bg-${localStorageExcel ? "green" : "red"}-500`}
+                />
+              </div>
+              {filePreview && (
+                <span className="text-xs text-muted-foreground dark:text-white">
+                  Loaded {filePreview.data?.length || 0} rows
+                </span>
+              )}
+            </div>
+
+            <div className="flex-1 overflow-auto bg-white dark:bg-zinc-950/30">
+              {filePreview?.data ? (
+                <table className="w-full text-xs text-left">
+                  <thead className="sticky top-0 bg-muted/50 text-muted-foreground font-medium z-10 shadow-sm backdrop-blur-sm">
+                    <tr>
+                      {Object.keys(filePreview.data[0] || {}).map((key) => (
+                        <th
+                          key={key}
+                          className="px-3 py-2 whitespace-nowrap border-b border-border/50"
+                        >
+                          {key}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/30">
+                    {filePreview.data.map((row, i) => (
+                      <tr
+                        key={i}
+                        className="hover:bg-muted/30 transition-colors"
+                      >
+                        {Object.values(row).map((value, j) => (
+                          <td
+                            key={j}
+                            className="px-3 py-1.5 whitespace-nowrap text-foreground/90"
+                          >
+                            {String(value)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
+                  <div className="p-4 bg-muted/30 dark:text-white/50 rounded-full">
+                    <FileSpreadsheet className="w-8 h-8 opacity-50" />
+                  </div>
+                  <p className="text-sm dark:text-white/40">
+                    Select a file and sheet to preview data
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-end mt-8">
-        <div className="flex gap-2">
-          <Button
-            onClick={() => setUploadedFiles([])}
-            variant="secondary"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : null}
-            Clear All
-          </Button>
-        </div>
-      </CardFooter>
     </section>
   );
 }

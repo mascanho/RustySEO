@@ -70,13 +70,13 @@
     "jspdf": "^2.5.2",
     "jszip": "^3.10.1",
     "lucide-react": "^0.525.0",
-    "next": "^16.0.3",
+    "next": "^16.0.7",
     "next-themes": "^0.4.6",
     "ollama": "^0.5.6",
     "ollama-ai-provider": "^0.10.0",
     "prettier": "^3.3.2",
     "prismjs": "^1.29.0",
-    "react": "^19.2.0",
+    "react": "^19.2.3",
     "react-beautiful-dnd": "^13.1.1",
     "react-code-blocks": "^0.1.6",
     "react-confetti": "^6.1.0",
@@ -111,6 +111,7 @@
     "use-debounce": "^10.0.1",
     "uuid": "^10.0.0",
     "vaul": "^0.9.1",
+    "xlsx": "^0.18.5",
     "zustand": "^4.5.4"
   },
   "devDependencies": {

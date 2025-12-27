@@ -28,6 +28,8 @@ pub mod chat;
 pub mod crawler;
 pub mod domain_crawler;
 pub mod settings;
+pub mod uploads;
+pub mod url_checker;
 pub mod users;
 
 pub mod machine_learning;
@@ -263,7 +265,10 @@ async fn main() {
             get_project_chunk_size_command,
             delete_config_folders_command,
             open_config_folder_command,
-            settings::settings::get_settings_command
+            settings::settings::get_settings_command,
+            url_checker::http_check::check_url,
+            loganalyser::log_commands::save_gsc_data,
+            loganalyser::helpers::gsc_log::load_gsc_from_database
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -90,7 +90,7 @@ export default function DomainManager({ closeDialog }: DomainManagerProps) {
   }, []);
 
   return (
-    <section className="w-[650px] max-w-5xl mx-auto h-[500px] pt-4">
+    <section className="w-[750px] max-w-5xl mx-auto h-[500px] pt-4">
       <CardContent className="grid gap-6 h-[490px]">
         {/* Domain Input Section */}
         <div className="space-y-4">

@@ -146,7 +146,7 @@ export default function LogsDBManager({ closeDialog, dbLogs }: any) {
   };
 
   return (
-    <section className="w-[650px] max-w-5xl mx-auto h-[670px] pt-2">
+    <section className="w-[750px] max-w-5xl mx-auto h-[670px] pt-2">
       <CardContent className="grid grid-cols-1 gap-6 h-[480px]">
         <div className="space-y-4">
           <div className="rounded-md h-[580px] overflow-y-auto">

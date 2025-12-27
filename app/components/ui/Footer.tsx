@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 import React, { useEffect, useState, useCallback } from "react";
 import { LiaTasksSolid } from "react-icons/lia";
@@ -43,6 +44,8 @@ import PopOverParsedLogs from "@/app/serverlogs/_components/PopOverParsedLogs";
 import ChangeLogContainer from "@/components/ui/changelog/ChangeLogContainer";
 import System from "./Footer/Sys/System";
 import LogAnalyserFooter from "./Footer/Loganalyserfooter/LoganalyserFooter";
+import useLoaderStore from "@/store/loadersStore";
+import HttpFooterLoader from "./URLchecker/FooterLoader";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -73,6 +76,10 @@ const Footer = () => {
     showChatbar,
     hideChatbar,
   } = useVisibilityStore();
+
+  // HTTP CHECKER FOOTER LOADER
+  const { loaders, toggleHttpChecker } = useLoaderStore();
+
   const [openedDrawer, { open: openDrawer, close: closeDrawer }] =
     useDisclosure(false);
   const [hasOllama, setHasOllama] = useState("");
@@ -292,6 +299,8 @@ const Footer = () => {
                 <LogAnalyserFooter />
               </div>
             )}
+            {/* HTTP CHECKER LOADER  */}
+            {loaders?.httpChecker && <HttpFooterLoader />}
           </div>
         </section>
         <section className="flex items-center space-x-2">
