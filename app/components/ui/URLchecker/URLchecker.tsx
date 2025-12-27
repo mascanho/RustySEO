@@ -543,7 +543,7 @@ export function UrlStatusChecker() {
         className="fixed inset-0 bg-black/20 dark:bg-black/60 z-40 backdrop-blur-[2px] transition-all duration-300"
         onClick={handleHideHttpChecker}
       />
-      <Card className="max-w-full bg-card w-[650px] border-border fixed bottom-9 left-2 z-50 dark:bg-brand-darker h-[calc(100vh-120px)] max-h-[900px] flex flex-col shadow-2xl rounded-xl overflow-hidden animate-in slide-in-from-left-4 fade-in duration-300">
+      <Card className="max-w-full bg-white dark:bg-brand-darker w-[650px] border-border fixed bottom-9 left-2 z-50 h-[calc(100vh-120px)] max-h-[900px] flex flex-col shadow-2xl rounded-xl overflow-hidden animate-in slide-in-from-left-4 fade-in duration-300">
         {/* Header */}
         <div className="p-4 border-b border-border/50 flex items-center justify-between flex-shrink-0 bg-secondary/5 dark:bg-card">
           <div className="flex items-center gap-2">
@@ -782,7 +782,7 @@ export function UrlStatusChecker() {
                     max="300"
                     value={pollingInterval}
                     onChange={(e) => setPollingInterval(Number(e.target.value))}
-                    className="h-8 pl-8 text-xs font-bold bg-background dark:bg-card border-border/50 dark:border-white/10 focus-visible:ring-primary/20 text-foreground"
+                    className="h-8 pl-8 text-xs font-bold bg-white dark:bg-transparent border-border/50 dark:border-white/20 focus-visible:ring-primary/20 text-foreground"
                   />
                   <RefreshCw className="absolute left-2.5 top-2 w-3 h-3 text-muted-foreground" />
                 </div>
@@ -1021,7 +1021,7 @@ export function UrlStatusChecker() {
                 onChange={(e) => setNewUrl(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && addUrl()}
                 disabled={isPolling}
-                className="h-9 pl-9 text-xs font-bold bg-secondary/30 dark:bg-card border-border/50 dark:border-white/10 focus-visible:ring-primary/20 rounded-lg text-foreground"
+                className="h-9 pl-9 text-xs font-bold bg-white dark:bg-transparent border-border/50 dark:border-white/20 focus-visible:ring-primary/20 rounded-lg text-foreground"
               />
             </div>
             <Button
