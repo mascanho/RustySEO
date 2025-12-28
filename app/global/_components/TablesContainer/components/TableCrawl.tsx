@@ -45,6 +45,7 @@ interface TableCrawlProps {
 
 interface TruncatedCellProps {
   text: string;
+  maxLength?: number;
   width?: string;
 }
 
@@ -84,8 +85,14 @@ interface ColumnPickerProps {
 
 const TruncatedCell = memo(({
   text,
+  maxLength = 90,
   width = "auto",
 }: TruncatedCellProps) => {
+  const truncatedText = useMemo(() => {
+    if (!text) return "";
+    return text.toString().length > maxLength ? `${text.toString().slice(0, maxLength)}...` : text;
+  }, [text, maxLength]);
+
   return (
     <div
       style={{
@@ -94,9 +101,8 @@ const TruncatedCell = memo(({
         textOverflow: "ellipsis",
         whiteSpace: "nowrap",
       }}
-      title={text?.toString()}
     >
-      {text}
+      {truncatedText}
     </div>
   );
 });
