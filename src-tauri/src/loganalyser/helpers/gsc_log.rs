@@ -16,6 +16,7 @@ struct GscMetrics {
     position: i32,
     clicks: i32,
     impressions: i32,
+    ctr: f64,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -52,6 +53,7 @@ pub fn load_gsc_from_database() -> Result<GscMessage, String> {
                 position: entry.position,
                 clicks: entry.clicks,
                 impressions: entry.impressions,
+                ctr: entry.ctr,
             },
         );
     }
@@ -142,16 +144,21 @@ fn normalize_gsc_path(path: &str) -> String {
 }
 
 /// Get GSC data for a specific path using exact matching
-pub fn get_gsc_data_for_path(path: &str) -> Option<(i32, i32, i32)> {
+pub fn get_gsc_data_for_path(path: &str) -> Option<(i32, i32, i32, f64)> {
     let cache = GSC_CACHE.lock().unwrap();
 
     // Normalize the input path
     let normalized_path = normalize_gsc_path(path);
 
     // Try exact match on normalized path
-    cache
-        .get(&normalized_path)
-        .map(|metrics| (metrics.position, metrics.clicks, metrics.impressions))
+    cache.get(&normalized_path).map(|metrics| {
+        (
+            metrics.position,
+            metrics.clicks,
+            metrics.impressions,
+            metrics.ctr,
+        )
+    })
 }
 
 /// Find the matching URL for a path using exact matching
@@ -173,26 +180,41 @@ pub fn get_matching_url(path: &str) -> Option<String> {
 pub fn get_gsc_data_for_path_with_options(
     path: &str,
     exact_match: bool,
-) -> Option<(i32, i32, i32)> {
+) -> Option<(i32, i32, i32, f64)> {
     let cache = GSC_CACHE.lock().unwrap();
     let normalized_path = normalize_gsc_path(path);
 
     if exact_match {
         // Strict exact matching
-        cache
-            .get(&normalized_path)
-            .map(|metrics| (metrics.position, metrics.clicks, metrics.impressions))
+        cache.get(&normalized_path).map(|metrics| {
+            (
+                metrics.position,
+                metrics.clicks,
+                metrics.impressions,
+                metrics.ctr,
+            )
+        })
     } else {
         // Try exact match first
         if let Some(metrics) = cache.get(&normalized_path) {
-            return Some((metrics.position, metrics.clicks, metrics.impressions));
+            return Some((
+                metrics.position,
+                metrics.clicks,
+                metrics.impressions,
+                metrics.ctr,
+            ));
         }
 
         // Fallback: Try to match with or without www
         let alternatives = generate_path_alternatives(&normalized_path);
         for alt_path in alternatives {
             if let Some(metrics) = cache.get(&alt_path) {
-                return Some((metrics.position, metrics.clicks, metrics.impressions));
+                return Some((
+                    metrics.position,
+                    metrics.clicks,
+                    metrics.impressions,
+                    metrics.ctr,
+                ));
             }
         }
 
@@ -221,19 +243,31 @@ fn generate_path_alternatives(path: &str) -> Vec<String> {
 }
 
 pub fn gsc_position_match(path: &str) -> Option<i32> {
-    get_gsc_data_for_path(path).map(|(pos, _, _)| pos)
+    get_gsc_data_for_path(path).map(|(pos, _, _, _)| pos)
 }
 
 pub fn gsc_impressions_match(path: &str) -> Option<i32> {
-    get_gsc_data_for_path(path).map(|(_, _, imp)| imp)
+    get_gsc_data_for_path(path).map(|(_, _, imp, _)| imp)
 }
 
 pub fn gsc_clicks_match(path: &str) -> Option<i32> {
-    get_gsc_data_for_path(path).map(|(_, clicks, _)| clicks)
+    get_gsc_data_for_path(path).map(|(_, clicks, _, _)| clicks)
+}
+
+pub fn gsc_ctr_match(path: &str) -> Option<f64> {
+    get_gsc_data_for_path(path).map(|(_, _, _, ctr)| ctr)
 }
 
 // Helper function for log parsing
-pub fn get_all_gsc_metrics(path: &str) -> (Option<i32>, Option<i32>, Option<i32>, Option<String>) {
+pub fn get_all_gsc_metrics(
+    path: &str,
+) -> (
+    Option<i32>,
+    Option<i32>,
+    Option<i32>,
+    Option<String>,
+    Option<f64>,
+) {
     let cache = GSC_CACHE.lock().unwrap();
     let normalized_path = normalize_gsc_path(path);
 
@@ -243,9 +277,10 @@ pub fn get_all_gsc_metrics(path: &str) -> (Option<i32>, Option<i32>, Option<i32>
             Some(metrics.clicks),
             Some(metrics.impressions),
             Some(normalized_path),
+            Some(metrics.ctr),
         )
     } else {
-        (None, None, None, None)
+        (None, None, None, None, None)
     }
 }
 

@@ -143,6 +143,12 @@ fn extract_excel_upload(
         .and_then(|v| v.as_i64())
         .unwrap_or(0) as i32;
 
+    let ctr = obj
+        .get("ctr")
+        .or_else(|| obj.get("CTR"))
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.0);
+
     Ok(storage::ExcelUpload {
         id: 0, // Will be auto-incremented
         date,
@@ -150,5 +156,6 @@ fn extract_excel_upload(
         position,
         clicks,
         impressions,
+        ctr,
     })
 }

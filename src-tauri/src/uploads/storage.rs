@@ -17,6 +17,7 @@ pub struct ExcelUpload {
     pub position: i32,
     pub clicks: i32,
     pub impressions: i32,
+    pub ctr: f64,
 }
 
 impl Storage {
@@ -37,7 +38,8 @@ impl Storage {
                 url TEXT NOT NULL,
                 position INTEGER NOT NULL,
                 clicks INTEGER NOT NULL,
-                impressions INTEGER NOT NULL
+                impressions INTEGER NOT NULL,
+                ctr REAL NOT NULL
             )",
                 [],
             )
@@ -56,13 +58,14 @@ impl Storage {
     /// Inserts a single row (for adding to existing data)
     pub fn insert_single(&self, data: &ExcelUpload) -> Result<(), String> {
         self.conn.execute(
-            "INSERT INTO gsc_excel_upload (date, url, position, clicks, impressions) VALUES (?1, ?2, ?3, ?4, ?5)",
+            "INSERT INTO gsc_excel_upload (date, url, position, clicks, impressions, ctr) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
             params![
                 data.date,
                 data.url,
                 data.position,
                 data.clicks,
-                data.impressions
+                data.impressions,
+                data.ctr
             ],
         )
         .map_err(|e| e.to_string())?;
@@ -99,13 +102,14 @@ impl Storage {
         let mut count = 0;
         for data in data_list {
             tx.execute(
-                "INSERT INTO gsc_excel_upload (date, url, position, clicks, impressions) VALUES (?1, ?2, ?3, ?4, ?5)",
+                "INSERT INTO gsc_excel_upload (date, url, position, clicks, impressions, ctr) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
                 params![
                     data.date,
                     data.url,
                     data.position,
                     data.clicks,
-                    data.impressions
+                    data.impressions,
+                    data.ctr
                 ],
             )
             .map_err(|e| e.to_string())?;
@@ -132,6 +136,7 @@ impl Storage {
                     position: row.get(3)?,
                     clicks: row.get(4)?,
                     impressions: row.get(5)?,
+                    ctr: row.get(6)?,
                 })
             })
             .map_err(|e| e.to_string())?;
@@ -184,6 +189,7 @@ impl Storage {
                     position: row.get(3)?,
                     clicks: row.get(4)?,
                     impressions: row.get(5)?,
+                    ctr: row.get(6)?,
                 })
             })
             .map_err(|e| e.to_string())?;
