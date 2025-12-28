@@ -18,7 +18,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { htmlElements } from "./HtmlElements";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { toast } from "sonner";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 
 export default function CustomSearchSelector({ close }) {

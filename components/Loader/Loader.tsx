@@ -1,5 +1,5 @@
 "use client";
-import { invoke } from "@tauri-apps/api/core";
+import { api } from "@/lib/api";
 import { usePathname } from "next/navigation";
 import { useEffect, useState, useMemo } from "react";
 
@@ -34,12 +34,16 @@ const Loader = () => {
       try {
         // Step 1: Check if window is defined
         if (typeof window !== "undefined") {
-          // Step 2: Call search console API
-          const result = await invoke<{}>("call_google_search_console");
+          // Step 2: Call search console API with timeout
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Search console call timed out")), 2000)
+          );
+          await Promise.race([api.callGoogleSearchConsole(), timeoutPromise]);
         }
       } catch (error) {
-        // Step 3: Handle any errors
+        // Step 3: Handle any errors gracefully
         console.warn("Search console connection unavailable:", error);
+        // Don't throw - let the loader continue
       } finally {
         // Step 4: Cleanup/final steps
         console.log("Search console call completed");
@@ -66,13 +70,13 @@ const Loader = () => {
         );
       }, 2000);
 
-      // Hide loader after 11 seconds
+      // Hide loader after 3 seconds
       const timeout = setTimeout(() => {
         setIsVisible(false);
         if (typeof window !== "undefined") {
           sessionStorage.setItem("hasInitiallyLoaded", "true");
         }
-      }, 11000);
+      }, 3000);
 
       return () => {
         clearInterval(messageInterval);

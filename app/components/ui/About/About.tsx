@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 import React, { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { api } from "@/lib/api";
 import { IoReload } from "react-icons/io5";
 
 const About: React.FC = () => {
@@ -18,7 +18,7 @@ const About: React.FC = () => {
   const checkForUpdates = async () => {
     setIsChecking(true);
     try {
-      const versions = await invoke("version_check_command");
+      const versions = await api.versionCheck();
 
       const latestVersion = versions.github;
       const localVersion = versions.local;

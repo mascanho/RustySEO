@@ -24,8 +24,8 @@ import {
   FiBarChart,
 } from "react-icons/fi";
 import { IoKey } from "react-icons/io5";
-import { invoke } from "@tauri-apps/api/core";
-import { emit, listen } from "@tauri-apps/api/event";
+import { invoke } from "@/lib/invoke";
+import { emit, listen } from "@/lib/tauri-compat";
 
 const RankingMenus = ({
   children,

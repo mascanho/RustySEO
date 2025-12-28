@@ -2,7 +2,6 @@ use anyhow::{anyhow, Result};
 use directories::ProjectDirs;
 use reqwest;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 
 const API_KEY: &str = "AIzaSyAzGe221fKyFf8IgPNFAIpK7YfKugNSVhc"; // Replace with your actual API key
 const API_ENDPOINT: &str =
@@ -215,8 +214,8 @@ pub struct Headings {
 }
 
 #[tauri::command]
-pub async fn get_headings_command(aiHeadings: String) -> Result<String, String> {
-    match generate_headings(aiHeadings).await {
+pub async fn get_headings_command(ai_headings: String) -> Result<String, String> {
+    match generate_headings(ai_headings).await {
         Ok(response) => Ok(response),
         Err(e) => Err(e.to_string()),
     }

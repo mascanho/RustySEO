@@ -1,7 +1,7 @@
 use directories::ProjectDirs;
 use r2d2::Pool;
 use r2d2_sqlite::SqliteConnectionManager;
-use rusqlite::{params, Connection, Result as RusqliteResult};
+use rusqlite::{params, Connection};
 use serde::{Deserialize, Serialize};
 use serde_json::{self, Value};
 use std::fs;
@@ -437,7 +437,7 @@ pub struct Differential {
 
 // Helper function to compare the fisr and last elemets of the tables
 // it ensures that the domain is the same and if it isnt then use a specific one.
-pub async fn check_diff_domains(urls: Vec<String>) -> Result<(), String> {
+pub async fn check_diff_domains(_urls: Vec<String>) -> Result<(), String> {
     Ok(())
 }
 

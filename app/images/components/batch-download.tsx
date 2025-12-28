@@ -12,8 +12,8 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { save } from "@tauri-apps/plugin-dialog";
-import { writeFile, WriteFileOptions } from "@tauri-apps/plugin-fs";
+import { save } from "@/lib/tauri-compat";
+import { writeFile } from "@/lib/tauri-compat";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Archive, Download, CheckSquare, Square } from "lucide-react";

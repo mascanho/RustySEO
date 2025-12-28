@@ -10,7 +10,7 @@ import { CardContent, CardFooter } from "@/components/ui/card";
 import { BiSolidCategoryAlt, BiWorld } from "react-icons/bi";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 import { useRouter } from "next/navigation";
 
 interface DomainManagerProps {

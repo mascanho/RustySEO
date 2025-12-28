@@ -6,7 +6,7 @@ import CodeBlock from "../CodeBlock";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import useStore from "@/store/Panes";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 import PageSchemaAI from "./PageSchemaAI";
 
 const PageSchemaTable = ({

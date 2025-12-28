@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use futures::future::join_all;
-use rand::seq::{IndexedRandom, SliceRandom};
+use rand::seq::IndexedRandom;
 use rand::Rng;
 use reqwest::{
     header::{
@@ -343,7 +343,7 @@ async fn fetch_with_retry(
         // Exponential backoff with jitter
         let base_delay = MIN_DELAY_MS * 2u64.pow(attempt as u32 - 1);
         let jitter =
-            (base_delay as f32 * JITTER_FACTOR * rand::thread_rng().gen_range(-1.0..1.0)) as i64;
+            (base_delay as f32 * JITTER_FACTOR * rand::rng().random_range(-1.0..1.0)) as i64;
         let delay = (base_delay as i64 + jitter).max(0) as u64;
         sleep(Duration::from_millis(delay)).await;
     }
@@ -392,7 +392,7 @@ async fn try_head_then_get(
     // Try HEAD request first
     match client.head(url).send().await {
         Ok(response) => Ok(response),
-        Err(head_err) => {
+        Err(_head_err) => {
             // Fallback to GET if HEAD fails
             match client.get(url).send().await {
                 Ok(response) => Ok(response),

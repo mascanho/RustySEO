@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useCallback, useEffect } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { api } from "@/lib/api";
 import useGSCStatusStore from "@/store/GSCStatusStore";
 
 export const useGSCStatus = () => {
@@ -19,7 +19,7 @@ export const useGSCStatus = () => {
   const checkStatus = useCallback(async () => {
     try {
       setLoading(true);
-      const gscCredentials = await invoke("read_credentials_file");
+      const gscCredentials = await api.readGscCredentials();
 
       updateStatus(gscCredentials);
 
@@ -60,7 +60,7 @@ export const useGSCStatus = () => {
         // Use a test URL or default
         const url = testUrl || "example.com";
 
-        await invoke("call_gsc_match_url", { url });
+        await api.matchGscUrl(url);
 
         return {
           success: true,

@@ -1,4 +1,4 @@
-use chrono::{NaiveDateTime, Utc};
+use chrono::Utc;
 use directories::ProjectDirs;
 use rusqlite::{params, Connection, Result};
 use serde::{Deserialize, Serialize};
@@ -532,7 +532,7 @@ pub fn read_gsc_matched_from_db() -> Result<Vec<GscMatched>> {
 // -------FUNCTION TO DELETE/CLEAR all the results from the DB
 #[command]
 pub fn clear_table_command(table: &str) {
-    let result = clear_table(table).expect("Failed to clear table");
+    let _result = clear_table(table).expect("Failed to clear table");
 }
 
 pub fn clear_table(table: &str) -> Result<(), Box<dyn std::error::Error>> {

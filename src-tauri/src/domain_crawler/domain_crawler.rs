@@ -1,32 +1,27 @@
 use colored::*;
-use futures::stream::{self, StreamExt};
-use html5ever::interface::NodeOrText::AppendNode;
 use rand::Rng;
 use reqwest::Client;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::io::Write;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use std::time::Instant;
-use tauri::{Emitter, Manager};
+use tauri::Emitter;
 use tokio::sync::{Mutex, Semaphore};
-use tokio::task;
 use tokio::time::{sleep, Duration};
 use url::Url;
 
-use crate::crawler::get_page_speed_insights;
 use crate::domain_crawler::database::{Database, DatabaseResults};
 use crate::domain_crawler::extractors::html::extract_html;
 use crate::domain_crawler::helpers::extract_url_pattern::extract_url_pattern;
 use crate::domain_crawler::helpers::fetch_with_exponential::fetch_with_exponential_backoff;
 use crate::domain_crawler::helpers::https_checker::valid_https;
-use crate::domain_crawler::helpers::normalize_url::{self, normalize_url};
+use crate::domain_crawler::helpers::normalize_url::normalize_url;
 use crate::domain_crawler::helpers::robots::get_domain_robots;
 use crate::domain_crawler::helpers::skip_url::should_skip_url;
 use crate::domain_crawler::models::Extractor;
-use crate::domain_crawler::user_agents;
 use crate::settings::settings::Settings;
-use crate::AppState;
+use crate::main_lib_exports::AppState;
 
 use super::database::{self, DatabaseError};
 use super::helpers::canonical_selector::get_canonical;
@@ -41,20 +36,17 @@ use super::helpers::meta_robots_selector::{get_meta_robots, MetaRobots};
 use super::helpers::text_ratio::{get_text_ratio, TextRatio};
 use super::helpers::{
     alt_tags, anchor_links, check_html_page,
-    css_selector::{self, extract_css},
+    css_selector::{self},
     domain_checker::url_check,
     headings_selector, iframe_selector, images_selector, indexability, javascript_selector,
     links_selector,
     mobile_checker::is_mobile,
     ngrams, page_description,
-    pdf_selector::extract_pdf_links,
     schema_selector, title_selector,
-    word_count::{self, get_word_count},
+    word_count::get_word_count,
 };
-use super::helpers::{pdf_checker, pdf_selector};
 use super::models::DomainCrawlResults;
 use super::page_speed::bulk::fetch_psi_bulk;
-use super::page_speed::model::Crawler;
 
 // TODO: Clean this up and implement the constants from settings crate
 // Constants for crawler behavior
@@ -541,7 +533,7 @@ pub async fn crawl_domain(
 
     let client = Client::builder()
         .user_agent(
-            &settings.user_agents[rand::thread_rng().gen_range(0..settings.user_agents.len())],
+            &settings.user_agents[rand::rng().random_range(0..settings.user_agents.len())],
         )
         .timeout(Duration::from_secs(settings.client_timeout))
         .connect_timeout(Duration::from_secs(settings.client_connect_timeout))
@@ -681,7 +673,7 @@ pub async fn crawl_domain(
 
             let handle = tokio::spawn(async move {
                 let _permit = semaphore_clone.acquire().await.unwrap();
-                let jitter = rand::thread_rng().gen_range(500..2000);
+                let jitter = rand::rng().random_range(500..2000);
                 sleep(Duration::from_millis(jitter)).await;
 
                 let result = process_url(

@@ -13,7 +13,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardFooter } from "@/components/ui/card";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 import { IoPlayCircleOutline } from "react-icons/io5";
 import * as XLSX from "xlsx";
 import useGSCUploadStore from "@/store/GSCUploadStore";

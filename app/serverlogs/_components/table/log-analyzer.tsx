@@ -66,8 +66,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { CardContent } from "@/components/ui/card";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
-import { writeTextFile } from "@tauri-apps/plugin-fs";
-import { ask, message, save } from "@tauri-apps/plugin-dialog";
+import { writeTextFile } from "@/lib/tauri-compat";
+import { ask, message, save } from "@/lib/tauri-compat";
 import { SiGoogle, SiSuperuser } from "react-icons/si";
 import { toast } from "sonner";
 import { IpDisplay } from "./IpCheckModal";

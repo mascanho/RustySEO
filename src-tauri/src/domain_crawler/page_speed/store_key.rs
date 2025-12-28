@@ -35,7 +35,8 @@ pub async fn read_page_speed_bulk_api_key() -> Result<(), String> {
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct PageSpeedDetails {
-    pub apiKey: Option<String>,
+    #[serde(rename = "apiKey")]
+    pub api_key: Option<String>,
     pub page_speed_crawl: bool,
 }
 
@@ -45,7 +46,7 @@ pub async fn check_page_speed_bulk() -> Result<PageSpeedDetails, String> {
 
     // Create the PageSpeedDetails struct to return
     let details = PageSpeedDetails {
-        apiKey: settings.page_speed_bulk_api_key.unwrap_or_default(),
+        api_key: settings.page_speed_bulk_api_key.unwrap_or_default(),
         page_speed_crawl: settings.page_speed_bulk,
     };
 

@@ -15,9 +15,9 @@ import { TbColumns3 } from "react-icons/tb";
 import DownloadButton from "./DownloadButton";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { toast } from "sonner";
-import { writeFile } from "@tauri-apps/plugin-fs";
-import { save } from "@tauri-apps/plugin-dialog";
-import { invoke } from "@tauri-apps/api/core";
+import { writeFile } from "@/lib/tauri-compat";
+import { save } from "@/lib/tauri-compat";
+import { invoke } from "@/lib/invoke";
 
 interface TableCrawlProps {
   rows: Array<{

@@ -24,9 +24,9 @@ import { TbColumns3 } from "react-icons/tb";
 import DownloadButton from "./DownloadButton.tsx";
 import useFilterTableURL from "@/app/Hooks/useFilterTableUrl";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import { save } from "@tauri-apps/plugin-dialog";
-import { invoke } from "@tauri-apps/api/core";
-import { writeFile } from "@tauri-apps/plugin-fs";
+import { save } from "@/lib/tauri-compat";
+import { invoke } from "@/lib/invoke";
+import { writeFile } from "@/lib/tauri-compat";
 
 interface TableCrawlProps {
   rows: Array<{

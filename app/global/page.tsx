@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 import React, { useEffect, useState, useMemo, useCallback } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 import { Tabs } from "@mantine/core";
 import { FaGlobe, FaTasks, FaChartBar } from "react-icons/fa";
 import { RiFireLine } from "react-icons/ri";
@@ -16,7 +16,7 @@ import SidebarContainer from "./_components/Sidebar/SidebarContainer";
 import { useVisibilityStore } from "@/store/VisibilityStore";
 import TaskManagerContainer from "../components/ui/TaskManager/TaskManagerContainer";
 import TablesContainer from "./_components/TablesContainer/TablesContainer";
-import { listen } from "@tauri-apps/api/event";
+import { listen } from "@/lib/tauri-compat";
 import Analytics from "../components/ui/Analytics/Analytics";
 import ClarityContainer from "../components/ui/MSClarityModal/ClarityContainer";
 import KeywordAnalytics from "../components/ui/KwTracking/KeywordAnalytics";

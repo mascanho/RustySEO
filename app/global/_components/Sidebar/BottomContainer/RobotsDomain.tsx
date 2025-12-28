@@ -1,6 +1,6 @@
 // @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import { listen } from "@tauri-apps/api/event";
+import { listen } from "@/lib/tauri-compat";
 import { useEffect } from "react";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { brownPaper } from "react-syntax-highlighter/dist/esm/styles/hljs"; // Choose a style you like

@@ -1,4 +1,4 @@
-use rust_xlsxwriter::{workbook, worksheet, Format, FormatAlign, FormatBorder, Workbook};
+use rust_xlsxwriter::{Format, FormatAlign, FormatBorder, Workbook};
 use serde_json::Value;
 
 #[tauri::command]
@@ -680,7 +680,7 @@ pub fn generate_keywords_excel(data: Vec<Value>) -> Result<Vec<u8>, String> {
 
         // Write the top 10 keywords and their frequencies in subsequent columns
         let mut col_idx = 1; // Start from column 1 (after URL)
-        for (i, keyword_pair) in keywords.iter().take(10).enumerate() {
+        for (_i, keyword_pair) in keywords.iter().take(10).enumerate() {
             let keyword_array = match keyword_pair {
                 Value::Array(arr) => arr,
                 _ => return Err("Invalid keyword pair format: expected an array".to_string()),

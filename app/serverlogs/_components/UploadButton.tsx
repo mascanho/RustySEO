@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import IPManager from "./IPManager";
 import DomainManager from "./DomainManager";
 import LogsDBManager from "./LogsDBManager";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 import { useServerLogsStore } from "@/store/ServerLogsGlobalStore";
 import { IoReload, IoTrashBin } from "react-icons/io5";
 import { toast } from "sonner";

@@ -1,6 +1,6 @@
 // @ts-nocheck
-import { message, save } from "@tauri-apps/plugin-dialog";
-import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { message, save } from "@/lib/tauri-compat";
+import { writeTextFile } from "@/lib/tauri-compat";
 
 export const exportPSIDataCSV = async (data) => {
   if (!data?.length) {

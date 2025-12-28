@@ -1,22 +1,16 @@
 use std::collections::HashMap;
 
-use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use url::Url;
 
-use crate::crawler::libs::LinkStatus;
 
-use super::{
-    helpers::{
+use super::helpers::{
         alt_tags::AltTags, anchor_links::InternalExternalLinks, cross_origin::SecuritySummary,
         css_selector::CSS, hreflang_selector::HreflangObject, html_size_calculator::Sizes,
         iframe_selector::Iframe, indexability::Indexability, javascript_selector::JavaScript,
-        links_status_code_checker::LinkCheckResults, meta_robots_selector::MetaRobots,
-        pdf_selector::PdfLinks, text_ratio::TextRatio, title_selector::TitleDetails,
-    },
-    page_speed::model::LighthouseResult,
-};
+        links_status_code_checker::LinkCheckResults, meta_robots_selector::MetaRobots, text_ratio::TextRatio, title_selector::TitleDetails,
+    };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Extractor {

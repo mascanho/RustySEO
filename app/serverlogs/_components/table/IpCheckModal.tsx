@@ -6,7 +6,7 @@ import { Copy, Check, X, CloudCog } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 
 interface IpDisplayProps {
   ip: string;

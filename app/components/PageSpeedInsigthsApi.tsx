@@ -1,5 +1,5 @@
 "use client";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 import React, { useState } from "react";
 import { toast } from "sonner";
 import { usePathname } from "next/navigation";

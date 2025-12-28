@@ -4,7 +4,7 @@ import MenuDrawer from "@/app/components/ui/MenuDrawer";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import useCrawlStore from "@/store/GlobalCrawlDataStore";
 import useLoaderStore from "@/store/loadersStore";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 import React, { useState } from "react";
 import { CiGlobe } from "react-icons/ci";
 import { IoIosClose } from "react-icons/io";

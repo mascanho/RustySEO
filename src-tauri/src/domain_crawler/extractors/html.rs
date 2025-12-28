@@ -1,6 +1,6 @@
 use crate::domain_crawler::db_deep::db::{fetch_custom_search, ExtractorConfig};
 use scraper::{Html, Selector};
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 use tokio::sync::OnceCell;
 
 // Global cache for custom_search results

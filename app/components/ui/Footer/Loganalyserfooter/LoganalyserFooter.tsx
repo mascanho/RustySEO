@@ -22,7 +22,7 @@ import {
   useSelectedProject,
 } from "@/store/logFilterStore";
 import { toast } from "sonner";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 import { useEffect, useState } from "react";
 
 type Project = {

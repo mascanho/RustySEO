@@ -4,24 +4,14 @@ use crate::crawler::db::KeywordsSummary;
 use crate::crawler::db::KwTrackingData;
 use crate::crawler::db::MatchedKeywordData;
 use crate::crawler::libs;
-use crate::crawler::libs::ApiKeys;
-use crate::crawler::libs::ClarityData;
 use crate::crawler::libs::Credentials;
 use crate::crawler::libs::DateRange;
-use crate::image_converter::converter;
-use crate::machine_learning::keyword_frequency;
 use crate::settings::settings;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::Value;
-use std::collections::HashSet;
-use std::error::Error;
 use std::fs;
-use std::io::{self, BufWriter, Write};
-use std::path::PathBuf;
-use tauri::command;
-use tauri_plugin_shell::ShellExt;
-use toml;
+use std::io::{BufWriter, Write};
 
 // ---------------- READ SEO PAGE DATA FROM THE DB ----------------
 #[tauri::command]
@@ -99,7 +89,7 @@ pub fn check_ollama() -> Result<OllamaProcess, String> {
 // ------- SETTING GOOGLE SEARCH CONSOLE CREDENTIALS
 #[tauri::command]
 pub async fn set_google_search_console_credentials(credentials: Credentials) {
-    let credentials = libs::set_search_console_credentials(credentials).await;
+    let _credentials = libs::set_search_console_credentials(credentials).await;
 }
 
 // ------ CALL THE GOOGLE SEARCH CONSOLE FUNCTION

@@ -1,5 +1,4 @@
 use scraper::{Html, Selector};
-use std::collections::HashSet;
 use tauri::Url;
 
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize, Clone)]

@@ -21,10 +21,10 @@ import {
 import { Download, Upload, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Ad } from "@/types/ad";
-import { readTextFile } from "@tauri-apps/plugin-fs";
-import { open } from "@tauri-apps/plugin-dialog";
-import { writeTextFile, BaseDirectory } from "@tauri-apps/plugin-fs";
-import { save } from "@tauri-apps/plugin-dialog";
+import { readTextFile } from "@/lib/tauri-compat";
+import { open } from "@/lib/tauri-compat";
+import { writeTextFile, BaseDirectory } from "@/lib/tauri-compat";
+import { save } from "@/lib/tauri-compat";
 
 // Utility functions
 const adsToJson = (ads: Ad[]): string => JSON.stringify(ads, null, 2);

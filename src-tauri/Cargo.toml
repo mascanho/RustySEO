@@ -69,6 +69,12 @@ lazy_static = "1.5.0"
 moka = { version = "0.12", features = ["future"] }
 governor = "0.10.0"
 rayon = "1.10.0"
+axum = "0.7"
+tower-http = { version = "0.5", features = ["cors"] }
+
+[[bin]]
+name = "rustyseo-server"
+path = "src/server_main.rs"
 
 
 [features]

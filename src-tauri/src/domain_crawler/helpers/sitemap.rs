@@ -1,5 +1,4 @@
 use reqwest::StatusCode;
-use std::error::Error;
 use url::Url;
 
 pub async fn get_sitemap(base: &Url) -> Result<Vec<String>, String> {

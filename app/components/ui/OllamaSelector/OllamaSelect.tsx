@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { Select } from "@mantine/core";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 

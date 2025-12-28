@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "build:server": "cd src-tauri && cargo build --bin rustyseo-server",
+    "dev:server": "cd src-tauri && ./target/debug/rustyseo-server",
+    "dev:web": "concurrently \"npm run dev\" \"npm run dev:server\""
   },
   "dependencies": {
     "@hugeicons/react-pro": "^0.3.2",
@@ -112,12 +115,12 @@
     "uuid": "^10.0.0",
     "vaul": "^0.9.1",
     "xlsx": "^0.18.5",
+    "zod": "^4.2.1",
     "zustand": "^4.5.4"
   },
   "devDependencies": {
     "@tauri-apps/api": "^2.4.0",
     "@tauri-apps/cli": "^2.4.0",
-    "@tauri-apps/cli-win32-x64-msvc": "^2.8.3",
     "@types/lodash": "^4.17.15",
     "@types/node": "^20",
     "@types/react": "19.1.8",
@@ -132,7 +135,8 @@
     "postcss-preset-mantine": "^1.15.0",
     "postcss-simple-vars": "^7.0.1",
     "tailwindcss": "^3.4.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "concurrently": "^8.2.2"
   },
   "overrides": {
     "@types/react": "19.1.8",

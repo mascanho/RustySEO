@@ -1,6 +1,6 @@
 use crate::crawler::db::open_db_connection;
-use rusqlite::{Connection, Result};
-use rust_xlsxwriter::{Workbook, Worksheet};
+use rusqlite::Result;
+use rust_xlsxwriter::Workbook;
 
 #[tauri::command]
 pub fn export_to_excel_command() {
@@ -9,7 +9,7 @@ pub fn export_to_excel_command() {
 
 fn export_db_to_excel() -> Result<()> {
     let excel_path = "data.xlsx";
-    let db_path = "data.db";
+    let _db_path = "data.db";
 
     // Open the database connection
     let conn = open_db_connection("crawl_results.db").expect("Failed to open database connection");
@@ -18,7 +18,7 @@ fn export_db_to_excel() -> Result<()> {
 
     // Create a new Excel workbook
     let mut workbook = Workbook::new();
-    let mut sheet = workbook.add_worksheet();
+    let sheet = workbook.add_worksheet();
 
     // Get the table names from the database
     let mut stmt = conn.prepare("SELECT name FROM sqlite_master WHERE type='table'")?;

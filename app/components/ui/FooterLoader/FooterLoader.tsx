@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useEffect, useState, useCallback, memo } from "react";
-import { listen } from "@tauri-apps/api/event";
+import { listen } from "@/lib/tauri-compat";
 import useCrawlStore from "@/store/GlobalCrawlDataStore";
 
 const FooterLoader = () => {

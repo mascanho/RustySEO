@@ -4,8 +4,8 @@
 // Import necessary dependencies
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import KeywordTable from "./GSCtable";
-import { invoke } from "@tauri-apps/api/core";
-import { listen, emit } from "@tauri-apps/api/event";
+import { invoke } from "@/lib/invoke";
+import { emit, listen } from "@/lib/tauri-compat";
 import { toast } from "sonner";
 import { StatsWidgets } from "./Widgets/WidgetsKeywordsContainer";
 import {

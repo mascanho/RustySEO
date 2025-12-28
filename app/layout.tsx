@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import Footer from "./components/ui/Footer";
 import Loader from "@/components/Loader/Loader";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 import { toast } from "sonner";
 import { ChatBar } from "./components/Chat/Chatbar";
 import { usePathname } from "next/navigation";
@@ -90,9 +90,9 @@ export default function RootLayout({
         <MantineProvider>
           {/* Fixed MenuDrawer */}
           <section className="mb-[6.3rem]">
-            <Loader />
-            <TopMenuBar />
-            <ChatBar />
+            <Loader key="loader" />
+            <TopMenuBar key="top-menu-bar" />
+            <ChatBar key="chat-bar" />
           </section>
           <UrlStatusChecker />
           <main className="mt-9   rounded-md  ">

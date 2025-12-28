@@ -3,14 +3,11 @@ use ipnet::IpNet;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use reqwest;
-use serde::{Deserialize, Serialize};
-use std::io::{self, Write};
-use std::net::{AddrParseError, IpAddr};
+use std::net::IpAddr;
 use std::str::FromStr;
 use std::sync::Mutex;
-use tauri::{Emitter, Manager};
 
-use crate::loganalyser::helpers::gsc_log::{self, gsc_position_match};
+use crate::loganalyser::helpers::gsc_log::{self};
 use crate::loganalyser::helpers::modeling::{
     BingBotRanges, IpVerificationError, LogEntry, OpenAIBotRanges, TaxonomyInfo,
 };

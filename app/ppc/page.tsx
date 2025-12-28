@@ -4,7 +4,7 @@ export const dynamic = "force-static";
 import { AiOutlineCluster } from "react-icons/ai";
 import Link from "next/link";
 import React, { useCallback, useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 import MenuDrawer from "../components/ui/MenuDrawer";
 import { FaChevronDown } from "react-icons/fa";
 import Loader from "@/components/Loader/Loader";

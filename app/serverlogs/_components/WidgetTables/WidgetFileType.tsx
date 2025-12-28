@@ -65,8 +65,8 @@ import {
 } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import { CardContent } from "@/components/ui/card";
-import { message, save } from "@tauri-apps/plugin-dialog";
-import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { message, save } from "@/lib/tauri-compat";
+import { writeTextFile } from "@/lib/tauri-compat";
 import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
 import { useAsyncLogFilter } from "./hooks/useAsyncLogFilter";
 

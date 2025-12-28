@@ -409,8 +409,8 @@ async fn busqueda_individual(
     client: &Client,
     busqueda: &str,
     url: &str,
-    idioma: &str,
-    pais: &str,
+    _idioma: &str,
+    _pais: &str,
     scrapeado: Arc<Mutex<HashSet<String>>>,
 ) -> Result<Vec<(String, String)>, Box<dyn Error + Send + Sync>> {
     let mut locked_scrapeado = scrapeado.lock().await;
@@ -510,7 +510,7 @@ async fn busqueda_global<'a>(
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
             ),
         );
-        let request = client.get(&url).headers(headers);
+        let _request = client.get(&url).headers(headers);
 
         let nuevas_busquedas = busqueda_individual(
             client,

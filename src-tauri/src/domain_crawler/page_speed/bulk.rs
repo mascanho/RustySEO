@@ -1,7 +1,4 @@
-use crate::{
-    domain_crawler::page_speed::model::{LighthouseResult, PsiResponse},
-    Settings,
-};
+use crate::settings::settings::Settings;
 use reqwest::Client;
 use serde_json::Value;
 use std::sync::Arc;
@@ -152,7 +149,7 @@ async fn fetch_psi_with_retry(
     );
 
     let mut last_error = String::new();
-    let mut last_status = Option::<u16>::None;
+    let mut _last_status = Option::<u16>::None;
 
     for attempt in 0..=max_retries {
         // Add delay between retries (except first attempt)
@@ -169,7 +166,7 @@ async fn fetch_psi_with_retry(
             Ok(resp) => resp,
             Err(e) => {
                 last_error = format!("Request failed: {}", e);
-                last_status = None;
+                _last_status = None;
                 if attempt == max_retries {
                     let mut breaker = CIRCUIT_BREAKER.lock().await;
                     breaker.record_failure();
@@ -179,7 +176,7 @@ async fn fetch_psi_with_retry(
         };
 
         let status = response.status();
-        last_status = Some(status.as_u16());
+        _last_status = Some(status.as_u16());
 
         // Handle rate limiting and quota errors
         if status.as_u16() == 429 || status.as_u16() == 403 {

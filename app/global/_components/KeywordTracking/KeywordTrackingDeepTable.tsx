@@ -26,8 +26,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { invoke } from "@tauri-apps/api/core";
-import { emit, listen } from "@tauri-apps/api/event";
+import { invoke } from "@/lib/invoke";
+import { emit, listen } from "@/lib/tauri-compat";
 import { useKeywordsStore } from "@/store/KWTrackingStore";
 
 interface KeywordData {

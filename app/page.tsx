@@ -1,10 +1,11 @@
 // @ts-nocheck
 "use client";
 export const dynamic = "force-static";
+import { api } from "@/lib/api";
+import { invoke } from "@/lib/invoke";
 import { AiOutlineCluster } from "react-icons/ai";
 import Link from "next/link";
 import React, { useCallback, useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
 import replaceDoubleSlash from "./Hooks/DecodeURL";
 import SchemaTextEncoder from "./Hooks/SchemaTest";
 import OpenGraphCard from "./components/ui/OpenGraphCard";
@@ -166,7 +167,7 @@ const Home: React.FC<HomeProps> = () => {
   };
 
   useEffect(() => {
-    invoke("get_db_data").then((result) => {
+    api.getDbData().then((result) => {
       setDBDATA(result);
     });
   }, [pageSpeed]);
@@ -238,33 +239,7 @@ const Home: React.FC<HomeProps> = () => {
     setVideo([]);
     setUrlLength([]);
 
-    invoke<{
-      links: [];
-      headings: [];
-      page_title: [];
-      page_description: [];
-      canonical_url: [];
-      hreflangs: [];
-      response_code: number;
-      indexation: [];
-      page_schema: [];
-      words_arr: number;
-      reading_time: number;
-      og_details: any[];
-      favicon_url: [];
-      keywords: [];
-      readings: any[];
-      tag_container: any[];
-      images: any[];
-      head_elements: any[];
-      body_elements: any[];
-      robots: string;
-      ratio: any;
-      page_rank: any[];
-      charset_arr: any[];
-      video: any[];
-      url_length: any[];
-    }>("crawl", { url })
+    api.crawl(url)
       .then((result) => {
         handleLinkStatusCheck(url);
         showLinksSequentially(result.links); // Show links one by one
@@ -404,7 +379,7 @@ const Home: React.FC<HomeProps> = () => {
 
   const handleLinkStatusCheck = (url: any) => {
     setLinkStatusCodeStatus(true);
-    invoke<{}>("check_link_status", { url: url })
+    api.checkLinkStatus(url)
       .then((result: any) => {
         setLinkStatusCodes(result);
       })

@@ -2,7 +2,7 @@
 "use client";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import { useFetch } from "@mantine/hooks";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 import React, { useCallback, useEffect, useId, useState } from "react";
 import { FaExternalLinkAlt } from "react-icons/fa";
 import { toast } from "sonner";

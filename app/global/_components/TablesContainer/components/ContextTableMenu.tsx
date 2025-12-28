@@ -26,7 +26,7 @@ import { SiAskfm, SiBrave, SiDuckduckgo, SiEcosia } from "react-icons/si";
 import { toast } from "sonner";
 import { DiYahooSmall } from "react-icons/di";
 import { LiaKeySolid } from "react-icons/lia";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 import useRankinInfoStore from "@/store/RankingInfoStore";
 import useGSCStatusStore from "@/store/GSCStatusStore";
 

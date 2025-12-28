@@ -6,7 +6,7 @@ import useOnPageSeo from "@/store/storeOnPageSeo";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { LiaHeadingSolid } from "react-icons/lia";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 import HeadingsTableAI from "./HeadingsTableAI";
 import { v4 as uuidv4 } from "uuid";
 import { debounce } from "lodash"; // Import debounce from lodash

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 import { FixedSizeList as List } from "react-window";
 import { FaCalendarAlt, FaFolder, FaProjectDiagram } from "react-icons/fa";
 import { SkeletonLoader } from "./SkeletonLoader";
@@ -21,7 +21,7 @@ import {
 } from "@/store/logFilterStore";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
 import Spinner from "@/app/components/ui/Sidebar/checks/_components/Spinner";
-import { listen } from "@tauri-apps/api/event";
+import { listen } from "@/lib/tauri-compat";
 import { TbAdCircle, TbReplace } from "react-icons/tb";
 import { IoIosAddCircleOutline } from "react-icons/io";
 

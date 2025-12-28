@@ -1,29 +1,18 @@
 // Import necessary modules and dependencies
-use directories::ProjectDirs;
 use dotenv::dotenv;
-use html5ever::driver::parse_document;
-use html5ever::serialize::{serialize, SerializeOpts, TraversalScope};
-use html5ever::tendril::{ByteTendril, TendrilSink};
-use markup5ever_rcdom::{Handle, RcDom, SerializableHandle};
 use regex::Regex;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, USER_AGENT};
 use reqwest::Client;
-use rusqlite::Connection;
 use scraper::selectable::Selectable;
 use scraper::{ElementRef, Html, Selector};
-use serde::de::Error;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::error::Error as StdError;
 use std::time::Instant;
 use std::{
     collections::HashMap,
-    env,
-    fs::{self, File},
-    io::{Read, Write},
     usize,
 };
-use std::{io, vec};
 use url::Url;
 
 use crate::crawler;
@@ -126,7 +115,8 @@ pub struct ImageInfo {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SeoPageSpeedResponse {
     id: String,
-    lighthouseResult: Option<SEOLighthouseResponse>,
+    #[serde(rename = "lighthouseResult")]
+    lighthouse_result: Option<SEOLighthouseResponse>,
     audits: Option<serde_json::Value>,
     // Add other fields based on the JSON response structure
 }
@@ -144,7 +134,8 @@ pub struct SEOLighthouseResponse {
 pub struct PageSpeedResponse {
     id: String,
     captcha_result: Option<String>,
-    lighthouseResult: Option<LighthouseResult>,
+    #[serde(rename = "lighthouseResult")]
+    lighthouse_result: Option<LighthouseResult>,
     audits: Option<serde_json::Value>,
     // Add other fields based on the JSON response structure
 }
@@ -153,7 +144,8 @@ pub struct PageSpeedResponse {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct LighthouseResult {
     pub categories: Categories,
-    lighthouseVersion: String,
+    #[serde(rename = "lighthouseVersion")]
+    lighthouse_version: String,
     diagnostics: Option<serde_json::Value>,
     audits: Option<serde_json::Value>,
     // Add other fields based on the JSON response structure
@@ -168,7 +160,7 @@ pub struct Categories {
 
 /// Struct representing audits
 #[derive(Debug, Deserialize, Serialize)]
-pub struct audits {
+pub struct Audits {
     category: Option<String>,
     score: Option<f64>,
 }
@@ -228,7 +220,7 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
     let mut page_description: Vec<String> = Vec::new();
     let mut canonical_url: Vec<String> = Vec::new();
     let mut hreflangs: Vec<Hreflang> = Vec::new();
-    let mut index_type = Vec::new();
+    let index_type = Vec::new();
     let mut page_schema: Vec<String> = Vec::new();
     let mut words_arr: Vec<(usize, Vec<String>, usize)> = Vec::new();
     let mut og_details: HashMap<String, Option<String>> = [
@@ -298,7 +290,7 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
 
         if let Some(body) = document.select(&body_selector).next() {
             body_elements.push(body.html());
-            let body_contents = serialize_element(&body);
+            let _body_contents = serialize_element(&body);
         }
 
         let gtm_selector = Selector::parse("script").unwrap_or_else(|_| {
@@ -530,7 +522,7 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
         return Err(format!("Failed to fetch the URL: {}", response.status()));
     }
 
-    let sitemap_from_url = libs::get_sitemap(&url);
+    let _sitemap_from_url = libs::get_sitemap(&url);
 
     let robots = libs::get_robots(&url).await;
 
@@ -549,7 +541,7 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
     let kws = keywords[0].clone();
     let words: Vec<String> = kws.iter().map(|(word, _)| word.clone()).collect();
 
-    let mut db_data: DBData = DBData {
+    let db_data: DBData = DBData {
         title,
         description,
         keywords: words.clone(),
@@ -731,12 +723,12 @@ async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError 
             match client.get(image_url.as_str()).send().await {
                 Ok(response) => {
                     // println!("Response status: {}", response.status());
-                    for (name, value) in response.headers() {
+                    for (_name, _value) in response.headers() {
                         // println!("{}: {:?}", name, value);
                     }
 
                     let bytes = response.bytes().await?;
-                    let duration = start.elapsed();
+                    let _duration = start.elapsed();
                     // make it just two decimal places
                     let size_mb = bytes.len() as f64 / 1024.0;
                     let rounded_size_mb = (size_mb * 100.0).round() / 100.0;
@@ -750,7 +742,7 @@ async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError 
                         size_mb: rounded_size_mb,
                     });
                 }
-                Err(e) => {
+                Err(_e) => {
                     // println!("Failed to fetch image {}: {}", image_url, e);
                 }
             }

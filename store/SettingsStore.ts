@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { create } from "zustand";
+import { api } from "@/lib/api";
 
 export interface SettingsState {
   // PSI Settings
@@ -47,26 +48,18 @@ const useSettingsStore = create<SettingsState>((set, get) => ({
   // Refresh from backend
   refreshSettings: async () => {
     try {
-      const { invoke } = await import("@tauri-apps/api/core");
+      const settings = await api.getSettings().catch(() => null);
 
-      const [aiModel, aiModelCheck, pageSpeed, ga4, clarity, pageSpeedBulkSettings] =
-        await Promise.all([
-          invoke<string>("get_ai_model").catch(() => "none"),
-          invoke<string>("check_ai_model").catch(() => "none"),
-          invoke<{ page_speed_key: string }>("load_api_keys").catch(() => ({ page_speed_key: "" })),
-          invoke<string | null>("get_google_analytics_id").catch(() => null),
-          invoke<string>("get_microsoft_clarity_command").catch(() => ""),
-          invoke<any>("check_page_speed_bulk").catch(() => ({ page_speed_bulk: false })),
-        ]);
-
-      set({
-        aiModel: aiModelCheck || aiModel || "none",
-        pageSpeedKey: pageSpeed?.page_speed_key || null,
-        pageSpeedBulk: pageSpeedBulkSettings?.page_speed_bulk || false,
-        ga4Id: ga4,
-        clarityApi: clarity || "",
-        lastUpdated: Date.now(),
-      });
+      if (settings) {
+        set({
+          aiModel: settings.ai_model_check || settings.ai_model || "none",
+          pageSpeedKey: settings.page_speed_key || null,
+          pageSpeedBulk: settings.page_speed_bulk || false,
+          ga4Id: settings.ga4_id,
+          clarityApi: settings.clarity_command || "",
+          lastUpdated: Date.now(),
+        });
+      }
     } catch (error) {
       console.error("[SettingsStore] Failed to refresh settings:", error);
     }

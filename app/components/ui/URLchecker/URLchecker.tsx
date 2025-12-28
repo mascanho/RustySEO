@@ -28,7 +28,7 @@ import {
   Copy,
 } from "lucide-react";
 import { useVisibilityStore } from "@/store/VisibilityStore";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 import { toast } from "sonner";
 import useLoaderStore from "@/store/loadersStore";
 

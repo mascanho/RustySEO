@@ -1,10 +1,10 @@
-use rusqlite::types::Value;
 use serde::{Deserialize, Serialize};
 
 // Main response struct
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PageSpeedResponse {
-    pub captchaResult: String,
+    #[serde(rename = "captchaResult")]
+    pub captcha_result: String,
     pub kind: String,
     pub id: String,
     #[serde(rename = "loadingExperience")]

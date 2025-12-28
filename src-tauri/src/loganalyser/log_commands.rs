@@ -1,8 +1,5 @@
-use super::{
-    analyser::LogResult,
-    database::{add_data_to_serverlog_db, create_serverlog_db},
-};
-use crate::loganalyser::analyser::{analyse_log, LogAnalysisResult, LogInput};
+use super::database::{add_data_to_serverlog_db, create_serverlog_db};
+use crate::loganalyser::analyser::{analyse_log, LogInput};
 use crate::uploads::storage;
 
 #[tauri::command]

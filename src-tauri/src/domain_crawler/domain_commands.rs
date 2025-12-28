@@ -1,20 +1,14 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, RwLock},
-};
 
-use rust_xlsxwriter::XlsxError;
 use serde_json::Value;
 
-use crate::{domain_crawler::domain_crawler, settings::settings::Settings, AppState};
+use crate::{domain_crawler::domain_crawler, main_lib_exports::AppState};
 
 use super::{
-    database::{self, analyse_diffs, DiffAnalysis, Differential},
+    database::{self, DiffAnalysis},
     excel::create_xlsx::{
         generate_css_table, generate_excel_main_table, generate_excel_two_cols,
         generate_keywords_excel, generate_links_table_excel, generate_xlsx,
     },
-    models::DomainCrawlResults,
 };
 
 #[tauri::command]

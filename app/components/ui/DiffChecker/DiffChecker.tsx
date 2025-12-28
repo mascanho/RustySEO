@@ -6,7 +6,7 @@ import { CardHeader, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useDiffStore } from "@/store/DiffStore";
-import { invoke } from "@tauri-apps/api/core";
+import { api } from "@/lib/api";
 import { format } from "date-fns";
 import { GiSpiderBot } from "react-icons/gi";
 
@@ -18,7 +18,7 @@ export default function DiffChecker() {
       try {
         setLoading(true);
         if (!diff) {
-          const diffResult = await invoke("get_url_diff_command");
+          const diffResult = await api.getUrlDiff();
           setBulkDiffData(diffResult);
         }
       } catch (err) {

@@ -1,7 +1,7 @@
 // @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
+import { invoke } from "@/lib/invoke";
+import { listen } from "@/lib/tauri-compat";
 import React, { useEffect, useState } from "react";
 import { MdOutlineErrorOutline } from "react-icons/md";
 import { RiPagesLine, RiCalendarLine } from "react-icons/ri";

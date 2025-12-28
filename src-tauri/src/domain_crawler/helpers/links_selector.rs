@@ -50,7 +50,7 @@ fn build_full_url(base_url: &Url, href: &str) -> Result<Url, url::ParseError> {
         }
         // Protocol-relative URLs (//example.com/path)
         s if s.starts_with("//") => {
-            let mut new_url = base_url.clone();
+            let _new_url = base_url.clone();
             let full = format!("{}:{}", base_url.scheme(), s);
             Url::parse(&full)
         }

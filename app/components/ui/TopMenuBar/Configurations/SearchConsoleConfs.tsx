@@ -30,7 +30,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 
 export default function SearchConsoleConfs() {
   const [date, setDate] = useState<{ from: Date; to: Date }>({

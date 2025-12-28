@@ -1,12 +1,9 @@
 use crate::gemini;
 use crate::globals;
 use actix_web::{web, App, HttpServer, Responder};
-use directories::ProjectDirs;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use std::f64::consts::E;
 use tokio::fs;
-use yup_oauth2::AccessToken;
 
 //----------- Get the AI MODEL -------------
 // Read the file

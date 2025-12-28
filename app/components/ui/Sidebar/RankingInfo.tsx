@@ -1,6 +1,6 @@
 // @ts-nocheck
 
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 import React, { useState, useEffect } from "react";
 import RankingMenus from "./RankingInfo/RankingMenus";
 import { ScrollArea } from "@/components/ui/scroll-area";

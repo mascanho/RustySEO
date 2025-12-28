@@ -1,7 +1,6 @@
 use crate::crawler::libs::read_credentials_file;
 use crate::crawler::libs::InstalledInfo;
 use directories::ProjectDirs;
-use std::fs;
 use uuid::Uuid;
 
 // ------------- Check if the UUID is present in the system  ---------------

@@ -1,20 +1,20 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use crate::domain_crawler::db_deep::db;
-use crate::domain_crawler::domain_commands;
-use crate::loganalyser::database::remove_all_logs_from_serverlog_db;
-use crawler::{
-    CrawlResult, LinkResult, PageSpeedResponse, SEOLighthouseResponse, SeoPageSpeedResponse,
+use app::domain_crawler::db_deep::db;
+use app::domain_crawler::domain_commands;
+use app::loganalyser::database::remove_all_logs_from_serverlog_db;
+use app::crawler::{
+    self, CrawlResult, LinkResult, PageSpeedResponse, SEOLighthouseResponse, SeoPageSpeedResponse,
 };
 use directories::ProjectDirs;
-use globals::actions;
+use app::globals::{self, actions};
 use serde::{Deserialize, Deserializer, Serialize};
-use settings::settings::delete_config_folders_command;
-use settings::settings::get_log_file_upload_size_command;
-use settings::settings::get_project_chunk_size_command;
-use settings::settings::get_system;
-use settings::settings::open_config_folder_command;
-use settings::settings::Settings;
+use app::settings::{self, settings::delete_config_folders_command};
+use app::settings::settings::get_log_file_upload_size_command;
+use app::settings::settings::get_project_chunk_size_command;
+use app::settings::settings::get_system;
+use app::settings::settings::open_config_folder_command;
+use app::settings::settings::Settings;
 use std::io::Write;
 use std::sync::Arc;
 use std::time::Duration;
@@ -24,39 +24,24 @@ use tokio::sync::Mutex;
 use tokio::sync::RwLock;
 use toml;
 
-pub mod chat;
-pub mod crawler;
-pub mod domain_crawler;
-pub mod settings;
-pub mod uploads;
-pub mod url_checker;
-pub mod users;
-
-pub mod machine_learning;
-
-pub mod downloads {
-    pub mod csv;
-    pub mod excel;
-    pub mod google_sheets;
-}
-
-pub mod globals {
-    pub mod actions;
-}
-
-pub mod commands;
-pub mod gemini;
-pub mod genai;
-pub mod gsc;
-mod image_converter;
-pub mod loganalyser;
-pub mod server;
-pub mod version;
+use app::chat;
+use app::uploads;
+use app::url_checker;
+use app::users;
+use app::machine_learning;
+use app::downloads;
+use app::commands;
+use app::gemini;
+use app::genai;
+use app::gsc;
+use app::image_converter;
+use app::loganalyser;
+use app::server;
+use app::version;
 
 // Handling the app state
-pub struct AppState {
-    pub settings: Arc<RwLock<Settings>>,
-}
+// Use the shared AppState from lib.rs
+use app::main_lib_exports::AppState;
 
 #[derive(Serialize, Debug, Deserialize)]
 struct Config {

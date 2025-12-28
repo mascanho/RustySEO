@@ -6,7 +6,7 @@ import { CheckCircle, XCircle, AlertCircle, Info, Clock } from "lucide-react";
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 import useGSCStatusStore from "@/store/GSCStatusStore";
 import useSettingsStore from "@/store/SettingsStore";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 
 type LogLevel = "success" | "error" | "warning" | "info" | "debug";
 

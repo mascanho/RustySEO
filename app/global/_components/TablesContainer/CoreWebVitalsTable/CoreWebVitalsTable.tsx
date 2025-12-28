@@ -19,9 +19,9 @@ import {
 import { TbColumns3 } from "react-icons/tb";
 import DownloadButton from "./DownloadButton";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import { invoke } from "@tauri-apps/api/core";
-import { save } from "@tauri-apps/plugin-dialog";
-import { writeFile } from "@tauri-apps/plugin-fs";
+import { invoke } from "@/lib/invoke";
+import { save } from "@/lib/tauri-compat";
+import { writeFile } from "@/lib/tauri-compat";
 import { toast } from "sonner";
 import { exportPSIDataCSV } from "./exportPSIDataCsv";
 

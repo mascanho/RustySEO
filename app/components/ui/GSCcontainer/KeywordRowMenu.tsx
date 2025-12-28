@@ -9,8 +9,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { invoke } from "@tauri-apps/api/core";
-import { emit } from "@tauri-apps/api/event";
+import { invoke } from "@/lib/invoke";
+import { emit } from "@/lib/tauri-compat";
 import { toast } from "sonner";
 
 interface KeywordRowMenuProps {

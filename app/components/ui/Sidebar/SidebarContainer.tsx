@@ -12,7 +12,7 @@ import PageRankChart from "../ShadCharts/PageRankChart";
 import SeoChart from "../ShadCharts/SeoChart";
 import { IoChevronBackCircleOutline } from "react-icons/io5";
 import { useVisibilityStore } from "@/store/VisibilityStore";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 import { useOllamaStore } from "@/store/store";
 import AIFeedbackTab from "./AiAnalysis";
 import { useParams } from "next/navigation";

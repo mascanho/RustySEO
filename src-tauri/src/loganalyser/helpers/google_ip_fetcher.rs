@@ -8,8 +8,10 @@ pub struct GoogleIpRanges {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Prefix {
-    pub ipv4Prefix: Option<String>,
-    pub ipv6Prefix: Option<String>,
+    #[serde(rename = "ipv4Prefix")]
+    pub ipv4_prefix: Option<String>,
+    #[serde(rename = "ipv6Prefix")]
+    pub ipv6_prefix: Option<String>,
 }
 
 pub async fn get_google_ip_ranges() -> Result<Vec<String>, String> {
@@ -25,7 +27,7 @@ pub async fn get_google_ip_ranges() -> Result<Vec<String>, String> {
     let vec = data
         .prefixes
         .into_iter()
-        .filter_map(|prefix| prefix.ipv4Prefix.or(prefix.ipv6Prefix))
+        .filter_map(|prefix| prefix.ipv4_prefix.or(prefix.ipv6_prefix))
         .collect();
 
     Ok(vec)

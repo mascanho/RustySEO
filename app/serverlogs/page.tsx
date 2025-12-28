@@ -15,10 +15,10 @@ import UploadButton from "./_components/UploadButton";
 import WidgetLogs from "./_components/WidgetLogs";
 import { toast, Toaster } from "sonner";
 import { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
+import { invoke } from "@/lib/invoke";
+import { listen } from "@/lib/tauri-compat";
 import { useLogAnalysis } from "@/store/ServerLogsStore";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { getCurrentWindow } from "@/lib/tauri-compat";
 
 interface CrawlResult {
   url: string;

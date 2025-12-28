@@ -1,6 +1,6 @@
 // @ts-nocheck
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import { listen } from "@tauri-apps/api/event";
+import { listen } from "@/lib/tauri-compat";
 import { useEffect, useState } from "react";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { darkula } from "react-syntax-highlighter/dist/cjs/styles/hljs";

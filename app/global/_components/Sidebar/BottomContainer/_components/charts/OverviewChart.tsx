@@ -19,7 +19,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import { listen } from "@tauri-apps/api/event";
+import { listen } from "@/lib/tauri-compat";
 import { debounce } from "lodash";
 
 const chartConfig = {

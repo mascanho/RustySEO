@@ -1,28 +1,23 @@
 use chrono::Utc;
 use directories::ProjectDirs;
-use google_sheets4::api::Response;
 use hyper::Client as HyperClient;
 use hyper_rustls::HttpsConnectorBuilder;
 use reqwest::Client;
-use rusqlite::{Connection, Result};
+use rusqlite::Result;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
-use serde_json::{json, Value};
-use std::fmt::format;
+use serde_json::Value;
 use std::{error::Error, path::PathBuf};
-use sysinfo::{ProcessExt, ProcessStatus, System, SystemExt};
-use tauri::Config;
+use sysinfo::{ProcessExt, System, SystemExt};
 use tokio::fs;
 use url::{ParseError, Url};
 use yup_oauth2 as oauth2;
 use yup_oauth2::{InstalledFlowAuthenticator, InstalledFlowReturnMethod};
 
 use reqwest::header::{HeaderMap, HeaderValue};
-use toml::de::Error as TomlError;
 
-use crate::crawler::db::{self, refresh_links_table};
-use crate::server;
+use crate::crawler::db::{self};
 
 use super::crawler;
 
@@ -40,13 +35,16 @@ pub struct CoreWebVitals {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Lcp {
-    renderTime: f64,
+    #[serde(rename = "renderTime")]
+    render_time: f64,
     size: usize,
     element: String,
     id: String,
     url: String,
-    loadTime: f64,
-    startTime: f64,
+    #[serde(rename = "loadTime")]
+    load_time: f64,
+    #[serde(rename = "startTime")]
+    start_time: f64,
     duration: f64,
 }
 
@@ -121,7 +119,7 @@ pub async fn get_sitemap(url: &String) -> Result<(), Box<dyn Error>> {
     }
 
     // Parse the XML response asynchronously
-    let body = response.text().await?;
+    let _body = response.text().await?;
 
     // Print the sitemap XML to the user
 
@@ -281,7 +279,7 @@ pub async fn check_links(url: String) -> Result<Vec<LinkStatus>, String> {
 
     // Convert the provided URL into a base URL
     let base_url = Url::parse(&url).map_err(|e| e.to_string())?;
-    let base_str = base_url.as_str();
+    let _base_str = base_url.as_str();
 
     let links = match crawler::db::read_links_from_db() {
         Ok(links) => links,
@@ -393,7 +391,8 @@ pub struct InstalledInfo {
     pub auth_provider_x509_cert_url: String,
     pub client_secret: String,
     pub redirect_uris: Vec<String>,
-    pub aggregationType: String,
+    #[serde(rename = "aggregationType")]
+    pub aggregation_type: String,
     pub range: String,
     pub search_type: String,
     pub url: String,
@@ -407,11 +406,15 @@ struct SearchAnalyticsResponse {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Credentials {
-    pub clientId: String,
-    pub projectId: String,
-    pub clientSecret: String,
+    #[serde(rename = "clientId")]
+    pub client_id: String,
+    #[serde(rename = "projectId")]
+    pub project_id: String,
+    #[serde(rename = "clientSecret")]
+    pub client_secret: String,
     pub url: String,
-    pub propertyType: String,
+    #[serde(rename = "propertyType")]
+    pub property_type: String,
     pub range: String,
     rows: String,
 }
@@ -420,15 +423,15 @@ pub struct Credentials {
 #[tauri::command]
 pub async fn read_credentials_file() -> Result<InstalledInfo, String> {
     let config_dirs =
-        ProjectDirs::from("", "", "rustyseo").expect("Failed to get project directories");
+        ProjectDirs::from("", "", "rustyseo").ok_or_else(|| "Failed to get project directories".to_string())?;
     let config_dir = config_dirs.data_dir();
     let secret_file = config_dir.join("client_secret.json");
 
     let data = fs::read_to_string(&secret_file)
         .await
-        .expect("Failed to read client secret file");
+        .map_err(|e| format!("Failed to read client secret file: {}", e))?;
     let secret: ClientSecret =
-        serde_json::from_str(&data).expect("Failed to parse client secret file");
+        serde_json::from_str(&data).map_err(|e| format!("Failed to parse client secret file: {}", e))?;
 
     let result = InstalledInfo {
         client_id: secret.installed.client_id,
@@ -438,7 +441,7 @@ pub async fn read_credentials_file() -> Result<InstalledInfo, String> {
         auth_provider_x509_cert_url: secret.installed.auth_provider_x509_cert_url,
         client_secret: secret.installed.client_secret,
         redirect_uris: secret.installed.redirect_uris,
-        aggregationType: secret.installed.aggregationType,
+        aggregation_type: secret.installed.aggregation_type,
         range: secret.installed.range,
         search_type: secret.installed.search_type,
         url: secret.installed.url,
@@ -451,18 +454,18 @@ pub async fn read_credentials_file() -> Result<InstalledInfo, String> {
 
 // FUNCTION TO SET GOOGLE SEARCH CONSOLE DATA ON THE DISK
 pub async fn set_search_console_credentials(credentials: Credentials) -> Result<PathBuf, String> {
-    let credentials_client_id = credentials.clientId;
-    let credentials_project_id = credentials.projectId;
-    let credentials_client_secret = credentials.clientSecret;
+    let credentials_client_id = credentials.client_id;
+    let credentials_project_id = credentials.project_id;
+    let credentials_client_secret = credentials.client_secret;
     let credentials_url = credentials.url;
-    let credentials_search_type = credentials.propertyType;
+    let credentials_search_type = credentials.property_type;
     let credentials_range = credentials.range;
     let credentials_rows = credentials.rows;
 
     // Define the JSON structure
     let client_secret = ClientSecret {
         installed: InstalledInfo {
-            aggregationType: "byPage".to_string(),
+            aggregation_type: "byPage".to_string(),
             client_id: credentials_client_id.to_string(),
             project_id: credentials_project_id.to_string(),
             client_secret: credentials_client_secret.to_string(),
@@ -518,7 +521,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
 
     // Set up the OAuth2 flow
     let secret_path = directories::ProjectDirs::from("", "", "rustyseo")
-        .expect("Failed to get project directories")
+        .ok_or("Failed to get project directories")?
         .data_dir()
         .join("client_secret.json");
     // println!("Secret path with error: {}", secret_path.display());
@@ -526,7 +529,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
 
     // Create an authenticator
     let auth_path = directories::ProjectDirs::from("", "", "rustyseo")
-        .expect("Failed to get project directories")
+        .ok_or("Failed to get project directories")?
         .data_dir()
         .join("tokencache.json");
     let auth = InstalledFlowAuthenticator::builder(secret, InstalledFlowReturnMethod::HTTPRedirect)
@@ -554,25 +557,25 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
     // READ THE FILE ON THE DISK
     let gsc_settings_info = read_credentials_file()
         .await
-        .expect("Failed to read credentials file");
+        .map_err(|e| format!("Failed to read credentials file: {}", e))?;
     let credentials_url = gsc_settings_info.url;
     let search_type = gsc_settings_info.search_type;
-    let credentials_project_id = gsc_settings_info.project_id;
-    let credentials_client_id = gsc_settings_info.client_id;
-    let credentials_client_secret = gsc_settings_info.client_secret;
+    let _credentials_project_id = gsc_settings_info.project_id;
+    let _credentials_client_id = gsc_settings_info.client_id;
+    let _credentials_client_secret = gsc_settings_info.client_secret;
     let credentials_range = gsc_settings_info.range;
     let credentials_rows = gsc_settings_info.rows;
 
     // Initialize variables
-    let mut domain = false;
-    let mut site = false;
+    let mut _domain = false;
+    let mut _site = false;
 
     // Set the end date to TODAY's date
     let finish_date = Utc::now().format("%Y-%m-%d").to_string();
 
     // Prepare the request
 
-    let (start_date, end_date) = match credentials_range.as_str() {
+    let (start_date, _end_date) = match credentials_range.as_str() {
         "1 month" => {
             let end_date = Utc::now().format("%Y-%m-%d").to_string();
             let start_date = (Utc::now() - chrono::Duration::days(30))
@@ -639,12 +642,12 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
 
     let site_url = match search_type.as_str() {
         "domain" => {
-            domain = true;
+            _domain = true;
             println!("Domain selected, URL: {}", &credentials_url);
             format!("sc-domain:{}", &credentials_url)
         }
         "site" => {
-            site = true;
+            _site = true;
             println!("Site selected, URL: {}", &credentials_url);
             credentials_url.clone()
         }
@@ -680,7 +683,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
     // Add data to DB
     gsc_data.push(data);
     tokio::time::sleep(tokio::time::Duration::from_secs(15)).await;
-    db::push_gsc_data_to_db(&gsc_data).expect("Failed to push data to database");
+    db::push_gsc_data_to_db(&gsc_data).map_err(|e| format!("Failed to push data to database: {}", e))?;
 
     Ok(gsc_data)
 }
@@ -719,7 +722,7 @@ pub async fn get_google_analytics_id() -> Result<String, String> {
     // read the file
     let file_toml = fs::read_to_string(file_path)
         .await
-        .expect("Could not read GA4 ID file");
+        .map_err(|e| format!("Could not read GA4 ID file: {}", e))?;
 
     println!("This is the content of the file {:#?}", file_toml);
 
@@ -736,6 +739,13 @@ pub async fn get_google_analytics(
     search_type: Vec<serde_json::Value>,
     date_ranges: Vec<DateRange>,
 ) -> Result<AnalyticsData, Box<dyn std::error::Error>> {
+    if search_type.is_empty() {
+        return Err("Search type array is empty".into());
+    }
+    if date_ranges.is_empty() {
+        return Err("Date ranges array is empty".into());
+    }
+
     println!("Search Type: {:#?}", search_type[0]);
     println!("Date Ranges: {:#?}", date_ranges[0]);
 
@@ -748,7 +758,7 @@ pub async fn get_google_analytics(
     // Set up the OAuth2 client
     let secret = oauth2::read_application_secret(&secret_path)
         .await
-        .expect("Where is the client_secret.json file?");
+        .map_err(|e| format!("Where is the client_secret.json file? {}", e))?;
 
     // Create an authenticator that persists tokens
     let auth_path = config_dir.join("ga_tokencache.json");
@@ -815,7 +825,7 @@ pub async fn get_google_analytics(
     // Process and print the results
     if let Some(rows) = response["rows"].as_array() {
         for row in rows {
-            let page = &row["dimensionValues"][0]["value"];
+            let _page = &row["dimensionValues"][0]["value"];
             let _views = &row["metricValues"][0]["value"];
             // println!("Page: {}, Views: {}", page, views);
         }

@@ -7,7 +7,7 @@ pub async fn reverse_lookup(ip: String) -> Option<String> {
     let ip: IpAddr = ip.parse().ok()?;
 
     // For reverse lookup, we need to use the special PTR record format
-    let ptr_name = match ip {
+    let _ptr_name = match ip {
         IpAddr::V4(ipv4) => {
             let octets = ipv4.octets();
             format!(

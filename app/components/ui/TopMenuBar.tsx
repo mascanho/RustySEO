@@ -22,9 +22,9 @@ import { usePathname, useRouter } from "next/navigation";
 import WindowToggler from "./Panes/WindowToggler";
 import GeminiSelector from "./GeminiSelector/GeminiSelector";
 import About from "./About/About";
-import { invoke } from "@tauri-apps/api/core";
-import { save } from "@tauri-apps/plugin-dialog";
-import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { invoke } from "@/lib/invoke";
+import { save } from "@/lib/tauri-compat";
+import { writeTextFile } from "@/lib/tauri-compat";
 import { LuPanelRight } from "react-icons/lu";
 import {
   FiFile,
@@ -58,7 +58,7 @@ import GoogleAnalyticsModal from "./GoogleAnalyticsModal/GoogleAnalyticsModal";
 import Configurations from "./TopMenuBar/Configurations/Configurations";
 import { FaGear } from "react-icons/fa6";
 import MSClarity from "./MSClarityModal/MSClarityModal";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { getCurrentWindow } from "@/lib/tauri-compat";
 import CustomSearchSelector from "./Extractors/CustomSearchSelector";
 import { PiGitDiff } from "react-icons/pi";
 import DiffChecker from "./DiffChecker/DiffChecker";

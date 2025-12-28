@@ -1,7 +1,7 @@
 use csv::Writer;
 use directories::ProjectDirs;
-use rusqlite::{Connection, Result as SqlResult};
-use std::{error::Error, fs, path::Path};
+use rusqlite::Connection;
+use std::{fs, path::Path};
 use tauri::command;
 
 // Define the ResultRecord struct

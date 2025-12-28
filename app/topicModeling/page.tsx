@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 import React, { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { invoke } from "@/lib/invoke";
 import useLoaderStore from "@/store/loadersStore";
 import InputZone from "./_components/InputZone";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
