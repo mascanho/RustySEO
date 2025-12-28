@@ -1049,7 +1049,7 @@ export function UrlStatusChecker() {
                 ${
                   isPolling
                     ? "bg-rose-600 hover:bg-rose-700 text-white  dark:bg-rose-600 dark:text-white"
-                    : "bg-brand-bright text-white shadow-lg shadow-brand-bright/20"
+                    : "bg-brand-bright text-white shadow-lg shadow-brand-bright/20 dark:bg-brand-bright dark:text-white"
                 }`}
             >
               {isPolling ? (

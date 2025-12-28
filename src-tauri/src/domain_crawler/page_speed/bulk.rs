@@ -113,6 +113,210 @@ lazy_static! {
         Arc::new(Mutex::new(CircuitBreaker::new()));
 }
 
+// Validation function to check if a URL should be analyzed with PSI
+fn should_analyze_with_psi(url: &Url) -> bool {
+    // Skip non-HTTP/HTTPS URLs
+    if url.scheme() != "http" && url.scheme() != "https" {
+        return false;
+    }
+
+    // Get the path
+    let path = url.path();
+
+    // Skip empty paths that might be API endpoints or redirects
+    if path.is_empty() || path == "/" {
+        return true; // Homepage is valid
+    }
+
+    // Skip common non-content paths
+    let skip_patterns = [
+        "/login",
+        "/signup",
+        "/register",
+        "/logout",
+        "/admin",
+        "/dashboard",
+        "/account",
+        "/cart",
+        "/checkout",
+        "/api/",
+        "/webhook/",
+        "/oauth/",
+        "/auth/",
+        "/search",
+        "/wp-admin",
+        "/wp-login",
+        "/wp-json",
+        "/graphql",
+        "/socket.io",
+        "/_next/",
+        "/static/",
+        "/assets/",
+        "/cdn/",
+        "/media/",
+        "/uploads/",
+        "/private/",
+        "/secure/",
+        "/member/",
+        "/user/",
+        "/profile/",
+        "/settings/",
+        "/billing/",
+        "/payment/",
+        "/invoice/",
+        "/order/",
+        "/ajax/",
+        "/rpc/",
+        "/ws/",
+        "/wss/",
+        "/websocket/",
+    ];
+
+    for pattern in skip_patterns.iter() {
+        if path.starts_with(pattern) {
+            return false;
+        }
+    }
+
+    // Skip file extensions that aren't typical web pages
+    let invalid_extensions = [
+        ".pdf", ".jpg", ".jpeg", ".png", ".gif", ".svg", ".ico", ".webp", ".mp4", ".mp3", ".avi",
+        ".mov", ".wav", ".flac", ".ogg", ".webm", ".zip", ".tar", ".gz", ".rar", ".7z", ".bz2",
+        ".exe", ".dmg", ".pkg", ".msi", ".deb", ".rpm", ".doc", ".docx", ".xls", ".xlsx", ".ppt",
+        ".pptx", ".txt", ".rtf", ".csv", ".json", ".xml", ".yml", ".yaml", ".js", ".css", ".map",
+        ".woff", ".woff2", ".ttf", ".eot", ".sql", ".db", ".sqlite", ".mdb", ".psd", ".ai", ".eps",
+        ".indd", ".iso", ".bin", ".dmg", ".img",
+    ];
+
+    for ext in invalid_extensions.iter() {
+        if path.to_lowercase().ends_with(ext) {
+            return false;
+        }
+    }
+
+    // Skip URLs with query parameters that indicate non-content pages
+    if let Some(query) = url.query() {
+        let query_lower = query.to_lowercase();
+        let skip_queries = [
+            "logout",
+            "action=logout",
+            "action=delete",
+            "action=edit",
+            "download=",
+            "format=json",
+            "format=xml",
+            "api_key=",
+            "token=",
+            "auth=",
+            "password=",
+            "secret=",
+            "key=",
+            "callback=",
+            "redirect=",
+            "return=",
+            "next=",
+            "ajax=",
+            "rpc=",
+            "method=",
+            "cmd=",
+            "command=",
+            "file=",
+            "attachment=",
+            "stream=",
+            "export=",
+            "print=",
+            "pdf=",
+            "csv=",
+            "excel=",
+        ];
+
+        for skip_query in skip_queries.iter() {
+            if query_lower.contains(skip_query) {
+                return false;
+            }
+        }
+
+        // Skip URLs with session/token parameters (common in authenticated areas)
+        if query_lower.contains("session")
+            || query_lower.contains("token")
+            || query_lower.contains("auth")
+            || query_lower.contains("oauth")
+            || query_lower.contains("jwt")
+        {
+            return false;
+        }
+    }
+
+    // Skip URLs with fragments that might indicate non-content
+    if let Some(fragment) = url.fragment() {
+        let fragment_lower = fragment.to_lowercase();
+        if fragment_lower.contains("comment")
+            || fragment_lower.contains("reply")
+            || fragment_lower.starts_with("modal")
+            || fragment_lower.starts_with("popup")
+        {
+            return false;
+        }
+    }
+
+    // Additional validation: check if path looks like a content page
+    let path_lower = path.to_lowercase();
+
+    // Allow common content patterns
+    let content_patterns = [
+        "/blog/",
+        "/article/",
+        "/news/",
+        "/post/",
+        "/page/",
+        "/product/",
+        "/item/",
+        "/guide/",
+        "/tutorial/",
+        "/help/",
+        "/docs/",
+        "/documentation/",
+        "/about",
+        "/contact",
+        "/faq",
+        "/privacy",
+        "/terms",
+        "/policy",
+        "/sitemap",
+        "/category/",
+        "/tag/",
+        "/archive/",
+        "/year/",
+        "/month/",
+        "/author/",
+    ];
+
+    for pattern in content_patterns.iter() {
+        if path_lower.contains(pattern) {
+            return true;
+        }
+    }
+
+    // If path has multiple segments and doesn't look like a file, assume it's content
+    let segments: Vec<&str> = path.split('/').filter(|s| !s.is_empty()).collect();
+
+    // URLs with 1-3 path segments are likely content pages
+    if segments.len() >= 1 && segments.len() <= 3 {
+        // Check if last segment looks like a slug (alphanumeric with hyphens)
+        if let Some(last_segment) = segments.last() {
+            let is_slug = last_segment
+                .chars()
+                .all(|c| c.is_alphanumeric() || c == '-');
+            if is_slug && last_segment.len() > 10 {
+                return true;
+            }
+        }
+    }
+
+    // Default to false for unknown URLs
+    false
+}
+
 async fn fetch_psi_with_retry(
     url: &str,
     strategy_str: &str,
@@ -141,6 +345,21 @@ async fn fetch_psi_with_retry(
                 breaker.success_rate() * 100.0,
                 wait_time
             ));
+        }
+    }
+
+    // Validate URL before making API call
+    match Url::parse(url) {
+        Ok(parsed_url) => {
+            if !should_analyze_with_psi(&parsed_url) {
+                return Err(format!(
+                    "Skipping PSI for {} - not a valid content page",
+                    url
+                ));
+            }
+        }
+        Err(e) => {
+            return Err(format!("Invalid URL format for {}: {}", url, e));
         }
     }
 
@@ -326,6 +545,12 @@ pub async fn fetch_psi_bulk(url: Url, settings: &Settings) -> Result<Vec<Value>,
         return Ok(vec![]);
     }
 
+    // Validate URL before making API request
+    if !should_analyze_with_psi(&url) {
+        eprintln!("Skipping PSI for {} - not a valid content page", url);
+        return Ok(vec![]);
+    }
+
     let api_key = settings
         .page_speed_bulk_api_key
         .as_ref()
@@ -438,5 +663,84 @@ pub async fn get_circuit_breaker_status() -> String {
             "CLOSED (healthy, success rate: {:.1}%)",
             success_rate * 100.0
         )
+    }
+}
+
+/// Get URL validation statistics (optional, for debugging/monitoring)
+pub fn get_url_validation_debug_info(url: &Url) -> String {
+    let mut info = vec![];
+
+    // Check scheme
+    if url.scheme() != "http" && url.scheme() != "https" {
+        info.push(format!("Invalid scheme: {}", url.scheme()));
+    }
+
+    // Check path patterns
+    let path = url.path();
+    let skip_patterns = [
+        "/login",
+        "/signup",
+        "/register",
+        "/logout",
+        "/admin",
+        "/dashboard",
+        "/account",
+        "/cart",
+        "/checkout",
+        "/api/",
+        "/webhook/",
+        "/oauth/",
+        "/auth/",
+        "/search",
+    ];
+
+    for pattern in skip_patterns.iter() {
+        if path.starts_with(pattern) {
+            info.push(format!("Matches skip pattern: {}", pattern));
+        }
+    }
+
+    // Check file extensions
+    let invalid_extensions = [
+        ".pdf", ".jpg", ".jpeg", ".png", ".gif", ".svg", ".ico", ".mp4", ".mp3", ".avi", ".mov",
+        ".zip", ".tar", ".gz", ".exe", ".dmg", ".pkg", ".doc", ".docx", ".xls", ".xlsx", ".ppt",
+        ".pptx", ".txt", ".rtf", ".csv",
+    ];
+
+    for ext in invalid_extensions.iter() {
+        if path.to_lowercase().ends_with(ext) {
+            info.push(format!("Invalid file extension: {}", ext));
+        }
+    }
+
+    // Check query parameters
+    if let Some(query) = url.query() {
+        let query_lower = query.to_lowercase();
+        let skip_queries = [
+            "logout",
+            "action=logout",
+            "action=delete",
+            "action=edit",
+            "download=",
+            "format=json",
+            "format=xml",
+            "api_key=",
+            "token=",
+            "auth=",
+            "password=",
+            "secret=",
+        ];
+
+        for skip_query in skip_queries.iter() {
+            if query_lower.contains(skip_query) {
+                info.push(format!("Contains skip query: {}", skip_query));
+            }
+        }
+    }
+
+    if info.is_empty() {
+        "URL is valid for PSI analysis".to_string()
+    } else {
+        format!("URL validation failed: {}", info.join(", "))
     }
 }
