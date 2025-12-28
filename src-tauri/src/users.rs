@@ -14,7 +14,7 @@ pub async fn add_user() -> Result<(), String> {
     };
 
     let response = match client
-        .post("https://server.rustyseo.com/users")
+        .post("https://api.rustyseo.com/users")
         .header("Content-Type", "application/json")
         .json(&json!({
             "user": settings.rustyid
