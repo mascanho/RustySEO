@@ -1077,7 +1077,7 @@ export function LogAnalyzer() {
 
                       {ExcelLoaded && !showAgent && (
                         <TableHead
-                          className="w-[30px] text-center cursor-pointer"
+                          className="w-[50px] text-center cursor-pointer"
                           onClick={cyclePosColumn}
                         >
                           {posColumn === "position"
@@ -1086,7 +1086,7 @@ export function LogAnalyzer() {
                               ? "Clicks"
                               : posColumn === "ctr"
                                 ? "CTR"
-                                : "Impressions"}
+                                : "Impr"}
                         </TableHead>
                       )}
 
