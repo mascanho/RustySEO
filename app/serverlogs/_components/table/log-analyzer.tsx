@@ -126,6 +126,16 @@ export function LogAnalyzer() {
   const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
   const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
 
+  const allStatusCodes = useMemo(() => {
+    const codes = new Set<number>();
+    entries.forEach((entry) => {
+      if (entry.status) {
+        codes.add(entry.status);
+      }
+    });
+    return Array.from(codes).sort((a, b) => a - b);
+  }, [entries]);
+
   // Search state - only filters when button is pressed
   const [searchInput, setSearchInput] = useState("");
   const [activeSearchTerm, setActiveSearchTerm] = useState("");
@@ -670,13 +680,13 @@ export function LogAnalyzer() {
 
               <DropdownMenuContent
                 align="center"
-                className="w-48 m-0 bg-white dark:bg-brand-darker text-left dark:text-white dark:border-brand-dark"
+                className="w-48 m-0 bg-white dark:bg-brand-darker text-left dark:text-white dark:border-brand-dark max-h-64 overflow-y-auto"
               >
                 <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
 
                 <DropdownMenuSeparator />
 
-                {[200, 201, 204, 400, 401, 403, 404, 500].map((code) => (
+                {allStatusCodes.map((code) => (
                   <DropdownMenuCheckboxItem
                     className="hover:bg-brand-blue active:text-black hover:text-white dark:text-white"
                     key={code}
