@@ -980,7 +980,7 @@ export function LogAnalyzer() {
           >
             <div className="rounded-md border dark:border-brand-dark h-full logs">
               <div className="relative w-full h-full overflow-auto">
-                <Table className="h-full [&_tr]:p-10 logs relative">
+                <Table className="logs relative">
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-[60px] text-center">#</TableHead>
@@ -1243,7 +1243,7 @@ function LogRow({
   return (
     <>
       <TableRow
-        className="group max-h-[10px] h-[10px] align-middle"
+        className="group min-h-[40px]"
         onClick={() => {
           setExpandedRow(expandedRow === index ? null : index);
         }}
@@ -1343,7 +1343,7 @@ function LogRow({
 
         {/* RENDER THE ROW WITH THE POSITION DATA IF IT HAS BEEN TOGGLED */}
         {ExcelLoaded && !showAgent && (
-          <TableCell className="text-center align-middle flex">
+          <TableCell className="text-center align-middle">
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
