@@ -231,6 +231,9 @@ export function LogAnalyzer() {
   }, []);
 
   const formatResponseSize = useCallback((bytes: number) => {
+    if (bytes === null || bytes === undefined || Number.isNaN(bytes)) {
+      return "0 B";
+    }
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -434,7 +437,6 @@ export function LogAnalyzer() {
     setUrlAgentFilter("url");
   }, []);
 
-  // Export logs as CSV
   const exportCSV = useCallback(async () => {
     // 1. Define headers
     const headers = [
@@ -503,20 +505,22 @@ export function LogAnalyzer() {
         const batch = dataToExport.slice(i, i + batchSize);
 
         for (const log of batch) {
+          if (!log) continue; // Skip null or undefined log entries
+
           const row = [
-            sanitizeForCSV(log.ip),
-            sanitizeForCSV(log.country),
-            sanitizeForCSV(log.browser),
-            sanitizeForCSV(log.timestamp),
-            sanitizeForCSV(log.method),
-            sanitizeForCSV(log.path),
-            sanitizeForCSV(log.taxonomy),
-            sanitizeForCSV(log.file_type),
-            sanitizeForCSV(log.status),
+            sanitizeForCSV(log.ip ?? ""),
+            sanitizeForCSV(log.country ?? ""),
+            sanitizeForCSV(log.browser ?? ""),
+            sanitizeForCSV(log.timestamp ?? ""),
+            sanitizeForCSV(log.method ?? ""),
+            sanitizeForCSV(log.path ?? ""),
+            sanitizeForCSV(log.taxonomy ?? ""),
+            sanitizeForCSV(log.file_type ?? ""),
+            sanitizeForCSV(log.status ?? ""),
             sanitizeForCSV(formatResponseSize(log.response_size)),
-            sanitizeForCSV(log.user_agent),
+            sanitizeForCSV(log.user_agent ?? ""),
             sanitizeForCSV(log.referer || "-"),
-            sanitizeForCSV(log.crawler_type),
+            sanitizeForCSV(log.crawler_type ?? ""),
             sanitizeForCSV(log.verified ? "true" : "false"),
           ];
 
@@ -541,7 +545,9 @@ export function LogAnalyzer() {
     } catch (error) {
       setIsExporting(false);
       console.error("Export failed:", error);
-      toast.error(`Export failed: ${error.message}`);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error(`Export failed: ${errorMessage}`);
     }
   }, [filteredLogs, entries, formatResponseSize]);
 
