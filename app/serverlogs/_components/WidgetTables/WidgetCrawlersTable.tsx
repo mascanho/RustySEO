@@ -587,7 +587,7 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
         <CardContent className="p-0 h-full overflow-hidden">
           <div className="rounded-md border dark:border-brand-dark h-full">
             <div className="relative w-full h-full overflow-auto">
-              <Table className="h-full">
+              <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[80px] text-center">#</TableHead>
