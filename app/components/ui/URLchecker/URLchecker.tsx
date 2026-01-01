@@ -1048,8 +1048,8 @@ export function UrlStatusChecker() {
               className={`flex-[2] h-10 font-bold transition-all duration-300 shadow-md transform hover:scale-[1.01] active:scale-[0.99]
                 ${
                   isPolling
-                    ? "bg-rose-600 hover:bg-rose-700 text-white  dark:bg-rose-600 dark:text-white"
-                    : "bg-brand-bright text-white shadow-lg shadow-brand-bright/20 dark:bg-brand-bright dark:text-white"
+                    ? "bg-rose-600 hover:bg-rose-700 text-white  dark:bg-rose-600 dark:text-white dark:hover:bg-rose-900"
+                    : "bg-brand-bright text-white shadow-lg shadow-brand-bright/20 dark:bg-brand-bright dark:hover:bg-brand-bright/50  dark:text-white"
                 }`}
             >
               {isPolling ? (
