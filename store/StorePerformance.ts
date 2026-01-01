@@ -1,4 +1,4 @@
-import create from "zustand";
+import { create } from "zustand";
 
 // Define the Zustand store
 const usePageSpeedStore = create((set, get) => ({

@@ -1,6 +1,6 @@
 // store/keywordsStore.ts
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage, StateStorage } from "zustand/middleware";
 
 interface KeywordData {
   id: string;
@@ -23,6 +23,18 @@ interface KeywordsStore {
   setKeywords: (keywords: KeywordData[]) => void;
 }
 
+const isBrowser = typeof window !== "undefined";
+
+const dummyStorage: StateStorage = {
+  getItem: () => null,
+  setItem: () => {},
+  removeItem: () => {},
+};
+
+const storage = isBrowser
+  ? createJSONStorage(() => localStorage)
+  : createJSONStorage(() => dummyStorage);
+
 export const useKeywordsStore = create<KeywordsStore>()(
   persist(
     (set) => ({
@@ -34,6 +46,7 @@ export const useKeywordsStore = create<KeywordsStore>()(
     }),
     {
       name: "keywords-storage", // LocalStorage key
+      storage,
       partialize: (state) => ({ keywords: state.keywords }), // Only persist keywords
     },
   ),

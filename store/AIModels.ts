@@ -1,5 +1,5 @@
-import create from "zustand";
-import { persist } from "zustand/middleware";
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 interface ModelStore {
   selectedModel: string;
@@ -17,7 +17,7 @@ const useModelStore = create<ModelStore>()(
     }),
     {
       name: "model-storage",
-      getStorage: () => localStorage,
+      storage: createJSONStorage(() => localStorage),
     },
   ),
 );

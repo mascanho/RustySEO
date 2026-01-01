@@ -1,4 +1,4 @@
-import create from "zustand";
+import { create } from "zustand";
 
 // Define the types for the state
 interface VisibilityState {
