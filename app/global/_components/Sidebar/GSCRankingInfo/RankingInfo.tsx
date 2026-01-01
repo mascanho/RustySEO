@@ -27,12 +27,12 @@ const RankingInfo = () => {
   const [credentials, setCredentials] = useState<InstalledInfo | null>(null);
 
   // Debug selectedTableURL structure
-  console.log("=== DEEP CRAWL DEBUG ===");
-  console.log("selectedTableURL:", selectedTableURL);
-  console.log("selectedTableURL type:", typeof selectedTableURL);
-  console.log("selectedTableURL length:", selectedTableURL?.length);
-  console.log("selectedTableURL[0]:", selectedTableURL?.[0]);
-  console.log("========================");
+  // console.log("=== DEEP CRAWL DEBUG ===");
+  // console.log("selectedTableURL:", selectedTableURL);
+  // console.log("selectedTableURL type:", typeof selectedTableURL);
+  // console.log("selectedTableURL length:", selectedTableURL?.length);
+  // console.log("selectedTableURL[0]:", selectedTableURL?.[0]);
+  // console.log("========================");
 
   // Safe data validation
   const validateData = (data) => {

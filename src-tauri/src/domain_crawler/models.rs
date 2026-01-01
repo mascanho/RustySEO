@@ -72,6 +72,11 @@ pub struct DomainCrawlResults {
     pub https: bool,
     pub cross_origin: SecuritySummary,
     pub psi_results: Result<Vec<Value>, String>,
+    pub original_url: String,             // The URL we requested
+    pub redirect_url: Option<String>,     // The redirect URL (if any)
+    pub had_redirect: bool,               // Boolean flag for easy filtering
+    pub redirection_type: Option<String>, // Type of redirect
+    pub status: Option<u16>,              // Status of the request
 }
 
 // Implement Default for DomainCrawlResults
@@ -123,6 +128,11 @@ impl Default for DomainCrawlResults {
                 total_inline_scripts: 0,
             },
             psi_results: Ok(Vec::new()),
+            original_url: String::new(),
+            redirect_url: None,
+            had_redirect: false,
+            redirection_type: None,
+            status: None,
         }
     }
 }
