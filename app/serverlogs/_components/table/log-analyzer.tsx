@@ -439,7 +439,7 @@ export function LogAnalyzer() {
 
   const exportCSV = useCallback(async () => {
     // 1. Define headers
-    const headers = [
+    let headers = [
       "IP",
       "Country",
       "Browser",
@@ -455,6 +455,16 @@ export function LogAnalyzer() {
       "Bot/Human",
       "Google Verified",
     ];
+
+    if (ExcelLoaded) {
+      headers = [
+        ...headers,
+        "Position",
+        "Clicks",
+        "Impressions",
+        "CTR",
+      ];
+    }
 
     // 2. Prepare data
     const dataToExport = filteredLogs.length > 0 ? filteredLogs : entries;
@@ -507,7 +517,7 @@ export function LogAnalyzer() {
         for (const log of batch) {
           if (!log) continue; // Skip null or undefined log entries
 
-          const row = [
+          let row = [
             sanitizeForCSV(log.ip ?? ""),
             sanitizeForCSV(log.country ?? ""),
             sanitizeForCSV(log.browser ?? ""),
@@ -524,8 +534,19 @@ export function LogAnalyzer() {
             sanitizeForCSV(log.verified ? "true" : "false"),
           ];
 
+          if (ExcelLoaded) {
+            row = [
+              ...row,
+              sanitizeForCSV(log.position ?? ""),
+              sanitizeForCSV(log.clicks ?? ""),
+              sanitizeForCSV(log.impressions ?? ""),
+              sanitizeForCSV(log.ctr ? `${(log.ctr * 100).toFixed(2)}%` : ""),
+            ];
+          }
+
           // Validate column count
-          if (row.length !== 14) {
+          const expectedColumnCount = ExcelLoaded ? 18 : 14;
+          if (row.length !== expectedColumnCount) {
             console.error("Invalid row detected:", log);
             continue;
           }
@@ -549,7 +570,7 @@ export function LogAnalyzer() {
         error instanceof Error ? error.message : String(error);
       toast.error(`Export failed: ${errorMessage}`);
     }
-  }, [filteredLogs, entries, formatResponseSize]);
+  }, [filteredLogs, entries, formatResponseSize, ExcelLoaded]);
 
   const handleIP = useCallback((ip: string) => {
     setIpModal(true);
