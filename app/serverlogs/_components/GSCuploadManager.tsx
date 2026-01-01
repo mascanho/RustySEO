@@ -362,7 +362,7 @@ export default function GSCuploadManager() {
           </div>
 
           {/* Right Column - Preview */}
-          <div className="col-span-8 h-full max-h-[560px] border dark:border-white/30 rounded-lg bg-background flex flex-col overflow-hidden">
+          <div className="col-span-8 h-full max-h-[550px] border dark:border-white/30 rounded-lg bg-background flex flex-col overflow-hidden">
             <div className="p-3 border-b dark:border-b-white/30 bg-muted/30 dark:bg-muted/10 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <h3 className="text-sm font-medium flex items-center gap-2 dark:text-white">
