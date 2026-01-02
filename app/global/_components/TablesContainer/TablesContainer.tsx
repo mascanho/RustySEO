@@ -29,6 +29,7 @@ import InnerLinksDetailsTable from "./SubTables/InnerLinksTable/InnerLinksDetail
 
 import { shallow } from "zustand/shallow";
 import OuterLinksSubTable from "./SubTables/OuterLinksSubTable/OuterLinksSubTable";
+import RedirectsTable from "./RedirectsTable/RedirectsTable";
 
 const BottomTableContent = ({ children, height }) => (
   <div
@@ -305,7 +306,7 @@ export default function Home() {
               <TabsTrigger value="search" className="rounded-t-md">
                 Custom Search
               </TabsTrigger>
-              <TabsTrigger value="search" className="rounded-t-md">
+              <TabsTrigger value="redirects" className="rounded-t-md">
                 Redirects
               </TabsTrigger>
               {issuesView && (
@@ -369,6 +370,12 @@ export default function Home() {
               />
             </TabsContent>
 
+            <TabsContent
+              value="redirects"
+              className="flex-grow overflow-hidden"
+            >
+              <RedirectsTable tabName={"AllData"} rows={debouncedCrawlData} />
+            </TabsContent>
             {/* DYNAMIC TABS */}
             {issuesView && (
               <TabsContent
