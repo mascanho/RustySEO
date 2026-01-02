@@ -305,6 +305,9 @@ export default function Home() {
               <TabsTrigger value="search" className="rounded-t-md">
                 Custom Search
               </TabsTrigger>
+              <TabsTrigger value="search" className="rounded-t-md">
+                Redirects
+              </TabsTrigger>
               {issuesView && (
                 <TabsTrigger value={issuesView} className="rounded-t-md">
                   {issuesView}
