@@ -126,6 +126,16 @@ export function LogAnalyzer() {
   const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
   const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
 
+  const allStatusCodes = useMemo(() => {
+    const codes = new Set<number>();
+    entries.forEach((entry) => {
+      if (entry.status) {
+        codes.add(entry.status);
+      }
+    });
+    return Array.from(codes).sort((a, b) => a - b);
+  }, [entries]);
+
   // Search state - only filters when button is pressed
   const [searchInput, setSearchInput] = useState("");
   const [activeSearchTerm, setActiveSearchTerm] = useState("");
@@ -141,23 +151,28 @@ export function LogAnalyzer() {
     setPosColumn((prev) => {
       if (prev === "position") return "clicks";
       if (prev === "clicks") return "impressions";
+      if (prev === "impressions") return "ctr";
       return "position";
     });
   };
 
   const getPositionBadgeColor = useCallback((position: any) => {
-    const posNum = typeof position === 'string' ? parseFloat(position) : position;
+    const posNum =
+      typeof position === "string" ? parseFloat(position) : position;
 
     if (posNum === undefined || posNum === null || isNaN(posNum)) {
       return "border-brand-bright/50"; // Default border if not a valid number
     }
     if (posNum < 5) {
       return "bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200 border-green-300 dark:border-green-700"; // Muted green
-    } else if (posNum <= 10) { // position > 5 and <= 10
+    } else if (posNum <= 10) {
+      // position > 5 and <= 10
       return "bg-yellow-200 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-200 border-yellow-300 dark:border-yellow-700"; // Yellow
-    } else if (posNum <= 20) { // position > 10 and <= 20
+    } else if (posNum <= 20) {
+      // position > 10 and <= 20
       return "bg-orange-200 dark:bg-orange-800 text-orange-800 dark:text-orange-200 border-orange-300 dark:border-orange-700"; // Orange
-    } else { // position > 20
+    } else {
+      // position > 20
       return "bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-200 border-red-300 dark:border-red-700"; // Red
     }
   }, []);
@@ -216,6 +231,9 @@ export function LogAnalyzer() {
   }, []);
 
   const formatResponseSize = useCallback((bytes: number) => {
+    if (bytes === null || bytes === undefined || Number.isNaN(bytes)) {
+      return "0 B";
+    }
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -419,10 +437,9 @@ export function LogAnalyzer() {
     setUrlAgentFilter("url");
   }, []);
 
-  // Export logs as CSV
   const exportCSV = useCallback(async () => {
     // 1. Define headers
-    const headers = [
+    let headers = [
       "IP",
       "Country",
       "Browser",
@@ -438,6 +455,16 @@ export function LogAnalyzer() {
       "Bot/Human",
       "Google Verified",
     ];
+
+    if (ExcelLoaded) {
+      headers = [
+        ...headers,
+        "Position",
+        "Clicks",
+        "Impressions",
+        "CTR",
+      ];
+    }
 
     // 2. Prepare data
     const dataToExport = filteredLogs.length > 0 ? filteredLogs : entries;
@@ -488,25 +515,38 @@ export function LogAnalyzer() {
         const batch = dataToExport.slice(i, i + batchSize);
 
         for (const log of batch) {
-          const row = [
-            sanitizeForCSV(log.ip),
-            sanitizeForCSV(log.country),
-            sanitizeForCSV(log.browser),
-            sanitizeForCSV(log.timestamp),
-            sanitizeForCSV(log.method),
-            sanitizeForCSV(log.path),
-            sanitizeForCSV(log.taxonomy),
-            sanitizeForCSV(log.file_type),
-            sanitizeForCSV(log.status),
+          if (!log) continue; // Skip null or undefined log entries
+
+          let row = [
+            sanitizeForCSV(log.ip ?? ""),
+            sanitizeForCSV(log.country ?? ""),
+            sanitizeForCSV(log.browser ?? ""),
+            sanitizeForCSV(log.timestamp ?? ""),
+            sanitizeForCSV(log.method ?? ""),
+            sanitizeForCSV(log.path ?? ""),
+            sanitizeForCSV(log.taxonomy ?? ""),
+            sanitizeForCSV(log.file_type ?? ""),
+            sanitizeForCSV(log.status ?? ""),
             sanitizeForCSV(formatResponseSize(log.response_size)),
-            sanitizeForCSV(log.user_agent),
+            sanitizeForCSV(log.user_agent ?? ""),
             sanitizeForCSV(log.referer || "-"),
-            sanitizeForCSV(log.crawler_type),
+            sanitizeForCSV(log.crawler_type ?? ""),
             sanitizeForCSV(log.verified ? "true" : "false"),
           ];
 
+          if (ExcelLoaded) {
+            row = [
+              ...row,
+              sanitizeForCSV(log.position ?? ""),
+              sanitizeForCSV(log.clicks ?? ""),
+              sanitizeForCSV(log.impressions ?? ""),
+              sanitizeForCSV(log.ctr ? `${(log.ctr * 100).toFixed(2)}%` : ""),
+            ];
+          }
+
           // Validate column count
-          if (row.length !== 14) {
+          const expectedColumnCount = ExcelLoaded ? 18 : 14;
+          if (row.length !== expectedColumnCount) {
             console.error("Invalid row detected:", log);
             continue;
           }
@@ -526,9 +566,11 @@ export function LogAnalyzer() {
     } catch (error) {
       setIsExporting(false);
       console.error("Export failed:", error);
-      toast.error(`Export failed: ${error.message}`);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      toast.error(`Export failed: ${errorMessage}`);
     }
-  }, [filteredLogs, entries, formatResponseSize]);
+  }, [filteredLogs, entries, formatResponseSize, ExcelLoaded]);
 
   const handleIP = useCallback((ip: string) => {
     setIpModal(true);
@@ -604,1069 +646,595 @@ export function LogAnalyzer() {
     return log?.crawler_type;
   }
 
-    return (
-
-      <TooltipProvider>
-
-        <div className="space-y-4 flex flex-col flex-1 h-full not-selectable">
-
-          <div className="flex flex-col md:flex-row justify-between relative -mb-4 p-1 h-full">
-
-            {ipModal && (
-
-              <div className="absolute z-50 top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-[2rem]">
-
-                <IpDisplay ip={ip} close={setIpModal} />
-
-              </div>
-
-            )}
-
-            <div className="relative w-full mr-1">
-
-              <Search className="absolute dark:text-white/50 left-2.5 top-3 h-4 w-4 text-muted-foreground" />
-
-              <Input
-
-                reset={resetFilters}
-
-                type="search"
-
-                placeholder="Search by IP, path, user agent..."
-
-                className="pl-8 w-full dark:text-white"
-
-                value={searchInput}
-
-                onChange={handleSearchChange}
-
-                onKeyDown={handleKeyDown}
-
-              />
-
-              <button
-
-                onClick={handleSearchClick}
-
-                className="absolute right-2 border-brand-bright border hover:bg-brand-bright hover:text-white text-black bg-white dark:bg-brand-darker   h-6 min-w-16   top-2 rounded-l-md px-2 dark:text-white text-xs dark:hover:bg-brand-bright"
-
-              >
-
-                search
-
-              </button>
-
-              {searchInput && (
-
-                <X
-
-                  size={14}
-
-                  className="absolute right-[75px] text-red-500 w-6 dark:text-red-500 top-[13px] rounded-md text-xs bg-white dark:bg-brand-darker cursor-pointer"
-
-                  onClick={() => {
-
-                    setSearchInput("");
-
-                    setActiveSearchTerm("");
-
-                  }}
-
-                />
-
-              )}{" "}
-
+  return (
+    <TooltipProvider>
+      <div className="space-y-4 flex flex-col flex-1 h-full not-selectable">
+        <div className="flex flex-col md:flex-row justify-between relative -mb-4 p-1 h-full">
+          {ipModal && (
+            <div className="absolute z-50 top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-[2rem]">
+              <IpDisplay ip={ip} close={setIpModal} />
             </div>
-
-  
-
-            <div className="flex flex-1 gap-1">
-
-              {/* Status Code Filter */}
-
-              <DropdownMenu>
-
-                <DropdownMenuTrigger asChild>
-
-                  <Button
-
-                    variant="outline"
-
-                    className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark"
-
-                  >
-
-                    <Filter className="h-4 w-4" />
-
-                    Status
-
-                    {statusFilter.length > 0 && (
-
-                      <Badge variant="secondary" className="ml-0">
-
-                        {statusFilter.length}
-
-                      </Badge>
-
-                    )}
-
-                  </Button>
-
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent
-
-                  align="center"
-
-                  className="w-48 m-0 bg-white dark:bg-brand-darker text-left dark:text-white dark:border-brand-dark"
-
-                >
-
-                  <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
-
-                  <DropdownMenuSeparator />
-
-                  {[200, 201, 204, 400, 401, 403, 404, 500].map((code) => (
-
-                    <DropdownMenuCheckboxItem
-
-                      className="hover:bg-brand-blue active:text-black hover:text-white dark:text-white"
-
-                      key={code}
-
-                      checked={statusFilter.includes(code)}
-
-                      onCheckedChange={(checked) => {
-
-                        setStatusFilter((prev) =>
-
-                          checked
-
-                            ? [...prev, code]
-
-                            : prev.filter((c) => c !== code),
-
-                        );
-
-                      }}
-
-                    >
-
-                      <Badge
-
-                        variant="outline"
-
-                        className={`mr-2 ${getStatusCodeColor(code)}`}
-
-                      >
-
-                        {code}
-
-                      </Badge>
-
-                      {code >= 200 && code < 300
-
-                        ? "Success"
-
-                        : code >= 300 && code < 400
-
-                          ? "Redirection"
-
-                          : code >= 400 && code < 500
-
-                            ? "Client Error"
-
-                            : "Server Error"}
-
-                    </DropdownMenuCheckboxItem>
-
-                  ))}
-
-                </DropdownMenuContent>
-
-              </DropdownMenu>
-
-  
-
-              {/* Method Filter */}
-
-              <DropdownMenu>
-
-                <DropdownMenuTrigger asChild>
-
-                  <Button
-
-                    variant="outline"
-
-                    className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark"
-
-                  >
-
-                    <Filter className="h-4 w-4" />
-
-                    Method
-
-                    {methodFilter.length > 0 && (
-
-                      <Badge variant="secondary" className="ml-1">
-
-                        {methodFilter.length}
-
-                      </Badge>
-
-                    )}
-
-                  </Button>
-
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent
-
-                  align="end"
-
-                  className="bg-white dark:border-brand-dark dark:text-white dark:active:bg-brand-bright dark:bg-brand-darker"
-
-                >
-
-                  <DropdownMenuLabel>Filter by Method</DropdownMenuLabel>
-
-                  <DropdownMenuSeparator />
-
-                  {["GET", "POST", "PUT", "DELETE", "HEAD"].map((method) => (
-
-                    <DropdownMenuCheckboxItem
-
-                      className="bg-white active:bg-gray-100 hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
-
-                      key={method}
-
-                      checked={methodFilter.includes(method)}
-
-                      onCheckedChange={(checked) => {
-
-                        setMethodFilter((prev) =>
-
-                          checked
-
-                            ? [...prev, method]
-
-                            : prev.filter((m) => m !== method),
-
-                        );
-
-                      }}
-
-                    >
-
-                      {method}
-
-                    </DropdownMenuCheckboxItem>
-
-                  ))}
-
-                </DropdownMenuContent>
-
-              </DropdownMenu>
-
-  
-
-              {/* FileType Filter */}
-
-              <DropdownMenu>
-
-                <DropdownMenuTrigger asChild>
-
-                  <Button
-
-                    variant="outline"
-
-                    className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark"
-
-                  >
-
-                    <Filter className="h-4 w-4" />
-
-                    File Type
-
-                    {fileTypeFilter.length > 0 && (
-
-                      <Badge variant="secondary" className="ml-1">
-
-                        {fileTypeFilter.length}
-
-                      </Badge>
-
-                    )}
-
-                  </Button>
-
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent
-
-                  align="end"
-
-                  className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker"
-
-                >
-
-                  <DropdownMenuLabel>Filter by File Type</DropdownMenuLabel>
-
-                  <DropdownMenuSeparator />
-
-                  {[
-
-                    "HTML",
-
-                    "CSS",
-
-                    "JS",
-
-                    "PHP",
-
-                    "TXT",
-
-                    "Image",
-
-                    "Video",
-
-                    "Audio",
-
-                    "Document",
-
-                    "Archive",
-
-                    "Font",
-
-                  ].map((fileType) => (
-
-                    <DropdownMenuCheckboxItem
-
-                      className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
-
-                      key={fileType}
-
-                      checked={fileTypeFilter.includes(fileType)}
-
-                      onCheckedChange={(checked) => {
-
-                        setFileTypeFilter((prev) =>
-
-                          checked
-
-                            ? [...prev, fileType]
-
-                            : prev.filter((m) => m !== fileType),
-
-                        );
-
-                      }}
-
-                    >
-
-                      {fileType}
-
-                    </DropdownMenuCheckboxItem>
-
-                  ))}
-
-                </DropdownMenuContent>
-
-              </DropdownMenu>
-
-  
-
-              {/* Bot/Human Filter */}
-
-              <Select
-
-                value={botFilter || "all"}
-
-                onValueChange={(value) =>
-
-                  setBotFilter(value === "all" ? null : value)
-
-                }
-
-              >
-
-                <SelectTrigger className="w-[125px] dark:bg-brand-darker dark:text-white">
-
-                  <SelectValue placeholder="Bot/Human" />
-
-                </SelectTrigger>
-
-                <SelectContent>
-
-                  <SelectItem value="all">All Requests</SelectItem>
-
-                  <SelectItem value="bot">🤖 Robots</SelectItem>
-
-                  <SelectItem value="Human">🙋 Human</SelectItem>
-
-                </SelectContent>
-
-              </Select>
-
-  
-
-              {/* USER AGENT AND URL FILTER */}
-
-  
-
-              <Select
-
-                value={urlAgentFilter}
-
-                onValueChange={(value) => {
-
-                  setUrlAgentFilter(value);
-
-                  setShowAgent(value === "agent");
-
-                }}
-
-              >
-
-                <SelectTrigger className="w-[125px] dark:bg-brand-darker dark:text-white">
-
-                  <SelectValue placeholder="Paths" />
-
-                </SelectTrigger>
-
-                <SelectContent>
-
-                  <SelectItem value="url">Path / URL</SelectItem>
-
-                  <SelectItem value="agent">User Agent</SelectItem>
-
-                </SelectContent>
-
-              </Select>
-
-              {/* SELECT BOT TYPE (DESKTOP OR MOBILE) */}
-
-              <Select
-
-                value={botTypeFilter === null ? "all" : botTypeFilter}
-
-                onValueChange={(value) =>
-
-                  setBotTypeFilter(value === "all" ? null : value)
-
-                }
-
-              >
-
-                <SelectTrigger className="w-[120px] dark:bg-brand-darker dark:text-white">
-
-                  <SelectValue placeholder="Bot/Human" />
-
-                </SelectTrigger>
-
-                <SelectContent>
-
-                  <SelectItem value="all">All devices</SelectItem>
-
-                  <SelectItem value="Desktop">Desktop</SelectItem>
-
-                  <SelectItem value="Mobile">Mobile</SelectItem>
-
-                </SelectContent>
-
-              </Select>
-
-  
-
-              {/* SELECT VEREFIED OR NOT VERIFIED */}
-
-              <Select
-
-                value={
-
-                  verifiedFilter === null
-
-                    ? "all"
-
-                    : verifiedFilter
-
-                      ? "verified"
-
-                      : "unverified"
-
-                }
-
-                onValueChange={(value) => {
-
-                  if (value === "all") setVerifiedFilter(null);
-
-                  else setVerifiedFilter(value === "verified");
-
-                }}
-
-              >
-
-                <SelectTrigger className="w-[130px] dark:bg-brand-darker dark:text-white">
-
-                  <SelectValue placeholder="Verification" />
-
-                </SelectTrigger>
-
-                <SelectContent>
-
-                  <SelectItem value="all">All IPs</SelectItem>
-
-                  <SelectItem className="flex" value="verified">
-
-                    <div className="flex items-center">
-
-                      <BadgeCheck
-
-                        className="text-xs active:text-brand-bright hover:white active:white"
-
-                        size={17}
-
-                      />
-
-                      <span className="ml-1 inline-block">Verified</span>
-
-                    </div>
-
-                  </SelectItem>
-
-                  <SelectItem value="unverified">
-
-                    <div className="flex">
-
-                      <BadgeInfo size={17} />{" "}
-
-                      <span className="ml-1">Unverified</span>
-
-                    </div>
-
-                  </SelectItem>
-
-                </SelectContent>
-
-              </Select>
-
-  
-
-              <Button
-
-                variant="outline"
-
-                onClick={resetFilters}
-
-                className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white"
-
-              >
-
-                <RefreshCw className="h-4 w-4" />
-
-                Reset
-
-              </Button>
-
-  
-
-              <Button
-
-                variant="outline"
-
-                onClick={exportCSV}
-
-                disabled={isExporting}
-
-                className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white"
-
-              >
-
-                {isExporting ? (
-
-                  <>
-
-                    <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
-
-                    Exporting...
-
-                  </>
-
-                ) : (
-
-                  <>
-
-                    <Download className="h-4 w-4" />
-
-                    Export CSV
-
-                  </>
-
-                )}
-
-              </Button>
-
-            </div>
-
-          </div>
-
-  
-
-          <div>
-
-            <CardContent
-
-              className="p-0"
-
-              style={{
-
-                height: "calc(100vh - 27.2rem)",
-
-              }}
-
+          )}
+
+          <div className="relative w-full mr-1">
+            <Search className="absolute dark:text-white/50 left-2.5 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              reset={resetFilters}
+              type="search"
+              placeholder="Search by IP, path, user agent..."
+              className="pl-8 w-full dark:text-white"
+              value={searchInput}
+              onChange={handleSearchChange}
+              onKeyDown={handleKeyDown}
+            />
+            <button
+              onClick={handleSearchClick}
+              className="absolute right-2 border-brand-bright border hover:bg-brand-bright hover:text-white text-black bg-white dark:bg-brand-darker   h-6 min-w-16   top-2 rounded-l-md px-2 dark:text-white text-xs dark:hover:bg-brand-bright"
             >
-
-              <div className="rounded-md border dark:border-brand-dark h-full logs">
-
-                <div className="relative w-full h-full overflow-auto">
-
-                  <Table className="h-full [&_tr]:p-10 logs relative">
-
-                    <TableHeader>
-
-                      <TableRow>
-
-                        <TableHead className="w-[60px] text-center">#</TableHead>
-
-                        <TableHead className="w-[140px] cursor-pointer">
-
-                          <div className="flex space-x-2 items-center">
-
-                            <span onClick={() => requestSort("ip")}>
-
-                              IP Address
-
-                            </span>
-
-                            {sortConfig?.key === "ip" && (
-
-                              <ChevronDown
-
-                                className={`ml-1 h-4 w-4 inline-block ${
-
-                                  sortConfig.direction === "descending"
-
-                                    ? "rotate-180"
-
-                                    : ""
-
-                                }`}
-
-                              />
-
-                            )}
-
-                            <FaEye
-
-                              className="ml-2"
-
-                              onClick={() => setShowIp(!showIp)}
-
-                            />
-
-                          </div>
-
-                        </TableHead>
-
-                        <TableHead
-
-                          className="w-[50px] cursor-pointer"
-
-                          onClick={() => requestSort("method")}
-
-                        >
-
-                          Method
-
-                          {sortConfig?.key === "method" && (
-
-                            <ChevronDown
-
-                              className={`ml-1 h-4 w-4 inline-block ${
-
-                                sortConfig.direction === "descending"
-
-                                  ? "rotate-180"
-
-                                  : ""
-
-                              }`}
-
-                            />
-
-                          )}
-
-                        </TableHead>
-
-                        <TableHead
-
-                          className="cursor-pointer text-center w-[40px]"
-
-                          onClick={() => requestSort("browser")}
-
-                        >
-
-                          Browser
-
-                          {sortConfig?.key === "browser" && (
-
-                            <ChevronDown
-
-                              className={`ml-1 h-4 w-4 inline-block ${
-
-                                sortConfig.direction === "descending"
-
-                                  ? "rotate-180"
-
-                                  : ""
-
-                              }`}
-
-                            />
-
-                          )}
-
-                        </TableHead>
-
-                        <TableHead
-
-                          className="w-[200px] cursor-pointer text-left"
-
-                          onClick={() => requestSort("timestamp")}
-
-                        >
-
-                          Timestamp
-
-                          {sortConfig?.key === "timestamp" && (
-
-                            <ChevronDown
-
-                              className={`ml-1 h-4 w-4 inline-block ${
-
-                                sortConfig.direction === "descending"
-
-                                  ? "rotate-180"
-
-                                  : ""
-
-                              }`}
-
-                            />
-
-                          )}
-
-                        </TableHead>
-
-  
-
-                        <TableHead
-
-                          className="w-[60px] cursor-pointer"
-
-                          onClick={() => requestSort("status")}
-
-                        >
-
-                          Status
-
-                          {sortConfig?.key === "status" && (
-
-                            <ChevronDown
-
-                              className={`ml-1 h-4 w-4 inline-block ${
-
-                                sortConfig.direction === "descending"
-
-                                  ? "rotate-180"
-
-                                  : ""
-
-                              }`}
-
-                            />
-
-                          )}
-
-                        </TableHead>
-
-  
-
-                        <TableHead
-
-                          className="cursor-pointer pl-7"
-
-                          onClick={() => requestSort("path")}
-
-                        >
-
-                          {showAgent ? "User Agent" : "Path"}
-
-                          {sortConfig?.key === "path" && (
-
-                            <ChevronDown
-
-                              className={`ml-1 h-4 w-4 inline-block ${
-
-                                sortConfig.direction === "descending"
-
-                                  ? "rotate-180"
-
-                                  : ""
-
-                              }`}
-
-                            />
-
-                          )}
-
-                        </TableHead>
-
-  
-
-                        {/* HERE CONDITIONALLY RENDER THE HEAD FOR POSITION IF TOGGLED */}
-
-                        {ExcelLoaded && !showAgent && (
-
-                          <TableHead
-
-                            className="w-[30px] text-center cursor-pointer"
-
-                            onClick={cyclePosColumn}
-
-                          >
-
-                            {posColumn === "position"
-
-                              ? "Position"
-
-                              : posColumn === "clicks"
-
-                                ? "Clicks"
-
-                                : "Impressions"}
-
-                          </TableHead>
-
-                        )}
-
-  
-
-                        <TableHead className="min-w-[50px] w-[50px] max-w-[100px] text-center">
-
-                          Segment
-
-                        </TableHead>
-
-                        <TableHead
-
-                          className="w-[80px] cursor-pointer"
-
-                          onClick={() => requestSort("file_type")}
-
-                        >
-
-                          File Type
-
-                          {sortConfig?.key === "file_type" && (
-
-                            <ChevronDown
-
-                              className={`ml-1 h-4 w-4 inline-block ${
-
-                                sortConfig.direction === "descending"
-
-                                  ? "rotate-180"
-
-                                  : ""
-
-                              }`}
-
-                            />
-
-                          )}
-
-                        </TableHead>
-
-                        {!showAgent && (
-
-                          <TableHead
-
-                            className="w-[80px] cursor-pointer"
-
-                            onClick={() => requestSort("responseSize")}
-
-                          >
-
-                            Size
-
-                            {sortConfig?.key === "responseSize" && (
-
-                              <ChevronDown
-
-                                className={`ml-1 h-4 w-4 inline-block ${
-
-                                  sortConfig.direction === "descending"
-
-                                    ? "rotate-180"
-
-                                    : ""
-
-                                }`}
-
-                              />
-
-                            )}
-
-                          </TableHead>
-
-                        )}
-
-                        <TableHead align="center" className="text-left w-[130px]">
-
-                          Crawler Type
-
-                        </TableHead>
-
-                      </TableRow>
-
-                    </TableHeader>
-
-                    <TableBody className="relative">
-
-                      {filteredLogs.length > 0 ? (
-
-                        currentLogs.map((log, index) => (
-
-                                                      <LogRow
-
-                                                        key={`${log.ip}-${log.timestamp}-${index}`}
-
-                                                        log={log}
-
-                                                        index={index}
-
-                                                        indexOfFirstItem={indexOfFirstItem}
-
-                                                        expandedRow={expandedRow}
-
-                                                        setExpandedRow={setExpandedRow}
-
-                                                        handleIP={handleIP}
-
-                                                        showOnTables={showOnTables}
-
-                                                        domain={domain}
-
-                                                        formatDate={formatDate}
-
-                                                        getFileIcon={getFileIcon}
-
-                                                        getStatusCodeColor={getStatusCodeColor}
-
-                                                        formatResponseSize={formatResponseSize}
-
-                                                        showIp={showIp}
-
-                                                        showAgent={showAgent}
-
-                                                        setShowAgent={setShowAgent}
-
-                                                        logIpMasking={logIpMasking}
-
-                                                        formatCrawlerType={formatCrawlerType}
-
-                                                        handleURLClick={handleURLClick}
-
-                                                        handleCopyClick={handleCopyClick}
-
-                                                        posColumn={posColumn}
-
-                                                        ExcelLoaded={ExcelLoaded}
-
-                                                        getPositionBadgeColor={getPositionBadgeColor}
-
-                                                      />
-
-                        ))
-
-                      ) : (
-
-                        <TableRow>
-
-                          <TableCell
-
-                            colSpan={11}
-
-                            className="h-24 max-h-24  text-center text-black/50 dark:text-white/50"
-
-                          >
-
-                            No log entries found.
-
-                          </TableCell>
-
-                        </TableRow>
-
-                      )}
-
-                    </TableBody>
-
-                  </Table>
-
-                </div>
-
-              </div>
-
-            </CardContent>
-
-            <div className="h-5 dark:bg-brand-darker bg-white dark:border-t border-l dark:border-l-brand-dark dark:border-r-brand-dark border-r border-t-0 border-t-brand-dark w-full absolute  top-[22.9rem]  -z-1" />
-
+              search
+            </button>
+            {searchInput && (
+              <X
+                size={14}
+                className="absolute right-[75px] text-red-500 w-6 dark:text-red-500 top-[13px] rounded-md text-xs bg-white dark:bg-brand-darker cursor-pointer"
+                onClick={() => {
+                  setSearchInput("");
+
+                  setActiveSearchTerm("");
+                }}
+              />
+            )}{" "}
           </div>
 
-  
+          <div className="flex flex-1 gap-1">
+            {/* Status Code Filter */}
 
-          <PaginationControls
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark"
+                >
+                  <Filter className="h-4 w-4" />
+                  Status
+                  {statusFilter.length > 0 && (
+                    <Badge variant="secondary" className="ml-0">
+                      {statusFilter.length}
+                    </Badge>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
 
-            currentPage={currentPage}
+              <DropdownMenuContent
+                align="center"
+                className="w-48 m-0 bg-white dark:bg-brand-darker text-left dark:text-white dark:border-brand-dark max-h-64 overflow-y-auto"
+              >
+                <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
 
-            totalPages={totalPages}
+                <DropdownMenuSeparator />
 
-            setCurrentPage={setCurrentPage}
+                {allStatusCodes.map((code) => (
+                  <DropdownMenuCheckboxItem
+                    className="hover:bg-brand-blue active:text-black hover:text-white dark:text-white"
+                    key={code}
+                    checked={statusFilter.includes(code)}
+                    onCheckedChange={(checked) => {
+                      setStatusFilter((prev) =>
+                        checked
+                          ? [...prev, code]
+                          : prev.filter((c) => c !== code),
+                      );
+                    }}
+                  >
+                    <Badge
+                      variant="outline"
+                      className={`mr-2 ${getStatusCodeColor(code)}`}
+                    >
+                      {code}
+                    </Badge>
 
-            itemsPerPage={itemsPerPage}
+                    {code >= 200 && code < 300
+                      ? "Success"
+                      : code >= 300 && code < 400
+                        ? "Redirection"
+                        : code >= 400 && code < 500
+                          ? "Client Error"
+                          : "Server Error"}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-            setItemsPerPage={setItemsPerPage}
+            {/* Method Filter */}
 
-            indexOfFirstItem={indexOfFirstItem}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark"
+                >
+                  <Filter className="h-4 w-4" />
+                  Method
+                  {methodFilter.length > 0 && (
+                    <Badge variant="secondary" className="ml-1">
+                      {methodFilter.length}
+                    </Badge>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
 
-            indexOfLastItem={indexOfLastItem}
+              <DropdownMenuContent
+                align="end"
+                className="bg-white dark:border-brand-dark dark:text-white dark:active:bg-brand-bright dark:bg-brand-darker"
+              >
+                <DropdownMenuLabel>Filter by Method</DropdownMenuLabel>
 
-            filteredLogs={filteredLogs}
+                <DropdownMenuSeparator />
 
-            entries={entries}
+                {["GET", "POST", "PUT", "DELETE", "HEAD"].map((method) => (
+                  <DropdownMenuCheckboxItem
+                    className="bg-white active:bg-gray-100 hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                    key={method}
+                    checked={methodFilter.includes(method)}
+                    onCheckedChange={(checked) => {
+                      setMethodFilter((prev) =>
+                        checked
+                          ? [...prev, method]
+                          : prev.filter((m) => m !== method),
+                      );
+                    }}
+                  >
+                    {method}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-            formatedNumber={formatedNumber}
+            {/* FileType Filter */}
 
-          />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark"
+                >
+                  <Filter className="h-4 w-4" />
+                  File Type
+                  {fileTypeFilter.length > 0 && (
+                    <Badge variant="secondary" className="ml-1">
+                      {fileTypeFilter.length}
+                    </Badge>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
 
+              <DropdownMenuContent
+                align="end"
+                className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker"
+              >
+                <DropdownMenuLabel>Filter by File Type</DropdownMenuLabel>
+
+                <DropdownMenuSeparator />
+
+                {[
+                  "HTML",
+
+                  "CSS",
+
+                  "JS",
+
+                  "PHP",
+
+                  "TXT",
+
+                  "Image",
+
+                  "Video",
+
+                  "Audio",
+
+                  "Document",
+
+                  "Archive",
+
+                  "Font",
+                ].map((fileType) => (
+                  <DropdownMenuCheckboxItem
+                    className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                    key={fileType}
+                    checked={fileTypeFilter.includes(fileType)}
+                    onCheckedChange={(checked) => {
+                      setFileTypeFilter((prev) =>
+                        checked
+                          ? [...prev, fileType]
+                          : prev.filter((m) => m !== fileType),
+                      );
+                    }}
+                  >
+                    {fileType}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Bot/Human Filter */}
+
+            <Select
+              value={botFilter || "all"}
+              onValueChange={(value) =>
+                setBotFilter(value === "all" ? null : value)
+              }
+            >
+              <SelectTrigger className="w-[125px] dark:bg-brand-darker dark:text-white">
+                <SelectValue placeholder="Bot/Human" />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="all">All Requests</SelectItem>
+
+                <SelectItem value="bot">🤖 Robots</SelectItem>
+
+                <SelectItem value="Human">🙋 Human</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* USER AGENT AND URL FILTER */}
+
+            <Select
+              value={urlAgentFilter}
+              onValueChange={(value) => {
+                setUrlAgentFilter(value);
+
+                setShowAgent(value === "agent");
+              }}
+            >
+              <SelectTrigger className="w-[125px] dark:bg-brand-darker dark:text-white">
+                <SelectValue placeholder="Paths" />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="url">Path / URL</SelectItem>
+
+                <SelectItem value="agent">User Agent</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* SELECT BOT TYPE (DESKTOP OR MOBILE) */}
+
+            <Select
+              value={botTypeFilter === null ? "all" : botTypeFilter}
+              onValueChange={(value) =>
+                setBotTypeFilter(value === "all" ? null : value)
+              }
+            >
+              <SelectTrigger className="w-[120px] dark:bg-brand-darker dark:text-white">
+                <SelectValue placeholder="Bot/Human" />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="all">All devices</SelectItem>
+
+                <SelectItem value="Desktop">Desktop</SelectItem>
+
+                <SelectItem value="Mobile">Mobile</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* SELECT VEREFIED OR NOT VERIFIED */}
+
+            <Select
+              value={
+                verifiedFilter === null
+                  ? "all"
+                  : verifiedFilter
+                    ? "verified"
+                    : "unverified"
+              }
+              onValueChange={(value) => {
+                if (value === "all") setVerifiedFilter(null);
+                else setVerifiedFilter(value === "verified");
+              }}
+            >
+              <SelectTrigger className="w-[130px] dark:bg-brand-darker dark:text-white">
+                <SelectValue placeholder="Verification" />
+              </SelectTrigger>
+
+              <SelectContent>
+                <SelectItem value="all">All IPs</SelectItem>
+
+                <SelectItem className="flex" value="verified">
+                  <div className="flex items-center">
+                    <BadgeCheck
+                      className="text-xs active:text-brand-bright hover:white active:white"
+                      size={17}
+                    />
+
+                    <span className="ml-1 inline-block">Verified</span>
+                  </div>
+                </SelectItem>
+
+                <SelectItem value="unverified">
+                  <div className="flex">
+                    <BadgeInfo size={17} />{" "}
+                    <span className="ml-1">Unverified</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button
+              variant="outline"
+              onClick={resetFilters}
+              className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Reset
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={exportCSV}
+              disabled={isExporting}
+              className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white"
+            >
+              {isExporting ? (
+                <>
+                  <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  Export CSV
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
-      </TooltipProvider>
+        <div>
+          <CardContent
+            className="p-0"
+            style={{
+              height: "calc(100vh - 27.2rem)",
+            }}
+          >
+            <div className="rounded-md border dark:border-brand-dark h-full logs">
+              <div className="relative w-full h-full overflow-auto">
+                <Table className="logs relative">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[60px] text-center">#</TableHead>
 
-    );
+                      <TableHead className="w-[140px] cursor-pointer">
+                        <div className="flex space-x-2 items-center">
+                          <span onClick={() => requestSort("ip")}>
+                            IP Address
+                          </span>
 
-  }
+                          {sortConfig?.key === "ip" && (
+                            <ChevronDown
+                              className={`ml-1 h-4 w-4 inline-block ${
+                                sortConfig.direction === "descending"
+                                  ? "rotate-180"
+                                  : ""
+                              }`}
+                            />
+                          )}
+
+                          <FaEye
+                            className="ml-2"
+                            onClick={() => setShowIp(!showIp)}
+                          />
+                        </div>
+                      </TableHead>
+
+                      <TableHead
+                        className="w-[50px] cursor-pointer"
+                        onClick={() => requestSort("method")}
+                      >
+                        Method
+                        {sortConfig?.key === "method" && (
+                          <ChevronDown
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        )}
+                      </TableHead>
+
+                      <TableHead
+                        className="cursor-pointer text-center w-[40px]"
+                        onClick={() => requestSort("browser")}
+                      >
+                        Browser
+                        {sortConfig?.key === "browser" && (
+                          <ChevronDown
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        )}
+                      </TableHead>
+
+                      <TableHead
+                        className="w-[200px] cursor-pointer text-left"
+                        onClick={() => requestSort("timestamp")}
+                      >
+                        Timestamp
+                        {sortConfig?.key === "timestamp" && (
+                          <ChevronDown
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        )}
+                      </TableHead>
+
+                      <TableHead
+                        className="w-[60px] cursor-pointer"
+                        onClick={() => requestSort("status")}
+                      >
+                        Status
+                        {sortConfig?.key === "status" && (
+                          <ChevronDown
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        )}
+                      </TableHead>
+
+                      <TableHead
+                        className="cursor-pointer pl-7"
+                        onClick={() => requestSort("path")}
+                      >
+                        {showAgent ? "User Agent" : "Path"}
+
+                        {sortConfig?.key === "path" && (
+                          <ChevronDown
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        )}
+                      </TableHead>
+
+                      {/* HERE CONDITIONALLY RENDER THE HEAD FOR POSITION IF TOGGLED */}
+
+                      {ExcelLoaded && !showAgent && (
+                        <TableHead
+                          className="w-[50px] text-center cursor-pointer"
+                          onClick={cyclePosColumn}
+                        >
+                          {posColumn === "position"
+                            ? "Position"
+                            : posColumn === "clicks"
+                              ? "Clicks"
+                              : posColumn === "ctr"
+                                ? "CTR"
+                                : "Impr"}
+                        </TableHead>
+                      )}
+
+                      <TableHead className="min-w-[50px] w-[50px] max-w-[100px] text-center">
+                        Segment
+                      </TableHead>
+
+                      <TableHead
+                        className="w-[80px] cursor-pointer"
+                        onClick={() => requestSort("file_type")}
+                      >
+                        File Type
+                        {sortConfig?.key === "file_type" && (
+                          <ChevronDown
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        )}
+                      </TableHead>
+
+                      {!showAgent && (
+                        <TableHead
+                          className="w-[80px] cursor-pointer"
+                          onClick={() => requestSort("responseSize")}
+                        >
+                          Size
+                          {sortConfig?.key === "responseSize" && (
+                            <ChevronDown
+                              className={`ml-1 h-4 w-4 inline-block ${
+                                sortConfig.direction === "descending"
+                                  ? "rotate-180"
+                                  : ""
+                              }`}
+                            />
+                          )}
+                        </TableHead>
+                      )}
+
+                      <TableHead align="center" className="text-left w-[130px]">
+                        Crawler Type
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+
+                  <TableBody className="relative">
+                    {filteredLogs.length > 0 ? (
+                      currentLogs.map((log, index) => (
+                        <LogRow
+                          key={`${log.ip}-${log.timestamp}-${index}`}
+                          log={log}
+                          index={index}
+                          indexOfFirstItem={indexOfFirstItem}
+                          expandedRow={expandedRow}
+                          setExpandedRow={setExpandedRow}
+                          handleIP={handleIP}
+                          showOnTables={showOnTables}
+                          domain={domain}
+                          formatDate={formatDate}
+                          getFileIcon={getFileIcon}
+                          getStatusCodeColor={getStatusCodeColor}
+                          formatResponseSize={formatResponseSize}
+                          showIp={showIp}
+                          showAgent={showAgent}
+                          setShowAgent={setShowAgent}
+                          logIpMasking={logIpMasking}
+                          formatCrawlerType={formatCrawlerType}
+                          handleURLClick={handleURLClick}
+                          handleCopyClick={handleCopyClick}
+                          posColumn={posColumn}
+                          ExcelLoaded={ExcelLoaded}
+                          getPositionBadgeColor={getPositionBadgeColor}
+                        />
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={11}
+                          className="h-24 max-h-24  text-center text-black/50 dark:text-white/50"
+                        >
+                          No log entries found.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </CardContent>
+
+          <div className="h-5 dark:bg-brand-darker bg-white dark:border-t border-l dark:border-l-brand-dark dark:border-r-brand-dark border-r border-t-0 border-t-brand-dark w-full absolute  top-[22.9rem]  -z-1" />
+        </div>
+
+        <PaginationControls
+          currentPage={currentPage}
+          totalPages={totalPages}
+          setCurrentPage={setCurrentPage}
+          itemsPerPage={itemsPerPage}
+          setItemsPerPage={setItemsPerPage}
+          indexOfFirstItem={indexOfFirstItem}
+          indexOfLastItem={indexOfLastItem}
+          filteredLogs={filteredLogs}
+          entries={entries}
+          formatedNumber={formatedNumber}
+        />
+      </div>
+    </TooltipProvider>
+  );
+}
 
 // Extracted LogRow component
 function LogRow({
@@ -1696,7 +1264,7 @@ function LogRow({
   return (
     <>
       <TableRow
-        className="group max-h-[10px] h-[10px] align-middle"
+        className="group min-h-[40px]"
         onClick={() => {
           setExpandedRow(expandedRow === index ? null : index);
         }}
@@ -1796,19 +1364,25 @@ function LogRow({
 
         {/* RENDER THE ROW WITH THE POSITION DATA IF IT HAS BEEN TOGGLED */}
         {ExcelLoaded && !showAgent && (
-          <TableCell className="text-center align-middle flex">
+          <TableCell className="text-center align-middle">
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
                   className={`border flex justify-center items-center rounded-full ml-2 w-8 h-5 text-[10px] cursor-default ${
-                    posColumn === "position" ? getPositionBadgeColor(log?.position) : "border-brand-bright/50"
+                    posColumn === "position"
+                      ? getPositionBadgeColor(log?.position)
+                      : "border-brand-bright/50"
                   }`}
                 >
                   {posColumn === "position"
                     ? log?.position || "-"
                     : posColumn === "clicks"
                       ? log?.clicks || "-"
-                      : log?.impressions || "-"}
+                      : posColumn === "ctr"
+                        ? log?.ctr
+                          ? `${(log.ctr * 100).toFixed(0)}%`
+                          : "-"
+                        : log?.impressions || "-"}
                 </span>
               </TooltipTrigger>
               <TooltipContent>
@@ -1821,6 +1395,10 @@ function LogRow({
                   <span className="border-r border-gray-300 h-3" />
                   <span className="text-xs">Impr:</span>
                   <span className="font-bold">{log?.impressions || "-"}</span>
+                  <span className="text-xs">CTR:</span>
+                  <span className="font-bold">
+                    {(log?.ctr?.toFixed(2) * 100).toFixed(0) + "%" || "-"}
+                  </span>
                 </div>
               </TooltipContent>
             </Tooltip>

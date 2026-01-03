@@ -24,7 +24,7 @@ rust_xlsxwriter = "0.84.0"
 serde_json = "*"
 serde = { version = "1.0", features = ["derive"] }
 tauri = { version = "2.9.5", features = [] }
-reqwest = { version = "0.12.23", features = ["blocking", "json"] }
+reqwest = { version = "0.12.28", features = [ "blocking", "json", "native-tls" ] }
 tokio = { version = "1.47.1", features = ["full"] }
 scraper = "*"
 url = "2.5.7"

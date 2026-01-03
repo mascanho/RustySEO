@@ -142,7 +142,15 @@ async fn main() {
     tokio::spawn(async {
         match users::add_user().await {
             Ok(_) => println!("User added successfully"),
-            Err(err) => eprintln!("Error adding user: {}", err),
+            Err(err) => {
+                if err.contains("409") {
+                    println!("User UUID already in DB.");
+                } else {
+                    eprintln!("Duplicated Error adding user: {}", err);
+                }
+
+                return;
+            }
         };
     });
 

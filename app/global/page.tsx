@@ -130,27 +130,44 @@ export default function Page() {
 
   // Event listener for crawl results
   useEffect(() => {
-    let isMounted = true;
+    console.log("Initializing crawl event listener...");
 
-    const handleCrawlResult = (event) => {
-      if (!isMounted) return;
+    const unlistenPromise = listen("crawl_result", (event) => {
+      // The payload structure is { result: DomainCrawlResults }
+      const payload = event.payload;
+      console.log("Payload:", payload);
 
-      const result = event?.payload?.result;
-      if (!result || typeof result !== "object") {
-        console.error("Invalid result format:", result);
-        return;
+      if (payload && typeof payload === "object") {
+        const result = payload.result;
+
+        if (result && typeof result === "object") {
+          addDomainCrawlResult(result);
+          setFinishedDeepCrawl(true);
+          setIsFinishedDeepCrawl(true);
+        } else {
+          console.warn("⚠️ Result is not an object:", result);
+        }
+      } else {
+        console.error("❌ Invalid payload:", payload);
       }
+    });
 
-      addDomainCrawlResult(result);
-      setFinishedDeepCrawl(true);
-      setIsFinishedDeepCrawl(true);
-    };
+    // Also listen to progress updates
+    listen("progress_update", (event) => {
+      // console.log("📈 Progress:", event.payload);
+    }).catch(console.error);
 
-    const unlistenPromise = listen("crawl_result", handleCrawlResult);
+    listen("crawl_complete", () => {
+      console.log("🏁 Crawl complete!", result);
+    }).catch(console.error);
 
     return () => {
-      isMounted = false;
-      unlistenPromise.then((unlisten) => unlisten());
+      unlistenPromise
+        .then((unlisten) => {
+          console.log("Cleaning up listeners");
+          unlisten();
+        })
+        .catch(console.error);
     };
   }, [addDomainCrawlResult, setFinishedDeepCrawl, setIsFinishedDeepCrawl]);
 

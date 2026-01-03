@@ -24,6 +24,11 @@ import {
   X,
   Check,
   AlertTriangle,
+  AlertCircle,
+  Zap,
+  Clock,
+  Trash2,
+  Globe,
   ExternalLink,
   Copy,
 } from "lucide-react";
@@ -535,62 +540,75 @@ export function UrlStatusChecker() {
     <section className={`${visibility.urlchecker ? "block" : "hidden"}`}>
       {/* Overlay background */}
       <div
-        className="fixed inset-0 bg-black/50 dark:bg-black/70 z-40 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/20 dark:bg-black/60 z-40 backdrop-blur-[2px] transition-all duration-300"
         onClick={handleHideHttpChecker}
       />
-      <Card className="max-w-full bg-card w-[700px] border-border fixed bottom-10 left-2 z-50 dark:bg-brand-darker bg-white h-[calc(100vh-150px)] max-h-full">
-        <div className="p-6 relative">
-          <X
-            size={14}
-            className="text-red-500 absolute top-4 right-4 text-muted-foreground cursor-pointer text-xs"
-            onClick={handleHideHttpChecker}
-          />
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex pt-4 w-full space-x-2">
-              <section className="flex w-full items-center">
-                <Activity className="w-5 h-5 text-primary" />
-                <h2 className="text-lg font-semibold text-foreground ml-1">
-                  HTTP Status Monitor
-                </h2>
-              </section>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowLogs(!showLogs)}
-                className="flex-shrink-0"
-              >
-                <ScrollText className="h-5 w-5 text-muted-foreground" />
-              </Button>
+      <Card className="max-w-full bg-white dark:bg-brand-darker w-[750px] border-border fixed bottom-9 left-2 z-50 h-[calc(100vh-120px)] max-h-[900px] flex flex-col shadow-2xl rounded-xl overflow-hidden animate-in slide-in-from-left-4 fade-in duration-300">
+        {/* Header */}
+        <div className="p-4 border-b dark:border-white/20 border-border/50 flex items-center justify-between flex-shrink-0 bg-secondary/5 dark:bg-card">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Activity className="w-4 h-4 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-foreground">
+                HTTP Status Monitor
+              </h2>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                Real-time connectivity
+              </p>
             </div>
           </div>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowLogs(!showLogs)}
+              className={`h-8 w-8 transition-colors ${showLogs ? "bg-primary/10 text-primary" : "text-muted-foreground"}`}
+              title="Toggle logs"
+            >
+              <ScrollText className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleHideHttpChecker}
+              className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors"
+            >
+              <X size={16} />
+            </Button>
+          </div>
+        </div>
 
-          {/* Response Details Panel */}
+        {/* Scrollable Content Wrapper */}
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-background dark:bg-brand-darker">
+          {/* Response Details Panel - Slim version */}
           {selectedUrl &&
             selectedUrl.status !== "unknown" &&
             selectedUrl.headers && (
-              <div className="mb-4 p-4 rounded-lg bg-secondary/20 border border-border/50 dark:border/50 max-h-[400px] overflow-y-auto">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      Response Details for {selectedUrl.url}
+              <div className="flex-shrink-0 p-4 dark:border-white/10 border-b border-border/50 bg-primary/5 dark:bg-primary/10 animate-in slide-in-from-top-2 duration-200 overflow-y-auto max-h-[45%]">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="min-w-0">
+                    <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5 truncate">
+                      <FileText className="h-3.5 w-3.5 text-primary" />
+                      {selectedUrl.url}
                     </h3>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] font-medium text-muted-foreground bg-secondary/50 dark:bg-secondary/20 px-1.5 py-0.5 rounded">
                         {totalHeadersCount} headers • {securityHeadersCount}{" "}
-                        security headers
+                        security
                       </span>
                       {selectedUrl.isSecure && (
-                        <span className="flex items-center gap-1 text-xs text-success">
-                          <Lock className="h-3 w-3" />
+                        <span className="flex items-center gap-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                          <Lock className="h-2.5 w-2.5" />
                           HTTPS
                         </span>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={() =>
                         copyToClipboard(
@@ -601,300 +619,150 @@ export function UrlStatusChecker() {
                           ),
                         )
                       }
-                      className="h-7 text-xs"
+                      className="h-7 px-2 text-[10px] font-semibold dark:border-white/10 dark:hover:bg-white/5"
                     >
                       <Copy className="h-3 w-3 mr-1" />
-                      Copy
+                      Copy JSON
                     </Button>
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="icon"
                       onClick={() => setSelectedUrlIndex(null)}
-                      className="h-7 text-xs"
+                      className="h-7 w-7 text-muted-foreground hover:bg-secondary dark:hover:bg-white/5"
                     >
-                      <X className="h-3 w-3 mr-1" />
-                      Close
+                      <X className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  {/* Basic Info Cards */}
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="flex items-center gap-3 p-3 rounded bg-secondary/50">
-                      <div
-                        className={`w-3 h-3 rounded-full ${getStatusColor(selectedUrl.status)}`}
-                      />
-                      <div>
-                        <p className="text-xs text-muted-foreground">Status</p>
-                        <p className="text-sm font-medium text-foreground">
-                          {selectedUrl.status === "online"
-                            ? "Online"
-                            : "Offline"}{" "}
-                          ({selectedUrl.statusCode})
-                        </p>
+                <div className="space-y-3">
+                  {/* Basic Info Row */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="p-2 rounded-lg bg-background dark:bg-card border border-border/40 dark:border-white/5 shadow-sm">
+                      <p className="text-[9px] text-muted-foreground uppercase font-bold mb-1">
+                        Status
+                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <div
+                          className={`w-1.5 h-1.5 rounded-full ${getStatusColor(selectedUrl.status)}`}
+                        />
+
+                        <Zap className="w-3 h-3 text-amber-500 -ml-3" />
+                        <span className="text-xs font-bold">
+                          {selectedUrl.statusCode || "---"}
+                        </span>
                       </div>
                     </div>
-
                     {selectedUrl.responseTime && (
-                      <div className="flex items-center gap-3 p-3 rounded bg-secondary/50">
-                        <RefreshCw className="w-4 h-4 text-primary" />
-                        <div>
-                          <p className="text-xs text-muted-foreground">
-                            Response Time
-                          </p>
-                          <p className="text-sm font-medium text-foreground">
+                      <div className="p-2 rounded-lg bg-background dark:bg-card border border-border/40 dark:border-white/5 shadow-sm">
+                        <p className="text-[9px] text-muted-foreground uppercase font-bold mb-1">
+                          Latency
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <Zap className="w-3 h-3 text-amber-500" />
+                          <span className="text-xs font-bold">
                             {selectedUrl.responseTime}ms
-                          </p>
+                          </span>
                         </div>
                       </div>
                     )}
-
                     {selectedUrl.contentType && (
-                      <div className="flex items-center gap-3 p-3 rounded bg-secondary/50">
-                        <FileText className="w-4 h-4 text-primary" />
-                        <div>
-                          <p className="text-xs text-muted-foreground">
-                            Content Type
-                          </p>
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {selectedUrl.contentType}
-                          </p>
-                        </div>
+                      <div className="p-2 rounded-lg bg-background dark:bg-card border border-border/40 dark:border-white/5 shadow-sm min-w-0">
+                        <p className="text-[9px] text-muted-foreground uppercase font-bold mb-1">
+                          Type
+                        </p>
+                        <span className="text-xs font-bold truncate block">
+                          {selectedUrl.contentType.split(";")[0]}
+                        </span>
                       </div>
                     )}
                   </div>
 
-                  {/* Headers Breakdown */}
+                  {/* Headers Breakdown - Condensed Accordions */}
                   {categorizedHeaders && (
-                    <div className="space-y-3 pt-4 border-t border-border/50">
-                      {/* Security Headers */}
-                      <div className="space-y-2">
-                        <button
-                          onClick={() => toggleCategory("security")}
-                          className="flex items-center justify-between w-full text-left"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Shield className="h-4 w-4 text-green-500" />
-                            <h4 className="text-sm font-semibold text-foreground">
-                              Security Headers (
-                              {Object.keys(categorizedHeaders.security).length})
-                            </h4>
-                          </div>
-                          {expandedCategories.security ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                        </button>
-
-                        {expandedCategories.security && (
-                          <div className="ml-6 space-y-2">
-                            {Object.entries(categorizedHeaders.security).map(
-                              ([key, value], idx) => (
-                                <div
-                                  key={idx}
-                                  className="flex items-start gap-3 p-2 rounded bg-secondary/30"
-                                >
-                                  <Check className="h-3 w-3 text-success mt-1 flex-shrink-0" />
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between">
-                                      <code className="text-xs font-mono text-foreground font-medium">
-                                        {key}
-                                      </code>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => copyToClipboard(value)}
-                                        className="h-5 w-5 ml-2"
-                                      >
-                                        <Copy className="h-3 w-3" />
-                                      </Button>
-                                    </div>
-                                    <div className="mt-1">
-                                      <code className="text-xs font-mono text-muted-foreground break-all">
-                                        {value}
-                                      </code>
-                                    </div>
-                                  </div>
+                    <div className="space-y-1.5">
+                      {[
+                        {
+                          id: "security",
+                          label: "Security",
+                          icon: Shield,
+                          color: "text-emerald-500",
+                          data: categorizedHeaders.security,
+                        },
+                        {
+                          id: "server",
+                          label: "Server",
+                          icon: Server,
+                          color: "text-blue-500",
+                          data: categorizedHeaders.server,
+                        },
+                        {
+                          id: "caching",
+                          label: "Caching",
+                          icon: Database,
+                          color: "text-purple-500",
+                          data: categorizedHeaders.caching,
+                        },
+                        {
+                          id: "other",
+                          label: "Other",
+                          icon: Info,
+                          color: "text-slate-500",
+                          data: categorizedHeaders.other,
+                        },
+                      ].map(
+                        (cat) =>
+                          Object.keys(cat.data).length > 0 && (
+                            <div
+                              key={cat.id}
+                              className="border border-border/30 dark:border-white/5 rounded-lg overflow-hidden bg-background/50 dark:bg-card/50"
+                            >
+                              <button
+                                onClick={() => toggleCategory(cat.id)}
+                                className="w-full flex items-center justify-between p-2 hover:bg-secondary/30 dark:hover:bg-white/5 transition-colors"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <cat.icon
+                                    className={`h-3.5 w-3.5 ${cat.color}`}
+                                  />
+                                  <span className="text-[11px] font-bold text-foreground">
+                                    {cat.label} ({Object.keys(cat.data).length})
+                                  </span>
                                 </div>
-                              ),
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Server Headers */}
-                      <div className="space-y-2">
-                        <button
-                          onClick={() => toggleCategory("server")}
-                          className="flex items-center justify-between w-full text-left"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Server className="h-4 w-4 text-blue-500" />
-                            <h4 className="text-sm font-semibold text-foreground">
-                              Server Headers (
-                              {Object.keys(categorizedHeaders.server).length})
-                            </h4>
-                          </div>
-                          {expandedCategories.server ? (
-                            <ChevronDown className="h-4 w-4" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4" />
-                          )}
-                        </button>
-
-                        {expandedCategories.server && (
-                          <div className="ml-6 space-y-2">
-                            {Object.entries(categorizedHeaders.server).map(
-                              ([key, value], idx) => (
-                                <div
-                                  key={idx}
-                                  className="flex items-start gap-3 p-2 rounded bg-secondary/30"
-                                >
-                                  <Server className="h-3 w-3 text-blue-500 mt-1 flex-shrink-0" />
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between">
-                                      <code className="text-xs font-mono text-foreground font-medium">
-                                        {key}
-                                      </code>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => copyToClipboard(value)}
-                                        className="h-5 w-5 ml-2"
-                                      >
-                                        <Copy className="h-3 w-3" />
-                                      </Button>
-                                    </div>
-                                    <div className="mt-1">
-                                      <code className="text-xs font-mono text-muted-foreground break-all">
-                                        {value}
-                                      </code>
-                                    </div>
-                                  </div>
-                                </div>
-                              ),
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Caching Headers */}
-                      {Object.keys(categorizedHeaders.caching).length > 0 && (
-                        <div className="space-y-2">
-                          <button
-                            onClick={() => toggleCategory("caching")}
-                            className="flex items-center justify-between w-full text-left"
-                          >
-                            <div className="flex items-center gap-2">
-                              <Database className="h-4 w-4 text-purple-500" />
-                              <h4 className="text-sm font-semibold text-foreground">
-                                Caching Headers (
-                                {Object.keys(categorizedHeaders.caching).length}
-                                )
-                              </h4>
-                            </div>
-                            {expandedCategories.caching ? (
-                              <ChevronDown className="h-4 w-4" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4" />
-                            )}
-                          </button>
-
-                          {expandedCategories.caching && (
-                            <div className="ml-6 space-y-2">
-                              {Object.entries(categorizedHeaders.caching).map(
-                                ([key, value], idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-start gap-3 p-2 rounded bg-secondary/30"
-                                  >
-                                    <Database className="h-3 w-3 text-purple-500 mt-1 flex-shrink-0" />
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center justify-between">
-                                        <code className="text-xs font-mono text-foreground font-medium">
-                                          {key}
-                                        </code>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          onClick={() => copyToClipboard(value)}
-                                          className="h-5 w-5 ml-2"
-                                        >
-                                          <Copy className="h-3 w-3" />
-                                        </Button>
-                                      </div>
-                                      <div className="mt-1">
-                                        <code className="text-xs font-mono text-muted-foreground break-all">
-                                          {value}
+                                {expandedCategories[cat.id] ? (
+                                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                                ) : (
+                                  <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                                )}
+                              </button>
+                              {expandedCategories[cat.id] && (
+                                <div className="px-2 pb-2 space-y-1 divide-y divide-border/20 dark:divide-white/5">
+                                  {Object.entries(cat.data).map(
+                                    ([key, value], idx) => (
+                                      <div key={idx} className="py-1.5 group">
+                                        <div className="flex items-center justify-between mb-0.5">
+                                          <code className="text-[10px] font-bold text-primary/80 dark:text-primary">
+                                            {key}
+                                          </code>
+                                          <button
+                                            onClick={() =>
+                                              copyToClipboard(value as string)
+                                            }
+                                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-secondary dark:hover:bg-white/10 rounded"
+                                          >
+                                            <Copy className="h-2.5 w-2.5 text-muted-foreground" />
+                                          </button>
+                                        </div>
+                                        <code className="text-[10px] font-medium text-muted-foreground leading-relaxed break-all font-mono">
+                                          {value as string}
                                         </code>
                                       </div>
-                                    </div>
-                                  </div>
-                                ),
+                                    ),
+                                  )}
+                                </div>
                               )}
                             </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Other Headers */}
-                      {Object.keys(categorizedHeaders.other).length > 0 && (
-                        <div className="space-y-2">
-                          <button
-                            onClick={() => toggleCategory("other")}
-                            className="flex items-center justify-between w-full text-left"
-                          >
-                            <div className="flex items-center gap-2">
-                              <Info className="h-4 w-4 text-gray-500" />
-                              <h4 className="text-sm font-semibold text-foreground">
-                                Other Headers (
-                                {Object.keys(categorizedHeaders.other).length})
-                              </h4>
-                            </div>
-                            {expandedCategories.other ? (
-                              <ChevronDown className="h-4 w-4" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4" />
-                            )}
-                          </button>
-
-                          {expandedCategories.other && (
-                            <div className="ml-6 space-y-2">
-                              {Object.entries(categorizedHeaders.other).map(
-                                ([key, value], idx) => (
-                                  <div
-                                    key={idx}
-                                    className="flex items-start gap-3 p-2 rounded bg-secondary/30"
-                                  >
-                                    <Info className="h-3 w-3 text-gray-500 mt-1 flex-shrink-0" />
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center justify-between">
-                                        <code className="text-xs font-mono text-foreground font-medium">
-                                          {key}
-                                        </code>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          onClick={() => copyToClipboard(value)}
-                                          className="h-5 w-5 ml-2"
-                                        >
-                                          <Copy className="h-3 w-3" />
-                                        </Button>
-                                      </div>
-                                      <div className="mt-1">
-                                        <code className="text-xs font-mono text-muted-foreground break-all">
-                                          {value}
-                                        </code>
-                                      </div>
-                                    </div>
-                                  </div>
-                                ),
-                              )}
-                            </div>
-                          )}
-                        </div>
+                          ),
                       )}
                     </div>
                   )}
@@ -902,239 +770,322 @@ export function UrlStatusChecker() {
               </div>
             )}
 
-          {/* Controls section */}
-          <div className="flex items-center gap-3 mb-4 p-3 rounded-lg bg-secondary/50 border border-border/50 dark:border-white/30">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <label className="text-xs text-black font-medium dark:text-white">
-                  Polling Interval (seconds)
+          {/* Controls section - Condensed Grid */}
+          <div className="p-3 bg-secondary/5 dark:bg-secondary/10 border-b border-border/50 dark:border-white/5">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-0.5">
+                  Interval (sec)
                 </label>
+                <div className="relative">
+                  <Input
+                    type="number"
+                    min="5"
+                    max="300"
+                    value={pollingInterval}
+                    onChange={(e) => setPollingInterval(Number(e.target.value))}
+                    className="h-8 pl-8 text-xs font-bold bg-white dark:bg-transparent border-border/50 dark:border-white/20 focus-visible:ring-primary/20 text-foreground"
+                  />
+                  <RefreshCw className="absolute left-2.5 top-2 w-3 h-3 text-muted-foreground" />
+                </div>
               </div>
-              <Input
-                type="number"
-                min="5"
-                max="300"
-                value={pollingInterval}
-                onChange={(e) => setPollingInterval(Number(e.target.value))}
-                className="dark:text-white h-8 bg-white text-black disabled:text-blue-900 border-border dark:border-white/50 font-mono text-sm  dark:disabled:text-white"
-              />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <label className="text-xs text-muted-foreground font-medium">
-                  Stop on error
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-0.5">
+                  Fault Tolerance
                 </label>
+                <button
+                  onClick={() => setStopOnError(!stopOnError)}
+                  disabled={isPolling}
+                  className={`h-8 w-full rounded-md border text-[10px] font-bold transition-all duration-200 flex items-center justify-center gap-1.5 shadow-sm
+                    ${
+                      stopOnError
+                        ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/20"
+                        : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
+                    }`}
+                >
+                  <AlertCircle className="w-3 h-3" />
+                  {stopOnError ? "STOP ON ERROR" : "CONTINUE ON ERROR"}
+                </button>
               </div>
-              <button
-                onClick={() => setStopOnError(!stopOnError)}
-                disabled={isPolling}
-                className={`h-8 w-full rounded-md border dark:border-white/30 text-sm font-medium transition-colors ${
-                  stopOnError
-                    ? "bg-brand-bright text-white border-primary dark:border/50"
-                    : " border-border dark:border/50"
-                }`}
-              >
-                {stopOnError ? "Enabled" : "Disabled"}
-              </button>
             </div>
           </div>
 
-          {/* URL List */}
-          <div className="space-y-3 mb-4 h-[200px] overflow-auto">
-            {urls.map((urlStatus, index) => (
-              <div
-                key={index}
-                className={`flex items-center gap-3 p-3 rounded-lg bg-secondary/30 border transition-colors ${
-                  selectedUrlIndex === index
-                    ? "border-primary dark:border-white/50"
-                    : "border-border/50 dark:border-white/30"
-                }`}
-              >
-                <button
-                  onClick={() => handleCheckSingle(index)}
-                  className={`flex-shrink-0 bg-gray-400 rounded-full h-12 ${urlStatus.statusCode === 200 && "bg-green-500 rounded-full"} ${urlStatus.statusCode === 404 && "bg-red-500 rounded-full"} ${urlStatus.statusCode === 500 && "bg-yellow-500 rounded-full"}`}
-                  disabled={urlStatus.status === "checking" || isPolling}
-                >
-                  <div
-                    className={`w-3 h-3 rounded-full ${getStatusColor(urlStatus.status)} ${
-                      urlStatus.status === "checking" ? "animate-pulse" : ""
-                    }`}
-                  />
-                </button>
+          {/* Main Work Area: URL List and Logs */}
+          <div className="flex-1 flex flex-col min-h-0 relative">
+            {/* URL List */}
+            <div
+              className={`flex-1 overflow-y-auto p-4 space-y-2 transition-all duration-300 ${showLogs ? "h-[60%]" : "h-full"}`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">
+                  Monitored Endpoints
+                </h4>
+                <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                  {urls.length} TOTAL
+                </span>
+              </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-mono text-foreground truncate">
-                      {urlStatus.url}
-                    </p>
-                    {urlStatus.isSecure && urlStatus.status === "online" && (
-                      <Lock className="w-3 h-3 text-success flex-shrink-0" />
-                    )}
+              {urls.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-40 text-center space-y-3 opacity-50">
+                  <div className="p-4 rounded-full bg-secondary/50 dark:bg-white/5">
+                    <Globe className="w-8 h-8 text-muted-foreground" />
                   </div>
-                  <div className="flex items-center gap-2 flex-wrap mt-1">
-                    <span className="text-xs font-mono text-muted-foreground">
-                      {getStatusText(urlStatus)}
-                    </span>
-                    {urlStatus.lastChecked && (
-                      <span className="text-xs text-muted-foreground">
-                        {formatTime(urlStatus.lastChecked)}
-                      </span>
-                    )}
-                    {urlStatus.headers &&
-                      Object.keys(urlStatus.headers).length > 0 && (
-                        <button
+                  <p className="text-xs font-medium text-muted-foreground">
+                    No URLs added to monitor yet.
+                  </p>
+                </div>
+              ) : (
+                urls.map((urlStatus, index) => (
+                  <div
+                    key={index}
+                    className={`group flex items-center gap-3 p-2.5 rounded-xl border transition-all duration-200 hover:shadow-md
+                      ${
+                        selectedUrlIndex === index
+                          ? "bg-primary/5 dark:bg-primary/10 border-brand-bright shadow-sm"
+                          : "bg-background dark:bg-card border-border/40 dark:border-white/5 hover:border-primary/30"
+                      }`}
+                  >
+                    <button
+                      onClick={() => handleCheckSingle(index)}
+                      className="relative flex-shrink-0"
+                      disabled={urlStatus.status === "checking" || isPolling}
+                    >
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors
+                        ${
+                          urlStatus.status === "online"
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                            : urlStatus.status === "offline"
+                              ? "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                              : "bg-secondary/50 dark:bg-white/10 text-muted-foreground"
+                        }`}
+                      >
+                        <Activity
+                          className={`w-4 h-4 ${urlStatus.status === "checking" ? "animate-pulse" : ""}`}
+                        />
+                      </div>
+                      <div
+                        className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background dark:border-brand-darker
+                        ${getStatusColor(urlStatus.status)} ${urlStatus.status === "checking" ? "animate-ping" : ""}`}
+                      />
+                    </button>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                          {urlStatus.url}
+                        </p>
+                        {urlStatus.isSecure &&
+                          urlStatus.status === "online" && (
+                            <Lock className="w-2.5 h-2.5 text-emerald-500" />
+                          )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span
+                          className={`text-[10px] font-bold px-1.5 py-0.5 rounded bg-secondary/50 dark:bg-secondary/20
+                          ${
+                            urlStatus.statusCode === 200
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : urlStatus.statusCode
+                                ? "text-rose-600 dark:text-rose-400"
+                                : "text-muted-foreground"
+                          }`}
+                        >
+                          {urlStatus.statusCode || "---"}{" "}
+                          {getStatusText(urlStatus)}
+                        </span>
+                        {urlStatus.lastChecked && (
+                          <span className="text-[10px] font-medium text-muted-foreground flex items-center gap-1">
+                            <Clock className="w-2.5 h-2.5" />
+                            {formatTime(urlStatus.lastChecked)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                      {urlStatus.headers && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => {
                             setSelectedUrlIndex(index);
                             setExpandedCategories({
                               security: true,
-                              caching: true,
-                              content: true,
                               server: true,
-                              other: true,
+                              caching: false,
+                              other: false,
                             });
                           }}
-                          className="text-xs font-mono text-primary hover:text-primary/80 px-2 py-1 rounded bg-primary/10 hover:bg-primary/20 transition-colors flex items-center gap-1"
+                          className="h-8 w-8 text-primary hover:bg-primary/10 dark:hover:bg-primary/20"
                         >
-                          <FileText className="w-3 h-3" />
-                          {Object.keys(urlStatus.headers).length} headers
-                        </button>
+                          <ChevronRight size={16} />
+                        </Button>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors"
+                        onClick={() => removeUrl(index)}
+                        disabled={isPolling}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Log Console - Sticky Bottom with flex distribution */}
+            {showLogs && (
+              <div className="flex-1 min-h-[120px] max-h-[40%] border-t border-border/50 dark:border-white/10 bg-secondary/5 dark:bg-card flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
+                <div className="flex items-center justify-between p-2 px-4 bg-background/50 dark:bg-white/5 border-b border-border/20 dark:border-white/5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                    <h3 className="text-[10px] font-bold text-foreground uppercase tracking-widest">
+                      Live Feed
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {logs.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setLogs([])}
+                        className="h-6 text-[9px] font-bold text-muted-foreground hover:text-foreground"
+                      >
+                        CLEAR LOGS
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowLogs(false)}
+                      className="h-6 w-6 text-muted-foreground hover:bg-secondary dark:hover:bg-white/10"
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="flex-shrink-0 h-8 w-8"
-                  onClick={() => removeUrl(index)}
-                  disabled={isPolling}
-                >
-                  <X className="h-4 w-4 text-muted-foreground" />
-                </Button>
+                <div className="flex-1 overflow-y-auto p-3 space-y-1 font-mono">
+                  {logs.length === 0 ? (
+                    <div className="h-full flex items-center justify-center text-center">
+                      <p className="text-[10px] text-muted-foreground font-medium italic">
+                        Monitoring for activity...
+                      </p>
+                    </div>
+                  ) : (
+                    logs.map((log, index) => (
+                      <div
+                        key={index}
+                        className="flex items-start gap-3 py-1 group border-l-2 border-transparent hover:border-primary/30 hover:bg-primary/5 dark:hover:bg-primary/10 px-2 rounded-r transition-all"
+                      >
+                        <span className="text-[9px] font-bold text-muted-foreground/60 w-14 flex-shrink-0">
+                          {formatTime(log.timestamp).split(" ")[0]}
+                        </span>
+                        <div
+                          className={`w-1 h-1 rounded-full mt-1.5 flex-shrink-0 ${log.status === "online" ? "bg-emerald-500" : "bg-rose-500"}`}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`text-[10px] font-bold text-foreground group-hover:text-primary transition-colors truncate`}
+                            >
+                              {log.url}
+                            </span>
+                            <span
+                              className={`text-[9px] font-bold uppercase ${log.status === "online" ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}
+                            >
+                              {log.status}
+                            </span>
+                          </div>
+                          <p
+                            className={`text-[10px] font-medium leading-relaxed ${colourStatus(log)} line-clamp-1`}
+                          >
+                            {log.message}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
-            ))}
+            )}
           </div>
+        </div>
 
-          {/* Add URL */}
-          <div className="flex gap-2 mb-4">
-            <Input
-              placeholder="https://example.com"
-              value={newUrl}
-              onChange={(e) => setNewUrl(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addUrl()}
-              disabled={isPolling}
-              className="flex-1 bg-secondary border-border text-foreground font-mono text-sm"
-            />
+        {/* Footer Actions */}
+        <div className="p-4 border-t border-border/50 dark:border-white/10 bg-background dark:bg-brand-darker flex-shrink-0 space-y-3">
+          {/* Add URL Row */}
+          <div className="flex gap-2">
+            <div className="relative flex-1 group">
+              <Globe className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <Input
+                placeholder="Paste endpoint URL..."
+                value={newUrl}
+                onChange={(e) => setNewUrl(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addUrl()}
+                disabled={isPolling}
+                className="h-9 pl-9 text-xs font-bold bg-white dark:bg-transparent border-border/50 dark:border-white/20 focus-visible:ring-primary/20 rounded-lg text-foreground"
+              />
+            </div>
             <Button
               onClick={addUrl}
-              size="icon"
-              className="flex-shrink-0"
-              disabled={isPolling}
+              size="sm"
+              className="px-4 font-bold shadow-lg shadow-primary/10 transition-all hover:scale-[1.02] active:scale-[0.98] dark:bg-primary dark:text-white"
+              disabled={isPolling || !newUrl}
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4 mr-1.5" />
+              ADD
             </Button>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-2">
+          {/* Execution Controls */}
+          <div className="flex gap-2.5">
             <Button
               onClick={togglePolling}
-              className={`flex-1 ${
-                isPolling
-                  ? "bg-red-700 text-white hover:bg-destructive/90 border dark:bg-red-900 dark:border-white/20 dark:text-white hover:dark:bg-red-900"
-                  : "bg-green-600 text-white hover:bg-success/90 border dark:bg-green-600 dark:border-white/20 dark:text-white dark:hover:bg-green-500"
-              }`}
+              className={`flex-[2] h-10 font-bold transition-all duration-300 shadow-md transform hover:scale-[1.01] active:scale-[0.99]
+                ${
+                  isPolling
+                    ? "bg-rose-600 hover:bg-rose-700 text-white  dark:bg-rose-600 dark:text-white dark:hover:bg-rose-900"
+                    : "bg-brand-bright text-white shadow-lg shadow-brand-bright/20 dark:bg-brand-bright dark:hover:bg-brand-bright/50  dark:text-white"
+                }`}
             >
               {isPolling ? (
                 <>
                   <Pause className="h-4 w-4 mr-2" />
-                  Stop Polling
+                  HALT MONITORING
                 </>
               ) : (
                 <>
                   <Play className="h-4 w-4 mr-2" />
-                  Start Polling
+                  RESUME MONITORING
                 </>
               )}
             </Button>
             <Button
               onClick={handleCheckAll}
               variant="outline"
-              className="flex-1 bg-transparent dark:bg-transparent dark:border-white/30"
+              className="flex-1 h-10 font-bold border-2 dark:border-white/10 dark:hover:bg-white/5 transition-all text-foreground"
               disabled={isPolling}
             >
               <RefreshCw className="h-4 w-4 mr-2" />
-              Check Once
+              PULSE
             </Button>
           </div>
         </div>
-
-        {/* LOG CONSOLE OUTPUT */}
-        {showLogs && (
-          <div className="p-3 rounded-lg bg-gray-200 dark:bg-brand-darker dark:border-white/30 border border-border/50 min-h-[calc(100%-51vh)] max-h-[calc(100%-51vh)] overflow-y-auto mx-4 overflow-clip ">
-            <div className="flex items-center justify-between sticky w-full bg-white rounded-full px-2  dark:bg-brand-dark">
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Activity Log
-              </h3>
-              {logs.length > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setLogs([])}
-                  className="h-6 text-xs text-muted-foreground hover:text-foreground"
-                >
-                  Clear
-                </Button>
-              )}
-            </div>
-            <div className="space-y-1.5">
-              {logs.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">
-                  No activity yet
-                </p>
-              ) : (
-                logs.map((log, index) => (
-                  <div
-                    key={index}
-                    className="flex items-start gap-2 text-xs pt-2"
-                  >
-                    <span className="text-muted-foreground font-mono flex-shrink-0 dark:text-brand-bright text-blue-900">
-                      {formatTime(log.timestamp)}
-                    </span>
-                    <div
-                      className={`w-1.5 h-1.5 rounded-full mt-1 flex-shrink-0 ${
-                        log.status === "online"
-                          ? "bg-green-500"
-                          : "bg-destructive"
-                      }`}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-mono text-foreground truncate dark:text-brand-highlight text-brand-bright">
-                        {log.url}
-                      </p>
-                      <p
-                        className={`font-mono text-muted-foreground ${colourStatus(log)}`}
-                      >
-                        {log.message}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
       </Card>
     </section>
   );
 
   function colourStatus(log) {
     if (log?.statusCode === 200) {
-      return "text-green-700";
+      return "text-green-700 dark:text-emerald-400";
     } else if (log?.statusCode === 404) {
-      return "text-red-700";
+      return "text-red-700 dark:text-rose-400";
     } else if (log?.statusCode === 500) {
-      return "text-yellow-700";
+      return "text-yellow-700 dark:text-amber-400";
     }
     return "text-muted-foreground";
   }

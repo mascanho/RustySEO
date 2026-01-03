@@ -154,6 +154,53 @@ fn to_database_results(result: &DomainCrawlResults) -> Result<DatabaseResults, s
     })
 }
 
+// Helper function to detect redirects and get useful information
+fn detect_redirect_info(
+    requested_url: &Url,
+    response_url: &Url,
+    response_status: u16,
+    response_headers: &reqwest::header::HeaderMap,
+) -> (bool, Option<String>, Option<String>) {
+    let had_redirect = requested_url != response_url;
+
+    // Check if it's an explicit redirect (3xx status)
+    let is_explicit_redirect = (300..399).contains(&response_status);
+
+    // Extract Location header if present (for explicit redirects)
+    let location_header = if is_explicit_redirect {
+        response_headers
+            .get("Location")
+            .and_then(|h| h.to_str().ok())
+            .map(|s| s.to_string())
+    } else {
+        None
+    };
+
+    // Determine the redirect URL to store
+    let redirect_url = if had_redirect {
+        // If we have a Location header, use that (it might be different from final URL)
+        if let Some(location) = location_header {
+            Some(location)
+        } else {
+            // Otherwise, use the final URL
+            Some(response_url.to_string())
+        }
+    } else {
+        None
+    };
+
+    // Also track the redirection type if it was explicit
+    let redirection_type = if is_explicit_redirect {
+        Some(format!("{} Redirect", response_status))
+    } else if had_redirect {
+        Some("Implicit Redirect".to_string())
+    } else {
+        None
+    };
+
+    (had_redirect, redirect_url, redirection_type)
+}
+
 // Process single URL
 async fn process_url(
     url: Url,
@@ -200,11 +247,24 @@ async fn process_url(
     };
 
     let final_url = response.url().clone();
+    let status_code = response.status().as_u16();
+
+    // Detect redirects efficiently
+    let (had_redirect, redirect_url, redirection_type) =
+        detect_redirect_info(&url, &final_url, status_code, response.headers());
+
+    // Log redirects occasionally for debugging (sampled to avoid performance hit)
+    if had_redirect && rand::thread_rng().gen_range(0..50) == 0 {
+        // ~2% sampling rate
+        println!(
+            "Redirect: {} -> {} (status: {})",
+            url, final_url, status_code
+        );
+    }
 
     // check if the url is https or not
     let https = valid_https(&final_url);
 
-    let status_code = response.status().as_u16();
     let content_type = response
         .headers()
         .get("content-type")
@@ -217,10 +277,6 @@ async fn process_url(
         .map(|s| s.parse::<usize>().unwrap_or(0));
 
     let content_len = content_length.clone();
-    let redirection = response
-        .headers()
-        .get("Location")
-        .and_then(|h| h.to_str().ok().map(String::from));
 
     let headers = response
         .headers()
@@ -263,6 +319,10 @@ async fn process_url(
             url: final_url.to_string(),
             status_code,
             pdf_files,
+            original_url: url.to_string(), // Store original URL
+            redirect_url,                  // Store redirect URL if any
+            had_redirect,                  // Boolean flag for easy filtering
+            redirection_type,              // Type of redirect
             ..Default::default()
         });
     }
@@ -276,8 +336,6 @@ async fn process_url(
         //settings,
     )
     .await;
-
-    // let check_url_with_page_speed = get_page_speed_insights_bulk(url, settings).await;
 
     // Cross-origin checker funtion
     let cross_origin = analyze_cross_origin_security(&body, base_url);
@@ -310,7 +368,11 @@ async fn process_url(
     };
 
     let result = DomainCrawlResults {
-        url: final_url.to_string(),
+        url: final_url.to_string(),    // Final URL (where we ended up)
+        original_url: url.to_string(), // Original requested URL
+        redirect_url,                  // Redirect URL (if any)
+        had_redirect,                  // Boolean: was there a redirect?
+        redirection_type,              // Type of redirect (e.g., "301 Redirect")
         title: title_selector::extract_title(&body),
         description: page_description::extract_page_description(&body)
             .unwrap_or_else(|| "".to_string()),
@@ -341,7 +403,7 @@ async fn process_url(
                 text_length: 0,
                 text_ratio: 0.0,
             })]),
-        redirection,
+        redirection: None, // Deprecated, use redirect_url instead
         keywords: extract_keywords(&body, &settings.stop_words),
         page_size: calculate_html_size(content_len),
         hreflangs: select_hreflang(&body),
@@ -357,6 +419,7 @@ async fn process_url(
         pdf_files,
         https,
         cross_origin,
+        status: Some(status_code),
     };
 
     {

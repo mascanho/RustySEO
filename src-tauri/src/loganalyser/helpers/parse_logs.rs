@@ -573,6 +573,7 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
             let clicks = gsc_log::gsc_clicks_match(path);
             let impressions = gsc_log::gsc_impressions_match(path);
             let gsc_url = gsc_log::get_matching_url(path);
+            let ctr = gsc_log::gsc_ctr_match(path);
 
             entries.push(LogEntry {
                 ip,
@@ -582,6 +583,7 @@ pub fn parse_log_entries(log: &str) -> Vec<LogEntry> {
                 position,
                 impressions,
                 clicks,
+                ctr,
                 status: caps[5].parse().unwrap_or(0),
                 user_agent,
                 country: None,

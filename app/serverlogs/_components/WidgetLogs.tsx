@@ -539,7 +539,7 @@ export default function WidgetLogs() {
                   {activeTab === "Filetypes" ? (
                     <WidgetFileType
                       data={overview}
-                      entries={entries}
+                      entries={currentLogs}
                       chartData={chartData}
                       selectedFileType={entry?.name}
                     />
@@ -609,7 +609,7 @@ export default function WidgetLogs() {
                       <Tabs.Panel value="logs" className="h-full">
                         <WidgetContentTable
                           data={overview}
-                          entries={entries}
+                          entries={currentLogs}
                           segment={entry?.name}
                         />
                       </Tabs.Panel>
@@ -629,16 +629,16 @@ export default function WidgetLogs() {
                       </Tabs.List>
                       <Tabs.Panel value="overview" className="h-full">
                         {entry?.name === "Google" && (
-                          <WidgetTable data={overview} />
+                          <WidgetTable data={overview} entries={currentLogs} />
                         )}
                         {entry?.name === "Bing" && (
-                          <WidgetTableBing data={overview} />
+                          <WidgetTableBing data={overview} entries={currentLogs} />
                         )}
                         {entry?.name === "Openai" && (
-                          <WidgetTableOpenAi data={overview} />
+                          <WidgetTableOpenAi data={overview} entries={currentLogs} />
                         )}
                         {entry?.name === "Claude" && (
-                          <WidgetTableClaude data={overview} />
+                          <WidgetTableClaude data={overview} entries={currentLogs} />
                         )}
                       </Tabs.Panel>
                     </Tabs>

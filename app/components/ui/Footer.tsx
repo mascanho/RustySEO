@@ -254,8 +254,8 @@ const Footer = () => {
       <ChangeLogContainer />
 
       <footer className="w-full justify-between bg-apple-silver dark:bg-brand-darker dark:text-white/50 shadow fixed ml-0 left-0 bottom-0 z-[999999999999999] border-t-2 pb-1.5 dark:border-t-brand-dark flex items-center py-1 text-xs">
-        <section>
-          <div className="flex items-center ml-2 space-x-1 w-full">
+        <section className="flex items-center">
+          <div className="flex items-center ml-2 space-x-1">
             {loading ? (
               <>
                 <div className="w-2 h-2 rounded-full bg-orange-500 mt-1" />
@@ -299,9 +299,9 @@ const Footer = () => {
                 <LogAnalyserFooter />
               </div>
             )}
-            {/* HTTP CHECKER LOADER  */}
-            {loaders?.httpChecker && <HttpFooterLoader />}
           </div>
+          {/* HTTP CHECKER LOADER  */}
+          {loaders?.httpChecker && <HttpFooterLoader />}
         </section>
         <section className="flex items-center space-x-2">
           <div className="flex w-50 items-center justify-center pr-3">

@@ -146,7 +146,8 @@ const TableHeader = ({
                       minWidth: columnWidths[index],
                       textAlign: columnAlignments[index],
                       backgroundColor: "var(--background, white)",
-                      height: "30px",
+                      padding: "8px",
+                      height: "auto",
                     }}
                     className="dark:border-gray-600 dark:bg-gray-800 bg-gray-50 font-medium text-gray-900 dark:text-gray-100"
                     onClick={() => onAlignToggle(index)}

@@ -1,10 +1,11 @@
+use chrono::Utc;
 use reqwest;
 use serde_json::json;
 use std::time::Duration;
 
 pub async fn add_user() -> Result<(), String> {
     let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(10))  // Set a 10-second timeout
+        .timeout(Duration::from_secs(10)) // Set a 10-second timeout
         .build()
         .map_err(|e| format!("Failed to create HTTP client: {}", e))?;
 
@@ -13,11 +14,14 @@ pub async fn add_user() -> Result<(), String> {
         Err(e) => return Err(format!("Failed to load settings: {}", e)),
     };
 
+    println!("Should add user: {:#?}", &settings.rustyid);
+
     let response = match client
-        .post("https://server.rustyseo.com/users")
+        .post("https://api.rustyseo.com/users/")
         .header("Content-Type", "application/json")
         .json(&json!({
-            "user": settings.rustyid
+            "user": settings.rustyid,
+            "created_at": Utc::now().to_rfc3339()  // Add current timestamp
         }))
         .send()
         .await

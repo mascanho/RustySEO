@@ -8,6 +8,7 @@ export const changelogData = [
       "Log Analyser: Data Integration",
       "Deep Crawler: Fixed titles < 30 chars",
       "General: Bug fixes and improvements",
+      "Tools: HTTP and Header Security Checker",
     ],
   },
   {

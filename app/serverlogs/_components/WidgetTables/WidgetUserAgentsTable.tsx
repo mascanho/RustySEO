@@ -1175,7 +1175,7 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
         <CardContent className="p-0 h-full overflow-hidden">
           <div className="rounded-md border dark:border-brand-dark h-full">
             <div className="relative w-full h-full overflow-auto">
-              <Table className="h-full">
+              <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[80px] text-center">#</TableHead>
@@ -1340,7 +1340,7 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                             <TableCell className="text-center align-middle">
                               {formatResponseSize(log.response_size)}
                             </TableCell>
-                            <TableCell className="text-center align-middle flex justify-center m-auto">
+                            <TableCell className="text-center align-middle">
                               <Badge
                                 variant="outline"
                                 className={

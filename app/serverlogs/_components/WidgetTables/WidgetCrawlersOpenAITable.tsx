@@ -555,7 +555,7 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
         <CardContent className="p-0 h-full overflow-hidden">
           <div className="rounded-md border dark:border-brand-dark h-full">
             <div className="relative w-full h-full overflow-auto">
-              <Table className="h-full">
+              <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[80px] text-center">#</TableHead>
@@ -669,61 +669,61 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
                           </TableCell>
 
                           <TableCell className="min-w-[30px] truncate align-middle">
-                            <div className="flex items-center h-full relative">
-                              <Badge
-                                variant="outline"
-                                className="flex items-center absolute"
-                              >
-                                {log.file_type}
-                              </Badge>
-                            </div>
-                          </TableCell>
+          <div className="flex items-center h-full justify-center">
+            <Badge
+              variant="outline"
+              className="flex items-center"
+            >
+              {log.file_type}
+            </Badge>
+          </div>
+        </TableCell>
 
                           <TableCell className="text-center align-middle">
-                            <div className="flex items-center justify-center align-middle relative h-full">
-                              <span className="absolute">
-                                {formatResponseSize(log.response_size)}
-                              </span>
-                            </div>
-                          </TableCell>
+          <div className="flex items-center justify-center h-full">
+            <span>
+              {formatResponseSize(log.response_size)}
+            </span>
+          </div>
+        </TableCell>
 
                           <TableCell className="text-center min-w-[90px] align-middle">
-                            <div className="flex items-center justify-center align-middle relative h-full">
-                              <span className="absolute">
-                                {timings(log)?.frequency?.total}
-                              </span>
-                            </div>
-                          </TableCell>
+          <div className="flex items-center justify-center h-full">
+            <span>
+              {timings(log)?.frequency?.total}
+            </span>
+          </div>
+        </TableCell>
 
                           <TableCell className="text-center w-[90px] align-middle">
-                            <div className="flex items-center justify-center align-middle relative h-full">
-                              <span className="absolute">
-                                {timings(log)?.frequency?.perHour}
-                              </span>
-                            </div>
-                          </TableCell>
+          <div className="flex items-center justify-center h-full">
+            <span>
+              {timings(log)?.frequency?.perHour}
+            </span>
+          </div>
+        </TableCell>
 
                           <TableCell
-                            width={100}
-                            className="max-w-[100px] align-middle"
-                          >
-                            <div className="flex items-center h-full relative">
-                              <Badge
-                                variant="outline"
-                                className={`flex items-center align-middle absolute justify-center ${
-                                  log.crawler_type !== "Human"
-                                    ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white w-full"
-                                    : "bg-green-100 text-green-800 border-green-200"
-                                }`}
-                              >
-                                {log.crawler_type.startsWith("Goo")
-                                  ? "Google 🤖"
-                                  : log.crawler_type.length > 10
-                                    ? log.crawler_type.trim().slice(0, 10)
-                                    : log.crawler_type}
-                              </Badge>
-                            </div>
-                          </TableCell>
+          width={100}
+          className="max-w-[100px] align-middle"
+        >
+          <div className="flex items-center h-full justify-center">
+            <Badge
+              variant="outline"
+              className={`flex items-center align-middle justify-center ${
+                log.crawler_type !== "Human"
+                  ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white w-full"
+                  : "bg-green-100 text-green-800 border-green-200"
+              }`}
+            >
+              {log.crawler_type.startsWith("Goo")
+                ? "Google 🤖"
+                : log.crawler_type.length > 10
+                  ? log.crawler_type.trim().slice(0, 10)
+                  : log.crawler_type}
+            </Badge>
+          </div>
+        </TableCell>
                         </TableRow>
 
                         {expandedRow === index && (

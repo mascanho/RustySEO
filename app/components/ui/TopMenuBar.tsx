@@ -235,6 +235,7 @@ const TopMenuBar = () => {
       console.log("Config file opened successfuylly");
     } catch (error) {
       console.error("failed to open the file", error);
+      // TODO: Implement better UI error handling
     }
   }
 
@@ -677,6 +678,15 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-3 text-xs">Help</MenubarTrigger>
             <MenubarContent className="z-[999999999999999]">
+              <MenubarItem
+                onClick={() =>
+                  openBrowserWindow("https://github.com/mascanho/Ruddit-Client")
+                }
+              >
+                <FiHelpCircle className="mr-2" />
+                Ruddit
+              </MenubarItem>
+              <MenubarSeparator />
               <MenubarItem onClick={handleOnboarding}>
                 <BiDoorOpen className="mr-2" />
                 Onboarding

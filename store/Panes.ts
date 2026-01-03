@@ -1,5 +1,6 @@
-import create from "zustand";
-import { persist } from "zustand/middleware";
+"use client";
+import { create } from "zustand";
+import { persist, createJSONStorage, StateStorage } from "zustand/middleware";
 
 // Define the type for the visible state
 interface VisibleState {
@@ -26,6 +27,19 @@ interface StoreState {
   hideComponent: (component: keyof VisibleState) => void;
   toggleComponent: (component: keyof VisibleState) => void;
 }
+
+// Check if we are in the browser
+const isBrowser = typeof window !== "undefined";
+
+const dummyStorage: StateStorage = {
+  getItem: () => null,
+  setItem: () => {},
+  removeItem: () => {},
+};
+
+const storage = isBrowser
+  ? createJSONStorage(() => localStorage)
+  : createJSONStorage(() => dummyStorage);
 
 const useStore = create<StoreState>()(
   persist(
@@ -60,8 +74,8 @@ const useStore = create<StoreState>()(
         })),
     }),
     {
-      name: "visibility-store", // unique name for storage
-      getStorage: () => localStorage, // use localStorage for persistence
+      name: "visibility-store",
+      storage,
     },
   ),
 );
