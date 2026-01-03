@@ -106,7 +106,7 @@ const GSCanalytics = () => {
   );
 
   return (
-    <div className="px-2 h-[calc(100vh-90px)] flex flex-col dark:text-white/50">
+    <div className="px-2 h-[calc(100vh-10rem)] flex flex-col dark:text-white/50">
       <div className="flex items-center gap-2 mb-2 flex-shrink-0">
         <h1 className="text-2xl font-bold">Google Search Console</h1>
         <button
