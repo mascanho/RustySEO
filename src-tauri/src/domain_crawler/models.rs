@@ -19,6 +19,12 @@ use super::{
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RedirectHop {
+    pub url: String,
+    pub status_code: u16,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Extractor {
     pub html: bool,
     pub css: bool,
@@ -76,6 +82,8 @@ pub struct DomainCrawlResults {
     pub redirect_url: Option<String>,     // The redirect URL (if any)
     pub had_redirect: bool,               // Boolean flag for easy filtering
     pub redirection_type: Option<String>, // Type of redirect
+    pub redirect_chain: Option<Vec<RedirectHop>>, // Full redirect chain
+    pub redirect_count: usize,            // Number of hops
     pub status: Option<u16>,              // Status of the request
 }
 
@@ -132,6 +140,8 @@ impl Default for DomainCrawlResults {
             redirect_url: None,
             had_redirect: false,
             redirection_type: None,
+            redirect_chain: None,
+            redirect_count: 0,
             status: None,
         }
     }

@@ -211,54 +211,107 @@ async fn process_url(
     app_handle: &tauri::AppHandle,
     settings: &Settings,
 ) -> Result<DomainCrawlResults, String> {
-    let response_result = tokio::time::timeout(
-        Duration::from_secs(30),
-        fetch_with_exponential_backoff(client, url.as_str(), settings),
-    )
-    .await;
+    let mut current_url = url.clone();
+    let mut redirect_chain = Vec::new();
+    let mut redirect_count = 0;
+    let mut had_redirect = false;
+    let mut redirection_type = None;
+    let mut final_response = None;
+    let mut total_time = 0.0;
 
-    let (response, response_time) = match response_result {
-        Ok(Ok((response, time))) => (response, time),
-        Ok(Err(e)) => {
-            let mut state = state.lock().await;
-            state.failed_urls.insert(FailedUrl {
-                url: url.to_string(),
-                error: e.to_string(),
-                retries: 0,
-                depth,
-                timestamp: Instant::now(),
-            });
-            state.pending_urls.remove(url.as_str());
-            return Err(format!("Failed to fetch {}: {}", url, e));
-        }
-        Err(_) => {
-            let mut state = state.lock().await;
-            state.failed_urls.insert(FailedUrl {
-                url: url.to_string(),
-                error: "Timeout fetching".to_string(),
-                retries: 0,
-                depth,
-                timestamp: Instant::now(),
-            });
-            state.pending_urls.remove(url.as_str());
+    while redirect_count < 10 {
+        let response_result = tokio::time::timeout(
+            Duration::from_secs(30),
+            fetch_with_exponential_backoff(client, current_url.as_str(), settings),
+        )
+        .await;
 
-            return Err(format!("Timeout fetching {}", url));
+        match response_result {
+            Ok(Ok((response, time))) => {
+                total_time += time;
+                let status = response.status();
+                let status_code = status.as_u16();
+
+                redirect_chain.push(crate::domain_crawler::models::RedirectHop {
+                    url: current_url.to_string(),
+                    status_code,
+                });
+
+                if status.is_redirection() {
+                    had_redirect = true;
+                    if redirection_type.is_none() {
+                        redirection_type = Some(format!("{} Redirect", status_code));
+                    }
+
+                    if let Some(location) = response.headers().get("location") {
+                        if let Ok(location_str) = location.to_str() {
+                            match current_url.join(location_str) {
+                                Ok(next_url) => {
+                                    // Check for infinite loops
+                                    if redirect_chain.iter().any(|hop| hop.url == next_url.to_string()) {
+                                        final_response = Some(response);
+                                        break;
+                                    }
+                                    current_url = next_url;
+                                    redirect_count += 1;
+                                    continue;
+                                }
+                                Err(_) => {
+                                    final_response = Some(response);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                final_response = Some(response);
+                break;
+            }
+            Ok(Err(e)) => {
+                let mut state = state.lock().await;
+                state.failed_urls.insert(FailedUrl {
+                    url: url.to_string(),
+                    error: e.to_string(),
+                    retries: 0,
+                    depth,
+                    timestamp: Instant::now(),
+                });
+                state.pending_urls.remove(url.as_str());
+                return Err(format!("Failed to fetch {}: {}", url, e));
+            }
+            Err(_) => {
+                let mut state = state.lock().await;
+                state.failed_urls.insert(FailedUrl {
+                    url: url.to_string(),
+                    error: "Timeout fetching".to_string(),
+                    retries: 0,
+                    depth,
+                    timestamp: Instant::now(),
+                });
+                state.pending_urls.remove(url.as_str());
+                return Err(format!("Timeout fetching {}", url));
+            }
         }
-    };
+    }
+
+    let response = final_response.ok_or_else(|| "Failed to get response".to_string())?;
+    let response_time = total_time;
 
     let final_url = response.url().clone();
     let status_code = response.status().as_u16();
 
-    // Detect redirects efficiently
-    let (had_redirect, redirect_url, redirection_type) =
-        detect_redirect_info(&url, &final_url, status_code, response.headers());
+    let redirect_url = if had_redirect {
+        Some(final_url.to_string())
+    } else {
+        None
+    };
 
     // Log redirects occasionally for debugging (sampled to avoid performance hit)
-    if had_redirect && rand::thread_rng().gen_range(0..50) == 0 {
+    if had_redirect && rand::random_range(0..50) == 0 {
         // ~2% sampling rate
         println!(
-            "Redirect: {} -> {} (status: {})",
-            url, final_url, status_code
+            "Redirect: {} -> {} (status: {}, hops: {})",
+            url, final_url, status_code, redirect_count
         );
     }
 
@@ -323,6 +376,8 @@ async fn process_url(
             redirect_url,                  // Store redirect URL if any
             had_redirect,                  // Boolean flag for easy filtering
             redirection_type,              // Type of redirect
+            redirect_chain: Some(redirect_chain.clone()), // Full redirect chain
+            redirect_count,                // Number of hops
             ..Default::default()
         });
     }
@@ -373,6 +428,8 @@ async fn process_url(
         redirect_url,                  // Redirect URL (if any)
         had_redirect,                  // Boolean: was there a redirect?
         redirection_type,              // Type of redirect (e.g., "301 Redirect")
+        redirect_chain: Some(redirect_chain), // Full redirect chain
+        redirect_count,                // Number of hops
         title: title_selector::extract_title(&body),
         description: page_description::extract_page_description(&body)
             .unwrap_or_else(|| "".to_string()),
@@ -604,11 +661,11 @@ pub async fn crawl_domain(
 
     let client = Client::builder()
         .user_agent(
-            &settings.user_agents[rand::thread_rng().gen_range(0..settings.user_agents.len())],
+            &settings.user_agents[rand::random_range(0..settings.user_agents.len())],
         )
         .timeout(Duration::from_secs(settings.client_timeout))
         .connect_timeout(Duration::from_secs(settings.client_connect_timeout))
-        .redirect(reqwest::redirect::Policy::limited(settings.redirect_policy))
+        .redirect(reqwest::redirect::Policy::none())
         .build()
         .map_err(|e| e.to_string())?;
 
@@ -744,7 +801,7 @@ pub async fn crawl_domain(
 
             let handle = tokio::spawn(async move {
                 let _permit = semaphore_clone.acquire().await.unwrap();
-                let jitter = rand::thread_rng().gen_range(500..2000);
+                let jitter = rand::random_range(500..2000);
                 sleep(Duration::from_millis(jitter)).await;
 
                 let result = process_url(

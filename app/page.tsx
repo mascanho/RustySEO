@@ -868,14 +868,12 @@ const Home: React.FC<HomeProps> = () => {
             <Tabs.Panel value="clarity">
               <ClarityContainer />
             </Tabs.Panel>{" "}
-            <Tabs.Panel value="kws">
-              <KeywordAnalytics />
-            </Tabs.Panel>{" "}
+            <Tabs.Panel value="kws">{/*<KeywordAnalytics />*/}</Tabs.Panel>{" "}
             <Tabs.Panel
               value="gsc"
               className="overflow-hidden h-[calc(100vh-140px)] "
             >
-              <GSCcontainer />
+              {/*<GSCcontainer />*/}
             </Tabs.Panel>{" "}
             <Tabs.Panel value="semrush">
               <SemrushContainer />
