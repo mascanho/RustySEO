@@ -164,7 +164,7 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
     };
 
     return (
-        <div className="flex flex-col h-[500px] w-full max-w-lg mx-auto overflow-hidden bg-white dark:bg-brand-darker rounded-2xl shadow-2xl border border-gray-100 dark:border-brand-dark">
+        <div className="flex flex-col min-h-[500px] h-auto w-full max-w-lg mx-auto overflow-hidden bg-white dark:bg-brand-darker rounded-2xl shadow-2xl border border-gray-100 dark:border-brand-dark">
             {/* Header */}
             <div className="p-6 border-b border-gray-100 dark:border-brand-dark flex items-center justify-between">
                 <div className="flex items-center gap-3">

@@ -153,7 +153,15 @@ const GSCanalytics = () => {
           content: {
             backgroundColor: "transparent",
             boxShadow: "none",
+            border: "none",
           },
+          body: {
+            padding: 0,
+            backgroundColor: "transparent",
+          },
+          inner: {
+            padding: 0,
+          }
         }}
       >
         <GSCConnectionWizard
