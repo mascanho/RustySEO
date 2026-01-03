@@ -327,7 +327,7 @@ export default function Page() {
               value="gsc"
               className="h-calc(100vh-8.8rem)] pt-9 dark:bg-brand-darker"
             >
-              {/*<GSCcontainer />*/}
+              <GSCcontainer />
             </Tabs.Panel>
           )}
 
