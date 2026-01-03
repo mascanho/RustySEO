@@ -164,7 +164,7 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
     };
 
     return (
-        <div className="flex flex-col min-h-[500px] h-auto w-full max-w-lg mx-auto overflow-hidden bg-white dark:bg-brand-darker rounded-2xl shadow-2xl border border-gray-100 dark:border-brand-dark">
+        <div className="flex flex-col h-[600px] w-full max-w-lg mx-auto overflow-hidden bg-white dark:bg-brand-darker rounded-2xl shadow-2xl border border-gray-100 dark:border-brand-dark">
             {/* Header */}
             <div className="p-6 border-b border-gray-100 dark:border-brand-dark flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -201,33 +201,37 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
                             initial="enter"
                             animate="center"
                             exit="exit"
-                            className="flex flex-col items-center text-center space-y-6"
+                            className="flex flex-col h-full text-center"
                         >
-                            <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-full">
-                                <ShieldCheck className="h-12 w-12 text-green-600 dark:text-green-400" />
-                            </div>
-                            <div className="space-y-2">
-                                <h3 className="text-xl font-bold dark:text-white">Unlock Deep Insights</h3>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-                                    Connect your Google Search Console to see real-time rankings, impressions, and clicks directly in RustySEO.
-                                </p>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4 w-full pt-4">
-                                <div className="p-3 bg-gray-50 dark:bg-brand-dark rounded-xl border border-gray-100 dark:border-brand-dark/50 text-left">
-                                    <Globe className="h-4 w-4 text-blue-500 mb-2" />
-                                    <p className="text-[10px] font-bold dark:text-white">Global Reach</p>
-                                    <p className="text-[9px] text-gray-500">Track worldwide performance</p>
+                            <div className="flex-1 flex flex-col items-center justify-center space-y-6">
+                                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-full">
+                                    <ShieldCheck className="h-12 w-12 text-green-600 dark:text-green-400" />
                                 </div>
-                                <div className="p-3 bg-gray-50 dark:bg-brand-dark rounded-xl border border-gray-100 dark:border-brand-dark/50 text-left">
-                                    <Key className="h-4 w-4 text-purple-500 mb-2" />
-                                    <p className="text-[10px] font-bold dark:text-white">Secure Access</p>
-                                    <p className="text-[9px] text-gray-500">Official Google API connection</p>
+                                <div className="space-y-2">
+                                    <h3 className="text-xl font-bold dark:text-white">Unlock Deep Insights</h3>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                                        Connect your Google Search Console to see real-time rankings, impressions, and clicks directly in RustySEO.
+                                    </p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 w-full pt-4">
+                                    <div className="p-3 bg-gray-50 dark:bg-brand-dark rounded-xl border border-gray-100 dark:border-brand-dark/50 text-left">
+                                        <Globe className="h-4 w-4 text-blue-500 mb-2" />
+                                        <p className="text-[10px] font-bold dark:text-white">Global Reach</p>
+                                        <p className="text-[9px] text-gray-500">Track worldwide performance</p>
+                                    </div>
+                                    <div className="p-3 bg-gray-50 dark:bg-brand-dark rounded-xl border border-gray-100 dark:border-brand-dark/50 text-left">
+                                        <Key className="h-4 w-4 text-purple-500 mb-2" />
+                                        <p className="text-[10px] font-bold dark:text-white">Secure Access</p>
+                                        <p className="text-[9px] text-gray-500">Official Google API connection</p>
+                                    </div>
                                 </div>
                             </div>
-                            <Button onClick={handleNext} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-xl group">
-                                Get Started
-                                <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                            </Button>
+                            <div className="pt-8">
+                                <Button onClick={handleNext} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-xl group">
+                                    Get Started
+                                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                                </Button>
+                            </div>
                         </motion.div>
                     )}
 
@@ -239,48 +243,50 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
                             initial="enter"
                             animate="center"
                             exit="exit"
-                            className="space-y-6"
+                            className="flex flex-col h-full"
                         >
-                            <div className="space-y-2">
-                                <h3 className="text-lg font-bold dark:text-white">API Configuration</h3>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    Enter your Google Cloud Project details. Need help?
-                                    <a href="#" className="text-blue-600 ml-1 inline-flex items-center">
-                                        View Guide <ExternalLink className="h-3 w-3 ml-1" />
-                                    </a>
-                                </p>
+                            <div className="flex-1 space-y-6">
+                                <div className="space-y-2">
+                                    <h3 className="text-lg font-bold dark:text-white">API Configuration</h3>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        Enter your Google Cloud Project details. Need help?
+                                        <a href="#" className="text-blue-600 ml-1 inline-flex items-center">
+                                            View Guide <ExternalLink className="h-3 w-3 ml-1" />
+                                        </a>
+                                    </p>
+                                </div>
+                                <div className="space-y-4">
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Client ID</label>
+                                        <Input
+                                            value={config.clientId}
+                                            onChange={(e) => setConfig({ ...config, clientId: e.target.value })}
+                                            placeholder="xxx-xxx.apps.googleusercontent.com"
+                                            className="bg-gray-50 dark:bg-brand-dark border-gray-200 dark:border-brand-dark py-6"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Project ID</label>
+                                        <Input
+                                            value={config.projectId}
+                                            onChange={(e) => setConfig({ ...config, projectId: e.target.value })}
+                                            placeholder="my-awesome-project"
+                                            className="bg-gray-50 dark:bg-brand-dark border-gray-200 dark:border-brand-dark py-6"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Client Secret</label>
+                                        <Input
+                                            type="password"
+                                            value={config.clientSecret}
+                                            onChange={(e) => setConfig({ ...config, clientSecret: e.target.value })}
+                                            placeholder="GOCSPX-xxxxxxxxxxxxxxxx"
+                                            className="bg-gray-50 dark:bg-brand-dark border-gray-200 dark:border-brand-dark py-6"
+                                        />
+                                    </div>
+                                </div>
                             </div>
-                            <div className="space-y-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Client ID</label>
-                                    <Input
-                                        value={config.clientId}
-                                        onChange={(e) => setConfig({ ...config, clientId: e.target.value })}
-                                        placeholder="xxx-xxx.apps.googleusercontent.com"
-                                        className="bg-gray-50 dark:bg-brand-dark border-gray-200 dark:border-brand-dark py-6"
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Project ID</label>
-                                    <Input
-                                        value={config.projectId}
-                                        onChange={(e) => setConfig({ ...config, projectId: e.target.value })}
-                                        placeholder="my-awesome-project"
-                                        className="bg-gray-50 dark:bg-brand-dark border-gray-200 dark:border-brand-dark py-6"
-                                    />
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-400">Client Secret</label>
-                                    <Input
-                                        type="password"
-                                        value={config.clientSecret}
-                                        onChange={(e) => setConfig({ ...config, clientSecret: e.target.value })}
-                                        placeholder="GOCSPX-xxxxxxxxxxxxxxxx"
-                                        className="bg-gray-50 dark:bg-brand-dark border-gray-200 dark:border-brand-dark py-6"
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex gap-3 pt-4">
+                            <div className="flex gap-3 pt-8">
                                 <Button variant="ghost" onClick={handleBack} className="flex-1 py-6 rounded-xl">Back</Button>
                                 <Button onClick={handleNext} className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-xl">
                                     Continue
@@ -297,32 +303,34 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
                             initial="enter"
                             animate="center"
                             exit="exit"
-                            className="flex flex-col items-center text-center space-y-8"
+                            className="flex flex-col h-full text-center"
                         >
-                            <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-full animate-pulse">
-                                <Key className="h-16 w-16 text-blue-600 dark:text-blue-400" />
+                            <div className="flex-1 flex flex-col items-center justify-center space-y-8">
+                                <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-full animate-pulse">
+                                    <Key className="h-16 w-16 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <div className="space-y-2">
+                                    <h3 className="text-xl font-bold dark:text-white">Authorize Access</h3>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        We'll now open a secure Google login window to authorize RustySEO to read your Search Console data.
+                                    </p>
+                                </div>
+                                <Button
+                                    onClick={handleConnect}
+                                    disabled={isLoading}
+                                    className="w-full bg-white dark:bg-white text-black hover:bg-gray-50 py-7 rounded-xl border border-gray-200 shadow-sm flex items-center justify-center gap-3"
+                                >
+                                    {isLoading ? (
+                                        <Loader2 className="h-5 w-5 animate-spin" />
+                                    ) : (
+                                        <>
+                                            <img src="https://www.google.com/favicon.ico" className="h-5 w-5" alt="Google" />
+                                            <span className="font-bold">Connect with Google</span>
+                                        </>
+                                    )}
+                                </Button>
                             </div>
-                            <div className="space-y-2">
-                                <h3 className="text-xl font-bold dark:text-white">Authorize Access</h3>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    We'll now open a secure Google login window to authorize RustySEO to read your Search Console data.
-                                </p>
-                            </div>
-                            <Button
-                                onClick={handleConnect}
-                                disabled={isLoading}
-                                className="w-full bg-white dark:bg-white text-black hover:bg-gray-50 py-7 rounded-xl border border-gray-200 shadow-sm flex items-center justify-center gap-3"
-                            >
-                                {isLoading ? (
-                                    <Loader2 className="h-5 w-5 animate-spin" />
-                                ) : (
-                                    <>
-                                        <img src="https://www.google.com/favicon.ico" className="h-5 w-5" alt="Google" />
-                                        <span className="font-bold">Connect with Google</span>
-                                    </>
-                                )}
-                            </Button>
-                            <div className="space-y-2">
+                            <div className="space-y-2 pt-8">
                                 <p className="text-[10px] text-gray-400">
                                     RustySEO only requests read-only access to your Search Console data.
                                 </p>
@@ -344,41 +352,45 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
                             initial="enter"
                             animate="center"
                             exit="exit"
-                            className="space-y-6"
+                            className="flex flex-col h-full"
                         >
-                            <div className="space-y-2">
-                                <h3 className="text-lg font-bold dark:text-white">Select Property</h3>
-                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                    Choose the website property you want to track in this workspace.
-                                </p>
+                            <div className="flex-1 space-y-6">
+                                <div className="space-y-2">
+                                    <h3 className="text-lg font-bold dark:text-white">Select Property</h3>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        Choose the website property you want to track in this workspace.
+                                    </p>
+                                </div>
+                                <div className="max-h-[220px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                                    {properties.map((prop) => (
+                                        <button
+                                            key={prop}
+                                            onClick={() => setSelectedProperty(prop)}
+                                            className={`w-full p-4 rounded-xl border text-left transition-all flex items-center justify-between ${selectedProperty === prop
+                                                ? "bg-blue-50 dark:bg-blue-900/30 border-blue-500 dark:border-blue-400 shadow-sm"
+                                                : "bg-gray-50 dark:bg-brand-dark border-gray-100 dark:border-brand-dark hover:border-gray-300"
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <Globe className={`h-4 w-4 ${selectedProperty === prop ? "text-blue-600" : "text-gray-400"}`} />
+                                                <span className={`text-xs font-medium ${selectedProperty === prop ? "text-blue-900 dark:text-blue-100" : "text-gray-700 dark:text-gray-300"}`}>
+                                                    {prop}
+                                                </span>
+                                            </div>
+                                            {selectedProperty === prop && <CheckCircle2 className="h-4 w-4 text-blue-600" />}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                            <div className="max-h-[220px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
-                                {properties.map((prop) => (
-                                    <button
-                                        key={prop}
-                                        onClick={() => setSelectedProperty(prop)}
-                                        className={`w-full p-4 rounded-xl border text-left transition-all flex items-center justify-between ${selectedProperty === prop
-                                            ? "bg-blue-50 dark:bg-blue-900/30 border-blue-500 dark:border-blue-400 shadow-sm"
-                                            : "bg-gray-50 dark:bg-brand-dark border-gray-100 dark:border-brand-dark hover:border-gray-300"
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <Globe className={`h-4 w-4 ${selectedProperty === prop ? "text-blue-600" : "text-gray-400"}`} />
-                                            <span className={`text-xs font-medium ${selectedProperty === prop ? "text-blue-900 dark:text-blue-100" : "text-gray-700 dark:text-gray-300"}`}>
-                                                {prop}
-                                            </span>
-                                        </div>
-                                        {selectedProperty === prop && <CheckCircle2 className="h-4 w-4 text-blue-600" />}
-                                    </button>
-                                ))}
+                            <div className="pt-8">
+                                <Button
+                                    onClick={handleFinalize}
+                                    disabled={isLoading || !selectedProperty}
+                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-xl font-bold"
+                                >
+                                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Complete Setup"}
+                                </Button>
                             </div>
-                            <Button
-                                onClick={handleFinalize}
-                                disabled={isLoading || !selectedProperty}
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-xl font-bold"
-                            >
-                                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Complete Setup"}
-                            </Button>
                         </motion.div>
                     )}
                 </AnimatePresence>
