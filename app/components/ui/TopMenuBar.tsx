@@ -17,7 +17,7 @@ import { useCallback, useEffect, useState } from "react";
 import PageSpeedInsigthsApi from "../PageSpeedInsigthsApi";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import OllamaSelect from "./OllamaSelector/OllamaSelect";
-import GoogleSearchConsoleModal from "./GoogleSearchConsole/GoogleSearchConsoleModal";
+import GSCConnectionWizard from "./GSCcontainer/GSCConnectionWizard";
 import { usePathname, useRouter } from "next/navigation";
 import WindowToggler from "./Panes/WindowToggler";
 import GeminiSelector from "./GeminiSelector/GeminiSelector";
@@ -403,10 +403,21 @@ const TopMenuBar = () => {
       <Modal
         opened={openedSearchConsole}
         onClose={closeSearchConsole}
-        title="Google Search Console"
+        padding={0}
+        radius="xl"
         centered
+        size="xl"
+        styles={{
+          content: {
+            backgroundColor: "transparent",
+            boxShadow: "none",
+          },
+        }}
       >
-        <GoogleSearchConsoleModal close={closeSearchConsole} />
+        <GSCConnectionWizard
+          onComplete={closeSearchConsole}
+          onClose={closeSearchConsole}
+        />
       </Modal>
 
       {/* GOOGLE Analytics Modal */}
