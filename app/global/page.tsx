@@ -27,7 +27,7 @@ import GlobalSettings from "../components/ui/GeneralSettings/GeneralSettings";
 import { PiShuffleAngularLight } from "react-icons/pi";
 import { LuMicroscope } from "react-icons/lu";
 import { useDiffStore } from "@/store/DiffStore";
-import KeywordTrackingDeepCrawlContainer from "./_components/KeywordTracking/KeywordTrackingDeepCrawlContainer";
+// import KeywordTrackingDeepCrawlContainer from "./_components/KeywordTracking/KeywordTrackingDeepCrawlContainer";
 
 interface CrawlResult {
   url: string;
@@ -313,14 +313,12 @@ export default function Page() {
             </Tabs.Panel>
           )}
 
-          {activeTab === "kws" && (
-            <Tabs.Panel
-              value="kws"
-              className="h-screen pt-9 dark:bg-brand-darker"
-            >
-              <KeywordTrackingDeepCrawlContainer />
-            </Tabs.Panel>
-          )}
+          <Tabs.Panel
+            value="kws"
+            className="h-screen pt-9 dark:bg-brand-darker"
+          >
+            <KeywordAnalytics />
+          </Tabs.Panel>
 
           {activeTab === "gsc" && (
             <Tabs.Panel
