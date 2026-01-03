@@ -689,11 +689,27 @@ pub fn delete_keyword_from_db(id: &str) -> Result<()> {
     println!("Deleting keyword with id: {}", id);
     let conn = open_db_connection("keyword_tracking.db")?;
 
-    // Delete from both tables to ensure consistency between shallow and deep crawl
-    conn.execute("DELETE FROM keywords WHERE id = ?", params![id])?;
-    conn.execute("DELETE FROM summarized_data WHERE id = ?", params![id])?;
+    // Fetch url and query before deleting to match in summarized_data
+    let mut stmt = conn.prepare("SELECT url, query FROM keywords WHERE id = ?")?;
+    let keyword_info: Option<(String, String)> = stmt.query_row(params![id], |row| {
+        Ok((row.get(0)?, row.get(1)?))
+    }).ok();
 
-    println!("Keyword deleted from both keywords and summarized_data tables");
+    if let Some((url, query)) = keyword_info {
+        // Delete from both tables to ensure consistency
+        conn.execute("DELETE FROM keywords WHERE id = ?", params![id])?;
+        conn.execute(
+            "DELETE FROM summarized_data WHERE url = ? AND query = ?",
+            params![url, query],
+        )?;
+        println!("Keyword deleted from both keywords and summarized_data tables");
+    } else {
+        // If not found in keywords, try deleting directly from summarized_data if id matches (fallback)
+        conn.execute("DELETE FROM keywords WHERE id = ?", params![id])?;
+        conn.execute("DELETE FROM summarized_data WHERE id = ?", params![id])?;
+        println!("Keyword with id {} handled with fallback deletion", id);
+    }
+
     Ok(())
 }
 
@@ -971,6 +987,7 @@ pub fn databases_start() -> Result<()> {
     // CREATE TABLE IF IT DOES NOT EXIST
     conn.execute(
         "CREATE TABLE IF NOT EXISTS summarized_data (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             url TEXT NOT NULL,
             query TEXT NOT NULL,
             initial_clicks INTEGER,

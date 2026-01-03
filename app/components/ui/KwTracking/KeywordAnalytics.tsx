@@ -62,7 +62,7 @@ export default function KeywordAnalytics() {
       const transformedData = response.map((item) => {
         const summaryMatch = summaryResponse.find((s) => s.query === item.query);
         return {
-          id: item.id,
+          id: String(item.id),
           keyword: item.query,
           initialImpressions: summaryMatch ? summaryMatch.initial_impressions : item.impressions,
           currentImpressions: summaryMatch ? summaryMatch.current_impressions : item.impressions,
