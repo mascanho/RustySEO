@@ -99,20 +99,22 @@ pub fn check_ollama() -> Result<OllamaProcess, String> {
 // ------- SETTING GOOGLE SEARCH CONSOLE CREDENTIALS
 #[tauri::command]
 pub async fn set_google_search_console_credentials(credentials: Credentials) {
-    let credentials = libs::set_search_console_credentials(credentials).await;
+    println!("Command: set_google_search_console_credentials for URL: {}", credentials.url);
+    let _ = libs::set_search_console_credentials(credentials).await;
+    println!("Command: set_google_search_console_credentials completed");
 }
 
 // ------ CALL THE GOOGLE SEARCH CONSOLE FUNCTION
 #[tauri::command]
 pub async fn call_google_search_console() -> Result<(), String> {
-    println!("Calling Google Search Console");
+    println!("Command: call_google_search_console starting...");
     match libs::get_google_search_console().await {
         Ok(_) => {
-            println!("Successfully called Google Search Console");
+            println!("Command: call_google_search_console successfully completed");
             Ok(())
         }
         Err(e) => {
-            eprintln!("Failed to call Google Search Console: {}", e);
+            eprintln!("Command: call_google_search_console failed: {}", e);
             Err(format!("Failed to call Google Search Console: {}", e))
         }
     }

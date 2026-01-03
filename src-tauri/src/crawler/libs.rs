@@ -281,7 +281,6 @@ pub async fn check_links(url: String) -> Result<Vec<LinkStatus>, String> {
 
     // Convert the provided URL into a base URL
     let base_url = Url::parse(&url).map_err(|e| e.to_string())?;
-    let base_str = base_url.as_str();
 
     let links = match crawler::db::read_links_from_db() {
         Ok(links) => links,
@@ -371,12 +370,17 @@ pub fn check_ollama() -> bool {
 // ------ CONNECT TO GOOGLE SEARCH CONSOLE
 #[derive(Deserialize, Serialize, Debug)]
 struct SearchAnalyticsQuery {
-    start_date: String,
-    end_date: String,
-    dimensions: Vec<String>,
+    #[serde(rename = "startDate")]
+    pub start_date: String,
+    #[serde(rename = "endDate")]
+    pub end_date: String,
+    pub dimensions: Vec<String>,
     #[serde(rename = "rowLimit")]
-    row_limit: String,
-    search_type: String,
+    pub row_limit: i32,
+    #[serde(rename = "type")]
+    pub search_type: String,
+    #[serde(rename = "aggregationType")]
+    pub aggregation_type: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -398,6 +402,7 @@ pub struct InstalledInfo {
     pub search_type: String,
     pub url: String,
     pub rows: String,
+    pub token: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -413,7 +418,8 @@ pub struct Credentials {
     pub url: String,
     pub propertyType: String,
     pub range: String,
-    rows: String,
+    pub rows: String,
+    pub token: Option<String>,
 }
 
 // helper function to move credentials around
@@ -443,6 +449,7 @@ pub async fn read_credentials_file() -> Result<InstalledInfo, String> {
         search_type: secret.installed.search_type,
         url: secret.installed.url,
         rows: secret.installed.rows,
+        token: secret.installed.token,
     };
 
     println!("Search Console Config: {:?}", result);
@@ -451,6 +458,7 @@ pub async fn read_credentials_file() -> Result<InstalledInfo, String> {
 
 // FUNCTION TO SET GOOGLE SEARCH CONSOLE DATA ON THE DISK
 pub async fn set_search_console_credentials(credentials: Credentials) -> Result<PathBuf, String> {
+    println!("libs: set_search_console_credentials starting...");
     let credentials_client_id = credentials.clientId;
     let credentials_project_id = credentials.projectId;
     let credentials_client_secret = credentials.clientSecret;
@@ -478,6 +486,7 @@ pub async fn set_search_console_credentials(credentials: Credentials) -> Result<
             search_type: credentials_search_type.to_string(),
             range: credentials_range.to_string(),
             rows: credentials_rows.to_string(),
+            token: credentials.token,
         },
     };
 
@@ -514,43 +523,6 @@ pub async fn set_search_console_credentials(credentials: Credentials) -> Result<
 }
 
 pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::error::Error>> {
-    // RUN THE CHECK ON THE SECRET IN THE DISK
-
-    // Set up the OAuth2 flow
-    let secret_path = directories::ProjectDirs::from("", "", "rustyseo")
-        .expect("Failed to get project directories")
-        .data_dir()
-        .join("client_secret.json");
-    // println!("Secret path with error: {}", secret_path.display());
-    let secret = yup_oauth2::read_application_secret(&secret_path).await?;
-
-    // Create an authenticator
-    let auth_path = directories::ProjectDirs::from("", "", "rustyseo")
-        .expect("Failed to get project directories")
-        .data_dir()
-        .join("tokencache.json");
-    let auth = InstalledFlowAuthenticator::builder(secret, InstalledFlowReturnMethod::HTTPRedirect)
-        .persist_tokens_to_disk(&auth_path)
-        .build()
-        .await
-        .map_err(|e| {
-            eprintln!("Failed to create authenticator: {}", e);
-            format!("Failed to create authenticator: {}", e)
-        })
-        .and_then(|ok_result| {
-            println!("Authenticator created successfully");
-            Ok(ok_result)
-        })
-        .map(|result| result)?;
-
-    // Create an authorized client
-    let https = HttpsConnectorBuilder::new()
-        .with_native_roots()
-        .https_only()
-        .enable_http1()
-        .build();
-    let client = HyperClient::builder().build(https);
-
     // READ THE FILE ON THE DISK
     let gsc_settings_info = read_credentials_file()
         .await
@@ -562,6 +534,47 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
     let credentials_client_secret = gsc_settings_info.client_secret;
     let credentials_range = gsc_settings_info.range;
     let credentials_rows = gsc_settings_info.rows;
+    let credentials_token = gsc_settings_info.token;
+
+    // Create an authorized client
+    let https = HttpsConnectorBuilder::new()
+        .with_native_roots()
+        .https_only()
+        .enable_http1()
+        .build();
+    let client = HyperClient::builder().build(https);
+
+    // Get the token (either from credentials or from auth flow)
+    let final_token = if let Some(token_str) = credentials_token {
+        println!("Using token from credentials");
+        token_str
+    } else {
+        // Set up the OAuth2 flow
+        let secret_path = directories::ProjectDirs::from("", "", "rustyseo")
+            .expect("Failed to get project directories")
+            .data_dir()
+            .join("client_secret.json");
+        let secret = yup_oauth2::read_application_secret(&secret_path).await?;
+
+        // Create an authenticator
+        let auth_path = directories::ProjectDirs::from("", "", "rustyseo")
+            .expect("Failed to get project directories")
+            .data_dir()
+            .join("tokencache.json");
+        let auth = InstalledFlowAuthenticator::builder(secret, InstalledFlowReturnMethod::HTTPRedirect)
+            .persist_tokens_to_disk(&auth_path)
+            .build()
+            .await
+            .map_err(|e| {
+                eprintln!("Failed to create authenticator: {}", e);
+                format!("Failed to create authenticator: {}", e)
+            })?;
+
+        let token = auth
+            .token(&["https://www.googleapis.com/auth/webmasters.readonly"])
+            .await?;
+        token.token().unwrap().to_string()
+    };
 
     // Initialize variables
     let mut domain = false;
@@ -597,7 +610,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
         "12 months" => {
             let end_date = Utc::now().format("%Y-%m-%d").to_string();
             let start_date = (Utc::now() - chrono::Duration::days(365))
-                // .format("%Y-%m-%d")
+                .format("%Y-%m-%d")
                 .to_string();
             (start_date, end_date)
         }
@@ -619,29 +632,29 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
 
     // let site_url = "sc-domain:algarvewonders.com";
     let query = SearchAnalyticsQuery {
-        // start_date: "2024-01-01".to_string(),
         start_date,
-        end_date: finish_date,
+        end_date,
         dimensions: vec![
             "query".to_string(),
             "page".to_string(),
-            // "country".to_string(),
         ],
         search_type: "web".to_string(),
-        row_limit: credentials_rows,
+        row_limit: credentials_rows.parse::<i32>().unwrap_or(1000),
+        aggregation_type: "auto".to_string(),
     };
     let body = serde_json::to_string(&query)?;
+    println!("GSC Request Body: {}", body);
 
     // Make the API request
-    let token = auth
-        .token(&["https://www.googleapis.com/auth/webmasters.readonly"])
-        .await?;
-
     let site_url = match search_type.as_str() {
         "domain" => {
             domain = true;
             println!("Domain selected, URL: {}", &credentials_url);
-            format!("sc-domain:{}", &credentials_url)
+            if credentials_url.starts_with("sc-domain:") {
+                credentials_url.clone()
+            } else {
+                format!("sc-domain:{}", &credentials_url)
+            }
         }
         "site" => {
             site = true;
@@ -662,25 +675,33 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
         ))
         .header(
             "Authorization",
-            format!("Bearer {}", token.token().unwrap()),
+            format!("Bearer {}", final_token),
         )
         .header("Content-Type", "application/json")
         .body(hyper::Body::from(body))?;
 
     let response = client.request(request).await?;
+    let status = response.status();
     let body_bytes = hyper::body::to_bytes(response.into_body()).await?;
     let body_str = String::from_utf8(body_bytes.to_vec())?;
 
+    println!("GSC Response Status: {}", status);
+    if !status.is_success() {
+        eprintln!("GSC API Error: {}", body_str);
+        return Err(format!("Google Search Console API error ({}): {}", status, body_str).into());
+    }
+
     // Parse and print the results
     let data: JsonValue = serde_json::from_str(&body_str)?;
-    // println!("Search Console Data: {:#?}", &data);
     let mut gsc_data = Vec::new();
 
-    println!("Search Console Data: {:#?}", &data);
+    println!("Parsed GSC Data successfully. Rows found: {}", data["rows"].as_array().map(|a| a.len()).unwrap_or(0));
     // Add data to DB
     gsc_data.push(data);
-    tokio::time::sleep(tokio::time::Duration::from_secs(15)).await;
-    db::push_gsc_data_to_db(&gsc_data).expect("Failed to push data to database");
+    if let Err(e) = db::push_gsc_data_to_db(&gsc_data) {
+        eprintln!("Failed to push GSC data to database: {}", e);
+        return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to save data to database: {}", e))));
+    }
 
     Ok(gsc_data)
 }
