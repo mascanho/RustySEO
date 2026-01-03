@@ -9,6 +9,8 @@ import {
 } from "@tanstack/react-table";
 import KeywordRow from "./KeywordRow";
 import { Search, X } from "lucide-react";
+import DeepCrawlQueryContextMenu from "@/app/global/_components/Sidebar/GSCRankingInfo/DeepCrawlQueryContextMenu";
+import useGSCStatusStore from "@/store/GSCStatusStore";
 
 interface GSCData {
   id: number;
@@ -31,6 +33,7 @@ export default function GSCkeywordTable({ gscData }: KeywordTableProps) {
   const [pageIndex, setPageIndex] = useState(0);
   const [filteredData, setFilteredData] = useState<GSCData[]>([]);
   const searchBarRef = useRef<HTMLDivElement>(null); // Ref to measure search bar height
+  const { credentials } = useGSCStatusStore();
 
   useEffect(() => {
     setFilteredData(
@@ -51,11 +54,20 @@ export default function GSCkeywordTable({ gscData }: KeywordTableProps) {
       accessorKey: "query",
       header: "Keyword",
       cell: ({ row }) => (
-        <span className="text-blue-600 font-semibold  w-[100px] max-w-[150px] min-w-[200px] block">
-          {row.original.query.toString().length > 45
-            ? row.original.query.substring(0, 45) + "..."
-            : row.original.query}
-        </span>
+        <DeepCrawlQueryContextMenu
+          url={row.original.url}
+          query={row.original.query}
+          credentials={credentials}
+          position={row.original.position}
+          impressions={row.original.impressions}
+          clicks={row.original.clicks}
+        >
+          <span className="text-blue-600 font-semibold  w-[100px] max-w-[150px] min-w-[200px] block cursor-pointer hover:underline">
+            {row.original.query.toString().length > 45
+              ? row.original.query.substring(0, 45) + "..."
+              : row.original.query}
+          </span>
+        </DeepCrawlQueryContextMenu>
       ),
     },
     {
