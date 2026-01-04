@@ -54,6 +54,8 @@ export default function AnalyticsTable() {
     if (!startDate || !endDate) return;
 
     setIsLoading(true);
+    toast.info("Fetching latest data from Google Analytics 4...");
+
     // Update selected dimension if passed (e.g. from select change)
     if (dimensionVal !== selectedDimension) {
       setSelectedDimension(dimensionVal);
@@ -190,10 +192,12 @@ export default function AnalyticsTable() {
 
       console.log("Result: ", result);
       setAnalyticsData(result);
+      toast.success("Google Analytics 4 data updated");
       return result;
     } catch (error) {
       console.error("Error fetching Google Analytics data:", error);
-      toast.error("Failed to fetch Google Analytics data");
+      const updateError = error instanceof Error ? error.message : String(error);
+      toast.error(`Failed to refresh Google Analytics data: ${updateError}`);
     } finally {
       setIsLoading(false);
     }
