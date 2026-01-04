@@ -61,10 +61,10 @@ const Analytics = () => {
         </p>
         <Button
           onClick={() => setIsWizardOpen(true)}
-          className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-6 rounded-2xl text-lg font-bold shadow-lg shadow-orange-200 dark:shadow-none transition-all hover:scale-[1.02] active:scale-[0.98]"
+          className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-6 rounded-2xl text-lg font-bold shadow-lg shadow-orange-200 dark:shadow-none transition-all hover:scale-[1.02] active:scale-[0.98] group"
         >
           Connect Now
-          <ArrowRight className="ml-2 h-5 w-5" />
+          <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
         </Button>
 
         <Modal
@@ -73,6 +73,8 @@ const Analytics = () => {
           withCloseButton={false}
           size="lg"
           padding={0}
+          centered
+          overlayProps={{ backgroundOpacity: 0.01, blur: 0 }}
           styles={{
             content: {
               backgroundColor: "transparent",
@@ -122,6 +124,8 @@ const Analytics = () => {
         withCloseButton={false}
         size="lg"
         padding={0}
+        centered
+        overlayProps={{ backgroundOpacity: 0.01, blur: 0 }}
         styles={{
           content: {
             backgroundColor: "transparent",

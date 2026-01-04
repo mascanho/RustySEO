@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { ArrowUpDown, Search, X, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUpDown, Search, X, ArrowUp, ArrowDown, Calendar as CalendarIcon } from "lucide-react";
 import { addDays, format } from "date-fns";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -59,12 +59,14 @@ export default function AnalyticsTable() {
     <button
       onClick={onClick}
       className={cn(
-        "w-[150px] justify-start text-left font-normal text-xs h-8 px-3 rounded-md border",
-        "bg-white dark:bg-brand-darker border-gray-300 dark:border-brand-dark",
-        "text-gray-900 dark:text-white/50 hover:bg-gray-50 dark:hover:bg-brand-dark"
+        "flex items-center gap-2 w-[140px] justify-start text-left font-medium text-xs h-8 px-3 rounded-md border transition-colors",
+        "bg-white dark:bg-brand-darker border-gray-200 dark:border-brand-dark",
+        "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-brand-dark",
+        "focus:outline-none focus:ring-2 focus:ring-orange-500/20"
       )}
     >
-      {value || "Select date"}
+      <CalendarIcon className="h-3.5 w-3.5 text-gray-400" />
+      <span>{value || "Select date"}</span>
     </button>
   );
 
@@ -258,11 +260,11 @@ export default function AnalyticsTable() {
 
   const sortedData = analyticsData?.response?.[0]?.rows
     ? sortData(analyticsData.response[0].rows, sortKey, sortOrder).filter(
-        (item) =>
-          item?.dimensionValues?.some((d: any) =>
-            d?.value?.toLowerCase().includes(search.toLowerCase())
-          )
-      )
+      (item) =>
+        item?.dimensionValues?.some((d: any) =>
+          d?.value?.toLowerCase().includes(search.toLowerCase())
+        )
+    )
     : [];
 
   const paginatedData = sortedData.slice(
@@ -331,7 +333,7 @@ export default function AnalyticsTable() {
   };
 
   return (
-    <div className="mx-auto py-1 z-10 text-xs overflow-y-hidden w-[calc(100vw-21rem)]">
+    <div className="mx-auto py-1 z-10 text-xs w-[calc(100vw-21rem)]">
       <div className="mb-2 flex items-center space-x-4 mt-1.5">
         <div className="relative flex-grow w-full rounded-md dark:border-brand-dark dark:bg-brand-darker">
           <Search className="absolute left-3 top-2.5 h-3 w-3 text-muted-foreground dark:text-white/50" />
@@ -360,8 +362,8 @@ export default function AnalyticsTable() {
               endDate={endDate}
               maxDate={endDate}
               customInput={<CustomInput />}
-              className="react-datepicker z-[1000]"
-              popperClassName="react-datepicker-popper z-[1000]"
+              className="react-datepicker z-[9999]"
+              popperClassName="react-datepicker-popper z-[9999]"
               calendarClassName="react-datepicker-calendar z-[1000]"
               wrapperClassName="react-datepicker-wrapper z-[1000]"
               dateFormat="MMM d, yyyy"
@@ -377,8 +379,8 @@ export default function AnalyticsTable() {
               endDate={endDate}
               minDate={startDate}
               customInput={<CustomInput />}
-              className="react-datepicker z-[1000]"
-              popperClassName="react-datepicker-popper z-[1000]"
+              className="react-datepicker z-[9999]"
+              popperClassName="react-datepicker-popper z-[9999]"
               calendarClassName="react-datepicker-calendar z-[1000]"
               wrapperClassName="react-datepicker-wrapper z-[1000]"
               dateFormat="MMM d, yyyy"

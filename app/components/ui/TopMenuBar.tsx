@@ -425,6 +425,7 @@ const TopMenuBar = () => {
             zIndex: 9999999999,
           }
         }}
+        overlayProps={{ backgroundOpacity: 0.01, blur: 0 }}
       >
         <GSCConnectionWizard
           onComplete={closeSearchConsole}
@@ -458,6 +459,7 @@ const TopMenuBar = () => {
             zIndex: 9999999999,
           }
         }}
+        overlayProps={{ backgroundOpacity: 0.01, blur: 0 }}
       >
         <GA4ConnectionWizard
           onComplete={closeGoogleAnalytics}
