@@ -403,6 +403,17 @@ pub struct InstalledInfo {
     pub url: String,
     pub rows: String,
     pub token: Option<String>,
+    pub refresh_token: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct GA4Credentials {
+    pub client_id: String,
+    pub project_id: String,
+    pub client_secret: String,
+    pub property_id: String,
+    pub token: Option<String>,
+    pub refresh_token: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -420,6 +431,7 @@ pub struct Credentials {
     pub range: String,
     pub rows: String,
     pub token: Option<String>,
+    pub refresh_token: Option<String>,
 }
 
 // helper function to move credentials around
@@ -450,6 +462,7 @@ pub async fn read_credentials_file() -> Result<InstalledInfo, String> {
         url: secret.installed.url,
         rows: secret.installed.rows,
         token: secret.installed.token,
+        refresh_token: secret.installed.refresh_token,
     };
 
     println!("Search Console Config: {:?}", result);
@@ -487,6 +500,7 @@ pub async fn set_search_console_credentials(credentials: Credentials) -> Result<
             range: credentials_range.to_string(),
             rows: credentials_rows.to_string(),
             token: credentials.token,
+            refresh_token: credentials.refresh_token,
         },
     };
 
@@ -713,38 +727,96 @@ pub struct AnalyticsData {
     pub response: Vec<Value>,
 }
 
-#[tauri::command]
-pub async fn set_google_analytics_id(id: String) -> Result<String, String> {
-    // set the directories
-    let config_dir = ProjectDirs::from("", "", "rustyseo")
-        .ok_or_else(|| "Failed to get project directories".to_string())?;
-    let config_dir = config_dir.data_dir();
-    let file_path = config_dir.join("ga_id.json");
+pub async fn refresh_google_token(client_id: &str, client_secret: &str, refresh_token: &str) -> Result<String, String> {
+    let client = reqwest::Client::new();
+    let response = client.post("https://oauth2.googleapis.com/token")
+        .form(&[
+            ("client_id", client_id),
+            ("client_secret", client_secret),
+            ("refresh_token", refresh_token),
+            ("grant_type", "refresh_token"),
+        ])
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
 
-    // write the id to the file
-    if let Err(e) = fs::write(&file_path, id.to_string()).await {
-        return Err(format!("Failed to write Google Analytics ID: {}", e));
+    let json: serde_json::Value = response.json().await.map_err(|e| e.to_string())?;
+    
+    if let Some(access_token) = json.get("access_token").and_then(|v| v.as_str()) {
+        Ok(access_token.to_string())
+    } else {
+        Err(format!("Failed to refresh token: {:?}", json))
     }
-
-    Ok(id.to_string())
 }
 
-// ------ GET THE GOOGLE ANALYTICS ID
-#[tauri::command]
-pub async fn get_google_analytics_id() -> Result<String, String> {
+// ------ GA4 CREDENTIALS MANAGEMENT
+
+pub async fn set_google_analytics_credentials(credentials: GA4Credentials) -> Result<(), String> {
     let config_dir = ProjectDirs::from("", "", "rustyseo")
         .ok_or_else(|| "Failed to get project directories".to_string())?;
     let config_dir = config_dir.data_dir();
-    let file_path = config_dir.join("ga_id.json");
+    let file_path = config_dir.join("ga4_credentials.json");
 
-    // read the file
-    let file_toml = fs::read_to_string(file_path)
+    let json = serde_json::to_string_pretty(&credentials)
+        .map_err(|e| format!("Failed to serialize GA4 credentials: {}", e))?;
+
+    fs::write(&file_path, json).await
+        .map_err(|e| format!("Failed to write GA4 credentials: {}", e))?;
+
+    // Also update the legacy ga_id.json for backward compatibility if needed
+    let ga_id_path = config_dir.join("ga_id.json");
+    let _ = fs::write(&ga_id_path, credentials.property_id).await;
+
+    Ok(())
+}
+
+pub async fn read_ga4_credentials_file() -> Result<GA4Credentials, String> {
+    let config_dir = ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
+    let config_dir = config_dir.data_dir();
+    let file_path = config_dir.join("ga4_credentials.json");
+
+    if !file_path.exists() {
+        return Err("GA4 credentials file not found".to_string());
+    }
+
+    let content = fs::read_to_string(file_path).await
+        .map_err(|e| format!("Failed to read GA4 credentials: {}", e))?;
+
+    let credentials: GA4Credentials = serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse GA4 credentials: {}", e))?;
+
+    Ok(credentials)
+}
+
+pub async fn get_ga4_properties(token: String) -> Result<Vec<Value>, String> {
+    let client = reqwest::Client::new();
+    
+    // 1. List accounts
+    let accounts_url = "https://analyticsadmin.googleapis.com/v1alpha/accountSummaries";
+    let response: Value = client
+        .get(accounts_url)
+        .bearer_auth(&token)
+        .send()
         .await
-        .expect("Could not read GA4 ID file");
+        .map_err(|e| format!("Failed to fetch accounts: {}", e))?
+        .json()
+        .await
+        .map_err(|e| format!("Failed to parse accounts: {}", e))?;
 
-    println!("This is the content of the file {:#?}", file_toml);
+    let mut all_properties = Vec::new();
 
-    Ok(file_toml)
+    if let Some(accounts) = response["accountSummaries"].as_array() {
+        for account in accounts {
+            if let Some(properties) = account["propertySummaries"].as_array() {
+                for property in properties {
+                    all_properties.push(property.clone());
+                }
+            }
+        }
+    }
+
+    Ok(all_properties)
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -773,17 +845,40 @@ pub async fn get_google_analytics(
 
     // Create an authenticator that persists tokens
     let auth_path = config_dir.join("ga_tokencache.json");
-    let auth = oauth2::InstalledFlowAuthenticator::builder(
-        secret,
-        oauth2::InstalledFlowReturnMethod::HTTPRedirect,
-    )
-    .persist_tokens_to_disk(auth_path)
-    .build()
-    .await?;
+    
+    // Try to read the new credentials first
+    let credentials = read_ga4_credentials_file().await.ok();
+    
+    let token_str = if let Some(ref creds) = credentials {
+        if let Some(ref t) = creds.token {
+            Some(t.clone())
+        } else {
+            None
+        }
+    } else {
+        None
+    };
 
-    // Get an access token
-    let scopes = &["https://www.googleapis.com/auth/analytics.readonly"];
-    let token = auth.token(scopes).await?;
+    let mut token_val = if let Some(t) = token_str {
+        t
+    } else {
+        let secret = oauth2::read_application_secret(&secret_path)
+            .await
+            .expect("Where is the client_secret.json file?");
+
+        let auth = oauth2::InstalledFlowAuthenticator::builder(
+            secret,
+            oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+        )
+        .persist_tokens_to_disk(auth_path)
+        .build()
+        .await?;
+
+        // Get an access token
+        let scopes = &["https://www.googleapis.com/auth/analytics.readonly"];
+        let token = auth.token(scopes).await?;
+        token.token().unwrap().to_string()
+    };
 
     // Create a client
     let client = reqwest::Client::new();
@@ -812,7 +907,12 @@ pub async fn get_google_analytics(
 
     let body = &search_type[0];
 
-    let id = get_google_analytics_id().await.unwrap();
+    let id = if let Some(ref creds) = credentials {
+        creds.property_id.clone()
+    } else {
+        // Fallback to legacy if possible, but for now let's just error if no credentials
+        return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "GA4 Property ID not found. Please connect GA4 first.")));
+    };
 
     println!("Using GA4 ID: {} to fetch Analytics data", id);
 
@@ -824,14 +924,60 @@ pub async fn get_google_analytics(
     );
 
     // Make the request
-    let response: Value = client
+    let mut response_res = client
         .post(&analytics_url)
-        .bearer_auth(token.token().unwrap())
+        .bearer_auth(token_val.clone())
         .json(&body)
         .send()
-        .await?
-        .json()
-        .await?;
+        .await;
+
+    // If 401 Unauthorized, try to refresh the token
+    if let Ok(ref res) = response_res {
+        if res.status() == reqwest::StatusCode::UNAUTHORIZED {
+            if let Some(ref creds) = credentials {
+                if let Some(ref refresh) = creds.refresh_token {
+                    println!("Access token expired, attempting to refresh...");
+                    match refresh_google_token(&creds.client_id, &creds.client_secret, refresh).await {
+                        Ok(new_token) => {
+                            println!("Token refreshed successfully!");
+                            // Update the token in memory for the retry
+                            token_val = new_token.clone();
+                            
+                            // Save the new token to disk
+                            let mut updated_creds = creds.clone();
+                            updated_creds.token = Some(new_token);
+                            let _ = set_google_analytics_credentials(updated_creds).await;
+                            
+                            // Retry the request
+                            response_res = client
+                                .post(&analytics_url)
+                                .bearer_auth(token_val.clone())
+                                .json(&body)
+                                .send()
+                                .await;
+                        }
+                        Err(e) => {
+                            println!("Failed to refresh token: {}", e);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let response: Value = match response_res {
+        Ok(res) => {
+            let status = res.status();
+            let text = res.text().await.unwrap_or_default();
+            println!("GA4 API Status: {}", status);
+            // println!("GA4 API Response: {}", text);
+            serde_json::from_str(&text).unwrap_or(json!({"error": {"message": format!("Failed to parse GA4 response: {}", text)}}))
+        }
+        Err(e) => {
+            println!("GA4 API Request Error: {}", e);
+            json!({"error": {"message": e.to_string()}})
+        }
+    };
 
     // Process and print the results
     if let Some(rows) = response["rows"].as_array() {

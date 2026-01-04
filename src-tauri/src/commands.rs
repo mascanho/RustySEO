@@ -8,6 +8,7 @@ use crate::crawler::libs::ApiKeys;
 use crate::crawler::libs::ClarityData;
 use crate::crawler::libs::Credentials;
 use crate::crawler::libs::DateRange;
+use crate::crawler::libs::GA4Credentials;
 use crate::image_converter::converter;
 use crate::machine_learning::keyword_frequency;
 use crate::settings::settings;
@@ -136,6 +137,27 @@ pub fn call_gsc_match_url(url: String) -> Result<Vec<GscMatched>, String> {
         Ok(result) => Ok(result),
         Err(err) => Err(err.to_string()),
     }
+}
+
+
+
+// ------- SETTING GOOGLE ANALYTICS CREDENTIALS
+#[tauri::command]
+pub async fn set_google_analytics_credentials(credentials: GA4Credentials) {
+    println!("Command: set_google_analytics_credentials for property: {}", credentials.property_id);
+    let _ = libs::set_google_analytics_credentials(credentials).await;
+}
+
+// ------- READ GA4 CREDENTIALS FILE
+#[tauri::command]
+pub async fn read_ga4_credentials_file() -> Result<GA4Credentials, String> {
+    libs::read_ga4_credentials_file().await
+}
+
+// ------- GET GA4 PROPERTIES
+#[tauri::command]
+pub async fn get_ga4_properties(token: String) -> Result<Vec<Value>, String> {
+    libs::get_ga4_properties(token).await
 }
 
 #[tauri::command]

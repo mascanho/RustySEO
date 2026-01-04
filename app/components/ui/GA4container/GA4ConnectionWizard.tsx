@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-    Search,
+    BarChart3,
     ShieldCheck,
     Key,
     Globe,
@@ -12,19 +12,26 @@ import {
     CheckCircle2,
     AlertCircle,
     Loader2,
-    ExternalLink
+    ExternalLink,
+    PieChart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { invoke } from "@tauri-apps/api/core";
 
-interface GSCConnectionWizardProps {
+interface GA4ConnectionWizardProps {
     onComplete: () => void;
     onClose: () => void;
 }
 
-export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnectionWizardProps) {
+interface GA4Property {
+    name: string; // resource name: properties/123
+    displayName: string;
+    property: string; // property id: 123
+}
+
+export default function GA4ConnectionWizard({ onComplete, onClose }: GA4ConnectionWizardProps) {
     const [step, setStep] = useState(1);
     const [config, setConfig] = useState({
         clientId: "",
@@ -32,8 +39,8 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
         clientSecret: "",
     });
     const [isLoading, setIsLoading] = useState(false);
-    const [properties, setProperties] = useState<string[]>([]);
-    const [selectedProperty, setSelectedProperty] = useState("");
+    const [properties, setProperties] = useState<GA4Property[]>([]);
+    const [selectedProperty, setSelectedProperty] = useState<GA4Property | null>(null);
     const [accessToken, setAccessToken] = useState("");
     const [refreshToken, setRefreshToken] = useState("");
 
@@ -49,7 +56,7 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
         setIsLoading(true);
         try {
             // 1. Start local server to receive the code
-            const port = await invoke<number>("start_gsc_auth_server");
+            const port = await invoke<number>("start_gsc_auth_server"); // Reusing the same auth server logic
             const redirectUri = `http://localhost:${port}`;
 
             // 2. Listen for the code from the backend
@@ -81,7 +88,7 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
             });
 
             // 4. Open Google Auth URL in system browser
-            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${config.clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=https://www.googleapis.com/auth/webmasters.readonly&prompt=consent&access_type=offline`;
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${config.clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=https://www.googleapis.com/auth/analytics.readonly&prompt=consent&access_type=offline`;
 
             const { open } = await import("@tauri-apps/plugin-shell");
             await open(authUrl);
@@ -96,15 +103,17 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
 
     const fetchProperties = async (token: string) => {
         try {
-            const response = await fetch("https://www.googleapis.com/webmasters/v3/sites", {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            const data = await response.json();
-            if (data.siteEntry) {
-                setProperties(data.siteEntry.map((s: any) => s.siteUrl));
+            const props = await invoke<any[]>("get_ga4_properties", { token });
+            if (props && props.length > 0) {
+                const formattedProps: GA4Property[] = props.map(p => ({
+                    name: p.property, // resource name
+                    displayName: p.displayName,
+                    property: p.property.split("/")[1] // extract ID from properties/123
+                }));
+                setProperties(formattedProps);
                 setStep(4);
             } else {
-                toast.error("No Search Console properties found");
+                toast.error("No GA4 properties found");
             }
         } catch (error) {
             console.error("Fetch properties error:", error);
@@ -115,12 +124,6 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
     };
 
     const handleFinalize = async () => {
-        console.log("Finalizing GSC connection...", {
-            clientId: config.clientId,
-            projectId: config.projectId,
-            selectedProperty,
-            hasToken: !!accessToken
-        });
         if (!selectedProperty) {
             toast.error("Please select a property");
             return;
@@ -128,25 +131,19 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
 
         setIsLoading(true);
         try {
-            console.log("Invoking set_google_search_console_credentials...");
             // Save credentials and tokens to backend
-            await invoke("set_google_search_console_credentials", {
+            await invoke("set_google_analytics_credentials", {
                 credentials: {
-                    clientId: config.clientId,
-                    projectId: config.projectId,
-                    clientSecret: config.clientSecret,
-                    url: selectedProperty,
-                    propertyType: selectedProperty.startsWith("sc-domain:") ? "domain" : "site",
-                    range: "3 months",
-                    rows: "1000",
+                    client_id: config.clientId,
+                    project_id: config.projectId,
+                    client_secret: config.clientSecret,
+                    property_id: selectedProperty.property,
                     token: accessToken,
                     refresh_token: refreshToken,
                 }
             });
-            console.log("Credentials saved successfully");
 
-            toast.success("Search Console connected successfully!");
-            console.log("Calling onComplete...");
+            toast.success("Google Analytics connected successfully!");
             onComplete();
         } catch (error) {
             console.error("Finalize error:", error);
@@ -176,11 +173,11 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
             {/* Header */}
             <div className="p-6 border-b border-gray-100 dark:border-brand-dark flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-                        <Search className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    <div className="p-2 bg-orange-50 dark:bg-orange-900/30 rounded-lg">
+                        <BarChart3 className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                     </div>
                     <div>
-                        <h2 className="text-lg font-bold dark:text-white">Connect Search Console</h2>
+                        <h2 className="text-lg font-bold dark:text-white">Connect GA4</h2>
                         <p className="text-xs text-gray-500 dark:text-gray-400">Step {step} of 4</p>
                     </div>
                 </div>
@@ -192,7 +189,7 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
             {/* Progress Bar */}
             <div className="h-1 w-full bg-gray-100 dark:bg-brand-dark">
                 <motion.div
-                    className="h-full bg-blue-600"
+                    className="h-full bg-orange-600"
                     initial={{ width: "25%" }}
                     animate={{ width: `${(step / 4) * 100}%` }}
                 />
@@ -212,30 +209,30 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
                             className="flex flex-col h-full text-center"
                         >
                             <div className="flex-1 flex flex-col items-center justify-center space-y-6">
-                                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-full">
-                                    <ShieldCheck className="h-12 w-12 text-green-600 dark:text-green-400" />
+                                <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-full">
+                                    <PieChart className="h-12 w-12 text-orange-600 dark:text-orange-400" />
                                 </div>
                                 <div className="space-y-2">
-                                    <h3 className="text-xl font-bold dark:text-white">Unlock Deep Insights</h3>
+                                    <h3 className="text-xl font-bold dark:text-white">Analyze User Behavior</h3>
                                     <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
-                                        Connect your Google Search Console to see real-time rankings, impressions, and clicks directly in RustySEO.
+                                        Connect Google Analytics 4 to track sessions, bounce rates, and user engagement directly in your SEO dashboard.
                                     </p>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 w-full pt-4">
                                     <div className="p-3 bg-gray-50 dark:bg-brand-dark rounded-xl border border-gray-100 dark:border-brand-dark/50 text-left">
                                         <Globe className="h-4 w-4 text-blue-500 mb-2" />
-                                        <p className="text-[10px] font-bold dark:text-white">Global Reach</p>
-                                        <p className="text-[9px] text-gray-500">Track worldwide performance</p>
+                                        <p className="text-[10px] font-bold dark:text-white">User Insights</p>
+                                        <p className="text-[9px] text-gray-500">Understand your audience</p>
                                     </div>
                                     <div className="p-3 bg-gray-50 dark:bg-brand-dark rounded-xl border border-gray-100 dark:border-brand-dark/50 text-left">
                                         <Key className="h-4 w-4 text-purple-500 mb-2" />
-                                        <p className="text-[10px] font-bold dark:text-white">Secure Access</p>
-                                        <p className="text-[9px] text-gray-500">Official Google API connection</p>
+                                        <p className="text-[10px] font-bold dark:text-white">Secure Auth</p>
+                                        <p className="text-[9px] text-gray-500">Official OAuth connection</p>
                                     </div>
                                 </div>
                             </div>
                             <div className="pt-8">
-                                <Button onClick={handleNext} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-xl group">
+                                <Button onClick={handleNext} className="w-full bg-orange-600 hover:bg-orange-700 text-white py-6 rounded-xl group">
                                     Get Started
                                     <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
                                 </Button>
@@ -257,10 +254,7 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
                                 <div className="space-y-2">
                                     <h3 className="text-lg font-bold dark:text-white">API Configuration</h3>
                                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                                        Enter your Google Cloud Project details. Need help?
-                                        <a href="#" className="text-blue-600 ml-1 inline-flex items-center">
-                                            View Guide <ExternalLink className="h-3 w-3 ml-1" />
-                                        </a>
+                                        Enter your Google Cloud Project details for GA4.
                                     </p>
                                 </div>
                                 <div className="space-y-4">
@@ -296,7 +290,7 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
                             </div>
                             <div className="flex gap-3 pt-8">
                                 <Button variant="ghost" onClick={handleBack} className="flex-1 py-6 rounded-xl">Back</Button>
-                                <Button onClick={handleNext} className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-xl">
+                                <Button onClick={handleNext} className="flex-[2] bg-orange-600 hover:bg-orange-700 text-white py-6 rounded-xl">
                                     Continue
                                 </Button>
                             </div>
@@ -314,13 +308,13 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
                             className="flex flex-col h-full text-center"
                         >
                             <div className="flex-1 flex flex-col items-center justify-center space-y-8">
-                                <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-full animate-pulse">
-                                    <Key className="h-16 w-16 text-blue-600 dark:text-blue-400" />
+                                <div className="p-6 bg-orange-50 dark:bg-orange-900/20 rounded-full animate-pulse">
+                                    <Key className="h-16 w-16 text-orange-600 dark:text-orange-400" />
                                 </div>
                                 <div className="space-y-2">
-                                    <h3 className="text-xl font-bold dark:text-white">Authorize Access</h3>
+                                    <h3 className="text-xl font-bold dark:text-white">Authorize GA4 Access</h3>
                                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        We'll now open a secure Google login window to authorize RustySEO to read your Search Console data.
+                                        We'll now open a secure Google login window to authorize RustySEO to read your Analytics data.
                                     </p>
                                 </div>
                                 <Button
@@ -340,12 +334,12 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
                             </div>
                             <div className="space-y-2 pt-8">
                                 <p className="text-[10px] text-gray-400">
-                                    RustySEO only requests read-only access to your Search Console data.
+                                    RustySEO only requests read-only access to your GA4 data.
                                 </p>
                                 <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 rounded-lg">
                                     <p className="text-[10px] text-amber-800 dark:text-amber-200 flex items-center gap-1.5 justify-center">
                                         <AlertCircle className="h-3 w-3" />
-                                        If the popup doesn't appear, please check if popups are blocked in your settings.
+                                        If the popup doesn't appear, please check if popups are blocked.
                                     </p>
                                 </div>
                             </div>
@@ -364,28 +358,31 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
                         >
                             <div className="flex-1 space-y-6">
                                 <div className="space-y-2">
-                                    <h3 className="text-lg font-bold dark:text-white">Select Property</h3>
+                                    <h3 className="text-lg font-bold dark:text-white">Select GA4 Property</h3>
                                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                                        Choose the website property you want to track in this workspace.
+                                        Choose the GA4 property you want to track in this workspace.
                                     </p>
                                 </div>
                                 <div className="max-h-[220px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
                                     {properties.map((prop) => (
                                         <button
-                                            key={prop}
+                                            key={prop.property}
                                             onClick={() => setSelectedProperty(prop)}
-                                            className={`w-full p-4 rounded-xl border text-left transition-all flex items-center justify-between ${selectedProperty === prop
-                                                ? "bg-blue-50 dark:bg-blue-900/30 border-blue-500 dark:border-blue-400 shadow-sm"
+                                            className={`w-full p-4 rounded-xl border text-left transition-all flex items-center justify-between ${selectedProperty?.property === prop.property
+                                                ? "bg-orange-50 dark:bg-orange-900/30 border-orange-500 dark:border-orange-400 shadow-sm"
                                                 : "bg-gray-50 dark:bg-brand-dark border-gray-100 dark:border-brand-dark hover:border-gray-300"
                                                 }`}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <Globe className={`h-4 w-4 ${selectedProperty === prop ? "text-blue-600" : "text-gray-400"}`} />
-                                                <span className={`text-xs font-medium ${selectedProperty === prop ? "text-blue-900 dark:text-blue-100" : "text-gray-700 dark:text-gray-300"}`}>
-                                                    {prop}
-                                                </span>
+                                                <BarChart3 className={`h-4 w-4 ${selectedProperty?.property === prop.property ? "text-orange-600" : "text-gray-400"}`} />
+                                                <div className="flex flex-col">
+                                                    <span className={`text-xs font-bold ${selectedProperty?.property === prop.property ? "text-orange-900 dark:text-orange-100" : "text-gray-700 dark:text-gray-300"}`}>
+                                                        {prop.displayName}
+                                                    </span>
+                                                    <span className="text-[9px] text-gray-400">ID: {prop.property}</span>
+                                                </div>
                                             </div>
-                                            {selectedProperty === prop && <CheckCircle2 className="h-4 w-4 text-blue-600" />}
+                                            {selectedProperty?.property === prop.property && <CheckCircle2 className="h-4 w-4 text-orange-600" />}
                                         </button>
                                     ))}
                                 </div>
@@ -394,7 +391,7 @@ export default function GSCConnectionWizard({ onComplete, onClose }: GSCConnecti
                                 <Button
                                     onClick={handleFinalize}
                                     disabled={isLoading || !selectedProperty}
-                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-xl font-bold"
+                                    className="w-full bg-orange-600 hover:bg-orange-700 text-white py-6 rounded-xl font-bold"
                                 >
                                     {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Complete Setup"}
                                 </Button>

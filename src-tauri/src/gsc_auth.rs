@@ -57,9 +57,5 @@ pub async fn exchange_gsc_code(code: String, client_id: String, client_secret: S
 
     let json: serde_json::Value = response.json().await.map_err(|e| e.to_string())?;
     
-    if let Some(access_token) = json.get("access_token").and_then(|v| v.as_str()) {
-        Ok(access_token.to_string())
-    } else {
-        Err(format!("Failed to get access token: {:?}", json))
-    }
+    Ok(json.to_string())
 }

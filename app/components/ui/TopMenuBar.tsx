@@ -18,6 +18,7 @@ import PageSpeedInsigthsApi from "../PageSpeedInsigthsApi";
 import openBrowserWindow from "@/app/Hooks/OpenBrowserWindow";
 import OllamaSelect from "./OllamaSelector/OllamaSelect";
 import GSCConnectionWizard from "./GSCcontainer/GSCConnectionWizard";
+import GA4ConnectionWizard from "./GA4container/GA4ConnectionWizard";
 import { usePathname, useRouter } from "next/navigation";
 import WindowToggler from "./Panes/WindowToggler";
 import GeminiSelector from "./GeminiSelector/GeminiSelector";
@@ -54,7 +55,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useVisibilityStore } from "@/store/VisibilityStore";
 import KeywordSerp from "./TopMenuBar/KeywordSerp";
-import GoogleAnalyticsModal from "./GoogleAnalyticsModal/GoogleAnalyticsModal";
 import Configurations from "./TopMenuBar/Configurations/Configurations";
 import { FaGear } from "react-icons/fa6";
 import MSClarity from "./MSClarityModal/MSClarityModal";
@@ -436,10 +436,33 @@ const TopMenuBar = () => {
       <Modal
         opened={openedGoogleAnalytics}
         onClose={closeGoogleAnalytics}
-        title="Google Analytics"
+        withCloseButton={false}
+        padding={0}
+        radius="xl"
         centered
+        size="lg"
+        styles={{
+          content: {
+            backgroundColor: "transparent",
+            boxShadow: "none",
+            border: "none",
+          },
+          body: {
+            padding: 0,
+            backgroundColor: "transparent",
+          },
+          inner: {
+            padding: 0,
+          },
+          root: {
+            zIndex: 9999999999,
+          }
+        }}
       >
-        <GoogleAnalyticsModal close={closeGoogleAnalytics} />
+        <GA4ConnectionWizard
+          onComplete={closeGoogleAnalytics}
+          onClose={closeGoogleAnalytics}
+        />
       </Modal>
 
       {/* Configurations Modal */}
