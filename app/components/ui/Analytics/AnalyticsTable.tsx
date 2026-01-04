@@ -13,8 +13,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { ArrowUpDown, Search, X, ArrowUp, ArrowDown, Calendar as CalendarIcon } from "lucide-react";
 import { addDays, format } from "date-fns";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -34,11 +32,10 @@ export default function AnalyticsTable() {
   const [sortKey, setSortKey] = useState<string>("sessions");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [search, setSearch] = useState("");
-  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
-    new Date(2022, 0, 1),
-    addDays(new Date(), 0) // Default to today
-  ]);
-  const [startDate, endDate] = dateRange;
+
+  // Initialize dates
+  const [startDate, setStartDate] = useState<Date | null>(new Date(2022, 0, 1));
+  const [endDate, setEndDate] = useState<Date | null>(addDays(new Date(), 0)); // Default to today
 
   const [selectedDimension, setSelectedDimension] = useState("general");
   const [analyticsDate, setAnalyticsDate] = useState<any>(undefined);
@@ -46,27 +43,26 @@ export default function AnalyticsTable() {
   const [isLoading, setIsLoading] = useState(false);
   const rowsPerPage = 100;
 
-  // Custom input component for the date range picker
-  const CustomInput = ({
-    value,
-    onClick,
-  }: {
-    value?: string;
-    onClick?: () => void;
-  }) => (
-    <button
-      onClick={onClick}
-      className={cn(
-        "flex items-center gap-2 w-[220px] justify-start text-left font-medium text-xs h-8 px-3 rounded-md border transition-colors",
-        "bg-white dark:bg-brand-darker border-gray-200 dark:border-brand-dark",
-        "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-brand-dark/50",
-        "focus:outline-none focus:ring-2 focus:ring-orange-500/20"
-      )}
-    >
-      <CalendarIcon className="h-3.5 w-3.5 text-gray-400" />
-      <span className="truncate">{value || "Select date range"}</span>
-    </button>
-  );
+  // Helper to format date for input value (yyyy-MM-dd)
+  const formatDateForInput = (date: Date | null) => {
+    if (!date) return "";
+    return format(date, "yyyy-MM-dd");
+  };
+
+  // Handle manual date change
+  const handleDateChange = (type: 'start' | 'end', value: string) => {
+    if (!value) return;
+    const date = new Date(value);
+    // Adjust for timezone offset to ensure the date is correct
+    const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+    const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
+
+    if (type === 'start') {
+      setStartDate(adjustedDate);
+    } else {
+      setEndDate(adjustedDate);
+    }
+  };
 
   // Handle the fetching of analytics data
   const handleFilteredAnalytics = async (value: string) => {
@@ -342,20 +338,26 @@ export default function AnalyticsTable() {
           )}
         </div>
 
-        <div className="z-[20]">
-          <DatePicker
-            selectsRange={true}
-            startDate={startDate}
-            endDate={endDate}
-            onChange={(update) => {
-              setDateRange(update);
-            }}
-            customInput={<CustomInput />}
-            className="react-datepicker"
-            popperClassName="react-datepicker-popper"
-            dateFormat="MMM d, yyyy"
-            popperProps={{ strategy: "fixed" }}
-          />
+        {/* Native Date Pickers */}
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <input
+              type="date"
+              value={formatDateForInput(startDate)}
+              onChange={(e) => handleDateChange('start', e.target.value)}
+              className="h-8 text-xs border rounded-md px-2 bg-white dark:bg-brand-darker dark:text-white dark:border-brand-dark focus:outline-none focus:ring-2 focus:ring-orange-500/20 block w-[130px] dark:[color-scheme:dark]"
+            />
+          </div>
+          <span className="text-gray-400 dark:text-gray-600">-</span>
+          <div className="relative">
+            <input
+              type="date"
+              value={formatDateForInput(endDate)}
+              onChange={(e) => handleDateChange('end', e.target.value)}
+              min={formatDateForInput(startDate)}
+              className="h-8 text-xs border rounded-md px-2 bg-white dark:bg-brand-darker dark:text-white dark:border-brand-dark focus:outline-none focus:ring-2 focus:ring-orange-500/20 block w-[130px] dark:[color-scheme:dark]"
+            />
+          </div>
         </div>
 
         <Select
@@ -479,88 +481,6 @@ export default function AnalyticsTable() {
           </div>
         )}
       </div>
-      <style jsx global>{`
-        .react-datepicker {
-          font-family: inherit;
-          border: 1px solid #e2e8f0;
-          border-radius: 0.5rem;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-          z-index: 1000;
-        }
-
-        .react-datepicker__header {
-          background-color: #fff;
-          border-bottom: 1px solid #e2e8f0;
-          padding-top: 0.5rem;
-        }
-
-        .react-datepicker__current-month,
-        .react-datepicker__day-name {
-          color: #64748b;
-          font-weight: 600;
-        }
-        
-        .react-datepicker__day-name {
-            color: #94a3b8;
-        }
-
-        .react-datepicker__day {
-          color: #334155;
-          margin: 0.2rem;
-          width: 1.8rem;
-          line-height: 1.8rem;
-        }
-
-        .react-datepicker__day--selected,
-        .react-datepicker__day--range-start,
-        .react-datepicker__day--range-end {
-          background-color: #ea580c !important;
-          color: white !important;
-          border-radius: 9999px;
-        }
-        
-        .react-datepicker__day--in-range {
-            background-color: #ffedd5 !important;
-            color: #9a3412 !important;
-        }
-
-        .react-datepicker__day:hover {
-          background-color: #f1f5f9;
-          border-radius: 9999px;
-        }
-
-        /* Dark mode styles */
-        .dark .react-datepicker {
-          background-color: #1e293b;
-          border-color: #334155;
-        }
-
-        .dark .react-datepicker__header {
-          background-color: #1e293b;
-          border-bottom-color: #334155;
-        }
-
-        .dark .react-datepicker__current-month {
-          color: #f1f5f9;
-        }
-        
-        .dark .react-datepicker__day {
-            color: #cbd5e1;
-        }
-        
-        .dark .react-datepicker__day:hover {
-            background-color: #334155;
-        }
-        
-        .dark .react-datepicker__day--in-range {
-            background-color: #7c2d12 !important;
-            color: #fdba74 !important;
-        }
-
-        .react-datepicker-popper {
-          z-index: 9999 !important;
-        }
-      `}</style>
     </div>
   );
 }
