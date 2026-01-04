@@ -98,23 +98,23 @@ const Analytics = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-[calc(100vh-2rem)] p-2 space-y-2 overflow-hidden">
+      <div className="flex items-center justify-between px-2 shrink-0">
         <div>
-          <h1 className="text-2xl font-bold dark:text-white">
+          <h1 className="text-xl font-bold dark:text-white">
             Analytics Overview
           </h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-xs text-gray-500">
             Real-time data from Google Analytics 4
           </p>
         </div>
-        <Button variant="outline" onClick={handleRefreshGA4} className="gap-2">
-          <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+        <Button variant="outline" size="sm" onClick={handleRefreshGA4} className="gap-2 h-8 text-xs">
+          <RefreshCw className={`h-3 w-3 ${isLoading ? "animate-spin" : ""}`} />
           Refresh Data
         </Button>
       </div>
 
-      <div className="overflow-hidden w-full">
+      <div className="flex-1 w-full overflow-hidden rounded-xl border dark:border-brand-dark bg-white dark:bg-brand-darker">
         <AnalyticsTable />
       </div>
 

@@ -30,25 +30,23 @@ import { toast } from "sonner";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 
 export default function AnalyticsTable() {
-  const [analyticsData, setAnalyticsData] = useState<
-    ReturnType<typeof getAnalyticsData>
-  >([]);
+  const [analyticsData, setAnalyticsData] = useState<any>([]);
   const [sortKey, setSortKey] = useState<string>("sessions");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [search, setSearch] = useState("");
-  const [startDate, setStartDate] = useState<Date>(new Date(2022, 0, 1));
-  const [endDate, setEndDate] = useState<Date>(
-    addDays(new Date(2024, 12, 1), 20)
-  );
+  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
+    new Date(2022, 0, 1),
+    addDays(new Date(), 0) // Default to today
+  ]);
+  const [startDate, endDate] = dateRange;
+
   const [selectedDimension, setSelectedDimension] = useState("general");
-  const [analyticsDate, setAnalyticsDate] = useState<DateRange | undefined>(
-    undefined
-  );
+  const [analyticsDate, setAnalyticsDate] = useState<any>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const rowsPerPage = 100;
 
-  // Custom input component for the date picker
+  // Custom input component for the date range picker
   const CustomInput = ({
     value,
     onClick,
@@ -59,19 +57,21 @@ export default function AnalyticsTable() {
     <button
       onClick={onClick}
       className={cn(
-        "flex items-center gap-2 w-[140px] justify-start text-left font-medium text-xs h-8 px-3 rounded-md border transition-colors",
+        "flex items-center gap-2 w-[220px] justify-start text-left font-medium text-xs h-8 px-3 rounded-md border transition-colors",
         "bg-white dark:bg-brand-darker border-gray-200 dark:border-brand-dark",
-        "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-brand-dark",
+        "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-brand-dark/50",
         "focus:outline-none focus:ring-2 focus:ring-orange-500/20"
       )}
     >
       <CalendarIcon className="h-3.5 w-3.5 text-gray-400" />
-      <span>{value || "Select date"}</span>
+      <span className="truncate">{value || "Select date range"}</span>
     </button>
   );
 
   // Handle the fetching of analytics data
   const handleFilteredAnalytics = async (value: string) => {
+    if (!startDate || !endDate) return;
+
     setIsLoading(true);
     setSelectedDimension(value);
     setAnalyticsDate([
@@ -260,7 +260,7 @@ export default function AnalyticsTable() {
 
   const sortedData = analyticsData?.response?.[0]?.rows
     ? sortData(analyticsData.response[0].rows, sortKey, sortOrder).filter(
-      (item) =>
+      (item: any) =>
         item?.dimensionValues?.some((d: any) =>
           d?.value?.toLowerCase().includes(search.toLowerCase())
         )
@@ -321,22 +321,11 @@ export default function AnalyticsTable() {
     }
   }, [sortKey, sortOrder]);
 
-  const getSortIcon = (headerName: string) => {
-    if (headerName === sortKey) {
-      return sortOrder === "asc" ? (
-        <ArrowUp className="ml-2 h-4 w-4" />
-      ) : (
-        <ArrowDown className="ml-2 h-4 w-4" />
-      );
-    }
-    return <ArrowUpDown className="ml-2 h-4 w-4" />;
-  };
-
   return (
-    <div className="mx-auto py-1 z-10 text-xs w-[calc(100vw-21rem)]">
-      <div className="mb-2 flex items-center space-x-4 mt-1.5">
-        <div className="relative flex-grow w-full rounded-md dark:border-brand-dark dark:bg-brand-darker">
-          <Search className="absolute left-3 top-2.5 h-3 w-3 text-muted-foreground dark:text-white/50" />
+    <div className="flex flex-col h-full w-full">
+      <div className="mb-4 flex items-center space-x-3 px-1 pt-2">
+        <div className="relative flex-grow max-w-sm rounded-md dark:border-brand-dark dark:bg-brand-darker">
+          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground dark:text-white/50" />
           <Input
             placeholder="Search URLs..."
             value={search}
@@ -352,46 +341,28 @@ export default function AnalyticsTable() {
             </button>
           )}
         </div>
-        <div className="flex items-center space-x-2 w-[400px] relative z-[1000]">
-          <div>
-            <DatePicker
-              selected={startDate}
-              onChange={(date: Date) => setStartDate(date)}
-              selectsStart
-              startDate={startDate}
-              endDate={endDate}
-              maxDate={endDate}
-              customInput={<CustomInput />}
-              className="react-datepicker z-[9999]"
-              popperClassName="react-datepicker-popper z-[9999]"
-              calendarClassName="react-datepicker-calendar z-[1000]"
-              wrapperClassName="react-datepicker-wrapper z-[1000]"
-              dateFormat="MMM d, yyyy"
-            />
-          </div>
-          <span className="text-gray-500 dark:text-white/50">to</span>
-          <div>
-            <DatePicker
-              selected={endDate}
-              onChange={(date: Date) => setEndDate(date)}
-              selectsEnd
-              startDate={startDate}
-              endDate={endDate}
-              minDate={startDate}
-              customInput={<CustomInput />}
-              className="react-datepicker z-[9999]"
-              popperClassName="react-datepicker-popper z-[9999]"
-              calendarClassName="react-datepicker-calendar z-[1000]"
-              wrapperClassName="react-datepicker-wrapper z-[1000]"
-              dateFormat="MMM d, yyyy"
-            />
-          </div>
+
+        <div className="z-[20]">
+          <DatePicker
+            selectsRange={true}
+            startDate={startDate}
+            endDate={endDate}
+            onChange={(update) => {
+              setDateRange(update);
+            }}
+            customInput={<CustomInput />}
+            className="react-datepicker"
+            popperClassName="react-datepicker-popper"
+            dateFormat="MMM d, yyyy"
+            popperProps={{ strategy: "fixed" }}
+          />
         </div>
+
         <Select
           onValueChange={handleFilteredAnalytics}
           value={selectedDimension}
         >
-          <SelectTrigger className="w-[180px] text-xs h-8 dark:text-white/50">
+          <SelectTrigger className="w-[160px] text-xs h-8 dark:text-white/50">
             <SelectValue placeholder="Select dimension" />
           </SelectTrigger>
           <SelectContent className="dark:text-white text-xs">
@@ -402,31 +373,35 @@ export default function AnalyticsTable() {
             <SelectItem value="device">Device</SelectItem>
           </SelectContent>
         </Select>
+
+        <div className="flex-1" /> {/* Spacer */}
+
         {totalPages > 1 && (
-          <div className="flex justify-center items-center w-[230px]">
+          <div className="flex justify-end items-center text-xs">
             <button
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className="mr-2 bg-brand-bright text-white p-1 rounded-md px-1"
+              className="mr-2 bg-brand-bright text-white p-1 rounded-md px-2 disabled:opacity-50"
             >
-              <FaChevronLeft className="h-4 w-4" />
+              <FaChevronLeft className="h-3 w-3" />
             </button>
-            <span className="dark:text-white/50">
-              Page {currentPage} of {totalPages}
+            <span className="dark:text-white/50 px-2 min-w-[80px] text-center">
+              {currentPage} / {totalPages}
             </span>
             <button
               onClick={() =>
                 setCurrentPage((prev) => Math.min(prev + 1, totalPages))
               }
               disabled={currentPage === totalPages}
-              className="ml-2 bg-brand-bright text-white p-1 rounded-md px-1"
+              className="ml-2 bg-brand-bright text-white p-1 rounded-md px-2 disabled:opacity-50"
             >
-              <FaChevronRight className="h-4 w-4" />
+              <FaChevronRight className="h-3 w-3" />
             </button>
           </div>
         )}
       </div>
-      <div className="rounded-md w-full border dark:border-brand-dark h-[calc(100vh-12.4rem)] overflow-y-hidden">
+
+      <div className="flex-1 rounded-md w-full overflow-hidden relative border-t dark:border-brand-dark">
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-bright"></div>
@@ -434,15 +409,15 @@ export default function AnalyticsTable() {
         ) : (
           <div className="h-full w-full overflow-auto">
             <Table className="relative w-full text-xs">
-              <TableHeader className="sticky top-0 bg-white dark:bg-gray-800 z-10 shadow">
-                <TableRow>
+              <TableHeader className="sticky top-0 bg-white dark:bg-brand-darker z-10 shadow-sm">
+                <TableRow className="hover:bg-transparent border-b dark:border-brand-dark">
                   {analyticsData?.response?.[0]?.dimensionHeaders?.map(
-                    (header, index) => (
-                      <TableHead key={index} className="text-left">
+                    (header: any, index: number) => (
+                      <TableHead key={index} className="text-left h-9">
                         <Button
                           variant="ghost"
                           onClick={() => handleSort(header.name)}
-                          className="text-xs"
+                          className="text-xs font-bold hover:bg-transparent px-2 h-auto"
                         >
                           {header.name.charAt(0).toUpperCase() +
                             header.name
@@ -454,11 +429,11 @@ export default function AnalyticsTable() {
                     )
                   )}
                   {analyticsData?.response?.[0]?.metricHeaders?.map(
-                    (header, index) => (
-                      <TableHead key={index} className="text-center">
+                    (header: any, index: number) => (
+                      <TableHead key={index} className="text-center h-9">
                         <div
                           onClick={() => handleSort(header.name)}
-                          className="text-xs"
+                          className="text-xs font-bold cursor-pointer"
                         >
                           {header.name.charAt(0).toUpperCase() +
                             header.name
@@ -472,25 +447,25 @@ export default function AnalyticsTable() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedData.map((row, index) => (
-                  <TableRow key={index} className="py-0">
-                    {row?.dimensionValues?.map((dimension, dimIndex) => (
+                {paginatedData.map((row: any, index: number) => (
+                  <TableRow key={index} className="border-b dark:border-brand-dark/50 hover:bg-muted/50">
+                    {row?.dimensionValues?.map((dimension: any, dimIndex: number) => (
                       <TableCell
                         key={dimIndex}
-                        className="font-medium text-xs text-left"
+                        className="font-medium text-xs text-left py-2"
                       >
                         <div
-                          className="truncate max-w-[400px] p-0 pl-4"
+                          className="truncate max-w-[400px] pl-2"
                           title={dimension?.value}
                         >
                           {dimension?.value || "N/A"}
                         </div>
                       </TableCell>
                     ))}
-                    {row?.metricValues?.map((metric, metricIndex) => (
+                    {row?.metricValues?.map((metric: any, metricIndex: number) => (
                       <TableCell
                         key={metricIndex}
-                        className="text-xs text-center"
+                        className="text-xs text-center py-2"
                       >
                         {metric?.name === "bounceRate"
                           ? `${(parseFloat(metric?.value || "0") * 100).toFixed(2)}%`
@@ -508,36 +483,50 @@ export default function AnalyticsTable() {
         .react-datepicker {
           font-family: inherit;
           border: 1px solid #e2e8f0;
-          border-radius: 0.375rem;
-          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+          border-radius: 0.5rem;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
           z-index: 1000;
         }
 
         .react-datepicker__header {
-          background-color: #f8fafc;
-          color: white;
+          background-color: #fff;
           border-bottom: 1px solid #e2e8f0;
+          padding-top: 0.5rem;
         }
 
         .react-datepicker__current-month,
-        .react-datepicker__day-name,
+        .react-datepicker__day-name {
+          color: #64748b;
+          font-weight: 600;
+        }
+        
+        .react-datepicker__day-name {
+            color: #94a3b8;
+        }
+
         .react-datepicker__day {
-          color: #1e293b;
+          color: #334155;
+          margin: 0.2rem;
+          width: 1.8rem;
+          line-height: 1.8rem;
         }
 
         .react-datepicker__day--selected,
-        .react-datepicker__day--keyboard-selected {
-          background-color: #3b82f6;
-          color: white;
+        .react-datepicker__day--range-start,
+        .react-datepicker__day--range-end {
+          background-color: #ea580c !important;
+          color: white !important;
+          border-radius: 9999px;
+        }
+        
+        .react-datepicker__day--in-range {
+            background-color: #ffedd5 !important;
+            color: #9a3412 !important;
         }
 
         .react-datepicker__day:hover {
           background-color: #f1f5f9;
-          color: white;
-        }
-
-        .react-datepicker__day--selected:hover {
-          background-color: #2563eb;
+          border-radius: 9999px;
         }
 
         /* Dark mode styles */
@@ -551,26 +540,25 @@ export default function AnalyticsTable() {
           border-bottom-color: #334155;
         }
 
-        .dark .react-datepicker__current-month,
-        .dark .react-datepicker__day-name,
+        .dark .react-datepicker__current-month {
+          color: #f1f5f9;
+        }
+        
         .dark .react-datepicker__day {
-          color: #e2e8f0;
+            color: #cbd5e1;
         }
-
+        
         .dark .react-datepicker__day:hover {
-          background-color: #334155;
+            background-color: #334155;
         }
-
-        .dark .react-datepicker__day--outside-month {
-          color: #64748b;
-        }
-
-        .dark .react-datepicker__day--disabled {
-          color: #475569;
+        
+        .dark .react-datepicker__day--in-range {
+            background-color: #7c2d12 !important;
+            color: #fdba74 !important;
         }
 
         .react-datepicker-popper {
-          z-index: 1000 !important;
+          z-index: 9999 !important;
         }
       `}</style>
     </div>
