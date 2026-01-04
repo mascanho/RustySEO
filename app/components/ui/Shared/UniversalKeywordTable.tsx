@@ -28,6 +28,7 @@ interface UniversalKeywordTableProps<TData> {
     initialPageSize?: number;
     onRowClick?: (row: TData) => void;
     isLoading?: boolean;
+    headerActions?: React.ReactNode;
 }
 
 export function UniversalKeywordTable<TData>({
@@ -37,6 +38,7 @@ export function UniversalKeywordTable<TData>({
     initialPageSize = 50,
     onRowClick,
     isLoading = false,
+    headerActions,
 }: UniversalKeywordTableProps<TData>) {
     const [sorting, setSorting] = useState<SortingState>([]);
     const [globalFilter, setGlobalFilter] = useState("");
@@ -91,23 +93,28 @@ export function UniversalKeywordTable<TData>({
                         </button>
                     )}
                 </div>
-                <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">Rows per page:</span>
-                    <Select
-                        value={pagination.pageSize.toString()}
-                        onValueChange={(value) => table.setPageSize(Number(value))}
-                    >
-                        <SelectTrigger className="h-8 w-[70px] text-xs">
-                            <SelectValue placeholder={pagination.pageSize} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {[10, 20, 50, 100, 500].map((size) => (
-                                <SelectItem key={size} value={size.toString()}>
-                                    {size}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+
+                <div className="flex items-center gap-4">
+                    {headerActions}
+
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Rows per page:</span>
+                        <Select
+                            value={pagination.pageSize.toString()}
+                            onValueChange={(value) => table.setPageSize(Number(value))}
+                        >
+                            <SelectTrigger className="h-8 w-[70px] text-xs">
+                                <SelectValue placeholder={pagination.pageSize} />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {[10, 20, 50, 100, 500].map((size) => (
+                                    <SelectItem key={size} value={size.toString()}>
+                                        {size}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
             </div>
 

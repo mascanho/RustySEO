@@ -264,36 +264,6 @@ const GSCanalytics = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Date Picker Group */}
-          {isConfigured && (
-            <div className="flex items-center gap-1.5 h-9 px-2.5 border border-gray-200 dark:border-brand-dark rounded-xl bg-white dark:bg-brand-darker shadow-sm mr-2">
-              <CalendarIcon className="h-4 w-4 text-gray-400 shrink-0 mr-1" />
-              <input
-                type="date"
-                value={formatDateForInput(startDate)}
-                onChange={(e) => handleDateChange('start', e.target.value)}
-                className="h-full w-[110px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 dark:[color-scheme:dark] font-medium"
-              />
-              <span className="text-gray-300 dark:text-gray-600 select-none">-</span>
-              <input
-                type="date"
-                value={formatDateForInput(endDate)}
-                onChange={(e) => handleDateChange('end', e.target.value)}
-                min={formatDateForInput(startDate)}
-                className="h-full w-[110px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 dark:[color-scheme:dark] font-medium text-right"
-              />
-            </div>
-          )}
-
-          {isConfigured ? (
-            <button
-              onClick={handleRefreshGSC}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-brand-dark rounded-xl transition-all border border-transparent hover:border-gray-200 dark:hover:border-brand-dark"
-              title="Refresh data"
-            >
-              <RefreshCw className={`h-5 w-5 text-gray-600 dark:text-gray-300 ${isLoading ? "animate-spin" : ""}`} />
-            </button>
-          ) : null}
           <Button
             onClick={openWizard}
             className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2 flex items-center gap-2 text-sm font-bold shadow-lg shadow-blue-500/20 transition-all active:scale-95"
@@ -329,6 +299,37 @@ const GSCanalytics = () => {
             columns={columns}
             searchPlaceholder="Search keywords or URL..."
             isLoading={isLoading}
+            headerActions={
+              <div className="flex items-center gap-2">
+                {/* Date Picker Group */}
+                <div className="flex items-center gap-1.5 h-9 px-2.5 border border-gray-200 dark:border-brand-dark rounded-xl bg-white dark:bg-brand-darker shadow-sm">
+                  <CalendarIcon className="h-4 w-4 text-gray-400 shrink-0 mr-1" />
+                  <input
+                    type="date"
+                    value={formatDateForInput(startDate)}
+                    onChange={(e) => handleDateChange('start', e.target.value)}
+                    className="h-full w-[110px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 dark:[color-scheme:dark] font-medium"
+                  />
+                  <span className="text-gray-300 dark:text-gray-600 select-none">-</span>
+                  <input
+                    type="date"
+                    value={formatDateForInput(endDate)}
+                    onChange={(e) => handleDateChange('end', e.target.value)}
+                    min={formatDateForInput(startDate)}
+                    className="h-full w-[110px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 dark:[color-scheme:dark] font-medium text-right"
+                  />
+                </div>
+
+                <button
+                  onClick={handleRefreshGSC}
+                  className="h-9 w-9 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-brand-dark rounded-xl transition-all border border-transparent hover:border-gray-200 dark:hover:border-brand-dark text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  title="Refresh data"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+                </button>
+                <div className="w-px h-6 bg-gray-200 dark:bg-brand-dark mx-1"></div>
+              </div>
+            }
           />
         )}
       </div>
