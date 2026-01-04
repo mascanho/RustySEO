@@ -1,18 +1,9 @@
 // @ts-nocheck
 "use client";
 
-import { useState, useEffect } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { ArrowUpDown, Search, X, ArrowUp, ArrowDown, Calendar as CalendarIcon } from "lucide-react";
-import { addDays, format } from "date-fns";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { format, addDays, isValid } from "date-fns";
+import { Search, Calendar as CalendarIcon, RefreshCw } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -25,27 +16,21 @@ import {
 } from "@/components/ui/select";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
-import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { UniversalKeywordTable } from "../Shared/UniversalKeywordTable";
+import { ColumnDef } from "@tanstack/react-table";
 
 export default function AnalyticsTable() {
   const [analyticsData, setAnalyticsData] = useState<any>([]);
-  const [sortKey, setSortKey] = useState<string>("sessions");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [search, setSearch] = useState("");
-
   // Initialize dates
   const [startDate, setStartDate] = useState<Date | null>(new Date(2022, 0, 1));
   const [endDate, setEndDate] = useState<Date | null>(addDays(new Date(), 0)); // Default to today
 
   const [selectedDimension, setSelectedDimension] = useState("general");
-  const [analyticsDate, setAnalyticsDate] = useState<any>(undefined);
-  const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const rowsPerPage = 100;
 
   // Helper to format date for input value (yyyy-MM-dd)
   const formatDateForInput = (date: Date | null) => {
-    if (!date) return "";
+    if (!date || !isValid(date)) return "";
     return format(date, "yyyy-MM-dd");
   };
 
@@ -65,17 +50,21 @@ export default function AnalyticsTable() {
   };
 
   // Handle the fetching of analytics data
-  const handleFilteredAnalytics = async (value: string) => {
+  const handleFilteredAnalytics = useCallback(async (dimensionVal: string = selectedDimension) => {
     if (!startDate || !endDate) return;
 
     setIsLoading(true);
-    setSelectedDimension(value);
-    setAnalyticsDate([
+    // Update selected dimension if passed (e.g. from select change)
+    if (dimensionVal !== selectedDimension) {
+      setSelectedDimension(dimensionVal);
+    }
+
+    const analyticsDateRange = [
       {
         start_date: startDate,
         end_date: endDate.toISOString(),
       },
-    ]);
+    ];
 
     let type = [];
 
@@ -168,7 +157,7 @@ export default function AnalyticsTable() {
       },
     };
 
-    switch (value) {
+    switch (dimensionVal) {
       case "general":
         type.push(params.general);
         break;
@@ -192,7 +181,7 @@ export default function AnalyticsTable() {
     try {
       const result: any = await invoke("get_google_analytics_command", {
         searchType: type,
-        dateRanges: analyticsDate,
+        dateRanges: analyticsDateRange,
       });
 
       if (result.response[0]?.error) {
@@ -201,286 +190,166 @@ export default function AnalyticsTable() {
 
       console.log("Result: ", result);
       setAnalyticsData(result);
-      setCurrentPage(1);
       return result;
     } catch (error) {
       console.error("Error fetching Google Analytics data:", error);
+      toast.error("Failed to fetch Google Analytics data");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [startDate, endDate, selectedDimension]);
 
-  useEffect(() => {
-    if (startDate && endDate) {
-      console.log("Selected date range:", {
-        from: format(startDate, "yyyy-MM-dd"),
-        to: format(endDate, "yyyy-MM-dd"),
-      });
-      handleFilteredAnalytics(selectedDimension);
-    }
-  }, [startDate, endDate]);
-
-  const sortData = (data: any[], key: string, order: "asc" | "desc") => {
-    return [...data].sort((a, b) => {
-      let aValue = null;
-      let bValue = null;
-
-      // Find the value in either dimensionValues or metricValues
-      for (const values of ["dimensionValues", "metricValues"]) {
-        const aItem = a[values]?.find((item: any) => item.name === key);
-        const bItem = b[values]?.find((item: any) => item.name === key);
-        if (aItem && bItem) {
-          aValue = aItem.value;
-          bValue = bItem.value;
-          break;
-        }
-      }
-
-      // If no values found, return 0 to maintain current order
-      if (aValue === null || bValue === null) return 0;
-
-      // Convert to numbers for numeric comparison
-      const aNum = parseFloat(aValue);
-      const bNum = parseFloat(bValue);
-
-      if (!isNaN(aNum) && !isNaN(bNum)) {
-        return order === "asc" ? aNum - bNum : bNum - aNum;
-      }
-
-      // String comparison for non-numeric values
-      return order === "asc"
-        ? aValue.toString().localeCompare(bValue.toString())
-        : bValue.toString().localeCompare(aValue.toString());
-    });
-  };
-
-  const sortedData = analyticsData?.response?.[0]?.rows
-    ? sortData(analyticsData.response[0].rows, sortKey, sortOrder).filter(
-      (item: any) =>
-        item?.dimensionValues?.some((d: any) =>
-          d?.value?.toLowerCase().includes(search.toLowerCase())
-        )
-    )
-    : [];
-
-  const paginatedData = sortedData.slice(
-    (currentPage - 1) * rowsPerPage,
-    currentPage * rowsPerPage
-  );
-
-  const totalPages = Math.ceil(sortedData.length / rowsPerPage);
-
-  const handleSort = (key: string) => {
-    if (key === sortKey) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortKey(key);
-      setSortOrder("desc");
-    }
-
-    // Immediately sort the data when header is clicked
-    if (analyticsData?.response?.[0]?.rows) {
-      const newSortedRows = sortData(
-        analyticsData.response[0].rows,
-        key,
-        key === sortKey ? (sortOrder === "asc" ? "desc" : "asc") : "desc"
-      );
-      setAnalyticsData((prevData: any) => ({
-        ...prevData,
-        response: [{ ...prevData.response[0], rows: newSortedRows }],
-      }));
-    }
-  };
-
-  const clearSearch = () => {
-    setSearch("");
-  };
-
+  // Initial fetch
   useEffect(() => {
     const fetchData = async () => {
-      await handleFilteredAnalytics("general");
+      // Avoid fetching if dates are invalid
+      if (startDate && endDate) {
+        await handleFilteredAnalytics("general");
+      }
     };
     fetchData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount
 
+  // Refetch when dates change (debounce could be added but explicit for now)
   useEffect(() => {
-    if (analyticsData?.response?.[0]?.rows) {
-      const sortedRows = sortData(
-        analyticsData.response[0].rows,
-        sortKey,
-        sortOrder
-      );
-      setAnalyticsData((prevData: any) => ({
-        ...prevData,
-        response: [{ ...prevData.response[0], rows: sortedRows }],
-      }));
+    // NOTE: GSC uses a refresh button, GA4 was auto-fetching. 
+    // To match GSC behavior exactly, we could remove this and rely on the refresh button.
+    // However, the original code auto-fetched. Let's keep auto-fetch for date changes 
+    // but the UI controls will look like GSC.
+    if (startDate && endDate) {
+      handleFilteredAnalytics(selectedDimension);
     }
-  }, [sortKey, sortOrder]);
+  }, [startDate, endDate, selectedDimension, handleFilteredAnalytics]);
+
+
+  // --- Data Transformation ---
+
+  const flattenData = useMemo(() => {
+    if (!analyticsData?.response?.[0]?.rows) return [];
+
+    const dimHeaders = analyticsData.response[0].dimensionHeaders || [];
+    const metHeaders = analyticsData.response[0].metricHeaders || [];
+
+    return analyticsData.response[0].rows.map((row: any) => {
+      const flatRow: any = {};
+
+      // Map dimensions
+      row.dimensionValues?.forEach((dim: any, index: number) => {
+        const headerName = dimHeaders[index]?.name || `dim_${index}`;
+        flatRow[headerName] = dim.value;
+      });
+
+      // Map metrics
+      row.metricValues?.forEach((met: any, index: number) => {
+        const headerName = metHeaders[index]?.name || `met_${index}`;
+        flatRow[headerName] = met.value;
+      });
+
+      return flatRow;
+    });
+  }, [analyticsData]);
+
+  const columns = useMemo<ColumnDef<any>[]>(() => {
+    if (!analyticsData?.response?.[0]) return [];
+
+    const dimHeaders = analyticsData.response[0].dimensionHeaders || [];
+    const metHeaders = analyticsData.response[0].metricHeaders || [];
+
+    const cols: ColumnDef<any>[] = [];
+
+    // Dimensions Columns
+    dimHeaders.forEach((header: any) => {
+      cols.push({
+        accessorKey: header.name,
+        header: header.name.charAt(0).toUpperCase() + header.name.slice(1).replace(/([A-Z])/g, " $1").trim(),
+        cell: ({ row }) => (
+          <div className="truncate max-w-[400px]" title={row.getValue(header.name)}>
+            {row.getValue(header.name) || "N/A"}
+          </div>
+        )
+      });
+    });
+
+    // Metrics Columns
+    metHeaders.forEach((header: any) => {
+      cols.push({
+        accessorKey: header.name,
+        header: header.name.charAt(0).toUpperCase() + header.name.slice(1).replace(/([A-Z])/g, " $1").trim(),
+        cell: ({ row }) => {
+          const value: any = row.getValue(header.name);
+          const numValue = parseFloat(value || "0");
+
+          if (header.name === "bounceRate" || header.name === "engagementRate") {
+            return `${(numValue * 100).toFixed(2)}%`;
+          }
+          return numValue.toLocaleString(undefined, { maximumFractionDigits: 1 });
+        }
+      });
+    });
+
+    return cols;
+  }, [analyticsData]);
+
 
   return (
-    <div className="flex flex-col h-full w-full">
-      <div className="mb-2 flex items-center gap-2 px-1 pt-2 w-full">
-        {/* Search */}
-        <div className="relative w-[240px]">
-          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground dark:text-gray-400" />
-          <Input
-            placeholder="Search URLs..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 h-8 text-xs bg-white dark:bg-brand-darker border-gray-200 dark:border-brand-dark w-full focus-visible:ring-1 focus-visible:ring-offset-0"
-          />
-          {search && (
-            <button
-              onClick={clearSearch}
-              className="absolute right-2 top-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+    <div className="px-2 h-[calc(100vh-10rem)] flex flex-col dark:text-white/50">
+      <UniversalKeywordTable
+        data={flattenData}
+        columns={columns}
+        searchPlaceholder="Search data..."
+        isLoading={isLoading}
+        headerActions={
+          <div className="flex items-center gap-2">
+            {/* Dimension Select */}
+            <Select
+              onValueChange={(val) => handleFilteredAnalytics(val)}
+              value={selectedDimension}
             >
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
+              <SelectTrigger className="w-[150px] h-9 text-xs bg-white dark:bg-brand-darker border-gray-200 dark:border-brand-dark focus:ring-1 focus:ring-offset-0 rounded-xl mr-2">
+                <SelectValue placeholder="Select dimension" />
+              </SelectTrigger>
+              <SelectContent className="dark:text-white text-xs dark:bg-brand-darker dark:border-brand-dark">
+                <SelectItem value="general">General</SelectItem>
+                <SelectItem value="landings">Landings</SelectItem>
+                <SelectItem value="country">Country</SelectItem>
+                <SelectItem value="city">City</SelectItem>
+                <SelectItem value="device">Device</SelectItem>
+              </SelectContent>
+            </Select>
 
-        {/* Date Picker Group */}
-        <div className="flex items-center gap-1.5 h-8 px-2.5 border border-gray-200 dark:border-brand-dark rounded-md bg-white dark:bg-brand-darker shadow-sm">
-          <CalendarIcon className="h-3.5 w-3.5 text-gray-400 shrink-0 mr-1" />
-          <input
-            type="date"
-            value={formatDateForInput(startDate)}
-            onChange={(e) => handleDateChange('start', e.target.value)}
-            className="h-full w-[110px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 dark:[color-scheme:dark] font-medium"
-          />
-          <span className="text-gray-300 dark:text-gray-600 select-none">-</span>
-          <input
-            type="date"
-            value={formatDateForInput(endDate)}
-            onChange={(e) => handleDateChange('end', e.target.value)}
-            min={formatDateForInput(startDate)}
-            className="h-full w-[110px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 dark:[color-scheme:dark] font-medium text-right"
-          />
-        </div>
+            <div className="w-px h-6 bg-gray-200 dark:bg-brand-dark mx-1"></div>
 
-        {/* Dimension Select */}
-        <Select
-          onValueChange={handleFilteredAnalytics}
-          value={selectedDimension}
-        >
-          <SelectTrigger className="w-[150px] h-8 text-xs bg-white dark:bg-brand-darker border-gray-200 dark:border-brand-dark focus:ring-1 focus:ring-offset-0">
-            <SelectValue placeholder="Select dimension" />
-          </SelectTrigger>
-          <SelectContent className="dark:text-white text-xs dark:bg-brand-darker dark:border-brand-dark">
-            <SelectItem value="general">General</SelectItem>
-            <SelectItem value="landings">Landings</SelectItem>
-            <SelectItem value="country">Country</SelectItem>
-            <SelectItem value="city">City</SelectItem>
-            <SelectItem value="device">Device</SelectItem>
-          </SelectContent>
-        </Select>
+            {/* Date Picker Group */}
+            <div className="flex items-center gap-1.5 h-9 px-2.5 border border-gray-200 dark:border-brand-dark rounded-xl bg-white dark:bg-brand-darker shadow-sm">
+              <CalendarIcon className="h-4 w-4 text-gray-400 shrink-0 mr-1" />
+              <input
+                type="date"
+                value={formatDateForInput(startDate)}
+                onChange={(e) => handleDateChange('start', e.target.value)}
+                className="h-full w-[110px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 dark:[color-scheme:dark] font-medium"
+              />
+              <span className="text-gray-300 dark:text-gray-600 select-none">-</span>
+              <input
+                type="date"
+                value={formatDateForInput(endDate)}
+                onChange={(e) => handleDateChange('end', e.target.value)}
+                min={formatDateForInput(startDate)}
+                className="h-full w-[110px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 dark:[color-scheme:dark] font-medium text-right"
+              />
+            </div>
 
-        <div className="flex-1" /> {/* Spacer */}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center gap-1 bg-white dark:bg-brand-darker border border-gray-200 dark:border-brand-dark rounded-md p-0.5 h-8 shadow-sm">
             <button
-              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              disabled={currentPage === 1}
-              className="h-full px-2 hover:bg-gray-100 dark:hover:bg-brand-dark rounded-sm disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-gray-600 dark:text-gray-300"
+              onClick={() => handleFilteredAnalytics(selectedDimension)}
+              className="h-9 w-9 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-brand-dark rounded-xl transition-all border border-transparent hover:border-gray-200 dark:hover:border-brand-dark text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              title="Refresh data"
             >
-              <FaChevronLeft className="h-3 w-3" />
+              <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
             </button>
-            <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 px-2 min-w-[60px] text-center select-none border-x border-gray-100 dark:border-brand-dark py-1">
-              {currentPage} / {totalPages}
-            </span>
-            <button
-              onClick={() =>
-                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-              }
-              disabled={currentPage === totalPages}
-              className="h-full px-2 hover:bg-gray-100 dark:hover:bg-brand-dark rounded-sm disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-gray-600 dark:text-gray-300"
-            >
-              <FaChevronRight className="h-3 w-3" />
-            </button>
+            <div className="w-px h-6 bg-gray-200 dark:bg-brand-dark mx-1"></div>
           </div>
-        )}
-      </div>
-
-      <div className="flex-1 rounded-md w-full overflow-hidden relative border-t dark:border-brand-dark">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-bright"></div>
-          </div>
-        ) : (
-          <div className="h-full w-full overflow-auto">
-            <Table className="relative w-full text-xs">
-              <TableHeader className="sticky top-0 bg-white dark:bg-brand-darker z-10 shadow-sm">
-                <TableRow className="hover:bg-transparent border-b dark:border-brand-dark">
-                  {analyticsData?.response?.[0]?.dimensionHeaders?.map(
-                    (header: any, index: number) => (
-                      <TableHead key={index} className="text-left h-9">
-                        <Button
-                          variant="ghost"
-                          onClick={() => handleSort(header.name)}
-                          className="text-xs font-bold hover:bg-transparent px-2 h-auto"
-                        >
-                          {header.name.charAt(0).toUpperCase() +
-                            header.name
-                              .slice(1)
-                              .replace(/([A-Z])/g, " $1")
-                              .trim()}
-                        </Button>
-                      </TableHead>
-                    )
-                  )}
-                  {analyticsData?.response?.[0]?.metricHeaders?.map(
-                    (header: any, index: number) => (
-                      <TableHead key={index} className="text-center h-9">
-                        <div
-                          onClick={() => handleSort(header.name)}
-                          className="text-xs font-bold cursor-pointer"
-                        >
-                          {header.name.charAt(0).toUpperCase() +
-                            header.name
-                              .slice(1)
-                              .replace(/([A-Z])/g, " $1")
-                              .trim()}
-                        </div>
-                      </TableHead>
-                    )
-                  )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paginatedData.map((row: any, index: number) => (
-                  <TableRow key={index} className="border-b dark:border-brand-dark/50 hover:bg-muted/50">
-                    {row?.dimensionValues?.map((dimension: any, dimIndex: number) => (
-                      <TableCell
-                        key={dimIndex}
-                        className="font-medium text-xs text-left py-2"
-                      >
-                        <div
-                          className="truncate max-w-[400px] pl-2"
-                          title={dimension?.value}
-                        >
-                          {dimension?.value || "N/A"}
-                        </div>
-                      </TableCell>
-                    ))}
-                    {row?.metricValues?.map((metric: any, metricIndex: number) => (
-                      <TableCell
-                        key={metricIndex}
-                        className="text-xs text-center py-2"
-                      >
-                        {metric?.name === "bounceRate"
-                          ? `${(parseFloat(metric?.value || "0") * 100).toFixed(2)}%`
-                          : parseFloat(metric?.value || "0").toFixed(1)}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </div>
+        }
+      />
     </div>
   );
 }

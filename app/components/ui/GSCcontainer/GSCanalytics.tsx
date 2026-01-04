@@ -4,7 +4,13 @@
 import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
-import { RefreshCw, LogIn, Plus, LayoutGrid, Calendar as CalendarIcon } from "lucide-react";
+import {
+  RefreshCw,
+  LogIn,
+  Plus,
+  LayoutGrid,
+  Calendar as CalendarIcon,
+} from "lucide-react";
 import { UniversalKeywordTable } from "../Shared/UniversalKeywordTable";
 import { ColumnDef } from "@tanstack/react-table";
 import DeepCrawlQueryContextMenu from "@/app/global/_components/Sidebar/GSCRankingInfo/DeepCrawlQueryContextMenu";
@@ -30,8 +36,13 @@ interface GscUrl {
 const GSCanalytics = () => {
   const [gscData, setGscData] = useState<GscUrl[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { credentials, isConfigured, refresh: refreshStatus } = useGSCStatusStore();
-  const [openedWizard, { open: openWizard, close: closeWizard }] = useDisclosure(false);
+  const {
+    credentials,
+    isConfigured,
+    refresh: refreshStatus,
+  } = useGSCStatusStore();
+  const [openedWizard, { open: openWizard, close: closeWizard }] =
+    useDisclosure(false);
 
   // Date filtering state - Init with last 28 days
   const [startDate, setStartDate] = useState<Date | null>(() => {
@@ -54,7 +65,7 @@ const GSCanalytics = () => {
   };
 
   // Handle manual date change
-  const handleDateChange = (type: 'start' | 'end', value: string) => {
+  const handleDateChange = (type: "start" | "end", value: string) => {
     if (!value) return;
     const date = new Date(value);
 
@@ -65,7 +76,7 @@ const GSCanalytics = () => {
     const userTimezoneOffset = date.getTimezoneOffset() * 60000;
     const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
 
-    if (type === 'start') {
+    if (type === "start") {
       setStartDate(adjustedDate);
     } else {
       setEndDate(adjustedDate);
@@ -102,12 +113,15 @@ const GSCanalytics = () => {
       const formattedStartDate = formatDateForInput(startDate);
       const formattedEndDate = formatDateForInput(endDate);
 
-      console.log("Invoking call_google_search_console with:", { formattedStartDate, formattedEndDate });
+      console.log("Invoking call_google_search_console with:", {
+        formattedStartDate,
+        formattedEndDate,
+      });
 
       // Pass the date range to the backend
       await invoke("call_google_search_console", {
         startDate: formattedStartDate || null,
-        endDate: formattedEndDate || null
+        endDate: formattedEndDate || null,
       });
 
       console.log("GSC API call completed, refreshing status...");
@@ -121,7 +135,8 @@ const GSCanalytics = () => {
     } catch (error) {
       console.error("Failed to refresh GSC data:", error);
       // Determine if error is an object with message or string
-      const updateError = error instanceof Error ? error.message : String(error);
+      const updateError =
+        error instanceof Error ? error.message : String(error);
       toast.error(`Failed to refresh Search Console data: ${updateError}`);
     } finally {
       setIsLoading(false);
@@ -193,7 +208,10 @@ const GSCanalytics = () => {
         accessorKey: "url",
         header: "URL",
         cell: ({ row }) => (
-          <div className="max-w-[400px] truncate text-gray-500" title={row.original.url}>
+          <div
+            className="max-w-[400px] truncate text-gray-500"
+            title={row.original.url}
+          >
             {row.original.url}
           </div>
         ),
@@ -202,13 +220,11 @@ const GSCanalytics = () => {
         accessorKey: "date",
         header: "Date",
         cell: ({ row }) => (
-          <span className="text-gray-500 text-xs">
-            {row.original.date}
-          </span>
+          <span className="text-gray-500 text-xs">{row.original.date}</span>
         ),
-      }
+      },
     ],
-    [credentials]
+    [credentials],
   );
 
   // Use data directly, as filtering is now handled by the API
@@ -217,7 +233,7 @@ const GSCanalytics = () => {
   }, [gscData]);
 
   return (
-    <div className="px-2 h-[calc(100vh-10rem)] flex flex-col dark:text-white/50">
+    <div className="px-2 h-[calc(100vh-9rem)] flex flex-col dark:text-white/50">
       <Modal
         opened={openedWizard}
         onClose={closeWizard}
@@ -238,7 +254,7 @@ const GSCanalytics = () => {
           },
           inner: {
             padding: 0,
-          }
+          },
         }}
       >
         <GSCConnectionWizard
@@ -251,14 +267,18 @@ const GSCanalytics = () => {
       </Modal>
 
       <div className="flex items-center justify-between mb-4 flex-shrink-0">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center">
           <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl">
             <LayoutGrid className="h-6 w-6 text-blue-600 dark:text-blue-400" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold dark:text-white">Search Console</h1>
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-bold dark:text-white">
+              Search Console
+            </h1>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              {isConfigured ? `Connected to ${credentials?.url}` : "Not connected"}
+              {isConfigured
+                ? `Connected to ${credentials?.url}`
+                : "Not connected"}
             </p>
           </div>
         </div>
@@ -266,7 +286,7 @@ const GSCanalytics = () => {
         <div className="flex items-center gap-2">
           <Button
             onClick={openWizard}
-            className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-4 py-2 flex items-center gap-2 text-sm font-bold shadow-lg shadow-blue-500/20 transition-all active:scale-95"
+            className="bg-brand-bright  hover:bg-blue-700 text-white rounded-md px-4 py-1 flex items-center text-xs font-bold h-8  shadow-blue-500/20 transition-all active:scale-95"
           >
             <Plus className="h-4 w-4" />
             {isConfigured ? "Reconnect" : "Connect GSC"}
@@ -281,9 +301,12 @@ const GSCanalytics = () => {
               <LogIn className="h-12 w-12 text-blue-600 dark:text-blue-400" />
             </div>
             <div className="max-w-xs space-y-2">
-              <h2 className="text-xl font-bold dark:text-white">Connect your data</h2>
+              <h2 className="text-xl font-bold dark:text-white">
+                Connect your data
+              </h2>
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Integrate Google Search Console to see your website's performance directly in RustySEO.
+                Integrate Google Search Console to see your website's
+                performance directly in RustySEO.
               </p>
             </div>
             <Button
@@ -307,14 +330,16 @@ const GSCanalytics = () => {
                   <input
                     type="date"
                     value={formatDateForInput(startDate)}
-                    onChange={(e) => handleDateChange('start', e.target.value)}
+                    onChange={(e) => handleDateChange("start", e.target.value)}
                     className="h-full w-[110px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 dark:[color-scheme:dark] font-medium"
                   />
-                  <span className="text-gray-300 dark:text-gray-600 select-none">-</span>
+                  <span className="text-gray-300 dark:text-gray-600 select-none">
+                    -
+                  </span>
                   <input
                     type="date"
                     value={formatDateForInput(endDate)}
-                    onChange={(e) => handleDateChange('end', e.target.value)}
+                    onChange={(e) => handleDateChange("end", e.target.value)}
                     min={formatDateForInput(startDate)}
                     className="h-full w-[110px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 dark:[color-scheme:dark] font-medium text-right"
                   />
@@ -325,7 +350,9 @@ const GSCanalytics = () => {
                   className="h-9 w-9 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-brand-dark rounded-xl transition-all border border-transparent hover:border-gray-200 dark:hover:border-brand-dark text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
                   title="Refresh data"
                 >
-                  <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+                  <RefreshCw
+                    className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+                  />
                 </button>
                 <div className="w-px h-6 bg-gray-200 dark:bg-brand-dark mx-1"></div>
               </div>
