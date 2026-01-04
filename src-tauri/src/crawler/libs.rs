@@ -559,7 +559,7 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
     let client = HyperClient::builder().build(https);
 
     // Get the token (either from credentials or from auth flow)
-    let final_token = if let Some(token_str) = credentials_token {
+    let mut final_token = if let Some(token_str) = credentials_token {
         println!("Using token from credentials");
         token_str
     } else {
@@ -589,6 +589,8 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
             .await?;
         token.token().unwrap().to_string()
     };
+
+    let refresh_token = gsc_settings_info.refresh_token;
 
     // Initialize variables
     let mut domain = false;
@@ -681,40 +683,72 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
         }
     };
 
-    let request = hyper::Request::builder()
-        .method("POST")
-        .uri(format!(
-            "https://searchconsole.googleapis.com/webmasters/v3/sites/{}/searchAnalytics/query",
-            urlencoding::encode(&site_url)
-        ))
-        .header(
-            "Authorization",
-            format!("Bearer {}", final_token),
-        )
-        .header("Content-Type", "application/json")
-        .body(hyper::Body::from(body))?;
+    // Retry loop for handling 401 Unauthorized
+    let mut gsc_data = Vec::new();
+    let max_retries = 1;
+    
+    for attempt in 0..=max_retries {
+        let request = hyper::Request::builder()
+            .method("POST")
+            .uri(format!(
+                "https://searchconsole.googleapis.com/webmasters/v3/sites/{}/searchAnalytics/query",
+                urlencoding::encode(&site_url)
+            ))
+            .header(
+                "Authorization",
+                format!("Bearer {}", final_token),
+            )
+            .header("Content-Type", "application/json")
+            .body(hyper::Body::from(body.clone()))?;
 
-    let response = client.request(request).await?;
-    let status = response.status();
-    let body_bytes = hyper::body::to_bytes(response.into_body()).await?;
-    let body_str = String::from_utf8(body_bytes.to_vec())?;
-
-    println!("GSC Response Status: {}", status);
-    if !status.is_success() {
+        let response = client.request(request).await?;
+        let status = response.status();
+        
+        // If successful, proceed to parse
+        if status.is_success() {
+            let body_bytes = hyper::body::to_bytes(response.into_body()).await?;
+            let body_str = String::from_utf8(body_bytes.to_vec())?;
+            println!("GSC Response Status: {}", status);
+            
+            // Parse and print the results
+            let data: JsonValue = serde_json::from_str(&body_str)?;
+            
+            println!("Parsed GSC Data successfully. Rows found: {}", data["rows"].as_array().map(|a| a.len()).unwrap_or(0));
+            // Add data to DB
+            gsc_data.push(data);
+            if let Err(e) = db::push_gsc_data_to_db(&gsc_data) {
+                eprintln!("Failed to push GSC data to database: {}", e);
+                return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to save data to database: {}", e))));
+            }
+            
+            // Successfully fetched and saved, break loop
+            return Ok(gsc_data);
+        } else if status == hyper::StatusCode::UNAUTHORIZED && attempt < max_retries {
+            println!("GSC API returned 401 Unauthorized. Attempting to refresh token...");
+            
+            if let Some(ref r_token) = refresh_token {
+                println!("Refresh token found. Refreshing...");
+                match refresh_google_token(&credentials_client_id, &credentials_client_secret, r_token).await {
+                    Ok(new_token) => {
+                        println!("Token refreshed successfully. Retrying request...");
+                        final_token = new_token;
+                        continue; // Retry loop with new token
+                    },
+                    Err(e) => {
+                        eprintln!("Failed to refresh token: {}", e);
+                        // Fall through to error return below
+                    }
+                }
+            } else {
+                eprintln!("No refresh token available to handle 401 error.");
+            }
+        }
+        
+        // If we get here, it means we failed and ran out of retries or it's a non-recoverable error
+        let body_bytes = hyper::body::to_bytes(response.into_body()).await?;
+        let body_str = String::from_utf8(body_bytes.to_vec())?;
         eprintln!("GSC API Error: {}", body_str);
         return Err(format!("Google Search Console API error ({}): {}", status, body_str).into());
-    }
-
-    // Parse and print the results
-    let data: JsonValue = serde_json::from_str(&body_str)?;
-    let mut gsc_data = Vec::new();
-
-    println!("Parsed GSC Data successfully. Rows found: {}", data["rows"].as_array().map(|a| a.len()).unwrap_or(0));
-    // Add data to DB
-    gsc_data.push(data);
-    if let Err(e) = db::push_gsc_data_to_db(&gsc_data) {
-        eprintln!("Failed to push GSC data to database: {}", e);
-        return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to save data to database: {}", e))));
     }
 
     Ok(gsc_data)
