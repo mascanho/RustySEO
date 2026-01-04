@@ -319,55 +319,54 @@ export default function AnalyticsTable() {
 
   return (
     <div className="flex flex-col h-full w-full">
-      <div className="mb-4 flex items-center space-x-3 px-1 pt-2">
-        <div className="relative flex-grow max-w-sm rounded-md dark:border-brand-dark dark:bg-brand-darker">
-          <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground dark:text-white/50" />
+      <div className="mb-2 flex items-center gap-2 px-1 pt-2 w-full">
+        {/* Search */}
+        <div className="relative w-[240px]">
+          <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground dark:text-gray-400" />
           <Input
             placeholder="Search URLs..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-8 h-8 text-xs dark:bg-brand-darker w-full dark:text-white"
+            className="pl-8 h-8 text-xs bg-white dark:bg-brand-darker border-gray-200 dark:border-brand-dark w-full focus-visible:ring-1 focus-visible:ring-offset-0"
           />
           {search && (
             <button
               onClick={clearSearch}
-              className="absolute right-2 top-2 text-gray-400 hover:text-gray-600"
+              className="absolute right-2 top-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
             >
               <X className="h-4 w-4" />
             </button>
           )}
         </div>
 
-        {/* Native Date Pickers */}
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <input
-              type="date"
-              value={formatDateForInput(startDate)}
-              onChange={(e) => handleDateChange('start', e.target.value)}
-              className="h-8 text-xs border rounded-md px-2 bg-white dark:bg-brand-darker dark:text-white dark:border-brand-dark focus:outline-none focus:ring-2 focus:ring-orange-500/20 block w-[130px] dark:[color-scheme:dark]"
-            />
-          </div>
-          <span className="text-gray-400 dark:text-gray-600">-</span>
-          <div className="relative">
-            <input
-              type="date"
-              value={formatDateForInput(endDate)}
-              onChange={(e) => handleDateChange('end', e.target.value)}
-              min={formatDateForInput(startDate)}
-              className="h-8 text-xs border rounded-md px-2 bg-white dark:bg-brand-darker dark:text-white dark:border-brand-dark focus:outline-none focus:ring-2 focus:ring-orange-500/20 block w-[130px] dark:[color-scheme:dark]"
-            />
-          </div>
+        {/* Date Picker Group */}
+        <div className="flex items-center gap-1.5 h-8 px-2.5 border border-gray-200 dark:border-brand-dark rounded-md bg-white dark:bg-brand-darker shadow-sm">
+          <CalendarIcon className="h-3.5 w-3.5 text-gray-400 shrink-0 mr-1" />
+          <input
+            type="date"
+            value={formatDateForInput(startDate)}
+            onChange={(e) => handleDateChange('start', e.target.value)}
+            className="h-full w-[110px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 dark:[color-scheme:dark] font-medium"
+          />
+          <span className="text-gray-300 dark:text-gray-600 select-none">-</span>
+          <input
+            type="date"
+            value={formatDateForInput(endDate)}
+            onChange={(e) => handleDateChange('end', e.target.value)}
+            min={formatDateForInput(startDate)}
+            className="h-full w-[110px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 dark:[color-scheme:dark] font-medium text-right"
+          />
         </div>
 
+        {/* Dimension Select */}
         <Select
           onValueChange={handleFilteredAnalytics}
           value={selectedDimension}
         >
-          <SelectTrigger className="w-[160px] text-xs h-8 dark:text-white/50">
+          <SelectTrigger className="w-[150px] h-8 text-xs bg-white dark:bg-brand-darker border-gray-200 dark:border-brand-dark focus:ring-1 focus:ring-offset-0">
             <SelectValue placeholder="Select dimension" />
           </SelectTrigger>
-          <SelectContent className="dark:text-white text-xs">
+          <SelectContent className="dark:text-white text-xs dark:bg-brand-darker dark:border-brand-dark">
             <SelectItem value="general">General</SelectItem>
             <SelectItem value="landings">Landings</SelectItem>
             <SelectItem value="country">Country</SelectItem>
@@ -378,16 +377,17 @@ export default function AnalyticsTable() {
 
         <div className="flex-1" /> {/* Spacer */}
 
+        {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex justify-end items-center text-xs">
+          <div className="flex items-center gap-1 bg-white dark:bg-brand-darker border border-gray-200 dark:border-brand-dark rounded-md p-0.5 h-8 shadow-sm">
             <button
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
-              className="mr-2 bg-brand-bright text-white p-1 rounded-md px-2 disabled:opacity-50"
+              className="h-full px-2 hover:bg-gray-100 dark:hover:bg-brand-dark rounded-sm disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-gray-600 dark:text-gray-300"
             >
               <FaChevronLeft className="h-3 w-3" />
             </button>
-            <span className="dark:text-white/50 px-2 min-w-[80px] text-center">
+            <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 px-2 min-w-[60px] text-center select-none border-x border-gray-100 dark:border-brand-dark py-1">
               {currentPage} / {totalPages}
             </span>
             <button
@@ -395,7 +395,7 @@ export default function AnalyticsTable() {
                 setCurrentPage((prev) => Math.min(prev + 1, totalPages))
               }
               disabled={currentPage === totalPages}
-              className="ml-2 bg-brand-bright text-white p-1 rounded-md px-2 disabled:opacity-50"
+              className="h-full px-2 hover:bg-gray-100 dark:hover:bg-brand-dark rounded-sm disabled:opacity-30 disabled:hover:bg-transparent transition-colors text-gray-600 dark:text-gray-300"
             >
               <FaChevronRight className="h-3 w-3" />
             </button>
