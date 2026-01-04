@@ -98,7 +98,7 @@ const Analytics = () => {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-2rem)] p-2 space-y-2 overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-140px)] p-2 space-y-2 overflow-hidden">
       <div className="flex items-center justify-between px-2 shrink-0">
         <div>
           <h1 className="text-xl font-bold dark:text-white">
