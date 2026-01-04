@@ -107,9 +107,12 @@ pub async fn set_google_search_console_credentials(credentials: Credentials) {
 
 // ------ CALL THE GOOGLE SEARCH CONSOLE FUNCTION
 #[tauri::command]
-pub async fn call_google_search_console() -> Result<(), String> {
+pub async fn call_google_search_console(
+    start_date: Option<String>,
+    end_date: Option<String>,
+) -> Result<(), String> {
     println!("Command: call_google_search_console starting...");
-    match libs::get_google_search_console().await {
+    match libs::get_google_search_console(start_date, end_date).await {
         Ok(_) => {
             println!("Command: call_google_search_console successfully completed");
             Ok(())

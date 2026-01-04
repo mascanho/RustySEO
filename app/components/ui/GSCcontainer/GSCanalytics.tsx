@@ -99,8 +99,16 @@ const GSCanalytics = () => {
       setIsLoading(true);
       toast.info("Fetching latest data from Google Search Console...");
 
-      console.log("Invoking call_google_search_console...");
-      await invoke("call_google_search_console");
+      const formattedStartDate = formatDateForInput(startDate);
+      const formattedEndDate = formatDateForInput(endDate);
+
+      console.log("Invoking call_google_search_console with:", { formattedStartDate, formattedEndDate });
+
+      // Pass the date range to the backend
+      await invoke("call_google_search_console", {
+        startDate: formattedStartDate || null,
+        endDate: formattedEndDate || null
+      });
 
       console.log("GSC API call completed, refreshing status...");
       await refreshStatus();
@@ -118,7 +126,7 @@ const GSCanalytics = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [handleFetchGSCdataFromDB, refreshStatus]);
+  }, [handleFetchGSCdataFromDB, refreshStatus, startDate, endDate]);
 
   useEffect(() => {
     refreshStatus();
@@ -203,42 +211,10 @@ const GSCanalytics = () => {
     [credentials]
   );
 
-  // Filter data based on date range
-  const filteredData = useMemo(() => {
-    // Ensure gscData is an array
-    if (!Array.isArray(gscData) || !gscData.length) return [];
-    if (!startDate && !endDate) return gscData;
-
-    return gscData.filter((item) => {
-      // Robust null check for item
-      if (!item || !item.date) return true;
-
-      const itemDate = new Date(item.date);
-
-      // Robust date validity check
-      if (!isValid(itemDate)) return false;
-
-      // Normalize times for comparison
-      itemDate.setHours(0, 0, 0, 0);
-
-      let afterStart = true;
-      let beforeEnd = true;
-
-      if (startDate && isValid(startDate)) {
-        const start = new Date(startDate);
-        start.setHours(0, 0, 0, 0);
-        afterStart = itemDate >= start;
-      }
-
-      if (endDate && isValid(endDate)) {
-        const end = new Date(endDate);
-        end.setHours(0, 0, 0, 0);
-        beforeEnd = itemDate <= end;
-      }
-
-      return afterStart && beforeEnd;
-    });
-  }, [gscData, startDate, endDate]);
+  // Use data directly, as filtering is now handled by the API
+  const displayData = useMemo(() => {
+    return Array.isArray(gscData) ? gscData : [];
+  }, [gscData]);
 
   return (
     <div className="px-2 h-[calc(100vh-10rem)] flex flex-col dark:text-white/50">
@@ -349,7 +325,7 @@ const GSCanalytics = () => {
           </div>
         ) : (
           <UniversalKeywordTable
-            data={filteredData}
+            data={displayData}
             columns={columns}
             searchPlaceholder="Search keywords or URL..."
             isLoading={isLoading}

@@ -536,7 +536,10 @@ pub async fn set_search_console_credentials(credentials: Credentials) -> Result<
     Ok(secret_file)
 }
 
-pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::error::Error>> {
+pub async fn get_google_search_console(
+    start_date_arg: Option<String>,
+    end_date_arg: Option<String>,
+) -> Result<Vec<JsonValue>, Box<dyn std::error::Error>> {
     // READ THE FILE ON THE DISK
     let gsc_settings_info = read_credentials_file()
         .await
@@ -601,48 +604,53 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
 
     // Prepare the request
 
-    let (start_date, end_date) = match credentials_range.as_str() {
-        "1 month" => {
-            let end_date = Utc::now().format("%Y-%m-%d").to_string();
-            let start_date = (Utc::now() - chrono::Duration::days(30))
-                .format("%Y-%m-%d")
-                .to_string();
-            (start_date, end_date)
-        }
-        "3 months" => {
-            let end_date = Utc::now().format("%Y-%m-%d").to_string();
-            let start_date = (Utc::now() - chrono::Duration::days(90))
-                .format("%Y-%m-%d")
-                .to_string();
-            (start_date, end_date)
-        }
-        "6 months" => {
-            let end_date = Utc::now().format("%Y-%m-%d").to_string();
-            let start_date = (Utc::now() - chrono::Duration::days(180))
-                .format("%Y-%m-%d")
-                .to_string();
-            (start_date, end_date)
-        }
-        "12 months" => {
-            let end_date = Utc::now().format("%Y-%m-%d").to_string();
-            let start_date = (Utc::now() - chrono::Duration::days(365))
-                .format("%Y-%m-%d")
-                .to_string();
-            (start_date, end_date)
-        }
-        "16 months" => {
-            let end_date = Utc::now().format("%Y-%m-%d").to_string();
-            let start_date = (Utc::now() - chrono::Duration::days(730))
-                .format("%Y-%m-%d")
-                .to_string();
-            (start_date, end_date)
-        }
-        _ => {
-            let end_date = Utc::now().format("%Y-%m-%d").to_string();
-            let start_date = (Utc::now() - chrono::Duration::days(365))
-                .format("%Y-%m-%d")
-                .to_string();
-            (start_date, end_date)
+    let (start_date, end_date) = if let (Some(s), Some(e)) = (start_date_arg, end_date_arg) {
+        println!("Using provided custom date range: {} to {}", s, e);
+        (s, e)
+    } else {
+        match credentials_range.as_str() {
+            "1 month" => {
+                let end_date = Utc::now().format("%Y-%m-%d").to_string();
+                let start_date = (Utc::now() - chrono::Duration::days(30))
+                    .format("%Y-%m-%d")
+                    .to_string();
+                (start_date, end_date)
+            }
+            "3 months" => {
+                let end_date = Utc::now().format("%Y-%m-%d").to_string();
+                let start_date = (Utc::now() - chrono::Duration::days(90))
+                    .format("%Y-%m-%d")
+                    .to_string();
+                (start_date, end_date)
+            }
+            "6 months" => {
+                let end_date = Utc::now().format("%Y-%m-%d").to_string();
+                let start_date = (Utc::now() - chrono::Duration::days(180))
+                    .format("%Y-%m-%d")
+                    .to_string();
+                (start_date, end_date)
+            }
+            "12 months" => {
+                let end_date = Utc::now().format("%Y-%m-%d").to_string();
+                let start_date = (Utc::now() - chrono::Duration::days(365))
+                    .format("%Y-%m-%d")
+                    .to_string();
+                (start_date, end_date)
+            }
+            "16 months" => {
+                let end_date = Utc::now().format("%Y-%m-%d").to_string();
+                let start_date = (Utc::now() - chrono::Duration::days(730))
+                    .format("%Y-%m-%d")
+                    .to_string();
+                (start_date, end_date)
+            }
+            _ => {
+                let end_date = Utc::now().format("%Y-%m-%d").to_string();
+                let start_date = (Utc::now() - chrono::Duration::days(365))
+                    .format("%Y-%m-%d")
+                    .to_string();
+                (start_date, end_date)
+            }
         }
     };
 
