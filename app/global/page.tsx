@@ -315,7 +315,7 @@ export default function Page() {
 
           <Tabs.Panel
             value="kws"
-            className="h-screen pt-9 dark:bg-brand-darker"
+            className="h-[calc(100vh-5rem)] pt-9 dark:bg-brand-darker overflow-hidden"
           >
             <KeywordAnalytics />
           </Tabs.Panel>

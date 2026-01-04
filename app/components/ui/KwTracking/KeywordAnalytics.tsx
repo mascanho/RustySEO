@@ -13,6 +13,7 @@ import {
   Database,
   ArrowUp,
   ArrowDown,
+  Target,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -243,37 +244,64 @@ export default function KeywordAnalytics() {
   );
 
   return (
-    <div className="px-2 h-[calc(100vh-10rem)] flex flex-col dark:text-white/50">
-      <div className="flex items-center gap-2 mb-2 flex-shrink-0">
-        <h1 className="text-2xl font-bold">Tracking Dashboard</h1>
-        <DropdownMenu>
-          <DropdownMenuTrigger className="hover:bg-gray-100 dark:hover:bg-brand-dark p-1 rounded-md transition-colors">
-            <Settings className="h-5 w-5 text-black dark:text-white" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-white dark:bg-brand-darker border-brand-dark">
-            <DropdownMenuItem onClick={handleFullRefresh}>
-              <RefreshCw className="mr-2 h-4 w-4" /> Refresh & Match GSC
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => invoke("match_tracked_with_gsc_command")}>
-              <Database className="mr-2 h-4 w-4" /> Force Match GSC
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+    <div className="px-0 h-full flex flex-col dark:text-white/50">
+      <div className="flex items-center justify-between mb-2 flex-shrink-0 px-1">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
+            <Target className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <h1 className="text-lg font-bold dark:text-white leading-none">
+              Keyword Tracking
+            </h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 leading-none">
+              Monitored rankings
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div className="flex-shrink-0 mb-4">
+      <div className="flex-shrink-0 mb-2">
         <StatsWidgets
           keywordsSummary={keywordsSummary}
           fetchKeywordsSummary={handleKeywordsSummary}
         />
       </div>
 
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 relative">
         <UniversalKeywordTable
           data={keywords}
           columns={columns}
           searchPlaceholder="Search keywords..."
           isLoading={isLoading}
+          headerActions={
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleFullRefresh}
+                className="h-9 w-9 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-brand-dark rounded-xl transition-all border border-transparent hover:border-gray-200 dark:hover:border-brand-dark text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                title="Refresh & Match GSC"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+                />
+              </button>
+
+              <div className="w-px h-6 bg-gray-200 dark:bg-brand-dark mx-1"></div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="h-9 w-9 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-brand-dark rounded-xl transition-all border border-transparent hover:border-gray-200 dark:hover:border-brand-dark text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <Settings className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-white dark:bg-brand-darker border-brand-dark">
+                  <DropdownMenuItem onClick={() => invoke("match_tracked_with_gsc_command")}>
+                    <Database className="mr-2 h-4 w-4" /> Force Match GSC
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          }
         />
       </div>
     </div>

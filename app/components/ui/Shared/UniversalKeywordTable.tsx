@@ -118,14 +118,14 @@ export function UniversalKeywordTable<TData>({
                         <p className="text-sm font-medium text-gray-400 mt-2 animate-pulse">Loading data...</p>
                     </div>
                 ) : (
-                    <table className="w-full text-xs border-collapse">
-                        <thead className="sticky top-0 bg-gray-50 dark:bg-brand-dark z-10">
+                    <table className="w-full text-xs issues" style={{ borderCollapse: "collapse", borderSpacing: "0" }}>
+                        <thead className="sticky top-0 bg-gray-50 dark:bg-brand-dark z-10 issues">
                             {table.getHeaderGroups().map((headerGroup) => (
-                                <tr key={headerGroup.id} className="border-b dark:border-brand-dark">
+                                <tr key={headerGroup.id} className="border-b dark:border-brand-dark issues">
                                     {headerGroup.headers.map((header) => (
                                         <th
                                             key={header.id}
-                                            className="px-4 py-2 text-left font-semibold text-muted-foreground uppercase tracking-wider"
+                                            className="px-4 py-2 text-left font-semibold text-muted-foreground uppercase tracking-wider issues"
                                             style={{ width: header.getSize() }}
                                         >
                                             {header.isPlaceholder ? null : (
@@ -146,27 +146,32 @@ export function UniversalKeywordTable<TData>({
                                 </tr>
                             ))}
                         </thead>
-                        <tbody className="divide-y dark:divide-brand-dark">
+                        <tbody className="issues">
                             {table.getRowModel().rows.length > 0 ? (
                                 table.getRowModel().rows.map((row) => (
                                     <tr
                                         key={row.id}
                                         onClick={() => onRowClick?.(row.original)}
-                                        className={`hover:bg-gray-50 dark:hover:bg-brand-dark/50 transition-colors ${onRowClick ? "cursor-pointer" : ""
+                                        className={`!border-0 !border-b !border-gray-200 dark:!border-brand-dark hover:bg-gray-50 dark:hover:bg-brand-dark/50 transition-colors issues ${onRowClick ? "cursor-pointer" : ""
                                             }`}
+                                        style={{ display: "table-row", height: "auto" }}
                                     >
                                         {row.getVisibleCells().map((cell) => (
-                                            <td key={cell.id} className="px-4 py-2 whitespace-nowrap">
+                                            <td
+                                                key={cell.id}
+                                                className="!px-4 !py-1.5 !m-0 !border-0 whitespace-nowrap issues align-middle"
+                                                style={{ display: "table-cell", verticalAlign: "middle", height: "auto" }}
+                                            >
                                                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                             </td>
                                         ))}
                                     </tr>
                                 ))
                             ) : (
-                                <tr>
+                                <tr className="issues">
                                     <td
                                         colSpan={columns.length}
-                                        className="px-4 py-8 text-center text-muted-foreground"
+                                        className="px-4 py-8 text-center text-muted-foreground issues"
                                     >
                                         No results found.
                                     </td>
@@ -174,49 +179,52 @@ export function UniversalKeywordTable<TData>({
                             )}
                         </tbody>
                     </table>
-                )}
-            </div>
+                )
+                }
+            </div >
 
             {/* Pagination Footer */}
-            {!isLoading && (
-                <div className="p-2 border-t dark:border-brand-dark flex items-center justify-between bg-gray-50/50 dark:bg-brand-darker/50">
-                    <div className="text-xs text-muted-foreground">
-                        Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{" "}
-                        {Math.min(
-                            (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-                            table.getFilteredRowModel().rows.length
-                        )}{" "}
-                        of {table.getFilteredRowModel().rows.length} entries
-                    </div>
-                    <div className="flex items-center gap-1">
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => table.previousPage()}
-                            disabled={!table.getCanPreviousPage()}
-                        >
-                            <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <div className="flex items-center gap-1 px-2">
-                            <span className="text-xs font-medium">
-                                {table.getState().pagination.pageIndex + 1}
-                            </span>
-                            <span className="text-xs text-muted-foreground">of</span>
-                            <span className="text-xs font-medium">{table.getPageCount()}</span>
+            {
+                !isLoading && (
+                    <div className="p-2 border-t dark:border-brand-dark flex items-center justify-between bg-gray-50/50 dark:bg-brand-darker/50">
+                        <div className="text-xs text-muted-foreground">
+                            Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to{" "}
+                            {Math.min(
+                                (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                                table.getFilteredRowModel().rows.length
+                            )}{" "}
+                            of {table.getFilteredRowModel().rows.length} entries
                         </div>
-                        <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-7 w-7"
-                            onClick={() => table.nextPage()}
-                            disabled={!table.getCanNextPage()}
-                        >
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => table.previousPage()}
+                                disabled={!table.getCanPreviousPage()}
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <div className="flex items-center gap-1 px-2">
+                                <span className="text-xs font-medium">
+                                    {table.getState().pagination.pageIndex + 1}
+                                </span>
+                                <span className="text-xs text-muted-foreground">of</span>
+                                <span className="text-xs font-medium">{table.getPageCount()}</span>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => table.nextPage()}
+                                disabled={!table.getCanNextPage()}
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }
