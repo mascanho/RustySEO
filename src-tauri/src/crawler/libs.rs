@@ -773,14 +773,32 @@ pub async fn set_google_analytics_credentials(credentials: GA4Credentials) -> Re
 pub async fn read_ga4_credentials_file() -> Result<GA4Credentials, String> {
     let config_dir = ProjectDirs::from("", "", "rustyseo")
         .ok_or_else(|| "Failed to get project directories".to_string())?;
-    let config_dir = config_dir.data_dir();
-    let file_path = config_dir.join("ga4_credentials.json");
+    let data_dir = config_dir.data_dir(); // Use data_dir as the base for credentials
+    let file_path = data_dir.join("ga4_credentials.json");
+
+    // Ensure the data directory exists
+    tokio::fs::create_dir_all(data_dir)
+        .await
+        .map_err(|e| format!("Failed to create data directory: {}", e))?;
 
     if !file_path.exists() {
-        return Err("GA4 credentials file not found".to_string());
+        // Create a default empty credentials file if it doesn't exist
+        let default_credentials = GA4Credentials {
+            client_id: String::new(),
+            project_id: String::new(),
+            client_secret: String::new(),
+            property_id: String::new(),
+            token: None,
+            refresh_token: None,
+        };
+        let default_content = serde_json::to_string_pretty(&default_credentials)
+            .map_err(|e| format!("Failed to serialize default GA4 credentials: {}", e))?;
+        fs::write(&file_path, default_content)
+            .await
+            .map_err(|e| format!("Failed to write default GA4 credentials file: {}", e))?;
     }
 
-    let content = fs::read_to_string(file_path).await
+    let content = fs::read_to_string(&file_path).await
         .map_err(|e| format!("Failed to read GA4 credentials: {}", e))?;
 
     let credentials: GA4Credentials = serde_json::from_str(&content)
@@ -793,16 +811,33 @@ pub async fn get_ga4_properties(token: String) -> Result<Vec<Value>, String> {
     let client = reqwest::Client::new();
     
     // 1. List accounts
-    let accounts_url = "https://analyticsadmin.googleapis.com/v1alpha/accountSummaries";
-    let response: Value = client
+    // Using v1beta as it is more stable than v1alpha
+    let accounts_url = "https://analyticsadmin.googleapis.com/v1beta/accountSummaries";
+    
+    let response_res = client
         .get(accounts_url)
         .bearer_auth(&token)
         .send()
-        .await
-        .map_err(|e| format!("Failed to fetch accounts: {}", e))?
-        .json()
-        .await
-        .map_err(|e| format!("Failed to parse accounts: {}", e))?;
+        .await;
+
+    let response: Value = match response_res {
+        Ok(res) => {
+            let status = res.status();
+            let text = res.text().await.unwrap_or_default();
+            println!("GA4 Account Summaries Status: {}", status);
+            println!("GA4 Account Summaries Response: {}", text);
+            
+            if !status.is_success() {
+                let error_json: Value = serde_json::from_str(&text).unwrap_or(json!({}));
+                let message = error_json["error"]["message"].as_str().unwrap_or("Unknown error");
+                return Err(format!("GA4 API Error: {}", message));
+            }
+
+            serde_json::from_str(&text)
+                .map_err(|e| format!("Failed to parse accounts JSON: {} (Content: {})", e, text))?
+        }
+        Err(e) => return Err(format!("Failed to fetch accounts: {}", e)),
+    };
 
     let mut all_properties = Vec::new();
 
@@ -814,6 +849,8 @@ pub async fn get_ga4_properties(token: String) -> Result<Vec<Value>, String> {
                 }
             }
         }
+    } else {
+         println!("No 'accountSummaries' found in response");
     }
 
     Ok(all_properties)

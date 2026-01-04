@@ -117,7 +117,8 @@ export default function GA4ConnectionWizard({ onComplete, onClose }: GA4Connecti
             }
         } catch (error) {
             console.error("Fetch properties error:", error);
-            toast.error("Failed to fetch properties");
+            const errorMessage = typeof error === 'string' ? error : "Failed to fetch properties";
+            toast.error(errorMessage);
         } finally {
             setIsLoading(false);
         }
