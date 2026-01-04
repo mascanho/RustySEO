@@ -125,7 +125,7 @@ export function UniversalKeywordTable<TData>({
                                     {headerGroup.headers.map((header) => (
                                         <th
                                             key={header.id}
-                                            className="px-4 py-2 text-left font-semibold text-muted-foreground uppercase tracking-wider issues"
+                                            className="!px-4 !py-2 text-left font-semibold text-muted-foreground uppercase tracking-wider issues !bg-gray-50 dark:!bg-brand-dark"
                                             style={{ width: header.getSize() }}
                                         >
                                             {header.isPlaceholder ? null : (
