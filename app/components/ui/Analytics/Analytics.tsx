@@ -99,19 +99,30 @@ const Analytics = () => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-140px)] p-2 space-y-2 overflow-hidden">
-      <div className="flex items-center justify-between px-2 shrink-0">
-        <div>
-          <h1 className="text-xl font-bold dark:text-white">
-            Analytics Overview
-          </h1>
-          <p className="text-xs text-gray-500">
-            Real-time data from Google Analytics 4
-          </p>
+      <div className="flex items-center justify-between mb-2 flex-shrink-0 px-1">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-orange-50 dark:bg-orange-900/30 rounded-lg">
+            <BarChart3 className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <h1 className="text-lg font-bold dark:text-white leading-none">
+              Google Analytics 4
+            </h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 leading-none">
+              Real-time data
+            </p>
+          </div>
         </div>
-        <Button variant="outline" size="sm" onClick={handleRefreshGA4} className="gap-2 h-8 text-xs">
-          <RefreshCw className={`h-3 w-3 ${isLoading ? "animate-spin" : ""}`} />
-          Refresh Data
-        </Button>
+
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setIsWizardOpen(true)}
+            variant="ghost"
+            className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-900/20 h-7 text-xs font-bold px-2 rounded-md"
+          >
+            Settings
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 w-full overflow-hidden rounded-xl border dark:border-brand-dark bg-white dark:bg-brand-darker">

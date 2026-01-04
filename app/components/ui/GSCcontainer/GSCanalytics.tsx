@@ -266,16 +266,16 @@ const GSCanalytics = () => {
         />
       </Modal>
 
-      <div className="flex items-center justify-between mb-4 flex-shrink-0">
-        <div className="flex items-center">
-          <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl">
-            <LayoutGrid className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+      <div className="flex items-center justify-between mb-2 flex-shrink-0 px-1">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+            <LayoutGrid className="h-4 w-4 text-blue-600 dark:text-blue-400" />
           </div>
-          <div className="flex flex-col">
-            <h1 className="text-2xl font-bold dark:text-white">
+          <div className="flex items-baseline gap-2">
+            <h1 className="text-lg font-bold dark:text-white leading-none">
               Search Console
             </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-gray-500 dark:text-gray-400 leading-none">
               {isConfigured
                 ? `Connected to ${credentials?.url}`
                 : "Not connected"}
@@ -283,13 +283,13 @@ const GSCanalytics = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 pt-1">
           <Button
             onClick={openWizard}
-            className="bg-brand-bright  hover:bg-blue-700 text-white rounded-md px-4 py-1 flex items-center text-xs font-bold h-8  shadow-blue-500/20 transition-all active:scale-95"
+            className="bg-brand-bright hover:bg-blue-700 text-white rounded-md px-3 h-7 flex items-center text-xs font-bold shadow-blue-500/20 transition-all active:scale-95"
           >
-            <Plus className="h-4 w-4" />
-            {isConfigured ? "Reconnect" : "Connect GSC"}
+            <Plus className="h-3 w-3 mr-1.5" />
+            {isConfigured ? "Reconnect" : "Connect"}
           </Button>
         </div>
       </div>

@@ -293,7 +293,7 @@ export default function AnalyticsTable() {
 
 
   return (
-    <div className="px-2 h-[calc(100vh-10rem)] flex flex-col dark:text-white/50">
+    <div className="px-0 h-full flex flex-col dark:text-white/50">
       <UniversalKeywordTable
         data={flattenData}
         columns={columns}
