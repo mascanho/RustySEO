@@ -244,7 +244,7 @@ export default function KeywordAnalytics() {
   );
 
   return (
-    <div className="px-0 h-full flex flex-col dark:text-white/50">
+    <div className="px-2 py-2 h-full flex flex-col dark:text-white/50">
       <div className="flex items-center justify-between mb-2 flex-shrink-0 px-1">
         <div className="flex items-center gap-2">
           <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
