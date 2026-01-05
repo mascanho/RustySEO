@@ -27,6 +27,7 @@ import {
   BadgeInfo,
   X,
   CopyIcon,
+  KeyRound,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -89,6 +90,7 @@ import {
   handleCopyClick,
 } from "../WidgetTables/helpers/useCopyOpen";
 import { useExcelLoading } from "@/store/ServerLogsGlobalStore";
+import useGSCStatusStore from "@/store/GSCStatusStore";
 
 export function LogAnalyzer() {
   const {
@@ -146,6 +148,15 @@ export function LogAnalyzer() {
 
   const [posColumn, setPosColumn] = useState("position");
   const { ExcelLoaded } = useExcelLoading();
+
+  // GSC Status
+  const {
+    isConfigured,
+    credentials,
+    isLoading: gscLoading,
+    updateStatus,
+    refreshStatus,
+  } = useGSCStatusStore();
 
   const cyclePosColumn = () => {
     setPosColumn((prev) => {
@@ -457,13 +468,7 @@ export function LogAnalyzer() {
     ];
 
     if (ExcelLoaded) {
-      headers = [
-        ...headers,
-        "Position",
-        "Clicks",
-        "Impressions",
-        "CTR",
-      ];
+      headers = [...headers, "Position", "Clicks", "Impressions", "CTR"];
     }
 
     // 2. Prepare data
@@ -1198,6 +1203,7 @@ export function LogAnalyzer() {
                           posColumn={posColumn}
                           ExcelLoaded={ExcelLoaded}
                           getPositionBadgeColor={getPositionBadgeColor}
+                          credentials={credentials}
                         />
                       ))
                     ) : (
@@ -1260,6 +1266,7 @@ function LogRow({
   posColumn,
   ExcelLoaded,
   getPositionBadgeColor,
+  credentials,
 }) {
   return (
     <>
@@ -1346,6 +1353,14 @@ function LogRow({
                   ? "https://" + domain + log.path
                   : log?.path}
               </span>
+              {/* SHOW A KEY TO POP THE MODAL WITH THE KEYWORDS FROM GSC */}
+              {credentials && (
+                <KeyRound
+                  size={14}
+                  className="text-[10px] ml-2 text-yellow-500 active:scale-95 hover:scale:105"
+                  onClick={() => console.log("MODAL WITH KEYWORDS")}
+                />
+              )}
             </section>
           ) : (
             <section className="max-w-[99%] w-[750px] 3xl:w-[950px] truncate relative ml-2 flex items-center">
