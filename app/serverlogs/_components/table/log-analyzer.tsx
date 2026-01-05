@@ -1378,7 +1378,7 @@ function LogRow({
               </span>
               {/* SHOW A KEY TO POP THE MODAL WITH THE KEYWORDS FROM GSC */}
               {credentials.token.length > 0 && isHovered && (
-                <span className="active:scale-95 hover:scale:105 hover:text-red-500">
+                <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150">
                   <KeyRound
                     size={14}
                     className="text-[10px] ml-2 text-yellow-500 cursor-pointer"
