@@ -9,10 +9,7 @@ interface SearchConsoleModalProps {
   onClose: () => void;
 }
 
-export function SearchConsoleModal({
-  isOpen,
-  onClose,
-}: SearchConsoleModalProps) {
+export function RankingsLogs({ isOpen, onClose }: SearchConsoleModalProps) {
   // Mock data - in a real app, this would come from Google Search Console API
   const url = "https://example.com/blog/article";
   const metrics = {

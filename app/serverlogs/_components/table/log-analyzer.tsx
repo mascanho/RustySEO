@@ -91,6 +91,7 @@ import {
 } from "../WidgetTables/helpers/useCopyOpen";
 import { useExcelLoading } from "@/store/ServerLogsGlobalStore";
 import useGSCStatusStore from "@/store/GSCStatusStore";
+import { RankingsLogs } from "../Rankings/RankingsLogs";
 
 export function LogAnalyzer() {
   const {
@@ -1356,17 +1357,20 @@ function LogRow({
               </span>
               {/* SHOW A KEY TO POP THE MODAL WITH THE KEYWORDS FROM GSC */}
               {credentials !== "" && (
-                <span className="active:scale-95 hover:scale:105 hover:text-red-500">
-                  <KeyRound
-                    size={14}
-                    className="text-[10px] ml-2 text-yellow-500 cursor-pointer"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      console.log(e, "CLicked to see KWs");
-                    }}
-                  />
-                </span>
+                <>
+                  <RankingsLogs isOpen={true} onClose={() => {}} />
+                  <span className="active:scale-95 hover:scale:105 hover:text-red-500">
+                    <KeyRound
+                      size={14}
+                      className="text-[10px] ml-2 text-yellow-500 cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        console.log(e, "CLicked to see KWs");
+                      }}
+                    />
+                  </span>
+                </>
               )}
             </section>
           ) : (
