@@ -100,14 +100,30 @@ export function RankingsLogs({
       name: "Clicks",
       value: metrics.clicks.toLocaleString(),
       icon: MousePointerClick,
+      color: "text-blue-600 dark:text-blue-400",
+      bgColor: "bg-blue-100 dark:bg-blue-900/20",
     },
     {
       name: "Impressions",
       value: metrics.impressions.toLocaleString(),
       icon: BarChart,
+      color: "text-purple-600 dark:text-purple-400",
+      bgColor: "bg-purple-100 dark:bg-purple-900/20",
     },
-    { name: "CTR", value: `${metrics.ctr}%`, icon: Percent },
-    { name: "Avg. Position", value: metrics.position, icon: TrendingUp },
+    {
+      name: "CTR",
+      value: `${metrics.ctr}%`,
+      icon: Percent,
+      color: "text-emerald-600 dark:text-emerald-400",
+      bgColor: "bg-emerald-100 dark:bg-emerald-900/20",
+    },
+    {
+      name: "Avg. Position",
+      value: metrics.position,
+      icon: TrendingUp,
+      color: "text-amber-600 dark:text-amber-400",
+      bgColor: "bg-amber-100 dark:bg-amber-900/20",
+    },
   ];
 
   return (
@@ -121,20 +137,27 @@ export function RankingsLogs({
           <DialogDescription className="truncate">{url} </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 p-4">
-          {metricItems.map((item) => (
-            <Card key={item.name} className="dark:border-zinc-700">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {item.name}
-                </CardTitle>
-                <item.icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{item.value}</div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="border-b bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900/50">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {metricItems.map((item) => (
+              <Card
+                key={item.name}
+                className="dark:border-zinc-800 dark:bg-zinc-900"
+              >
+                <CardContent className="flex items-center gap-4 p-4">
+                  <div
+                    className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg ${item.bgColor}`}
+                  >
+                    <item.icon className={`h-6 w-6 ${item.color}`} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{item.name}</p>
+                    <p className="text-2xl font-bold">{item.value}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
 
         <div className="px-4 pb-4 flex-1 overflow-y-auto">
