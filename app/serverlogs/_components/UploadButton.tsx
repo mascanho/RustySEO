@@ -85,7 +85,7 @@ function UploadButton() {
         <DialogTrigger asChild>
           <aside
             data-tooltip-id="gsc-tooltip"
-            className="bg-stone-500 text-xs rounded-sm"
+            className="bg-stone-500 text-xs rounded-sm cursor-pointer"
           >
             <KeyRound className="w-7 h-7 text-white p-1.5" />
           </aside>

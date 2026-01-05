@@ -1,3 +1,4 @@
+/* eslint-disable */
 // @ts-nocheck
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import {
@@ -1285,6 +1286,9 @@ function LogRow({
   credentials,
   setSelectedLog,
 }) {
+  // Track hover state for the row
+  const [isHovered, setIsHovered] = useState(false);
+
   return (
     <>
       <TableRow
@@ -1292,6 +1296,8 @@ function LogRow({
         onClick={() => {
           setExpandedRow(expandedRow === index ? null : index);
         }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
         <TableCell className="font-medium text-center align-middle">
           {indexOfFirstItem + index + 1}
@@ -1371,7 +1377,7 @@ function LogRow({
                   : log?.path}
               </span>
               {/* SHOW A KEY TO POP THE MODAL WITH THE KEYWORDS FROM GSC */}
-              {credentials.token.length > 0 && (
+              {credentials.token.length > 0 && isHovered && (
                 <span className="active:scale-95 hover:scale:105 hover:text-red-500">
                   <KeyRound
                     size={14}
