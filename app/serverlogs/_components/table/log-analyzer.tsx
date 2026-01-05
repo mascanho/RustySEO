@@ -159,6 +159,7 @@ export function LogAnalyzer() {
     updateStatus,
     refreshStatus,
   } = useGSCStatusStore();
+
   console.log("GSC DATA", credentials);
 
   const cyclePosColumn = () => {
@@ -1370,7 +1371,7 @@ function LogRow({
                   : log?.path}
               </span>
               {/* SHOW A KEY TO POP THE MODAL WITH THE KEYWORDS FROM GSC */}
-              {credentials !== "" && (
+              {credentials.token.length > 0 && (
                 <span className="active:scale-95 hover:scale:105 hover:text-red-500">
                   <KeyRound
                     size={14}

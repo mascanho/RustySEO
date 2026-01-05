@@ -16,6 +16,7 @@ interface GSCStatusState {
   isLoading: boolean;
   lastChecked: Date | null;
   error: string | null;
+  showInTable: boolean;
 
   // Actions
   setCredentials: (credentials: GSCCredentials | null) => void;
@@ -24,6 +25,7 @@ interface GSCStatusState {
   updateStatus: (credentials: GSCCredentials | null, error?: string) => void;
   clearStatus: () => void;
   refresh: () => Promise<void>;
+  setShowInTable: (showInTable: boolean) => void;
 
   // Getters
   getIsConfigured: () => boolean;
@@ -35,6 +37,7 @@ const useGSCStatusStore = create<GSCStatusState>((set, get) => ({
   isLoading: false,
   lastChecked: null,
   error: null,
+  showInTable: false,
 
   setCredentials: (credentials) =>
     set((state) => ({
@@ -46,6 +49,7 @@ const useGSCStatusStore = create<GSCStatusState>((set, get) => ({
       ),
       lastChecked: new Date(),
       error: null,
+      showInTable: false,
     })),
 
   setLoading: (isLoading) => set({ isLoading }),
@@ -56,6 +60,8 @@ const useGSCStatusStore = create<GSCStatusState>((set, get) => ({
       isLoading: false,
       lastChecked: new Date(),
     })),
+
+  setShowInTable: (showInTable) => set({ showInTable }),
 
   updateStatus: (credentials, error) =>
     set((state) => ({
@@ -88,7 +94,10 @@ const useGSCStatusStore = create<GSCStatusState>((set, get) => ({
       get().updateStatus(credentials);
     } catch (error) {
       console.error("Failed to refresh GSC status:", error);
-      get().updateStatus(null, error instanceof Error ? error.message : String(error));
+      get().updateStatus(
+        null,
+        error instanceof Error ? error.message : String(error),
+      );
     } finally {
       set({ isLoading: false });
     }
