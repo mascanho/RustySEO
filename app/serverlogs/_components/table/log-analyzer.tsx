@@ -157,6 +157,7 @@ export function LogAnalyzer() {
     updateStatus,
     refreshStatus,
   } = useGSCStatusStore();
+  console.log("GSC DATA", credentials);
 
   const cyclePosColumn = () => {
     setPosColumn((prev) => {
@@ -1354,12 +1355,18 @@ function LogRow({
                   : log?.path}
               </span>
               {/* SHOW A KEY TO POP THE MODAL WITH THE KEYWORDS FROM GSC */}
-              {credentials && (
-                <KeyRound
-                  size={14}
-                  className="text-[10px] ml-2 text-yellow-500 active:scale-95 hover:scale:105"
-                  onClick={() => console.log("MODAL WITH KEYWORDS")}
-                />
+              {credentials !== "" && (
+                <span className="active:scale-95 hover:scale:105 hover:text-red-500">
+                  <KeyRound
+                    size={14}
+                    className="text-[10px] ml-2 text-yellow-500 cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      console.log(e, "CLicked to see KWs");
+                    }}
+                  />
+                </span>
               )}
             </section>
           ) : (
