@@ -138,7 +138,9 @@ export function RankingsLogs({
         </div>
 
         <div className="px-4 pb-4 flex-1 overflow-y-auto">
-          <p className="text-sm font-semibold mb-2">Top Keywords</p>
+          <p className="text-sm font-semibold mb-2 dark:text-white">
+            Top Keywords
+          </p>
           <div className="rounded-md border dark:border-zinc-700">
             <Table>
               <TableHeader>
@@ -178,4 +180,3 @@ export function RankingsLogs({
     </Dialog>
   );
 }
-
