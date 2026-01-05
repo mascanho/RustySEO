@@ -343,7 +343,7 @@ async fn fetch_with_retry(
         // Exponential backoff with jitter
         let base_delay = MIN_DELAY_MS * 2u64.pow(attempt as u32 - 1);
         let jitter =
-            (base_delay as f32 * JITTER_FACTOR * rand::thread_rng().gen_range(-1.0..1.0)) as i64;
+            (base_delay as f32 * JITTER_FACTOR * rand::random_range(-1.0..1.0)) as i64;
         let delay = (base_delay as i64 + jitter).max(0) as u64;
         sleep(Duration::from_millis(delay)).await;
     }

@@ -3,17 +3,17 @@
 
 // Import necessary dependencies
 import React, { useState, useMemo, useEffect, useCallback } from "react";
-import KeywordTable from "./KeywordTable";
 import { invoke } from "@tauri-apps/api/core";
 import { listen, emit } from "@tauri-apps/api/event";
 import { toast } from "sonner";
 import { StatsWidgets } from "./Widgets/WidgetsKeywordsContainer";
 import {
-  ChevronDown,
   RefreshCw,
   Settings,
   Database,
-  FolderSearchIcon,
+  ArrowUp,
+  ArrowDown,
+  Target,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -21,6 +21,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { UniversalKeywordTable } from "../Shared/UniversalKeywordTable";
+import { ColumnDef } from "@tanstack/react-table";
+import KeywordRowMenu from "./KeywordRowMenu";
 
 // Interface defining the structure of a Keyword object
 interface Keyword {
@@ -36,250 +39,271 @@ interface Keyword {
   dateAdded: string;
 }
 
-export default React.memo(
-  function KeywordAnalytics() {
-    // State declarations for managing keyword data and UI
-    const [keywords, setKeywords] = useState<Keyword[]>([]);
-    const [sortConfig, setSortConfig] = useState<SortConfig>(null);
-    const [initialData, setInitialData] = useState<Keyword[]>([]);
-    const [gscData, setGscData] = useState<GscUrl[]>([]);
-    const [matchedTrackedKws, setMatchedTrackedKws] = useState<
-      KwTrackingData[]
-    >([]);
-    const [keywordsSummary, setKeywordsSummary] = useState([]);
-    const [isUpdating, setIsUpdating] = useState(false);
-    const [needsUpdate, setNeedsUpdate] = useState(false);
+export default function KeywordAnalytics() {
+  const [keywords, setKeywords] = useState<Keyword[]>([]);
+  const [keywordsSummary, setKeywordsSummary] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [needsUpdate, setNeedsUpdate] = useState(false);
 
-    // Memoized handlers
-    const handleKeywordsSummary = useCallback(async () => {
-      try {
-        const response = await invoke(
-          "fetch_keywords_summarized_matched_command",
-        );
-        setKeywordsSummary(response);
-      } catch (error) {
-        console.error("Failed to fetch Keywords Summary:", error);
-      }
-    }, []);
+  const handleKeywordsSummary = useCallback(async () => {
+    try {
+      const response = await invoke("fetch_keywords_summarized_matched_command");
+      setKeywordsSummary(response);
+    } catch (error) {
+      console.error("Failed to fetch Keywords Summary:", error);
+    }
+  }, []);
 
-    const handleFetchKeywords = useCallback(async () => {
-      try {
-        const response = await invoke("fetch_tracked_keywords_command");
-        const summaryResponse = await invoke(
-          "fetch_keywords_summarized_matched_command",
-        );
+  const handleFetchKeywords = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await invoke("fetch_tracked_keywords_command");
+      const summaryResponse = await invoke("fetch_keywords_summarized_matched_command");
 
-        const transformedData = response.map((item) => {
-          const summaryMatch = summaryResponse.find(
-            (s) => s.query === item.query,
-          );
-          return {
-            id: item.id,
-            keyword: item.query,
-            initialImpressions: summaryMatch
-              ? summaryMatch.initial_impressions
-              : item.impressions,
-            currentImpressions: summaryMatch
-              ? summaryMatch.current_impressions
-              : item.impressions,
-            initialClicks: summaryMatch
-              ? summaryMatch.initial_clicks
-              : item.clicks,
-            currentClicks: summaryMatch
-              ? summaryMatch.current_clicks
-              : item.clicks,
-            url: item.url,
-            initialPosition: summaryMatch
-              ? summaryMatch.initial_position.toFixed(1)
-              : item.position.toFixed(1),
-            currentPosition: summaryMatch
-              ? Number(summaryMatch.current_position.toFixed(1))
-              : Number(item.position.toFixed(1)),
-            dateAdded: new Date(item.date).toLocaleDateString("en-GB", {
-              year: "2-digit",
-              month: "2-digit",
-              day: "2-digit",
-            }),
-          };
-        });
-
-        setInitialData(transformedData);
-        setKeywords(transformedData);
-        sessionStorage.setItem(
-          "keywordsLength",
-          transformedData.length.toString(),
-        );
-      } catch (error) {
-        console.error("Failed to fetch keywords:", error);
-      }
-    }, []);
-
-    useEffect(() => {
-      if (needsUpdate && !isUpdating) {
-        const updateData = async () => {
-          setIsUpdating(true);
-          try {
-            await invoke("match_tracked_with_gsc_command");
-            await handleKeywordsSummary();
-            await handleFetchKeywords();
-          } catch (error) {
-            toast.error("Failed to refresh data");
-            console.error("Error updating data:", error);
-          } finally {
-            setIsUpdating(false);
-          }
+      const transformedData = response.map((item) => {
+        const summaryMatch = summaryResponse.find((s) => s.query === item.query);
+        return {
+          id: String(item.id),
+          keyword: item.query,
+          initialImpressions: summaryMatch ? summaryMatch.initial_impressions : item.impressions,
+          currentImpressions: summaryMatch ? summaryMatch.current_impressions : item.impressions,
+          initialClicks: summaryMatch ? summaryMatch.initial_clicks : item.clicks,
+          currentClicks: summaryMatch ? summaryMatch.current_clicks : item.clicks,
+          url: item.url,
+          initialPosition: summaryMatch ? Number(summaryMatch.initial_position.toFixed(1)) : Number(item.position.toFixed(1)),
+          currentPosition: summaryMatch ? Number(summaryMatch.current_position.toFixed(1)) : Number(item.position.toFixed(1)),
+          dateAdded: new Date(item.date).toLocaleDateString("en-GB", {
+            year: "2-digit",
+            month: "2-digit",
+            day: "2-digit",
+          }),
         };
-        updateData();
-        setNeedsUpdate(false);
-      }
-    }, [needsUpdate, isUpdating, handleKeywordsSummary, handleFetchKeywords]);
-
-    const handleMatchedTrackedKws = useCallback(async () => {
-      try {
-        const response = await invoke("read_matched_keywords_from_db_command");
-        setMatchedTrackedKws(response);
-      } catch (error) {
-        console.error("Failed to fetch Matched Tracked Keywords:", error);
-      }
-    }, []);
-
-    const removeKeyword = useCallback(
-      async (id: string) => {
-        try {
-          await invoke("delete_keyword_command", { id });
-          setKeywords((prevKeywords) =>
-            prevKeywords.filter((keyword) => keyword.id !== id),
-          );
-          await emit("keyword-tracked", { action: "delete", id });
-          toast.success(`Keyword deleted: (ID: ${id})`);
-          await handleKeywordsSummary();
-          await handleFetchKeywords();
-        } catch (error) {
-          console.error("Failed to remove keyword:", error);
-          toast.error("Failed to delete keyword");
-        }
-      },
-      [handleKeywordsSummary, handleFetchKeywords],
-    );
-
-    const requestSort = useCallback((key: keyof Keyword) => {
-      setSortConfig((prevConfig) => {
-        const direction =
-          prevConfig && prevConfig.key === key && prevConfig.direction === "asc"
-            ? "desc"
-            : "asc";
-        return { key, direction };
       });
-    }, []);
 
-    useEffect(() => {
-      const initData = async () => {
-        await handleFetchKeywords();
-        await handleKeywordsSummary();
-      };
+      setKeywords(transformedData);
+      sessionStorage.setItem("keywordsLength", transformedData.length.toString());
+    } catch (error) {
+      console.error("Failed to fetch keywords:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-      initData();
+  const handleFullRefresh = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      await invoke("match_tracked_with_gsc_command");
+      await handleFetchKeywords();
+      await handleKeywordsSummary();
+      toast.success("Data refreshed and matched with GSC");
+    } catch (error) {
+      console.error("Failed to refresh data:", error);
+      toast.error("Failed to refresh data");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [handleFetchKeywords, handleKeywordsSummary]);
 
-      const setupListener = async () => {
-        try {
-          return await listen("keyword-tracked", (event) => {
-            if (
-              event.payload.action === "add" ||
-              event.payload.action === "delete"
-            ) {
-              setNeedsUpdate(true);
-            }
-          });
-        } catch (err) {
-          console.error("Error setting up event listener:", err);
-          return null;
-        }
-      };
+  useEffect(() => {
+    const initData = async () => {
+      await handleFetchKeywords();
+      await handleKeywordsSummary();
+    };
+    initData();
 
-      const unsubscribe = setupListener();
-
-      return () => {
-        if (unsubscribe) {
-          unsubscribe.then((unlisten) => {
-            if (unlisten) unlisten();
-          });
-        }
-      };
-    }, [handleFetchKeywords, handleKeywordsSummary]);
-
-    const sortedKeywords = useMemo(() => {
-      let sortableItems = [...keywords];
-      if (sortConfig !== null) {
-        sortableItems.sort((a, b) => {
-          if (a[sortConfig.key] < b[sortConfig.key]) {
-            return sortConfig.direction === "asc" ? -1 : 1;
+    const setupListener = async () => {
+      try {
+        return await listen("keyword-tracked", (event) => {
+          if (event.payload.action === "add" || event.payload.action === "delete") {
+            setNeedsUpdate(true);
           }
-          if (a[sortConfig.key] > b[sortConfig.key]) {
-            return sortConfig.direction === "asc" ? 1 : -1;
-          }
-          return 0;
+        });
+      } catch (err) {
+        console.error("Error setting up event listener:", err);
+        return null;
+      }
+    };
+
+    const unsubscribe = setupListener();
+    return () => {
+      if (unsubscribe) {
+        unsubscribe.then((unlisten) => {
+          if (unlisten) unlisten();
         });
       }
-      return sortableItems;
-    }, [keywords, sortConfig]);
+    };
+  }, [handleFetchKeywords, handleKeywordsSummary]);
 
+  useEffect(() => {
+    if (needsUpdate) {
+      handleFetchKeywords();
+      handleKeywordsSummary();
+      setNeedsUpdate(false);
+    }
+  }, [needsUpdate, handleFetchKeywords, handleKeywordsSummary]);
+
+  const removeKeyword = useCallback(
+    async (id: string) => {
+      try {
+        await invoke("delete_keyword_command", { id });
+        setKeywords((prev) => prev.filter((k) => k.id !== id));
+        await emit("keyword-tracked", { action: "delete", id });
+        toast.success(`Keyword deleted`);
+        handleKeywordsSummary();
+      } catch (error) {
+        console.error("Failed to remove keyword:", error);
+        toast.error("Failed to delete keyword");
+      }
+    },
+    [handleKeywordsSummary]
+  );
+
+  const renderChange = (current: number, initial: number, inverse = false) => {
+    const change = current - initial;
+    if (change === 0) return null;
+    const isPositive = inverse ? change < 0 : change > 0;
+    const color = isPositive ? "text-green-500" : "text-red-500";
     return (
-      <div className="px-2 h-[calc(100vh-10rem)]   overflow-x-hidden overflow-y-hidden dark:text-white/50 ">
-        <div className="flex items-center gap-2 mb-2">
-          <h1 className="text-2xl font-bold">Tracking Dashboard</h1>
-          <DropdownMenu>
-            <DropdownMenuTrigger className="hover:bg-white hover:text-black  dark:hover:bg-[#1F2937] p-1 rounded-md">
-              <Settings className="h-5 w-5 text-black dark:text-white  hover:text-black" />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="bg-white dark:bg-brand-darker border-brand-dark">
-              <DropdownMenuItem
-                onClick={() => invoke("match_tracked_with_gsc_command")}
-                className=" dark:text-white hover:text-white focus:text-white"
-              >
-                <Database className="mr-2 h-4 w-4 dark:text-white hover:text-white focus:text-white" />{" "}
-                Match with GSC
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleMatchedTrackedKws}
-                className="dark:text-white hover:text-white focus:text-white"
-              >
-                <Database className="mr-2 h-4 w-4 dark:text-white hover:text-white focus:text-white" />{" "}
-                Tracked Keywords with GSC
-              </DropdownMenuItem>{" "}
-              <DropdownMenuItem
-                onClick={handleKeywordsSummary}
-                className="text-black dark:text-white hover:text-white focus:text-white"
-              >
-                <Settings className="mr-2 h-4 w-4 text-black dark:text-white hover:text-white focus:text-white" />{" "}
-                Summary Kws
-              </DropdownMenuItem>{" "}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-        <div className="space-y-6 h-fit">
-          <StatsWidgets
-            keywordsSummary={keywordsSummary}
-            fetchKeywordsSummary={handleKeywordsSummary}
+      <span className={`inline-flex items-center ml-1 text-[10px] ${color}`}>
+        {isPositive ? <ArrowUp className="h-2 w-2" /> : <ArrowDown className="h-2 w-2" />}
+        {Math.abs(change).toFixed(1)}
+      </span>
+    );
+  };
+
+  const columns = useMemo<ColumnDef<Keyword>[]>(
+    () => [
+      {
+        accessorKey: "keyword",
+        header: "Keyword",
+        cell: ({ row }) => (
+          <span className="text-blue-600 font-semibold truncate block max-w-[150px]">
+            {row.original.keyword}
+          </span>
+        ),
+      },
+      {
+        accessorKey: "currentImpressions",
+        header: "Impressions",
+        cell: ({ row }) => (
+          <div className="flex items-center">
+            {row.original.currentImpressions.toLocaleString()}
+            {renderChange(row.original.currentImpressions, row.original.initialImpressions)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "currentClicks",
+        header: "Clicks",
+        cell: ({ row }) => (
+          <div className="flex items-center">
+            {row.original.currentClicks.toLocaleString()}
+            {renderChange(row.original.currentClicks, row.original.initialClicks)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "currentPosition",
+        header: "Position",
+        cell: ({ row }) => (
+          <div className="flex items-center">
+            <span className={row.original.currentPosition <= 10 ? "text-green-500" : "text-red-500"}>
+              {row.original.currentPosition.toFixed(1)}
+            </span>
+            {renderChange(row.original.currentPosition, row.original.initialPosition, true)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "url",
+        header: "URL",
+        cell: ({ row }) => (
+          <div className="max-w-[300px] truncate text-gray-500" title={row.original.url}>
+            {row.original.url}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "dateAdded",
+        header: "Added",
+      },
+      {
+        id: "actions",
+        header: "",
+        cell: ({ row }) => (
+          <KeywordRowMenu
+            keywordId={row.original.id}
+            removeKeyword={removeKeyword}
+            keywordIds={keywords.map((k) => k.id)}
           />
-          {sortedKeywords.length > 0 ? (
-            <KeywordTable
-              keywords={sortedKeywords}
-              removeKeyword={removeKeyword}
-              requestSort={requestSort}
-              sortConfig={sortConfig}
-              keywordIds={keywords.map((k) => k.id)}
-            />
-          ) : (
-            <div className="text-center text-gray-500 dark:text-gray-400">
-              No keywords available. Please add some keywords to get started.
-            </div>
-          )}
+        ),
+        size: 40,
+      },
+    ],
+    [keywords, removeKeyword]
+  );
+
+  return (
+    <div className="px-2 py-2 h-full flex flex-col dark:text-white/50">
+      <div className="flex items-center justify-between mb-2 flex-shrink-0 px-1">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
+            <Target className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+          </div>
+          <div className="flex items-baseline gap-2">
+            <h1 className="text-lg font-bold dark:text-white leading-none">
+              Keyword Tracking
+            </h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 leading-none">
+              Monitored rankings
+            </p>
+          </div>
         </div>
       </div>
-    );
-  },
-  (prevProps, nextProps) => {
-    // Only update when needsUpdate changes
-    return !prevProps.needsUpdate === nextProps.needsUpdate;
-  },
-);
+
+      <div className="flex-shrink-0 mb-2">
+        <StatsWidgets
+          keywordsSummary={keywordsSummary}
+          fetchKeywordsSummary={handleKeywordsSummary}
+        />
+      </div>
+
+      <div className="flex-1 min-h-0 relative">
+        <UniversalKeywordTable
+          data={keywords}
+          columns={columns}
+          searchPlaceholder="Search keywords..."
+          isLoading={isLoading}
+          headerActions={
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleFullRefresh}
+                className="h-9 w-9 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-brand-dark rounded-xl transition-all border border-transparent hover:border-gray-200 dark:hover:border-brand-dark text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                title="Refresh & Match GSC"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+                />
+              </button>
+
+              <div className="w-px h-6 bg-gray-200 dark:bg-brand-dark mx-1"></div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="h-9 w-9 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-brand-dark rounded-xl transition-all border border-transparent hover:border-gray-200 dark:hover:border-brand-dark text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <Settings className="h-4 w-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="bg-white dark:bg-brand-darker border-brand-dark">
+                  <DropdownMenuItem onClick={() => invoke("match_tracked_with_gsc_command")}>
+                    <Database className="mr-2 h-4 w-4" /> Force Match GSC
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          }
+        />
+      </div>
+    </div>
+  );
+}

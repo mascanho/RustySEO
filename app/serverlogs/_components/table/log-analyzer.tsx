@@ -27,6 +27,7 @@ import {
   BadgeInfo,
   X,
   CopyIcon,
+  KeyRound,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -89,6 +90,8 @@ import {
   handleCopyClick,
 } from "../WidgetTables/helpers/useCopyOpen";
 import { useExcelLoading } from "@/store/ServerLogsGlobalStore";
+import useGSCStatusStore from "@/store/GSCStatusStore";
+import { RankingsLogs } from "../Rankings/RankingsLogs";
 
 export function LogAnalyzer() {
   const {
@@ -125,6 +128,7 @@ export function LogAnalyzer() {
   const [showOnTables, setShowOnTables] = useState(false);
   const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
   const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
+  const [selectedLog, setSelectedLog] = useState<any | null>(null);
 
   const allStatusCodes = useMemo(() => {
     const codes = new Set<number>();
@@ -146,6 +150,16 @@ export function LogAnalyzer() {
 
   const [posColumn, setPosColumn] = useState("position");
   const { ExcelLoaded } = useExcelLoading();
+
+  // GSC Status
+  const {
+    isConfigured,
+    credentials,
+    isLoading: gscLoading,
+    updateStatus,
+    refreshStatus,
+  } = useGSCStatusStore();
+  console.log("GSC DATA", credentials);
 
   const cyclePosColumn = () => {
     setPosColumn((prev) => {
@@ -457,13 +471,7 @@ export function LogAnalyzer() {
     ];
 
     if (ExcelLoaded) {
-      headers = [
-        ...headers,
-        "Position",
-        "Clicks",
-        "Impressions",
-        "CTR",
-      ];
+      headers = [...headers, "Position", "Clicks", "Impressions", "CTR"];
     }
 
     // 2. Prepare data
@@ -648,6 +656,17 @@ export function LogAnalyzer() {
 
   return (
     <TooltipProvider>
+      {selectedLog && (
+        <RankingsLogs
+          isOpen={!!selectedLog}
+          onClose={() => setSelectedLog(null)}
+          url={
+            domain && selectedLog.path
+              ? `https://${domain}${selectedLog.path}`
+              : selectedLog.path
+          }
+        />
+      )}
       <div className="space-y-4 flex flex-col flex-1 h-full not-selectable">
         <div className="flex flex-col md:flex-row justify-between relative -mb-4 p-1 h-full">
           {ipModal && (
@@ -1198,6 +1217,8 @@ export function LogAnalyzer() {
                           posColumn={posColumn}
                           ExcelLoaded={ExcelLoaded}
                           getPositionBadgeColor={getPositionBadgeColor}
+                          credentials={credentials}
+                          setSelectedLog={setSelectedLog}
                         />
                       ))
                     ) : (
@@ -1260,6 +1281,8 @@ function LogRow({
   posColumn,
   ExcelLoaded,
   getPositionBadgeColor,
+  credentials,
+  setSelectedLog,
 }) {
   return (
     <>
@@ -1346,6 +1369,20 @@ function LogRow({
                   ? "https://" + domain + log.path
                   : log?.path}
               </span>
+              {/* SHOW A KEY TO POP THE MODAL WITH THE KEYWORDS FROM GSC */}
+              {credentials !== "" && (
+                <span className="active:scale-95 hover:scale:105 hover:text-red-500">
+                  <KeyRound
+                    size={14}
+                    className="text-[10px] ml-2 text-yellow-500 cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setSelectedLog(log);
+                    }}
+                  />
+                </span>
+              )}
             </section>
           ) : (
             <section className="max-w-[99%] w-[750px] 3xl:w-[950px] truncate relative ml-2 flex items-center">

@@ -29,7 +29,7 @@ export default function KeywordRowMenu({
     setIsMounted(true);
   }, []);
 
-  if (!isMounted || pathname !== "/") {
+  if (!isMounted) {
     return <div className="h-8 w-8" />; // Return empty space with consistent dimensions
   }
 

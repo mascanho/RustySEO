@@ -281,7 +281,6 @@ pub async fn check_links(url: String) -> Result<Vec<LinkStatus>, String> {
 
     // Convert the provided URL into a base URL
     let base_url = Url::parse(&url).map_err(|e| e.to_string())?;
-    let base_str = base_url.as_str();
 
     let links = match crawler::db::read_links_from_db() {
         Ok(links) => links,
@@ -371,12 +370,17 @@ pub fn check_ollama() -> bool {
 // ------ CONNECT TO GOOGLE SEARCH CONSOLE
 #[derive(Deserialize, Serialize, Debug)]
 struct SearchAnalyticsQuery {
-    start_date: String,
-    end_date: String,
-    dimensions: Vec<String>,
+    #[serde(rename = "startDate")]
+    pub start_date: String,
+    #[serde(rename = "endDate")]
+    pub end_date: String,
+    pub dimensions: Vec<String>,
     #[serde(rename = "rowLimit")]
-    row_limit: String,
-    search_type: String,
+    pub row_limit: i32,
+    #[serde(rename = "type")]
+    pub search_type: String,
+    #[serde(rename = "aggregationType")]
+    pub aggregation_type: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -398,6 +402,18 @@ pub struct InstalledInfo {
     pub search_type: String,
     pub url: String,
     pub rows: String,
+    pub token: Option<String>,
+    pub refresh_token: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct GA4Credentials {
+    pub client_id: String,
+    pub project_id: String,
+    pub client_secret: String,
+    pub property_id: String,
+    pub token: Option<String>,
+    pub refresh_token: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -413,7 +429,9 @@ pub struct Credentials {
     pub url: String,
     pub propertyType: String,
     pub range: String,
-    rows: String,
+    pub rows: String,
+    pub token: Option<String>,
+    pub refresh_token: Option<String>,
 }
 
 // helper function to move credentials around
@@ -443,6 +461,8 @@ pub async fn read_credentials_file() -> Result<InstalledInfo, String> {
         search_type: secret.installed.search_type,
         url: secret.installed.url,
         rows: secret.installed.rows,
+        token: secret.installed.token,
+        refresh_token: secret.installed.refresh_token,
     };
 
     println!("Search Console Config: {:?}", result);
@@ -451,6 +471,7 @@ pub async fn read_credentials_file() -> Result<InstalledInfo, String> {
 
 // FUNCTION TO SET GOOGLE SEARCH CONSOLE DATA ON THE DISK
 pub async fn set_search_console_credentials(credentials: Credentials) -> Result<PathBuf, String> {
+    println!("libs: set_search_console_credentials starting...");
     let credentials_client_id = credentials.clientId;
     let credentials_project_id = credentials.projectId;
     let credentials_client_secret = credentials.clientSecret;
@@ -478,6 +499,8 @@ pub async fn set_search_console_credentials(credentials: Credentials) -> Result<
             search_type: credentials_search_type.to_string(),
             range: credentials_range.to_string(),
             rows: credentials_rows.to_string(),
+            token: credentials.token,
+            refresh_token: credentials.refresh_token,
         },
     };
 
@@ -513,44 +536,10 @@ pub async fn set_search_console_credentials(credentials: Credentials) -> Result<
     Ok(secret_file)
 }
 
-pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::error::Error>> {
-    // RUN THE CHECK ON THE SECRET IN THE DISK
-
-    // Set up the OAuth2 flow
-    let secret_path = directories::ProjectDirs::from("", "", "rustyseo")
-        .expect("Failed to get project directories")
-        .data_dir()
-        .join("client_secret.json");
-    // println!("Secret path with error: {}", secret_path.display());
-    let secret = yup_oauth2::read_application_secret(&secret_path).await?;
-
-    // Create an authenticator
-    let auth_path = directories::ProjectDirs::from("", "", "rustyseo")
-        .expect("Failed to get project directories")
-        .data_dir()
-        .join("tokencache.json");
-    let auth = InstalledFlowAuthenticator::builder(secret, InstalledFlowReturnMethod::HTTPRedirect)
-        .persist_tokens_to_disk(&auth_path)
-        .build()
-        .await
-        .map_err(|e| {
-            eprintln!("Failed to create authenticator: {}", e);
-            format!("Failed to create authenticator: {}", e)
-        })
-        .and_then(|ok_result| {
-            println!("Authenticator created successfully");
-            Ok(ok_result)
-        })
-        .map(|result| result)?;
-
-    // Create an authorized client
-    let https = HttpsConnectorBuilder::new()
-        .with_native_roots()
-        .https_only()
-        .enable_http1()
-        .build();
-    let client = HyperClient::builder().build(https);
-
+pub async fn get_google_search_console(
+    start_date_arg: Option<String>,
+    end_date_arg: Option<String>,
+) -> Result<Vec<JsonValue>, Box<dyn std::error::Error>> {
     // READ THE FILE ON THE DISK
     let gsc_settings_info = read_credentials_file()
         .await
@@ -562,6 +551,49 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
     let credentials_client_secret = gsc_settings_info.client_secret;
     let credentials_range = gsc_settings_info.range;
     let credentials_rows = gsc_settings_info.rows;
+    let credentials_token = gsc_settings_info.token;
+
+    // Create an authorized client
+    let https = HttpsConnectorBuilder::new()
+        .with_native_roots()
+        .https_only()
+        .enable_http1()
+        .build();
+    let client = HyperClient::builder().build(https);
+
+    // Get the token (either from credentials or from auth flow)
+    let mut final_token = if let Some(token_str) = credentials_token {
+        println!("Using token from credentials");
+        token_str
+    } else {
+        // Set up the OAuth2 flow
+        let secret_path = directories::ProjectDirs::from("", "", "rustyseo")
+            .expect("Failed to get project directories")
+            .data_dir()
+            .join("client_secret.json");
+        let secret = yup_oauth2::read_application_secret(&secret_path).await?;
+
+        // Create an authenticator
+        let auth_path = directories::ProjectDirs::from("", "", "rustyseo")
+            .expect("Failed to get project directories")
+            .data_dir()
+            .join("tokencache.json");
+        let auth = InstalledFlowAuthenticator::builder(secret, InstalledFlowReturnMethod::HTTPRedirect)
+            .persist_tokens_to_disk(&auth_path)
+            .build()
+            .await
+            .map_err(|e| {
+                eprintln!("Failed to create authenticator: {}", e);
+                format!("Failed to create authenticator: {}", e)
+            })?;
+
+        let token = auth
+            .token(&["https://www.googleapis.com/auth/webmasters.readonly"])
+            .await?;
+        token.token().unwrap().to_string()
+    };
+
+    let refresh_token = gsc_settings_info.refresh_token;
 
     // Initialize variables
     let mut domain = false;
@@ -572,76 +604,81 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
 
     // Prepare the request
 
-    let (start_date, end_date) = match credentials_range.as_str() {
-        "1 month" => {
-            let end_date = Utc::now().format("%Y-%m-%d").to_string();
-            let start_date = (Utc::now() - chrono::Duration::days(30))
-                .format("%Y-%m-%d")
-                .to_string();
-            (start_date, end_date)
-        }
-        "3 months" => {
-            let end_date = Utc::now().format("%Y-%m-%d").to_string();
-            let start_date = (Utc::now() - chrono::Duration::days(90))
-                .format("%Y-%m-%d")
-                .to_string();
-            (start_date, end_date)
-        }
-        "6 months" => {
-            let end_date = Utc::now().format("%Y-%m-%d").to_string();
-            let start_date = (Utc::now() - chrono::Duration::days(180))
-                .format("%Y-%m-%d")
-                .to_string();
-            (start_date, end_date)
-        }
-        "12 months" => {
-            let end_date = Utc::now().format("%Y-%m-%d").to_string();
-            let start_date = (Utc::now() - chrono::Duration::days(365))
-                // .format("%Y-%m-%d")
-                .to_string();
-            (start_date, end_date)
-        }
-        "16 months" => {
-            let end_date = Utc::now().format("%Y-%m-%d").to_string();
-            let start_date = (Utc::now() - chrono::Duration::days(730))
-                .format("%Y-%m-%d")
-                .to_string();
-            (start_date, end_date)
-        }
-        _ => {
-            let end_date = Utc::now().format("%Y-%m-%d").to_string();
-            let start_date = (Utc::now() - chrono::Duration::days(365))
-                .format("%Y-%m-%d")
-                .to_string();
-            (start_date, end_date)
+    let (start_date, end_date) = if let (Some(s), Some(e)) = (start_date_arg, end_date_arg) {
+        println!("Using provided custom date range: {} to {}", s, e);
+        (s, e)
+    } else {
+        match credentials_range.as_str() {
+            "1 month" => {
+                let end_date = Utc::now().format("%Y-%m-%d").to_string();
+                let start_date = (Utc::now() - chrono::Duration::days(30))
+                    .format("%Y-%m-%d")
+                    .to_string();
+                (start_date, end_date)
+            }
+            "3 months" => {
+                let end_date = Utc::now().format("%Y-%m-%d").to_string();
+                let start_date = (Utc::now() - chrono::Duration::days(90))
+                    .format("%Y-%m-%d")
+                    .to_string();
+                (start_date, end_date)
+            }
+            "6 months" => {
+                let end_date = Utc::now().format("%Y-%m-%d").to_string();
+                let start_date = (Utc::now() - chrono::Duration::days(180))
+                    .format("%Y-%m-%d")
+                    .to_string();
+                (start_date, end_date)
+            }
+            "12 months" => {
+                let end_date = Utc::now().format("%Y-%m-%d").to_string();
+                let start_date = (Utc::now() - chrono::Duration::days(365))
+                    .format("%Y-%m-%d")
+                    .to_string();
+                (start_date, end_date)
+            }
+            "16 months" => {
+                let end_date = Utc::now().format("%Y-%m-%d").to_string();
+                let start_date = (Utc::now() - chrono::Duration::days(730))
+                    .format("%Y-%m-%d")
+                    .to_string();
+                (start_date, end_date)
+            }
+            _ => {
+                let end_date = Utc::now().format("%Y-%m-%d").to_string();
+                let start_date = (Utc::now() - chrono::Duration::days(365))
+                    .format("%Y-%m-%d")
+                    .to_string();
+                (start_date, end_date)
+            }
         }
     };
 
     // let site_url = "sc-domain:algarvewonders.com";
     let query = SearchAnalyticsQuery {
-        // start_date: "2024-01-01".to_string(),
         start_date,
-        end_date: finish_date,
+        end_date,
         dimensions: vec![
             "query".to_string(),
             "page".to_string(),
-            // "country".to_string(),
         ],
         search_type: "web".to_string(),
-        row_limit: credentials_rows,
+        row_limit: credentials_rows.parse::<i32>().unwrap_or(1000),
+        aggregation_type: "auto".to_string(),
     };
     let body = serde_json::to_string(&query)?;
+    println!("GSC Request Body: {}", body);
 
     // Make the API request
-    let token = auth
-        .token(&["https://www.googleapis.com/auth/webmasters.readonly"])
-        .await?;
-
     let site_url = match search_type.as_str() {
         "domain" => {
             domain = true;
             println!("Domain selected, URL: {}", &credentials_url);
-            format!("sc-domain:{}", &credentials_url)
+            if credentials_url.starts_with("sc-domain:") {
+                credentials_url.clone()
+            } else {
+                format!("sc-domain:{}", &credentials_url)
+            }
         }
         "site" => {
             site = true;
@@ -654,33 +691,73 @@ pub async fn get_google_search_console() -> Result<Vec<JsonValue>, Box<dyn std::
         }
     };
 
-    let request = hyper::Request::builder()
-        .method("POST")
-        .uri(format!(
-            "https://searchconsole.googleapis.com/webmasters/v3/sites/{}/searchAnalytics/query",
-            urlencoding::encode(&site_url)
-        ))
-        .header(
-            "Authorization",
-            format!("Bearer {}", token.token().unwrap()),
-        )
-        .header("Content-Type", "application/json")
-        .body(hyper::Body::from(body))?;
-
-    let response = client.request(request).await?;
-    let body_bytes = hyper::body::to_bytes(response.into_body()).await?;
-    let body_str = String::from_utf8(body_bytes.to_vec())?;
-
-    // Parse and print the results
-    let data: JsonValue = serde_json::from_str(&body_str)?;
-    // println!("Search Console Data: {:#?}", &data);
+    // Retry loop for handling 401 Unauthorized
     let mut gsc_data = Vec::new();
+    let max_retries = 1;
+    
+    for attempt in 0..=max_retries {
+        let request = hyper::Request::builder()
+            .method("POST")
+            .uri(format!(
+                "https://searchconsole.googleapis.com/webmasters/v3/sites/{}/searchAnalytics/query",
+                urlencoding::encode(&site_url)
+            ))
+            .header(
+                "Authorization",
+                format!("Bearer {}", final_token),
+            )
+            .header("Content-Type", "application/json")
+            .body(hyper::Body::from(body.clone()))?;
 
-    println!("Search Console Data: {:#?}", &data);
-    // Add data to DB
-    gsc_data.push(data);
-    tokio::time::sleep(tokio::time::Duration::from_secs(15)).await;
-    db::push_gsc_data_to_db(&gsc_data).expect("Failed to push data to database");
+        let response = client.request(request).await?;
+        let status = response.status();
+        
+        // If successful, proceed to parse
+        if status.is_success() {
+            let body_bytes = hyper::body::to_bytes(response.into_body()).await?;
+            let body_str = String::from_utf8(body_bytes.to_vec())?;
+            println!("GSC Response Status: {}", status);
+            
+            // Parse and print the results
+            let data: JsonValue = serde_json::from_str(&body_str)?;
+            
+            println!("Parsed GSC Data successfully. Rows found: {}", data["rows"].as_array().map(|a| a.len()).unwrap_or(0));
+            // Add data to DB
+            gsc_data.push(data);
+            if let Err(e) = db::push_gsc_data_to_db(&gsc_data) {
+                eprintln!("Failed to push GSC data to database: {}", e);
+                return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to save data to database: {}", e))));
+            }
+            
+            // Successfully fetched and saved, break loop
+            return Ok(gsc_data);
+        } else if status == hyper::StatusCode::UNAUTHORIZED && attempt < max_retries {
+            println!("GSC API returned 401 Unauthorized. Attempting to refresh token...");
+            
+            if let Some(ref r_token) = refresh_token {
+                println!("Refresh token found. Refreshing...");
+                match refresh_google_token(&credentials_client_id, &credentials_client_secret, r_token).await {
+                    Ok(new_token) => {
+                        println!("Token refreshed successfully. Retrying request...");
+                        final_token = new_token;
+                        continue; // Retry loop with new token
+                    },
+                    Err(e) => {
+                        eprintln!("Failed to refresh token: {}", e);
+                        // Fall through to error return below
+                    }
+                }
+            } else {
+                eprintln!("No refresh token available to handle 401 error.");
+            }
+        }
+        
+        // If we get here, it means we failed and ran out of retries or it's a non-recoverable error
+        let body_bytes = hyper::body::to_bytes(response.into_body()).await?;
+        let body_str = String::from_utf8(body_bytes.to_vec())?;
+        eprintln!("GSC API Error: {}", body_str);
+        return Err(format!("Google Search Console API error ({}): {}", status, body_str).into());
+    }
 
     Ok(gsc_data)
 }
@@ -692,38 +769,133 @@ pub struct AnalyticsData {
     pub response: Vec<Value>,
 }
 
-#[tauri::command]
-pub async fn set_google_analytics_id(id: String) -> Result<String, String> {
-    // set the directories
-    let config_dir = ProjectDirs::from("", "", "rustyseo")
-        .ok_or_else(|| "Failed to get project directories".to_string())?;
-    let config_dir = config_dir.data_dir();
-    let file_path = config_dir.join("ga_id.json");
+pub async fn refresh_google_token(client_id: &str, client_secret: &str, refresh_token: &str) -> Result<String, String> {
+    let client = reqwest::Client::new();
+    let response = client.post("https://oauth2.googleapis.com/token")
+        .form(&[
+            ("client_id", client_id),
+            ("client_secret", client_secret),
+            ("refresh_token", refresh_token),
+            ("grant_type", "refresh_token"),
+        ])
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
 
-    // write the id to the file
-    if let Err(e) = fs::write(&file_path, id.to_string()).await {
-        return Err(format!("Failed to write Google Analytics ID: {}", e));
+    let json: serde_json::Value = response.json().await.map_err(|e| e.to_string())?;
+    
+    if let Some(access_token) = json.get("access_token").and_then(|v| v.as_str()) {
+        Ok(access_token.to_string())
+    } else {
+        Err(format!("Failed to refresh token: {:?}", json))
     }
-
-    Ok(id.to_string())
 }
 
-// ------ GET THE GOOGLE ANALYTICS ID
-#[tauri::command]
-pub async fn get_google_analytics_id() -> Result<String, String> {
+// ------ GA4 CREDENTIALS MANAGEMENT
+
+pub async fn set_google_analytics_credentials(credentials: GA4Credentials) -> Result<(), String> {
     let config_dir = ProjectDirs::from("", "", "rustyseo")
         .ok_or_else(|| "Failed to get project directories".to_string())?;
     let config_dir = config_dir.data_dir();
-    let file_path = config_dir.join("ga_id.json");
+    let file_path = config_dir.join("ga4_credentials.json");
 
-    // read the file
-    let file_toml = fs::read_to_string(file_path)
+    let json = serde_json::to_string_pretty(&credentials)
+        .map_err(|e| format!("Failed to serialize GA4 credentials: {}", e))?;
+
+    fs::write(&file_path, json).await
+        .map_err(|e| format!("Failed to write GA4 credentials: {}", e))?;
+
+    // Also update the legacy ga_id.json for backward compatibility if needed
+    let ga_id_path = config_dir.join("ga_id.json");
+    let _ = fs::write(&ga_id_path, credentials.property_id).await;
+
+    Ok(())
+}
+
+pub async fn read_ga4_credentials_file() -> Result<GA4Credentials, String> {
+    let config_dir = ProjectDirs::from("", "", "rustyseo")
+        .ok_or_else(|| "Failed to get project directories".to_string())?;
+    let data_dir = config_dir.data_dir(); // Use data_dir as the base for credentials
+    let file_path = data_dir.join("ga4_credentials.json");
+
+    // Ensure the data directory exists
+    tokio::fs::create_dir_all(data_dir)
         .await
-        .expect("Could not read GA4 ID file");
+        .map_err(|e| format!("Failed to create data directory: {}", e))?;
 
-    println!("This is the content of the file {:#?}", file_toml);
+    if !file_path.exists() {
+        // Create a default empty credentials file if it doesn't exist
+        let default_credentials = GA4Credentials {
+            client_id: String::new(),
+            project_id: String::new(),
+            client_secret: String::new(),
+            property_id: String::new(),
+            token: None,
+            refresh_token: None,
+        };
+        let default_content = serde_json::to_string_pretty(&default_credentials)
+            .map_err(|e| format!("Failed to serialize default GA4 credentials: {}", e))?;
+        fs::write(&file_path, default_content)
+            .await
+            .map_err(|e| format!("Failed to write default GA4 credentials file: {}", e))?;
+    }
 
-    Ok(file_toml)
+    let content = fs::read_to_string(&file_path).await
+        .map_err(|e| format!("Failed to read GA4 credentials: {}", e))?;
+
+    let credentials: GA4Credentials = serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse GA4 credentials: {}", e))?;
+
+    Ok(credentials)
+}
+
+pub async fn get_ga4_properties(token: String) -> Result<Vec<Value>, String> {
+    let client = reqwest::Client::new();
+    
+    // 1. List accounts
+    // Using v1beta as it is more stable than v1alpha
+    let accounts_url = "https://analyticsadmin.googleapis.com/v1beta/accountSummaries";
+    
+    let response_res = client
+        .get(accounts_url)
+        .bearer_auth(&token)
+        .send()
+        .await;
+
+    let response: Value = match response_res {
+        Ok(res) => {
+            let status = res.status();
+            let text = res.text().await.unwrap_or_default();
+            println!("GA4 Account Summaries Status: {}", status);
+            println!("GA4 Account Summaries Response: {}", text);
+            
+            if !status.is_success() {
+                let error_json: Value = serde_json::from_str(&text).unwrap_or(json!({}));
+                let message = error_json["error"]["message"].as_str().unwrap_or("Unknown error");
+                return Err(format!("GA4 API Error: {}", message));
+            }
+
+            serde_json::from_str(&text)
+                .map_err(|e| format!("Failed to parse accounts JSON: {} (Content: {})", e, text))?
+        }
+        Err(e) => return Err(format!("Failed to fetch accounts: {}", e)),
+    };
+
+    let mut all_properties = Vec::new();
+
+    if let Some(accounts) = response["accountSummaries"].as_array() {
+        for account in accounts {
+            if let Some(properties) = account["propertySummaries"].as_array() {
+                for property in properties {
+                    all_properties.push(property.clone());
+                }
+            }
+        }
+    } else {
+         println!("No 'accountSummaries' found in response");
+    }
+
+    Ok(all_properties)
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -752,17 +924,40 @@ pub async fn get_google_analytics(
 
     // Create an authenticator that persists tokens
     let auth_path = config_dir.join("ga_tokencache.json");
-    let auth = oauth2::InstalledFlowAuthenticator::builder(
-        secret,
-        oauth2::InstalledFlowReturnMethod::HTTPRedirect,
-    )
-    .persist_tokens_to_disk(auth_path)
-    .build()
-    .await?;
+    
+    // Try to read the new credentials first
+    let credentials = read_ga4_credentials_file().await.ok();
+    
+    let token_str = if let Some(ref creds) = credentials {
+        if let Some(ref t) = creds.token {
+            Some(t.clone())
+        } else {
+            None
+        }
+    } else {
+        None
+    };
 
-    // Get an access token
-    let scopes = &["https://www.googleapis.com/auth/analytics.readonly"];
-    let token = auth.token(scopes).await?;
+    let mut token_val = if let Some(t) = token_str {
+        t
+    } else {
+        let secret = oauth2::read_application_secret(&secret_path)
+            .await
+            .expect("Where is the client_secret.json file?");
+
+        let auth = oauth2::InstalledFlowAuthenticator::builder(
+            secret,
+            oauth2::InstalledFlowReturnMethod::HTTPRedirect,
+        )
+        .persist_tokens_to_disk(auth_path)
+        .build()
+        .await?;
+
+        // Get an access token
+        let scopes = &["https://www.googleapis.com/auth/analytics.readonly"];
+        let token = auth.token(scopes).await?;
+        token.token().unwrap().to_string()
+    };
 
     // Create a client
     let client = reqwest::Client::new();
@@ -791,7 +986,12 @@ pub async fn get_google_analytics(
 
     let body = &search_type[0];
 
-    let id = get_google_analytics_id().await.unwrap();
+    let id = if let Some(ref creds) = credentials {
+        creds.property_id.clone()
+    } else {
+        // Fallback to legacy if possible, but for now let's just error if no credentials
+        return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "GA4 Property ID not found. Please connect GA4 first.")));
+    };
 
     println!("Using GA4 ID: {} to fetch Analytics data", id);
 
@@ -803,14 +1003,60 @@ pub async fn get_google_analytics(
     );
 
     // Make the request
-    let response: Value = client
+    let mut response_res = client
         .post(&analytics_url)
-        .bearer_auth(token.token().unwrap())
+        .bearer_auth(token_val.clone())
         .json(&body)
         .send()
-        .await?
-        .json()
-        .await?;
+        .await;
+
+    // If 401 Unauthorized, try to refresh the token
+    if let Ok(ref res) = response_res {
+        if res.status() == reqwest::StatusCode::UNAUTHORIZED {
+            if let Some(ref creds) = credentials {
+                if let Some(ref refresh) = creds.refresh_token {
+                    println!("Access token expired, attempting to refresh...");
+                    match refresh_google_token(&creds.client_id, &creds.client_secret, refresh).await {
+                        Ok(new_token) => {
+                            println!("Token refreshed successfully!");
+                            // Update the token in memory for the retry
+                            token_val = new_token.clone();
+                            
+                            // Save the new token to disk
+                            let mut updated_creds = creds.clone();
+                            updated_creds.token = Some(new_token);
+                            let _ = set_google_analytics_credentials(updated_creds).await;
+                            
+                            // Retry the request
+                            response_res = client
+                                .post(&analytics_url)
+                                .bearer_auth(token_val.clone())
+                                .json(&body)
+                                .send()
+                                .await;
+                        }
+                        Err(e) => {
+                            println!("Failed to refresh token: {}", e);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let response: Value = match response_res {
+        Ok(res) => {
+            let status = res.status();
+            let text = res.text().await.unwrap_or_default();
+            println!("GA4 API Status: {}", status);
+            // println!("GA4 API Response: {}", text);
+            serde_json::from_str(&text).unwrap_or(json!({"error": {"message": format!("Failed to parse GA4 response: {}", text)}}))
+        }
+        Err(e) => {
+            println!("GA4 API Request Error: {}", e);
+            json!({"error": {"message": e.to_string()}})
+        }
+    };
 
     // Process and print the results
     if let Some(rows) = response["rows"].as_array() {

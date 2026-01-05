@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Menu, Plus, Settings } from "lucide-react";
+import { KeyRound, Menu, Plus, Settings } from "lucide-react";
 import { FileUpload } from "./FileUpload";
 import { useEffect, useState } from "react";
 import TaxonomyManager from "./TaxonomyManager";
@@ -24,10 +24,13 @@ import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { FaRegTrashCan } from "react-icons/fa6";
 import ProjectsDBManager from "./LogsDBprojectsManager";
 import GSCuploadManager from "./GSCuploadManager";
+import { SiGooglesearchconsole } from "react-icons/si";
+import GSCcontainer from "@/app/components/ui/GSCcontainer/GSCcontainer";
 
 function UploadButton() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [gscOpen, setGscOpen] = useState(false);
   const [logsFromDB, setLogsFromDB] = useState(false);
   const { setStoredLogsFromDBStore } = useServerLogsStore();
   const { resetAll } = useLogAnalysis();
@@ -70,13 +73,93 @@ function UploadButton() {
         />
       </>
 
+      {/* Google Search console button */}
+
+      <Tooltip
+        id="gsc-tooltip"
+        place="top"
+        content="View Google Search Console data"
+        className="!bg-gray-800 !text-xs"
+      />
+      <Dialog clssName="w-[1200px]" open={gscOpen} onOpenChange={setGscOpen}>
+        <DialogTrigger asChild>
+          <aside
+            data-tooltip-id="gsc-tooltip"
+            className="bg-stone-500 text-xs rounded-sm"
+          >
+            <KeyRound className="w-7 h-7 text-white p-1.5" />
+          </aside>
+        </DialogTrigger>
+        <DialogContent className="px-4 py-5 overflow-hidden pl-6 w-[1900px] max-w-[90vw] h-[860px] dark:bg-brand-darker">
+          <GSCcontainer />
+        </DialogContent>
+      </Dialog>
+
+      {/* Settings Button */}
+      <>
+        <Tooltip id="settings-tooltip" place="top" content="Settings" />
+        <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+          <DialogTrigger asChild>
+            <button
+              data-tooltip-id="settings-tooltip"
+              className="bg-gray-200 dark:bg-gray-700 text-xs w-7  h-7 rounded-sm text-gray-800 dark:text-white flex justify-center items-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors active:scale-95"
+            >
+              <Settings size={15} className="text-xs" />
+            </button>
+          </DialogTrigger>
+          <DialogContent className="p-9 overflow-hidden pl-6 max-w-[800px] h-[660px] dark:bg-brand-darker">
+            <Tabs>
+              <TabsList className="grid w-full grid-cols-5 bg-gray-100 dark:bg-brand-dark">
+                <TabsTrigger
+                  className="hover:bg-brand-bright/70 hover:text-white"
+                  value="domain"
+                >
+                  Domain
+                </TabsTrigger>
+                <TabsTrigger value="taxonomy">Content Segments</TabsTrigger>
+                {/* <TabsTrigger value="ips">Google IPs</TabsTrigger> */}
+                <TabsTrigger value="logs">Stored Logs</TabsTrigger>
+                <TabsTrigger value="gsc">GSC Sync</TabsTrigger>
+                <TabsTrigger value="projects">Projects</TabsTrigger>
+              </TabsList>
+
+              {/* SEPARATOR */}
+              {/* <div className="w-full bg-gray-700 h-[1px] hidden dark:block mt-1 mr-4" /> */}
+
+              <TabsContent value="taxonomy" className="mt-4">
+                <TaxonomyManager closeDialog={() => setSettingsOpen(false)} />
+              </TabsContent>
+
+              <TabsContent value="domain" className="mt-4">
+                <DomainManager closeDialog={() => setSettingsOpen(false)} />
+              </TabsContent>
+              <TabsContent value="logs" className="mt-4">
+                <LogsDBManager
+                  dbLogs={logsFromDB}
+                  closeDialog={() => setSettingsOpen(false)}
+                />
+              </TabsContent>
+
+              <TabsContent value="projects" className="mt-4">
+                <ProjectsDBManager />
+              </TabsContent>
+
+              <TabsContent value="gsc" className="mt-4">
+                <GSCuploadManager />
+              </TabsContent>
+            </Tabs>
+          </DialogContent>
+        </Dialog>
+      </>
+
       <>
         <aside
           data-tooltip-id="reload-tooltip"
           onClick={() => handleClearStoreLogs()}
-          className="dark:bg-red-800  bg-red-500 w-7 h-7 flex items-center justify-center text-white rounded-sm cursor-pointer active:scale-95 p-2"
+          className="dark:bg-red-800  bg-red-500 w-32 h-7 text-xs flex items-center justify-center text-white rounded-sm cursor-pointer active:scale-95 p-2 rounded-r-xl pr-4"
         >
-          <FaRegTrashCan />
+          <FaRegTrashCan className="mr-2" />
+          Remove Logs
         </aside>
         <Tooltip
           id="reload-tooltip"
@@ -85,57 +168,6 @@ function UploadButton() {
           className="!bg-gray-800 !text-xs"
         />
       </>
-      {/* Settings Button */}
-      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogTrigger asChild>
-          <button className="bg-gray-200 dark:bg-gray-700 text-xs w-32 h-7 rounded-r-2xl text-gray-800 dark:text-white flex justify-center items-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors active:scale-95">
-            <Settings size={15} className="text-xs -ml-3 mr-2" />
-            Settings
-          </button>
-        </DialogTrigger>
-        <DialogContent className="p-9 overflow-hidden pl-6 max-w-[800px] h-[660px] dark:bg-brand-darker">
-          <Tabs>
-            <TabsList className="grid w-full grid-cols-5 bg-gray-100 dark:bg-brand-dark">
-              <TabsTrigger
-                className="hover:bg-brand-bright/70 hover:text-white"
-                value="domain"
-              >
-                Domain
-              </TabsTrigger>
-              <TabsTrigger value="taxonomy">Content Segments</TabsTrigger>
-              {/* <TabsTrigger value="ips">Google IPs</TabsTrigger> */}
-              <TabsTrigger value="logs">Stored Logs</TabsTrigger>
-              <TabsTrigger value="gsc">GSC Sync</TabsTrigger>
-              <TabsTrigger value="projects">Projects</TabsTrigger>
-            </TabsList>
-
-            {/* SEPARATOR */}
-            {/* <div className="w-full bg-gray-700 h-[1px] hidden dark:block mt-1 mr-4" /> */}
-
-            <TabsContent value="taxonomy" className="mt-4">
-              <TaxonomyManager closeDialog={() => setSettingsOpen(false)} />
-            </TabsContent>
-
-            <TabsContent value="domain" className="mt-4">
-              <DomainManager closeDialog={() => setSettingsOpen(false)} />
-            </TabsContent>
-            <TabsContent value="logs" className="mt-4">
-              <LogsDBManager
-                dbLogs={logsFromDB}
-                closeDialog={() => setSettingsOpen(false)}
-              />
-            </TabsContent>
-
-            <TabsContent value="projects" className="mt-4">
-              <ProjectsDBManager />
-            </TabsContent>
-
-            <TabsContent value="gsc" className="mt-4">
-              <GSCuploadManager />
-            </TabsContent>
-          </Tabs>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

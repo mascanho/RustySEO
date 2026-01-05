@@ -82,7 +82,7 @@ import Loader from "@/components/Loader/Loader";
 import { IconPokeball } from "@tabler/icons-react";
 import KeywordAnalytics from "./components/ui/KwTracking/KeywordAnalytics";
 import { SiGooglesearchconsole, SiSemrush } from "react-icons/si";
-import GscContainer from "./components/ui/GscContainer/GscContainer";
+// import GscContainer from "./components/ui/GscContainer/GscContainer";
 import SemrushContainer from "./components/ui/SemrushContainer/SemrushContainer";
 import { SlSocialGoogle } from "react-icons/sl";
 import GSCcontainer from "./components/ui/GSCcontainer/GSCcontainer";
@@ -96,7 +96,7 @@ import { LuMicroscope } from "react-icons/lu";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
-interface HomeProps {}
+interface HomeProps { }
 
 const Home: React.FC<HomeProps> = () => {
   const [openedModal, { open: openModal, close: closeModal }] =
@@ -509,7 +509,7 @@ const Home: React.FC<HomeProps> = () => {
           onClose={closeModal}
           title=""
           centered
-          // zIndex={"10000"}
+        // zIndex={"10000"}
         >
           <Todo url={debouncedURL} close={closeModal} strategy={strategy} />
         </Modal>
@@ -870,13 +870,13 @@ const Home: React.FC<HomeProps> = () => {
             </Tabs.Panel>{" "}
             <Tabs.Panel value="kws">
               <KeywordAnalytics />
-            </Tabs.Panel>{" "}
+            </Tabs.Panel>
             <Tabs.Panel
               value="gsc"
               className="overflow-hidden h-[calc(100vh-140px)] "
             >
               <GSCcontainer />
-            </Tabs.Panel>{" "}
+            </Tabs.Panel>
             <Tabs.Panel value="semrush">
               <SemrushContainer />
             </Tabs.Panel>{" "}

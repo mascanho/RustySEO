@@ -220,6 +220,13 @@ const TableRow = memo(
         row?.had_redirect ? "Yes" : "No" || "",
         row?.redirect_url || "",
         row?.redirection_type || "",
+        row?.status || "",
+        row?.redirect_count || 0,
+        row?.redirect_chain
+          ? row.redirect_chain
+            .map((hop: any) => `${hop.url} (${hop.status_code})`)
+            .join(" -> ")
+          : "",
       ],
       [row, index],
     );
@@ -274,13 +281,12 @@ const TableRow = memo(
               display: "flex",
               alignItems: "center",
             }}
-            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${
-              isRowClicked
+            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${isRowClicked
                 ? "bg-blue-600"
                 : index % 2 === 0
                   ? "bg-white dark:bg-brand-darker"
                   : "bg-gray-50 dark:bg-brand-dark/30"
-            }`}
+              }`}
           >
             <ContextTableMenu data={item.cell}>
               <TruncatedCell text={item.cell?.toString()} width="100%" />

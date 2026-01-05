@@ -23,6 +23,7 @@ interface GSCStatusState {
   setError: (error: string | null) => void;
   updateStatus: (credentials: GSCCredentials | null, error?: string) => void;
   clearStatus: () => void;
+  refresh: () => Promise<void>;
 
   // Getters
   getIsConfigured: () => boolean;
@@ -77,6 +78,21 @@ const useGSCStatusStore = create<GSCStatusState>((set, get) => ({
       lastChecked: null,
       error: null,
     }),
+
+  refresh: async () => {
+    const { invoke } = await import("@tauri-apps/api/core");
+    set({ isLoading: true });
+    try {
+      const credentials = await invoke<GSCCredentials>("read_credentials_file");
+      console.log("Raw GSC credentials from backend:", credentials);
+      get().updateStatus(credentials);
+    } catch (error) {
+      console.error("Failed to refresh GSC status:", error);
+      get().updateStatus(null, error instanceof Error ? error.message : String(error));
+    } finally {
+      set({ isLoading: false });
+    }
+  },
 
   getIsConfigured: () => {
     const state = get();

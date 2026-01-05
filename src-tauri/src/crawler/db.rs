@@ -316,7 +316,8 @@ pub fn push_gsc_data_to_db(data: &Vec<serde_json::Value>) -> Result<()> {
             impressions INTEGER,
             clicks INTEGER,
             ctr FLOAT,
-            position INTEGER
+            position FLOAT,
+            UNIQUE(date, url, query)
         )",
         [],
     )?;
@@ -326,32 +327,35 @@ pub fn push_gsc_data_to_db(data: &Vec<serde_json::Value>) -> Result<()> {
     {
         // Prepare the insert statement once
         let mut stmt = tx.prepare(
-            "INSERT INTO gsc_data (date, url, query, impressions, clicks, ctr, position)
+            "INSERT OR REPLACE INTO gsc_data (date, url, query, impressions, clicks, ctr, position)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
         )?;
 
+        let mut count = 0;
         for item in data {
-            let objects = item["rows"].as_array().unwrap();
+            if let Some(objects) = item["rows"].as_array() {
+                for object in objects {
+                    let url = object["keys"][1].as_str().unwrap_or("");
+                    let query = object["keys"][0].as_str().unwrap_or("");
+                    let ctr = object["ctr"].as_f64().unwrap_or(0.0);
+                    let clicks = object["clicks"].as_i64().unwrap_or(0);
+                    let impressions = object["impressions"].as_i64().unwrap_or(0);
+                    let position = object["position"].as_f64().unwrap_or(0.0);
 
-            for object in objects {
-                let url = object["keys"][1].as_str().unwrap_or("");
-                let query = object["keys"][0].as_str().unwrap_or("");
-                let ctr = object["ctr"].as_f64().unwrap_or(0.0);
-                let clicks = object["clicks"].as_i64().unwrap_or(0);
-                let impressions = object["impressions"].as_i64().unwrap_or(0);
-                let position = object["position"].to_string();
-
-                stmt.execute(params![
-                    date,
-                    url,
-                    query,
-                    impressions,
-                    clicks,
-                    ctr,
-                    position
-                ])?;
+                    stmt.execute(params![
+                        date,
+                        url,
+                        query,
+                        impressions,
+                        clicks,
+                        ctr,
+                        position
+                    ])?;
+                    count += 1;
+                }
             }
         }
+        println!("Inserted {} rows into gsc_data table", count);
     }
 
     // Commit transaction
@@ -364,19 +368,19 @@ pub fn push_gsc_data_to_db(data: &Vec<serde_json::Value>) -> Result<()> {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GscDataFromDB {
-    id: i32,
-    date: String,
-    url: String,
-    query: String,
-    impressions: i64,
-    clicks: i64,
-    ctr: f64,
-    position: f64,
+    pub id: i32,
+    pub date: String,
+    pub url: String,
+    pub query: String,
+    pub impressions: i64,
+    pub clicks: i64,
+    pub ctr: f64,
+    pub position: f64,
 }
 
 pub fn read_gsc_data_from_db() -> Result<Vec<GscDataFromDB>> {
     let conn = open_db_connection("crawl_results.db")?;
-    let mut stmt = conn.prepare("SELECT * FROM gsc_data")?;
+    let mut stmt = conn.prepare("SELECT id, date, url, query, impressions, clicks, ctr, position FROM gsc_data")?;
 
     let gsc_data = stmt.query_map([], |row| {
         Ok(GscDataFromDB {
@@ -390,13 +394,11 @@ pub fn read_gsc_data_from_db() -> Result<Vec<GscDataFromDB>> {
             position: row.get(7)?,
         })
     })?;
-
     let mut data = Vec::new();
-
     for gsc in gsc_data {
         data.push(gsc?);
     }
-    //println!("Page SEO Data: {:#?}", data);
+    println!("Read {} rows from gsc_data table", data.len());
     Ok(data)
 }
 
@@ -689,11 +691,27 @@ pub fn delete_keyword_from_db(id: &str) -> Result<()> {
     println!("Deleting keyword with id: {}", id);
     let conn = open_db_connection("keyword_tracking.db")?;
 
-    // Delete from both tables to ensure consistency between shallow and deep crawl
-    conn.execute("DELETE FROM keywords WHERE id = ?", params![id])?;
-    conn.execute("DELETE FROM summarized_data WHERE id = ?", params![id])?;
+    // Fetch url and query before deleting to match in summarized_data
+    let mut stmt = conn.prepare("SELECT url, query FROM keywords WHERE id = ?")?;
+    let keyword_info: Option<(String, String)> = stmt.query_row(params![id], |row| {
+        Ok((row.get(0)?, row.get(1)?))
+    }).ok();
 
-    println!("Keyword deleted from both keywords and summarized_data tables");
+    if let Some((url, query)) = keyword_info {
+        // Delete from both tables to ensure consistency
+        conn.execute("DELETE FROM keywords WHERE id = ?", params![id])?;
+        conn.execute(
+            "DELETE FROM summarized_data WHERE url = ? AND query = ?",
+            params![url, query],
+        )?;
+        println!("Keyword deleted from both keywords and summarized_data tables");
+    } else {
+        // If not found in keywords, try deleting directly from summarized_data if id matches (fallback)
+        conn.execute("DELETE FROM keywords WHERE id = ?", params![id])?;
+        conn.execute("DELETE FROM summarized_data WHERE id = ?", params![id])?;
+        println!("Keyword with id {} handled with fallback deletion", id);
+    }
+
     Ok(())
 }
 
@@ -971,6 +989,7 @@ pub fn databases_start() -> Result<()> {
     // CREATE TABLE IF IT DOES NOT EXIST
     conn.execute(
         "CREATE TABLE IF NOT EXISTS summarized_data (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             url TEXT NOT NULL,
             query TEXT NOT NULL,
             initial_clicks INTEGER,

@@ -48,6 +48,7 @@ pub mod commands;
 pub mod gemini;
 pub mod genai;
 pub mod gsc;
+pub mod gsc_auth;
 mod image_converter;
 pub mod loganalyser;
 pub mod server;
@@ -215,11 +216,12 @@ async fn main() {
             globals::actions::get_search_console_credentials,
             globals::actions::check_ai_model,
             commands::get_google_analytics_command,
+            commands::set_google_analytics_credentials,
+            commands::read_ga4_credentials_file,
+            commands::get_ga4_properties,
             crawler::content::scrape_google_headings_command,
             crawler::content::fetch_google_suggestions,
-            crawler::libs::set_google_analytics_id,
             crawler::libs::load_api_keys,
-            crawler::libs::get_google_analytics_id,
             crawler::libs::read_credentials_file,
             genai::get_ai_model,
             actions::ai_model_selected,
@@ -276,7 +278,9 @@ async fn main() {
             settings::settings::get_settings_command,
             url_checker::http_check::check_url,
             loganalyser::log_commands::save_gsc_data,
-            loganalyser::helpers::gsc_log::load_gsc_from_database
+            loganalyser::helpers::gsc_log::load_gsc_from_database,
+            gsc_auth::start_gsc_auth_server,
+            gsc_auth::exchange_gsc_code
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -8,6 +8,7 @@ use crate::crawler::libs::ApiKeys;
 use crate::crawler::libs::ClarityData;
 use crate::crawler::libs::Credentials;
 use crate::crawler::libs::DateRange;
+use crate::crawler::libs::GA4Credentials;
 use crate::image_converter::converter;
 use crate::machine_learning::keyword_frequency;
 use crate::settings::settings;
@@ -99,20 +100,25 @@ pub fn check_ollama() -> Result<OllamaProcess, String> {
 // ------- SETTING GOOGLE SEARCH CONSOLE CREDENTIALS
 #[tauri::command]
 pub async fn set_google_search_console_credentials(credentials: Credentials) {
-    let credentials = libs::set_search_console_credentials(credentials).await;
+    println!("Command: set_google_search_console_credentials for URL: {}", credentials.url);
+    let _ = libs::set_search_console_credentials(credentials).await;
+    println!("Command: set_google_search_console_credentials completed");
 }
 
 // ------ CALL THE GOOGLE SEARCH CONSOLE FUNCTION
 #[tauri::command]
-pub async fn call_google_search_console() -> Result<(), String> {
-    println!("Calling Google Search Console");
-    match libs::get_google_search_console().await {
+pub async fn call_google_search_console(
+    start_date: Option<String>,
+    end_date: Option<String>,
+) -> Result<(), String> {
+    println!("Command: call_google_search_console starting...");
+    match libs::get_google_search_console(start_date, end_date).await {
         Ok(_) => {
-            println!("Successfully called Google Search Console");
+            println!("Command: call_google_search_console successfully completed");
             Ok(())
         }
         Err(e) => {
-            eprintln!("Failed to call Google Search Console: {}", e);
+            eprintln!("Command: call_google_search_console failed: {}", e);
             Err(format!("Failed to call Google Search Console: {}", e))
         }
     }
@@ -134,6 +140,27 @@ pub fn call_gsc_match_url(url: String) -> Result<Vec<GscMatched>, String> {
         Ok(result) => Ok(result),
         Err(err) => Err(err.to_string()),
     }
+}
+
+
+
+// ------- SETTING GOOGLE ANALYTICS CREDENTIALS
+#[tauri::command]
+pub async fn set_google_analytics_credentials(credentials: GA4Credentials) {
+    println!("Command: set_google_analytics_credentials for property: {}", credentials.property_id);
+    let _ = libs::set_google_analytics_credentials(credentials).await;
+}
+
+// ------- READ GA4 CREDENTIALS FILE
+#[tauri::command]
+pub async fn read_ga4_credentials_file() -> Result<GA4Credentials, String> {
+    libs::read_ga4_credentials_file().await
+}
+
+// ------- GET GA4 PROPERTIES
+#[tauri::command]
+pub async fn get_ga4_properties(token: String) -> Result<Vec<Value>, String> {
+    libs::get_ga4_properties(token).await
 }
 
 #[tauri::command]
