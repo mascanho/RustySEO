@@ -1,8 +1,32 @@
 "use client";
 
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  BarChart,
+  MousePointerClick,
+  Percent,
+  TrendingUp,
+} from "lucide-react";
 
 interface SearchConsoleModalProps {
   isOpen: boolean;
@@ -81,109 +105,80 @@ export function RankingsLogs({
     },
   ];
 
+  const metricItems = [
+    {
+      name: "Clicks",
+      value: metrics.clicks.toLocaleString(),
+      icon: MousePointerClick,
+    },
+    {
+      name: "Impressions",
+      value: metrics.impressions.toLocaleString(),
+      icon: BarChart,
+    },
+    { name: "CTR", value: `${metrics.ctr}%`, icon: Percent },
+    { name: "Avg. Position", value: metrics.position, icon: TrendingUp },
+  ];
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden border-border/50 bg-black p-0 text-white shadow-2xl">
-        {/* Header */}
-        <div className="flex items-start justify-between border-b border-border/50 p-6">
-          <div className="flex-1">
-            <div className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Search Console Performance
-            </div>
-            <h2 className="text-balance font-medium leading-tight text-white">
-              {url}
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">Last 28 days</p>
-          </div>
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-4 border-b">
+          <DialogTitle className="text-base font-semibold">
+            Search Console Performance
+          </DialogTitle>
+          <DialogDescription className="truncate">
+            {url} · <span className="text-xs">Last 28 days</span>
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 p-4">
+          {metricItems.map((item) => (
+            <Card key={item.name}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{item.name}</CardTitle>
+                <item.icon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{item.value}</div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
-        <div className="grid grid-cols-2 gap-px bg-border/30 lg:grid-cols-4">
-          <div className="bg-black p-6">
-            <div className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Clicks
-            </div>
-            <div className="text-3xl font-semibold tabular-nums tracking-tight">
-              {metrics.clicks.toLocaleString()}
-            </div>
-          </div>
-
-          <div className="bg-black p-6">
-            <div className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Impressions
-            </div>
-            <div className="text-3xl font-semibold tabular-nums tracking-tight">
-              {metrics.impressions.toLocaleString()}
-            </div>
-          </div>
-
-          <div className="bg-black p-6">
-            <div className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              CTR
-            </div>
-            <div className="text-3xl font-semibold tabular-nums tracking-tight">
-              {metrics.ctr}%
-            </div>
-          </div>
-
-          <div className="bg-black p-6">
-            <div className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Avg. Position
-            </div>
-            <div className="text-3xl font-semibold tabular-nums tracking-tight">
-              {metrics.position}
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6 overflow-auto">
-          <h3 className="mb-4 text-sm font-medium text-white">Top Keywords</h3>
-
-          <div className="rounded-lg border border-border/50 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border/50 bg-white/[0.02]">
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Query
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Clicks
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Impressions
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    CTR
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                    Position
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
+        <div className="px-4 pb-4 flex-1 overflow-y-auto">
+          <p className="text-sm font-semibold mb-2">Top Keywords</p>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Query</TableHead>
+                  <TableHead className="text-right">Clicks</TableHead>
+                  <TableHead className="text-right">Impressions</TableHead>
+                  <TableHead className="text-right">CTR</TableHead>
+                  <TableHead className="text-right">Position</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {keywords.map((keyword, index) => (
-                  <tr
-                    key={index}
-                    className="border-b border-border/30 transition-colors hover:bg-white/[0.02] last:border-0"
-                  >
-                    <td className="px-4 py-3 font-medium text-white">
-                      {keyword.query}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums">
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{keyword.query}</TableCell>
+                    <TableCell className="text-right tabular-nums">
                       {keyword.clicks.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
                       {keyword.impressions.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
                       {keyword.ctr}%
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
                       {keyword.position}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </div>
       </DialogContent>
