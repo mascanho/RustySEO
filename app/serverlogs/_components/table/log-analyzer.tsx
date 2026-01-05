@@ -128,6 +128,7 @@ export function LogAnalyzer() {
   const [showOnTables, setShowOnTables] = useState(false);
   const [verifiedFilter, setVerifiedFilter] = useState<boolean | null>(null);
   const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
+  const [selectedLog, setSelectedLog] = useState<any | null>(null);
 
   const allStatusCodes = useMemo(() => {
     const codes = new Set<number>();
@@ -655,6 +656,17 @@ export function LogAnalyzer() {
 
   return (
     <TooltipProvider>
+      {selectedLog && (
+        <RankingsLogs
+          isOpen={!!selectedLog}
+          onClose={() => setSelectedLog(null)}
+          url={
+            domain && selectedLog.path
+              ? `https://${domain}${selectedLog.path}`
+              : selectedLog.path
+          }
+        />
+      )}
       <div className="space-y-4 flex flex-col flex-1 h-full not-selectable">
         <div className="flex flex-col md:flex-row justify-between relative -mb-4 p-1 h-full">
           {ipModal && (
@@ -1206,6 +1218,7 @@ export function LogAnalyzer() {
                           ExcelLoaded={ExcelLoaded}
                           getPositionBadgeColor={getPositionBadgeColor}
                           credentials={credentials}
+                          setSelectedLog={setSelectedLog}
                         />
                       ))
                     ) : (
@@ -1269,6 +1282,7 @@ function LogRow({
   ExcelLoaded,
   getPositionBadgeColor,
   credentials,
+  setSelectedLog,
 }) {
   return (
     <>
@@ -1357,20 +1371,17 @@ function LogRow({
               </span>
               {/* SHOW A KEY TO POP THE MODAL WITH THE KEYWORDS FROM GSC */}
               {credentials !== "" && (
-                <>
-                  <RankingsLogs isOpen={true} onClose={() => {}} />
-                  <span className="active:scale-95 hover:scale:105 hover:text-red-500">
-                    <KeyRound
-                      size={14}
-                      className="text-[10px] ml-2 text-yellow-500 cursor-pointer"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-                        console.log(e, "CLicked to see KWs");
-                      }}
-                    />
-                  </span>
-                </>
+                <span className="active:scale-95 hover:scale:105 hover:text-red-500">
+                  <KeyRound
+                    size={14}
+                    className="text-[10px] ml-2 text-yellow-500 cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setSelectedLog(log);
+                    }}
+                  />
+                </span>
               )}
             </section>
           ) : (

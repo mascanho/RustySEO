@@ -7,11 +7,14 @@ import { Button } from "@/components/ui/button";
 interface SearchConsoleModalProps {
   isOpen: boolean;
   onClose: () => void;
+  url: string;
 }
 
-export function RankingsLogs({ isOpen, onClose }: SearchConsoleModalProps) {
-  // Mock data - in a real app, this would come from Google Search Console API
-  const url = "https://example.com/blog/article";
+export function RankingsLogs({
+  isOpen,
+  onClose,
+  url,
+}: SearchConsoleModalProps) {
   const metrics = {
     clicks: 2847,
     impressions: 45123,
