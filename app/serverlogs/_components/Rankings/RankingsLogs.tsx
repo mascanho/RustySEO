@@ -38,60 +38,130 @@ export function RankingsLogs({
 
   const keywords = [
     {
-      query: "next.js tutorial",
-      clicks: 342,
-      impressions: 5821,
+      query: "supply chain management",
+      clicks: 412,
+      impressions: 6234,
+      ctr: 6.6,
+      position: 7.9,
+    },
+    {
+      query: "logistics optimization",
+      clicks: 367,
+      impressions: 5789,
+      ctr: 6.3,
+      position: 9.2,
+    },
+    {
+      query: "inventory control techniques",
+      clicks: 298,
+      impressions: 4892,
+      ctr: 6.1,
+      position: 10.5,
+    },
+    {
+      query: "demand forecasting methods",
+      clicks: 245,
+      impressions: 4120,
       ctr: 5.9,
-      position: 8.2,
+      position: 11.7,
     },
     {
-      query: "react server components",
-      clicks: 289,
-      impressions: 4203,
-      ctr: 6.9,
-      position: 11.3,
+      query: "supplier relationship management",
+      clicks: 192,
+      impressions: 3567,
+      ctr: 5.4,
+      position: 13.3,
     },
     {
-      query: "app router guide",
-      clicks: 256,
-      impressions: 3842,
-      ctr: 6.7,
-      position: 9.8,
+      query: "warehouse automation",
+      clicks: 168,
+      impressions: 3124,
+      ctr: 5.4,
+      position: 14.8,
     },
     {
-      query: "next.js best practices",
-      clicks: 198,
-      impressions: 3290,
-      ctr: 6.0,
-      position: 13.1,
-    },
-    {
-      query: "server side rendering",
-      clicks: 176,
-      impressions: 2981,
-      ctr: 5.9,
-      position: 14.7,
-    },
-    {
-      query: "next.js deployment",
-      clicks: 134,
-      impressions: 2456,
-      ctr: 5.5,
-      position: 16.2,
-    },
-    {
-      query: "react framework",
-      clicks: 112,
-      impressions: 2198,
+      query: "transportation management systems",
+      clicks: 143,
+      impressions: 2789,
       ctr: 5.1,
-      position: 18.4,
+      position: 16.1,
     },
     {
-      query: "web performance optimization",
-      clicks: 98,
-      impressions: 1876,
-      ctr: 5.2,
-      position: 15.9,
+      query: "supply chain analytics",
+      clicks: 121,
+      impressions: 2432,
+      ctr: 5.0,
+      position: 17.5,
+    },
+    {
+      query: "procurement strategies",
+      clicks: 109,
+      impressions: 2210,
+      ctr: 4.9,
+      position: 18.9,
+    },
+    {
+      query: "risk management in supply chain",
+      clicks: 97,
+      impressions: 1987,
+      ctr: 4.9,
+      position: 19.7,
+    },
+    {
+      query: "sustainable supply chain",
+      clicks: 85,
+      impressions: 1765,
+      ctr: 4.8,
+      position: 20.8,
+    },
+    {
+      query: "reverse logistics",
+      clicks: 74,
+      impressions: 1543,
+      ctr: 4.8,
+      position: 21.9,
+    },
+    {
+      query: "supply chain visibility",
+      clicks: 68,
+      impressions: 1421,
+      ctr: 4.8,
+      position: 22.7,
+    },
+    {
+      query: "just in time inventory",
+      clicks: 61,
+      impressions: 1308,
+      ctr: 4.7,
+      position: 23.6,
+    },
+    {
+      query: "supply chain software",
+      clicks: 54,
+      impressions: 1196,
+      ctr: 4.5,
+      position: 24.4,
+    },
+    {
+      query: "cold chain logistics",
+      clicks: 49,
+      impressions: 1083,
+      ctr: 4.5,
+      position: 25.1,
+    },
+    {
+      query: "global supply chain trends",
+      clicks: 43,
+      impressions: 972,
+      ctr: 4.4,
+      position: 26.0,
+    },
+    {
+      query: "supply chain resilience",
+      clicks: 39,
+      impressions: 865,
+      ctr: 4.5,
+      position: 26.8,
     },
   ];
 
@@ -128,13 +198,15 @@ export function RankingsLogs({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
+      <DialogContent className="max-w-4xl max-h-[70vh] flex flex-col p-0 gap-0">
         <DialogHeader className="p-4 border-b dark:border-zinc-700 flex">
           <DialogTitle className="text-base font-semibold dark:text-white">
             Search Console Performance ·{" "}
             <span className="text-xs">Last 28 days</span>
           </DialogTitle>
-          <DialogDescription className="truncate">{url} </DialogDescription>
+          <DialogDescription className="truncate">
+            <span className="text-brand-bright font-bold">URL:</span> {url}{" "}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="border-b bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900/50">
@@ -160,13 +232,13 @@ export function RankingsLogs({
           </div>
         </div>
 
-        <div className="px-4 pb-4 flex-1 overflow-y-auto">
-          <p className="text-sm font-semibold mb-2 dark:text-white">
+        <div className="flex flex-1 flex-col overflow-y-hidden px-4 pt-3 pb-4">
+          <p className="flex-shrink-0 pb-2 text-sm font-semibold dark:text-white">
             Top Keywords
           </p>
-          <div className="rounded-md border dark:border-zinc-700">
+          <div className="flex-1 overflow-y-auto rounded-md border dark:border-zinc-700">
             <Table>
-              <TableHeader>
+              <TableHeader className="sticky top-0 z-10 bg-card">
                 <TableRow>
                   <TableHead>Query</TableHead>
                   <TableHead className="text-right">Clicks</TableHead>
