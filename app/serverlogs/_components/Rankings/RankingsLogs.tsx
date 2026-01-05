@@ -95,14 +95,6 @@ export function RankingsLogs({
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">Last 28 days</p>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-8 w-8 hover:bg-white/5"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </div>
 
         <div className="grid grid-cols-2 gap-px bg-border/30 lg:grid-cols-4">
