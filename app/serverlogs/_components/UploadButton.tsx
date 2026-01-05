@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { KeyRound, Menu, Plus, Settings } from "lucide-react";
+import { Menu, Plus, Settings } from "lucide-react";
 import { FileUpload } from "./FileUpload";
 import { useEffect, useState } from "react";
 import TaxonomyManager from "./TaxonomyManager";
@@ -24,13 +24,10 @@ import { useLogAnalysis } from "@/store/ServerLogsStore";
 import { FaRegTrashCan } from "react-icons/fa6";
 import ProjectsDBManager from "./LogsDBprojectsManager";
 import GSCuploadManager from "./GSCuploadManager";
-import { SiGooglesearchconsole } from "react-icons/si";
-import GSCcontainer from "@/app/components/ui/GSCcontainer/GSCcontainer";
 
 function UploadButton() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [gscOpen, setGscOpen] = useState(false);
   const [logsFromDB, setLogsFromDB] = useState(false);
   const { setStoredLogsFromDBStore } = useServerLogsStore();
   const { resetAll } = useLogAnalysis();
@@ -88,19 +85,6 @@ function UploadButton() {
           className="!bg-gray-800 !text-xs"
         />
       </>
-
-      {/* Google Search console button */}
-      <Dialog clssName="w-[1200px]" open={gscOpen} onOpenChange={setGscOpen}>
-        <DialogTrigger asChild>
-          <div className="bg-stone-500 text-xs rounded-sm">
-            <KeyRound className="w-7 h-7 text-white p-1.5" />
-          </div>
-        </DialogTrigger>
-        <DialogContent className="px-4 py-5 overflow-hidden pl-6 w-[1900px] max-w-[90vw] h-[860px] dark:bg-brand-darker">
-          <GSCcontainer />
-        </DialogContent>
-      </Dialog>
-
       {/* Settings Button */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DialogTrigger asChild>
