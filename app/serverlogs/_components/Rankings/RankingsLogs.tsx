@@ -15,18 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  BarChart,
-  MousePointerClick,
-  Percent,
-  TrendingUp,
-} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarChart, MousePointerClick, Percent, TrendingUp } from "lucide-react";
 
 interface SearchConsoleModalProps {
   isOpen: boolean;
@@ -123,20 +113,21 @@ export function RankingsLogs({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
-        <DialogHeader className="p-4 border-b">
-          <DialogTitle className="text-base font-semibold">
-            Search Console Performance
+        <DialogHeader className="p-4 border-b dark:border-zinc-700 flex">
+          <DialogTitle className="text-base font-semibold dark:text-white">
+            Search Console Performance ·{" "}
+            <span className="text-xs">Last 28 days</span>
           </DialogTitle>
-          <DialogDescription className="truncate">
-            {url} · <span className="text-xs">Last 28 days</span>
-          </DialogDescription>
+          <DialogDescription className="truncate">{url} </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 p-4">
           {metricItems.map((item) => (
-            <Card key={item.name}>
+            <Card key={item.name} className="dark:border-zinc-700">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{item.name}</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {item.name}
+                </CardTitle>
                 <item.icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -148,7 +139,7 @@ export function RankingsLogs({
 
         <div className="px-4 pb-4 flex-1 overflow-y-auto">
           <p className="text-sm font-semibold mb-2">Top Keywords</p>
-          <div className="rounded-md border">
+          <div className="rounded-md border dark:border-zinc-700">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -162,7 +153,9 @@ export function RankingsLogs({
               <TableBody>
                 {keywords.map((keyword, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{keyword.query}</TableCell>
+                    <TableCell className="font-medium">
+                      {keyword.query}
+                    </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {keyword.clicks.toLocaleString()}
                     </TableCell>
@@ -185,3 +178,4 @@ export function RankingsLogs({
     </Dialog>
   );
 }
+
