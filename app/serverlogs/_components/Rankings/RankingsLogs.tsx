@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import useGSCStatusStore from "@/store/GSCStatusStore";
 import { useMemo, useState } from "react";
+import { format } from "date-fns";
 
 interface SearchConsoleModalProps {
   isOpen: boolean;
@@ -39,11 +40,21 @@ export function RankingsLogs({
   onClose,
   url,
 }: SearchConsoleModalProps) {
-  const { selectedURLDetails } = useGSCStatusStore();
+  const { selectedURLDetails, startDate, endDate } = useGSCStatusStore();
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: "ascending" | "descending";
   } | null>({ key: "clicks", direction: "descending" });
+
+  const dateRangeText = useMemo(() => {
+    if (startDate && endDate) {
+      return `${format(startDate, "MMM d, yyyy")} - ${format(
+        endDate,
+        "MMM d, yyyy",
+      )}`;
+    }
+    return "Last 28 days";
+  }, [startDate, endDate]);
 
   const requestSort = (key: any) => {
     let direction: "ascending" | "descending" = "descending";
@@ -142,7 +153,7 @@ export function RankingsLogs({
         <DialogHeader className="p-4 border-b dark:border-zinc-700 flex">
           <DialogTitle className="text-base font-semibold dark:text-white">
             Search Console Performance ·{" "}
-            <span className="text-xs">Last 28 days</span>
+            <span className="text-xs">{dateRangeText}</span>
           </DialogTitle>
           <DialogDescription className="truncate">
             <span className="text-brand-bright font-bold">Log URL:</span>{" "}

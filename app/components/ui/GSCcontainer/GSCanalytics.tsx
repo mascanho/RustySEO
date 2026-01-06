@@ -42,19 +42,22 @@ const GSCanalytics = () => {
     refresh: refreshStatus,
     setGSCStoreData,
     data,
+    startDate,
+    endDate,
+    setStartDate,
+    setEndDate,
   } = useGSCStatusStore();
   const [openedWizard, { open: openWizard, close: closeWizard }] =
     useDisclosure(false);
 
-  // Date filtering state - Init with last 28 days
-  const [startDate, setStartDate] = useState<Date | null>(() => {
-    const date = subDays(new Date(), 28);
-    return isValid(date) ? date : null;
-  });
-  const [endDate, setEndDate] = useState<Date | null>(() => {
-    const date = new Date();
-    return isValid(date) ? date : null;
-  });
+  useEffect(() => {
+    if (!startDate) {
+      setStartDate(subDays(new Date(), 28));
+    }
+    if (!endDate) {
+      setEndDate(new Date());
+    }
+  }, [startDate, endDate, setStartDate, setEndDate]);
 
   // Helper to format date for input value (yyyy-MM-dd)
   const formatDateForInput = (date: Date | null) => {

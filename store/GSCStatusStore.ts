@@ -19,6 +19,8 @@ interface GSCStatusState {
   showInTable: boolean;
   data: any;
   selectedURLDetails: GscQueryMatch | null;
+  startDate: Date | null;
+  endDate: Date | null;
 
   // Actions
   setCredentials: (credentials: GSCCredentials | null) => void;
@@ -30,6 +32,8 @@ interface GSCStatusState {
   setShowInTable: (showInTable: boolean) => void;
   setGSCStoreData: (data: any) => void;
   setSelectedURLDetails: (data: any) => void;
+  setStartDate: (date: Date | null) => void;
+  setEndDate: (date: Date | null) => void;
 
   // Getters
   getIsConfigured: () => boolean;
@@ -66,6 +70,11 @@ const useGSCStatusStore = create<GSCStatusState>((set, get) => ({
   showInTable: false,
   data: [],
   selectedURLDetails: null,
+  startDate: null,
+  endDate: null,
+
+  setStartDate: (date) => set({ startDate: date }),
+  setEndDate: (date) => set({ endDate: date }),
 
   setSelectedURLDetails: (data: GscQueryMatch | null) =>
     set({ selectedURLDetails: data }),
