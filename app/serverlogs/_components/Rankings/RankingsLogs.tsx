@@ -17,9 +17,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
-import { BarChart, MousePointerClick, Percent, TrendingUp } from "lucide-react";
+import {
+  BarChart,
+  MousePointerClick,
+  Percent,
+  TrendingUp,
+  ChevronUp,
+  ChevronDown,
+} from "lucide-react";
 import useGSCStatusStore from "@/store/GSCStatusStore";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 interface SearchConsoleModalProps {
   isOpen: boolean;
@@ -33,6 +40,44 @@ export function RankingsLogs({
   url,
 }: SearchConsoleModalProps) {
   const { selectedURLDetails } = useGSCStatusStore();
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: "ascending" | "descending";
+  } | null>({ key: "clicks", direction: "descending" });
+
+  const requestSort = (key: any) => {
+    let direction: "ascending" | "descending" = "descending";
+    if (sortConfig && sortConfig.key === key) {
+      direction =
+        sortConfig.direction === "descending" ? "ascending" : "descending";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedMatches = useMemo(() => {
+    if (!selectedURLDetails?.matches) {
+      return [];
+    }
+
+    let items = [...selectedURLDetails.matches];
+
+    if (sortConfig !== null) {
+      items.sort((a, b) => {
+        const aVal = a[sortConfig.key];
+        const bVal = b[sortConfig.key];
+
+        if (aVal < bVal) {
+          return sortConfig.direction === "ascending" ? -1 : 1;
+        }
+        if (aVal > bVal) {
+          return sortConfig.direction === "ascending" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    return items;
+  }, [selectedURLDetails?.matches, sortConfig]);
 
   const metrics = useMemo(() => {
     if (!selectedURLDetails) {
@@ -81,6 +126,14 @@ export function RankingsLogs({
       color: "text-amber-600 dark:text-amber-400",
       bgColor: "bg-amber-100 dark:bg-amber-900/20",
     },
+  ];
+
+  const tableHeaders = [
+    { key: "query", label: "Query", className: "text-left" },
+    { key: "clicks", label: "Clicks", className: "text-right" },
+    { key: "impressions", label: "Impressions", className: "text-right" },
+    { key: "ctr", label: "CTR", className: "text-right" },
+    { key: "position", label: "Position", className: "text-right" },
   ];
 
   return (
@@ -132,17 +185,35 @@ export function RankingsLogs({
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-card">
                 <TableRow>
-                  <TableHead>Query</TableHead>
-                  <TableHead className="text-right">Clicks</TableHead>
-                  <TableHead className="text-right">Impressions</TableHead>
-                  <TableHead className="text-right">CTR</TableHead>
-                  <TableHead className="text-right">Position</TableHead>
+                  {tableHeaders.map((header) => (
+                    <TableHead
+                      key={header.key}
+                      onClick={() => requestSort(header.key)}
+                      className={`${header.className} cursor-pointer`}
+                    >
+                      <div
+                        className={`flex items-center ${
+                          header.className === "text-right" ? "justify-end" : ""
+                        }`}
+                      >
+                        {header.label}
+                        {sortConfig?.key === header.key && (
+                          <span className="ml-1">
+                            {sortConfig.direction === "ascending" ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </TableHead>
+                  ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {selectedURLDetails?.matches &&
-                selectedURLDetails.matches.length > 0 ? (
-                  selectedURLDetails.matches.map((keyword, index) => (
+                {sortedMatches && sortedMatches.length > 0 ? (
+                  sortedMatches.map((keyword, index) => (
                     <TableRow key={index}>
                       <TableCell className="font-medium">
                         {keyword.query}
