@@ -90,7 +90,7 @@ function UploadButton() {
             <KeyRound className="w-7 h-7 text-white p-1.5" />
           </aside>
         </DialogTrigger>
-        <DialogContent className="px-4 py-5 overflow-hidden pl-6 w-[1900px] max-w-[90vw] h-[860px] dark:bg-brand-darker">
+        <DialogContent className="px-4 py-5 overflow-hidden pl-6 w-[1900px] max-w-[90vw] h-[calc(100vh-10vh)] dark:bg-brand-darker">
           <GSCcontainer />
         </DialogContent>
       </Dialog>
