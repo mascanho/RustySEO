@@ -1,5 +1,7 @@
 use anyhow::Error;
 use serde::{Deserialize, Serialize};
+use strsim::jaro_winkler;
+use tracing::{debug, error, info, warn};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GscDataItem {
@@ -38,7 +40,7 @@ pub struct GscMatch {
 }
 
 pub fn match_gsc_query(data: Vec<GscDataItem>, url: &str) -> Result<GscQueryMatch, Error> {
-    println!("Received {} GSC items for URL: {}", data.len(), url);
+    tracing::info!("Received {} GSC items for URL: {}", data.len(), url);
 
     // Process the actual data
     let matches: Vec<GscMatch> = data
@@ -47,7 +49,7 @@ pub fn match_gsc_query(data: Vec<GscDataItem>, url: &str) -> Result<GscQueryMatc
             // Check if this GSC item is relevant to the target URL
             let similarity = calculate_url_similarity(&item.url, url);
 
-            if similarity > 0.3 {
+            if similarity > 0.8 {
                 Some(GscMatch {
                     query: item.query.clone(),
                     clicks: item.clicks,
@@ -78,60 +80,71 @@ pub fn match_gsc_query(data: Vec<GscDataItem>, url: &str) -> Result<GscQueryMatc
         0.0
     };
 
-            let total_clicks: f32 = matches.iter().map(|m| m.clicks as f32).sum();
-            let total_impressions: f32 = matches.iter().map(|m| m.impressions as f32).sum();
-    
-            let avg_ctr = if total_impressions > 0.0 {
-                (total_clicks / total_impressions) * 100.0
-            } else {
-                0.0
-            };
-    
-            let avg_position = if !matches.is_empty() {
-                matches.iter().map(|m| m.position).sum::<f32>() / matches.len() as f32
-            } else {
-                0.0
-            };
-    
-        Ok(GscQueryMatch {
-            url: url.to_string(),
-            matches,       // This moves matches into the struct
-            total_matches, // Use the pre-calculated value
-                confidence_score,
-            top_queries,
-            total_clicks: total_clicks as u32,
-            total_impressions: total_impressions as u32,
-            avg_ctr,
-            avg_position,
-        })        }
-        
-        fn calculate_url_similarity(gsc_url: &str, target_url: &str) -> f32 {
-            // Simple URL similarity calculation
-            // You can implement more sophisticated logic here
-            let gsc_lower = gsc_url.to_lowercase();
-            let target_lower = target_url.to_lowercase();
-    if gsc_lower == target_lower {
-        return 1.0;
-    }
+    let total_clicks: f32 = matches.iter().map(|m| m.clicks as f32).sum();
+    let total_impressions: f32 = matches.iter().map(|m| m.impressions as f32).sum();
 
-    if gsc_lower.contains(&target_lower) || target_lower.contains(&gsc_lower) {
-        return 0.8;
-    }
-
-    // Check for partial matches
-    let gsc_parts: Vec<&str> = gsc_lower.split('/').collect();
-    let target_parts: Vec<&str> = target_lower.split('/').collect();
-
-    let common_parts = gsc_parts
-        .iter()
-        .filter(|&part| target_parts.contains(part))
-        .count();
-
-    let total_parts = gsc_parts.len().max(target_parts.len());
-
-    if total_parts > 0 {
-        common_parts as f32 / total_parts as f32
+    let avg_ctr = if total_impressions > 0.0 {
+        (total_clicks / total_impressions) * 100.0
     } else {
         0.0
+    };
+
+    let avg_position = if !matches.is_empty() {
+        matches.iter().map(|m| m.position).sum::<f32>() / matches.len() as f32
+    } else {
+        0.0
+    };
+
+    Ok(GscQueryMatch {
+        url: url.to_string(),
+        matches,       // This moves matches into the struct
+        total_matches, // Use the pre-calculated value
+        confidence_score,
+        top_queries,
+        total_clicks: total_clicks as u32,
+        total_impressions: total_impressions as u32,
+        avg_ctr,
+        avg_position,
+    })
+}
+
+fn normalize_url(url_str: &str) -> String {
+    let mut normalized_path = String::new();
+
+    if let Ok(url) = url::Url::parse(url_str) {
+        // If it's a valid absolute URL, take its path and query
+        normalized_path = url.path().to_string();
+        if let Some(query) = url.query() {
+            normalized_path.push('?');
+            normalized_path.push_str(query);
+        }
+    } else {
+        // If it's not a valid absolute URL, assume it's already a path-like string
+        normalized_path = url_str.to_string();
     }
+
+    // Ensure path starts with '/'
+    if !normalized_path.starts_with('/') {
+        normalized_path.insert(0, '/');
+    }
+
+    // Remove trailing slash if present, unless it's just "/"
+    if normalized_path.len() > 1 && normalized_path.ends_with('/') {
+        normalized_path.pop();
+    }
+
+    // Convert to lowercase for case-insensitive comparison
+    normalized_path.to_lowercase()
+}
+
+fn calculate_url_similarity(gsc_url: &str, target_url: &str) -> f32 {
+    let gsc_norm = normalize_url(gsc_url);
+    let target_norm = normalize_url(target_url);
+
+    tracing::info!("Normalized GSC URL: {}", gsc_norm);
+    tracing::info!("Normalized Target URL: {}", target_norm);
+    tracing::error!("Target URL: {}", target_url);
+    tracing::debug!("GSC URL: {}", gsc_url);
+
+    jaro_winkler(&gsc_norm, &target_norm) as f32
 }

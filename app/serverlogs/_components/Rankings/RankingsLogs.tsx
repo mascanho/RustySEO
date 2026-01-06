@@ -92,7 +92,12 @@ export function RankingsLogs({
             <span className="text-xs">Last 28 days</span>
           </DialogTitle>
           <DialogDescription className="truncate">
-            <span className="text-brand-bright font-bold">URL:</span> {url}{" "}
+            <span className="text-brand-bright font-bold">Log URL:</span>{" "}
+            {url}{" "}
+          </DialogDescription>
+          <DialogDescription className="truncate">
+            <span className="text-brand-bright font-bold">GSC URL:</span>{" "}
+            {selectedURLDetails?.url}{" "}
           </DialogDescription>
         </DialogHeader>
 
@@ -135,25 +140,34 @@ export function RankingsLogs({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {selectedURLDetails?.matches?.map((keyword, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">
-                      {keyword.query}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {keyword.clicks.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">
-                      {keyword.impressions.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">
-                      {(keyword.ctr * 100).toFixed(2)}%
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">
-                      {keyword.position.toFixed(1)}
+                {selectedURLDetails?.matches &&
+                selectedURLDetails.matches.length > 0 ? (
+                  selectedURLDetails.matches.map((keyword, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">
+                        {keyword.query}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {keyword.clicks.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
+                        {keyword.impressions.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
+                        {(keyword.ctr * 100).toFixed(2)}%
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
+                        {keyword.position.toFixed(1)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      No data to display.
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </div>
