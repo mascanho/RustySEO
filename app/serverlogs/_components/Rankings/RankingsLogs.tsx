@@ -96,8 +96,8 @@ export function RankingsLogs({
             {url}{" "}
           </DialogDescription>
           <DialogDescription className="truncate">
-            <span className="text-brand-bright font-bold">GSC URL:</span>{" "}
-            {selectedURLDetails?.url}{" "}
+            <span className="text-brand-bright font-bold">Matched GSC URL:</span>{" "}
+            {selectedURLDetails?.matches?.[0]?.source_url || "N/A"}{" "}
           </DialogDescription>
         </DialogHeader>
 
