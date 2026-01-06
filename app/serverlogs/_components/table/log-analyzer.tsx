@@ -1389,17 +1389,17 @@ function LogRow({
                   <KeyRound
                     size={14}
                     className="text-[10px] ml-2 text-yellow-500 cursor-pointer"
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       e.stopPropagation();
                       e.preventDefault();
                       setSelectedLog(log);
-                      const response = FetchMatchGSC(
+                      const response = await FetchMatchGSC(
                         log.path,
                         credentials,
                         GSCdata,
                       );
 
-                      setSelectedURLDetails(response);
+                      setSelectedURLDetails(response.matches);
                     }}
                   />
                 </span>

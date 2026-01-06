@@ -1,4 +1,5 @@
 "use client";
+// @ts-nocheck
 
 import {
   Dialog,
@@ -15,8 +16,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { BarChart, MousePointerClick, Percent, TrendingUp } from "lucide-react";
+import useGSCStatusStore from "@/store/GSCStatusStore";
+import { useMemo } from "react";
 
 interface SearchConsoleModalProps {
   isOpen: boolean;
@@ -29,141 +32,39 @@ export function RankingsLogs({
   onClose,
   url,
 }: SearchConsoleModalProps) {
-  const metrics = {
-    clicks: 2847,
-    impressions: 45123,
-    ctr: 6.31,
-    position: 12.4,
-  };
+  const { selectedURLDetails } = useGSCStatusStore();
 
-  const keywords = [
-    {
-      query: "supply chain management",
-      clicks: 412,
-      impressions: 6234,
-      ctr: 6.6,
-      position: 7.9,
-    },
-    {
-      query: "logistics optimization",
-      clicks: 367,
-      impressions: 5789,
-      ctr: 6.3,
-      position: 9.2,
-    },
-    {
-      query: "inventory control techniques",
-      clicks: 298,
-      impressions: 4892,
-      ctr: 6.1,
-      position: 10.5,
-    },
-    {
-      query: "demand forecasting methods",
-      clicks: 245,
-      impressions: 4120,
-      ctr: 5.9,
-      position: 11.7,
-    },
-    {
-      query: "supplier relationship management",
-      clicks: 192,
-      impressions: 3567,
-      ctr: 5.4,
-      position: 13.3,
-    },
-    {
-      query: "warehouse automation",
-      clicks: 168,
-      impressions: 3124,
-      ctr: 5.4,
-      position: 14.8,
-    },
-    {
-      query: "transportation management systems",
-      clicks: 143,
-      impressions: 2789,
-      ctr: 5.1,
-      position: 16.1,
-    },
-    {
-      query: "supply chain analytics",
-      clicks: 121,
-      impressions: 2432,
-      ctr: 5.0,
-      position: 17.5,
-    },
-    {
-      query: "procurement strategies",
-      clicks: 109,
-      impressions: 2210,
-      ctr: 4.9,
-      position: 18.9,
-    },
-    {
-      query: "risk management in supply chain",
-      clicks: 97,
-      impressions: 1987,
-      ctr: 4.9,
-      position: 19.7,
-    },
-    {
-      query: "sustainable supply chain",
-      clicks: 85,
-      impressions: 1765,
-      ctr: 4.8,
-      position: 20.8,
-    },
-    {
-      query: "reverse logistics",
-      clicks: 74,
-      impressions: 1543,
-      ctr: 4.8,
-      position: 21.9,
-    },
-    {
-      query: "supply chain visibility",
-      clicks: 68,
-      impressions: 1421,
-      ctr: 4.8,
-      position: 22.7,
-    },
-    {
-      query: "just in time inventory",
-      clicks: 61,
-      impressions: 1308,
-      ctr: 4.7,
-      position: 23.6,
-    },
-    {
-      query: "supply chain software",
-      clicks: 54,
-      impressions: 1196,
-      ctr: 4.5,
-      position: 24.4,
-    },
-    {
-      query: "cold chain logistics",
-      clicks: 49,
-      impressions: 1083,
-      ctr: 4.5,
-      position: 25.1,
-    },
-    {
-      query: "global supply chain trends",
-      clicks: 43,
-      impressions: 972,
-      ctr: 4.4,
-      position: 26.0,
-    },
-    {
-      query: "supply chain resilience",
-      clicks: 39,
-      impressions: 865,
-      ctr: 4.5,
-      position: 26.8,
-    },
-  ];
+  const metrics = useMemo(() => {
+    if (!selectedURLDetails || selectedURLDetails.length === 0) {
+      return {
+        clicks: 0,
+        impressions: 0,
+        ctr: 0,
+        position: 0,
+      };
+    }
+
+    const totalClicks = selectedURLDetails.reduce(
+      (sum, item) => sum + item.clicks,
+      0,
+    );
+    const totalImpressions = selectedURLDetails.reduce(
+      (sum, item) => sum + item.impressions,
+      0,
+    );
+    const avgPosition =
+      selectedURLDetails.reduce((sum, item) => sum + item.position, 0) /
+      selectedURLDetails.length;
+    const avgCtr =
+      totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
+
+    return {
+      clicks: totalClicks,
+      impressions: totalImpressions,
+      ctr: parseFloat(avgCtr.toFixed(2)),
+      position: parseFloat(avgPosition.toFixed(1)),
+    };
+  }, [selectedURLDetails]);
 
   const metricItems = [
     {
@@ -248,7 +149,7 @@ export function RankingsLogs({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {keywords.map((keyword, index) => (
+                {selectedURLDetails?.map((keyword, index) => (
                   <TableRow key={index}>
                     <TableCell className="font-medium">
                       {keyword.query}
@@ -260,10 +161,10 @@ export function RankingsLogs({
                       {keyword.impressions.toLocaleString()}
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-muted-foreground">
-                      {keyword.ctr}%
+                      {(keyword.ctr * 100).toFixed(2)}%
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-muted-foreground">
-                      {keyword.position}
+                      {keyword.position.toFixed(1)}
                     </TableCell>
                   </TableRow>
                 ))}
