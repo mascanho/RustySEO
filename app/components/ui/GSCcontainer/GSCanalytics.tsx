@@ -40,6 +40,8 @@ const GSCanalytics = () => {
     credentials,
     isConfigured,
     refresh: refreshStatus,
+    setGSCStoreData,
+    data,
   } = useGSCStatusStore();
   const [openedWizard, { open: openWizard, close: closeWizard }] =
     useDisclosure(false);
@@ -91,6 +93,8 @@ const GSCanalytics = () => {
       // Ensure response is an array
       if (Array.isArray(response)) {
         setGscData(response);
+        // SET AS GLOBAL STORE STATE
+        setGSCStoreData(response);
       } else {
         console.warn("GSC data from DB is not an array:", response);
         setGscData([]);

@@ -278,6 +278,7 @@ async fn main() {
             settings::settings::get_settings_command,
             url_checker::http_check::check_url,
             loganalyser::log_commands::save_gsc_data,
+            loganalyser::log_commands::match_gsc_query_command,
             loganalyser::helpers::gsc_log::load_gsc_from_database,
             gsc_auth::start_gsc_auth_server,
             gsc_auth::exchange_gsc_code

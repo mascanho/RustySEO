@@ -17,6 +17,8 @@ interface GSCStatusState {
   lastChecked: Date | null;
   error: string | null;
   showInTable: boolean;
+  data: any;
+  selectedURLDetails: any;
 
   // Actions
   setCredentials: (credentials: GSCCredentials | null) => void;
@@ -26,6 +28,8 @@ interface GSCStatusState {
   clearStatus: () => void;
   refresh: () => Promise<void>;
   setShowInTable: (showInTable: boolean) => void;
+  setGSCStoreData: (data: any) => void;
+  setSelectedURLDetails: (data: any) => void;
 
   // Getters
   getIsConfigured: () => boolean;
@@ -38,6 +42,12 @@ const useGSCStatusStore = create<GSCStatusState>((set, get) => ({
   lastChecked: null,
   error: null,
   showInTable: false,
+  data: [],
+  selectedURLDetails: [],
+
+  setSelectedURLDetails: (data) => set({ selectedURLDetails: data }),
+
+  setGSCStoreData: (data) => set({ data }),
 
   setCredentials: (credentials) =>
     set((state) => ({

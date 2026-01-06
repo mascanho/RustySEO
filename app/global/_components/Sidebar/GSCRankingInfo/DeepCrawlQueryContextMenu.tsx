@@ -47,15 +47,15 @@ const DeepCrawlQueryContextMenu: React.FC<DeepCrawlQueryContextMenuProps> = ({
   clicks,
 }) => {
   // Debug props received
-  console.log("🔧 DeepCrawlQueryContextMenu initialized with props:", {
-    url,
-    query,
-    credentials: !!credentials,
-    position,
-    impressions,
-    clicks,
-    hasChildren: !!children,
-  });
+  // console.log("🔧 DeepCrawlQueryContextMenu initialized with props:", {
+  //   url,
+  //   query,
+  //   credentials: !!credentials,
+  //   position,
+  //   impressions,
+  //   clicks,
+  //   hasChildren: !!children,
+  // });
 
   useEffect(() => {
     console.log("🎯 Setting up keyword-tracked event listener");
@@ -367,8 +367,6 @@ const DeepCrawlQueryContextMenu: React.FC<DeepCrawlQueryContextMenuProps> = ({
     },
     [],
   );
-
-  console.log("🎨 Rendering DeepCrawlQueryContextMenu with query:", query);
 
   return (
     <ContextMenu>

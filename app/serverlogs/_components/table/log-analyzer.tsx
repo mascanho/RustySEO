@@ -93,6 +93,7 @@ import {
 import { useExcelLoading } from "@/store/ServerLogsGlobalStore";
 import useGSCStatusStore from "@/store/GSCStatusStore";
 import { RankingsLogs } from "../Rankings/RankingsLogs";
+import FetchMatchGSC from "./utils/FetchMatchGSC";
 
 export function LogAnalyzer() {
   const {
@@ -105,8 +106,6 @@ export function LogAnalyzer() {
     setFilter,
     resetAll,
   } = useLogAnalysis();
-
-  console.log(entries, overview);
 
   const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -159,9 +158,13 @@ export function LogAnalyzer() {
     isLoading: gscLoading,
     updateStatus,
     refreshStatus,
+    data,
+    setSelectedURLDetails,
   } = useGSCStatusStore();
 
-  console.log("GSC DATA", credentials);
+  const GSCdata = data;
+
+  // console.log("GSC DATA", credentials);
 
   const cyclePosColumn = () => {
     setPosColumn((prev) => {
@@ -1221,6 +1224,8 @@ export function LogAnalyzer() {
                           getPositionBadgeColor={getPositionBadgeColor}
                           credentials={credentials}
                           setSelectedLog={setSelectedLog}
+                          GSCdata={GSCdata}
+                          setSelectedURLDetails={setSelectedURLDetails}
                         />
                       ))
                     ) : (
@@ -1285,6 +1290,8 @@ function LogRow({
   getPositionBadgeColor,
   credentials,
   setSelectedLog,
+  GSCdata,
+  setSelectedURLDetails,
 }) {
   // Track hover state for the row
   const [isHovered, setIsHovered] = useState(false);
@@ -1377,7 +1384,7 @@ function LogRow({
                   : log?.path}
               </span>
               {/* SHOW A KEY TO POP THE MODAL WITH THE KEYWORDS FROM GSC */}
-              {credentials.token.length > 0 && isHovered && (
+              {credentials?.token?.length > 0 && isHovered && (
                 <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150">
                   <KeyRound
                     size={14}
@@ -1386,6 +1393,13 @@ function LogRow({
                       e.stopPropagation();
                       e.preventDefault();
                       setSelectedLog(log);
+                      const response = FetchMatchGSC(
+                        log.path,
+                        credentials,
+                        GSCdata,
+                      );
+
+                      setSelectedURLDetails(response);
                     }}
                   />
                 </span>

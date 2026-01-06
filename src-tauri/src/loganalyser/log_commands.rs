@@ -2,8 +2,12 @@ use super::{
     analyser::LogResult,
     database::{add_data_to_serverlog_db, create_serverlog_db},
 };
-use crate::loganalyser::analyser::{analyse_log, LogAnalysisResult, LogInput};
+use crate::loganalyser::{
+    analyser::{analyse_log, LogAnalysisResult, LogInput},
+    helpers::gsc_query_match::{self, match_gsc_query, GscDataItem, GscQueryMatch},
+};
 use crate::uploads::storage;
+use anyhow::Error;
 
 #[tauri::command]
 pub fn check_logs_command(
@@ -158,4 +162,16 @@ fn extract_excel_upload(
         impressions,
         ctr,
     })
+}
+
+// HANDLE THE MATCHING OF GSC DATA AND SENDS IT BACK TO THE FE
+#[tauri::command]
+pub fn match_gsc_query_command(
+    data: Vec<GscDataItem>,
+    url: String,
+) -> Result<GscQueryMatch, String> {
+    match gsc_query_match::match_gsc_query(data, &url) {
+        Ok(result) => Ok(result),
+        Err(err) => Err(err.to_string()),
+    }
 }
