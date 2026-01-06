@@ -1399,7 +1399,7 @@ function LogRow({
                         GSCdata,
                       );
 
-                      setSelectedURLDetails(response.matches);
+                      setSelectedURLDetails(response);
                     }}
                   />
                 </span>

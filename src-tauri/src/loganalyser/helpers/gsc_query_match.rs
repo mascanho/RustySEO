@@ -20,6 +20,10 @@ pub struct GscQueryMatch {
     pub total_matches: usize,
     pub confidence_score: f32,
     pub top_queries: Vec<String>, // Added for convenience
+    pub total_clicks: u32,
+    pub total_impressions: u32,
+    pub avg_ctr: f32,
+    pub avg_position: f32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)] // Added Clone
@@ -74,20 +78,38 @@ pub fn match_gsc_query(data: Vec<GscDataItem>, url: &str) -> Result<GscQueryMatc
         0.0
     };
 
-    Ok(GscQueryMatch {
-        url: url.to_string(),
-        matches,       // This moves matches into the struct
-        total_matches, // Use the pre-calculated value
-        confidence_score,
-        top_queries,
-    })
-}
-fn calculate_url_similarity(gsc_url: &str, target_url: &str) -> f32 {
-    // Simple URL similarity calculation
-    // You can implement more sophisticated logic here
-    let gsc_lower = gsc_url.to_lowercase();
-    let target_lower = target_url.to_lowercase();
-
+            let total_clicks: f32 = matches.iter().map(|m| m.clicks as f32).sum();
+            let total_impressions: f32 = matches.iter().map(|m| m.impressions as f32).sum();
+    
+            let avg_ctr = if total_impressions > 0.0 {
+                (total_clicks / total_impressions) * 100.0
+            } else {
+                0.0
+            };
+    
+            let avg_position = if !matches.is_empty() {
+                matches.iter().map(|m| m.position).sum::<f32>() / matches.len() as f32
+            } else {
+                0.0
+            };
+    
+        Ok(GscQueryMatch {
+            url: url.to_string(),
+            matches,       // This moves matches into the struct
+            total_matches, // Use the pre-calculated value
+                confidence_score,
+            top_queries,
+            total_clicks: total_clicks as u32,
+            total_impressions: total_impressions as u32,
+            avg_ctr,
+            avg_position,
+        })        }
+        
+        fn calculate_url_similarity(gsc_url: &str, target_url: &str) -> f32 {
+            // Simple URL similarity calculation
+            // You can implement more sophisticated logic here
+            let gsc_lower = gsc_url.to_lowercase();
+            let target_lower = target_url.to_lowercase();
     if gsc_lower == target_lower {
         return 1.0;
     }

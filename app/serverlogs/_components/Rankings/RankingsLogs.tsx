@@ -35,7 +35,7 @@ export function RankingsLogs({
   const { selectedURLDetails } = useGSCStatusStore();
 
   const metrics = useMemo(() => {
-    if (!selectedURLDetails || selectedURLDetails.length === 0) {
+    if (!selectedURLDetails) {
       return {
         clicks: 0,
         impressions: 0,
@@ -44,25 +44,11 @@ export function RankingsLogs({
       };
     }
 
-    const totalClicks = selectedURLDetails.reduce(
-      (sum, item) => sum + item.clicks,
-      0,
-    );
-    const totalImpressions = selectedURLDetails.reduce(
-      (sum, item) => sum + item.impressions,
-      0,
-    );
-    const avgPosition =
-      selectedURLDetails.reduce((sum, item) => sum + item.position, 0) /
-      selectedURLDetails.length;
-    const avgCtr =
-      totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0;
-
     return {
-      clicks: totalClicks,
-      impressions: totalImpressions,
-      ctr: parseFloat(avgCtr.toFixed(2)),
-      position: parseFloat(avgPosition.toFixed(1)),
+      clicks: selectedURLDetails.total_clicks,
+      impressions: selectedURLDetails.total_impressions,
+      ctr: parseFloat(selectedURLDetails.avg_ctr.toFixed(2)),
+      position: parseFloat(selectedURLDetails.avg_position.toFixed(1)),
     };
   }, [selectedURLDetails]);
 
@@ -149,7 +135,7 @@ export function RankingsLogs({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {selectedURLDetails?.map((keyword, index) => (
+                {selectedURLDetails?.matches?.map((keyword, index) => (
                   <TableRow key={index}>
                     <TableCell className="font-medium">
                       {keyword.query}

@@ -18,7 +18,7 @@ interface GSCStatusState {
   error: string | null;
   showInTable: boolean;
   data: any;
-  selectedURLDetails: any;
+  selectedURLDetails: GscQueryMatch | null;
 
   // Actions
   setCredentials: (credentials: GSCCredentials | null) => void;
@@ -35,6 +35,28 @@ interface GSCStatusState {
   getIsConfigured: () => boolean;
 }
 
+interface GscMatch {
+  query: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+  similarity_score: number;
+  source_url: string;
+}
+
+interface GscQueryMatch {
+  url: string;
+  matches: GscMatch[];
+  total_matches: number;
+  confidence_score: number;
+  top_queries: string[];
+  total_clicks: number;
+  total_impressions: number;
+  avg_ctr: number;
+  avg_position: number;
+}
+
 const useGSCStatusStore = create<GSCStatusState>((set, get) => ({
   credentials: null,
   isConfigured: false,
@@ -43,9 +65,10 @@ const useGSCStatusStore = create<GSCStatusState>((set, get) => ({
   error: null,
   showInTable: false,
   data: [],
-  selectedURLDetails: [],
+  selectedURLDetails: null,
 
-  setSelectedURLDetails: (data) => set({ selectedURLDetails: data }),
+  setSelectedURLDetails: (data: GscQueryMatch | null) =>
+    set({ selectedURLDetails: data }),
 
   setGSCStoreData: (data) => set({ data }),
 
