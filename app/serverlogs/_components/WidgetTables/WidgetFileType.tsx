@@ -1239,9 +1239,8 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                                     ? "https://" + domain + log.path
                                     : log?.path}
                                 </span>
-                                {credentials?.token?.length > 0 &&
-                                  hoveredRow === index && (
-                                    <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150">
+                                {credentials?.token?.length > 0 && (
+                                    <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150 opacity-0 invisible group-hover:opacity-100 group-hover:visible">
                                       <KeyRound
                                         size={14}
                                         className="text-[10px] ml-2 text-yellow-500 cursor-pointer"
