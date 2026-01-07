@@ -17,7 +17,11 @@ import {
   RefreshCw,
   Search,
   Loader2,
+  KeyRound,
 } from "lucide-react";
+import useGSCStatusStore from "@/store/GSCStatusStore";
+import { RankingsLogs } from "../Rankings/RankingsLogs";
+import FetchMatchGSC from "../table/utils/FetchMatchGSC";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -163,6 +167,13 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
   const [botTypeFilter, setBotTypeFilter] = useState<string | null>(null);
   const [domain, setDomain] = useState("");
   const [showOnTables, setShowOnTables] = useState(false);
+  const [selectedLog, setSelectedLog] = useState<any | null>(null);
+
+  const {
+    credentials,
+    data: GSCdata,
+    setSelectedURLDetails,
+  } = useGSCStatusStore();
 
   // Load domain and showOnTables settings
   useEffect(() => {
@@ -400,8 +411,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     () =>
       initialLogs.length > 0
         ? initialLogs.reduce((oldest, log) =>
-            new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-          )
+          new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+        )
         : null,
     [initialLogs],
   );
@@ -410,8 +421,8 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
     () =>
       initialLogs.length > 0
         ? initialLogs.reduce((newest, log) =>
-            new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-          )
+          new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+        )
         : null,
     [initialLogs],
   );
@@ -489,6 +500,17 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
 
   return (
     <div className="space-y-4 h-full pb-0 -mb-4">
+      {selectedLog && (
+        <RankingsLogs
+          isOpen={!!selectedLog}
+          onClose={() => setSelectedLog(null)}
+          url={
+            domain && selectedLog.path
+              ? `https://${domain}${selectedLog.path}`
+              : selectedLog.path
+          }
+        />
+      )}
       <div className="flex flex-col md:flex-row justify-between -mb-4 p-1">
         <div className="relative w-full mr-1">
           <Search className="absolute dark:text-white/50 left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -599,11 +621,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       Path
                       {sortConfig?.key === "path" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -614,11 +635,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       File Type
                       {sortConfig?.key === "file_type" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -629,11 +649,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       Size
                       {sortConfig?.key === "response_size" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -644,11 +663,10 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                       Total Hits
                       {sortConfig?.key === "frequency" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -698,63 +716,81 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                   ? "https://" + domain + log.path
                                   : log?.path}
                               </span>
+                              {credentials?.token?.length > 0 && (
+                                <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150 opacity-0 invisible group-hover:opacity-100 group-hover:visible">
+                                  <KeyRound
+                                    size={14}
+                                    className="text-[10px] ml-2 text-yellow-500 cursor-pointer"
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      e.preventDefault();
+                                      setSelectedLog(log);
+                                      const response = await FetchMatchGSC(
+                                        log.path,
+                                        credentials,
+                                        GSCdata,
+                                      );
+                                      setSelectedURLDetails(response);
+                                    }}
+                                  />
+                                </span>
+                              )}
                             </div>
                           </TableCell>
 
                           <TableCell className="min-w-[30px] truncate align-middle">
-          <div className="flex items-center h-full justify-center">
-            <Badge
-              variant="outline"
-              className="flex items-center"
-            >
-              {log.file_type}
-            </Badge>
-          </div>
-        </TableCell>
+                            <div className="flex items-center h-full justify-center">
+                              <Badge
+                                variant="outline"
+                                className="flex items-center"
+                              >
+                                {log.file_type}
+                              </Badge>
+                            </div>
+                          </TableCell>
 
                           <TableCell className="text-center align-middle">
-          <div className="flex items-center justify-center h-full">
-            <span>
-              {formatResponseSize(log.response_size)}
-            </span>
-          </div>
-        </TableCell>
+                            <div className="flex items-center justify-center h-full">
+                              <span>
+                                {formatResponseSize(log.response_size)}
+                              </span>
+                            </div>
+                          </TableCell>
 
                           <TableCell className="text-center min-w-[90px] align-middle">
-          <div className="flex items-center justify-center h-full">
-            <span>
-              {timings(log)?.frequency?.total}
-            </span>
-          </div>
-        </TableCell>
+                            <div className="flex items-center justify-center h-full">
+                              <span>
+                                {timings(log)?.frequency?.total}
+                              </span>
+                            </div>
+                          </TableCell>
 
                           <TableCell className="text-center w-[90px] align-middle">
-          <div className="flex items-center justify-center h-full">
-            <span>
-              {timings(log)?.frequency?.perHour}
-            </span>
-          </div>
-        </TableCell>
+                            <div className="flex items-center justify-center h-full">
+                              <span>
+                                {timings(log)?.frequency?.perHour}
+                              </span>
+                            </div>
+                          </TableCell>
 
                           <TableCell
-          width={100}
-          className="max-w-[100px] align-middle"
-        >
-          <div className="flex items-center h-full justify-center">
-            <Badge
-              variant="outline"
-              className={`flex items-center align-middle justify-center ${
-                log.crawler_type !== "Human"
-                  ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
-                  : "bg-green-100 text-green-800 border-green-200"
-              }`}
-            >
-              {log.crawler_type.length > 10
-                ? log.crawler_type.trim().slice(0, 10)
-                : log.crawler_type}
-            </Badge>
-          </div>
-        </TableCell>
+                            width={100}
+                            className="max-w-[100px] align-middle"
+                          >
+                            <div className="flex items-center h-full justify-center">
+                              <Badge
+                                variant="outline"
+                                className={`flex items-center align-middle justify-center ${log.crawler_type !== "Human"
+                                    ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white"
+                                    : "bg-green-100 text-green-800 border-green-200"
+                                  }`}
+                              >
+                                {log.crawler_type.length > 10
+                                  ? log.crawler_type.trim().slice(0, 10)
+                                  : log.crawler_type}
+                              </Badge>
+                            </div>
+                          </TableCell>
                         </TableRow>
                         {expandedRow === index && (
                           <TableRow>
@@ -765,62 +801,62 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {/* Left Column */}
                                 <div className="flex flex-col max-w-[70rem] w-full">
-                                    <div className="flex mb-2 space-x-2 items-center justify-between">
-                                      <h4 className="font-bold">Details</h4>
-                                      {log.verified && (
-                                        <div className="flex items-center space-x-1 py-1 bg-red-200 dark:bg-red-400 px-2 text-xs rounded-md">
-                                          <BadgeCheck
-                                            size={18}
-                                            className="text-blue-800 pr-1 dark:text-blue-900"
-                                          />
-                                          {log?.crawler_type}
+                                  <div className="flex mb-2 space-x-2 items-center justify-between">
+                                    <h4 className="font-bold">Details</h4>
+                                    {log.verified && (
+                                      <div className="flex items-center space-x-1 py-1 bg-red-200 dark:bg-red-400 px-2 text-xs rounded-md">
+                                        <BadgeCheck
+                                          size={18}
+                                          className="text-blue-800 pr-1 dark:text-blue-900"
+                                        />
+                                        {log?.crawler_type}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                                    <div className="space-y-2 text-sm">
+                                      <div>
+                                        <span className="font-semibold">
+                                          IP:
+                                        </span>{" "}
+                                        {log.ip}
+                                      </div>
+                                      <div>
+                                        <span className="font-semibold">
+                                          Method:
+                                        </span>{" "}
+                                        {log.method}
+                                      </div>
+                                      <div>
+                                        <span className="font-semibold">
+                                          User Agent:
+                                        </span>{" "}
+                                        <span
+                                          className="font-mono text-xs break-all hover:underline cursor-pointer"
+                                          onClick={(click) =>
+                                            handleCopyClick(
+                                              log.user_agent,
+                                              click,
+                                              "User Agent",
+                                            )
+                                          }
+                                        >
+                                          {log.user_agent}
+                                        </span>
+                                      </div>
+                                      {log.referer && (
+                                        <div>
+                                          <span className="font-semibold">
+                                            Referer:
+                                          </span>{" "}
+                                          <span className="font-mono text-xs break-all">
+                                            {log.referer}
+                                          </span>
                                         </div>
                                       )}
                                     </div>
-                                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-                                      <div className="space-y-2 text-sm">
-                                        <div>
-                                          <span className="font-semibold">
-                                            IP:
-                                          </span>{" "}
-                                          {log.ip}
-                                        </div>
-                                        <div>
-                                          <span className="font-semibold">
-                                            Method:
-                                          </span>{" "}
-                                          {log.method}
-                                        </div>
-                                        <div>
-                                          <span className="font-semibold">
-                                            User Agent:
-                                          </span>{" "}
-                                          <span
-                                            className="font-mono text-xs break-all hover:underline cursor-pointer"
-                                            onClick={(click) =>
-                                              handleCopyClick(
-                                                log.user_agent,
-                                                click,
-                                                "User Agent",
-                                              )
-                                            }
-                                          >
-                                            {log.user_agent}
-                                          </span>
-                                        </div>
-                                        {log.referer && (
-                                          <div>
-                                            <span className="font-semibold">
-                                              Referer:
-                                            </span>{" "}
-                                            <span className="font-mono text-xs break-all">
-                                              {log.referer}
-                                            </span>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
                                   </div>
+                                </div>
 
                                 {/* Right Column */}
                                 <div className="flex flex-col">
@@ -992,32 +1028,32 @@ const WidgetTable: React.FC<WidgetTableProps> = ({ data }) => {
                                     {/* Other Status Codes */}
                                     {(log.status_codes?.other_count || 0) >
                                       0 && (
-                                      <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
-                                        <span className="font-semibold text-gray-600 dark:text-gray-400">
-                                          Other Codes:{" "}
-                                          {log.status_codes?.other_count || 0}
-                                        </span>
-                                        <div className="flex flex-wrap gap-1 mt-1">
-                                          {Object.entries(
-                                            log.status_codes?.counts || {},
-                                          )
-                                            .filter(([code]) => {
-                                              const status = parseInt(code);
-                                              return (
-                                                status < 200 || status >= 600
-                                              );
-                                            })
-                                            .map(([code, count]) => (
-                                              <span
-                                                key={code}
-                                                className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs"
-                                              >
-                                                {code}: {count}
-                                              </span>
-                                            ))}
+                                        <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
+                                          <span className="font-semibold text-gray-600 dark:text-gray-400">
+                                            Other Codes:{" "}
+                                            {log.status_codes?.other_count || 0}
+                                          </span>
+                                          <div className="flex flex-wrap gap-1 mt-1">
+                                            {Object.entries(
+                                              log.status_codes?.counts || {},
+                                            )
+                                              .filter(([code]) => {
+                                                const status = parseInt(code);
+                                                return (
+                                                  status < 200 || status >= 600
+                                                );
+                                              })
+                                              .map(([code, count]) => (
+                                                <span
+                                                  key={code}
+                                                  className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs"
+                                                >
+                                                  {code}: {count}
+                                                </span>
+                                              ))}
+                                          </div>
                                         </div>
-                                      </div>
-                                    )}
+                                      )}
                                   </div>
                                 </div>
                               </div>
