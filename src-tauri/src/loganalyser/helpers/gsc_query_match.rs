@@ -1,7 +1,7 @@
 use anyhow::Error;
 use serde::{Deserialize, Serialize};
-use strsim::jaro_winkler;
 use tracing::{debug, error, info, warn};
+use urlencoding::decode;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GscDataItem {
@@ -109,32 +109,50 @@ pub fn match_gsc_query(data: Vec<GscDataItem>, url: &str) -> Result<GscQueryMatc
 }
 
 fn normalize_url(url_str: &str) -> String {
-    let mut normalized_path = String::new();
+    let trimmed = url_str.trim().to_lowercase();
 
-    if let Ok(url) = url::Url::parse(url_str) {
+    let mut path_and_query = if let Ok(parsed_url) = url::Url::parse(&trimmed) {
         // If it's a valid absolute URL, take its path and query
-        normalized_path = url.path().to_string();
-        if let Some(query) = url.query() {
-            normalized_path.push('?');
-            normalized_path.push_str(query);
+        let path = parsed_url.path().to_string();
+        let decoded_path = decode(&path).map(|d| d.into_owned()).unwrap_or(path);
+
+        if let Some(query) = parsed_url.query() {
+            let decoded_query = decode(query)
+                .map(|d| d.into_owned())
+                .unwrap_or(query.to_string());
+            format!("{}?{}", decoded_path, decoded_query)
+        } else {
+            decoded_path
         }
     } else {
-        // If it's not a valid absolute URL, assume it's already a path-like string
-        normalized_path = url_str.to_string();
-    }
+        // If it's not a valid absolute URL, decode first then handle domain
+        let decoded = decode(&trimmed).map(|d| d.into_owned()).unwrap_or(trimmed);
+
+        if let Some(slash_pos) = decoded.find('/') {
+            let prefix = &decoded[..slash_pos];
+            if prefix.contains('.') && !prefix.contains(':') {
+                decoded[slash_pos..].to_string()
+            } else {
+                decoded.to_string()
+            }
+        } else if decoded.contains('.') && !decoded.contains('/') {
+            "/".to_string()
+        } else {
+            decoded.to_string()
+        }
+    };
 
     // Ensure path starts with '/'
-    if !normalized_path.starts_with('/') {
-        normalized_path.insert(0, '/');
+    if !path_and_query.starts_with('/') {
+        path_and_query.insert(0, '/');
     }
 
     // Remove trailing slash if present, unless it's just "/"
-    if normalized_path.len() > 1 && normalized_path.ends_with('/') {
-        normalized_path.pop();
+    if path_and_query.len() > 1 && path_and_query.ends_with('/') {
+        path_and_query.pop();
     }
 
-    // Convert to lowercase for case-insensitive comparison
-    normalized_path.to_lowercase()
+    path_and_query
 }
 
 fn calculate_url_similarity(gsc_url: &str, target_url: &str) -> f32 {
@@ -143,8 +161,10 @@ fn calculate_url_similarity(gsc_url: &str, target_url: &str) -> f32 {
 
     tracing::info!("Normalized GSC URL: {}", gsc_norm);
     tracing::info!("Normalized Target URL: {}", target_norm);
-    tracing::error!("Target URL: {}", target_url);
-    tracing::debug!("GSC URL: {}", gsc_url);
 
-    jaro_winkler(&gsc_norm, &target_norm) as f32
+    if gsc_norm == target_norm {
+        1.0
+    } else {
+        0.0
+    }
 }

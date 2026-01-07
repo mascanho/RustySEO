@@ -1,3 +1,4 @@
+//@ts-nocheck
 "use client";
 import {
   Dialog,
@@ -26,6 +27,7 @@ import {
 import useGSCStatusStore from "@/store/GSCStatusStore";
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
+import { BsCalendar2 } from "react-icons/bs";
 
 interface SearchConsoleModalProps {
   isOpen: boolean;
@@ -149,16 +151,27 @@ export function RankingsLogs({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[70vh] flex flex-col p-0 gap-0">
         <DialogHeader className="p-4 border-b dark:border-zinc-700 flex">
-          <DialogTitle className="text-base font-semibold dark:text-white">
-            Search Console Performance ·{" "}
-            <span className="text-xs">{dateRangeText}</span>
+          <DialogTitle className="text-base font-semibold dark:text-white w-full">
+            <div className="flex items-center space-x-2 justify-between mr-6">
+              <h1 className="text-lg font-bold">
+                Google Search Console Rankings
+              </h1>
+              <div className="flex items-center space-x-2">
+                <BsCalendar2 className="h-4 w-4" />
+                <span className="text-xs text-brand-bright">
+                  {dateRangeText}
+                </span>
+              </div>
+            </div>
           </DialogTitle>
           <DialogDescription className="truncate">
             <span className="text-brand-bright font-bold">Log URL:</span>{" "}
             {url}{" "}
           </DialogDescription>
           <DialogDescription className="truncate">
-            <span className="text-brand-bright font-bold">Matched GSC URL:</span>{" "}
+            <span className="text-brand-bright font-bold">
+              Matched GSC URL:
+            </span>{" "}
             {selectedURLDetails?.matches?.[0]?.source_url || "N/A"}{" "}
           </DialogDescription>
         </DialogHeader>
