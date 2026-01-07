@@ -381,6 +381,8 @@ struct SearchAnalyticsQuery {
     pub search_type: String,
     #[serde(rename = "aggregationType")]
     pub aggregation_type: String,
+    #[serde(rename = "startRow")]
+    pub start_row: Option<i32>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -607,7 +609,17 @@ pub async fn get_google_search_console(
 
     let (start_date, end_date) = if let (Some(s), Some(e)) = (start_date_arg, end_date_arg) {
         println!("Using provided custom date range: {} to {}", s, e);
-        (s, e)
+        
+        // Validate and fix future dates
+        let today = Utc::now().format("%Y-%m-%d").to_string();
+        let validated_end_date = if e > today {
+            println!("End date {} is in future, using today: {}", e, today);
+            today
+        } else {
+            e
+        };
+        
+        (s, validated_end_date)
     } else {
         match credentials_range.as_str() {
             "1 month" => {
@@ -656,16 +668,17 @@ pub async fn get_google_search_console(
     };
 
     // let site_url = "sc-domain:algarvewonders.com";
-    let query = SearchAnalyticsQuery {
-        start_date,
-        end_date,
-        dimensions: vec!["query".to_string(), "page".to_string()],
-        search_type: "web".to_string(),
-        row_limit: credentials_rows.parse::<i32>().unwrap_or(25000),
-        aggregation_type: "auto".to_string(),
-    };
-    let body = serde_json::to_string(&query)?;
-    println!("GSC Request Body: {}", body);
+    // Always fetch maximum possible data from GSC API
+    // Use 5000 rows per request (GSC max) and paginate until no more data
+    let row_limit_per_request = 5000; // GSC max is 5000 per request
+    let _requested_rows = 5000; // Ignore user setting, always max out
+
+    // Retry loop for handling 401 Unauthorized
+    let mut gsc_data = Vec::new();
+    let mut all_rows = Vec::new();
+    let max_retries = 1;
+    let mut start_row = 0;
+    let mut has_more_data = true;
 
     // Make the API request
     let site_url = match search_type.as_str() {
@@ -689,50 +702,70 @@ pub async fn get_google_search_console(
         }
     };
 
-    // Retry loop for handling 401 Unauthorized
-    let mut gsc_data = Vec::new();
-    let max_retries = 1;
+    // Pagination loop to fetch ALL available data from GSC
+    // Continue until API returns no more rows
+    while has_more_data {
+        for attempt in 0..=max_retries {
+            let query = SearchAnalyticsQuery {
+                start_date: start_date.clone(),
+                end_date: end_date.clone(),
+                dimensions: vec!["query".to_string(), "page".to_string()],
+                search_type: "web".to_string(),
+                row_limit: row_limit_per_request,
+                aggregation_type: "auto".to_string(),
+                start_row: Some(start_row),
+            };
+            let body = serde_json::to_string(&query)?;
+            println!("GSC Request Body (startRow: {}): {}", start_row, body);
 
-    for attempt in 0..=max_retries {
-        let request = hyper::Request::builder()
-            .method("POST")
-            .uri(format!(
-                "https://searchconsole.googleapis.com/webmasters/v3/sites/{}/searchAnalytics/query",
-                urlencoding::encode(&site_url)
-            ))
-            .header("Authorization", format!("Bearer {}", final_token))
-            .header("Content-Type", "application/json")
-            .body(hyper::Body::from(body.clone()))?;
+            let request = hyper::Request::builder()
+                .method("POST")
+                .uri(format!(
+                    "https://searchconsole.googleapis.com/webmasters/v3/sites/{}/searchAnalytics/query",
+                    urlencoding::encode(&site_url)
+                ))
+                .header("Authorization", format!("Bearer {}", final_token))
+                .header("Content-Type", "application/json")
+                .body(hyper::Body::from(body))?;
 
-        let response = client.request(request).await?;
-        let status = response.status();
+            let response = client.request(request).await?;
+            let status = response.status();
 
-        // If successful, proceed to parse
-        if status.is_success() {
-            let body_bytes = hyper::body::to_bytes(response.into_body()).await?;
-            let body_str = String::from_utf8(body_bytes.to_vec())?;
-            println!("GSC Response Status: {}", status);
+            // If successful, proceed to parse
+            if status.is_success() {
+                let body_bytes = hyper::body::to_bytes(response.into_body()).await?;
+                let body_str = String::from_utf8(body_bytes.to_vec())?;
+                println!("GSC Response Status: {}", status);
 
             // Parse and print the results
             let data: JsonValue = serde_json::from_str(&body_str)?;
+            
+            // Debug: Print the full response structure
+            println!("Full GSC API Response: {}", serde_json::to_string_pretty(&data)?);
 
-            println!(
-                "Parsed GSC Data successfully. Rows found: {}",
-                data["rows"].as_array().map(|a| a.len()).unwrap_or(0)
-            );
-            // Add data to DB
-            gsc_data.push(data);
-            if let Err(e) = db::push_gsc_data_to_db(&gsc_data) {
-                eprintln!("Failed to push GSC data to database: {}", e);
-                return Err(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    format!("Failed to save data to database: {}", e),
-                )));
+            if let Some(rows) = data["rows"].as_array() {
+                let row_count = rows.len();
+                println!("Fetched {} rows (total so far: {})", row_count, all_rows.len() + row_count);
+                
+                // Add rows to our collection
+                all_rows.extend(rows.iter().cloned());
+                
+                // Check if we have more data to fetch
+                // Continue as long as we got a full page (5000 rows)
+                has_more_data = row_count == row_limit_per_request as usize;
+                
+                // Prepare for next iteration
+                if has_more_data {
+                    start_row += row_limit_per_request;
+                    println!("Fetching more data... Next startRow: {}", start_row);
+                }
+            } else {
+                println!("No rows array found in response");
+                has_more_data = false;
             }
 
-            // Successfully fetched and saved, break loop
-            return Ok(gsc_data);
-        } else if status == hyper::StatusCode::UNAUTHORIZED && attempt < max_retries {
+                break; // Success, exit retry loop
+            } else if status == hyper::StatusCode::UNAUTHORIZED && attempt < max_retries {
             println!("GSC API returned 401 Unauthorized. Attempting to refresh token...");
 
             if let Some(ref r_token) = refresh_token {
@@ -764,6 +797,28 @@ pub async fn get_google_search_console(
         let body_str = String::from_utf8(body_bytes.to_vec())?;
         eprintln!("GSC API Error: {}", body_str);
         return Err(format!("Google Search Console API error ({}): {}", status, body_str).into());
+        }
+    }
+
+    // Create final response with all fetched rows
+    let final_data = json!({
+        "rows": all_rows
+    });
+    
+    gsc_data.push(final_data);
+    
+    println!(
+        "Final GSC Data: {} rows total fetched (maximum available for date range)",
+        all_rows.len()
+    );
+
+    // Add data to DB
+    if let Err(e) = db::push_gsc_data_to_db(&gsc_data) {
+        eprintln!("Failed to push GSC data to database: {}", e);
+        return Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("Failed to save data to database: {}", e),
+        )));
     }
 
     Ok(gsc_data)

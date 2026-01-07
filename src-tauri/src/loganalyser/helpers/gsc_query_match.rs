@@ -159,9 +159,6 @@ fn calculate_url_similarity(gsc_url: &str, target_url: &str) -> f32 {
     let gsc_norm = normalize_url(gsc_url);
     let target_norm = normalize_url(target_url);
 
-    tracing::info!("Normalized GSC URL: {}", gsc_norm);
-    tracing::info!("Normalized Target URL: {}", target_norm);
-
     if gsc_norm == target_norm {
         1.0
     } else {
