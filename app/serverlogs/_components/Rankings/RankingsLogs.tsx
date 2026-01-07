@@ -1,5 +1,5 @@
+//@ts-nocheck
 "use client";
-
 import {
   Dialog,
   DialogContent,
@@ -15,8 +15,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart, MousePointerClick, Percent, TrendingUp } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  BarChart,
+  MousePointerClick,
+  Percent,
+  TrendingUp,
+  ChevronUp,
+  ChevronDown,
+} from "lucide-react";
+import useGSCStatusStore from "@/store/GSCStatusStore";
+import { useMemo, useState } from "react";
+import { format } from "date-fns";
+import { BsCalendar2 } from "react-icons/bs";
 
 interface SearchConsoleModalProps {
   isOpen: boolean;
@@ -29,147 +40,227 @@ export function RankingsLogs({
   onClose,
   url,
 }: SearchConsoleModalProps) {
-  const metrics = {
-    clicks: 2847,
-    impressions: 45123,
-    ctr: 6.31,
-    position: 12.4,
+  const { selectedURLDetails, startDate, endDate } = useGSCStatusStore();
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof GscMatch;
+    direction: "ascending" | "descending";
+  } | null>({ key: "clicks", direction: "descending" });
+
+  const dateRangeText = useMemo(() => {
+    if (startDate && endDate) {
+      return `${format(startDate, "MMM d, yyyy")} - ${format(
+        endDate,
+        "MMM d, yyyy",
+      )}`;
+    }
+    return "Last 28 days";
+  }, [startDate, endDate]);
+
+  const requestSort = (key: keyof GscMatch) => {
+    let direction: "ascending" | "descending" = "descending";
+    if (sortConfig && sortConfig.key === key) {
+      direction =
+        sortConfig.direction === "descending" ? "ascending" : "descending";
+    }
+    setSortConfig({ key, direction });
   };
 
-  const keywords = [
-    {
-      query: "next.js tutorial",
-      clicks: 342,
-      impressions: 5821,
-      ctr: 5.9,
-      position: 8.2,
-    },
-    {
-      query: "react server components",
-      clicks: 289,
-      impressions: 4203,
-      ctr: 6.9,
-      position: 11.3,
-    },
-    {
-      query: "app router guide",
-      clicks: 256,
-      impressions: 3842,
-      ctr: 6.7,
-      position: 9.8,
-    },
-    {
-      query: "next.js best practices",
-      clicks: 198,
-      impressions: 3290,
-      ctr: 6.0,
-      position: 13.1,
-    },
-    {
-      query: "server side rendering",
-      clicks: 176,
-      impressions: 2981,
-      ctr: 5.9,
-      position: 14.7,
-    },
-    {
-      query: "next.js deployment",
-      clicks: 134,
-      impressions: 2456,
-      ctr: 5.5,
-      position: 16.2,
-    },
-    {
-      query: "react framework",
-      clicks: 112,
-      impressions: 2198,
-      ctr: 5.1,
-      position: 18.4,
-    },
-    {
-      query: "web performance optimization",
-      clicks: 98,
-      impressions: 1876,
-      ctr: 5.2,
-      position: 15.9,
-    },
-  ];
+  const sortedMatches = useMemo(() => {
+    if (!selectedURLDetails?.matches) {
+      return [];
+    }
+
+    let items = [...selectedURLDetails.matches];
+
+    if (sortConfig !== null) {
+      items.sort((a, b) => {
+        const aVal = a[sortConfig.key as keyof GscMatch];
+        const bVal = b[sortConfig.key as keyof GscMatch];
+
+        if (aVal < bVal) {
+          return sortConfig.direction === "ascending" ? -1 : 1;
+        }
+        if (aVal > bVal) {
+          return sortConfig.direction === "ascending" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    return items;
+  }, [selectedURLDetails?.matches, sortConfig]);
+
+  const metrics = useMemo(() => {
+    if (!selectedURLDetails) {
+      return {
+        clicks: 0,
+        impressions: 0,
+        ctr: 0,
+        position: 0,
+      };
+    }
+
+    return {
+      clicks: selectedURLDetails.total_clicks,
+      impressions: selectedURLDetails.total_impressions,
+      ctr: parseFloat(selectedURLDetails.avg_ctr.toFixed(2)),
+      position: parseFloat(selectedURLDetails.avg_position.toFixed(1)),
+    };
+  }, [selectedURLDetails]);
 
   const metricItems = [
     {
       name: "Clicks",
       value: metrics.clicks.toLocaleString(),
       icon: MousePointerClick,
+      color: "text-blue-600 dark:text-blue-400",
+      bgColor: "bg-blue-100 dark:bg-blue-900/20",
     },
     {
       name: "Impressions",
       value: metrics.impressions.toLocaleString(),
       icon: BarChart,
+      color: "text-purple-600 dark:text-purple-400",
+      bgColor: "bg-purple-100 dark:bg-purple-900/20",
     },
-    { name: "CTR", value: `${metrics.ctr}%`, icon: Percent },
-    { name: "Avg. Position", value: metrics.position, icon: TrendingUp },
+    {
+      name: "CTR",
+      value: `${metrics.ctr}%`,
+      icon: Percent,
+      color: "text-emerald-600 dark:text-emerald-400",
+      bgColor: "bg-emerald-100 dark:bg-emerald-900/20",
+    },
+    {
+      name: "Avg. Position",
+      value: metrics.position,
+      icon: TrendingUp,
+      color: "text-amber-600 dark:text-amber-400",
+      bgColor: "bg-amber-100 dark:bg-amber-900/20",
+    },
+  ];
+
+  const tableHeaders = [
+    { key: "query", label: "Query", className: "text-left" },
+    { key: "clicks", label: "Clicks", className: "text-right" },
+    { key: "impressions", label: "Impressions", className: "text-right" },
+    { key: "ctr", label: "CTR", className: "text-right" },
+    { key: "position", label: "Position", className: "text-right" },
   ];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0 gap-0">
+      <DialogContent className="max-w-4xl max-h-[70vh] flex flex-col p-0 gap-0">
         <DialogHeader className="p-4 border-b dark:border-zinc-700 flex">
-          <DialogTitle className="text-base font-semibold dark:text-white">
-            Search Console Performance ·{" "}
-            <span className="text-xs">Last 28 days</span>
+          <DialogTitle className="text-base font-semibold dark:text-white w-full">
+            <div className="flex items-center space-x-2 justify-between mr-6">
+              <h1 className="text-lg font-bold">
+                Google Search Console Rankings
+              </h1>
+              <div className="flex items-center space-x-2">
+                <BsCalendar2 className="h-4 w-4" />
+                <span className="text-xs text-brand-bright">
+                  {dateRangeText}
+                </span>
+              </div>
+            </div>
           </DialogTitle>
-          <DialogDescription className="truncate">{url} </DialogDescription>
+          <DialogDescription className="truncate">
+            <span className="text-brand-bright font-bold">Log URL:</span>{" "}
+            {url}{" "}
+          </DialogDescription>
+          <DialogDescription className="truncate">
+            <span className="text-brand-bright font-bold">
+              Matched GSC URL:
+            </span>{" "}
+            {selectedURLDetails?.matches?.[0]?.source_url || "N/A"}{" "}
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 p-4">
-          {metricItems.map((item) => (
-            <Card key={item.name} className="dark:border-zinc-700">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  {item.name}
-                </CardTitle>
-                <item.icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{item.value}</div>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="border-b bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900/50">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {metricItems.map((item) => (
+              <Card
+                key={item.name}
+                className="dark:border-zinc-800 dark:bg-zinc-900"
+              >
+                <CardContent className="flex items-center gap-4 p-4">
+                  <div
+                    className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg ${item.bgColor}`}
+                  >
+                    <item.icon className={`h-6 w-6 ${item.color}`} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">{item.name}</p>
+                    <p className="text-2xl font-bold">{item.value}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
 
-        <div className="px-4 pb-4 flex-1 overflow-y-auto">
-          <p className="text-sm font-semibold mb-2">Top Keywords</p>
-          <div className="rounded-md border dark:border-zinc-700">
+        <div className="flex flex-1 flex-col overflow-y-hidden px-4 pt-3 pb-4">
+          <p className="flex-shrink-0 pb-2 text-sm font-semibold dark:text-white">
+            Top Keywords
+          </p>
+          <div className="flex-1 overflow-y-auto rounded-md border dark:border-zinc-700">
             <Table>
-              <TableHeader>
+              <TableHeader className="sticky top-0 z-10 bg-card">
                 <TableRow>
-                  <TableHead>Query</TableHead>
-                  <TableHead className="text-right">Clicks</TableHead>
-                  <TableHead className="text-right">Impressions</TableHead>
-                  <TableHead className="text-right">CTR</TableHead>
-                  <TableHead className="text-right">Position</TableHead>
+                  {tableHeaders.map((header) => (
+                    <TableHead
+                      key={header.key}
+                      onClick={() => requestSort(header.key)}
+                      className={`${header.className} cursor-pointer`}
+                    >
+                      <div
+                        className={`flex items-center ${
+                          header.className === "text-right" ? "justify-end" : ""
+                        }`}
+                      >
+                        {header.label}
+                        {sortConfig?.key === header.key && (
+                          <span className="ml-1">
+                            {sortConfig.direction === "ascending" ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    </TableHead>
+                  ))}
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {keywords.map((keyword, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">
-                      {keyword.query}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {keyword.clicks.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">
-                      {keyword.impressions.toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">
-                      {keyword.ctr}%
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-muted-foreground">
-                      {keyword.position}
+                {sortedMatches && sortedMatches.length > 0 ? (
+                  sortedMatches.map((keyword, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">
+                        {keyword.query}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums">
+                        {keyword.clicks.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
+                        {keyword.impressions.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
+                        {(keyword.ctr * 100).toFixed(2)}%
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-muted-foreground">
+                        {keyword.position.toFixed(1)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      No data to display.
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </div>
@@ -178,4 +269,3 @@ export function RankingsLogs({
     </Dialog>
   );
 }
-

@@ -4,5 +4,6 @@ pub mod country_extractor;
 pub mod crawler_type;
 pub mod google_ip_fetcher;
 pub mod gsc_log;
+pub mod gsc_query_match;
 pub mod modeling;
 pub mod parse_logs;

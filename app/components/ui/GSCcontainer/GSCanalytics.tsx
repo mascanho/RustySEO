@@ -15,11 +15,11 @@ import { UniversalKeywordTable } from "../Shared/UniversalKeywordTable";
 import { ColumnDef } from "@tanstack/react-table";
 import DeepCrawlQueryContextMenu from "@/app/global/_components/Sidebar/GSCRankingInfo/DeepCrawlQueryContextMenu";
 import useGSCStatusStore from "@/store/GSCStatusStore";
-import { Modal } from "@mantine/core";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useDisclosure } from "@mantine/hooks";
 import GSCConnectionWizard from "./GSCConnectionWizard";
 import { Button } from "@/components/ui/button";
-import { format, subDays, isValid } from "date-fns";
+import { format, subDays, isValid, parse } from "date-fns";
 
 // Interface defining the structure of a Keyword object
 interface GscUrl {
@@ -40,19 +40,24 @@ const GSCanalytics = () => {
     credentials,
     isConfigured,
     refresh: refreshStatus,
+    setGSCStoreData,
+    data,
+    startDate,
+    endDate,
+    setStartDate,
+    setEndDate,
   } = useGSCStatusStore();
   const [openedWizard, { open: openWizard, close: closeWizard }] =
     useDisclosure(false);
 
-  // Date filtering state - Init with last 28 days
-  const [startDate, setStartDate] = useState<Date | null>(() => {
-    const date = subDays(new Date(), 28);
-    return isValid(date) ? date : null;
-  });
-  const [endDate, setEndDate] = useState<Date | null>(() => {
-    const date = new Date();
-    return isValid(date) ? date : null;
-  });
+  useEffect(() => {
+    if (!startDate) {
+      setStartDate(subDays(new Date(), 28));
+    }
+    if (!endDate) {
+      setEndDate(new Date());
+    }
+  }, [startDate, endDate, setStartDate, setEndDate]);
 
   // Helper to format date for input value (yyyy-MM-dd)
   const formatDateForInput = (date: Date | null) => {
@@ -91,6 +96,8 @@ const GSCanalytics = () => {
       // Ensure response is an array
       if (Array.isArray(response)) {
         setGscData(response);
+        // SET AS GLOBAL STORE STATE
+        setGSCStoreData(response);
       } else {
         console.warn("GSC data from DB is not an array:", response);
         setGscData([]);
@@ -219,9 +226,19 @@ const GSCanalytics = () => {
       {
         accessorKey: "date",
         header: "Date",
-        cell: ({ row }) => (
-          <span className="text-gray-500 text-xs">{row.original.date}</span>
-        ),
+        cell: ({ row }) => {
+          let formattedDate = row.original.date;
+          try {
+            // Try to parse the date and format it as dd/mm/yyyy
+            const date = new Date(row.original.date);
+            if (isValid(date)) {
+              formattedDate = format(date, "dd/MM/yyyy");
+            }
+          } catch (e) {
+            // Keep original value if parsing fails
+          }
+          return <span className="text-gray-500 text-xs">{formattedDate}</span>;
+        },
       },
     ],
     [credentials],
@@ -234,37 +251,20 @@ const GSCanalytics = () => {
 
   return (
     <div className="px-2 h-[calc(100vh-9rem)] flex flex-col dark:text-white/50">
-      <Modal
-        opened={openedWizard}
-        onClose={closeWizard}
-        withCloseButton={false}
-        centered
-        size="lg"
-        padding={0}
-        radius="xl"
-        styles={{
-          content: {
-            backgroundColor: "transparent",
-            boxShadow: "none",
-            border: "none",
-          },
-          body: {
-            padding: 0,
-            backgroundColor: "transparent",
-          },
-          inner: {
-            padding: 0,
-          },
-        }}
+      <Dialog
+        open={openedWizard}
+        onOpenChange={(open) => !open && closeWizard()}
       >
-        <GSCConnectionWizard
-          onComplete={() => {
-            closeWizard();
-            handleRefreshGSC();
-          }}
-          onClose={closeWizard}
-        />
-      </Modal>
+        <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-lg z-[10001]">
+          <GSCConnectionWizard
+            onComplete={() => {
+              closeWizard();
+              handleRefreshGSC();
+            }}
+            onClose={closeWizard}
+          />
+        </DialogContent>
+      </Dialog>
 
       <div className="flex items-center justify-between mb-2 flex-shrink-0 px-1">
         <div className="flex items-center gap-2">
@@ -327,22 +327,42 @@ const GSCanalytics = () => {
                 {/* Date Picker Group */}
                 <div className="flex items-center gap-1.5 h-9 px-2.5 border border-gray-200 dark:border-brand-dark rounded-xl bg-white dark:bg-brand-darker shadow-sm">
                   <CalendarIcon className="h-4 w-4 text-gray-400 shrink-0 mr-1" />
-                  <input
-                    type="date"
-                    value={formatDateForInput(startDate)}
-                    onChange={(e) => handleDateChange("start", e.target.value)}
-                    className="h-full w-[110px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 dark:[color-scheme:dark] font-medium"
-                  />
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={formatDateForInput(startDate)}
+                      onChange={(e) =>
+                        handleDateChange("start", e.target.value)
+                      }
+                      className="h-full w-[75px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 dark:[color-scheme:dark] font-medium opacity-0 absolute inset-0 cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={startDate ? format(startDate, "dd/MM/yyyy") : ""}
+                      readOnly
+                      placeholder="dd/mm/yyyy"
+                      className="h-full w-[75px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 font-medium pointer-events-none"
+                    />
+                  </div>
                   <span className="text-gray-300 dark:text-gray-600 select-none">
                     -
                   </span>
-                  <input
-                    type="date"
-                    value={formatDateForInput(endDate)}
-                    onChange={(e) => handleDateChange("end", e.target.value)}
-                    min={formatDateForInput(startDate)}
-                    className="h-full w-[110px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 dark:[color-scheme:dark] font-medium text-right"
-                  />
+                  <div className="relative">
+                    <input
+                      type="date"
+                      value={formatDateForInput(endDate)}
+                      onChange={(e) => handleDateChange("end", e.target.value)}
+                      min={formatDateForInput(startDate)}
+                      className="h-full w-[75px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 dark:[color-scheme:dark] font-medium opacity-0 absolute inset-0 cursor-pointer"
+                    />
+                    <input
+                      type="text"
+                      value={endDate ? format(endDate, "dd/MM/yyyy") : ""}
+                      readOnly
+                      placeholder="dd/mm/yyyy"
+                      className="h-full w-[75px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 font-medium text-right pointer-events-none"
+                    />
+                  </div>
                 </div>
 
                 <button

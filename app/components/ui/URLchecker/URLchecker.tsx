@@ -891,7 +891,6 @@ export function UrlStatusChecker() {
                                 : "text-muted-foreground"
                           }`}
                         >
-                          {urlStatus.statusCode || "---"}{" "}
                           {getStatusText(urlStatus)}
                         </span>
                         {urlStatus.lastChecked && (

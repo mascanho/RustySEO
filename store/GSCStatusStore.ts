@@ -16,6 +16,11 @@ interface GSCStatusState {
   isLoading: boolean;
   lastChecked: Date | null;
   error: string | null;
+  showInTable: boolean;
+  data: any;
+  selectedURLDetails: GscQueryMatch | null;
+  startDate: Date | null;
+  endDate: Date | null;
 
   // Actions
   setCredentials: (credentials: GSCCredentials | null) => void;
@@ -24,9 +29,36 @@ interface GSCStatusState {
   updateStatus: (credentials: GSCCredentials | null, error?: string) => void;
   clearStatus: () => void;
   refresh: () => Promise<void>;
+  setShowInTable: (showInTable: boolean) => void;
+  setGSCStoreData: (data: any) => void;
+  setSelectedURLDetails: (data: any) => void;
+  setStartDate: (date: Date | null) => void;
+  setEndDate: (date: Date | null) => void;
 
   // Getters
   getIsConfigured: () => boolean;
+}
+
+interface GscMatch {
+  query: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number;
+  similarity_score: number;
+  source_url: string;
+}
+
+interface GscQueryMatch {
+  url: string;
+  matches: GscMatch[];
+  total_matches: number;
+  confidence_score: number;
+  top_queries: string[];
+  total_clicks: number;
+  total_impressions: number;
+  avg_ctr: number;
+  avg_position: number;
 }
 
 const useGSCStatusStore = create<GSCStatusState>((set, get) => ({
@@ -35,6 +67,19 @@ const useGSCStatusStore = create<GSCStatusState>((set, get) => ({
   isLoading: false,
   lastChecked: null,
   error: null,
+  showInTable: false,
+  data: [],
+  selectedURLDetails: null,
+  startDate: null,
+  endDate: null,
+
+  setStartDate: (date) => set({ startDate: date }),
+  setEndDate: (date) => set({ endDate: date }),
+
+  setSelectedURLDetails: (data: GscQueryMatch | null) =>
+    set({ selectedURLDetails: data }),
+
+  setGSCStoreData: (data) => set({ data }),
 
   setCredentials: (credentials) =>
     set((state) => ({
@@ -46,6 +91,7 @@ const useGSCStatusStore = create<GSCStatusState>((set, get) => ({
       ),
       lastChecked: new Date(),
       error: null,
+      showInTable: false,
     })),
 
   setLoading: (isLoading) => set({ isLoading }),
@@ -56,6 +102,8 @@ const useGSCStatusStore = create<GSCStatusState>((set, get) => ({
       isLoading: false,
       lastChecked: new Date(),
     })),
+
+  setShowInTable: (showInTable) => set({ showInTable }),
 
   updateStatus: (credentials, error) =>
     set((state) => ({
@@ -88,7 +136,10 @@ const useGSCStatusStore = create<GSCStatusState>((set, get) => ({
       get().updateStatus(credentials);
     } catch (error) {
       console.error("Failed to refresh GSC status:", error);
-      get().updateStatus(null, error instanceof Error ? error.message : String(error));
+      get().updateStatus(
+        null,
+        error instanceof Error ? error.message : String(error),
+      );
     } finally {
       set({ isLoading: false });
     }

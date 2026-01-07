@@ -27,35 +27,36 @@ const Loader = () => {
   const pathname = usePathname();
 
   // FETCH DATA FROM GOGLE SEARCH CONSOLE
-  useEffect(() => {
-    const sessionId = sessionStorage?.getItem("sessionId");
+  // FOR NOW LEAVE THIS OFF TO SAVE REQUESTS ON THE API
+  // useEffect(() => {
+  //   const sessionId = sessionStorage?.getItem("sessionId");
 
-    const callSearchConsole = async () => {
-      try {
-        // Step 1: Check if window is defined
-        if (typeof window !== "undefined") {
-          // Step 2: Call search console API
-          const result = await invoke<{}>("call_google_search_console");
-        }
-      } catch (error) {
-        // Step 3: Handle any errors
-        console.warn("Search console connection unavailable:", error);
-      } finally {
-        // Step 4: Cleanup/final steps
-        console.log("Search console call completed");
-      }
-    };
+  //   const callSearchConsole = async () => {
+  //     try {
+  //       // Step 1: Check if window is defined
+  //       if (typeof window !== "undefined") {
+  //         // Step 2: Call search console API
+  //         const result = await invoke<{}>("call_google_search_console");
+  //       }
+  //     } catch (error) {
+  //       // Step 3: Handle any errors
+  //       console.warn("Search console connection unavailable:", error);
+  //     } finally {
+  //       // Step 4: Cleanup/final steps
+  //       console.log("Search console call completed");
+  //     }
+  //   };
 
-    if (!sessionId && typeof window !== "undefined") {
-      try {
-        const newSessionId = Math.random().toString(36).substring(2, 15);
-        sessionStorage?.setItem("sessionId", newSessionId);
-        callSearchConsole();
-      } catch (err) {
-        console.warn("Session storage not available:", err);
-      }
-    }
-  }, []);
+  //   if (!sessionId && typeof window !== "undefined") {
+  //     try {
+  //       const newSessionId = Math.random().toString(36).substring(2, 15);
+  //       sessionStorage?.setItem("sessionId", newSessionId);
+  //       callSearchConsole();
+  //     } catch (err) {
+  //       console.warn("Session storage not available:", err);
+  //     }
+  //   }
+  // }, []);
 
   useEffect(() => {
     if (isVisible) {

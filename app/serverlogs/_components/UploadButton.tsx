@@ -81,16 +81,16 @@ function UploadButton() {
         content="View Google Search Console data"
         className="!bg-gray-800 !text-xs"
       />
-      <Dialog clssName="w-[1200px]" open={gscOpen} onOpenChange={setGscOpen}>
+      <Dialog className="w-[1200px]" open={gscOpen} onOpenChange={setGscOpen}>
         <DialogTrigger asChild>
           <aside
             data-tooltip-id="gsc-tooltip"
-            className="bg-stone-500 text-xs rounded-sm"
+            className="bg-stone-500 text-xs rounded-sm cursor-pointer"
           >
             <KeyRound className="w-7 h-7 text-white p-1.5" />
           </aside>
         </DialogTrigger>
-        <DialogContent className="px-4 py-5 overflow-hidden pl-6 w-[1900px] max-w-[90vw] h-[860px] dark:bg-brand-darker">
+        <DialogContent className="px-4 py-5 overflow-hidden pl-6 w-[1900px] max-w-[90vw] h-[100%-10%]  dark:bg-brand-darker">
           <GSCcontainer />
         </DialogContent>
       </Dialog>

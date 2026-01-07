@@ -16,7 +16,11 @@ import {
   Package,
   RefreshCw,
   Search,
+  KeyRound,
 } from "lucide-react";
+import useGSCStatusStore from "@/store/GSCStatusStore";
+import { RankingsLogs } from "../Rankings/RankingsLogs";
+import FetchMatchGSC from "../table/utils/FetchMatchGSC";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -151,6 +155,13 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
   const [domain, setDomain] = useState("");
   const [showOnTables, setShowOnTables] = useState(false);
   const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
+  const [selectedLog, setSelectedLog] = useState<any | null>(null);
+
+  const {
+    credentials,
+    data: GSCdata,
+    setSelectedURLDetails,
+  } = useGSCStatusStore();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -384,8 +395,8 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
     () =>
       initialLogs.length > 0
         ? initialLogs.reduce((oldest, log) =>
-            new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
-          )
+          new Date(log.timestamp) < new Date(oldest.timestamp) ? log : oldest,
+        )
         : null,
     [initialLogs],
   );
@@ -394,8 +405,8 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
     () =>
       initialLogs.length > 0
         ? initialLogs.reduce((newest, log) =>
-            new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
-          )
+          new Date(log.timestamp) > new Date(newest.timestamp) ? log : newest,
+        )
         : null,
     [initialLogs],
   );
@@ -457,6 +468,17 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
 
   return (
     <div className="space-y-4 h-full pb-0 -mb-4">
+      {selectedLog && (
+        <RankingsLogs
+          isOpen={!!selectedLog}
+          onClose={() => setSelectedLog(null)}
+          url={
+            domain && selectedLog.path
+              ? `https://${domain}${selectedLog.path}`
+              : selectedLog.path
+          }
+        />
+      )}
       <div className="flex flex-col md:flex-row justify-between -mb-4 p-1">
         <div className="relative w-full mr-1">
           <Search className="absolute dark:text-white/50 left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -566,11 +588,10 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
                       Path
                       {sortConfig?.key === "path" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -581,11 +602,10 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
                       File Type
                       {sortConfig?.key === "file_type" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -596,11 +616,10 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
                       Size
                       {sortConfig?.key === "response_size" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -611,11 +630,10 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
                       Total Hits
                       {sortConfig?.key === "frequency" && (
                         <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
+                          className={`ml-1 h-4 w-4 inline-block ${sortConfig.direction === "descending"
                               ? "rotate-180"
                               : ""
-                          }`}
+                            }`}
                         />
                       )}
                     </TableHead>
@@ -665,65 +683,83 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
                                   ? "https://" + domain + log.path
                                   : log?.path}
                               </span>
+                              {credentials?.token?.length > 0 && (
+                                <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150 opacity-0 invisible group-hover:opacity-100 group-hover:visible">
+                                  <KeyRound
+                                    size={14}
+                                    className="text-[10px] ml-2 text-yellow-500 cursor-pointer"
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      e.preventDefault();
+                                      setSelectedLog(log);
+                                      const response = await FetchMatchGSC(
+                                        log.path,
+                                        credentials,
+                                        GSCdata,
+                                      );
+                                      setSelectedURLDetails(response);
+                                    }}
+                                  />
+                                </span>
+                              )}
                             </div>
                           </TableCell>
 
                           <TableCell className="min-w-[30px] truncate align-middle">
-          <div className="flex items-center h-full justify-center">
-            <Badge
-              variant="outline"
-              className="flex items-center"
-            >
-              {log.file_type}
-            </Badge>
-          </div>
-        </TableCell>
+                            <div className="flex items-center h-full justify-center">
+                              <Badge
+                                variant="outline"
+                                className="flex items-center"
+                              >
+                                {log.file_type}
+                              </Badge>
+                            </div>
+                          </TableCell>
 
                           <TableCell className="text-center align-middle">
-          <div className="flex items-center justify-center h-full">
-            <span>
-              {formatResponseSize(log.response_size)}
-            </span>
-          </div>
-        </TableCell>
+                            <div className="flex items-center justify-center h-full">
+                              <span>
+                                {formatResponseSize(log.response_size)}
+                              </span>
+                            </div>
+                          </TableCell>
 
                           <TableCell className="text-center min-w-[90px] align-middle">
-          <div className="flex items-center justify-center h-full">
-            <span>
-              {timings(log)?.frequency?.total}
-            </span>
-          </div>
-        </TableCell>
+                            <div className="flex items-center justify-center h-full">
+                              <span>
+                                {timings(log)?.frequency?.total}
+                              </span>
+                            </div>
+                          </TableCell>
 
                           <TableCell className="text-center w-[90px] align-middle">
-          <div className="flex items-center justify-center h-full">
-            <span>
-              {timings(log)?.frequency?.perHour}
-            </span>
-          </div>
-        </TableCell>
+                            <div className="flex items-center justify-center h-full">
+                              <span>
+                                {timings(log)?.frequency?.perHour}
+                              </span>
+                            </div>
+                          </TableCell>
 
                           <TableCell
-          width={100}
-          className="max-w-[100px] align-middle"
-        >
-          <div className="flex items-center h-full justify-center">
-            <Badge
-              variant="outline"
-              className={`flex items-center align-middle justify-center ${
-                log.crawler_type !== "Human"
-                  ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white w-full"
-                  : "bg-green-100 text-green-800 border-green-200"
-              }`}
-            >
-              {log.crawler_type.startsWith("Goo")
-                ? "Google 🤖"
-                : log.crawler_type.length > 10
-                  ? log.crawler_type.trim().slice(0, 10)
-                  : log.crawler_type}
-            </Badge>
-          </div>
-        </TableCell>
+                            width={100}
+                            className="max-w-[100px] align-middle"
+                          >
+                            <div className="flex items-center h-full justify-center">
+                              <Badge
+                                variant="outline"
+                                className={`flex items-center align-middle justify-center ${log.crawler_type !== "Human"
+                                    ? "bg-red-200 dark:bg-red-400 border-purple-200 text-black dark:text-white w-full"
+                                    : "bg-green-100 text-green-800 border-green-200"
+                                  }`}
+                              >
+                                {log.crawler_type.startsWith("Goo")
+                                  ? "Google 🤖"
+                                  : log.crawler_type.length > 10
+                                    ? log.crawler_type.trim().slice(0, 10)
+                                    : log.crawler_type}
+                              </Badge>
+                            </div>
+                          </TableCell>
                         </TableRow>
 
                         {expandedRow === index && (
@@ -934,32 +970,32 @@ const WidgetTableOpenAi: React.FC<WidgetTableProps> = ({ data }) => {
                                     {/* Other Status Codes */}
                                     {(log.status_codes?.other_count || 0) >
                                       0 && (
-                                      <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
-                                        <span className="font-semibold text-gray-600 dark:text-gray-400">
-                                          Other Codes:{" "}
-                                          {log.status_codes?.other_count || 0}
-                                        </span>
-                                        <div className="flex flex-wrap gap-1 mt-1">
-                                          {Object.entries(
-                                            log.status_codes?.counts || {},
-                                          )
-                                            .filter(([code]) => {
-                                              const status = parseInt(code);
-                                              return (
-                                                status < 200 || status >= 600
-                                              );
-                                            })
-                                            .map(([code, count]) => (
-                                              <span
-                                                key={code}
-                                                className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs"
-                                              >
-                                                {code}: {count}
-                                              </span>
-                                            ))}
+                                        <div className="mt-3 pt-3 border-t border-gray-300 dark:border-gray-600">
+                                          <span className="font-semibold text-gray-600 dark:text-gray-400">
+                                            Other Codes:{" "}
+                                            {log.status_codes?.other_count || 0}
+                                          </span>
+                                          <div className="flex flex-wrap gap-1 mt-1">
+                                            {Object.entries(
+                                              log.status_codes?.counts || {},
+                                            )
+                                              .filter(([code]) => {
+                                                const status = parseInt(code);
+                                                return (
+                                                  status < 200 || status >= 600
+                                                );
+                                              })
+                                              .map(([code, count]) => (
+                                                <span
+                                                  key={code}
+                                                  className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs"
+                                                >
+                                                  {code}: {count}
+                                                </span>
+                                              ))}
+                                          </div>
                                         </div>
-                                      </div>
-                                    )}
+                                      )}
                                   </div>
                                 </div>
                               </div>

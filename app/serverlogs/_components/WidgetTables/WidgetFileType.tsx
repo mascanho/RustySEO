@@ -19,6 +19,7 @@ import {
   FileVideo,
   Filter,
   Image,
+  KeyRound,
   Package,
   RefreshCw,
   Search,
@@ -69,6 +70,9 @@ import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
 import { useAsyncLogFilter } from "./hooks/useAsyncLogFilter";
+import useGSCStatusStore from "@/store/GSCStatusStore";
+import { RankingsLogs } from "../Rankings/RankingsLogs";
+import FetchMatchGSC from "../table/utils/FetchMatchGSC";
 
 interface LogEntry {
   browser: string;
@@ -209,6 +213,14 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
   const [isInitialized, setIsInitialized] = useState(false);
   const [availableFileTypes, setAvailableFileTypes] = useState<string[]>([]);
   const [isReady, setIsReady] = useState(false);
+  const [selectedLog, setSelectedLog] = useState<any | null>(null);
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+
+  const {
+    credentials,
+    data: GSCdata,
+    setSelectedURLDetails,
+  } = useGSCStatusStore();
 
   // Use deferred rendering to unblock initial paint
   useEffect(() => {
@@ -762,6 +774,17 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
 
   return (
     <div className="space-y-4 h-full pb-0 -mb-4">
+      {selectedLog && (
+        <RankingsLogs
+          isOpen={!!selectedLog}
+          onClose={() => setSelectedLog(null)}
+          url={
+            domain && selectedLog.path
+              ? `https://${domain}${selectedLog.path}`
+              : selectedLog.path
+          }
+        />
+      )}
       {/* File Type Header */}
       {fileTypeFilter.length > 0 && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-2">
@@ -1187,6 +1210,8 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                                 expandedRow === index ? null : index,
                               )
                             }
+                            onMouseEnter={() => setHoveredRow(index)}
+                            onMouseLeave={() => setHoveredRow(null)}
                           >
                             <TableCell className="font-medium text-center max-w-[40px] align-middle">
                               {indexOfFirstItem + index + 1}
@@ -1214,6 +1239,25 @@ const WidgetFileType: React.FC<WidgetTableProps> = ({
                                     ? "https://" + domain + log.path
                                     : log?.path}
                                 </span>
+                                {credentials?.token?.length > 0 && (
+                                    <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150 opacity-0 invisible group-hover:opacity-100 group-hover:visible">
+                                      <KeyRound
+                                        size={14}
+                                        className="text-[10px] ml-2 text-yellow-500 cursor-pointer"
+                                        onClick={async (e) => {
+                                          e.stopPropagation();
+                                          e.preventDefault();
+                                          setSelectedLog(log);
+                                          const response = await FetchMatchGSC(
+                                            log.path,
+                                            credentials,
+                                            GSCdata,
+                                          );
+                                          setSelectedURLDetails(response);
+                                        }}
+                                      />
+                                    </span>
+                                  )}
                               </span>
                             </TableCell>
                             <TableCell className="min-w-[30px] truncate align-middle">

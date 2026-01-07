@@ -68,7 +68,7 @@ const FooterLoader = ({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="m-auto flex items-center gap-2 cursor-pointer select-none ">
+          <div className="m-auto mt-[1.5px] flex items-center gap-2 cursor-pointer select-none ">
             {/* Flashing indicator - maintains your original styling */}
             <div
               className={cn(

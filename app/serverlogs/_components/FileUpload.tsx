@@ -76,8 +76,6 @@ export function FileUpload({
     getFileUploadLimit();
   }, []);
 
-  console.log("maxSizeMB", maxSizeMB);
-
   // Get the initial state of storing logs from the localStorage
   useEffect(() => {
     const storedValue = localStorage.getItem("logsStorage");

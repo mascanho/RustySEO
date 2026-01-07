@@ -13,6 +13,7 @@ import {
   FileVideo,
   Filter,
   Image,
+  KeyRound,
   Package,
   RefreshCw,
   Search,
@@ -63,6 +64,9 @@ import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
 import { useAsyncLogFilter } from "./hooks/useAsyncLogFilter";
+import useGSCStatusStore from "@/store/GSCStatusStore";
+import { RankingsLogs } from "../Rankings/RankingsLogs";
+import FetchMatchGSC from "../table/utils/FetchMatchGSC";
 
 interface LogEntry {
   browser: string;
@@ -132,6 +136,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
     direction: "ascending" | "descending";
   } | null>({ key: "timestamp", direction: "descending" });
   const [expandedRow, setExpandedRow] = useState<number | null>(null);
+  const [selectedLog, setSelectedLog] = useState<any | null>(null);
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [domain, setDomain] = useState("");
   const [showOnTables, setShowOnTables] = useState(false);
   const [botTypeFilter, setBotTypeFilter] = useState<string | null>("all");
@@ -143,6 +149,12 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
   const [statusFilter, setStatusFilter] = useState<number[]>([]);
   const [crawlerTypeFilter, setCrawlerTypeFilter] = useState<string[]>([]);
   const [isReady, setIsReady] = useState(false);
+
+  const {
+    credentials,
+    data: GSCdata,
+    setSelectedURLDetails,
+  } = useGSCStatusStore();
 
   // Use deferred rendering to unblock initial paint
   useEffect(() => {
@@ -604,7 +616,19 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
   }
 
   return (
-    <div className="space-y-4 h-full pb-0 -mb-4">
+    <React.Fragment>
+      {selectedLog && (
+        <RankingsLogs
+          isOpen={!!selectedLog}
+          onClose={() => setSelectedLog(null)}
+          url={
+            domain && selectedLog.path
+              ? `https://${domain}${selectedLog.path}`
+              : selectedLog.path
+          }
+        />
+      )}
+      <div className="space-y-4 h-full pb-0 -mb-4">
       {/* Segment Header */}
       {segment && segment !== "all" && currentSegmentTaxonomy && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-2">
@@ -999,6 +1023,8 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                                 expandedRow === index ? null : index,
                               )
                             }
+                            onMouseEnter={() => setHoveredRow(index)}
+                            onMouseLeave={() => setHoveredRow(null)}
                           >
                             <TableCell className="font-medium text-center max-w-[40px] align-middle">
                               {indexOfFirstItem + index + 1}
@@ -1006,10 +1032,10 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                             <TableCell className="min-w-[150px] align-middle">
                               {formatDate(log.timestamp)}
                             </TableCell>
-                            <TableCell className="truncate max-w-[400px] align-middle">
-                              <span className=" flex items-start truncate">
+                            <TableCell className="max-w-[400px] align-middle">
+                              <span className="flex items-center">
                                 <span
-                                  className="hover:scale-105 active:scale-95 mr-1"
+                                  className="hover:scale-105 active:scale-95 mr-1 flex-shrink-0"
                                   onClick={(click) =>
                                     handleCopyClick(
                                       log?.path,
@@ -1021,7 +1047,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                                   {getFileIcon(log.file_type)} {""}
                                 </span>
                                 <span
-                                  className="hover:underline cursor-pointer "
+                                  className="hover:underline cursor-pointer truncate"
                                   onClick={(click) =>
                                     handleURLClick(log?.path, click)
                                   }
@@ -1030,6 +1056,26 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
                                     ? "https://" + domain + log.path
                                     : log?.path}
                                 </span>
+                                {credentials?.token?.length > 0 && hoveredRow === index && (
+                                  <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150 ml-2 flex-shrink-0">
+                                    <KeyRound
+                                      size={14}
+                                      className="text-[10px] text-yellow-500 cursor-pointer"
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        setSelectedLog(log);
+                                        const response = await FetchMatchGSC(
+                                          log.path,
+                                          credentials,
+                                          GSCdata,
+                                        );
+
+                                        setSelectedURLDetails(response);
+                                      }}
+                                    />
+                                  </span>
+                                )}
                               </span>
                             </TableCell>
                             <TableCell className="min-w-[30px] truncate align-middle">
@@ -1385,6 +1431,7 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
         </Pagination>
       </div>
     </div>
+    </React.Fragment>
   );
 };
 

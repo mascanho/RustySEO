@@ -23,6 +23,7 @@ use tauri::{Manager, Window, WindowEvent};
 use tokio::sync::Mutex;
 use tokio::sync::RwLock;
 use toml;
+use tracing_subscriber::fmt;
 
 pub mod chat;
 pub mod crawler;
@@ -138,6 +139,12 @@ async fn generate_ai_topics(body: String) -> Result<String, String> {
 
 #[tokio::main]
 async fn main() {
+    // Initialize the logger
+    tracing_subscriber::fmt()
+        .event_format(tracing_subscriber::fmt::format().compact())
+        .without_time()
+        .init();
+
     // Add RustySEO uuid to DB on a seaparate async thread to no block UI
 
     tokio::spawn(async {
@@ -278,6 +285,7 @@ async fn main() {
             settings::settings::get_settings_command,
             url_checker::http_check::check_url,
             loganalyser::log_commands::save_gsc_data,
+            loganalyser::log_commands::match_gsc_query_command,
             loganalyser::helpers::gsc_log::load_gsc_from_database,
             gsc_auth::start_gsc_auth_server,
             gsc_auth::exchange_gsc_code
