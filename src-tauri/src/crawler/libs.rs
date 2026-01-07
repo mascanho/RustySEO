@@ -578,14 +578,15 @@ pub async fn get_google_search_console(
             .expect("Failed to get project directories")
             .data_dir()
             .join("tokencache.json");
-        let auth = InstalledFlowAuthenticator::builder(secret, InstalledFlowReturnMethod::HTTPRedirect)
-            .persist_tokens_to_disk(&auth_path)
-            .build()
-            .await
-            .map_err(|e| {
-                eprintln!("Failed to create authenticator: {}", e);
-                format!("Failed to create authenticator: {}", e)
-            })?;
+        let auth =
+            InstalledFlowAuthenticator::builder(secret, InstalledFlowReturnMethod::HTTPRedirect)
+                .persist_tokens_to_disk(&auth_path)
+                .build()
+                .await
+                .map_err(|e| {
+                    eprintln!("Failed to create authenticator: {}", e);
+                    format!("Failed to create authenticator: {}", e)
+                })?;
 
         let token = auth
             .token(&["https://www.googleapis.com/auth/webmasters.readonly"])
@@ -658,12 +659,9 @@ pub async fn get_google_search_console(
     let query = SearchAnalyticsQuery {
         start_date,
         end_date,
-        dimensions: vec![
-            "query".to_string(),
-            "page".to_string(),
-        ],
+        dimensions: vec!["query".to_string(), "page".to_string()],
         search_type: "web".to_string(),
-        row_limit: credentials_rows.parse::<i32>().unwrap_or(1000),
+        row_limit: credentials_rows.parse::<i32>().unwrap_or(25000),
         aggregation_type: "auto".to_string(),
     };
     let body = serde_json::to_string(&query)?;
@@ -694,7 +692,7 @@ pub async fn get_google_search_console(
     // Retry loop for handling 401 Unauthorized
     let mut gsc_data = Vec::new();
     let max_retries = 1;
-    
+
     for attempt in 0..=max_retries {
         let request = hyper::Request::builder()
             .method("POST")
@@ -702,46 +700,55 @@ pub async fn get_google_search_console(
                 "https://searchconsole.googleapis.com/webmasters/v3/sites/{}/searchAnalytics/query",
                 urlencoding::encode(&site_url)
             ))
-            .header(
-                "Authorization",
-                format!("Bearer {}", final_token),
-            )
+            .header("Authorization", format!("Bearer {}", final_token))
             .header("Content-Type", "application/json")
             .body(hyper::Body::from(body.clone()))?;
 
         let response = client.request(request).await?;
         let status = response.status();
-        
+
         // If successful, proceed to parse
         if status.is_success() {
             let body_bytes = hyper::body::to_bytes(response.into_body()).await?;
             let body_str = String::from_utf8(body_bytes.to_vec())?;
             println!("GSC Response Status: {}", status);
-            
+
             // Parse and print the results
             let data: JsonValue = serde_json::from_str(&body_str)?;
-            
-            println!("Parsed GSC Data successfully. Rows found: {}", data["rows"].as_array().map(|a| a.len()).unwrap_or(0));
+
+            println!(
+                "Parsed GSC Data successfully. Rows found: {}",
+                data["rows"].as_array().map(|a| a.len()).unwrap_or(0)
+            );
             // Add data to DB
             gsc_data.push(data);
             if let Err(e) = db::push_gsc_data_to_db(&gsc_data) {
                 eprintln!("Failed to push GSC data to database: {}", e);
-                return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, format!("Failed to save data to database: {}", e))));
+                return Err(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    format!("Failed to save data to database: {}", e),
+                )));
             }
-            
+
             // Successfully fetched and saved, break loop
             return Ok(gsc_data);
         } else if status == hyper::StatusCode::UNAUTHORIZED && attempt < max_retries {
             println!("GSC API returned 401 Unauthorized. Attempting to refresh token...");
-            
+
             if let Some(ref r_token) = refresh_token {
                 println!("Refresh token found. Refreshing...");
-                match refresh_google_token(&credentials_client_id, &credentials_client_secret, r_token).await {
+                match refresh_google_token(
+                    &credentials_client_id,
+                    &credentials_client_secret,
+                    r_token,
+                )
+                .await
+                {
                     Ok(new_token) => {
                         println!("Token refreshed successfully. Retrying request...");
                         final_token = new_token;
                         continue; // Retry loop with new token
-                    },
+                    }
                     Err(e) => {
                         eprintln!("Failed to refresh token: {}", e);
                         // Fall through to error return below
@@ -751,7 +758,7 @@ pub async fn get_google_search_console(
                 eprintln!("No refresh token available to handle 401 error.");
             }
         }
-        
+
         // If we get here, it means we failed and ran out of retries or it's a non-recoverable error
         let body_bytes = hyper::body::to_bytes(response.into_body()).await?;
         let body_str = String::from_utf8(body_bytes.to_vec())?;
@@ -769,9 +776,14 @@ pub struct AnalyticsData {
     pub response: Vec<Value>,
 }
 
-pub async fn refresh_google_token(client_id: &str, client_secret: &str, refresh_token: &str) -> Result<String, String> {
+pub async fn refresh_google_token(
+    client_id: &str,
+    client_secret: &str,
+    refresh_token: &str,
+) -> Result<String, String> {
     let client = reqwest::Client::new();
-    let response = client.post("https://oauth2.googleapis.com/token")
+    let response = client
+        .post("https://oauth2.googleapis.com/token")
         .form(&[
             ("client_id", client_id),
             ("client_secret", client_secret),
@@ -783,7 +795,7 @@ pub async fn refresh_google_token(client_id: &str, client_secret: &str, refresh_
         .map_err(|e| e.to_string())?;
 
     let json: serde_json::Value = response.json().await.map_err(|e| e.to_string())?;
-    
+
     if let Some(access_token) = json.get("access_token").and_then(|v| v.as_str()) {
         Ok(access_token.to_string())
     } else {
@@ -802,7 +814,8 @@ pub async fn set_google_analytics_credentials(credentials: GA4Credentials) -> Re
     let json = serde_json::to_string_pretty(&credentials)
         .map_err(|e| format!("Failed to serialize GA4 credentials: {}", e))?;
 
-    fs::write(&file_path, json).await
+    fs::write(&file_path, json)
+        .await
         .map_err(|e| format!("Failed to write GA4 credentials: {}", e))?;
 
     // Also update the legacy ga_id.json for backward compatibility if needed
@@ -840,7 +853,8 @@ pub async fn read_ga4_credentials_file() -> Result<GA4Credentials, String> {
             .map_err(|e| format!("Failed to write default GA4 credentials file: {}", e))?;
     }
 
-    let content = fs::read_to_string(&file_path).await
+    let content = fs::read_to_string(&file_path)
+        .await
         .map_err(|e| format!("Failed to read GA4 credentials: {}", e))?;
 
     let credentials: GA4Credentials = serde_json::from_str(&content)
@@ -851,16 +865,12 @@ pub async fn read_ga4_credentials_file() -> Result<GA4Credentials, String> {
 
 pub async fn get_ga4_properties(token: String) -> Result<Vec<Value>, String> {
     let client = reqwest::Client::new();
-    
+
     // 1. List accounts
     // Using v1beta as it is more stable than v1alpha
     let accounts_url = "https://analyticsadmin.googleapis.com/v1beta/accountSummaries";
-    
-    let response_res = client
-        .get(accounts_url)
-        .bearer_auth(&token)
-        .send()
-        .await;
+
+    let response_res = client.get(accounts_url).bearer_auth(&token).send().await;
 
     let response: Value = match response_res {
         Ok(res) => {
@@ -868,10 +878,12 @@ pub async fn get_ga4_properties(token: String) -> Result<Vec<Value>, String> {
             let text = res.text().await.unwrap_or_default();
             println!("GA4 Account Summaries Status: {}", status);
             println!("GA4 Account Summaries Response: {}", text);
-            
+
             if !status.is_success() {
                 let error_json: Value = serde_json::from_str(&text).unwrap_or(json!({}));
-                let message = error_json["error"]["message"].as_str().unwrap_or("Unknown error");
+                let message = error_json["error"]["message"]
+                    .as_str()
+                    .unwrap_or("Unknown error");
                 return Err(format!("GA4 API Error: {}", message));
             }
 
@@ -892,7 +904,7 @@ pub async fn get_ga4_properties(token: String) -> Result<Vec<Value>, String> {
             }
         }
     } else {
-         println!("No 'accountSummaries' found in response");
+        println!("No 'accountSummaries' found in response");
     }
 
     Ok(all_properties)
@@ -924,10 +936,10 @@ pub async fn get_google_analytics(
 
     // Create an authenticator that persists tokens
     let auth_path = config_dir.join("ga_tokencache.json");
-    
+
     // Try to read the new credentials first
     let credentials = read_ga4_credentials_file().await.ok();
-    
+
     let token_str = if let Some(ref creds) = credentials {
         if let Some(ref t) = creds.token {
             Some(t.clone())
@@ -990,7 +1002,10 @@ pub async fn get_google_analytics(
         creds.property_id.clone()
     } else {
         // Fallback to legacy if possible, but for now let's just error if no credentials
-        return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, "GA4 Property ID not found. Please connect GA4 first.")));
+        return Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            "GA4 Property ID not found. Please connect GA4 first.",
+        )));
     };
 
     println!("Using GA4 ID: {} to fetch Analytics data", id);
@@ -1016,17 +1031,19 @@ pub async fn get_google_analytics(
             if let Some(ref creds) = credentials {
                 if let Some(ref refresh) = creds.refresh_token {
                     println!("Access token expired, attempting to refresh...");
-                    match refresh_google_token(&creds.client_id, &creds.client_secret, refresh).await {
+                    match refresh_google_token(&creds.client_id, &creds.client_secret, refresh)
+                        .await
+                    {
                         Ok(new_token) => {
                             println!("Token refreshed successfully!");
                             // Update the token in memory for the retry
                             token_val = new_token.clone();
-                            
+
                             // Save the new token to disk
                             let mut updated_creds = creds.clone();
                             updated_creds.token = Some(new_token);
                             let _ = set_google_analytics_credentials(updated_creds).await;
-                            
+
                             // Retry the request
                             response_res = client
                                 .post(&analytics_url)
@@ -1050,7 +1067,9 @@ pub async fn get_google_analytics(
             let text = res.text().await.unwrap_or_default();
             println!("GA4 API Status: {}", status);
             // println!("GA4 API Response: {}", text);
-            serde_json::from_str(&text).unwrap_or(json!({"error": {"message": format!("Failed to parse GA4 response: {}", text)}}))
+            serde_json::from_str(&text).unwrap_or(
+                json!({"error": {"message": format!("Failed to parse GA4 response: {}", text)}}),
+            )
         }
         Err(e) => {
             println!("GA4 API Request Error: {}", e);
