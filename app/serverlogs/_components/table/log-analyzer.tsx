@@ -1295,6 +1295,7 @@ function LogRow({
 }) {
   // Track hover state for the row
   const [isHovered, setIsHovered] = useState(false);
+  const [isFetchingGSC, setIsFetchingGSC] = useState(false);
 
   return (
     <>
@@ -1386,22 +1387,39 @@ function LogRow({
               {/* SHOW A KEY TO POP THE MODAL WITH THE KEYWORDS FROM GSC */}
               {credentials?.token?.length > 0 && isHovered && (
                 <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150">
-                  <KeyRound
-                    size={14}
-                    className="text-[10px] ml-2 text-yellow-500 cursor-pointer"
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      setSelectedLog(log);
-                      const response = await FetchMatchGSC(
-                        log.path,
-                        credentials,
-                        GSCdata,
-                      );
+                  <div className="relative">
+                    {isFetchingGSC && (
+                      <div className="absolute inset-0 flex items-center justify-center ml-2">
+                        <div className="animate-spin rounded-full h-3 w-3 border border-yellow-500 border-t-transparent" />
+                      </div>
+                    )}
+                    <KeyRound
+                      size={14}
+                      className={`text-[10px] ml-2 cursor-pointer transition-opacity ${
+                        isFetchingGSC
+                          ? "opacity-30"
+                          : "text-yellow-500 hover:text-yellow-400"
+                      }`}
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        if (isFetchingGSC) return; // Prevent multiple clicks
 
-                      setSelectedURLDetails(response);
-                    }}
-                  />
+                        setSelectedLog(log);
+                        setIsFetchingGSC(true);
+                        try {
+                          const response = await FetchMatchGSC(
+                            log.path,
+                            credentials,
+                            GSCdata,
+                          );
+                          setSelectedURLDetails(response);
+                        } finally {
+                          setIsFetchingGSC(false);
+                        }
+                      }}
+                    />
+                  </div>
                 </span>
               )}
             </section>
