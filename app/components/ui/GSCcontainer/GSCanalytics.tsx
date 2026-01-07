@@ -15,7 +15,7 @@ import { UniversalKeywordTable } from "../Shared/UniversalKeywordTable";
 import { ColumnDef } from "@tanstack/react-table";
 import DeepCrawlQueryContextMenu from "@/app/global/_components/Sidebar/GSCRankingInfo/DeepCrawlQueryContextMenu";
 import useGSCStatusStore from "@/store/GSCStatusStore";
-import { Modal } from "@mantine/core";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useDisclosure } from "@mantine/hooks";
 import GSCConnectionWizard from "./GSCConnectionWizard";
 import { Button } from "@/components/ui/button";
@@ -241,37 +241,17 @@ const GSCanalytics = () => {
 
   return (
     <div className="px-2 h-[calc(100vh-9rem)] flex flex-col dark:text-white/50">
-      <Modal
-        opened={openedWizard}
-        onClose={closeWizard}
-        withCloseButton={false}
-        centered
-        size="lg"
-        padding={0}
-        radius="xl"
-        styles={{
-          content: {
-            backgroundColor: "transparent",
-            boxShadow: "none",
-            border: "none",
-          },
-          body: {
-            padding: 0,
-            backgroundColor: "transparent",
-          },
-          inner: {
-            padding: 0,
-          },
-        }}
-      >
-        <GSCConnectionWizard
-          onComplete={() => {
-            closeWizard();
-            handleRefreshGSC();
-          }}
-          onClose={closeWizard}
-        />
-      </Modal>
+      <Dialog open={openedWizard} onOpenChange={(open) => !open && closeWizard()}>
+        <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-lg z-[10001]">
+          <GSCConnectionWizard
+            onComplete={() => {
+              closeWizard();
+              handleRefreshGSC();
+            }}
+            onClose={closeWizard}
+          />
+        </DialogContent>
+      </Dialog>
 
       <div className="flex items-center justify-between mb-2 flex-shrink-0 px-1">
         <div className="flex items-center gap-2">

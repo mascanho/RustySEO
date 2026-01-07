@@ -81,7 +81,7 @@ function UploadButton() {
         content="View Google Search Console data"
         className="!bg-gray-800 !text-xs"
       />
-      <Dialog clssName="w-[1200px]" open={gscOpen} onOpenChange={setGscOpen}>
+      <Dialog className="w-[1200px]" open={gscOpen} onOpenChange={setGscOpen}>
         <DialogTrigger asChild>
           <aside
             data-tooltip-id="gsc-tooltip"
