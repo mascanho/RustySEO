@@ -4,7 +4,7 @@ use serde::Serialize;
 use std::error::Error;
 
 pub fn local_version() -> String {
-    let version = "0.3.5".to_string();
+    let version = "0.3.6".to_string();
     version
 }
 
@@ -13,8 +13,8 @@ pub async fn get_version() -> Result<(Version, Version), Box<dyn Error>> {
     let local_version = Version::parse(&local_version())?;
 
     // GitHub repository details
-    let owner = "mascanho"; // Replace with the repo owner
-    let repo = "rustyseo"; // Replace with the repo name
+    let owner = "mascanho"; //
+    let repo = "rustyseo"; //
     let url = format!(
         "https://api.github.com/repos/{}/{}/releases/latest",
         owner, repo
