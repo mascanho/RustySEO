@@ -21,6 +21,7 @@ import {
   Bot,
   CheckCircle,
   XCircle,
+  KeyRound,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -62,6 +63,9 @@ import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
 import { useAsyncLogFilter } from "./hooks/useAsyncLogFilter";
+import FetchMatchGSC from "../table/utils/FetchMatchGSC";
+import { RankingsLogs } from "../Rankings/RankingsLogs";
+import useGSCStatusStore from "@/store/GSCStatusStore";
 import { Loader2 } from "lucide-react";
 
 interface LogEntry {
@@ -279,8 +283,14 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
     string[]
   >([]);
   const [isReady, setIsReady] = useState(false);
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  const [selectedLog, setSelectedLog] = useState<any | null>(null);
 
-  // Use deferred rendering to unblock initial paint
+  const {
+    credentials,
+    data: GSCdata,
+    setSelectedURLDetails,
+  } = useGSCStatusStore();
   useEffect(() => {
     const timer = requestAnimationFrame(() => {
       setIsReady(true);
@@ -726,7 +736,19 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
   }
 
   return (
-    <div className="space-y-4 h-full pb-0 -mb-4">
+    <React.Fragment>
+      {selectedLog && (
+        <RankingsLogs
+          isOpen={!!selectedLog}
+          onClose={() => setSelectedLog(null)}
+          url={
+            domain && selectedLog.path
+              ? `https://${domain}${selectedLog.path}`
+              : selectedLog.path
+          }
+        />
+      )}
+      <div className="space-y-4 h-full pb-0 -mb-4">
       {/* Status Code Header */}
       {statusFilter.length > 0 && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-2">
@@ -1240,6 +1262,8 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                                 expandedRow === index ? null : index,
                               )
                             }
+                            onMouseEnter={() => setHoveredRow(index)}
+                            onMouseLeave={() => setHoveredRow(null)}
                           >
                             <TableCell className="font-medium text-center max-w-[40px] align-middle">
                               {indexOfFirstItem + index + 1}
@@ -1271,6 +1295,26 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
                                     ? "https://" + domain + log.path
                                     : log?.path}
                                 </span>
+                                {credentials?.token?.length > 0 && hoveredRow === index && (
+                                  <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150 ml-2 flex-shrink-0">
+                                    <KeyRound
+                                      size={14}
+                                      className="text-[10px] text-yellow-500 cursor-pointer"
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        setSelectedLog(log);
+                                        const response = await FetchMatchGSC(
+                                          log.path,
+                                          credentials,
+                                          GSCdata,
+                                        );
+
+                                        setSelectedURLDetails(response);
+                                      }}
+                                    />
+                                  </span>
+                                )}
                               </span>
                             </TableCell>
                             <TableCell className="text-center align-middle">
@@ -1651,6 +1695,7 @@ const WidgetStatusCodesTable: React.FC<WidgetTableProps> = ({
         </Pagination>
       </div>
     </div>
+  </React.Fragment>
   );
 };
 
