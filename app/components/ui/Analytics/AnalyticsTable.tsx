@@ -207,28 +207,22 @@ export default function AnalyticsTable() {
     [startDate, endDate, selectedDimension],
   );
 
-  // Initial fetch
-  useEffect(() => {
-    const fetchData = async () => {
-      // Avoid fetching if dates are invalid
-      if (startDate && endDate) {
-        await handleFilteredAnalytics("general");
-      }
-    };
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount
+  // Remove auto-fetch on mount - data will only load when user explicitly requests it
 
-  // Refetch when dates change (debounce could be added but explicit for now)
+  // Only refetch when dates change if user has already fetched data
   useEffect(() => {
-    // NOTE: GSC uses a refresh button, GA4 was auto-fetching.
-    // To match GSC behavior exactly, we could remove this and rely on the refresh button.
-    // However, the original code auto-fetched. Let's keep auto-fetch for date changes
-    // but the UI controls will look like GSC.
-    if (startDate && endDate) {
+    // NOTE: Only auto-fetch when dates change if data has already been loaded
+    // to avoid initial automatic fetch on component mount
+    if (startDate && endDate && analyticsData.length > 0) {
       handleFilteredAnalytics(selectedDimension);
     }
-  }, [startDate, endDate, selectedDimension, handleFilteredAnalytics]);
+  }, [
+    startDate,
+    endDate,
+    selectedDimension,
+    handleFilteredAnalytics,
+    analyticsData.length,
+  ]);
 
   // --- Data Transformation ---
 

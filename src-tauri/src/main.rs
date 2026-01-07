@@ -140,7 +140,10 @@ async fn generate_ai_topics(body: String) -> Result<String, String> {
 #[tokio::main]
 async fn main() {
     // Initialize the logger
-    tracing_subscriber::fmt().init();
+    tracing_subscriber::fmt()
+        .event_format(tracing_subscriber::fmt::format().compact())
+        .without_time()
+        .init();
 
     // Add RustySEO uuid to DB on a seaparate async thread to no block UI
 
