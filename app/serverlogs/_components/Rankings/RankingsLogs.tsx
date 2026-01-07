@@ -1,5 +1,5 @@
 "use client";
-// @ts-nocheck
+
 
 import {
   Dialog,
@@ -74,7 +74,7 @@ export function RankingsLogs({
 
     if (sortConfig !== null) {
       items.sort((a, b) => {
-        const aVal = a[sortConfig.key];
+        const aVal = a[sortConfig.key as keyof GscMatch];
         const bVal = b[sortConfig.key];
 
         if (aVal < bVal) {
