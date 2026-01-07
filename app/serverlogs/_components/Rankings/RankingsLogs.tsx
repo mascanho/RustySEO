@@ -1,6 +1,4 @@
 "use client";
-
-
 import {
   Dialog,
   DialogContent,
@@ -42,7 +40,7 @@ export function RankingsLogs({
 }: SearchConsoleModalProps) {
   const { selectedURLDetails, startDate, endDate } = useGSCStatusStore();
   const [sortConfig, setSortConfig] = useState<{
-    key: string;
+    key: keyof GscMatch;
     direction: "ascending" | "descending";
   } | null>({ key: "clicks", direction: "descending" });
 
@@ -56,7 +54,7 @@ export function RankingsLogs({
     return "Last 28 days";
   }, [startDate, endDate]);
 
-  const requestSort = (key: any) => {
+  const requestSort = (key: keyof GscMatch) => {
     let direction: "ascending" | "descending" = "descending";
     if (sortConfig && sortConfig.key === key) {
       direction =
@@ -75,7 +73,7 @@ export function RankingsLogs({
     if (sortConfig !== null) {
       items.sort((a, b) => {
         const aVal = a[sortConfig.key as keyof GscMatch];
-        const bVal = b[sortConfig.key];
+        const bVal = b[sortConfig.key as keyof GscMatch];
 
         if (aVal < bVal) {
           return sortConfig.direction === "ascending" ? -1 : 1;

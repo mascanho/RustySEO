@@ -1,4 +1,3 @@
-// @ts-nocheck
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   AlertCircle,
@@ -24,6 +23,7 @@ import {
   Users,
   Globe,
   Loader2,
+  KeyRound,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,9 @@ import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { useAsyncLogFilter } from "./hooks/useAsyncLogFilter";
 import { toast } from "sonner";
 import { handleCopyClick, handleURLClick } from "./helpers/useCopyOpen";
+import useGSCStatusStore from "@/store/GSCStatusStore";
+import { RankingsLogs } from "../Rankings/RankingsLogs";
+import FetchMatchGSC from "../table/utils/FetchMatchGSC";
 
 interface LogEntry {
   browser: string;
@@ -265,6 +268,14 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
   const [availableUserAgentCategories, setAvailableUserAgentCategories] =
     useState<string[]>([]);
   const [isReady, setIsReady] = useState(false);
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  const [selectedLog, setSelectedLog] = useState<any | null>(null);
+
+  const {
+    credentials,
+    data: GSCdata,
+    setSelectedURLDetails,
+  } = useGSCStatusStore();
 
   // Use deferred rendering to unblock initial paint
   useEffect(() => {
@@ -786,7 +797,19 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
   }
 
   return (
-    <div className="space-y-4 h-full pb-0 -mb-4">
+    <React.Fragment>
+      {selectedLog && (
+        <RankingsLogs
+          isOpen={!!selectedLog}
+          onClose={() => setSelectedLog(null)}
+          url={
+            domain && selectedLog.path
+              ? `https://${domain}${selectedLog.path}`
+              : selectedLog.path
+          }
+        />
+      )}
+      <div className="space-y-4 h-full pb-0 -mb-4">
       {/* User Agent Category Header */}
       {userAgentCategoryFilter.length > 0 && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-2">
@@ -1279,6 +1302,8 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                                 expandedRow === index ? null : index,
                               );
                             }}
+                            onMouseEnter={() => setHoveredRow(index)}
+                            onMouseLeave={() => setHoveredRow(null)}
                           >
                             <TableCell className="font-medium text-center max-w-[40px] align-middle">
                               {indexOfFirstItem + index + 1}
@@ -1306,6 +1331,26 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
                                     ? "https://" + domain + log.path
                                     : log?.path}
                                 </span>
+                                {credentials?.token?.length > 0 && hoveredRow === index && (
+                                  <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150 ml-2 flex-shrink-0">
+                                    <KeyRound
+                                      size={14}
+                                      className="text-[10px] text-yellow-500 cursor-pointer"
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        setSelectedLog(log);
+                                        const response = await FetchMatchGSC(
+                                          log.path,
+                                          credentials,
+                                          GSCdata,
+                                        );
+
+                                        setSelectedURLDetails(response);
+                                      }}
+                                    />
+                                  </span>
+                                )}
                               </span>
                             </TableCell>
                             <TableCell className="truncate max-w-[250px] align-middle">
@@ -1683,6 +1728,7 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
         </Pagination>
       </div>
     </div>
+    </React.Fragment>
   );
 };
 
