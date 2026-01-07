@@ -1,3 +1,4 @@
+//@ts-nocheck
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   AlertCircle,
@@ -810,56 +811,20 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
         />
       )}
       <div className="space-y-4 h-full pb-0 -mb-4">
-      {/* User Agent Category Header */}
-      {userAgentCategoryFilter.length > 0 && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-2">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold text-blue-800 dark:text-blue-300">
-                Viewing: {userAgentCategoryFilter.join(", ")} User Agents
-              </h3>
-              <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
-                Showing {filteredLogs.length} log entries for{" "}
-                <span className="font-bold">
-                  {userAgentCategoryFilter.join(", ")}
-                </span>{" "}
-                user agent{userAgentCategoryFilter.length > 1 ? "s" : ""}
-              </p>
-            </div>
-            <Badge
-              variant="outline"
-              className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
-            >
-              {filteredLogs.length} entries
-            </Badge>
-          </div>
-        </div>
-      )}
-
-      {/* Segment Header - Only show if segment is selected */}
-      {segment &&
-        segment !== "all" &&
-        currentSegmentTaxonomy &&
-        !userAgentCategoryFilter.length && (
+        {/* User Agent Category Header */}
+        {userAgentCategoryFilter.length > 0 && (
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-2">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-semibold text-blue-800 dark:text-blue-300">
-                  Viewing: {segment}
+                  Viewing: {userAgentCategoryFilter.join(", ")} User Agents
                 </h3>
                 <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
-                  Showing request activity for{" "}
-                  <span className="font-bold">{segment.toLowerCase()}</span>
-                  {""} segment
-                  {currentSegmentTaxonomy.paths.length > 0 && (
-                    <span className="ml-1">
-                      (<span className="font-bold">matches: {""}</span>
-                      {currentSegmentTaxonomy.paths
-                        .map((p) => p.path)
-                        .join(", ")}
-                      )
-                    </span>
-                  )}
+                  Showing {filteredLogs.length} log entries for{" "}
+                  <span className="font-bold">
+                    {userAgentCategoryFilter.join(", ")}
+                  </span>{" "}
+                  user agent{userAgentCategoryFilter.length > 1 ? "s" : ""}
                 </p>
               </div>
               <Badge
@@ -872,862 +837,908 @@ const WidgetUserAgentsTable: React.FC<WidgetTableProps> = ({
           </div>
         )}
 
-      <div className="flex flex-col md:flex-row justify-between -mb-4 p-1">
-        <div className="relative w-full mr-1">
-          <Search className="absolute dark:text-white/50 left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search by IP, path, user agent, or referer..."
-            className="pl-8 w-full dark:text-white dark:bg-brand-darker"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
-        <div className="flex flex-1 gap-1">
-          {/* Taxonomy Filter */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-full"
-              >
-                <FolderTree className="h-4 w-4" />
-                Segment
-                {selectedTaxonomy !== "all" && (
-                  <Badge variant="secondary" className="ml-1">
-                    {taxonomies.find((t) => t.id === selectedTaxonomy)?.name}
-                  </Badge>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999] w-[200px]"
-            >
-              <DropdownMenuLabel>Filter by Segment</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuCheckboxItem
-                className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
-                checked={selectedTaxonomy === "all"}
-                onCheckedChange={() => setSelectedTaxonomy("all")}
-              >
-                All Segments
-              </DropdownMenuCheckboxItem>
-              {taxonomies.map((taxonomy) => (
-                <DropdownMenuCheckboxItem
-                  className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
-                  key={taxonomy.id}
-                  checked={selectedTaxonomy === taxonomy.id}
-                  onCheckedChange={(checked) => {
-                    setSelectedTaxonomy(checked ? taxonomy.id : "all");
-                  }}
-                >
-                  {taxonomy.name}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* User Agent Category Filter */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-full"
-              >
-                <Users className="h-4 w-4" />
-                User Agent
-                {userAgentCategoryFilter.length > 0 && (
-                  <Badge variant="secondary" className="ml-1">
-                    {userAgentCategoryFilter.length}
-                  </Badge>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999] max-h-[400px] overflow-y-auto"
-            >
-              <DropdownMenuLabel>
-                Filter by User Agent Category
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {availableUserAgentCategories.map((category) => (
-                <DropdownMenuCheckboxItem
-                  className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
-                  key={category}
-                  checked={userAgentCategoryFilter.some(
-                    (cat) => cat === category,
-                  )}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setUserAgentCategoryFilter([
-                        ...userAgentCategoryFilter,
-                        category,
-                      ]);
-                    } else {
-                      setUserAgentCategoryFilter(
-                        userAgentCategoryFilter.filter(
-                          (cat) => cat !== category,
-                        ),
-                      );
-                    }
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    {getUserAgentIcon(category)}
-                    <span>{category}</span>
-                  </div>
-                </DropdownMenuCheckboxItem>
-              ))}
-              {availableUserAgentCategories.length === 0 && (
-                <div className="px-2 py-2 text-sm text-gray-500">
-                  No user agent categories available
-                </div>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* File Type Filter */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-32"
-              >
-                <Filter className="h-4 w-4" />
-                File Type
-                {fileTypeFilter.length > 0 && (
-                  <Badge variant="secondary" className="ml-1">
-                    {fileTypeFilter.length}
-                  </Badge>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999] max-h-[400px] overflow-y-auto"
-            >
-              <DropdownMenuLabel>Filter by File Type</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {[
-                "HTML",
-                "CSS",
-                "JS",
-                "PHP",
-                "TXT",
-                "Image",
-                "Video",
-                "Audio",
-                "Document",
-                "Archive",
-                "Font",
-              ].map((fileType) => (
-                <DropdownMenuCheckboxItem
-                  className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
-                  key={fileType}
-                  checked={fileTypeFilter.includes(fileType)}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setFileTypeFilter([...fileTypeFilter, fileType]);
-                    } else {
-                      setFileTypeFilter(
-                        fileTypeFilter.filter((ft) => ft !== fileType),
-                      );
-                    }
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    {getFileIcon(fileType)}
-                    <span>{fileType}</span>
-                  </div>
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Status Code Filter */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-32"
-              >
-                <CheckCircle className="h-4 w-4" />
-                Status
-                {statusFilter.length > 0 && (
-                  <Badge variant="secondary" className="ml-1">
-                    {statusFilter.length}
-                  </Badge>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999]"
-            >
-              <DropdownMenuLabel>Filter by Status Code</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {uniqueStatusCodes.map((statusCode) => (
-                <DropdownMenuCheckboxItem
-                  className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
-                  key={statusCode}
-                  checked={statusFilter.includes(statusCode)}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setStatusFilter([...statusFilter, statusCode]);
-                    } else {
-                      setStatusFilter(
-                        statusFilter.filter((code) => code !== statusCode),
-                      );
-                    }
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`w-3 h-3 rounded-full ${
-                        statusCode >= 200 && statusCode < 300
-                          ? "bg-green-500"
-                          : statusCode >= 300 && statusCode < 400
-                            ? "bg-blue-500"
-                            : statusCode >= 400 && statusCode < 500
-                              ? "bg-yellow-500"
-                              : statusCode >= 500
-                                ? "bg-red-500"
-                                : "bg-gray-500"
-                      }`}
-                    />
-                    <span>{statusCode}</span>
-                  </div>
-                </DropdownMenuCheckboxItem>
-              ))}
-              {uniqueStatusCodes.length === 0 && (
-                <div className="px-2 py-2 text-sm text-gray-500">
-                  No status codes available
-                </div>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Crawler Type Filter */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-32"
-              >
-                <Bot className="h-4 w-4" />
-                Crawler
-                {crawlerTypeFilter.length > 0 && (
-                  <Badge variant="secondary" className="ml-1">
-                    {crawlerTypeFilter.length}
-                  </Badge>
-                )}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999] max-h-[400px] overflow-y-scroll -right-32 absolute"
-            >
-              <DropdownMenuLabel>Filter by Crawler Type</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {uniqueCrawlerTypes.map((crawlerType) => (
-                <DropdownMenuCheckboxItem
-                  className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
-                  key={crawlerType}
-                  checked={crawlerTypeFilter.includes(crawlerType)}
-                  onCheckedChange={(checked) => {
-                    if (checked) {
-                      setCrawlerTypeFilter([...crawlerTypeFilter, crawlerType]);
-                    } else {
-                      setCrawlerTypeFilter(
-                        crawlerTypeFilter.filter(
-                          (type) => type !== crawlerType,
-                        ),
-                      );
-                    }
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    {crawlerType === "Human" ? (
-                      <User className="h-4 w-4 text-blue-500" />
-                    ) : (
-                      <Bot className="h-4 w-4 text-purple-500" />
+        {/* Segment Header - Only show if segment is selected */}
+        {segment &&
+          segment !== "all" &&
+          currentSegmentTaxonomy &&
+          !userAgentCategoryFilter.length && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-blue-800 dark:text-blue-300">
+                    Viewing: {segment}
+                  </h3>
+                  <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                    Showing request activity for{" "}
+                    <span className="font-bold">{segment.toLowerCase()}</span>
+                    {""} segment
+                    {currentSegmentTaxonomy.paths.length > 0 && (
+                      <span className="ml-1">
+                        (<span className="font-bold">matches: {""}</span>
+                        {currentSegmentTaxonomy.paths
+                          .map((p) => p.path)
+                          .join(", ")}
+                        )
+                      </span>
                     )}
-                    <span>{crawlerType}</span>
-                  </div>
-                </DropdownMenuCheckboxItem>
-              ))}
-              {uniqueCrawlerTypes.length === 0 && (
-                <div className="px-2 py-2 text-sm text-gray-500">
-                  No crawler types available
+                  </p>
                 </div>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <Badge
+                  variant="outline"
+                  className="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200"
+                >
+                  {filteredLogs.length} entries
+                </Badge>
+              </div>
+            </div>
+          )}
 
-          <Button
-            variant="outline"
-            onClick={resetFilters}
-            className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Reset
-          </Button>
+        <div className="flex flex-col md:flex-row justify-between -mb-4 p-1">
+          <div className="relative w-full mr-1">
+            <Search className="absolute dark:text-white/50 left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search by IP, path, user agent, or referer..."
+              className="pl-8 w-full dark:text-white dark:bg-brand-darker"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
 
-          <Button
-            variant="outline"
-            onClick={exportCSV}
-            className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white"
-          >
-            <Download className="h-4 w-4" />
-            Export CSV
-          </Button>
+          <div className="flex flex-1 gap-1">
+            {/* Taxonomy Filter */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-full"
+                >
+                  <FolderTree className="h-4 w-4" />
+                  Segment
+                  {selectedTaxonomy !== "all" && (
+                    <Badge variant="secondary" className="ml-1">
+                      {taxonomies.find((t) => t.id === selectedTaxonomy)?.name}
+                    </Badge>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999] w-[200px]"
+              >
+                <DropdownMenuLabel>Filter by Segment</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuCheckboxItem
+                  className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                  checked={selectedTaxonomy === "all"}
+                  onCheckedChange={() => setSelectedTaxonomy("all")}
+                >
+                  All Segments
+                </DropdownMenuCheckboxItem>
+                {taxonomies.map((taxonomy) => (
+                  <DropdownMenuCheckboxItem
+                    className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                    key={taxonomy.id}
+                    checked={selectedTaxonomy === taxonomy.id}
+                    onCheckedChange={(checked) => {
+                      setSelectedTaxonomy(checked ? taxonomy.id : "all");
+                    }}
+                  >
+                    {taxonomy.name}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* User Agent Category Filter */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-full"
+                >
+                  <Users className="h-4 w-4" />
+                  User Agent
+                  {userAgentCategoryFilter.length > 0 && (
+                    <Badge variant="secondary" className="ml-1">
+                      {userAgentCategoryFilter.length}
+                    </Badge>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999] max-h-[400px] overflow-y-auto"
+              >
+                <DropdownMenuLabel>
+                  Filter by User Agent Category
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {availableUserAgentCategories.map((category) => (
+                  <DropdownMenuCheckboxItem
+                    className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                    key={category}
+                    checked={userAgentCategoryFilter.some(
+                      (cat) => cat === category,
+                    )}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setUserAgentCategoryFilter([
+                          ...userAgentCategoryFilter,
+                          category,
+                        ]);
+                      } else {
+                        setUserAgentCategoryFilter(
+                          userAgentCategoryFilter.filter(
+                            (cat) => cat !== category,
+                          ),
+                        );
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      {getUserAgentIcon(category)}
+                      <span>{category}</span>
+                    </div>
+                  </DropdownMenuCheckboxItem>
+                ))}
+                {availableUserAgentCategories.length === 0 && (
+                  <div className="px-2 py-2 text-sm text-gray-500">
+                    No user agent categories available
+                  </div>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* File Type Filter */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-32"
+                >
+                  <Filter className="h-4 w-4" />
+                  File Type
+                  {fileTypeFilter.length > 0 && (
+                    <Badge variant="secondary" className="ml-1">
+                      {fileTypeFilter.length}
+                    </Badge>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999] max-h-[400px] overflow-y-auto"
+              >
+                <DropdownMenuLabel>Filter by File Type</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {[
+                  "HTML",
+                  "CSS",
+                  "JS",
+                  "PHP",
+                  "TXT",
+                  "Image",
+                  "Video",
+                  "Audio",
+                  "Document",
+                  "Archive",
+                  "Font",
+                ].map((fileType) => (
+                  <DropdownMenuCheckboxItem
+                    className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                    key={fileType}
+                    checked={fileTypeFilter.includes(fileType)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setFileTypeFilter([...fileTypeFilter, fileType]);
+                      } else {
+                        setFileTypeFilter(
+                          fileTypeFilter.filter((ft) => ft !== fileType),
+                        );
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      {getFileIcon(fileType)}
+                      <span>{fileType}</span>
+                    </div>
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Status Code Filter */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-32"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Status
+                  {statusFilter.length > 0 && (
+                    <Badge variant="secondary" className="ml-1">
+                      {statusFilter.length}
+                    </Badge>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999]"
+              >
+                <DropdownMenuLabel>Filter by Status Code</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {uniqueStatusCodes.map((statusCode) => (
+                  <DropdownMenuCheckboxItem
+                    className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                    key={statusCode}
+                    checked={statusFilter.includes(statusCode)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setStatusFilter([...statusFilter, statusCode]);
+                      } else {
+                        setStatusFilter(
+                          statusFilter.filter((code) => code !== statusCode),
+                        );
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-3 h-3 rounded-full ${
+                          statusCode >= 200 && statusCode < 300
+                            ? "bg-green-500"
+                            : statusCode >= 300 && statusCode < 400
+                              ? "bg-blue-500"
+                              : statusCode >= 400 && statusCode < 500
+                                ? "bg-yellow-500"
+                                : statusCode >= 500
+                                  ? "bg-red-500"
+                                  : "bg-gray-500"
+                        }`}
+                      />
+                      <span>{statusCode}</span>
+                    </div>
+                  </DropdownMenuCheckboxItem>
+                ))}
+                {uniqueStatusCodes.length === 0 && (
+                  <div className="px-2 py-2 text-sm text-gray-500">
+                    No status codes available
+                  </div>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Crawler Type Filter */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex gap-2 dark:bg-brand-darker dark:text-white dark:border-brand-dark w-32"
+                >
+                  <Bot className="h-4 w-4" />
+                  Crawler
+                  {crawlerTypeFilter.length > 0 && (
+                    <Badge variant="secondary" className="ml-1">
+                      {crawlerTypeFilter.length}
+                    </Badge>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="bg-white dark:border-brand-dark dark:text-white dark:bg-brand-darker z-[999999999999999999] max-h-[400px] overflow-y-scroll -right-32 absolute"
+              >
+                <DropdownMenuLabel>Filter by Crawler Type</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {uniqueCrawlerTypes.map((crawlerType) => (
+                  <DropdownMenuCheckboxItem
+                    className="bg-white active:bg-brand-bright hover:text-white dark:bg-brand-darker dark:hover:bg-brand-bright"
+                    key={crawlerType}
+                    checked={crawlerTypeFilter.includes(crawlerType)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setCrawlerTypeFilter([
+                          ...crawlerTypeFilter,
+                          crawlerType,
+                        ]);
+                      } else {
+                        setCrawlerTypeFilter(
+                          crawlerTypeFilter.filter(
+                            (type) => type !== crawlerType,
+                          ),
+                        );
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      {crawlerType === "Human" ? (
+                        <User className="h-4 w-4 text-blue-500" />
+                      ) : (
+                        <Bot className="h-4 w-4 text-purple-500" />
+                      )}
+                      <span>{crawlerType}</span>
+                    </div>
+                  </DropdownMenuCheckboxItem>
+                ))}
+                {uniqueCrawlerTypes.length === 0 && (
+                  <div className="px-2 py-2 text-sm text-gray-500">
+                    No crawler types available
+                  </div>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button
+              variant="outline"
+              onClick={resetFilters}
+              className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Reset
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={exportCSV}
+              className="flex gap-2 dark:bg-brand-darker dark:border-brand-dark dark:text-white"
+            >
+              <Download className="h-4 w-4" />
+              Export CSV
+            </Button>
+          </div>
         </div>
-      </div>
 
-      <div
-        style={{
-          height: "calc(100vh - 40vh)",
-          maxHeight: "calc(100vh - 40vh)",
-          overflowX: "hidden",
-        }}
-        className="px-1"
-      >
-        <CardContent className="p-0 h-full overflow-hidden">
-          <div className="rounded-md border dark:border-brand-dark h-full">
-            <div className="relative w-full h-full overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[80px] text-center">#</TableHead>
-                    <TableHead
-                      className="cursor-pointer w-[190px]"
-                      onClick={() => requestSort("timestamp")}
-                    >
-                      Timestamp
-                      {sortConfig?.key === "timestamp" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      )}
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer"
-                      onClick={() => requestSort("path")}
-                    >
-                      Path
-                      {sortConfig?.key === "path" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      )}
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer"
-                      onClick={() => requestSort("user_agent")}
-                    >
-                      User Agent
-                      {sortConfig?.key === "user_agent" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      )}
-                    </TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Segment</TableHead>
-                    <TableHead
-                      className="cursor-pointer text-center w-20"
-                      onClick={() => requestSort("response_size")}
-                    >
-                      Size
-                      {sortConfig?.key === "response_size" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      )}
-                    </TableHead>
-                    <TableHead
-                      className="cursor-pointer text-center"
-                      onClick={() => requestSort("status")}
-                    >
-                      Status
-                      {sortConfig?.key === "status" && (
-                        <ChevronDown
-                          className={`ml-1 h-4 w-4 inline-block ${
-                            sortConfig.direction === "descending"
-                              ? "rotate-180"
-                              : ""
-                          }`}
-                        />
-                      )}
-                    </TableHead>
-                    <TableHead>Crawler Type</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {currentLogs.length > 0 ? (
-                    currentLogs.map((log, index) => {
-                      // Calculate details only for visible rows
-                      const { timings } = getLogDetails(log);
-                      const userAgentCategory = categorizeUserAgent(
-                        log.user_agent || "",
-                      );
+        <div
+          style={{
+            height: "calc(100vh - 40vh)",
+            maxHeight: "calc(100vh - 40vh)",
+            overflowX: "hidden",
+          }}
+          className="px-1"
+        >
+          <CardContent className="p-0 h-full overflow-hidden">
+            <div className="rounded-md border dark:border-brand-dark h-full">
+              <div className="relative w-full h-full overflow-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[80px] text-center">#</TableHead>
+                      <TableHead
+                        className="cursor-pointer w-[190px]"
+                        onClick={() => requestSort("timestamp")}
+                      >
+                        Timestamp
+                        {sortConfig?.key === "timestamp" && (
+                          <ChevronDown
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        )}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer"
+                        onClick={() => requestSort("path")}
+                      >
+                        Path
+                        {sortConfig?.key === "path" && (
+                          <ChevronDown
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        )}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer"
+                        onClick={() => requestSort("user_agent")}
+                      >
+                        User Agent
+                        {sortConfig?.key === "user_agent" && (
+                          <ChevronDown
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        )}
+                      </TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Segment</TableHead>
+                      <TableHead
+                        className="cursor-pointer text-center w-20"
+                        onClick={() => requestSort("response_size")}
+                      >
+                        Size
+                        {sortConfig?.key === "response_size" && (
+                          <ChevronDown
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        )}
+                      </TableHead>
+                      <TableHead
+                        className="cursor-pointer text-center"
+                        onClick={() => requestSort("status")}
+                      >
+                        Status
+                        {sortConfig?.key === "status" && (
+                          <ChevronDown
+                            className={`ml-1 h-4 w-4 inline-block ${
+                              sortConfig.direction === "descending"
+                                ? "rotate-180"
+                                : ""
+                            }`}
+                          />
+                        )}
+                      </TableHead>
+                      <TableHead>Crawler Type</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {currentLogs.length > 0 ? (
+                      currentLogs.map((log, index) => {
+                        // Calculate details only for visible rows
+                        const { timings } = getLogDetails(log);
+                        const userAgentCategory = categorizeUserAgent(
+                          log.user_agent || "",
+                        );
 
-                      return (
-                        <React.Fragment
-                          key={`${log.ip}-${log.timestamp}-${index}-${log.path}`}
-                        >
-                          <TableRow
-                            className={`group pb-2 cursor-pointer ${expandedRow === index ? "bg-sky-dark/10" : ""}`}
-                            onClick={(e) => {
-                              setExpandedRow(
-                                expandedRow === index ? null : index,
-                              );
-                            }}
-                            onMouseEnter={() => setHoveredRow(index)}
-                            onMouseLeave={() => setHoveredRow(null)}
+                        return (
+                          <React.Fragment
+                            key={`${log.ip}-${log.timestamp}-${index}-${log.path}`}
                           >
-                            <TableCell className="font-medium text-center max-w-[40px] align-middle">
-                              {indexOfFirstItem + index + 1}
-                            </TableCell>
-                            <TableCell className="min-w-[150px] align-middle">
-                              {formatDate(log.timestamp)}
-                            </TableCell>
-                            <TableCell className="truncate max-w-[400px] align-middle">
-                              <span className="flex items-start truncate">
-                                <span
-                                  onClick={(e) =>
-                                    handleCopyClick(log.path, e, "URL / PATH")
-                                  }
-                                  className="mr-1 hover:scale-105 active:scale-95 cursor-pointer"
-                                >
-                                  {getFileIcon(log.file_type || "Unknown")} {""}
-                                </span>
-                                <span
-                                  onClick={(click) =>
-                                    handleURLClick(log?.path, click)
-                                  }
-                                  className="hover:underline cursor-pointer"
-                                >
-                                  {showOnTables && domain
-                                    ? "https://" + domain + log.path
-                                    : log?.path}
-                                </span>
-                                {credentials?.token?.length > 0 && hoveredRow === index && (
-                                  <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150 ml-2 flex-shrink-0">
-                                    <KeyRound
-                                      size={14}
-                                      className="text-[10px] text-yellow-500 cursor-pointer"
-                                      onClick={async (e) => {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        setSelectedLog(log);
-                                        const response = await FetchMatchGSC(
-                                          log.path,
-                                          credentials,
-                                          GSCdata,
-                                        );
-
-                                        setSelectedURLDetails(response);
-                                      }}
-                                    />
+                            <TableRow
+                              className={`group pb-2 cursor-pointer ${expandedRow === index ? "bg-sky-dark/10" : ""}`}
+                              onClick={(e) => {
+                                setExpandedRow(
+                                  expandedRow === index ? null : index,
+                                );
+                              }}
+                              onMouseEnter={() => setHoveredRow(index)}
+                              onMouseLeave={() => setHoveredRow(null)}
+                            >
+                              <TableCell className="font-medium text-center max-w-[40px] align-middle">
+                                {indexOfFirstItem + index + 1}
+                              </TableCell>
+                              <TableCell className="min-w-[150px] align-middle">
+                                {formatDate(log.timestamp)}
+                              </TableCell>
+                              <TableCell className="truncate max-w-[400px] align-middle">
+                                <span className="flex items-start truncate">
+                                  <span
+                                    onClick={(e) =>
+                                      handleCopyClick(log.path, e, "URL / PATH")
+                                    }
+                                    className="mr-1 hover:scale-105 active:scale-95 cursor-pointer"
+                                  >
+                                    {getFileIcon(log.file_type || "Unknown")}{" "}
+                                    {""}
                                   </span>
-                                )}
-                              </span>
-                            </TableCell>
-                            <TableCell className="truncate max-w-[250px] align-middle">
-                              <span className="flex items-start truncate">
-                                <span className="mr-1">
-                                  {getUserAgentIcon(userAgentCategory)} {""}
+                                  <span
+                                    onClick={(click) =>
+                                      handleURLClick(log?.path, click)
+                                    }
+                                    className="hover:underline cursor-pointer"
+                                  >
+                                    {showOnTables && domain
+                                      ? "https://" + domain + log.path
+                                      : log?.path}
+                                  </span>
+                                  {credentials?.token?.length > 0 &&
+                                    hoveredRow === index && (
+                                      <span className="active:scale-95 hover:scale-105 hover:text-red-500 transition-all duration-150 ml-2 flex-shrink-0">
+                                        <KeyRound
+                                          size={14}
+                                          className="text-[10px] text-yellow-500 cursor-pointer"
+                                          onClick={async (e) => {
+                                            e.stopPropagation();
+                                            e.preventDefault();
+                                            setSelectedLog(log);
+                                            const response =
+                                              await FetchMatchGSC(
+                                                log.path,
+                                                credentials,
+                                                GSCdata,
+                                              );
+
+                                            setSelectedURLDetails(response);
+                                          }}
+                                        />
+                                      </span>
+                                    )}
                                 </span>
-                                <span
-                                  className="text-xs hover:underline cursor-pointer"
-                                  onClick={(e) =>
-                                    handleCopyClick(
-                                      log.user_agent,
-                                      e,
-                                      "User Agent",
-                                    )
+                              </TableCell>
+                              <TableCell className="truncate max-w-[250px] align-middle">
+                                <span className="flex items-start truncate">
+                                  <span className="mr-1">
+                                    {getUserAgentIcon(userAgentCategory)} {""}
+                                  </span>
+                                  <span
+                                    className="text-xs hover:underline cursor-pointer"
+                                    onClick={(e) =>
+                                      handleCopyClick(
+                                        log.user_agent,
+                                        e,
+                                        "User Agent",
+                                      )
+                                    }
+                                  >
+                                    {log.user_agent || "Unknown"}
+                                  </span>
+                                </span>
+                              </TableCell>
+                              <TableCell className="min-w-[100px] align-middle">
+                                <Badge variant="outline" className="text-xs">
+                                  {userAgentCategory}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="min-w-[100px] align-middle">
+                                <Badge variant="secondary" className="text-xs">
+                                  {getTaxonomyForPath(log.path)}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-center align-middle">
+                                {formatResponseSize(log.response_size)}
+                              </TableCell>
+                              <TableCell className="text-center align-middle">
+                                <Badge
+                                  variant="outline"
+                                  className={
+                                    log.status
+                                      ? log.status >= 200 && log.status < 300
+                                        ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                                        : log.status >= 300 && log.status < 400
+                                          ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                          : log.status >= 400 &&
+                                              log.status < 500
+                                            ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                                            : log.status >= 500
+                                              ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                                              : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                                      : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
                                   }
                                 >
-                                  {log.user_agent || "Unknown"}
-                                </span>
-                              </span>
-                            </TableCell>
-                            <TableCell className="min-w-[100px] align-middle">
-                              <Badge variant="outline" className="text-xs">
-                                {userAgentCategory}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="min-w-[100px] align-middle">
-                              <Badge variant="secondary" className="text-xs">
-                                {getTaxonomyForPath(log.path)}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-center align-middle">
-                              {formatResponseSize(log.response_size)}
-                            </TableCell>
-                            <TableCell className="text-center align-middle">
-                              <Badge
-                                variant="outline"
-                                className={
-                                  log.status
-                                    ? log.status >= 200 && log.status < 300
-                                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                                      : log.status >= 300 && log.status < 400
-                                        ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                                        : log.status >= 400 && log.status < 500
-                                          ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                                          : log.status >= 500
-                                            ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                                            : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-                                    : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200"
-                                }
-                              >
-                                {log.status || "N/A"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell width={110} className="max-w-[100px] ">
-                              <Badge
-                                variant="outline"
-                                className={
-                                  log.crawler_type !== "Human"
-                                    ? "w-[95px] p-0 flex justify-center text-[10px] bg-red-600 text-white dark:bg-red-400 border-purple-200  dark:text-white"
-                                    : "w-[95px] p-0 flex justify-center text-[11px] text-center bg-blue-600 text-white border-blue-200"
-                                }
-                              >
-                                {log.crawler_type &&
-                                log.crawler_type.length > 12
-                                  ? log.crawler_type.trim().slice(0, 15)
-                                  : log.crawler_type || "Unknown"}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                          {expandedRow === index && (
-                            <TableRow>
-                              <TableCell
-                                colSpan={9}
-                                className="bg-gray-50 dark:bg-gray-800 p-4"
-                              >
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  {/* Left Column */}
-                                  <div className="flex flex-col max-w-[70rem] w-full">
-                                    <div className="flex mb-2 space-x-2 items-center justify-between">
-                                      <h4 className="font-bold">Details</h4>
-                                      {log.verified && (
-                                        <div className="flex items-center space-x-1 py-1 bg-red-200 dark:bg-red-400 px-2 text-xs rounded-md">
-                                          <BadgeCheck
-                                            size={18}
-                                            className="text-blue-800 pr-1 dark:text-blue-900"
-                                          />
-                                          {log?.crawler_type}
-                                        </div>
-                                      )}
-                                    </div>
-                                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-                                      <div className="space-y-2 text-sm">
-                                        <div>
-                                          <span className="font-semibold">
-                                            IP:
-                                          </span>{" "}
-                                          {log.ip}
-                                        </div>
-                                        <div>
-                                          <span className="font-semibold">
-                                            Method:
-                                          </span>{" "}
-                                          {log.method}
-                                        </div>
-                                        <div>
-                                          <span className="font-semibold">
-                                            User Agent Category:
-                                          </span>{" "}
-                                          <Badge
-                                            variant="outline"
-                                            className="ml-2"
-                                          >
-                                            {userAgentCategory}
-                                          </Badge>
-                                        </div>
-                                        <div>
-                                          <span className="font-semibold">
-                                            User Agent:
-                                          </span>{" "}
-                                          <span
-                                            className="font-mono text-xs break-all hover:underline cursor-pointer"
-                                            onClick={(click) =>
-                                              handleCopyClick(
-                                                log.user_agent,
-                                                click,
-                                                "User Agent",
-                                              )
-                                            }
-                                          >
-                                            {log.user_agent}
-                                          </span>
-                                        </div>
-                                        {log.referer && (
-                                          <div>
-                                            <span className="font-semibold">
-                                              Referer:
-                                            </span>{" "}
-                                            <span className="font-mono text-xs break-all">
-                                              {log.referer}
-                                            </span>
+                                  {log.status || "N/A"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell width={110} className="max-w-[100px] ">
+                                <Badge
+                                  variant="outline"
+                                  className={
+                                    log.crawler_type !== "Human"
+                                      ? "w-[95px] p-0 flex justify-center text-[10px] bg-red-600 text-white dark:bg-red-400 border-purple-200  dark:text-white"
+                                      : "w-[95px] p-0 flex justify-center text-[11px] text-center bg-blue-600 text-white border-blue-200"
+                                  }
+                                >
+                                  {log.crawler_type &&
+                                  log.crawler_type.length > 12
+                                    ? log.crawler_type.trim().slice(0, 15)
+                                    : log.crawler_type || "Unknown"}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                            {expandedRow === index && (
+                              <TableRow>
+                                <TableCell
+                                  colSpan={9}
+                                  className="bg-gray-50 dark:bg-gray-800 p-4"
+                                >
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* Left Column */}
+                                    <div className="flex flex-col max-w-[70rem] w-full">
+                                      <div className="flex mb-2 space-x-2 items-center justify-between">
+                                        <h4 className="font-bold">Details</h4>
+                                        {log.verified && (
+                                          <div className="flex items-center space-x-1 py-1 bg-red-200 dark:bg-red-400 px-2 text-xs rounded-md">
+                                            <BadgeCheck
+                                              size={18}
+                                              className="text-blue-800 pr-1 dark:text-blue-900"
+                                            />
+                                            {log?.crawler_type}
                                           </div>
                                         )}
                                       </div>
-                                    </div>
-                                  </div>
-
-                                  {/* Right Column */}
-                                  <div className="flex flex-col">
-                                    <h4 className="mb-2 font-bold">
-                                      Frequency Analysis
-                                    </h4>
-                                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
-                                      <div className="space-y-2 text-sm">
-                                        <div>
-                                          <span className="font-semibold">
-                                            Total Hits:
-                                          </span>{" "}
-                                          {log.frequency || 1}
-                                        </div>
-                                        <div>
-                                          <span className="font-semibold">
-                                            Per Hour:
-                                          </span>{" "}
-                                          {timings?.frequency?.perHour}
-                                        </div>
-                                        <div>
-                                          <span className="font-semibold">
-                                            Per Minute:
-                                          </span>{" "}
-                                          {timings?.frequency?.perMinute}
-                                        </div>
-                                        <div>
-                                          <span className="font-semibold">
-                                            Per Second:
-                                          </span>{" "}
-                                          {timings?.frequency?.perSecond}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* Taxonomy Information */}
-                                  <div className="md:col-span-2">
-                                    <h4 className="mb-2 font-bold">
-                                      Taxonomy Information
-                                    </h4>
-                                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
-                                      <div className="flex items-center gap-4">
-                                        <div>
-                                          <span className="font-semibold">
-                                            Category:
-                                          </span>
-                                          <Badge
-                                            variant="secondary"
-                                            className="ml-2"
-                                          >
-                                            {getTaxonomyForPath(log.path)}
-                                          </Badge>
-                                        </div>
-                                        <div>
-                                          <span className="font-semibold">
-                                            Matching Rules:
-                                          </span>
-                                          <div className="flex flex-wrap gap-1 mt-1">
-                                            {taxonomies
-                                              .find(
-                                                (tax) =>
-                                                  tax.name ===
-                                                  getTaxonomyForPath(log.path),
-                                              )
-                                              ?.paths.map((pathRule, idx) => (
-                                                <Badge
-                                                  key={idx}
-                                                  variant="outline"
-                                                  className="text-xs"
-                                                >
-                                                  {pathRule.path} (
-                                                  {pathRule.matchType})
-                                                </Badge>
-                                              ))}
+                                      <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                                        <div className="space-y-2 text-sm">
+                                          <div>
+                                            <span className="font-semibold">
+                                              IP:
+                                            </span>{" "}
+                                            {log.ip}
                                           </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* File Type Information */}
-                                  <div className="md:col-span-2">
-                                    <h4 className="mb-2 font-bold">
-                                      File Type Information
-                                    </h4>
-                                    <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
-                                      <div className="flex items-center justify-center">
-                                        <div className="text-center">
-                                          <div className="flex items-center gap-2">
-                                            {getFileIcon(
-                                              log.file_type || "Unknown",
-                                            )}
-                                            <span className="text-lg font-medium">
-                                              {log.file_type || "Unknown"} File
+                                          <div>
+                                            <span className="font-semibold">
+                                              Method:
+                                            </span>{" "}
+                                            {log.method}
+                                          </div>
+                                          <div>
+                                            <span className="font-semibold">
+                                              User Agent Category:
+                                            </span>{" "}
+                                            <Badge
+                                              variant="outline"
+                                              className="ml-2"
+                                            >
+                                              {userAgentCategory}
+                                            </Badge>
+                                          </div>
+                                          <div>
+                                            <span className="font-semibold">
+                                              User Agent:
+                                            </span>{" "}
+                                            <span
+                                              className="font-mono text-xs break-all hover:underline cursor-pointer"
+                                              onClick={(click) =>
+                                                handleCopyClick(
+                                                  log.user_agent,
+                                                  click,
+                                                  "User Agent",
+                                                )
+                                              }
+                                            >
+                                              {log.user_agent}
                                             </span>
                                           </div>
-                                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                                            This request accessed a{" "}
-                                            {log.file_type || "Unknown"} file
-                                          </p>
+                                          {log.referer && (
+                                            <div>
+                                              <span className="font-semibold">
+                                                Referer:
+                                              </span>{" "}
+                                              <span className="font-mono text-xs break-all">
+                                                {log.referer}
+                                              </span>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Right Column */}
+                                    <div className="flex flex-col">
+                                      <h4 className="mb-2 font-bold">
+                                        Frequency Analysis
+                                      </h4>
+                                      <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md h-full">
+                                        <div className="space-y-2 text-sm">
+                                          <div>
+                                            <span className="font-semibold">
+                                              Total Hits:
+                                            </span>{" "}
+                                            {log.frequency || 1}
+                                          </div>
+                                          <div>
+                                            <span className="font-semibold">
+                                              Per Hour:
+                                            </span>{" "}
+                                            {timings?.frequency?.perHour}
+                                          </div>
+                                          <div>
+                                            <span className="font-semibold">
+                                              Per Minute:
+                                            </span>{" "}
+                                            {timings?.frequency?.perMinute}
+                                          </div>
+                                          <div>
+                                            <span className="font-semibold">
+                                              Per Second:
+                                            </span>{" "}
+                                            {timings?.frequency?.perSecond}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Taxonomy Information */}
+                                    <div className="md:col-span-2">
+                                      <h4 className="mb-2 font-bold">
+                                        Taxonomy Information
+                                      </h4>
+                                      <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
+                                        <div className="flex items-center gap-4">
+                                          <div>
+                                            <span className="font-semibold">
+                                              Category:
+                                            </span>
+                                            <Badge
+                                              variant="secondary"
+                                              className="ml-2"
+                                            >
+                                              {getTaxonomyForPath(log.path)}
+                                            </Badge>
+                                          </div>
+                                          <div>
+                                            <span className="font-semibold">
+                                              Matching Rules:
+                                            </span>
+                                            <div className="flex flex-wrap gap-1 mt-1">
+                                              {taxonomies
+                                                .find(
+                                                  (tax) =>
+                                                    tax.name ===
+                                                    getTaxonomyForPath(
+                                                      log.path,
+                                                    ),
+                                                )
+                                                ?.paths.map((pathRule, idx) => (
+                                                  <Badge
+                                                    key={idx}
+                                                    variant="outline"
+                                                    className="text-xs"
+                                                  >
+                                                    {pathRule.path} (
+                                                    {pathRule.matchType})
+                                                  </Badge>
+                                                ))}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* File Type Information */}
+                                    <div className="md:col-span-2">
+                                      <h4 className="mb-2 font-bold">
+                                        File Type Information
+                                      </h4>
+                                      <div className="p-3 bg-brand-bright/20 dark:bg-gray-700 rounded-md">
+                                        <div className="flex items-center justify-center">
+                                          <div className="text-center">
+                                            <div className="flex items-center gap-2">
+                                              {getFileIcon(
+                                                log.file_type || "Unknown",
+                                              )}
+                                              <span className="text-lg font-medium">
+                                                {log.file_type || "Unknown"}{" "}
+                                                File
+                                              </span>
+                                            </div>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                                              This request accessed a{" "}
+                                              {log.file_type || "Unknown"} file
+                                            </p>
+                                          </div>
                                         </div>
                                       </div>
                                     </div>
                                   </div>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          )}
-                        </React.Fragment>
-                      );
-                    })
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={9} className="text-center h-24">
-                        {userAgentCategoryFilter.length > 0
-                          ? `No log entries found for ${userAgentCategoryFilter.join(", ")} user agent${userAgentCategoryFilter.length > 1 ? "s" : ""}. Available categories: ${availableUserAgentCategories.join(", ")}`
-                          : segment && segment !== "all"
-                            ? `No log entries found for ${segment}`
-                            : "No log entries found."}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </React.Fragment>
+                        );
+                      })
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={9} className="text-center h-24">
+                          {userAgentCategoryFilter.length > 0
+                            ? `No log entries found for ${userAgentCategoryFilter.join(", ")} user agent${userAgentCategoryFilter.length > 1 ? "s" : ""}. Available categories: ${availableUserAgentCategories.join(", ")}`
+                            : segment && segment !== "all"
+                              ? `No log entries found for ${segment}`
+                              : "No log entries found."}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </div>
-
-      <div
-        className="flex items-center justify-between w-full"
-        style={{ marginTop: "0.2em" }}
-      >
-        <div className="flex items-center -mt-2 ml-1">
-          <Select
-            value={itemsPerPage.toString()}
-            onValueChange={(value) => setItemsPerPage(Number(value))}
-          >
-            <SelectTrigger className="w-[70px] text-xs dark:text-white/50 h-6 mr-2 z-50">
-              <SelectValue placeholder="100" />
-            </SelectTrigger>
-            <SelectContent className="z-[9999999999]">
-              <SelectItem
-                className="dark:hover:bg-brand-bright dark:hover:text-white hover:bg-brand-bright hover:text-white"
-                value="100"
-              >
-                100
-              </SelectItem>
-              <SelectItem
-                className="dark:hover:bg-brand-bright dark:hover:text-white hover:bg-brand-bright hover:text-white"
-                value="500"
-              >
-                500
-              </SelectItem>
-              <SelectItem
-                className="dark:hover:bg-brand-bright dark:hover:text-white hover:bg-brand-bright hover:text-white"
-                value="1000"
-              >
-                1000
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          </CardContent>
         </div>
 
-        <Pagination className="text-xs">
-          <PaginationContent style={{ marginTop: "-5px" }}>
-            <PaginationItem className="cursor-pointer">
-              <PaginationPrevious
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                className={
-                  currentPage === 1
-                    ? "pointer-events-none opacity-50 text-xs"
-                    : "text-xs"
+        <div
+          className="flex items-center justify-between w-full"
+          style={{ marginTop: "0.2em" }}
+        >
+          <div className="flex items-center -mt-2 ml-1">
+            <Select
+              value={itemsPerPage.toString()}
+              onValueChange={(value) => setItemsPerPage(Number(value))}
+            >
+              <SelectTrigger className="w-[70px] text-xs dark:text-white/50 h-6 mr-2 z-50">
+                <SelectValue placeholder="100" />
+              </SelectTrigger>
+              <SelectContent className="z-[9999999999]">
+                <SelectItem
+                  className="dark:hover:bg-brand-bright dark:hover:text-white hover:bg-brand-bright hover:text-white"
+                  value="100"
+                >
+                  100
+                </SelectItem>
+                <SelectItem
+                  className="dark:hover:bg-brand-bright dark:hover:text-white hover:bg-brand-bright hover:text-white"
+                  value="500"
+                >
+                  500
+                </SelectItem>
+                <SelectItem
+                  className="dark:hover:bg-brand-bright dark:hover:text-white hover:bg-brand-bright hover:text-white"
+                  value="1000"
+                >
+                  1000
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Pagination className="text-xs">
+            <PaginationContent style={{ marginTop: "-5px" }}>
+              <PaginationItem className="cursor-pointer">
+                <PaginationPrevious
+                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                  className={
+                    currentPage === 1
+                      ? "pointer-events-none opacity-50 text-xs"
+                      : "text-xs"
+                  }
+                />
+              </PaginationItem>
+
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum = i + 1;
+
+                if (totalPages > 5) {
+                  if (currentPage > 3 && currentPage <= totalPages - 2) {
+                    pageNum = currentPage - 2 + i;
+                  } else if (currentPage > totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  }
                 }
-              />
-            </PaginationItem>
 
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              let pageNum = i + 1;
+                return (
+                  <PaginationItem key={i}>
+                    <PaginationLink
+                      className="cursor-pointer h-6"
+                      onClick={() => setCurrentPage(pageNum)}
+                      isActive={currentPage === pageNum}
+                    >
+                      {pageNum}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              })}
 
-              if (totalPages > 5) {
-                if (currentPage > 3 && currentPage <= totalPages - 2) {
-                  pageNum = currentPage - 2 + i;
-                } else if (currentPage > totalPages - 2) {
-                  pageNum = totalPages - 4 + i;
-                }
-              }
+              {totalPages > 5 && currentPage < totalPages - 2 && (
+                <>
+                  <PaginationItem className="cursor-pointer">
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                  <PaginationItem>
+                    <PaginationLink onClick={() => setCurrentPage(totalPages)}>
+                      {totalPages}
+                    </PaginationLink>
+                  </PaginationItem>
+                </>
+              )}
 
-              return (
-                <PaginationItem key={i}>
-                  <PaginationLink
-                    className="cursor-pointer h-6"
-                    onClick={() => setCurrentPage(pageNum)}
-                    isActive={currentPage === pageNum}
-                  >
-                    {pageNum}
-                  </PaginationLink>
-                </PaginationItem>
-              );
-            })}
-
-            {totalPages > 5 && currentPage < totalPages - 2 && (
-              <>
-                <PaginationItem className="cursor-pointer">
-                  <PaginationEllipsis />
-                </PaginationItem>
-                <PaginationItem>
-                  <PaginationLink onClick={() => setCurrentPage(totalPages)}>
-                    {totalPages}
-                  </PaginationLink>
-                </PaginationItem>
-              </>
-            )}
-
-            <PaginationItem className="cursor-pointer">
-              <PaginationNext
-                onClick={() =>
-                  setCurrentPage(Math.min(totalPages, currentPage + 1))
-                }
-                className={
-                  currentPage === totalPages
-                    ? "pointer-events-none opacity-50"
-                    : ""
-                }
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
+              <PaginationItem className="cursor-pointer">
+                <PaginationNext
+                  onClick={() =>
+                    setCurrentPage(Math.min(totalPages, currentPage + 1))
+                  }
+                  className={
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
       </div>
-    </div>
     </React.Fragment>
   );
 };
