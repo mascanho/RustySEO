@@ -19,7 +19,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useDisclosure } from "@mantine/hooks";
 import GSCConnectionWizard from "./GSCConnectionWizard";
 import { Button } from "@/components/ui/button";
-import { format, subDays, isValid, parse } from "date-fns";
+import { format, subDays, isValid } from "date-fns";
 
 // Interface defining the structure of a Keyword object
 interface GscUrl {
@@ -226,19 +226,9 @@ const GSCanalytics = () => {
       {
         accessorKey: "date",
         header: "Date",
-        cell: ({ row }) => {
-          let formattedDate = row.original.date;
-          try {
-            // Try to parse the date and format it as dd/mm/yyyy
-            const date = new Date(row.original.date);
-            if (isValid(date)) {
-              formattedDate = format(date, "dd/MM/yyyy");
-            }
-          } catch (e) {
-            // Keep original value if parsing fails
-          }
-          return <span className="text-gray-500 text-xs">{formattedDate}</span>;
-        },
+        cell: ({ row }) => (
+          <span className="text-gray-500 text-xs">{row.original.date}</span>
+        ),
       },
     ],
     [credentials],
@@ -251,10 +241,7 @@ const GSCanalytics = () => {
 
   return (
     <div className="px-2 h-[calc(100vh-9rem)] flex flex-col dark:text-white/50">
-      <Dialog
-        open={openedWizard}
-        onOpenChange={(open) => !open && closeWizard()}
-      >
+      <Dialog open={openedWizard} onOpenChange={(open) => !open && closeWizard()}>
         <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-lg z-[10001]">
           <GSCConnectionWizard
             onComplete={() => {
@@ -327,42 +314,22 @@ const GSCanalytics = () => {
                 {/* Date Picker Group */}
                 <div className="flex items-center gap-1.5 h-9 px-2.5 border border-gray-200 dark:border-brand-dark rounded-xl bg-white dark:bg-brand-darker shadow-sm">
                   <CalendarIcon className="h-4 w-4 text-gray-400 shrink-0 mr-1" />
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={formatDateForInput(startDate)}
-                      onChange={(e) =>
-                        handleDateChange("start", e.target.value)
-                      }
-                      className="h-full w-[75px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 dark:[color-scheme:dark] font-medium opacity-0 absolute inset-0 cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={startDate ? format(startDate, "dd/MM/yyyy") : ""}
-                      readOnly
-                      placeholder="dd/mm/yyyy"
-                      className="h-full w-[75px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 font-medium pointer-events-none"
-                    />
-                  </div>
+                  <input
+                    type="date"
+                    value={formatDateForInput(startDate)}
+                    onChange={(e) => handleDateChange("start", e.target.value)}
+                    className="h-full w-[110px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 dark:[color-scheme:dark] font-medium"
+                  />
                   <span className="text-gray-300 dark:text-gray-600 select-none">
                     -
                   </span>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={formatDateForInput(endDate)}
-                      onChange={(e) => handleDateChange("end", e.target.value)}
-                      min={formatDateForInput(startDate)}
-                      className="h-full w-[75px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 dark:[color-scheme:dark] font-medium opacity-0 absolute inset-0 cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={endDate ? format(endDate, "dd/MM/yyyy") : ""}
-                      readOnly
-                      placeholder="dd/mm/yyyy"
-                      className="h-full w-[75px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 font-medium text-right pointer-events-none"
-                    />
-                  </div>
+                  <input
+                    type="date"
+                    value={formatDateForInput(endDate)}
+                    onChange={(e) => handleDateChange("end", e.target.value)}
+                    min={formatDateForInput(startDate)}
+                    className="h-full w-[110px] text-xs bg-transparent border-none p-0 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-0 dark:[color-scheme:dark] font-medium text-right"
+                  />
                 </div>
 
                 <button
