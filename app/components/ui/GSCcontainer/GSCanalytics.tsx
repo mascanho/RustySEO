@@ -11,6 +11,7 @@ import {
   LayoutGrid,
   Calendar as CalendarIcon,
   Download,
+  Loader2,
 } from "lucide-react";
 import { UniversalKeywordTable } from "../Shared/UniversalKeywordTable";
 import { ColumnDef } from "@tanstack/react-table";
@@ -38,6 +39,7 @@ interface GscUrl {
 const GSCanalytics = () => {
   const [gscData, setGscData] = useState<GscUrl[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
   const {
     credentials,
     isConfigured,
@@ -118,12 +120,14 @@ const GSCanalytics = () => {
     return Array.isArray(gscData) ? gscData : [];
   }, [gscData]);
 
-  const handleDownloadCSV = useCallback(() => {
+  const handleDownloadCSV = useCallback(async () => {
     try {
       if (displayData.length === 0) {
         toast.error("No data available to download");
         return;
       }
+
+      setIsDownloading(true);
 
       // Prepare data for CSV export
       const csvData = displayData.map((item) => ({
@@ -136,11 +140,24 @@ const GSCanalytics = () => {
         date: item.date,
       }));
 
-      exportToCSV(csvData, "gsc_search_console_data");
-      toast.success("CSV file downloaded successfully");
-    } catch (error) {
+      await exportToCSV(csvData, "gsc_search_console_data");
+      toast.success("CSV file saved successfully!", {
+        description: "File has been saved to your selected location.",
+        duration: 4000,
+      });
+    } catch (error: any) {
       console.error("Error downloading CSV:", error);
-      toast.error("Failed to download CSV file");
+      if (error.message === "Save dialog was cancelled") {
+        toast.info("Download cancelled", {
+          description: "You cancelled the file save dialog.",
+        });
+      } else {
+        toast.error("Failed to download CSV file", {
+          description: error.message || "Please try again.",
+        });
+      }
+    } finally {
+      setIsDownloading(false);
     }
   }, [displayData]);
 
@@ -395,11 +412,15 @@ const GSCanalytics = () => {
 
                 <button
                   onClick={handleDownloadCSV}
-                  className="h-9 w-9 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-brand-dark rounded-xl transition-all border border-transparent hover:border-gray-200 dark:hover:border-brand-dark text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  className="h-9 w-9 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-brand-dark rounded-xl transition-all border border-transparent hover:border-gray-200 dark:hover:border-brand-dark text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Download CSV"
-                  disabled={displayData.length === 0}
+                  disabled={displayData.length === 0 || isDownloading}
                 >
-                  <Download className="h-4 w-4" />
+                  {isDownloading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
                 </button>
 
                 <button
