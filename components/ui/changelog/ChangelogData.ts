@@ -4,6 +4,8 @@ export const changelogData = [
     date: "2025-01-31",
     type: "feature",
     changes: [
+      "Global: Bug fixes and improvements",
+      "Global: Better stdout logging",
       "Better integration for GA4 and GSC",
       "Log Analyser: Ingests GSC API data",
       "Log Analyser: Table now shows GSC data",
