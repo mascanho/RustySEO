@@ -868,7 +868,10 @@ const Home: React.FC<HomeProps> = () => {
             <Tabs.Panel value="clarity">
               <ClarityContainer />
             </Tabs.Panel>{" "}
-            <Tabs.Panel value="kws">
+            <Tabs.Panel
+              value="kws"
+              className="h-[calc(100vh-7rem)] pt-9 dark:bg-brand-darker overflow-hidden"
+            >
               <KeywordAnalytics />
             </Tabs.Panel>
             <Tabs.Panel
