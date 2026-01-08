@@ -84,11 +84,11 @@ export default function Changelog() {
         <div className="pt-2">
           <a
             target="_blank"
+            rel="noopener noreferrer"
             href="https://github.com/mascanho/rustyseo/releases"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
           >
-            <button className="text-xs text-muted-foreground hover:text-foreground transition-colors">
-              View all releases →
-            </button>
+            View all releases →
           </a>
         </div>
       </CardContent>
