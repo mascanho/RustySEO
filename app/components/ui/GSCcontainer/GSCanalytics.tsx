@@ -10,6 +10,7 @@ import {
   Plus,
   LayoutGrid,
   Calendar as CalendarIcon,
+  Download,
 } from "lucide-react";
 import { UniversalKeywordTable } from "../Shared/UniversalKeywordTable";
 import { ColumnDef } from "@tanstack/react-table";
@@ -20,6 +21,7 @@ import { useDisclosure } from "@mantine/hooks";
 import GSCConnectionWizard from "./GSCConnectionWizard";
 import { Button } from "@/components/ui/button";
 import { format, subDays, isValid, parse } from "date-fns";
+import { exportToCSV } from "@/app/utils/csvUtils";
 
 // Interface defining the structure of a Keyword object
 interface GscUrl {
@@ -110,6 +112,37 @@ const GSCanalytics = () => {
       setIsLoading(false);
     }
   }, []);
+
+  // Use data directly, as filtering is now handled by the API
+  const displayData = useMemo(() => {
+    return Array.isArray(gscData) ? gscData : [];
+  }, [gscData]);
+
+  const handleDownloadCSV = useCallback(() => {
+    try {
+      if (displayData.length === 0) {
+        toast.error("No data available to download");
+        return;
+      }
+
+      // Prepare data for CSV export
+      const csvData = displayData.map((item) => ({
+        query: item.query,
+        impressions: item.impressions,
+        clicks: item.clicks,
+        ctr: `${(item.ctr * 100).toFixed(2)}%`,
+        position: item.position.toFixed(1),
+        url: item.url,
+        date: item.date,
+      }));
+
+      exportToCSV(csvData, "gsc_search_console_data");
+      toast.success("CSV file downloaded successfully");
+    } catch (error) {
+      console.error("Error downloading CSV:", error);
+      toast.error("Failed to download CSV file");
+    }
+  }, [displayData]);
 
   const handleRefreshGSC = useCallback(async () => {
     console.log("Refreshing GSC data...");
@@ -244,11 +277,6 @@ const GSCanalytics = () => {
     [credentials],
   );
 
-  // Use data directly, as filtering is now handled by the API
-  const displayData = useMemo(() => {
-    return Array.isArray(gscData) ? gscData : [];
-  }, [gscData]);
-
   return (
     <div className="px-2 h-[calc(100vh-9rem)] flex flex-col dark:text-white/50">
       <Dialog
@@ -364,6 +392,15 @@ const GSCanalytics = () => {
                     />
                   </div>
                 </div>
+
+                <button
+                  onClick={handleDownloadCSV}
+                  className="h-9 w-9 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-brand-dark rounded-xl transition-all border border-transparent hover:border-gray-200 dark:hover:border-brand-dark text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  title="Download CSV"
+                  disabled={displayData.length === 0}
+                >
+                  <Download className="h-4 w-4" />
+                </button>
 
                 <button
                   onClick={handleRefreshGSC}
