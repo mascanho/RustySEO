@@ -83,7 +83,7 @@ pub struct CrawlResult {
     pub page_schema: Vec<String>,
     pub words_arr: Vec<(usize, Vec<String>, usize)>,
     // pub reading_time: usize,
-    pub page_speed_results: Vec<Result<Value, String>>,
+    pub page_speed_results: Vec<String>,
     pub og_details: HashMap<String, Option<String>>,
     pub favicon_url: Vec<String>,
     pub keywords: Vec<Vec<(String, usize)>>,
@@ -93,7 +93,7 @@ pub struct CrawlResult {
     pub images: Vec<ImageInfo>,
     //pub head_elements: Vec<String>,
     pub body_elements: Vec<String>,
-    pub robots: Result<String, libs::MyError>,
+    pub robots: String,
     pub ratio: Vec<(f64, f64, f64)>,
     pub page_rank: Vec<f32>,
     pub charset_arr: Vec<String>,
@@ -117,9 +117,9 @@ pub struct LinkResult {
 /// Struct representing image information
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ImageInfo {
-    alt_text: String,
-    link: String,
-    size_mb: f64,
+    pub alt_text: String,
+    pub link: String,
+    pub size_mb: f64,
 }
 
 /// Struct representing the SEO page speed response
@@ -179,12 +179,24 @@ pub struct Performance {
     score: Option<f64>,
 }
 
+/// Function to normalize URLs by adding protocol if missing
+fn normalize_url(url: &str) -> String {
+    let url = url.trim();
+    if url.starts_with("http://") || url.starts_with("https://") {
+        url.to_string()
+    } else {
+        format!("https://{}", url)
+    }
+}
+
 /// Function to crawl a webpage and extract various information
 pub async fn crawl(url: String) -> Result<CrawlResult, String> {
     let _create_table = db::create_results_table();
     let _create_links_table = db::create_links_table();
 
-    let url_clone = url.clone();
+    // Normalize the URL to ensure it has a protocol
+    let normalized_url = normalize_url(&url);
+    let url_clone = normalized_url.clone();
     let host_value = HeaderValue::from_str(
         &Url::parse(&url_clone)
             .map_err(|e| format!("Failed to parse URL: {}", e))?
@@ -213,7 +225,7 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
     dbg!(&client);
 
     let response = client
-        .get(&url)
+        .get(&normalized_url)
         .send()
         .await
         .map_err(|e| format!("Request error: {}", e))?;
@@ -254,7 +266,7 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
     let mut video = Vec::new();
     let mut url_length = Vec::new();
 
-    url_length.push(url.len());
+    url_length.push(normalized_url.len());
 
     if response.status().is_success() {
         let body = response
@@ -462,7 +474,7 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
         for selector in &favicon_selectors {
             for favicon in document.select(selector) {
                 if let Some(favicon_href) = favicon.value().attr("href") {
-                    let full_url = match Url::parse(&url).and_then(|base| base.join(favicon_href)) {
+                    let full_url = match Url::parse(&normalized_url).and_then(|base| base.join(favicon_href)) {
                         Ok(full_url) => full_url.to_string(),
                         Err(_) => favicon_href.to_string(),
                     };
@@ -475,7 +487,7 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
         }
 
         if favicon_url.is_empty() {
-            if let Ok(root_url) = Url::parse(&url) {
+            if let Ok(root_url) = Url::parse(&normalized_url) {
                 let favicon_ico_url = root_url
                     .join("/favicon.ico")
                     .unwrap_or(root_url)
@@ -530,11 +542,14 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
         return Err(format!("Failed to fetch the URL: {}", response.status()));
     }
 
-    let sitemap_from_url = libs::get_sitemap(&url);
+    let sitemap_from_url = libs::get_sitemap(&normalized_url);
 
-    let robots = libs::get_robots(&url).await;
+    let robots = match libs::get_robots(&normalized_url).await {
+        Ok(content) => content,
+        Err(e) => format!("Error fetching robots.txt: {}", e),
+    };
 
-    let images = fetch_image_info(&url).await.unwrap();
+    let images = fetch_image_info(&normalized_url).await.unwrap();
 
     let title = match page_title.len() {
         0 => String::from(""),
@@ -557,7 +572,7 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
     };
 
     let mut page_rank = Vec::new();
-    let page_score = page_rank::fetch_page_rank(&url).await;
+    let page_score = page_rank::fetch_page_rank(&normalized_url).await;
     match page_score {
         Ok(page_score) => {
             page_rank.push(page_score);
@@ -570,7 +585,7 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
     println!("Page URL length: {:?}", url_length);
     db::refresh_links_table().expect("Failed to refresh links table");
     db::store_links_in_db(links.clone()).expect("Failed to store link in the DB");
-    db::add_technical_data(db_data, &url).unwrap();
+    db::add_technical_data(db_data, &normalized_url).unwrap();
 
     Ok(CrawlResult {
         links,
@@ -608,6 +623,9 @@ pub async fn get_page_speed_insights(
 ) -> Result<(PageSpeedResponse, SeoPageSpeedResponse), String> {
     dotenv().ok();
 
+    // Normalize the URL to ensure it has a protocol
+    let normalized_url = normalize_url(&url);
+
     // ----- This loads the API key prompted from the user, if not set, it will use the default one -----
 
     let api_key = match libs::load_api_keys().await {
@@ -640,7 +658,7 @@ pub async fn get_page_speed_insights(
     let general_request_url = format!(
         "{}?url={}&key={}{}",
         page_speed_url,
-        url,
+        normalized_url,
         api_key,
         if let Some(strategy) = &strategy {
             format!("&strategy={}", strategy)
@@ -652,7 +670,7 @@ pub async fn get_page_speed_insights(
     // SEO-specific insights request URL
     let seo_request_url = format!(
         "{}?url={}&category=seo&key={}",
-        page_speed_url, url, api_key
+        page_speed_url, normalized_url, api_key
     );
 
     // Send both requests concurrently
@@ -681,7 +699,7 @@ pub async fn get_page_speed_insights(
 
     // Push data into DB (consider doing this asynchronously)
     // You may want to implement retry logic or batch this
-    db::add_data_from_pagespeed(&general_response_text, &strategy.unwrap_or_default(), &url);
+    db::add_data_from_pagespeed(&general_response_text, &strategy.unwrap_or_default(), &normalized_url);
     //db::add_data_from_pagespeed(&seo_response_text, "seo", &url);
 
     // Parse responses into PageSpeedResponse structs
@@ -697,6 +715,9 @@ pub async fn get_page_speed_insights(
 
 /// Function to fetch image information from a webpage
 async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError + Send + Sync>> {
+    // Normalize URL to ensure it has a protocol
+    let normalized_url = normalize_url(url);
+
     let mut headers = HeaderMap::new();
     headers.insert(
         USER_AGENT,
@@ -714,9 +735,9 @@ async fn fetch_image_info(url: &str) -> Result<Vec<ImageInfo>, Box<dyn StdError 
 
     let client = Client::builder().default_headers(headers).build()?;
 
-    let body = client.get(url).send().await?.text().await?;
+    let body = client.get(&normalized_url).send().await?.text().await?;
 
-    let base_url = Url::parse(url)?;
+    let base_url = Url::parse(&normalized_url)?;
     let mut image_data = Vec::new();
 
     for cap in regex::Regex::new(r#"<img[^>]*>"#)?.captures_iter(&body) {

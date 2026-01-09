@@ -97,8 +97,13 @@ pub struct LinkStatus {
 // GET THE SITEMAP
 
 pub async fn get_sitemap(url: &String) -> Result<(), Box<dyn Error>> {
-    // Parse the input URL
-    let url = Url::parse(&url)?;
+    // Normalize and parse the input URL
+    let normalized_url = if url.starts_with("http://") || url.starts_with("https://") {
+        url.clone()
+    } else {
+        format!("https://{}", url)
+    };
+    let url = Url::parse(&normalized_url)?;
 
     // Extract the domain
     let domain = url.domain().ok_or(ParseError::EmptyHost)?;
@@ -155,8 +160,13 @@ pub async fn get_sitemap(url: &String) -> Result<(), Box<dyn Error>> {
 
 // GET ROBOTS.TXT
 pub async fn get_robots(domain_url: &String) -> Result<String, MyError> {
-    // Parse the input URL
-    let url = Url::parse(domain_url).map_err(MyError::from)?;
+    // Normalize and parse the input URL
+    let normalized_url = if domain_url.starts_with("http://") || domain_url.starts_with("https://") {
+        domain_url.clone()
+    } else {
+        format!("https://{}", domain_url)
+    };
+    let url = Url::parse(&normalized_url).map_err(MyError::from)?;
     println!("URL: {:?}", url);
 
     // Extract the scheme and domain and construct the robots.txt URL
