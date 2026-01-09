@@ -68,11 +68,18 @@ struct Config {
 
 #[tauri::command]
 async fn crawl(url: String) -> Result<CrawlResult, String> {
+    println!("Tauri crawl command called with URL: {}", url);
     let result = crawler::crawl(url).await;
 
     match result {
-        Ok(result) => Ok(result),
-        Err(err) => Err(err),
+        Ok(result) => {
+            println!("Crawl completed successfully");
+            Ok(result)
+        }
+        Err(err) => {
+            println!("Crawl failed with error: {}", err);
+            Err(err)
+        }
     }
 }
 
