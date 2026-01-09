@@ -44,27 +44,24 @@ const PageSchemaTable = ({
 
   const testURL = convertToGoogleRichResultsURL(googleSchemaTestUrl || "");
 
-  // Invoke Tauri Function to send SCHEMA or BODY
+  // Invoke Tauri Function to send SCHEMA or BODY (only called when user clicks)
   const fetchAiJSONLD = async () => {
     try {
-      if (newSchema !== previousSchema.current) {
-        const schemaToUse = newSchema.trim().length === 0 ? body[0] : newSchema;
-        setSchema(schemaToUse);
+      const schemaToUse = newSchema.trim().length === 0 ? body[0] : newSchema;
+      setSchema(schemaToUse);
 
-        const response = await invoke("get_jsonld_command", {
-          jsonld: schemaToUse,
-        });
+      const response = await invoke("get_jsonld_command", {
+        jsonld: schemaToUse,
+      });
 
-        if (!response || typeof response !== "string") {
-          throw new Error("Invalid response from AI service");
-        }
-
-        if (isMounted.current) {
-          setNewAISchema(response);
-        }
-        return response;
+      if (!response || typeof response !== "string") {
+        throw new Error("Invalid response from AI service");
       }
-      return null;
+
+      if (isMounted.current) {
+        setNewAISchema(response);
+      }
+      return response;
     } catch (error) {
       console.error("Failed to get AI-generated schema:", error);
       throw error;
@@ -90,30 +87,26 @@ const PageSchemaTable = ({
 
   useEffect(() => {
     isMounted.current = true;
-
-    const fetchData = async () => {
-      if (body.length > 0) {
-        try {
-          const response = await fetchAiJSONLD();
-          if (isMounted.current) {
-            setNewAISchema(response);
-          }
-        } catch (error) {
-          console.error("Error fetching AI schema:", error);
-        }
-      }
-    };
-
-    fetchData();
-
     return () => {
       isMounted.current = false;
     };
-  }, [body, newSchema]);
+  }, []);
 
-  const openDialog = () => {
+  const openDialog = async () => {
     setDialogOpen(true);
     setDropdownOpen(false); // Close dropdown when dialog opens
+
+    // Trigger AI schema generation
+    try {
+      const response = await fetchAiJSONLD();
+      if (isMounted.current) {
+        setNewAISchema(response);
+      }
+    } catch (error) {
+      console.error("Error fetching AI schema:", error);
+      // Set a fallback message
+      setNewAISchema("AI schema generation failed. Please try again.");
+    }
   };
 
   // Toggle dropdown visibility
