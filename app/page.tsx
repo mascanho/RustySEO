@@ -238,7 +238,6 @@ const Home: React.FC<HomeProps> = () => {
     setVideo([]);
     setUrlLength([]);
 
-    console.log("Starting crawl for URL:", url);
     invoke<{
       links: [string, string][];
       headings: string[];
@@ -267,7 +266,6 @@ const Home: React.FC<HomeProps> = () => {
       url_length: number[];
     }>("crawl", { url })
       .then((result) => {
-        console.log("Crawl result received:", result);
         handleLinkStatusCheck(url);
         showLinksSequentially(result.links); // Show links one by one
         setHeadings(result.headings);

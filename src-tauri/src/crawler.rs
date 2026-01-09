@@ -191,13 +191,11 @@ fn normalize_url(url: &str) -> String {
 
 /// Function to crawl a webpage and extract various information
 pub async fn crawl(url: String) -> Result<CrawlResult, String> {
-    println!("Starting crawl for URL: {}", url);
     let _create_table = db::create_results_table();
     let _create_links_table = db::create_links_table();
 
     // Normalize the URL to ensure it has a protocol
     let normalized_url = normalize_url(&url);
-    println!("Normalized URL: {}", normalized_url);
     let url_clone = normalized_url.clone();
     let host_value = HeaderValue::from_str(
         &Url::parse(&url_clone)
@@ -589,36 +587,33 @@ pub async fn crawl(url: String) -> Result<CrawlResult, String> {
     db::store_links_in_db(links.clone()).expect("Failed to store link in the DB");
     db::add_technical_data(db_data, &normalized_url).unwrap();
 
-    let result = CrawlResult {
-        links: links.clone(),
-        headings: headings.clone(),
-        indexation: indexation.clone(),
-        page_title: page_title.clone(),
-        page_description: page_description.clone(),
-        canonical_url: canonical_url.clone(),
-        hreflangs: hreflangs.clone(),
-        index_type: index_type.clone(),
-        page_schema: page_schema.clone(),
-        words_arr: words_arr.clone(),
+    Ok(CrawlResult {
+        links,
+        headings,
+        indexation,
+        page_title,
+        page_description,
+        canonical_url,
+        hreflangs,
+        index_type,
+        page_schema,
+        words_arr,
         page_speed_results,
-        og_details: og_details.clone(),
-        favicon_url: favicon_url.clone(),
-        keywords: keywords.clone(),
-        readings: readings.clone(),
-        google_tag_manager: google_tag_manager.clone(),
-        tag_container: tag_container.clone(),
-        images: images.clone(),
-        body_elements: body_elements.clone(),
-        robots: robots.clone(),
-        ratio: ratio.clone(),
-        page_rank: page_rank.clone(),
-        charset_arr: charset_arr.clone(),
-        video: video.clone(),
+        og_details,
+        favicon_url,
+        keywords,
+        readings,
+        google_tag_manager,
+        tag_container,
+        images,
+        body_elements,
+        robots,
+        ratio,
+        page_rank,
+        charset_arr,
+        video,
         url_length,
-    };
-
-    println!("Crawl completed. Links found: {}, Headings: {}, Title: {:?}", result.links.len(), result.headings.len(), result.page_title);
-    Ok(result)
+    })
 }
 
 /// Function to fetch performance data from Google PageSpeed Insights
