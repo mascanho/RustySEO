@@ -23,6 +23,7 @@ use toml::de::Error as TomlError;
 
 use crate::crawler::db::{self, refresh_links_table};
 use crate::server;
+use crate::settings::settings::{load_settings, Settings};
 
 use super::crawler;
 
@@ -549,12 +550,14 @@ pub async fn get_google_search_console(
         .expect("Failed to read credentials file");
     let credentials_url = gsc_settings_info.url;
     let search_type = gsc_settings_info.search_type;
-    let credentials_project_id = gsc_settings_info.project_id;
     let credentials_client_id = gsc_settings_info.client_id;
     let credentials_client_secret = gsc_settings_info.client_secret;
     let credentials_range = gsc_settings_info.range;
-    let credentials_rows = gsc_settings_info.rows;
     let credentials_token = gsc_settings_info.token;
+
+    // GET THE SETTINGS FROM THE DISK
+    let settings = load_settings().await.unwrap_or(Settings::new());
+    let gsc_rows_limit = settings.gsc_row_limit;
 
     // Create an authorized client
     let https = HttpsConnectorBuilder::new()
@@ -670,8 +673,7 @@ pub async fn get_google_search_console(
 
     // let site_url = "sc-domain:algarvewonders.com";
     // Always fetch maximum possible data from GSC API
-    // Use 5000 rows per request (GSC max) and paginate until no more data
-    let row_limit_per_request = 5000; // GSC max is 5000 per request
+    let row_limit_per_request = gsc_rows_limit;
     let _requested_rows = 5000; // Ignore user setting, always max out
 
     // Retry loop for handling 401 Unauthorized
@@ -773,7 +775,7 @@ pub async fn get_google_search_console(
                         tracing::info!("Page number: {}", pages);
                     }
                 } else {
-                    println!("No rows array found in response");
+                    tracing::error!("No rows array found in response");
                     has_more_data = false;
                 }
 
@@ -791,12 +793,12 @@ pub async fn get_google_search_console(
                     .await
                     {
                         Ok(new_token) => {
-                            println!("Token refreshed successfully. Retrying request...");
+                            tracing::info!("Token refreshed successfully. Retrying request...");
                             final_token = new_token;
                             continue; // Retry loop with new token
                         }
                         Err(e) => {
-                            eprintln!("Failed to refresh token: {}", e);
+                            tracing::error!("Failed to refresh token: {}", e);
                             // Fall through to error return below
                         }
                     }
@@ -822,6 +824,7 @@ pub async fn get_google_search_console(
 
     gsc_data.push(final_data);
 
+    tracing::info!("GSC Max Rows: {}", row_limit_per_request);
     tracing::info!(
         "Final GSC Data: {} rows total fetched (maximum available for date range)",
         all_rows.len()

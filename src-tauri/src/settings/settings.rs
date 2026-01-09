@@ -50,6 +50,7 @@ pub struct Settings {
     pub extract_ngrams: bool,
     pub stop_words: HashSet<String>,
     pub log_bots: Vec<(String, String)>,
+    pub gsc_row_limit: i32,
 }
 
 impl Settings {
@@ -86,6 +87,7 @@ impl Settings {
             extract_ngrams: false,
             stop_words: default_stop_words(),
             log_bots: generate_default_user_bots(),
+            gsc_row_limit: 25000,
         }
     }
 
@@ -217,6 +219,8 @@ pub fn print_settings(settings: &Settings) {
     println!("Ngrams: {}", settings.extract_ngrams);
 
     println!("Log Bots: {:#?}", settings.log_bots);
+
+    println!("GSC Row Limit: {}", settings.gsc_row_limit);
 
     println!("")
 }
@@ -378,6 +382,10 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
 
     if let Some(val) = updates.get("extract_ngrams").and_then(|v| v.as_bool()) {
         settings.extract_ngrams = val;
+    }
+
+    if let Some(val) = updates.get("gsc_row_limit").and_then(|v| v.as_integer()) {
+        settings.gsc_row_limit = val as i32;
     }
 
     // Explicit file writing with flush
