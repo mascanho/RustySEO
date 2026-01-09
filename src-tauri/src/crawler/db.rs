@@ -190,15 +190,15 @@ pub fn add_data_from_pagespeed(data: &str, strategy: &str, url: &str) -> Result<
     // Extract response values
     let audits = parsed_data.lighthouse_result.audits;
     let score = parsed_data.lighthouse_result.categories.performance.score;
-    let fcp = audits.first_contentful_paint.score;
-    let lcp = audits.largest_contentful_paint.score;
-    let tti = audits.interactive.score;
-    let tbt = audits.total_blocking_time.score;
-    let cls = audits.cumulative_layout_shift.score;
-    let dom_size = audits.dom_size.numeric_value; // Adjust as necessary
-    let speed_index = audits.speed_index.score;
-    let server_response_time = audits.server_response_time.numeric_value;
-    let total_byte_weight = audits.total_byte_weight.score;
+    let fcp = audits.first_contentful_paint.as_ref().map(|a| a.score).unwrap_or(0.0);
+    let lcp = audits.largest_contentful_paint.as_ref().map(|a| a.score).unwrap_or(0.0);
+    let tti = audits.interactive.as_ref().map(|a| a.score).unwrap_or(0.0);
+    let tbt = audits.total_blocking_time.as_ref().map(|a| a.score).unwrap_or(0.0);
+    let cls = audits.cumulative_layout_shift.as_ref().map(|a| a.score).unwrap_or(0.0);
+    let dom_size = audits.dom_size.as_ref().and_then(|a| a.numeric_value).unwrap_or(0.0);
+    let speed_index = audits.speed_index.as_ref().map(|a| a.score).unwrap_or(0.0);
+    let server_response_time = audits.server_response_time.as_ref().and_then(|a| a.numeric_value).unwrap_or(0.0);
+    let total_byte_weight = audits.total_byte_weight.as_ref().map(|a| a.score).unwrap_or(0.0);
     let performance = format!("{}", score);
     let date = Utc::now().naive_utc().to_string();
 
