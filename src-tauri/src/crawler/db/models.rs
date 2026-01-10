@@ -74,7 +74,7 @@ pub struct ConfigSettings {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Audits {
     pub interactive: Option<Audit>,
-    #[serde(rename = "render-blocking-resources")]
+    #[serde(rename = "render-blocking-resources", alias = "render-blocking-insight")]
     pub render_blocking_resources: Option<Audit>,
     #[serde(rename = "first-contentful-paint")]
     pub first_contentful_paint: Option<Audit>,
@@ -86,7 +86,7 @@ pub struct Audits {
     pub total_blocking_time: Option<Audit>,
     #[serde(rename = "total-byte-weight")]
     pub total_byte_weight: Option<Audit>,
-    #[serde(rename = "dom-size")]
+    #[serde(rename = "dom-size", alias = "dom-size-insight")]
     pub dom_size: Option<Audit>,
     #[serde(rename = "server-response-time")]
     pub server_response_time: Option<Audit>,

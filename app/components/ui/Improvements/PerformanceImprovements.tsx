@@ -45,7 +45,8 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
     pageSpeed?.lighthouseResult?.audits?.["total-byte-weight"]?.score;
 
   const domSize =
-    pageSpeed?.lighthouseResult?.audits?.["dom-size"]?.numericValue;
+    (pageSpeed?.lighthouseResult?.audits?.["dom-size-insight"] ||
+      pageSpeed?.lighthouseResult?.audits?.["dom-size"])?.numericValue;
 
   const urlRedirects =
     pageSpeed?.lighthouseResult?.audits?.redirects?.details?.items.length;
@@ -53,7 +54,8 @@ const PerformanceImprovements = ({ pageSpeed }: any) => {
   const longTasks = pageSpeed?.lighthouseResult?.audits?.["long-tasks"]?.score;
 
   const renderBlocking =
-    pageSpeed?.lighthouseResult?.audits?.["render-blocking-resources"]
+    (pageSpeed?.lighthouseResult?.audits?.["render-blocking-insight"] ||
+      pageSpeed?.lighthouseResult?.audits?.["render-blocking-resources"])
       ?.numericValue;
 
   const networkRequests =

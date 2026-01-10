@@ -16,9 +16,10 @@ const DomElements = ({
   const [opened, { close, open }] = useDisclosure(false);
 
   // Extract score and calculate percentage
-  const score = Math.floor(
-    stat?.lighthouseResult?.audits["dom-size"]?.score * 100,
-  );
+  const domAudit =
+    stat?.lighthouseResult?.audits["dom-size-insight"] ||
+    stat?.lighthouseResult?.audits["dom-size"];
+  const score = Math.floor(domAudit?.score * 100);
 
   // Determine the label based on the score
   let label = "";
@@ -26,7 +27,7 @@ const DomElements = ({
     label = "Good";
   } else if (score >= 50) {
     label = "Average";
-  } else {
+  } else if (!isNaN(score)) {
     label = "Poor";
   }
 
@@ -153,10 +154,10 @@ const DomElements = ({
             <div className="flex items-center space-x-4">
               <div className="flex items-center">
                 <span className="font-bold text-2xl text-apple-spaceGray/50">
-                  {(stat && score + "%") || "..."}
+                  {stat && !isNaN(score) ? score + "%" : "..."}
                 </span>
                 <p
-                  className={`rounded-full font-semibold ml-2 px-2 text-xs py-[1px] ${!stat && "hidden"} ${labelClass}`}
+                  className={`rounded-full font-semibold ml-2 px-2 text-xs py-[1px] ${(!stat || isNaN(score)) && "hidden"} ${labelClass}`}
                 >
                   {label}
                 </p>
@@ -168,7 +169,7 @@ const DomElements = ({
           onClick={() =>
             openBrowserWindow(
               "https://pagespeed.web.dev/report?url=" +
-                (url || "No URL provided"),
+              (url || "No URL provided"),
             )
           }
           className="flex cursor-pointer"
@@ -178,9 +179,7 @@ const DomElements = ({
               Nodes found:{""}
             </h4>
             <span className="font-semibold text-xs ml-1 text-brand-bright text-apple-spaceGray/50">
-              {stat?.lighthouseResult?.audits?.["dom-size"]?.numericValue
-                ? `${stat.lighthouseResult.audits["dom-size"].numericValue}`
-                : "..."}
+              {domAudit?.numericValue ? `${domAudit.numericValue}` : "..."}
             </span>
           </div>
         </div>

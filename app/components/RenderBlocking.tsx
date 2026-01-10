@@ -17,14 +17,15 @@ const RenderBlocking: React.FC<RenderBlockingProps> = ({
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
 
-  const renderBlockingItems =
-    stat?.lighthouseResult?.audits?.["render-blocking-resources"]?.details
-      ?.items ?? [];
+  const renderBlockingAudit =
+    stat?.lighthouseResult?.audits?.["render-blocking-insight"] ||
+    stat?.lighthouseResult?.audits?.["render-blocking-resources"];
+
+  const renderBlockingItems = renderBlockingAudit?.details?.items ?? [];
 
   const renderBlockingCount = renderBlockingItems.length;
 
-  const displayValue =
-    stat?.lighthouseResult?.audits?.["render-blocking-resources"]?.displayValue;
+  const displayValue = renderBlockingAudit?.displayValue;
 
   // Determine the label based on the number of render-blocking resources
   let label = "";
