@@ -3,7 +3,7 @@ use url::Url;
 use std::collections::HashSet;
 
 /// Extracts and normalizes links from HTML
-pub fn extract_links(html: &str, base_url: &Url) -> HashSet<Url> {
+pub fn extract_links(html: &str, resolve_url: &Url, scope_url: &Url) -> HashSet<Url> {
     let document = Html::parse_document(html);
     let selector = Selector::parse("a[href]").unwrap();
 
@@ -11,7 +11,7 @@ pub fn extract_links(html: &str, base_url: &Url) -> HashSet<Url> {
 
     for element in document.select(&selector) {
         if let Some(href) = element.value().attr("href") {
-            if let Some(url) = process_link(base_url, href) {
+            if let Some(url) = process_link(resolve_url, scope_url, href) {
                 unique_urls.insert(url);
             }
         }
@@ -21,17 +21,17 @@ pub fn extract_links(html: &str, base_url: &Url) -> HashSet<Url> {
 }
 
 /// Process a single link
-fn process_link(base_url: &Url, href: &str) -> Option<Url> {
+fn process_link(resolve_url: &Url, scope_url: &Url, href: &str) -> Option<Url> {
     // Skip problematic hrefs early
     if href.is_empty() || href.starts_with('#') || href.starts_with("javascript:") {
         return None;
     }
 
-    // Build URL
-    let url = build_full_url(base_url, href).ok()?;
+    // Build URL using resolve_url (current page)
+    let url = build_full_url(resolve_url, href).ok()?;
 
-    // Validate and normalize
-    validate_and_normalize_url(base_url, &url)
+    // Validate using scope_url (root domain)
+    validate_and_normalize_url(scope_url, &url)
 }
 
 /// Build URL with better relative path handling

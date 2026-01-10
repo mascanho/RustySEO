@@ -28,13 +28,15 @@ pub struct LinkTypes {
 ///
 /// # Arguments
 /// * `html` - The HTML content as a string.
-/// * `base_url` - The base URL used to resolve relative links.
+/// * `resolve_url` - The URL of the current page, used to resolve relative links.
+/// * `scope_url` - The base URL of the scan (root domain), used to check for internal/external status.
 ///
 /// # Returns
 /// An `Option<InternalExternalLinks>` containing internal and external links and their anchor texts.
 pub fn extract_internal_external_links(
     html: &str,
-    base_url: &Url,
+    resolve_url: &Url,
+    scope_url: &Url,
 ) -> Option<InternalExternalLinks> {
     let document = Html::parse_document(html);
 
@@ -84,7 +86,8 @@ pub fn extract_internal_external_links(
          element| {
             if let Some(href) = element.value().attr("href") {
                 // Resolve the URL (handle relative and absolute URLs)
-                let full_url = resolve_url(href, base_url);
+                // Use the CURRENT page URL for resolution
+                let full_url = resolve_relative_url(href, resolve_url);
 
                 // Get the anchor text
                 let anchor_text = element.text().collect::<String>();
@@ -95,7 +98,8 @@ pub fn extract_internal_external_links(
                 let target = element.value().attr("target").map(|s| s.to_string());
 
                 // Classify as internal or external
-                if is_internal_link(&full_url, base_url) {
+                // Use the SCOPE URL (root domain) for classification
+                if is_internal_link(&full_url, scope_url) {
                     internal_links.push(full_url.to_string());
                     internal_anchors.push(anchor_text);
                     internal_rels.push(rel);
@@ -162,7 +166,7 @@ pub fn extract_internal_external_links(
 ///
 /// # Returns
 /// A resolved `Url`.
-fn resolve_url(href: &str, base_url: &Url) -> Url {
+fn resolve_relative_url(href: &str, base_url: &Url) -> Url {
     Url::parse(href).unwrap_or_else(|_| base_url.join(href).unwrap_or_else(|_| base_url.clone()))
 }
 

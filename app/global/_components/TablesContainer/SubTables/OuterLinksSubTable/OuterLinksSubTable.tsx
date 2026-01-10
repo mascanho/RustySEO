@@ -186,52 +186,7 @@ const OuterLinksSubTable: React.FC<InlinksSubTableProps> = ({
     );
   }
 
-  function normalizeUrl(url) {
-    // Remove "https://" and "www." for comparison
-    let normalized = url.replace(/^https?:\/\/(www\.)?/, "");
-    // Ensure the normalized URL starts with "www."
-    return `https://www.${normalized}`;
-  }
-
-  function getAnchorText(obj, targetUrl) {
-    const normalizedTargetUrl = normalizeUrl(targetUrl);
-
-    const anchorTexts = obj?.inoutlinks_status_codes?.internal
-      .filter((item) => {
-        const normalizedItemUrl = normalizeUrl(item.url);
-        return normalizedItemUrl === normalizedTargetUrl;
-      })
-      .map((item) => item.anchor_text);
-
-    return anchorTexts;
-  }
-
-  function getStatusCode(obj, targetUrl) {
-    const normalizedTargetUrl = normalizeUrl(targetUrl);
-
-    const statusCodes = obj?.inoutlinks_status_codes?.internal
-      .filter((item) => {
-        const normalizedItemUrl = normalizeUrl(item.url);
-        return normalizedItemUrl === normalizedTargetUrl;
-      })
-      .map((item) => item.status);
-
-    return (
-      <span
-        className={` font-semibold
-
-${statusCodes?.[0] === 200 && "text-green-700"}
-
-${statusCodes?.[0] === 404 && "text-red-700"}
-
-${statusCodes?.[0] === 403 && "text-orange-700"}
-
-`}
-      >
-        {statusCodes}
-      </span>
-    );
-  }
+  // Removed unused helper functions (normalizeUrl, getAnchorText, getStatusCode)
 
   return (
     <section
@@ -310,16 +265,24 @@ ${statusCodes?.[0] === 403 && "text-orange-700"}
                 ? "bg-gray-50 dark:bg-brand-dark/20"
                 : "bg-white dark:bg-brand-darker";
 
+            // Format status code color
+            const statusCode = item.status;
+            let statusColor = "";
+            if (statusCode >= 200 && statusCode < 300) statusColor = "text-green-700";
+            else if (statusCode >= 300 && statusCode < 400) statusColor = "text-orange-700"; // Redirects often orange/yellow
+            else if (statusCode === 403) statusColor = "text-orange-700";
+            else if (statusCode >= 400) statusColor = "text-red-700";
+
             return (
               <tr key={index} className={`${rowColorClass} text-xs border`}>
                 <td className="text-center border border-l ">{index + 1}</td>
                 <td className="pl-3 border border-l">{data?.[0].url}</td>
                 <td className="pl-3 border border-l">{item?.url}</td>
                 <td className="pl-3 border border-l ">
-                  {getAnchorText(item, data?.[0].url)}
+                  {item.anchor_text || "N/A"}
                 </td>
-                <td className={`pl-3 text-center font-semibold`}>
-                  {getStatusCode(item, data?.[0].url)}
+                <td className={`pl-3 text-center font-semibold ${statusColor}`}>
+                  {statusCode || "N/A"}
                 </td>
               </tr>
             );

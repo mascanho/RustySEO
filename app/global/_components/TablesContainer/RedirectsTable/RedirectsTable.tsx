@@ -505,15 +505,30 @@ const RedirectsTable = ({
 
         const normalizeUrl = (url: string) => {
           if (!url) return "";
-          if (!url.startsWith("http")) url = "https://" + url;
-          if (!url.startsWith("https://www.")) {
-            if (url.startsWith("https://")) {
-              url = "https://www." + url.substring(8);
-            } else {
-              url = "https://www." + url;
-            }
+          try {
+            // Use URL object for more robust parsing if possible, but fallback to string manipulation for partials
+            let u = url.toString().trim().toLowerCase();
+
+            // Remove protocol
+            u = u.replace(/^(?:https?:\/\/)?/i, "");
+            // Remove www
+            u = u.replace(/^www\./i, "");
+
+            // Remove query params and hash
+            const queryIdx = u.indexOf("?");
+            if (queryIdx !== -1) u = u.substring(0, queryIdx);
+
+            const hashIdx = u.indexOf("#");
+            if (hashIdx !== -1) u = u.substring(0, hashIdx);
+
+            // Remove trailing slash
+            if (u.endsWith("/")) u = u.slice(0, -1);
+
+            return u;
+          } catch (e) {
+            console.error("Error normalizing URL:", e);
+            return "";
           }
-          return url.toString().trim().toLowerCase();
         };
 
         const targetUrlNormalized = normalizeUrl(cellContent);
@@ -527,14 +542,21 @@ const RedirectsTable = ({
 
         setInlinks([{ url: cellContent }, innerLinksMatched]);
 
-        const outLinksMatched = rows.filter((r) => {
-          const externalLinks = r?.inoutlinks_status_codes?.external || [];
-          return externalLinks.some(
-            (link: any) => normalizeUrl(link?.url) === targetUrlNormalized,
-          );
-        });
+        setInlinks([{ url: cellContent }, innerLinksMatched]);
 
-        setOutlinks([{ url: cellContent }, outLinksMatched]);
+        // For Outlinks (Links ON this page), we just need the links from the selected row
+        const selectedRow = rows.find((r) => r.url === cellContent);
+        const allOutgoingLinks = [];
+        if (selectedRow) {
+          if (selectedRow.inoutlinks_status_codes?.internal) {
+            allOutgoingLinks.push(...selectedRow.inoutlinks_status_codes.internal);
+          }
+          if (selectedRow.inoutlinks_status_codes?.external) {
+            allOutgoingLinks.push(...selectedRow.inoutlinks_status_codes.external);
+          }
+        }
+
+        setOutlinks([{ url: cellContent }, allOutgoingLinks]);
       }
     },
     [rows, setInlinks, setOutlinks, setSelectedTableURL],

@@ -191,10 +191,28 @@ const InnerLinksDetailsTable: React.FC<InlinksSubTableProps> = ({
   }
 
   function normalizeUrl(url) {
-    // Remove "https://" and "www." for comparison
-    let normalized = url.replace(/^https?:\/\/(www\.)?/, "");
-    // Ensure the normalized URL starts with "www."
-    return `https://www.${normalized}`;
+    if (!url) return "";
+    try {
+      let u = url.toString().trim().toLowerCase();
+      // Remove protocol
+      u = u.replace(/^(?:https?:\/\/)?/i, "");
+      // Remove www
+      u = u.replace(/^www\./i, "");
+
+      // Remove query params and hash
+      const queryIdx = u.indexOf("?");
+      if (queryIdx !== -1) u = u.substring(0, queryIdx);
+
+      const hashIdx = u.indexOf("#");
+      if (hashIdx !== -1) u = u.substring(0, hashIdx);
+
+      // Remove trailing slash
+      if (u.endsWith("/")) u = u.slice(0, -1);
+      return u;
+    } catch (e) {
+      console.error("Error normalizing URL:", e);
+      return "";
+    }
   }
 
   function getAnchorText(obj, targetUrl) {
