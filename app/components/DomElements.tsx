@@ -15,19 +15,22 @@ const DomElements = ({
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
 
-  // Extract score and calculate percentage
+  // Extract node count and calculate score
   const domAudit =
     stat?.lighthouseResult?.audits["dom-size-insight"] ||
     stat?.lighthouseResult?.audits["dom-size"];
   const score = Math.floor(domAudit?.score * 100);
+  const nodeCount = domAudit?.numericValue || 0;
 
-  // Determine the label based on the score
+  // Determine the label based on the number of nodes
   let label = "";
-  if (score >= 80) {
+  if (!stat) {
+    label = "";
+  } else if (nodeCount <= 1000) {
     label = "Good";
-  } else if (score >= 50) {
+  } else if (nodeCount <= 1500) {
     label = "Average";
-  } else if (!isNaN(score)) {
+  } else {
     label = "Poor";
   }
 
