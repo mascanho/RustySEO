@@ -220,7 +220,6 @@ const InnerLinksDetailsTable: React.FC<InlinksSubTableProps> = ({
       })
       .map((item) => item.status);
 
-
     return (
       <span
         className={` font-semibold
@@ -248,7 +247,7 @@ ${statusCodes?.[0] === 403 && "text-orange-700"}
     >
       <button
         onClick={exportCSV}
-        className="absolute -top-8   right-1 z-50 text-xs border border-brand-bright dark:border-brand-bright px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors  dark:text-white/50"
+        className="absolute -top-6   right-1 z-50 text-xs border border-brand-bright dark:border-brand-bright px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors  dark:text-white/50"
       >
         Export
       </button>
@@ -256,7 +255,7 @@ ${statusCodes?.[0] === 403 && "text-orange-700"}
         ref={tableRef}
         style={{ width: "100%", borderCollapse: "collapse" }}
       >
-        <thead className="text-xs top-0 sticky">
+        <thead className="text-xs top-6 sticky">
           <tr className="shadow">
             <th
               style={{

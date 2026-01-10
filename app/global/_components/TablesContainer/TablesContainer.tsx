@@ -390,7 +390,7 @@ export default function Home() {
         </div>
         <ResizableDivider onResize={handleResize} containerRef={containerRef} />
         <div
-          className="overflow-hidden dark:bg-brand-darker h-auto relative"
+          className="dark:bg-brand-darker h-auto relative"
           style={{ height: `${bottomTableHeight}px`, minHeight: "100px" }}
         >
           <Tabs value={activeBottomTab} onValueChange={setActiveBottomTab}>
@@ -426,7 +426,7 @@ export default function Home() {
                 <InnerLinksDetailsTable data={inlinks} />
               </BottomTableContent>
             </TabsContent>
-            <TabsContent value="outlinks">
+            <TabsContent value="outlinks" className="relative z-0">
               <BottomTableContent height={bottomTableHeight}>
                 <OuterLinksSubTable data={outlinks} />
               </BottomTableContent>
