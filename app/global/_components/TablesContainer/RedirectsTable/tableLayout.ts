@@ -1,12 +1,13 @@
 export const initialColumnWidths = [
   "50px", // ID
-  "30%", // Page
+  "250px", // Page
   "80px", // Redirected
-  "30%", // Destination
-  "100px", // Type
-  "80px", // Final Status
+  "250px", // Destination
+  "80px", // Type
+  "80px", // Status
   "60px", // Hops
-  "20%", // Chain
+  "60px", // Loop
+  "400px", // Chain
 ];
 
 export const initialColumnAlignments = [
@@ -15,8 +16,9 @@ export const initialColumnAlignments = [
   "center", // Redirected
   "left", // Destination
   "center", // Type
-  "center", // Final Status
+  "center", // Status
   "center", // Hops
+  "center", // Loop
   "left", // Chain
 ];
 
@@ -26,7 +28,8 @@ export const headerTitles = [
   "Redirected",
   "Destination",
   "Type",
-  "Final Status",
+  "Status",
   "Hops",
+  "Loop",
   "Chain",
 ];
