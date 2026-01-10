@@ -26,7 +26,9 @@ const DomElements = ({
   let label = "";
   if (!stat) {
     label = "";
-  } else if (nodeCount <= 1000) {
+  } else if (nodeCount <= 800) {
+    label = "Optimal";
+  } else if (nodeCount <= 1200) {
     label = "Good";
   } else if (nodeCount <= 1500) {
     label = "Average";
@@ -37,9 +39,10 @@ const DomElements = ({
   // Determine the background color and text color based on the label
   const labelClass =
     {
-      Poor: "bg-red-500 text-white",
-      Average: "bg-orange-500 text-white",
+      Optimal: "bg-emerald-500 text-white",
       Good: "bg-green-500 text-white",
+      Average: "bg-orange-500 text-white",
+      Poor: "bg-red-500 text-white",
     }[label] || "bg-gray-200 text-black";
 
   return (
@@ -122,8 +125,9 @@ const DomElements = ({
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
           <Text size="xs">
-            The number of elements (nodes) in a webpage&apos;s Document Object
-            Model (DOM). A large DOM can negatively impact page performance.
+            The number of elements in the DOM. Optimal is &lt; 800 nodes.
+            Excessive DOM size (&gt; 1500) increases memory usage and slows down
+            layout/style calculations.
           </Text>
         </Popover.Dropdown>
       </Popover>
