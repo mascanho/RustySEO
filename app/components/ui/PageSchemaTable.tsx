@@ -15,7 +15,7 @@ const PageSchemaTable = ({
   sessionUrl,
   body,
 }: {
-  body: string;
+  body: string[];
   pageSchema?: string;
   googleSchemaTestUrl?: string;
 }) => {

@@ -144,6 +144,22 @@ async fn generate_ai_topics(body: String) -> Result<String, String> {
     }
 }
 
+#[tauri::command]
+async fn get_headings_command(ai_headings: String) -> Result<String, String> {
+    match genai::generate_headings(ai_headings).await {
+        Ok(response) => Ok(response.content.unwrap_or_default()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+#[tauri::command]
+async fn get_jsonld_command(jsonld: String) -> Result<String, String> {
+    match genai::generate_jsonld(jsonld).await {
+        Ok(response) => Ok(response.content.unwrap_or_default()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
 #[tokio::main]
 async fn main() {
     // Initialize the logger
@@ -243,8 +259,8 @@ async fn main() {
             commands::get_microsoft_clarity_command,
             commands::get_microsoft_clarity_data_command,
             version::version_check_command,
-            gemini::get_headings_command,
-            gemini::get_jsonld_command,
+            get_headings_command,
+            get_jsonld_command,
             commands::add_gsc_data_to_kw_tracking_command,
             commands::fetch_tracked_keywords_command,
             commands::delete_keyword_command,

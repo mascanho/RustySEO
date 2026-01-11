@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::io::Write;
 
-use crate::gemini::{self, Headings};
+use crate::gemini::{self};
 
 use crate::globals::actions;
 
@@ -172,7 +172,7 @@ pub async fn generate_headings(headings: String) -> Result<ChatResponse, Box<dyn
 
         // Create the chat request
         let prompt = format!(
-        "You are an amazing SEO expert, given the headings provided improve them and make them better to have better changes of ranking on search engines, and more importantly on google. Follow the latest SEO best practices and use the keywords wisely, output it the same format as submited, do not output anything else besides the headings, if there are duplicated headings ensure to try and make them different whilst keeping the same semanting meaning. The headings are: {:#?}", headings
+        "You are an amazing SEO expert, given the headings provided improve them and make them better to have better changes of ranking on search engines, and more importantly on google. Follow the latest SEO best practices and use the keywords wisely, output it the same format as submited, do not output anything else besides the headings, if there are duplicated headings ensure to try and make them different whilst keeping the same semanting meaning. The headings are: {}", headings
     );
         let chat_req = ChatRequest::new(vec![
             // ChatMessage::system("Output a JSON format, do not add anything else to your reply if it is not inside the JSON format"),
@@ -230,7 +230,7 @@ pub async fn generate_jsonld(jsonld: String) -> Result<ChatResponse, Box<dyn Err
 
         // Create the chat request
         let prompt = format!(
-        "You are an amazing SEO expert, given the JSON-LD provided improve it and make it better to have better changes of ranking on search engines, and more importantly on google. Follow the latest SEO best practices and use the keywords wisely, output it the same format as submited, do not output anything else besides it. the json-ld (structured data) is: {:#?}, in case I have no json-ld I'll submit a page body HTML for you to generate the best json-ld for it, below the JSON-Ld output a brief explanation of what the improvements were, do not include ** in your explanation", jsonld
+        "You are an amazing SEO expert, given the JSON-LD provided improve it and make it better to have better changes of ranking on search engines, and more importantly on google. Follow the latest SEO best practices and use the keywords wisely, output it the same format as submited, do not output anything else besides it. the json-ld (structured data) is: {}, in case I have no json-ld I'll submit a page body HTML for you to generate the best json-ld for it, below the JSON-Ld output a brief explanation of what the improvements were, do not include ** in your explanation", jsonld
     );
         let chat_req = ChatRequest::new(vec![
             // ChatMessage::system("Output a JSON format, do not add anything else to your reply if it is not inside the JSON format"),
