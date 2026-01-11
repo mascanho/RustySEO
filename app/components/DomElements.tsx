@@ -19,8 +19,17 @@ const DomElements = ({
   const domAudit =
     stat?.lighthouseResult?.audits["dom-size-insight"] ||
     stat?.lighthouseResult?.audits["dom-size"];
-  const score = Math.floor(domAudit?.score * 100);
   const nodeCount = domAudit?.numericValue || 0;
+
+  // Custom score logic: 100% if optimal (<= 800), decreases to 0% at 3000 nodes.
+  const calculateDomScore = (count: number) => {
+    if (!count) return 0;
+    if (count <= 800) return 100;
+    if (count >= 3000) return 0;
+    return Math.floor(100 - ((count - 800) / (3000 - 800)) * 100);
+  };
+
+  const score = stat ? calculateDomScore(nodeCount) : 0;
 
   // Determine the label based on the number of nodes
   let label = "";
