@@ -178,17 +178,17 @@ const TableRow = ({
       row?.psi_results?.Ok?.[0]?.audits?.["speed-index"]?.score ?? "n/a",
       row?.psi_results?.Ok?.[1]?.audits?.["speed-index"]?.score ?? "n/a",
       row?.psi_results?.Ok?.[0]?.audits?.["largest-contentful-paint"]?.score ??
-        "n/a",
+      "n/a",
       row?.psi_results?.Ok?.[1]?.audits?.["largest-contentful-paint"]?.score ??
-        "n/a",
+      "n/a",
       row?.psi_results?.Ok?.[0]?.audits?.["cumulative-layout-shift"]?.score ??
-        "n/a",
+      "n/a",
       row?.psi_results?.Ok?.[1]?.audits?.["cumulative-layout-shift"]?.score ??
-        "n/a",
+      "n/a",
       row?.psi_results?.Ok?.[0]?.audits?.["first-contentful-paint"]?.score ??
-        "n/a",
+      "n/a",
       row?.psi_results?.Ok?.[1]?.audits?.["first-contentful-paint"]?.score ??
-        "n/a",
+      "n/a",
 
       row?.psi_results?.Ok?.[0]?.audits?.["interactive"]?.score ?? "n/a",
       row?.psi_results?.Ok?.[1]?.audits?.["interactive"]?.score ?? "n/a",
@@ -203,7 +203,8 @@ const TableRow = ({
         ? `${row?.psi_results?.Ok?.[0]?.audits?.["total-blocking-time"]?.numericValue.toFixed(0)} ms`
         : "n/a",
 
-      row?.psi_results?.Ok?.[0]?.audits?.["dom-size"]?.numericValue ?? "n/a",
+      (row?.psi_results?.Ok?.[0]?.audits?.["dom-size-insight"] ||
+        row?.psi_results?.Ok?.[0]?.audits?.["dom-size"])?.numericValue ?? "n/a",
     ],
     [row, index],
   );
@@ -398,11 +399,11 @@ const CoreWebVitalsTable = ({
 
     return searchTerm
       ? rows.filter((row) => {
-          if (!row || typeof row !== "object") return false;
-          return Object.values(row).some((value) =>
-            normalizeText(value?.toString()).includes(searchTermNormalized),
-          );
-        })
+        if (!row || typeof row !== "object") return false;
+        return Object.values(row).some((value) =>
+          normalizeText(value?.toString()).includes(searchTermNormalized),
+        );
+      })
       : rows;
   }, [rows, searchTerm]);
 

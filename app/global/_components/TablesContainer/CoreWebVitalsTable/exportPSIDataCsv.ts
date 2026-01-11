@@ -56,27 +56,27 @@ export const exportPSIDataCSV = async (data) => {
 
       // Desktop LCP (6)
       row?.psi_results?.Ok?.[0]?.audits?.["largest-contentful-paint"]?.score ??
-        "n/a",
+      "n/a",
 
       // Mobile LCP (7)
       row?.psi_results?.Ok?.[1]?.audits?.["largest-contentful-paint"]?.score ??
-        "n/a",
+      "n/a",
 
       // Desktop CLS (8)
       row?.psi_results?.Ok?.[0]?.audits?.["cumulative-layout-shift"]?.score ??
-        "n/a",
+      "n/a",
 
       // Mobile CLS (9)
       row?.psi_results?.Ok?.[1]?.audits?.["cumulative-layout-shift"]?.score ??
-        "n/a",
+      "n/a",
 
       // Desktop FCP (10)
       row?.psi_results?.Ok?.[0]?.audits?.["first-contentful-paint"]?.score ??
-        "n/a",
+      "n/a",
 
       // Mobile FCP (11)
       row?.psi_results?.Ok?.[1]?.audits?.["first-contentful-paint"]?.score ??
-        "n/a",
+      "n/a",
 
       // Desktop Interactive (12)
       row?.psi_results?.Ok?.[0]?.audits?.["interactive"]?.score ?? "n/a",
@@ -98,7 +98,8 @@ export const exportPSIDataCSV = async (data) => {
         : "n/a",
 
       // DOM Size (17)
-      row?.psi_results?.Ok?.[0]?.audits?.["dom-size"]?.numericValue ?? "n/a",
+      (row?.psi_results?.Ok?.[0]?.audits?.["dom-size-insight"] ||
+        row?.psi_results?.Ok?.[0]?.audits?.["dom-size"])?.numericValue ?? "n/a",
     ];
   });
 
