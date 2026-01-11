@@ -119,7 +119,7 @@ const CrawlerType = () => {
             page_speed_crawl: newPsiCrawlValue, // Always save as boolean
           }),
         );
-        toast.info("Page Speed Insights toggled, please restart RustySEO");
+        toast.success("Page Speed Insights toggled successfully");
       }
     } catch (error) {
       console.error(`Failed to toggle page speed bulk: ${error}`);
