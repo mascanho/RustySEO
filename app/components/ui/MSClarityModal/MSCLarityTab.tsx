@@ -1,4 +1,6 @@
 // @ts-nocheck
+"use client";
+
 import { invoke } from "@tauri-apps/api/core";
 import {
   Card,
@@ -17,434 +19,346 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Bar,
-  BarChart,
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-} from "recharts";
-import {
-  Apple,
-  Chrome,
-  Globe,
-  Monitor,
-  Smartphone,
-  Tablet,
-  RefreshCw,
+  Clock,
   Users,
   MousePointer,
   ArrowDownUp,
-  Clock,
   ScrollText,
   AlertCircle,
+  RefreshCw,
+  TrendingDown,
+  TrendingUp,
+  Zap,
+  ShieldAlert,
+  Ghost,
+  MapPin,
+  ExternalLink,
+  ChevronRight,
+  Activity,
+  Layers,
+  Layout,
 } from "lucide-react";
 import { BrowserChart } from "./Charts/BrowserChart";
 import { DeviceDistributionChart } from "./Charts/DeviceDistributionChart";
 import { GeographicalDistributionChart } from "./Charts/GeographicalDistributionChart";
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 
-interface TrafficMetric {
-  name: string;
-  value: string;
-  icon: React.ElementType;
-}
+const GlassCard = ({ children, className = "", delay = 0 }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20, scale: 0.98 }}
+    animate={{ opacity: 1, y: 0, scale: 1 }}
+    transition={{ duration: 0.5, delay, ease: [0.23, 1, 0.32, 1] }}
+    className={`
+      relative group overflow-hidden rounded-3xl border border-white/10 dark:border-white/5
+      bg-white/40 dark:bg-brand-darker/40 backdrop-blur-xl shadow-2xl shadow-black/5
+      hover:shadow-brand-bright/10 hover:border-brand-bright/30 transition-all duration-500
+      ${className}
+    `}
+  >
+    <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent dark:from-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+    <div className="relative z-10 h-full">{children}</div>
+  </motion.div>
+);
+
+const GlowBlob = ({ className = "", color = "bg-brand-bright" }) => (
+  <motion.div
+    animate={{
+      scale: [1, 1.2, 1],
+      opacity: [0.1, 0.2, 0.1],
+      x: [0, 50, 0],
+      y: [0, 30, 0],
+    }}
+    transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+    className={`absolute rounded-full blur-[120px] pointer-events-none -z-10 ${color} ${className}`}
+  />
+);
 
 export default function ClarityDashboard() {
   const [data, setData] = useState<any>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+
+  const refreshData = async () => {
+    setIsLoading(true);
+    try {
+      const result = await invoke<any>("get_microsoft_clarity_data_command");
+      if (result && result[0]) {
+        setData(result[0]);
+        setLastRefreshed(new Date());
+      }
+    } catch (err) {
+      console.error("Clarity Error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshData();
+  }, []);
 
   // Process user behavior data
-  const behaviorMetrics = [
-    "DeadClickCount",
-    "ExcessiveScroll",
-    "RageClickCount",
-    "QuickbackClick",
-    "ScriptErrorCount",
-    "ErrorClickCount",
-  ].map((metricName) => {
-    const metric = data.find((m: any) => m.metricName === metricName);
-    return {
-      name: metricName,
-      sessions: metric?.information[0].sessionsCount || "0",
-      percentage: metric?.information[0].sessionsWithMetricPercentage || 0,
-      pageViews: metric?.information[0].pagesViews || "0",
-      subtotal: metric?.information[0].subTotal || "0",
-    };
-  });
+  const behaviorMetrics = useMemo(() => {
+    return [
+      { id: "RageClickCount", label: "Rage Clicks", description: "Frustrated rapid interaction", icon: Zap, color: "text-orange-500", glow: "shadow-orange-500/20" },
+      { id: "DeadClickCount", label: "Dead Clicks", description: "No visual or logical feedback", icon: Ghost, color: "text-indigo-400", glow: "shadow-indigo-500/20" },
+      { id: "ErrorClickCount", label: "Error Clicks", description: "JS errors on interaction", icon: ShieldAlert, color: "text-rose-500", glow: "shadow-rose-500/20" },
+      { id: "ExcessiveScroll", label: "Excessive Scroll", description: "Lost users scrolling fast", icon: ArrowDownUp, color: "text-emerald-500", glow: "shadow-emerald-500/20" },
+      { id: "QuickbackClick", label: "Quick Back", description: "Instant exit navigation", icon: TrendingDown, color: "text-purple-500", glow: "shadow-purple-500/20" },
+      { id: "ScriptErrorCount", label: "Global Errors", description: "Backend or logic fatal errors", icon: AlertCircle, color: "text-red-600", glow: "shadow-red-500/20" },
+    ].map((m) => {
+      const metric = data.find((item: any) => item.metricName === m.id);
+      const info = metric?.information?.[0] || {};
+      return {
+        ...m,
+        sessions: info.sessionsCount || "0",
+        percentage: info.sessionsWithMetricPercentage || 0,
+      };
+    });
+  }, [data]);
 
-  // Process traffic metrics
-  const trafficInfo =
-    data.find((m: any) => m.metricName === "Traffic")?.information[0] || {};
-  const trafficMetrics = [
-    {
-      name: "Total Sessions",
-      value: trafficInfo.totalSessionCount || "0",
-      icon: Users,
-    },
-    {
-      name: "Bot Sessions",
-      value: trafficInfo.totalBotSessionCount || "0",
-      icon: MousePointer,
-    },
-    {
-      name: "Distinct Users",
-      value: trafficInfo.distinctUserCount || "0",
-      icon: Users,
-    },
-    {
-      name: "Pages Per Session",
-      value: trafficInfo.pagesPerSessionPercentage?.toFixed(2) || "0",
-      icon: ArrowDownUp,
-    },
+  const trafficInfo = useMemo(() => data.find((m: any) => m.metricName === "Traffic")?.information?.[0] || {}, [data]);
+  const engagementData = useMemo(() => data.find((m: any) => m.metricName === "EngagementTime")?.information?.[0] || {}, [data]);
+  const scrollData = useMemo(() => data.find((m: any) => m.metricName === "ScrollDepth")?.information?.[0] || {}, [data]);
+
+  const stats = [
+    { label: "Daily Volume", value: trafficInfo.totalSessionCount || "0", sub: "Total Sessions", icon: Activity, color: "text-sky-500" },
+    { label: "Unique Reach", value: trafficInfo.distinctUserCount || "0", sub: "Verified Users", icon: Users, color: "text-brand-bright" },
+    { label: "Interaction", value: `${engagementData.activeTime || 0}s`, sub: "Avg. Active Time", icon: Zap, color: "text-amber-500" },
+    { label: "Page Depth", value: `${scrollData.averageScrollDepth?.toFixed(1) || 0}%`, sub: "Avg. Vertical Scroll", icon: Layers, color: "text-emerald-500" },
   ];
 
-  // Process browser data
-  const browserMetric = data.find((m: any) => m.metricName === "Browser");
-  const browserData =
-    browserMetric?.information?.map((b: any) => ({
-      name: b.name,
-      sessions: parseInt(b.sessionsCount),
-      icon: b.name.includes("Chrome")
-        ? Chrome
-        : b.name.includes("Safari")
-          ? Apple
-          : Globe,
-    })) || [];
+  const popularPages = useMemo(() => data.find((m: any) => m.metricName === "PopularPages")?.information?.slice(0, 10) || [], [data]);
+  const referrers = useMemo(() => data.find((m: any) => m.metricName === "ReferrerUrl")?.information?.slice(0, 5) || [], [data]);
 
-  // Process device data
-  const deviceMetric = data.find((m: any) => m.metricName === "Device");
-  const deviceData =
-    deviceMetric?.information?.map((d: any) => ({
-      name: d.name,
-      sessions: parseInt(d.sessionsCount),
-      icon:
-        d.name === "Mobile" ? Smartphone : d.name === "PC" ? Monitor : Tablet,
-    })) || [];
+  // Process chart data
+  const browserData = useMemo(() => {
+    const metric = data.find((m: any) => m.metricName === "Browser");
+    return (
+      metric?.information?.map((b: any) => ({
+        name: b.name,
+        sessions: parseInt(b.sessionsCount),
+      })) || []
+    );
+  }, [data]);
 
-  // Process geographical data
-  const geoMetric = data.find((m: any) => m.metricName === "Country");
-  const geoData =
-    geoMetric?.information?.map((g: any) => ({
-      name: g.name,
-      sessions: parseInt(g.sessionsCount),
-    })) || [];
+  const deviceData = useMemo(() => {
+    const metric = data.find((m: any) => m.metricName === "Device");
+    return (
+      metric?.information?.map((d: any) => ({
+        name: d.name,
+        sessions: parseInt(d.sessionsCount),
+      })) || []
+    );
+  }, [data]);
 
-  // Process engagement metrics
-  const engagementData =
-    data.find((m: any) => m.metricName === "EngagementTime")?.information[0] ||
-    {};
-  const scrollData =
-    data.find((m: any) => m.metricName === "ScrollDepth")?.information[0] || {};
-  const engagementMetrics = [
-    {
-      name: "Total Time",
-      value: `${engagementData.totalTime || 0}s`,
-      icon: Clock,
-    },
-    {
-      name: "Active Time",
-      value: `${engagementData.activeTime || 0}s`,
-      icon: Clock,
-    },
-    {
-      name: "Average Scroll Depth",
-      value: `${scrollData.averageScrollDepth?.toFixed(1) || 0}%`,
-      icon: ScrollText,
-    },
-  ];
-
-  // Process page titles
-  const pageTitles =
-    data
-      .find((m: any) => m.metricName === "PageTitle")
-      ?.information?.map((p: any) => ({
-        title: p.name || "Unknown",
-        sessions: p.sessionsCount,
-      })) || [];
-
-  // Process referrers
-  const referrers =
-    data
-      .find((m: any) => m.metricName === "ReferrerUrl")
-      ?.information?.map((r: any) => ({
-        name: r.name || "Direct",
-        sessions: r.sessionsCount,
-      })) || [];
-
-  // Process popular pages
-  const popularPages =
-    data
-      .find((m: any) => m.metricName === "PopularPages")
-      ?.information?.map((p: any) => ({
-        url: p.url,
-        visits: p.visitsCount,
-      })) || [];
-
-  const browsers = browserMetric?.information || [];
+  const geoData = useMemo(() => {
+    const metric = data.find((m: any) => m.metricName === "Country");
+    return (
+      metric?.information?.map((g: any) => ({
+        name: g.name,
+        sessions: parseInt(g.sessionsCount),
+      })) || []
+    );
+  }, [data]);
 
   return (
-    <div className="min-h-screen w-full">
-      <div className=" mx-auto py-2 pb-8 px-2   w-full space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xs font-bold text-gray-900 dark:text-white">
-              User Behavior Dashboard
-            </h1>
-            <div className="relative group mt-1">
-              <button className="text-gray-500 hover:text-gray-700">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </button>
-              <div className="absolute left-0 top-full mt-0 z-10 w-48 p-2 bg-white dark:bg-gray-800 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                <p className="text-xs text-gray-600 dark:text-gray-300">
-                  These metrics match your current clarity timeframe selection
-                </p>
+    <TooltipProvider>
+      <div className="relative min-h-screen w-full bg-slate-50/50 dark:bg-brand-darker/20 p-8 overflow-hidden">
+        {/* Ambient Glows */}
+        <GlowBlob className="top-0 -left-20 w-[600px] h-[600px] opacity-[0.05]" color="bg-blue-600" />
+        <GlowBlob className="bottom-0 -right-20 w-[500px] h-[500px] opacity-[0.05]" color="bg-purple-600" />
+
+        <div className="relative z-10 max-w-[1600px] mx-auto space-y-10">
+          {/* Top Bar */}
+          <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-black/5 dark:border-white/5">
+            <div className="space-y-1">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-brand-bright shadow-lg shadow-brand-bright/30">
+                  <Layout className="w-6 h-6 text-white" />
+                </div>
+                <h1 className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white uppercase italic">
+                  Clarity <span className="text-brand-bright not-italic">Engine</span>
+                </h1>
+              </div>
+              <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-gray-400">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  System Synced
+                </div>
+                <span>•</span>
+                <div>{lastRefreshed ? `Updated ${lastRefreshed.toLocaleTimeString()}` : "Waiting for pulse..."}</div>
               </div>
             </div>
-          </div>
-          <button
-            className="bg-brand-bright hover:bg-blue-700 text-white font-medium py-2 px-3 rounded text-xs flex items-center gap-2"
-            onClick={() => {
-              setIsLoading(true);
-              invoke<any>("get_microsoft_clarity_data_command")
-                .then((result: any) => {
-                  setData(result[0]);
-                  setIsLoading(false);
-                })
-                .catch((err: Error) => {
-                  console.error(err);
-                  setIsLoading(false);
-                });
-            }}
-          >
-            <RefreshCw className="w-3 h-3" />
-            Refresh Data
-          </button>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card className="shadow-sm relative overflow-hidden dark:bg-brand-darker">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900/50" />
-            <CardHeader className="space-y-0 pb-4 relative dark:bg-brand-darker">
-              <CardTitle className="text-xs font-medium">
-                User Behavior Metrics
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="relative dark:bg-brand-darker">
-              <ScrollArea className="h-[400px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs">Metric</TableHead>
-                      <TableHead className="text-xs">Sessions</TableHead>
-                      <TableHead className="text-xs">%</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {behaviorMetrics.map((item) => (
-                      <TableRow key={item.name}>
-                        <TableCell className="text-xs">{item.name}</TableCell>
-                        <TableCell className="text-xs">
-                          {item.sessions}
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {item.percentage}%
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+            <button
+              onClick={refreshData}
+              disabled={isLoading}
+              className="px-6 py-3 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-2 group shadow-xl"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"}`} />
+              {isLoading ? "Syncing..." : "Pulse Refresh"}
+            </button>
+          </header>
 
-          <Card className="relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900/50" />
-            <CardHeader className="relative">
-              <CardTitle className="text-xs font-semibold">
-                Traffic Metrics
-              </CardTitle>
-              <CardDescription className="text-xs">
-                Key traffic indicators
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6 px-6 relative">
-              {trafficMetrics.map((metric) => (
-                <div
-                  key={metric.name}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex items-center space-x-4">
-                    <metric.icon className="h-6 w-6 text-blue-500" />
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                      {metric.name}
-                    </p>
-                  </div>
-                  <p className="text-xs font-bold">{metric.value}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-sm relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900/50" />
-            <CardHeader className="space-y-0 pb-4 relative">
-              <CardTitle className="text-xs font-medium">
-                Engagement Time
-              </CardTitle>
-              <CardDescription className="text-xs">
-                User interaction durations
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-6 relative">
-              <ScrollArea className="h-[400px] pt-4">
-                <div className="space-y-8">
-                  {engagementMetrics.map((metric) => (
-                    <div
-                      key={metric.name}
-                      className="flex justify-between items-center"
-                    >
-                      <div className="flex items-center gap-3">
-                        <metric.icon className="h-5 w-5 text-blue-500" />
-                        <span className="text-xs font-medium">
-                          {metric.name}
-                        </span>
-                      </div>
-                      <span className="text-xs font-bold">{metric.value}</span>
+          {/* Core Stats Bento */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {stats.map((stat, i) => (
+              <GlassCard key={i} delay={i * 0.1}>
+                <div className="p-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{stat.label}</span>
+                    <div className={`p-2 rounded-xl bg-slate-100 dark:bg-white/5 ${stat.color}`}>
+                      <stat.icon className="w-4 h-4" />
                     </div>
-                  ))}
+                  </div>
+                  <div>
+                    <div className="text-4xl font-black tracking-tighter tabular-nums text-slate-900 dark:text-white">{stat.value}</div>
+                    <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase italic tracking-wider">{stat.sub}</p>
+                  </div>
                 </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+                <div className={`h-1 w-full bg-gradient-to-r from-transparent via-brand-bright to-transparent opacity-20`} />
+              </GlassCard>
+            ))}
+          </div>
 
-          <Card className="shadow-sm col-span-full lg:col-span-1 relative overflow-hidden">
-            <CardContent className="relative">
-              <ScrollArea className="h-[300px]">
-                <ResponsiveContainer width="100%" height={350}>
-                  <BrowserChart data={browserData} browsers={browsers} />
-                </ResponsiveContainer>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Main Friction Analysis */}
+            <div className="lg:col-span-8 flex flex-col gap-6">
+              <GlassCard className="h-full">
+                <div className="p-8 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-black italic uppercase tracking-tighter">Friction Intelligence</h2>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Behavioral Signal Matrix</p>
+                  </div>
+                  <Activity className="w-5 h-5 text-brand-bright opacity-40" />
+                </div>
+                <div className="p-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-black/5 dark:bg-white/5">
+                    {behaviorMetrics.map((item, idx) => (
+                      <motion.div
+                        key={item.label}
+                        whileHover={{ backgroundColor: "rgba(43, 108, 196, 0.03)" }}
+                        className="p-8 space-y-6 transition-colors"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-4">
+                            <div className={`p-3 rounded-2xl bg-white dark:bg-white/5 shadow-xl ${item.glow} hover:scale-110 transition-transform`}>
+                              <item.icon className={`w-5 h-5 ${item.color}`} />
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-slate-100">{item.label}</h3>
+                              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{item.description}</p>
+                            </div>
+                          </div>
+                          <Badge variant="outline" className="text-[10px] font-black rounded-lg py-0 px-2 h-5 tabular-nums">
+                            {item.sessions} SESS
+                          </Badge>
+                        </div>
 
-          <DeviceDistributionChart data={deviceData} />
-
-          <GeographicalDistributionChart data={geoData} />
-
-          <Card className="shadow-sm relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900/50" />
-            <CardHeader className="space-y-0 pb-4 relative dark:bg-brand-darker">
-              <CardTitle className="text-xs font-medium">
-                Top Page Titles
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="relative dark:bg-brand-darker">
-              <ScrollArea className="h-[300px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs">Title</TableHead>
-                      <TableHead className="text-xs">Sessions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pageTitles.map((page: any) => (
-                      <TableRow key={page.title}>
-                        <TableCell className="text-xs">{page.title}</TableCell>
-                        <TableCell className="text-xs">
-                          {page.sessions}
-                        </TableCell>
-                      </TableRow>
+                        <div className="space-y-4">
+                          <div className="flex items-end justify-between">
+                            <div className="flex flex-col">
+                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Intensity</span>
+                              <span className="text-2xl font-black tabular-nums text-slate-900 dark:text-white">{item.percentage}%</span>
+                            </div>
+                            <div className="w-32 h-2 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${item.percentage}%` }}
+                                transition={{ duration: 1, delay: 0.5 + idx * 0.1 }}
+                                className={`h-full rounded-full bg-gradient-to-r from-brand-bright to-blue-400 shadow-[0_0_10px_rgba(43,108,196,0.5)]`}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
                     ))}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+                  </div>
+                </div>
+              </GlassCard>
+            </div>
 
-          <Card className="shadow-sm relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900/50" />
-            <CardHeader className="space-y-0 pb-4 relative dark:bg-brand-darker">
-              <CardTitle className="text-xs font-medium">
-                Top Referrer URLs
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="relative dark:bg-brand-darker">
-              <ScrollArea className="h-[300px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs">Referrer</TableHead>
-                      <TableHead className="text-xs">Sessions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {referrers.map((referrer: any) => (
-                      <TableRow key={referrer.name}>
-                        <TableCell className="text-xs">
-                          {referrer.name}
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {referrer.sessions}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+            {/* Distribution Charts Side */}
+            <div className="lg:col-span-4 flex flex-col gap-6">
+              <GlassCard className="flex-1">
+                <div className="p-6 border-b border-black/5 dark:border-white/5">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Browser Environment</h3>
+                </div>
+                <div className="p-4 h-[250px] flex items-center justify-center">
+                  <BrowserChart data={browserData} />
+                </div>
+              </GlassCard>
 
-          <Card className="shadow-sm relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-white dark:from-blue-900/20 dark:to-gray-900/50" />
-            <CardHeader className="space-y-0 pb-4 relative dark:bg-brand-darker">
-              <CardTitle className="text-xs font-medium">
-                Popular Pages
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="relative dark:bg-brand-darker">
-              <ScrollArea className="h-[300px]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs">Page</TableHead>
-                      <TableHead className="text-xs">Visits</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {popularPages.map((page: any) => (
-                      <TableRow key={page.url}>
-                        <TableCell className="text-xs">{page.url}</TableCell>
-                        <TableCell className="text-xs">{page.visits}</TableCell>
-                      </TableRow>
+              <GlassCard className="flex-1">
+                <div className="p-6 border-b border-black/5 dark:border-white/5">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Device Distribution</h3>
+                </div>
+                <div className="p-6">
+                  <DeviceDistributionChart data={deviceData} />
+                </div>
+              </GlassCard>
+            </div>
+          </div>
+
+          {/* Bottom Section: Geo & Lists */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <GlassCard>
+              <div className="p-6 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Source Intel</h3>
+                <MapPin className="w-4 h-4 text-brand-bright opacity-30" />
+              </div>
+              <div className="p-4">
+                <GeographicalDistributionChart data={geoData} />
+              </div>
+            </GlassCard>
+
+            <GlassCard className="md:col-span-2">
+              <div className="p-6 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Top Acquisition & Content</h3>
+                <ExternalLink className="w-4 h-4 text-brand-bright opacity-30" />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2">
+                <div className="p-6 space-y-4 border-r border-black/5 dark:border-white/5">
+                  <p className="text-[10px] font-black text-brand-bright uppercase tracking-widest mb-2">Prime Referrers</p>
+                  <div className="space-y-2">
+                    {referrers.map((ref, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] hover:bg-brand-bright/5 transition-colors border border-transparent hover:border-brand-bright/10 group">
+                        <span className="text-xs font-bold truncate max-w-[150px] group-hover:text-brand-bright transition-colors uppercase tracking-tight text-slate-800 dark:text-slate-200">{ref.name || "Direct Path"}</span>
+                        <span className="text-xs font-black tabular-nums text-slate-900 dark:text-white">{ref.sessionsCount}</span>
+                      </div>
                     ))}
-                  </TableBody>
-                </Table>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+                  </div>
+                </div>
+                <div className="p-6 space-y-4">
+                  <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">High Volume Nodes</p>
+                  <ScrollArea className="h-[250px] pr-4">
+                    <div className="space-y-2">
+                      {popularPages.map((page, i) => (
+                        <div key={i} className="flex items-center justify-between p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] hover:bg-emerald-500/5 transition-colors group">
+                          <div className="flex flex-col gap-0.5 max-w-[180px]">
+                            <span className="text-[10px] font-bold truncate group-hover:text-emerald-500 transition-colors lowercase tracking-tight text-slate-800 dark:text-slate-200">{page.url}</span>
+                            <span className="text-[8px] font-black text-slate-400 uppercase">Target Endpoint</span>
+                          </div>
+                          <span className="text-xs font-black tabular-nums text-slate-900 dark:text-white">{page.visitsCount}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+              </div>
+            </GlassCard>
+          </div>
         </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

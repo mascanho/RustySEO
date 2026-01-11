@@ -1,6 +1,5 @@
 "use client";
 
-import { TrendingUp } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -11,14 +10,6 @@ import {
 } from "recharts";
 
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
@@ -28,7 +19,7 @@ import {
 const chartConfig = {
   sessions: {
     label: "Sessions",
-    color: "hsl(var(--chart-1))",
+    color: "hsl(var(--brand-bright))",
   },
   label: {
     color: "hsl(var(--background))",
@@ -36,59 +27,62 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function GeographicalDistributionChart({ data }: { data: any[] }) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic">
+        No geographical data available
+      </div>
+    );
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Geographical Distribution</CardTitle>
-      </CardHeader>
-      <CardContent className="px-6">
-        <ChartContainer config={chartConfig}>
-          <BarChart
-            accessibilityLayer
-            data={data}
+    <div className="w-full h-full">
+      <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
+        <BarChart
+          accessibilityLayer
+          data={data}
+          layout="vertical"
+          margin={{
+            right: 40,
+            left: 10,
+          }}
+        >
+          <CartesianGrid horizontal={false} strokeDasharray="3 3" opacity={0.1} />
+          <YAxis
+            dataKey="name"
+            type="category"
+            tickLine={false}
+            tickMargin={10}
+            axisLine={false}
+            hide
+          />
+          <XAxis dataKey="sessions" type="number" hide />
+          <ChartTooltip
+            cursor={false}
+            content={<ChartTooltipContent indicator="line" />}
+          />
+          <Bar
+            dataKey="sessions"
             layout="vertical"
-            margin={{
-              right: 16,
-            }}
+            fill="#2B6CC4"
+            radius={4}
+            barSize={24}
           >
-            <CartesianGrid horizontal={false} />
-            <YAxis
+            <LabelList
               dataKey="name"
-              type="category"
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-              hide
+              position="insideLeft"
+              offset={8}
+              className="fill-white dark:fill-white font-bold text-[10px] uppercase tracking-tighter"
             />
-            <XAxis dataKey="sessions" type="number" hide />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent indicator="line" />}
-            />
-            <Bar
+            <LabelList
               dataKey="sessions"
-              layout="vertical"
-              fill="var(--color-sessions)"
-              radius={4}
-            >
-              <LabelList
-                dataKey="name"
-                position="insideLeft"
-                offset={8}
-                className="fill-[--color-label]"
-                fontSize={12}
-              />
-              <LabelList
-                dataKey="sessions"
-                position="right"
-                offset={8}
-                className="fill-foreground"
-                fontSize={12}
-              />
-            </Bar>
-          </BarChart>
-        </ChartContainer>
-      </CardContent>
-    </Card>
+              position="right"
+              offset={8}
+              className="fill-foreground font-mono text-[10px] font-bold"
+            />
+          </Bar>
+        </BarChart>
+      </ChartContainer>
+    </div>
   );
 }

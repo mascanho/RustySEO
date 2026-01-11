@@ -1,16 +1,7 @@
 "use client";
 
-import { TrendingUp } from "lucide-react";
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
@@ -21,43 +12,53 @@ import {
 const chartConfig = {
   sessions: {
     label: "Sessions",
-    color: "hsl(var(--chart-1))",
+    color: "hsl(var(--brand-bright))",
   },
 } satisfies ChartConfig;
 
 export function DeviceDistributionChart({ data }: { data: any[] }) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic">
+        No device data available
+      </div>
+    );
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Device Distribution</CardTitle>
-        <CardDescription>Session count by device type</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig}>
-          <BarChart accessibilityLayer data={data}>
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="name"
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-            />
-            <ChartTooltip
-              cursor={false}
-              content={<ChartTooltipContent hideLabel />}
-            />
-            <Bar dataKey="sessions" fill="hsl(var(--chart-1))" radius={8} />
-          </BarChart>
-        </ChartContainer>
-      </CardContent>
-      {/* <CardFooter className="flex-col items-start gap-2 text-sm">
-        <div className="flex gap-2 font-medium leading-none">
-          Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="leading-none text-muted-foreground">
-          Showing total visitors for the last 6 months
-        </div>
-      </CardFooter> */}
-    </Card>
+    <div className="w-full h-full">
+      <ChartContainer config={chartConfig} className="max-h-[180px] w-full">
+        <BarChart
+          accessibilityLayer
+          data={data}
+          margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+        >
+          <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.2} />
+          <XAxis
+            dataKey="name"
+            tickLine={false}
+            tickMargin={10}
+            axisLine={false}
+            className="text-[10px] font-bold uppercase tracking-wider fill-muted-foreground"
+          />
+          <YAxis
+            tickLine={false}
+            axisLine={false}
+            tickMargin={10}
+            className="text-[10px] font-bold fill-muted-foreground"
+          />
+          <ChartTooltip
+            cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+            content={<ChartTooltipContent hideLabel />}
+          />
+          <Bar
+            dataKey="sessions"
+            fill="#2B6CC4"
+            radius={[4, 4, 0, 0]}
+            barSize={40}
+          />
+        </BarChart>
+      </ChartContainer>
+    </div>
   );
 }
