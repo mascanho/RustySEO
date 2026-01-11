@@ -331,9 +331,13 @@ export default function ClarityDashboard() {
                   <p className="text-[10px] font-black text-brand-bright uppercase tracking-widest mb-2">Prime Referrers</p>
                   <div className="space-y-2">
                     {referrers.map((ref, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] hover:bg-brand-bright/5 transition-colors border border-transparent hover:border-brand-bright/10 group">
-                        <span className="text-xs font-bold truncate max-w-[150px] group-hover:text-brand-bright transition-colors uppercase tracking-tight text-slate-800 dark:text-slate-300">{ref.name || "Direct Path"}</span>
-                        <span className="text-xs font-black tabular-nums text-slate-900 dark:text-white">{ref.sessionsCount}</span>
+                      <div key={i} className="flex items-center justify-between gap-4 p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] hover:bg-brand-bright/5 transition-colors border border-transparent hover:border-brand-bright/10 group">
+                        <span className="text-xs font-bold break-all group-hover:text-brand-bright transition-colors uppercase tracking-tight text-slate-800 dark:text-slate-300">
+                          {ref.name || "Direct Path"}
+                        </span>
+                        <span className="text-xs font-black tabular-nums text-slate-900 dark:text-white shrink-0">
+                          {ref.sessionsCount}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -343,12 +347,16 @@ export default function ClarityDashboard() {
                   <ScrollArea className="h-[250px] pr-4">
                     <div className="space-y-2">
                       {popularPages.map((page, i) => (
-                        <div key={i} className="flex items-center justify-between p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] hover:bg-emerald-500/5 transition-colors group">
-                          <div className="flex flex-col gap-0.5 max-w-[180px]">
-                            <span className="text-[10px] font-bold truncate group-hover:text-emerald-500 transition-colors lowercase tracking-tight text-slate-800 dark:text-slate-300">{page.url}</span>
+                        <div key={i} className="flex items-center justify-between gap-4 p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] hover:bg-emerald-500/5 transition-colors group">
+                          <div className="flex flex-col gap-0.5 min-w-0">
+                            <span className="text-[10px] font-bold break-all group-hover:text-emerald-500 transition-colors lowercase tracking-tight text-slate-800 dark:text-slate-300">
+                              {page.url}
+                            </span>
                             <span className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase">Target Endpoint</span>
                           </div>
-                          <span className="text-xs font-black tabular-nums text-slate-900 dark:text-white">{page.visitsCount}</span>
+                          <span className="text-xs font-black tabular-nums text-slate-900 dark:text-white shrink-0">
+                            {page.visitsCount}
+                          </span>
                         </div>
                       ))}
                     </div>
