@@ -107,7 +107,7 @@ function UploadButton() {
               <Settings size={15} className="text-xs" />
             </button>
           </DialogTrigger>
-          <DialogContent className="p-9 overflow-hidden pl-6 max-w-[800px] h-[660px] dark:bg-brand-darker">
+          <DialogContent className="p-9 overflow-hidden pl-6 max-w-[800px] min-w-[800px] h-[660px] dark:bg-brand-darker">
             <Tabs>
               <TabsList className="grid w-full grid-cols-5 bg-gray-100 dark:bg-brand-dark">
                 <TabsTrigger
