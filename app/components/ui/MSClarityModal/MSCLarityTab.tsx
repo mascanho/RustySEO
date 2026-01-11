@@ -58,7 +58,7 @@ const GlassCard = ({ children, className = "", delay = 0 }) => (
     transition={{ duration: 0.5, delay, ease: [0.23, 1, 0.32, 1] }}
     className={`
       relative group overflow-hidden rounded-3xl border border-slate-200 dark:border-brand-dark
-      bg-white/40 dark:bg-brand-darker/40 backdrop-blur-xl shadow-2xl shadow-black/5
+      bg-white dark:bg-brand-darker/40 backdrop-blur-xl shadow-2xl shadow-black/5
       hover:shadow-brand-bright/10 hover:border-brand-bright/30 transition-all duration-500
       ${className}
     `}
@@ -264,7 +264,7 @@ export default function ClarityDashboard() {
 
   return (
     <TooltipProvider>
-      <div className="relative w-full  dark:bg-brand-darker px-4 pt-2 pb-6 transition-colors duration-500 h-full overflow-y-auto overflow-x-hidden">
+      <div className="relative w-full bg-gradient-to-br from-white via-slate-50/30 to-blue-50/20 dark:bg-brand-darker px-4 pt-2 pb-6 transition-colors duration-500 h-full overflow-y-auto overflow-x-hidden">
         {/* Ambient Glows */}
         <GlowBlob
           className="top-0 -left-20 w-[600px] h-[600px] opacity-[0.05]"
@@ -479,7 +479,7 @@ export default function ClarityDashboard() {
                     {referrers.map((ref, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] hover:bg-brand-bright/5 transition-colors border border-transparent hover:border-brand-bright/10 group"
+                        className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-white dark:bg-white/[0.02] hover:bg-brand-bright/5 transition-colors border border-slate-100 dark:border-transparent hover:border-brand-bright/10 group"
                       >
                         <span className="text-xs font-bold break-all group-hover:text-brand-bright transition-colors  tracking-tight text-slate-800 dark:text-slate-300">
                           {ref.name || "Direct Path"}
@@ -500,7 +500,7 @@ export default function ClarityDashboard() {
                       {popularPages.map((page, i) => (
                         <div
                           key={i}
-                          className="flex items-center justify-between gap-4 p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] hover:bg-emerald-500/5 transition-colors group"
+                          className="flex items-center justify-between gap-4 p-3 rounded-2xl bg-white dark:bg-white/[0.02] hover:bg-emerald-500/5 transition-colors border border-slate-100 dark:border-transparent group"
                         >
                           <div className="flex flex-col gap-0.5 min-w-0">
                             <span className="text-[10px] font-bold break-all group-hover:text-emerald-500 transition-colors lowercase tracking-tight text-slate-800 dark:text-slate-300">
