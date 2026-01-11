@@ -280,7 +280,7 @@ export default function ClarityDashboard() {
           <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-1  border-slate-200 dark:border-brand-dark">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <div className="shadow-lg shadow-brand-bright/30">
+                <div>
                   <Layout className="w-5 h-5 text-brand-bright" />
                 </div>
                 <h1 className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">
