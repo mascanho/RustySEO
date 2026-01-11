@@ -108,12 +108,54 @@ export default function ClarityDashboard() {
   // Process user behavior data
   const behaviorMetrics = useMemo(() => {
     return [
-      { id: "RageClickCount", label: "Rage Clicks", description: "Frustrated rapid interaction", icon: Zap, color: "text-orange-500", glow: "shadow-orange-500/20" },
-      { id: "DeadClickCount", label: "Dead Clicks", description: "No visual or logical feedback", icon: Ghost, color: "text-indigo-400", glow: "shadow-indigo-500/20" },
-      { id: "ErrorClickCount", label: "Error Clicks", description: "JS errors on interaction", icon: ShieldAlert, color: "text-rose-500", glow: "shadow-rose-500/20" },
-      { id: "ExcessiveScroll", label: "Excessive Scroll", description: "Lost users scrolling fast", icon: ArrowDownUp, color: "text-emerald-500", glow: "shadow-emerald-500/20" },
-      { id: "QuickbackClick", label: "Quick Back", description: "Instant exit navigation", icon: TrendingDown, color: "text-purple-500", glow: "shadow-purple-500/20" },
-      { id: "ScriptErrorCount", label: "Global Errors", description: "Backend or logic fatal errors", icon: AlertCircle, color: "text-red-600", glow: "shadow-red-500/20" },
+      {
+        id: "RageClickCount",
+        label: "Rage Clicks",
+        description: "Frustrated rapid interaction",
+        icon: Zap,
+        color: "text-orange-500",
+        glow: "shadow-orange-500/20",
+      },
+      {
+        id: "DeadClickCount",
+        label: "Dead Clicks",
+        description: "No visual or logical feedback",
+        icon: Ghost,
+        color: "text-indigo-400",
+        glow: "shadow-indigo-500/20",
+      },
+      {
+        id: "ErrorClickCount",
+        label: "Error Clicks",
+        description: "JS errors on interaction",
+        icon: ShieldAlert,
+        color: "text-rose-500",
+        glow: "shadow-rose-500/20",
+      },
+      {
+        id: "ExcessiveScroll",
+        label: "Excessive Scroll",
+        description: "Lost users scrolling fast",
+        icon: ArrowDownUp,
+        color: "text-emerald-500",
+        glow: "shadow-emerald-500/20",
+      },
+      {
+        id: "QuickbackClick",
+        label: "Quick Back",
+        description: "Instant exit navigation",
+        icon: TrendingDown,
+        color: "text-purple-500",
+        glow: "shadow-purple-500/20",
+      },
+      {
+        id: "ScriptErrorCount",
+        label: "Global Errors",
+        description: "Backend or logic fatal errors",
+        icon: AlertCircle,
+        color: "text-red-600",
+        glow: "shadow-red-500/20",
+      },
     ].map((m) => {
       const metric = data.find((item: any) => item.metricName === m.id);
       const info = metric?.information?.[0] || {};
@@ -125,19 +167,69 @@ export default function ClarityDashboard() {
     });
   }, [data]);
 
-  const trafficInfo = useMemo(() => data.find((m: any) => m.metricName === "Traffic")?.information?.[0] || {}, [data]);
-  const engagementData = useMemo(() => data.find((m: any) => m.metricName === "EngagementTime")?.information?.[0] || {}, [data]);
-  const scrollData = useMemo(() => data.find((m: any) => m.metricName === "ScrollDepth")?.information?.[0] || {}, [data]);
+  const trafficInfo = useMemo(
+    () =>
+      data.find((m: any) => m.metricName === "Traffic")?.information?.[0] || {},
+    [data],
+  );
+  const engagementData = useMemo(
+    () =>
+      data.find((m: any) => m.metricName === "EngagementTime")
+        ?.information?.[0] || {},
+    [data],
+  );
+  const scrollData = useMemo(
+    () =>
+      data.find((m: any) => m.metricName === "ScrollDepth")?.information?.[0] ||
+      {},
+    [data],
+  );
 
   const stats = [
-    { label: "Daily Volume", value: trafficInfo.totalSessionCount || "0", sub: "Total Sessions", icon: Activity, color: "text-sky-500" },
-    { label: "Unique Reach", value: trafficInfo.distinctUserCount || "0", sub: "Verified Users", icon: Users, color: "text-brand-bright" },
-    { label: "Interaction", value: `${engagementData.activeTime || 0}s`, sub: "Avg. Active Time", icon: Zap, color: "text-amber-500" },
-    { label: "Page Depth", value: `${scrollData.averageScrollDepth?.toFixed(1) || 0}%`, sub: "Avg. Vertical Scroll", icon: Layers, color: "text-emerald-500" },
+    {
+      label: "Daily Volume",
+      value: trafficInfo.totalSessionCount || "0",
+      sub: "Total Sessions",
+      icon: Activity,
+      color: "text-sky-500",
+    },
+    {
+      label: "Unique Reach",
+      value: trafficInfo.distinctUserCount || "0",
+      sub: "Verified Users",
+      icon: Users,
+      color: "text-brand-bright",
+    },
+    {
+      label: "Interaction",
+      value: `${engagementData.activeTime || 0}s`,
+      sub: "Avg. Active Time",
+      icon: Zap,
+      color: "text-amber-500",
+    },
+    {
+      label: "Page Depth",
+      value: `${scrollData.averageScrollDepth?.toFixed(1) || 0}%`,
+      sub: "Avg. Vertical Scroll",
+      icon: Layers,
+      color: "text-emerald-500",
+    },
   ];
 
-  const popularPages = useMemo(() => data.find((m: any) => m.metricName === "PopularPages")?.information?.slice(0, 10) || [], [data]);
-  const referrers = useMemo(() => data.find((m: any) => m.metricName === "ReferrerUrl")?.information?.slice(0, 5) || [], [data]);
+  const popularPages = useMemo(
+    () =>
+      data
+        .find((m: any) => m.metricName === "PopularPages")
+        ?.information?.slice(0, 10) || [],
+    [data],
+  );
+  const referrers = useMemo(
+    () =>
+      data
+        .find((m: any) => m.metricName === "ReferrerUrl")
+        ?.information?.slice(0, 5) || [],
+    [data],
+  );
 
   // Process chart data
   const browserData = useMemo(() => {
@@ -172,21 +264,28 @@ export default function ClarityDashboard() {
 
   return (
     <TooltipProvider>
-      <div className="relative min-h-screen w-full bg-white dark:bg-brand-darker p-8 overflow-hidden transition-colors duration-500">
+      <div className="relative min-h-screen w-full bg-white dark:bg-brand-darker px-4 py-2 overflow-hidden transition-colors duration-500">
         {/* Ambient Glows */}
-        <GlowBlob className="top-0 -left-20 w-[600px] h-[600px] opacity-[0.05]" color="bg-blue-600" />
-        <GlowBlob className="bottom-0 -right-20 w-[500px] h-[500px] opacity-[0.05]" color="bg-purple-600" />
+        <GlowBlob
+          className="top-0 -left-20 w-[600px] h-[600px] opacity-[0.05]"
+          color="bg-blue-600"
+        />
+        <GlowBlob
+          className="bottom-0 -right-20 w-[500px] h-[500px] opacity-[0.05]"
+          color="bg-purple-600"
+        />
 
-        <div className="relative z-10 max-w-[1600px] mx-auto space-y-10">
+        <div className="relative z-10 max-w-[1600px] mx-auto space-y-5">
           {/* Top Bar */}
-          <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-slate-200 dark:border-brand-dark">
+          <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-3 border-b border-slate-200 dark:border-brand-dark">
             <div className="space-y-1">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-2xl bg-brand-bright shadow-lg shadow-brand-bright/30">
                   <Layout className="w-6 h-6 text-white" />
                 </div>
                 <h1 className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white uppercase italic">
-                  Clarity <span className="text-brand-bright not-italic">Engine</span>
+                  Clarity{" "}
+                  <span className="text-brand-bright not-italic">Engine</span>
                 </h1>
               </div>
               <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-gray-400">
@@ -195,7 +294,11 @@ export default function ClarityDashboard() {
                   System Synced
                 </div>
                 <span>•</span>
-                <div>{lastRefreshed ? `Updated ${lastRefreshed.toLocaleTimeString()}` : "Waiting for pulse..."}</div>
+                <div>
+                  {lastRefreshed
+                    ? `Updated ${lastRefreshed.toLocaleTimeString()}`
+                    : "Waiting for pulse..."}
+                </div>
               </div>
             </div>
 
@@ -204,7 +307,9 @@ export default function ClarityDashboard() {
               disabled={isLoading}
               className="px-6 py-3 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-2 group shadow-xl"
             >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"}`} />
+              <RefreshCw
+                className={`w-4 h-4 ${isLoading ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"}`}
+              />
               {isLoading ? "Syncing..." : "Pulse Refresh"}
             </button>
           </header>
@@ -215,17 +320,27 @@ export default function ClarityDashboard() {
               <GlassCard key={i} delay={i * 0.1}>
                 <div className="p-6 space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">{stat.label}</span>
-                    <div className={`p-2 rounded-xl bg-slate-100 dark:bg-brand-dark/50 ${stat.color}`}>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                      {stat.label}
+                    </span>
+                    <div
+                      className={`p-2 rounded-xl bg-slate-100 dark:bg-brand-dark/50 ${stat.color}`}
+                    >
                       <stat.icon className="w-4 h-4" />
                     </div>
                   </div>
                   <div>
-                    <div className="text-4xl font-black tracking-tighter tabular-nums text-slate-900 dark:text-white">{stat.value}</div>
-                    <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase italic tracking-wider">{stat.sub}</p>
+                    <div className="text-4xl font-black tracking-tighter tabular-nums text-slate-900 dark:text-white">
+                      {stat.value}
+                    </div>
+                    <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase italic tracking-wider">
+                      {stat.sub}
+                    </p>
                   </div>
                 </div>
-                <div className={`h-1 w-full bg-gradient-to-r from-transparent via-brand-bright to-transparent opacity-20`} />
+                <div
+                  className={`h-1 w-full bg-gradient-to-r from-transparent via-brand-bright to-transparent opacity-20`}
+                />
               </GlassCard>
             ))}
           </div>
@@ -236,8 +351,12 @@ export default function ClarityDashboard() {
               <GlassCard className="h-full">
                 <div className="p-8 border-b border-slate-200 dark:border-brand-dark flex items-center justify-between">
                   <div>
-                    <h2 className="text-xl font-black italic uppercase tracking-tighter">Friction Intelligence</h2>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Behavioral Signal Matrix</p>
+                    <h2 className="text-xl font-black italic uppercase tracking-tighter">
+                      Friction Intelligence
+                    </h2>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                      Behavioral Signal Matrix
+                    </p>
                   </div>
                   <Activity className="w-5 h-5 text-brand-bright opacity-40" />
                 </div>
@@ -246,20 +365,31 @@ export default function ClarityDashboard() {
                     {behaviorMetrics.map((item, idx) => (
                       <motion.div
                         key={item.label}
-                        whileHover={{ backgroundColor: "rgba(43, 108, 196, 0.08)" }}
+                        whileHover={{
+                          backgroundColor: "rgba(43, 108, 196, 0.08)",
+                        }}
                         className="p-8 space-y-6 transition-colors bg-white dark:bg-brand-dark"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-4">
-                            <div className={`p-3 rounded-2xl bg-white dark:bg-brand-darker shadow-xl ${item.glow} hover:scale-110 transition-transform ring-1 ring-black/5 dark:ring-white/10`}>
+                            <div
+                              className={`p-3 rounded-2xl bg-white dark:bg-brand-darker shadow-xl ${item.glow} hover:scale-110 transition-transform ring-1 ring-black/5 dark:ring-white/10`}
+                            >
                               <item.icon className={`w-5 h-5 ${item.color}`} />
                             </div>
                             <div>
-                              <h3 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-slate-100">{item.label}</h3>
-                              <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{item.description}</p>
+                              <h3 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-slate-100">
+                                {item.label}
+                              </h3>
+                              <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                                {item.description}
+                              </p>
                             </div>
                           </div>
-                          <Badge variant="outline" className="text-[10px] font-black rounded-xl py-0 px-3 h-6 tabular-nums bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-brand-dark text-slate-600 dark:text-slate-300">
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] font-black rounded-xl py-0 px-3 h-6 tabular-nums bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-brand-dark text-slate-600 dark:text-slate-300"
+                          >
                             {item.sessions} SESS
                           </Badge>
                         </div>
@@ -267,14 +397,21 @@ export default function ClarityDashboard() {
                         <div className="space-y-4">
                           <div className="flex items-end justify-between">
                             <div className="flex flex-col">
-                              <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Intensity</span>
-                              <span className="text-2xl font-black tabular-nums text-slate-900 dark:text-white">{item.percentage}%</span>
+                              <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
+                                Intensity
+                              </span>
+                              <span className="text-2xl font-black tabular-nums text-slate-900 dark:text-white">
+                                {item.percentage}%
+                              </span>
                             </div>
                             <div className="w-32 h-2.5 bg-slate-100 dark:bg-brand-darker rounded-full overflow-hidden p-[2px]">
                               <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${item.percentage}%` }}
-                                transition={{ duration: 1, delay: 0.5 + idx * 0.1 }}
+                                transition={{
+                                  duration: 1,
+                                  delay: 0.5 + idx * 0.1,
+                                }}
                                 className={`h-full rounded-full bg-gradient-to-r from-brand-bright to-blue-400 shadow-[0_0_12px_rgba(43,108,196,0.6)]`}
                               />
                             </div>
@@ -291,7 +428,9 @@ export default function ClarityDashboard() {
             <div className="lg:col-span-4 flex flex-col gap-6">
               <GlassCard className="flex-1">
                 <div className="p-6 border-b border-slate-200 dark:border-brand-dark">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Browser Environment</h3>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                    Browser Environment
+                  </h3>
                 </div>
                 <div className="p-4 h-[250px] flex items-center justify-center">
                   <BrowserChart data={browserData} />
@@ -300,7 +439,9 @@ export default function ClarityDashboard() {
 
               <GlassCard className="flex-1">
                 <div className="p-6 border-b border-slate-200 dark:border-brand-dark">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Device Distribution</h3>
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                    Device Distribution
+                  </h3>
                 </div>
                 <div className="p-6">
                   <DeviceDistributionChart data={deviceData} />
@@ -313,7 +454,9 @@ export default function ClarityDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <GlassCard>
               <div className="p-6 border-b border-slate-200 dark:border-brand-dark flex items-center justify-between">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Source Intel</h3>
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                  Source Intel
+                </h3>
                 <MapPin className="w-4 h-4 text-brand-bright opacity-30" />
               </div>
               <div className="p-4">
@@ -323,15 +466,22 @@ export default function ClarityDashboard() {
 
             <GlassCard className="md:col-span-2">
               <div className="p-6 border-b border-slate-200 dark:border-brand-dark flex items-center justify-between">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Top Acquisition & Content</h3>
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                  Top Acquisition & Content
+                </h3>
                 <ExternalLink className="w-4 h-4 text-brand-bright opacity-30" />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2">
                 <div className="p-6 space-y-6 border-r border-slate-200 dark:border-brand-dark">
-                  <p className="text-[10px] font-black text-brand-bright uppercase tracking-widest mb-2">Prime Referrers</p>
+                  <p className="text-[10px] font-black text-brand-bright uppercase tracking-widest mb-2">
+                    Prime Referrers
+                  </p>
                   <div className="space-y-2">
                     {referrers.map((ref, i) => (
-                      <div key={i} className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] hover:bg-brand-bright/5 transition-colors border border-transparent hover:border-brand-bright/10 group">
+                      <div
+                        key={i}
+                        className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] hover:bg-brand-bright/5 transition-colors border border-transparent hover:border-brand-bright/10 group"
+                      >
                         <span className="text-xs font-bold break-all group-hover:text-brand-bright transition-colors uppercase tracking-tight text-slate-800 dark:text-slate-300">
                           {ref.name || "Direct Path"}
                         </span>
@@ -343,16 +493,23 @@ export default function ClarityDashboard() {
                   </div>
                 </div>
                 <div className="p-6 space-y-4">
-                  <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">High Volume Nodes</p>
+                  <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-2">
+                    High Volume Nodes
+                  </p>
                   <ScrollArea className="h-[250px] pr-4">
                     <div className="space-y-2">
                       {popularPages.map((page, i) => (
-                        <div key={i} className="flex items-center justify-between gap-4 p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] hover:bg-emerald-500/5 transition-colors group">
+                        <div
+                          key={i}
+                          className="flex items-center justify-between gap-4 p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] hover:bg-emerald-500/5 transition-colors group"
+                        >
                           <div className="flex flex-col gap-0.5 min-w-0">
                             <span className="text-[10px] font-bold break-all group-hover:text-emerald-500 transition-colors lowercase tracking-tight text-slate-800 dark:text-slate-300">
                               {page.url}
                             </span>
-                            <span className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase">Target Endpoint</span>
+                            <span className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase">
+                              Target Endpoint
+                            </span>
                           </div>
                           <span className="text-xs font-black tabular-nums text-slate-900 dark:text-white shrink-0">
                             {page.visitsCount}
