@@ -126,7 +126,7 @@ const GeminiSelector = ({ closeGemini }: { closeGemini: () => void }) => {
   if (isInitialLoading) {
     return (
       <div className="flex flex-col items-center justify-center p-12 space-y-4">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-brand-bright" />
         <Text size="sm" color="dimmed">Loading configuration...</Text>
       </div>
     );
@@ -140,8 +140,8 @@ const GeminiSelector = ({ closeGemini }: { closeGemini: () => void }) => {
     >
       <header className="flex items-center justify-between pb-4 border-b dark:border-white/5">
         <div className="flex items-center space-x-3">
-          <div className="p-2 bg-blue-500/10 dark:bg-blue-500/20 rounded-lg">
-            <Sparkles className="w-6 h-6 text-blue-500 dark:text-blue-400" />
+          <div className="p-2 bg-brand-bright/10 dark:bg-brand-bright/20 rounded-lg">
+            <Sparkles className="w-6 h-6 text-brand-bright" />
           </div>
           <div>
             <Text fw={700} size="lg" className="text-gray-900 dark:text-gray-100">Google Gemini</Text>
@@ -211,10 +211,10 @@ const GeminiSelector = ({ closeGemini }: { closeGemini: () => void }) => {
           />
         </section>
 
-        <Paper withBorder p="md" radius="md" className="bg-blue-50/50 dark:bg-blue-500/5 border-blue-100 dark:border-blue-500/10">
+        <Paper withBorder p="md" radius="md" className="bg-brand-bright/5 dark:bg-brand-bright/5 border-brand-bright/20 dark:border-brand-bright/10">
           <Group gap="sm" wrap="nowrap" align="flex-start">
-            <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
-            <Text size="xs" className="text-blue-700/70 dark:text-blue-300/60 leading-relaxed">
+            <ShieldCheck className="w-5 h-5 text-brand-bright mt-0.5" />
+            <Text size="xs" className="text-brand-bright/80 dark:text-brand-bright/60 leading-relaxed">
               Your API key is stored securely on your local machine and never transmitted to our servers. Only sent directly to Google's API during requests.
             </Text>
           </Group>
@@ -240,7 +240,7 @@ const GeminiSelector = ({ closeGemini }: { closeGemini: () => void }) => {
           loading={isLoading}
           leftIcon={<Check className="w-4 h-4" />}
           onClick={handleSaveSettings}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-brand-bright hover:opacity-90 transition-opacity"
         >
           Save & Activate
         </Button>
