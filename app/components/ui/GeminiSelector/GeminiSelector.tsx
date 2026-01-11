@@ -19,20 +19,22 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 
 const GeminiSelector = ({ closeGemini }: { closeGemini: () => void }) => {
-  const [model, setModel] = useState("gemini-1.5-flash-latest");
+  const [model, setModel] = useState("gemini-2.0-flash-exp");
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [availableModels, setAvailableModels] = useState([]);
+  const [isFetchingModels, setIsFetchingModels] = useState(false);
 
-  const geminiModels = [
-    { value: "gemini-1.5-flash-latest", label: "Gemini 1.5 Flash (Fast & Efficient)" },
-    { value: "gemini-1.5-pro-latest", label: "Gemini 1.5 Pro (Advance Reasoning)" },
-    { value: "gemini-2.0-flash-exp", label: "Gemini 2.0 Flash (Next Gen - Experimental)" },
-    { value: "gemini-1.5-pro-002", label: "Gemini 1.5 Pro 002 (Latest Stable)" },
-    { value: "gemini-1.5-flash-002", label: "Gemini 1.5 Flash 002 (Latest Stable)" },
+  // Default fallback models (latest as of Jan 2026)
+  const defaultGeminiModels = [
+    { value: "gemini-2.0-flash-exp", label: "Gemini 2.0 Flash (Experimental - Latest)" },
+    { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash (Fast & Efficient)" },
     { value: "gemini-1.5-flash-8b", label: "Gemini 1.5 Flash-8B (Lightweight)" },
+    { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro (Advanced Reasoning)" },
+    { value: "gemini-pro", label: "Gemini Pro (Stable)" },
   ];
 
   // Load existing config on mount
@@ -42,7 +44,11 @@ const GeminiSelector = ({ closeGemini }: { closeGemini: () => void }) => {
         const config = await invoke("get_gemini_config_command");
         if (config) {
           if (config.gemini_model) setModel(config.gemini_model);
-          if (config.key) setApiKey(config.key);
+          if (config.key) {
+            setApiKey(config.key);
+            // Fetch available models if we have an API key
+            fetchAvailableModels(config.key);
+          }
         }
       } catch (error) {
         console.log("No existing Gemini configuration found.");
@@ -52,6 +58,91 @@ const GeminiSelector = ({ closeGemini }: { closeGemini: () => void }) => {
     };
     fetchConfig();
   }, []);
+
+  const fetchAvailableModels = async (key?: string) => {
+    const keyToUse = key || apiKey;
+    if (!keyToUse) {
+      setAvailableModels(defaultGeminiModels);
+      return;
+    }
+
+    setIsFetchingModels(true);
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models?key=${keyToUse}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.models && Array.isArray(data.models)) {
+        // Filter for generateContent capable models and sort by name
+        const models = data.models
+          .filter((m: any) =>
+            m.supportedGenerationMethods?.includes("generateContent") &&
+            m.name.includes("gemini")
+          )
+          .map((m: any) => {
+            const modelName = m.name.replace("models/", "");
+            // Create friendly labels
+            let label = modelName;
+            if (modelName.includes("2.0")) {
+              label = modelName.includes("flash")
+                ? "Gemini 2.0 Flash (Latest - Experimental)"
+                : "Gemini 2.0 (Latest)";
+            } else if (modelName.includes("1.5-flash-8b")) {
+              label = "Gemini 1.5 Flash-8B (Lightweight)";
+            } else if (modelName.includes("1.5-flash")) {
+              label = "Gemini 1.5 Flash (Fast & Efficient)";
+            } else if (modelName.includes("1.5-pro")) {
+              label = "Gemini 1.5 Pro (Advanced Reasoning)";
+            } else if (modelName.includes("pro")) {
+              label = "Gemini Pro (Stable)";
+            }
+
+            return {
+              value: modelName,
+              label: label,
+            };
+          })
+          .sort((a, b) => {
+            // Sort: 2.0 models first, then 1.5, then others
+            if (a.value.includes("2.0") && !b.value.includes("2.0")) return -1;
+            if (!a.value.includes("2.0") && b.value.includes("2.0")) return 1;
+            return a.value.localeCompare(b.value);
+          });
+
+        if (models.length > 0) {
+          setAvailableModels(models);
+          // Set the first model as default if current model is not in the list
+          if (!models.find((m: any) => m.value === model)) {
+            setModel(models[0].value);
+          }
+        } else {
+          setAvailableModels(defaultGeminiModels);
+        }
+      } else {
+        setAvailableModels(defaultGeminiModels);
+      }
+    } catch (error) {
+      console.error("Error fetching models:", error);
+      toast.error("Could not fetch models", {
+        description: "Using default model list. Check your API key."
+      });
+      setAvailableModels(defaultGeminiModels);
+    } finally {
+      setIsFetchingModels(false);
+    }
+  };
 
   const handleSaveSettings = async () => {
     if (!apiKey) {
@@ -96,27 +187,45 @@ const GeminiSelector = ({ closeGemini }: { closeGemini: () => void }) => {
 
     setIsTesting(true);
     try {
-      // 1. Ensure global model is gemini for the test
-      await invoke("ai_model_selected", { model: "gemini" });
+      // Test with a simple API call directly to Google
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: "Say 'Success' in one word."
+              }]
+            }]
+          })
+        }
+      );
 
-      // 2. Briefly save it to test
-      await invoke("set_gemini_api_key", {
-        key: apiKey,
-        apiType: "gemini",
-        geminiModel: model,
-      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+      }
 
-      // Simple test prompt
-      const response = await invoke("get_genai", { query: "Keep your response to exactly one word: Success." });
+      const data = await response.json();
 
-      if (response) {
+      if (data.candidates && data.candidates.length > 0) {
         toast.success("Connection Successful", {
-          description: "Gemini responded correctly."
+          description: `${model} responded correctly.`
         });
+
+        // Now fetch available models since the key works
+        await fetchAvailableModels(apiKey);
+      } else {
+        throw new Error("No response from model");
       }
     } catch (error) {
+      console.error("Test error:", error);
       toast.error("Connection Failed", {
-        description: error.toString()
+        description: error.message || error.toString()
       });
     } finally {
       setIsTesting(false);
@@ -131,6 +240,8 @@ const GeminiSelector = ({ closeGemini }: { closeGemini: () => void }) => {
       </div>
     );
   }
+
+  const modelsToDisplay = availableModels.length > 0 ? availableModels : defaultGeminiModels;
 
   return (
     <motion.div
@@ -155,31 +266,10 @@ const GeminiSelector = ({ closeGemini }: { closeGemini: () => void }) => {
 
       <Stack gap="md">
         <section>
-          <Text size="sm" fw={600} mb={8} className="dark:text-gray-300">Choose Model</Text>
-          <Select
-            placeholder="Select a model"
-            value={model}
-            data={geminiModels}
-            onChange={(val) => val && setModel(val)}
-            transitionProps={{ transition: 'pop-top-left', duration: 80, timingFunction: 'ease' }}
-            styles={(theme) => ({
-              input: {
-                backgroundColor: 'transparent',
-                borderRadius: '8px',
-                height: '42px',
-                '&:focus': {
-                  borderColor: '#2B6CC4'
-                }
-              }
-            })}
-          />
-        </section>
-
-        <section>
           <Group justify="space-between" mb={8} wrap="nowrap">
             <Text size="sm" fw={600} className="dark:text-gray-300">API Key</Text>
             <Anchor
-              href="https://ai.google.dev/aistudio"
+              href="https://aistudio.google.com/app/apikey"
               target="_blank"
               size="xs"
               className="flex items-center space-x-1"
@@ -209,6 +299,47 @@ const GeminiSelector = ({ closeGemini }: { closeGemini: () => void }) => {
               }
             }}
           />
+        </section>
+
+        <section>
+          <Group justify="space-between" mb={8} wrap="nowrap">
+            <Text size="sm" fw={600} className="dark:text-gray-300">Choose Model</Text>
+            {apiKey && (
+              <Button
+                size="xs"
+                variant="subtle"
+                compact
+                loading={isFetchingModels}
+                leftIcon={<RefreshCw className="w-3 h-3" />}
+                onClick={() => fetchAvailableModels()}
+              >
+                Refresh Models
+              </Button>
+            )}
+          </Group>
+          <Select
+            placeholder="Select a model"
+            value={model}
+            data={modelsToDisplay}
+            onChange={(val) => val && setModel(val)}
+            disabled={isFetchingModels}
+            transitionProps={{ transition: 'pop-top-left', duration: 80, timingFunction: 'ease' }}
+            styles={(theme) => ({
+              input: {
+                backgroundColor: 'transparent',
+                borderRadius: '8px',
+                height: '42px',
+                '&:focus': {
+                  borderColor: '#2B6CC4'
+                }
+              }
+            })}
+          />
+          {availableModels.length === 0 && (
+            <Text size="xs" color="dimmed" mt={4}>
+              Using default models. Enter API key and click "Refresh Models" to see all available options.
+            </Text>
+          )}
         </section>
 
         <Paper withBorder p="md" radius="md" className="bg-brand-bright/5 dark:bg-brand-bright/5 border-brand-bright/20 dark:border-brand-bright/10">
