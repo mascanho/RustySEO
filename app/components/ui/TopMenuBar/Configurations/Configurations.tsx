@@ -8,6 +8,7 @@ import SearchConsoleConfs from "./SearchConsoleConfs";
 import AIConfigurations from "./AIConfigurations";
 import ClarityConfs from "./ClarityConfs";
 import { Settings, X, Cpu, BarChart3, Search, Activity, Zap } from "lucide-react";
+import { invoke } from "@tauri-apps/api/core";
 import { motion, AnimatePresence } from "framer-motion";
 
 const tabs = [
@@ -23,8 +24,16 @@ const Configurations = ({ close }: { close: () => void }) => {
   const [localVersion, setLocalVersion] = useState<string | null>(null);
 
   React.useEffect(() => {
-    const appVersion = localStorage?.getItem("app-version");
-    setLocalVersion(appVersion || "1.0.0");
+    const fetchVersion = async () => {
+      try {
+        const versions = await invoke<any>("version_check_command");
+        setLocalVersion(versions.local);
+      } catch (error) {
+        const appVersion = localStorage?.getItem("app-version");
+        setLocalVersion(appVersion || "1.0.0");
+      }
+    };
+    fetchVersion();
   }, []);
 
   const renderContent = () => {

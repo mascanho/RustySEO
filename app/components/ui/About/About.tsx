@@ -12,8 +12,16 @@ const About: React.FC<{ close: () => void }> = ({ close }) => {
   const [updateAvailable, setUpdateAvailable] = useState(false);
 
   useEffect(() => {
-    const appVersion = localStorage?.getItem("app-version");
-    setLocalVersion(appVersion || "1.0.0");
+    const fetchVersion = async () => {
+      try {
+        const versions = await invoke<any>("version_check_command");
+        setLocalVersion(versions.local);
+      } catch (error) {
+        const appVersion = localStorage?.getItem("app-version");
+        setLocalVersion(appVersion || "1.0.0");
+      }
+    };
+    fetchVersion();
   }, []);
 
   const checkForUpdates = async () => {
@@ -23,6 +31,7 @@ const About: React.FC<{ close: () => void }> = ({ close }) => {
       const latestVersion = versions.github;
       const currentLocalVersion = versions.local;
       setUpdateAvailable(latestVersion !== currentLocalVersion);
+      setLocalVersion(currentLocalVersion);
     } catch (error) {
       console.error("Failed to check for updates:", error);
     } finally {
@@ -143,13 +152,6 @@ const About: React.FC<{ close: () => void }> = ({ close }) => {
             >
               <Github className="w-4 h-4" />
               <Text size="xs" fw={700} className="group-hover:text-brand-bright transition-colors">GitHub</Text>
-            </a>
-            <a
-              href="mailto:530rusty@gmail.com"
-              className="flex items-center space-x-2 text-gray-400 hover:text-brand-bright transition-colors group"
-            >
-              <Mail className="w-4 h-4" />
-              <Text size="xs" fw={700} className="group-hover:text-brand-bright transition-colors">Email</Text>
             </a>
           </Group>
           <Text size="xs" className="text-gray-300 dark:text-gray-700 font-mono tracking-widest uppercase">mascanho © 2026</Text>
