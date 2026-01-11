@@ -172,7 +172,7 @@ export default function ClarityDashboard() {
 
   return (
     <TooltipProvider>
-      <div className="relative min-h-screen w-full bg-slate-50/50 dark:bg-brand-darker p-8 overflow-hidden transition-colors duration-500">
+      <div className="relative min-h-screen w-full bg-white dark:bg-brand-darker p-8 overflow-hidden transition-colors duration-500">
         {/* Ambient Glows */}
         <GlowBlob className="top-0 -left-20 w-[600px] h-[600px] opacity-[0.05]" color="bg-blue-600" />
         <GlowBlob className="bottom-0 -right-20 w-[500px] h-[500px] opacity-[0.05]" color="bg-purple-600" />
@@ -242,24 +242,24 @@ export default function ClarityDashboard() {
                   <Activity className="w-5 h-5 text-brand-bright opacity-40" />
                 </div>
                 <div className="p-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-slate-200 dark:bg-brand-dark">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-slate-100 dark:bg-brand-dark/30">
                     {behaviorMetrics.map((item, idx) => (
                       <motion.div
                         key={item.label}
-                        whileHover={{ backgroundColor: "rgba(43, 108, 196, 0.05)" }}
-                        className="p-8 space-y-6 transition-colors bg-white/90 dark:bg-brand-dark/40"
+                        whileHover={{ backgroundColor: "rgba(43, 108, 196, 0.08)" }}
+                        className="p-8 space-y-6 transition-colors bg-white dark:bg-brand-dark"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-4">
-                            <div className={`p-3 rounded-2xl bg-white dark:bg-brand-dark/60 shadow-xl ${item.glow} hover:scale-110 transition-transform ring-1 ring-black/5 dark:ring-white/10`}>
+                            <div className={`p-3 rounded-2xl bg-white dark:bg-brand-darker shadow-xl ${item.glow} hover:scale-110 transition-transform ring-1 ring-black/5 dark:ring-white/10`}>
                               <item.icon className={`w-5 h-5 ${item.color}`} />
                             </div>
                             <div>
                               <h3 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-slate-100">{item.label}</h3>
-                              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{item.description}</p>
+                              <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{item.description}</p>
                             </div>
                           </div>
-                          <Badge variant="outline" className="text-[10px] font-black rounded-xl py-0 px-3 h-6 tabular-nums bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400">
+                          <Badge variant="outline" className="text-[10px] font-black rounded-xl py-0 px-3 h-6 tabular-nums bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-brand-dark text-slate-600 dark:text-slate-300">
                             {item.sessions} SESS
                           </Badge>
                         </div>
@@ -267,15 +267,15 @@ export default function ClarityDashboard() {
                         <div className="space-y-4">
                           <div className="flex items-end justify-between">
                             <div className="flex flex-col">
-                              <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Intensity</span>
+                              <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">Intensity</span>
                               <span className="text-2xl font-black tabular-nums text-slate-900 dark:text-white">{item.percentage}%</span>
                             </div>
-                            <div className="w-32 h-2.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden p-[2px]">
+                            <div className="w-32 h-2.5 bg-slate-100 dark:bg-brand-darker rounded-full overflow-hidden p-[2px]">
                               <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${item.percentage}%` }}
                                 transition={{ duration: 1, delay: 0.5 + idx * 0.1 }}
-                                className={`h-full rounded-full bg-gradient-to-r from-brand-bright to-blue-400 shadow-[0_0_12px_rgba(43,108,196,0.5)]`}
+                                className={`h-full rounded-full bg-gradient-to-r from-brand-bright to-blue-400 shadow-[0_0_12px_rgba(43,108,196,0.6)]`}
                               />
                             </div>
                           </div>
@@ -332,7 +332,7 @@ export default function ClarityDashboard() {
                   <div className="space-y-2">
                     {referrers.map((ref, i) => (
                       <div key={i} className="flex items-center justify-between p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] hover:bg-brand-bright/5 transition-colors border border-transparent hover:border-brand-bright/10 group">
-                        <span className="text-xs font-bold truncate max-w-[150px] group-hover:text-brand-bright transition-colors uppercase tracking-tight text-slate-800 dark:text-slate-200">{ref.name || "Direct Path"}</span>
+                        <span className="text-xs font-bold truncate max-w-[150px] group-hover:text-brand-bright transition-colors uppercase tracking-tight text-slate-800 dark:text-slate-300">{ref.name || "Direct Path"}</span>
                         <span className="text-xs font-black tabular-nums text-slate-900 dark:text-white">{ref.sessionsCount}</span>
                       </div>
                     ))}
@@ -345,8 +345,8 @@ export default function ClarityDashboard() {
                       {popularPages.map((page, i) => (
                         <div key={i} className="flex items-center justify-between p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] hover:bg-emerald-500/5 transition-colors group">
                           <div className="flex flex-col gap-0.5 max-w-[180px]">
-                            <span className="text-[10px] font-bold truncate group-hover:text-emerald-500 transition-colors lowercase tracking-tight text-slate-800 dark:text-slate-200">{page.url}</span>
-                            <span className="text-[8px] font-black text-slate-400 uppercase">Target Endpoint</span>
+                            <span className="text-[10px] font-bold truncate group-hover:text-emerald-500 transition-colors lowercase tracking-tight text-slate-800 dark:text-slate-300">{page.url}</span>
+                            <span className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase">Target Endpoint</span>
                           </div>
                           <span className="text-xs font-black tabular-nums text-slate-900 dark:text-white">{page.visitsCount}</span>
                         </div>

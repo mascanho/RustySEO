@@ -117,14 +117,14 @@ export function BrowserChart({ data }: BrowserChartProps) {
                       <tspan
                         x={viewBox.cx}
                         y={viewBox.cy}
-                        className="fill-foreground text-2xl font-black tracking-tighter"
+                        className="fill-slate-900 dark:fill-white text-2xl font-black tracking-tighter"
                       >
                         {totalSessions.toLocaleString()}
                       </tspan>
                       <tspan
                         x={viewBox.cx}
                         y={(viewBox.cy || 0) + 18}
-                        className="fill-muted-foreground text-[10px] font-bold uppercase tracking-tight"
+                        className="fill-slate-400 dark:fill-slate-500 text-[10px] font-bold uppercase tracking-tight"
                       >
                         Total Sessions
                       </tspan>

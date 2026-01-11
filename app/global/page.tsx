@@ -285,7 +285,7 @@ export default function Page() {
           )}
 
           {activeTab === "clarity" && (
-            <Tabs.Panel value="clarity" className="pt-8">
+            <Tabs.Panel value="clarity" className="pt-8 dark:bg-brand-darker">
               <section className="h-[calc(100vh-8rem)] overflow-auto">
                 <ClarityContainer />
               </section>
