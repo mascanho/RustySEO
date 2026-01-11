@@ -264,7 +264,7 @@ export default function ClarityDashboard() {
 
   return (
     <TooltipProvider>
-      <div className="relative min-h-screen w-full bg-white dark:bg-brand-darker px-4 py-2 overflow-hidden transition-colors duration-500">
+      <div className="relative  w-full bg-white dark:bg-brand-darker px-4 pt-2  transition-colors duration-500 h-[calc(100vh-14vh)] overflow-y-auto overflow-x-hidden ">
         {/* Ambient Glows */}
         <GlowBlob
           className="top-0 -left-20 w-[600px] h-[600px] opacity-[0.05]"
@@ -275,17 +275,16 @@ export default function ClarityDashboard() {
           color="bg-purple-600"
         />
 
-        <div className="relative z-10 max-w-[1600px] mx-auto space-y-5">
+        <div className="relative z-10 max-w-[1600px] mx-auto space-y-5 pb-4 ">
           {/* Top Bar */}
           <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-3 border-b border-slate-200 dark:border-brand-dark">
             <div className="space-y-1">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-2xl bg-brand-bright shadow-lg shadow-brand-bright/30">
-                  <Layout className="w-6 h-6 text-white" />
+              <div className="flex items-center gap-2">
+                <div className="shadow-lg shadow-brand-bright/30">
+                  <Layout className="w-5 h-5 text-brand-bright" />
                 </div>
-                <h1 className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white uppercase italic">
+                <h1 className="text-3xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">
                   Clarity{" "}
-                  <span className="text-brand-bright not-italic">Engine</span>
                 </h1>
               </div>
               <div className="flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-gray-400">
@@ -351,7 +350,7 @@ export default function ClarityDashboard() {
               <GlassCard className="h-full">
                 <div className="p-8 border-b border-slate-200 dark:border-brand-dark flex items-center justify-between">
                   <div>
-                    <h2 className="text-xl font-black italic uppercase tracking-tighter">
+                    <h2 className="text-xl font-black italic uppercase tracking-tighter dark:text-white">
                       Friction Intelligence
                     </h2>
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
@@ -368,7 +367,7 @@ export default function ClarityDashboard() {
                         whileHover={{
                           backgroundColor: "rgba(43, 108, 196, 0.08)",
                         }}
-                        className="p-8 space-y-6 transition-colors bg-white dark:bg-brand-dark"
+                        className="p-8 space-y-6 transition-colors bg-white dark:bg-brand-darker"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-4">
