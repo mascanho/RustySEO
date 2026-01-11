@@ -41,8 +41,8 @@ const Configurations = ({ close }: { close: () => void }) => {
       {/* Header - Matching GeminiSelector */}
       <header className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/[0.02]">
         <div className="flex items-center space-x-3">
-          <div className="p-2.5 bg-blue-500/10 dark:bg-blue-500/20 rounded-xl">
-            <Settings className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          <div className="p-2.5 bg-brand-bright/10 dark:bg-brand-bright/20 rounded-xl">
+            <Settings className="w-6 h-6 text-brand-bright" />
           </div>
           <div>
             <Text fw={800} size="lg" className="text-gray-900 dark:text-white tracking-tight">Connector Settings</Text>
@@ -76,7 +76,7 @@ const Configurations = ({ close }: { close: () => void }) => {
                 {isActive && (
                   <motion.div
                     layoutId="active-pill"
-                    className="absolute inset-0 bg-blue-600 dark:bg-blue-500 rounded-xl z-0"
+                    className="absolute inset-0 bg-brand-bright rounded-xl z-0"
                     transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
                   />
                 )}

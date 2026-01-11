@@ -80,10 +80,10 @@ export default function SearchConsoleConfs() {
   return (
     <Card className="w-full p-0 h-full shadow-none border-0 mt-0 mx-auto dark:bg-transparent">
       <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 p-0 mt-2">
-        <div className="flex items-start space-x-4 p-4 rounded-xl bg-blue-50/30 dark:bg-blue-500/5 border border-blue-100/50 dark:border-blue-500/10">
-          <Hash className="h-5 w-5 text-blue-500 mt-1" />
+        <div className="flex items-start space-x-4 p-4 rounded-xl bg-brand-bright/10 dark:bg-brand-bright/5 border border-brand-bright/20 dark:border-brand-bright/10">
+          <Hash className="h-5 w-5 text-brand-bright mt-1" />
           <div>
-            <Text fw={800} size="xs" className="text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">Project ID</Text>
+            <Text fw={800} size="xs" className="text-brand-bright uppercase tracking-wider mb-1">Project ID</Text>
             <Text size="sm" className="text-gray-700 dark:text-gray-300 font-medium">{confs?.project_id}</Text>
           </div>
         </div>
