@@ -258,7 +258,7 @@ export default function Page() {
           {activeTab === "first" && (
             <Tabs.Panel
               value="first"
-              className="flex flex-col h-screen bg-white dark:bg-brand-darker overflow-auto"
+              className="flex flex-col h-screen bg-white dark:bg-brand-darker overflow-hidden"
             >
               <TablesContainer />
             </Tabs.Panel>

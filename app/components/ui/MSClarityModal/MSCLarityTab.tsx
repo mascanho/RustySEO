@@ -277,7 +277,7 @@ export default function ClarityDashboard() {
 
         <div className="relative z-10 max-w-[1600px] mx-auto space-y-5 pb-4 ">
           {/* Top Bar */}
-          <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-3 border-b border-slate-200 dark:border-brand-dark">
+          <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-1  border-slate-200 dark:border-brand-dark">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <div className="shadow-lg shadow-brand-bright/30">
@@ -304,12 +304,12 @@ export default function ClarityDashboard() {
             <button
               onClick={refreshData}
               disabled={isLoading}
-              className="px-6 py-3 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-2 group shadow-xl"
+              className="px-6 py-1 rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-2 group shadow-xl"
             >
               <RefreshCw
                 className={`w-4 h-4 ${isLoading ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"}`}
               />
-              {isLoading ? "Syncing..." : "Pulse Refresh"}
+              {isLoading ? "Syncing..." : "Refresh"}
             </button>
           </header>
 
@@ -362,7 +362,7 @@ export default function ClarityDashboard() {
                 <div className="p-0">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-slate-200 dark:bg-brand-dark">
                     {behaviorMetrics.map((item, idx) => (
-                      <motion.div
+                      <div
                         key={item.label}
                         whileHover={{
                           backgroundColor: "rgba(43, 108, 196, 0.08)",
@@ -403,7 +403,7 @@ export default function ClarityDashboard() {
                                 {item.percentage}%
                               </span>
                             </div>
-                            <div className="w-32 h-2.5 bg-slate-100 dark:bg-brand-darker rounded-full overflow-hidden p-[2px]">
+                            <div className="w-32 h-2.5 bg-slate-100 dark:bg-brand-dark rounded-full overflow-hidden p-[2px]">
                               <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${item.percentage}%` }}
@@ -411,12 +411,12 @@ export default function ClarityDashboard() {
                                   duration: 1,
                                   delay: 0.5 + idx * 0.1,
                                 }}
-                                className={`h-full rounded-full bg-gradient-to-r from-brand-bright to-blue-400 shadow-[0_0_12px_rgba(43,108,196,0.6)]`}
+                                className={`h-full rounded-full  bg-gradient-to-r from-brand-bright to-blue-400 shadow-[0_0_12px_rgba(43,108,196,0.6)]`}
                               />
                             </div>
                           </div>
                         </div>
-                      </motion.div>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -481,7 +481,7 @@ export default function ClarityDashboard() {
                         key={i}
                         className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] hover:bg-brand-bright/5 transition-colors border border-transparent hover:border-brand-bright/10 group"
                       >
-                        <span className="text-xs font-bold break-all group-hover:text-brand-bright transition-colors uppercase tracking-tight text-slate-800 dark:text-slate-300">
+                        <span className="text-xs font-bold break-all group-hover:text-brand-bright transition-colors  tracking-tight text-slate-800 dark:text-slate-300">
                           {ref.name || "Direct Path"}
                         </span>
                         <span className="text-xs font-black tabular-nums text-slate-900 dark:text-white shrink-0">
