@@ -57,8 +57,8 @@ const GlassCard = ({ children, className = "", delay = 0 }) => (
     animate={{ opacity: 1, y: 0, scale: 1 }}
     transition={{ duration: 0.5, delay, ease: [0.23, 1, 0.32, 1] }}
     className={`
-      relative group overflow-hidden rounded-3xl border border-white/10 dark:border-brand-dark
-      bg-white/40 dark:bg-brand-dark/40 backdrop-blur-xl shadow-2xl shadow-black/5
+      relative group overflow-hidden rounded-3xl border border-slate-200 dark:border-brand-dark
+      bg-white/40 dark:bg-brand-darker/40 backdrop-blur-xl shadow-2xl shadow-black/5
       hover:shadow-brand-bright/10 hover:border-brand-bright/30 transition-all duration-500
       ${className}
     `}
@@ -179,7 +179,7 @@ export default function ClarityDashboard() {
 
         <div className="relative z-10 max-w-[1600px] mx-auto space-y-10">
           {/* Top Bar */}
-          <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-black/5 dark:border-brand-dark">
+          <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-slate-200 dark:border-brand-dark">
             <div className="space-y-1">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-2xl bg-brand-bright shadow-lg shadow-brand-bright/30">
@@ -234,7 +234,7 @@ export default function ClarityDashboard() {
             {/* Main Friction Analysis */}
             <div className="lg:col-span-8 flex flex-col gap-6">
               <GlassCard className="h-full">
-                <div className="p-8 border-b border-black/5 dark:border-brand-dark flex items-center justify-between">
+                <div className="p-8 border-b border-slate-200 dark:border-brand-dark flex items-center justify-between">
                   <div>
                     <h2 className="text-xl font-black italic uppercase tracking-tighter">Friction Intelligence</h2>
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Behavioral Signal Matrix</p>
@@ -242,7 +242,7 @@ export default function ClarityDashboard() {
                   <Activity className="w-5 h-5 text-brand-bright opacity-40" />
                 </div>
                 <div className="p-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-slate-100 dark:bg-brand-dark/30">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-slate-200 dark:bg-brand-dark">
                     {behaviorMetrics.map((item, idx) => (
                       <motion.div
                         key={item.label}
@@ -290,7 +290,7 @@ export default function ClarityDashboard() {
             {/* Distribution Charts Side */}
             <div className="lg:col-span-4 flex flex-col gap-6">
               <GlassCard className="flex-1">
-                <div className="p-6 border-b border-black/5 dark:border-brand-dark">
+                <div className="p-6 border-b border-slate-200 dark:border-brand-dark">
                   <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Browser Environment</h3>
                 </div>
                 <div className="p-4 h-[250px] flex items-center justify-center">
@@ -299,7 +299,7 @@ export default function ClarityDashboard() {
               </GlassCard>
 
               <GlassCard className="flex-1">
-                <div className="p-6 border-b border-black/5 dark:border-brand-dark">
+                <div className="p-6 border-b border-slate-200 dark:border-brand-dark">
                   <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Device Distribution</h3>
                 </div>
                 <div className="p-6">
@@ -312,7 +312,7 @@ export default function ClarityDashboard() {
           {/* Bottom Section: Geo & Lists */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <GlassCard>
-              <div className="p-6 border-b border-black/5 dark:border-brand-dark flex items-center justify-between">
+              <div className="p-6 border-b border-slate-200 dark:border-brand-dark flex items-center justify-between">
                 <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Source Intel</h3>
                 <MapPin className="w-4 h-4 text-brand-bright opacity-30" />
               </div>
@@ -322,16 +322,16 @@ export default function ClarityDashboard() {
             </GlassCard>
 
             <GlassCard className="md:col-span-2">
-              <div className="p-6 border-b border-black/5 dark:border-brand-dark flex items-center justify-between">
+              <div className="p-6 border-b border-slate-200 dark:border-brand-dark flex items-center justify-between">
                 <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Top Acquisition & Content</h3>
                 <ExternalLink className="w-4 h-4 text-brand-bright opacity-30" />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2">
-                <div className="p-6 space-y-4 border-r border-black/5 dark:border-brand-dark">
+                <div className="p-6 space-y-6 border-r border-slate-200 dark:border-brand-dark">
                   <p className="text-[10px] font-black text-brand-bright uppercase tracking-widest mb-2">Prime Referrers</p>
                   <div className="space-y-2">
                     {referrers.map((ref, i) => (
-                      <div key={i} className="flex items-center justify-between gap-4 p-3 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] hover:bg-brand-bright/5 transition-colors border border-transparent hover:border-brand-bright/10 group">
+                      <div key={i} className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] hover:bg-brand-bright/5 transition-colors border border-transparent hover:border-brand-bright/10 group">
                         <span className="text-xs font-bold break-all group-hover:text-brand-bright transition-colors uppercase tracking-tight text-slate-800 dark:text-slate-300">
                           {ref.name || "Direct Path"}
                         </span>
