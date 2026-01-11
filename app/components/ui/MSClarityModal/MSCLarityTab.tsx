@@ -50,6 +50,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 const GlassCard = ({ children, className = "", delay = 0 }) => (
   <motion.div
@@ -95,6 +96,7 @@ export default function ClarityDashboard() {
         setLastRefreshed(new Date());
       }
     } catch (err) {
+      toast.error(`Failed to fetch Microsoft Clarity data: ${err}`);
       console.error("Clarity Error:", err);
     } finally {
       setIsLoading(false);
@@ -264,7 +266,7 @@ export default function ClarityDashboard() {
 
   return (
     <TooltipProvider>
-      <div className="relative w-full bg-gradient-to-br from-white via-slate-50/30 to-blue-50/20 dark:bg-brand-darker px-4 pt-2 pb-6 transition-colors duration-500 h-full overflow-y-auto overflow-x-hidden">
+      <div className="relative w-full bg-gradient-to-br from-white via-slate-50/30 to-blue-50/20 dark:bg-brand-darker px-4 pt-2  transition-colors duration-500 h-full overflow-y-auto overflow-x-hidden dark:bg-gradient-to-t dark:from-brand-darker dark:via-brand-darker dark:to-brand-darker pb-12">
         {/* Ambient Glows */}
         <GlowBlob
           className="top-0 -left-20 w-[600px] h-[600px] opacity-[0.05]"

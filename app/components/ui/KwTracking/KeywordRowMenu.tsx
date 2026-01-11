@@ -43,7 +43,7 @@ export default function KeywordRowMenu({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-[200px] dark:bg-gray-900 bg-white"
+        className="w-[200px] dark:bg-gray-900 bg-white dark:border-brand-dark"
       >
         <DropdownMenuLabel className="text-xs dark:text-gray-400">
           Actions
