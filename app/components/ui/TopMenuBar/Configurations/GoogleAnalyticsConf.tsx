@@ -10,8 +10,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { EyeIcon, EyeOffIcon, BarChart3, AlertCircle } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
+import { Text } from "@mantine/core";
 
 interface APIkey {
   google_analytics_id: string;
@@ -43,31 +44,34 @@ export default function GoogleAnalyticsConf() {
   }, []);
 
   return (
-    <Card className="w-full mt-8 mx-auto ml-0 dark:bg-brand-darker border-0 shadow-none">
-      <CardHeader className="-ml-2">
-        <CardTitle>Google Analytics ID</CardTitle>
-        <CardDescription>Your secret GA ID. Keep it safe!</CardDescription>
+    <Card className="w-full mt-4 mx-auto border-0 shadow-none bg-transparent">
+      <CardHeader className="px-0 pt-0">
+        <CardTitle className="text-lg font-bold dark:text-gray-100 flex items-center gap-2">
+          <BarChart3 className="w-5 h-5 text-green-500" />
+          Google Analytics ID
+        </CardTitle>
+        <CardDescription className="dark:text-gray-400">Your GA4 Measurement ID used for tracking and metrics integration.</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-0">
         {ga4ID === "" ? (
-          <div className="bg-gray-100 dark:bg-brand-dark p-4 rounded-md font-mono text-sm break-all">
-            <span className="text-gray-500 dark:text-gray-400">
-              No GA4 ID found. Connect your Google Analytics account in the
-              connectors menu.
-            </span>
+          <div className="flex items-start gap-3 text-amber-600 dark:text-amber-400/80 bg-amber-50/50 dark:bg-amber-500/5 p-4 rounded-xl border border-amber-100 dark:border-amber-500/10 transition-all">
+            <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+            <Text size="xs" className="leading-relaxed">
+              No GA4 Property ID found. Connect your Google Analytics account via the "Connectors" menu to enable property-specific insights.
+            </Text>
           </div>
         ) : (
-          <div className="bg-gray-100 dark:bg-brand-dark p-4 rounded-md font-mono text-sm break-all">
+          <div className="bg-gray-50 dark:bg-white/[0.03] p-4 rounded-xl border border-gray-100 dark:border-white/[0.05] font-mono text-sm break-all text-gray-700 dark:text-gray-300">
             {isVisible ? ga4ID : maskApiKey(ga4ID)}
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex justify-end">
+      <CardFooter className="px-0 flex justify-end mt-2">
         {ga4ID !== "" && (
           <Button
             onClick={toggleVisibility}
             variant="outline"
-            className="flex items-center space-x-2 dark:bg-brand-dark"
+            className="flex items-center space-x-2 rounded-lg border-gray-200 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:text-gray-200 transition-all"
           >
             {isVisible ? (
               <>

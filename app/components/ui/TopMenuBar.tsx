@@ -367,6 +367,9 @@ const TopMenuBar = () => {
         padding={0}
         radius="lg"
         withCloseButton={false}
+        styles={{
+          content: { background: 'transparent' }
+        }}
       >
         <GeminiSelector closeGemini={closeGemini} />
       </Modal>
@@ -471,11 +474,16 @@ const TopMenuBar = () => {
 
       {/* Configurations Modal */}
       <Modal
-        size={"800px"}
+        size={"850px"}
         opened={openedConfs}
         onClose={closeConfs}
-        title="Connector Settings"
         centered
+        padding={0}
+        radius="lg"
+        withCloseButton={false}
+        styles={{
+          content: { background: 'transparent' }
+        }}
       >
         <Configurations close={closeConfs} />
       </Modal>

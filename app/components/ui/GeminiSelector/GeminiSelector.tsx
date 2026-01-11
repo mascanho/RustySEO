@@ -13,7 +13,8 @@ import {
   Check,
   AlertCircle,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -28,7 +29,10 @@ const GeminiSelector = ({ closeGemini }: { closeGemini: () => void }) => {
   const geminiModels = [
     { value: "gemini-1.5-flash-latest", label: "Gemini 1.5 Flash (Fast & Efficient)" },
     { value: "gemini-1.5-pro-latest", label: "Gemini 1.5 Pro (Advance Reasoning)" },
-    { value: "gemini-2.0-flash-exp", label: "Gemini 2.0 Flash (Experimental)" },
+    { value: "gemini-2.0-flash-exp", label: "Gemini 2.0 Flash (Next Gen - Experimental)" },
+    { value: "gemini-1.5-pro-002", label: "Gemini 1.5 Pro 002 (Latest Stable)" },
+    { value: "gemini-1.5-flash-002", label: "Gemini 1.5 Flash 002 (Latest Stable)" },
+    { value: "gemini-1.5-flash-8b", label: "Gemini 1.5 Flash-8B (Lightweight)" },
   ];
 
   // Load existing config on mount
@@ -130,23 +134,28 @@ const GeminiSelector = ({ closeGemini }: { closeGemini: () => void }) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col space-y-6 p-4"
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex flex-col space-y-6 p-6 w-full min-w-[480px] max-w-[500px] bg-white dark:bg-[#0f0f0f]"
     >
-      <header className="flex items-center space-x-3 pb-2 border-b dark:border-white/10">
-        <div className="p-2 bg-blue-500/10 rounded-lg">
-          <Sparkles className="w-6 h-6 text-blue-500" />
+      <header className="flex items-center justify-between pb-4 border-b dark:border-white/5">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-blue-500/10 dark:bg-blue-500/20 rounded-lg">
+            <Sparkles className="w-6 h-6 text-blue-500 dark:text-blue-400" />
+          </div>
+          <div>
+            <Text fw={700} size="lg" className="text-gray-900 dark:text-gray-100">Google Gemini</Text>
+            <Text size="xs" className="text-gray-500 dark:text-gray-400">Configure your Google AI Studio integration</Text>
+          </div>
         </div>
-        <div>
-          <Text weight={700} size="lg" className="dark:text-white">Google Gemini</Text>
-          <Text size="xs" color="dimmed">Configure your Google AI Studio integration</Text>
-        </div>
+        <ActionIcon onClick={closeGemini} variant="subtle" color="gray" radius="xl" className="hover:bg-gray-100 dark:hover:bg-white/5">
+          <X className="w-5 h-5" />
+        </ActionIcon>
       </header>
 
-      <Stack spacing="md">
+      <Stack gap="md">
         <section>
-          <Text size="sm" weight={600} mb={8} className="dark:text-gray-300">Choose Model</Text>
+          <Text size="sm" fw={600} mb={8} className="dark:text-gray-300">Choose Model</Text>
           <Select
             placeholder="Select a model"
             value={model}
@@ -167,8 +176,8 @@ const GeminiSelector = ({ closeGemini }: { closeGemini: () => void }) => {
         </section>
 
         <section>
-          <Group position="apart" mb={8}>
-            <Text size="sm" weight={600} className="dark:text-gray-300">API Key</Text>
+          <Group justify="space-between" mb={8} wrap="nowrap">
+            <Text size="sm" fw={600} className="dark:text-gray-300">API Key</Text>
             <Anchor
               href="https://ai.google.dev/aistudio"
               target="_blank"
@@ -202,10 +211,10 @@ const GeminiSelector = ({ closeGemini }: { closeGemini: () => void }) => {
           />
         </section>
 
-        <Paper withBorder p="xs" radius="md" className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-900/30">
-          <Group spacing="sm" noWrap align="flex-start">
-            <ShieldCheck className="w-5 h-5 text-blue-600 mt-0.5" />
-            <Text size="xs" color="dimmed">
+        <Paper withBorder p="md" radius="md" className="bg-blue-50/50 dark:bg-blue-500/5 border-blue-100 dark:border-blue-500/10">
+          <Group gap="sm" wrap="nowrap" align="flex-start">
+            <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
+            <Text size="xs" className="text-blue-700/70 dark:text-blue-300/60 leading-relaxed">
               Your API key is stored securely on your local machine and never transmitted to our servers. Only sent directly to Google's API during requests.
             </Text>
           </Group>
