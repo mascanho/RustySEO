@@ -20,6 +20,12 @@ const tabs = [
 
 const Configurations = ({ close }: { close: () => void }) => {
   const [activeTab, setActiveTab] = useState("pagespeed");
+  const [localVersion, setLocalVersion] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const appVersion = localStorage?.getItem("app-version");
+    setLocalVersion(appVersion || "1.0.0");
+  }, []);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -108,10 +114,10 @@ const Configurations = ({ close }: { close: () => void }) => {
         </ScrollArea>
       </Box>
 
-      {/* Footer Branding - Optional matching style */}
-      <div className="px-6 pb-6 pt-2 flex justify-between items-center opacity-40">
-        <div className="h-px flex-1 bg-gray-100 dark:bg-white/5 mr-4" />
-        <Text size="xs" className="text-gray-400 dark:text-gray-600 font-mono italic">RustySEO v1.5.0</Text>
+      {/* Footer Branding - Consistent with About */}
+      <div className="px-6 pb-6 pt-2 flex justify-between items-center">
+        <div className="h-px flex-1 bg-gray-100 dark:bg-white/5 mr-4 opacity-40" />
+        <Text size="xs" className="text-gray-400 dark:text-gray-600 font-mono italic opacity-60">RustySEO v{localVersion}</Text>
       </div>
     </motion.div>
   );

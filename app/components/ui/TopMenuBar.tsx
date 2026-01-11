@@ -380,11 +380,16 @@ const TopMenuBar = () => {
         closeOnEscape
         closeOnClickOutside
         onClose={closeAbout}
-        title="About RustySEO"
         centered
         size={"500px"}
+        padding={0}
+        radius="lg"
+        withCloseButton={false}
+        styles={{
+          content: { background: 'transparent', border: 'none', boxShadow: 'none' }
+        }}
       >
-        <About closeGemini={closeAbout} />
+        <About close={closeAbout} />
       </Modal>
 
       {/* Drawer */}
