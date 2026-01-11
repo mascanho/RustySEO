@@ -19,7 +19,7 @@ const AIConfigurations = () => {
   }, []);
 
   return (
-    <Box className="w-full mt-4">
+    <Box className="w-full">
       <Stack gap="xl">
         <section>
           <Group justify="space-between" mb={8} wrap="nowrap">
