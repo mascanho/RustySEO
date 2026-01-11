@@ -118,15 +118,21 @@ pub async fn ask_rusty(prompt: String) -> Result<String, Box<dyn std::error::Err
 pub async fn ask_gemini(prompt: String) -> Result<String, Box<dyn std::error::Error>> {
     let client = Client::new();
 
-    // GET THE API KEY
-    let api_key = match gemini::get_gemini_api_key() {
-        Ok(key) => key,
-        Err(e) => return Err(format!("Gemini API key error: {}", e).into()),
+    // GET THE CONFIG
+    let config = match gemini::get_gemini_config() {
+        Ok(c) => c,
+        Err(e) => return Err(format!("Gemini config error: {}", e).into()),
+    };
+
+    let model = if config.gemini_model.is_empty() {
+        "gemini-1.5-flash-latest"
+    } else {
+        &config.gemini_model
     };
 
     let url = format!(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent?key={}",
-        api_key
+        "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
+        model, config.key
     );
 
     // Prepare request body for Gemini

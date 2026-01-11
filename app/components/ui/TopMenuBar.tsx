@@ -362,9 +362,11 @@ const TopMenuBar = () => {
         closeOnEscape
         closeOnClickOutside
         onClose={closeGemini}
-        title="Google Gemini"
         centered
         size={"500px"}
+        padding={0}
+        radius="lg"
+        withCloseButton={false}
       >
         <GeminiSelector closeGemini={closeGemini} />
       </Modal>

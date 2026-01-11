@@ -5,8 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 const API_KEY: &str = "AIzaSyAzGe221fKyFf8IgPNFAIpK7YfKugNSVhc"; // Replace with your actual API key
-const API_ENDPOINT: &str =
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent";
+const BASE_URL: &str = "https://generativelanguage.googleapis.com/v1beta/models";
 
 #[derive(Serialize)]
 pub struct GeminiRequest {
@@ -58,7 +57,9 @@ impl GeminiRequest {
 pub async fn ask_gemini(prompt: &str) -> anyhow::Result<String> {
     // READ THE KEY IF IT EXISTS ELSE RETURN AN ERROR
 
-    let key = get_gemini_api_key().map_err(|e| anyhow!(e))?;
+    let config = get_gemini_config().map_err(|e| anyhow!(e))?;
+    let model = if config.gemini_model.is_empty() { "gemini-1.5-flash-latest" } else { &config.gemini_model };
+    let url = format!("{}/{}:generateContent", BASE_URL, model);
 
     let client = reqwest::Client::new();
 
@@ -72,8 +73,8 @@ pub async fn ask_gemini(prompt: &str) -> anyhow::Result<String> {
     let request = GeminiRequest::new(&my_prompt);
 
     let response = client
-        .post(API_ENDPOINT)
-        .query(&[("key", key)])
+        .post(&url)
+        .query(&[("key", config.key)])
         .json(&request)
         .send()
         .await?;
@@ -103,9 +104,9 @@ pub async fn greet(prompt: &str) -> Result<(), String> {
 
 #[derive(Serialize, Deserialize)]
 pub struct GeminiApiKey {
-    key: String,
-    api_type: String,
-    gemini_model: String,
+    pub key: String,
+    pub api_type: String,
+    pub gemini_model: String,
 }
 
 #[tauri::command]
@@ -143,8 +144,9 @@ pub fn set_gemini_api_key(
     Ok(gemini_api_key)
 }
 
-// ----- RED THE API KEY FROM THE CONGIF FILE AND RETURN IT
-pub fn get_gemini_api_key() -> Result<String, String> {
+// ----- READ THE API KEY FROM THE CONFIG FILE AND RETURN IT
+#[tauri::command]
+pub fn get_gemini_config_command() -> Result<GeminiApiKey, String> {
     // create the config directory if it doesn't exist
     let config_dirs = ProjectDirs::from("", "", "rustyseo")
         .ok_or_else(|| "Failed to get project directories".to_string())?;
@@ -164,12 +166,22 @@ pub fn get_gemini_api_key() -> Result<String, String> {
         .map_err(|e| format!("Failed to parse Gemini API key JSON: {}", e))?;
 
     println!("Gemini API key loaded successfully");
-    Ok(gemini_api_key.key)
+    Ok(gemini_api_key)
+}
+
+pub fn get_gemini_config() -> Result<GeminiApiKey, String> {
+    get_gemini_config_command()
+}
+
+pub fn get_gemini_api_key() -> Result<String, String> {
+    get_gemini_config().map(|c| c.key)
 }
 
 // ---------------- Ask Gemini for TOPICS of a page
 pub async fn generate_topics(body: String) -> anyhow::Result<String> {
-    let key = get_gemini_api_key().map_err(|e| anyhow!(e))?;
+    let config = get_gemini_config().map_err(|e| anyhow!(e))?;
+    let model = if config.gemini_model.is_empty() { "gemini-1.5-flash-latest" } else { &config.gemini_model };
+    let url = format!("{}/{}:generateContent", BASE_URL, model);
 
     let client = reqwest::Client::new();
 
@@ -180,8 +192,8 @@ pub async fn generate_topics(body: String) -> anyhow::Result<String> {
     let request = GeminiRequest::new(&prompt);
 
     let response = client
-        .post(API_ENDPOINT)
-        .query(&[("key", key)])
+        .post(&url)
+        .query(&[("key", config.key)])
         .json(&request)
         .send()
         .await
@@ -210,7 +222,9 @@ pub async fn generate_topics(body: String) -> anyhow::Result<String> {
 
 // ---------------- Ask Gemini for Headings of a page
 pub async fn generate_headings(headings: String) -> anyhow::Result<String> {
-    let key = get_gemini_api_key().map_err(|e| anyhow!(e))?;
+    let config = get_gemini_config().map_err(|e| anyhow!(e))?;
+    let model = if config.gemini_model.is_empty() { "gemini-1.5-flash-latest" } else { &config.gemini_model };
+    let url = format!("{}/{}:generateContent", BASE_URL, model);
 
     let client = reqwest::Client::new();
 
@@ -223,8 +237,8 @@ pub async fn generate_headings(headings: String) -> anyhow::Result<String> {
     let request = GeminiRequest::new(&prompt);
 
     let response = client
-        .post(API_ENDPOINT)
-        .query(&[("key", key)])
+        .post(&url)
+        .query(&[("key", config.key)])
         .json(&request)
         .send()
         .await
@@ -255,7 +269,9 @@ pub async fn generate_headings(headings: String) -> anyhow::Result<String> {
 
 // ---------------- Ask Gemini for JSON-LD of a page
 pub async fn generate_jsonld(jsonld: String) -> anyhow::Result<String> {
-    let key = get_gemini_api_key().map_err(|e| anyhow!(e))?;
+    let config = get_gemini_config().map_err(|e| anyhow!(e))?;
+    let model = if config.gemini_model.is_empty() { "gemini-1.5-flash-latest" } else { &config.gemini_model };
+    let url = format!("{}/{}:generateContent", BASE_URL, model);
 
     let client = reqwest::Client::new();
 
@@ -268,8 +284,8 @@ pub async fn generate_jsonld(jsonld: String) -> anyhow::Result<String> {
     let request = GeminiRequest::new(&prompt);
 
     let response = client
-        .post(API_ENDPOINT)
-        .query(&[("key", key)])
+        .post(&url)
+        .query(&[("key", config.key)])
         .json(&request)
         .send()
         .await

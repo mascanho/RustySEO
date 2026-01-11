@@ -237,6 +237,7 @@ async fn main() {
             commands::set_google_search_console_credentials,
             image_converter::converter::handle_image_conversion,
             gemini::set_gemini_api_key,
+            gemini::get_gemini_config_command,
             downloads::csv::generate_seo_csv,
             generate_ai_topics,
             get_genai,

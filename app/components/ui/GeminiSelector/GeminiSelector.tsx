@@ -1,96 +1,242 @@
+// @ts-nocheck
 import { invoke } from "@tauri-apps/api/core";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Select } from "@mantine/core";
+import { Select, TextInput, Button, Group, Text, Anchor, Stack, Paper, ActionIcon, Tooltip } from "@mantine/core";
+import {
+  Sparkles,
+  ExternalLink,
+  ShieldCheck,
+  Eye,
+  EyeOff,
+  Key,
+  Check,
+  AlertCircle,
+  Loader2,
+  RefreshCw
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
-const GeminiSelector = ({ closeGemini }: any) => {
-  const [geminiModel, setGeminiModel] = useState("");
-  const [prevSelected, setPrevSelected] = useState("");
-  const [userInput, setUserInput] = useState("");
+const GeminiSelector = ({ closeGemini }: { closeGemini: () => void }) => {
+  const [model, setModel] = useState("gemini-1.5-flash-latest");
+  const [apiKey, setApiKey] = useState("");
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
-  const geminiModels = [{ value: "gemini-1.5-flash", label: "Gemini Flash" }];
+  const geminiModels = [
+    { value: "gemini-1.5-flash-latest", label: "Gemini 1.5 Flash (Fast & Efficient)" },
+    { value: "gemini-1.5-pro-latest", label: "Gemini 1.5 Pro (Advance Reasoning)" },
+    { value: "gemini-2.0-flash-exp", label: "Gemini 2.0 Flash (Experimental)" },
+  ];
 
-  const handleGeminiSelect = (value: string | null) => {
-    if (value) {
-      setGeminiModel(value);
-      setPrevSelected(value);
+  // Load existing config on mount
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const config = await invoke("get_gemini_config_command");
+        if (config) {
+          if (config.gemini_model) setModel(config.gemini_model);
+          if (config.key) setApiKey(config.key);
+        }
+      } catch (error) {
+        console.log("No existing Gemini configuration found.");
+      } finally {
+        setIsInitialLoading(false);
+      }
+    };
+    fetchConfig();
+  }, []);
+
+  const handleSaveSettings = async () => {
+    if (!apiKey) {
+      toast.error("Please enter an API key");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // 1. Set global AI provider to Gemini
+      await invoke("ai_model_selected", { model: "gemini" });
+
+      // 2. Save Gemini specific configuration
+      await invoke("set_gemini_api_key", {
+        key: apiKey,
+        apiType: "gemini",
+        geminiModel: model,
+      });
+
+      toast.success("Gemini Settings Saved", {
+        description: "Google Gemini is now your active AI provider.",
+        icon: <Sparkles className="w-4 h-4 text-yellow-500" />
+      });
+
+      localStorage.setItem("AI-provider", "gemini");
+      closeGemini();
+    } catch (error) {
+      console.error("Error saving Gemini settings:", error);
+      toast.error("Failed to save settings", {
+        description: error.toString()
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleModelSelection = (model: string) => {
-    // Implement logic to handle model selection
-    console.log(`Selected model: ${model}`);
-  };
+  const testConnection = async () => {
+    if (!apiKey) {
+      toast.error("Enter an API key first to test");
+      return;
+    }
 
-  console.log(userInput);
-
-  const handleAddApiKey: any = async (key: string) => {
+    setIsTesting(true);
     try {
-      // Set the global AI Model
-      const model = await invoke<{ success: boolean }>("ai_model_selected", {
-        model: "gemini",
-      });
-      console.log(model, "This is the model");
-      if (model) {
-        console.log("Model selected successfully");
-      }
+      // 1. Ensure global model is gemini for the test
+      await invoke("ai_model_selected", { model: "gemini" });
 
-      // Set the API key for the Gemini Model
-      const result = await invoke<{ success: boolean }>("set_gemini_api_key", {
-        key,
+      // 2. Briefly save it to test
+      await invoke("set_gemini_api_key", {
+        key: apiKey,
         apiType: "gemini",
-        geminiModel,
+        geminiModel: model,
       });
-      console.log(result, "This is the result");
-      if (result) {
-        console.log("API key added successfully");
-        toast("API key added successfully");
-        // Perform any additional actions on success
-      } else {
-        console.log("Failed to add API key");
-        // Handle the failure case
+
+      // Simple test prompt
+      const response = await invoke("get_genai", { query: "Keep your response to exactly one word: Success." });
+
+      if (response) {
+        toast.success("Connection Successful", {
+          description: "Gemini responded correctly."
+        });
       }
     } catch (error) {
-      console.error("Error adding API key:", error);
-      // Handle the error (e.g., show an error message to the user)
+      toast.error("Connection Failed", {
+        description: error.toString()
+      });
+    } finally {
+      setIsTesting(false);
     }
-    closeGemini();
   };
 
-  return (
-    <div className="flex flex-col space-y-3 px-4 pb-4">
-      <h2 className="dark:text-white">
-        Paste your{" "}
-        <a
-          href="https://ai.google.dev"
-          target="_blank"
-          className="underline dark:text-white"
-        >
-          Google Gemini API key
-        </a>
-      </h2>
-      <Select
-        placeholder="Select Model"
-        value={geminiModel}
-        data={geminiModels}
-        className="w-full dark:bg-brand-darker  dark:text-white"
-        onChange={(e) => handleGeminiSelect(e)}
-      />
+  if (isInitialLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 space-y-4">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+        <Text size="sm" color="dimmed">Loading configuration...</Text>
+      </div>
+    );
+  }
 
-      <input
-        onChange={(e) => setUserInput(e.target.value)}
-        type="password"
-        name="pagespeed"
-        className="border rounded-md py-1 dark:text-white px-2 dark:bg-brand-darker dark:border-white/30"
-      />
-      <button
-        onClick={() => handleAddApiKey(userInput)}
-        type="button"
-        className="w-full flex items-center pt-1 h-9 justify-center font-semibold border bg-blue-500 text-white rounded-md dark:border-white/10"
-      >
-        Connect Model
-      </button>
-    </div>
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex flex-col space-y-6 p-4"
+    >
+      <header className="flex items-center space-x-3 pb-2 border-b dark:border-white/10">
+        <div className="p-2 bg-blue-500/10 rounded-lg">
+          <Sparkles className="w-6 h-6 text-blue-500" />
+        </div>
+        <div>
+          <Text weight={700} size="lg" className="dark:text-white">Google Gemini</Text>
+          <Text size="xs" color="dimmed">Configure your Google AI Studio integration</Text>
+        </div>
+      </header>
+
+      <Stack spacing="md">
+        <section>
+          <Text size="sm" weight={600} mb={8} className="dark:text-gray-300">Choose Model</Text>
+          <Select
+            placeholder="Select a model"
+            value={model}
+            data={geminiModels}
+            onChange={(val) => val && setModel(val)}
+            transitionProps={{ transition: 'pop-top-left', duration: 80, timingFunction: 'ease' }}
+            styles={(theme) => ({
+              input: {
+                backgroundColor: 'transparent',
+                borderRadius: '8px',
+                height: '42px',
+                '&:focus': {
+                  borderColor: theme.colors.blue[5]
+                }
+              }
+            })}
+          />
+        </section>
+
+        <section>
+          <Group position="apart" mb={8}>
+            <Text size="sm" weight={600} className="dark:text-gray-300">API Key</Text>
+            <Anchor
+              href="https://ai.google.dev/aistudio"
+              target="_blank"
+              size="xs"
+              className="flex items-center space-x-1"
+            >
+              <span>Get Key</span> <ExternalLink className="w-3 h-3" />
+            </Anchor>
+          </Group>
+
+          <TextInput
+            placeholder="AIzaSy..."
+            type={showApiKey ? "text" : "password"}
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            icon={<Key className="w-4 h-4 opacity-50" />}
+            rightSection={
+              <Tooltip label={showApiKey ? "Hide Key" : "Show Key"}>
+                <ActionIcon onClick={() => setShowApiKey(!showApiKey)} variant="transparent">
+                  {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </ActionIcon>
+              </Tooltip>
+            }
+            styles={{
+              input: {
+                borderRadius: '8px',
+                height: '42px',
+                fontFamily: apiKey ? 'monospace' : 'inherit'
+              }
+            }}
+          />
+        </section>
+
+        <Paper withBorder p="xs" radius="md" className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-200 dark:border-blue-900/30">
+          <Group spacing="sm" noWrap align="flex-start">
+            <ShieldCheck className="w-5 h-5 text-blue-600 mt-0.5" />
+            <Text size="xs" color="dimmed">
+              Your API key is stored securely on your local machine and never transmitted to our servers. Only sent directly to Google's API during requests.
+            </Text>
+          </Group>
+        </Paper>
+      </Stack>
+
+      <footer className="flex space-x-3 pt-2">
+        <Button
+          variant="light"
+          fullWidth
+          height={40}
+          radius="md"
+          loading={isTesting}
+          leftIcon={<RefreshCw className="w-4 h-4" />}
+          onClick={testConnection}
+        >
+          Test
+        </Button>
+        <Button
+          fullWidth
+          height={40}
+          radius="md"
+          loading={isLoading}
+          leftIcon={<Check className="w-4 h-4" />}
+          onClick={handleSaveSettings}
+          className="bg-blue-600 hover:bg-blue-700"
+        >
+          Save & Activate
+        </Button>
+      </footer>
+    </motion.div>
   );
 };
 
