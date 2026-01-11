@@ -57,8 +57,8 @@ const GlassCard = ({ children, className = "", delay = 0 }) => (
     animate={{ opacity: 1, y: 0, scale: 1 }}
     transition={{ duration: 0.5, delay, ease: [0.23, 1, 0.32, 1] }}
     className={`
-      relative group overflow-hidden rounded-3xl border border-white/10 dark:border-white/5
-      bg-white/40 dark:bg-brand-darker/40 backdrop-blur-xl shadow-2xl shadow-black/5
+      relative group overflow-hidden rounded-3xl border border-white/10 dark:border-brand-dark
+      bg-white/40 dark:bg-brand-dark/40 backdrop-blur-xl shadow-2xl shadow-black/5
       hover:shadow-brand-bright/10 hover:border-brand-bright/30 transition-all duration-500
       ${className}
     `}
@@ -172,14 +172,14 @@ export default function ClarityDashboard() {
 
   return (
     <TooltipProvider>
-      <div className="relative min-h-screen w-full bg-slate-50/50 dark:bg-brand-darker/20 p-8 overflow-hidden">
+      <div className="relative min-h-screen w-full bg-slate-50/50 dark:bg-brand-darker p-8 overflow-hidden transition-colors duration-500">
         {/* Ambient Glows */}
         <GlowBlob className="top-0 -left-20 w-[600px] h-[600px] opacity-[0.05]" color="bg-blue-600" />
         <GlowBlob className="bottom-0 -right-20 w-[500px] h-[500px] opacity-[0.05]" color="bg-purple-600" />
 
         <div className="relative z-10 max-w-[1600px] mx-auto space-y-10">
           {/* Top Bar */}
-          <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-black/5 dark:border-white/5">
+          <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-black/5 dark:border-brand-dark">
             <div className="space-y-1">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-2xl bg-brand-bright shadow-lg shadow-brand-bright/30">
@@ -215,8 +215,8 @@ export default function ClarityDashboard() {
               <GlassCard key={i} delay={i * 0.1}>
                 <div className="p-6 space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{stat.label}</span>
-                    <div className={`p-2 rounded-xl bg-slate-100 dark:bg-white/5 ${stat.color}`}>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">{stat.label}</span>
+                    <div className={`p-2 rounded-xl bg-slate-100 dark:bg-brand-dark/50 ${stat.color}`}>
                       <stat.icon className="w-4 h-4" />
                     </div>
                   </div>
@@ -234,7 +234,7 @@ export default function ClarityDashboard() {
             {/* Main Friction Analysis */}
             <div className="lg:col-span-8 flex flex-col gap-6">
               <GlassCard className="h-full">
-                <div className="p-8 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
+                <div className="p-8 border-b border-black/5 dark:border-brand-dark flex items-center justify-between">
                   <div>
                     <h2 className="text-xl font-black italic uppercase tracking-tighter">Friction Intelligence</h2>
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Behavioral Signal Matrix</p>
@@ -242,16 +242,16 @@ export default function ClarityDashboard() {
                   <Activity className="w-5 h-5 text-brand-bright opacity-40" />
                 </div>
                 <div className="p-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-black/5 dark:bg-white/5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-slate-200 dark:bg-brand-dark">
                     {behaviorMetrics.map((item, idx) => (
                       <motion.div
                         key={item.label}
-                        whileHover={{ backgroundColor: "rgba(43, 108, 196, 0.03)" }}
-                        className="p-8 space-y-6 transition-colors"
+                        whileHover={{ backgroundColor: "rgba(43, 108, 196, 0.05)" }}
+                        className="p-8 space-y-6 transition-colors bg-white/90 dark:bg-brand-dark/40"
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-4">
-                            <div className={`p-3 rounded-2xl bg-white dark:bg-white/5 shadow-xl ${item.glow} hover:scale-110 transition-transform`}>
+                            <div className={`p-3 rounded-2xl bg-white dark:bg-brand-dark/60 shadow-xl ${item.glow} hover:scale-110 transition-transform ring-1 ring-black/5 dark:ring-white/10`}>
                               <item.icon className={`w-5 h-5 ${item.color}`} />
                             </div>
                             <div>
@@ -259,7 +259,7 @@ export default function ClarityDashboard() {
                               <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{item.description}</p>
                             </div>
                           </div>
-                          <Badge variant="outline" className="text-[10px] font-black rounded-lg py-0 px-2 h-5 tabular-nums">
+                          <Badge variant="outline" className="text-[10px] font-black rounded-xl py-0 px-3 h-6 tabular-nums bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400">
                             {item.sessions} SESS
                           </Badge>
                         </div>
@@ -270,12 +270,12 @@ export default function ClarityDashboard() {
                               <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Intensity</span>
                               <span className="text-2xl font-black tabular-nums text-slate-900 dark:text-white">{item.percentage}%</span>
                             </div>
-                            <div className="w-32 h-2 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+                            <div className="w-32 h-2.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden p-[2px]">
                               <motion.div
                                 initial={{ width: 0 }}
                                 animate={{ width: `${item.percentage}%` }}
                                 transition={{ duration: 1, delay: 0.5 + idx * 0.1 }}
-                                className={`h-full rounded-full bg-gradient-to-r from-brand-bright to-blue-400 shadow-[0_0_10px_rgba(43,108,196,0.5)]`}
+                                className={`h-full rounded-full bg-gradient-to-r from-brand-bright to-blue-400 shadow-[0_0_12px_rgba(43,108,196,0.5)]`}
                               />
                             </div>
                           </div>
@@ -290,8 +290,8 @@ export default function ClarityDashboard() {
             {/* Distribution Charts Side */}
             <div className="lg:col-span-4 flex flex-col gap-6">
               <GlassCard className="flex-1">
-                <div className="p-6 border-b border-black/5 dark:border-white/5">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Browser Environment</h3>
+                <div className="p-6 border-b border-black/5 dark:border-brand-dark">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Browser Environment</h3>
                 </div>
                 <div className="p-4 h-[250px] flex items-center justify-center">
                   <BrowserChart data={browserData} />
@@ -299,8 +299,8 @@ export default function ClarityDashboard() {
               </GlassCard>
 
               <GlassCard className="flex-1">
-                <div className="p-6 border-b border-black/5 dark:border-white/5">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Device Distribution</h3>
+                <div className="p-6 border-b border-black/5 dark:border-brand-dark">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Device Distribution</h3>
                 </div>
                 <div className="p-6">
                   <DeviceDistributionChart data={deviceData} />
@@ -312,8 +312,8 @@ export default function ClarityDashboard() {
           {/* Bottom Section: Geo & Lists */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <GlassCard>
-              <div className="p-6 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Source Intel</h3>
+              <div className="p-6 border-b border-black/5 dark:border-brand-dark flex items-center justify-between">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Source Intel</h3>
                 <MapPin className="w-4 h-4 text-brand-bright opacity-30" />
               </div>
               <div className="p-4">
@@ -322,12 +322,12 @@ export default function ClarityDashboard() {
             </GlassCard>
 
             <GlassCard className="md:col-span-2">
-              <div className="p-6 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Top Acquisition & Content</h3>
+              <div className="p-6 border-b border-black/5 dark:border-brand-dark flex items-center justify-between">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Top Acquisition & Content</h3>
                 <ExternalLink className="w-4 h-4 text-brand-bright opacity-30" />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2">
-                <div className="p-6 space-y-4 border-r border-black/5 dark:border-white/5">
+                <div className="p-6 space-y-4 border-r border-black/5 dark:border-brand-dark">
                   <p className="text-[10px] font-black text-brand-bright uppercase tracking-widest mb-2">Prime Referrers</p>
                   <div className="space-y-2">
                     {referrers.map((ref, i) => (
