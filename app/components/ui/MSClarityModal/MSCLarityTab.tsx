@@ -458,7 +458,7 @@ export default function ClarityDashboard() {
                 </h3>
                 <MapPin className="w-4 h-4 text-brand-bright opacity-30" />
               </div>
-              <div className="p-4">
+              <div className="p-6">
                 <GeographicalDistributionChart data={geoData} />
               </div>
             </GlassCard>
