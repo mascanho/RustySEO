@@ -264,7 +264,7 @@ export default function ClarityDashboard() {
 
   return (
     <TooltipProvider>
-      <div className="relative  w-full bg-white dark:bg-brand-darker px-4 pt-2  transition-colors duration-500 h-[calc(100vh-14vh)] overflow-y-auto overflow-x-hidden ">
+      <div className="relative w-full  dark:bg-brand-darker px-4 pt-2 pb-6 transition-colors duration-500 h-full overflow-y-auto overflow-x-hidden">
         {/* Ambient Glows */}
         <GlowBlob
           className="top-0 -left-20 w-[600px] h-[600px] opacity-[0.05]"
@@ -275,7 +275,7 @@ export default function ClarityDashboard() {
           color="bg-purple-600"
         />
 
-        <div className="relative z-10 max-w-[1600px] mx-auto space-y-5 pb-4 ">
+        <div className="relative z-10 max-w-[1600px] mx-auto space-y-5 pb-4  ">
           {/* Top Bar */}
           <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-1  border-slate-200 dark:border-brand-dark">
             <div className="space-y-1">
@@ -304,7 +304,7 @@ export default function ClarityDashboard() {
             <button
               onClick={refreshData}
               disabled={isLoading}
-              className="px-6 py-1 rounded-md bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-2 group shadow-xl"
+              className="px-6 py-2 rounded-md bg-brand-bright dark:bg-white text-white dark:text-slate-900 font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-2 group"
             >
               <RefreshCw
                 className={`w-4 h-4 ${isLoading ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"}`}

@@ -96,7 +96,7 @@ import { LuMicroscope } from "react-icons/lu";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
-interface HomeProps {}
+interface HomeProps { }
 
 const Home: React.FC<HomeProps> = () => {
   const [openedModal, { open: openModal, close: closeModal }] =
@@ -515,7 +515,7 @@ const Home: React.FC<HomeProps> = () => {
           onClose={closeModal}
           title=""
           centered
-          // zIndex={"10000"}
+        // zIndex={"10000"}
         >
           <Todo url={debouncedURL} close={closeModal} strategy={strategy} />
         </Modal>
@@ -871,7 +871,10 @@ const Home: React.FC<HomeProps> = () => {
             <Tabs.Panel value="seo">
               <TodoBoard />
             </Tabs.Panel>
-            <Tabs.Panel value="clarity">
+            <Tabs.Panel
+              value="clarity"
+              className="overflow-hidden h-[calc(100vh-140px)]"
+            >
               <ClarityContainer />
             </Tabs.Panel>{" "}
             <Tabs.Panel
