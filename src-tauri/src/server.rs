@@ -118,10 +118,12 @@ pub async fn ask_rusty(prompt: String) -> Result<String, Box<dyn std::error::Err
 pub async fn ask_gemini(prompt: String) -> Result<String, Box<dyn std::error::Error>> {
     let client = Client::new();
 
-    // Gemini API endpoint
-    // let api_key = "AIzaSyALVt4Dn2GjjOZDBHyglejbQEWHrOnq_sU".to_string();
-    let api_key = gemini::get_gemini_api_key()
-        .expect("Failed to get Gemini API key for the RUsty Chat Gemini");
+    // GET THE API KEY
+    let api_key = match gemini::get_gemini_api_key() {
+        Ok(key) => key,
+        Err(e) => return Err(format!("Gemini API key error: {}", e).into()),
+    };
+
     let url = format!(
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-001:generateContent?key={}",
         api_key
@@ -138,11 +140,16 @@ pub async fn ask_gemini(prompt: String) -> Result<String, Box<dyn std::error::Er
 
     let response = client.post(&url).json(&request_body).send().await?;
 
+    if !response.status().is_success() {
+        let error_text = response.text().await?;
+        return Err(format!("Gemini API request failed: {}", error_text).into());
+    }
+
     let response_json: serde_json::Value = response.json().await?;
 
     let full_response = response_json["candidates"][0]["content"]["parts"][0]["text"]
         .as_str()
-        .unwrap_or("No response")
+        .ok_or_else(|| format!("Unexpected Gemini response structure: {:?}", response_json))?
         .to_string();
 
     println!("Response: {}", full_response);
