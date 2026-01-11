@@ -63,7 +63,7 @@ export default function SearchConsoleConfs() {
 
   if (confs === "" || confs === undefined || Object.keys(confs).length === 0) {
     return (
-      <Card className="w-full p-8 h-[24rem] flex flex-col items-center justify-center shadow-none border-0 bg-transparent">
+      <Card className="w-full p-8 flex flex-col items-center justify-center shadow-none border-0 bg-transparent">
         <div className="p-4 bg-gray-50 dark:bg-white/[0.03] rounded-2xl border border-dashed border-gray-200 dark:border-white/10 text-center max-w-sm">
           <Search className="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
           <Text fw={700} size="md" className="text-gray-900 dark:text-gray-100 mb-2">
@@ -78,8 +78,8 @@ export default function SearchConsoleConfs() {
   }
 
   return (
-    <Card className="w-full p-0 h-full shadow-none border-0 mt-0 mx-auto dark:bg-transparent">
-      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 p-0 mt-2">
+    <Card className="w-full p-0 shadow-none border-0 mx-auto dark:bg-transparent">
+      <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 p-0">
         <div className="flex items-start space-x-4 p-4 rounded-xl bg-brand-bright/10 dark:bg-brand-bright/5 border border-brand-bright/20 dark:border-brand-bright/10">
           <Hash className="h-5 w-5 text-brand-bright mt-1" />
           <div>

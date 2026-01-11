@@ -168,7 +168,7 @@ const GeminiSelector = ({ closeGemini }: { closeGemini: () => void }) => {
                 borderRadius: '8px',
                 height: '42px',
                 '&:focus': {
-                  borderColor: theme.colors.blue[5]
+                  borderColor: '#2B6CC4'
                 }
               }
             })}

@@ -51,7 +51,7 @@ export default function PagespeedInsightsApi() {
   }, []);
 
   return (
-    <Card className="w-full mt-4 mx-auto border-0 shadow-none bg-transparent">
+    <Card className="w-full mx-auto border-0 shadow-none bg-transparent">
       <CardHeader className="px-0 pt-0">
         <CardTitle className="text-lg font-bold dark:text-gray-100 flex items-center gap-2">
           <Zap className="w-5 h-5 text-yellow-500" />

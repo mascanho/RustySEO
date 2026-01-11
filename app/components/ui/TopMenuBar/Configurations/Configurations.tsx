@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ActionIcon, Text, Box, Group } from "@mantine/core";
+import { ActionIcon, Text, Box, Group, ScrollArea } from "@mantine/core";
 import PagespeedInsightsApi from "./PagespeedInsigthsApi";
 import GoogleAnalyticsConf from "./GoogleAnalyticsConf";
 import SearchConsoleConfs from "./SearchConsoleConfs";
@@ -91,20 +91,22 @@ const Configurations = ({ close }: { close: () => void }) => {
       </div>
 
       {/* Content Area */}
-      <div className="p-6 min-h-[420px] relative overflow-hidden">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            transition={{ duration: 0.15 }}
-            className="w-full"
-          >
-            {renderContent()}
-          </motion.div>
-        </AnimatePresence>
-      </div>
+      <Box className="relative">
+        <ScrollArea h={480} offsetScrollbars scrollbarSize={6} type="hover" className="px-6 pb-6">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.15 }}
+              className="w-full pt-4"
+            >
+              {renderContent()}
+            </motion.div>
+          </AnimatePresence>
+        </ScrollArea>
+      </Box>
 
       {/* Footer Branding - Optional matching style */}
       <div className="px-6 pb-6 pt-2 flex justify-between items-center opacity-40">
