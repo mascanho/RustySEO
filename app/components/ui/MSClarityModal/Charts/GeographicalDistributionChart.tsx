@@ -6,7 +6,7 @@ import { MapPin } from "lucide-react";
 export function GeographicalDistributionChart({ data }: { data: any[] }) {
   if (!data || data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic">
+      <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic dark:text-white/50">
         No geographical data available
       </div>
     );
@@ -21,7 +21,9 @@ export function GeographicalDistributionChart({ data }: { data: any[] }) {
   return (
     <div className="w-full h-full space-y-3">
       {topCountries.map((country, index) => {
-        const percentage = ((country.sessions / totalSessions) * 100).toFixed(1);
+        const percentage = ((country.sessions / totalSessions) * 100).toFixed(
+          1,
+        );
 
         return (
           <motion.div
@@ -43,7 +45,7 @@ export function GeographicalDistributionChart({ data }: { data: any[] }) {
                 <span className="text-xs font-black tabular-nums text-slate-900 dark:text-white">
                   {country.sessions.toLocaleString()}
                 </span>
-                <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500">
+                <span className="text-[9px] font-bold text-slate-400 dark:text-slate-400">
                   {percentage}%
                 </span>
               </div>
@@ -57,7 +59,7 @@ export function GeographicalDistributionChart({ data }: { data: any[] }) {
                 transition={{
                   duration: 0.8,
                   delay: 0.2 + index * 0.05,
-                  ease: [0.23, 1, 0.32, 1]
+                  ease: [0.23, 1, 0.32, 1],
                 }}
                 className="absolute inset-y-0 left-0 bg-gradient-to-r from-brand-bright to-blue-400 rounded-full shadow-[0_0_8px_rgba(43,108,196,0.4)]"
               />
@@ -72,8 +74,9 @@ export function GeographicalDistributionChart({ data }: { data: any[] }) {
       {/* Summary footer */}
       {data.length > 8 && (
         <div className="pt-3 mt-3 border-t border-slate-200 dark:border-brand-dark">
-          <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest text-center">
-            +{data.length - 8} more countries • {totalSessions.toLocaleString()} total sessions
+          <p className="text-[9px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest text-center">
+            +{data.length - 8} more countries • {totalSessions.toLocaleString()}{" "}
+            total sessions
           </p>
         </div>
       )}

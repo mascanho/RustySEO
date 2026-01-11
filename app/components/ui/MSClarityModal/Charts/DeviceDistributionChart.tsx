@@ -19,7 +19,7 @@ const chartConfig = {
 export function DeviceDistributionChart({ data }: { data: any[] }) {
   if (!data || data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic">
+      <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic dark:text-white/50">
         No device data available
       </div>
     );
@@ -48,7 +48,7 @@ export function DeviceDistributionChart({ data }: { data: any[] }) {
             className="text-[10px] font-bold fill-muted-foreground"
           />
           <ChartTooltip
-            cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+            cursor={{ fill: "rgba(0,0,0,0.05)" }}
             content={<ChartTooltipContent hideLabel />}
           />
           <Bar

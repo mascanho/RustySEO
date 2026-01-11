@@ -4,10 +4,7 @@
 import * as React from "react";
 import { Label, Pie, PieChart } from "recharts";
 
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
@@ -79,7 +76,7 @@ export function BrowserChart({ data }: BrowserChartProps) {
 
   if (!data || data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic">
+      <div className="flex items-center justify-center h-full text-muted-foreground text-xs italic dark:text-white/50">
         No browser data available
       </div>
     );

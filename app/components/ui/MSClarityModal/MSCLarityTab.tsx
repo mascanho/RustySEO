@@ -306,7 +306,7 @@ export default function ClarityDashboard() {
             <button
               onClick={refreshData}
               disabled={isLoading}
-              className="px-6 py-2 rounded-md bg-brand-bright dark:bg-white text-white dark:text-slate-900 font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-2 group"
+              className="px-6 py-2 rounded-md bg-brand-bright dark:bg-white text-white dark:text-brand-darker font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all flex items-center gap-2 group"
             >
               <RefreshCw
                 className={`w-4 h-4 ${isLoading ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500"}`}
@@ -321,7 +321,7 @@ export default function ClarityDashboard() {
               <GlassCard key={i} delay={i * 0.1}>
                 <div className="p-6 space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-300">
                       {stat.label}
                     </span>
                     <div
@@ -334,7 +334,7 @@ export default function ClarityDashboard() {
                     <div className="text-4xl font-black tracking-tighter tabular-nums text-slate-900 dark:text-white">
                       {stat.value}
                     </div>
-                    <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase italic tracking-wider">
+                    <p className="text-[10px] font-bold text-slate-400 dark:text-slate-300 mt-1 uppercase italic tracking-wider">
                       {stat.sub}
                     </p>
                   </div>
@@ -355,7 +355,7 @@ export default function ClarityDashboard() {
                     <h2 className="text-xl font-black italic uppercase tracking-tighter dark:text-white">
                       Friction Intelligence
                     </h2>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">
+                    <p className="text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-widest mt-1">
                       Behavioral Signal Matrix
                     </p>
                   </div>
@@ -382,14 +382,14 @@ export default function ClarityDashboard() {
                               <h3 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-slate-100">
                                 {item.label}
                               </h3>
-                              <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                              <p className="text-[9px] font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider">
                                 {item.description}
                               </p>
                             </div>
                           </div>
                           <Badge
                             variant="outline"
-                            className="text-[10px] font-black rounded-xl py-0 px-3 h-6 tabular-nums bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-brand-dark text-slate-600 dark:text-slate-300"
+                            className="text-[10px] font-black rounded-xl py-0 px-3 h-6 tabular-nums bg-slate-50 dark:bg-brand-darker border-slate-200 dark:border-brand-dark text-slate-600 dark:text-slate-200"
                           >
                             {item.sessions} SESS
                           </Badge>
@@ -398,7 +398,7 @@ export default function ClarityDashboard() {
                         <div className="space-y-4">
                           <div className="flex items-end justify-between">
                             <div className="flex flex-col">
-                              <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em]">
+                              <span className="text-[9px] font-black text-slate-400 dark:text-slate-300 uppercase tracking-[0.2em]">
                                 Intensity
                               </span>
                               <span className="text-2xl font-black tabular-nums text-slate-900 dark:text-white">
@@ -429,7 +429,7 @@ export default function ClarityDashboard() {
             <div className="lg:col-span-4 flex flex-col gap-6">
               <GlassCard className="flex-1">
                 <div className="p-6 border-b border-slate-200 dark:border-brand-dark">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-300">
                     Browser Environment
                   </h3>
                 </div>
@@ -440,7 +440,7 @@ export default function ClarityDashboard() {
 
               <GlassCard className="flex-1">
                 <div className="p-6 border-b border-slate-200 dark:border-brand-dark">
-                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-300">
                     Device Distribution
                   </h3>
                 </div>
@@ -455,7 +455,7 @@ export default function ClarityDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <GlassCard>
               <div className="p-6 border-b border-slate-200 dark:border-brand-dark flex items-center justify-between">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-300">
                   Source Intel
                 </h3>
                 <MapPin className="w-4 h-4 text-brand-bright opacity-30" />
@@ -467,7 +467,7 @@ export default function ClarityDashboard() {
 
             <GlassCard className="md:col-span-2">
               <div className="p-6 border-b border-slate-200 dark:border-brand-dark flex items-center justify-between">
-                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 dark:text-slate-300">
                   Top Acquisition & Content
                 </h3>
                 <ExternalLink className="w-4 h-4 text-brand-bright opacity-30" />
@@ -483,7 +483,7 @@ export default function ClarityDashboard() {
                         key={i}
                         className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-white dark:bg-white/[0.02] hover:bg-brand-bright/5 transition-colors border border-slate-100 dark:border-transparent hover:border-brand-bright/10 group"
                       >
-                        <span className="text-xs font-bold break-all group-hover:text-brand-bright transition-colors  tracking-tight text-slate-800 dark:text-slate-300">
+                        <span className="text-xs font-bold break-all group-hover:text-brand-bright transition-colors  tracking-tight text-slate-800 dark:text-slate-200">
                           {ref.name || "Direct Path"}
                         </span>
                         <span className="text-xs font-black tabular-nums text-slate-900 dark:text-white shrink-0">
@@ -505,10 +505,10 @@ export default function ClarityDashboard() {
                           className="flex items-center justify-between gap-4 p-3 rounded-2xl bg-white dark:bg-white/[0.02] hover:bg-emerald-500/5 transition-colors border border-slate-100 dark:border-transparent group"
                         >
                           <div className="flex flex-col gap-0.5 min-w-0">
-                            <span className="text-[10px] font-bold break-all group-hover:text-emerald-500 transition-colors lowercase tracking-tight text-slate-800 dark:text-slate-300">
+                            <span className="text-[10px] font-bold break-all group-hover:text-emerald-500 transition-colors lowercase tracking-tight text-slate-800 dark:text-slate-200">
                               {page.url}
                             </span>
-                            <span className="text-[8px] font-black text-slate-400 dark:text-slate-500 uppercase">
+                            <span className="text-[8px] font-black text-slate-400 dark:text-slate-300 uppercase">
                               Target Endpoint
                             </span>
                           </div>
