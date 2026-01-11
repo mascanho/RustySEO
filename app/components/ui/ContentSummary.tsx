@@ -82,13 +82,32 @@ const ContentSummary: React.FC<ContentSummaryProps> = ({
 
   useEffect(() => {
     if (keywords && keywords.length > 0 && pageTitle && pageTitle.length > 0) {
-      invoke<string>("get_genai", { query: pageTitle[0] })
-        .then((result) => {
-          setAiContentAnalysis(result);
-        })
-        .catch((error) => {
+      // Add timeout to prevent blocking the crawl process - make AI call optional
+      const timeoutId = setTimeout(async () => {
+        try {
+          // Create a timeout promise
+          const timeoutPromise = new Promise(
+            (_, reject) =>
+              setTimeout(() => reject(new Error("AI request timeout")), 5000), // 5 second timeout
+          );
+
+          // Race between the API call and timeout
+          const result = await Promise.race([
+            invoke<string>("get_genai", { query: pageTitle[0] }),
+            timeoutPromise,
+          ]);
+
+          setAiContentAnalysis(result as string);
+        } catch (error) {
           console.error("Error from get_genai:", error);
-        });
+          // Set a user-friendly message instead of leaving it empty
+          setAiContentAnalysis(
+            "AI analysis unavailable - API may be rate limited or unavailable. Click 'Analyze Content' to retry.",
+          );
+        }
+      }, 2000); // Delay by 2 seconds to ensure crawl is complete
+
+      return () => clearTimeout(timeoutId);
     }
   }, [keywords, pageTitle]);
 
@@ -192,6 +211,25 @@ const ContentSummary: React.FC<ContentSummaryProps> = ({
                 </p>
                 <p>Then select your AI Model</p>
               </div>
+            )}
+            {aiContentAnalysis.includes("unavailable") && (
+              <button
+                onClick={() => {
+                  invoke<string>("get_genai", { query: pageTitle[0] })
+                    .then((result) => {
+                      setAiContentAnalysis(result);
+                    })
+                    .catch((error) => {
+                      console.error("Error from get_genai:", error);
+                      setAiContentAnalysis(
+                        "AI analysis failed. Please try again later.",
+                      );
+                    });
+                }}
+                className="mt-2 px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded transition-colors"
+              >
+                Retry AI Analysis
+              </button>
             )}
           </div>
         </div>

@@ -45,14 +45,17 @@ const usePageSpeedStore = create((set, get) => ({
         pageSpeed?.lighthouseResult?.audits?.["total-byte-weight"]?.score ||
         null,
       domSize:
-        pageSpeed?.lighthouseResult?.audits?.["dom-size"]?.numericValue || null,
+        (pageSpeed?.lighthouseResult?.audits?.["dom-size-insight"] ||
+          pageSpeed?.lighthouseResult?.audits?.["dom-size"])?.numericValue ||
+        null,
       urlRedirects:
         pageSpeed?.lighthouseResult?.audits?.redirects?.details?.items.length ||
         null,
       longTasks:
         pageSpeed?.lighthouseResult?.audits?.["long-tasks"]?.score || null,
       renderBlocking:
-        pageSpeed?.lighthouseResult?.audits?.["render-blocking-resources"]
+        (pageSpeed?.lighthouseResult?.audits?.["render-blocking-insight"] ||
+          pageSpeed?.lighthouseResult?.audits?.["render-blocking-resources"])
           ?.numericValue || null,
       networkRequests:
         pageSpeed?.lighthouseResult?.audits?.["network-requests"]?.score ||

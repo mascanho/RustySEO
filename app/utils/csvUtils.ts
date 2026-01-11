@@ -1,8 +1,11 @@
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeFile } from "@tauri-apps/plugin-fs";
+
 export interface CSVRow {
   [key: string]: any;
 }
 
-export const generateCSV = (data: CSVRow[], filename?: string): string => {
+export const generateCSV = (data: CSVRow[]): string => {
   if (!data || data.length === 0) {
     throw new Error("No data available to export");
   }
@@ -35,35 +38,37 @@ export const generateCSV = (data: CSVRow[], filename?: string): string => {
   return csvContent;
 };
 
-export const downloadCSV = (
-  csvContent: string,
-  filename: string = "data.csv",
-): void => {
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const link = document.createElement("a");
-
-  if (link.download !== undefined) {
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", filename);
-    link.style.visibility = "hidden";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  } else {
-    throw new Error("Your browser does not support downloading files");
-  }
-};
-
-export const exportToCSV = (data: CSVRow[], filename?: string): void => {
+export const exportToCSV = async (
+  data: CSVRow[],
+  filename?: string,
+): Promise<void> => {
   try {
     const csvContent = generateCSV(data);
     const timestamp = new Date().toISOString().split("T")[0];
-    const finalFilename = filename
+    const defaultFileName = filename
       ? `${filename}_${timestamp}.csv`
       : `export_${timestamp}.csv`;
-    downloadCSV(csvContent, finalFilename);
+
+    // Use Tauri's save dialog
+    const filePath = await save({
+      filters: [
+        {
+          name: "CSV File",
+          extensions: ["csv"],
+        },
+      ],
+      defaultPath: defaultFileName,
+    });
+
+    if (filePath) {
+      // Convert string to Uint8Array for Tauri's file system API
+      const encoder = new TextEncoder();
+      const uint8Array = encoder.encode(csvContent);
+      await writeFile(filePath, uint8Array);
+    } else {
+      console.log("User canceled save dialog.");
+      throw new Error("Save dialog was cancelled");
+    }
   } catch (error) {
     console.error("Error exporting CSV:", error);
     throw error;

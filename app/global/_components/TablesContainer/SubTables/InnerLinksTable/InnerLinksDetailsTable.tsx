@@ -191,10 +191,28 @@ const InnerLinksDetailsTable: React.FC<InlinksSubTableProps> = ({
   }
 
   function normalizeUrl(url) {
-    // Remove "https://" and "www." for comparison
-    let normalized = url.replace(/^https?:\/\/(www\.)?/, "");
-    // Ensure the normalized URL starts with "www."
-    return `https://www.${normalized}`;
+    if (!url) return "";
+    try {
+      let u = url.toString().trim().toLowerCase();
+      // Remove protocol
+      u = u.replace(/^(?:https?:\/\/)?/i, "");
+      // Remove www
+      u = u.replace(/^www\./i, "");
+
+      // Remove query params and hash
+      const queryIdx = u.indexOf("?");
+      if (queryIdx !== -1) u = u.substring(0, queryIdx);
+
+      const hashIdx = u.indexOf("#");
+      if (hashIdx !== -1) u = u.substring(0, hashIdx);
+
+      // Remove trailing slash
+      if (u.endsWith("/")) u = u.slice(0, -1);
+      return u;
+    } catch (e) {
+      console.error("Error normalizing URL:", e);
+      return "";
+    }
   }
 
   function getAnchorText(obj, targetUrl) {
@@ -219,7 +237,6 @@ const InnerLinksDetailsTable: React.FC<InlinksSubTableProps> = ({
         return normalizedItemUrl === normalizedTargetUrl;
       })
       .map((item) => item.status);
-
 
     return (
       <span
@@ -248,7 +265,7 @@ ${statusCodes?.[0] === 403 && "text-orange-700"}
     >
       <button
         onClick={exportCSV}
-        className="absolute -top-8   right-1 z-50 text-xs border border-brand-bright dark:border-brand-bright px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors  dark:text-white/50"
+        className="absolute -top-6   right-1 z-50 text-xs border border-brand-bright dark:border-brand-bright px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors  dark:text-white/50"
       >
         Export
       </button>
@@ -256,7 +273,7 @@ ${statusCodes?.[0] === 403 && "text-orange-700"}
         ref={tableRef}
         style={{ width: "100%", borderCollapse: "collapse" }}
       >
-        <thead className="text-xs top-0 sticky">
+        <thead className="text-xs top-6 sticky">
           <tr className="shadow">
             <th
               style={{

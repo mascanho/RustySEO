@@ -73,25 +73,25 @@ pub struct ConfigSettings {
 // Audits struct
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Audits {
-    pub interactive: Audit,
-    #[serde(rename = "render-blocking-resources")]
-    pub render_blocking_resources: Audit,
+    pub interactive: Option<Audit>,
+    #[serde(rename = "render-blocking-resources", alias = "render-blocking-insight")]
+    pub render_blocking_resources: Option<Audit>,
     #[serde(rename = "first-contentful-paint")]
-    pub first_contentful_paint: Audit,
+    pub first_contentful_paint: Option<Audit>,
     #[serde(rename = "largest-contentful-paint")]
-    pub largest_contentful_paint: Audit,
+    pub largest_contentful_paint: Option<Audit>,
     #[serde(rename = "cumulative-layout-shift")]
-    pub cumulative_layout_shift: Audit,
+    pub cumulative_layout_shift: Option<Audit>,
     #[serde(rename = "total-blocking-time")]
-    pub total_blocking_time: Audit,
+    pub total_blocking_time: Option<Audit>,
     #[serde(rename = "total-byte-weight")]
-    pub total_byte_weight: Audit,
-    #[serde(rename = "dom-size")]
-    pub dom_size: Audit,
+    pub total_byte_weight: Option<Audit>,
+    #[serde(rename = "dom-size", alias = "dom-size-insight")]
+    pub dom_size: Option<Audit>,
     #[serde(rename = "server-response-time")]
-    pub server_response_time: Audit,
+    pub server_response_time: Option<Audit>,
     #[serde(rename = "speed-index")]
-    pub speed_index: Audit,
+    pub speed_index: Option<Audit>,
 }
 
 // Categories struct

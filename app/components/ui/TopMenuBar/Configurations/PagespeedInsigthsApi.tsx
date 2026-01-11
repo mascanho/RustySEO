@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { EyeIcon, EyeOffIcon } from "lucide-react";
+import { EyeIcon, EyeOffIcon, Zap, AlertCircle } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import useSettingsStore from "@/store/SettingsStore";
 
@@ -51,42 +51,47 @@ export default function PagespeedInsightsApi() {
   }, []);
 
   return (
-    <Card className="w-full mt-8 mx-auto ml-0 dark:bg-brand-darker border-0 shadow-none">
-      <CardHeader className="-ml-2">
-        <CardTitle>API Key</CardTitle>
-        <CardDescription>Your secret API key. Keep it safe!</CardDescription>
+    <Card className="w-full mx-auto border-0 shadow-none bg-transparent">
+      <CardHeader className="px-0 pt-0">
+        <CardTitle className="text-lg font-bold dark:text-gray-100 flex items-center gap-2">
+          <Zap className="w-5 h-5 text-yellow-500" />
+          PageSpeed API Key
+        </CardTitle>
+        <CardDescription className="dark:text-gray-400">Your secure API key used for fetching PageSpeed Insights data.</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="bg-gray-100 dark:bg-brand-dark p-4 rounded-md font-mono text-sm break-all">
+      <CardContent className="px-0">
+        <div className="bg-gray-50 dark:bg-white/[0.03] p-4 rounded-xl border border-gray-100 dark:border-white/[0.05] font-mono text-sm break-all">
           {fetchedKey ? (
-            isVisible ? (
-              fetchedKey
-            ) : (
-              maskApiKey(fetchedKey)
-            )
+            <div className="flex items-center justify-between">
+              <span className="text-gray-700 dark:text-gray-300">
+                {isVisible ? fetchedKey : maskApiKey(fetchedKey)}
+              </span>
+            </div>
           ) : (
-            <span className="text-gray-500 dark:text-gray-400 text-xs">
-              No API key found, falling back to default one. Generate one and
-              add it in the connectors menu.
-            </span>
+            <div className="flex items-start gap-3 text-amber-600 dark:text-amber-400/80 bg-amber-50/50 dark:bg-amber-500/5 p-3 rounded-lg border border-amber-100 dark:border-amber-500/10">
+              <AlertCircle className="w-4 h-4 mt-0.5" />
+              <span className="text-xs leading-relaxed">
+                No custom API key found. Using shared public limits. For higher reliability, add your own key.
+              </span>
+            </div>
           )}
         </div>
       </CardContent>
-      <CardFooter className="flex justify-end">
+      <CardFooter className="px-0 flex justify-end gap-3 mt-2">
         <Button
           onClick={toggleVisibility}
           variant="outline"
-          className="flex items-center space-x-2 dark:bg-brand-dark"
+          className="flex items-center space-x-2 rounded-lg border-gray-200 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10 dark:text-gray-200 transition-all"
         >
           {isVisible ? (
             <>
               <EyeOffIcon className="h-4 w-4" />
-              <span>Hide API Key</span>
+              <span>Hide Key</span>
             </>
           ) : (
             <>
               <EyeIcon className="h-4 w-4" />
-              <span>Show API Key</span>
+              <span>Show Key</span>
             </>
           )}
         </Button>

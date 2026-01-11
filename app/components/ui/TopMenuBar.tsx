@@ -362,9 +362,14 @@ const TopMenuBar = () => {
         closeOnEscape
         closeOnClickOutside
         onClose={closeGemini}
-        title="Google Gemini"
         centered
         size={"500px"}
+        padding={0}
+        radius="lg"
+        withCloseButton={false}
+        styles={{
+          content: { background: 'transparent' }
+        }}
       >
         <GeminiSelector closeGemini={closeGemini} />
       </Modal>
@@ -375,11 +380,16 @@ const TopMenuBar = () => {
         closeOnEscape
         closeOnClickOutside
         onClose={closeAbout}
-        title="About RustySEO"
         centered
         size={"500px"}
+        padding={0}
+        radius="lg"
+        withCloseButton={false}
+        styles={{
+          content: { background: 'transparent', border: 'none', boxShadow: 'none' }
+        }}
       >
-        <About closeGemini={closeAbout} />
+        <About close={closeAbout} />
       </Modal>
 
       {/* Drawer */}
@@ -469,11 +479,16 @@ const TopMenuBar = () => {
 
       {/* Configurations Modal */}
       <Modal
-        size={"800px"}
+        size={"850px"}
         opened={openedConfs}
         onClose={closeConfs}
-        title="Connector Settings"
         centered
+        padding={0}
+        radius="lg"
+        withCloseButton={false}
+        styles={{
+          content: { background: 'transparent' }
+        }}
       >
         <Configurations close={closeConfs} />
       </Modal>

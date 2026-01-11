@@ -254,7 +254,7 @@ export default function GSCuploadManager() {
   }, []);
 
   return (
-    <section className="w-full max-w-5xl mx-auto h-[670px]  dark:ring-0">
+    <section className="max-w-[800px] w-[750px] mx-auto h-[670px]  dark:ring-0">
       <CardContent className="grid grid-cols-1 gap-6 h-[580px] max-h-[560px]">
         <div className="grid grid-cols-12 gap-6 h-full">
           {/* Left Column - Upload & Settings */}

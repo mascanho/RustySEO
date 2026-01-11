@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::io::Write;
 
-use crate::gemini::{self, Headings};
+use crate::gemini::{self};
 
 use crate::globals::actions;
 
@@ -36,27 +36,28 @@ pub async fn genai(query: String) -> Result<ChatResponse, Box<dyn Error>> {
 
         let gemini_response = gemini::ask_gemini(&query).await;
 
-        let gemini_response = ChatResponse {
-            content: Some(gemini_response.unwrap()),
-            ..Default::default()
-        };
-        println!("Gemini selected, not using Ollama");
-        Ok(gemini_response)
+        match gemini_response {
+            Ok(content) => {
+                let gemini_response = ChatResponse {
+                    content: Some(content),
+                    ..Default::default()
+                };
+                println!("Gemini selected, not using Ollama");
+                Ok(gemini_response)
+            }
+            Err(e) => {
+                println!("Gemini API error: {:?}", e);
+                Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())) as Box<dyn Error>)
+            }
+        }
     } else {
         // get the Ollama model selection
         let model_selection = get_ai_model().trim().to_string(); // Ensure it's a String
-
-        // Generate GEMINI and get the results
-        let results = gemini::greet(&query)
-            .await
-            .expect("Failed to generate gemini");
-        println!("{:?}", results);
 
         // Initialize the HTTP client
         let client = Client::default();
 
         // Create the chat request
-
         let chat_req = ChatRequest::new(vec![
             ChatMessage::system("Answer in one sentence"),
             ChatMessage::user(query.clone()),
@@ -64,7 +65,7 @@ pub async fn genai(query: String) -> Result<ChatResponse, Box<dyn Error>> {
 
         // Retrieve and trim the model selection
         let model = model_selection;
-        println!("Using model: {}", model);
+        println!("Using Ollama model: {}", model);
 
         // Execute the chat request
         let chat_res = client.exec_chat(&model, chat_req.clone(), None).await?;
@@ -90,12 +91,20 @@ pub async fn generate_topics(body: String) -> Result<ChatResponse, Box<dyn Error
     if global_model_selected == "gemini" {
         let gemini_response = gemini::generate_topics(body).await;
 
-        let gemini_response = ChatResponse {
-            content: Some(gemini_response.unwrap()),
-            ..Default::default()
-        };
-        println!("Gemini selected, not using Ollama");
-        Ok(gemini_response)
+        match gemini_response {
+            Ok(content) => {
+                let gemini_response = ChatResponse {
+                    content: Some(content),
+                    ..Default::default()
+                };
+                println!("Gemini selected, not using Ollama");
+                Ok(gemini_response)
+            }
+            Err(e) => {
+                println!("Gemini API error in generate_topics: {:?}", e);
+                Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())) as Box<dyn Error>)
+            }
+        }
     } else {
         // get the Ollama model selection
         let model_selection = get_ai_model().trim().to_string(); // Ensure it's a String
@@ -140,12 +149,20 @@ pub async fn generate_headings(headings: String) -> Result<ChatResponse, Box<dyn
     if global_model_selected == "gemini" {
         let gemini_response = gemini::generate_headings(headings).await;
 
-        let gemini_response = ChatResponse {
-            content: Some(gemini_response.unwrap()),
-            ..Default::default()
-        };
-        println!("Gemini selected, not using Ollama");
-        Ok(gemini_response)
+        match gemini_response {
+            Ok(content) => {
+                let gemini_response = ChatResponse {
+                    content: Some(content),
+                    ..Default::default()
+                };
+                println!("Gemini selected, not using Ollama");
+                Ok(gemini_response)
+            }
+            Err(e) => {
+                println!("Gemini API error in generate_headings: {:?}", e);
+                Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())) as Box<dyn Error>)
+            }
+        }
     } else {
         // get the Ollama model selection
         let model_selection = get_ai_model().trim().to_string(); // Ensure it's a String
@@ -155,7 +172,7 @@ pub async fn generate_headings(headings: String) -> Result<ChatResponse, Box<dyn
 
         // Create the chat request
         let prompt = format!(
-        "You are an amazing SEO expert, given the headings provided improve them and make them better to have better changes of ranking on search engines, and more importantly on google. Follow the latest SEO best practices and use the keywords wisely, output it the same format as submited, do not output anything else besides the headings, if there are duplicated headings ensure to try and make them different whilst keeping the same semanting meaning. The headings are: {:#?}", headings
+        "You are an amazing SEO expert, given the headings provided improve them and make them better to have better changes of ranking on search engines, and more importantly on google. Follow the latest SEO best practices and use the keywords wisely, output it the same format as submited, do not output anything else besides the headings, if there are duplicated headings ensure to try and make them different whilst keeping the same semanting meaning. The headings are: {}", headings
     );
         let chat_req = ChatRequest::new(vec![
             // ChatMessage::system("Output a JSON format, do not add anything else to your reply if it is not inside the JSON format"),
@@ -188,14 +205,22 @@ pub async fn generate_jsonld(jsonld: String) -> Result<ChatResponse, Box<dyn Err
     );
 
     if global_model_selected == "gemini" {
-        let gemini_response = gemini::generate_headings(jsonld).await;
+        let gemini_response = gemini::generate_jsonld(jsonld).await;
 
-        let gemini_response = ChatResponse {
-            content: Some(gemini_response.unwrap()),
-            ..Default::default()
-        };
-        println!("Gemini selected, not using Ollama");
-        Ok(gemini_response)
+        match gemini_response {
+            Ok(content) => {
+                let gemini_response = ChatResponse {
+                    content: Some(content),
+                    ..Default::default()
+                };
+                println!("Gemini selected, not using Ollama");
+                Ok(gemini_response)
+            }
+            Err(e) => {
+                println!("Gemini API error in generate_jsonld: {:?}", e);
+                Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())) as Box<dyn Error>)
+            }
+        }
     } else {
         // get the Ollama model selection
         let model_selection = get_ai_model().trim().to_string(); // Ensure it's a String
@@ -205,7 +230,7 @@ pub async fn generate_jsonld(jsonld: String) -> Result<ChatResponse, Box<dyn Err
 
         // Create the chat request
         let prompt = format!(
-        "You are an amazing SEO expert, given the JSON-LD provided improve it and make it better to have better changes of ranking on search engines, and more importantly on google. Follow the latest SEO best practices and use the keywords wisely, output it the same format as submited, do not output anything else besides it. the json-ld (structured data) is: {:#?}, in case I have no json-ld I'll submit a page body HTML for you to generate the best json-ld for it, below the JSON-Ld output a brief explanation of what the improvements were, do not include ** in your explanation", jsonld
+        "You are an amazing SEO expert, given the JSON-LD provided improve it and make it better to have better changes of ranking on search engines, and more importantly on google. Follow the latest SEO best practices and use the keywords wisely, output it the same format as submited, do not output anything else besides it. the json-ld (structured data) is: {}, in case I have no json-ld I'll submit a page body HTML for you to generate the best json-ld for it, below the JSON-Ld output a brief explanation of what the improvements were, do not include ** in your explanation", jsonld
     );
         let chat_req = ChatRequest::new(vec![
             // ChatMessage::system("Output a JSON format, do not add anything else to your reply if it is not inside the JSON format"),

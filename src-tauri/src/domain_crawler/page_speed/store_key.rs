@@ -6,7 +6,9 @@ use tauri::Emitter;
 use crate::settings;
 
 #[tauri::command]
-pub async fn read_page_speed_bulk_api_key() -> Result<(), String> {
+pub async fn read_page_speed_bulk_api_key(
+    settings_state: tauri::State<'_, crate::AppState>,
+) -> Result<(), String> {
     // Get the config file path
     let file_path: PathBuf = ProjectDirs::from("", "", "rustyseo")
         .ok_or("Failed to get config directory")?
@@ -26,7 +28,12 @@ pub async fn read_page_speed_bulk_api_key() -> Result<(), String> {
     // Create proper TOML update string
     let api_key_update = format!(r#"page_speed_bulk_api_key = "{}""#, api_key);
 
-    settings::settings::override_settings(&api_key_update).await?;
+    let updated_settings = settings::settings::override_settings(&api_key_update).await?;
+
+    // Update the global AppState
+    let mut settings_lock = settings_state.settings.write().await;
+    *settings_lock = updated_settings;
+
     println!("File to merge is: {:#?}", &file_path);
     println!("Updating settings with API key");
 
@@ -56,11 +63,16 @@ pub async fn check_page_speed_bulk() -> Result<PageSpeedDetails, String> {
 pub async fn toggle_page_speed_bulk(
     value: bool,
     app_handle: tauri::AppHandle,
+    settings_state: tauri::State<'_, crate::AppState>,
 ) -> Result<(), String> {
     // Create proper TOML update string (unquoted boolean)
     let state = format!("page_speed_bulk = {}", value);
 
-    settings::settings::override_settings(&state).await?;
+    let updated_settings = settings::settings::override_settings(&state).await?;
+
+    // Update the global AppState immediately
+    let mut settings_lock = settings_state.settings.write().await;
+    *settings_lock = updated_settings;
 
     println!("Page Speed Bulk Check set to: {}", value);
 

@@ -1229,10 +1229,14 @@ export function LogAnalyzer() {
                         />
                       ))
                     ) : (
-                      <TableRow>
+                      <TableRow className="min-h-full h-[calc(100vh-39vh)] max-h-full bg-white">
                         <TableCell
                           colSpan={11}
-                          className="h-24 max-h-24  text-center text-black/50 dark:text-white/50"
+                          className="*:)] h-[calc(100vh-39vh)] max-h-full bg-white text-center text-black/50 dark:text-white/50 dark:bg-brand-darker"
+                          style={{
+                            lineHeight: "calc(100vh - 39vh)",
+                            verticalAlign: "middle",
+                          }}
                         >
                           No log entries found.
                         </TableCell>

@@ -22,7 +22,7 @@ import {
   initialColumnAlignments,
   headerTitles,
 } from "./tableLayout";
-import { TbColumns3 } from "react-icons/tb";
+import { TbColumns3, TbArrowRight, TbAlertTriangle, TbCheck } from "react-icons/tb";
 import DownloadButton from "./DownloadButton";
 import useGlobalCrawlStore, {
   useDataActions,
@@ -115,6 +115,57 @@ const TruncatedCell = memo(
 );
 
 TruncatedCell.displayName = "TruncatedCell";
+
+const LoopCell = memo(({ isLoop }: { isLoop: boolean }) => {
+  return (
+    <div className="flex items-center justify-center w-full h-full">
+      {isLoop ? (
+        <span className="flex items-center gap-1 text-red-500 font-medium">
+          <TbAlertTriangle className="w-3.5 h-3.5" />
+          Yes
+        </span>
+      ) : (
+        <span className="flex items-center gap-1 text-gray-400">
+          <TbCheck className="w-3.5 h-3.5" />
+          No
+        </span>
+      )}
+    </div>
+  );
+});
+
+LoopCell.displayName = "LoopCell";
+
+const ChainCell = memo(({ chain }: { chain: any[] }) => {
+  if (!chain || !Array.isArray(chain) || chain.length === 0) return null;
+
+  return (
+    <div className="flex items-center gap-1.5 w-full overflow-hidden text-xs">
+      {chain.map((hop, i) => (
+        <React.Fragment key={i}>
+          {i > 0 && <TbArrowRight className="text-gray-400 w-3 h-3 flex-shrink-0" />}
+          <div className="flex items-center gap-1 flex-shrink-0 max-w-[200px]">
+            <span
+              className={`px-1 rounded text-[10px] font-mono border ${hop.status_code >= 300 && hop.status_code < 400
+                ? "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700/50"
+                : hop.status_code === 200
+                  ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700/50"
+                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700/50"
+                }`}
+            >
+              {hop.status_code}
+            </span>
+            <span className="truncate text-gray-600 dark:text-gray-300" title={hop.url}>
+              {hop.url}
+            </span>
+          </div>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+});
+
+ChainCell.displayName = "ChainCell";
 
 const ResizableDivider = memo(({ onMouseDown }: ResizableDividerProps) => {
   return (
@@ -213,8 +264,21 @@ const TableRow = memo(
     clickedCell,
     handleCellClick,
   }: TableRowProps) => {
-    const rowData = useMemo(
-      () => [
+    const rowData = useMemo(() => {
+      // Determine if there is a loop
+      let isLoop = false;
+      if (row?.redirect_chain && Array.isArray(row.redirect_chain)) {
+        const seen = new Set<string>();
+        for (const hop of row.redirect_chain) {
+          if (hop.url && seen.has(hop.url)) {
+            isLoop = true;
+            break;
+          }
+          if (hop.url) seen.add(hop.url);
+        }
+      }
+
+      return [
         index + 1,
         row?.original_url || "",
         row?.had_redirect ? "Yes" : "No" || "",
@@ -222,14 +286,10 @@ const TableRow = memo(
         row?.redirection_type || "",
         row?.status || "",
         row?.redirect_count || 0,
-        row?.redirect_chain
-          ? row.redirect_chain
-            .map((hop: any) => `${hop.url} (${hop.status_code})`)
-            .join(" -> ")
-          : "",
-      ],
-      [row, index],
-    );
+        isLoop,
+        row?.redirect_chain || [],
+      ];
+    }, [row, index]);
 
     const visibleItems = useMemo(() => {
       return rowData
@@ -268,7 +328,7 @@ const TableRow = memo(
               )
             }
             style={{
-              padding: "6px 8px",
+              padding: "0px 8px",
               justifyContent:
                 item.alignment === "center"
                   ? "center"
@@ -282,15 +342,29 @@ const TableRow = memo(
               alignItems: "center",
             }}
             className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${isRowClicked
-                ? "bg-blue-600"
-                : index % 2 === 0
-                  ? "bg-white dark:bg-brand-darker"
-                  : "bg-gray-50 dark:bg-brand-dark/30"
+              ? "bg-blue-600"
+              : index % 2 === 0
+                ? "bg-white dark:bg-brand-darker"
+                : "bg-gray-50 dark:bg-brand-dark/30"
               }`}
           >
-            <ContextTableMenu data={item.cell}>
-              <TruncatedCell text={item.cell?.toString()} width="100%" />
-            </ContextTableMenu>
+            {item.originalIndex === 7 ? (
+              <ContextTableMenu data={item.cell ? "Yes" : "No"}>
+                <LoopCell isLoop={item.cell as boolean} />
+              </ContextTableMenu>
+            ) : item.originalIndex === 8 ? (
+              <ContextTableMenu
+                data={(item.cell as any[])
+                  ?.map((h) => `${h.url} (${h.status_code})`)
+                  .join(" -> ")}
+              >
+                <ChainCell chain={item.cell as any[]} />
+              </ContextTableMenu>
+            ) : (
+              <ContextTableMenu data={item.cell}>
+                <TruncatedCell text={item.cell?.toString()} width="100%" />
+              </ContextTableMenu>
+            )}
           </div>
         ))}
       </div>
@@ -431,15 +505,30 @@ const RedirectsTable = ({
 
         const normalizeUrl = (url: string) => {
           if (!url) return "";
-          if (!url.startsWith("http")) url = "https://" + url;
-          if (!url.startsWith("https://www.")) {
-            if (url.startsWith("https://")) {
-              url = "https://www." + url.substring(8);
-            } else {
-              url = "https://www." + url;
-            }
+          try {
+            // Use URL object for more robust parsing if possible, but fallback to string manipulation for partials
+            let u = url.toString().trim().toLowerCase();
+
+            // Remove protocol
+            u = u.replace(/^(?:https?:\/\/)?/i, "");
+            // Remove www
+            u = u.replace(/^www\./i, "");
+
+            // Remove query params and hash
+            const queryIdx = u.indexOf("?");
+            if (queryIdx !== -1) u = u.substring(0, queryIdx);
+
+            const hashIdx = u.indexOf("#");
+            if (hashIdx !== -1) u = u.substring(0, hashIdx);
+
+            // Remove trailing slash
+            if (u.endsWith("/")) u = u.slice(0, -1);
+
+            return u;
+          } catch (e) {
+            console.error("Error normalizing URL:", e);
+            return "";
           }
-          return url.toString().trim().toLowerCase();
         };
 
         const targetUrlNormalized = normalizeUrl(cellContent);
@@ -453,14 +542,21 @@ const RedirectsTable = ({
 
         setInlinks([{ url: cellContent }, innerLinksMatched]);
 
-        const outLinksMatched = rows.filter((r) => {
-          const externalLinks = r?.inoutlinks_status_codes?.external || [];
-          return externalLinks.some(
-            (link: any) => normalizeUrl(link?.url) === targetUrlNormalized,
-          );
-        });
+        setInlinks([{ url: cellContent }, innerLinksMatched]);
 
-        setOutlinks([{ url: cellContent }, outLinksMatched]);
+        // For Outlinks (Links ON this page), we just need the links from the selected row
+        const selectedRow = rows.find((r) => r.url === cellContent);
+        const allOutgoingLinks = [];
+        if (selectedRow) {
+          if (selectedRow.inoutlinks_status_codes?.internal) {
+            allOutgoingLinks.push(...selectedRow.inoutlinks_status_codes.internal);
+          }
+          if (selectedRow.inoutlinks_status_codes?.external) {
+            allOutgoingLinks.push(...selectedRow.inoutlinks_status_codes.external);
+          }
+        }
+
+        setOutlinks([{ url: cellContent }, allOutgoingLinks]);
       }
     },
     [rows, setInlinks, setOutlinks, setSelectedTableURL],

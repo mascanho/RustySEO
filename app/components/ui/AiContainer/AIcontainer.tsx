@@ -244,7 +244,22 @@ const AIcontainer = () => {
         console.error("Failed to save messages to session storage", e);
       }
     } catch (error) {
-      console.error("Error from Ollama:", error);
+      console.error("Error from AI:", error);
+      const errorMessage: Message = {
+        id: Date.now() + 2,
+        role: "assistant",
+        content: `Sorry, I encountered an error: ${typeof error === "string" ? error : "Failed to get response from AI. Please check your connection and API keys."}`,
+      };
+      const finalMessages = [...updatedMessages, errorMessage];
+      setMessages(finalMessages);
+      try {
+        sessionStorage?.setItem(
+          SESSION_STORAGE_KEY,
+          JSON.stringify(finalMessages),
+        );
+      } catch (e) {
+        console.error("Failed to save error message to session storage", e);
+      }
       toast.error("Failed to get response from AI");
     } finally {
       setIsThinking(false);
@@ -314,11 +329,10 @@ const AIcontainer = () => {
                   <Markdown
                     // @ts-ignore
                     ref={bubbleRef}
-                    className={`mb-3 mt-1 p-2 rounded-lg relative pr-2 text-black dark:text-white/90 ${
-                      m.role === "user"
+                    className={`mb-3 mt-1 p-2 rounded-lg relative pr-2 text-black dark:text-white/90 ${m.role === "user"
                         ? "bg-blue-100 dark:bg-blue-900  dark:text-white"
                         : "bg-brand-dark/10 dark:bg-purple-900"
-                    }`}
+                      }`}
                   >
                     {m.content}
                   </Markdown>

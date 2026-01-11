@@ -113,32 +113,8 @@ const HeadingsTable = ({
     }, 500), // Increased debounce delay to 500ms
   ).current;
 
-  useEffect(() => {
-    // Only fetch if we have headings and they've changed
-    if (
-      aiHeadings &&
-      aiHeadings.trim() !== "" &&
-      JSON.stringify(headings) !== JSON.stringify(previousHeadingsRef.current)
-    ) {
-      console.log("🔄 Headings changed, preparing to fetch AI suggestions...");
-      console.log("📝 Previous headings:", previousHeadingsRef.current);
-      console.log("📝 New headings:", headings);
-      debouncedFetchAiHeadings(aiHeadings);
-      previousHeadingsRef.current = headings;
-    } else {
-      console.log("⏭️ Skipping AI fetch:", {
-        hasAiHeadings: !!aiHeadings,
-        hasContent: aiHeadings?.trim() !== "",
-        headingsChanged:
-          JSON.stringify(headings) !==
-          JSON.stringify(previousHeadingsRef.current),
-      });
-    }
-
-    return () => {
-      debouncedFetchAiHeadings.cancel(); // Cancel debounce on unmount
-    };
-  }, [headings, aiHeadings, debouncedFetchAiHeadings]);
+  // Removed automatic AI fetching - now only triggered manually by user
+  // AI suggestions are only generated when user clicks "Improve Headings"
 
   const findDuplicates = (array: string[]) => {
     const count: Record<string, number> = {};
@@ -243,7 +219,8 @@ const HeadingsTable = ({
                     sessionStorage.removeItem(`${existingUuid}_response`);
                     sessionStorage.removeItem(headingsKey);
                   }
-                  debouncedFetchAiHeadings(headingsString);
+                  // Call directly without debouncing for immediate response
+                  debouncedFetchAiHeadings.current(headingsString);
                 }
               }}
               className="w-full text-left px-2 py-1 text-xs text-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-brand-dark cursor-pointer rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"

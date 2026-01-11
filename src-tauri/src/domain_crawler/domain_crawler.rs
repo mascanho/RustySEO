@@ -382,7 +382,8 @@ async fn process_url(
         });
     }
 
-    let internal_external_links = anchor_links::extract_internal_external_links(&body, base_url);
+    let internal_external_links =
+        anchor_links::extract_internal_external_links(&body, &final_url, base_url);
 
     let check_links_status_code = get_links_status_code(
         internal_external_links,
@@ -434,15 +435,15 @@ async fn process_url(
         description: page_description::extract_page_description(&body)
             .unwrap_or_else(|| "".to_string()),
         headings: headings_selector::headings_selector(&body),
-        javascript: javascript_selector::extract_javascript(&body, base_url),
-        images: images_selector::extract_images_with_sizes_and_alts(&body, base_url).await,
+        javascript: javascript_selector::extract_javascript(&body, &final_url),
+        images: images_selector::extract_images_with_sizes_and_alts(&body, &final_url).await,
         status_code,
-        anchor_links: anchor_links::extract_internal_external_links(&body, base_url),
+        anchor_links: anchor_links::extract_internal_external_links(&body, &final_url, base_url),
         inoutlinks_status_codes: check_links_status_code,
         indexability: indexability::extract_indexability(&body),
         alt_tags: alt_tags::get_alt_tags(&body),
         schema: schema_selector::get_schema(&body),
-        css: css_selector::extract_css(&body, base_url.clone()),
+        css: css_selector::extract_css(&body, final_url.clone()),
         iframe: iframe_selector::extract_iframe(&body),
         word_count: get_word_count(&body),
         response_time: Some(response_time),
@@ -489,7 +490,7 @@ async fn process_url(
 
         // Only process links if we haven't reached limits and depth allows
         if depth < MAX_DEPTH && state.total_urls < MAX_URLS_PER_DOMAIN {
-            let links = links_selector::extract_links(&body, base_url);
+            let links = links_selector::extract_links(&body, &final_url, base_url);
             let links_found = links.len();
             if links_found > 0 && state.crawled_urls % 100 == 0 {
                 println!("Found {} links on {} at depth {}", links_found, url, depth);

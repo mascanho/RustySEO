@@ -68,11 +68,18 @@ struct Config {
 
 #[tauri::command]
 async fn crawl(url: String) -> Result<CrawlResult, String> {
+    println!("Tauri crawl command called with URL: {}", url);
     let result = crawler::crawl(url).await;
 
     match result {
-        Ok(result) => Ok(result),
-        Err(err) => Err(err),
+        Ok(result) => {
+            println!("Crawl completed successfully");
+            Ok(result)
+        }
+        Err(err) => {
+            println!("Crawl failed with error: {}", err);
+            Err(err)
+        }
     }
 }
 
@@ -132,6 +139,22 @@ fn get_db_data() -> Result<Vec<crawler::db::ResultRecord>, String> {
 #[tauri::command]
 async fn generate_ai_topics(body: String) -> Result<String, String> {
     match genai::generate_topics(body).await {
+        Ok(response) => Ok(response.content.unwrap_or_default()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+#[tauri::command]
+async fn get_headings_command(ai_headings: String) -> Result<String, String> {
+    match genai::generate_headings(ai_headings).await {
+        Ok(response) => Ok(response.content.unwrap_or_default()),
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+#[tauri::command]
+async fn get_jsonld_command(jsonld: String) -> Result<String, String> {
+    match genai::generate_jsonld(jsonld).await {
         Ok(response) => Ok(response.content.unwrap_or_default()),
         Err(e) => Err(e.to_string()),
     }
@@ -214,6 +237,7 @@ async fn main() {
             commands::set_google_search_console_credentials,
             image_converter::converter::handle_image_conversion,
             gemini::set_gemini_api_key,
+            gemini::get_gemini_config_command,
             downloads::csv::generate_seo_csv,
             generate_ai_topics,
             get_genai,
@@ -236,8 +260,8 @@ async fn main() {
             commands::get_microsoft_clarity_command,
             commands::get_microsoft_clarity_data_command,
             version::version_check_command,
-            gemini::get_headings_command,
-            gemini::get_jsonld_command,
+            get_headings_command,
+            get_jsonld_command,
             commands::add_gsc_data_to_kw_tracking_command,
             commands::fetch_tracked_keywords_command,
             commands::delete_keyword_command,

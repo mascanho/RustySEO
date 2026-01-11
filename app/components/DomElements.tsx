@@ -15,16 +15,31 @@ const DomElements = ({
 }) => {
   const [opened, { close, open }] = useDisclosure(false);
 
-  // Extract score and calculate percentage
-  const score = Math.floor(
-    stat?.lighthouseResult?.audits["dom-size"]?.score * 100,
-  );
+  // Extract node count and calculate score
+  const domAudit =
+    stat?.lighthouseResult?.audits["dom-size-insight"] ||
+    stat?.lighthouseResult?.audits["dom-size"];
+  const nodeCount = domAudit?.numericValue || 0;
 
-  // Determine the label based on the score
+  // Custom score logic: 100% if optimal (<= 800), decreases to 0% at 3000 nodes.
+  const calculateDomScore = (count: number) => {
+    if (!count) return 0;
+    if (count <= 800) return 100;
+    if (count >= 3000) return 0;
+    return Math.floor(100 - ((count - 800) / (3000 - 800)) * 100);
+  };
+
+  const score = stat ? calculateDomScore(nodeCount) : 0;
+
+  // Determine the label based on the number of nodes
   let label = "";
-  if (score >= 80) {
+  if (!stat) {
+    label = "";
+  } else if (nodeCount <= 800) {
+    label = "Optimal";
+  } else if (nodeCount <= 1200) {
     label = "Good";
-  } else if (score >= 50) {
+  } else if (nodeCount <= 1500) {
     label = "Average";
   } else {
     label = "Poor";
@@ -33,9 +48,10 @@ const DomElements = ({
   // Determine the background color and text color based on the label
   const labelClass =
     {
-      Poor: "bg-red-500 text-white",
-      Average: "bg-orange-500 text-white",
+      Optimal: "bg-emerald-500 text-white",
       Good: "bg-green-500 text-white",
+      Average: "bg-orange-500 text-white",
+      Poor: "bg-red-500 text-white",
     }[label] || "bg-gray-200 text-black";
 
   return (
@@ -118,8 +134,9 @@ const DomElements = ({
         </Popover.Target>
         <Popover.Dropdown style={{ pointerEvents: "none" }}>
           <Text size="xs">
-            The number of elements (nodes) in a webpage&apos;s Document Object
-            Model (DOM). A large DOM can negatively impact page performance.
+            The number of elements in the DOM. Optimal is &lt; 800 nodes.
+            Excessive DOM size (&gt; 1500) increases memory usage and slows down
+            layout/style calculations.
           </Text>
         </Popover.Dropdown>
       </Popover>
@@ -153,10 +170,10 @@ const DomElements = ({
             <div className="flex items-center space-x-4">
               <div className="flex items-center">
                 <span className="font-bold text-2xl text-apple-spaceGray/50">
-                  {(stat && score + "%") || "..."}
+                  {stat && !isNaN(score) ? score + "%" : "..."}
                 </span>
                 <p
-                  className={`rounded-full font-semibold ml-2 px-2 text-xs py-[1px] ${!stat && "hidden"} ${labelClass}`}
+                  className={`rounded-full font-semibold ml-2 px-2 text-xs py-[1px] ${(!stat || isNaN(score)) && "hidden"} ${labelClass}`}
                 >
                   {label}
                 </p>
@@ -168,7 +185,7 @@ const DomElements = ({
           onClick={() =>
             openBrowserWindow(
               "https://pagespeed.web.dev/report?url=" +
-                (url || "No URL provided"),
+              (url || "No URL provided"),
             )
           }
           className="flex cursor-pointer"
@@ -178,9 +195,7 @@ const DomElements = ({
               Nodes found:{""}
             </h4>
             <span className="font-semibold text-xs ml-1 text-brand-bright text-apple-spaceGray/50">
-              {stat?.lighthouseResult?.audits?.["dom-size"]?.numericValue
-                ? `${stat.lighthouseResult.audits["dom-size"].numericValue}`
-                : "..."}
+              {domAudit?.numericValue ? `${domAudit.numericValue}` : "..."}
             </span>
           </div>
         </div>

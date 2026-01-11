@@ -96,7 +96,7 @@ import { LuMicroscope } from "react-icons/lu";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
-interface HomeProps {}
+interface HomeProps { }
 
 const Home: React.FC<HomeProps> = () => {
   const [openedModal, { open: openModal, close: closeModal }] =
@@ -239,31 +239,31 @@ const Home: React.FC<HomeProps> = () => {
     setUrlLength([]);
 
     invoke<{
-      links: [];
-      headings: [];
-      page_title: [];
-      page_description: [];
-      canonical_url: [];
-      hreflangs: [];
-      response_code: number;
-      indexation: [];
-      page_schema: [];
-      words_arr: number;
-      reading_time: number;
-      og_details: any[];
-      favicon_url: [];
-      keywords: [];
-      readings: any[];
-      tag_container: any[];
-      images: any[];
-      head_elements: any[];
-      body_elements: any[];
+      links: [string, string][];
+      headings: string[];
+      indexation: string[];
+      page_title: string[];
+      page_description: string[];
+      canonical_url: string[];
+      hreflangs: { lang: string; href: string }[];
+      index_type: string[];
+      page_schema: string[];
+      words_arr: [number, string[], number][];
+      page_speed_results: string[];
+      og_details: Record<string, string | null>;
+      favicon_url: string[];
+      keywords: [string, number][][];
+      readings: [number, string][];
+      google_tag_manager: string[];
+      tag_container: string[];
+      images: { alt_text: string; link: string; size_mb: number }[];
+      body_elements: string[];
       robots: string;
-      ratio: any;
-      page_rank: any[];
-      charset_arr: any[];
-      video: any[];
-      url_length: any[];
+      ratio: [number, number, number][];
+      page_rank: number[];
+      charset_arr: string[];
+      video: string[];
+      url_length: number[];
     }>("crawl", { url })
       .then((result) => {
         handleLinkStatusCheck(url);
@@ -275,11 +275,15 @@ const Home: React.FC<HomeProps> = () => {
         setPageDescription(result.page_description);
         setCanonical(result.canonical_url);
         setHreflangs(result.hreflangs);
-        setResponseCode(result.response_code);
+        // Note: response_code is not returned by crawl function
+        // It might be handled by handleLinkStatusCheck or other means
         setIndexation(result.indexation);
         setPageSchema(result.page_schema);
         setWordCount(result.words_arr);
-        setReadingTime(result.reading_time);
+        // Extract reading time from words_arr if available
+        if (result.words_arr && result.words_arr.length > 0) {
+          setReadingTime(result.words_arr[0][2]);
+        }
         setOpenGraphDetails(result.og_details);
         setFavicon_url(result.favicon_url);
         setKeywords(result.keywords);
@@ -295,7 +299,9 @@ const Home: React.FC<HomeProps> = () => {
         setVideo(result.video);
         setUrlLength(result.url_length);
       })
-      .catch(console.error)
+      .catch((error) => {
+        console.error("Crawl error:", error);
+      })
       .finally(() => {
         console.log("FINNALY IT FINISHED CRAAWLING");
         // Add a + 1 to the number of crawels on the sessions storage
@@ -509,7 +515,7 @@ const Home: React.FC<HomeProps> = () => {
           onClose={closeModal}
           title=""
           centered
-          // zIndex={"10000"}
+        // zIndex={"10000"}
         >
           <Todo url={debouncedURL} close={closeModal} strategy={strategy} />
         </Modal>
@@ -865,10 +871,16 @@ const Home: React.FC<HomeProps> = () => {
             <Tabs.Panel value="seo">
               <TodoBoard />
             </Tabs.Panel>
-            <Tabs.Panel value="clarity">
+            <Tabs.Panel
+              value="clarity"
+              className="overflow-hidden h-[calc(100vh-140px)]"
+            >
               <ClarityContainer />
             </Tabs.Panel>{" "}
-            <Tabs.Panel value="kws">
+            <Tabs.Panel
+              value="kws"
+              className="h-[calc(100vh-7rem)] pt-9 dark:bg-brand-darker overflow-hidden"
+            >
               <KeywordAnalytics />
             </Tabs.Panel>
             <Tabs.Panel
