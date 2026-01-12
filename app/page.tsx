@@ -96,7 +96,7 @@ import { LuMicroscope } from "react-icons/lu";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
-interface HomeProps { }
+interface HomeProps {}
 
 const Home: React.FC<HomeProps> = () => {
   const [openedModal, { open: openModal, close: closeModal }] =
@@ -515,7 +515,7 @@ const Home: React.FC<HomeProps> = () => {
           onClose={closeModal}
           title=""
           centered
-        // zIndex={"10000"}
+          // zIndex={"10000"}
         >
           <Todo url={debouncedURL} close={closeModal} strategy={strategy} />
         </Modal>
@@ -678,7 +678,10 @@ const Home: React.FC<HomeProps> = () => {
                 </Tabs.Tab> */}
               </Tabs.List>
             </div>
-            <Tabs.Panel value="first" className="h-full overflow-y-auto side-scrollbar pb-20">
+            <Tabs.Panel
+              value="first"
+              className="h-full overflow-y-auto side-scrollbar pb-20"
+            >
               {/* WIDGET SECTION */}
 
               <div
@@ -837,7 +840,10 @@ const Home: React.FC<HomeProps> = () => {
                 />
               </main>
             </Tabs.Panel>
-            <Tabs.Panel value="third" className="h-full overflow-y-auto side-scrollbar">
+            <Tabs.Panel
+              value="third"
+              className="h-full overflow-y-auto side-scrollbar"
+            >
               <SEOImprovements
                 pageTitle={pageTitle}
                 // seo={seoPageSpeed}
@@ -855,26 +861,32 @@ const Home: React.FC<HomeProps> = () => {
                 linkStatusCodes={linkStatusCodes}
               />
             </Tabs.Panel>
-            <Tabs.Panel value="fourth" className="h-full overflow-y-auto side-scrollbar">
+            <Tabs.Panel
+              value="fourth"
+              className="h-full overflow-y-auto side-scrollbar"
+            >
               <TaskManagerContainer strategy={strategy} />
             </Tabs.Panel>
-            <Tabs.Panel value="fifth" className="h-full overflow-y-auto side-scrollbar">
+            <Tabs.Panel
+              value="fifth"
+              className="h-full overflow-y-auto side-scrollbar"
+            >
               <CrawlHistory
                 crawl={handleClick}
                 loading={loading}
                 dbdata={DBDATA}
               />
             </Tabs.Panel>
-            <Tabs.Panel value="analytics" className="h-full pt-9 overflow-hidden">
+            <Tabs.Panel value="analytics" className="h-full overflow-hidden">
               <Analytics />
             </Tabs.Panel>
-            <Tabs.Panel value="seo" className="h-full overflow-y-auto side-scrollbar">
+            <Tabs.Panel
+              value="seo"
+              className="h-full overflow-y-auto side-scrollbar"
+            >
               <TodoBoard />
             </Tabs.Panel>
-            <Tabs.Panel
-              value="clarity"
-              className="overflow-hidden h-full"
-            >
+            <Tabs.Panel value="clarity" className="overflow-hidden h-full">
               <ClarityContainer />
             </Tabs.Panel>{" "}
             <Tabs.Panel
@@ -883,10 +895,7 @@ const Home: React.FC<HomeProps> = () => {
             >
               <KeywordAnalytics />
             </Tabs.Panel>
-            <Tabs.Panel
-              value="gsc"
-              className="overflow-hidden h-full "
-            >
+            <Tabs.Panel value="gsc" className="overflow-hidden h-full ">
               <GSCcontainer />
             </Tabs.Panel>
             <Tabs.Panel value="semrush" className="h-full overflow-hidden">
@@ -913,7 +922,10 @@ const Home: React.FC<HomeProps> = () => {
             <Tabs.Panel value="content" className="h-full overflow-hidden">
               <ContentPlannerContainer />
             </Tabs.Panel>{" "}
-            <Tabs.Panel value="topicModeling" className="h-full overflow-hidden">
+            <Tabs.Panel
+              value="topicModeling"
+              className="h-full overflow-hidden"
+            >
               <TopicModelingContainer />
             </Tabs.Panel>{" "}
           </Tabs>

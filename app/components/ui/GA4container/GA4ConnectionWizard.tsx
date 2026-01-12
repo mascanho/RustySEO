@@ -261,7 +261,7 @@ export default function GA4ConnectionWizard({
               <div className="pt-4">
                 <Button
                   onClick={handleNext}
-                  className="w-full bg-orange-600 hover:bg-orange-700 text-white py-5 rounded-xl group text-sm"
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white py-5 rounded-xl group text-sm dark:bg-orange-600 dark:text-white dark:hover:bg-orange-600"
                 >
                   Get Started
                   <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -342,7 +342,7 @@ export default function GA4ConnectionWizard({
                 </Button>
                 <Button
                   onClick={handleNext}
-                  className="flex-[2] bg-orange-600 hover:bg-orange-700 text-white py-5 rounded-xl text-xs dark:hover:bg-orange-600 dark:hover:text-white"
+                  className="flex-[2] bg-orange-600 hover:bg-orange-700 text-white py-5 rounded-xl text-xs dark:hover:bg-orange-600 dark:hover:text-white dark:bg-orange-600 dark:text-white"
                 >
                   Continue
                 </Button>
