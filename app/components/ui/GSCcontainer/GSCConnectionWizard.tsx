@@ -310,7 +310,7 @@ export default function GSCConnectionWizard({
                         setConfig({ ...config, clientId: e.target.value })
                       }
                       placeholder="xxx-xxx.apps.googleusercontent.com"
-                      className="bg-gray-50 dark:bg-brand-dark border-gray-200 dark:border-brand-dark py-6"
+                      className="bg-gray-50 dark:bg-brand-dark border-gray-200 dark:border-brand-dark py-6 dark:text-white"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -323,7 +323,7 @@ export default function GSCConnectionWizard({
                         setConfig({ ...config, projectId: e.target.value })
                       }
                       placeholder="my-awesome-project"
-                      className="bg-gray-50 dark:bg-brand-dark border-gray-200 dark:border-brand-dark py-6"
+                      className="bg-gray-50 dark:bg-brand-dark border-gray-200 dark:border-brand-dark py-6 dark:text-white"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -337,7 +337,7 @@ export default function GSCConnectionWizard({
                         setConfig({ ...config, clientSecret: e.target.value })
                       }
                       placeholder="GOCSPX-xxxxxxxxxxxxxxxx"
-                      className="bg-gray-50 dark:bg-brand-dark border-gray-200 dark:border-brand-dark py-6"
+                      className="bg-gray-50 dark:text-white  dark:bg-brand-dark border-gray-200 dark:border-brand-dark py-6"
                     />
                   </div>
                 </div>
