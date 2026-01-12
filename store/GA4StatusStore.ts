@@ -50,7 +50,7 @@ const useGA4StatusStore = create<GA4StatusState>((set, get) => ({
 
     // Initial data state
     analyticsData: [],
-    startDate: new Date(2022, 0, 1),
+    startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
     endDate: new Date(),
     selectedDimension: "general",
 

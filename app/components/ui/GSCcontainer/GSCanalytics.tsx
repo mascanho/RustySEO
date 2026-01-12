@@ -56,7 +56,7 @@ const GSCanalytics = () => {
 
   useEffect(() => {
     if (!startDate) {
-      setStartDate(subDays(new Date(), 28));
+      setStartDate(subDays(new Date(), 7));
     }
     if (!endDate) {
       setEndDate(new Date());

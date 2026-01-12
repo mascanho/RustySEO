@@ -152,7 +152,9 @@ export default function GA4ConnectionWizard({
         },
       });
 
-      toast.success("Google Analytics connected successfully!");
+      toast.success(
+        "Google Analytics connected successfully! Please refresh the table.",
+      );
       onComplete();
     } catch (error) {
       console.error("Finalize error:", error);
@@ -220,9 +222,9 @@ export default function GA4ConnectionWizard({
               initial="enter"
               animate="center"
               exit="exit"
-              className="flex flex-col h-full text-center"
+              className="flex flex-col h-full text-left"
             >
-              <div className="flex-1 flex flex-col items-center justify-center space-y-4">
+              <div className="flex-1 flex flex-col items-start justify-center space-y-4">
                 <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-full">
                   <PieChart className="h-10 w-10 text-orange-600 dark:text-orange-400" />
                 </div>
@@ -356,9 +358,9 @@ export default function GA4ConnectionWizard({
               initial="enter"
               animate="center"
               exit="exit"
-              className="flex flex-col h-full text-center"
+              className="flex flex-col h-full text-left"
             >
-              <div className="flex-1 flex flex-col items-center justify-center space-y-6">
+              <div className="flex-1 flex flex-col items-start justify-center space-y-6">
                 <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-full animate-pulse">
                   <Key className="h-10 w-10 text-orange-600 dark:text-orange-400" />
                 </div>

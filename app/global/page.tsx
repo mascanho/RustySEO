@@ -278,7 +278,7 @@ export default function Page() {
           {activeTab === "analytics" && (
             <Tabs.Panel
               value="analytics"
-              className="pt-9 dark:bg-brand-darker mb-0 h-[calc(100vh-7rem)]"
+              className="pt-8 dark:bg-brand-darker mb-0 h-[calc(100vh-7rem)]"
             >
               <Analytics />
             </Tabs.Panel>

@@ -70,8 +70,8 @@ const useGSCStatusStore = create<GSCStatusState>((set, get) => ({
   showInTable: false,
   data: [],
   selectedURLDetails: null,
-  startDate: null,
-  endDate: null,
+  startDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+  endDate: new Date(),
 
   setStartDate: (date) => set({ startDate: date }),
   setEndDate: (date) => set({ endDate: date }),

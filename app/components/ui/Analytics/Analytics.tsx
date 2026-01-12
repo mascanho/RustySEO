@@ -48,7 +48,7 @@ const Analytics = () => {
 
   if (!isConfigured) {
     return (
-      <div className="flex flex-col items-center justify-center max-w-2xl mx-auto text-center px-6 flex-1 h-full">
+      <div className="flex flex-col justify-center max-w-2xl mx-auto px-6 flex-1 h-full">
         <AnimatePresence mode="wait">
           {!isWizardOpen ? (
             <motion.div
@@ -56,7 +56,7 @@ const Analytics = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="flex flex-col items-center"
+              className="flex flex-col items-start text-left"
             >
               <div className="p-6 bg-orange-50 dark:bg-orange-900/20 rounded-3xl mb-8">
                 <BarChart3 className="h-16 w-16 text-orange-600 dark:text-orange-400" />
