@@ -47,7 +47,7 @@ const Analytics = () => {
 
   if (!isConfigured) {
     return (
-      <div className="flex flex-col items-center justify-center max-w-2xl mx-auto text-center px-6 flex-1 h-[90vh]">
+      <div className="flex flex-col items-center justify-center max-w-2xl mx-auto text-center px-6 flex-1 h-full">
         <div className="p-6 bg-orange-50 dark:bg-orange-900/20 rounded-3xl mb-8">
           <BarChart3 className="h-16 w-16 text-orange-600 dark:text-orange-400" />
         </div>
@@ -98,7 +98,7 @@ const Analytics = () => {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] p-2 space-y-2 overflow-hidden">
+    <div className="flex flex-col h-full p-2 space-y-2 overflow-hidden">
       <div className="flex items-center justify-between mb-2 flex-shrink-0 px-1">
         <div className="flex items-center gap-2">
           <div className="p-1.5 bg-orange-50 dark:bg-orange-900/30 rounded-lg">
