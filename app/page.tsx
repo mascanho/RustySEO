@@ -879,7 +879,7 @@ const Home: React.FC<HomeProps> = () => {
             </Tabs.Panel>{" "}
             <Tabs.Panel
               value="kws"
-              className="h-full pt-4 dark:bg-brand-darker overflow-hidden"
+              className="h-full pt-0 dark:bg-brand-darker overflow-hidden"
             >
               <KeywordAnalytics />
             </Tabs.Panel>
