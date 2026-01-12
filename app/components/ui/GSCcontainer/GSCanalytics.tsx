@@ -12,7 +12,9 @@ import {
   Calendar as CalendarIcon,
   Download,
   Loader2,
+  ArrowRight,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { UniversalKeywordTable } from "../Shared/UniversalKeywordTable";
 import { ColumnDef } from "@tanstack/react-table";
 import DeepCrawlQueryContextMenu from "@/app/global/_components/Sidebar/GSCRankingInfo/DeepCrawlQueryContextMenu";
@@ -296,20 +298,7 @@ const GSCanalytics = () => {
 
   return (
     <div className="px-2 h-[calc(100vh-9rem)] flex flex-col dark:text-white/50">
-      <Dialog
-        open={openedWizard}
-        onOpenChange={(open) => !open && closeWizard()}
-      >
-        <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-lg z-[10001]">
-          <GSCConnectionWizard
-            onComplete={() => {
-              closeWizard();
-              handleRefreshGSC();
-            }}
-            onClose={closeWizard}
-          />
-        </DialogContent>
-      </Dialog>
+
 
       <div className="flex items-center justify-between mb-2 flex-shrink-0 px-1">
         <div className="flex items-center gap-2">
@@ -341,25 +330,54 @@ const GSCanalytics = () => {
 
       <div className="flex-1 min-h-0">
         {!isConfigured ? (
-          <div className="h-full flex flex-col items-center justify-center text-center space-y-6 bg-gray-50/50 dark:bg-brand-darker/50 rounded-3xl border-2 border-dashed border-gray-200 dark:border-brand-dark">
-            <div className="p-6 bg-white dark:bg-brand-dark rounded-full shadow-xl">
-              <LogIn className="h-12 w-12 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div className="max-w-xs space-y-2">
-              <h2 className="text-xl font-bold dark:text-white">
-                Connect your data
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Integrate Google Search Console to see your website's
-                performance directly in RustySEO.
-              </p>
-            </div>
-            <Button
-              onClick={openWizard}
-              className="bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-8 py-6 text-lg font-bold shadow-xl shadow-blue-500/30 transition-all active:scale-95"
-            >
-              Get Started
-            </Button>
+          <div className="h-full flex flex-col justify-center max-w-2xl mx-auto px-6">
+            <AnimatePresence mode="wait">
+              {!openedWizard ? (
+                <motion.div
+                  key="intro"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="flex flex-col items-center text-center"
+                >
+                  <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-3xl mb-8">
+                    <LogIn className="h-16 w-16 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <h1 className="text-3xl font-bold mb-4 dark:text-white">
+                    Connect Search Console
+                  </h1>
+                  <p className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed max-w-md">
+                    Integrate Google Search Console to see your website's performance,
+                    indexing status, and keyword rankings directly in RustySEO.
+                  </p>
+                  <Button
+                    onClick={openWizard}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 rounded-2xl text-lg font-bold shadow-lg shadow-blue-500/30 dark:shadow-none transition-all hover:scale-[1.02] active:scale-[0.98] group"
+                  >
+                    Get Started
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="wizard"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="w-full flex justify-center"
+                >
+                  <div className="w-full max-w-lg bg-white dark:bg-brand-darker rounded-2xl shadow-2xl border border-gray-100 dark:border-brand-dark overflow-hidden">
+                    <GSCConnectionWizard
+                      onComplete={() => {
+                        closeWizard();
+                        handleRefreshGSC();
+                      }}
+                      onClose={closeWizard}
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         ) : (
           <UniversalKeywordTable

@@ -226,9 +226,9 @@ export default function GSCConnectionWizard({
               initial="enter"
               animate="center"
               exit="exit"
-              className="flex flex-col h-full text-center"
+              className="flex flex-col h-full text-left"
             >
-              <div className="flex-1 flex flex-col items-center justify-center space-y-6">
+              <div className="flex-1 flex flex-col items-start justify-center space-y-6">
                 <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-full">
                   <ShieldCheck className="h-12 w-12 text-green-600 dark:text-green-400" />
                 </div>
@@ -368,9 +368,9 @@ export default function GSCConnectionWizard({
               initial="enter"
               animate="center"
               exit="exit"
-              className="flex flex-col h-full text-center"
+              className="flex flex-col h-full text-left"
             >
-              <div className="flex-1 flex flex-col items-center justify-center space-y-8">
+              <div className="flex-1 flex flex-col items-start justify-center space-y-8">
                 <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-full animate-pulse">
                   <Key className="h-16 w-16 text-blue-600 dark:text-blue-400" />
                 </div>
@@ -443,11 +443,10 @@ export default function GSCConnectionWizard({
                     <button
                       key={prop}
                       onClick={() => setSelectedProperty(prop)}
-                      className={`w-full p-4 rounded-xl border text-left transition-all flex items-center justify-between ${
-                        selectedProperty === prop
-                          ? "bg-blue-50 dark:bg-blue-900/30 border-blue-500 dark:border-blue-400 shadow-sm"
-                          : "bg-gray-50 dark:bg-brand-dark border-gray-100 dark:border-brand-dark hover:border-gray-300"
-                      }`}
+                      className={`w-full p-4 rounded-xl border text-left transition-all flex items-center justify-between ${selectedProperty === prop
+                        ? "bg-blue-50 dark:bg-blue-900/30 border-blue-500 dark:border-blue-400 shadow-sm"
+                        : "bg-gray-50 dark:bg-brand-dark border-gray-100 dark:border-brand-dark hover:border-gray-300"
+                        }`}
                     >
                       <div className="flex items-center gap-3">
                         <Globe
