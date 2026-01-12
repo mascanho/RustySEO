@@ -106,7 +106,7 @@ const generateLogs = (
 
   async function get_settings() {
     const settings = await invoke<any>("get_settings_command");
-    console.log(settings, "These are the settings");
+    // console.log(settings, "These are the settings");
     return settings;
   }
 
@@ -137,7 +137,10 @@ const generateLogs = (
     {
       id: now + 4,
       timestamp,
-      level: isGa4Configured || (ga4ID !== null && ga4ID !== "") ? "success" : "error",
+      level:
+        isGa4Configured || (ga4ID !== null && ga4ID !== "")
+          ? "success"
+          : "error",
       message:
         isGa4Configured || (ga4ID !== null && ga4ID !== "")
           ? "Google Analytics: Enabled"

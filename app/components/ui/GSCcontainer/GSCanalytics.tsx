@@ -207,10 +207,6 @@ const GSCanalytics = () => {
   }, [refreshStatus]);
 
   useEffect(() => {
-    console.log("GSC Status updated:", { isConfigured, credentials });
-  }, [isConfigured, credentials]);
-
-  useEffect(() => {
     if (isConfigured) {
       handleFetchGSCdataFromDB();
     }
@@ -298,8 +294,6 @@ const GSCanalytics = () => {
 
   return (
     <div className="px-2 h-[calc(100vh-9rem)] flex flex-col dark:text-white/50">
-
-
       {isConfigured && (
         <div className="flex items-center justify-between mb-2 flex-shrink-0 px-1">
           <div className="flex items-center gap-2">
@@ -347,8 +341,9 @@ const GSCanalytics = () => {
                     Connect Search Console
                   </h1>
                   <p className="text-gray-500 dark:text-gray-400 mb-8 leading-relaxed max-w-md">
-                    Integrate Google Search Console to see your website's performance,
-                    indexing status, and keyword rankings directly in RustySEO.
+                    Integrate Google Search Console to see your website's
+                    performance, indexing status, and keyword rankings directly
+                    in RustySEO.
                   </p>
                   <Button
                     onClick={openWizard}
