@@ -25,6 +25,18 @@ interface GA4StatusState {
     clearStatus: () => void;
     refresh: () => Promise<void>;
 
+    // Data persistence
+    analyticsData: any;
+    startDate: Date | null;
+    endDate: Date | null;
+    selectedDimension: string;
+
+    // Data Actions
+    setAnalyticsData: (data: any) => void;
+    setStartDate: (date: Date | null) => void;
+    setEndDate: (date: Date | null) => void;
+    setSelectedDimension: (dimension: string) => void;
+
     // Getters
     getIsConfigured: () => boolean;
 }
@@ -35,6 +47,17 @@ const useGA4StatusStore = create<GA4StatusState>((set, get) => ({
     isLoading: false,
     lastChecked: null,
     error: null,
+
+    // Initial data state
+    analyticsData: [],
+    startDate: new Date(2022, 0, 1),
+    endDate: new Date(),
+    selectedDimension: "general",
+
+    setAnalyticsData: (analyticsData) => set({ analyticsData }),
+    setStartDate: (startDate) => set({ startDate }),
+    setEndDate: (endDate) => set({ endDate }),
+    setSelectedDimension: (selectedDimension) => set({ selectedDimension }),
 
     setCredentials: (credentials) =>
         set((state) => ({
@@ -77,6 +100,8 @@ const useGA4StatusStore = create<GA4StatusState>((set, get) => ({
             isLoading: false,
             lastChecked: null,
             error: null,
+            analyticsData: [],
+            selectedDimension: "general",
         }),
 
     refresh: async () => {

@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { format, addDays, isValid, parse } from "date-fns";
 import { Search, Calendar as CalendarIcon, RefreshCw } from "lucide-react";
 
@@ -18,14 +18,20 @@ import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import { UniversalKeywordTable } from "../Shared/UniversalKeywordTable";
 import { ColumnDef } from "@tanstack/react-table";
+import useGA4StatusStore from "@/store/GA4StatusStore";
 
 export default function AnalyticsTable() {
-  const [analyticsData, setAnalyticsData] = useState<any>([]);
-  // Initialize dates
-  const [startDate, setStartDate] = useState<Date | null>(new Date(2022, 0, 1));
-  const [endDate, setEndDate] = useState<Date | null>(addDays(new Date(), 0)); // Default to today
+  const {
+    analyticsData,
+    setAnalyticsData,
+    startDate,
+    setStartDate,
+    endDate,
+    setEndDate,
+    selectedDimension,
+    setSelectedDimension,
+  } = useGA4StatusStore();
 
-  const [selectedDimension, setSelectedDimension] = useState("general");
   const [isLoading, setIsLoading] = useState(false);
 
   // Helper to format date for input value (yyyy-MM-dd)
@@ -210,19 +216,8 @@ export default function AnalyticsTable() {
   // Remove auto-fetch on mount - data will only load when user explicitly requests it
 
   // Only refetch when dates change if user has already fetched data
-  useEffect(() => {
-    // NOTE: Only auto-fetch when dates change if data has already been loaded
-    // to avoid initial automatic fetch on component mount
-    if (startDate && endDate && analyticsData.length > 0) {
-      handleFilteredAnalytics(selectedDimension);
-    }
-  }, [
-    startDate,
-    endDate,
-    selectedDimension,
-    handleFilteredAnalytics,
-    analyticsData.length,
-  ]);
+  // REMOVED: Auto-fetch logic causing data to reload on tab swap. 
+  // User must explicitly click refresh to update data after changing dates.
 
   // --- Data Transformation ---
 

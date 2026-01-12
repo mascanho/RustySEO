@@ -51,6 +51,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { useClarityStore } from "@/store/ClarityStore";
 
 const GlassCard = ({ children, className = "", delay = 0 }) => (
   <motion.div
@@ -83,9 +84,8 @@ const GlowBlob = ({ className = "", color = "bg-brand-bright" }) => (
 );
 
 export default function ClarityDashboard() {
-  const [data, setData] = useState<any>([]);
+  const { data, setData, lastRefreshed, setLastRefreshed } = useClarityStore();
   const [isLoading, setIsLoading] = useState(false);
-  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
 
   const refreshData = async () => {
     setIsLoading(true);
@@ -102,10 +102,6 @@ export default function ClarityDashboard() {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    refreshData();
-  }, []);
 
   // Process user behavior data
   const behaviorMetrics = useMemo(() => {
