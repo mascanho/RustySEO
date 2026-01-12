@@ -298,6 +298,7 @@ async fn main() {
             loganalyser::database::get_stored_logs_command,
             loganalyser::database::create_project_command,
             loganalyser::database::get_logs_by_project_name_command,
+            commands::get_google_analytics_id,
             loganalyser::database::get_all_projects_command,
             loganalyser::database::delete_project_command,
             loganalyser::database::get_logs_by_project_name_for_processing_command,

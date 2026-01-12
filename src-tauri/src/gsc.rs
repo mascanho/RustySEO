@@ -48,7 +48,7 @@ pub async fn check_google_search_console() {
     let (pkce_code_challenge, pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
 
     // Generate the authorization URL and CSRF token
-    let (auth_url, _csrf_token) = client
+    let (_auth_url, _csrf_token) = client
         .authorize_url(CsrfToken::new_random)
         .add_scope(oauth2::Scope::new(
             "https://www.googleapis.com/auth/webmasters".to_string(),

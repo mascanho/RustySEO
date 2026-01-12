@@ -164,6 +164,15 @@ pub async fn get_ga4_properties(token: String) -> Result<Vec<Value>, String> {
 }
 
 #[tauri::command]
+pub async fn get_google_analytics_id() -> Result<String, String> {
+    let credentials = libs::read_ga4_credentials_file().await?;
+    if credentials.property_id.is_empty() {
+        return Err("No property ID found".to_string());
+    }
+    Ok(credentials.property_id)
+}
+
+#[tauri::command]
 pub async fn get_google_analytics_command(
     search_type: Vec<serde_json::Value>,
     date_ranges: Vec<DateRange>,

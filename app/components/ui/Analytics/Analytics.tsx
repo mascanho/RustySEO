@@ -18,7 +18,7 @@ import useGA4StatusStore from "@/store/GA4StatusStore";
 
 const Analytics = () => {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
-  const { isConfigured, isLoading, refresh } = useGA4StatusStore();
+  const { isConfigured, isLoading, refresh, credentials } = useGA4StatusStore();
 
   useEffect(() => {
     refresh();
@@ -111,7 +111,11 @@ const Analytics = () => {
               Google Analytics 4
             </h1>
             <p className="text-xs text-gray-500 dark:text-gray-400 leading-none">
-              Real-time data
+              {isConfigured
+                ? credentials?.property_id
+                  ? `Connected to ${credentials.property_id}`
+                  : "Connected"
+                : "Not connected"}
             </p>
           </div>
         </div>
@@ -132,14 +136,16 @@ const Analytics = () => {
       </div>
 
       {isWizardOpen && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 dark:bg-brand-darker/80 backdrop-blur-sm">
-          <GA4ConnectionWizard
-            onComplete={() => {
-              setIsWizardOpen(false);
-              refresh();
-            }}
-            onClose={() => setIsWizardOpen(false)}
-          />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 dark:bg-brand-darker/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg">
+            <GA4ConnectionWizard
+              onComplete={() => {
+                setIsWizardOpen(false);
+                refresh();
+              }}
+              onClose={() => setIsWizardOpen(false)}
+            />
+          </div>
         </div>
       )}
     </div>
