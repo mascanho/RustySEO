@@ -300,33 +300,33 @@ const GSCanalytics = () => {
     <div className="px-2 h-[calc(100vh-9rem)] flex flex-col dark:text-white/50">
 
 
-      <div className="flex items-center justify-between mb-2 flex-shrink-0 px-1">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-            <LayoutGrid className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+      {isConfigured && (
+        <div className="flex items-center justify-between mb-2 flex-shrink-0 px-1">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+              <LayoutGrid className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="flex items-baseline gap-2">
+              <h1 className="text-lg font-bold dark:text-white leading-none">
+                Search Console
+              </h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400 leading-none">
+                {`Connected to ${credentials?.url}`}
+              </p>
+            </div>
           </div>
-          <div className="flex items-baseline gap-2">
-            <h1 className="text-lg font-bold dark:text-white leading-none">
-              Search Console
-            </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400 leading-none">
-              {isConfigured
-                ? `Connected to ${credentials?.url}`
-                : "Not connected"}
-            </p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-2 pt-1">
-          <Button
-            onClick={openWizard}
-            className="bg-brand-bright hover:bg-blue-700 text-white rounded-md px-3 h-7 flex items-center text-xs font-bold shadow-blue-500/20 transition-all active:scale-95"
-          >
-            <Plus className="h-3 w-3 mr-1.5" />
-            {isConfigured ? "Reconnect" : "Connect"}
-          </Button>
+          <div className="flex items-center gap-2 pt-1">
+            <Button
+              onClick={openWizard}
+              className="bg-brand-bright hover:bg-blue-700 text-white rounded-md px-3 h-7 flex items-center text-xs font-bold shadow-blue-500/20 transition-all active:scale-95"
+            >
+              <Plus className="h-3 w-3 mr-1.5" />
+              Reconnect
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="flex-1 min-h-0">
         {!isConfigured ? (
