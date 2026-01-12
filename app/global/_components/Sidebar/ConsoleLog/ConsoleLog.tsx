@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { CheckCircle, XCircle, AlertCircle, Info, Clock } from "lucide-react";
 import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 import useGSCStatusStore from "@/store/GSCStatusStore";
+import useGA4StatusStore from "@/store/GA4StatusStore";
 import useSettingsStore from "@/store/SettingsStore";
 import { invoke } from "@tauri-apps/api/core";
 
@@ -98,6 +99,7 @@ const generateLogs = (
   gscCredentials: any,
   isGscConfigured: boolean,
   clarityApi: string,
+  isGa4Configured: boolean,
 ): LogEntry[] => {
   const now = Date.now();
   const timestamp = new Date();
@@ -135,11 +137,11 @@ const generateLogs = (
     {
       id: now + 4,
       timestamp,
-      level: ga4ID === null || ga4ID === "" ? "error" : "success",
+      level: isGa4Configured || (ga4ID !== null && ga4ID !== "") ? "success" : "error",
       message:
-        ga4ID === null || ga4ID === ""
-          ? "No GA4 ID configured"
-          : "Google Analytics: Enabled",
+        isGa4Configured || (ga4ID !== null && ga4ID !== "")
+          ? "Google Analytics: Enabled"
+          : "No GA4 ID configured",
     },
     {
       id: now + 5,
@@ -219,6 +221,8 @@ export default function ConsoleLog() {
     lastChecked: gscLastChecked,
   } = useGSCStatusStore();
 
+  const { isConfigured: isGa4Configured } = useGA4StatusStore();
+
   const {
     pageSpeedKey,
     ga4Id,
@@ -297,6 +301,7 @@ export default function ConsoleLog() {
       gscCredentials,
       isGscConfigured,
       clarityApi,
+      isGa4Configured,
     );
   }, [
     crawler,
@@ -309,6 +314,7 @@ export default function ConsoleLog() {
     gscCredentials,
     isGscConfigured,
     clarityApi,
+    isGa4Configured,
     lastUpdated, // Include lastUpdated to trigger re-render when settings change
   ]);
 
