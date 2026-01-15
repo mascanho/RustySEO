@@ -14,6 +14,7 @@ use settings::settings::get_log_file_upload_size_command;
 use settings::settings::get_project_chunk_size_command;
 use settings::settings::get_system;
 use settings::settings::open_config_folder_command;
+use settings::settings::toggle_javascript_rendering;
 use settings::settings::Settings;
 use std::io::Write;
 use std::sync::Arc;
@@ -308,6 +309,7 @@ async fn main() {
             delete_config_folders_command,
             open_config_folder_command,
             settings::settings::get_settings_command,
+            toggle_javascript_rendering,
             url_checker::http_check::check_url,
             loganalyser::log_commands::save_gsc_data,
             loganalyser::log_commands::match_gsc_query_command,

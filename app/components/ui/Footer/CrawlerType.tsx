@@ -40,6 +40,21 @@ const CrawlerType = () => {
     apiKey: "",
     psiCrawl: false,
   });
+  const [javascriptRendering, setJavascriptRendering] = useState(false);
+
+  const toggleJavascriptRendering = async () => {
+    const newValue = !javascriptRendering;
+    setJavascriptRendering(newValue);
+    try {
+      await invoke("toggle_javascript_rendering", { value: newValue });
+      triggerRefresh();
+      toast.success("Javascript Rendering toggled successfully");
+    } catch (error) {
+      console.error("Failed to toggle javascript rendering:", error);
+      setJavascriptRendering(!newValue);
+      toast.error("Failed to toggle Javascript Rendering");
+    }
+  };
 
   // Load PSI details from localStorage (fallback)
   const loadPSIDetailsFromLocalStorage = useCallback(() => {
@@ -74,6 +89,9 @@ const CrawlerType = () => {
         apiKey: backendDetails.apiKey || "",
         psiCrawl: backendDetails.page_speed_crawl,
       });
+
+      const settings = await invoke<any>("get_settings_command");
+      setJavascriptRendering(settings.javascript_rendering);
     } catch (error) {
       console.error("Error fetching backend state:", error);
       // Fallback to localStorage if backend fetch fails
@@ -131,13 +149,23 @@ const CrawlerType = () => {
     }
   };
 
-  // Determine icon color based on psiCrawl first (highest priority), then crawlerType
-  const iconColorClass =
-    details.psiCrawl && details.apiKey
-      ? "text-blue-500 dark:text-blue-500/50 mt-[2px]"
-      : crawlerType === CRAWLER_TYPES.CUSTOM_SEARCH
-        ? "text-red-500 dark:text-red-500/50 mt-[2px]"
-        : "text-black dark:text-white/50 mt-[2px]";
+  // Determine icon color/animation based on active settings
+  const getIconClass = () => {
+    const isPsi = details.psiCrawl && details.apiKey;
+    const isJs = javascriptRendering;
+
+    if (isPsi && isJs) return "animate-cycle-purple-orange mt-[2px]";
+    if (isPsi) return "animate-pulse-purple mt-[2px]";
+    if (isJs) return "animate-flash-orange mt-[2px]";
+
+    // Fallback to existing logic
+    return crawlerType === CRAWLER_TYPES.CUSTOM_SEARCH
+      ? "text-red-500 dark:text-red-500/50 mt-[2px]"
+      : "text-black dark:text-white/50 mt-[2px]";
+  };
+
+  const iconColorClass = getIconClass();
+
   // HANDLE THE PSI DETAILS TO SHOW THE USER THAT PSI IS ACTIVATED
   // Fetch backend state on component mount to update icon color immediately
   useEffect(() => {
@@ -153,6 +181,26 @@ const CrawlerType = () => {
 
   return (
     <div className="relative">
+      <style>{`
+        @keyframes pulse-purple {
+          0%, 100% { color: #a855f7; opacity: 1; }
+          50% { color: #c084fc; opacity: 0.7; }
+        }
+        @keyframes flash-orange {
+          0%, 100% { color: #f97316; opacity: 1; }
+          50% { color: #fb923c; opacity: 0.4; }
+        }
+        @keyframes cycle-purple-orange {
+          0% { color: #a855f7; }
+          50% { color: #f97316; }
+          100% { color: #a855f7; }
+        }
+        .animate-pulse-purple { animation: pulse-purple 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .animate-flash-orange { animation: flash-orange 1s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .animate-cycle-purple-orange { animation: cycle-purple-orange 3s linear infinite; }
+      `}</style>
+
+      {/* Icon Button process */}
       {/* Icon Button */}
       <button
         onClick={() => setIsModalOpen(true)}
@@ -215,6 +263,32 @@ const CrawlerType = () => {
                   onChange={toggleCrawlerType}
                   className="sr-only peer"
                   aria-label="Toggle crawler type"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+
+            {/* Toggle Switch for Javascript Rendering */}
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-md mb-3">
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                Javascript Mode:{" "}
+                <span
+                  className={
+                    javascriptRendering
+                      ? "text-green-500 font-medium"
+                      : "text-gray-500 font-medium"
+                  }
+                >
+                  {javascriptRendering ? "On" : "Off"}
+                </span>
+              </span>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={javascriptRendering}
+                  onChange={toggleJavascriptRendering}
+                  className="sr-only peer"
+                  aria-label="Toggle Javascript Rendering"
                 />
                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
               </label>

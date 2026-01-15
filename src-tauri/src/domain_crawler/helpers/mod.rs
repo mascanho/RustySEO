@@ -9,6 +9,7 @@ pub mod domain_checker;
 pub mod extract_url_pattern;
 pub mod fetch_with_exponential;
 pub mod flesch_reader;
+pub mod headless_fetch;
 pub mod headings_selector;
 pub mod hreflang_selector;
 pub mod html_size_calculator;

@@ -19,6 +19,7 @@ use crate::domain_crawler::database::{Database, DatabaseResults};
 use crate::domain_crawler::extractors::html::extract_html;
 use crate::domain_crawler::helpers::extract_url_pattern::extract_url_pattern;
 use crate::domain_crawler::helpers::fetch_with_exponential::fetch_with_exponential_backoff;
+use crate::domain_crawler::helpers::headless_fetch;
 use crate::domain_crawler::helpers::https_checker::valid_https;
 use crate::domain_crawler::helpers::normalize_url::{self, normalize_url};
 use crate::domain_crawler::helpers::robots::get_domain_robots;
@@ -71,6 +72,7 @@ const MAX_URLS_PER_DOMAIN: usize = 50000; // Maximum URLs to crawl per domain (i
 const MAX_DEPTH: usize = 50; // Maximum crawl depth (increased)
 const MAX_PENDING_TIME: Duration = Duration::from_secs(900); // 15 minutes max pending time (increased)
 const STALL_CHECK_INTERVAL: Duration = Duration::from_secs(30); // Check for stalls every 30s
+const JS_CONCURRENCY: usize = 2; // Limit concurrent headless chrome instances
 
 // Track failed URLs and retries
 #[derive(Clone, Hash, Eq, PartialEq)]
@@ -210,6 +212,7 @@ async fn process_url(
     state: Arc<Mutex<CrawlerState>>,
     app_handle: &tauri::AppHandle,
     settings: &Settings,
+    js_semaphore: Arc<Semaphore>,
 ) -> Result<DomainCrawlResults, String> {
     let mut current_url = url.clone();
     let mut redirect_chain = Vec::new();
@@ -344,7 +347,7 @@ async fn process_url(
         sleep(Duration::from_secs(2)).await;
     }
 
-    let body = match response.text().await {
+    let mut body = match response.text().await {
         Ok(body) => body,
         Err(e) => {
             let mut state = state.lock().await;
@@ -358,6 +361,32 @@ async fn process_url(
             return Err(format!("Failed to read response body: {}", e));
         }
     };
+
+    // If Javascript Rendering is enabled and content is HTML, re-fetch via Headless Chrome
+    if settings.javascript_rendering && check_html_page::is_html_page(&body, content_type.as_deref()).await {
+        let js_url = final_url.to_string();
+        let js_semaphore_clone = js_semaphore.clone();
+        
+        // Use a separate task for blocking IO of headless chrome, protected by semaphore
+        let js_fetch_future = async move {
+            // Acquire permit asynchronously
+            let _permit = js_semaphore_clone.acquire().await.map_err(|e| e.to_string())?;
+            
+            // Run blocking Chrome operation
+            task::spawn_blocking(move || {
+                headless_fetch::fetch_js_body(&js_url)
+            }).await.map_err(|e| e.to_string())?
+        };
+
+        match js_fetch_future.await {
+            Ok(js_body) => {
+                 body = js_body;
+            },
+            Err(e) => {
+                 println!("Failed to render JS for {}: {}. Falling back to static content.", final_url, e);
+            }
+        }
+    }
 
     let mut pdf_files: Vec<String> = Vec::new();
     if !check_html_page::is_html_page(&body, content_type.as_deref()).await {
@@ -435,7 +464,11 @@ async fn process_url(
         description: page_description::extract_page_description(&body)
             .unwrap_or_else(|| "".to_string()),
         headings: headings_selector::headings_selector(&body),
-        javascript: javascript_selector::extract_javascript(&body, &final_url),
+        javascript: if settings.javascript_rendering {
+            javascript_selector::extract_javascript(&body, &final_url)
+        } else {
+            javascript_selector::JavaScript::default()
+        },
         images: images_selector::extract_images_with_sizes_and_alts(&body, &final_url).await,
         status_code,
         anchor_links: anchor_links::extract_internal_external_links(&body, &final_url, base_url),
@@ -731,6 +764,7 @@ pub async fn crawl_domain(
     }
 
     let semaphore = Arc::new(Semaphore::new(settings.concurrent_requests));
+    let js_semaphore = Arc::new(Semaphore::new(JS_CONCURRENCY));
     let crawl_start_time = Instant::now();
     let mut last_stall_check = Instant::now();
     let mut last_crawled_count = 0;
@@ -798,6 +832,7 @@ pub async fn crawl_domain(
             let app_handle_clone = app_handle.clone();
             let semaphore_clone = semaphore.clone();
             let settings_clone = settings.clone();
+            let js_semaphore_clone = js_semaphore.clone();
             let db_tx_clone = db_tx.clone();
 
             let handle = tokio::spawn(async move {
@@ -813,6 +848,7 @@ pub async fn crawl_domain(
                     state_clone.clone(),
                     &app_handle_clone,
                     &settings_clone,
+                    js_semaphore_clone,
                 )
                 .await;
 
