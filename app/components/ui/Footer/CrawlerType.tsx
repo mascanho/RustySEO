@@ -10,6 +10,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { toast } from "sonner";
 import { GiRobotAntennas, GiRobotHelmet, GiSpiderAlt } from "react-icons/gi";
 import useSettingsStore from "@/store/SettingsStore";
+import { Tooltip, Stack, Text, Group, Badge } from "@mantine/core";
 
 // Constants for crawler types
 const CRAWLER_TYPES = {
@@ -200,16 +201,71 @@ const CrawlerType = () => {
         .animate-cycle-purple-orange { animation: cycle-purple-orange 3s linear infinite; }
       `}</style>
 
-      {/* Icon Button process */}
-      {/* Icon Button */}
-      <button
-        onClick={() => setIsModalOpen(true)}
-        className={`transition-colors`}
-        title={`Crawler Type: ${crawlerType}`}
-        aria-label="Open crawler settings"
+      {/* Icon Button details tooltip */}
+      <Tooltip
+        label={
+          <Stack gap="xs" p={4}>
+            <Text size="xs" fw={700} c="dimmed" tt="uppercase">
+              Configured Settings
+            </Text>
+
+            <Group justify="space-between" gap="xl" align="center">
+              <Text size="xs" fw={500}>
+                Crawler Type
+              </Text>
+              <Badge
+                size="sm"
+                variant="light"
+                color={crawlerType === CRAWLER_TYPES.SPIDER ? "blue" : "red"}
+              >
+                {crawlerType}
+              </Badge>
+            </Group>
+
+            <Group justify="space-between" gap="xl" align="center">
+              <Text size="xs" fw={500}>
+                Javascript Mode
+              </Text>
+              <Badge
+                size="sm"
+                variant="dot"
+                color={javascriptRendering ? "orange" : "gray"}
+              >
+                {javascriptRendering ? "Active" : "Disabled"}
+              </Badge>
+            </Group>
+
+            {details.apiKey && (
+              <Group justify="space-between" gap="xl" align="center">
+                <Text size="xs" fw={500}>
+                  PSI
+                </Text>
+                <Badge
+                  size="sm"
+                  variant="dot"
+                  color={details.psiCrawl ? "violet" : "gray"}
+                >
+                  {details.psiCrawl ? "Enabled" : "Disabled"}
+                </Badge>
+              </Group>
+            )}
+          </Stack>
+        }
+        position="top"
+        withArrow
+        transitionProps={{ duration: 200, transition: "pop" }}
+        multiline
+        w={240}
+        color="dark"
       >
-        <GiRobotAntennas className={`text-sm p-[1px] ${iconColorClass}`} />
-      </button>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className={`transition-colors`}
+          aria-label="Open crawler settings"
+        >
+          <GiRobotAntennas className={`text-sm p-[1px] ${iconColorClass}`} />
+        </button>
+      </Tooltip>
 
       {/* Modal */}
       {isModalOpen && (
@@ -276,7 +332,7 @@ const CrawlerType = () => {
                   className={
                     javascriptRendering
                       ? "text-green-500 font-medium"
-                      : "text-gray-500 font-medium"
+                      : "text-red-500 font-medium"
                   }
                 >
                   {javascriptRendering ? "On" : "Off"}
