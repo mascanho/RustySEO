@@ -58,7 +58,7 @@ const DeepCrawlQueryContextMenu: React.FC<DeepCrawlQueryContextMenuProps> = ({
   // });
 
   useEffect(() => {
-    console.log("🎯 Setting up keyword-tracked event listener");
+    // console.log("🎯 Setting up keyword-tracked event listener");
     const unlisten = listen("keyword-tracked", (event) => {
       console.log("✅ Keyword tracked event received:", event);
     });

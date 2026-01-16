@@ -96,7 +96,7 @@ import { LuMicroscope } from "react-icons/lu";
 
 const HeadAnalysis = React.lazy(() => import("./components/ui/HeadAnalysis"));
 
-interface HomeProps { }
+interface HomeProps {}
 
 const Home: React.FC<HomeProps> = () => {
   const [openedModal, { open: openModal, close: closeModal }] =
@@ -515,7 +515,7 @@ const Home: React.FC<HomeProps> = () => {
           onClose={closeModal}
           title=""
           centered
-        // zIndex={"10000"}
+          // zIndex={"10000"}
         >
           <Todo url={debouncedURL} close={closeModal} strategy={strategy} />
         </Modal>
@@ -619,8 +619,8 @@ const Home: React.FC<HomeProps> = () => {
           </section>
         </div>
         {/* TABS SECTION */}
-        <section className="mt-1 relative h-[calc(100vh-8.6rem)] overflow-x-hidden pt-0 px-1.5 side-scrollbar">
-          <Tabs defaultValue="first">
+        <section className="mt-1 relative h-[calc(100vh-8.6rem)] overflow-hidden pt-0 px-1.5 ">
+          <Tabs defaultValue="first" className="h-full">
             <div className="transition-all   ease-in  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-1 top-[70px]  transform dark:bg-brand-darker  pb-0 z-[999]">
               <Tabs.List
                 justify="center"
@@ -678,7 +678,10 @@ const Home: React.FC<HomeProps> = () => {
                 </Tabs.Tab> */}
               </Tabs.List>
             </div>
-            <Tabs.Panel value="first">
+            <Tabs.Panel
+              value="first"
+              className="h-full overflow-y-auto side-scrollbar pb-20"
+            >
               {/* WIDGET SECTION */}
 
               <div
@@ -837,7 +840,10 @@ const Home: React.FC<HomeProps> = () => {
                 />
               </main>
             </Tabs.Panel>
-            <Tabs.Panel value="third">
+            <Tabs.Panel
+              value="third"
+              className="h-full overflow-y-auto side-scrollbar"
+            >
               <SEOImprovements
                 pageTitle={pageTitle}
                 // seo={seoPageSpeed}
@@ -855,51 +861,53 @@ const Home: React.FC<HomeProps> = () => {
                 linkStatusCodes={linkStatusCodes}
               />
             </Tabs.Panel>
-            <Tabs.Panel value="fourth">
+            <Tabs.Panel
+              value="fourth"
+              className="h-full overflow-y-auto side-scrollbar"
+            >
               <TaskManagerContainer strategy={strategy} />
             </Tabs.Panel>
-            <Tabs.Panel value="fifth">
+            <Tabs.Panel
+              value="fifth"
+              className="h-full overflow-y-auto side-scrollbar"
+            >
               <CrawlHistory
                 crawl={handleClick}
                 loading={loading}
                 dbdata={DBDATA}
               />
             </Tabs.Panel>
-            <Tabs.Panel value="analytics">
+            <Tabs.Panel value="analytics" className="h-full overflow-hidden">
               <Analytics />
             </Tabs.Panel>
-            <Tabs.Panel value="seo">
+            <Tabs.Panel
+              value="seo"
+              className="h-full overflow-y-auto side-scrollbar"
+            >
               <TodoBoard />
             </Tabs.Panel>
-            <Tabs.Panel
-              value="clarity"
-              className="overflow-hidden h-[calc(100vh-140px)]"
-            >
+            <Tabs.Panel value="clarity" className="overflow-hidden h-full">
               <ClarityContainer />
             </Tabs.Panel>{" "}
             <Tabs.Panel
               value="kws"
-              className="h-[calc(100vh-7rem)] pt-9 dark:bg-brand-darker overflow-hidden"
+              className="h-full pt-[2px] dark:bg-brand-darker overflow-hidden"
             >
               <KeywordAnalytics />
             </Tabs.Panel>
-            <Tabs.Panel
-              value="gsc"
-              className="overflow-hidden h-[calc(100vh-140px)] "
-            >
+            <Tabs.Panel value="gsc" className="overflow-hidden h-full ">
               <GSCcontainer />
             </Tabs.Panel>
-            <Tabs.Panel value="semrush">
+            <Tabs.Panel value="semrush" className="h-full overflow-hidden">
               <SemrushContainer />
             </Tabs.Panel>{" "}
             <Tabs.Panel
               value="powerbi"
-              className="w-full  flex-none  overflow-hidden   flex justify-center items-center  bg-white "
-              style={{ height: "90%" }}
+              className="w-full h-full flex-none overflow-hidden flex justify-center items-center bg-white"
             >
-              <div className="flex justify-center items-center  w-full h-[calc(100vh-140px)]    overflow-hidden">
+              <div className="flex justify-center items-center w-full h-full overflow-hidden">
                 {powerBiUrl ? (
-                  <div className="relative w-full h-full    max-w-full max-h-full aspect-[32/15]">
+                  <div className="relative w-full h-full max-w-full max-h-full aspect-[32/15]">
                     <iframe
                       className="absolute top-0 left-0 w-full h-full border-0"
                       src={powerBiUrl}
@@ -911,10 +919,13 @@ const Home: React.FC<HomeProps> = () => {
                 ) : null}
               </div>
             </Tabs.Panel>
-            <Tabs.Panel value="content">
+            <Tabs.Panel value="content" className="h-full overflow-hidden">
               <ContentPlannerContainer />
             </Tabs.Panel>{" "}
-            <Tabs.Panel value="topicModeling">
+            <Tabs.Panel
+              value="topicModeling"
+              className="h-full overflow-hidden"
+            >
               <TopicModelingContainer />
             </Tabs.Panel>{" "}
           </Tabs>

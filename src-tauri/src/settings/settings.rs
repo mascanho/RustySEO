@@ -51,6 +51,7 @@ pub struct Settings {
     pub stop_words: HashSet<String>,
     pub log_bots: Vec<(String, String)>,
     pub gsc_row_limit: i32,
+    pub javascript_rendering: bool,
 }
 
 impl Settings {
@@ -88,6 +89,7 @@ impl Settings {
             stop_words: default_stop_words(),
             log_bots: generate_default_user_bots(),
             gsc_row_limit: 25000,
+            javascript_rendering: false,
         }
     }
 
@@ -388,6 +390,10 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
         settings.gsc_row_limit = val as i32;
     }
 
+    if let Some(val) = updates.get("javascript_rendering").and_then(|v| v.as_bool()) {
+        settings.javascript_rendering = val;
+    }
+
     // Explicit file writing with flush
     let config_path = Settings::config_path()?;
     let toml_str = toml::to_string_pretty(&settings) // prettier formatting
@@ -495,4 +501,27 @@ pub fn open_config_folder_command() -> Result<(), String> {
 pub async fn get_settings_command() -> Result<Settings, String> {
     let settings = load_settings().await?;
     Ok(settings)
+}
+
+#[tauri::command]
+pub async fn toggle_javascript_rendering(
+    value: bool,
+    app_handle: tauri::AppHandle,
+    settings_state: tauri::State<'_, crate::AppState>,
+) -> Result<(), String> {
+    let state = format!("javascript_rendering = {}", value);
+    
+    let updated_settings = override_settings(&state).await?;
+
+    let mut settings_lock = settings_state.settings.write().await;
+    *settings_lock = updated_settings;
+
+    println!("Javascript Rendering set to: {}", value);
+
+    use tauri::Emitter;
+    app_handle
+        .emit("javascript-rendering-toggled", value)
+        .map_err(|e| format!("Failed to emit event: {}", e))?;
+
+    Ok(())
 }

@@ -226,9 +226,9 @@ export default function GSCConnectionWizard({
               initial="enter"
               animate="center"
               exit="exit"
-              className="flex flex-col h-full text-center"
+              className="flex flex-col h-full text-left"
             >
-              <div className="flex-1 flex flex-col items-center justify-center space-y-6">
+              <div className="flex-1 flex flex-col items-start justify-center space-y-6">
                 <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-full">
                   <ShieldCheck className="h-12 w-12 text-green-600 dark:text-green-400" />
                 </div>
@@ -265,7 +265,7 @@ export default function GSCConnectionWizard({
               <div className="pt-8">
                 <Button
                   onClick={handleNext}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-xl group"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-xl group dark:bg-blue-600 dark:text-white dark:hover:bg-blue-600/90 hover:text-white"
                 >
                   Get Started
                   <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -310,7 +310,7 @@ export default function GSCConnectionWizard({
                         setConfig({ ...config, clientId: e.target.value })
                       }
                       placeholder="xxx-xxx.apps.googleusercontent.com"
-                      className="bg-gray-50 dark:bg-brand-dark border-gray-200 dark:border-brand-dark py-6"
+                      className="bg-gray-50 dark:bg-brand-dark border-gray-200 dark:border-brand-dark py-6 dark:text-white"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -323,7 +323,7 @@ export default function GSCConnectionWizard({
                         setConfig({ ...config, projectId: e.target.value })
                       }
                       placeholder="my-awesome-project"
-                      className="bg-gray-50 dark:bg-brand-dark border-gray-200 dark:border-brand-dark py-6"
+                      className="bg-gray-50 dark:bg-brand-dark border-gray-200 dark:border-brand-dark py-6 dark:text-white"
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -337,7 +337,7 @@ export default function GSCConnectionWizard({
                         setConfig({ ...config, clientSecret: e.target.value })
                       }
                       placeholder="GOCSPX-xxxxxxxxxxxxxxxx"
-                      className="bg-gray-50 dark:bg-brand-dark border-gray-200 dark:border-brand-dark py-6"
+                      className="bg-gray-50 dark:text-white  dark:bg-brand-dark border-gray-200 dark:border-brand-dark py-6"
                     />
                   </div>
                 </div>
@@ -352,7 +352,7 @@ export default function GSCConnectionWizard({
                 </Button>
                 <Button
                   onClick={handleNext}
-                  className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-xl"
+                  className="flex-[2] bg-blue-600 hover:bg-blue-700 text-white py-6 rounded-xl dark:bg-blue-700 dark:text-white dark:hover:bg-brand-bright/90 dark:hover:text-white"
                 >
                   Continue
                 </Button>
@@ -368,9 +368,9 @@ export default function GSCConnectionWizard({
               initial="enter"
               animate="center"
               exit="exit"
-              className="flex flex-col h-full text-center"
+              className="flex flex-col h-full text-left"
             >
-              <div className="flex-1 flex flex-col items-center justify-center space-y-8">
+              <div className="flex-1 flex flex-col items-start justify-center space-y-8">
                 <div className="p-6 bg-blue-50 dark:bg-blue-900/20 rounded-full animate-pulse">
                   <Key className="h-16 w-16 text-blue-600 dark:text-blue-400" />
                 </div>
@@ -386,17 +386,19 @@ export default function GSCConnectionWizard({
                 <Button
                   onClick={handleConnect}
                   disabled={isLoading}
-                  className="w-full bg-white dark:bg-white text-black hover:bg-gray-50 py-7 rounded-xl border border-gray-200 shadow-sm flex items-center justify-center gap-3"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-7 rounded-xl shadow-lg shadow-blue-500/30 dark:shadow-none flex items-center justify-center gap-3 transition-all active:scale-95"
                 >
                   {isLoading ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
                     <>
-                      <img
-                        src="https://www.google.com/favicon.ico"
-                        className="h-5 w-5"
-                        alt="Google"
-                      />
+                      <div className="bg-white p-1 rounded-full">
+                        <img
+                          src="https://www.google.com/favicon.ico"
+                          className="h-4 w-4"
+                          alt="Google"
+                        />
+                      </div>
                       <span className="font-bold">Connect with Google</span>
                     </>
                   )}

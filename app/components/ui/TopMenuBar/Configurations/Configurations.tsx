@@ -48,11 +48,7 @@ const Configurations = ({ close }: { close: () => void }) => {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col w-full bg-white dark:bg-[#0f0f0f] rounded-2xl overflow-hidden shadow-2xl border border-gray-100 dark:border-white/5"
-    >
+    <div className="flex flex-col w-full bg-white dark:bg-[#0f0f0f] rounded-2xl overflow-hidden border border-gray-100 dark:border-white/5">
       {/* Header - Matching GeminiSelector */}
       <header className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/[0.02]">
         <div className="flex items-center space-x-3">
@@ -80,20 +76,13 @@ const Configurations = ({ close }: { close: () => void }) => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`
-                  relative flex items-center justify-center flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200
-                  ${isActive
-                    ? "text-white shadow-lg"
+                className={`relative flex items-center justify-center flex-1 py-2.5 px-3 rounded-xl text-xs font-bold ${isActive
+                    ? "text-white"
                     : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-200/50 dark:hover:bg-white/5"
-                  }
-                `}
+                  }`}
               >
                 {isActive && (
-                  <motion.div
-                    layoutId="active-pill"
-                    className="absolute inset-0 bg-brand-bright rounded-xl z-0"
-                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                  />
+                  <div className="absolute inset-0 bg-brand-bright rounded-xl z-0" />
                 )}
                 <Group gap={6} wrap="nowrap" className="relative z-10">
                   <Icon className={`w-4 h-4 ${isActive ? "text-white" : "opacity-70"}`} />
@@ -108,18 +97,9 @@ const Configurations = ({ close }: { close: () => void }) => {
       {/* Content Area */}
       <Box className="relative">
         <ScrollArea h={480} offsetScrollbars scrollbarSize={6} type="hover" className="px-6 pb-6">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.15 }}
-              className="w-full pt-4"
-            >
-              {renderContent()}
-            </motion.div>
-          </AnimatePresence>
+          <div className="w-full pt-4">
+            {renderContent()}
+          </div>
         </ScrollArea>
       </Box>
 
@@ -128,7 +108,7 @@ const Configurations = ({ close }: { close: () => void }) => {
         <div className="h-px flex-1 bg-gray-100 dark:bg-white/5 mr-4 opacity-40" />
         <Text size="xs" className="text-gray-400 dark:text-gray-600 font-mono italic opacity-60">RustySEO v{localVersion}</Text>
       </div>
-    </motion.div>
+    </div>
   );
 };
 

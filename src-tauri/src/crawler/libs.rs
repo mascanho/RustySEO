@@ -1014,11 +1014,8 @@ pub async fn get_google_analytics(
     let config_dir = config_dir.data_dir();
     let secret_path = config_dir.join("client_secret.json");
 
-    // Set up the OAuth2 client
-    let secret = oauth2::read_application_secret(&secret_path)
-        .await
-        .expect("Where is the client_secret.json file?");
-
+    // Remove the early read of client_secret.json which was causing panic
+    
     // Create an authenticator that persists tokens
     let auth_path = config_dir.join("ga_tokencache.json");
 
@@ -1038,9 +1035,24 @@ pub async fn get_google_analytics(
     let mut token_val = if let Some(t) = token_str {
         t
     } else {
-        let secret = oauth2::read_application_secret(&secret_path)
-            .await
-            .expect("Where is the client_secret.json file?");
+        // Look for the secret in the credentials file first, then the client_secret.json
+        let secret = if let Some(ref creds) = credentials {
+            oauth2::ApplicationSecret {
+                client_id: creds.client_id.clone(),
+                client_secret: creds.client_secret.clone(),
+                token_uri: "https://oauth2.googleapis.com/token".to_string(),
+                auth_uri: "https://accounts.google.com/o/oauth2/auth".to_string(),
+                redirect_uris: vec!["http://localhost".to_string()],
+                project_id: Some(creds.project_id.clone()),
+                client_email: None,
+                auth_provider_x509_cert_url: None,
+                client_x509_cert_url: None,
+            }
+        } else {
+            oauth2::read_application_secret(&secret_path)
+                .await
+                .expect("Where is the client_secret.json file?")
+        };
 
         let auth = oauth2::InstalledFlowAuthenticator::builder(
             secret,

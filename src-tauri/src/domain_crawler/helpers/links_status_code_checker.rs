@@ -392,7 +392,7 @@ async fn try_head_then_get(
     // Try HEAD request first
     match client.head(url).send().await {
         Ok(response) => Ok(response),
-        Err(head_err) => {
+        Err(_head_err) => {
             // Fallback to GET if HEAD fails
             match client.get(url).send().await {
                 Ok(response) => Ok(response),
