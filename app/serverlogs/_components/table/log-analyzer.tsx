@@ -1189,7 +1189,7 @@ export function LogAnalyzer() {
                         </TableHead>
                       )}
 
-                      <TableHead align="center" className="text-left w-[130px]">
+                      <TableHead align="center" className="text-left w-[100px]">
                         Crawler Type
                       </TableHead>
                     </TableRow>
@@ -1508,8 +1508,8 @@ function LogRow({
             variant="outline"
             className={
               log.crawler_type !== "Human"
-                ? "bg-red-100 dark:bg-red-700 dark:text-white w-28 truncate overflow-hidden text-center flex justify-center"
-                : "bg-blue-100 truncate dark:bg-blue-500 dark:text-white overflow-hidden  text-blue-800 border-blue-200 flex items-center justify-center text-center w-28"
+                ? "bg-red-100 dark:bg-red-700 dark:text-white w-20 truncate overflow-hidden text-center flex justify-center text-[10px]"
+                : "bg-blue-100 truncate dark:bg-blue-500 dark:text-white overflow-hidden  text-blue-800 border-blue-200 flex items-center justify-center text-center w-20 text-[10px]"
             }
           >
             {formatCrawlerType(log)}
