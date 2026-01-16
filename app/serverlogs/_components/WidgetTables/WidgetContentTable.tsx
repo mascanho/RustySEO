@@ -652,26 +652,42 @@ const WidgetContentTable: React.FC<WidgetTableProps> = ({
       )}
       <div className="space-y-4 h-full pb-0 -mb-4">
         {/* Segment Header */}
-        {segment && segment !== "all" && currentSegmentTaxonomy && (
+        {segment && (
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-2">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-semibold text-blue-800 dark:text-blue-300">
-                  Viewing: {segment}
+                  Viewing:{" "}
+                  {segment === "all"
+                    ? "All Segments"
+                    : segment === "Uncategorized"
+                      ? "Uncategorized"
+                      : segment}
                 </h3>
                 <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">
                   Showing request activity for{" "}
-                  <span className="font-bold">{segment.toLowerCase()}</span>
-                  {""} segment
-                  {currentSegmentTaxonomy.paths.length > 0 && (
-                    <span className="ml-1">
-                      (<span className="font-bold">matches: {""}</span>
-                      {currentSegmentTaxonomy.paths
-                        .map((p) => p.path)
-                        .join(", ")}
-                      )
-                    </span>
-                  )}
+                  <span className="font-bold">
+                    {segment === "all"
+                      ? "all segments"
+                      : segment === "Uncategorized"
+                        ? "uncategorized"
+                        : segment.toLowerCase()}{" "}
+                    {segment === "all" || segment === "Uncategorized"
+                      ? ""
+                      : "segment"}
+                  </span>
+                  {currentSegmentTaxonomy &&
+                    currentSegmentTaxonomy.paths.length > 0 &&
+                    segment !== "all" &&
+                    segment !== "Uncategorized" && (
+                      <span className="ml-1">
+                        (<span className="font-bold">matches: {""}</span>
+                        {currentSegmentTaxonomy.paths
+                          .map((p) => p.path)
+                          .join(", ")}
+                        )
+                      </span>
+                    )}
                 </p>
               </div>
               <Badge
