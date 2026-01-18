@@ -1,3 +1,4 @@
+use once_cell::sync::Lazy;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 
@@ -7,13 +8,12 @@ pub struct HreflangObject {
     pub url: String,
 }
 
-pub fn select_hreflang(body: &str) -> Option<Vec<HreflangObject>> {
-    let document = Html::parse_document(&body);
-    let selector = Selector::parse(r#"link[rel="alternate"][hreflang]"#).unwrap();
+static HREFLANG_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse(r#"link[rel="alternate"][hreflang]"#).unwrap());
 
+pub fn select_hreflang(document: &Html) -> Option<Vec<HreflangObject>> {
     let mut hreflangs = Vec::new();
 
-    for element in document.select(&selector) {
+    for element in document.select(&HREFLANG_SELECTOR) {
         if let Some(hreflang) = element.value().attr("hreflang") {
             if let Some(href) = element.value().attr("href") {
                 hreflangs.push(HreflangObject {
@@ -30,3 +30,4 @@ pub fn select_hreflang(body: &str) -> Option<Vec<HreflangObject>> {
         Some(hreflangs)
     }
 }
+

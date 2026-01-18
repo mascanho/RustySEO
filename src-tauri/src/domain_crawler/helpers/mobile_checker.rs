@@ -1,9 +1,9 @@
+use once_cell::sync::Lazy;
 use scraper::{Html, Selector};
 
-pub fn is_mobile(body: &str) -> bool {
-    let document = Html::parse_document(&body);
+static VIEWPORT_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("meta[name=\"viewport\"]").unwrap());
 
-    let selector = Selector::parse("meta[name=\"viewport\"]").unwrap();
-
-    document.select(&selector).next().is_some()
+pub fn is_mobile(document: &Html) -> bool {
+    document.select(&VIEWPORT_SELECTOR).next().is_some()
 }
+

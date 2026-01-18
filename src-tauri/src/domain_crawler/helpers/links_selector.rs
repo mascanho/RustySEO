@@ -1,15 +1,15 @@
+use once_cell::sync::Lazy;
 use scraper::{Html, Selector};
 use url::Url;
 use std::collections::HashSet;
 
-/// Extracts and normalizes links from HTML
-pub fn extract_links(html: &str, resolve_url: &Url, scope_url: &Url) -> HashSet<Url> {
-    let document = Html::parse_document(html);
-    let selector = Selector::parse("a[href]").unwrap();
+static LINK_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("a[href]").unwrap());
 
+/// Extracts and normalizes links from HTML
+pub fn extract_links(document: &Html, resolve_url: &Url, scope_url: &Url) -> HashSet<Url> {
     let mut unique_urls = HashSet::new();
 
-    for element in document.select(&selector) {
+    for element in document.select(&LINK_SELECTOR) {
         if let Some(href) = element.value().attr("href") {
             if let Some(url) = process_link(resolve_url, scope_url, href) {
                 unique_urls.insert(url);
@@ -19,6 +19,7 @@ pub fn extract_links(html: &str, resolve_url: &Url, scope_url: &Url) -> HashSet<
 
     unique_urls
 }
+
 
 /// Process a single link
 fn process_link(resolve_url: &Url, scope_url: &Url, href: &str) -> Option<Url> {

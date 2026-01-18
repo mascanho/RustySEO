@@ -1,14 +1,14 @@
+use once_cell::sync::Lazy;
 use regex::Regex;
 use scraper::{Html, Selector};
 use std::collections::{HashMap, HashSet};
-use std::sync::LazyLock;
 
 use crate::settings::settings::Settings;
 
 /// Cached regex for text cleaning - compiled once and reused across all function calls.
 /// This provides ~50-70% performance improvement over recompiling the regex each time.
 /// Keeps apostrophes and hyphens in words for better keyword quality.
-static TEXT_CLEANER: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"[^\w\s'-]").unwrap());
+static TEXT_CLEANER: Lazy<Regex> = Lazy::new(|| Regex::new(r"[^\w\s'-]").unwrap());
 
 // Performance constants
 const MIN_WORD_LENGTH: usize = 3;
@@ -16,6 +16,9 @@ const ESTIMATED_TEXT_RATIO: usize = 4; // HTML to text ratio estimate
 const ESTIMATED_AVG_WORD_LENGTH: usize = 6; // Average word length estimate
 const MAX_WORD_FREQUENCY: usize = 1555; // Maximum frequency to prevent noise
 const TOP_KEYWORDS_LIMIT: usize = 10; // Number of top keywords to return
+
+static TEXT_SELECTORS: Lazy<Selector> = Lazy::new(|| Selector::parse("p, h1, h2, h3, h4, h5, h6, a").unwrap());
+static EXCLUDED_SELECTORS: Lazy<Selector> = Lazy::new(|| Selector::parse("script, style, noscript, code, pre").unwrap());
 
 /// Returns default English stop words as a HashSet.
 /// This is a convenience function that creates the stop words collection.
@@ -38,9 +41,9 @@ pub fn default_stop_words() -> HashSet<String> {
 }
 
 // Convenience wrapper that integrates with Settings
-pub fn extract_keywords_with_settings(html: &str) -> Vec<(String, usize)> {
+pub fn extract_keywords_with_settings(document: &Html) -> Vec<(String, usize)> {
     let settings = Settings::new();
-    extract_keywords(html, &settings.stop_words)
+    extract_keywords(document, &settings.stop_words)
 }
 
 /// Extracts keywords from HTML content with performance optimizations.
@@ -53,35 +56,19 @@ pub fn extract_keywords_with_settings(html: &str) -> Vec<(String, usize)> {
 /// - Optimized string slicing for normalization
 ///
 /// # Arguments:
-/// * `html` - The HTML content to extract keywords from
+/// * `document` - The parsed HTML document
 /// * `stop_words` - HashSet of words to exclude from results
 ///
 /// # Returns:
 /// Vector of (keyword, frequency) tuples, sorted by frequency (descending)
 /// and alphabetically for ties. Limited to top 10 keywords.
-///
-/// # Example:
-/// ```
-/// let stop_words = default_stop_words();
-/// let keywords = extract_keywords("<p>rust programming language</p>", &stop_words);
-/// assert_eq!(keywords[0].0, "programming"); // assuming highest frequency
-/// ```
-pub fn extract_keywords(html: &str, stop_words: &HashSet<String>) -> Vec<(String, usize)> {
-    // Parse the HTML document
-    let document = Html::parse_document(html);
-
-    // Define selectors for elements that typically contain visible text
-    let text_selectors = Selector::parse("p, h1, h2, h3, h4, h5, h6, a").unwrap();
-
-    // Exclude non-content elements (e.g., scripts, styles)
-    let excluded_selectors = Selector::parse("script, style, noscript, code, pre").unwrap();
-
+pub fn extract_keywords(document: &Html, stop_words: &HashSet<String>) -> Vec<(String, usize)> {
     // Extract text from all selected elements, excluding non-content elements
     // Pre-allocate with estimated capacity for ~25% performance improvement
-    let mut text = String::with_capacity(html.len() / ESTIMATED_TEXT_RATIO);
-    for element in document.select(&text_selectors) {
+    let mut text = String::new(); // Capacity estimation removed for simplicity here, can be added back if needed
+    for element in document.select(&TEXT_SELECTORS) {
         // Skip elements that match excluded selectors
-        if element.select(&excluded_selectors).next().is_some() {
+        if element.select(&EXCLUDED_SELECTORS).next().is_some() {
             continue;
         }
 
@@ -143,6 +130,7 @@ pub fn extract_keywords(html: &str, stop_words: &HashSet<String>) -> Vec<(String
     // Return the top keywords (or fewer if there aren't enough)
     sorted_words.into_iter().take(TOP_KEYWORDS_LIMIT).collect()
 }
+
 
 /// Normalizes a word by removing common suffixes or pluralization.
 fn normalize_word(word: &str) -> String {

@@ -1,3 +1,4 @@
+use once_cell::sync::Lazy;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 
@@ -8,16 +9,14 @@ pub struct AltTags {
     pub alt_tags_total: Vec<String>,
 }
 
-pub fn get_alt_tags(html: &str) -> AltTags {
-    let document = Html::parse_document(html);
-    let selector = Selector::parse("img").unwrap();
-    let images = document.select(&selector);
+static IMG_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("img").unwrap());
 
+pub fn get_alt_tags(document: &Html) -> AltTags {
     let mut with_alt_tags = Vec::new();
     let mut without_alt_tags = Vec::new();
     let mut alt_tags_total = Vec::new();
 
-    for image in images {
+    for image in document.select(&IMG_SELECTOR) {
         let alt_tag = image.value().attr("alt");
         match alt_tag {
             Some(alt) => {
@@ -37,3 +36,4 @@ pub fn get_alt_tags(html: &str) -> AltTags {
         alt_tags_total,
     }
 }
+

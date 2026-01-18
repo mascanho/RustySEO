@@ -36,17 +36,22 @@ async fn fetch_and_update_cache() -> Result<(), String> {
     Ok(())
 }
 
-pub async fn extract_html(body: &str) -> bool {
-    // Fetch and update the cache if necessary
-    if let Err(_e) = fetch_and_update_cache().await {
-        // eprintln!("Error updating cache: {}", e);
-        return false;
-    }
+pub async fn update_cache() -> Result<(), String> {
+    fetch_and_update_cache().await
+}
 
+pub fn perform_extraction(document: &Html) -> bool {
     // Get the cached custom_search results
-    let cache = get_custom_search().await;
+    let cache = match CUSTOM_SEARCH_CACHE.get() {
+        Some(c) => c,
+        None => return false,
+    };
+    
     let cache_lock = cache.lock().unwrap();
-    let custom_search = cache_lock.as_ref().unwrap();
+    let custom_search = match &*cache_lock {
+        Some(data) => data,
+        None => return false,
+    };
 
     // Extract the first configuration (if it exists)
     let (text_value, element) = match custom_search.get(0) {
@@ -57,26 +62,20 @@ pub async fn extract_html(body: &str) -> bool {
         None => return false,
     };
 
-    // println!("text: {:#?}", text_value);
-
     // Early exit if text_value is empty string
     if text_value.is_empty() {
-        // println!("No custom searched has been configured");
         return false;
     } else {
-        // Parse the HTML document
-        let document = Html::parse_document(body);
-
         // Create a selector for the specified element
-        let selector = Selector::parse(&element).unwrap();
+        if let Ok(selector) = Selector::parse(&element) {
+            // Extract text from the selected element if it exists
+            if let Some(body) = document.select(&selector).next() {
+                let extracted_text: String = body.text().collect();
 
-        // Extract text from the selected element if it exists
-        if let Some(body) = document.select(&selector).next() {
-            let extracted_text: String = body.text().collect();
-
-            // Check if the extracted text contains the search term
-            if extracted_text.contains(&text_value) {
-                return true;
+                // Check if the extracted text contains the search term
+                if extracted_text.contains(&text_value) {
+                    return true;
+                }
             }
         }
 
@@ -84,3 +83,5 @@ pub async fn extract_html(body: &str) -> bool {
         false
     }
 }
+
+

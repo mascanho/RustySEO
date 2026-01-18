@@ -1,27 +1,24 @@
 use futures::future::join_all;
+use once_cell::sync::Lazy;
 use reqwest::StatusCode;
 use scraper::{Html, Selector};
 use tokio::time::{timeout, Duration};
 use url::Url;
 
+static IMG_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("img").expect("Failed to parse img selector"));
+
 /// Extracts image URLs, alt tags, and a boolean indicating if width or height is not specified.
 ///
 /// # Arguments
-/// * `html` - The HTML content as a string.
+/// * `document` - The parsed HTML document.
 /// * `base_url` - The base URL used to resolve relative image URLs.
 ///
 /// # Returns
 /// A vector of tuples containing the image URL, alt text, and a boolean indicating if width or height is not specified.
-pub fn extract_image_urls_and_alts(html: &str, base_url: &Url) -> Vec<(Url, String, bool)> {
-    // Parse the HTML document
-    let document = Html::parse_document(html);
-
-    // Create a selector for `<img>` tags
-    let img_selector = Selector::parse("img").expect("Failed to parse img selector");
-
+pub fn extract_image_urls_and_alts(document: &Html, base_url: &Url) -> Vec<(Url, String, bool)> {
     // Iterate over all `<img>` elements in the document
     document
-        .select(&img_selector)
+        .select(&IMG_SELECTOR)
         .filter_map(|element| {
             // Check both `src` and `data-src` attributes for the image URL
             let src = element
@@ -106,18 +103,21 @@ async fn fetch_image_size(url: &Url) -> Result<(u64, String, u16), String> {
 /// Extracts image URLs, alt tags, sizes, content types, status codes, and a boolean indicating if width or height is not specified.
 ///
 /// # Arguments
-/// * `html` - The HTML content as a string.
+/// * `document` - The parsed HTML document.
 /// * `base_url` - The base URL used to resolve relative image URLs.
 ///
 /// # Returns
 /// A vector of tuples containing the image URL, alt text, size in KB, content type, status code as u16, and a boolean indicating if width or height is not specified.
-pub async fn extract_images_with_sizes_and_alts(
-    html: &str,
-    base_url: &Url,
+/// Fetches details for a list of image URLs.
+///
+/// # Arguments
+/// * `image_urls_and_alts` - A vector of tuples containing the image URL, alt text, and a boolean indicating if width or height is not specified.
+///
+/// # Returns
+/// A vector of tuples containing the image details.
+pub async fn fetch_image_details(
+    image_urls_and_alts: Vec<(Url, String, bool)>,
 ) -> Result<Vec<(String, String, u64, String, u16, bool)>, String> {
-    // Extract image URLs, alt tags, and the boolean indicating if width or height is not specified
-    let image_urls_and_alts = extract_image_urls_and_alts(html, base_url);
-
     // Create a list of futures to fetch image sizes, content types, and status codes in parallel
     let fetch_futures =
         image_urls_and_alts
@@ -152,3 +152,5 @@ pub async fn extract_images_with_sizes_and_alts(
     // Return the collected image details
     Ok(results)
 }
+
+

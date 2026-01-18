@@ -1,3 +1,4 @@
+use once_cell::sync::Lazy;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -24,25 +25,22 @@ pub struct LinkTypes {
     pub absolute: Vec<String>,
 }
 
+static LINK_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("a").unwrap());
+
 /// Extracts internal and external links from an HTML document.
 ///
 /// # Arguments
-/// * `html` - The HTML content as a string.
+/// * `document` - The parsed HTML document.
 /// * `resolve_url` - The URL of the current page, used to resolve relative links.
 /// * `scope_url` - The base URL of the scan (root domain), used to check for internal/external status.
 ///
 /// # Returns
 /// An `Option<InternalExternalLinks>` containing internal and external links and their anchor texts.
 pub fn extract_internal_external_links(
-    html: &str,
+    document: &Html,
     resolve_url: &Url,
     scope_url: &Url,
 ) -> Option<InternalExternalLinks> {
-    let document = Html::parse_document(html);
-
-    // Selector for all <a> tags with href attributes
-    let link_selector = Selector::parse("a").ok()?;
-
     // Extract all links and their attributes
     let (
         internal_links,
@@ -56,7 +54,7 @@ pub fn extract_internal_external_links(
         external_rels,
         external_titles,
         external_targets,
-    ) = document.select(&link_selector).fold(
+    ) = document.select(&LINK_SELECTOR).fold(
         (
             Vec::new(),
             Vec::new(),
@@ -157,6 +155,7 @@ pub fn extract_internal_external_links(
         },
     })
 }
+
 
 /// Resolves a URL relative to a base URL.
 ///
