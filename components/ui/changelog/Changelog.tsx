@@ -38,7 +38,7 @@ export default function Changelog() {
 
   return (
     <Card
-      className={`w-full max-w-[360px] border-0 shadow-none max-h-[calc(100vh-0.8rem)]  dark:bg-brand-darker ${ppc && "h-full overflow-clip"}`}
+      className={`w-full max-w-[360px] border-0 shadow-none -mt-[4.5rem] max-h-[calc(100vh-0.8rem)] h-[calc(100vh-1vh)] dark:bg-brand-darker ${ppc && "h-full overflow-clip"}`}
     >
       <CardHeader className="pb-3 shadow">
         <CardTitle className="text-lg -ml-3 mt-[2px] -mb-2 font-semibold">
@@ -46,7 +46,7 @@ export default function Changelog() {
         </CardTitle>
       </CardHeader>
       <CardContent
-        className={`space-y-4 px-4 h-[calc(100vh-8.8rem)] pt-3 pb-8 overflow-auto`}
+        className={`space-y-4 px-4 h-[calc(100vh-6rem)] pt-3 pb-8 overflow-auto`}
       >
         {changelogData.map((entry, index) => (
           <div key={entry.version} className="space-y-2 ">
