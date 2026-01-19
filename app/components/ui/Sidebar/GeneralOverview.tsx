@@ -28,8 +28,6 @@ export default function GeneralOverview({
   const { seoLoading, setSeoLoading } = useOnPageSeo();
   const { setSeoUrlLength } = useOnPageSeo();
 
-  console.log(urlLength, "URL length");
-
   useEffect(() => {
     if (pageTitle.length > 0) {
       setSeoUrlLength(urlLength[0]);
