@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { Tree, Group, Text } from "@mantine/core";
 import { IconChevronRight, IconChevronDown, IconFolder, IconFileText, IconWorld, IconHierarchy2 } from "@tabler/icons-react";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
+import TreeNodeContextMenu from "./TreeNodeContextMenu";
 
 interface TreeNode {
     label: string;
@@ -89,32 +90,38 @@ const URLTreeContainer = () => {
                 renderNode={({ node, expanded, hasChildren, elementProps }) => {
                     const customNode = node as any as TreeNode;
                     return (
-                        <Group gap={8} {...elementProps} className="hover:bg-gray-100 dark:hover:bg-brand-dark/50 rounded-md cursor-pointer py-1.5 px-2 transition-colors duration-200">
-                            {hasChildren && (
-                                <div className="text-gray-400">
-                                    {expanded ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
-                                </div>
-                            )}
-
-                            {!hasChildren && <div style={{ width: 16 }} />}
-
-                            {hasChildren ? (
-                                <IconFolder size={18} className="text-amber-400 fill-amber-400/20" />
-                            ) : (
-                                <IconFileText size={18} className="text-blue-400 fill-blue-400/20" />
-                            )}
-
-                            <div className="flex flex-col">
-                                <Text size="sm" className={`dark:text-gray-200 ${customNode.isPage ? 'font-medium' : ''}`}>
-                                    {customNode.label || "/"}
-                                </Text>
-                                {customNode.isPage && customNode.url && (
-                                    <Text size="10px" className="text-gray-400 font-mono truncate max-w-[400px]">
-                                        {new URL(customNode.url).pathname}
-                                    </Text>
+                        <TreeNodeContextMenu
+                            url={customNode.url}
+                            label={customNode.label || "/"}
+                            isPage={customNode.isPage || false}
+                        >
+                            <Group gap={8} {...elementProps} className="hover:bg-gray-100 dark:hover:bg-brand-dark/50 rounded-md cursor-pointer py-1.5 px-2 transition-colors duration-200">
+                                {hasChildren && (
+                                    <div className="text-gray-400">
+                                        {expanded ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
+                                    </div>
                                 )}
-                            </div>
-                        </Group>
+
+                                {!hasChildren && <div style={{ width: 16 }} />}
+
+                                {hasChildren ? (
+                                    <IconFolder size={18} className="text-amber-400 fill-amber-400/20" />
+                                ) : (
+                                    <IconFileText size={18} className="text-blue-400 fill-blue-400/20" />
+                                )}
+
+                                <div className="flex flex-col">
+                                    <Text size="sm" className={`dark:text-gray-200 ${customNode.isPage ? 'font-medium' : ''}`}>
+                                        {customNode.label || "/"}
+                                    </Text>
+                                    {customNode.isPage && customNode.url && (
+                                        <Text size="10px" className="text-gray-400 font-mono truncate max-w-[400px]">
+                                            {new URL(customNode.url).pathname}
+                                        </Text>
+                                    )}
+                                </div>
+                            </Group>
+                        </TreeNodeContextMenu>
                     );
                 }}
             />
