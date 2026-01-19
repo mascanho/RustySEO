@@ -25,8 +25,8 @@ const TopContainer = () => {
           <Tabs.Tab value="first">General</Tabs.Tab>
           <Tabs.Tab value="issues">Issues</Tabs.Tab>
           <Tabs.Tab value="queries">Queries</Tabs.Tab>
-          <Tabs.Tab value="status">Status</Tabs.Tab>
           <Tabs.Tab value="tree">Tree</Tabs.Tab>
+          <Tabs.Tab value="status">Status</Tabs.Tab>
         </Tabs.List>
 
         {/* Render components directly */}

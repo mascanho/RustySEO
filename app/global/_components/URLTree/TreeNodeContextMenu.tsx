@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Menu } from "@mantine/core";
 import {
     IconCopy,
@@ -22,6 +22,13 @@ const TreeNodeContextMenu: React.FC<TreeNodeContextMenuProps> = ({
     isPage,
     children
 }) => {
+    const [opened, setOpened] = useState(false);
+
+    const handleContextMenu = (e: React.MouseEvent) => {
+        e.preventDefault();
+        setOpened(true);
+    };
+
     const handleCopyURL = () => {
         if (url) {
             navigator.clipboard.writeText(url);
@@ -29,11 +36,13 @@ const TreeNodeContextMenu: React.FC<TreeNodeContextMenuProps> = ({
         } else {
             toast.error("No URL available for this folder");
         }
+        setOpened(false);
     };
 
     const handleCopyPath = () => {
         navigator.clipboard.writeText(label);
         toast.success("Path copied to clipboard");
+        setOpened(false);
     };
 
     const handleOpenInNewTab = () => {
@@ -42,6 +51,7 @@ const TreeNodeContextMenu: React.FC<TreeNodeContextMenuProps> = ({
         } else {
             toast.error("No URL available for this folder");
         }
+        setOpened(false);
     };
 
     const handleViewInTable = () => {
@@ -51,6 +61,7 @@ const TreeNodeContextMenu: React.FC<TreeNodeContextMenuProps> = ({
         } else {
             toast.error("No URL available for this folder");
         }
+        setOpened(false);
     };
 
     const handleAnalyze = () => {
@@ -59,12 +70,15 @@ const TreeNodeContextMenu: React.FC<TreeNodeContextMenuProps> = ({
         } else {
             toast.error("No URL available for this folder");
         }
+        setOpened(false);
     };
 
     return (
-        <Menu shadow="md" width={200} position="right-start">
+        <Menu shadow="md" width={200} position="right-start" opened={opened} onChange={setOpened}>
             <Menu.Target>
-                {children}
+                <div onContextMenu={handleContextMenu}>
+                    {children}
+                </div>
             </Menu.Target>
 
             <Menu.Dropdown className="dark:bg-brand-dark dark:border-brand-dark">
