@@ -46,11 +46,12 @@ const QueryRow = ({ item, index, selectedTableURL, credentials }) => {
   };
 
   return (
-    <div className={`group p-2 rounded border transition-all duration-150 ${index % 2 === 0
-      ? "bg-white dark:bg-brand-dark/40 border-gray-100 dark:border-brand-dark"
-      : "bg-gray-50/50 dark:bg-brand-dark/20 border-gray-100 dark:border-brand-dark/50"
+    <div className={`group px-2 py-1.5 rounded border transition-all duration-150 ${index % 2 === 0
+        ? "bg-white dark:bg-brand-dark/40 border-gray-100 dark:border-brand-dark"
+        : "bg-gray-50/50 dark:bg-brand-dark/20 border-gray-100 dark:border-brand-dark/50"
       } hover:bg-blue-50/50 dark:hover:bg-blue-500/5 hover:border-blue-200 dark:hover:border-blue-500/30`}>
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-3">
+        {/* Keyword - flex-1 to take available space */}
         <div className="flex-1 min-w-0">
           <DeepCrawlQueryContextMenu
             url={selectedTableURL?.[0] || ""}
@@ -60,34 +61,32 @@ const QueryRow = ({ item, index, selectedTableURL, credentials }) => {
             impressions={item?.impressions || 0}
             clicks={item?.clicks || 0}
           >
-            <div className="flex items-center gap-2 cursor-pointer group/query">
-              <IconKey size={12} className="text-gray-400 dark:text-gray-500 flex-none" />
+            <div className="flex items-center gap-1.5 cursor-pointer group/query">
+              <IconKey size={11} className="text-gray-400 dark:text-gray-500 flex-none" />
               <span className="text-[10px] font-medium text-gray-700 dark:text-gray-200 group-hover/query:text-blue-600 dark:group-hover/query:text-blue-400 group-hover/query:underline truncate">
                 {item?.query || "N/A"}
               </span>
             </div>
           </DeepCrawlQueryContextMenu>
-
-          <div className="flex items-center gap-2 mt-1.5">
-            <div className="flex items-center gap-1">
-              <IconClick size={9} className="text-blue-500" />
-              <span className="text-[9px] font-semibold text-blue-600 dark:text-blue-400">{item?.clicks || 0}</span>
-            </div>
-            <span className="text-gray-300 dark:text-gray-600 text-[8px]">•</span>
-            <div className="flex items-center gap-1">
-              <IconEye size={9} className="text-purple-500" />
-              <span className="text-[9px] font-semibold text-purple-600 dark:text-purple-400">{item?.impressions || 0}</span>
-            </div>
-          </div>
         </div>
 
-        <div className={`flex-none px-2 py-1 rounded ${getPositionColor(item?.position || 0)}`}>
-          <div className="flex flex-col items-center">
-            <span className="text-[7px] uppercase tracking-wide opacity-60 leading-none">Pos</span>
-            <span className="text-xs font-bold leading-none mt-0.5">
-              {item?.position ? item.position.toFixed(1) : "0.0"}
-            </span>
-          </div>
+        {/* Clicks - fixed width */}
+        <div className="flex items-center gap-1 w-12 justify-end">
+          <IconClick size={9} className="text-blue-500 flex-none" />
+          <span className="text-[9px] font-semibold text-blue-600 dark:text-blue-400 tabular-nums">{item?.clicks || 0}</span>
+        </div>
+
+        {/* Impressions - fixed width */}
+        <div className="flex items-center gap-1 w-14 justify-end">
+          <IconEye size={9} className="text-purple-500 flex-none" />
+          <span className="text-[9px] font-semibold text-purple-600 dark:text-purple-400 tabular-nums">{item?.impressions || 0}</span>
+        </div>
+
+        {/* Position - fixed width */}
+        <div className={`flex-none w-14 px-1.5 py-0.5 rounded text-center ${getPositionColor(item?.position || 0)}`}>
+          <span className="text-[10px] font-bold tabular-nums">
+            {item?.position ? item.position.toFixed(1) : "0.0"}
+          </span>
         </div>
       </div>
     </div>
