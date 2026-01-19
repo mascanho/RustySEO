@@ -47,8 +47,8 @@ const QueryRow = ({ item, index, selectedTableURL, credentials }) => {
 
   return (
     <div className={`group px-2 py-1.5 rounded border transition-all duration-150 ${index % 2 === 0
-        ? "bg-white dark:bg-brand-dark/40 border-gray-100 dark:border-brand-dark"
-        : "bg-gray-50/50 dark:bg-brand-dark/20 border-gray-100 dark:border-brand-dark/50"
+      ? "bg-white dark:bg-brand-dark/40 border-gray-100 dark:border-brand-dark"
+      : "bg-gray-50/50 dark:bg-brand-dark/20 border-gray-100 dark:border-brand-dark/50"
       } hover:bg-blue-50/50 dark:hover:bg-blue-500/5 hover:border-blue-200 dark:hover:border-blue-500/30`}>
       <div className="flex items-center gap-3">
         {/* Keyword - flex-1 to take available space */}
@@ -165,31 +165,32 @@ const RankingInfo = () => {
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-brand-darker overflow-hidden">
-      <div className="p-2 border-b dark:border-brand-dark bg-gray-50/50 dark:bg-brand-dark/20">
-        <div className="flex items-center gap-1.5 mb-1.5">
-          <IconChartBar size={16} className="text-blue-500" />
-          <h2 className="text-xs font-bold dark:text-white">Search Performance</h2>
-        </div>
+      <div className="sticky top-0 z-10 bg-white dark:bg-brand-darker px-2 pt-2 pb-1.5 border-b dark:border-brand-dark">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-xs font-bold dark:text-white flex items-center gap-1">
+            <IconChartBar size={14} className="text-blue-500" />
+            Search Performance
+          </h2>
 
-        {validateData(items) && items[0].queries.length > 0 && (
-          <div className="grid grid-cols-3 gap-1">
-            <div className="flex flex-col items-center p-1 rounded bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20">
-              <IconClick size={10} className="text-blue-500 mb-0.5" />
-              <span className="text-[7px] text-gray-500 dark:text-gray-400 uppercase leading-none">Clicks</span>
-              <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mt-0.5">{totalClicks}</span>
+          {validateData(items) && items[0].queries.length > 0 && (
+            <div className="flex items-center gap-2 text-[9px]">
+              <div className="flex items-center gap-1">
+                <IconClick size={10} className="text-blue-500" />
+                <span className="font-bold text-blue-600 dark:text-blue-400">{totalClicks}</span>
+              </div>
+              <span className="text-gray-300 dark:text-gray-600">•</span>
+              <div className="flex items-center gap-1">
+                <IconEye size={10} className="text-purple-500" />
+                <span className="font-bold text-purple-600 dark:text-purple-400">{totalImpressions}</span>
+              </div>
+              <span className="text-gray-300 dark:text-gray-600">•</span>
+              <div className="flex items-center gap-1">
+                <IconTrendingUp size={10} className="text-emerald-500" />
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">{avgPosition}</span>
+              </div>
             </div>
-            <div className="flex flex-col items-center p-1 rounded bg-purple-50 dark:bg-purple-500/10 border border-purple-100 dark:border-purple-500/20">
-              <IconEye size={10} className="text-purple-500 mb-0.5" />
-              <span className="text-[7px] text-gray-500 dark:text-gray-400 uppercase leading-none">Impr.</span>
-              <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 mt-0.5">{totalImpressions}</span>
-            </div>
-            <div className="flex flex-col items-center p-1 rounded bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20">
-              <IconTrendingUp size={10} className="text-emerald-500 mb-0.5" />
-              <span className="text-[7px] text-gray-500 dark:text-gray-400 uppercase leading-none">Avg Pos</span>
-              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{avgPosition}</span>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-auto p-2 custom-scrollbar">
