@@ -1,7 +1,7 @@
 export const changelogData = [
   {
     version: "0.3.7",
-    date: "2025-02-31",
+    date: "2025-02-21",
     type: "feature",
     changes: ["Deep Crawl: Javascript Crawling"],
   },
