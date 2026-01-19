@@ -141,12 +141,15 @@ const TableHeader = ({
                 width: columnWidths[index],
                 position: "relative",
                 border: "1px solid #ddd",
-                padding: "8px",
+                padding: "4px 8px",
                 userSelect: "none",
                 minWidth: columnWidths[index],
                 textAlign: columnAlignments[index],
                 backgroundColor: "var(--background, white)",
-                height: "32px",
+                height: "28px",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
               }}
               onClick={() => onAlignToggle(index)}
             >
@@ -169,45 +172,68 @@ const TableRow = ({
   clickedCell,
   handleCellClick,
 }: TableRowProps) => {
-  const rowData = useMemo(
-    () => [
+  const rowData = useMemo(() => {
+    const mobile = row?.psi_results?.Ok?.[0];
+    const desktop = row?.psi_results?.Ok?.[1];
+
+    const formatScore = (score: any) => {
+      if (score === null || score === undefined) return "n/a";
+      return Math.round(score * 100).toString();
+    };
+
+    const getAuditValue = (audit: any, options?: { isTime?: boolean; isBytes?: boolean }) => {
+      if (!audit) return "n/a";
+      if (audit.numericValue !== undefined) {
+        if (options?.isTime) {
+          return `${Math.round(audit.numericValue)} ms`;
+        }
+        if (options?.isBytes) {
+          const bytes = audit.numericValue;
+          if (bytes === 0) return "0 B";
+          const k = 1024;
+          const sizes = ["B", "KB", "MB", "GB"];
+          const i = Math.floor(Math.log(bytes) / Math.log(k));
+          return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+        }
+        // If it's a small decimal (like CLS), keep decimals, otherwise round
+        return audit.numericValue < 1 && audit.numericValue > 0
+          ? audit.numericValue.toFixed(3)
+          : (audit.numericValue > 100 ? Math.round(audit.numericValue).toString() : audit.numericValue.toFixed(2));
+      }
+      return audit.displayValue || "n/a";
+    };
+
+    return [
       index + 1,
       row?.url || "",
-      row?.psi_results?.Ok?.[0]?.categories?.performance?.score ?? "n/a",
-      row?.psi_results?.Ok?.[1]?.categories?.performance?.score ?? "n/a",
-      row?.psi_results?.Ok?.[0]?.audits?.["speed-index"]?.score ?? "n/a",
-      row?.psi_results?.Ok?.[1]?.audits?.["speed-index"]?.score ?? "n/a",
-      row?.psi_results?.Ok?.[0]?.audits?.["largest-contentful-paint"]?.score ??
-      "n/a",
-      row?.psi_results?.Ok?.[1]?.audits?.["largest-contentful-paint"]?.score ??
-      "n/a",
-      row?.psi_results?.Ok?.[0]?.audits?.["cumulative-layout-shift"]?.score ??
-      "n/a",
-      row?.psi_results?.Ok?.[1]?.audits?.["cumulative-layout-shift"]?.score ??
-      "n/a",
-      row?.psi_results?.Ok?.[0]?.audits?.["first-contentful-paint"]?.score ??
-      "n/a",
-      row?.psi_results?.Ok?.[1]?.audits?.["first-contentful-paint"]?.score ??
-      "n/a",
-
-      row?.psi_results?.Ok?.[0]?.audits?.["interactive"]?.score ?? "n/a",
-      row?.psi_results?.Ok?.[1]?.audits?.["interactive"]?.score ?? "n/a",
-
-      row?.psi_results?.Ok?.[0]?.audits?.["redirects"]?.score ?? "n/a",
-
-      row?.psi_results?.Ok?.[0]?.audits?.["server-response-time"]?.numericValue
-        ? `${row?.psi_results?.Ok?.[0]?.audits?.["server-response-time"]?.numericValue} ms`
-        : "n/a",
-
-      row?.psi_results?.Ok?.[0]?.audits?.["total-blocking-time"]?.numericValue
-        ? `${row?.psi_results?.Ok?.[0]?.audits?.["total-blocking-time"]?.numericValue.toFixed(0)} ms`
-        : "n/a",
-
-      (row?.psi_results?.Ok?.[0]?.audits?.["dom-size-insight"] ||
-        row?.psi_results?.Ok?.[0]?.audits?.["dom-size"])?.numericValue ?? "n/a",
-    ],
-    [row, index],
-  );
+      formatScore(mobile?.categories?.performance?.score),
+      formatScore(desktop?.categories?.performance?.score),
+      formatScore(mobile?.categories?.accessibility?.score),
+      formatScore(desktop?.categories?.accessibility?.score),
+      formatScore(mobile?.categories?.["best-practices"]?.score),
+      formatScore(desktop?.categories?.["best-practices"]?.score),
+      formatScore(mobile?.categories?.seo?.score),
+      formatScore(desktop?.categories?.seo?.score),
+      getAuditValue(mobile?.audits?.["speed-index"]),
+      getAuditValue(desktop?.audits?.["speed-index"]),
+      getAuditValue(mobile?.audits?.["largest-contentful-paint"]),
+      getAuditValue(desktop?.audits?.["largest-contentful-paint"]),
+      getAuditValue(mobile?.audits?.["cumulative-layout-shift"]),
+      getAuditValue(desktop?.audits?.["cumulative-layout-shift"]),
+      getAuditValue(mobile?.audits?.["first-contentful-paint"]),
+      getAuditValue(desktop?.audits?.["first-contentful-paint"]),
+      getAuditValue(mobile?.audits?.["interactive"]),
+      getAuditValue(desktop?.audits?.["interactive"]),
+      getAuditValue(mobile?.audits?.["total-blocking-time"]),
+      getAuditValue(desktop?.audits?.["total-blocking-time"]),
+      formatScore(mobile?.audits?.["redirects"]?.score),
+      getAuditValue(mobile?.audits?.["server-response-time"], { isTime: true }),
+      getAuditValue(desktop?.audits?.["server-response-time"], { isTime: true }),
+      getAuditValue(mobile?.audits?.["dom-size-insight"] || mobile?.audits?.["dom-size"]),
+      getAuditValue(mobile?.audits?.["total-byte-weight"], { isBytes: true }),
+      getAuditValue(desktop?.audits?.["total-byte-weight"], { isBytes: true }),
+    ];
+  }, [row, index]);
 
   const isOddRow = index % 2 === 1;
   const zebraBackground = isOddRow
