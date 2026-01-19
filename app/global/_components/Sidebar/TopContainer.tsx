@@ -6,6 +6,7 @@ import GeneralTopSideBarContainer from "./General/GeneralTopSideBarContainer";
 import IssuesContainer from "./Issues/IssuesContainer";
 import RankingInfo from "@/app/global/_components/Sidebar/GSCRankingInfo/RankingInfo";
 import ConsoleLog from "./ConsoleLog/ConsoleLog";
+import URLTreeContainer from "../URLTree/URLTreeContainer";
 import { useVisibilityStore } from "@/store/VisibilityStore";
 
 const TopContainer = () => {
@@ -25,8 +26,7 @@ const TopContainer = () => {
           <Tabs.Tab value="issues">Issues</Tabs.Tab>
           <Tabs.Tab value="queries">Queries</Tabs.Tab>
           <Tabs.Tab value="status">Status</Tabs.Tab>
-          {/* <Tabs.Tab value="fourth">Struct</Tabs.Tab>
-          <Tabs.Tab value="fifth">Crawls</Tabs.Tab> */}
+          <Tabs.Tab value="tree">Tree</Tabs.Tab>
         </Tabs.List>
 
         {/* Render components directly */}
@@ -44,6 +44,12 @@ const TopContainer = () => {
 
         <Tabs.Panel value="status">
           <ConsoleLog />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="tree">
+          <section className="h-[calc(100vh-12rem)] overflow-auto">
+            <URLTreeContainer />
+          </section>
         </Tabs.Panel>
       </Tabs>
     </div>
