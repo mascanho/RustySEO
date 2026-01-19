@@ -4,9 +4,10 @@ export const changelogData = [
     date: "2025-02-21",
     type: "feature",
     changes: [
-      "Deep Crawl: Javascript Crawling",
-      "Deep Crawl: Tree view",
-      "Deep Crawl: Improved Issues tab",
+      "Deep Crawler: Javascript Crawling",
+      "Deep Crawler: Tree view",
+      "Deep Crawler: Improved Issues tab",
+      "Deep Crawler: Improved Queries tab ",
     ],
   },
   {
