@@ -25,7 +25,7 @@ const RobotsDomain = () => {
   }, [robots, crawlData]);
 
   return (
-    <div className="h-[calc(100vh-90vh)] w-[20rem] text-[9px] bg-transparent dark:bg-brand-darker text-black robotsDomain">
+    <div className="h-[calc(100vh-90vh)] w-[25.5rem] text-[9px] bg-transparent dark:bg-brand-darker text-black robotsDomain">
       {robots && robots.length > 0 && robots[0] ? (
         <SyntaxHighlighter language="text" style={brownPaper}>
           {robots[0]}
