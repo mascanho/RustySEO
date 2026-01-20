@@ -260,7 +260,7 @@ export default function Home() {
 
   return (
     <div
-      className={`mx-0 mt-[2rem] h-screen dark:bg-brand-darker ${visibility.sidebar ? "w-[calc(100vw-20.4rem)]" : ""}`}
+      className={`mx-0 mt-[2rem] h-screen dark:bg-brand-darker ${visibility.sidebar ? "w-[calc(100vw-26rem)]" : ""}`}
     >
       <div
         ref={containerRef}

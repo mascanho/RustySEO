@@ -15,91 +15,78 @@ export const exportPSIDataCSV = async (data) => {
   const headers = [
     "#",
     "URL",
-    "Desktop Performance",
-    "Mobile Performance",
-    "Desktop Speed Index",
-    "Mobile Speed Index",
-    "Desktop LCP",
-    "Mobile LCP",
-    "Desktop CLS",
-    "Mobile CLS",
-    "Desktop FCP",
-    "Mobile FCP",
-    "Desktop Interactive",
-    "Mobile Interactive",
+    "Perf (M)",
+    "Perf (D)",
+    "Acc (M)",
+    "Acc (D)",
+    "BP (M)",
+    "BP (D)",
+    "SEO (M)",
+    "SEO (D)",
+    "Speed Index (M)",
+    "Speed Index (D)",
+    "LCP (M)",
+    "LCP (D)",
+    "CLS (M)",
+    "CLS (D)",
+    "FCP (M)",
+    "FCP (D)",
+    "Interactive (M)",
+    "Interactive (D)",
+    "TBT (M)",
+    "TBT (D)",
     "Redirects",
-    "Server Response Time",
-    "Total Blocking Time",
-    "DOM Size",
+    "TTFB (M)",
+    "TTFB (D)",
+    "DOM Nodes",
+    "Byte Weight (M)",
+    "Byte Weight (D)",
   ];
 
   // Process data into CSV rows
   const csvData = data.map((row: any, index: number) => {
+    const mobile = row?.psi_results?.Ok?.[0];
+    const desktop = row?.psi_results?.Ok?.[1];
+
+    const formatScore = (score: any) => {
+      if (score === null || score === undefined) return "n/a";
+      return (Math.round(score * 100)).toString();
+    };
+
+    const getAuditValue = (audit: any) => {
+      if (!audit) return "n/a";
+      return `"${(audit.displayValue || (audit.numericValue !== undefined ? audit.numericValue.toFixed(2) : "n/a")).replace(/"/g, '""')}"`;
+    };
+
     return [
-      // Index (0)
       index + 1,
-
-      // URL (1)
       `"${(row?.url || "").replace(/"/g, '""')}"`,
-
-      // Desktop Performance (2)
-      row?.psi_results?.Ok?.[0]?.categories?.performance?.score ?? "n/a",
-
-      // Mobile Performance (3)
-      row?.psi_results?.Ok?.[1]?.categories?.performance?.score ?? "n/a",
-
-      // Desktop Speed Index (4)
-      row?.psi_results?.Ok?.[0]?.audits?.["speed-index"]?.score ?? "n/a",
-
-      // Mobile Speed Index (5)
-      row?.psi_results?.Ok?.[1]?.audits?.["speed-index"]?.score ?? "n/a",
-
-      // Desktop LCP (6)
-      row?.psi_results?.Ok?.[0]?.audits?.["largest-contentful-paint"]?.score ??
-      "n/a",
-
-      // Mobile LCP (7)
-      row?.psi_results?.Ok?.[1]?.audits?.["largest-contentful-paint"]?.score ??
-      "n/a",
-
-      // Desktop CLS (8)
-      row?.psi_results?.Ok?.[0]?.audits?.["cumulative-layout-shift"]?.score ??
-      "n/a",
-
-      // Mobile CLS (9)
-      row?.psi_results?.Ok?.[1]?.audits?.["cumulative-layout-shift"]?.score ??
-      "n/a",
-
-      // Desktop FCP (10)
-      row?.psi_results?.Ok?.[0]?.audits?.["first-contentful-paint"]?.score ??
-      "n/a",
-
-      // Mobile FCP (11)
-      row?.psi_results?.Ok?.[1]?.audits?.["first-contentful-paint"]?.score ??
-      "n/a",
-
-      // Desktop Interactive (12)
-      row?.psi_results?.Ok?.[0]?.audits?.["interactive"]?.score ?? "n/a",
-
-      // Mobile Interactive (13)
-      row?.psi_results?.Ok?.[1]?.audits?.["interactive"]?.score ?? "n/a",
-
-      // Redirects (14)
-      row?.psi_results?.Ok?.[0]?.audits?.["redirects"]?.score ?? "n/a",
-
-      // Server Response Time (15)
-      row?.psi_results?.Ok?.[0]?.audits?.["server-response-time"]?.numericValue
-        ? `${row.psi_results.Ok[0].audits["server-response-time"].numericValue} ms`
-        : "n/a",
-
-      // Total Blocking Time (16)
-      row?.psi_results?.Ok?.[0]?.audits?.["total-blocking-time"]?.numericValue
-        ? `${row.psi_results.Ok[0].audits["total-blocking-time"].numericValue.toFixed(0)} ms`
-        : "n/a",
-
-      // DOM Size (17)
-      (row?.psi_results?.Ok?.[0]?.audits?.["dom-size-insight"] ||
-        row?.psi_results?.Ok?.[0]?.audits?.["dom-size"])?.numericValue ?? "n/a",
+      formatScore(mobile?.categories?.performance?.score),
+      formatScore(desktop?.categories?.performance?.score),
+      formatScore(mobile?.categories?.accessibility?.score),
+      formatScore(desktop?.categories?.accessibility?.score),
+      formatScore(mobile?.categories?.["best-practices"]?.score),
+      formatScore(desktop?.categories?.["best-practices"]?.score),
+      formatScore(mobile?.categories?.seo?.score),
+      formatScore(desktop?.categories?.seo?.score),
+      getAuditValue(mobile?.audits?.["speed-index"]),
+      getAuditValue(desktop?.audits?.["speed-index"]),
+      getAuditValue(mobile?.audits?.["largest-contentful-paint"]),
+      getAuditValue(desktop?.audits?.["largest-contentful-paint"]),
+      getAuditValue(mobile?.audits?.["cumulative-layout-shift"]),
+      getAuditValue(desktop?.audits?.["cumulative-layout-shift"]),
+      getAuditValue(mobile?.audits?.["first-contentful-paint"]),
+      getAuditValue(desktop?.audits?.["first-contentful-paint"]),
+      getAuditValue(mobile?.audits?.["interactive"]),
+      getAuditValue(desktop?.audits?.["interactive"]),
+      getAuditValue(mobile?.audits?.["total-blocking-time"]),
+      getAuditValue(desktop?.audits?.["total-blocking-time"]),
+      formatScore(mobile?.audits?.["redirects"]?.score),
+      getAuditValue(mobile?.audits?.["server-response-time"]),
+      getAuditValue(desktop?.audits?.["server-response-time"]),
+      getAuditValue(mobile?.audits?.["dom-size-insight"] || mobile?.audits?.["dom-size"]),
+      getAuditValue(mobile?.audits?.["total-byte-weight"]),
+      getAuditValue(desktop?.audits?.["total-byte-weight"]),
     ];
   });
 
