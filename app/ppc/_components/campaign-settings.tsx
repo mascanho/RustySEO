@@ -15,7 +15,7 @@ export function CampaignSettings({ ad, onChange }: CampaignSettingsProps) {
                 <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-700 dark:text-gray-200">Daily Budget</label>
                     <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">$</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 text-xs">$</span>
                         <input
                             type="number"
                             value={ad.budget}

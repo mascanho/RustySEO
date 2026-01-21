@@ -48,7 +48,7 @@ export function ExtensionsEditor({ extensions, onChange }: ExtensionsEditorProps
             <div className="flex items-center justify-between">
                 <div>
                     <h4 className="text-sm font-bold text-gray-900 dark:text-white">Ad Extensions</h4>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black opacity-60">Add assets to improve ad performance</p>
+                    <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest font-black opacity-60">Add assets to improve ad performance</p>
                 </div>
                 <div className="flex gap-2">
                     <select

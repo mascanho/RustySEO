@@ -222,7 +222,7 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-brand-dark/5 overflow-hidden">
       {/* TABS NAVBAR */}
-      <div className="flex-shrink-0 p-6 pb-0">
+      <div className="flex-shrink-0 p-3 pb-0">
         <div className="flex bg-white dark:bg-brand-dark p-1 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm overflow-x-auto custom-scrollbar no-scrollbar">
           {[
             { id: "content", label: "Content" },
@@ -233,7 +233,7 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as TabType)}
-              className={`flex-1 min-w-[100px] px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === tab.id
+              className={`flex-1 min-w-[100px] px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === tab.id
                 ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20 scale-[1.02]"
                 : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"}`}
             >
@@ -244,12 +244,12 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
       </div>
 
       {/* SCROLLABLE AREA */}
-      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-6 space-y-8 pb-32">
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar px-4 pt-4 space-y-6 pb-32">
         {activeTab === "content" && (
           <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
             {/* AD TYPE SELECTION */}
-            <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
-              <h5 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-6">Select Ad Type</h5>
+            <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
+              <h5 className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-4">Select Ad Type</h5>
               <div className="flex flex-wrap gap-8">
                 {["search", "pmax", "display"].map((type) => (
                   <label key={type} className="flex items-center gap-3 cursor-pointer group">
@@ -272,10 +272,10 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
             </div>
 
             {/* AD CREATIVE */}
-            <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm space-y-6">
+            <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm space-y-5">
               <div>
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">Ad Creative</h3>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black opacity-60">Define your messaging and landing page</p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest font-black opacity-60">Define your messaging and landing page</p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -422,9 +422,9 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
 
         {activeTab === "targeting" && (
           <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
+            <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Targeting & Keywords</h3>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black opacity-60 mb-6">Define who should see your ads</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest font-black opacity-60 mb-6">Define who should see your ads</p>
 
               <div className="space-y-4">
                 <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Target Keywords (One per line)</label>
@@ -446,9 +446,9 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
 
         {activeTab === "settings" && (
           <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
+            <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Campaign Strategy</h3>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black opacity-60 mb-8">Configure your budget and auction strategy</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest font-black opacity-60 mb-6">Configure your budget and auction strategy</p>
               <CampaignSettings ad={formData} onChange={handleUpdateSettings} />
             </div>
           </div>

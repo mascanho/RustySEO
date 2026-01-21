@@ -42,7 +42,7 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
         <h3 className="text-lg font-medium dark:text-white/50">
           No ads created yet
         </h3>
-        <p className="text-sm text-muted-foreground mt-1 dark:text-white/50">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
           Create your first ad to get started
         </p>
       </div>
@@ -93,7 +93,7 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
       {filteredAds.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-10">
           <h3 className="text-base font-bold">No {adTypeFilter} ads found</h3>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Create a new ad or switch to a different category
           </p>
         </div>

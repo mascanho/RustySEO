@@ -208,12 +208,12 @@ export function AdDashboard() {
     switch (sidebarView) {
       case "ads":
         return selectedAd ? (
-          <div className="w-full flex flex-col lg:flex-row gap-6 h-full bg-gray-50/20 dark:bg-transparent rounded-2xl overflow-hidden">
+          <div className="w-full flex flex-col lg:flex-row gap-4 h-full bg-gray-50/20 dark:bg-transparent rounded-2xl overflow-hidden">
             {/* Optimized Editor Column */}
             <div className="w-full lg:w-[650px] xl:w-[750px] flex-shrink-0 h-full flex flex-col">
               <div className="flex-1 flex flex-col bg-white dark:bg-brand-darker/60 backdrop-blur-md rounded-2xl border border-gray-200/50 dark:border-white/5 shadow-sm overflow-hidden">
-                <div className="flex-shrink-0 p-6 pb-0">
-                  <div className="mb-6 pb-6 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
+                <div className="flex-shrink-0 p-4 pb-0">
+                  <div className="mb-4 pb-4 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-3 mb-1">
                         <Button
@@ -226,7 +226,7 @@ export function AdDashboard() {
                         </Button>
                         <h3 className="text-xl font-bold text-gray-900 dark:text-white">Ad Editor</h3>
                       </div>
-                      <p className="text-sm text-muted-foreground ml-11">Refine your headlines, descriptions and assets</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 ml-11">Refine your headlines, descriptions and assets</p>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -242,7 +242,7 @@ export function AdDashboard() {
                   </div>
                 </div>
 
-                <div className="flex-1 min-h-0 px-6 pb-6">
+                <div className="flex-1 min-h-0 px-4 pb-4">
                   <div className="h-full">
                     <AdForm
                       ad={selectedAd}

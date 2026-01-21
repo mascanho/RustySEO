@@ -94,7 +94,7 @@ export function ImageManager({
         <div className="space-y-4">
             <div>
                 <h4 className="text-sm font-bold text-gray-900 dark:text-white">{title}</h4>
-                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black opacity-60">{description}</p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest font-black opacity-60">{description}</p>
             </div>
 
             <div

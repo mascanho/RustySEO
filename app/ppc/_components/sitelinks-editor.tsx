@@ -51,7 +51,7 @@ export function SitelinksEditor({ sitelinks, onChange }: SitelinksEditorProps) {
       <div className="flex justify-between items-center bg-gray-50/50 dark:bg-brand-dark/20 p-4 rounded-xl border border-gray-100 dark:border-white/5">
         <div>
           <h4 className="text-sm font-bold text-gray-900 dark:text-white">Ad Sitelinks</h4>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black opacity-60">
+          <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest font-black opacity-60">
             Add up to 6 secondary links below your main ad
           </p>
         </div>
@@ -120,8 +120,8 @@ export function SitelinksEditor({ sitelinks, onChange }: SitelinksEditorProps) {
                         className="w-full px-3 h-9 text-xs rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-brand-darker focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium placeholder:text-gray-400 text-gray-900 dark:text-gray-100"
                       />
                       <div className="flex justify-between items-center px-1">
-                        <span className="text-[9px] text-muted-foreground uppercase font-bold opacity-50">Max 25 chars</span>
-                        <span className="text-[9px] text-muted-foreground font-mono">{sitelink.title.length}/25</span>
+                        <span className="text-[9px] text-gray-500 dark:text-gray-400 uppercase font-bold opacity-50">Max 25 chars</span>
+                        <span className="text-[9px] text-gray-500 dark:text-gray-400 font-mono">{sitelink.title.length}/25</span>
                       </div>
                     </div>
 
