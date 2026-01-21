@@ -2,28 +2,13 @@
 "use client";
 
 import type React from "react";
-
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Plus, Trash, Eye, Upload, Download, RefreshCcw } from "lucide-react";
 import { KeywordValidator } from "./keyword-validator";
 import { SitelinksEditor } from "./sitelinks-editor";
 import { ImageManager } from "./image-manager";
 import { ExtensionsEditor } from "./extensions-editor";
 import { CampaignSettings } from "./campaign-settings";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { exportAdsToCSV } from "@/utils/ad-export";
 import { importAdsFromCSV } from "@/utils/ad-import";
 import { toast } from "sonner";
@@ -37,19 +22,14 @@ interface AdFormProps {
   onChange?: (ad: Ad) => void;
 }
 
+type TabType = "content" | "assets" | "targeting" | "settings";
+
 export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
+  const [activeTab, setActiveTab] = useState<TabType>("content");
   const [formData, setFormData] = useState<Ad>(() => ({
     ...ad,
-    headlines: Array.isArray(ad.headlines)
-      ? ad.headlines
-      : typeof ad.headlines === "string"
-        ? ad.headlines.split("\n")
-        : [],
-    descriptions: Array.isArray(ad.descriptions)
-      ? ad.descriptions
-      : typeof ad.descriptions === "string"
-        ? ad.descriptions.split("\n")
-        : [],
+    headlines: Array.isArray(ad.headlines) ? ad.headlines : [""],
+    descriptions: Array.isArray(ad.descriptions) ? ad.descriptions : [""],
     keywords: Array.isArray(ad.keywords) ? ad.keywords : [],
     images: Array.isArray(ad.images) ? ad.images : [],
     logos: Array.isArray(ad.logos) ? ad.logos : [],
@@ -66,7 +46,6 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
     missingKeywords: string[];
   }>({ valid: true, missingKeywords: [] });
 
-  // Validate keywords whenever form data changes and notify parent of changes
   useEffect(() => {
     validateKeywords();
     if (onChange) {
@@ -146,24 +125,6 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
     setFormData({ ...formData, descriptions: newDescriptions });
   };
 
-  const handleAddKeyword = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (keywordInput.trim()) {
-      setFormData({
-        ...formData,
-        keywords: [...formData.keywords, keywordInput.trim()],
-      });
-      setKeywordInput("");
-    }
-  };
-
-  const handleRemoveKeyword = (keyword: string) => {
-    setFormData({
-      ...formData,
-      keywords: formData.keywords.filter((k) => k !== keyword),
-    });
-  };
-
   const handleKeywordInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setKeywordInput(e.target.value);
   };
@@ -220,7 +181,6 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
     try {
       const importedAds = await importAdsFromCSV(file);
       if (importedAds.length > 0) {
-        // Merge imported data with defaults to ensure all required fields exist
         const newAd = { ...formData, ...importedAds[0] };
         setFormData(newAd);
         setKeywordInput(newAd.keywords.join("\n"));
@@ -255,210 +215,285 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
 
   const handleSave = () => {
     onSave(formData);
-
-    // set the data into local storage
     localStorage.setItem("Ads", JSON.stringify(formData));
     toast.success("Ad saved");
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#f8f9fa] dark:bg-brand-dark/5 overflow-hidden">
-      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-6">
-        <Tabs defaultValue="content" className="w-full h-fit space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-gray-100 dark:bg-brand-dark p-1 rounded-xl h-11">
-            <TabsTrigger value="content" className="rounded-lg font-bold text-xs uppercase tracking-wider">Content</TabsTrigger>
-            <TabsTrigger value="assets" className="rounded-lg font-bold text-xs uppercase tracking-wider">Assets</TabsTrigger>
-            <TabsTrigger value="targeting" className="rounded-lg font-bold text-xs uppercase tracking-wider">Targeting</TabsTrigger>
-            <TabsTrigger value="settings" className="rounded-lg font-bold text-xs uppercase tracking-wider">Settings</TabsTrigger>
-          </TabsList>
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-brand-dark/5 overflow-hidden">
+      {/* TABS NAVBAR */}
+      <div className="flex-shrink-0 p-6 pb-0">
+        <div className="flex bg-white dark:bg-brand-dark p-1 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm overflow-x-auto custom-scrollbar no-scrollbar">
+          {[
+            { id: "content", label: "Content" },
+            { id: "assets", label: "Assets" },
+            { id: "targeting", label: "Targeting" },
+            { id: "settings", label: "Settings" }
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as TabType)}
+              className={`flex-1 min-w-[100px] px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === tab.id
+                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20 scale-[1.02]"
+                : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"}`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-          <TabsContent value="content" className="space-y-6 mt-0">
+      {/* SCROLLABLE AREA */}
+      <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-6 space-y-8 pb-32">
+        {activeTab === "content" && (
+          <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
             {/* AD TYPE SELECTION */}
-            <Card className="w-full h-fit dark:bg-brand-darker/60 rounded-xl dark:border-white/5 relative shadow-sm mb-0">
-              <CardHeader className="py-4">
-                <CardTitle className="text-sm font-black uppercase tracking-widest text-gray-400">Ad Type</CardTitle>
-              </CardHeader>
-              <CardContent className="px-6 pb-6 pt-0">
-                <RadioGroup
-                  value={formData.type}
-                  onValueChange={handleTypeChange}
-                  className="flex flex-wrap gap-6"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="search" id="ad-type-search" />
-                    <Label htmlFor="ad-type-search" className="text-sm font-bold">Search</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="pmax" id="ad-type-pmax" />
-                    <Label htmlFor="ad-type-pmax" className="text-sm font-bold">Performance Max</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="display" id="ad-type-display" />
-                    <Label htmlFor="ad-type-display" className="text-sm font-bold">Display</Label>
-                  </div>
-                </RadioGroup>
-              </CardContent>
-            </Card>
+            <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
+              <h5 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-6">Select Ad Type</h5>
+              <div className="flex flex-wrap gap-8">
+                {["search", "pmax", "display"].map((type) => (
+                  <label key={type} className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative flex items-center justify-center">
+                      <input
+                        type="radio"
+                        name="ad-type"
+                        checked={formData.type === type}
+                        onChange={() => handleTypeChange(type as AdType)}
+                        className="peer appearance-none w-5 h-5 rounded-full border-2 border-gray-200 dark:border-white/10 checked:border-blue-600 transition-all"
+                      />
+                      <div className="absolute w-2.5 h-2.5 rounded-full bg-blue-600 scale-0 peer-checked:scale-100 transition-transform" />
+                    </div>
+                    <span className={`text-xs font-bold transition-colors ${formData.type === type ? "text-gray-900 dark:text-white" : "text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300"}`}>
+                      {type === "pmax" ? "Performance Max" : type.charAt(0).toUpperCase() + type.slice(1)}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
 
-            {/* AD DETAILS */}
-            <Card className="w-full dark:bg-brand-darker/60 rounded-xl dark:border-white/5 relative shadow-sm mb-0">
-              <CardHeader className="py-4">
-                <CardTitle className="text-lg">Ad Creative</CardTitle>
-                <CardDescription className="text-xs italic">Define your messaging and landing page</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 px-6 pb-6 pt-0">
+            {/* AD CREATIVE */}
+            <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm space-y-6">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Ad Creative</h3>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black opacity-60">Define your messaging and landing page</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="ad-name">Ad Name</Label>
-                  <Input id="ad-name" value={formData.name} onChange={handleNameChange} placeholder="Enter a name for your ad" className="h-9 text-xs" />
+                  <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Ad Name</label>
+                  <input
+                    value={formData.name}
+                    onChange={handleNameChange}
+                    placeholder="Enter ad variation name"
+                    className="w-full px-3 h-10 text-xs rounded-xl border border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-brand-darker focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                  />
                 </div>
 
                 {(formData.type === "display" || formData.type === "pmax") && (
                   <div className="space-y-2">
-                    <Label htmlFor="business-name">Business Name</Label>
-                    <Input id="business-name" value={formData.businessName || ""} onChange={handleBusinessNameChange} placeholder="Enter your brand or company name" maxLength={25} className="h-9 text-xs" />
+                    <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Business Name</label>
+                    <input
+                      value={formData.businessName || ""}
+                      onChange={handleBusinessNameChange}
+                      placeholder="Your brand name"
+                      maxLength={25}
+                      className="w-full px-3 h-10 text-xs rounded-xl border border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-brand-darker focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                    />
                   </div>
                 )}
+              </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="final-url">Final URL</Label>
-                  <Input id="final-url" value={formData.finalUrl} onChange={handleFinalUrlChange} placeholder="https://example.com" className="h-9 text-xs" />
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Final URL</label>
+                <input
+                  value={formData.finalUrl}
+                  onChange={handleFinalUrlChange}
+                  placeholder="https://example.com/landing-page"
+                  className="w-full px-3 h-10 text-xs rounded-xl border border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-brand-darker focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                />
+              </div>
+
+              {/* HEADLINES */}
+              <div className="space-y-4 pt-4 border-t border-gray-50 dark:border-white/5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Headlines ({formData.headlines.length}/15)</label>
+                  <button
+                    type="button"
+                    onClick={handleAddHeadline}
+                    disabled={formData.headlines.length >= 15}
+                    className="px-3 py-1.5 h-7 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                  >
+                    Add Headline
+                  </button>
                 </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">Headlines ({formData.headlines.length}/15)</Label>
-                    <Button type="button" variant="outline" size="sm" onClick={handleAddHeadline} disabled={formData.headlines.length >= 15} className="h-7 text-xs font-bold ring-offset-background transition-colors hover:bg-brand-bright hover:text-white dark:bg-brand-dark">
-                      <Plus className="h-3 w-3 mr-1" /> Add
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {formData.headlines.map((headline, index) => (
-                      <div key={index} className="flex gap-2 relative group">
-                        <Input value={headline} onChange={(e) => handleHeadlineChange(index, e.target.value)} placeholder={`Headline ${index + 1}`} maxLength={30} className="h-9 text-xs flex-1 pr-12" />
-                        <span className="absolute right-12 top-1/2 -translate-y-1/2 text-[9px] font-mono text-gray-400 tabular-nums">{headline.length}/30</span>
-                        <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveHeadline(index)} disabled={formData.headlines.length <= 1} className="h-9 w-9 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Trash className="h-4 w-4" />
-                        </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {formData.headlines.map((headline, index) => (
+                    <div key={index} className="relative group">
+                      <input
+                        value={headline}
+                        onChange={(e) => handleHeadlineChange(index, e.target.value)}
+                        placeholder={`Headline ${index + 1}`}
+                        maxLength={30}
+                        className="w-full pl-3 pr-16 h-10 text-xs rounded-xl border border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-brand-darker focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                      />
+                      <div className="absolute right-10 top-1/2 -translate-y-1/2 text-[9px] font-mono text-gray-400 tabular-nums">
+                        {headline.length}/30
                       </div>
-                    ))}
-                  </div>
+                      <button
+                        onClick={() => handleRemoveHeadline(index)}
+                        disabled={formData.headlines.length <= 1}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
+              </div>
 
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs">Descriptions ({formData.descriptions.length}/4)</Label>
-                    <Button type="button" variant="outline" size="sm" onClick={handleAddDescription} disabled={formData.descriptions.length >= 4} className="h-7 text-xs font-bold ring-offset-background transition-colors hover:bg-brand-bright hover:text-white dark:bg-brand-dark">
-                      <Plus className="h-3 w-3 mr-1" /> Add
-                    </Button>
-                  </div>
-                  <div className="space-y-2">
-                    {formData.descriptions.map((description, index) => (
-                      <div key={index} className="flex gap-2 relative group">
-                        <Textarea value={description} onChange={(e) => handleDescriptionChange(index, e.target.value)} placeholder={`Description ${index + 1}`} maxLength={90} className="h-16 text-xs resize-none flex-1 pr-12 dark:bg-brand-darker" />
-                        <span className="absolute right-12 bottom-2 text-[9px] font-mono text-gray-400 tabular-nums">{description.length}/90</span>
-                        <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveDescription(index)} disabled={formData.descriptions.length <= 1} className="h-16 w-9 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Trash className="h-4 w-4" />
-                        </Button>
+              {/* DESCRIPTIONS */}
+              <div className="space-y-4 pt-4 border-t border-gray-50 dark:border-white/5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Descriptions ({formData.descriptions.length}/4)</label>
+                  <button
+                    type="button"
+                    onClick={handleAddDescription}
+                    disabled={formData.descriptions.length >= 4}
+                    className="px-3 py-1.5 h-7 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                  >
+                    Add Description
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {formData.descriptions.map((desc, index) => (
+                    <div key={index} className="relative group">
+                      <textarea
+                        value={desc}
+                        onChange={(e) => handleDescriptionChange(index, e.target.value)}
+                        placeholder={`Description ${index + 1}`}
+                        maxLength={90}
+                        rows={2}
+                        className="w-full pl-3 pr-16 py-2.5 text-xs rounded-xl border border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-brand-darker focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium resize-none text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                      />
+                      <div className="absolute right-10 bottom-3 text-[9px] font-mono text-gray-400 tabular-nums">
+                        {desc.length}/90
                       </div>
-                    ))}
-                  </div>
+                      <button
+                        onClick={() => handleRemoveDescription(index)}
+                        disabled={formData.descriptions.length <= 1}
+                        className="absolute right-2 bottom-3 p-1 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </div>
+          </div>
+        )}
 
-          <TabsContent value="assets" className="space-y-6 mt-0">
-            {/* VISUAL ASSETS */}
+        {activeTab === "assets" && (
+          <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            {/* VISUAL CREATIVES */}
             {(formData.type === "display" || formData.type === "pmax") && (
-              <Card className="w-full dark:bg-brand-darker/60 rounded-xl dark:border-white/5 shadow-sm">
-                <CardHeader className="py-4">
-                  <CardTitle className="text-lg">Visual Creatives</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-8 px-6 pb-6">
-                  <ImageManager title="Marketing Images" description="Upload your brand visuals" images={formData.images || []} onChange={handleUpdateImages} maxFiles={15} />
-                  <div className="pt-6 border-t dark:border-white/5">
-                    <ImageManager title="Logos" description="Add your square logos" images={formData.logos || []} onChange={handleUpdateLogos} maxFiles={5} />
+              <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Visual Creatives</h3>
+                <div className="space-y-8">
+                  <ImageManager title="Marketing Images" description="Upload your high-quality brand visuals" images={formData.images || []} onChange={handleUpdateImages} maxFiles={15} />
+                  <div className="pt-8 border-t border-gray-50 dark:border-white/5">
+                    <ImageManager title="Logos" description="Add your square and landscape logos" images={formData.logos || []} onChange={handleUpdateLogos} maxFiles={5} />
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             )}
 
-            {/* EXTENSIONS */}
-            <Card className="w-full dark:bg-brand-darker/60 rounded-xl dark:border-white/5 shadow-sm h-fit">
-              <CardHeader className="py-4">
-                <CardTitle className="text-lg">Ad Extensions</CardTitle>
-                <CardDescription className="text-xs">Assets that appear with your ad to provide more information</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-8 px-6 pb-6">
+            {/* AD EXTENSIONS */}
+            <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
+              <div className="space-y-10">
                 <ExtensionsEditor extensions={formData.extensions || []} onChange={handleUpdateExtensions} />
-                <div className="pt-8 border-t dark:border-white/5">
-                  <Label className="block mb-4 text-xs font-black uppercase tracking-widest text-gray-400">Sitelinks</Label>
+                <div className="pt-10 border-t border-gray-50 dark:border-white/5">
                   <SitelinksEditor sitelinks={formData.sitelinks || []} onChange={handleUpdateSitelinks} />
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </div>
+            </div>
+          </div>
+        )}
 
-          <TabsContent value="targeting" className="space-y-6 mt-0">
-            <Card className="w-full dark:bg-brand-darker/60 rounded-xl dark:border-white/5 shadow-sm">
-              <CardHeader className="py-4">
-                <CardTitle className="text-lg">Targeting & Keywords</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6 px-6 pb-6 pt-0">
-                <div className="space-y-2">
-                  <Label>Keyword List (One per line)</Label>
-                  <Textarea
-                    value={keywordInput}
-                    onChange={handleKeywordInputChange}
-                    onBlur={handleKeywordsBlur}
-                    placeholder="Enter keywords to target..."
-                    className="h-48 text-xs font-mono dark:bg-brand-darker"
-                  />
-                </div>
-                <section className="pt-2 border-t dark:border-white/5 mt-4">
-                  <KeywordValidator validationResults={validationResults} adContent={formData} />
-                </section>
-              </CardContent>
-            </Card>
-          </TabsContent>
+        {activeTab === "targeting" && (
+          <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Targeting & Keywords</h3>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black opacity-60 mb-6">Define who should see your ads</p>
 
-          <TabsContent value="settings" className="space-y-6 mt-0">
-            <Card className="w-full dark:bg-brand-darker/60 rounded-xl dark:border-white/5 shadow-sm">
-              <CardHeader className="py-4">
-                <CardTitle className="text-lg">Campaign Strategy</CardTitle>
-                <CardDescription className="text-xs">Configure budget, bidding and scheduling</CardDescription>
-              </CardHeader>
-              <CardContent className="px-6 pb-6 pt-0">
-                <CampaignSettings ad={formData} onChange={handleUpdateSettings} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              <div className="space-y-4">
+                <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Target Keywords (One per line)</label>
+                <textarea
+                  value={keywordInput}
+                  onChange={handleKeywordInputChange}
+                  onBlur={handleKeywordsBlur}
+                  placeholder="e.g. digital marketing&#10;seo tools&#10;ad simulator"
+                  className="w-full p-4 h-64 text-xs font-mono rounded-2xl border border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-[#0a0a0b]/60 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all resize-none custom-scrollbar text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
+                />
+              </div>
+
+              <div className="mt-8 pt-8 border-t border-gray-50 dark:border-white/5">
+                <KeywordValidator validationResults={validationResults} adContent={formData} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "settings" && (
+          <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Campaign Strategy</h3>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black opacity-60 mb-8">Configure your budget and auction strategy</p>
+              <CampaignSettings ad={formData} onChange={handleUpdateSettings} />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* STICKY FOOTER */}
+      {/* FOOTER ACTIONS */}
       <div className="flex-shrink-0 p-4 border-t border-gray-100 dark:border-white/5 bg-white/80 dark:bg-brand-darker/80 backdrop-blur-xl flex justify-between items-center z-50">
-        <div className="flex gap-2.5">
-          <Button variant="outline" onClick={onPreview} className="rounded-xl px-4 h-10 font-bold border-none bg-gray-100 dark:bg-brand-dark text-gray-700 dark:text-gray-300">
-            <Eye className="h-4 w-4 mr-2" /> Preview
-          </Button>
+        <div className="flex gap-2">
+          <button
+            onClick={onPreview}
+            className="flex items-center gap-2 px-4 h-10 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+          >
+            <Eye className="h-4 w-4" /> <span>Preview</span>
+          </button>
 
-          <input type="file" id="csv-import" className="hidden" accept=".csv" onChange={handleImport} />
-          <Button variant="outline" onClick={() => document.getElementById('csv-import')?.click()} className="rounded-xl px-4 h-10 font-bold border-none bg-blue-500/10 text-blue-600 dark:text-blue-400">
-            <Upload className="h-4 w-4 mr-2" /> Import
-          </Button>
+          <input type="file" id="csv-import-native" className="hidden" accept=".csv" onChange={handleImport} />
+          <button
+            onClick={() => document.getElementById('csv-import-native')?.click()}
+            className="flex items-center gap-2 px-4 h-10 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+          >
+            <Upload className="h-4 w-4" /> <span>Import</span>
+          </button>
 
-          <Button variant="outline" onClick={handleExport} className="rounded-xl px-4 h-10 font-bold border-none bg-blue-500/10 text-blue-600 dark:text-blue-400">
-            <Download className="h-4 w-4 mr-2" /> Export
-          </Button>
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-2 px-4 h-10 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+          >
+            <Download className="h-4 w-4" /> <span>Export</span>
+          </button>
 
-          <Button variant="outline" onClick={handleClear} className="rounded-xl px-4 h-10 font-bold border-none bg-red-500/10 text-red-600 dark:text-red-400">
-            <RefreshCcw className="h-4 w-4 mr-2" /> Clear
-          </Button>
+          <button
+            onClick={handleClear}
+            className="flex items-center gap-2 px-4 h-10 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+          >
+            <RefreshCcw className="h-4 w-4" /> <span>Clear</span>
+          </button>
         </div>
-        <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-10 h-10 font-black shadow-lg shadow-blue-500/30 active:scale-95 transition-all">
+
+        <button
+          onClick={handleSave}
+          className="px-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/30 active:scale-95 transition-all transform hover:-translate-y-0.5"
+        >
           Save Campaign
-        </Button>
+        </button>
       </div>
     </div>
   );
