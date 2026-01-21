@@ -8,6 +8,8 @@ import { AdPreview } from "./ad-preview";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardLayout } from "./dashboard-layout";
 import { toast } from "./hooks/use-toast";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function AdDashboard() {
   const [ads, setAds] = useState<Ad[]>([]);
@@ -207,12 +209,34 @@ export function AdDashboard() {
       case "ads":
         return selectedAd ? (
           <div className="w-full flex flex-col lg:flex-row gap-8 h-full bg-gray-50/30 dark:bg-transparent rounded-[2.5rem] overflow-hidden">
-            {/* Expanded Editor Column - 20% wider */}
+            {/* Expanded Editor Column - Now with integrated Back Button */}
             <div className="w-full lg:w-[780px] xl:w-[960px] flex-shrink-0 h-full flex flex-col">
               <div className="flex-1 overflow-y-auto custom-scrollbar bg-white dark:bg-brand-darker/40 backdrop-blur-md rounded-[2.5rem] p-10 border border-gray-100 dark:border-white/5 shadow-sm">
-                <div className="mb-8 pb-8 border-b border-gray-100 dark:border-white/5">
-                  <h3 className="text-2xl font-black text-gray-900 dark:text-white">Ad Editor</h3>
-                  <p className="text-base text-muted-foreground mt-1">Refine your headlines, descriptions and assets</p>
+                <div className="mb-8 pb-8 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-3 mb-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
+                        onClick={() => setSelectedAd(null)}
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                      <h3 className="text-2xl font-black text-gray-900 dark:text-white">Ad Editor</h3>
+                    </div>
+                    <p className="text-base text-muted-foreground ml-11">Refine your headlines, descriptions and assets</p>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      className="rounded-xl font-bold border-gray-200 dark:border-white/10"
+                      onClick={() => setSidebarView("previews")}
+                    >
+                      Preview Studio
+                    </Button>
+                  </div>
                 </div>
                 <AdForm
                   ad={selectedAd}
@@ -225,7 +249,7 @@ export function AdDashboard() {
               </div>
             </div>
 
-            {/* Flexible Preview Column */}
+            {/* Flexible Preview Column - Full Height */}
             <div className="flex-1 h-full overflow-hidden">
               <AdPreview
                 ad={selectedAd}
@@ -304,31 +328,35 @@ export function AdDashboard() {
       activeView={sidebarView}
       onViewChange={setSidebarView}
     >
-      <div className="w-full h-[calc(100vh-120px)] flex flex-col">
-        <div className="flex-shrink-0 mb-6">
-          <DashboardHeader
-            heading={getHeaderTitle()}
-            description={getHeaderDescription()}
-            onAddNew={
-              sidebarView === "dashboard" ||
+      <div className="w-full h-full flex flex-col p-4 md:p-6 min-h-0 overflow-hidden">
+        {!(sidebarView === "ads" && selectedAd) && (
+          <div className="flex-shrink-0 mb-6">
+            <DashboardHeader
+              heading={getHeaderTitle()}
+              description={getHeaderDescription()}
+              onAddNew={
+                sidebarView === "dashboard" ||
+                  (sidebarView === "ads" && !selectedAd)
+                  ? handleAddAd
+                  : undefined
+              }
+              showBackButton={sidebarView === "ads" && selectedAd !== null}
+              onBack={() => {
+                setSelectedAd(null);
+              }}
+              ads={ads}
+              onImport={handleImportAds}
+              showImportExport={
+                sidebarView === "dashboard" ||
                 (sidebarView === "ads" && !selectedAd)
-                ? handleAddAd
-                : undefined
-            }
-            showBackButton={sidebarView === "ads" && selectedAd !== null}
-            onBack={() => {
-              setSelectedAd(null);
-            }}
-            ads={ads}
-            onImport={handleImportAds}
-            showImportExport={
-              sidebarView === "dashboard" ||
-              (sidebarView === "ads" && !selectedAd)
-            }
-          />
-        </div>
+              }
+            />
+          </div>
+        )}
 
-        <div className="flex-1 min-h-0">{renderContent()}</div>
+        <div className="flex-1 min-h-0">
+          {renderContent()}
+        </div>
       </div>
     </DashboardLayout>
   );
