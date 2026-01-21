@@ -324,8 +324,16 @@ export function DisplayPreview({
     <div className="w-full max-w-[600px] mx-auto p-4 flex items-center justify-center">
       <div className="w-full aspect-[1.91/1] bg-white dark:bg-[#202124] rounded-2xl overflow-hidden shadow-2xl border border-gray-100 dark:border-white/5 relative group cursor-pointer transition-all duration-500 hover:shadow-indigo-500/10">
         {/* Ad Background / Image Area */}
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/10 via-purple-600/5 to-blue-600/10">
-          <div className="absolute top-0 right-0 p-4">
+        <div className="absolute inset-0">
+          <img
+            src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=1200"
+            alt="Ad background"
+            className="w-full h-full object-cover transform scale-105 group-hover:scale-110 transition-transform duration-1000"
+          />
+          {/* Dark Overlay for Readability */}
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/95 to-white/40 dark:from-[#202124] dark:via-[#202124]/95 dark:to-[#202124]/40" />
+
+          <div className="absolute top-0 right-0 p-4 z-10">
             <div className="bg-black/20 backdrop-blur-md rounded-full p-2">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="white" className="opacity-80">
                 <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
