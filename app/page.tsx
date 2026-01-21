@@ -619,7 +619,7 @@ const Home: React.FC<HomeProps> = () => {
           </section>
         </div>
         {/* TABS SECTION */}
-        <section className="mt-1 relative h-[calc(100vh-8.6rem)] overflow-hidden pt-0 px-1.5 ">
+        <section className="mt-1 relative h-[calc(100vh-8.6rem)] overflow-hidden pt-0 px-0.5 pl-2 ">
           <Tabs defaultValue="first" className="h-full">
             <div className="transition-all   ease-in  bg-white duration-150 border-t dark:border-brand-dark  fixed left-0 right-0 pt-1 top-[70px]  transform dark:bg-brand-darker  pb-0 z-[999]">
               <Tabs.List

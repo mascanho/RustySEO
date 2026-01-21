@@ -7,7 +7,7 @@ import FixesContainer from "./BottomContainer/Fixes/FixesContainer";
 
 const BottomContainer = () => {
   return (
-    <div className="border-t dark:border-brand-dark relative h-[38rem] min-h-[30rem] flex flex-col">
+    <div className="relative h-full flex flex-col dark:bg-gray-900 bg-slate-100">
       <Tabs defaultValue="overview" className="overflow-hidden h-full w-full">
         <Tabs.List
           justify="center"

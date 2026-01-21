@@ -1,3 +1,4 @@
+use once_cell::sync::Lazy;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 
@@ -6,21 +7,20 @@ pub struct MetaRobots {
     pub meta_robots: Vec<String>,
 }
 
+static META_ROBOTS_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("meta[name='robots']").unwrap());
+
 /// Extracts meta robots content from an HTML document.
 ///
 /// # Arguments
-/// * `body` - The HTML content as a string.
+/// * `document` - The parsed HTML document.
 ///
 /// # Returns
 /// * `Option<MetaRobots>` - Returns `Some(MetaRobots)` if meta robots tags are found,
 ///   otherwise returns `None`.
-pub fn get_meta_robots(body: &str) -> Option<MetaRobots> {
-    let document = Html::parse_document(body);
-    let meta_robots_selector = Selector::parse("meta[name='robots']").unwrap();
-
+pub fn get_meta_robots(document: &Html) -> Option<MetaRobots> {
     // Use iterator methods to collect meta robots content
     let meta_robots: Vec<String> = document
-        .select(&meta_robots_selector)
+        .select(&META_ROBOTS_SELECTOR)
         .filter_map(|element| element.value().attr("content").map(String::from))
         .collect();
 
@@ -31,3 +31,4 @@ pub fn get_meta_robots(body: &str) -> Option<MetaRobots> {
         Some(MetaRobots { meta_robots })
     }
 }
+

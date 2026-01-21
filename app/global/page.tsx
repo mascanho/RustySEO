@@ -347,7 +347,7 @@ export default function Page() {
       </section>
 
       <aside
-        className={`${visibility.sidebar ? "  max-w-[20.4rem] w-[20.4rem] flex-grow " : "w-0"} h-screen`}
+        className={`${visibility.sidebar ? "  max-w-[26rem] w-[26rem] flex-grow " : "w-0"} h-screen transition-all duration-300`}
       >
         <SidebarContainer />
       </aside>

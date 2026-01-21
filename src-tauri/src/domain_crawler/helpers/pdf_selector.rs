@@ -1,3 +1,4 @@
+use once_cell::sync::Lazy;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -7,18 +8,12 @@ pub struct PdfLinks {
     pdf_links: Vec<String>,
 }
 
-pub fn extract_pdf_links(body: &str, base_url: &Url) -> Option<PdfLinks> {
-    let document = Html::parse_document(body);
+static PDF_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("a[href$='.pdf']").expect("Failed to parse PDF selector"));
 
-    // Create selector for anchor tags with PDF links
-    let pdf_selector = match Selector::parse("a[href$='.pdf']") {
-        Ok(selector) => selector,
-        Err(_) => return None,
-    };
-
+pub fn extract_pdf_links(document: &Html, base_url: &Url) -> Option<PdfLinks> {
     let mut pdf_links = Vec::new();
 
-    for element in document.select(&pdf_selector) {
+    for element in document.select(&PDF_SELECTOR) {
         if let Some(href) = element.value().attr("href") {
             // Convert relative URLs to absolute URLs
             match Url::parse(href) {
@@ -40,3 +35,4 @@ pub fn extract_pdf_links(body: &str, base_url: &Url) -> Option<PdfLinks> {
         Some(PdfLinks { pdf_links })
     }
 }
+

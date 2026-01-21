@@ -13,10 +13,13 @@ use tokio::sync::{Mutex, Semaphore};
 use tokio::task;
 use tokio::time::{sleep, Duration};
 use url::Url;
+use scraper::Html;
+
 
 use crate::crawler::get_page_speed_insights;
 use crate::domain_crawler::database::{Database, DatabaseResults};
-use crate::domain_crawler::extractors::html::extract_html;
+use crate::domain_crawler::extractors::html::{perform_extraction, update_cache};
+
 use crate::domain_crawler::helpers::extract_url_pattern::extract_url_pattern;
 use crate::domain_crawler::helpers::fetch_with_exponential::fetch_with_exponential_backoff;
 use crate::domain_crawler::helpers::headless_fetch;
@@ -46,8 +49,9 @@ use super::helpers::{
     domain_checker::url_check,
     headings_selector, iframe_selector, images_selector, indexability, javascript_selector,
     links_selector,
-    mobile_checker::is_mobile,
-    ngrams, page_description,
+    mobile_checker,
+    ngrams,
+ page_description,
     pdf_selector::extract_pdf_links,
     schema_selector, title_selector,
     word_count::{self, get_word_count},
@@ -390,6 +394,7 @@ async fn process_url(
 
     let mut pdf_files: Vec<String> = Vec::new();
     if !check_html_page::is_html_page(&body, content_type.as_deref()).await {
+
         pdf_files.push(url.to_string());
 
         let mut state = state.lock().await;
@@ -411,23 +416,84 @@ async fn process_url(
         });
     }
 
-    let internal_external_links =
-        anchor_links::extract_internal_external_links(&body, &final_url, base_url);
+    // Update the custom HTML extractor cache before parsing
+    let _ = update_cache().await;
 
-    let check_links_status_code = get_links_status_code(
+    // Perform all synchronous extractions in a scoped block to ensure `document` (non-Send) 
+    // is dropped before any `.await` points.
+    let (
+        title,
+        description,
+        headings,
+        javascript_data,
+        image_urls_for_fetch,
         internal_external_links,
+        indexability_data,
+        alt_tags_data,
+        schema_data,
+        css_data,
+        iframe_data,
+        word_count_val,
+        mobile_val,
+        canonicals_val,
+        meta_robots_val,
+        text_ratio_val,
+        keywords_val,
+        hreflangs_val,
+        language_val,
+        flesch_val,
+        html_extractor_val,
+        cross_origin_data,
+        links_for_crawler,
+        _ngrams_data,
+    ) = {
+        let document = Html::parse_document(&body);
+        
+        (
+            title_selector::extract_title(&document),
+            page_description::extract_page_description(&document).unwrap_or_default(),
+            headings_selector::headings_selector(&document),
+            if settings.javascript_rendering {
+                javascript_selector::extract_javascript(&document, &final_url)
+            } else {
+                javascript_selector::JavaScript::default()
+            },
+            images_selector::extract_image_urls_and_alts(&document, &final_url),
+            anchor_links::extract_internal_external_links(&document, &final_url, base_url),
+            indexability::extract_indexability(&document),
+            alt_tags::get_alt_tags(&document),
+            schema_selector::get_schema(&document),
+            css_selector::extract_css(&document, &final_url),
+            iframe_selector::extract_iframe(&document),
+            get_word_count(&document),
+            mobile_checker::is_mobile(&document),
+            get_canonical(&document).map(|c| c.canonicals),
+            get_meta_robots(&document).unwrap_or(MetaRobots { meta_robots: Vec::new() }),
+            get_text_ratio(&document),
+            extract_keywords(&document, &settings.stop_words),
+            select_hreflang(&document),
+            detect_language(&document),
+            get_flesch_score(&document),
+            perform_extraction(&document),
+            analyze_cross_origin_security(&document, &final_url),
+            links_selector::extract_links(&document, &final_url, base_url),
+            if settings.extract_ngrams {
+                ngrams::check_ngrams(&body, 2, url.as_str()).unwrap_or_default()
+            } else {
+                Vec::new()
+            },
+        )
+    }; // `document` is dropped here
+
+    // Now perform asynchronous checks
+    let check_links_status_code = get_links_status_code(
+        internal_external_links.clone(),
         base_url,
         final_url.to_string(),
-        //settings,
-    )
-    .await;
+    ).await;
 
-    // Cross-origin checker funtion
-    let cross_origin = analyze_cross_origin_security(&body, base_url);
+    let images_details = images_selector::fetch_image_details(image_urls_for_fetch).await;
 
-    // Page Speed Insights Checker
-    // Check if the key exists to make the call otherwise return an empty vector
-    // Attempt to fetch PSI results, but if there's an error, use an empty Vec
     // Start PSI fetch as a separate task
     let psi_future = if settings.page_speed_bulk {
         let url_clone = url.clone();
@@ -445,73 +511,60 @@ async fn process_url(
         None => Ok(Vec::new()),                             // No PSI requested
     };
 
-    // IF CONFIGURED BY THE USER GET THE NGRAMS FROM EACH PAGE
-    let _ngrams = if settings.extract_ngrams {
-        ngrams::check_ngrams(&body, 2, url.as_str()).unwrap_or_else(|_| Vec::new())
-    } else {
-        Vec::new()
-    };
-
     let result = DomainCrawlResults {
-        url: final_url.to_string(),    // Final URL (where we ended up)
-        original_url: url.to_string(), // Original requested URL
-        redirect_url,                  // Redirect URL (if any)
-        had_redirect,                  // Boolean: was there a redirect?
-        redirection_type,              // Type of redirect (e.g., "301 Redirect")
-        redirect_chain: Some(redirect_chain), // Full redirect chain
-        redirect_count,                // Number of hops
-        title: title_selector::extract_title(&body),
-        description: page_description::extract_page_description(&body)
-            .unwrap_or_else(|| "".to_string()),
-        headings: headings_selector::headings_selector(&body),
-        javascript: if settings.javascript_rendering {
-            javascript_selector::extract_javascript(&body, &final_url)
-        } else {
-            javascript_selector::JavaScript::default()
-        },
-        images: images_selector::extract_images_with_sizes_and_alts(&body, &final_url).await,
+        url: final_url.to_string(),
+        original_url: url.to_string(),
+        redirect_url,
+        had_redirect,
+        redirection_type,
+        redirect_chain: Some(redirect_chain),
+        redirect_count,
+        title,
+        description,
+        headings,
+        javascript: javascript_data,
+        images: images_details,
         status_code,
-        anchor_links: anchor_links::extract_internal_external_links(&body, &final_url, base_url),
+        anchor_links: internal_external_links,
         inoutlinks_status_codes: check_links_status_code,
-        indexability: indexability::extract_indexability(&body),
-        alt_tags: alt_tags::get_alt_tags(&body),
-        schema: schema_selector::get_schema(&body),
-        css: css_selector::extract_css(&body, final_url.clone()),
-        iframe: iframe_selector::extract_iframe(&body),
-        word_count: get_word_count(&body),
+        indexability: indexability_data,
+        alt_tags: alt_tags_data,
+        schema: schema_data,
+        css: css_data,
+        iframe: iframe_data,
+        word_count: word_count_val,
         response_time: Some(response_time),
-        mobile: is_mobile(&body),
-        canonicals: get_canonical(&body).map(|c| c.canonicals),
-        meta_robots: get_meta_robots(&body).unwrap_or(MetaRobots {
-            meta_robots: Vec::new(),
-        }),
-        content_type: content_type.unwrap_or("Unknown".to_string()),
+        mobile: mobile_val,
+        canonicals: canonicals_val,
+        meta_robots: meta_robots_val,
+        content_type: content_type.unwrap_or_else(|| "Unknown".to_string()),
         content_length: content_length.unwrap_or(0),
-        text_ratio: Some(vec![get_text_ratio(&body)
+        text_ratio: Some(vec![text_ratio_val
             .and_then(|mut v| v.pop())
             .unwrap_or(TextRatio {
                 html_length: 0,
                 text_length: 0,
                 text_ratio: 0.0,
             })]),
-        redirection: None, // Deprecated, use redirect_url instead
-        keywords: extract_keywords(&body, &settings.stop_words),
+        redirection: None,
+        keywords: keywords_val,
         page_size: calculate_html_size(content_len),
-        hreflangs: select_hreflang(&body),
-        language: detect_language(&body),
-        flesch: get_flesch_score(&body),
+        hreflangs: hreflangs_val,
+        language: language_val,
+        flesch: flesch_val,
         psi_results,
         extractor: Extractor {
-            html: extract_html(&body).await,
+            html: html_extractor_val,
             css: false,
             regex: false,
         },
         headers,
         pdf_files,
         https,
-        cross_origin,
+        cross_origin: cross_origin_data,
         status: Some(status_code),
     };
+
 
     {
         let mut state = state.lock().await;
@@ -523,7 +576,7 @@ async fn process_url(
 
         // Only process links if we haven't reached limits and depth allows
         if depth < MAX_DEPTH && state.total_urls < MAX_URLS_PER_DOMAIN {
-            let links = links_selector::extract_links(&body, &final_url, base_url);
+            let links = links_for_crawler;
             let links_found = links.len();
             if links_found > 0 && state.crawled_urls % 100 == 0 {
                 println!("Found {} links on {} at depth {}", links_found, url, depth);

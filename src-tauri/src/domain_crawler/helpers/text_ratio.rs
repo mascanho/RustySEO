@@ -1,3 +1,4 @@
+use once_cell::sync::Lazy;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 
@@ -8,13 +9,11 @@ pub struct TextRatio {
     pub text_ratio: f64,
 }
 
-pub fn get_text_ratio(html_content: &str) -> Option<Vec<TextRatio>> {
-    // Parse the HTML document
-    let doc = Html::parse_document(html_content);
+static BODY_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("body").unwrap());
 
+pub fn get_text_ratio(doc: &Html) -> Option<Vec<TextRatio>> {
     // Select the <body> tag
-    let selector = Selector::parse("body").ok()?;
-    let body = doc.select(&selector).next()?;
+    let body = doc.select(&BODY_SELECTOR).next()?;
 
     // Extract text content and concatenate it into a single string
     let text_content: String = body.text().collect::<Vec<_>>().join(" ").trim().to_string();
@@ -42,3 +41,4 @@ pub fn get_text_ratio(html_content: &str) -> Option<Vec<TextRatio>> {
     // Return the vector
     Some(text_ratio_vec)
 }
+

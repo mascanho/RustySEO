@@ -1,16 +1,14 @@
+use once_cell::sync::Lazy;
 use scraper::{Html, Selector};
 use std::collections::HashMap;
 
-pub fn headings_selector(html: &str) -> HashMap<String, Vec<String>> {
-    let document = Html::parse_document(html);
+static HEADINGS_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("h1, h2, h3, h4, h5, h6").unwrap());
 
-    // Create a selector for all headings from h1 to h6
-    let selector = Selector::parse("h1, h2, h3, h4, h5, h6").unwrap();
-
+pub fn headings_selector(document: &Html) -> HashMap<String, Vec<String>> {
     let mut headings_map: HashMap<String, Vec<String>> = HashMap::new();
 
     // Iterate over all headings in the document
-    for heading in document.select(&selector) {
+    for heading in document.select(&HEADINGS_SELECTOR) {
         // Get the tag name of the heading (e.g., h1, h2, etc.)
         let tag_name = heading.value().name(); // This is a &str, no Option involved.
 
@@ -30,3 +28,4 @@ pub fn headings_selector(html: &str) -> HashMap<String, Vec<String>> {
 
     headings_map
 }
+

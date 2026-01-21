@@ -1,5 +1,4 @@
 // @ts-nocheck
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, Check } from "lucide-react";
 import type { Ad } from "@/types/ad";
 
@@ -22,36 +21,44 @@ export function KeywordValidator({
 
   if (validationResults.valid) {
     return (
-      <Alert
-        variant="default"
-        className="bg-green-50 border-green-200 overflow-y-auto h-56 min-h-56"
-      >
-        <Check className="h-4 w-4 text-green-600" />
-        <AlertTitle className="text-green-800">
-          All keywords are present
-        </AlertTitle>
-        <AlertDescription className="text-green-700">
-          All of your keywords appear in your ad copy.
-        </AlertDescription>
-      </Alert>
+      <div className="flex flex-col gap-3 p-4 bg-emerald-50/50 dark:bg-emerald-500/5 border border-emerald-200 dark:border-emerald-500/20 rounded-xl animate-in fade-in duration-300">
+        <div className="flex items-center gap-2">
+          <div className="p-1 dark:bg-emerald-500/20 bg-emerald-100 rounded-full">
+            <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <h5 className="text-[11px] font-black uppercase tracking-widest text-emerald-800 dark:text-emerald-400">
+            Ad Copy Optimized
+          </h5>
+        </div>
+        <p className="text-xs text-emerald-700 dark:text-emerald-400/80 leading-relaxed font-medium">
+          Brilliant! All of your targeted keywords are correctly included in your ad headlines and descriptions.
+        </p>
+      </div>
     );
   }
 
   return (
-    <Alert
-      variant="destructive"
-      className="bg-red-50 border-red-200 overflow-y-auto h-56 min-h-56"
-    >
-      <AlertTriangle className="h-4 w-4 text-red-600" />
-      <AlertTitle className="text-red-800">Missing keywords</AlertTitle>
-      <AlertDescription className="text-red-700">
-        <p>The following keywords are missing from your ad copy:</p>
-        <ul className="list-disc list-inside mt-1">
+    <div className="flex flex-col gap-3 p-4 bg-orange-50/50 dark:bg-orange-500/5 border border-orange-200 dark:border-orange-500/20 rounded-xl animate-in fade-in duration-300">
+      <div className="flex items-center gap-2">
+        <div className="p-1 dark:bg-orange-500/20 bg-orange-100 rounded-full">
+          <AlertTriangle className="h-3.5 w-3.5 text-orange-600 dark:text-orange-400" />
+        </div>
+        <h5 className="text-[11px] font-black uppercase tracking-widest text-orange-800 dark:text-orange-400">
+          Optimization Required
+        </h5>
+      </div>
+      <div className="space-y-2">
+        <p className="text-xs text-orange-700 dark:text-orange-400/80 leading-relaxed font-medium">
+          The following keywords are currently missing from your ad creative:
+        </p>
+        <div className="flex flex-wrap gap-1.5 mt-1">
           {validationResults.missingKeywords.map((keyword, index) => (
-            <li key={index}>{keyword}</li>
+            <span key={index} className="px-2 py-0.5 bg-orange-100/50 dark:bg-orange-500/10 text-[10px] font-bold text-orange-600 dark:text-orange-400 rounded-md border border-orange-200/50 dark:border-orange-500/10">
+              {keyword}
+            </span>
           ))}
-        </ul>
-      </AlertDescription>
-    </Alert>
+        </div>
+      </div>
+    </div>
   );
 }

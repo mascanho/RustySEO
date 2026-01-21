@@ -1,5 +1,5 @@
+use once_cell::sync::Lazy;
 use scraper::{Html, Selector};
-use std::collections::HashSet;
 use tauri::Url;
 
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize, Clone)]
@@ -56,14 +56,25 @@ pub struct SecuritySummary {
     pub total_inline_scripts: usize,
 }
 
-pub fn analyze_cross_origin_security(html: &str, page_url: &Url) -> SecuritySummary {
-    let document = Html::parse_document(html);
+static ANCHOR_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("a[target='_blank']").unwrap());
+static IFRAME_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("iframe").unwrap());
+static RESOURCE_SELECTORS: Lazy<Vec<(&'static str, &'static str, Selector)>> = Lazy::new(|| {
+    vec![
+        ("img", "src", Selector::parse("img").unwrap()),
+        ("script", "src", Selector::parse("script[src]").unwrap()),
+        ("link", "href", Selector::parse("link").unwrap()),
+        ("audio", "src", Selector::parse("audio").unwrap()),
+        ("video", "src", Selector::parse("video").unwrap()),
+    ]
+});
+static INLINE_SCRIPT_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("script:not([src])").unwrap());
+
+pub fn analyze_cross_origin_security(document: &Html, page_url: &Url) -> SecuritySummary {
     let base_url = Url::parse(&page_url.to_string()).ok();
     let mut report = CrossOriginSecurityReport::default();
 
     // Check unsafe anchor tags (target="_blank" without noopener)
-    let anchor_selector = Selector::parse("a[target='_blank']").unwrap();
-    for element in document.select(&anchor_selector) {
+    for element in document.select(&ANCHOR_SELECTOR) {
         let rel = element.value().attr("rel").unwrap_or("");
         if !rel.contains("noopener") {
             let href = element.value().attr("href").unwrap_or("").to_string();
@@ -75,8 +86,7 @@ pub fn analyze_cross_origin_security(html: &str, page_url: &Url) -> SecuritySumm
     }
 
     // Check insecure iframes
-    let iframe_selector = Selector::parse("iframe").unwrap();
-    for element in document.select(&iframe_selector) {
+    for element in document.select(&IFRAME_SELECTOR) {
         let sandbox = element.value().attr("sandbox").map(|s| s.to_string());
         if sandbox.is_none() {
             report.insecure_iframes.push(InsecureIframe {
@@ -88,18 +98,9 @@ pub fn analyze_cross_origin_security(html: &str, page_url: &Url) -> SecuritySumm
     }
 
     // Check mixed content and missing crossorigin attributes
-    let resource_selectors = [
-        ("img", "src"),
-        ("script", "src"),
-        ("link", "href"),
-        ("audio", "src"),
-        ("video", "src"),
-    ];
-
-    for (tag, attr) in resource_selectors {
-        let selector = Selector::parse(tag).unwrap();
-        for element in document.select(&selector) {
-            if let Some(url) = element.value().attr(attr) {
+    for (tag, attr, selector) in RESOURCE_SELECTORS.iter() {
+        for element in document.select(selector) {
+            if let Some(url) = element.value().attr(*attr) {
                 // Check mixed content (HTTP on HTTPS page)
                 if let Some(base) = &base_url {
                     if base.scheme() == "https" && url.starts_with("http://") {
@@ -126,8 +127,7 @@ pub fn analyze_cross_origin_security(html: &str, page_url: &Url) -> SecuritySumm
     }
 
     // Check inline scripts with potentially dangerous patterns
-    let script_selector = Selector::parse("script:not([src])").unwrap();
-    for element in document.select(&script_selector) {
+    for element in document.select(&INLINE_SCRIPT_SELECTOR) {
         if let Some(script_content) = element.text().next() {
             let dangerous_patterns = [
                 "fetch(",
@@ -162,6 +162,7 @@ pub fn analyze_cross_origin_security(html: &str, page_url: &Url) -> SecuritySumm
 
     report.summary
 }
+
 
 // Example usage:
 // let report = analyze_cross_origin_security(&html_content, "https://example.com");

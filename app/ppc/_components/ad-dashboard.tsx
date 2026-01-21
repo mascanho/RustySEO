@@ -8,6 +8,8 @@ import { AdPreview } from "./ad-preview";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardLayout } from "./dashboard-layout";
 import { toast } from "./hooks/use-toast";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export function AdDashboard() {
   const [ads, setAds] = useState<Ad[]>([]);
@@ -35,11 +37,23 @@ export function AdDashboard() {
     // Load ads from localStorage when the component mounts
     const savedAds = getAdsFromLocalStorage();
     if (savedAds.length > 0) {
-      const processedAds = savedAds.map(ad => ({
+      const processedAds = savedAds.map((ad) => ({
         ...ad,
-        headlines: Array.isArray(ad.headlines) ? ad.headlines : (typeof ad.headlines === 'string' ? ad.headlines.split('\n') : []),
-        descriptions: Array.isArray(ad.descriptions) ? ad.descriptions : (typeof ad.descriptions === 'string' ? ad.descriptions.split('\n') : []),
-        keywords: Array.isArray(ad.keywords) ? ad.keywords : (typeof ad.keywords === 'string' ? ad.keywords.split('\n') : []),
+        headlines: Array.isArray(ad.headlines)
+          ? ad.headlines
+          : typeof ad.headlines === "string"
+            ? ad.headlines.split("\n")
+            : [],
+        descriptions: Array.isArray(ad.descriptions)
+          ? ad.descriptions
+          : typeof ad.descriptions === "string"
+            ? ad.descriptions.split("\n")
+            : [],
+        keywords: Array.isArray(ad.keywords)
+          ? ad.keywords
+          : typeof ad.keywords === "string"
+            ? ad.keywords.split("\n")
+            : [],
       }));
       setAds(processedAds);
       setSelectedAd(processedAds[0]);
@@ -104,9 +118,21 @@ export function AdDashboard() {
   const handleSelectAd = (ad) => {
     const processedAd = {
       ...ad,
-      headlines: Array.isArray(ad.headlines) ? ad.headlines : (typeof ad.headlines === 'string' ? ad.headlines.split('\n') : []),
-      descriptions: Array.isArray(ad.descriptions) ? ad.descriptions : (typeof ad.descriptions === 'string' ? ad.descriptions.split('\n') : []),
-      keywords: Array.isArray(ad.keywords) ? ad.keywords : (typeof ad.keywords === 'string' ? ad.keywords.split('\n') : []),
+      headlines: Array.isArray(ad.headlines)
+        ? ad.headlines
+        : typeof ad.headlines === "string"
+          ? ad.headlines.split("\n")
+          : [],
+      descriptions: Array.isArray(ad.descriptions)
+        ? ad.descriptions
+        : typeof ad.descriptions === "string"
+          ? ad.descriptions.split("\n")
+          : [],
+      keywords: Array.isArray(ad.keywords)
+        ? ad.keywords
+        : typeof ad.keywords === "string"
+          ? ad.keywords.split("\n")
+          : [],
       sitelinks: Array.isArray(ad.sitelinks) ? ad.sitelinks : [],
     };
     setSelectedAd(processedAd);
@@ -206,12 +232,68 @@ export function AdDashboard() {
     switch (sidebarView) {
       case "ads":
         return selectedAd ? (
-          <div className="w-full">
-            <AdForm
-              ad={selectedAd}
-              onSave={handleSaveAd}
-              onPreview={() => setSidebarView("previews")}
-            />
+          <div className="w-full flex flex-col lg:flex-row gap-4 h-full bg-gray-50/20 dark:bg-transparent rounded-2xl overflow-hidden">
+            {/* Optimized Editor Column */}
+            <div className="w-full lg:w-[650px] xl:w-[750px] flex-shrink-0 h-full flex flex-col">
+              <div className="flex-1 flex flex-col bg-white dark:bg-brand-darker/60 backdrop-blur-md rounded-2xl border border-gray-200/50 dark:border-white/5 shadow-sm overflow-hidden">
+                <div className="flex-shrink-0 p-4 pb-0">
+                  <div className="mb-4 pb-4 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-3 mb-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 dark:bg-gray-100"
+                          onClick={() => setSelectedAd(null)}
+                        >
+                          <ArrowLeft className="h-4 w-4" />
+                        </Button>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                          Ad Editor
+                        </h3>
+                      </div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 ml-11">
+                        Refine your headlines, descriptions and assets
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-lg font-semibold border-gray-200 dark:border-white/10"
+                        onClick={() => setSidebarView("previews")}
+                      >
+                        Preview Studio
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex-1 min-h-0 px-4 pb-4">
+                  <div className="h-full">
+                    <AdForm
+                      ad={selectedAd}
+                      onSave={handleSaveAd}
+                      onPreview={() => setSidebarView("previews")}
+                      onChange={(updatedAd) => {
+                        setSelectedAd(updatedAd);
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Flexible Preview Column - Full Height */}
+            <div className="flex-1 h-full overflow-hidden">
+              <AdPreview
+                ad={selectedAd}
+                allAds={ads}
+                onSelectAd={setSelectedAd}
+                isLive={true}
+              />
+            </div>
           </div>
         ) : (
           <AdList
@@ -282,29 +364,36 @@ export function AdDashboard() {
       activeView={sidebarView}
       onViewChange={setSidebarView}
     >
-      <div className="w-full max-w-full">
-        <DashboardHeader
-          heading={getHeaderTitle()}
-          description={getHeaderDescription()}
-          onAddNew={
-            sidebarView === "dashboard" ||
-            (sidebarView === "ads" && !selectedAd)
-              ? handleAddAd
-              : undefined
-          }
-          showBackButton={sidebarView === "ads" && selectedAd !== null}
-          onBack={() => {
-            setSelectedAd(null);
-          }}
-          ads={ads}
-          onImport={handleImportAds}
-          showImportExport={
-            sidebarView === "dashboard" ||
-            (sidebarView === "ads" && !selectedAd)
-          }
-        />
+      <div className="w-full h-full flex flex-col p-4 md:p-6 min-h-0 overflow-hidden">
+        {!(
+          sidebarView === "previews" ||
+          (sidebarView === "ads" && selectedAd)
+        ) && (
+          <div className="flex-shrink-0 mb-6">
+            <DashboardHeader
+              heading={getHeaderTitle()}
+              description={getHeaderDescription()}
+              onAddNew={
+                sidebarView === "dashboard" ||
+                (sidebarView === "ads" && !selectedAd)
+                  ? handleAddAd
+                  : undefined
+              }
+              showBackButton={sidebarView === "ads" && selectedAd !== null}
+              onBack={() => {
+                setSelectedAd(null);
+              }}
+              ads={ads}
+              onImport={handleImportAds}
+              showImportExport={
+                sidebarView === "dashboard" ||
+                (sidebarView === "ads" && !selectedAd)
+              }
+            />
+          </div>
+        )}
 
-        <div className="w-full flex-1">{renderContent()}</div>
+        <div className="flex-1 min-h-0">{renderContent()}</div>
       </div>
     </DashboardLayout>
   );

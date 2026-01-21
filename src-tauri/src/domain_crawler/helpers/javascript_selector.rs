@@ -1,3 +1,4 @@
+use once_cell::sync::Lazy;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -8,20 +9,21 @@ pub struct JavaScript {
     pub inline: Vec<String>,   // Content of inline scripts
 }
 
-pub fn extract_javascript(body: &str, base_url: &Url) -> JavaScript {
-    let document = Html::parse_document(body);
-    let script_selector = Selector::parse("script").unwrap();
+static SCRIPT_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("script").unwrap());
+
+pub fn extract_javascript(document: &Html, base_url: &Url) -> JavaScript {
     let mut javascript = JavaScript {
         external: Vec::new(),
         inline: Vec::new(),
     };
 
-    for element in document.select(&script_selector) {
+    for element in document.select(&SCRIPT_SELECTOR) {
         if let Some(src) = element.value().attr("src") {
             // External script: add the URL
             //concatenate the base URL with the relative URL
-            let src = base_url.join(&src).unwrap().to_string();
-            javascript.external.push(src.to_string());
+            if let Ok(full_src) = base_url.join(src) {
+                javascript.external.push(full_src.to_string());
+            }
         } else {
             // Inline script: add the text content
             let inline_js = element.text().collect::<String>();
@@ -33,3 +35,4 @@ pub fn extract_javascript(body: &str, base_url: &Url) -> JavaScript {
 
     javascript
 }
+

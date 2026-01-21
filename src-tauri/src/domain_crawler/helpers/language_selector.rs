@@ -1,12 +1,13 @@
+use once_cell::sync::Lazy;
 use scraper::{Html, Selector};
 
-pub fn detect_language(body: &str) -> Option<String> {
-    let document = Html::parse_document(&body);
+static LANG_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("html[lang]").unwrap());
+static CONTENT_LANG_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse(r#"meta[http-equiv="Content-Language"]"#).unwrap());
 
+pub fn detect_language(document: &Html) -> Option<String> {
     // Check the <html> tag's lang attribute
-    let language_selector = Selector::parse("html[lang]").unwrap();
     if let Some(lang) = document
-        .select(&language_selector)
+        .select(&LANG_SELECTOR)
         .next()
         .and_then(|html_element| {
             html_element
@@ -19,9 +20,8 @@ pub fn detect_language(body: &str) -> Option<String> {
     }
 
     // Check the <meta> tag for Content-Language
-    let meta_selector = Selector::parse(r#"meta[http-equiv="Content-Language"]"#).unwrap();
     if let Some(content) = document
-        .select(&meta_selector)
+        .select(&CONTENT_LANG_SELECTOR)
         .next()
         .and_then(|meta_element| {
             meta_element
@@ -36,3 +36,4 @@ pub fn detect_language(body: &str) -> Option<String> {
     // No language found
     None
 }
+

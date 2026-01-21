@@ -15,11 +15,11 @@ function ChangeLogContainer() {
 
   return (
     <section
-      className={`w-[325px] border-l-2 max-w-5xl absolute top-0 right-0 mx-auto h-[calc(100vh-3rem)] pt-16 ${visibility.changelog ? "block" : "hidden"}  border dark:border-brand-dark bg-white dark:bg-brand-darker z-50  ${serverlogs && "mt-2 h-full"} ${shallow && "-mt-[5.1rem]"} ${ppc && "h-full "} z-[999999] `}
+      className={`w-[325px] border-l-2 max-w-5xl absolute top-0 right-0 mx-auto h-[calc(100vh-3.3rem)] pt-16 ${visibility.changelog ? "block" : "hidden"}  border dark:border-brand-dark bg-white dark:bg-brand-darker z-50  ${serverlogs && "mt-4 h-full"} ${shallow && "-mt-[5.1rem] h-[calc(100vh-2.8rem)] "} ${ppc && "h-full "} z-[9999]`}
     >
       <X
         onClick={() => hideChangelog()}
-        className="absolute top-6  right-4 h-4 w-4 cursor-pointer dark:text-red-700"
+        className="absolute top-6 right-4 h-4 w-4 cursor-pointer dark:text-red-700"
       />
       <Changelog />
     </section>

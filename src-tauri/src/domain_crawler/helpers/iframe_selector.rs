@@ -1,3 +1,4 @@
+use once_cell::sync::Lazy;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 
@@ -6,20 +7,13 @@ pub struct Iframe {
     iframe: Vec<String>,
 }
 
-pub fn extract_iframe(body: &str) -> Option<Iframe> {
-    // Use parse_document if the input is a full HTML document
-    let document = Html::parse_document(body);
+static IFRAME_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("iframe").unwrap());
 
-    // Handle selector parsing errors gracefully
-    let iframe_selector = match Selector::parse("iframe") {
-        Ok(selector) => selector,
-        Err(_) => return None, // Return None if the selector is invalid
-    };
-
+pub fn extract_iframe(document: &Html) -> Option<Iframe> {
     let mut iframes = Vec::new();
 
     // Extract iframe src attributes
-    for element in document.select(&iframe_selector) {
+    for element in document.select(&IFRAME_SELECTOR) {
         if let Some(src) = element.value().attr("src") {
             iframes.push(src.to_string());
         }
@@ -32,3 +26,4 @@ pub fn extract_iframe(body: &str) -> Option<Iframe> {
         Some(Iframe { iframe: iframes })
     }
 }
+

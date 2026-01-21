@@ -1,3 +1,4 @@
+use once_cell::sync::Lazy;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
 
@@ -16,12 +17,14 @@ impl TitleDetails {
     }
 }
 
-pub fn extract_title(html: &str) -> Option<Vec<TitleDetails>> {
-    let document = Html::parse_document(html);
+static TITLE_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("title").unwrap());
+static H1_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("h1").unwrap());
+static H2_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("h2").unwrap());
+static META_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("meta").unwrap());
 
+pub fn extract_title(document: &Html) -> Option<Vec<TitleDetails>> {
     // Try to extract the <title> tag
-    let title_selector = Selector::parse("title").unwrap();
-    if let Some(title_element) = document.select(&title_selector).next() {
+    if let Some(title_element) = document.select(&TITLE_SELECTOR).next() {
         let title = title_element.text().collect::<String>().trim().to_string();
         let title_len = title.len();
         let mut results = Vec::new();
@@ -32,8 +35,7 @@ pub fn extract_title(html: &str) -> Option<Vec<TitleDetails>> {
     }
 
     // Fallback: Try to extract the first <h1> tag
-    let h1_selector = Selector::parse("h1").unwrap();
-    if let Some(h1_element) = document.select(&h1_selector).next() {
+    if let Some(h1_element) = document.select(&H1_SELECTOR).next() {
         let h1_text = h1_element.text().collect::<String>().trim().to_string();
         let h1_len = h1_text.len();
         let mut results = Vec::new();
@@ -44,8 +46,7 @@ pub fn extract_title(html: &str) -> Option<Vec<TitleDetails>> {
     }
 
     // Fallback: Try to extract the first <h2> tag
-    let h2_selector = Selector::parse("h2").unwrap();
-    if let Some(h2_element) = document.select(&h2_selector).next() {
+    if let Some(h2_element) = document.select(&H2_SELECTOR).next() {
         let h2_text = h2_element.text().collect::<String>().trim().to_string();
         let h2_len = h2_text.len();
         let mut results = Vec::new();
@@ -56,8 +57,7 @@ pub fn extract_title(html: &str) -> Option<Vec<TitleDetails>> {
     }
 
     // Fallback: Try to extract the <meta> tag with name="title" or property="og:title"
-    let meta_selector = Selector::parse("meta").unwrap();
-    for meta_element in document.select(&meta_selector) {
+    for meta_element in document.select(&META_SELECTOR) {
         if let Some(name) = meta_element.value().attr("name") {
             if name.eq_ignore_ascii_case("title") || name.eq_ignore_ascii_case("og:title") {
                 if let Some(content) = meta_element.value().attr("content") {
@@ -76,3 +76,4 @@ pub fn extract_title(html: &str) -> Option<Vec<TitleDetails>> {
     // If no title is found, return None
     None
 }
+

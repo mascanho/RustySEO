@@ -368,7 +368,7 @@ const TopMenuBar = () => {
         radius="lg"
         withCloseButton={false}
         styles={{
-          content: { background: 'transparent' }
+          content: { background: "transparent" },
         }}
       >
         <GeminiSelector closeGemini={closeGemini} />
@@ -386,7 +386,11 @@ const TopMenuBar = () => {
         radius="lg"
         withCloseButton={false}
         styles={{
-          content: { background: 'transparent', border: 'none', boxShadow: 'none' }
+          content: {
+            background: "transparent",
+            border: "none",
+            boxShadow: "none",
+          },
         }}
       >
         <About close={closeAbout} />
@@ -433,7 +437,7 @@ const TopMenuBar = () => {
           },
           root: {
             zIndex: 9999999999,
-          }
+          },
         }}
         overlayProps={{ backgroundOpacity: 0.01, blur: 0 }}
       >
@@ -467,7 +471,7 @@ const TopMenuBar = () => {
           },
           root: {
             zIndex: 9999999999,
-          }
+          },
         }}
         overlayProps={{ backgroundOpacity: 0.01, blur: 0 }}
       >
@@ -487,7 +491,7 @@ const TopMenuBar = () => {
         radius="lg"
         withCloseButton={false}
         styles={{
-          content: { background: 'transparent' }
+          content: { background: "transparent" },
         }}
       >
         <Configurations close={closeConfs} />
@@ -741,15 +745,15 @@ const TopMenuBar = () => {
           <MenubarMenu>
             <MenubarTrigger className="ml-3 text-xs">Help</MenubarTrigger>
             <MenubarContent className="z-[999999999999999]">
-              <MenubarItem
-                onClick={() =>
-                  openBrowserWindow("https://github.com/mascanho/Ruddit-Client")
-                }
-              >
-                <FiHelpCircle className="mr-2" />
-                Ruddit
-              </MenubarItem>
-              <MenubarSeparator />
+              {/* <MenubarItem */}
+              {/*   onClick={() => */}
+              {/*     openBrowserWindow("https://github.com/mascanho/Ruddit-Client") */}
+              {/*   } */}
+              {/* > */}
+              {/*   <FiHelpCircle className="mr-2" /> */}
+              {/*   Atalaia */}
+              {/* </MenubarItem> */}
+              {/* <MenubarSeparator /> */}
               <MenubarItem onClick={handleOnboarding}>
                 <BiDoorOpen className="mr-2" />
                 Onboarding

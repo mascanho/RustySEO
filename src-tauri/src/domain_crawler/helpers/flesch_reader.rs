@@ -1,15 +1,12 @@
+use once_cell::sync::Lazy;
 use scraper::{Html, Selector};
 
-pub fn get_flesch_score(body: &str) -> Result<(f64, String), String> {
-    // Parse the HTML document
-    let document = Html::parse_document(body);
+static P_SELECTOR: Lazy<Selector> = Lazy::new(|| Selector::parse("p").unwrap());
 
-    // Define a selector to extract text from <p> tags
-    let selector = Selector::parse("p").map_err(|e| format!("Failed to parse selector: {}", e))?;
-
+pub fn get_flesch_score(document: &Html) -> Result<(f64, String), String> {
     // Extract and concatenate the text content of each paragraph
     let mut text = String::new();
-    for element in document.select(&selector) {
+    for element in document.select(&P_SELECTOR) {
         let paragraph_text = element.text().collect::<Vec<_>>().join(" ");
         text.push_str(&paragraph_text);
         text.push(' '); // Add space between paragraphs
@@ -29,6 +26,7 @@ pub fn get_flesch_score(body: &str) -> Result<(f64, String), String> {
     // Return the score and classification as a tuple inside a Result
     Ok((score, classification))
 }
+
 
 fn count_sentences(text: &str) -> usize {
     text.split(|c: char| ['.', '!', '?'].contains(&c)).count()

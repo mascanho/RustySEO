@@ -131,9 +131,7 @@ export function DashboardLayout({
             </div>
           </SidebarFooter>
         </Sidebar>
-        <main className="flex-1 overflow-auto p-4 md:p-6">
-          {" "}
-          {/* flex-1 to take remaining width, overflow-auto for content scrolling */}
+        <main className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
           {children}
         </main>
       </div>
