@@ -84,11 +84,29 @@ export function SearchPreview({
         {/* Description */}
         <div className="mt-2.5 text-[14px] text-[#4d5156] dark:text-[#bdc1c6] leading-[1.6] max-w-[620px] font-normal">
           {currentDescription ? (
-            <p className="line-clamp-3">{currentDescription}</p>
+            <p className="line-clamp-3">
+              {currentDescription}
+              {ad.extensions?.filter(e => e.type === 'callout').map((ext, i) => (
+                <span key={ext.id}>
+                  <span className="mx-1.5 opacity-60">·</span>
+                  <span className="opacity-90">{ext.value}</span>
+                </span>
+              ))}
+            </p>
           ) : (
             <p className="text-gray-300 dark:text-gray-700 italic">[Your description will appear here]</p>
           )}
         </div>
+
+        {/* Assets / Extensions (Call, etc.) */}
+        {ad.extensions?.some(e => e.type === 'call') && (
+          <div className="mt-4 flex items-center gap-2 text-[14px] text-[#1a0dab] dark:text-[#8ab4f8] font-medium border-t dark:border-white/5 pt-4">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M6.62,10.79C8.06,13.62 10.38,15.94 13.21,17.38L15.41,15.18C15.69,14.9 16.08,14.82 16.43,14.93C17.55,15.3 18.75,15.5 20,15.5A1,1 0 0,1 21,16.5V20A1,1 0 0,1 20,21A17,17 0 0,1 3,4A1,1 0 0,1 4,3H7.5A1,1 0 0,1 8.5,4C8.5,5.25 8.7,6.45 9.07,7.57C9.18,7.92 9.1,8.31 8.82,8.59L6.62,10.79Z" />
+            </svg>
+            <span>Call: {ad.extensions.find(e => e.type === 'call')?.value}</span>
+          </div>
+        )}
 
         {/* Sitelinks - Desktop Style */}
         {validSitelinks.length > 0 && (

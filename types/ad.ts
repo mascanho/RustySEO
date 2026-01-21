@@ -16,17 +16,41 @@ export interface AdImage {
     type: string;
 }
 
+export type BiddingStrategy = 'manual_cpc' | 'maximize_conversions' | 'maximize_clicks' | 'target_roas' | 'target_cpa';
+
+export interface AdExtension {
+    id: string;
+    type: 'callout' | 'structured_snippet' | 'call' | 'price' | 'promotion';
+    value: string;
+    extra?: string; // For call phone number, promotion code, etc.
+}
+
 export interface Ad {
     id: string;
     name: string;
+    status: 'enabled' | 'paused' | 'removed';
     type: AdType;
+    // Core Content
     headlines: string[];
     descriptions: string[];
     finalUrl: string;
     displayPath: string;
+    businessName?: string;
+    // Targeting
     keywords: string[];
+    locations: string[];
+    languages: string[];
+    // Assets & Extensions
     sitelinks: Sitelink[];
     images: AdImage[];
     logos: AdImage[];
-    businessName?: string;
+    extensions: AdExtension[];
+    // Campaign Settings
+    budget: number;
+    currency: string;
+    biddingStrategy: BiddingStrategy;
+    targetCPA?: number;
+    targetROAS?: number;
+    startDate?: string;
+    endDate?: string;
 }
