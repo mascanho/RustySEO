@@ -346,7 +346,7 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
                     type="button"
                     onClick={handleAddHeadline}
                     disabled={formData.headlines.length >= 15}
-                    className="px-3 h-7 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                    className="px-3 h-7 bg-brand-bright hover:bg-brand-bright text-white rounded-lg text-sm font-black uppercase tracking-widest transition-all disabled:opacity-50"
                   >
                     +
                   </button>
@@ -562,7 +562,7 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
 
         <button
           onClick={handleSave}
-          className="px-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/30 active:scale-95 transition-all transform hover:-translate-y-0.5"
+          className="px-10 h-10 bg-brand-bright hover:bg-blue-700 text-white rounded-xl text-[11px] font-black uppercase tracking-widest   active:scale-95 transition-all transform hover:-translate-y-0.5"
         >
           Save Campaign
         </button>
