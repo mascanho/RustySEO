@@ -37,11 +37,23 @@ export function AdDashboard() {
     // Load ads from localStorage when the component mounts
     const savedAds = getAdsFromLocalStorage();
     if (savedAds.length > 0) {
-      const processedAds = savedAds.map(ad => ({
+      const processedAds = savedAds.map((ad) => ({
         ...ad,
-        headlines: Array.isArray(ad.headlines) ? ad.headlines : (typeof ad.headlines === 'string' ? ad.headlines.split('\n') : []),
-        descriptions: Array.isArray(ad.descriptions) ? ad.descriptions : (typeof ad.descriptions === 'string' ? ad.descriptions.split('\n') : []),
-        keywords: Array.isArray(ad.keywords) ? ad.keywords : (typeof ad.keywords === 'string' ? ad.keywords.split('\n') : []),
+        headlines: Array.isArray(ad.headlines)
+          ? ad.headlines
+          : typeof ad.headlines === "string"
+            ? ad.headlines.split("\n")
+            : [],
+        descriptions: Array.isArray(ad.descriptions)
+          ? ad.descriptions
+          : typeof ad.descriptions === "string"
+            ? ad.descriptions.split("\n")
+            : [],
+        keywords: Array.isArray(ad.keywords)
+          ? ad.keywords
+          : typeof ad.keywords === "string"
+            ? ad.keywords.split("\n")
+            : [],
       }));
       setAds(processedAds);
       setSelectedAd(processedAds[0]);
@@ -80,9 +92,9 @@ export function AdDashboard() {
     // Clone sitelinks with new IDs
     const clonedSitelinks = ad.sitelinks
       ? ad.sitelinks.map((sitelink) => ({
-        ...sitelink,
-        id: Date.now() + Math.random().toString(36).substring(2, 9),
-      }))
+          ...sitelink,
+          id: Date.now() + Math.random().toString(36).substring(2, 9),
+        }))
       : [];
 
     const clonedAd = {
@@ -106,9 +118,21 @@ export function AdDashboard() {
   const handleSelectAd = (ad) => {
     const processedAd = {
       ...ad,
-      headlines: Array.isArray(ad.headlines) ? ad.headlines : (typeof ad.headlines === 'string' ? ad.headlines.split('\n') : []),
-      descriptions: Array.isArray(ad.descriptions) ? ad.descriptions : (typeof ad.descriptions === 'string' ? ad.descriptions.split('\n') : []),
-      keywords: Array.isArray(ad.keywords) ? ad.keywords : (typeof ad.keywords === 'string' ? ad.keywords.split('\n') : []),
+      headlines: Array.isArray(ad.headlines)
+        ? ad.headlines
+        : typeof ad.headlines === "string"
+          ? ad.headlines.split("\n")
+          : [],
+      descriptions: Array.isArray(ad.descriptions)
+        ? ad.descriptions
+        : typeof ad.descriptions === "string"
+          ? ad.descriptions.split("\n")
+          : [],
+      keywords: Array.isArray(ad.keywords)
+        ? ad.keywords
+        : typeof ad.keywords === "string"
+          ? ad.keywords.split("\n")
+          : [],
       sitelinks: Array.isArray(ad.sitelinks) ? ad.sitelinks : [],
     };
     setSelectedAd(processedAd);
@@ -219,14 +243,18 @@ export function AdDashboard() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
+                          className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 dark:bg-gray-100"
                           onClick={() => setSelectedAd(null)}
                         >
                           <ArrowLeft className="h-4 w-4" />
                         </Button>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Ad Editor</h3>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                          Ad Editor
+                        </h3>
                       </div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 ml-11">Refine your headlines, descriptions and assets</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 ml-11">
+                        Refine your headlines, descriptions and assets
+                      </p>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -337,14 +365,17 @@ export function AdDashboard() {
       onViewChange={setSidebarView}
     >
       <div className="w-full h-full flex flex-col p-4 md:p-6 min-h-0 overflow-hidden">
-        {!(sidebarView === "previews" || (sidebarView === "ads" && selectedAd)) && (
+        {!(
+          sidebarView === "previews" ||
+          (sidebarView === "ads" && selectedAd)
+        ) && (
           <div className="flex-shrink-0 mb-6">
             <DashboardHeader
               heading={getHeaderTitle()}
               description={getHeaderDescription()}
               onAddNew={
                 sidebarView === "dashboard" ||
-                  (sidebarView === "ads" && !selectedAd)
+                (sidebarView === "ads" && !selectedAd)
                   ? handleAddAd
                   : undefined
               }
@@ -362,9 +393,7 @@ export function AdDashboard() {
           </div>
         )}
 
-        <div className="flex-1 min-h-0">
-          {renderContent()}
-        </div>
+        <div className="flex-1 min-h-0">{renderContent()}</div>
       </div>
     </DashboardLayout>
   );

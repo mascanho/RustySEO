@@ -125,7 +125,9 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
     setFormData({ ...formData, descriptions: newDescriptions });
   };
 
-  const handleKeywordInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleKeywordInputChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>,
+  ) => {
     setKeywordInput(e.target.value);
   };
 
@@ -222,20 +224,22 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-brand-dark/5 overflow-hidden">
       {/* TABS NAVBAR */}
-      <div className="flex-shrink-0 p-3 pb-0">
-        <div className="flex bg-white dark:bg-brand-dark p-1 rounded-2xl border border-gray-100 dark:border-white/5 shadow-sm overflow-x-auto custom-scrollbar no-scrollbar">
+      <div className="flex-shrink-0 p-0 mb-2 pb-0 shadow-lg ">
+        <div className="flex bg-white dark:bg-brand-dark p-1 px-3  w-full border border-gray-100 dark:border-white/5 shadow-sm overflow-x-auto custom-scrollbar no-scrollbar">
           {[
             { id: "content", label: "Content" },
             { id: "assets", label: "Assets" },
             { id: "targeting", label: "Targeting" },
-            { id: "settings", label: "Settings" }
+            { id: "settings", label: "Settings" },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as TabType)}
-              className={`flex-1 min-w-[100px] px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === tab.id
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20 scale-[1.02]"
-                : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"}`}
+              className={`flex-1 min-w-[100px] px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
+                activeTab === tab.id
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20 scale-[1.02]"
+                  : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
+              }`}
             >
               {tab.label}
             </button>
@@ -249,10 +253,15 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
           <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
             {/* AD TYPE SELECTION */}
             <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
-              <h5 className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-4">Select Ad Type</h5>
+              <h5 className="text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-4">
+                Select Ad Type
+              </h5>
               <div className="flex flex-wrap gap-8">
                 {["search", "pmax", "display"].map((type) => (
-                  <label key={type} className="flex items-center gap-3 cursor-pointer group">
+                  <label
+                    key={type}
+                    className="flex items-center gap-3 cursor-pointer group"
+                  >
                     <div className="relative flex items-center justify-center">
                       <input
                         type="radio"
@@ -263,8 +272,12 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
                       />
                       <div className="absolute w-2.5 h-2.5 rounded-full bg-blue-600 scale-0 peer-checked:scale-100 transition-transform" />
                     </div>
-                    <span className={`text-xs font-bold transition-colors ${formData.type === type ? "text-gray-900 dark:text-white" : "text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300"}`}>
-                      {type === "pmax" ? "Performance Max" : type.charAt(0).toUpperCase() + type.slice(1)}
+                    <span
+                      className={`text-xs font-bold transition-colors ${formData.type === type ? "text-gray-900 dark:text-white" : "text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300"}`}
+                    >
+                      {type === "pmax"
+                        ? "Performance Max"
+                        : type.charAt(0).toUpperCase() + type.slice(1)}
                     </span>
                   </label>
                 ))}
@@ -274,13 +287,19 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
             {/* AD CREATIVE */}
             <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm space-y-5">
               <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Ad Creative</h3>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest font-black opacity-60">Define your messaging and landing page</p>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  Ad Creative
+                </h3>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest font-black opacity-60">
+                  Define your messaging and landing page
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Ad Name</label>
+                  <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">
+                    Ad Name
+                  </label>
                   <input
                     value={formData.name}
                     onChange={handleNameChange}
@@ -291,7 +310,9 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
 
                 {(formData.type === "display" || formData.type === "pmax") && (
                   <div className="space-y-2">
-                    <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Business Name</label>
+                    <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">
+                      Business Name
+                    </label>
                     <input
                       value={formData.businessName || ""}
                       onChange={handleBusinessNameChange}
@@ -304,7 +325,9 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Final URL</label>
+                <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">
+                  Final URL
+                </label>
                 <input
                   value={formData.finalUrl}
                   onChange={handleFinalUrlChange}
@@ -316,14 +339,16 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
               {/* HEADLINES */}
               <div className="space-y-4 pt-4 border-t border-gray-50 dark:border-white/5">
                 <div className="flex items-center justify-between">
-                  <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Headlines ({formData.headlines.length}/15)</label>
+                  <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">
+                    Headlines ({formData.headlines.length}/15)
+                  </label>
                   <button
                     type="button"
                     onClick={handleAddHeadline}
                     disabled={formData.headlines.length >= 15}
-                    className="px-3 py-1.5 h-7 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                    className="px-3 h-7 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-black uppercase tracking-widest transition-all disabled:opacity-50"
                   >
-                    Add Headline
+                    +
                   </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -331,7 +356,9 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
                     <div key={index} className="relative group">
                       <input
                         value={headline}
-                        onChange={(e) => handleHeadlineChange(index, e.target.value)}
+                        onChange={(e) =>
+                          handleHeadlineChange(index, e.target.value)
+                        }
                         placeholder={`Headline ${index + 1}`}
                         maxLength={30}
                         className="w-full pl-3 pr-16 h-10 text-xs rounded-xl border border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-brand-darker focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium text-gray-900 dark:text-gray-100 placeholder:text-gray-400"
@@ -354,14 +381,16 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
               {/* DESCRIPTIONS */}
               <div className="space-y-4 pt-4 border-t border-gray-50 dark:border-white/5">
                 <div className="flex items-center justify-between">
-                  <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Descriptions ({formData.descriptions.length}/4)</label>
+                  <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">
+                    Descriptions ({formData.descriptions.length}/4)
+                  </label>
                   <button
                     type="button"
                     onClick={handleAddDescription}
                     disabled={formData.descriptions.length >= 4}
-                    className="px-3 py-1.5 h-7 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all disabled:opacity-50"
+                    className="px-3  h-6 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-black uppercase tracking-widest transition-all disabled:opacity-50"
                   >
-                    Add Description
+                    +
                   </button>
                 </div>
                 <div className="space-y-3">
@@ -369,7 +398,9 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
                     <div key={index} className="relative group">
                       <textarea
                         value={desc}
-                        onChange={(e) => handleDescriptionChange(index, e.target.value)}
+                        onChange={(e) =>
+                          handleDescriptionChange(index, e.target.value)
+                        }
                         placeholder={`Description ${index + 1}`}
                         maxLength={90}
                         rows={2}
@@ -398,11 +429,25 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
             {/* VISUAL CREATIVES */}
             {(formData.type === "display" || formData.type === "pmax") && (
               <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Visual Creatives</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
+                  Visual Creatives
+                </h3>
                 <div className="space-y-8">
-                  <ImageManager title="Marketing Images" description="Upload your high-quality brand visuals" images={formData.images || []} onChange={handleUpdateImages} maxFiles={15} />
+                  <ImageManager
+                    title="Marketing Images"
+                    description="Upload your high-quality brand visuals"
+                    images={formData.images || []}
+                    onChange={handleUpdateImages}
+                    maxFiles={15}
+                  />
                   <div className="pt-8 border-t border-gray-50 dark:border-white/5">
-                    <ImageManager title="Logos" description="Add your square and landscape logos" images={formData.logos || []} onChange={handleUpdateLogos} maxFiles={5} />
+                    <ImageManager
+                      title="Logos"
+                      description="Add your square and landscape logos"
+                      images={formData.logos || []}
+                      onChange={handleUpdateLogos}
+                      maxFiles={5}
+                    />
                   </div>
                 </div>
               </div>
@@ -411,9 +456,15 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
             {/* AD EXTENSIONS */}
             <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-6 shadow-sm">
               <div className="space-y-10">
-                <ExtensionsEditor extensions={formData.extensions || []} onChange={handleUpdateExtensions} />
+                <ExtensionsEditor
+                  extensions={formData.extensions || []}
+                  onChange={handleUpdateExtensions}
+                />
                 <div className="pt-10 border-t border-gray-50 dark:border-white/5">
-                  <SitelinksEditor sitelinks={formData.sitelinks || []} onChange={handleUpdateSitelinks} />
+                  <SitelinksEditor
+                    sitelinks={formData.sitelinks || []}
+                    onChange={handleUpdateSitelinks}
+                  />
                 </div>
               </div>
             </div>
@@ -423,11 +474,17 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
         {activeTab === "targeting" && (
           <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
             <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Targeting & Keywords</h3>
-              <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest font-black opacity-60 mb-6">Define who should see your ads</p>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                Targeting & Keywords
+              </h3>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest font-black opacity-60 mb-6">
+                Define who should see your ads
+              </p>
 
               <div className="space-y-4">
-                <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">Target Keywords (One per line)</label>
+                <label className="text-[10px] uppercase font-black tracking-widest text-gray-400">
+                  Target Keywords (One per line)
+                </label>
                 <textarea
                   value={keywordInput}
                   onChange={handleKeywordInputChange}
@@ -438,7 +495,10 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
               </div>
 
               <div className="mt-8 pt-8 border-t border-gray-50 dark:border-white/5">
-                <KeywordValidator validationResults={validationResults} adContent={formData} />
+                <KeywordValidator
+                  validationResults={validationResults}
+                  adContent={formData}
+                />
               </div>
             </div>
           </div>
@@ -447,8 +507,12 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
         {activeTab === "settings" && (
           <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
             <div className="bg-white dark:bg-brand-darker/60 rounded-2xl border border-gray-100 dark:border-white/5 p-5 shadow-sm">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Campaign Strategy</h3>
-              <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest font-black opacity-60 mb-6">Configure your budget and auction strategy</p>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                Campaign Strategy
+              </h3>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-widest font-black opacity-60 mb-6">
+                Configure your budget and auction strategy
+              </p>
               <CampaignSettings ad={formData} onChange={handleUpdateSettings} />
             </div>
           </div>
@@ -465,9 +529,17 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
             <Eye className="h-4 w-4" /> <span>Preview</span>
           </button>
 
-          <input type="file" id="csv-import-native" className="hidden" accept=".csv" onChange={handleImport} />
+          <input
+            type="file"
+            id="csv-import-native"
+            className="hidden"
+            accept=".csv"
+            onChange={handleImport}
+          />
           <button
-            onClick={() => document.getElementById('csv-import-native')?.click()}
+            onClick={() =>
+              document.getElementById("csv-import-native")?.click()
+            }
             className="flex items-center gap-2 px-4 h-10 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
           >
             <Upload className="h-4 w-4" /> <span>Import</span>
