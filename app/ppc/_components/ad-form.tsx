@@ -460,7 +460,7 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
         <div className="flex gap-2">
           <button
             onClick={onPreview}
-            className="flex items-center gap-2 px-4 h-10 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-gray-300 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+            className="flex items-center gap-2 px-4 h-10 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-700 dark:text-gray-200 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
           >
             <Eye className="h-4 w-4" /> <span>Preview</span>
           </button>

@@ -117,7 +117,7 @@ export function SitelinksEditor({ sitelinks, onChange }: SitelinksEditorProps) {
                         onChange={(e) => handleUpdateSitelink(sitelink.id, "title", e.target.value)}
                         placeholder="e.g., Shop Now"
                         maxLength={25}
-                        className="w-full px-3 h-9 text-xs rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-brand-darker focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium placeholder:text-gray-400"
+                        className="w-full px-3 h-9 text-xs rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-brand-darker focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium placeholder:text-gray-400 text-gray-900 dark:text-gray-100"
                       />
                       <div className="flex justify-between items-center px-1">
                         <span className="text-[9px] text-muted-foreground uppercase font-bold opacity-50">Max 25 chars</span>
@@ -131,7 +131,7 @@ export function SitelinksEditor({ sitelinks, onChange }: SitelinksEditorProps) {
                         value={sitelink.url}
                         onChange={(e) => handleUpdateSitelink(sitelink.id, "url", e.target.value)}
                         placeholder="https://example.com/page"
-                        className="w-full px-3 h-9 text-xs rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-brand-darker focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium placeholder:text-gray-400"
+                        className="w-full px-3 h-9 text-xs rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-brand-darker focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium placeholder:text-gray-400 text-gray-900 dark:text-gray-100"
                       />
                     </div>
                   </div>
@@ -144,7 +144,7 @@ export function SitelinksEditor({ sitelinks, onChange }: SitelinksEditorProps) {
                         onChange={(e) => handleUpdateSitelink(sitelink.id, "description1", e.target.value)}
                         placeholder="First descriptive line"
                         maxLength={35}
-                        className="w-full px-3 h-9 text-xs rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-brand-darker focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium placeholder:text-gray-400"
+                        className="w-full px-3 h-9 text-xs rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-brand-darker focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium placeholder:text-gray-400 text-gray-900 dark:text-gray-100"
                       />
                     </div>
                     <div className="space-y-2">
@@ -154,7 +154,7 @@ export function SitelinksEditor({ sitelinks, onChange }: SitelinksEditorProps) {
                         onChange={(e) => handleUpdateSitelink(sitelink.id, "description2", e.target.value)}
                         placeholder="Second descriptive line"
                         maxLength={35}
-                        className="w-full px-3 h-9 text-xs rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-brand-darker focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium placeholder:text-gray-400"
+                        className="w-full px-3 h-9 text-xs rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-brand-darker focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium placeholder:text-gray-400 text-gray-900 dark:text-gray-100"
                       />
                     </div>
                   </div>
