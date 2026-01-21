@@ -22,13 +22,16 @@ import { KeywordValidator } from "./keyword-validator";
 import { SitelinksEditor } from "./sitelinks-editor";
 import { toast } from "sonner";
 
+import type { Ad, AdType, Sitelink } from "@/types/ad";
+
 interface AdFormProps {
   ad: Ad;
   onSave: (ad: Ad) => void;
   onPreview: () => void;
+  onChange?: (ad: Ad) => void;
 }
 
-export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
+export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
   const [formData, setFormData] = useState<Ad>(() => ({
     ...ad,
     headlines: Array.isArray(ad.headlines)
@@ -53,9 +56,12 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
     missingKeywords: string[];
   }>({ valid: true, missingKeywords: [] });
 
-  // Validate keywords whenever form data changes
+  // Validate keywords whenever form data changes and notify parent of changes
   useEffect(() => {
     validateKeywords();
+    if (onChange) {
+      onChange(formData);
+    }
   }, [formData]);
 
   const validateKeywords = () => {
@@ -235,21 +241,28 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
               </div>
               <div className="space-y-2">
                 {formData.headlines.map((headline, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      value={headline}
-                      onChange={(e) =>
-                        handleHeadlineChange(index, e.target.value)
-                      }
-                      placeholder={`Headline ${index + 1}`}
-                      maxLength={30}
-                    />
+                  <div key={index} className="flex gap-2 relative group mt-2">
+                    <div className="relative flex-1">
+                      <Input
+                        value={headline}
+                        onChange={(e) =>
+                          handleHeadlineChange(index, e.target.value)
+                        }
+                        placeholder={`Headline ${index + 1}`}
+                        maxLength={30}
+                        className="pr-12"
+                      />
+                      <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono ${headline.length > 25 ? 'text-orange-500' : 'text-gray-400'}`}>
+                        {headline.length}/30
+                      </span>
+                    </div>
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
                       onClick={() => handleRemoveHeadline(index)}
                       disabled={formData.headlines.length <= 1}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <Trash className="h-4 w-4" />
                       <span className="sr-only">Remove</span>
@@ -278,23 +291,29 @@ export function AdForm({ ad, onSave, onPreview }: AdFormProps) {
               </div>
               <div className="space-y-2">
                 {formData.descriptions.map((description, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Textarea
-                      value={description}
-                      onChange={(e) =>
-                        handleDescriptionChange(index, e.target.value)
-                      }
-                      placeholder={`Description ${index + 1}`}
-                      maxLength={90}
-                      className="resize-none dark:bg-brand-darker dark:border-brand-dark"
-                      rows={2}
-                    />
+                  <div key={index} className="flex gap-2 relative group mt-2">
+                    <div className="relative flex-1">
+                      <Textarea
+                        value={description}
+                        onChange={(e) =>
+                          handleDescriptionChange(index, e.target.value)
+                        }
+                        placeholder={`Description ${index + 1}`}
+                        maxLength={90}
+                        className="resize-none dark:bg-brand-darker dark:border-brand-dark pr-12"
+                        rows={2}
+                      />
+                      <span className={`absolute right-3 bottom-2 text-[10px] font-mono ${description.length > 80 ? 'text-orange-500' : 'text-gray-400'}`}>
+                        {description.length}/90
+                      </span>
+                    </div>
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
                       onClick={() => handleRemoveDescription(index)}
                       disabled={formData.descriptions.length <= 1}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <Trash className="h-4 w-4" />
                       <span className="sr-only">Remove</span>

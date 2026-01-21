@@ -98,101 +98,108 @@ export function AdList({ ads, onSelect, onClone, onDelete }: AdListProps) {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 w-full">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 w-full">
           {filteredAds.map((ad) => (
-            <Card key={ad.id} className="overflow-hidden border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 dark:bg-gray-800 dark:border-gray-700">
-              <CardHeader className="p-4 border-b border-gray-200 dark:border-gray-700">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">{ad.name}</CardTitle>
-                    <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
-                      {ad.headlines.filter((h) => h.trim()).length} headlines,{" "}
-                      {ad.descriptions.filter((d) => d.trim()).length}{" "}
-                      descriptions
-                    </CardDescription>
-                  </div>
-                  <Badge
-                    variant={
-                      ad.type === "search"
-                        ? "default"
-                        : ad.type === "pmax"
-                          ? "secondary"
-                          : "outline"
-                    }
-                    className="capitalize px-2 py-1 text-xs font-medium rounded-full"
-                  >
-                    {ad.type}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="p-4 space-y-3">
-                <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Headlines:</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-                    {ad.headlines
-                      .filter((h) => h.trim())
-                      .slice(0, 4)
-                      .join(" | ")}
+            <div
+              key={ad.id}
+              className="group relative bg-white dark:bg-brand-darker border border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden flex flex-col"
+            >
+              {/* Type Badge */}
+              <div className="absolute top-4 right-4 z-10">
+                <Badge
+                  className={`capitalize px-3 py-1 text-[10px] font-bold tracking-wider rounded-full border-none shadow-sm ${ad.type === "search"
+                      ? "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                      : ad.type === "pmax"
+                        ? "bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
+                        : "bg-orange-50 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400"
+                    }`}
+                >
+                  {ad.type}
+                </Badge>
+              </div>
+
+              <div className="p-6 flex-1">
+                <div className="mb-4">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate pr-16">
+                    {ad.name}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Updated {new Date(parseInt(ad.id)).toLocaleDateString()}
                   </p>
                 </div>
-                <div className="space-y-1">
-                  <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Keywords:</h4>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {ad.keywords.slice(0, 3).map((keyword, i) => (
-                      <span
-                        key={i}
-                        className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-200"
-                      >
-                        {keyword}
-                      </span>
-                    ))}
-                    {ad.keywords.length > 3 && (
-                      <Badge variant="outline" className="bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                        +{ad.keywords.length - 3}
-                      </Badge>
-                    )}
+
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-widest font-bold text-gray-400 dark:text-gray-500 mb-2">
+                      Primary Headline
+                    </div>
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200 line-clamp-1 italic">
+                      "{(ad.headlines || []).find(h => h.trim()) || 'No headlines'}"
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="text-[10px] uppercase tracking-widest font-bold text-gray-400 dark:text-gray-500 mb-2">
+                      Stats
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-gray-900 dark:text-white">{(ad.headlines || []).filter(h => h.trim()).length}</span>
+                        <span className="text-[10px] text-gray-500">Headlines</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-gray-900 dark:text-white">{(ad.descriptions || []).filter(d => d.trim()).length}</span>
+                        <span className="text-[10px] text-gray-500">Descs</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-bold text-gray-900 dark:text-white">{(ad.keywords || []).length}</span>
+                        <span className="text-[10px] text-gray-500">Keywords</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </CardContent>
-              <CardFooter className="flex justify-between p-4 border-t border-gray-200 dark:border-gray-700">
+              </div>
+
+              <div className="p-6 pt-0 mt-auto border-t border-gray-50 dark:border-gray-800/50 flex items-center justify-between bg-gray-50/30 dark:bg-black/10">
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => onSelect(ad)}
-                  className="text-blue-600 border-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-gray-700"
+                  className="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 font-bold text-xs rounded-xl"
                 >
-                  <Edit className="h-4 w-4 mr-1" /> Edit
+                  <Edit className="h-3.5 w-3.5 mr-2" />
+                  Edit Ad
                 </Button>
-                <div className="flex gap-2">
+
+                <div className="flex items-center gap-1">
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="icon"
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
                       onClone(ad);
                     }}
-                    className="text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                    className="h-8 w-8 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-full"
+                    title="Clone ad"
                   >
                     <Copy className="h-4 w-4" />
-                    <span className="sr-only">Clone</span>
                   </Button>
                   <Button
-                    variant={confirmDelete === ad.id ? "destructive" : "ghost"}
-                    size="sm"
+                    variant="ghost"
+                    size="icon"
                     onClick={(e) => handleDeleteClick(ad.id, e)}
-                    className={confirmDelete === ad.id ? "w-24 bg-red-500 hover:bg-red-600 text-white" : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"}
+                    className={`h-8 w-8 rounded-full ${confirmDelete === ad.id
+                        ? "bg-red-50 text-red-600 dark:bg-red-900/20 shadow-inner"
+                        : "text-gray-400 hover:text-red-500 dark:hover:text-red-400"
+                      }`}
+                    title={confirmDelete === ad.id ? "Click to confirm deletion" : "Delete ad"}
                   >
                     <Trash className="h-4 w-4" />
-                    <span
-                      className={confirmDelete === ad.id ? "ml-1" : "sr-only"}
-                    >
-                      {confirmDelete === ad.id ? "Confirm" : "Delete"}
-                    </span>
                   </Button>
                 </div>
-              </CardFooter>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       )}

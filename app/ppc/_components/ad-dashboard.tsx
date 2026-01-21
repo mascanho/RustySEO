@@ -78,9 +78,9 @@ export function AdDashboard() {
     // Clone sitelinks with new IDs
     const clonedSitelinks = ad.sitelinks
       ? ad.sitelinks.map((sitelink) => ({
-          ...sitelink,
-          id: Date.now() + Math.random().toString(36).substring(2, 9),
-        }))
+        ...sitelink,
+        id: Date.now() + Math.random().toString(36).substring(2, 9),
+      }))
       : [];
 
     const clonedAd = {
@@ -206,12 +206,34 @@ export function AdDashboard() {
     switch (sidebarView) {
       case "ads":
         return selectedAd ? (
-          <div className="w-full">
-            <AdForm
-              ad={selectedAd}
-              onSave={handleSaveAd}
-              onPreview={() => setSidebarView("previews")}
-            />
+          <div className="w-full flex flex-col lg:flex-row gap-8 h-full bg-gray-50/30 dark:bg-transparent rounded-[2.5rem] overflow-hidden">
+            {/* Expanded Editor Column - 20% wider */}
+            <div className="w-full lg:w-[780px] xl:w-[960px] flex-shrink-0 h-full flex flex-col">
+              <div className="flex-1 overflow-y-auto custom-scrollbar bg-white dark:bg-brand-darker/40 backdrop-blur-md rounded-[2.5rem] p-10 border border-gray-100 dark:border-white/5 shadow-sm">
+                <div className="mb-8 pb-8 border-b border-gray-100 dark:border-white/5">
+                  <h3 className="text-2xl font-black text-gray-900 dark:text-white">Ad Editor</h3>
+                  <p className="text-base text-muted-foreground mt-1">Refine your headlines, descriptions and assets</p>
+                </div>
+                <AdForm
+                  ad={selectedAd}
+                  onSave={handleSaveAd}
+                  onPreview={() => setSidebarView("previews")}
+                  onChange={(updatedAd) => {
+                    setSelectedAd(updatedAd);
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Flexible Preview Column */}
+            <div className="flex-1 h-full overflow-hidden">
+              <AdPreview
+                ad={selectedAd}
+                allAds={ads}
+                onSelectAd={setSelectedAd}
+                isLive={true}
+              />
+            </div>
           </div>
         ) : (
           <AdList
@@ -282,29 +304,31 @@ export function AdDashboard() {
       activeView={sidebarView}
       onViewChange={setSidebarView}
     >
-      <div className="w-full max-w-full">
-        <DashboardHeader
-          heading={getHeaderTitle()}
-          description={getHeaderDescription()}
-          onAddNew={
-            sidebarView === "dashboard" ||
-            (sidebarView === "ads" && !selectedAd)
-              ? handleAddAd
-              : undefined
-          }
-          showBackButton={sidebarView === "ads" && selectedAd !== null}
-          onBack={() => {
-            setSelectedAd(null);
-          }}
-          ads={ads}
-          onImport={handleImportAds}
-          showImportExport={
-            sidebarView === "dashboard" ||
-            (sidebarView === "ads" && !selectedAd)
-          }
-        />
+      <div className="w-full h-[calc(100vh-120px)] flex flex-col">
+        <div className="flex-shrink-0 mb-6">
+          <DashboardHeader
+            heading={getHeaderTitle()}
+            description={getHeaderDescription()}
+            onAddNew={
+              sidebarView === "dashboard" ||
+                (sidebarView === "ads" && !selectedAd)
+                ? handleAddAd
+                : undefined
+            }
+            showBackButton={sidebarView === "ads" && selectedAd !== null}
+            onBack={() => {
+              setSelectedAd(null);
+            }}
+            ads={ads}
+            onImport={handleImportAds}
+            showImportExport={
+              sidebarView === "dashboard" ||
+              (sidebarView === "ads" && !selectedAd)
+            }
+          />
+        </div>
 
-        <div className="w-full flex-1">{renderContent()}</div>
+        <div className="flex-1 min-h-0">{renderContent()}</div>
       </div>
     </DashboardLayout>
   );

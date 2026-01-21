@@ -4,6 +4,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ChevronLeft,
@@ -13,6 +14,8 @@ import {
   Youtube,
   Pause,
   Play,
+  Target,
+  Zap,
   Grid3X3,
   LayoutList,
 } from "lucide-react";
@@ -23,10 +26,13 @@ import {
   YoutubePreview,
 } from "./ad-preview-examples";
 
+import type { Ad } from "@/types/ad";
+
 interface AdPreviewProps {
   ad: Ad | null;
   allAds: Ad[];
   onSelectAd: (ad: Ad) => void;
+  isLive?: boolean;
 }
 
 export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
@@ -114,27 +120,27 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
   // Now safe to use ad and allAds since we've returned early if they're invalid
   const validHeadlines = ad.headlines
     ? (Array.isArray(ad.headlines)
-        ? ad.headlines
-        : typeof ad.headlines === "string"
-          ? ad.headlines.split("\n")
-          : []
-      ).filter((h) => h.trim())
+      ? ad.headlines
+      : typeof ad.headlines === "string"
+        ? ad.headlines.split("\n")
+        : []
+    ).filter((h) => h.trim())
     : [];
   const validDescriptions = ad.descriptions
     ? (Array.isArray(ad.descriptions)
-        ? ad.descriptions
-        : typeof ad.descriptions === "string"
-          ? ad.descriptions.split("\n")
-          : []
-      ).filter((d) => d.trim())
+      ? ad.descriptions
+      : typeof ad.descriptions === "string"
+        ? ad.descriptions.split("\n")
+        : []
+    ).filter((d) => d.trim())
     : [];
   const validKeywords = ad.keywords
     ? (Array.isArray(ad.keywords)
-        ? ad.keywords
-        : typeof ad.keywords === "string"
-          ? ad.keywords.split("\n")
-          : []
-      ).filter((k) => k.trim())
+      ? ad.keywords
+      : typeof ad.keywords === "string"
+        ? ad.keywords.split("\n")
+        : []
+    ).filter((k) => k.trim())
     : [];
 
   // Calculate max indices for cycling
@@ -200,346 +206,165 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
   const currentDescription = validDescriptions[descriptionIndex] || "";
 
   return (
-    <div className="space-y-6 w-full">
-      <Card className="w-full flex-1 flex-col bg-white dark:bg-brand-darker border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm h-[calc(100vh-40vh)] overflow-auto">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 border-b border-gray-200 dark:border-gray-700">
-          <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-            Ad Preview
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() =>
-                setViewMode(viewMode === "single" ? "grid" : "single")
-              }
-              title={viewMode === "single" ? "Show all ads" : "Show single ad"}
-              className="h-8 w-8 text-gray-600 border-gray-300 hover:bg-gray-100 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700"
-            >
-              {viewMode === "single" ? (
-                <Grid3X3 className="h-4 w-4" />
-              ) : (
-                <LayoutList className="h-4 w-4" />
-              )}
-            </Button>
+    <div className="w-full h-full min-h-[750px] animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <Card className="w-full h-full bg-white/70 dark:bg-brand-darker/70 backdrop-blur-xl border-none rounded-[2rem] shadow-2xl overflow-hidden flex flex-col border border-white/20 dark:border-white/5">
+        <CardHeader className="flex flex-row items-center justify-between p-4 border-b border-gray-100/50 dark:border-white/5 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-blue-900/10 dark:to-indigo-900/10">
+          <div className="flex gap-3 items-center">
+            <div className="p-2 bg-blue-600 rounded-xl shadow-lg shadow-blue-500/20">
+              <Monitor className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <CardTitle className="text-lg font-black tracking-tight text-gray-900 dark:text-white">
+                Creative Studio
+              </CardTitle>
+              <div className="flex items-center gap-2 mt-0.5">
+                <Badge variant="secondary" className="bg-blue-100/50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-none px-1.5 py-0 text-[9px] uppercase font-bold tracking-widest">
+                  Live
+                </Badge>
+                <span className="text-[10px] text-muted-foreground font-medium truncate max-w-[150px]">• {ad.name}</span>
+              </div>
+            </div>
+          </div>
 
+          <div className="flex items-center gap-3">
             {viewMode === "single" && (
-              <Tabs
-                value={previewType}
-                onValueChange={(v) => setPreviewType(v as any)}
-                className="bg-gray-100 rounded-md p-0.5 px-2 dark:bg-brand-dark"
-              >
-                <TabsList className="bg-transparent p-0">
-                  <TabsTrigger
-                    value="search"
-                    className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-800 dark:data-[state=active]:text-white text-gray-600 dark:text-gray-300 data-[state=active]:py-1"
+              <div className="flex bg-gray-200/50 dark:bg-brand-dark p-1 rounded-xl border border-gray-100 dark:border-white/5">
+                {[
+                  { id: "search", icon: Monitor, label: "Search" },
+                  { id: "mobile", icon: Smartphone, label: "Mobile" },
+                  { id: "youtube", icon: Youtube, label: "YouTube" }
+                ].map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setPreviewType(item.id as any)}
+                    className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${previewType === item.id
+                      ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-white shadow-md scale-105"
+                      : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                      }`}
                   >
-                    <Monitor className="h-4 w-4 mr-2" />
-                    Search
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="youtube"
-                    className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-800 dark:data-[state=active]:text-white text-gray-600 dark:text-gray-300 data-[state=active]:py-1"
-                  >
-                    <Youtube className="h-4 w-4 mr-2" />
-                    YouTube
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="mobile"
-                    className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-800 dark:data-[state=active]:text-white text-gray-600 dark:text-gray-300 data-[state=active]:py-1"
-                  >
-                    <Smartphone className="h-4 w-4 mr-2" />
-                    Mobile
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
+                    <item.icon className="h-3.5 w-3.5" />
+                    {item.label}
+                  </button>
+                ))}
+              </div>
             )}
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setViewMode(viewMode === "single" ? "grid" : "single")}
+              className="rounded-xl h-9 w-9 bg-gray-100 dark:bg-brand-dark hover:bg-white dark:hover:bg-gray-700 shadow-sm border border-gray-100 dark:border-white/5"
+            >
+              {viewMode === "single" ? <Grid3X3 className="h-4 w-4" /> : <LayoutList className="h-4 w-4" />}
+            </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-4">
+
+        <CardContent className="p-0 border-none overflow-y-auto bg-transparent flex-1 relative flex flex-col">
           {viewMode === "single" ? (
-            <>
-              <div className="flex items-center justify-between mb-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={prevAd}
-                  disabled={allAds.length <= 1}
-                  className="h-8 px-3 text-sm text-gray-600 border-gray-300 hover:bg-gray-100 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700"
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" /> Previous Ad
-                </Button>
-                <div className="text-base font-medium text-gray-800 dark:text-white">
-                  {ad.name} ({currentAdIndex + 1}/{allAds.length})
+            <div className="flex-1 flex flex-col">
+              <div className="flex-1 p-6 md:p-10 flex items-center justify-center bg-gradient-to-b from-gray-50/50 to-transparent dark:from-brand-dark/20 border-none">
+                <div className="w-full transition-all duration-500 transform hover:scale-[1.01]">
+                  {previewType === "search" && (
+                    <SearchPreview
+                      ad={ad}
+                      currentHeadlines={currentHeadlines}
+                      currentDescription={currentDescription}
+                      displayUrl={displayUrl}
+                    />
+                  )}
+                  {previewType === "youtube" && (
+                    <YoutubePreview
+                      ad={ad}
+                      currentHeadlines={currentHeadlines}
+                      currentDescription={currentDescription}
+                      displayUrl={displayUrl}
+                    />
+                  )}
+                  {previewType === "mobile" && (
+                    <MobilePreview
+                      ad={ad}
+                      currentHeadlines={currentHeadlines}
+                      currentDescription={currentDescription}
+                      displayUrl={displayUrl}
+                    />
+                  )}
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={nextAd}
-                  disabled={allAds.length <= 1}
-                  className="h-8 px-3 text-sm text-gray-600 border-gray-300 hover:bg-gray-100 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700"
-                >
-                  Next Ad <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
               </div>
 
-              <div className="py-4">
-                {previewType === "search" && (
-                  <SearchPreview
-                    ad={ad}
-                    currentHeadlines={currentHeadlines}
-                    currentDescription={currentDescription}
-                    displayUrl={displayUrl}
-                  />
-                )}
-                {previewType === "youtube" && (
-                  <YoutubePreview
-                    ad={ad}
-                    currentHeadlines={currentHeadlines}
-                    currentDescription={currentDescription}
-                    displayUrl={displayUrl}
-                  />
-                )}
-                {previewType === "mobile" && (
-                  <MobilePreview
-                    ad={ad}
-                    currentHeadlines={currentHeadlines}
-                    currentDescription={currentDescription}
-                    displayUrl={displayUrl}
-                  />
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Headlines
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-7 w-7 text-gray-600 border-gray-300 hover:bg-gray-100 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700"
-                        onClick={prevHeadlineSet}
-                        disabled={maxHeadlineIndex === 0}
-                      >
-                        <ChevronLeft className="h-3 w-3" />
-                      </Button>
-                      <span className="text-xs text-gray-600 dark:text-gray-400">
-                        {headlineIndex + 1}/{maxHeadlineIndex + 1}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-7 w-7 text-gray-600 border-gray-300 hover:bg-gray-100 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700"
-                        onClick={nextHeadlineSet}
-                        disabled={maxHeadlineIndex === 0}
-                      >
-                        <ChevronRight className="h-3 w-3" />
-                      </Button>
-                      {shouldAutoRotateHeadlines && (
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-7 w-7 ml-1 text-gray-600 border-gray-300 hover:bg-gray-100 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700"
-                          onClick={toggleAutoRotation}
-                          title={
-                            isAutoRotating
-                              ? "Pause auto-rotation"
-                              : "Start auto-rotation"
-                          }
-                        >
-                          {isAutoRotating ? (
-                            <Pause className="h-3 w-3" />
-                          ) : (
-                            <Play className="h-3 w-3" />
-                          )}
+              {/* Ultra-Compact Rotator Dock */}
+              <div className="p-4 border-t border-gray-100/50 dark:border-white/5 bg-white/30 dark:bg-black/10 backdrop-blur-md">
+                <div className="flex flex-col md:flex-row gap-6 max-w-7xl mx-auto">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">Headlines</span>
+                        <span className="text-[10px] font-mono text-gray-500 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded-md tabular-nums">{headlineIndex + 1}/{maxHeadlineIndex + 1}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-white dark:hover:bg-gray-800" onClick={prevHeadlineSet} disabled={maxHeadlineIndex === 0}>
+                          <ChevronLeft className="h-3.5 w-3.5" />
                         </Button>
-                      )}
+                        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-white dark:hover:bg-gray-800" onClick={nextHeadlineSet} disabled={maxHeadlineIndex === 0}>
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </Button>
+                        {shouldAutoRotateHeadlines && (
+                          <Button variant="ghost" size="icon" className={`h-7 w-7 rounded-lg ml-0.5 ${isAutoRotating ? 'text-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''}`} onClick={toggleAutoRotation}>
+                            {isAutoRotating ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {currentHeadlines.map((h, i) => (
+                        <div key={i} className="px-3 py-1 bg-white/50 dark:bg-gray-800/50 border border-gray-100 dark:border-white/5 rounded-lg text-[11px] font-semibold text-gray-600 dark:text-gray-400 shadow-sm truncate max-w-[140px]">
+                          {h || "Empty"}
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <div className="text-sm space-y-1">
-                    {currentHeadlines.map((headline, i) => (
-                      <div
-                        key={i}
-                        className="p-2 bg-gray-50 rounded-md dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-                      >
-                        {headline}
-                      </div>
-                    ))}
-                    {currentHeadlines.length === 0 && (
-                      <div className="p-2 bg-gray-50 rounded-md text-gray-400 dark:bg-brand-darker">
-                        No headlines to display
-                      </div>
-                    )}
-                  </div>
-                </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Description
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-7 w-7 text-gray-600 border-gray-300 hover:bg-gray-100 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700"
-                        onClick={prevDescription}
-                        disabled={maxDescriptionIndex === 0}
-                      >
-                        <ChevronLeft className="h-3 w-3" />
-                      </Button>
-                      <span className="text-xs text-gray-600 dark:text-gray-400">
-                        {descriptionIndex + 1}/{maxDescriptionIndex + 1}
-                      </span>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-7 w-7 text-gray-600 border-gray-300 hover:bg-gray-100 dark:text-gray-400 dark:border-gray-600 dark:hover:bg-gray-700"
-                        onClick={nextDescription}
-                        disabled={maxDescriptionIndex === 0}
-                      >
-                        <ChevronRight className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                  <div className="text-sm">
-                    {currentDescription ? (
-                      <div className="p-2 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md">
-                        {currentDescription}
+                  <div className="flex-[0.8] border-l border-gray-100 dark:border-white/5 md:pl-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-2 rounded-full bg-indigo-500"></div>
+                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">Description</span>
+                        <span className="text-[10px] font-mono text-gray-500 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded-md tabular-nums">{descriptionIndex + 1}/{maxDescriptionIndex + 1}</span>
                       </div>
-                    ) : (
-                      <div className="p-2 bg-gray-50 rounded-md text-gray-400 dark:bg-gray-700">
-                        No description to display
+                      <div className="flex items-center gap-1.5">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-white dark:hover:bg-gray-800" onClick={prevDescription} disabled={maxDescriptionIndex === 0}>
+                          <ChevronLeft className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-lg hover:bg-white dark:hover:bg-gray-800" onClick={nextDescription} disabled={maxDescriptionIndex === 0}>
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </Button>
                       </div>
-                    )}
+                    </div>
+                    <div className="px-3 py-2 bg-white/50 dark:bg-gray-800/50 border border-gray-100 dark:border-white/5 rounded-lg shadow-sm text-[11px] font-medium text-gray-500 dark:text-gray-400 italic line-clamp-1">
+                      "{currentDescription || 'No description available'}"
+                    </div>
                   </div>
                 </div>
               </div>
-            </>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {allAds.map((adItem) => (
                 <div
                   key={adItem.id}
-                  className={`cursor-pointer p-2 rounded-lg transition-all duration-200 ${adItem.id === ad.id ? "border-2 border-blue-500 shadow-md" : "border border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600"}`}
+                  className={`cursor-pointer transition-all duration-500 rounded-[2rem] p-1 ${adItem.id === ad.id ? "bg-gradient-to-br from-blue-500 to-indigo-600 shadow-2xl scale-[1.03] rotate-1" : "hover:scale-[1.02]"}`}
                   onClick={() => onSelectAd(adItem)}
                 >
-                  <AdThumbnail ad={adItem} />
+                  <div className="bg-white dark:bg-brand-darker rounded-[1.8rem] h-full overflow-hidden">
+                    <AdThumbnail ad={adItem} />
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
-
-      {viewMode === "single" && (
-        <Card className="w-full bg-white dark:bg-brand-darker border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
-          <CardHeader className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-              Ad Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4 overflow-y-auto h-80 pb-5">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Ad Type:
-                </h3>
-                <span className="text-sm capitalize text-gray-800 dark:text-gray-200">
-                  {ad.type}
-                </span>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Headlines ({validHeadlines.length}/15)
-                </h3>
-                {validHeadlines.length > 0 ? (
-                  <ul className="mt-1 space-y-1 list-disc list-inside text-gray-800 dark:text-gray-200">
-                    {validHeadlines.map((headline, i) => (
-                      <li key={i} className="text-sm">
-                        {i + 1}. {headline}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    No headlines added
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Descriptions ({validDescriptions.length}/4)
-                </h3>
-                {validDescriptions.length > 0 ? (
-                  <ul className="mt-1 space-y-1 list-none list-inside text-gray-800 dark:text-gray-200">
-                    {validDescriptions.map((desc, i) => (
-                      <li key={i} className="text-sm">
-                        {i + 1}. {desc}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    No descriptions added
-                  </p>
-                )}
-              </div>
-
-              {ad.type === "search" &&
-                ad.sitelinks &&
-                ad.sitelinks.length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Sitelinks ({ad.sitelinks.length})
-                    </h3>
-                    <ul className="mt-1 space-y-1 list-none text-gray-800 dark:text-gray-200">
-                      {ad.sitelinks.map((sitelink, i) => (
-                        <li key={i} className="text-sm">
-                          {i + 1}. {sitelink.title} - {sitelink.url}
-                          {(sitelink.description1 || sitelink.description2) && (
-                            <ul className="ml-4 text-xs text-gray-500 list-none">
-                              {sitelink.description1 && (
-                                <li>{sitelink.description1}</li>
-                              )}
-                              {sitelink.description2 && (
-                                <li>{sitelink.description2}</li>
-                              )}
-                            </ul>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Keywords ({validKeywords.length})
-                </h3>
-                {validKeywords.length > 0 ? (
-                  <ul className="mt-1 space-y-1 list-disc list-inside text-gray-800 dark:text-gray-200">
-                    {validKeywords.map((keyword, i) => (
-                      <li key={i} className="text-sm">
-                        {keyword}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                    No keywords added
-                  </p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

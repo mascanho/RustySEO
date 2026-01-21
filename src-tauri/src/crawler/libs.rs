@@ -161,7 +161,8 @@ pub async fn get_sitemap(url: &String) -> Result<(), Box<dyn Error>> {
 // GET ROBOTS.TXT
 pub async fn get_robots(domain_url: &String) -> Result<String, MyError> {
     // Normalize and parse the input URL
-    let normalized_url = if domain_url.starts_with("http://") || domain_url.starts_with("https://") {
+    let normalized_url = if domain_url.starts_with("http://") || domain_url.starts_with("https://")
+    {
         domain_url.clone()
     } else {
         format!("https://{}", domain_url)
@@ -479,7 +480,7 @@ pub async fn read_credentials_file() -> Result<InstalledInfo, String> {
         refresh_token: secret.installed.refresh_token,
     };
 
-    println!("Search Console Config: {:?}", result);
+    // println!("Search Console Config: {:?}", result);
     Ok(result)
 }
 
@@ -1015,7 +1016,7 @@ pub async fn get_google_analytics(
     let secret_path = config_dir.join("client_secret.json");
 
     // Remove the early read of client_secret.json which was causing panic
-    
+
     // Create an authenticator that persists tokens
     let auth_path = config_dir.join("ga_tokencache.json");
 
