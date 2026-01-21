@@ -20,9 +20,10 @@ import { Plus, Trash, Eye } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { KeywordValidator } from "./keyword-validator";
 import { SitelinksEditor } from "./sitelinks-editor";
+import { ImageManager } from "./image-manager";
 import { toast } from "sonner";
 
-import type { Ad, AdType, Sitelink } from "@/types/ad";
+import type { Ad, AdType, Sitelink, AdImage } from "@/types/ad";
 
 interface AdFormProps {
   ad: Ad;
@@ -49,6 +50,8 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
       : typeof ad.keywords === "string"
         ? ad.keywords.split("\n")
         : [],
+    images: Array.isArray(ad.images) ? ad.images : [],
+    logos: Array.isArray(ad.logos) ? ad.logos : [],
   }));
   const [keywordInput, setKeywordInput] = useState("");
   const [validationResults, setValidationResults] = useState<{
@@ -162,8 +165,20 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
     setFormData({ ...formData, displayPath: e.target.value });
   };
 
+  const handleBusinessNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, businessName: e.target.value });
+  };
+
   const handleUpdateSitelinks = (sitelinks: Sitelink[]) => {
     setFormData({ ...formData, sitelinks });
+  };
+
+  const handleUpdateImages = (images: AdImage[]) => {
+    setFormData({ ...formData, images });
+  };
+
+  const handleUpdateLogos = (logos: AdImage[]) => {
+    setFormData({ ...formData, logos });
   };
 
   const handleSave = () => {
@@ -236,6 +251,22 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
                   placeholder="Enter a name for your ad"
                 />
               </div>
+
+              {(formData.type === "display" || formData.type === "pmax") && (
+                <div className="space-y-2">
+                  <Label htmlFor="business-name">Business Name</Label>
+                  <Input
+                    id="business-name"
+                    value={formData.businessName || ""}
+                    onChange={handleBusinessNameChange}
+                    placeholder="Enter your brand or company name"
+                    maxLength={25}
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Max 25 characters
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -434,6 +465,37 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
             </Card>
           </div>
         </div>
+
+        {/* IMAGES & LOGOS SECTION */}
+        {(formData.type === "display" || formData.type === "pmax") && (
+          <Card className="w-full h-full flex flex-col dark:bg-brand-darker/60 rounded-xl dark:border-white/5 relative shadow-sm overflow-hidden mb-6">
+            <CardHeader className="py-4">
+              <CardTitle className="text-lg">Images & Logos</CardTitle>
+              <CardDescription className="text-xs">
+                Upload your creative assets for this display ad
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-8 px-6 pb-6">
+              <ImageManager
+                title="Marketing Images"
+                description="Add up to 15 landscape, square, and portrait images"
+                images={formData.images || []}
+                onChange={handleUpdateImages}
+                maxFiles={15}
+              />
+
+              <div className="pt-6 border-t border-gray-100 dark:border-white/5">
+                <ImageManager
+                  title="Logos"
+                  description="Add up to 5 square and landscape logos"
+                  images={formData.logos || []}
+                  onChange={handleUpdateLogos}
+                  maxFiles={5}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* SITELINKS */}
 

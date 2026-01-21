@@ -132,6 +132,15 @@ export function YoutubePreview({
           {/* Cinematic Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40"></div>
 
+          {/* Background Image if available */}
+          {ad.images && ad.images.length > 0 && (
+            <img
+              src={ad.images[0].url}
+              className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-1000"
+              alt="Youtube ad thumbnail"
+            />
+          )}
+
           {/* Skip Ad Overlay - Redesigned */}
           <div className="absolute bottom-6 right-0 bg-black/70 backdrop-blur-xl text-white py-3 px-6 border-l-[3px] border-amber-400 flex items-center gap-3 animate-in slide-in-from-right duration-1000">
             <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Skip in</span>
@@ -151,8 +160,12 @@ export function YoutubePreview({
 
         {/* Youtube Info Section */}
         <div className="p-6 bg-white dark:bg-[#0f0f0f] flex items-start gap-4">
-          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex-shrink-0 flex items-center justify-center shadow-lg">
-            <YoutubeIcon className="text-white w-7 h-7" />
+          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex-shrink-0 flex items-center justify-center shadow-lg overflow-hidden">
+            {ad.logos && ad.logos.length > 0 ? (
+              <img src={ad.logos[0].url} className="w-full h-full object-cover" alt="Logo" />
+            ) : (
+              <YoutubeIcon className="text-white w-7 h-7" />
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-base font-black text-gray-900 dark:text-white line-clamp-2 mb-1 tracking-tight">
@@ -317,8 +330,10 @@ export function DisplayPreview({
   currentDescription,
   displayUrl,
 }: PreviewProps) {
-  const businessName = displayUrl.split(".")[0];
+  const businessName = ad.businessName || displayUrl.split(".")[0];
   const headline = currentHeadlines[0] || "[Impactful Business Headline]";
+  const marketingImage = ad.images && ad.images.length > 0 ? ad.images[0].url : "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=1200";
+  const logoUrl = ad.logos && ad.logos.length > 0 ? ad.logos[0].url : null;
 
   return (
     <div className="w-full max-w-[600px] mx-auto p-4 flex items-center justify-center">
@@ -326,7 +341,7 @@ export function DisplayPreview({
         {/* Ad Background / Image Area */}
         <div className="absolute inset-0">
           <img
-            src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=1200"
+            src={marketingImage}
             alt="Ad background"
             className="w-full h-full object-cover transform scale-105 group-hover:scale-110 transition-transform duration-1000"
           />
@@ -345,10 +360,14 @@ export function DisplayPreview({
         {/* Content Overlay */}
         <div className="absolute inset-0 flex flex-col p-8">
           <div className="flex items-center gap-3 mb-auto">
-            <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-xl flex items-center justify-center border border-gray-100 dark:border-white/5">
-              <span className="text-lg font-black bg-gradient-to-br from-indigo-600 to-blue-600 bg-clip-text text-transparent">
-                {businessName.charAt(0).toUpperCase()}
-              </span>
+            <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-xl flex items-center justify-center border border-gray-100 dark:border-white/5 overflow-hidden">
+              {logoUrl ? (
+                <img src={logoUrl} className="w-full h-full object-cover" alt="Logo" />
+              ) : (
+                <span className="text-lg font-black bg-gradient-to-br from-indigo-600 to-blue-600 bg-clip-text text-transparent">
+                  {businessName.charAt(0).toUpperCase()}
+                </span>
+              )}
             </div>
             <span className="text-sm font-black tracking-tight text-gray-900 dark:text-white uppercase opacity-80">
               {businessName}
