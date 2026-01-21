@@ -120,27 +120,27 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
   // Now safe to use ad and allAds since we've returned early if they're invalid
   const validHeadlines = ad.headlines
     ? (Array.isArray(ad.headlines)
-        ? ad.headlines
-        : typeof ad.headlines === "string"
-          ? ad.headlines.split("\n")
-          : []
-      ).filter((h) => h.trim())
+      ? ad.headlines
+      : typeof ad.headlines === "string"
+        ? ad.headlines.split("\n")
+        : []
+    ).filter((h) => h.trim())
     : [];
   const validDescriptions = ad.descriptions
     ? (Array.isArray(ad.descriptions)
-        ? ad.descriptions
-        : typeof ad.descriptions === "string"
-          ? ad.descriptions.split("\n")
-          : []
-      ).filter((d) => d.trim())
+      ? ad.descriptions
+      : typeof ad.descriptions === "string"
+        ? ad.descriptions.split("\n")
+        : []
+    ).filter((d) => d.trim())
     : [];
   const validKeywords = ad.keywords
     ? (Array.isArray(ad.keywords)
-        ? ad.keywords
-        : typeof ad.keywords === "string"
-          ? ad.keywords.split("\n")
-          : []
-      ).filter((k) => k.trim())
+      ? ad.keywords
+      : typeof ad.keywords === "string"
+        ? ad.keywords.split("\n")
+        : []
+    ).filter((k) => k.trim())
     : [];
 
   // Calculate max indices for cycling
@@ -207,20 +207,20 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
 
   return (
     <div className="w-full h-full animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <Card className="w-full h-full bg-white/70 dark:bg-brand-darker/70 backdrop-blur-xl border-none rounded-[2rem] shadow-2xl overflow-hidden flex flex-col border border-white/20 dark:border-white/5 max-h-full">
-        <CardHeader className="flex-shrink-0 flex flex-row items-center justify-between p-4 border-b border-gray-100/50 dark:border-white/5 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 dark:from-blue-900/10 dark:to-indigo-900/10">
-          <div className="flex gap-3 items-center">
-            <div className="p-2 bg-blue-600 rounded-xl shadow-lg shadow-blue-500/20">
-              <Monitor className="h-5 w-5 text-white" />
+      <Card className="w-full h-full bg-white/70 dark:bg-brand-darker/70 backdrop-blur-xl border-none rounded-2xl shadow-xl overflow-hidden flex flex-col border border-white/20 dark:border-white/5 max-h-full">
+        <CardHeader className="flex-shrink-0 flex flex-row items-center justify-between p-3 border-b border-gray-200/50 dark:border-white/5 bg-gray-50/50 dark:bg-brand-dark/20">
+          <div className="flex gap-2.5 items-center">
+            <div className="p-1.5 bg-blue-600 rounded-lg shadow-sm">
+              <Monitor className="h-4 w-4 text-white" />
             </div>
             <div>
-              <CardTitle className="text-lg font-black tracking-tight text-gray-900 dark:text-white">
+              <CardTitle className="text-base font-bold text-gray-900 dark:text-white">
                 Creative Studio
               </CardTitle>
-              <div className="flex items-center gap-2 mt-0.5">
+              <div className="flex items-center gap-2 mt-0">
                 <Badge
                   variant="secondary"
-                  className="bg-blue-100/50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-none px-1.5 py-0 text-[9px] uppercase font-bold tracking-widest"
+                  className="bg-blue-100/50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-none px-1.5 py-0 text-[8px] uppercase font-bold tracking-wider"
                 >
                   Live
                 </Badge>
@@ -231,9 +231,9 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {viewMode === "single" && (
-              <div className="flex bg-gray-200/50 dark:bg-brand-dark p-1 rounded-xl border border-gray-100 dark:border-white/5">
+              <div className="flex bg-gray-100 dark:bg-brand-dark p-0.5 rounded-lg border border-gray-200 dark:border-white/5">
                 {[
                   { id: "search", icon: Monitor, label: "Search" },
                   { id: "mobile", icon: Smartphone, label: "Mobile" },
@@ -242,13 +242,12 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
                   <button
                     key={item.id}
                     onClick={() => setPreviewType(item.id as any)}
-                    className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 ${
-                      previewType === item.id
-                        ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-white shadow-md scale-105"
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-bold transition-all duration-200 ${previewType === item.id
+                        ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-white shadow-sm"
                         : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
-                    }`}
+                      }`}
                   >
-                    <item.icon className="h-3.5 w-3.5" />
+                    <item.icon className="h-3 w-3" />
                     {item.label}
                   </button>
                 ))}
@@ -261,12 +260,12 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
               onClick={() =>
                 setViewMode(viewMode === "single" ? "grid" : "single")
               }
-              className="rounded-xl h-9 w-9 bg-gray-100 dark:bg-brand-dark hover:bg-white dark:hover:bg-gray-700 shadow-sm border border-gray-100 dark:border-white/5"
+              className="rounded-lg h-7 w-7 bg-gray-100 dark:bg-brand-dark hover:bg-white dark:hover:bg-gray-700 shadow-sm border border-gray-200 dark:border-white/5"
             >
               {viewMode === "single" ? (
-                <Grid3X3 className="h-4 w-4" />
+                <Grid3X3 className="h-3.5 w-3.5" />
               ) : (
-                <LayoutList className="h-4 w-4" />
+                <LayoutList className="h-3.5 w-3.5" />
               )}
             </Button>
           </div>
@@ -275,8 +274,8 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
         <CardContent className="p-0 border-none overflow-hidden bg-transparent flex-1 relative flex flex-col">
           {viewMode === "single" ? (
             <div className="flex-1 flex flex-col min-h-0">
-              <div className="flex-1 p-6 md:p-10 flex items-center justify-center bg-gradient-to-b from-gray-50/50 to-transparent dark:from-brand-dark/20 border-none overflow-hidden">
-                <div className="w-full h-full flex items-center justify-center transition-all duration-500 transform hover:scale-[1.01]">
+              <div className="flex-1 p-4 md:p-6 flex items-center justify-center bg-gray-50/50 dark:bg-brand-dark/10 border-none overflow-hidden">
+                <div className="w-full h-full flex items-center justify-center transition-all duration-300 transform">
                   {previewType === "search" && (
                     <SearchPreview
                       ad={ad}
@@ -405,14 +404,14 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
               </div>
             </div>
           ) : (
-            <div className="flex-1 p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto">
+            <div className="flex-1 p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 overflow-y-auto">
               {allAds.map((adItem) => (
                 <div
                   key={adItem.id}
-                  className={`cursor-pointer transition-all duration-500 rounded-[2rem] p-1 h-fit ${adItem.id === ad.id ? "bg-gradient-to-br from-blue-500 to-indigo-600 shadow-2xl scale-[1.03] rotate-1" : "hover:scale-[1.02]"}`}
+                  className={`cursor-pointer transition-all duration-300 rounded-xl p-0.5 h-fit ${adItem.id === ad.id ? "bg-blue-500 shadow-lg scale-[1.02]" : "hover:scale-[1.01]"}`}
                   onClick={() => onSelectAd(adItem)}
                 >
-                  <div className="bg-white dark:bg-brand-darker rounded-[1.8rem] h-full overflow-hidden">
+                  <div className="bg-white dark:bg-brand-darker rounded-[0.65rem] h-full overflow-hidden">
                     <AdThumbnail ad={adItem} />
                   </div>
                 </div>

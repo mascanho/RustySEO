@@ -208,11 +208,11 @@ export function AdDashboard() {
     switch (sidebarView) {
       case "ads":
         return selectedAd ? (
-          <div className="w-full flex flex-col lg:flex-row gap-8 h-full bg-gray-50/30 dark:bg-transparent rounded-[2.5rem] overflow-hidden">
-            {/* Expanded Editor Column - Now with integrated Back Button */}
+          <div className="w-full flex flex-col lg:flex-row gap-6 h-full bg-gray-50/20 dark:bg-transparent rounded-2xl overflow-hidden">
+            {/* Optimized Editor Column */}
             <div className="w-full lg:w-[780px] xl:w-[960px] flex-shrink-0 h-full flex flex-col">
-              <div className="flex-1 overflow-y-auto custom-scrollbar bg-white dark:bg-brand-darker/40 backdrop-blur-md rounded-[2.5rem] p-10 border border-gray-100 dark:border-white/5 shadow-sm">
-                <div className="mb-8 pb-8 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
+              <div className="flex-1 overflow-y-auto custom-scrollbar bg-white dark:bg-brand-darker/60 backdrop-blur-md rounded-2xl p-6 border border-gray-200/50 dark:border-white/5 shadow-sm">
+                <div className="mb-6 pb-6 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-3 mb-1">
                       <Button
@@ -223,29 +223,32 @@ export function AdDashboard() {
                       >
                         <ArrowLeft className="h-4 w-4" />
                       </Button>
-                      <h3 className="text-2xl font-black text-gray-900 dark:text-white">Ad Editor</h3>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">Ad Editor</h3>
                     </div>
-                    <p className="text-base text-muted-foreground ml-11">Refine your headlines, descriptions and assets</p>
+                    <p className="text-sm text-muted-foreground ml-11">Refine your headlines, descriptions and assets</p>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
-                      className="rounded-xl font-bold border-gray-200 dark:border-white/10"
+                      size="sm"
+                      className="rounded-lg font-semibold border-gray-200 dark:border-white/10"
                       onClick={() => setSidebarView("previews")}
                     >
                       Preview Studio
                     </Button>
                   </div>
                 </div>
-                <AdForm
-                  ad={selectedAd}
-                  onSave={handleSaveAd}
-                  onPreview={() => setSidebarView("previews")}
-                  onChange={(updatedAd) => {
-                    setSelectedAd(updatedAd);
-                  }}
-                />
+                <div className="px-1">
+                  <AdForm
+                    ad={selectedAd}
+                    onSave={handleSaveAd}
+                    onPreview={() => setSidebarView("previews")}
+                    onChange={(updatedAd) => {
+                      setSelectedAd(updatedAd);
+                    }}
+                  />
+                </div>
               </div>
             </div>
 

@@ -175,46 +175,43 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
   };
 
   return (
-    <div className="space-y-6 w-full max-w-full relative">
-      <Card className="w-fit right-[0rem] h-20  p-0 -top-[7.1rem] px-3 absolute bg-white dark:bg-brand-darker rounded-md dark:border-brand-dark">
-        <CardHeader className="p-3 m-0">
-          <CardTitle className="dark:text-white/50 p-0 m-0 pt-2">
-            Ad Type
-          </CardTitle>
-          {/* <CardDescription> */}
-          {/*   Select the type of ad you want to create */}
-          {/* </CardDescription> */}
-        </CardHeader>
-        <CardContent className="h-10">
-          <RadioGroup
-            value={formData.type}
-            onValueChange={handleTypeChange}
-            className="flex space-x-4"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="search" id="ad-type-search" />
-              <Label htmlFor="ad-type-search">Search</Label>
+    <div className="space-y-4 w-full max-w-full relative">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Ad Type Selector - Now Integrated */}
+        <Card className="lg:col-span-12 rounded-xl border-gray-200/50 dark:border-white/5 shadow-sm bg-white dark:bg-brand-darker/60">
+          <CardContent className="p-4 flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-4">
+              <Label className="text-gray-500 font-bold uppercase text-[10px] tracking-widest">Ad Type</Label>
+              <RadioGroup
+                value={formData.type}
+                onValueChange={handleTypeChange}
+                className="flex space-x-4"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="search" id="ad-type-search" />
+                  <Label htmlFor="ad-type-search" className="text-sm font-medium">Search</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="pmax" id="ad-type-pmax" />
+                  <Label htmlFor="ad-type-pmax" className="text-sm font-medium">Performance Max</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="display" id="ad-type-display" />
+                  <Label htmlFor="ad-type-display" className="text-sm font-medium">Display</Label>
+                </div>
+              </RadioGroup>
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="pmax" id="ad-type-pmax" />
-              <Label htmlFor="ad-type-pmax">Performance Max</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="display" id="ad-type-display" />
-              <Label htmlFor="ad-type-display">Display</Label>
-            </div>
-          </RadioGroup>
-        </CardContent>
-      </Card>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="w-full h-[51.2rem] max-h-full overflow-y-scroll dark:bg-brand-darker dark:border-brand-dark relative">
-          <CardHeader>
-            <CardTitle>Ad Details</CardTitle>
-            <CardDescription>
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-7 h-fit dark:bg-brand-darker/60 rounded-xl dark:border-white/5 relative shadow-sm">
+          <CardHeader className="py-4">
+            <CardTitle className="text-lg">Ad Details</CardTitle>
+            <CardDescription className="text-xs">
               Enter the basic information for your ad
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 px-6">
+          <CardContent className="space-y-4 px-6 pb-6 pt-0">
             <div className="space-y-2">
               <Label htmlFor="ad-name">Ad Name</Label>
               <Input
@@ -328,11 +325,11 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
           </CardContent>
         </Card>
 
-        <div className="space-y-6">
-          <Card className="w-full h-fit pb-6 dark:bg-brand-darker dark:border-brand-dark">
-            <CardHeader>
-              <CardTitle>URL Settings</CardTitle>
-              <CardDescription>
+        <div className="lg:col-span-5 space-y-6">
+          <Card className="w-full h-fit pb-6 dark:bg-brand-darker/60 rounded-xl dark:border-white/5 shadow-sm">
+            <CardHeader className="py-4">
+              <CardTitle className="text-lg">URL Settings</CardTitle>
+              <CardDescription className="text-xs">
                 Set the destination and display URLs
               </CardDescription>
             </CardHeader>
@@ -359,14 +356,14 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
             </CardContent>
           </Card>
 
-          <Card className="w-full h-[52rem] max-h-[32rem] overflow-y-auto dark:bg-brand-darker dark:border-brand-dark">
-            <CardHeader>
-              <CardTitle>Keywords</CardTitle>
-              <CardDescription>
+          <Card className="w-full max-h-[32rem] overflow-y-auto dark:bg-brand-darker/60 rounded-xl dark:border-white/5 shadow-sm">
+            <CardHeader className="py-4">
+              <CardTitle className="text-lg">Keywords</CardTitle>
+              <CardDescription className="text-xs">
                 Add keywords to track in your ad copy
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 px-6 items-center">
+            <CardContent className="space-y-4 px-6 items-center flex flex-col">
               <form onSubmit={handleAddKeyword} className="flex gap-2">
                 <Input
                   value={keywordInput}
@@ -422,10 +419,10 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
       {/* SITELINKS */}
 
       {formData.type === "search" && (
-        <Card className="w-full dark:bg-brand-darker dark:border-brand-dark  relative h-[30rem] max-h-[30rem]">
-          <CardHeader className="-z-10">
-            <CardTitle>Sitelinks</CardTitle>
-            <CardDescription>
+        <Card className="w-full dark:bg-brand-darker/60 rounded-xl dark:border-white/5 shadow-sm">
+          <CardHeader className="py-4">
+            <CardTitle className="text-lg">Sitelinks</CardTitle>
+            <CardDescription className="text-xs">
               Add sitelinks to enhance your search ad
             </CardDescription>
           </CardHeader>
