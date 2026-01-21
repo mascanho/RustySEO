@@ -77,31 +77,31 @@ const initialMessages: Message[] = [
     senderId: "2",
   },
   {
-    id: "m1",
+    id: "m3",
     text: "Just to let you know that a chat function is on the way.🔥",
     timestamp: new Date(Date.now() - 1000 * 60 * 60),
     senderId: "1",
   },
   {
-    id: "m2",
+    id: "m4",
     text: "That would be cool. What kind of chat?",
     timestamp: new Date(Date.now() - 1000 * 60 * 30),
     senderId: "2",
   },
   {
-    id: "m1",
+    id: "m5",
     text: "A chat where SEO professionals can be conneted to each other, ask questions and get cool feedback from other SEO peers. All while they analyse their websites.",
     timestamp: new Date(Date.now() - 1000 * 60 * 60),
     senderId: "1",
   },
   {
-    id: "m1",
+    id: "m6",
     text: "For now its just dummy text... RustySEO's developer is working on it. Stay tunned",
     timestamp: new Date(Date.now() - 1000 * 60 * 60),
     senderId: "1",
   },
   {
-    id: "m2",
+    id: "m7",
     text: "Nice!! That could be interesting. Hope it comes out soon.",
     timestamp: new Date(Date.now() - 1000 * 60 * 30),
     senderId: "2",
@@ -118,7 +118,7 @@ export function ChatBar() {
     if (newMessage.trim() === "") return;
 
     const message: Message = {
-      id: `m${messages.length + 1}`,
+      id: `m${Date.now()}`,
       text: newMessage,
       timestamp: new Date(),
       senderId: "1", // Current user is Alex
@@ -225,11 +225,10 @@ ${pathname === "/serverlogs" && "top-[4.2rem] h-[calc(100vh-6.3rem)]"}
                       )}
                       <div className="flex items-end space-x-2">
                         <div
-                          className={`rounded-md px-3 py-2 ${
-                            isCurrentUser
-                              ? "bg-blue-600 text-white dark:bg-[#2a4365]"
-                              : "bg-gray-100 text-gray-800 dark:bg-[#2d2d2d] dark:text-gray-200"
-                          }`}
+                          className={`rounded-md px-3 py-2 ${isCurrentUser
+                            ? "bg-blue-600 text-white dark:bg-[#2a4365]"
+                            : "bg-gray-100 text-gray-800 dark:bg-[#2d2d2d] dark:text-gray-200"
+                            }`}
                         >
                           <p className="whitespace-pre-wrap text-xs">
                             {message.text}
