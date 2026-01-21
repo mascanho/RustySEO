@@ -310,3 +310,62 @@ export function AdThumbnail({ ad }: { ad: Ad }) {
     </div>
   );
 }
+
+export function DisplayPreview({
+  ad,
+  currentHeadlines,
+  currentDescription,
+  displayUrl,
+}: PreviewProps) {
+  const businessName = displayUrl.split(".")[0];
+  const headline = currentHeadlines[0] || "[Impactful Business Headline]";
+
+  return (
+    <div className="w-full max-w-[600px] mx-auto p-4 flex items-center justify-center">
+      <div className="w-full aspect-[1.91/1] bg-white dark:bg-[#202124] rounded-2xl overflow-hidden shadow-2xl border border-gray-100 dark:border-white/5 relative group cursor-pointer transition-all duration-500 hover:shadow-indigo-500/10">
+        {/* Ad Background / Image Area */}
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/10 via-purple-600/5 to-blue-600/10">
+          <div className="absolute top-0 right-0 p-4">
+            <div className="bg-black/20 backdrop-blur-md rounded-full p-2">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="white" className="opacity-80">
+                <path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Overlay */}
+        <div className="absolute inset-0 flex flex-col p-8">
+          <div className="flex items-center gap-3 mb-auto">
+            <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-800 shadow-xl flex items-center justify-center border border-gray-100 dark:border-white/5">
+              <span className="text-lg font-black bg-gradient-to-br from-indigo-600 to-blue-600 bg-clip-text text-transparent">
+                {businessName.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <span className="text-sm font-black tracking-tight text-gray-900 dark:text-white uppercase opacity-80">
+              {businessName}
+            </span>
+          </div>
+
+          <div className="max-w-[70%]">
+            <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-3 leading-tight tracking-tight">
+              {headline}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 font-medium line-clamp-2 mb-6 opacity-90">
+              {currentDescription || "[Your compelling display ad description will attract attention here]"}
+            </p>
+
+            <button className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-black transition-all duration-300 shadow-xl shadow-indigo-500/20 active:scale-95 group-hover:px-8">
+              Explore Now
+            </button>
+          </div>
+        </div>
+
+        {/* Ad Label */}
+        <div className="absolute bottom-4 right-4 bg-white/80 dark:bg-black/40 backdrop-blur-md px-2 py-0.5 rounded text-[9px] font-black text-gray-400 border border-gray-100 dark:border-white/5 uppercase tracking-widest">
+          Ad
+        </div>
+      </div>
+    </div>
+  );
+}

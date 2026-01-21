@@ -24,6 +24,7 @@ import {
   MobilePreview,
   SearchPreview,
   YoutubePreview,
+  DisplayPreview,
 } from "./ad-preview-examples";
 
 import type { Ad } from "@/types/ad";
@@ -41,7 +42,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
     allAds.findIndex((a) => a.id === ad?.id),
   );
   const [previewType, setPreviewType] = useState<
-    "search" | "youtube" | "mobile"
+    "search" | "youtube" | "mobile" | "display"
   >("search");
   const [headlineIndex, setHeadlineIndex] = useState(0);
   const [descriptionIndex, setDescriptionIndex] = useState(0);
@@ -236,6 +237,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
               <div className="flex bg-gray-100 dark:bg-brand-dark p-0.5 rounded-lg border border-gray-200 dark:border-white/5">
                 {[
                   { id: "search", icon: Monitor, label: "Search" },
+                  { id: "display", icon: Target, label: "Display" },
                   { id: "mobile", icon: Smartphone, label: "Mobile" },
                   { id: "youtube", icon: Youtube, label: "YouTube" },
                 ].map((item) => (
@@ -243,8 +245,8 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
                     key={item.id}
                     onClick={() => setPreviewType(item.id as any)}
                     className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-[11px] font-bold transition-all duration-200 ${previewType === item.id
-                        ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-white shadow-sm"
-                        : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                      ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-white shadow-sm"
+                      : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
                       }`}
                   >
                     <item.icon className="h-3 w-3" />
@@ -294,6 +296,14 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
                   )}
                   {previewType === "mobile" && (
                     <MobilePreview
+                      ad={ad}
+                      currentHeadlines={currentHeadlines}
+                      currentDescription={currentDescription}
+                      displayUrl={displayUrl}
+                    />
+                  )}
+                  {previewType === "display" && (
+                    <DisplayPreview
                       ad={ad}
                       currentHeadlines={currentHeadlines}
                       currentDescription={currentDescription}
