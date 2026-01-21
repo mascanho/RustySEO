@@ -211,43 +211,48 @@ export function AdDashboard() {
           <div className="w-full flex flex-col lg:flex-row gap-6 h-full bg-gray-50/20 dark:bg-transparent rounded-2xl overflow-hidden">
             {/* Optimized Editor Column */}
             <div className="w-full lg:w-[780px] xl:w-[960px] flex-shrink-0 h-full flex flex-col">
-              <div className="flex-1 overflow-y-auto custom-scrollbar bg-white dark:bg-brand-darker/60 backdrop-blur-md rounded-2xl p-6 border border-gray-200/50 dark:border-white/5 shadow-sm">
-                <div className="mb-6 pb-6 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
-                        onClick={() => setSelectedAd(null)}
-                      >
-                        <ArrowLeft className="h-4 w-4" />
-                      </Button>
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-white">Ad Editor</h3>
+              <div className="flex-1 flex flex-col bg-white dark:bg-brand-darker/60 backdrop-blur-md rounded-2xl border border-gray-200/50 dark:border-white/5 shadow-sm overflow-hidden">
+                <div className="flex-shrink-0 p-6 pb-0">
+                  <div className="mb-6 pb-6 border-b border-gray-100 dark:border-white/5 flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-3 mb-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
+                          onClick={() => setSelectedAd(null)}
+                        >
+                          <ArrowLeft className="h-4 w-4" />
+                        </Button>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Ad Editor</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground ml-11">Refine your headlines, descriptions and assets</p>
                     </div>
-                    <p className="text-sm text-muted-foreground ml-11">Refine your headlines, descriptions and assets</p>
-                  </div>
 
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="rounded-lg font-semibold border-gray-200 dark:border-white/10"
-                      onClick={() => setSidebarView("previews")}
-                    >
-                      Preview Studio
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-lg font-semibold border-gray-200 dark:border-white/10"
+                        onClick={() => setSidebarView("previews")}
+                      >
+                        Preview Studio
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                <div className="px-1">
-                  <AdForm
-                    ad={selectedAd}
-                    onSave={handleSaveAd}
-                    onPreview={() => setSidebarView("previews")}
-                    onChange={(updatedAd) => {
-                      setSelectedAd(updatedAd);
-                    }}
-                  />
+
+                <div className="flex-1 min-h-0 px-6 pb-6">
+                  <div className="h-full">
+                    <AdForm
+                      ad={selectedAd}
+                      onSave={handleSaveAd}
+                      onPreview={() => setSidebarView("previews")}
+                      onChange={(updatedAd) => {
+                        setSelectedAd(updatedAd);
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

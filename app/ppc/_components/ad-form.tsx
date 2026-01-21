@@ -175,277 +175,300 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
   };
 
   return (
-    <div className="space-y-4 w-full max-w-full relative">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Ad Type Selector - Now Integrated */}
-        <Card className="lg:col-span-12 rounded-xl border-gray-200/50 dark:border-white/5 shadow-sm bg-white dark:bg-brand-darker/60">
-          <CardContent className="p-4 flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <Label className="text-gray-500 font-bold uppercase text-[10px] tracking-widest">Ad Type</Label>
-              <RadioGroup
-                value={formData.type}
-                onValueChange={handleTypeChange}
-                className="flex space-x-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="search" id="ad-type-search" />
-                  <Label htmlFor="ad-type-search" className="text-sm font-medium">Search</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="pmax" id="ad-type-pmax" />
-                  <Label htmlFor="ad-type-pmax" className="text-sm font-medium">Performance Max</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="display" id="ad-type-display" />
-                  <Label htmlFor="ad-type-display" className="text-sm font-medium">Display</Label>
-                </div>
-              </RadioGroup>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="lg:col-span-7 h-fit dark:bg-brand-darker/60 rounded-xl dark:border-white/5 relative shadow-sm">
-          <CardHeader className="py-4">
-            <CardTitle className="text-lg">Ad Details</CardTitle>
-            <CardDescription className="text-xs">
-              Enter the basic information for your ad
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 px-6 pb-6 pt-0">
-            <div className="space-y-2">
-              <Label htmlFor="ad-name">Ad Name</Label>
-              <Input
-                id="ad-name"
-                value={formData.name}
-                onChange={handleNameChange}
-                placeholder="Enter a name for your ad"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Headlines ({formData.headlines.length}/15)</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddHeadline}
-                  disabled={formData.headlines.length >= 15}
-                  className=" dark:bg-brand-bright h-7 text-xs"
+    <div className="h-full flex flex-col w-full max-w-full relative overflow-hidden">
+      <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-1">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Ad Type Selector - Now Integrated */}
+          <Card className="lg:col-span-12 rounded-xl border-gray-200/50 dark:border-white/5 shadow-sm bg-white dark:bg-brand-darker/60">
+            <CardContent className="p-4 flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-4">
+                <Label className="text-gray-500 font-bold uppercase text-[10px] tracking-widest">
+                  Ad Type
+                </Label>
+                <RadioGroup
+                  value={formData.type}
+                  onValueChange={handleTypeChange}
+                  className="flex space-x-4"
                 >
-                  <Plus className="h-4 w-4 mr-1" /> Add Headline
-                </Button>
-              </div>
-              <div className="space-y-2">
-                {formData.headlines.map((headline, index) => (
-                  <div key={index} className="flex gap-2 relative group mt-2">
-                    <div className="relative flex-1">
-                      <Input
-                        value={headline}
-                        onChange={(e) =>
-                          handleHeadlineChange(index, e.target.value)
-                        }
-                        placeholder={`Headline ${index + 1}`}
-                        maxLength={30}
-                        className="pr-12"
-                      />
-                      <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono ${headline.length > 25 ? 'text-orange-500' : 'text-gray-400'}`}>
-                        {headline.length}/30
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveHeadline(index)}
-                      disabled={formData.headlines.length <= 1}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="search" id="ad-type-search" />
+                    <Label
+                      htmlFor="ad-type-search"
+                      className="text-sm font-medium"
                     >
-                      <Trash className="h-4 w-4" />
-                      <span className="sr-only">Remove</span>
-                    </Button>
+                      Search
+                    </Label>
                   </div>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Each headline can have up to 30 characters
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Descriptions ({formData.descriptions.length}/4)</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAddDescription}
-                  disabled={formData.descriptions.length >= 4}
-                  className="dark:bg-brand-bright dark:text-white h-7 text-xs"
-                >
-                  <Plus className="h-4 w-4 mr-1" /> Add Description
-                </Button>
-              </div>
-              <div className="space-y-2">
-                {formData.descriptions.map((description, index) => (
-                  <div key={index} className="flex gap-2 relative group mt-2">
-                    <div className="relative flex-1">
-                      <Textarea
-                        value={description}
-                        onChange={(e) =>
-                          handleDescriptionChange(index, e.target.value)
-                        }
-                        placeholder={`Description ${index + 1}`}
-                        maxLength={90}
-                        className="resize-none dark:bg-brand-darker dark:border-brand-dark pr-12"
-                        rows={2}
-                      />
-                      <span className={`absolute right-3 bottom-2 text-[10px] font-mono ${description.length > 80 ? 'text-orange-500' : 'text-gray-400'}`}>
-                        {description.length}/90
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveDescription(index)}
-                      disabled={formData.descriptions.length <= 1}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="pmax" id="ad-type-pmax" />
+                    <Label htmlFor="ad-type-pmax" className="text-sm font-medium">
+                      Performance Max
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="display" id="ad-type-display" />
+                    <Label
+                      htmlFor="ad-type-display"
+                      className="text-sm font-medium"
                     >
-                      <Trash className="h-4 w-4" />
-                      <span className="sr-only">Remove</span>
-                    </Button>
+                      Display
+                    </Label>
                   </div>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Each description can have up to 90 characters
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="lg:col-span-5 space-y-6">
-          <Card className="w-full h-fit pb-6 dark:bg-brand-darker/60 rounded-xl dark:border-white/5 shadow-sm">
-            <CardHeader className="py-4">
-              <CardTitle className="text-lg">URL Settings</CardTitle>
-              <CardDescription className="text-xs">
-                Set the destination and display URLs
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 px-6">
-              <div className="space-y-2">
-                <Label htmlFor="final-url">Final URL</Label>
-                <Input
-                  id="final-url"
-                  value={formData.finalUrl}
-                  onChange={handleUrlChange}
-                  placeholder="https://example.com/landing-page"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="display-path">Display Path</Label>
-                <Input
-                  id="display-path"
-                  value={formData.displayPath}
-                  onChange={handleDisplayPathChange}
-                  placeholder="example.com/special-offer"
-                />
+                </RadioGroup>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="w-full max-h-[32rem] overflow-y-auto dark:bg-brand-darker/60 rounded-xl dark:border-white/5 shadow-sm">
-            <CardHeader className="py-4">
-              <CardTitle className="text-lg">Keywords</CardTitle>
+          <Card className="lg:col-span-7 h-full max-h-full flex flex-col dark:bg-brand-darker/60 rounded-xl dark:border-white/5 relative shadow-sm overflow-hidden">
+            <CardHeader className="py-4 flex-shrink-0">
+              <CardTitle className="text-lg">Ad Details</CardTitle>
               <CardDescription className="text-xs">
-                Add keywords to track in your ad copy
+                Enter the basic information for your ad
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4 px-6 items-center flex flex-col">
-              <form onSubmit={handleAddKeyword} className="flex gap-2">
+            <CardContent className="flex-1 overflow-y-auto custom-scrollbar space-y-4 px-6 pb-6 pt-0">
+              <div className="space-y-2">
+                <Label htmlFor="ad-name">Ad Name</Label>
                 <Input
-                  value={keywordInput}
-                  onChange={(e) => setKeywordInput(e.target.value)}
-                  placeholder="Enter a keyword"
+                  id="ad-name"
+                  value={formData.name}
+                  onChange={handleNameChange}
+                  placeholder="Enter a name for your ad"
                 />
-                <Button
-                  className="text-xs bg-white border text-black  dark:bg-brand-bright  h-9 dark:text-white dark:border-brand-dark hover:bg-gray-100"
-                  type="submit"
-                >
-                  Add
-                </Button>
-              </form>
+              </div>
 
-              <div className="flex flex-wrap gap-2 max-h-24 h-24 overflow-y-auto   ">
-                {formData.keywords.map((keyword, index) => (
-                  <Badge
-                    key={index}
-                    variant="secondary"
-                    className="flex items-center gap-1 h-fit"
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Headlines ({formData.headlines.length}/15)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddHeadline}
+                    disabled={formData.headlines.length >= 15}
+                    className=" dark:bg-brand-bright h-7 text-xs"
                   >
-                    {keyword}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-4 w-4 p-0 ml-1"
-                      onClick={() => handleRemoveKeyword(keyword)}
-                    >
-                      <Trash className="h-3 w-3" />
-                      <span className="sr-only">Remove</span>
-                    </Button>
-                  </Badge>
-                ))}
-                {formData.keywords.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    No keywords added yet
-                  </p>
-                )}
+                    <Plus className="h-4 w-4 mr-1" /> Add Headline
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {formData.headlines.map((headline, index) => (
+                    <div key={index} className="flex gap-2 relative group mt-2">
+                      <div className="relative flex-1">
+                        <Input
+                          value={headline}
+                          onChange={(e) =>
+                            handleHeadlineChange(index, e.target.value)
+                          }
+                          placeholder={`Headline ${index + 1}`}
+                          maxLength={30}
+                          className="pr-12"
+                        />
+                        <span
+                          className={`absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono ${headline.length > 25 ? "text-orange-500" : "text-gray-400"}`}
+                        >
+                          {headline.length}/30
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveHeadline(index)}
+                        disabled={formData.headlines.length <= 1}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash className="h-4 w-4" />
+                        <span className="sr-only">Remove</span>
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Each headline can have up to 30 characters
+                </p>
               </div>
 
-              <section className="pt-2">
-                <KeywordValidator
-                  validationResults={validationResults}
-                  adContent={formData}
-                />
-              </section>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Descriptions ({formData.descriptions.length}/4)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddDescription}
+                    disabled={formData.descriptions.length >= 4}
+                    className="dark:bg-brand-bright dark:text-white h-7 text-xs"
+                  >
+                    <Plus className="h-4 w-4 mr-1" /> Add Description
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {formData.descriptions.map((description, index) => (
+                    <div key={index} className="flex gap-2 relative group mt-2">
+                      <div className="relative flex-1">
+                        <Textarea
+                          value={description}
+                          onChange={(e) =>
+                            handleDescriptionChange(index, e.target.value)
+                          }
+                          placeholder={`Description ${index + 1}`}
+                          maxLength={90}
+                          className="resize-none dark:bg-brand-darker dark:border-brand-dark pr-12"
+                          rows={2}
+                        />
+                        <span
+                          className={`absolute right-3 bottom-2 text-[10px] font-mono ${description.length > 80 ? "text-orange-500" : "text-gray-400"}`}
+                        >
+                          {description.length}/90
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveDescription(index)}
+                        disabled={formData.descriptions.length <= 1}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash className="h-4 w-4" />
+                        <span className="sr-only">Remove</span>
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Each description can have up to 90 characters
+                </p>
+              </div>
             </CardContent>
           </Card>
+
+          <div className="lg:col-span-5 flex flex-col gap-6">
+            <Card className="w-full h-fit flex-shrink-0 pb-6 dark:bg-brand-darker/60 rounded-xl dark:border-white/5 shadow-sm">
+              <CardHeader className="py-4">
+                <CardTitle className="text-lg">URL Settings</CardTitle>
+                <CardDescription className="text-xs">
+                  Set the destination and display URLs
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4 px-6">
+                <div className="space-y-2">
+                  <Label htmlFor="final-url">Final URL</Label>
+                  <Input
+                    id="final-url"
+                    value={formData.finalUrl}
+                    onChange={handleUrlChange}
+                    placeholder="https://example.com/landing-page"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="display-path">Display Path</Label>
+                  <Input
+                    id="display-path"
+                    value={formData.displayPath}
+                    onChange={handleDisplayPathChange}
+                    placeholder="example.com/special-offer"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="w-full flex-1 min-h-0 flex flex-col dark:bg-brand-darker/60 rounded-xl dark:border-white/5 shadow-sm overflow-hidden">
+              <CardHeader className="py-4 flex-shrink-0">
+                <CardTitle className="text-lg">Keywords</CardTitle>
+                <CardDescription className="text-xs">
+                  Add keywords to track in your ad copy
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1 overflow-y-auto custom-scrollbar space-y-4 px-6 pb-6 pt-0 items-center flex flex-col">
+                <form onSubmit={handleAddKeyword} className="flex gap-2">
+                  <Input
+                    value={keywordInput}
+                    onChange={(e) => setKeywordInput(e.target.value)}
+                    placeholder="Enter a keyword"
+                  />
+                  <Button
+                    className="text-xs bg-white border text-black  dark:bg-brand-bright  h-9 dark:text-white dark:border-brand-dark hover:bg-gray-100"
+                    type="submit"
+                  >
+                    Add
+                  </Button>
+                </form>
+
+                <div className="flex flex-wrap gap-2 max-h-24 h-24 overflow-y-auto   ">
+                  {formData.keywords.map((keyword, index) => (
+                    <Badge
+                      key={index}
+                      variant="secondary"
+                      className="flex items-center gap-1 h-fit"
+                    >
+                      {keyword}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-4 w-4 p-0 ml-1"
+                        onClick={() => handleRemoveKeyword(keyword)}
+                      >
+                        <Trash className="h-3 w-3" />
+                        <span className="sr-only">Remove</span>
+                      </Button>
+                    </Badge>
+                  ))}
+                  {formData.keywords.length === 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      No keywords added yet
+                    </p>
+                  )}
+                </div>
+
+                <section className="pt-2">
+                  <KeywordValidator
+                    validationResults={validationResults}
+                    adContent={formData}
+                  />
+                </section>
+              </CardContent>
+            </Card>
+          </div>
         </div>
+
+        {/* SITELINKS */}
+
+        {formData.type === "search" && (
+          <Card className="w-full dark:bg-brand-darker/60 rounded-xl dark:border-white/5 shadow-sm">
+            <CardHeader className="py-4">
+              <CardTitle className="text-lg">Sitelinks</CardTitle>
+              <CardDescription className="text-xs">
+                Add sitelinks to enhance your search ad
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="h-96 overflow-auto px-6">
+              <SitelinksEditor
+                sitelinks={formData.sitelinks || []}
+                onChange={handleUpdateSitelinks}
+              />
+            </CardContent>
+          </Card>
+        )}
+
       </div>
 
-      {/* SITELINKS */}
-
-      {formData.type === "search" && (
-        <Card className="w-full dark:bg-brand-darker/60 rounded-xl dark:border-white/5 shadow-sm">
-          <CardHeader className="py-4">
-            <CardTitle className="text-lg">Sitelinks</CardTitle>
-            <CardDescription className="text-xs">
-              Add sitelinks to enhance your search ad
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="h-96 overflow-auto px-6">
-            <SitelinksEditor
-              sitelinks={formData.sitelinks || []}
-              onChange={handleUpdateSitelinks}
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="flex justify-between pt-4">
+      <div className="flex-shrink-0 flex justify-between py-4 mt-2 border-t border-gray-100 dark:border-white/5 bg-white/20 dark:bg-brand-darker/20 backdrop-blur-md">
         <Button
           variant="outline"
           onClick={onPreview}
-          className="dark:bg-brand-darker dark:text-white dark:border-brand-dark"
+          size="sm"
+          className="dark:bg-brand-darker dark:text-white dark:border-brand-dark rounded-lg font-bold"
         >
           <Eye className="h-4 w-4 mr-2" />
           Preview Ad
         </Button>
         <Button
-          className="dark:bg-brand-bright h-8 w-28 mt-1.5 rounded dark:text-white dark:border-brand-dark dark:hover:bg-brand-bright/80 active:scale-95 "
+          size="sm"
+          className="dark:bg-brand-bright h-9 w-32 rounded-lg font-bold dark:text-white dark:border-brand-dark dark:hover:bg-brand-bright/80 active:scale-95 shadow-lg shadow-blue-500/20"
           onClick={handleSave}
         >
           Save Ad
