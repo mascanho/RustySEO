@@ -332,7 +332,7 @@ export function AdDashboard() {
       onViewChange={setSidebarView}
     >
       <div className="w-full h-full flex flex-col p-4 md:p-6 min-h-0 overflow-hidden">
-        {!(sidebarView === "ads" && selectedAd) && (
+        {!(sidebarView === "previews" || (sidebarView === "ads" && selectedAd)) && (
           <div className="flex-shrink-0 mb-6">
             <DashboardHeader
               heading={getHeaderTitle()}
