@@ -360,7 +360,7 @@ export default function ClarityDashboard() {
                 <div className="p-0">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-slate-200 dark:bg-brand-dark">
                     {behaviorMetrics.map((item, idx) => (
-                      <div
+                      <motion.div
                         key={item.label}
                         whileHover={{
                           backgroundColor: "rgba(43, 108, 196, 0.08)",
@@ -414,7 +414,7 @@ export default function ClarityDashboard() {
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 </div>
