@@ -121,7 +121,7 @@ export function ImageManager({
                 </div>
 
                 <div className="text-center">
-                    <p className="text-sm font-bold text-gray-700 dark:text-gray-300">
+                    <p className="text-sm font-bold text-gray-700 dark:text-gray-200">
                         Click to upload or drag and drop
                     </p>
                     <p className="text-[9px] text-gray-400 mt-1 uppercase tracking-[0.2em] font-black opacity-50">
