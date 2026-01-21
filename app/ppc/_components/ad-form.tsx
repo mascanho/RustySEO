@@ -225,7 +225,7 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
     <div className="flex flex-col h-full bg-gray-50 dark:bg-brand-dark/5 overflow-hidden">
       {/* TABS NAVBAR */}
       <div className="flex-shrink-0 p-0 mb-2 pb-0 shadow-lg ">
-        <div className="flex bg-white dark:bg-brand-dark p-1 px-3  w-full border border-gray-100 dark:border-white/5 shadow-sm overflow-x-auto custom-scrollbar no-scrollbar">
+        <div className="flex bg-white dark:bg-brand-darker p-1 px-3  w-full border border-gray-100 dark:border-white/5 shadow-sm overflow-x-auto custom-scrollbar no-scrollbar ">
           {[
             { id: "content", label: "Content" },
             { id: "assets", label: "Assets" },
@@ -237,7 +237,7 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
               onClick={() => setActiveTab(tab.id as TabType)}
               className={`flex-1 min-w-[100px] px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${
                 activeTab === tab.id
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20 scale-[1.02]"
+                  ? "bg-brand-bright text-white shadow-lg shadow-blue-600/20 scale-[1.02]"
                   : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5"
               }`}
             >
@@ -268,9 +268,9 @@ export function AdForm({ ad, onSave, onPreview, onChange }: AdFormProps) {
                         name="ad-type"
                         checked={formData.type === type}
                         onChange={() => handleTypeChange(type as AdType)}
-                        className="peer appearance-none w-5 h-5 rounded-full border-2 border-gray-200 dark:border-white/10 checked:border-blue-600 transition-all"
+                        className="peer appearance-none w-5 h-5 rounded-full border-2 border-gray-200 dark:border-white/10 checked:border-brand-bright transition-all"
                       />
-                      <div className="absolute w-2.5 h-2.5 rounded-full bg-blue-600 scale-0 peer-checked:scale-100 transition-transform" />
+                      <div className="absolute w-2.5 h-2.5 rounded-full bg-brand-bright scale-0 peer-checked:scale-100 transition-transform" />
                     </div>
                     <span
                       className={`text-xs font-bold transition-colors ${formData.type === type ? "text-gray-900 dark:text-white" : "text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300"}`}
