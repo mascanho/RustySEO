@@ -306,7 +306,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
 
           {viewMode === "single" ? (
             <div className="flex-1 flex flex-col min-h-0">
-              <div className="flex-1 p-4 md:p-12 flex items-center justify-center bg-gray-50/50 dark:bg-brand-dark/10 border-none overflow-hidden relative">
+              <div className="flex-1 p-4 md:p-6 flex items-center justify-center bg-gray-50/50 dark:bg-brand-dark/10 border-none overflow-hidden relative">
                 <div className="w-full h-full flex items-center justify-center transition-all duration-300 transform">
                   {previewType === "search" && (
                     <SearchPreview

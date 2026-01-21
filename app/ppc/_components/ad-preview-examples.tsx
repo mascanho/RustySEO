@@ -24,7 +24,7 @@ export function SearchPreview({
   const paths = formattedUrl.slice(1).filter(Boolean);
 
   return (
-    <div className="w-full max-w-[1000px] mx-auto group">
+    <div className="w-full max-w-[1100px] mx-auto group">
       {/* Browser Chrome Shell */}
       <div className="bg-[#f2f2f2] dark:bg-[#1a1a1a] rounded-t-2xl p-3 flex items-center gap-2 border-x border-t border-gray-200 dark:border-white/5 shadow-sm">
         <div className="flex gap-1.5 ml-2">
@@ -354,7 +354,7 @@ export function DisplayPreview({
   const logoUrl = ad.logos && ad.logos.length > 0 ? ad.logos[0].url : null;
 
   return (
-    <div className="w-full max-w-[600px] mx-auto p-4 flex items-center justify-center">
+    <div className="w-full max-w-[800px] mx-auto p-4 flex items-center justify-center">
       <div className="w-full aspect-[1.91/1] bg-white dark:bg-[#202124] rounded-2xl overflow-hidden shadow-2xl border border-gray-100 dark:border-white/5 relative group cursor-pointer transition-all duration-500 hover:shadow-indigo-500/10">
         {/* Ad Background / Image Area */}
         <div className="absolute inset-0">
