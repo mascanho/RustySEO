@@ -8,6 +8,7 @@ export const changelogData = [
       "Deep Crawler: Tree view",
       "Deep Crawler: Improved Issues tab",
       "Deep Crawler: Improved Queries tab ",
+      "PPC simulator: Improved UI",
     ],
   },
   {
