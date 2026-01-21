@@ -56,6 +56,7 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
 
     setHeadlineIndex(0);
     setDescriptionIndex(0);
+    setCurrentAdIndex(allAds.findIndex((a) => a.id === ad?.id));
 
     const validHeadlines = ad.headlines.filter((h) => h.trim());
     const validDescriptions = ad.descriptions.filter((d) => d.trim());
@@ -214,20 +215,25 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
             <div className="p-1.5 bg-blue-600 rounded-lg shadow-sm">
               <Monitor className="h-4 w-4 text-white" />
             </div>
-            <div>
+            <div className="flex flex-col">
               <CardTitle className="text-base font-bold text-gray-900 dark:text-white">
                 Creative Studio
               </CardTitle>
               <div className="flex items-center gap-2 mt-0">
                 <Badge
                   variant="secondary"
-                  className="bg-blue-100/50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-none px-1.5 py-0 text-[8px] uppercase font-bold tracking-wider"
+                  className="bg-blue-100/50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border-none px-1.5 py-0 text-[8px] uppercase font-bold tracking-wider shrink-0"
                 >
                   Live
                 </Badge>
-                <span className="text-[10px] text-muted-foreground font-medium truncate max-w-[150px]">
-                  • {ad.name}
-                </span>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-[10px] text-muted-foreground font-bold truncate max-w-[120px]">
+                    {ad.name}
+                  </span>
+                  <span className="text-[9px] font-black text-gray-400/80 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-full tabular-nums">
+                    AD {currentAdIndex + 1} OF {allAds.length}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -273,10 +279,34 @@ export function AdPreview({ ad, allAds, onSelectAd }: AdPreviewProps) {
           </div>
         </CardHeader>
 
-        <CardContent className="p-0 border-none overflow-hidden bg-transparent flex-1 relative flex flex-col">
+        <CardContent className="p-0 border-none flex-1 relative flex flex-col group/container overflow-hidden">
+          {/* Main Carousel Controls */}
+          <div className="absolute inset-y-0 left-4 z-40 flex items-center pointer-events-none">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={prevAd}
+              disabled={allAds.length <= 1}
+              className="h-12 w-12 rounded-full bg-white/80 dark:bg-brand-darker/80 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-2xl opacity-0 group-hover/container:opacity-100 pointer-events-auto transition-all duration-300 -translate-x-4 group-hover/container:translate-x-0 disabled:hidden hover:scale-110 active:scale-95 text-blue-600 dark:text-blue-400"
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </Button>
+          </div>
+          <div className="absolute inset-y-0 right-4 z-40 flex items-center pointer-events-none">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={nextAd}
+              disabled={allAds.length <= 1}
+              className="h-12 w-12 rounded-full bg-white/80 dark:bg-brand-darker/80 backdrop-blur-xl border border-white/20 dark:border-white/5 shadow-2xl opacity-0 group-hover/container:opacity-100 pointer-events-auto transition-all duration-300 translate-x-4 group-hover/container:translate-x-0 disabled:hidden hover:scale-110 active:scale-95 text-blue-600 dark:text-blue-400"
+            >
+              <ChevronRight className="h-6 w-6" />
+            </Button>
+          </div>
+
           {viewMode === "single" ? (
             <div className="flex-1 flex flex-col min-h-0">
-              <div className="flex-1 p-4 md:p-6 flex items-center justify-center bg-gray-50/50 dark:bg-brand-dark/10 border-none overflow-hidden">
+              <div className="flex-1 p-4 md:p-12 flex items-center justify-center bg-gray-50/50 dark:bg-brand-dark/10 border-none overflow-hidden relative">
                 <div className="w-full h-full flex items-center justify-center transition-all duration-300 transform">
                   {previewType === "search" && (
                     <SearchPreview
