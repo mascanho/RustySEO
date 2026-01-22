@@ -79,7 +79,7 @@ impl CircuitBreaker {
 
     fn should_skip(&self) -> bool {
         // Only skip if we have significant consecutive failures AND backoff is active
-        self.is_open() && self.consecutive_failures >= 3
+        self.is_open() && self.consecutive_failures >= 10
     }
 
     fn success_rate(&self) -> f64 {
@@ -94,9 +94,9 @@ impl CircuitBreaker {
     async fn enforce_rate_limit(&self) {
         if let Some(last_request) = self.last_request_time {
             let elapsed = last_request.elapsed();
-            // PSI API has limits - enforce at least 1 second between requests
-            if elapsed < Duration::from_secs(1) {
-                sleep(Duration::from_secs(1) - elapsed).await;
+            // PSI API has limits - enforce at least 500ms between requests
+            if elapsed < Duration::from_millis(500) {
+                sleep(Duration::from_millis(500) - elapsed).await;
             }
         }
     }
@@ -123,12 +123,12 @@ fn should_analyze_with_psi(url: &Url) -> bool {
     // Get the path
     let path = url.path();
 
-    // Skip empty paths that might be API endpoints or redirects
+    // Check if it's a homepage/root
     if path.is_empty() || path == "/" {
-        return true; // Homepage is valid
+        return true; 
     }
 
-    // Skip common non-content paths
+    // Skip common non-content paths (Blacklist)
     let skip_patterns = [
         "/login",
         "/signup",
@@ -259,62 +259,8 @@ fn should_analyze_with_psi(url: &Url) -> bool {
         }
     }
 
-    // Additional validation: check if path looks like a content page
-    let path_lower = path.to_lowercase();
-
-    // Allow common content patterns
-    let content_patterns = [
-        "/blog/",
-        "/article/",
-        "/news/",
-        "/post/",
-        "/page/",
-        "/product/",
-        "/item/",
-        "/guide/",
-        "/tutorial/",
-        "/help/",
-        "/docs/",
-        "/documentation/",
-        "/about",
-        "/contact",
-        "/faq",
-        "/privacy",
-        "/terms",
-        "/policy",
-        "/sitemap",
-        "/category/",
-        "/tag/",
-        "/archive/",
-        "/year/",
-        "/month/",
-        "/author/",
-    ];
-
-    for pattern in content_patterns.iter() {
-        if path_lower.contains(pattern) {
-            return true;
-        }
-    }
-
-    // If path has multiple segments and doesn't look like a file, assume it's content
-    let segments: Vec<&str> = path.split('/').filter(|s| !s.is_empty()).collect();
-
-    // URLs with 1-3 path segments are likely content pages
-    if segments.len() >= 1 && segments.len() <= 3 {
-        // Check if last segment looks like a slug (alphanumeric with hyphens)
-        if let Some(last_segment) = segments.last() {
-            let is_slug = last_segment
-                .chars()
-                .all(|c| c.is_alphanumeric() || c == '-');
-            if is_slug && last_segment.len() > 10 {
-                return true;
-            }
-        }
-    }
-
-    // Default to false for unknown URLs
-    false
+    // Default to true for any other URL, assuming the caller has already filtered non-HTML content
+    true
 }
 
 async fn fetch_psi_with_retry(
@@ -560,7 +506,7 @@ pub async fn fetch_psi_bulk(url: Url, settings: &Settings) -> Result<Vec<Value>,
     // Very lenient circuit breaker check
     {
         let breaker = CIRCUIT_BREAKER.lock().await;
-        if breaker.should_skip() && breaker.success_rate() < 0.2 {
+        if breaker.should_skip() && breaker.success_rate() < 0.1 {
             eprintln!(
                 "Skipping PSI for {} - circuit breaker open (success rate: {:.1}%)",
                 url,
@@ -570,7 +516,7 @@ pub async fn fetch_psi_bulk(url: Url, settings: &Settings) -> Result<Vec<Value>,
         }
     }
 
-    let max_retries = 1; // Only 1 retry to avoid hammering API
+    let max_retries = 3; // Retry a few times to handle API flakesg API
     let mut results = Vec::new();
     let mut errors = Vec::new();
 

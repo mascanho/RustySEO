@@ -496,7 +496,7 @@ async fn process_url(
 
     // Start PSI fetch as a separate task
     let psi_future = if settings.page_speed_bulk {
-        let url_clone = url.clone();
+        let url_clone = final_url.clone();
         let settings_clone = settings.clone();
         Some(tokio::spawn(async move {
             fetch_psi_bulk(url_clone, &settings_clone).await
