@@ -1,13 +1,13 @@
 export const initialColumnWidths = [
   "50px", // ID
-  "250px", // Page
+  "minmax(600px, auto)", // Page
   "80px", // Redirected
-  "250px", // Destination
+  "minmax(600px, auto)", // Destination
   "80px", // Type
   "80px", // Status
   "60px", // Hops
   "60px", // Loop
-  "400px", // Chain
+  "minmax(600px, auto)", // Chain
 ];
 
 export const initialColumnAlignments = [

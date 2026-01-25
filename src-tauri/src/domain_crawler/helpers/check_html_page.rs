@@ -2,8 +2,28 @@ use scraper::{Html, Selector};
 
 pub async fn is_html_page(body: &str, content_type: Option<&str>) -> bool {
     // Check the content-type header for HTML MIME types
+    if let Some(ct) = content_type {
+        let ct_lower = ct.to_lowercase();
+        // Explicitly reject non-html types
+        if ct_lower.contains("json")
+            || ct_lower.contains("xml")
+            || ct_lower.contains("image")
+            || ct_lower.contains("pdf")
+            || ct_lower.contains("css")
+            || ct_lower.contains("javascript")
+            || ct_lower.contains("text/plain")
+            || ct_lower.contains("application/")
+        {
+            // If it's one of these, but also claims to be html? Unlikely.
+            // But strict check: if it is explicitly text/html, we accept it.
+            if !ct_lower.contains("text/html") {
+                return false;
+            }
+        }
+    }
+
     let is_html_header = content_type
-        .map(|content_type| content_type.contains("text/html"))
+        .map(|content_type| content_type.to_lowercase().contains("text/html"))
         .unwrap_or(false);
 
     // CHECK THE RESPONSE BODY FOR HTML-LIKE CONTENT

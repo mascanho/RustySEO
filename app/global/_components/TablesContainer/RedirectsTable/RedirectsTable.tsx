@@ -22,7 +22,12 @@ import {
   initialColumnAlignments,
   headerTitles,
 } from "./tableLayout";
-import { TbColumns3, TbArrowRight, TbAlertTriangle, TbCheck } from "react-icons/tb";
+import {
+  TbColumns3,
+  TbArrowRight,
+  TbAlertTriangle,
+  TbCheck,
+} from "react-icons/tb";
 import DownloadButton from "./DownloadButton";
 import useGlobalCrawlStore, {
   useDataActions,
@@ -143,19 +148,22 @@ const ChainCell = memo(({ chain }: { chain: any[] }) => {
     <div className="flex items-center gap-1.5 w-full overflow-hidden text-xs">
       {chain.map((hop, i) => (
         <React.Fragment key={i}>
-          {i > 0 && <TbArrowRight className="text-gray-400 w-3 h-3 flex-shrink-0" />}
-          <div className="flex items-center gap-1 flex-shrink-0 max-w-[200px]">
+          {i > 0 && (
+            <TbArrowRight className="text-gray-400 w-3 h-3 flex-shrink-0" />
+          )}
+          <div className="flex items-center gap-1 flex-shrink-0">
             <span
-              className={`px-1 rounded text-[10px] font-mono border ${hop.status_code >= 300 && hop.status_code < 400
-                ? "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700/50"
-                : hop.status_code === 200
-                  ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700/50"
-                  : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700/50"
-                }`}
+              className={`px-1 rounded text-[10px] font-mono border ${
+                hop.status_code >= 300 && hop.status_code < 400
+                  ? "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-700/50"
+                  : hop.status_code === 200
+                    ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-700/50"
+                    : "bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-700/50"
+              }`}
             >
               {hop.status_code}
             </span>
-            <span className="truncate text-gray-600 dark:text-gray-300" title={hop.url}>
+            <span className="text-gray-600 dark:text-gray-300" title={hop.url}>
               {hop.url}
             </span>
           </div>
@@ -341,12 +349,13 @@ const TableRow = memo(
               display: "flex",
               alignItems: "center",
             }}
-            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${isRowClicked
-              ? "bg-blue-600"
-              : index % 2 === 0
-                ? "bg-white dark:bg-brand-darker"
-                : "bg-gray-50 dark:bg-brand-dark/30"
-              }`}
+            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${
+              isRowClicked
+                ? "bg-blue-600"
+                : index % 2 === 0
+                  ? "bg-white dark:bg-brand-darker"
+                  : "bg-gray-50 dark:bg-brand-dark/30"
+            }`}
           >
             {item.originalIndex === 7 ? (
               <ContextTableMenu data={item.cell ? "Yes" : "No"}>
@@ -549,10 +558,14 @@ const RedirectsTable = ({
         const allOutgoingLinks = [];
         if (selectedRow) {
           if (selectedRow.inoutlinks_status_codes?.internal) {
-            allOutgoingLinks.push(...selectedRow.inoutlinks_status_codes.internal);
+            allOutgoingLinks.push(
+              ...selectedRow.inoutlinks_status_codes.internal,
+            );
           }
           if (selectedRow.inoutlinks_status_codes?.external) {
-            allOutgoingLinks.push(...selectedRow.inoutlinks_status_codes.external);
+            allOutgoingLinks.push(
+              ...selectedRow.inoutlinks_status_codes.external,
+            );
           }
         }
 

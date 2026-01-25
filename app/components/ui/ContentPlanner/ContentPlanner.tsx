@@ -1,3 +1,4 @@
+"use client";
 import { useContentItems } from "@/app/Hooks/useContentItems";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ export function ContentPlanner() {
   const { items, addItem, updateItem, removeItem, onDragEnd } =
     useContentItems();
   const [maxHeight, setMaxHeight] = useState(0);
+  const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
     const heights = items.map(
@@ -16,6 +18,18 @@ export function ContentPlanner() {
     );
     setMaxHeight(Math.max(...heights));
   }, [items]);
+
+  useEffect(() => {
+    const animation = requestAnimationFrame(() => setEnabled(true));
+    return () => {
+      cancelAnimationFrame(animation);
+      setEnabled(false);
+    };
+  }, []);
+
+  if (!enabled) {
+    return null;
+  }
 
   return (
     <div className="mx-auto py-4 px-2 h-full relative">
@@ -26,7 +40,7 @@ export function ContentPlanner() {
         <PlusCircle className="mr-2 h-3 w-3 text-xs" /> Add Topic
       </button>
       <DragDropContext onDragEnd={onDragEnd}>
-        <Droppable droppableId="content-list">
+        <Droppable droppableId="content-list" isDropDisabled={false}>
           {(provided) => (
             <div
               {...provided.droppableProps}
