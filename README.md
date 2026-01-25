@@ -33,6 +33,9 @@ Without crawl limits, start ranking better on search engines.
 #### Log analyser (Apache / Nginx)
 ![Logo](assets/logs.png)
 
+#### Terminal Mode
+![Logo](assets/tui.webp)
+
 ## RustySEO - A cross-platform SEO toolkit
 
 RustySEO is an all-in-one, cross-platform Marketing toolkit, designed for comprehensive SEO & GEO analysis. It enables users to crawl websites, analise server logs gaining actionable insights into their marketing and SEO strategies.
