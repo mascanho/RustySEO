@@ -33,7 +33,10 @@ Without crawl limits, start ranking better on search engines.
 #### Log analyser (Apache / Nginx)
 ![Logo](assets/logs.png)
 
-#### Terminal Mode
+#### Terminal Mode (Experimental)
+
+TUI mode is a standalone app that requires to be installed separately. You can find it [here](https://github.com/mascanho/RustySEO-Headless).
+
 ![Logo](assets/tui.webp)
 
 ## RustySEO - A cross-platform SEO toolkit
