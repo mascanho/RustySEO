@@ -1,11 +1,10 @@
 // @ts-nocheck
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useMemo, useCallback } from "react";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import useFindDuplicateTitles from "./libs/useDuplicatedTitles";
 import useFindDuplicateDescriptions from "./libs/useDuplicatedDescriptions";
 import useResponseCodes from "./libs/useResponseCodes";
 import { useFixesStore } from "@/store/FixesStore";
-import useGlobalConsoleStore from "@/store/GlobalConsoleLog";
 import {
   IconAlertCircle,
   IconAlertTriangle,
@@ -17,19 +16,45 @@ import {
   IconServerOff,
   IconHeading,
   IconLayout,
-  IconPhoto
+  IconPhoto,
+  IconLockOff,
+  IconRoute,
+  IconEyeOff,
+  IconClock,
+  IconMaximize,
+  IconLink,
+  IconShieldExclamation
 } from "@tabler/icons-react";
+
+// Import new modularized hooks
+import { useMultipleH1, useMissingH1, useMissingH2 } from "./libs/useHeadingsIssues";
+import { useCanonicalsMissing, useCanonicalMismatch } from "./libs/useCanonicalIssues";
+import { useNoIndex, useNoFollow } from "./libs/useIndexabilityIssues";
+import { useMissingAltText, useBrokenImages, useLargeImages } from "./libs/useImageIssues";
+import { useSlowPages, useLargeHTML } from "./libs/usePerformanceIssues";
+import { useShortContent } from "./libs/useContentIssues";
+import { useNotHttps } from "./libs/useHttpsIssues";
+import { useLongRedirectChains } from "./libs/useRedirectIssues";
 
 const getIssueIcon = (name) => {
   const iconProps = { size: 16, className: "flex-none" };
-  if (name.includes("Title")) return <IconLetterT {...iconProps} className="text-blue-500" />;
-  if (name.includes("Description")) return <IconFileDescription {...iconProps} className="text-cyan-500" />;
-  if (name.includes("404")) return <IconLinkOff {...iconProps} className="text-red-500" />;
-  if (name.includes("5XX")) return <IconServerOff {...iconProps} className="text-red-600" />;
-  if (name.includes("H1") || name.includes("H2")) return <IconHeading {...iconProps} className="text-purple-500" />;
-  if (name.includes("Content")) return <IconFileText {...iconProps} className="text-amber-500" />;
-  if (name.includes("Schema")) return <IconLayout {...iconProps} className="text-emerald-500" />;
-  if (name.includes("Images")) return <IconPhoto {...iconProps} className="text-orange-500" />;
+  const lowerName = name.toLowerCase();
+
+  if (lowerName.includes("title")) return <IconLetterT {...iconProps} className="text-blue-500" />;
+  if (lowerName.includes("description")) return <IconFileDescription {...iconProps} className="text-cyan-500" />;
+  if (lowerName.includes("404") || lowerName.includes("broken")) return <IconLinkOff {...iconProps} className="text-red-500" />;
+  if (lowerName.includes("5xx")) return <IconServerOff {...iconProps} className="text-red-600" />;
+  if (lowerName.includes("h1") || lowerName.includes("h2")) return <IconHeading {...iconProps} className="text-purple-500" />;
+  if (lowerName.includes("content") || lowerName.includes("word count")) return <IconFileText {...iconProps} className="text-amber-500" />;
+  if (lowerName.includes("schema")) return <IconLayout {...iconProps} className="text-emerald-500" />;
+  if (lowerName.includes("image")) return <IconPhoto {...iconProps} className="text-orange-500" />;
+  if (lowerName.includes("https") || lowerName.includes("security")) return <IconLockOff {...iconProps} className="text-red-400" />;
+  if (lowerName.includes("redirect")) return <IconRoute {...iconProps} className="text-yellow-500" />;
+  if (lowerName.includes("noindex") || lowerName.includes("nofollow")) return <IconEyeOff {...iconProps} className="text-gray-500" />;
+  if (lowerName.includes("canonical")) return <IconLink {...iconProps} className="text-indigo-500" />;
+  if (lowerName.includes("slow") || lowerName.includes("performance")) return <IconClock {...iconProps} className="text-rose-500" />;
+  if (lowerName.includes("large") || lowerName.includes("size")) return <IconMaximize {...iconProps} className="text-slate-500" />;
+
   return <IconInfoCircle {...iconProps} />;
 };
 
@@ -95,25 +120,38 @@ const IssuesContainer = () => {
   const setGenericChart = useGlobalCrawlStore((state) => state.setGenericChart);
   const { setFix } = useFixesStore();
 
-  const missingTitles = useMemo(() => crawlData?.filter((page) => !page?.title || page?.title === "") || [], [crawlData]);
+  // Basic SEO Issues
+  const missingTitles = useMemo(() => crawlData?.filter((page) => !page?.title?.[0]?.title) || [], [crawlData]);
   const missingDescriptions = useMemo(() => crawlData?.filter((page) => !page?.description || page?.description === "") || [], [crawlData]);
-  const duplicateTitles = useFindDuplicateTitles(crawlData, "title");
-  const duplicateDescriptions = useFindDuplicateDescriptions(crawlData, "description");
+  const duplicateTitles = useFindDuplicateTitles(crawlData);
+  const duplicateDescriptions = useFindDuplicateDescriptions(crawlData);
   const descriptionsAbove160Chars = useMemo(() => crawlData?.filter((page) => page?.description?.length > 160) || [], [crawlData]);
-  const response404 = useResponseCodes(crawlData, 404);
-  const response5xx = useResponseCodes(crawlData, 500);
   const pagetitleBelow30Chars = useMemo(() => crawlData?.filter((page) => page?.title?.[0]?.title?.length < 30) || [], [crawlData]);
   const pageTitlesAbove60Chars = useMemo(() => crawlData?.filter((page) => page?.title?.[0]?.title?.length > 60) || [], [crawlData]);
-  const lowContentPages = useMemo(() =>
-    crawlData?.filter((page) =>
-      Array.isArray(page?.text_ratio)
-        ? page.text_ratio.every((obj) => obj.text_ratio < 50)
-        : (page?.text_ratio || 0) < 50
-    ) || [], [crawlData]);
-  const missingH1 = useMemo(() => crawlData?.filter((page) => !page?.headings?.h1) || [], [crawlData]);
-  const missingH2 = useMemo(() => crawlData?.filter((page) => !page?.headings?.h2) || [], [crawlData]);
+
+  // Status Code Issues
+  const response404 = useResponseCodes(crawlData, 404);
+  const response5xx = useResponseCodes(crawlData, 500);
+
+  // Modularized Issues
+  const multipleH1 = useMultipleH1(crawlData);
+  const missingH1 = useMissingH1(crawlData);
+  const missingH2 = useMissingH2(crawlData);
+  const canonicalsMissing = useCanonicalsMissing(crawlData);
+  const canonicalMismatch = useCanonicalMismatch(crawlData);
+  const noIndex = useNoIndex(crawlData);
+  const noFollow = useNoFollow(crawlData);
+  const missingAltText = useMissingAltText(crawlData);
+  const brokenImages = useBrokenImages(crawlData);
+  const largeImages = useLargeImages(crawlData);
+  const slowPages = useSlowPages(crawlData);
+  const largeHTML = useLargeHTML(crawlData);
+  const shortContent = useShortContent(crawlData);
+  const notHttps = useNotHttps(crawlData);
+  const longRedirectChains = useLongRedirectChains(crawlData);
+
+  // Existing ad-hoc filters
   const missingSchema = useMemo(() => crawlData?.filter((page) => !page?.schema) || [], [crawlData]);
-  const imagesAbove100KB = useMemo(() => crawlData?.filter((page) => page?.images?.Ok?.some((image) => image[2] > 100)) || [], [crawlData]);
 
   const issuesArr = useMemo(() => [
     { id: 1, name: "Missing Page Title", issueCount: missingTitles.length, priority: "High" },
@@ -127,14 +165,25 @@ const IssuesContainer = () => {
     { id: 9, name: "5XX Response", issueCount: response5xx?.length || 0, priority: "High" },
     { id: 10, name: "H1 Missing", issueCount: missingH1.length, priority: "High" },
     { id: 11, name: "H2 Missing", issueCount: missingH2.length, priority: "Low" },
-    { id: 12, name: "Low Content", issueCount: lowContentPages.length, priority: "Low" },
-    { id: 13, name: "Missing Schema", issueCount: missingSchema.length, priority: "Medium" },
-    { id: 14, name: "Large Images", issueCount: imagesAbove100KB.length, priority: "Medium" },
+    { id: 12, name: "Multiple H1 tags", issueCount: multipleH1.length, priority: "Medium" },
+    { id: 13, name: "Canonical Missing", issueCount: canonicalsMissing.length, priority: "Medium" },
+    { id: 14, name: "Canonical Mismatch", issueCount: canonicalMismatch.length, priority: "Medium" },
+    { id: 15, name: "NoIndex Pages", issueCount: noIndex.length, priority: "Medium" },
+    { id: 16, name: "NoFollow Pages", issueCount: noFollow.length, priority: "Medium" },
+    { id: 17, name: "Images Missing Alt Text", issueCount: missingAltText.length, priority: "Low" },
+    { id: 18, name: "Broken Images", issueCount: brokenImages.length, priority: "High" },
+    { id: 19, name: "Large Images (>100KB)", issueCount: largeImages.length, priority: "Medium" },
+    { id: 20, name: "Slow Response (>2s)", issueCount: slowPages.length, priority: "High" },
+    { id: 21, name: "Large HTML Page (>100KB)", issueCount: largeHTML.length, priority: "Low" },
+    { id: 22, name: "Thin Content (<300 words)", issueCount: shortContent.length, priority: "Low" },
+    { id: 23, name: "Non-HTTPS Pages", issueCount: notHttps.length, priority: "High" },
+    { id: 24, name: "Long Redirect Chains", issueCount: longRedirectChains.length, priority: "Medium" },
+    { id: 25, name: "Missing Schema", issueCount: missingSchema.length, priority: "Medium" },
   ].map(issue => ({
     ...issue,
     percentage: ((issue.issueCount / (crawlData?.length || 1)) * 100).toFixed(0) + "%"
   })).sort((a, b) => b.issueCount - a.issueCount),
-    [missingTitles, missingDescriptions, duplicateTitles, pageTitlesAbove60Chars, pagetitleBelow30Chars, duplicateDescriptions, descriptionsAbove160Chars, response404, response5xx, missingH1, missingH2, lowContentPages, missingSchema, imagesAbove100KB, crawlData]);
+    [missingTitles, missingDescriptions, duplicateTitles, pageTitlesAbove60Chars, pagetitleBelow30Chars, duplicateDescriptions, descriptionsAbove160Chars, response404, response5xx, missingH1, missingH2, multipleH1, canonicalsMissing, canonicalMismatch, noIndex, noFollow, missingAltText, brokenImages, largeImages, slowPages, largeHTML, shortContent, notHttps, longRedirectChains, missingSchema, crawlData]);
 
   const sumIssues = useMemo(() => issuesArr.reduce((total, issue) => total + (issue.issueCount || 0), 0), [issuesArr]);
 
@@ -150,10 +199,21 @@ const IssuesContainer = () => {
     "5XX Response": response5xx,
     "H1 Missing": missingH1,
     "H2 Missing": missingH2,
-    "Low Content": lowContentPages,
+    "Multiple H1 tags": multipleH1,
+    "Canonical Missing": canonicalsMissing,
+    "Canonical Mismatch": canonicalMismatch,
+    "NoIndex Pages": noIndex,
+    "NoFollow Pages": noFollow,
+    "Images Missing Alt Text": missingAltText,
+    "Broken Images": brokenImages,
+    "Large Images (>100KB)": largeImages,
+    "Slow Response (>2s)": slowPages,
+    "Large HTML Page (>100KB)": largeHTML,
+    "Thin Content (<300 words)": shortContent,
+    "Non-HTTPS Pages": notHttps,
+    "Long Redirect Chains": longRedirectChains,
     "Missing Schema": missingSchema,
-    "Large Images": imagesAbove100KB,
-  }), [missingTitles, missingDescriptions, duplicateTitles, pageTitlesAbove60Chars, pagetitleBelow30Chars, duplicateDescriptions, descriptionsAbove160Chars, response404, response5xx, missingH1, missingH2, lowContentPages, missingSchema, imagesAbove100KB]);
+  }), [missingTitles, missingDescriptions, duplicateTitles, pageTitlesAbove60Chars, pagetitleBelow30Chars, duplicateDescriptions, descriptionsAbove160Chars, response404, response5xx, missingH1, missingH2, multipleH1, canonicalsMissing, canonicalMismatch, noIndex, noFollow, missingAltText, brokenImages, largeImages, slowPages, largeHTML, shortContent, notHttps, longRedirectChains, missingSchema]);
 
   useEffect(() => {
     setIssues(sumIssues);
