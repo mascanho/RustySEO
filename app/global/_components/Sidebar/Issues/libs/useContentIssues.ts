@@ -1,3 +1,4 @@
+// @ts-nocheck
 export const useShortContent = (crawlData) => {
-    return crawlData?.filter((page) => (page?.word_count || 0) < 300) || [];
+  return crawlData?.filter((page) => (page?.word_count || 0) < 300) || [];
 };

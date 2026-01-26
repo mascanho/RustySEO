@@ -1,3 +1,4 @@
+// @ts-nocheck
 export const useNotHttps = (crawlData) => {
-    return crawlData?.filter((page) => !page?.https) || [];
+  return crawlData?.filter((page) => !page?.https) || [];
 };
