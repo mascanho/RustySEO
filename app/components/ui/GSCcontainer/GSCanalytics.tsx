@@ -361,15 +361,13 @@ const GSCanalytics = () => {
                   exit={{ opacity: 0, scale: 0.95 }}
                   className="w-full flex justify-center"
                 >
-                  <div className="w-full max-w-lg bg-white dark:bg-brand-darker rounded-2xl shadow-2xl border border-gray-100 dark:border-brand-dark overflow-hidden">
-                    <GSCConnectionWizard
-                      onComplete={() => {
-                        closeWizard();
-                        handleRefreshGSC();
-                      }}
-                      onClose={closeWizard}
-                    />
-                  </div>
+                  <GSCConnectionWizard
+                    onComplete={() => {
+                      closeWizard();
+                      handleRefreshGSC();
+                    }}
+                    onClose={closeWizard}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -451,6 +449,21 @@ const GSCanalytics = () => {
           />
         )}
       </div>
+
+      <Dialog
+        open={isConfigured && openedWizard}
+        onOpenChange={(open) => !open && closeWizard()}
+      >
+        <DialogContent className="sm:max-w-2xl p-0 border-none bg-transparent shadow-none dark:bg-transparent dark:border-none dark:shadow-none [&>button]:hidden">
+          <GSCConnectionWizard
+            onComplete={() => {
+              closeWizard();
+              handleRefreshGSC();
+            }}
+            onClose={closeWizard}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
