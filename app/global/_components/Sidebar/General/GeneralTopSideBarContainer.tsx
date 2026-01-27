@@ -15,6 +15,11 @@ import CustomSearch from "./DropDowns/CustomSearch";
 import Security from "./DropDowns/Security";
 import URLinfo from "./DropDowns/URLinfo";
 import Content from "./DropDowns/Content";
+import Canonicals from "./DropDowns/Canonicals";
+import WordCount from "./DropDowns/WordCount";
+import Language from "./DropDowns/Language";
+import Mobile from "./DropDowns/Mobile";
+import Redirects from "./DropDowns/Redirects";
 
 const GeneralTopSideBarContainer = () => {
   return (
@@ -32,17 +37,22 @@ const GeneralTopSideBarContainer = () => {
         <MetaDescriptions />
         <H1 />
         <H2 />
+        <WordCount />
         <Images />
         <Css />
         {/* <Iframes /> */}
         <Javascript />
         <Schema />
+        <Canonicals />
+        <Language />
+        <Mobile />
         {/* TODO: Needs to be finished */}
         <Security />
         {/* TODO: Needs to be finished */}
         <URLinfo />
         {/* TODO: Needs to be finished */}
         <StatusCodes />
+        <Redirects />
         <CustomSearch />
       </div>
     </div>
