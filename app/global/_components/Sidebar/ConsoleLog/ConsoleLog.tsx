@@ -341,8 +341,8 @@ export default function ConsoleLog() {
   }, [memoizedLogs]);
 
   return (
-    <div className="w-full max-w-[600px] overflow-hidden bg-gray-50 dark:bg-zinc-900 font-mono text-xs h-[calc(100vh-39rem)]">
-      <ScrollArea className="h-[calc(100vh-40.6rem)]" ref={scrollAreaRef}>
+    <div className="w-full max-w-[600px] overflow-hidden bg-gray-50 dark:bg-zinc-900 font-mono text-xs h-full flex flex-col">
+      <ScrollArea className="flex-1" ref={scrollAreaRef}>
         <div className="p-2 space-y-2">
           {logs.map((log) => {
             const config = LEVEL_CONFIGS[log.level];
