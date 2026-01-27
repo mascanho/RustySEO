@@ -111,6 +111,21 @@ export default function Page() {
       setIsFinishedDeepCrawl(true);
       setIsGlobalCrawling(false);
 
+      // Add URL to the Localstorage history URLs
+      const storedUrls = localStorage.getItem("searchHistory");
+      const urls = JSON.parse(storedUrls || "[]");
+
+      if (urls.length >= 6) {
+        urls.shift();
+      }
+
+      if (urls.includes(url)) {
+        return;
+      }
+
+      urls.push(url);
+      localStorage.setItem("searchHistory", JSON.stringify(urls));
+
       // Get the differences between crawls
       const diff = await invoke("get_url_diff_command");
       setBulkDiffData(diff);

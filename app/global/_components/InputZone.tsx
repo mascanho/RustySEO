@@ -5,7 +5,7 @@ import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import useLoaderStore from "@/store/loadersStore";
 import { CiGlobe } from "react-icons/ci";
 import { IoIosClose } from "react-icons/io";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 interface InputZoneProps {
   handleDomainCrawl: (url: string) => void; // Fixed prop type
@@ -14,7 +14,10 @@ interface InputZoneProps {
 const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
   const { loaders, showLoader, hideLoader } = useLoaderStore();
   const [url, setUrl] = useState("");
-  const { setCrawlData, domainCrawlLoading } = useGlobalCrawlStore();
+  const { setCrawlData, domainCrawlLoading, crawlData } = useGlobalCrawlStore();
+  const [historyUrls, setHistoryUrls] = useState<string[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const historyRef = useRef<HTMLDivElement>(null);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(event.target.value.toLowerCase());
@@ -24,12 +27,51 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
     if (event.key === "Enter") {
       console.log("Sending to crawl:", url);
       handleDomainCrawl(url);
+      setShowHistory(false);
     }
   };
 
   const handleButtonCrawl = () => {
     handleDomainCrawl(url);
+    setShowHistory(false);
   };
+
+  // GET THE HISTORY URLS FROM LOCALSTORAGE
+  function getHistoryUrls() {
+    const history = localStorage.getItem("searchHistory");
+    if (history) {
+      const parsedHistory = JSON.parse(history);
+      console.log("History:", parsedHistory);
+      setHistoryUrls(parsedHistory);
+    }
+    return [];
+  }
+
+  const handleDeleteHistory = (urlToDelete: string) => {
+    const updatedHistory = historyUrls.filter((url) => url !== urlToDelete);
+    setHistoryUrls(updatedHistory);
+    localStorage.setItem("searchHistory", JSON.stringify(updatedHistory));
+  };
+
+  useEffect(() => {
+    getHistoryUrls();
+  }, [crawlData]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        historyRef.current &&
+        !historyRef.current.contains(event.target as Node)
+      ) {
+        setShowHistory(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
     <div className="fixed top-[28px] left-0 right-0 z-[2000] h-11 border-b  bg-white dark:bg-brand-darker flex items-center px-4 dark:border-b-brand-dark">
@@ -43,9 +85,10 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
               required
               placeholder="www.yourwebsite.com"
               value={url}
+              onClick={() => setShowHistory(!showHistory)}
               onChange={handleInputChange}
-              onKeyDown={handleKeyPress} // Fixed deprecated onKeyPress
-              className="w-full h-7 text-xs pl-8 rounded-l-md bg-slate-100 dark:bg-blue-900/5 dark:bg-brand-darker dark:border dark:border-white/20 dark:text-white placeholder:text-gray-500 border rounded-r-md lowercase"
+              onKeyDown={handleKeyPress}
+              className="w-full h-7 text-xs pl-8 rounded-l-md bg-slate-100 dark:bg-blue-900/5 dark:bg-brand-darker dark:border dark:border-white/20 dark:text-white placeholder:text-gray-500 border rounded-r-md lowercase "
               style={{ outline: "none", boxShadow: "none" }}
             />
             <IoIosClose
@@ -69,6 +112,38 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
                 )}
               </span>
             </button>
+            {showHistory && historyUrls.length > 0 && (
+              <section
+                ref={historyRef}
+                className="absolute dark:bg-brand-darker border dark:border-white/20  cursor-pointer top-8 left-0 z-[10000] bottom-1.5 text-red-500 block h-44 max-h-50 bg-slate-50 shadow-md w-[32.5rem] rounded-md overflow-scroll pt-1"
+              >
+                {historyUrls.map((historyUrl, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between px-2 pt-1"
+                  >
+                    <span
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline w-full text-sm h-6 hover:bg-blue-500/20 rounded-sm px-1  max-w-[calc(100%-4rem)] truncate dark:hover:text-white"
+                      onClick={(e) => {
+                        handleDomainCrawl(historyUrl);
+                        setUrl(historyUrl);
+                        setShowHistory(false);
+                      }}
+                    >
+                      {historyUrl}
+                    </span>
+                    <button
+                      onClick={() => handleDeleteHistory(historyUrl)}
+                      className="text-red-500  text-xs  hover:bg-red-500 hover:text-white px-2 py-1  hover:rounded-md"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ))}
+              </section>
+            )}
           </div>
         </div>
       </section>
