@@ -6,6 +6,7 @@ import useLoaderStore from "@/store/loadersStore";
 import { CiGlobe } from "react-icons/ci";
 import { IoIosClose } from "react-icons/io";
 import React, { useEffect, useRef, useState } from "react";
+import { FiGlobe } from "react-icons/fi";
 
 interface InputZoneProps {
   handleDomainCrawl: (url: string) => void; // Fixed prop type
@@ -124,14 +125,17 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
                       className="group flex items-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150 border-b border-gray-200 dark:border-gray-700 last:border-b-0"
                     >
                       <span
-                        className="flex-1 text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-4 py-3 cursor-pointer truncate transition-colors duration-150 hover:font-semibold"
+                        className="flex-1 text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-4 py-2 cursor-pointer truncate transition-colors duration-150 hover:font-semibold"
                         onClick={(e) => {
                           handleDomainCrawl(historyUrl);
                           setUrl(historyUrl);
                           setShowHistory(false);
                         }}
                       >
-                        {historyUrl}
+                        <div className="flex items-center">
+                          <FiGlobe className="mr-2" />
+                          {historyUrl}
+                        </div>
                       </span>
                       <button
                         onClick={() => handleDeleteHistory(historyUrl)}

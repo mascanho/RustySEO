@@ -115,7 +115,7 @@ export default function Page() {
       const storedUrls = localStorage.getItem("searchHistory");
       const urls = JSON.parse(storedUrls || "[]");
 
-      if (urls.length >= 6) {
+      if (urls.length >= 10) {
         urls.shift();
       }
 
