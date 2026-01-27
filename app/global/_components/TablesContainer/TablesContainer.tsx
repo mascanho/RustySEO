@@ -30,6 +30,7 @@ import InnerLinksDetailsTable from "./SubTables/InnerLinksTable/InnerLinksDetail
 import { shallow } from "zustand/shallow";
 import OuterLinksSubTable from "./SubTables/OuterLinksSubTable/OuterLinksSubTable";
 import RedirectsTable from "./RedirectsTable/RedirectsTable";
+import FilesTable from "./FilesTable/FilesTable";
 
 const BottomTableContent = ({ children, height }) => (
   <div
@@ -237,6 +238,86 @@ export default function Home() {
     return customSearch;
   }, [debouncedCrawlData]);
 
+  const filteredFilesArr = useMemo(() => {
+    const fileSet = new Set<string>();
+    const files = [];
+
+    const imageExts = [
+      "png",
+      "jpg",
+      "jpeg",
+      "webp",
+      "svg",
+      "gif",
+      "ico",
+      "bmp",
+      "tiff",
+    ];
+    const jsExts = ["js", "mjs", "jsx", "ts", "tsx"];
+    const cssExts = ["css", "scss", "sass", "less"];
+    const htmlPhpExts = [
+      "html",
+      "htm",
+      "php",
+      "php7",
+      "phtml",
+      "asp",
+      "aspx",
+      "jsp",
+      "cfm",
+    ];
+
+    const getFileExt = (url: string) => {
+      if (!url) return null;
+      try {
+        const parts = url.split("/");
+        const lastPart = parts[parts.length - 1];
+        if (!lastPart.includes(".")) return null;
+
+        const ext = lastPart.split(".").pop()?.split(/[?#]/)[0]?.toLowerCase();
+        return ext || null;
+      } catch (e) {
+        return null;
+      }
+    };
+
+    debouncedCrawlData.forEach((item) => {
+      // Collect all links from this page
+      const allLinks = [
+        ...(item?.inoutlinks_status_codes?.internal || []),
+        ...(item?.inoutlinks_status_codes?.external || []),
+      ];
+
+      allLinks.forEach((linkObj) => {
+        const url = linkObj.url;
+        if (!url) return;
+
+        const ext = getFileExt(url);
+        if (ext) {
+          if (
+            imageExts.includes(ext) ||
+            jsExts.includes(ext) ||
+            cssExts.includes(ext) ||
+            htmlPhpExts.includes(ext)
+          ) {
+            return;
+          }
+
+          if (!fileSet.has(url)) {
+            fileSet.add(url);
+            files.push({
+              url: url,
+              filetype: ext.toUpperCase(),
+              found_at: item.url || "",
+            });
+          }
+        }
+      });
+    });
+
+    return files.map((f, index) => ({ id: index + 1, ...f }));
+  }, [debouncedCrawlData]);
+
   const renderIssuesViewContent = () => {
     switch (issuesView) {
       case "Duplicated Titles":
@@ -309,6 +390,9 @@ export default function Home() {
               <TabsTrigger value="redirects" className="rounded-t-md">
                 Redirects
               </TabsTrigger>
+              <TabsTrigger value="files" className="rounded-t-md">
+                Files
+              </TabsTrigger>
               {issuesView && (
                 <TabsTrigger value={issuesView} className="rounded-t-md">
                   {issuesView}
@@ -375,6 +459,9 @@ export default function Home() {
               className="flex-grow overflow-hidden"
             >
               <RedirectsTable tabName={"AllData"} rows={debouncedCrawlData} />
+            </TabsContent>
+            <TabsContent value="files" className="flex-grow overflow-hidden">
+              <FilesTable tabName={"All Files"} rows={filteredFilesArr} />
             </TabsContent>
             {/* DYNAMIC TABS */}
             {issuesView && (
