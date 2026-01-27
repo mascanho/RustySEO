@@ -454,7 +454,10 @@ const GSCanalytics = () => {
         open={isConfigured && openedWizard}
         onOpenChange={(open) => !open && closeWizard()}
       >
-        <DialogContent className="sm:max-w-2xl p-0 border-none bg-transparent shadow-none dark:bg-transparent dark:border-none dark:shadow-none [&>button]:hidden">
+        <DialogContent
+          hideOverlay
+          className="sm:max-w-2xl p-0 border-none bg-transparent shadow-none dark:bg-transparent dark:border-none dark:shadow-none [&>button]:hidden"
+        >
           <GSCConnectionWizard
             onComplete={() => {
               closeWizard();
