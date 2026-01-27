@@ -23,13 +23,13 @@ import Redirects from "./DropDowns/Redirects";
 
 const GeneralTopSideBarContainer = () => {
   return (
-    <div className="text-xs w-full space-y-1 min-h-[10rem] h-[calc(100vh-39rem)] overflow-y-scroll overflow-x-hidden relative">
-      <section className="w-full flex justify-end  bg-gradient-to-r from-gray-100 to-white font-bold sticky top-0 py-0.5 dark:bg-gradient-to-l dark:from-brand-darker dark:to-blue-950/50 shadow dark:text-blue-600">
+    <div className="text-xs w-full space-y-1 h-full overflow-y-auto overflow-x-hidden relative flex flex-col">
+      <section className="w-full flex justify-end bg-gradient-to-r from-gray-100 to-white font-bold sticky top-0 py-0.5 dark:bg-gradient-to-l dark:from-brand-darker dark:to-blue-950/50 shadow dark:text-blue-600 flex-none z-10">
         <div className="w-full"></div>
         <div className="w-[7em]">Total</div>
         <div className="w-[3.5em]">%</div>
       </section>
-      <div className="overflow-hidden not-selectable">
+      <div className="overflow-y-auto overflow-x-hidden not-selectable flex-1">
         <Summary />
         {/* TODO: Needs to be finished */}
         {/* <Content /> */}
