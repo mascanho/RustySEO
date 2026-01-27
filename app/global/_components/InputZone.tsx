@@ -125,7 +125,7 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
                     <span
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-500 hover:underline w-full text-sm h-6 hover:bg-blue-500/20 rounded-sm px-1  max-w-[calc(100%-4rem)] truncate dark:hover:text-white"
+                      className="text-blue-500 flex items-center  w-full text-sm  bg-blue-500/20 rounded-sm px-1 my-0.5 ml-1 mr-2  pr-3  max-w-[calc(100%-4rem)] truncate dark:hover:text-white h-8 pl-2 justify-between"
                       onClick={(e) => {
                         handleDomainCrawl(historyUrl);
                         setUrl(historyUrl);
@@ -136,7 +136,7 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
                     </span>
                     <button
                       onClick={() => handleDeleteHistory(historyUrl)}
-                      className="text-red-500  text-xs  hover:bg-red-500 hover:text-white px-2 py-1  hover:rounded-md"
+                      className="  text-xs bg-red-500 text-white px-2 py-1  rounded-md absolute right-0 mr-2"
                     >
                       Delete
                     </button>
