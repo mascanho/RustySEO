@@ -115,33 +115,33 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
             {showHistory && historyUrls.length > 0 && (
               <section
                 ref={historyRef}
-                className="absolute dark:bg-brand-darker border dark:border-white/20  cursor-pointer top-8 left-0 z-[10000] bottom-1.5 text-red-500 block h-44 max-h-50 bg-slate-50 shadow-md w-[32.5rem] rounded-md overflow-scroll pt-1"
+                className="absolute dark:bg-brand-darker border dark:border-white/20 top-8 left-0 z-[10000] bg-white dark:bg-gray-900 shadow-lg w-[32.5rem] rounded-lg overflow-hidden"
               >
-                {historyUrls.map((historyUrl, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between px-2 pt-1"
-                  >
-                    <span
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 flex items-center  w-full text-sm  bg-blue-500/20 rounded-sm px-1 my-0.5 ml-1 mr-2  pr-3  max-w-[calc(100%-4rem)] truncate dark:hover:text-white h-8 pl-2 justify-between"
-                      onClick={(e) => {
-                        handleDomainCrawl(historyUrl);
-                        setUrl(historyUrl);
-                        setShowHistory(false);
-                      }}
+                <div className="max-h-48 overflow-y-auto">
+                  {historyUrls.map((historyUrl, index) => (
+                    <div
+                      key={index}
+                      className="group flex items-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150 border-b border-gray-200 dark:border-gray-700 last:border-b-0"
                     >
-                      {historyUrl}
-                    </span>
-                    <button
-                      onClick={() => handleDeleteHistory(historyUrl)}
-                      className="  text-xs bg-red-500 text-white px-2 py-1  rounded-md absolute right-0 mr-2"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                ))}
+                      <span
+                        className="flex-1 text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-4 py-3 cursor-pointer truncate transition-colors duration-150 hover:font-semibold"
+                        onClick={(e) => {
+                          handleDomainCrawl(historyUrl);
+                          setUrl(historyUrl);
+                          setShowHistory(false);
+                        }}
+                      >
+                        {historyUrl}
+                      </span>
+                      <button
+                        onClick={() => handleDeleteHistory(historyUrl)}
+                        className="opacity-0 group-hover:opacity-100 text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 px-3 py-3 transition-all duration-150"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </section>
             )}
           </div>
