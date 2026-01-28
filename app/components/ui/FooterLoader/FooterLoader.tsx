@@ -45,8 +45,8 @@ const FooterLoader = () => {
         };
       });
 
-      // Reset completion state if new crawl starts
-      if (percentage < 100 && crawlCompleted) {
+      // Reset completion state if new crawl starts (only if significantly less than 100%)
+      if (percentage < 95 && crawlCompleted) {
         setCrawlCompleted(false);
       }
 
@@ -67,11 +67,11 @@ const FooterLoader = () => {
 
     // Set up crawl completion listener
     const completeUnlistenPromise = listen("crawl_complete", () => {
-      // Ensure percentage shows 100% when crawl is complete and use actual crawlData length
+      // Use current progress data instead of potentially empty crawlData
       setProgress((prev) => ({
-        crawledPages: crawlData.length,
+        crawledPages: Math.max(prev.crawledPages, prev.crawledPagesCount),
         percentageCrawled: 100,
-        crawledPagesCount: crawlData.length,
+        crawledPagesCount: Math.max(prev.crawledPages, prev.crawledPagesCount),
       }));
       setCrawlCompleted(true);
     });
@@ -81,7 +81,7 @@ const FooterLoader = () => {
       progressUnlistenPromise.then((unlisten) => unlisten());
       completeUnlistenPromise.then((unlisten) => unlisten());
     };
-  }, [handleProgressUpdate, crawlData.length]);
+  }, [handleProgressUpdate]); // Remove crawlData.length from dependencies
 
   return (
     <div className="flex items-center justify-center w-full h-full">
