@@ -64,30 +64,30 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
         return Err("No data to generate Excel".to_string());
     }
 
-    // Define the headers for the table (must match tableLayout.ts)
+    // Define the headers for the table (must match tableLayout.ts exactly)
     let headers = vec![
-        "ID",
-        "URL",
-        "Page Title",
-        "Title Size",
-        "Description",
-        "Desc. Size",
-        "H1",
-        "H1 Size",
-        "H2",
-        "H2 Size",
-        "Status Code",
-        "Word Count",
-        "Text Ratio",
-        "Flesch Score",
-        "Flesch Grade",
-        "Mobile",
-        "Meta Robots",
-        "Content Type",
-        "Indexability",
-        "Language",
-        "Schema",
-        "Depth",
+        "ID",           // 0
+        "URL",          // 1
+        "Page Title",   // 2
+        "Title Size",   // 3
+        "Description",  // 4
+        "Desc. Size",   // 5
+        "H1",           // 6
+        "H1 Size",      // 7
+        "H2",           // 8
+        "H2 Size",      // 9
+        "Status Code",  // 10
+        "Word Count",   // 11
+        "Text Ratio",   // 12
+        "Flesch Score", // 13
+        "Flesch Grade", // 14
+        "Mobile",       // 15
+        "Meta Robots",  // 16
+        "Content Type", // 17
+        "Indexability", // 18
+        "Language",     // 19
+        "Schema",       // 20
+        "Depth",        // 21
     ];
 
     // Create a new workbook and worksheet
