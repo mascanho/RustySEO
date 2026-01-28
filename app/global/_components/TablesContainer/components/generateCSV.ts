@@ -11,33 +11,39 @@ export const exportSEODataCSV = async (data) => {
     return;
   }
 
-  // Define headers (same as your Excel version)
-  //FIX: Check if this is really outputting all the URLs in the table
+  // Define headers (must match tableLayout.ts headerTitles exactly)
   const headers = [
-    "URL",
-    "Page Title",
-    "Page Title Length",
-    "Description",
-    "Description Length",
-    "H1",
-    "H1 Length",
-    "H2",
-    "H2 Length",
-    "Status Code",
-    "Word Count",
-    "Indexability",
-    "Schema",
-    "Canonicals",
-    "Flesch Score",
-    "Flesch Readability",
-    "Keywords",
-    "Language",
-    "Meta Robots",
-    "Mobile",
-    "Page Size (KB)",
-    "Response Time (s)",
-    "Text Ratio (%)",
+    "ID", // 0
+    "URL", // 1
+    "Page Title", // 2
+    "Title Size", // 3
+    "Description", // 4
+    "Desc. Size", // 5
+    "H1", // 6
+    "H1 Size", // 7
+    "H2", // 8
+    "H2 Size", // 9
+    "Status Code", // 10
+    "Word Count", // 11
+    "Text Ratio", // 12
+    "Flesch Score", // 13
+    "Flesch Grade", // 14
+    "Mobile", // 15
+    "Meta Robots", // 16
+    "Content Type", // 17
+    "Indexability", // 18
+    "Language", // 19
+    "Schema", // 20
+    "Depth", // 21 - This was missing!
   ];
+
+  // Debug: Log first item structure and check for depth
+  console.log("First data item structure:", data[0]);
+  console.log(
+    "Does first item have url_depth?",
+    data[0]?.hasOwnProperty("url_depth"),
+  );
+  console.log("url_depth value:", data[0]?.url_depth);
 
   // Process data into CSV rows
   const csvData = data.map((item: any) => {
@@ -134,6 +140,9 @@ export const exportSEODataCSV = async (data) => {
 
       // Text Ratio (22)
       getValue("text_ratio", "0", "text_ratio")?.toString() || "",
+
+      // Depth (23)
+      item.url_depth?.toString() || "",
     ];
   });
 

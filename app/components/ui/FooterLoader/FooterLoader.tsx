@@ -50,6 +50,11 @@ const FooterLoader = () => {
         setCrawlCompleted(false);
       }
 
+      // Auto-complete when we reach 100% progress (fallback for JavaScript mode)
+      if (percentage >= 100 && !crawlCompleted) {
+        setCrawlCompleted(true);
+      }
+
       // Update global state only if the total URLs have changed
       setTotalUrlsCrawled((prev) =>
         prev === safeTotalUrls ? prev : safeTotalUrls,
@@ -76,10 +81,21 @@ const FooterLoader = () => {
       setCrawlCompleted(true);
     });
 
+    // Also listen for any other completion-related events
+    const crawlErrorUnlistenPromise = listen("crawl_error", (event) => {
+      // Handle crawl errors
+    });
+
+    const crawlStoppedUnlistenPromise = listen("crawl_stopped", () => {
+      // Handle crawl stops
+    });
+
     // Cleanup the event listeners on unmount
     return () => {
       progressUnlistenPromise.then((unlisten) => unlisten());
       completeUnlistenPromise.then((unlisten) => unlisten());
+      crawlErrorUnlistenPromise.then((unlisten) => unlisten());
+      crawlStoppedUnlistenPromise.then((unlisten) => unlisten());
     };
   }, [handleProgressUpdate]); // Remove crawlData.length from dependencies
 
@@ -108,6 +124,11 @@ const FooterLoader = () => {
         <span className="text-white bg-brand-bright dark:bg-brand-bright px-2 text-[10px] rounded-sm">
           {crawlCompleted ? " Complete!" : ""}
         </span>
+        {/* Debug info */}
+        {/*<span className="ml-2 text-xs text-gray-500">
+          [Debug: crawlCompleted={crawlCompleted.toString()}, progress=
+          {progress.percentageCrawled}%]
+        </span>*/}
       </span>
     </div>
   );

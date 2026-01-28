@@ -64,31 +64,30 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
         return Err("No data to generate Excel".to_string());
     }
 
-    // Define the headers for the table
+    // Define the headers for the table (must match tableLayout.ts)
     let headers = vec![
+        "ID",
         "URL",
         "Page Title",
-        "Page Title Length",
-        "Description",        // New column for description
-        "Description Length", // New column for description length
+        "Title Size",
+        "Description",
+        "Desc. Size",
         "H1",
-        "H1 Length",
+        "H1 Size",
         "H2",
-        "H2 Length",
+        "H2 Size",
         "Status Code",
         "Word Count",
-        "Indexability",
-        "Schema",
-        "Canonicals",
+        "Text Ratio",
         "Flesch Score",
-        "Flesch Readability",
-        "Keywords",
-        "Language",
-        "Meta Robots",
+        "Flesch Grade",
         "Mobile",
-        "Page Size (KB)",
-        "Response Time (s)",
-        "Text Ratio (%)",
+        "Meta Robots",
+        "Content Type",
+        "Indexability",
+        "Language",
+        "Schema",
+        "Depth",
     ];
 
     // Create a new workbook and worksheet
@@ -422,6 +421,61 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
         worksheet
             .write((row_idx + 1) as u32, 22, &text_ratio)
             .map_err(|e| format!("Failed to write text ratio at row {}: {}", row_idx + 1, e))?;
+
+        // CONTENT TYPE
+        let content_type = match obj.get("content_type") {
+            Some(Value::String(s)) => s.clone(),
+            _ => String::new(), // If content type is missing, write a blank cell
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 23, &content_type)
+            .map_err(|e| format!("Failed to write content type at row {}: {}", row_idx + 1, e))?;
+
+        // INDEXABILITY
+        let indexability = match obj.get("indexability") {
+            Some(Value::Object(indexability_obj)) => match indexability_obj.get("indexability") {
+                Some(Value::Number(n)) => {
+                    if n > &0.5 {
+                        "Indexable".to_string()
+                    } else {
+                        "Not Indexable".to_string()
+                    }
+                }
+                _ => "Unknown".to_string(),
+            },
+            _ => "Unknown".to_string(),
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 24, &indexability)
+            .map_err(|e| format!("Failed to write indexability at row {}: {}", row_idx + 1, e))?;
+
+        // LANGUAGE
+        let language = match obj.get("language") {
+            Some(Value::String(s)) => s.clone(),
+            _ => String::new(), // If language is missing, write a blank cell
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 25, &language)
+            .map_err(|e| format!("Failed to write language at row {}: {}", row_idx + 1, e))?;
+
+        // SCHEMA
+        let schema = match obj.get("schema") {
+            Some(Value::String(s)) => "Yes".to_string(), // If schema exists, write "Yes"
+            _ => "No".to_string(),                       // If schema is missing, write "No"
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 26, &schema)
+            .map_err(|e| format!("Failed to write schema at row {}: {}", row_idx + 1, e))?;
+
+        // DEPTH
+        let url_depth = match obj.get("url_depth") {
+            Some(Value::Number(n)) => n.to_string(),
+            Some(Value::String(s)) => s.clone(),
+            _ => String::new(), // If depth is missing, write a blank cell
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 27, &url_depth)
+            .map_err(|e| format!("Failed to write depth at row {}: {}", row_idx + 1, e))?;
     }
 
     // Save workbook to an in-memory buffer

@@ -3,6 +3,7 @@ use futures::stream::{self, StreamExt};
 use html5ever::interface::NodeOrText::AppendNode;
 use rand::Rng;
 use reqwest::Client;
+use scraper::Html;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::io::Write;
@@ -13,8 +14,6 @@ use tokio::sync::{Mutex, Semaphore};
 use tokio::task;
 use tokio::time::{sleep, Duration};
 use url::Url;
-use scraper::Html;
-
 
 use crate::crawler::get_page_speed_insights;
 use crate::domain_crawler::database::{Database, DatabaseResults};
@@ -22,11 +21,11 @@ use crate::domain_crawler::extractors::html::{perform_extraction, update_cache};
 
 use crate::domain_crawler::helpers::extract_url_pattern::extract_url_pattern;
 use crate::domain_crawler::helpers::fetch_with_exponential::fetch_with_exponential_backoff;
-use crate::domain_crawler::helpers::headless_fetch;
 use crate::domain_crawler::helpers::https_checker::valid_https;
 use crate::domain_crawler::helpers::normalize_url::{self, normalize_url};
 use crate::domain_crawler::helpers::robots::get_domain_robots;
 use crate::domain_crawler::helpers::skip_url::should_skip_url;
+use crate::domain_crawler::helpers::{headless_fetch, url_depth};
 use crate::domain_crawler::models::Extractor;
 use crate::domain_crawler::user_agents;
 use crate::settings::settings::Settings;
@@ -48,10 +47,7 @@ use super::helpers::{
     css_selector::{self, extract_css},
     domain_checker::url_check,
     headings_selector, iframe_selector, images_selector, indexability, javascript_selector,
-    links_selector,
-    mobile_checker,
-    ngrams,
- page_description,
+    links_selector, mobile_checker, ngrams, page_description,
     pdf_selector::extract_pdf_links,
     schema_selector, title_selector,
     word_count::{self, get_word_count},
@@ -255,7 +251,10 @@ async fn process_url(
                             match current_url.join(location_str) {
                                 Ok(next_url) => {
                                     // Check for infinite loops
-                                    if redirect_chain.iter().any(|hop| hop.url == next_url.to_string()) {
+                                    if redirect_chain
+                                        .iter()
+                                        .any(|hop| hop.url == next_url.to_string())
+                                    {
                                         final_response = Some(response);
                                         break;
                                     }
@@ -367,34 +366,41 @@ async fn process_url(
     };
 
     // If Javascript Rendering is enabled and content is HTML, re-fetch via Headless Chrome
-    if settings.javascript_rendering && check_html_page::is_html_page(&body, content_type.as_deref()).await {
+    if settings.javascript_rendering
+        && check_html_page::is_html_page(&body, content_type.as_deref()).await
+    {
         let js_url = final_url.to_string();
         let js_semaphore_clone = js_semaphore.clone();
-        
+
         // Use a separate task for blocking IO of headless chrome, protected by semaphore
         let js_fetch_future = async move {
             // Acquire permit asynchronously
-            let _permit = js_semaphore_clone.acquire().await.map_err(|e| e.to_string())?;
-            
+            let _permit = js_semaphore_clone
+                .acquire()
+                .await
+                .map_err(|e| e.to_string())?;
+
             // Run blocking Chrome operation
-            task::spawn_blocking(move || {
-                headless_fetch::fetch_js_body(&js_url)
-            }).await.map_err(|e| e.to_string())?
+            task::spawn_blocking(move || headless_fetch::fetch_js_body(&js_url))
+                .await
+                .map_err(|e| e.to_string())?
         };
 
         match js_fetch_future.await {
             Ok(js_body) => {
-                 body = js_body;
-            },
+                body = js_body;
+            }
             Err(e) => {
-                 println!("Failed to render JS for {}: {}. Falling back to static content.", final_url, e);
+                println!(
+                    "Failed to render JS for {}: {}. Falling back to static content.",
+                    final_url, e
+                );
             }
         }
     }
 
     let mut pdf_files: Vec<String> = Vec::new();
     if !check_html_page::is_html_page(&body, content_type.as_deref()).await {
-
         pdf_files.push(url.to_string());
 
         let mut state = state.lock().await;
@@ -419,7 +425,7 @@ async fn process_url(
     // Update the custom HTML extractor cache before parsing
     let _ = update_cache().await;
 
-    // Perform all synchronous extractions in a scoped block to ensure `document` (non-Send) 
+    // Perform all synchronous extractions in a scoped block to ensure `document` (non-Send)
     // is dropped before any `.await` points.
     let (
         title,
@@ -448,7 +454,7 @@ async fn process_url(
         _ngrams_data,
     ) = {
         let document = Html::parse_document(&body);
-        
+
         (
             title_selector::extract_title(&document),
             page_description::extract_page_description(&document).unwrap_or_default(),
@@ -468,7 +474,9 @@ async fn process_url(
             get_word_count(&document),
             mobile_checker::is_mobile(&document),
             get_canonical(&document).map(|c| c.canonicals),
-            get_meta_robots(&document).unwrap_or(MetaRobots { meta_robots: Vec::new() }),
+            get_meta_robots(&document).unwrap_or(MetaRobots {
+                meta_robots: Vec::new(),
+            }),
             get_text_ratio(&document),
             extract_keywords(&document, &settings.stop_words),
             select_hreflang(&document),
@@ -490,7 +498,8 @@ async fn process_url(
         internal_external_links.clone(),
         base_url,
         final_url.to_string(),
-    ).await;
+    )
+    .await;
 
     let images_details = images_selector::fetch_image_details(image_urls_for_fetch).await;
 
@@ -510,6 +519,8 @@ async fn process_url(
         Some(fut) => fut.await.map_err(|e| e.to_string())?, // Handle task join error
         None => Ok(Vec::new()),                             // No PSI requested
     };
+
+    let url_depth = url_depth::calculate_url_depth(&url);
 
     let result = DomainCrawlResults {
         url: final_url.to_string(),
@@ -539,13 +550,13 @@ async fn process_url(
         meta_robots: meta_robots_val,
         content_type: content_type.unwrap_or_else(|| "Unknown".to_string()),
         content_length: content_length.unwrap_or(0),
-        text_ratio: Some(vec![text_ratio_val
-            .and_then(|mut v| v.pop())
-            .unwrap_or(TextRatio {
+        text_ratio: Some(vec![text_ratio_val.and_then(|mut v| v.pop()).unwrap_or(
+            TextRatio {
                 html_length: 0,
                 text_length: 0,
                 text_ratio: 0.0,
-            })]),
+            },
+        )]),
         redirection: None,
         keywords: keywords_val,
         page_size: calculate_html_size(content_len),
@@ -563,8 +574,8 @@ async fn process_url(
         https,
         cross_origin: cross_origin_data,
         status: Some(status_code),
+        url_depth: Some(url_depth),
     };
-
 
     {
         let mut state = state.lock().await;
@@ -747,9 +758,7 @@ pub async fn crawl_domain(
     let settings = Arc::new(settings_state.settings.read().await.clone());
 
     let client = Client::builder()
-        .user_agent(
-            &settings.user_agents[rand::random_range(0..settings.user_agents.len())],
-        )
+        .user_agent(&settings.user_agents[rand::random_range(0..settings.user_agents.len())])
         .timeout(Duration::from_secs(settings.client_timeout))
         .connect_timeout(Duration::from_secs(settings.client_connect_timeout))
         .redirect(reqwest::redirect::Policy::none())

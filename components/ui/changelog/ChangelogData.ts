@@ -11,6 +11,8 @@ export const changelogData = [
       "PPC simulator: Improved UI",
       "Deep Crawler: Better Issue tracking",
       "Deep Crawler: URL search history",
+      "Deep Crawler: URL depth calculation",
+      "Deep Crawler: Open Graph discovery",
     ],
   },
   {
