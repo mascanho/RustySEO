@@ -219,38 +219,75 @@ const InnerLinksDetailsTable: React.FC<InlinksSubTableProps> = ({
     const normalizedTargetUrl = normalizeUrl(targetUrl);
 
     const anchorTexts = obj?.inoutlinks_status_codes?.internal
-      .filter((item) => {
+      ?.filter((item) => {
         const normalizedItemUrl = normalizeUrl(item.url);
         return normalizedItemUrl === normalizedTargetUrl;
       })
       .map((item) => item.anchor_text);
 
-    return anchorTexts;
+    return [...new Set(anchorTexts)].join(", ");
   }
 
   function getStatusCode(obj, targetUrl) {
     const normalizedTargetUrl = normalizeUrl(targetUrl);
 
-    const statusCodes = obj?.inoutlinks_status_codes?.internal
-      .filter((item) => {
+    const rawStatuses = obj?.inoutlinks_status_codes?.internal
+      ?.filter((item) => {
         const normalizedItemUrl = normalizeUrl(item.url);
         return normalizedItemUrl === normalizedTargetUrl;
       })
       .map((item) => item.status);
 
+    const processedStatuses = new Set<number>();
+
+    // Helper to process a single status value
+    const addStatus = (val: any) => {
+      if (val === null || val === undefined) return;
+      if (Array.isArray(val)) {
+        val.forEach(addStatus);
+        return;
+      }
+
+      const str = String(val).trim();
+      // If it looks like a concatenated status string (e.g. "200200")
+      if (str.length > 3 && /^\d+$/.test(str) && str.length % 3 === 0) {
+        for (let i = 0; i < str.length; i += 3) {
+          const chunk = parseInt(str.substring(i, i + 3), 10);
+          if (!isNaN(chunk)) processedStatuses.add(chunk);
+        }
+      } else {
+        const num = parseInt(str, 10);
+        if (!isNaN(num)) processedStatuses.add(num);
+      }
+    };
+
+    if (Array.isArray(rawStatuses)) {
+      rawStatuses.forEach(addStatus);
+    }
+
+    // Remove 429 as requested
+    processedStatuses.delete(429);
+
+    const uniqueStatusCodes = Array.from(processedStatuses);
+
+    if (uniqueStatusCodes.length === 0) return <span className="text-gray-400">-</span>;
+
     return (
-      <span
-        className={` font-semibold
-
-${statusCodes?.[0] === 200 && "text-green-700"}
-
-${statusCodes?.[0] === 404 && "text-red-700"}
-
-${statusCodes?.[0] === 403 && "text-orange-700"}
-
-`}
-      >
-        {statusCodes}
+      <span className="font-semibold">
+        {uniqueStatusCodes.map((code, idx) => (
+          <React.Fragment key={code}>
+            <span
+              className={`
+                ${code === 200 ? "text-green-700" : ""}
+                ${code === 404 ? "text-red-700" : ""}
+                ${code === 403 ? "text-orange-700" : ""}
+              `}
+            >
+              {code}
+            </span>
+            {idx < uniqueStatusCodes.length - 1 && ", "}
+          </React.Fragment>
+        ))}
       </span>
     );
   }
