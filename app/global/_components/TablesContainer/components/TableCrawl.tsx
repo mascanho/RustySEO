@@ -232,7 +232,7 @@ const TableRow = memo(
         row?.flesch?.Ok?.[1] || "", // Flesch Grade
         row?.mobile ? "Yes" : "No", // Mobile
         row?.meta_robots?.meta_robots?.[0] || "", // Meta Robots
-        row?.content_type || "", // Content Type
+        row?.content_type || "", // Content Type - ADD THIS
         row?.indexability?.indexability > 0.5 ? "Indexable" : "Not Indexable", // Indexability
         row?.language || "", // Language
         row?.schema ? "Yes" : "No", // Schema

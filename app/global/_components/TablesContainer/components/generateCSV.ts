@@ -46,7 +46,7 @@ export const exportSEODataCSV = async (data) => {
   console.log("url_depth value:", data[0]?.url_depth);
 
   // Process data into CSV rows
-  const csvData = data.map((item: any) => {
+  const csvData = data.map((item: any, index: number) => {
     // Helper function to safely get nested values
     const getValue = (...path: string[]) => {
       return path.reduce(
@@ -56,92 +56,74 @@ export const exportSEODataCSV = async (data) => {
     };
 
     return [
-      // URL (0)
+      // ID (0)
+      (index + 1).toString(),
+
+      // URL (1)
       `"${(item.url || "").replace(/"/g, '""')}"`,
 
-      // Page Title (1)
+      // Page Title (2)
       `"${(getValue("title", "0", "title") || "").replace(/"/g, '""')}"`,
 
-      // Page Title Length (2)
+      // Title Size (3)
       String((getValue("title", "0", "title") || "").length),
 
-      // Description (3)
+      // Description (4)
       `"${(item.description || "").replace(/"/g, '""')}"`,
 
-      // Description Length (4)
+      // Desc. Size (5)
       String(item.description?.length || ""),
 
-      // H1 (5)
+      // H1 (6)
       `"${(getValue("headings", "h1", "0") || "").replace(/"/g, '""')}"`,
 
-      // H1 Length (6)
+      // H1 Size (7)
       String((getValue("headings", "h1", "0") || "").length),
 
-      // H2 (7)
+      // H2 (8)
       `"${(getValue("headings", "h2", "0") || "").replace(/"/g, '""')}"`,
 
-      // H2 Length (8)
+      // H2 Size (9)
       String((getValue("headings", "h2", "0") || "").length),
 
-      // Status Code (9)
+      // Status Code (10)
       item.status_code?.toString() || "",
 
-      // Word Count (10)
+      // Word Count (11)
       item.word_count?.toString() || "",
 
-      // Indexability (11)
-      `"${(
-        getValue("indexability", "indexability_reason") ||
-        getValue("indexability", "indexability", "indexability_reason") ||
-        "Unknown"
-      ).replace(/"/g, '""')}"`,
-      // Schema (12)
-      item.schema === null ? "no" : item.schema ? "yes" : "no",
+      // Text Ratio (12)
+      getValue("text_ratio", "0", "text_ratio")?.toFixed(1) || "",
 
-      // Canonicals (13)
-      `"${(Array.isArray(item.canonicals)
-        ? item.canonicals.filter((x) => typeof x === "string").join(", ")
-        : ""
-      ).replace(/"/g, '""')}"`,
+      // Flesch Score (13)
+      getValue("flesch", "Ok", "0")?.toFixed(1) || "",
 
-      // Flesch Score (14)
-      getValue("flesch", "Ok", "0")?.toString() || "",
-
-      // Flesch Readability (15)
+      // Flesch Grade (14)
       `"${(getValue("flesch", "Ok", "1") || "").replace(/"/g, '""')}"`,
 
-      // Keywords (16)
-      `"${(Array.isArray(item.keywords)
-        ? item.keywords
-            .filter((kw) => Array.isArray(kw) && kw[0])
-            .map((kw) => kw[0])
-            .join(", ")
-        : ""
-      ).replace(/"/g, '""')}"`,
+      // Mobile (15)
+      item.mobile ? "Yes" : "No",
 
-      // Language (17)
-      `"${(item.language || "").replace(/"/g, '""')}"`,
-
-      // Meta Robots (18)
+      // Meta Robots (16)
       `"${(
         getValue("meta_robots", "meta_robots")
           ?.filter((x) => typeof x === "string")
           ?.join(", ") || ""
       ).replace(/"/g, '""')}"`,
 
-      // Mobile (19)
-      typeof item.mobile === "boolean" ? String(item.mobile) : "",
+      // Content Type (17)
+      `"${(item.content_type || "").replace(/"/g, '""')}"`,
 
-      // Page Size (KB) (20)
-      getValue("page_size", "0", "kb")?.toString() || "",
+      // Indexability (18)
+      item.indexability?.indexability > 0.5 ? "Indexable" : "Not Indexable",
 
-      // Response Time (21)
-      item.response_time?.toString() || "",
+      // Language (19)
+      `"${(item.language || "").replace(/"/g, '""')}"`,
 
-      // Text Ratio (22)
-      getValue("text_ratio", "0", "text_ratio")?.toString() || "",
+      // Schema (20)
+      item.schema ? "Yes" : "No",
 
-      // Depth (23)
+      // Depth (21)
       item.url_depth?.toString() || "",
     ];
   });
