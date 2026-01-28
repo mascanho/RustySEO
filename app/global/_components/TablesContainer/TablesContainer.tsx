@@ -273,6 +273,8 @@ export default function Home() {
         const parts = url.split("/");
         const lastPart = parts[parts.length - 1];
         if (!lastPart.includes(".")) return null;
+        // This prevents email from being collected into the table
+        if (url.includes("@")) return null;
 
         const ext = lastPart.split(".").pop()?.split(/[?#]/)[0]?.toLowerCase();
         return ext || null;
