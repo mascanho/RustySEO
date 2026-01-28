@@ -26,7 +26,6 @@ pub mod meta_robots_selector;
 pub mod mobile_checker;
 pub mod ngrams;
 pub mod normalize_url;
-pub mod open_graph;
 pub mod page_description;
 pub mod pdf_checker;
 pub mod pdf_selector;

@@ -434,13 +434,7 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
         // INDEXABILITY
         let indexability = match obj.get("indexability") {
             Some(Value::Object(indexability_obj)) => match indexability_obj.get("indexability") {
-                Some(Value::Number(n)) => {
-                    if n > &0.5 {
-                        "Indexable".to_string()
-                    } else {
-                        "Not Indexable".to_string()
-                    }
-                }
+                Some(Value::Number(_)) => "Indexable".to_string(),
                 _ => "Unknown".to_string(),
             },
             _ => "Unknown".to_string(),
