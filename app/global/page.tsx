@@ -150,7 +150,7 @@ export default function Page() {
     const unlistenPromise = listen("crawl_result", (event) => {
       // The payload structure is { result: DomainCrawlResults }
       const payload = event.payload;
-      console.log("Payload:", payload);
+      // console.log("Payload:", payload);
 
       if (payload && typeof payload === "object") {
         const result = payload.result;

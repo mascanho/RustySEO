@@ -42,7 +42,7 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
     const history = localStorage.getItem("searchHistory");
     if (history) {
       const parsedHistory = JSON.parse(history);
-      console.log("History:", parsedHistory);
+      // console.log("History:", parsedHistory);
       setHistoryUrls(parsedHistory);
     }
     return [];

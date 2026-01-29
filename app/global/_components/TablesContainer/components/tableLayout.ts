@@ -22,6 +22,7 @@ export const initialColumnWidths = [
   "70px", //  Language
   "70px", //  Schema
   "70px", //  Depth
+  "70px", //  OpenGraph
 ];
 
 export const initialColumnAlignments = [
@@ -47,6 +48,7 @@ export const initialColumnAlignments = [
   "center", //  Language
   "center", //  Schema
   "center", //  Depth
+  "center", //  OpenGraph
 ];
 
 export const headerTitles = [
@@ -72,4 +74,5 @@ export const headerTitles = [
   "Language",
   "Schema",
   "Depth",
+  "OpenGraph",
 ];

@@ -524,7 +524,7 @@ async fn process_url(
     let url_depth = url_depth::calculate_url_depth(&url);
 
     // PARSES THE OPENGRAPH DATA
-    let opengraph_data = opengraph::parse_opengraph(html);
+    let opengraph_data = opengraph::parse_opengraph(&body);
 
     let result = DomainCrawlResults {
         url: final_url.to_string(),
@@ -552,6 +552,7 @@ async fn process_url(
         mobile: mobile_val,
         canonicals: canonicals_val,
         meta_robots: meta_robots_val,
+        opengraph: opengraph_data,
         content_type: content_type.unwrap_or_else(|| "Unknown".to_string()),
         content_length: content_length.unwrap_or(0),
         text_ratio: Some(vec![text_ratio_val.and_then(|mut v| v.pop()).unwrap_or(
