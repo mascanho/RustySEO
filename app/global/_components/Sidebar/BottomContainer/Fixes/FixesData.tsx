@@ -3,9 +3,9 @@ export const FixesData = [
     id: 1,
     title: "Missing Page Title",
     description:
-      "Page titles are critical for SEO as they help search engines understand the content of your page. A missing title can lead to poor rankings and reduced visibility in search results. Without a title, your page may appear generic or irrelevant to users.",
+      "Page titles are critical for SEO as they help search engines understand the content of your page. A missing title can lead to poor rankings and reduced visibility in search results.",
     fixes:
-      "Add a unique and descriptive title tag to every page. Ensure the title includes primary keywords, is under 60 characters, and accurately reflects the page's content. Use tools like Google Search Console to identify pages without titles.",
+      "Add a unique, descriptive <title> tag within the <head> of your HTML. It should accurately describe the page content and include your primary keyword.",
     links: [
       "https://developers.google.com/search/docs/appearance/title-link",
       "https://moz.com/learn/seo/title-tag",
@@ -15,156 +15,236 @@ export const FixesData = [
     id: 2,
     title: "Duplicated Titles",
     description:
-      "Duplicate page titles can confuse search engines, making it harder for them to determine which page is most relevant for a query. This can lead to lower rankings and missed opportunities for traffic.",
+      "Duplicate titles make it difficult for search engines to distinguish between pages. This can lead to keyword cannibalization where your own pages compete against each other in search results.",
     fixes:
-      "Audit your site for duplicate titles using tools like Screaming Frog or Google Search Console. Update each title to be unique, descriptive, and keyword-rich. Use canonical tags to indicate the preferred version of a page if necessary.",
+      "Ensure every page has a unique title. Review duplicated titles and differentiate them by adding specific details about the page content, location, or audience.",
     links: [
       "https://developers.google.com/search/docs/advanced/crawling/duplicate-titles",
-      "https://moz.com/blog/duplicate-content-issues",
     ],
   },
   {
     id: 3,
     title: "Page Title > 60 Chars",
     description:
-      "Titles longer than 60 characters may be truncated in search engine results, making them less effective. Users may not see the full context, which can reduce click-through rates.",
+      "Search engines usually truncate titles that exceed 60 characters (or ~600 pixels). Truncated titles can look unprofessional and hide important keywords from users.",
     fixes:
-      "Shorten your page titles to under 60 characters while keeping them descriptive and keyword-rich. Focus on the most important information and place primary keywords at the beginning.",
-    links: [
-      "https://developers.google.com/search/docs/appearance/title-link",
-      "https://moz.com/learn/seo/title-tag",
-    ],
+      "Rewrite titles to be concise and keep them under 60 characters. Place the most important keywords at the beginning of the title.",
+    links: ["https://moz.com/learn/seo/title-tag"],
   },
   {
     id: 4,
     title: "Page Title < 30 Chars",
     description:
-      "Titles shorter than 30 characters may not provide enough context for users or search engines. This can make your page appear less relevant and reduce its chances of ranking well.",
+      "Short titles often fail to provide enough context for users or search engines, which can missed opportunities to include relevant secondary keywords.",
     fixes:
-      "Expand your page titles to at least 30 characters. Ensure they are descriptive, include primary keywords, and accurately summarize the page's content.",
-    links: [
-      "https://developers.google.com/search/docs/appearance/title-link",
-      "https://moz.com/learn/seo/title-tag",
-    ],
+      "Expand short titles to be more descriptive. Include your brand name or secondary descriptive keywords to reach at least 30-40 characters.",
+    links: ["https://ahrefs.com/blog/title-tag-seo/"],
   },
   {
     id: 5,
     title: "Missing Description",
     description:
-      "Meta descriptions provide a summary of your page's content in search results. Missing descriptions can lead to lower click-through rates, as search engines may generate irrelevant snippets.",
+      "Meta descriptions influence click-through rates (CTR) by providing a brief summary of the page in search results. Missing descriptions let search engines pick random text from the page.",
     fixes:
-      "Write unique and compelling meta descriptions for every page. Keep them under 160 characters, include primary keywords naturally, and use action-oriented language to encourage clicks.",
-    links: [
-      "https://developers.google.com/search/docs/appearance/snippet",
-      "https://moz.com/learn/seo/meta-description",
-    ],
+      "Create a unique meta description for every page that summarizes the content and includes a call to action. Ensure it is between 120-160 characters.",
+    links: ["https://developers.google.com/search/docs/appearance/snippet"],
   },
   {
     id: 6,
     title: "Duplicated Descriptions",
     description:
-      "Duplicate meta descriptions can confuse search engines and reduce the effectiveness of your snippets. This can lead to lower click-through rates and missed opportunities for traffic.",
+      "Duplicate meta descriptions provide no unique value and can lead to lower CTR across all affected pages as they won't stand out to users.",
     fixes:
-      "Audit your site for duplicate meta descriptions using tools like Screaming Frog or Google Search Console. Update each description to be unique, descriptive, and engaging.",
-    links: [
-      "https://developers.google.com/search/docs/advanced/crawling/duplicate-descriptions",
-      "https://moz.com/blog/duplicate-content-issues",
-    ],
+      "Audit your duplicated descriptions and rewrite them to reflect the unique value proposition of each specific page.",
+    links: ["https://moz.com/learn/seo/meta-description"],
   },
   {
     id: 7,
     title: "Descriptions > 160 Chars",
     description:
-      "Meta descriptions longer than 160 characters may be truncated in search results, making them less effective. Users may not see the full context, which can reduce click-through rates.",
+      "Meta descriptions over 160 characters are usually truncated in SERPs. Important information or calls-to-action at the end may be lost.",
     fixes:
-      "Shorten your meta descriptions to under 160 characters. Focus on the most important information, include primary keywords, and use action-oriented language.",
-    links: [
-      "https://developers.google.com/search/docs/appearance/snippet",
-      "https://moz.com/learn/seo/meta-description",
-    ],
+      "Shorten descriptions to stay within 155-160 characters. Moving the most important information to the front is recommended.",
+    links: ["https://ahrefs.com/blog/meta-description-seo/"],
   },
   {
     id: 8,
     title: "404 Response",
     description:
-      "404 errors occur when a page cannot be found. These errors can harm user experience and SEO, as search engines cannot index the page. Broken links can also dilute your site's authority.",
+      "A 404 error means the page was not found. This results in a poor user experience and wastes crawl budget as search engines try to visit non-existent pages.",
     fixes:
-      "Identify broken links using tools like Screaming Frog or Google Search Console. Update or remove broken links, and implement 301 redirects for permanently moved pages.",
-    links: [
-      "https://developers.google.com/search/docs/crawling-indexing/fix-broken-links",
-      "https://ahrefs.com/blog/find-and-fix-broken-links/",
-    ],
+      "Fix internal broken links pointing to the 404 page. If the page moved, implement a 301 redirect to the new URL. If it's gone, redirect to the most relevant category page.",
+    links: ["https://developers.google.com/search/docs/crawling-indexing/fix-broken-links"],
   },
   {
     id: 9,
     title: "5XX Response",
     description:
-      "5XX errors indicate server-side issues, which can prevent users and search engines from accessing your site. These errors can harm your site's credibility and rankings.",
+      "5XX errors indicate server-side problems where the server failed to fulfill a valid request. Consistent 5XX errors can lead to search engines de-indexing your site.",
     fixes:
-      "Check your server logs to identify the cause of 5XX errors. Contact your hosting provider or developer to resolve server issues. Monitor your site regularly to prevent future errors.",
-    links: [
-      "https://developers.google.com/search/docs/advanced/crawling/5xx-errors",
-      "https://moz.com/blog/5xx-errors",
-    ],
+      "Check your server logs to identify the specific error (e.g., 500, 503). Ensure your server has enough resources and that no scripts are timing out or crashing.",
+    links: ["https://www.searchenginejournal.com/website-errors-seo/5xx-errors/"],
   },
   {
     id: 10,
     title: "H1 Missing",
     description:
-      "H1 tags are the main heading of a page and are critical for SEO. Missing H1 tags can make it harder for search engines to understand the structure and content of your page.",
+      "The H1 tag is the primary heading and should tell both users and search engines what the page is about. Missing it creates a poor content hierarchy.",
     fixes:
-      "Add a single, descriptive H1 tag to every page. Ensure it includes primary keywords and accurately reflects the page's content. Avoid using multiple H1 tags on a single page.",
-    links: [
-      "https://developers.google.com/search/docs/advanced/guidelines/webmaster-guidelines",
-      "https://moz.com/learn/seo/headings",
-    ],
+      "Identify the main topic of your page and add a single <h1> tag at the top of the content structure.",
+    links: ["https://moz.com/learn/seo/headings"],
   },
   {
     id: 11,
     title: "H2 Missing",
     description:
-      "H2 tags are subheadings that help structure your content. Missing H2 tags can reduce readability and make it harder for search engines to understand your content.",
+      "H2 tags are used for sub-headings to structure the content. Without them, large blocks of text become hard to read for users and difficult to parse for search engines.",
     fixes:
-      "Use H2 tags to organize your content hierarchically. Include relevant keywords and ensure each H2 tag provides context for the section it introduces.",
-    links: [
-      "https://developers.google.com/search/docs/advanced/guidelines/webmaster-guidelines",
-      "https://moz.com/learn/seo/headings",
-    ],
+      "Break up your content into sections and use <h2> tags for section headings. This improves readability and allows you to target secondary keywords.",
+    links: ["https://ahrefs.com/blog/h1-tag-seo/"],
   },
   {
     id: 12,
-    title: "Low Content",
+    title: "Multiple H1 tags",
     description:
-      "Pages with low content may not provide enough value to users or search engines. This can lead to lower rankings and reduced traffic.",
+      "While HTML5 allows it, having multiple H1 tags can dilute the primary focus of the page. It's generally better for SEO to have one clear primary heading.",
     fixes:
-      "Expand your content to cover topics comprehensively. Add original research, multimedia, or examples to increase the depth and value of your pages. Avoid keyword stuffing.",
-    links: [
-      "https://developers.google.com/search/docs/essentials/creating-helpful-content",
-      "https://moz.com/blog/thin-content-how-to-find-it-and-fix-it",
-    ],
+      "Review pages with multiple H1 tags. Keep the most relevant one as H1 and change the others to H2 or H3 tags to maintain a proper hierarchy.",
+    links: ["https://www.searchenginejournal.com/h1-tags-seo/"],
   },
   {
     id: 13,
-    title: "Missing Schema",
+    title: "Canonical Missing",
     description:
-      "Schema markup helps search engines understand your content and can lead to rich results like featured snippets, carousels, or knowledge panels. Missing schema can reduce your visibility in search results.",
+      "Canonical tags prevent duplicate content issues by telling search engines which version of a URL is the 'master' copy. Without them, search engines might index duplicate versions of your pages.",
     fixes:
-      "Add structured data to your pages using JSON-LD format. Test your markup with Google’s Rich Results Test and include relevant schema types (e.g., Article, Product, FAQ).",
-    links: [
-      "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data",
-      "https://schema.org/",
-    ],
+      "Add a <link rel='canonical' href='...'> tag to the <head> of every page. On standard pages, this should usually be a self-referencing canonical to the page's own clean URL.",
+    links: ["https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls"],
   },
   {
     id: 14,
-    title: "Large Images",
+    title: "Canonical Mismatch",
     description:
-      "Large images can slow down your website, leading to poor user experience and lower rankings. Slow-loading pages can increase bounce rates and reduce conversions.",
+      "A canonical mismatch occurs when the canonical tag points to a different URL than the one being crawled, or when multiple canonicals are present. This can lead to indexing the wrong page.",
     fixes:
-      "Compress images to reduce file size without sacrificing quality. Use next-gen formats like WebP, specify image dimensions, and lazy load images below the fold.",
-    links: [
-      "https://developers.google.com/search/docs/appearance/google-images",
-      "https://web.dev/use-srcset-to-automatically-choose-the-right-image/",
-    ],
+      "Ensure your canonical tags accurately point to the preferred version of the URL. Check for conflicting tags or errors in your CMS settings.",
+    links: ["https://ahrefs.com/blog/canonical-tags/"],
+  },
+  {
+    id: 15,
+    title: "NoIndex Pages",
+    description:
+      "The 'noindex' directive tells search engines not to show the page in search results. If important pages are marked as noindex, they will not get any organic traffic.",
+    fixes:
+      "Check your meta robots tags or X-Robots headers. Remove the 'noindex' directive from pages that you want to be discovered and indexed by search engines.",
+    links: ["https://developers.google.com/search/docs/crawling-indexing/block-indexing"],
+  },
+  {
+    id: 16,
+    title: "NoFollow Pages",
+    description:
+      "The 'nofollow' directive tells search engines not to follow the links on a page. This can prevent search engines from discovering other pages on your site.",
+    fixes:
+      "Review your meta robots tags. Change 'nofollow' to 'follow' unless you have a specific reason to prevent robots from following links on that page.",
+    links: ["https://developers.google.com/search/docs/crawling-indexing/qualify-outbound-links"],
+  },
+  {
+    id: 17,
+    title: "Images Missing Alt Text",
+    description:
+      "Alt text (alternative text) is essential for web accessibility and helps search engines understand what is in an image. Missing alt text is a significant SEO and accessibility issue.",
+    fixes:
+      "Add descriptive alt attributes to all <img> tags. The text should describe what is shown in the image while naturally including relevant keywords if applicable.",
+    links: ["https://moz.com/learn/seo/alt-text"],
+  },
+  {
+    id: 18,
+    title: "Broken Images",
+    description:
+      "Broken images occur when the image file cannot be loaded. This damages the user experience and can make your site look neglected or unprofessional.",
+    fixes:
+      "Check the image URLs for typos or missing files on your server. Replace broken image links with valid, optimized image files.",
+    links: ["https://web.dev/optimize-images/"],
+  },
+  {
+    id: 19,
+    title: "Large Images (>100KB)",
+    description:
+      "Images larger than 100KB can significantly increase page load times. This negatively impacts Core Web Vitals and user retention.",
+    fixes:
+      "Compress your images using tools like TinyPNG or Squoosh. Use modern formats like WebP or AVIF and ensure images are sized correctly for their display area.",
+    links: ["https://web.dev/browser-level-image-lazy-loading/"],
+  },
+  {
+    id: 20,
+    title: "Slow Response (>2s)",
+    description:
+      "A server response time over 2 seconds is considered very slow. Speed is a direct ranking factor for Google and a key part of user experience.",
+    fixes:
+      "Optimize your database queries, implement caching (server-side and CDN), and check your hosting resources. Heavy server-side processing should be minimized.",
+    links: ["https://web.dev/vitals/"],
+  },
+  {
+    id: 21,
+    title: "Large HTML Page (>100KB)",
+    description:
+      "HTML documents larger than 100KB take longer to download and parse, especially on mobile devices. Heavy HTML often indicates excessive inline CSS/JS or bloated DOM structure.",
+    fixes:
+      "Externalize CSS and JavaScript files. Minify your HTML and review your page structure to remove unnecessary nesting or excessive hidden elements.",
+    links: ["https://web.dev/reduce-network-payloads-and-compress-assets/"],
+  },
+  {
+    id: 22,
+    title: "Thin Content (<300 words)",
+    description:
+      "Thin content refers to pages with very little text. Search engines may perceive these pages as 'low value' and avoid ranking them highly.",
+    fixes:
+      "Increase the depth of your content by adding more helpful information, analysis, or multimedia. If a page doesn't need more content, consider combining it with another page.",
+    links: ["https://developers.google.com/search/docs/essentials/creating-helpful-content"],
+  },
+  {
+    id: 23,
+    title: "Non-HTTPS Pages",
+    description:
+      "HTTPS is a basic security requirement. Google uses it as a ranking signal, and browsers will mark non-HTTPS pages as 'Not Secure', which destroys user trust.",
+    fixes:
+      "Install an SSL certificate (like Let's Encrypt) on your server and implement 301 redirects from HTTP to HTTPS version of your URLs.",
+    links: ["https://developers.google.com/search/docs/appearance/https-seo"],
+  },
+  {
+    id: 24,
+    title: "Long Redirect Chains",
+    description:
+      "Redirect chains (e.g., A -> B -> C) increase latency and waste crawl budget. Each hop loses a small amount of 'link equity' and increases the risk of a failure.",
+    fixes:
+      "Update your internal links to point directly to the final destination URL. Avoid chaining redirects; link A should point directly to C.",
+    links: ["https://ahrefs.com/blog/redirect-chains/"],
+  },
+  {
+    id: 25,
+    title: "Missing Schema",
+    description:
+      "Schema markup helps search engines provide rich results (like stars, prices, or FAQ snippets). Missing it means you lose out on visual real-estate in search results.",
+    fixes:
+      "Identify the type of content (Article, Product, Organization, etc.) and add the corresponding JSON-LD structured data to your pages.",
+    links: ["https://schema.org/", "https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data"],
+  },
+  {
+    id: 26,
+    title: "Deeply Nested URLs (>5 Depth)",
+    description:
+      "URLs nested deep in the site structure (e.g., more than 5 clicks away from the homepage) are harder for both users and search engine bots to reach. They often receive less 'link juice' and may be crawled less frequently.",
+    fixes:
+      "Improve your internal linking structure. Use categories, breadcrumbs, or a flatter site architecture to ensure important pages are accessible within 3-4 clicks from the homepage.",
+    links: ["https://moz.com/blog/flat-vs-deep-site-hierarchies"],
+  },
+  {
+    id: 27,
+    title: "Missing OpenGraph Tags",
+    description:
+      "OpenGraph tags (like og:title and og:image) control how your content looks when shared on social media (Facebook, LinkedIn, Twitter). Missing tags can lead to unattractive previews and lower social engagement.",
+    fixes:
+      "Add essential OpenGraph meta tags inside the <head> of your pages. At minimum, include og:title, og:description, og:image, and og:url.",
+    links: ["https://ogp.me/"],
   },
 ];

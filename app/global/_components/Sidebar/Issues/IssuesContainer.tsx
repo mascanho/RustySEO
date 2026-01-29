@@ -23,7 +23,9 @@ import {
   IconClock,
   IconMaximize,
   IconLink,
-  IconShieldExclamation
+  IconShieldExclamation,
+  IconHierarchy2,
+  IconShare
 } from "@tabler/icons-react";
 
 // Import new modularized hooks
@@ -54,6 +56,8 @@ const getIssueIcon = (name) => {
   if (lowerName.includes("canonical")) return <IconLink {...iconProps} className="text-indigo-500" />;
   if (lowerName.includes("slow") || lowerName.includes("performance")) return <IconClock {...iconProps} className="text-rose-500" />;
   if (lowerName.includes("large") || lowerName.includes("size")) return <IconMaximize {...iconProps} className="text-slate-500" />;
+  if (lowerName.includes("nested") || lowerName.includes("depth")) return <IconHierarchy2 {...iconProps} className="text-pink-500" />;
+  if (lowerName.includes("opengraph") || lowerName.includes("social")) return <IconShare {...iconProps} className="text-blue-400" />;
 
   return <IconInfoCircle {...iconProps} />;
 };
@@ -149,6 +153,8 @@ const IssuesContainer = () => {
   const shortContent = useShortContent(crawlData);
   const notHttps = useNotHttps(crawlData);
   const longRedirectChains = useLongRedirectChains(crawlData);
+  const deepLinks = useMemo(() => crawlData?.filter((page) => page?.url_depth > 5) || [], [crawlData]);
+  const missingOG = useMemo(() => crawlData?.filter((page) => !page?.opengraph || Object.keys(page.opengraph).length === 0) || [], [crawlData]);
 
   // Existing ad-hoc filters
   const missingSchema = useMemo(() => crawlData?.filter((page) => !page?.schema) || [], [crawlData]);
@@ -179,11 +185,13 @@ const IssuesContainer = () => {
     { id: 23, name: "Non-HTTPS Pages", issueCount: notHttps.length, priority: "High" },
     { id: 24, name: "Long Redirect Chains", issueCount: longRedirectChains.length, priority: "Medium" },
     { id: 25, name: "Missing Schema", issueCount: missingSchema.length, priority: "Medium" },
+    { id: 26, name: "Deeply Nested URLs (>5 Depth)", issueCount: deepLinks.length, priority: "Low" },
+    { id: 27, name: "Missing OpenGraph Tags", issueCount: missingOG.length, priority: "Low" },
   ].map(issue => ({
     ...issue,
     percentage: ((issue.issueCount / (crawlData?.length || 1)) * 100).toFixed(0) + "%"
   })).sort((a, b) => b.issueCount - a.issueCount),
-    [missingTitles, missingDescriptions, duplicateTitles, pageTitlesAbove60Chars, pagetitleBelow30Chars, duplicateDescriptions, descriptionsAbove160Chars, response404, response5xx, missingH1, missingH2, multipleH1, canonicalsMissing, canonicalMismatch, noIndex, noFollow, missingAltText, brokenImages, largeImages, slowPages, largeHTML, shortContent, notHttps, longRedirectChains, missingSchema, crawlData]);
+    [missingTitles, missingDescriptions, duplicateTitles, pageTitlesAbove60Chars, pagetitleBelow30Chars, duplicateDescriptions, descriptionsAbove160Chars, response404, response5xx, missingH1, missingH2, multipleH1, canonicalsMissing, canonicalMismatch, noIndex, noFollow, missingAltText, brokenImages, largeImages, slowPages, largeHTML, shortContent, notHttps, longRedirectChains, missingSchema, deepLinks, missingOG, crawlData]);
 
   const sumIssues = useMemo(() => issuesArr.reduce((total, issue) => total + (issue.issueCount || 0), 0), [issuesArr]);
 
@@ -213,7 +221,9 @@ const IssuesContainer = () => {
     "Non-HTTPS Pages": notHttps,
     "Long Redirect Chains": longRedirectChains,
     "Missing Schema": missingSchema,
-  }), [missingTitles, missingDescriptions, duplicateTitles, pageTitlesAbove60Chars, pagetitleBelow30Chars, duplicateDescriptions, descriptionsAbove160Chars, response404, response5xx, missingH1, missingH2, multipleH1, canonicalsMissing, canonicalMismatch, noIndex, noFollow, missingAltText, brokenImages, largeImages, slowPages, largeHTML, shortContent, notHttps, longRedirectChains, missingSchema]);
+    "Deeply Nested URLs (>5 Depth)": deepLinks,
+    "Missing OpenGraph Tags": missingOG,
+  }), [missingTitles, missingDescriptions, duplicateTitles, pageTitlesAbove60Chars, pagetitleBelow30Chars, duplicateDescriptions, descriptionsAbove160Chars, response404, response5xx, missingH1, missingH2, multipleH1, canonicalsMissing, canonicalMismatch, noIndex, noFollow, missingAltText, brokenImages, largeImages, slowPages, largeHTML, shortContent, notHttps, longRedirectChains, missingSchema, deepLinks, missingOG]);
 
   useEffect(() => {
     setIssues(sumIssues);
