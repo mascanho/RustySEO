@@ -13,7 +13,7 @@ use tokio::time::{sleep, Duration};
 use url::Url;
 
 use crate::domain_crawler::helpers::domain_checker::url_check;
-use crate::domain_crawler::helpers::robots::get_domain_robots;
+use crate::domain_crawler::helpers::robots::{self, get_domain_robots};
 use crate::settings::settings::Settings;
 use crate::AppState;
 
@@ -44,6 +44,11 @@ pub async fn crawl_domain(
     let domain = base_url.clone();
 
     let app_handle_clone = app_handle.clone();
+
+    let robots_blocked = {
+        let urls_blocked_in_robots = robots::get_urls_from_robots(&base_url).await;
+        urls_blocked_in_robots.unwrap_or_default()
+    };
 
     // Spawn a task that checks for the robots files
     tokio::spawn(async move {
@@ -274,6 +279,7 @@ pub async fn crawl_domain(
             percentage: 100.0, // Always 100% when truly complete
             failed_urls_count: state_guard.failed_urls.len(),
             discovered_urls: std::cmp::max(state_guard.total_urls, 1),
+            robots_blocked: Some(robots_blocked),
         };
 
         println!(
