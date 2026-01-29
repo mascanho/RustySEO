@@ -551,6 +551,7 @@ async fn update_state_and_emit_progress(
         percentage,
         failed_urls_count: state.failed_urls.len(),
         discovered_urls: safe_total_discovered,
+        robots_blocked: None,
     };
 
     // Debug logging for troubleshooting NaN issues
