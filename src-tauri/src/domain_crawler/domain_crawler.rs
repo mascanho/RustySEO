@@ -25,7 +25,7 @@ use crate::domain_crawler::helpers::https_checker::valid_https;
 use crate::domain_crawler::helpers::normalize_url::{self, normalize_url};
 use crate::domain_crawler::helpers::robots::get_domain_robots;
 use crate::domain_crawler::helpers::skip_url::should_skip_url;
-use crate::domain_crawler::helpers::{headless_fetch, url_depth};
+use crate::domain_crawler::helpers::{headless_fetch, opengraph, url_depth};
 use crate::domain_crawler::models::Extractor;
 use crate::domain_crawler::user_agents;
 use crate::settings::settings::Settings;
@@ -520,7 +520,11 @@ async fn process_url(
         None => Ok(Vec::new()),                             // No PSI requested
     };
 
+    // GETS THE SPECIFIC URL DEPTH
     let url_depth = url_depth::calculate_url_depth(&url);
+
+    // PARSES THE OPENGRAPH DATA
+    let opengraph_data = opengraph::parse_opengraph(html);
 
     let result = DomainCrawlResults {
         url: final_url.to_string(),

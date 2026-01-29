@@ -37,3 +37,4 @@ pub mod text_ratio;
 pub mod title_selector;
 pub mod url_depth;
 pub mod word_count;
+pub mod opengraph;
