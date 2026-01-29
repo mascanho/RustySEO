@@ -34,7 +34,8 @@ export const exportSEODataCSV = async (data) => {
     "Indexability", // 18
     "Language", // 19
     "Schema", // 20
-    "Depth", // 21 - This was missing!
+    "Depth", // 21
+    "Opengraph", // 22
   ];
 
   // Debug: Log first item structure and check for depth
@@ -125,6 +126,9 @@ export const exportSEODataCSV = async (data) => {
 
       // Depth (21)
       item.url_depth?.toString() || "",
+
+      // Opengraph (22)
+      item.opengraph?.["og:image"] ? "Yes" : "No",
     ];
   });
 
