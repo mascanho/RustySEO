@@ -230,7 +230,7 @@ const DetailsTable = ({ data, height }) => {
                         padding: "2px 0",
                       }}
                     >
-                      {anchorItem?.title?.[0]?.title.length || ""}
+                      {anchorItem?.title?.[0]?.title?.length || ""}
                     </td>
                   </tr>
                   <tr>
@@ -513,7 +513,7 @@ const DetailsTable = ({ data, height }) => {
                         padding: "2px 0",
                       }}
                     >
-                      {(anchorItem?.text_ratio?.[0]?.text_ratio).toFixed(1) ||
+                      {anchorItem?.text_ratio?.[0]?.text_ratio?.toFixed(1) ||
                         ""}
                     </td>
                   </tr>
