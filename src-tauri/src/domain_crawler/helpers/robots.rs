@@ -42,7 +42,7 @@ pub async fn get_urls_from_robots(base_url: &Url) -> Option<Vec<String>> {
 
     for line in lines {
         let line = line.trim();
-        
+
         if line.to_lowercase().starts_with("disallow:") {
             let path = line["Disallow:".len()..].trim();
             if !path.is_empty() {
@@ -51,6 +51,8 @@ pub async fn get_urls_from_robots(base_url: &Url) -> Option<Vec<String>> {
             }
         }
     }
+
+    tracing::warn!("Blocked URLs: {:#?}", &blocked_urls);
 
     if blocked_urls.is_empty() {
         None
