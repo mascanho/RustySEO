@@ -1,5 +1,5 @@
 //! Main domain crawler orchestration
-//!
+//! On expansion keep adding separate modules to slim down the codebase and improve maintainability.
 //! This module contains the main `crawl_domain` function that coordinates
 //! the entire crawling process. The actual URL processing is delegated to
 //! the `url_processor` module.

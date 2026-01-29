@@ -28,6 +28,7 @@ pub struct ProgressData {
     pub failed_urls_count: usize,
     pub failed_urls: Vec<String>,
     pub discovered_urls: usize,
+    pub robots_blocked: Option<Vec<String>>,
 }
 
 /// Crawl result structure for emitting events
@@ -86,7 +87,9 @@ impl CrawlerState {
 }
 
 /// Convert DomainCrawlResults to DatabaseResults
-pub fn to_database_results(result: &DomainCrawlResults) -> Result<DatabaseResults, serde_json::Error> {
+pub fn to_database_results(
+    result: &DomainCrawlResults,
+) -> Result<DatabaseResults, serde_json::Error> {
     Ok(DatabaseResults {
         url: result.url.clone(),
         data: serde_json::to_value(result)?,
