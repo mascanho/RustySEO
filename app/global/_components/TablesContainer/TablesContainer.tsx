@@ -238,6 +238,7 @@ export default function Home() {
     return customSearch;
   }, [debouncedCrawlData]);
 
+  // TODO: Some things still seep through appearing as files. improve this behaviour later
   const filteredFilesArr = useMemo(() => {
     const fileSet = new Set<string>();
     const files = [];
@@ -275,6 +276,9 @@ export default function Home() {
         if (!lastPart.includes(".")) return null;
         // This prevents email from being collected into the table
         if (url.includes("@")) return null;
+        if (url.includes("mailto:")) return null;
+        if (url.includes("tel:")) return null;
+        if (url.includes(".com")) return null;
 
         const ext = lastPart.split(".").pop()?.split(/[?#]/)[0]?.toLowerCase();
         return ext || null;

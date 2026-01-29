@@ -237,7 +237,8 @@ const TableRow = memo(
         row?.language || "", // Language
         row?.schema ? "Yes" : "No", // Schema
         row?.url_depth || "", // Depth
-        row?.opengraph?.["og:image"] && row?.opengraph?.["og:title"]
+        row?.opengraph?.["og:image"] !== "" &&
+        row?.opengraph?.["og: title"] !== ""
           ? "Yes"
           : "No" || "", // OpenGraph
       ],

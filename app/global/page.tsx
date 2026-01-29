@@ -213,6 +213,8 @@ export default function Page() {
     check_psi_status();
   }, []);
 
+  console.log(crawlData, "CRAWL DATA");
+
   return (
     <main className="flex h-full w-full">
       <InputZone handleDomainCrawl={handleDomainCrawl} />
