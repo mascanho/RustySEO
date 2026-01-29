@@ -264,11 +264,11 @@ pub async fn crawl_domain(
     }
 
     // Emit final 100% progress update before completion
-    {
+    let final_progress = {
         let state_guard = state.lock().await;
         let completed = state_guard.crawled_urls + state_guard.failed_urls.len();
         let safe_completed = std::cmp::max(completed, 1);
-        let final_progress = ProgressData {
+        let progress = ProgressData {
             total_urls: safe_completed, // Set total to actual completed count for consistency
             crawled_urls: safe_completed,
             failed_urls: state_guard
@@ -289,12 +289,14 @@ pub async fn crawl_domain(
             state_guard.failed_urls.len()
         );
 
-        if let Err(err) = app_handle.emit("progress_update", final_progress) {
+        if let Err(err) = app_handle.emit("progress_update", progress.clone()) {
             eprintln!("Failed to emit final progress update: {}", err);
         }
-    }
+        
+        progress
+    };
 
-    app_handle.emit("crawl_complete", ()).unwrap_or_default();
+    app_handle.emit("crawl_complete", final_progress).unwrap_or_default();
     println!("Crawl completed.");
 
     if let Err(e) = database::create_diff_tables() {

@@ -145,7 +145,7 @@ export default function Page() {
 
   // Event listener for crawl results
   useEffect(() => {
-    console.log("Initializing crawl event listener...");
+    console.log("Initializing crawl event listeners...");
 
     const unlistenPromise = listen("crawl_result", (event) => {
       // The payload structure is { result: DomainCrawlResults }
@@ -172,9 +172,15 @@ export default function Page() {
       // console.log("📈 Progress:", event.payload);
     }).catch(console.error);
 
-    listen("crawl_complete", () => {
-      console.log("🏁 Crawl complete!", result);
-    }).catch(console.error);
+    listen("crawl_complete", (event) => {
+      console.log("🏁 Crawl complete event received!");
+      console.log("🏁 Crawl complete payload:", event.payload);
+      console.log("🏁 Payload type:", typeof event.payload);
+    }).catch((error) => {
+      console.error("Failed to setup crawl_complete listener:", error);
+    });
+
+    console.log("✅ Crawl event listeners registered");
 
     return () => {
       unlistenPromise
