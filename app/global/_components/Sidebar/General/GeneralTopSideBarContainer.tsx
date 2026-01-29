@@ -20,6 +20,7 @@ import WordCount from "./DropDowns/WordCount";
 import Language from "./DropDowns/Language";
 import Mobile from "./DropDowns/Mobile";
 import Redirects from "./DropDowns/Redirects";
+import OpenGraph from "./DropDowns/OpenGraph";
 
 const GeneralTopSideBarContainer = () => {
   return (
@@ -44,6 +45,7 @@ const GeneralTopSideBarContainer = () => {
         <Javascript />
         <Schema />
         <Canonicals />
+        <OpenGraph />
         <Language />
         <Mobile />
         {/* TODO: Needs to be finished */}
