@@ -51,6 +51,7 @@ export default function Page() {
     setIssuesData,
     setFinishedDeepCrawl,
     setCrawlSessionTotalArray,
+    setRobotsBlocked,
   } = useGlobalCrawlStore();
   const { setIsGlobalCrawling, setIsFinishedDeepCrawl } =
     useGlobalConsoleStore();
@@ -100,6 +101,7 @@ export default function Page() {
       setDomainCrawlLoading(true);
       setIssuesData([]);
       clearDomainCrawlData();
+      setRobotsBlocked([]);
       setIsGlobalCrawling(true);
 
       const result = await invoke("domain_crawl_command", { domain: url });
@@ -175,9 +177,24 @@ export default function Page() {
     listen("crawl_complete", (event) => {
       console.log("🏁 Crawl complete event received!");
       console.log("🏁 Crawl complete payload:", event.payload);
-      console.log("🏁 Payload type:", typeof event.payload);
+
+      // @ts-ignore
+      if (event.payload && event.payload.robots_blocked) {
+        // @ts-ignore
+        setRobotsBlocked(event.payload.robots_blocked);
+      }
     }).catch((error) => {
       console.error("Failed to setup crawl_complete listener:", error);
+    });
+
+    listen("robots_blocked", (event) => {
+      console.log("🚫 Robot Blocked URLs received:", event.payload);
+      if (Array.isArray(event.payload)) {
+        // @ts-ignore
+        setRobotsBlocked(event.payload);
+      }
+    }).catch((error) => {
+      console.error("Failed to setup robots_blocked listener:", error);
     });
 
     console.log("✅ Crawl event listeners registered");

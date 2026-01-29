@@ -47,7 +47,13 @@ pub async fn crawl_domain(
 
     let robots_blocked = {
         let urls_blocked_in_robots = robots::get_urls_from_robots(&base_url).await;
-        urls_blocked_in_robots.unwrap_or_default()
+        let blocked = urls_blocked_in_robots.unwrap_or_default();
+
+        if let Err(err) = app_handle.emit("robots_blocked", &blocked) {
+            eprintln!("Failed to emit robots_blocked: {}", err);
+        }
+        
+        blocked
     };
 
     // Spawn a task that checks for the robots files

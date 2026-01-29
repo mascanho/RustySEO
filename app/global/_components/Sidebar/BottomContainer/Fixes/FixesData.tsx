@@ -247,4 +247,13 @@ export const FixesData = [
       "Add essential OpenGraph meta tags inside the <head> of your pages. At minimum, include og:title, og:description, og:image, and og:url.",
     links: ["https://ogp.me/"],
   },
+  {
+    id: 28,
+    title: "Blocked by Robots.txt",
+    description:
+      "These pages are disallowed in the robots.txt file. This prevents search engines from crawling them, meaning they won't be indexed or ranked.",
+    fixes:
+      "Review your robots.txt file. Remove the Disallow rule for these URLs if you want them to be indexed. If they are intentionally blocked, ensure they are not being linked to internally.",
+    links: ["https://developers.google.com/search/docs/crawling-indexing/robots/intro"],
+  },
 ];

@@ -25,7 +25,8 @@ import {
   IconLink,
   IconShieldExclamation,
   IconHierarchy2,
-  IconShare
+  IconShare,
+  IconRobot
 } from "@tabler/icons-react";
 
 // Import new modularized hooks
@@ -58,6 +59,7 @@ const getIssueIcon = (name) => {
   if (lowerName.includes("large") || lowerName.includes("size")) return <IconMaximize {...iconProps} className="text-slate-500" />;
   if (lowerName.includes("nested") || lowerName.includes("depth")) return <IconHierarchy2 {...iconProps} className="text-pink-500" />;
   if (lowerName.includes("opengraph") || lowerName.includes("social")) return <IconShare {...iconProps} className="text-blue-400" />;
+  if (lowerName.includes("robots") || lowerName.includes("blocked")) return <IconRobot {...iconProps} className="text-gray-600" />;
 
   return <IconInfoCircle {...iconProps} />;
 };
@@ -116,6 +118,7 @@ IssueRow.displayName = "IssueRow";
 
 const IssuesContainer = () => {
   const crawlData = useGlobalCrawlStore((state) => state.crawlData);
+  const robotsBlocked = useGlobalCrawlStore((state) => state.robotsBlocked);
   const setIssues = useGlobalCrawlStore((state) => state.setIssues);
   const issueRow = useGlobalCrawlStore((state) => state.issueRow);
   const setIssueRow = useGlobalCrawlStore((state) => state.setIssueRow);
@@ -136,6 +139,17 @@ const IssuesContainer = () => {
   // Status Code Issues
   const response404 = useResponseCodes(crawlData, 404);
   const response5xx = useResponseCodes(crawlData, 500);
+
+  // Robots Blocked Issues
+  const blockedRobotsIssue = useMemo(
+    () =>
+      robotsBlocked?.map((url) => ({
+        url,
+        title: "Blocked by robots.txt",
+        description: "This URL is disallowed in robots.txt",
+      })) || [],
+    [robotsBlocked],
+  );
 
   // Modularized Issues
   const multipleH1 = useMultipleH1(crawlData);
@@ -187,11 +201,12 @@ const IssuesContainer = () => {
     { id: 25, name: "Missing Schema", issueCount: missingSchema.length, priority: "Medium" },
     { id: 26, name: "Deeply Nested URLs (>5 Depth)", issueCount: deepLinks.length, priority: "Low" },
     { id: 27, name: "Missing OpenGraph Tags", issueCount: missingOG.length, priority: "Low" },
+    { id: 28, name: "Blocked by Robots.txt", issueCount: blockedRobotsIssue.length, priority: "High" },
   ].map(issue => ({
     ...issue,
     percentage: ((issue.issueCount / (crawlData?.length || 1)) * 100).toFixed(0) + "%"
   })).sort((a, b) => b.issueCount - a.issueCount),
-    [missingTitles, missingDescriptions, duplicateTitles, pageTitlesAbove60Chars, pagetitleBelow30Chars, duplicateDescriptions, descriptionsAbove160Chars, response404, response5xx, missingH1, missingH2, multipleH1, canonicalsMissing, canonicalMismatch, noIndex, noFollow, missingAltText, brokenImages, largeImages, slowPages, largeHTML, shortContent, notHttps, longRedirectChains, missingSchema, deepLinks, missingOG, crawlData]);
+    [missingTitles, missingDescriptions, duplicateTitles, pageTitlesAbove60Chars, pagetitleBelow30Chars, duplicateDescriptions, descriptionsAbove160Chars, response404, response5xx, missingH1, missingH2, multipleH1, canonicalsMissing, canonicalMismatch, noIndex, noFollow, missingAltText, brokenImages, largeImages, slowPages, largeHTML, shortContent, notHttps, longRedirectChains, missingSchema, deepLinks, missingOG, blockedRobotsIssue, crawlData]);
 
   const sumIssues = useMemo(() => issuesArr.reduce((total, issue) => total + (issue.issueCount || 0), 0), [issuesArr]);
 
@@ -223,7 +238,8 @@ const IssuesContainer = () => {
     "Missing Schema": missingSchema,
     "Deeply Nested URLs (>5 Depth)": deepLinks,
     "Missing OpenGraph Tags": missingOG,
-  }), [missingTitles, missingDescriptions, duplicateTitles, pageTitlesAbove60Chars, pagetitleBelow30Chars, duplicateDescriptions, descriptionsAbove160Chars, response404, response5xx, missingH1, missingH2, multipleH1, canonicalsMissing, canonicalMismatch, noIndex, noFollow, missingAltText, brokenImages, largeImages, slowPages, largeHTML, shortContent, notHttps, longRedirectChains, missingSchema, deepLinks, missingOG]);
+    "Blocked by Robots.txt": blockedRobotsIssue,
+  }), [missingTitles, missingDescriptions, duplicateTitles, pageTitlesAbove60Chars, pagetitleBelow30Chars, duplicateDescriptions, descriptionsAbove160Chars, response404, response5xx, missingH1, missingH2, multipleH1, canonicalsMissing, canonicalMismatch, noIndex, noFollow, missingAltText, brokenImages, largeImages, slowPages, largeHTML, shortContent, notHttps, longRedirectChains, missingSchema, deepLinks, missingOG, blockedRobotsIssue]);
 
   useEffect(() => {
     setIssues(sumIssues);
