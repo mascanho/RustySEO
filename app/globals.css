@@ -139,7 +139,7 @@ tbody:is(.issues) {
   @apply bg-transparent !important;
 }
 
-pre:not([class*="robots"]) {
+pre:not([class*="robots"]):not([class*="schema"]) {
   @apply dark:bg-brand-dark bg-gray-200/50 dark:text-white/50 border-0 !important;
   overflow: scroll;
   padding: 6px;
@@ -194,7 +194,7 @@ pre:not([class*="robots"]) {
     @apply p-4 font-semibold text-sm dark:text-white text-black/50;
   }
 
-  pre:not([class*="robots"]) {
+  pre:not([class*="robots"]):not([class*="schema"]) {
     @apply dark:bg-brand-darker dark:text-white/50 border-0  !important;
     overflow: scroll;
     height: 86% !important;
