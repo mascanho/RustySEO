@@ -12,7 +12,7 @@ use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration};
 use url::Url;
 
-use crate::domain_crawler::helpers::cookies;
+
 use crate::domain_crawler::helpers::domain_checker::url_check;
 use crate::domain_crawler::helpers::robots::{self, get_domain_robots};
 use crate::settings::settings::Settings;
@@ -47,8 +47,7 @@ pub async fn crawl_domain(
 
     let app_handle_clone = app_handle.clone();
 
-    // GET THE COOKIES FROM THE SERVER SIDE
-    let cookies = cookies::extract_cookies(&client, &url_checked).await;
+
 
     // GET THE ROBOTS
     let robots_blocked = {
@@ -188,7 +187,7 @@ pub async fn crawl_domain(
             let js_semaphore_clone = js_semaphore.clone();
             let db_tx_clone = db_tx.clone();
 
-            let cookies_clone = cookies.clone();
+
             let handle = tokio::spawn(async move {
                 let _permit = semaphore_clone.acquire().await.unwrap();
                 let jitter = rand::random_range(500..2000);
@@ -203,7 +202,7 @@ pub async fn crawl_domain(
                     &app_handle_clone,
                     &settings_clone,
                     js_semaphore_clone,
-                    cookies_clone,
+
                 )
                 .await;
 

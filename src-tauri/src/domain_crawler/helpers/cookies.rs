@@ -1,11 +1,12 @@
-pub async fn extract_cookies(client: &reqwest::Client, url: &str) -> Result<Vec<String>, String> {
-    let response = client.get(url).send().await.map_err(|e| e.to_string())?;
-    let cookies = response
+pub fn extract_cookies(response: &reqwest::Response) -> Vec<String> {
+    let cookies: Vec<String> = response
         .cookies()
         .map(|cookie| format!("{}={}", cookie.name(), cookie.value()))
         .collect();
 
-    println!("Cookies: {:?}", cookies);
+    if !cookies.is_empty() {
+        println!("Cookies found for {}: {:?}", response.url(), cookies);
+    }
 
-    Ok(cookies)
+    cookies
 }

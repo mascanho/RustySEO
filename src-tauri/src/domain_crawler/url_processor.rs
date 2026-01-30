@@ -13,6 +13,7 @@ use tokio::time::{sleep, Duration};
 use url::Url;
 
 use crate::domain_crawler::extractors::html::{perform_extraction, update_cache};
+use crate::domain_crawler::helpers::cookies;
 use crate::domain_crawler::helpers::extract_url_pattern::extract_url_pattern;
 use crate::domain_crawler::helpers::fetch_with_exponential::fetch_with_exponential_backoff;
 use crate::domain_crawler::helpers::https_checker::valid_https;
@@ -52,7 +53,7 @@ pub async fn process_url(
     app_handle: &tauri::AppHandle,
     settings: &Settings,
     js_semaphore: Arc<Semaphore>,
-    cookies: Result<Vec<String>, String>,
+
 ) -> Result<DomainCrawlResults, String> {
     let mut current_url = url.clone();
     let mut redirect_chain = Vec::new();
@@ -183,6 +184,8 @@ pub async fn process_url(
         .iter()
         .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or("").to_string()))
         .collect::<Vec<_>>();
+
+    let cookies_data = cookies::extract_cookies(&response);
 
     if response.headers().contains_key("cf-ray")
         || response.headers().contains_key("x-cdn")
@@ -423,7 +426,7 @@ pub async fn process_url(
         cross_origin: cross_origin_data,
         status: Some(status_code),
         url_depth: Some(url_depth),
-        cookies,
+        cookies: Ok(cookies_data),
     };
 
     // Update state and emit progress
