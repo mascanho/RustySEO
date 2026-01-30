@@ -44,6 +44,7 @@ interface TableCrawlProps {
     word_count?: number;
     mobile?: boolean;
     meta_robots?: { meta_robots: string[] };
+    cookies?: { Ok?: string[] } | string[];
   }>;
   rowHeight?: number;
   overscan?: number;
@@ -233,7 +234,7 @@ const TableRow = memo(
         row?.mobile ? "Yes" : "No", // Mobile
         row?.meta_robots?.meta_robots?.[0] || "", // Meta Robots
         row?.content_type || "", // Content Type - ADD THIS
-        row?.indexability?.indexability > 0.5 ? "Indexable" : "Not Indexable", // Indexability
+        row?.indexability?.indexability >= 0.5 ? "Indexable" : "Not Indexable", // Indexability
         row?.language || "", // Language
         row?.schema ? "Yes" : "No", // Schema
         row?.url_depth || "", // Depth
@@ -241,6 +242,11 @@ const TableRow = memo(
         row?.opengraph?.["og: title"] !== ""
           ? "Yes"
           : "No" || "", // OpenGraph
+        Array.isArray(row?.cookies?.Ok)
+          ? row.cookies.Ok.length
+          : Array.isArray(row?.cookies)
+            ? row.cookies.length
+            : 0, // Cookies
       ],
       [row, index],
     );

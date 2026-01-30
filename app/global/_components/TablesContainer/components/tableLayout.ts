@@ -23,6 +23,7 @@ export const initialColumnWidths = [
   "70px", //  Schema
   "70px", //  Depth
   "70px", //  OpenGraph
+  "70px", //  Cookies
 ];
 
 export const initialColumnAlignments = [
@@ -49,6 +50,7 @@ export const initialColumnAlignments = [
   "center", //  Schema
   "center", //  Depth
   "center", //  OpenGraph
+  "center", //  Cookies
 ];
 
 export const headerTitles = [
@@ -75,4 +77,5 @@ export const headerTitles = [
   "Schema",
   "Depth",
   "OpenGraph",
+  "Cookies",
 ];

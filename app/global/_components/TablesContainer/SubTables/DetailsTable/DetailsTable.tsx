@@ -795,7 +795,43 @@ const DetailsTable = ({ data, height }) => {
                     >
                       {anchorItem?.language || ""}
                     </td>
-                  </tr>{" "}
+                  </tr>
+                  <tr>
+                    <td
+                      style={{
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        border: "1px solid #ddd",
+                        padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Cookies
+                    </td>
+                    <td
+                      style={{
+                        textAlign: "left",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        border: "1px solid #ddd",
+                        padding: "2px 0",
+                      }}
+                    >
+                      {(anchorItem?.cookies?.Ok || anchorItem?.cookies || [])
+                        .map((c) => c.toString().split("=")[0])
+                        .map((name, i) => (
+                          <span
+                            key={i}
+                            className="bg-gray-100 dark:bg-brand-dark border dark:border-white/10 dark:text-gray-300 px-2 py-0.5 rounded text-xs mr-2 inline-block my-0.5"
+                          >
+                            {name}
+                          </span>
+                        ))}
+                    </td>
+                  </tr>
                 </React.Fragment>
               );
             })}

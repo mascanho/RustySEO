@@ -36,6 +36,7 @@ export const exportSEODataCSV = async (data) => {
     "Schema", // 20
     "Depth", // 21
     "Opengraph", // 22
+    "Cookies", // 23
   ];
 
   // Debug: Log first item structure and check for depth
@@ -129,6 +130,9 @@ export const exportSEODataCSV = async (data) => {
 
       // Opengraph (22)
       item.opengraph?.["og:image"] ? "Yes" : "No",
+
+      // Cookies (23)
+      (Array.isArray(item.cookies?.Ok) ? item.cookies.Ok.length : (Array.isArray(item.cookies) ? item.cookies.length : 0)).toString(),
     ];
   });
 
