@@ -526,7 +526,7 @@ export default function Home() {
               <ImagesTable height={bottomTableHeight} />
             </TabsContent>
             <TabsContent value="schema">
-              <SchemaSubTable height={bottomTableHeight - 50} />
+              <SchemaSubTable height={bottomTableHeight} />
             </TabsContent>
 
             <TabsContent

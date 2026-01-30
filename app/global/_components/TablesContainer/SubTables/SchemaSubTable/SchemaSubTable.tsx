@@ -2,7 +2,7 @@
 import React from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
-import { darcula } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 const SchemaSubTable = ({ height }) => {
   const { selectedTableURL } = useGlobalCrawlStore();
@@ -25,18 +25,32 @@ const SchemaSubTable = ({ height }) => {
 
   return (
     <div
-      className={`-mt-4 ${height ? `h-[${height}px]` : "h-screen"} overflow-y-auto crawlSchema`}
+      className={`w-full overflow-y-scroll ${height ? "" : "h-screen"}`}
+      style={{
+        height: height ? `${height - 35}px` : "100%",
+        backgroundColor: "#0b0f19" // Ensure container is dark
+      }}
     >
       {schemaData ? (
         <SyntaxHighlighter
-          language="json" // Specify the language as JSON
-          style={darcula} // Use the dark theme (or choose another theme)
-          showLineNumbers // Optional: Show line numbers
-          wrapLines // Optional: Wrap long lines
+          language="json"
+          style={atomDark}
+          showLineNumbers={true}
+          wrapLines={true}
           customStyle={{
-            fontSize: "14px", // Adjust font size for clarity
-            lineHeight: "1.5", // Adjust line height for better readability
-            backgroundColor: "transparent", // Ensure background is transparent
+            margin: 0,
+            padding: "1rem",
+            fontSize: "13px",
+            lineHeight: "1.6",
+            background: "#0b0f19",
+            borderRadius: "0",
+            minHeight: "100%",
+            overflow: "visible", // Allow growth, disable internal scrollbar
+            wordBreak: "break-all",
+            whiteSpace: "pre-wrap", // Ensure text wraps and grows height
+          }}
+          codeTagProps={{
+            style: { fontFamily: "'Fira Code', 'Consolas', monospace" }
           }}
         >
           {formattedSchema}
@@ -44,7 +58,7 @@ const SchemaSubTable = ({ height }) => {
       ) : (
         <div
           className="w-full"
-          style={{ height: `${height + 2}px`, display: "flex" }}
+          style={{ height: "100%", display: "flex" }}
         >
           <p className="m-auto dark:text-white/50 text-black/50 text-xs">
             No schema data available.
