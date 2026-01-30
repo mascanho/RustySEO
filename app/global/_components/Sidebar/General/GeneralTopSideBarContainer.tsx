@@ -21,6 +21,7 @@ import Language from "./DropDowns/Language";
 import Mobile from "./DropDowns/Mobile";
 import Redirects from "./DropDowns/Redirects";
 import OpenGraph from "./DropDowns/OpenGraph";
+import Cookies from "./DropDowns/Cookies";
 
 const GeneralTopSideBarContainer = () => {
   return (
@@ -46,6 +47,7 @@ const GeneralTopSideBarContainer = () => {
         <Schema />
         <Canonicals />
         <OpenGraph />
+        <Cookies />
         <Language />
         <Mobile />
         {/* TODO: Needs to be finished */}
