@@ -12,6 +12,7 @@ use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration};
 use url::Url;
 
+use crate::domain_crawler::helpers::cookies;
 use crate::domain_crawler::helpers::domain_checker::url_check;
 use crate::domain_crawler::helpers::robots::{self, get_domain_robots};
 use crate::settings::settings::Settings;
@@ -32,6 +33,7 @@ pub async fn crawl_domain(
     let settings = Arc::new(settings_state.settings.read().await.clone());
 
     let client = Client::builder()
+        .cookie_store(true)
         .user_agent(&settings.user_agents[rand::random_range(0..settings.user_agents.len())])
         .timeout(Duration::from_secs(settings.client_timeout))
         .connect_timeout(Duration::from_secs(settings.client_connect_timeout))
@@ -45,6 +47,10 @@ pub async fn crawl_domain(
 
     let app_handle_clone = app_handle.clone();
 
+    // GET THE COOKIES FROM THE SERVER SIDE
+    let cookies = cookies::extract_cookies(&client, &url_checked).await;
+
+    // GET THE ROBOTS
     let robots_blocked = {
         let urls_blocked_in_robots = robots::get_urls_from_robots(&base_url).await;
         let blocked = urls_blocked_in_robots.unwrap_or_default();
@@ -52,7 +58,7 @@ pub async fn crawl_domain(
         if let Err(err) = app_handle.emit("robots_blocked", &blocked) {
             eprintln!("Failed to emit robots_blocked: {}", err);
         }
-        
+
         blocked
     };
 
@@ -182,6 +188,7 @@ pub async fn crawl_domain(
             let js_semaphore_clone = js_semaphore.clone();
             let db_tx_clone = db_tx.clone();
 
+            let cookies_clone = cookies.clone();
             let handle = tokio::spawn(async move {
                 let _permit = semaphore_clone.acquire().await.unwrap();
                 let jitter = rand::random_range(500..2000);
@@ -196,6 +203,7 @@ pub async fn crawl_domain(
                     &app_handle_clone,
                     &settings_clone,
                     js_semaphore_clone,
+                    cookies_clone,
                 )
                 .await;
 
@@ -298,11 +306,13 @@ pub async fn crawl_domain(
         if let Err(err) = app_handle.emit("progress_update", progress.clone()) {
             eprintln!("Failed to emit final progress update: {}", err);
         }
-        
+
         progress
     };
 
-    app_handle.emit("crawl_complete", final_progress).unwrap_or_default();
+    app_handle
+        .emit("crawl_complete", final_progress)
+        .unwrap_or_default();
     println!("Crawl completed.");
 
     if let Err(e) = database::create_diff_tables() {

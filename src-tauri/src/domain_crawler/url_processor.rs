@@ -36,8 +36,7 @@ use super::helpers::text_ratio::{get_text_ratio, TextRatio};
 use super::helpers::{
     alt_tags, anchor_links, check_html_page, css_selector, headings_selector, iframe_selector,
     images_selector, indexability, javascript_selector, links_selector, mobile_checker, ngrams,
-    page_description, schema_selector, title_selector,
-    word_count::get_word_count,
+    page_description, schema_selector, title_selector, word_count::get_word_count,
 };
 use super::models::DomainCrawlResults;
 use super::page_speed::bulk::fetch_psi_bulk;
@@ -53,6 +52,7 @@ pub async fn process_url(
     app_handle: &tauri::AppHandle,
     settings: &Settings,
     js_semaphore: Arc<Semaphore>,
+    cookies: Result<Vec<String>, String>,
 ) -> Result<DomainCrawlResults, String> {
     let mut current_url = url.clone();
     let mut redirect_chain = Vec::new();
@@ -367,6 +367,8 @@ pub async fn process_url(
     // PARSES THE OPENGRAPH DATA
     let opengraph_data = opengraph::parse_opengraph(&body);
 
+    // PARSES THE COOKIE DATA
+
     let result = DomainCrawlResults {
         url: final_url.to_string(),
         original_url: url.to_string(),
@@ -421,18 +423,12 @@ pub async fn process_url(
         cross_origin: cross_origin_data,
         status: Some(status_code),
         url_depth: Some(url_depth),
+        cookies,
     };
 
     // Update state and emit progress
-    update_state_and_emit_progress(
-        &state,
-        &url,
-        depth,
-        &result,
-        links_for_crawler,
-        app_handle,
-    )
-    .await;
+    update_state_and_emit_progress(&state, &url, depth, &result, links_for_crawler, app_handle)
+        .await;
 
     Ok(result)
 }

@@ -87,6 +87,7 @@ pub struct DomainCrawlResults {
     pub redirect_count: usize,                    // Number of hops
     pub status: Option<u16>,                      // Status of the request
     pub url_depth: Option<usize>,
+    pub cookies: Result<Vec<String>, String>,
 }
 
 // Implement Default for DomainCrawlResults
@@ -147,6 +148,7 @@ impl Default for DomainCrawlResults {
             redirect_count: 0,
             status: None,
             url_depth: Some(0),
+            cookies: Ok(Vec::new()),
         }
     }
 }
