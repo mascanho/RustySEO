@@ -185,7 +185,7 @@ pub async fn process_url(
         .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or("").to_string()))
         .collect::<Vec<_>>();
 
-    let cookies_data = cookies::extract_cookies(&response);
+    let mut cookies_data = cookies::extract_cookies(&response);
 
     if response.headers().contains_key("cf-ray")
         || response.headers().contains_key("x-cdn")
@@ -231,8 +231,18 @@ pub async fn process_url(
         };
 
         match js_fetch_future.await {
-            Ok(js_body) => {
+            Ok((js_body, js_cookies)) => {
                 body = js_body;
+                // Merge JS cookies with existing cookies
+                // We use a HashSet (implicitly by iterating) or just append and dedup?
+                // Simple append is fine, the frontend can handle duplicates or we can dedup here if needed.
+                // Let's dedup by name if possible, but "cookie=value" strings are opaque here.
+                // Just appending is safer to avoid losing data.
+                cookies_data.extend(js_cookies);
+                
+                // Deduplicate cookies
+                cookies_data.sort();
+                cookies_data.dedup();
             }
             Err(e) => {
                 println!(
