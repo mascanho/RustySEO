@@ -38,12 +38,14 @@ const BottomTableContent = ({ children, height }) => (
       height: `${height - 34}px`,
       minHeight: "100px",
       overflowY: "auto",
-      marginBottom: "60px",
+      marginBottom: "0px", // Reduced from 60px
     }}
   >
     {children}
   </div>
 );
+
+
 
 export default function Home() {
   const [containerHeight, setContainerHeight] = useState(770);
@@ -514,20 +516,14 @@ export default function Home() {
                 height={bottomTableHeight}
               />
             </TabsContent>
-            <TabsContent value="inlinks" className="relative z-0">
-              <BottomTableContent height={bottomTableHeight}>
-                <InnerLinksDetailsTable data={inlinks} />
-              </BottomTableContent>
+            <TabsContent value="inlinks" className="relative z-0 h-full">
+              <InnerLinksDetailsTable data={inlinks} height={bottomTableHeight} />
             </TabsContent>
-            <TabsContent value="outlinks" className="relative z-0">
-              <BottomTableContent height={bottomTableHeight}>
-                <OuterLinksSubTable data={outlinks} />
-              </BottomTableContent>
+            <TabsContent value="outlinks" className="relative z-0 h-full">
+              <OuterLinksSubTable data={outlinks} height={bottomTableHeight} />
             </TabsContent>
             <TabsContent value="images">
-              <BottomTableContent height={bottomTableHeight}>
-                <ImagesTable />
-              </BottomTableContent>
+              <ImagesTable height={bottomTableHeight} />
             </TabsContent>
             <TabsContent value="schema">
               <SchemaSubTable height={bottomTableHeight - 50} />

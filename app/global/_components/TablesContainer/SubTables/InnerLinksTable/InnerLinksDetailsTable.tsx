@@ -293,99 +293,102 @@ const InnerLinksDetailsTable: React.FC<InlinksSubTableProps> = ({
   }
 
   return (
-    <section
-      className="overflow-auto h-full w-full"
+    <div
+      className="relative w-full"
       style={{
-        height: `${height}px`,
-        minHeight: "100px",
+        height: `${height - 35}px`,
       }}
     >
       <button
         onClick={exportCSV}
-        className="absolute -top-6   right-1 z-50 text-xs border border-brand-bright dark:border-brand-bright px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors  dark:text-white/50"
+        className="absolute top-1 right-2 z-50 text-xs border border-brand-bright dark:border-brand-bright px-2 py-0.5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors dark:text-white/80 bg-white dark:bg-brand-dark"
       >
         Export
       </button>
-      <table
-        ref={tableRef}
-        style={{ width: "100%", borderCollapse: "collapse" }}
-      >
-        <thead className="text-xs top-6 sticky">
-          <tr className="shadow">
-            <th
-              style={{
-                width: "20px",
-                textAlign: "center",
-                position: "relative",
-                paddingRight: "10px",
-              }}
-            >
-              ID
-            </th>
-            <th
-              style={{
-                textAlign: "left",
-                position: "relative",
-                minWidth: "230px",
-              }}
-            >
-              From
-            </th>
-            <th
-              style={{
-                textAlign: "left",
-                position: "relative",
-                minWidth: "230px",
-              }}
-            >
-              To
-            </th>
-            <th
-              style={{
-                textAlign: "left",
-                position: "relative",
-                minWidth: "230px",
-              }}
-            >
-              Anchor Text
-            </th>
-            <th
-              style={{
-                textAlign: "center",
-                position: "relative",
-                minWidth: "80px",
-              }}
-            >
-              Status
-            </th>
-          </tr>
-        </thead>
 
-        <tbody>
-          {data?.[1].map((item: any, index: number) => {
-            // Determine the background color class based on the index
-            const rowColorClass =
-              index % 2 === 0
-                ? "bg-gray-50 dark:bg-brand-dark/20"
-                : "bg-white dark:bg-brand-darker";
+      <div className="overflow-auto h-full w-full">
+        <table
+          ref={tableRef}
+          className="w-full border-collapse table-fixed text-xs"
+        >
+          <thead className="sticky top-0 z-20">
+            <tr className="shadow bg-white dark:bg-brand-dark">
+              <th
+                className="border border-gray-200 dark:border-gray-700 py-1"
+                style={{
+                  width: "40px",
+                  textAlign: "center",
+                }}
+              >
+                ID
+              </th>
+              <th
+                className="border border-gray-200 dark:border-gray-700 py-1 px-2 text-left"
+                style={{ width: "25%" }}
+              >
+                From
+              </th>
+              <th
+                className="border border-gray-200 dark:border-gray-700 py-1 px-2 text-left"
+                style={{ width: "25%" }}
+              >
+                To
+              </th>
+              <th
+                className="border border-gray-200 dark:border-gray-700 py-1 px-2 text-left"
+                style={{ width: "auto" }} // Flexible width
+              >
+                Anchor Text
+              </th>
+              <th
+                className="border border-gray-200 dark:border-gray-700 py-1 px-2 text-center"
+                style={{ width: "100px" }}
+              >
+                Status
+              </th>
+            </tr>
+          </thead>
 
-            return (
-              <tr key={index} className={`${rowColorClass} text-xs border`}>
-                <td className="text-center border border-l ">{index + 1}</td>
-                <td className="pl-3 border border-l">{item?.url}</td>
-                <td className="pl-3 border border-l">{data?.[0].url}</td>
-                <td className="pl-3 border border-l ">
-                  {getAnchorText(item, data?.[0].url)}
-                </td>
-                <td className="pl-3 text-center">
-                  {getStatusCode(item, data?.[0].url)}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </section>
+          <tbody>
+            {data?.[1].map((item: any, index: number) => {
+              const rowColorClass =
+                index % 2 === 0
+                  ? "bg-gray-50 dark:bg-brand-dark/20"
+                  : "bg-white dark:bg-brand-darker";
+
+              return (
+                <tr key={index} className={`${rowColorClass} border-b dark:border-brand-dark/50 hover:opacity-80`}>
+                  <td className="text-center border-r border-gray-200 dark:border-gray-700 py-1">
+                    {index + 1}
+                  </td>
+                  <td
+                    className="px-2 border-r border-gray-200 dark:border-gray-700 py-1 truncate max-w-0"
+                    title={data?.[0].url}
+                  >
+                    {data?.[0].url}
+                  </td>
+                  <td
+                    className="px-2 border-r border-gray-200 dark:border-gray-700 py-1 truncate max-w-0"
+                    title={item?.url}
+                  >
+                    {item?.url}
+                  </td>
+                  <td
+                    className="px-2 border-r border-gray-200 dark:border-gray-700 py-1 truncate max-w-0"
+                    title={getAnchorText(item, data?.[0].url)}
+                  >
+                    {getAnchorText(item, data?.[0].url)}
+                  </td>
+                  <td className="px-2 text-center py-1">
+                    {getStatusCode(item, data?.[0].url)}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 };
 
