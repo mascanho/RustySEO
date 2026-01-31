@@ -21,6 +21,7 @@ use crate::domain_crawler::helpers::normalize_url::normalize_url;
 use crate::domain_crawler::helpers::skip_url::should_skip_url;
 use crate::domain_crawler::helpers::{headless_fetch, opengraph, url_depth};
 use crate::domain_crawler::models::Extractor;
+use crate::settings;
 use crate::settings::settings::Settings;
 
 use super::constants::{MAX_DEPTH, MAX_URLS_PER_DOMAIN};
@@ -53,7 +54,6 @@ pub async fn process_url(
     app_handle: &tauri::AppHandle,
     settings: &Settings,
     js_semaphore: Arc<Semaphore>,
-
 ) -> Result<DomainCrawlResults, String> {
     let mut current_url = url.clone();
     let mut redirect_chain = Vec::new();
@@ -239,7 +239,7 @@ pub async fn process_url(
                 // Let's dedup by name if possible, but "cookie=value" strings are opaque here.
                 // Just appending is safer to avoid losing data.
                 cookies_data.extend(js_cookies);
-                
+
                 // Deduplicate cookies
                 cookies_data.sort();
                 cookies_data.dedup();
@@ -461,9 +461,12 @@ async fn update_state_and_emit_progress(
     state.pending_urls.remove(url.as_str());
     state.last_activity = Instant::now();
     state.active_tasks = state.active_tasks.saturating_sub(1);
+    let settings = settings::settings::load_settings()
+        .await
+        .unwrap_or_default();
 
     // Only process links if we haven't reached limits and depth allows
-    if depth < MAX_DEPTH && state.total_urls < MAX_URLS_PER_DOMAIN {
+    if depth < settings.max_depth && state.total_urls < settings.max_urls_per_domain {
         let links = links_for_crawler;
         let links_found = links.len();
         if links_found > 0 && state.crawled_urls % 100 == 0 {
@@ -512,7 +515,7 @@ async fn update_state_and_emit_progress(
             if !state.visited.contains(link_str)
                 && !state.queue.iter().any(|(q_url, _)| q_url == &link)
                 && !state.pending_urls.contains_key(link_str)
-                && state.total_urls < MAX_URLS_PER_DOMAIN
+                && state.total_urls < settings.max_urls_per_domain
             {
                 // Only increment total_urls when we actually add a new URL
                 let queue_length_before = state.queue.len();

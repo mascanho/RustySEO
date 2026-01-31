@@ -568,8 +568,15 @@ const TopMenuBar = () => {
                   className=" text-sm mr-1.5 "
                   style={{ marginLeft: "-1px" }}
                 />
-                Crawler settings
+                Crawler settings (JSON)
               </MenubarItem>
+              {/* <MenubarItem onClick={handleOpenConfigFile}> */}
+              {/*   <CiSettings */}
+              {/*     className=" text-sm mr-1.5 " */}
+              {/*     style={{ marginLeft: "-1px" }} */}
+              {/*   /> */}
+              {/*   Crawler settings (GUI) */}
+              {/* </MenubarItem> */}
               <MenubarItem onClick={() => getCurrentWindow().close()}>
                 <FiLogOut className="mr-2" />
                 Exit

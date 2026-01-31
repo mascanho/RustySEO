@@ -140,7 +140,7 @@ tbody:is(.issues) {
 }
 
 pre:not([class*="robots"]):not([class*="schema"]) {
-  @apply dark:bg-brand-dark bg-gray-200/50 dark:text-white/50 border-0 !important;
+  @apply dark:bg-stone-900 bg-gray-200/50 dark:text-white/50 border-0 text-slate-800 !important;
   overflow: scroll;
   padding: 6px;
   height: 34.4rem !important;
@@ -195,7 +195,7 @@ pre:not([class*="robots"]):not([class*="schema"]) {
   }
 
   pre:not([class*="robots"]):not([class*="schema"]) {
-    @apply dark:bg-brand-darker dark:text-white/50 border-0  !important;
+    @apply dark:text-white/50 border-0  !important;
     overflow: scroll;
     height: 86% !important;
     overflow-x: hidden;

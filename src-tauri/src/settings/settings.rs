@@ -2,12 +2,10 @@ use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::{HashMap, HashSet};
-use std::fmt::format;
 use std::path::PathBuf;
 use sysinfo::{ProcessExt, System, SystemExt};
 use tokio::fs;
 use tokio::io::AsyncWriteExt;
-use tokio::time::Duration;
 use toml;
 use uuid::Uuid;
 
@@ -52,6 +50,11 @@ pub struct Settings {
     pub log_bots: Vec<(String, String)>,
     pub gsc_row_limit: i32,
     pub javascript_rendering: bool,
+    pub javascript_concurrency: usize,
+    pub stall_check_interval: u64, // CHECKS CRAWLER STALLS EVERY 30 SECONDS
+    pub max_pending_time: u64,     // 15 MINUTES MAX PENDING TIME, set in seconds
+    pub max_depth: usize,
+    pub max_urls_per_domain: usize,
 }
 
 impl Settings {
@@ -67,7 +70,7 @@ impl Settings {
             max_delay: 8000,
             concurrent_requests: 20,
             batch_size: 20,
-            db_batch_size: 10,
+            db_batch_size: 100,
             user_agents: user_agents::agents(),
             html: false,
             links_max_concurrent_requests: 150,
@@ -90,6 +93,11 @@ impl Settings {
             log_bots: generate_default_user_bots(),
             gsc_row_limit: 25000,
             javascript_rendering: false,
+            javascript_concurrency: 2,
+            stall_check_interval: 30, // SECONDS
+            max_pending_time: 900,    // SECONDS
+            max_depth: 50,
+            max_urls_per_domain: 10000000,
         }
     }
 
@@ -390,8 +398,43 @@ pub async fn override_settings(updates: &str) -> Result<Settings, String> {
         settings.gsc_row_limit = val as i32;
     }
 
-    if let Some(val) = updates.get("javascript_rendering").and_then(|v| v.as_bool()) {
+    if let Some(val) = updates
+        .get("javascript_rendering")
+        .and_then(|v| v.as_bool())
+    {
         settings.javascript_rendering = val;
+    }
+
+    if let Some(val) = updates
+        .get("javascript_concurrency")
+        .and_then(|v| v.as_integer())
+    {
+        settings.javascript_concurrency = val as usize;
+    }
+
+    if let Some(val) = updates
+        .get("stall_check_interval")
+        .and_then(|v| v.as_integer())
+    {
+        settings.stall_check_interval = val as u64;
+    }
+
+    if let Some(val) = updates
+        .get("max_concurrent_requests")
+        .and_then(|v| v.as_integer())
+    {
+        settings.max_pending_time = val as u64;
+    }
+
+    if let Some(val) = updates.get("max_depth").and_then(|v| v.as_integer()) {
+        settings.max_depth = val as usize;
+    }
+
+    if let Some(val) = updates
+        .get("max_urls_per_domain")
+        .and_then(|v| v.as_integer())
+    {
+        settings.max_urls_per_domain = val as usize;
     }
 
     // Explicit file writing with flush
@@ -510,7 +553,7 @@ pub async fn toggle_javascript_rendering(
     settings_state: tauri::State<'_, crate::AppState>,
 ) -> Result<(), String> {
     let state = format!("javascript_rendering = {}", value);
-    
+
     let updated_settings = override_settings(&state).await?;
 
     let mut settings_lock = settings_state.settings.write().await;

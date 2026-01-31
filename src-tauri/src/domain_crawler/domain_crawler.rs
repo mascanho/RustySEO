@@ -4,6 +4,7 @@
 //! the entire crawling process. The actual URL processing is delegated to
 //! the `url_processor` module.
 
+use rand::Rng;
 use reqwest::Client;
 use std::sync::Arc;
 use std::time::Instant;
@@ -12,13 +13,10 @@ use tokio::sync::{Mutex, Semaphore};
 use tokio::time::{sleep, Duration};
 use url::Url;
 
-
 use crate::domain_crawler::helpers::domain_checker::url_check;
 use crate::domain_crawler::helpers::robots::{self, get_domain_robots};
-use crate::settings::settings::Settings;
 use crate::AppState;
 
-use super::constants::{DB_BATCH_SIZE, JS_CONCURRENCY, MAX_PENDING_TIME, STALL_CHECK_INTERVAL};
 use super::database::{self, Database, DatabaseError};
 use super::state::{to_database_results, CrawlerState, FailedUrl, ProgressData};
 use super::url_processor::process_url;
@@ -30,13 +28,25 @@ pub async fn crawl_domain(
     db: Result<Database, DatabaseError>,
     settings_state: tauri::State<'_, AppState>,
 ) -> Result<(), String> {
-    let settings = Arc::new(settings_state.settings.read().await.clone());
+    let settings = settings_state.settings.read().await.clone();
+
+    // Extract all settings values we need to avoid borrowing issues
+    let user_agents = settings.user_agents.clone();
+    let client_timeout = settings.client_timeout;
+    let client_connect_timeout = settings.client_connect_timeout;
+    let concurrent_requests = settings.concurrent_requests;
+    let js_concurrency = settings.javascript_concurrency;
+    let stall_check_interval = settings.stall_check_interval;
+    let max_pending_time = settings.max_pending_time;
+    let batch_size = settings.batch_size;
+    let crawl_timeout = settings.crawl_timeout;
+    let db_batch_size = settings.db_batch_size;
 
     let client = Client::builder()
         .cookie_store(true)
-        .user_agent(&settings.user_agents[rand::random_range(0..settings.user_agents.len())])
-        .timeout(Duration::from_secs(settings.client_timeout))
-        .connect_timeout(Duration::from_secs(settings.client_connect_timeout))
+        .user_agent(&user_agents[rand::random_range(0..user_agents.len())])
+        .timeout(Duration::from_secs(client_timeout))
+        .connect_timeout(Duration::from_secs(client_connect_timeout))
         .redirect(reqwest::redirect::Policy::none())
         .build()
         .map_err(|e| e.to_string())?;
@@ -46,8 +56,6 @@ pub async fn crawl_domain(
     let domain = base_url.clone();
 
     let app_handle_clone = app_handle.clone();
-
-
 
     // GET THE ROBOTS
     let robots_blocked = {
@@ -74,15 +82,16 @@ pub async fn crawl_domain(
         }
     });
 
-    let (db_tx, mut db_rx) = tokio::sync::mpsc::channel(DB_BATCH_SIZE);
+    let (db_tx, mut db_rx) = tokio::sync::mpsc::channel(db_batch_size);
 
     let db_handle = if let Ok(database) = db {
         let db_pool = database.get_pool();
+        let db_batch_size_clone = db_batch_size;
         let handle = tokio::spawn(async move {
-            let mut batch_results = Vec::with_capacity(DB_BATCH_SIZE);
+            let mut batch_results = Vec::with_capacity(db_batch_size_clone);
             while let Some(result) = db_rx.recv().await {
                 batch_results.push(result);
-                if batch_results.len() >= DB_BATCH_SIZE {
+                if batch_results.len() >= db_batch_size {
                     if let Err(e) = database::insert_bulk_crawl_data(
                         db_pool.clone(),
                         batch_results.drain(..).collect(),
@@ -115,8 +124,8 @@ pub async fn crawl_domain(
             .insert(base_url.to_string(), Instant::now());
     }
 
-    let semaphore = Arc::new(Semaphore::new(settings.concurrent_requests));
-    let js_semaphore = Arc::new(Semaphore::new(JS_CONCURRENCY));
+    let semaphore = Arc::new(Semaphore::new(concurrent_requests));
+    let js_semaphore = Arc::new(Semaphore::new(js_concurrency));
     let crawl_start_time = Instant::now();
     let mut last_stall_check = Instant::now();
     let mut last_crawled_count = 0;
@@ -134,10 +143,12 @@ pub async fn crawl_domain(
             }
 
             // Check for stalling (made less aggressive)
-            if last_stall_check.elapsed() > STALL_CHECK_INTERVAL {
+            // STALL CHECK FROM SETTINGS CHECKING EVERY 30 SECONDS
+            if last_stall_check.elapsed() > Duration::from_secs(stall_check_interval) {
                 // Only consider it stalled if no progress AND no pending URLs AND empty queue AND no active tasks
                 if state_guard.crawled_urls == last_crawled_count
-                    && state_guard.last_activity.elapsed() > MAX_PENDING_TIME
+                    && state_guard.last_activity.elapsed() > Duration::from_secs(max_pending_time) // DEFAULT
+                // IS 900
                     && state_guard.is_truly_complete()
                 {
                     println!("Crawler appears to be stalled, terminating...");
@@ -154,7 +165,7 @@ pub async fn crawl_domain(
                 continue;
             }
 
-            let batch_size = std::cmp::min(settings.batch_size, state_guard.queue.len());
+            let batch_size = std::cmp::min(batch_size, state_guard.queue.len());
             state_guard.queue.drain(..batch_size).collect()
         };
 
@@ -177,16 +188,16 @@ pub async fn crawl_domain(
         }
 
         let mut handles = Vec::with_capacity(current_batch.len());
+
         for (url, depth) in current_batch {
             let client_clone = client.clone();
             let base_url_clone = base_url.clone();
             let state_clone = state.clone();
             let app_handle_clone = app_handle.clone();
             let semaphore_clone = semaphore.clone();
-            let settings_clone = settings.clone();
             let js_semaphore_clone = js_semaphore.clone();
             let db_tx_clone = db_tx.clone();
-
+            let settings_clone = settings.clone();
 
             let handle = tokio::spawn(async move {
                 let _permit = semaphore_clone.acquire().await.unwrap();
@@ -202,7 +213,6 @@ pub async fn crawl_domain(
                     &app_handle_clone,
                     &settings_clone,
                     js_semaphore_clone,
-
                 )
                 .await;
 
@@ -243,7 +253,7 @@ pub async fn crawl_domain(
             }
         }
 
-        if crawl_start_time.elapsed() > Duration::from_secs(settings.crawl_timeout) {
+        if crawl_start_time.elapsed() > Duration::from_secs(crawl_timeout) {
             println!("Crawl timeout reached, terminating...");
             app_handle.emit("crawl_interrupted", ()).unwrap_or_default();
             break;

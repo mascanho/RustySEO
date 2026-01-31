@@ -29,10 +29,6 @@ const BottomContainer = () => {
           <OverviewBottomSidePanel />
         </Tabs.Panel>
 
-        <Tabs.Panel value="robots">
-          <RobotsDomain />
-        </Tabs.Panel>
-
         {/*<Tabs.Panel value="sitemaps" className="h-[28rem]">
           <SitemapDomain />
         </Tabs.Panel>*/}
@@ -46,6 +42,9 @@ const BottomContainer = () => {
           <div className="flex flex-col gap-y-2 dark:bg-gray-900">
             <HistoryDomainCrawls />
           </div>
+        </Tabs.Panel>
+        <Tabs.Panel value="robots">
+          <RobotsDomain />
         </Tabs.Panel>
       </Tabs>
     </div>
