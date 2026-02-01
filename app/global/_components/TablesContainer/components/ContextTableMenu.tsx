@@ -1,5 +1,4 @@
 // @ts-nocheck
-//TODO: Add more submenus like Schema validation, opengraph chekrs. etc.
 import {
   ContextMenu,
   ContextMenuContent,
@@ -12,6 +11,7 @@ import {
 } from "@/components/ui/context-menu";
 import { FaClipboard, FaKey, FaRegClipboard } from "react-icons/fa6";
 import { GoSearch } from "react-icons/go";
+import { MdVerified } from "react-icons/md";
 import {
   IoLogoGoogle,
   IoLogoMicrosoft,
@@ -99,6 +99,54 @@ export default function ContextTableMenu({ children, data }) {
     },
   ];
 
+  // Validation tools
+  const validationTools = [
+    {
+      name: "Schema Validator",
+      url: `https://validator.schema.org/#url=${encodeURIComponent(data)}`,
+    },
+    {
+      name: "Rich Results Test",
+      url: `https://search.google.com/test/rich-results?url=${encodeURIComponent(data)}`,
+    },
+    {
+      name: "OpenGraph Debugger",
+      url: `https://www.opengraph.xyz/url/${encodeURIComponent(data)}`,
+    },
+    {
+      name: "Facebook Sharing Debugger",
+      url: `https://developers.facebook.com/tools/debug/?q=${encodeURIComponent(data)}`,
+    },
+    {
+      name: "Twitter Card Validator",
+      url: `https://cards-dev.twitter.com/validator`,
+    },
+    {
+      name: "LinkedIn Post Inspector",
+      url: `https://www.linkedin.com/post-inspector/inspect/${encodeURIComponent(data)}`,
+    },
+    {
+      name: "Meta Tags Checker",
+      url: `https://metatags.io/?url=${encodeURIComponent(data)}`,
+    },
+    {
+      name: "Mobile-Friendly Test",
+      url: `https://search.google.com/test/mobile-friendly?url=${encodeURIComponent(data)}`,
+    },
+    {
+      name: "PageSpeed Insights",
+      url: `https://pagespeed.web.dev/analysis?url=${encodeURIComponent(data)}`,
+    },
+    {
+      name: "Security Headers",
+      url: `https://securityheaders.com/?q=${encodeURIComponent(data)}`,
+    },
+    {
+      name: "SSL Server Test",
+      url: `https://www.ssllabs.com/ssltest/analyze.html?d=${encodeURIComponent(data)}`,
+    },
+  ];
+
   const url = data;
 
   async function fetchQueries() {
@@ -163,6 +211,27 @@ export default function ContextTableMenu({ children, data }) {
                 <ContextMenuItem className="text-xs w-full cursor-pointer">
                   {engine.icon}
                   {engine.name}
+                </ContextMenuItem>
+              </a>
+            ))}
+          </ContextMenuSubContent>
+        </ContextMenuSub>
+
+        <ContextMenuSub>
+          <ContextMenuSubTrigger className="text-xs">
+            <MdVerified className="mr-2" /> Validate with...
+          </ContextMenuSubTrigger>
+          <ContextMenuSubContent className="w-56 text-xs dark:bg-brand-darker dark:border-brand-dark">
+            {validationTools.map((tool, index) => (
+              <a
+                key={index}
+                className="flex items-center w-full cursor-pointer hover:bg-gray-100 dark:hover:bg-brand-dark"
+                href={tool.url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <ContextMenuItem className="text-xs w-full cursor-pointer">
+                  {tool.name}
                 </ContextMenuItem>
               </a>
             ))}
