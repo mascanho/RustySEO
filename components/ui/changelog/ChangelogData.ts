@@ -12,7 +12,7 @@ export const changelogData = [
       "Deep Crawler: Better Issue tracking",
       "Deep Crawler: URL search history",
       "Deep Crawler: URL depth calculation",
-      "Deep Crawler: Open Graph discovery",
+      "Deep Crawler: Open Graph discovery & preview",
       "Deep Crawler: Cookie discovery & handling for server and client",
     ],
   },
