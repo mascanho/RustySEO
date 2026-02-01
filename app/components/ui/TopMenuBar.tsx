@@ -568,7 +568,7 @@ const TopMenuBar = () => {
                   className=" text-sm mr-1.5 "
                   style={{ marginLeft: "-1px" }}
                 />
-                Crawler settings (JSON)
+                Crawler settings (TOML)
               </MenubarItem>
               {/* <MenubarItem onClick={handleOpenConfigFile}> */}
               {/*   <CiSettings */}
