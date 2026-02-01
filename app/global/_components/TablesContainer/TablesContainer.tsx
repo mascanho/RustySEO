@@ -31,6 +31,7 @@ import { shallow } from "zustand/shallow";
 import OuterLinksSubTable from "./SubTables/OuterLinksSubTable/OuterLinksSubTable";
 import RedirectsTable from "./RedirectsTable/RedirectsTable";
 import FilesTable from "./FilesTable/FilesTable";
+import OpenGraphPreview from "./SubTables/OpenGraphPreview/OpenGraphPreview";
 
 const BottomTableContent = ({ children, height }) => (
   <div
@@ -513,6 +514,9 @@ export default function Home() {
                 <TabsTrigger value="headers" className="rounded-t-md">
                   Headers
                 </TabsTrigger>
+                <TabsTrigger value="opengraph" className="rounded-t-md">
+                  OpenGraph
+                </TabsTrigger>
 
                 {/* Export button for Inlinks tab */}
                 {activeBottomTab === "inlinks" && (
@@ -586,6 +590,13 @@ export default function Home() {
                 data={selectedTableURL}
                 height={bottomTableHeight}
               />
+            </TabsContent>
+
+            <TabsContent
+              value="opengraph"
+              className="flex-1 min-h-0 mt-0 overflow-hidden"
+            >
+              <OpenGraphPreview height={bottomTableHeight} />
             </TabsContent>
 
             {/* <TabsContent */}
