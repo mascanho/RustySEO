@@ -677,8 +677,8 @@ const DetailsTable = ({ data, height }) => {
                         padding: "2px 0",
                       }}
                     >
-                      {anchorItem?.page_size?.[0]?.length
-                        ? anchorItem?.page_size[0].length + " bytes"
+                      {typeof anchorItem?.page_size?.[0]?.length === 'number'
+                        ? anchorItem.page_size[0].length.toLocaleString() + " bytes"
                         : "N/A"}
                     </td>
                   </tr>
@@ -706,8 +706,8 @@ const DetailsTable = ({ data, height }) => {
                         padding: "2px 0",
                       }}
                     >
-                      {anchorItem?.page_size?.[0]?.kb
-                        ? anchorItem?.page_size[0].kb + " KB"
+                      {typeof anchorItem?.page_size?.[0]?.kb === 'number'
+                        ? anchorItem.page_size[0].kb.toLocaleString() + " KB"
                         : "N/A"}
                     </td>
                   </tr>

@@ -171,13 +171,6 @@ pub async fn process_url(
         .get("content-type")
         .and_then(|h| h.to_str().ok())
         .map(String::from);
-    let content_length = response
-        .headers()
-        .get("Content-Length")
-        .and_then(|h| h.to_str().ok())
-        .map(|s| s.parse::<usize>().unwrap_or(0));
-
-    let content_len = content_length.clone();
 
     let headers = response
         .headers()
@@ -272,6 +265,8 @@ pub async fn process_url(
             redirection_type,              // Type of redirect
             redirect_chain: Some(redirect_chain.clone()), // Full redirect chain
             redirect_count,                // Number of hops
+            content_length: body.len(),
+            page_size: calculate_html_size(Some(body.len())),
             ..Default::default()
         });
     }
@@ -410,7 +405,7 @@ pub async fn process_url(
         meta_robots: meta_robots_val,
         opengraph: opengraph_data,
         content_type: content_type.unwrap_or_else(|| "Unknown".to_string()),
-        content_length: content_length.unwrap_or(0),
+        content_length: body.len(),
         text_ratio: Some(vec![text_ratio_val.and_then(|mut v| v.pop()).unwrap_or(
             TextRatio {
                 html_length: 0,
@@ -420,7 +415,7 @@ pub async fn process_url(
         )]),
         redirection: None,
         keywords: keywords_val,
-        page_size: calculate_html_size(content_len),
+        page_size: calculate_html_size(Some(body.len())),
         hreflangs: hreflangs_val,
         language: language_val,
         flesch: flesch_val,
