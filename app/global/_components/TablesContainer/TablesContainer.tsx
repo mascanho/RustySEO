@@ -48,6 +48,8 @@ const BottomTableContent = ({ children, height }) => (
 export default function Home() {
   const [containerHeight, setContainerHeight] = useState(770);
   const [bottomTableHeight, setBottomTableHeight] = useState(218);
+  const inlinksTableRef = useRef(null);
+  const outlinksTableRef = useRef(null);
   const [activeBottomTab, setActiveBottomTab] = useState("details");
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -491,26 +493,48 @@ export default function Home() {
             onValueChange={setActiveBottomTab}
             className="h-full flex flex-col"
           >
-            <TabsList className="w-full justify-start dark:bg-brand-darker  dark:border-brand-dark border-t  bg-slate-50 rounded-none sticky top-0 -z-0  ">
-              <TabsTrigger value="details" className="rounded-t-md">
-                Details
-              </TabsTrigger>
-              <TabsTrigger value="inlinks" className="rounded-t-md">
-                Inlinks
-              </TabsTrigger>
-              <TabsTrigger value="outlinks" className="rounded-t-md">
-                Outlinks
-              </TabsTrigger>
-              <TabsTrigger value="images" className="rounded-t-md">
-                Images
-              </TabsTrigger>
-              <TabsTrigger value="schema" className="rounded-t-md">
-                Schema
-              </TabsTrigger>
-              <TabsTrigger value="headers" className="rounded-t-md">
-                Headers
-              </TabsTrigger>
-            </TabsList>
+            <div className="relative">
+              <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t bg-slate-50 rounded-none">
+                <TabsTrigger value="details" className="rounded-t-md">
+                  Details
+                </TabsTrigger>
+                <TabsTrigger value="inlinks" className="rounded-t-md">
+                  Inlinks
+                </TabsTrigger>
+                <TabsTrigger value="outlinks" className="rounded-t-md">
+                  Outlinks
+                </TabsTrigger>
+                <TabsTrigger value="images" className="rounded-t-md">
+                  Images
+                </TabsTrigger>
+                <TabsTrigger value="schema" className="rounded-t-md">
+                  Schema
+                </TabsTrigger>
+                <TabsTrigger value="headers" className="rounded-t-md">
+                  Headers
+                </TabsTrigger>
+
+                {/* Export button for Inlinks tab */}
+                {activeBottomTab === "inlinks" && (
+                  <button
+                    onClick={() => inlinksTableRef.current?.exportCSV?.()}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs border border-brand-bright dark:border-brand-bright px-2 py-0.5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors dark:text-white/80 bg-white dark:bg-brand-dark shadow-sm"
+                  >
+                    Export
+                  </button>
+                )}
+
+                {/* Export button for Outlinks tab */}
+                {activeBottomTab === "outlinks" && (
+                  <button
+                    onClick={() => outlinksTableRef.current?.exportCSV?.()}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs border border-brand-bright dark:border-brand-bright px-2 py-0.5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors dark:text-white/80 bg-white dark:bg-brand-dark shadow-sm"
+                  >
+                    Export
+                  </button>
+                )}
+              </TabsList>
+            </div>
 
             <TabsContent
               value="details"
@@ -523,18 +547,23 @@ export default function Home() {
             </TabsContent>
             <TabsContent
               value="inlinks"
-              className="flex-1 min-h-0 mt-0 overflow-hidden relative z-0"
+              className="flex-1 min-h-0 mt-0 overflow-hidden"
             >
               <InnerLinksDetailsTable
+                ref={inlinksTableRef}
                 data={inlinks}
                 height={bottomTableHeight}
               />
             </TabsContent>
             <TabsContent
               value="outlinks"
-              className="flex-1 min-h-0 mt-0 overflow-hidden relative z-0"
+              className="flex-1 min-h-0 mt-0 overflow-hidden"
             >
-              <OuterLinksSubTable data={outlinks} height={bottomTableHeight} />
+              <OuterLinksSubTable
+                ref={outlinksTableRef}
+                data={outlinks}
+                height={bottomTableHeight}
+              />
             </TabsContent>
             <TabsContent
               value="images"

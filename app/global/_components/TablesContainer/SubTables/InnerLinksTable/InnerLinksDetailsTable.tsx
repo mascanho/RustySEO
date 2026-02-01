@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback, useImperativeHandle, forwardRef } from "react";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 
@@ -23,10 +23,7 @@ interface InlinksSubTableProps {
   }[];
 }
 
-const InnerLinksDetailsTable: React.FC<InlinksSubTableProps> = ({
-  data,
-  height,
-}) => {
+const InnerLinksDetailsTable = forwardRef<{ exportCSV: () => Promise<void> }, InlinksSubTableProps>(({ data, height }, ref) => {
   const tableRef = useRef<HTMLTableElement>(null);
 
   const urlsWithPageAsInternalLink = data
@@ -166,6 +163,11 @@ const InnerLinksDetailsTable: React.FC<InlinksSubTableProps> = ({
     }
   }, [makeResizable]);
 
+  // Expose exportCSV to parent via ref
+  useImperativeHandle(ref, () => ({
+    exportCSV
+  }));
+
   // Move localStorage access into useEffect to avoid re-renders
   useEffect(() => {
     const isDark = localStorage.getItem("dark-mode");
@@ -299,12 +301,6 @@ const InnerLinksDetailsTable: React.FC<InlinksSubTableProps> = ({
         height: "100%",
       }}
     >
-      <button
-        onClick={exportCSV}
-        className="absolute top-1 right-2 z-50 text-xs border border-brand-bright dark:border-brand-bright px-2 py-0.5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors dark:text-white/80 bg-white dark:bg-brand-dark"
-      >
-        Export
-      </button>
 
       <div className="flex-1 min-h-0 overflow-auto w-full">
         <table
@@ -390,6 +386,6 @@ const InnerLinksDetailsTable: React.FC<InlinksSubTableProps> = ({
       </div>
     </div>
   );
-};
+});
 
 export default React.memo(InnerLinksDetailsTable);
