@@ -3,9 +3,7 @@ import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { listen } from "@tauri-apps/api/event";
 import { useEffect } from "react";
 import SyntaxHighlighter from "react-syntax-highlighter";
-import {
-  arta,
-} from "react-syntax-highlighter/dist/esm/styles/hljs";
+import { arta } from "react-syntax-highlighter/dist/esm/styles/hljs";
 
 const RobotsDomain = () => {
   const { crawlData, setRobots, robots } = useGlobalCrawlStore();
@@ -27,7 +25,7 @@ const RobotsDomain = () => {
   }, [setRobots]);
 
   return (
-    <div className="absolute inset-0 w-full h-full bg-white dark:bg-brand-darker text-gray-900 dark:text-gray-50">
+    <div className="absolute inset-0 w-full h-full bg-white dark:bg-brand-darker text-gray-900 dark:text-gray-50 robotsDomain">
       {robots && robots.length > 0 && robots[0] ? (
         <SyntaxHighlighter
           language="text"
@@ -38,7 +36,6 @@ const RobotsDomain = () => {
             padding: "1rem", // Add comfortable padding inside the scrollable area
             height: "100%",
             width: "100%",
-            overflow: "auto", // Handle scrolling internally
             fontSize: "12px", // Slightly larger for readability
             lineHeight: "1.5",
             background: "transparent",

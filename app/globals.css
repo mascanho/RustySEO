@@ -6,10 +6,14 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 224, 224, 224;
   --background-end-rgb: 255, 255, 255;
-  --color-status-200: #4299e1; /* Light Blue for success */
-  --color-status-301: #2b8cbe; /* Medium Blue for redirection */
-  --color-status-404: #3182bd; /* Dark Blue for client error */
-  --color-status-500: #2a78b8; /* Darker Blue for server error */
+  --color-status-200: #4299e1;
+  /* Light Blue for success */
+  --color-status-301: #2b8cbe;
+  /* Medium Blue for redirection */
+  --color-status-404: #3182bd;
+  /* Dark Blue for client error */
+  --color-status-500: #2a78b8;
+  /* Darker Blue for server error */
   /* Add more status codes as needed */
 }
 
@@ -18,10 +22,14 @@
 }
 
 .not-selectable {
-  -webkit-user-select: none; /* Safari */
-  -moz-user-select: none; /* Firefox */
-  -ms-user-select: none; /* IE/Edge */
-  user-select: none; /* Standard syntax */
+  -webkit-user-select: none;
+  /* Safari */
+  -moz-user-select: none;
+  /* Firefox */
+  -ms-user-select: none;
+  /* IE/Edge */
+  user-select: none;
+  /* Standard syntax */
 }
 
 h1 {
@@ -47,6 +55,7 @@ h3 {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -62,13 +71,14 @@ h3 {
 
 input:focus {
   outline: none;
-  box-shadow: none; /* Removes any box-shadow if present */
+  box-shadow: none;
+  /* Removes any box-shadow if present */
 }
 
 /* Tables Styles */
 
 .table_container {
-  @apply bg-white border dark:border-brand-darker dark:bg-brand-darker dark:text-white shadow rounded-md h-[30rem] overflow-hidden p-0.5  !important;
+  @apply bg-white border dark:border-brand-darker dark:bg-brand-darker dark:text-white shadow rounded-md h-[30rem] overflow-hidden p-0.5 !important;
 
   div {
     @apply dark:text-white dark:bg-brand-darker mt-0 bg-white !important;
@@ -94,7 +104,7 @@ table:not(.issues) {
 }
 
 thead {
-  @apply z-20 overflow-clip border-none border-b-2  dark:bg-brand-darker dark:text-white/20 !important;
+  @apply z-20 overflow-clip border-none border-b-2 dark:bg-brand-darker dark:text-white/20 !important;
 }
 
 tbody {
@@ -102,7 +112,7 @@ tbody {
 }
 
 th:not(.issues) {
-  @apply pb-2 dark:bg-brand-darker dark:text-white/30 bg-white border-0 pl-3.5 text-black/50  !important;
+  @apply pb-2 dark:bg-brand-darker dark:text-white/30 bg-white border-0 pl-3.5 text-black/50 !important;
   padding: 4px 0;
   position: sticky;
   top: 0;
@@ -126,10 +136,7 @@ td {
 }
 
 table:not(.issues),
-tbody:not(.issues)
-  > tr:not(.issues):nth-child(odd)
-  tbody:not(.issues)
-  > tr:not(.issues):nth-child(odd) {
+tbody:not(.issues)>tr:not(.issues):nth-child(odd) tbody:not(.issues)>tr:not(.issues):nth-child(odd) {
   background: #0001;
   @apply dark:bg-brand-dark/20;
 }
@@ -152,7 +159,7 @@ pre:not([class*="robots"]):not([class*="schema"]) {
 .mantine-Drawer-inner,
 .mantine-Drawer-content {
   margin: 2.5rem 0 36px 0.1rem;
-  overflow: hidden !important ;
+  overflow: hidden !important;
   padding: 0 !important;
   z-index: 9999999 !important;
   /* height: calc(90vh - 36px) !important; */
@@ -188,14 +195,14 @@ pre:not([class*="robots"]):not([class*="schema"]) {
 }
 
 .naked_table {
-  @apply dark:border-brand-darker  bg-white p-1 dark:bg-brand-darker shadow rounded-md h-[30rem] overflow-hidden border;
+  @apply dark:border-brand-darker bg-white p-1 dark:bg-brand-darker shadow rounded-md h-[30rem] overflow-hidden border;
 
   h2 {
     @apply p-4 font-semibold text-sm dark:text-white text-black/50;
   }
 
   pre:not([class*="robots"]):not([class*="schema"]) {
-    @apply dark:text-white/50 border-0  !important;
+    @apply dark:text-white/50 border-0 !important;
     overflow: scroll;
     height: 86% !important;
     overflow-x: hidden;
@@ -240,6 +247,7 @@ pre:not([class*="robots"]):not([class*="schema"]) {
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
   .dark {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
@@ -306,23 +314,23 @@ pre:not([class*="robots"]):not([class*="schema"]) {
 }
 
 .m_539e827b {
-  @apply dark:bg-transparent  !important;
+  @apply dark:bg-transparent !important;
 }
 
 .m_539e827b span {
-  @apply text-black  dark:text-brand-normal text-xs h-3 !important;
+  @apply text-black dark:text-brand-normal text-xs h-3 !important;
 }
 
 .m_539e827b:not([data-active]) {
-  @apply text-gray-400   !important;
+  @apply text-gray-400 !important;
 }
 
 .m_539e827b:where([data-active]) {
-  @apply text-black  dark:text-brand-highlight dark:bg-transparent !important;
+  @apply text-black dark:text-brand-highlight dark:bg-transparent !important;
 }
 
 .m_539e827b:hover {
-  @apply dark:text-black dark:border-0  !important;
+  @apply dark:text-black dark:border-0 !important;
 }
 
 /* TABS FONTS */
@@ -334,14 +342,14 @@ pre:not([class*="robots"]):not([class*="schema"]) {
 /*WIDGETS*/
 
 .widget {
-  @apply border w-full sm:w-[13rem]  xl:w-full  dark:bg-brand-darker dark:border-brand-darker h-[7.8em] !important;
+  @apply border w-full sm:w-[13rem] xl:w-full dark:bg-brand-darker dark:border-brand-darker h-[7.8em] !important;
 }
 
-.widget > div > h2:first-of-type {
+.widget>div>h2:first-of-type {
   @apply text-sky-dark !important;
 }
 
-.widget > div > h2:last-of-type {
+.widget>div>h2:last-of-type {
   @apply dark:text-brand-background/50 text-gray-500 font-semibold;
 }
 
@@ -367,7 +375,7 @@ pre:not([class*="robots"]):not([class*="schema"]) {
   @apply text-brand-highlight;
 }
 
-.widget div > svg {
+.widget div>svg {
   @apply text-brand-highlight;
 }
 
@@ -379,6 +387,7 @@ pre:not([class*="robots"]):not([class*="schema"]) {
 .widget div span:last-of-type {
   @apply dark:text-brand-background/60;
 }
+
 /* Custom Select Element */
 .custom-select {
   @apply text-black bg-white dark:bg-[#171717] dark:text-white;
@@ -450,8 +459,10 @@ pre:not([class*="robots"]):not([class*="schema"]) {
 
 /* Style the entire scrollbar */
 ::-webkit-scrollbar {
-  width: 5px; /* Width of the scrollbar */
-  height: 5px; /* Height of the horizontal scrollbar */
+  width: 5px;
+  /* Width of the scrollbar */
+  height: 5px;
+  /* Height of the horizontal scrollbar */
   z-index: -10 !important;
   background: transparent;
 }
@@ -475,8 +486,10 @@ pre:not([class*="robots"]):not([class*="schema"]) {
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(20px); /* Slightly move from below */
+    transform: translateY(20px);
+    /* Slightly move from below */
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -498,6 +511,7 @@ pre:not([class*="robots"]):not([class*="schema"]) {
   animation: l2 1.5s infinite linear;
   position: relative;
 }
+
 .loader:before,
 .loader:after {
   content: "";
@@ -508,9 +522,11 @@ pre:not([class*="robots"]):not([class*="schema"]) {
   animation: inherit;
   animation-delay: -0.5s;
 }
+
 .loader:after {
   animation-delay: -1s;
 }
+
 @keyframes l2 {
   100% {
     box-shadow: 0 0 0 40px #0000;
@@ -613,18 +629,25 @@ select:focus {
 
 select,
 #range {
-  appearance: none; /* Remove default styling */
-  -webkit-appearance: none; /* For Safari */
-  -moz-appearance: none; /* For Firefox */
-  padding-right: 30px; /* Adjust for the icon */
+  appearance: none;
+  /* Remove default styling */
+  -webkit-appearance: none;
+  /* For Safari */
+  -moz-appearance: none;
+  /* For Firefox */
+  padding-right: 30px;
+  /* Adjust for the icon */
   @apply dark:border-white/30;
 }
 
 select option {
   /* Styling the options in the dropdown */
-  appearance: none; /* Remove default styling */
-  -webkit-appearance: none; /* For Safari */
-  -moz-appearance: none; /* For Firefox */
+  appearance: none;
+  /* Remove default styling */
+  -webkit-appearance: none;
+  /* For Safari */
+  -moz-appearance: none;
+  /* For Firefox */
 }
 
 /* LOADER ANIMATION */
@@ -638,6 +661,7 @@ select option {
   animation: l2 1.5s infinite linear;
   position: relative;
 }
+
 .loader:before,
 .loader:after {
   content: "";
@@ -648,9 +672,11 @@ select option {
   animation: inherit;
   animation-delay: -0.5s;
 }
+
 .loader:after {
   animation-delay: -1s;
 }
+
 @keyframes l2 {
   100% {
     box-shadow: 0 0 0 40px #0000;
@@ -664,12 +690,13 @@ select option {
 
 /* TECHNICAL CHART COLOIURS */
 #chart-buttons button {
-  @apply dark:text-white dark:bg-brand-darker  text-black !important;
+  @apply dark:text-white dark:bg-brand-darker text-black !important;
 }
 
 .topics-scrollbar::-webkit-scrollbar-thumb {
   @apply text-red-500 dark:bg-brand-bright border-none border-0 hidden !important;
 }
+
 .topics-scrollbar::-webkit-scrollbar-track {
   @apply dark:bg-brand-dark border-none border-0 !important;
 }
@@ -741,13 +768,14 @@ button .mantine-Tabs-tabLabel {
 .css-d7l1ni-option {
   @apply dark:bg-brand-darker dark:text-white !important;
 }
+
 .css-13cymwt-control {
   @apply dark:border-brand-dark !important;
 }
 
 /* HEADINGS TABLE */
 .headings_table {
-  @apply dark:bg-brand-darker dark:text-white border-0  !important;
+  @apply dark:bg-brand-darker dark:text-white border-0 !important;
   border-collapse: collapse !important;
   width: 100%;
   background-color: white !important;
@@ -764,7 +792,7 @@ button .mantine-Tabs-tabLabel {
 
 /* CHANGE THE CODE ELEMENT FOR AI SCHEMA */
 .aiSchema section div pre {
-  @apply h-[42.4rem] dark:border-brand-dark rounded-md  !important;
+  @apply h-[42.4rem] dark:border-brand-dark rounded-md !important;
 }
 
 /* CRAWL DOMAIN TABLE */
@@ -773,7 +801,7 @@ button .mantine-Tabs-tabLabel {
 }
 
 .domainCrawlParent tr td {
-  @apply px-[5px] py-[2px] border  !important;
+  @apply px-[5px] py-[2px] border !important;
 }
 
 .domainCrawlParent tbody {
@@ -789,6 +817,10 @@ button .mantine-Tabs-tabLabel {
 div:is(.robotsDomain) {
   pre {
     @apply bg-transparent dark:bg-gray-900 dark:text-white !important;
+    height: 100% !important;
+    padding-bottom: 5rem !important;
+    /* Account for app footer */
+    overflow: auto !important;
   }
 }
 
@@ -814,6 +846,7 @@ div:is(.sitemapsDomain) {
 .m_539e827b:is(.dark *) {
   @apply h-3 py-3;
 }
+
 .m_539e827b:where([data-active]):is(.dark *) {
   @apply dark:bg-brand-bright h-2 !important;
 }
@@ -824,12 +857,12 @@ div:is(.sitemapsDomain) {
 
 /* SETS THE TABS BACKGROUND */
 .m_539e827b:is([data-active]) {
-  @apply h-3 bg-brand-bright rounded-t-lg hover:border-b-2  !important;
+  @apply h-3 bg-brand-bright rounded-t-lg hover:border-b-2 !important;
 }
 
 /* SETS THE TABS TEXT */
 .m_539e827b:is([data-active]) span {
-  @apply h-3  text-white !important;
+  @apply h-3 text-white !important;
 }
 
 body {
@@ -842,13 +875,15 @@ body {
 }
 
 .sticky {
-  position: -webkit-sticky; /* For Safari */
+  position: -webkit-sticky;
+  /* For Safari */
   position: sticky;
   top: 0;
 }
 
 th {
-  background-color: #f87171; /* Ensure the background color matches the header */
+  background-color: #f87171;
+  /* Ensure the background color matches the header */
   z-index: 1;
 }
 
@@ -880,10 +915,12 @@ dialog::backdrop {
 
 /* BLINKING TEXT */
 @keyframes blink {
+
   0%,
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0;
   }
@@ -893,6 +930,7 @@ dialog::backdrop {
 .recharts-area-curve[data-key="human"] {
   stroke: hsl(var(--primary)) !important;
 }
+
 .recharts-area-curve[data-key="crawler"] {
   stroke: red !important;
 }
@@ -902,9 +940,11 @@ dialog::backdrop {
   0% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
+
   100% {
     opacity: 1;
   }
@@ -925,20 +965,7 @@ tbody tr {
 
 /* NATIVE BUTTON  */
 .native-button {
-  @apply px-4 py-1.5
-  bg-brand-bright text-white dark:bg-[#2d2d2d]
-  border border-[#adadad] dark:border-[#4a4a4a]
-  rounded-sm
-   dark:text-[#e6e6e6]
-  text-xs
-  font-sans
-  shadow-sm
-  active:bg-brand-bright/90 dark:active:bg-[#424242]
-  active:border-[#7e7e7e] dark:active:border-[#5a5a5a]
-  active:shadow-none
-  focus:outline-none focus:ring-1 focus:ring-[#0078d7]
-  transition-all duration-75
-  disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply px-4 py-1.5 bg-brand-bright text-white dark:bg-[#2d2d2d] border border-[#adadad] dark:border-[#4a4a4a] rounded-sm dark:text-[#e6e6e6] text-xs font-sans shadow-sm active:bg-brand-bright/90 dark:active:bg-[#424242] active:border-[#7e7e7e] dark:active:border-[#5a5a5a] active:shadow-none focus:outline-none focus:ring-1 focus:ring-[#0078d7] transition-all duration-75 disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
 /*THIS CHANGES THE ROBOTS ELEMENT FONT SIZE*/
