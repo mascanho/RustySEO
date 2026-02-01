@@ -5,8 +5,7 @@ import { useEffect } from "react";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import {
   arta,
-  brownPaper,
-} from "react-syntax-highlighter/dist/esm/styles/hljs"; // Choose a style you like
+} from "react-syntax-highlighter/dist/esm/styles/hljs";
 
 const RobotsDomain = () => {
   const { crawlData, setRobots, robots } = useGlobalCrawlStore();
@@ -15,9 +14,9 @@ const RobotsDomain = () => {
     let unlisten: () => void;
 
     listen<[string, any]>("robots", ({ payload }) => {
-      const [domain, robots] = payload;
-      console.log(robots, "THE ROBOTS");
-      setRobots(robots);
+      const [domain, robotsPayload] = payload;
+      // console.log(robotsPayload, "THE ROBOTS");
+      setRobots(robotsPayload);
     }).then((fn) => {
       unlisten = fn;
     });
@@ -25,17 +24,34 @@ const RobotsDomain = () => {
     return () => {
       if (unlisten) unlisten();
     };
-  }, [robots, crawlData]);
+  }, [setRobots]);
 
   return (
-    <div className="h-[calc(100vh-90vh)] w-[25.5rem] text-[9px] bg-transparent dark:bg-brand-darker text-black robotsDomain">
+    <div className="absolute inset-0 w-full h-full bg-white dark:bg-brand-darker text-gray-900 dark:text-gray-50">
       {robots && robots.length > 0 && robots[0] ? (
-        <SyntaxHighlighter language="text" style={arta}>
+        <SyntaxHighlighter
+          language="text"
+          style={arta}
+          className="robots-content" // Avoid global pre styles
+          customStyle={{
+            margin: 0,
+            padding: "1rem", // Add comfortable padding inside the scrollable area
+            height: "100%",
+            width: "100%",
+            overflow: "auto", // Handle scrolling internally
+            fontSize: "12px", // Slightly larger for readability
+            lineHeight: "1.5",
+            background: "transparent",
+            color: "inherit", // Inherit high-contrast color from parent
+            boxSizing: "border-box", // Ensure padding doesn't affect dimensions
+          }}
+          wrapLongLines={true}
+        >
           {robots[0]}
         </SyntaxHighlighter>
       ) : (
-        <section className="w-full items-center justify-center flex flex-col">
-          <span className="p-2 mt-4">No robots.txt loaded yet</span>
+        <section className="w-full h-full flex items-center justify-center text-xs text-gray-500 dark:text-gray-400">
+          <span>No robots.txt loaded yet</span>
         </section>
       )}
     </div>

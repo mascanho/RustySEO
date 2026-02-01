@@ -8,7 +8,7 @@ import FixesContainer from "./BottomContainer/Fixes/FixesContainer";
 const BottomContainer = () => {
   return (
     <div className="relative h-full flex flex-col dark:bg-gray-900 bg-slate-100">
-      <Tabs defaultValue="overview" className="overflow-hidden h-full w-full">
+      <Tabs defaultValue="overview" className="overflow-hidden h-full w-full flex flex-col">
         <Tabs.List
           justify="center"
           grow
@@ -24,7 +24,7 @@ const BottomContainer = () => {
 
         <Tabs.Panel
           value="overview"
-          className="overflow-auto flex flex-col justify-between relative dark:bg-gray-900"
+          className="overflow-auto flex flex-col justify-between relative dark:bg-gray-900 flex-1"
         >
           <OverviewBottomSidePanel />
         </Tabs.Panel>
@@ -33,17 +33,17 @@ const BottomContainer = () => {
           <SitemapDomain />
         </Tabs.Panel>*/}
 
-        <Tabs.Panel value="fixes">
+        <Tabs.Panel value="fixes" className="flex-1 overflow-auto">
           <div className="flex flex-col gap-y-2 dark:bg-gray-900">
             <FixesContainer />
           </div>
         </Tabs.Panel>
-        <Tabs.Panel value="history">
+        <Tabs.Panel value="history" className="flex-1 overflow-auto">
           <div className="flex flex-col gap-y-2 dark:bg-gray-900">
             <HistoryDomainCrawls />
           </div>
         </Tabs.Panel>
-        <Tabs.Panel value="robots">
+        <Tabs.Panel value="robots" className="flex-1 w-full min-h-0 relative p-0 overflow-hidden">
           <RobotsDomain />
         </Tabs.Panel>
       </Tabs>
