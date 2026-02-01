@@ -86,10 +86,7 @@ const OpenGraphPreview: React.FC<OpenGraphPreviewProps> = ({ height }) => {
           >
             <div className="w-full max-w-2xl h-full flex flex-col justify-center">
               {/* <h2 className="text-lg font-semibold mb-4 dark:text-white shrink-0">Facebook / OpenGraph Preview</h2> */}
-              <div
-                className="bg-white dark:bg-brand-dark border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col"
-                style={{ maxHeight: "calc(100% - 3rem)" }}
-              >
+              <div className="bg-white dark:bg-brand-dark border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
                 {ogImage && (
                   <div
                     className="w-full bg-gray-100 dark:bg-gray-800 relative overflow-hidden flex items-center justify-center shrink-0"
@@ -132,10 +129,7 @@ const OpenGraphPreview: React.FC<OpenGraphPreviewProps> = ({ height }) => {
               {/* <h2 className="text-lg font-semibold mb-4 dark:text-white shrink-0"> */}
               {/*   Twitter Card Preview */}
               {/* </h2> */}
-              <div
-                className="bg-white dark:bg-brand-dark border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col"
-                style={{ maxHeight: "calc(100% - 3rem)" }}
-              >
+              <div className="bg-white dark:bg-brand-dark border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
                 {twitterImage && (
                   <div
                     className="w-full bg-gray-100 dark:bg-gray-800 relative overflow-hidden flex items-center justify-center shrink-0"
@@ -178,10 +172,7 @@ const OpenGraphPreview: React.FC<OpenGraphPreviewProps> = ({ height }) => {
               {/* <h2 className="text-lg font-semibold mb-4 dark:text-white shrink-0"> */}
               {/*   LinkedIn Preview */}
               {/* </h2> */}
-              <div
-                className="bg-white dark:bg-brand-dark border border-gray-200 dark:border-gray-700 rounded overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col"
-                style={{ maxHeight: "calc(100% - 3rem)" }}
-              >
+              <div className="bg-white dark:bg-brand-dark border border-gray-200 dark:border-gray-700 rounded overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
                 {ogImage && (
                   <div
                     className="w-full bg-gray-100 dark:bg-gray-800 relative overflow-hidden flex items-center justify-center shrink-0"
@@ -221,7 +212,7 @@ const OpenGraphPreview: React.FC<OpenGraphPreviewProps> = ({ height }) => {
               {/* <h2 className="text-lg font-semibold mb-4 dark:text-white"> */}
               {/*   OpenGraph Data */}
               {/* </h2> */}
-              <div className="bg-white dark:bg-brand-dark border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <div className="bg-white dark:bg-brand-dark border border-gray-200 dark:border-gray-700 rounded-lg p-4 h-full overflow-scroll">
                 {Object.keys(ogData).length > 0 ? (
                   <div className="space-y-2">
                     {Object.entries(ogData).map(([key, value]) => (

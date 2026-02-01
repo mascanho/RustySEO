@@ -1,4 +1,5 @@
 // @ts-nocheck
+//TODO: Add more submenus like Schema validation, opengraph chekrs. etc.
 import {
   ContextMenu,
   ContextMenuContent,
