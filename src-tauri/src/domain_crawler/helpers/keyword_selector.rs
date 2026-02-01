@@ -1,29 +1,25 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
-use scraper::{Html, Selector};
+use scraper::{node::Node, ElementRef, Html, Selector};
 use std::collections::{HashMap, HashSet};
 
 use crate::settings::settings::Settings;
 
-/// Cached regex for text cleaning - compiled once and reused across all function calls.
-/// This provides ~50-70% performance improvement over recompiling the regex each time.
-/// Keeps apostrophes and hyphens in words for better keyword quality.
-static TEXT_CLEANER: Lazy<Regex> = Lazy::new(|| Regex::new(r"[^\w\s'-]").unwrap());
+/// Cached regex for word tokenization.
+/// Matches sequences of word characters, apostrophes, and hyphens.
+/// \w in Rust regex is Unicode-aware.
+static WORD_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"[\w'-]+").unwrap());
 
 // Performance constants
 const MIN_WORD_LENGTH: usize = 3;
-const ESTIMATED_TEXT_RATIO: usize = 4; // HTML to text ratio estimate
-const ESTIMATED_AVG_WORD_LENGTH: usize = 6; // Average word length estimate
-const MAX_WORD_FREQUENCY: usize = 1555; // Maximum frequency to prevent noise
-const TOP_KEYWORDS_LIMIT: usize = 10; // Number of top keywords to return
+const ESTIMATED_AVG_WORD_LENGTH: usize = 6;
+const MAX_WORD_FREQUENCY: usize = 1555;
+const TOP_KEYWORDS_LIMIT: usize = 10;
 
-static TEXT_SELECTORS: Lazy<Selector> = Lazy::new(|| Selector::parse("p, h1, h2, h3, h4, h5, h6, a").unwrap());
-static EXCLUDED_SELECTORS: Lazy<Selector> = Lazy::new(|| Selector::parse("script, style, noscript, code, pre").unwrap());
+// Tags to strictly exclude from text extraction
+const EXCLUDED_TAGS: [&str; 5] = ["script", "style", "noscript", "code", "pre"];
 
 /// Returns default English stop words as a HashSet.
-/// This is a convenience function that creates the stop words collection.
-/// For better performance when processing multiple documents,
-/// create this once and reuse the HashSet.
 pub fn default_stop_words() -> HashSet<String> {
     vec![
         "the", "and", "is", "in", "it", "to", "of", "for", "on", "with", "as", "at", "by", "an",
@@ -46,129 +42,73 @@ pub fn extract_keywords_with_settings(document: &Html) -> Vec<(String, usize)> {
     extract_keywords(document, &settings.stop_words)
 }
 
-/// Extracts keywords from HTML content with performance optimizations.
-///
-/// # Performance Optimizations:
-/// - Uses cached regex compilation (50-70% faster than recompiling)
-/// - Pre-allocates collections with estimated capacity
-/// - Early filtering to avoid unnecessary string operations
-/// - Single-pass lowercase conversion
-/// - Optimized string slicing for normalization
-///
-/// # Arguments:
-/// * `document` - The parsed HTML document
-/// * `stop_words` - HashSet of words to exclude from results
-///
-/// # Returns:
-/// Vector of (keyword, frequency) tuples, sorted by frequency (descending)
-/// and alphabetically for ties. Limited to top 10 keywords.
-pub fn extract_keywords(document: &Html, stop_words: &HashSet<String>) -> Vec<(String, usize)> {
-    // Extract text from all selected elements, excluding non-content elements
-    // Pre-allocate with estimated capacity for ~25% performance improvement
-    let mut text = String::new(); // Capacity estimation removed for simplicity here, can be added back if needed
-    for element in document.select(&TEXT_SELECTORS) {
-        // Skip elements that match excluded selectors
-        if element.select(&EXCLUDED_SELECTORS).next().is_some() {
-            continue;
-        }
-
-        // Extract text content more efficiently
-        for text_node in element.text() {
-            text.push_str(text_node);
-            text.push(' ');
+/// Recursively extracts text from the DOM, skipping excluded tags.
+/// This prevents double-counting of text in nested elements and ensures accuracy.
+fn extract_relevant_text(element: ElementRef, text_buf: &mut String) {
+    for node in element.children() {
+        match node.value() {
+            Node::Text(text) => {
+                text_buf.push_str(text);
+                text_buf.push(' ');
+            }
+            Node::Element(elem) => {
+                if !EXCLUDED_TAGS.contains(&elem.name()) {
+                    if let Some(child_el) = ElementRef::wrap(node) {
+                        extract_relevant_text(child_el, text_buf);
+                    }
+                }
+            }
+            _ => {}
         }
     }
+}
 
-    // Clean and tokenize the text using cached regex
-    let cleaned_text = TEXT_CLEANER.replace_all(&text, " ");
+/// Extracts keywords from HTML content with improved accuracy and performance.
+pub fn extract_keywords(document: &Html, stop_words: &HashSet<String>) -> Vec<(String, usize)> {
+    // 1. Efficiently extract relevant text from the document body/root
+    // Using estimation to reduce allocation
+    let mut text = String::with_capacity(1024);
+    extract_relevant_text(document.root_element(), &mut text);
 
-    // Pre-allocate HashMap with estimated capacity for ~15% performance improvement
-    let estimated_words = cleaned_text.len() / ESTIMATED_AVG_WORD_LENGTH;
-    let mut word_counts: HashMap<String, usize> = HashMap::with_capacity(estimated_words);
+    // 2. Tokenize and count using regex iteration
+    // Using regex iteration avoids allocating a huge "cleaned" string
+    let mut word_counts: HashMap<String, usize> = HashMap::new();
 
-    for word in cleaned_text.split_whitespace() {
-        // Early filtering to avoid unnecessary allocations - ~30% performance gain
+    for mat in WORD_REGEX.find_iter(&text) {
+        let word = mat.as_str();
+
         if word.len() < MIN_WORD_LENGTH {
             continue;
         }
 
         // Check if word contains at least one letter and is not purely numeric
+        // Iterating chars of the slice is fast
         let has_alpha = word.chars().any(|c| c.is_alphabetic());
         if !has_alpha || word.chars().all(|c| c.is_numeric()) {
             continue;
         }
 
-        // Convert to lowercase only once
+        // Convert to lowercase (allocation only happens here for valid words)
         let lowercase_word = word.to_lowercase();
 
-        // Check stop words after lowercase conversion
         if stop_words.contains(&lowercase_word) {
             continue;
         }
 
-        // Normalize the word (e.g., remove pluralization or common suffixes)
-        let normalized_word = normalize_word_optimized(&lowercase_word);
-        *word_counts.entry(normalized_word).or_insert(0) += 1;
+        // Removed aggressive normalization/stemming to preserve full words
+        *word_counts.entry(lowercase_word).or_insert(0) += 1;
     }
 
-    // Filter out words that appear too frequently (likely not meaningful keywords)
+    // 3. Filter and Sort
     word_counts.retain(|_, count| *count <= MAX_WORD_FREQUENCY);
 
-    // Sort words by frequency in descending order
     let mut sorted_words: Vec<_> = word_counts.into_iter().collect();
     sorted_words.sort_by(|a, b| {
-        // First sort by frequency (descending)
-        let freq_cmp = b.1.cmp(&a.1);
-        if freq_cmp == std::cmp::Ordering::Equal {
-            // If frequencies are equal, sort alphabetically
-            a.0.cmp(&b.0)
-        } else {
-            freq_cmp
-        }
+        // Sort by frequency (descending), then alphabetically
+        b.1.cmp(&a.1).then_with(|| a.0.cmp(&b.0))
     });
 
-    // Return the top keywords (or fewer if there aren't enough)
     sorted_words.into_iter().take(TOP_KEYWORDS_LIMIT).collect()
-}
-
-
-/// Normalizes a word by removing common suffixes or pluralization.
-fn normalize_word(word: &str) -> String {
-    // Remove common suffixes (e.g., "ing", "ed", "s", "es")
-    let normalized = if word.len() > 4 && word.ends_with("ing") {
-        &word[..word.len() - 3]
-    } else if word.len() > 3 && word.ends_with("ed") {
-        &word[..word.len() - 2]
-    } else if word.len() > 2 && word.ends_with("es") {
-        &word[..word.len() - 2]
-    } else if word.len() > 1 && word.ends_with("s") && !word.ends_with("ss") {
-        &word[..word.len() - 1]
-    } else {
-        word
-    };
-
-    // Convert to lowercase to ensure consistency
-    normalized.to_lowercase()
-}
-
-/// Performance-optimized version of normalize_word that assumes input is already lowercase.
-/// This saves ~10-15% processing time by skipping the to_lowercase() conversion.
-/// Used internally by extract_keywords after the word has already been lowercased.
-
-/// Optimized version that assumes word is already lowercase
-fn normalize_word_optimized(word: &str) -> String {
-    // Remove common suffixes (e.g., "ing", "ed", "s", "es")
-    if word.len() > 4 && word.ends_with("ing") {
-        word[..word.len() - 3].to_string()
-    } else if word.len() > 3 && word.ends_with("ed") {
-        word[..word.len() - 2].to_string()
-    } else if word.len() > 2 && word.ends_with("es") {
-        word[..word.len() - 2].to_string()
-    } else if word.len() > 1 && word.ends_with('s') && !word.ends_with("ss") {
-        word[..word.len() - 1].to_string()
-    } else {
-        word.to_string()
-    }
 }
 
 #[cfg(test)]
@@ -176,87 +116,71 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_normalize_word() {
-        assert_eq!(normalize_word("running"), "runn");
-        assert_eq!(normalize_word("walked"), "walk");
-        assert_eq!(normalize_word("boxes"), "box");
-        assert_eq!(normalize_word("cats"), "cat");
-        assert_eq!(normalize_word("glass"), "glass"); // Should not remove 's' from "ss"
-        assert_eq!(normalize_word("is"), "is"); // Too short to normalize
-    }
-
-    #[test]
-    fn test_normalize_word_optimized() {
-        assert_eq!(normalize_word_optimized("running"), "runn");
-        assert_eq!(normalize_word_optimized("walked"), "walk");
-        assert_eq!(normalize_word_optimized("boxes"), "box");
-        assert_eq!(normalize_word_optimized("cats"), "cat");
-        assert_eq!(normalize_word_optimized("glass"), "glass"); // Should not remove 's' from "ss"
-        assert_eq!(normalize_word_optimized("is"), "is"); // Too short to normalize
-    }
-
-    #[test]
-    fn test_default_stop_words() {
-        let stop_words = default_stop_words();
-        assert!(stop_words.contains("the"));
-        assert!(stop_words.contains("and"));
-        assert!(!stop_words.contains("programming"));
-    }
-
-    #[test]
-    fn test_extract_keywords_with_custom_stop_words() {
+    fn test_extract_keywords_accuracy() {
         let html = r#"
             <html>
                 <body>
-                    <h1>Programming Languages</h1>
-                    <p>Rust programming language programming programming</p>
-                    <script>console.log('ignored');</script>
+                    <h1>Keyword Extraction</h1>
+                    <p>Testing keyword extraction. Keyword extraction is important.</p>
+                    <p>Double count test: <span>keyword</span></p>
+                    <script>console.log('ignore extracting keywords from script');</script>
+                    <div>
+                        <p>Nested <code>code block</code> content.</p>
+                    </div>
                 </body>
             </html>
         "#;
+        let document = Html::parse_document(html);
+        let stop_words = default_stop_words();
+        
+        let keywords = extract_keywords(&document, &stop_words);
+        let keyword_map: HashMap<_, _> = keywords.into_iter().collect();
 
-        // Create custom stop words that exclude "programming"
-        let mut custom_stop_words = HashSet::new();
-        custom_stop_words.insert("the".to_string());
-        custom_stop_words.insert("and".to_string());
-        // Note: "programming" is not in stop words, so it should appear
-
-        let keywords = extract_keywords(html, &custom_stop_words);
-        assert!(!keywords.is_empty());
-
-        // Check that script content is ignored
-        let keyword_words: Vec<&str> = keywords.iter().map(|(word, _)| word.as_str()).collect();
-        assert!(!keyword_words.contains(&"console"));
-        assert!(!keyword_words.contains(&"log"));
-
-        // Programming should appear since it's not in our custom stop words
-        assert!(keyword_words.contains(&"program")); // normalized from "programming"
+        // "keyword" appears in H1, P1(2 times), P2, span. Total 5?
+        // H1: Keyword (1)
+        // P1: Keyword (1), keyword (1) -> 2
+        // P2: -> 0 direct text
+        // Span: keyword (1)
+        // Code: 'code', 'block' should be IGNORED.
+        // Script: 'ignore', 'extracting', 'keywords', 'script' should be IGNORED.
+        
+        // Let's trace manually:
+        // H1: "Keyword Extraction" -> keyword(1), extraction(1)
+        // P1: "Testing keyword extraction. Keyword extraction is important." 
+        //     -> testing(1), keyword(1), extraction(1), keyword(1), extraction(1), important(1)
+        // P2: "Double count test: " (text node) -> double(1), count(1), test(1)
+        // Span: "keyword" -> keyword(1)
+        // Div -> P: "Nested " -> nested(1)
+        // Code -> SKIPPED
+        // P cont: " content." -> content(1)
+        
+        // Total "keyword": 1 (H1) + 2 (P1) + 1 (Span) = 4.
+        // Total "extraction": 1 (H1) + 2 (P1) = 3.
+        
+        // We need to ensure we don't accidentally check "extracting" from script or "code" from code.
+        
+        assert_eq!(*keyword_map.get("keyword").unwrap_or(&0), 4);
+        assert_eq!(*keyword_map.get("extraction").unwrap_or(&0), 3);
+        
+        // Verify ignored content
+        assert!(!keyword_map.contains_key("console")); // Script
+        assert!(!keyword_map.contains_key("code"));    // Code block
+        assert!(keyword_map.contains_key("nested"));   // Surrounding text kept
+        assert!(keyword_map.contains_key("content"));  // Surrounding text kept
     }
 
     #[test]
-    fn test_extract_keywords_with_default_stop_words() {
-        let html = r#"
-            <html>
-                <body>
-                    <h1>The Quick Brown Fox</h1>
-                    <p>The quick brown fox jumps over the lazy dog.</p>
-                </body>
-            </html>
-        "#;
-
-        let stop_words = default_stop_words();
-        let keywords = extract_keywords(html, &stop_words);
-
-        // Check that stop words are filtered out
-        let keyword_words: Vec<&str> = keywords.iter().map(|(word, _)| word.as_str()).collect();
-        assert!(!keyword_words.contains(&"the"));
-        assert!(!keyword_words.contains(&"over"));
-
-        // Non-stop words should be present
-        assert!(
-            keyword_words.contains(&"quick")
-                || keyword_words.contains(&"brown")
-                || keyword_words.contains(&"fox")
-        );
+    fn test_full_words_preserved() {
+        let html = "<html><body>Marketing Running Setting</body></html>";
+        let document = Html::parse_document(html);
+        let stop_words = HashSet::new(); // No stop words to interfere
+        
+        let keywords = extract_keywords(&document, &stop_words);
+        let words: Vec<&str> = keywords.iter().map(|(w, _)| w.as_str()).collect();
+        
+        // Should NOT be "market", "runn", "sett"
+        assert!(words.contains(&"marketing"));
+        assert!(words.contains(&"running"));
+        assert!(words.contains(&"setting"));
     }
 }

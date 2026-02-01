@@ -14,7 +14,8 @@ export const changelogData = [
       "Deep Crawler: URL depth calculation",
       "Deep Crawler: Open Graph discovery & preview",
       "Deep Crawler: Cookie discovery & handling for server and client",
-      "Deep Crawler: Table context menu now includes validation/checks "
+      "Deep Crawler: Table context menu now includes validation/checks ",
+      "Deep Crawler: Improved keyword analysis and collection",
     ],
   },
   {
@@ -31,7 +32,6 @@ export const changelogData = [
     ],
   },
   {
-    
     version: "0.3.5",
     date: "2025-01-15",
     type: "feature",
