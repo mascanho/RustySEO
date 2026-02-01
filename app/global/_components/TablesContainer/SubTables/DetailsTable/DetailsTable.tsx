@@ -740,6 +740,33 @@ const DetailsTable = ({ data, height }) => {
                         : "N/A"}
                     </td>
                   </tr>
+                  <tr>
+                    <td
+                      style={{
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        border: "1px solid #ddd",
+                        padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
+                      }}
+                    >
+                      URL Depth
+                    </td>
+                    <td
+                      style={{
+                        textAlign: "left",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        border: "1px solid #ddd",
+                        padding: "2px 0",
+                      }}
+                    >
+                      {anchorItem?.url_depth ?? "N/A"}
+                    </td>
+                  </tr>
                   {anchorItem?.hreflangs?.map((lang) => (
                     <tr key={lang.id}>
                       <td
@@ -796,6 +823,35 @@ const DetailsTable = ({ data, height }) => {
                       {anchorItem?.language || ""}
                     </td>
                   </tr>
+                  {Object.entries(anchorItem?.opengraph || {}).map(([key, value]) => (
+                    <tr key={key}>
+                      <td
+                        style={{
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          border: "1px solid #ddd",
+                          padding: "2px 0",
+                          width: "260px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {"OG: " + key}
+                      </td>
+                      <td
+                        style={{
+                          textAlign: "left",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          border: "1px solid #ddd",
+                          padding: "2px 0",
+                        }}
+                      >
+                        {value}
+                      </td>
+                    </tr>
+                  ))}
                   <tr>
                     <td
                       style={{
