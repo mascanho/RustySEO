@@ -45,8 +45,6 @@ const BottomTableContent = ({ children, height }) => (
   </div>
 );
 
-
-
 export default function Home() {
   const [containerHeight, setContainerHeight] = useState(770);
   const [bottomTableHeight, setBottomTableHeight] = useState(218);
@@ -486,9 +484,13 @@ export default function Home() {
         <ResizableDivider onResize={handleResize} containerRef={containerRef} />
         <div
           className="dark:bg-brand-darker h-auto relative"
-          style={{ height: `${bottomTableHeight}px`, minHeight: "100px" }}
+          style={{ height: `${bottomTableHeight}px`, minHeight: "100px", overflow: "hidden" }}
         >
-          <Tabs value={activeBottomTab} onValueChange={setActiveBottomTab}>
+          <Tabs
+            value={activeBottomTab}
+            onValueChange={setActiveBottomTab}
+            className="h-full flex flex-col"
+          >
             <TabsList className="w-full justify-start dark:bg-brand-darker  dark:border-brand-dark border-t  bg-slate-50 rounded-none sticky top-0 -z-0  ">
               <TabsTrigger value="details" className="rounded-t-md">
                 Details
@@ -510,31 +512,46 @@ export default function Home() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="details">
+            <TabsContent
+              value="details"
+              className="flex-1 min-h-0 mt-0 overflow-hidden"
+            >
               <DetailsTable
                 data={selectedTableURL}
                 height={bottomTableHeight}
               />
             </TabsContent>
-            <TabsContent value="inlinks" className="relative z-0 h-full">
-              <InnerLinksDetailsTable data={inlinks} height={bottomTableHeight} />
+            <TabsContent
+              value="inlinks"
+              className="flex-1 min-h-0 mt-0 overflow-hidden relative z-0"
+            >
+              <InnerLinksDetailsTable
+                data={inlinks}
+                height={bottomTableHeight}
+              />
             </TabsContent>
-            <TabsContent value="outlinks" className="relative z-0 h-full">
+            <TabsContent
+              value="outlinks"
+              className="flex-1 min-h-0 mt-0 overflow-hidden relative z-0"
+            >
               <OuterLinksSubTable data={outlinks} height={bottomTableHeight} />
             </TabsContent>
-            <TabsContent value="images">
+            <TabsContent
+              value="images"
+              className="flex-1 min-h-0 mt-0 overflow-hidden"
+            >
               <ImagesTable height={bottomTableHeight} />
             </TabsContent>
-            <TabsContent value="schema">
+            <TabsContent
+              value="schema"
+              className="flex-1 min-h-0 mt-0 overflow-hidden"
+            >
               <SchemaSubTable height={bottomTableHeight} />
             </TabsContent>
 
             <TabsContent
               value="headers"
-              style={{
-                height: `${bottomTableHeight - 35}px`,
-                overflowY: "auto",
-              }}
+              className="flex-1 min-h-0 mt-0 overflow-hidden"
             >
               <ResponseHeaders
                 data={selectedTableURL}
@@ -542,10 +559,10 @@ export default function Home() {
               />
             </TabsContent>
 
-            <TabsContent
-              value="innerLinks"
-              className="relative z-0"
-            ></TabsContent>
+            {/* <TabsContent */}
+            {/*   value="innerLinks" */}
+            {/*   className="relative z-0" */}
+            {/* ></TabsContent> */}
           </Tabs>
         </div>
       </div>

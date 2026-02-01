@@ -294,9 +294,9 @@ const InnerLinksDetailsTable: React.FC<InlinksSubTableProps> = ({
 
   return (
     <div
-      className="relative w-full"
+      className="relative w-full flex flex-col"
       style={{
-        height: `${height - 35}px`,
+        height: "100%",
       }}
     >
       <button
@@ -306,7 +306,7 @@ const InnerLinksDetailsTable: React.FC<InlinksSubTableProps> = ({
         Export
       </button>
 
-      <div className="overflow-auto h-full w-full">
+      <div className="flex-1 min-h-0 overflow-auto w-full">
         <table
           ref={tableRef}
           className="w-full border-collapse table-fixed text-xs"

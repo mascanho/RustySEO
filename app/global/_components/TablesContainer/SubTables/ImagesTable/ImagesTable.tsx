@@ -18,8 +18,7 @@ const ImagesTable = ({ height }: { height: number }) => {
   if (!selectedTableURL?.[0]?.images?.Ok) {
     return (
       <div
-        className="text-base text-black/50 dark:text-white/50 flex justify-center items-center m-auto w-full"
-        style={{ height: `${height - 35}px` }}
+        className="text-base text-black/50 dark:text-white/50 flex justify-center items-center m-auto w-full h-full"
       >
         <span className="text-xs">Select a URL from the HTML table</span>
       </div>
@@ -44,8 +43,7 @@ const ImagesTable = ({ height }: { height: number }) => {
 
   return (
     <div
-      className="flex w-full"
-      style={{ height: `${height - 35}px` }}
+      className="flex w-full h-full overflow-hidden"
     >
       {/* Table Section */}
       <section className="flex-1 overflow-hidden w-full h-full">
@@ -87,10 +85,10 @@ const ImagesTable = ({ height }: { height: number }) => {
                   <tr
                     key={index}
                     className={`cursor-pointer border-b dark:border-brand-dark/50 ${selectedRowIndex === index
-                        ? "bg-brand-bright text-white"
-                        : index % 2 === 0
-                          ? "bg-gray-50 dark:bg-brand-dark/20"
-                          : "bg-white dark:bg-brand-darker"
+                      ? "bg-brand-bright text-white"
+                      : index % 2 === 0
+                        ? "bg-gray-50 dark:bg-brand-dark/20"
+                        : "bg-white dark:bg-brand-darker"
                       } hover:opacity-80`}
                     onClick={() => handleRowClick(image, index)}
                   >

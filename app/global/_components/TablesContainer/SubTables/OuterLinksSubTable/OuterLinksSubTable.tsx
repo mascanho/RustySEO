@@ -192,13 +192,13 @@ const OuterLinksSubTable: React.FC<InlinksSubTableProps> = ({
     <section
       className="overflow-auto h-full w-full"
       style={{
-        height: `${height}px`,
+        height: "100%",
         minHeight: "100px",
       }}
     >
       <button
         onClick={exportCSV}
-        className="absolute -top-6   right-1 z-50 text-xs border border-brand-bright dark:border-brand-bright px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors  dark:text-white/50"
+        className="absolute top-1 right-1 z-50 text-xs border border-brand-bright dark:border-brand-bright px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors  dark:text-white/50 bg-white dark:bg-brand-dark"
       >
         Export
       </button>

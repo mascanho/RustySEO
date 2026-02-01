@@ -51,19 +51,18 @@ const DetailsTable = ({ data, height }) => {
 
   return (
     <div
-      className="domainCrawlParent -mt-2  "
+      className="domainCrawlParent flex flex-col"
       style={{
         position: "relative",
-        height: `${height + 80}px `,
+        height: "100%",
         width: "100%",
+        overflow: "hidden"
       }}
     >
       <div
-        className="table-header"
+        className="table-header shrink-0"
         style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 0,
+          zIndex: 10,
           backgroundColor: "#f87171",
         }}
       >
@@ -84,8 +83,9 @@ const DetailsTable = ({ data, height }) => {
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   backgroundColor: "#f87171",
-                  zIndex: 1,
                   width: "260px",
+                  padding: "4px 8px",
+                  color: "#fff"
                 }}
               >
                 Name
@@ -97,7 +97,8 @@ const DetailsTable = ({ data, height }) => {
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   backgroundColor: "#f87171",
-                  zIndex: 1,
+                  padding: "4px 8px",
+                  color: "#fff"
                 }}
               >
                 Value
@@ -107,9 +108,9 @@ const DetailsTable = ({ data, height }) => {
         </table>
       </div>
       <div
+        className="flex-1"
         style={{
           overflow: "auto",
-          height: `calc(100% - 125px)`,
           width: "100%",
           padding: "0 0 3px 0",
         }}
