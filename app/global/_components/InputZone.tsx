@@ -88,7 +88,7 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
                 className="absolute ml-3 w-4 h-4 rounded-sm object-contain z-10"
                 onError={(e) => {
                   // Fallback if image fails to load
-                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.style.display = "none";
                 }}
               />
             ) : (
@@ -119,7 +119,7 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
                     className="top-0.5 right-4 z-[32423454] w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin cursor-pointer"
                     role="status"
                     aria-label="loading"
-                  // onClick={() => window.location.reload()}
+                    // onClick={() => window.location.reload()}
                   />
                 ) : (
                   "Crawl"
