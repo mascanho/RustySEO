@@ -78,7 +78,7 @@ pub async fn crawl_domain(
         if let Err(err) = app_handle_clone.emit("robots", (&domain, robots_str)) {
             eprintln!("Failed to emit robots data: {}", err);
         } else {
-            println!("Robots emitted for {}", &domain);
+            tracing::info!("Robots emitted for {}", &domain);
         }
     });
 
@@ -151,7 +151,7 @@ pub async fn crawl_domain(
                 // IS 900
                     && state_guard.is_truly_complete()
                 {
-                    println!("Crawler appears to be stalled, terminating...");
+                    tracing::info!("Crawler appears to be stalled, terminating...");
                     break;
                 }
                 last_crawled_count = state_guard.crawled_urls;
@@ -173,7 +173,7 @@ pub async fn crawl_domain(
             // Check if there are truly no more URLs to process
             let state_guard = state.lock().await;
             if state_guard.is_truly_complete() {
-                println!("All URLs processed, crawl complete");
+                tracing::info!("All URLs processed, crawl complete");
                 break;
             }
             drop(state_guard);
@@ -322,7 +322,7 @@ pub async fn crawl_domain(
     app_handle
         .emit("crawl_complete", final_progress)
         .unwrap_or_default();
-    println!("Crawl completed.");
+    tracing::info!("Crawl completed.");
 
     if let Err(e) = database::create_diff_tables() {
         eprintln!("Failed to create diff tables: {}", e);
