@@ -90,7 +90,7 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
           )}>
 
             {/* Favicon or Globe Container */}
-            <div className="flex items-center justify-center w-10 h-full">
+            <div className="flex items-center justify-center w-10 h-full border-r border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/5">
               <AnimatePresence mode="wait">
                 {favicon ? (
                   <motion.img
@@ -137,9 +137,9 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
                     onClick={() => { setUrl(""); inputRef.current?.focus(); }}
-                    className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 transition-colors"
+                    className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-rose-500/10 text-gray-400 hover:text-rose-500 transition-colors"
                   >
-                    <IoIosClose className="w-4 h-4" />
+                    <IoIosClose className="w-5 h-5" />
                   </motion.button>
                 )}
               </AnimatePresence>
@@ -148,12 +148,12 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
                 disabled={domainCrawlLoading || !url.trim()}
                 onClick={handleButtonCrawl}
                 className={cn(
-                  "flex items-center justify-center gap-2 h-7 px-4 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed",
-                  "bg-gradient-to-tr from-brand-bright to-blue-600 hover:from-blue-600 hover:to-brand-bright text-white shadow-md shadow-brand-bright/10 border border-white/10"
+                  "flex items-center justify-center gap-2 h-7 px-5 rounded-lg text-[10px] font-bold uppercase tracking-[0.05em] transition-all active:scale-95 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed",
+                  "bg-brand-bright hover:bg-blue-600 text-white shadow-sm border border-brand-bright/20"
                 )}
               >
                 {domainCrawlLoading ? (
-                  <div className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                  <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                 ) : (
                   <>
                     <FiSearch className="text-[10px] stroke-[3px]" />
