@@ -59,22 +59,22 @@ const generateLogs = (
     {
       id: 3,
       label: "PSI Insights",
-      status: pageSpeedKey ? "Linked" : "Offline",
+      status: pageSpeedKey ? "Connected" : "Offline",
       level: pageSpeedKey ? "success" : "error",
       icon: <Zap size={14} />,
     },
     {
       id: 4,
       label: "Google Analytics",
-      status: isGa4Configured || ga4ID ? "Running" : "Standby",
-      level: isGa4Configured || ga4ID ? "success" : "info",
+      status: isGa4Configured || ga4ID ? "Running" : "Not Configured",
+      level: isGa4Configured || ga4ID ? "success" : "warning",
       icon: <Activity size={14} />,
     },
     {
       id: 5,
       label: "MS Clarity",
-      status: clarityApi !== "" ? "Running" : "Standby",
-      level: clarityApi !== "" ? "success" : "info",
+      status: clarityApi !== "" ? "Running" : "Not Configured",
+      level: clarityApi !== "" ? "success" : "warning",
       icon: <Globe size={14} />,
     },
     {
