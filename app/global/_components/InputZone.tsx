@@ -148,12 +148,17 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
                 disabled={domainCrawlLoading || !url.trim()}
                 onClick={handleButtonCrawl}
                 className={cn(
-                  "flex items-center justify-center gap-2 h-7 px-5 rounded-lg text-[10px] font-bold uppercase tracking-[0.05em] transition-all active:scale-95 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed",
-                  "bg-brand-bright hover:bg-blue-600 text-white shadow-sm border border-brand-bright/20"
+                  "flex items-center justify-center gap-1.5 h-6 px-4 rounded-[8px] text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 disabled:cursor-not-allowed",
+                  domainCrawlLoading
+                    ? "bg-white dark:bg-zinc-800 border border-gray-200 dark:border-white/10 shadow-none"
+                    : "bg-brand-bright hover:bg-blue-600 text-white shadow-sm disabled:opacity-30 disabled:grayscale"
                 )}
               >
                 {domainCrawlLoading ? (
-                  <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                  <div className="relative w-3.5 h-3.5">
+                    <div className="absolute inset-0 border-2 border-brand-bright/10 rounded-full"></div>
+                    <div className="absolute inset-0 border-2 border-t-brand-bright rounded-full animate-spin"></div>
+                  </div>
                 ) : (
                   <>
                     <FiSearch className="text-[10px] stroke-[3px]" />
