@@ -32,7 +32,7 @@ use super::helpers::hreflang_selector::select_hreflang;
 use super::helpers::html_size_calculator::calculate_html_size;
 use super::helpers::keyword_selector::extract_keywords;
 use super::helpers::language_selector::detect_language;
-use super::helpers::links_status_code_checker::get_links_status_code;
+use super::helpers::links_status_code_checker::get_links_status_code_from_settings;
 use super::helpers::meta_robots_selector::{get_meta_robots, MetaRobots};
 use super::helpers::text_ratio::{get_text_ratio, TextRatio};
 use super::helpers::{
@@ -342,11 +342,13 @@ pub async fn process_url(
         )
     }; // `document` is dropped here
 
+    let settings_clone = settings.clone();
     // Now perform asynchronous checks
-    let check_links_status_code = get_links_status_code(
+    let check_links_status_code = get_links_status_code_from_settings(
         internal_external_links.clone(),
         base_url,
         final_url.to_string(),
+        &settings_clone,
     )
     .await;
 
@@ -355,7 +357,6 @@ pub async fn process_url(
     // Start PSI fetch as a separate task
     let psi_future = if settings.page_speed_bulk {
         let url_clone = final_url.clone();
-        let settings_clone = settings.clone();
         Some(tokio::spawn(async move {
             fetch_psi_bulk(url_clone, &settings_clone).await
         }))

@@ -3,8 +3,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use futures::future::join_all;
-use rand::seq::{IndexedRandom, SliceRandom};
-use rand::Rng;
+use rand::seq::IndexedRandom;
 use reqwest::{
     header::{
         HeaderMap, ACCEPT, ACCEPT_ENCODING, ACCEPT_LANGUAGE, CACHE_CONTROL, CONNECTION, DNT,
@@ -18,20 +17,48 @@ use tokio::task::{JoinError, JoinHandle};
 use tokio::time::{sleep, timeout};
 
 use crate::domain_crawler::{helpers::anchor_links::InternalExternalLinks, user_agents};
+use crate::settings::settings::Settings;
 
-// Constants configuration
-const MAX_CONCURRENT_REQUESTS: usize = 8;
-const MIN_DELAY_MS: u64 = 800;
-const MAX_DELAY_MS: u64 = 3000;
-const MAX_RETRIES: usize = 3;
-const REQUEST_TIMEOUT_SECS: u64 = 15;
-const JITTER_FACTOR: f32 = 0.3;
-const MAX_REQUESTS_PER_DOMAIN: usize = 2000;
-const INITIAL_TASK_CAPACITY: usize = 100;
-const RETRY_DELAY_MS: u64 = 500;
-const CONNECTION_TIMEOUT_SECS: u64 = 5;
-const POOL_IDLE_TIMEOUT_SECS: u64 = 60;
-const POOL_MAX_IDLE_PER_HOST: usize = 10;
+#[derive(Debug, Clone)]
+pub struct LinkCheckConfig {
+    pub concurrent_requests: usize,
+    pub min_delay_ms: u64,
+    pub max_delay_ms: u64,
+    pub max_retries: usize,
+    pub request_timeout_secs: u64,
+    pub jitter_factor: f32,
+    pub max_requests_per_domain: usize,
+    pub initial_task_capacity: usize,
+    pub retry_delay_ms: u64,
+    pub connection_timeout_secs: u64,
+    pub pool_idle_timeout_secs: u64,
+    pub pool_max_idle_per_host: usize,
+}
+
+impl From<&Settings> for LinkCheckConfig {
+    fn from(settings: &Settings) -> Self {
+        Self {
+            concurrent_requests: settings.links_max_concurrent_requests,
+            min_delay_ms: settings.links_retry_delay,
+            max_delay_ms: settings.links_retry_delay * 2,
+            max_retries: settings.links_max_retries,
+            request_timeout_secs: settings.links_request_timeout,
+            jitter_factor: 0.3,
+            max_requests_per_domain: settings.max_urls_per_domain,
+            initial_task_capacity: settings.links_initial_task_capacity,
+            retry_delay_ms: settings.links_retry_delay,
+            connection_timeout_secs: settings.client_connect_timeout,
+            pool_idle_timeout_secs: 60,
+            pool_max_idle_per_host: 10,
+        }
+    }
+}
+
+impl LinkCheckConfig {
+    pub fn from_settings(settings: &Settings) -> Self {
+        Self::from(settings)
+    }
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct LinkStatus {
@@ -58,14 +85,16 @@ struct DomainTracker {
     last_request: Mutex<HashMap<String, Instant>>,
     delays: Mutex<HashMap<String, Duration>>,
     request_counts: Mutex<HashMap<String, usize>>,
+    config: LinkCheckConfig,
 }
 
 impl DomainTracker {
-    fn new() -> Self {
+    fn new(config: &LinkCheckConfig) -> Self {
         DomainTracker {
             last_request: Mutex::new(HashMap::new()),
             delays: Mutex::new(HashMap::new()),
             request_counts: Mutex::new(HashMap::new()),
+            config: config.clone(),
         }
     }
 
@@ -74,7 +103,7 @@ impl DomainTracker {
         delays
             .get(domain)
             .copied()
-            .unwrap_or(Duration::from_millis(MIN_DELAY_MS))
+            .unwrap_or(Duration::from_millis(self.config.min_delay_ms))
     }
 
     async fn update_delay_for(&self, domain: &str, response: &reqwest::Response) {
@@ -83,12 +112,12 @@ impl DomainTracker {
             // Increase delay for this domain
             let current = delays
                 .entry(domain.to_string())
-                .or_insert(Duration::from_millis(MIN_DELAY_MS));
+                .or_insert(Duration::from_millis(self.config.min_delay_ms));
             *current = (*current * 2).min(Duration::from_secs(5));
         } else if response.status().is_success() {
             // Gradually decrease delay for well-behaved domains
             if let Some(delay) = delays.get_mut(domain) {
-                *delay = (*delay / 2).max(Duration::from_millis(500));
+                *delay = (*delay / 2).max(Duration::from_millis(self.config.retry_delay_ms));
             }
         }
     }
@@ -97,7 +126,7 @@ impl DomainTracker {
         let mut counts = self.request_counts.lock().await;
         let count = counts.entry(domain.to_string()).or_insert(0);
         *count += 1;
-        *count > MAX_REQUESTS_PER_DOMAIN
+        *count > self.config.max_requests_per_domain
     }
 
     async fn record_request(&self, domain: &str) {
@@ -110,18 +139,38 @@ pub async fn get_links_status_code(
     links: Option<InternalExternalLinks>,
     base_url: &Url,
     page: String,
+    config: LinkCheckConfig,
 ) -> LinkCheckResults {
-    let client = build_client();
-    let client = Arc::new(client);
-    let domain_tracker = Arc::new(DomainTracker::new());
+    get_links_status_code_with_config(links, base_url, page, config).await
+}
 
-    let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT_REQUESTS));
+pub async fn get_links_status_code_from_settings(
+    links: Option<InternalExternalLinks>,
+    base_url: &Url,
+    page: String,
+    settings: &Settings,
+) -> LinkCheckResults {
+    let config = LinkCheckConfig::from_settings(settings);
+    get_links_status_code_with_config(links, base_url, page, config).await
+}
+
+async fn get_links_status_code_with_config(
+    links: Option<InternalExternalLinks>,
+    base_url: &Url,
+    page: String,
+    config: LinkCheckConfig,
+) -> LinkCheckResults {
+    let client = build_client(&config);
+    let client = Arc::new(client);
+    let domain_tracker = Arc::new(DomainTracker::new(&config));
+
+    let semaphore = Arc::new(Semaphore::new(config.concurrent_requests));
     let base_url_arc = Arc::new(base_url.clone());
     let page_arc = Arc::new(page);
-    let seen_urls = Arc::new(Mutex::new(HashSet::with_capacity(INITIAL_TASK_CAPACITY)));
+    let seen_urls = Arc::new(Mutex::new(HashSet::with_capacity(config.initial_task_capacity)));
 
     let mut tasks: Vec<JoinHandle<Option<(LinkStatus, bool)>>> =
-        Vec::with_capacity(INITIAL_TASK_CAPACITY);
+        Vec::with_capacity(config.initial_task_capacity);
 
     if let Some(links_data) = links {
         for (link, anchor, rel, title, target, is_internal) in prepare_links(links_data) {
@@ -139,6 +188,7 @@ pub async fn get_links_status_code(
                 title,
                 target,
                 is_internal,
+                config.clone(),
             );
         }
     }
@@ -146,7 +196,7 @@ pub async fn get_links_status_code(
     process_results(join_all(tasks).await, page_arc, base_url_arc)
 }
 
-fn build_client() -> Client {
+fn build_client(config: &LinkCheckConfig) -> Client {
     let mut headers = HeaderMap::new();
     headers.insert(
         ACCEPT,
@@ -162,10 +212,10 @@ fn build_client() -> Client {
     headers.insert(UPGRADE_INSECURE_REQUESTS, "1".parse().unwrap());
 
     Client::builder()
-        .timeout(Duration::from_secs(REQUEST_TIMEOUT_SECS))
-        .connect_timeout(Duration::from_secs(CONNECTION_TIMEOUT_SECS))
-        .pool_idle_timeout(Duration::from_secs(POOL_IDLE_TIMEOUT_SECS))
-        .pool_max_idle_per_host(POOL_MAX_IDLE_PER_HOST)
+        .timeout(Duration::from_secs(config.request_timeout_secs))
+        .connect_timeout(Duration::from_secs(config.connection_timeout_secs))
+        .pool_idle_timeout(Duration::from_secs(config.pool_idle_timeout_secs))
+        .pool_max_idle_per_host(config.pool_max_idle_per_host)
         .user_agent(user_agents::agents().choose(&mut rand::rng()).unwrap())
         .redirect(reqwest::redirect::Policy::limited(5))
         .default_headers(headers)
@@ -224,6 +274,7 @@ fn spawn_link_check_task(
     title: Option<String>,
     target: Option<String>,
     is_internal: bool,
+    config: LinkCheckConfig,
 ) {
     tasks.push(tokio::spawn(async move {
         let full_url = match if is_internal {
@@ -269,6 +320,7 @@ fn spawn_link_check_task(
             title,
             target,
             Arc::clone(&semaphore),
+            &config,
         )
         .await;
 
@@ -290,6 +342,7 @@ async fn fetch_with_retry(
     title: Option<String>,
     target: Option<String>,
     semaphore: Arc<Semaphore>,
+    config: &LinkCheckConfig,
 ) -> LinkStatus {
     let mut attempt = 0;
     let mut last_error = None;
@@ -308,7 +361,7 @@ async fn fetch_with_retry(
         };
 
         match timeout(
-            Duration::from_secs(REQUEST_TIMEOUT_SECS),
+            Duration::from_secs(config.request_timeout_secs),
             try_head_then_get(client, url),
         )
         .await
@@ -336,14 +389,13 @@ async fn fetch_with_retry(
         }
 
         attempt += 1;
-        if attempt >= MAX_RETRIES {
+        if attempt >= config.max_retries {
             break;
         }
 
         // Exponential backoff with jitter
-        let base_delay = MIN_DELAY_MS * 2u64.pow(attempt as u32 - 1);
-        let jitter =
-            (base_delay as f32 * JITTER_FACTOR * rand::random_range(-1.0..1.0)) as i64;
+        let base_delay = config.retry_delay_ms * 2u64.pow(attempt as u32 - 1);
+        let jitter = (base_delay as f32 * config.jitter_factor * rand::random_range(-1.0..1.0)) as i64;
         let delay = (base_delay as i64 + jitter).max(0) as u64;
         sleep(Duration::from_millis(delay)).await;
     }

@@ -201,7 +201,7 @@ pub async fn crawl_domain(
 
             let handle = tokio::spawn(async move {
                 let _permit = semaphore_clone.acquire().await.unwrap();
-                let jitter = rand::random_range(500..2000);
+                let jitter = rand::random_range(10..50);
                 sleep(Duration::from_millis(jitter)).await;
 
                 let result = process_url(
