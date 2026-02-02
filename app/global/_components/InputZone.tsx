@@ -125,7 +125,7 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
               onBlur={() => setIsFocused(false)}
               onChange={handleInputChange}
               onKeyDown={handleKeyPress}
-              className="flex-1 h-full bg-transparent text-[11px] text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-600 outline-none font-medium"
+              className="flex-1 h-full bg-transparent text-[11px] text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-600 outline-none font-medium px-3"
             />
 
             {/* Content Actions */}
@@ -148,12 +148,12 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
                 disabled={domainCrawlLoading || !url.trim()}
                 onClick={handleButtonCrawl}
                 className={cn(
-                  "flex items-center justify-center gap-1.5 h-6.5 px-4 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed",
-                  "bg-brand-bright hover:bg-brand-bright/90 text-white shadow-sm border border-brand-bright/20"
+                  "flex items-center justify-center gap-2 h-7 px-4 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed",
+                  "bg-gradient-to-tr from-brand-bright to-blue-600 hover:from-blue-600 hover:to-brand-bright text-white shadow-md shadow-brand-bright/10 border border-white/10"
                 )}
               >
                 {domainCrawlLoading ? (
-                  <div className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  <div className="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin" />
                 ) : (
                   <>
                     <FiSearch className="text-[10px] stroke-[3px]" />
