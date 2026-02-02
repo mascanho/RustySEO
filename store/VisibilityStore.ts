@@ -9,6 +9,7 @@ interface VisibilityState {
   chatbar: boolean;
   changelog: boolean;
   urlchecker: boolean;
+  terminal: boolean;
 }
 
 // Define the interface for the store
@@ -28,6 +29,8 @@ interface BearState {
   hideChangelog: () => void;
   showUrlChecker: () => void;
   hideUrlChecker: () => void;
+  showTerminal: () => void;
+  hideTerminal: () => void;
 }
 
 // Create the Zustand store with proper types
@@ -40,6 +43,7 @@ export const useVisibilityStore = create<BearState>((set) => ({
     chatbar: false,
     changelog: false,
     urlchecker: false,
+    terminal: false,
   },
 
   // Sidebar actions
@@ -109,5 +113,13 @@ export const useVisibilityStore = create<BearState>((set) => ({
   hideUrlChecker: () =>
     set((state) => ({
       visibility: { ...state.visibility, urlchecker: false },
+    })),
+  showTerminal: () =>
+    set((state) => ({
+      visibility: { ...state.visibility, terminal: true },
+    })),
+  hideTerminal: () =>
+    set((state) => ({
+      visibility: { ...state.visibility, terminal: false },
     })),
 }));
