@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { LiaTasksSolid } from "react-icons/lia";
 import { CgWebsite } from "react-icons/cg";
-import { FaDatabase, FaRobot } from "react-icons/fa6";
+import { FaDatabase, FaRobot, FaTerminal } from "react-icons/fa6";
 import { useChat } from "ai/react";
 import {
   BsChatDots,
@@ -46,6 +46,7 @@ import System from "./Footer/Sys/System";
 import LogAnalyserFooter from "./Footer/Loganalyserfooter/LoganalyserFooter";
 import useLoaderStore from "@/store/loadersStore";
 import HttpFooterLoader from "./URLchecker/FooterLoader";
+import { IoTerminal } from "react-icons/io5";
 
 const date = new Date();
 const year = date.getFullYear();
@@ -321,6 +322,16 @@ const Footer = () => {
                   {tasks.length}
                 </span>
               </div>
+
+              {/*TERMINAL/STATUS*/}
+              {/*<div className="relative group hover:delay-1000">
+                <button className="pt-[2px]">
+                  <FaTerminal />
+                </button>
+                <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
+                  Terminal Logs
+                </div>
+              </div>*/}
 
               {/* SYSTEM SETTINGS */}
               <div className="relative group hover:delay-1000">

@@ -1,6 +1,6 @@
 // @ts-nocheck
 // BOTTOM OUTLINKS TABLE
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback, useImperativeHandle, forwardRef } from "react";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 
@@ -24,10 +24,7 @@ interface InlinksSubTableProps {
   }[];
 }
 
-const OuterLinksSubTable: React.FC<InlinksSubTableProps> = ({
-  data,
-  height,
-}) => {
+const OuterLinksSubTable = forwardRef<{ exportCSV: () => Promise<void> }, InlinksSubTableProps>(({ data, height }, ref) => {
   const tableRef = useRef<HTMLTableElement>(null);
 
   const urlsWithPageAsInternalLink = data
@@ -106,17 +103,15 @@ const OuterLinksSubTable: React.FC<InlinksSubTableProps> = ({
       const csvData = data[1].map((item, index) => {
         const sourceUrl = data[0]?.url || "N/A";
         const targetUrl = item?.url || "N/A";
-        const anchorTexts = getAnchorText(item, sourceUrl);
-        const statusCodes = getStatusCode(item, sourceUrl);
+        const anchorText = item?.anchor_text || "N/A";
+        const statusCode = item?.status || "N/A";
 
         return [
           index + 1,
           `"${sourceUrl.replace(/"/g, '""')}"`,
           `"${targetUrl.replace(/"/g, '""')}"`,
-          `"${(Array.isArray(anchorTexts) ? anchorTexts.join(", ") : anchorTexts || "N/A").replace(/"/g, '""')}"`,
-          Array.isArray(statusCodes)
-            ? statusCodes.join(", ")
-            : statusCodes || "N/A",
+          `"${anchorText.replace(/"/g, '""')}"`,
+          statusCode,
         ];
       });
 
@@ -164,6 +159,11 @@ const OuterLinksSubTable: React.FC<InlinksSubTableProps> = ({
     }
   }, [makeResizable]);
 
+  // Expose exportCSV to parent via ref
+  useImperativeHandle(ref, () => ({
+    exportCSV
+  }));
+
   // useEffect(() => {
   //   const isDark = localStorage.getItem("dark-mode");
   // }, []);
@@ -192,16 +192,10 @@ const OuterLinksSubTable: React.FC<InlinksSubTableProps> = ({
     <section
       className="overflow-auto h-full w-full"
       style={{
-        height: `${height}px`,
+        height: "100%",
         minHeight: "100px",
       }}
     >
-      <button
-        onClick={exportCSV}
-        className="absolute -top-6   right-1 z-50 text-xs border border-brand-bright dark:border-brand-bright px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors  dark:text-white/50"
-      >
-        Export
-      </button>
       <table
         ref={tableRef}
         style={{ width: "100%", borderCollapse: "collapse" }}
@@ -291,6 +285,6 @@ const OuterLinksSubTable: React.FC<InlinksSubTableProps> = ({
       </table>
     </section>
   );
-};
+});
 
 export default React.memo(OuterLinksSubTable);

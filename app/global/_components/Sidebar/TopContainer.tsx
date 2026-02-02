@@ -42,7 +42,7 @@ const TopContainer = () => {
           <RankingInfo />
         </Tabs.Panel>
 
-        <Tabs.Panel value="status" className="flex-1 overflow-auto">
+        <Tabs.Panel value="status" className="flex-1 h-full overflow-hidden">
           <ConsoleLog />
         </Tabs.Panel>
 

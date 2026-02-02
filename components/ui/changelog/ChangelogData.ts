@@ -9,6 +9,13 @@ export const changelogData = [
       "Deep Crawler: Improved Issues tab",
       "Deep Crawler: Improved Queries tab ",
       "PPC simulator: Improved UI",
+      "Deep Crawler: Better Issue tracking",
+      "Deep Crawler: URL search history",
+      "Deep Crawler: URL depth calculation",
+      "Deep Crawler: Open Graph discovery & preview",
+      "Deep Crawler: Cookie discovery & handling for server and client",
+      "Deep Crawler: Table context menu now includes validation/checks ",
+      "Deep Crawler: Improved keyword analysis and collection",
     ],
   },
   {

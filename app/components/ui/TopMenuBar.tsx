@@ -39,7 +39,7 @@ import {
   FiGlobe,
   FiSearch,
 } from "react-icons/fi";
-import { GiRobotGrab } from "react-icons/gi";
+import { GiRobotGrab, GiSpiderBot } from "react-icons/gi";
 import { FaRegLightbulb, FaRegMoon } from "react-icons/fa";
 import { AiOutlineShareAlt, AiOutlinePrinter } from "react-icons/ai";
 import {
@@ -568,8 +568,15 @@ const TopMenuBar = () => {
                   className=" text-sm mr-1.5 "
                   style={{ marginLeft: "-1px" }}
                 />
-                Crawler settings
+                Crawler settings (TOML)
               </MenubarItem>
+              {/* <MenubarItem onClick={handleOpenConfigFile}> */}
+              {/*   <CiSettings */}
+              {/*     className=" text-sm mr-1.5 " */}
+              {/*     style={{ marginLeft: "-1px" }} */}
+              {/*   /> */}
+              {/*   Crawler settings (GUI) */}
+              {/* </MenubarItem> */}
               <MenubarItem onClick={() => getCurrentWindow().close()}>
                 <FiLogOut className="mr-2" />
                 Exit
@@ -718,11 +725,11 @@ const TopMenuBar = () => {
             <MenubarTrigger className="ml-3 text-xs">Crawlers</MenubarTrigger>
             <MenubarContent className="z-[999999999999999]">
               <MenubarItem onClick={() => router.push("/")}>
-                <GiRobotGrab className="mr-2" />
+                <GiSpiderBot className="mr-2" />
                 Shallow Crawler
               </MenubarItem>
               <MenubarItem onClick={() => router.push("/global")}>
-                <GiRobotGrab className="mr-2" />
+                <GiSpiderBot className="mr-2" />
                 Deep Crawler
               </MenubarItem>
             </MenubarContent>

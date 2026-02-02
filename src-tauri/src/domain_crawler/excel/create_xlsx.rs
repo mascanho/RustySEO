@@ -64,31 +64,30 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
         return Err("No data to generate Excel".to_string());
     }
 
-    // Define the headers for the table
+    // Define the headers for the table (must match tableLayout.ts exactly)
     let headers = vec![
-        "URL",
-        "Page Title",
-        "Page Title Length",
-        "Description",        // New column for description
-        "Description Length", // New column for description length
-        "H1",
-        "H1 Length",
-        "H2",
-        "H2 Length",
-        "Status Code",
-        "Word Count",
-        "Indexability",
-        "Schema",
-        "Canonicals",
-        "Flesch Score",
-        "Flesch Readability",
-        "Keywords",
-        "Language",
-        "Meta Robots",
-        "Mobile",
-        "Page Size (KB)",
-        "Response Time (s)",
-        "Text Ratio (%)",
+        "ID",           // 0
+        "URL",          // 1
+        "Page Title",   // 2
+        "Title Size",   // 3
+        "Description",  // 4
+        "Desc. Size",   // 5
+        "H1",           // 6
+        "H1 Size",      // 7
+        "H2",           // 8
+        "H2 Size",      // 9
+        "Status Code",  // 10
+        "Word Count",   // 11
+        "Text Ratio",   // 12
+        "Flesch Score", // 13
+        "Flesch Grade", // 14
+        "Mobile",       // 15
+        "Meta Robots",  // 16
+        "Content Type", // 17
+        "Indexability", // 18
+        "Language",     // 19
+        "Schema",       // 20
+        "Depth",        // 21
     ];
 
     // Create a new workbook and worksheet
@@ -422,6 +421,55 @@ pub fn generate_excel_main_table(data: Vec<Value>) -> Result<Vec<u8>, String> {
         worksheet
             .write((row_idx + 1) as u32, 22, &text_ratio)
             .map_err(|e| format!("Failed to write text ratio at row {}: {}", row_idx + 1, e))?;
+
+        // CONTENT TYPE
+        let content_type = match obj.get("content_type") {
+            Some(Value::String(s)) => s.clone(),
+            _ => String::new(), // If content type is missing, write a blank cell
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 23, &content_type)
+            .map_err(|e| format!("Failed to write content type at row {}: {}", row_idx + 1, e))?;
+
+        // INDEXABILITY
+        let indexability = match obj.get("indexability") {
+            Some(Value::Object(indexability_obj)) => match indexability_obj.get("indexability") {
+                Some(Value::Number(_)) => "Indexable".to_string(),
+                _ => "Unknown".to_string(),
+            },
+            _ => "Unknown".to_string(),
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 24, &indexability)
+            .map_err(|e| format!("Failed to write indexability at row {}: {}", row_idx + 1, e))?;
+
+        // LANGUAGE
+        let language = match obj.get("language") {
+            Some(Value::String(s)) => s.clone(),
+            _ => String::new(), // If language is missing, write a blank cell
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 25, &language)
+            .map_err(|e| format!("Failed to write language at row {}: {}", row_idx + 1, e))?;
+
+        // SCHEMA
+        let schema = match obj.get("schema") {
+            Some(Value::String(s)) => "Yes".to_string(), // If schema exists, write "Yes"
+            _ => "No".to_string(),                       // If schema is missing, write "No"
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 26, &schema)
+            .map_err(|e| format!("Failed to write schema at row {}: {}", row_idx + 1, e))?;
+
+        // DEPTH
+        let url_depth = match obj.get("url_depth") {
+            Some(Value::Number(n)) => n.to_string(),
+            Some(Value::String(s)) => s.clone(),
+            _ => String::new(), // If depth is missing, write a blank cell
+        };
+        worksheet
+            .write((row_idx + 1) as u32, 27, &url_depth)
+            .map_err(|e| format!("Failed to write depth at row {}: {}", row_idx + 1, e))?;
     }
 
     // Save workbook to an in-memory buffer

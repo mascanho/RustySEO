@@ -63,6 +63,7 @@ pub struct DomainCrawlResults {
     pub mobile: bool,
     pub canonicals: Option<Vec<String>>,
     pub meta_robots: MetaRobots,
+    pub opengraph: HashMap<String, String>,
     pub content_type: String,
     pub content_length: usize,
     pub text_ratio: Option<Vec<TextRatio>>,
@@ -78,13 +79,15 @@ pub struct DomainCrawlResults {
     pub https: bool,
     pub cross_origin: SecuritySummary,
     pub psi_results: Result<Vec<Value>, String>,
-    pub original_url: String,             // The URL we requested
-    pub redirect_url: Option<String>,     // The redirect URL (if any)
-    pub had_redirect: bool,               // Boolean flag for easy filtering
-    pub redirection_type: Option<String>, // Type of redirect
+    pub original_url: String,                     // The URL we requested
+    pub redirect_url: Option<String>,             // The redirect URL (if any)
+    pub had_redirect: bool,                       // Boolean flag for easy filtering
+    pub redirection_type: Option<String>,         // Type of redirect
     pub redirect_chain: Option<Vec<RedirectHop>>, // Full redirect chain
-    pub redirect_count: usize,            // Number of hops
-    pub status: Option<u16>,              // Status of the request
+    pub redirect_count: usize,                    // Number of hops
+    pub status: Option<u16>,                      // Status of the request
+    pub url_depth: Option<usize>,
+    pub cookies: Result<Vec<String>, String>,
 }
 
 // Implement Default for DomainCrawlResults
@@ -115,6 +118,7 @@ impl Default for DomainCrawlResults {
             mobile: false,
             canonicals: None,
             meta_robots: MetaRobots::default(),
+            opengraph: HashMap::new(),
             content_type: String::new(),
             content_length: 0,
             text_ratio: None,
@@ -143,6 +147,8 @@ impl Default for DomainCrawlResults {
             redirect_chain: None,
             redirect_count: 0,
             status: None,
+            url_depth: Some(0),
+            cookies: Ok(Vec::new()),
         }
     }
 }

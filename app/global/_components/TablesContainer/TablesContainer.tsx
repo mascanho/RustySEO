@@ -30,6 +30,8 @@ import InnerLinksDetailsTable from "./SubTables/InnerLinksTable/InnerLinksDetail
 import { shallow } from "zustand/shallow";
 import OuterLinksSubTable from "./SubTables/OuterLinksSubTable/OuterLinksSubTable";
 import RedirectsTable from "./RedirectsTable/RedirectsTable";
+import FilesTable from "./FilesTable/FilesTable";
+import OpenGraphPreview from "./SubTables/OpenGraphPreview/OpenGraphPreview";
 
 const BottomTableContent = ({ children, height }) => (
   <div
@@ -37,7 +39,7 @@ const BottomTableContent = ({ children, height }) => (
       height: `${height - 34}px`,
       minHeight: "100px",
       overflowY: "auto",
-      marginBottom: "60px",
+      marginBottom: "0px", // Reduced from 60px
     }}
   >
     {children}
@@ -47,6 +49,8 @@ const BottomTableContent = ({ children, height }) => (
 export default function Home() {
   const [containerHeight, setContainerHeight] = useState(770);
   const [bottomTableHeight, setBottomTableHeight] = useState(218);
+  const inlinksTableRef = useRef(null);
+  const outlinksTableRef = useRef(null);
   const [activeBottomTab, setActiveBottomTab] = useState("details");
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -237,6 +241,92 @@ export default function Home() {
     return customSearch;
   }, [debouncedCrawlData]);
 
+  // TODO: Some things still seep through appearing as files. improve this behaviour later
+  const filteredFilesArr = useMemo(() => {
+    const fileSet = new Set<string>();
+    const files = [];
+
+    const imageExts = [
+      "png",
+      "jpg",
+      "jpeg",
+      "webp",
+      "svg",
+      "gif",
+      "ico",
+      "bmp",
+      "tiff",
+    ];
+    const jsExts = ["js", "mjs", "jsx", "ts", "tsx"];
+    const cssExts = ["css", "scss", "sass", "less"];
+    const htmlPhpExts = [
+      "html",
+      "htm",
+      "php",
+      "php7",
+      "phtml",
+      "asp",
+      "aspx",
+      "jsp",
+      "cfm",
+    ];
+
+    const getFileExt = (url: string) => {
+      if (!url) return null;
+      try {
+        const parts = url.split("/");
+        const lastPart = parts[parts.length - 1];
+        if (!lastPart.includes(".")) return null;
+        // This prevents email from being collected into the table
+        if (url.includes("@")) return null;
+        if (url.includes("mailto:")) return null;
+        if (url.includes("tel:")) return null;
+        if (url.includes(".com")) return null;
+
+        const ext = lastPart.split(".").pop()?.split(/[?#]/)[0]?.toLowerCase();
+        return ext || null;
+      } catch (e) {
+        return null;
+      }
+    };
+
+    debouncedCrawlData.forEach((item) => {
+      // Collect all links from this page
+      const allLinks = [
+        ...(item?.inoutlinks_status_codes?.internal || []),
+        ...(item?.inoutlinks_status_codes?.external || []),
+      ];
+
+      allLinks.forEach((linkObj) => {
+        const url = linkObj.url;
+        if (!url) return;
+
+        const ext = getFileExt(url);
+        if (ext) {
+          if (
+            imageExts.includes(ext) ||
+            jsExts.includes(ext) ||
+            cssExts.includes(ext) ||
+            htmlPhpExts.includes(ext)
+          ) {
+            return;
+          }
+
+          if (!fileSet.has(url)) {
+            fileSet.add(url);
+            files.push({
+              url: url,
+              filetype: ext.toUpperCase(),
+              found_at: item.url || "",
+            });
+          }
+        }
+      });
+    });
+
+    return files.map((f, index) => ({ id: index + 1, ...f }));
+  }, [debouncedCrawlData]);
+
   const renderIssuesViewContent = () => {
     switch (issuesView) {
       case "Duplicated Titles":
@@ -309,6 +399,9 @@ export default function Home() {
               <TabsTrigger value="redirects" className="rounded-t-md">
                 Redirects
               </TabsTrigger>
+              <TabsTrigger value="files" className="rounded-t-md">
+                Files
+              </TabsTrigger>
               {issuesView && (
                 <TabsTrigger value={issuesView} className="rounded-t-md">
                   {issuesView}
@@ -376,6 +469,9 @@ export default function Home() {
             >
               <RedirectsTable tabName={"AllData"} rows={debouncedCrawlData} />
             </TabsContent>
+            <TabsContent value="files" className="flex-grow overflow-hidden">
+              <FilesTable tabName={"All Files"} rows={filteredFilesArr} />
+            </TabsContent>
             {/* DYNAMIC TABS */}
             {issuesView && (
               <TabsContent
@@ -391,61 +487,104 @@ export default function Home() {
         <ResizableDivider onResize={handleResize} containerRef={containerRef} />
         <div
           className="dark:bg-brand-darker h-auto relative"
-          style={{ height: `${bottomTableHeight}px`, minHeight: "100px" }}
+          style={{ height: `${bottomTableHeight}px`, minHeight: "100px", overflow: "hidden" }}
         >
-          <Tabs value={activeBottomTab} onValueChange={setActiveBottomTab}>
-            <TabsList className="w-full justify-start dark:bg-brand-darker  dark:border-brand-dark border-t  bg-slate-50 rounded-none sticky top-0 -z-0  ">
-              <TabsTrigger value="details" className="rounded-t-md">
-                Details
-              </TabsTrigger>
-              <TabsTrigger value="inlinks" className="rounded-t-md">
-                Inlinks
-              </TabsTrigger>
-              <TabsTrigger value="outlinks" className="rounded-t-md">
-                Outlinks
-              </TabsTrigger>
-              <TabsTrigger value="images" className="rounded-t-md">
-                Images
-              </TabsTrigger>
-              <TabsTrigger value="schema" className="rounded-t-md">
-                Schema
-              </TabsTrigger>
-              <TabsTrigger value="headers" className="rounded-t-md">
-                Headers
-              </TabsTrigger>
-            </TabsList>
+          <Tabs
+            value={activeBottomTab}
+            onValueChange={setActiveBottomTab}
+            className="h-full flex flex-col"
+          >
+            <div className="relative">
+              <TabsList className="w-full justify-start dark:bg-brand-darker dark:border-brand-dark border-t bg-slate-50 rounded-none">
+                <TabsTrigger value="details" className="rounded-t-md">
+                  Details
+                </TabsTrigger>
+                <TabsTrigger value="inlinks" className="rounded-t-md">
+                  Inlinks
+                </TabsTrigger>
+                <TabsTrigger value="outlinks" className="rounded-t-md">
+                  Outlinks
+                </TabsTrigger>
+                <TabsTrigger value="images" className="rounded-t-md">
+                  Images
+                </TabsTrigger>
+                <TabsTrigger value="schema" className="rounded-t-md">
+                  Schema
+                </TabsTrigger>
+                <TabsTrigger value="headers" className="rounded-t-md">
+                  Headers
+                </TabsTrigger>
+                <TabsTrigger value="opengraph" className="rounded-t-md">
+                  OpenGraph
+                </TabsTrigger>
 
-            <TabsContent value="details">
+                {/* Export button for Inlinks tab */}
+                {activeBottomTab === "inlinks" && (
+                  <button
+                    onClick={() => inlinksTableRef.current?.exportCSV?.()}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs border border-brand-bright dark:border-brand-bright px-2 py-0.5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors dark:text-white/80 bg-white dark:bg-brand-dark shadow-sm"
+                  >
+                    Export
+                  </button>
+                )}
+
+                {/* Export button for Outlinks tab */}
+                {activeBottomTab === "outlinks" && (
+                  <button
+                    onClick={() => outlinksTableRef.current?.exportCSV?.()}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs border border-brand-bright dark:border-brand-bright px-2 py-0.5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors dark:text-white/80 bg-white dark:bg-brand-dark shadow-sm"
+                  >
+                    Export
+                  </button>
+                )}
+              </TabsList>
+            </div>
+
+            <TabsContent
+              value="details"
+              className="flex-1 min-h-0 mt-0 overflow-hidden"
+            >
               <DetailsTable
                 data={selectedTableURL}
                 height={bottomTableHeight}
               />
             </TabsContent>
-            <TabsContent value="inlinks" className="relative z-0">
-              <BottomTableContent height={bottomTableHeight}>
-                <InnerLinksDetailsTable data={inlinks} />
-              </BottomTableContent>
+            <TabsContent
+              value="inlinks"
+              className="flex-1 min-h-0 mt-0 overflow-hidden"
+            >
+              <InnerLinksDetailsTable
+                ref={inlinksTableRef}
+                data={inlinks}
+                height={bottomTableHeight}
+              />
             </TabsContent>
-            <TabsContent value="outlinks" className="relative z-0">
-              <BottomTableContent height={bottomTableHeight}>
-                <OuterLinksSubTable data={outlinks} />
-              </BottomTableContent>
+            <TabsContent
+              value="outlinks"
+              className="flex-1 min-h-0 mt-0 overflow-hidden"
+            >
+              <OuterLinksSubTable
+                ref={outlinksTableRef}
+                data={outlinks}
+                height={bottomTableHeight}
+              />
             </TabsContent>
-            <TabsContent value="images">
-              <BottomTableContent height={bottomTableHeight}>
-                <ImagesTable />
-              </BottomTableContent>
+            <TabsContent
+              value="images"
+              className="flex-1 min-h-0 mt-0 overflow-hidden"
+            >
+              <ImagesTable height={bottomTableHeight} />
             </TabsContent>
-            <TabsContent value="schema">
-              <SchemaSubTable height={bottomTableHeight - 50} />
+            <TabsContent
+              value="schema"
+              className="flex-1 min-h-0 mt-0 overflow-hidden"
+            >
+              <SchemaSubTable height={bottomTableHeight} />
             </TabsContent>
 
             <TabsContent
               value="headers"
-              style={{
-                height: `${bottomTableHeight - 35}px`,
-                overflowY: "auto",
-              }}
+              className="flex-1 min-h-0 mt-0 overflow-hidden"
             >
               <ResponseHeaders
                 data={selectedTableURL}
@@ -454,9 +593,16 @@ export default function Home() {
             </TabsContent>
 
             <TabsContent
-              value="innerLinks"
-              className="relative z-0"
-            ></TabsContent>
+              value="opengraph"
+              className="flex-1 min-h-0 mt-0 overflow-hidden"
+            >
+              <OpenGraphPreview height={bottomTableHeight} />
+            </TabsContent>
+
+            {/* <TabsContent */}
+            {/*   value="innerLinks" */}
+            {/*   className="relative z-0" */}
+            {/* ></TabsContent> */}
           </Tabs>
         </div>
       </div>

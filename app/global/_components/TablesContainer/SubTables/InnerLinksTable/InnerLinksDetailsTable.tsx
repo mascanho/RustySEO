@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback, useImperativeHandle, forwardRef } from "react";
 import { message, save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 
@@ -23,10 +23,7 @@ interface InlinksSubTableProps {
   }[];
 }
 
-const InnerLinksDetailsTable: React.FC<InlinksSubTableProps> = ({
-  data,
-  height,
-}) => {
+const InnerLinksDetailsTable = forwardRef<{ exportCSV: () => Promise<void> }, InlinksSubTableProps>(({ data, height }, ref) => {
   const tableRef = useRef<HTMLTableElement>(null);
 
   const urlsWithPageAsInternalLink = data
@@ -166,6 +163,11 @@ const InnerLinksDetailsTable: React.FC<InlinksSubTableProps> = ({
     }
   }, [makeResizable]);
 
+  // Expose exportCSV to parent via ref
+  useImperativeHandle(ref, () => ({
+    exportCSV
+  }));
+
   // Move localStorage access into useEffect to avoid re-renders
   useEffect(() => {
     const isDark = localStorage.getItem("dark-mode");
@@ -219,137 +221,171 @@ const InnerLinksDetailsTable: React.FC<InlinksSubTableProps> = ({
     const normalizedTargetUrl = normalizeUrl(targetUrl);
 
     const anchorTexts = obj?.inoutlinks_status_codes?.internal
-      .filter((item) => {
+      ?.filter((item) => {
         const normalizedItemUrl = normalizeUrl(item.url);
         return normalizedItemUrl === normalizedTargetUrl;
       })
       .map((item) => item.anchor_text);
 
-    return anchorTexts;
+    return [...new Set(anchorTexts)].join(", ");
   }
 
   function getStatusCode(obj, targetUrl) {
     const normalizedTargetUrl = normalizeUrl(targetUrl);
 
-    const statusCodes = obj?.inoutlinks_status_codes?.internal
-      .filter((item) => {
+    const rawStatuses = obj?.inoutlinks_status_codes?.internal
+      ?.filter((item) => {
         const normalizedItemUrl = normalizeUrl(item.url);
         return normalizedItemUrl === normalizedTargetUrl;
       })
       .map((item) => item.status);
 
+    const processedStatuses = new Set<number>();
+
+    // Helper to process a single status value
+    const addStatus = (val: any) => {
+      if (val === null || val === undefined) return;
+      if (Array.isArray(val)) {
+        val.forEach(addStatus);
+        return;
+      }
+
+      const str = String(val).trim();
+      // If it looks like a concatenated status string (e.g. "200200")
+      if (str.length > 3 && /^\d+$/.test(str) && str.length % 3 === 0) {
+        for (let i = 0; i < str.length; i += 3) {
+          const chunk = parseInt(str.substring(i, i + 3), 10);
+          if (!isNaN(chunk)) processedStatuses.add(chunk);
+        }
+      } else {
+        const num = parseInt(str, 10);
+        if (!isNaN(num)) processedStatuses.add(num);
+      }
+    };
+
+    if (Array.isArray(rawStatuses)) {
+      rawStatuses.forEach(addStatus);
+    }
+
+    // Remove 429 as requested
+    processedStatuses.delete(429);
+
+    const uniqueStatusCodes = Array.from(processedStatuses);
+
+    if (uniqueStatusCodes.length === 0) return <span className="text-gray-400">-</span>;
+
     return (
-      <span
-        className={` font-semibold
-
-${statusCodes?.[0] === 200 && "text-green-700"}
-
-${statusCodes?.[0] === 404 && "text-red-700"}
-
-${statusCodes?.[0] === 403 && "text-orange-700"}
-
-`}
-      >
-        {statusCodes}
+      <span className="font-semibold">
+        {uniqueStatusCodes.map((code, idx) => (
+          <React.Fragment key={code}>
+            <span
+              className={`
+                ${code === 200 ? "text-green-700" : ""}
+                ${code === 404 ? "text-red-700" : ""}
+                ${code === 403 ? "text-orange-700" : ""}
+              `}
+            >
+              {code}
+            </span>
+            {idx < uniqueStatusCodes.length - 1 && ", "}
+          </React.Fragment>
+        ))}
       </span>
     );
   }
 
   return (
-    <section
-      className="overflow-auto h-full w-full"
+    <div
+      className="relative w-full flex flex-col"
       style={{
-        height: `${height}px`,
-        minHeight: "100px",
+        height: "100%",
       }}
     >
-      <button
-        onClick={exportCSV}
-        className="absolute -top-6   right-1 z-50 text-xs border border-brand-bright dark:border-brand-bright px-3 h-5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors  dark:text-white/50"
-      >
-        Export
-      </button>
-      <table
-        ref={tableRef}
-        style={{ width: "100%", borderCollapse: "collapse" }}
-      >
-        <thead className="text-xs top-6 sticky">
-          <tr className="shadow">
-            <th
-              style={{
-                width: "20px",
-                textAlign: "center",
-                position: "relative",
-                paddingRight: "10px",
-              }}
-            >
-              ID
-            </th>
-            <th
-              style={{
-                textAlign: "left",
-                position: "relative",
-                minWidth: "230px",
-              }}
-            >
-              From
-            </th>
-            <th
-              style={{
-                textAlign: "left",
-                position: "relative",
-                minWidth: "230px",
-              }}
-            >
-              To
-            </th>
-            <th
-              style={{
-                textAlign: "left",
-                position: "relative",
-                minWidth: "230px",
-              }}
-            >
-              Anchor Text
-            </th>
-            <th
-              style={{
-                textAlign: "center",
-                position: "relative",
-                minWidth: "80px",
-              }}
-            >
-              Status
-            </th>
-          </tr>
-        </thead>
 
-        <tbody>
-          {data?.[1].map((item: any, index: number) => {
-            // Determine the background color class based on the index
-            const rowColorClass =
-              index % 2 === 0
-                ? "bg-gray-50 dark:bg-brand-dark/20"
-                : "bg-white dark:bg-brand-darker";
+      <div className="flex-1 min-h-0 overflow-auto w-full">
+        <table
+          ref={tableRef}
+          className="w-full border-collapse table-fixed text-xs"
+        >
+          <thead className="sticky top-0 z-20">
+            <tr className="shadow bg-white dark:bg-brand-dark">
+              <th
+                className="border border-gray-200 dark:border-gray-700 py-1"
+                style={{
+                  width: "40px",
+                  textAlign: "center",
+                }}
+              >
+                ID
+              </th>
+              <th
+                className="border border-gray-200 dark:border-gray-700 py-1 px-2 text-left"
+                style={{ width: "25%" }}
+              >
+                From
+              </th>
+              <th
+                className="border border-gray-200 dark:border-gray-700 py-1 px-2 text-left"
+                style={{ width: "25%" }}
+              >
+                To
+              </th>
+              <th
+                className="border border-gray-200 dark:border-gray-700 py-1 px-2 text-left"
+                style={{ width: "auto" }} // Flexible width
+              >
+                Anchor Text
+              </th>
+              <th
+                className="border border-gray-200 dark:border-gray-700 py-1 px-2 text-center"
+                style={{ width: "100px" }}
+              >
+                Status
+              </th>
+            </tr>
+          </thead>
 
-            return (
-              <tr key={index} className={`${rowColorClass} text-xs border`}>
-                <td className="text-center border border-l ">{index + 1}</td>
-                <td className="pl-3 border border-l">{item?.url}</td>
-                <td className="pl-3 border border-l">{data?.[0].url}</td>
-                <td className="pl-3 border border-l ">
-                  {getAnchorText(item, data?.[0].url)}
-                </td>
-                <td className="pl-3 text-center">
-                  {getStatusCode(item, data?.[0].url)}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </section>
+          <tbody>
+            {data?.[1].map((item: any, index: number) => {
+              const rowColorClass =
+                index % 2 === 0
+                  ? "bg-gray-50 dark:bg-brand-dark/20"
+                  : "bg-white dark:bg-brand-darker";
+
+              return (
+                <tr key={index} className={`${rowColorClass} border-b dark:border-brand-dark/50 hover:opacity-80`}>
+                  <td className="text-center border-r border-gray-200 dark:border-gray-700 py-1">
+                    {index + 1}
+                  </td>
+                  <td
+                    className="px-2 border-r border-gray-200 dark:border-gray-700 py-1 truncate max-w-0"
+                    title={data?.[0].url}
+                  >
+                    {data?.[0].url}
+                  </td>
+                  <td
+                    className="px-2 border-r border-gray-200 dark:border-gray-700 py-1 truncate max-w-0"
+                    title={item?.url}
+                  >
+                    {item?.url}
+                  </td>
+                  <td
+                    className="px-2 border-r border-gray-200 dark:border-gray-700 py-1 truncate max-w-0"
+                    title={getAnchorText(item, data?.[0].url)}
+                  >
+                    {getAnchorText(item, data?.[0].url)}
+                  </td>
+                  <td className="px-2 text-center py-1">
+                    {getStatusCode(item, data?.[0].url)}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
-};
+});
 
 export default React.memo(InnerLinksDetailsTable);

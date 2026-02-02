@@ -125,7 +125,7 @@ fn should_analyze_with_psi(url: &Url) -> bool {
 
     // Check if it's a homepage/root
     if path.is_empty() || path == "/" {
-        return true; 
+        return true;
     }
 
     // Skip common non-content paths (Blacklist)
@@ -542,16 +542,17 @@ pub async fn fetch_psi_bulk(url: Url, settings: &Settings) -> Result<Vec<Value>,
             Ok(Ok(value)) => {
                 if let Some(lighthouse_result) = value.get("lighthouseResult") {
                     results.push(lighthouse_result.clone());
-                    eprintln!(
+                    tracing::info!(
                         "Successfully fetched PSI data for {} ({})",
-                        url, strategy_str
+                        url,
+                        strategy_str,
                     );
                 } else {
                     errors.push(format!("{}: no lighthouse result", strategy_str));
                 }
             }
             Ok(Err(e)) => {
-                eprintln!("PSI fetch failed for {} ({}): {}", url, strategy_str, e);
+                tracing::error!("PSI fetch failed for {} ({}): {}", url, strategy_str, e);
                 errors.push(format!("{}: {}", strategy_str, e));
             }
             Err(_) => {
@@ -563,7 +564,7 @@ pub async fn fetch_psi_bulk(url: Url, settings: &Settings) -> Result<Vec<Value>,
 
     // Return whatever results we got (even if partial)
     if !results.is_empty() {
-        eprintln!(
+        tracing::error!(
             "PSI completed for {}: {} successes, {} errors",
             url,
             results.len(),
@@ -572,7 +573,7 @@ pub async fn fetch_psi_bulk(url: Url, settings: &Settings) -> Result<Vec<Value>,
         Ok(results)
     } else {
         // All failed but return empty vec to not block crawl
-        eprintln!("All PSI strategies failed for {}: {:?}", url, errors);
+        tracing::error!("All PSI strategies failed for {}: {:?}", url, errors);
         Ok(vec![])
     }
 }

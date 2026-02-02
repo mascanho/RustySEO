@@ -42,7 +42,7 @@
   },
   "productName": "RustySEO",
   "mainBinaryName": "RustySEO",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "identifier": "rustyseo.com",
   "plugins": {},
   "app": {
@@ -51,7 +51,7 @@
       {
         "fullscreen": false,
         "resizable": true,
-        "title": "RustySEO - 0.3.6",
+        "title": "RustySEO - 0.3.7",
         "minWidth": 1600,
         "minHeight": 1000,
         "width": 1800,

@@ -46,6 +46,8 @@ interface CrawlStore {
   deepCrawlTab: string;
   inlinks: string[];
   outlinks: string[];
+  robotsBlocked: string[];
+  cookies: string[];
 
   // Original actions (maintained for backward compatibility)
   setDomainCrawlData: (data: PageDetails[]) => void;
@@ -77,6 +79,8 @@ interface CrawlStore {
   setDeepCrawlTab: (tab: string) => void;
   setInlinks: (links: string[]) => void;
   setOutlinks: (links: string[]) => void;
+  setRobotsBlocked: (links: string[]) => void;
+  setCookies: (cookies: string[]) => void;
   updateStreamingData: (
     result: PageDetails,
     crawledPages: number,
@@ -104,6 +108,8 @@ interface CrawlStore {
       setCrawlSessionTotalArray: (data: string[]) => void;
       setInlinks: (links: string[]) => void;
       setOutlinks: (links: string[]) => void;
+      setRobotsBlocked: (links: string[]) => void;
+      setCookies: (cookies: string[]) => void;
     };
     ui: {
       setGenericChart: (chart: string) => void;
@@ -171,6 +177,8 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
     setDeepCrawlTab: createSetter<string>("deepCrawlTab"),
     setInlinks: createSetter<string[]>("inlinks"),
     setOutlinks: createSetter<string[]>("outlinks"),
+    setRobotsBlocked: createSetter<string[]>("robotsBlocked"),
+    setCookies: createSetter<string[]>("cookies"),
     updateStreamingData: (
       result: PageDetails,
       crawledPages: number,
@@ -214,6 +222,8 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
     deepCrawlTab: "",
     inlinks: [],
     outlinks: [],
+    robotsBlocked: [],
+    cookies: [],
 
     // Original actions (for backward compatibility)
     ...setters,
@@ -239,6 +249,8 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
         setCrawlSessionTotalArray: setters.setCrawlSessionTotalArray,
         setInlinks: setters.setInlinks,
         setOutlinks: setters.setOutlinks,
+        setRobotsBlocked: setters.setRobotsBlocked,
+        setCookies: setters.setCookies,
       },
       ui: {
         setGenericChart: setters.setGenericChart,
@@ -269,6 +281,9 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
               update.progress?.total ?? state.streamedTotalPages,
           })),
       },
+      robots: {
+        setRobotsBlocked: setters.setRobotsBlocked,
+      }
     },
   };
 });
@@ -317,6 +332,16 @@ export const useInlinks = () => {
 
 export const useOutlinks = () => {
   const selector = useCallback((state: CrawlStore) => state.outlinks, []);
+  return useGlobalCrawlStore(selector, shallow);
+};
+
+export const useRobotsBlocked = () => {
+  const selector = useCallback((state: CrawlStore) => state.robotsBlocked, []);
+  return useGlobalCrawlStore(selector, shallow);
+};
+
+export const useCookies = () => {
+  const selector = useCallback((state: CrawlStore) => state.cookies, []);
   return useGlobalCrawlStore(selector, shallow);
 };
 

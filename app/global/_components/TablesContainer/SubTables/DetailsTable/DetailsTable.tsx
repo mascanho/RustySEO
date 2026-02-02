@@ -51,19 +51,18 @@ const DetailsTable = ({ data, height }) => {
 
   return (
     <div
-      className="domainCrawlParent -mt-2  "
+      className="domainCrawlParent flex flex-col"
       style={{
         position: "relative",
-        height: `${height + 80}px `,
+        height: "100%",
         width: "100%",
+        overflow: "hidden"
       }}
     >
       <div
-        className="table-header"
+        className="table-header shrink-0"
         style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 0,
+          zIndex: 10,
           backgroundColor: "#f87171",
         }}
       >
@@ -84,8 +83,9 @@ const DetailsTable = ({ data, height }) => {
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   backgroundColor: "#f87171",
-                  zIndex: 1,
                   width: "260px",
+                  padding: "4px 8px",
+                  color: "#fff"
                 }}
               >
                 Name
@@ -97,7 +97,8 @@ const DetailsTable = ({ data, height }) => {
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   backgroundColor: "#f87171",
-                  zIndex: 1,
+                  padding: "4px 8px",
+                  color: "#fff"
                 }}
               >
                 Value
@@ -107,9 +108,9 @@ const DetailsTable = ({ data, height }) => {
         </table>
       </div>
       <div
+        className="flex-1"
         style={{
           overflow: "auto",
-          height: `calc(100% - 125px)`,
           width: "100%",
           padding: "0 0 3px 0",
         }}
@@ -230,7 +231,7 @@ const DetailsTable = ({ data, height }) => {
                         padding: "2px 0",
                       }}
                     >
-                      {anchorItem?.title?.[0]?.title.length || ""}
+                      {anchorItem?.title?.[0]?.title?.length || ""}
                     </td>
                   </tr>
                   <tr>
@@ -513,7 +514,7 @@ const DetailsTable = ({ data, height }) => {
                         padding: "2px 0",
                       }}
                     >
-                      {(anchorItem?.text_ratio?.[0]?.text_ratio).toFixed(1) ||
+                      {anchorItem?.text_ratio?.[0]?.text_ratio?.toFixed(1) ||
                         ""}
                     </td>
                   </tr>
@@ -677,8 +678,8 @@ const DetailsTable = ({ data, height }) => {
                         padding: "2px 0",
                       }}
                     >
-                      {anchorItem?.page_size?.[0]?.length
-                        ? anchorItem?.page_size[0].length + " bytes"
+                      {typeof anchorItem?.page_size?.[0]?.length === 'number'
+                        ? anchorItem.page_size[0].length.toLocaleString() + " bytes"
                         : "N/A"}
                     </td>
                   </tr>
@@ -706,8 +707,8 @@ const DetailsTable = ({ data, height }) => {
                         padding: "2px 0",
                       }}
                     >
-                      {anchorItem?.page_size?.[0]?.kb
-                        ? anchorItem?.page_size[0].kb + " KB"
+                      {typeof anchorItem?.page_size?.[0]?.kb === 'number'
+                        ? anchorItem.page_size[0].kb.toLocaleString() + " KB"
                         : "N/A"}
                     </td>
                   </tr>
@@ -738,6 +739,33 @@ const DetailsTable = ({ data, height }) => {
                       {anchorItem?.response_time
                         ? anchorItem?.response_time + " ms"
                         : "N/A"}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td
+                      style={{
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        border: "1px solid #ddd",
+                        padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
+                      }}
+                    >
+                      URL Depth
+                    </td>
+                    <td
+                      style={{
+                        textAlign: "left",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        border: "1px solid #ddd",
+                        padding: "2px 0",
+                      }}
+                    >
+                      {anchorItem?.url_depth ?? "N/A"}
                     </td>
                   </tr>
                   {anchorItem?.hreflangs?.map((lang) => (
@@ -795,7 +823,72 @@ const DetailsTable = ({ data, height }) => {
                     >
                       {anchorItem?.language || ""}
                     </td>
-                  </tr>{" "}
+                  </tr>
+                  {Object.entries(anchorItem?.opengraph || {}).map(([key, value]) => (
+                    <tr key={key}>
+                      <td
+                        style={{
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          border: "1px solid #ddd",
+                          padding: "2px 0",
+                          width: "260px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {"OG: " + key}
+                      </td>
+                      <td
+                        style={{
+                          textAlign: "left",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          border: "1px solid #ddd",
+                          padding: "2px 0",
+                        }}
+                      >
+                        {value}
+                      </td>
+                    </tr>
+                  ))}
+                  <tr>
+                    <td
+                      style={{
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        border: "1px solid #ddd",
+                        padding: "2px 0",
+                        width: "260px",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Cookies
+                    </td>
+                    <td
+                      style={{
+                        textAlign: "left",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        border: "1px solid #ddd",
+                        padding: "2px 0",
+                      }}
+                    >
+                      {(anchorItem?.cookies?.Ok || anchorItem?.cookies || [])
+                        .map((c) => c.toString().split("=")[0])
+                        .map((name, i) => (
+                          <span
+                            key={i}
+                            className="bg-gray-100 dark:bg-brand-dark border dark:border-white/10 dark:text-gray-300 px-2 py-0.5 rounded text-xs mr-2 inline-block my-0.5"
+                          >
+                            {name}
+                          </span>
+                        ))}
+                    </td>
+                  </tr>
                 </React.Fragment>
               );
             })}

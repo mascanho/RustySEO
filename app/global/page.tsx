@@ -51,6 +51,7 @@ export default function Page() {
     setIssuesData,
     setFinishedDeepCrawl,
     setCrawlSessionTotalArray,
+    setRobotsBlocked,
   } = useGlobalCrawlStore();
   const { setIsGlobalCrawling, setIsFinishedDeepCrawl } =
     useGlobalConsoleStore();
@@ -100,6 +101,7 @@ export default function Page() {
       setDomainCrawlLoading(true);
       setIssuesData([]);
       clearDomainCrawlData();
+      setRobotsBlocked([]);
       setIsGlobalCrawling(true);
 
       const result = await invoke("domain_crawl_command", { domain: url });
@@ -110,6 +112,21 @@ export default function Page() {
       setDomainCrawlLoading(false);
       setIsFinishedDeepCrawl(true);
       setIsGlobalCrawling(false);
+
+      // Add URL to the Localstorage history URLs
+      const storedUrls = localStorage.getItem("searchHistory");
+      const urls = JSON.parse(storedUrls || "[]");
+
+      if (urls.length >= 10) {
+        urls.shift();
+      }
+
+      if (urls.includes(url)) {
+        return;
+      }
+
+      urls.push(url);
+      localStorage.setItem("searchHistory", JSON.stringify(urls));
 
       // Get the differences between crawls
       const diff = await invoke("get_url_diff_command");
@@ -130,12 +147,12 @@ export default function Page() {
 
   // Event listener for crawl results
   useEffect(() => {
-    console.log("Initializing crawl event listener...");
+    console.log("Initializing crawl event listeners...");
 
     const unlistenPromise = listen("crawl_result", (event) => {
       // The payload structure is { result: DomainCrawlResults }
       const payload = event.payload;
-      console.log("Payload:", payload);
+      // console.log("Payload:", payload);
 
       if (payload && typeof payload === "object") {
         const result = payload.result;
@@ -157,9 +174,30 @@ export default function Page() {
       // console.log("📈 Progress:", event.payload);
     }).catch(console.error);
 
-    listen("crawl_complete", () => {
-      console.log("🏁 Crawl complete!", result);
-    }).catch(console.error);
+    listen("crawl_complete", (event) => {
+      console.log("🏁 Crawl complete event received!");
+      console.log("🏁 Crawl complete payload:", event.payload);
+
+      // @ts-ignore
+      if (event.payload && event.payload.robots_blocked) {
+        // @ts-ignore
+        setRobotsBlocked(event.payload.robots_blocked);
+      }
+    }).catch((error) => {
+      console.error("Failed to setup crawl_complete listener:", error);
+    });
+
+    listen("robots_blocked", (event) => {
+      console.log("🚫 Robot Blocked URLs received:", event.payload);
+      if (Array.isArray(event.payload)) {
+        // @ts-ignore
+        setRobotsBlocked(event.payload);
+      }
+    }).catch((error) => {
+      console.error("Failed to setup robots_blocked listener:", error);
+    });
+
+    console.log("✅ Crawl event listeners registered");
 
     return () => {
       unlistenPromise
@@ -197,6 +235,8 @@ export default function Page() {
 
     check_psi_status();
   }, []);
+
+  console.log(crawlData, "CRAWL DATA");
 
   return (
     <main className="flex h-full w-full">

@@ -21,6 +21,9 @@ export const initialColumnWidths = [
   "100px", //  Indexability
   "70px", //  Language
   "70px", //  Schema
+  "70px", //  Depth
+  "70px", //  OpenGraph
+  "70px", //  Cookies
 ];
 
 export const initialColumnAlignments = [
@@ -45,6 +48,9 @@ export const initialColumnAlignments = [
   "left", //  Indexability
   "center", //  Language
   "center", //  Schema
+  "center", //  Depth
+  "center", //  OpenGraph
+  "center", //  Cookies
 ];
 
 export const headerTitles = [
@@ -69,4 +75,7 @@ export const headerTitles = [
   "Indexability",
   "Language",
   "Schema",
+  "Depth",
+  "OpenGraph",
+  "Cookies",
 ];
