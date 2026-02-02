@@ -167,7 +167,9 @@ async fn get_links_status_code_with_config(
     let semaphore = Arc::new(Semaphore::new(config.concurrent_requests));
     let base_url_arc = Arc::new(base_url.clone());
     let page_arc = Arc::new(page);
-    let seen_urls = Arc::new(Mutex::new(HashSet::with_capacity(config.initial_task_capacity)));
+    let seen_urls = Arc::new(Mutex::new(HashSet::with_capacity(
+        config.initial_task_capacity,
+    )));
 
     let mut tasks: Vec<JoinHandle<Option<(LinkStatus, bool)>>> =
         Vec::with_capacity(config.initial_task_capacity);
@@ -395,7 +397,8 @@ async fn fetch_with_retry(
 
         // Exponential backoff with jitter
         let base_delay = config.retry_delay_ms * 2u64.pow(attempt as u32 - 1);
-        let jitter = (base_delay as f32 * config.jitter_factor * rand::random_range(-1.0..1.0)) as i64;
+        let jitter =
+            (base_delay as f32 * config.jitter_factor * rand::random_range(-1.0..1.0)) as i64;
         let delay = (base_delay as i64 + jitter).max(0) as u64;
         sleep(Duration::from_millis(delay)).await;
     }
@@ -482,7 +485,6 @@ fn handle_success_response(
     }
 }
 
-#[allow(dead_code)]
 #[allow(dead_code)]
 fn is_internal(url_to_check: &str, base_url: &Url) -> bool {
     Url::parse(url_to_check)
