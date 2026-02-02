@@ -542,7 +542,7 @@ pub async fn fetch_psi_bulk(url: Url, settings: &Settings) -> Result<Vec<Value>,
             Ok(Ok(value)) => {
                 if let Some(lighthouse_result) = value.get("lighthouseResult") {
                     results.push(lighthouse_result.clone());
-                    tracing::info(
+                    tracing::info!(
                         "Successfully fetched PSI data for {} ({})",
                         url,
                         strategy_str,

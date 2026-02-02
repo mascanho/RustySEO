@@ -324,14 +324,14 @@ const Footer = () => {
               </div>
 
               {/*TERMINAL/STATUS*/}
-              <div className="relative group hover:delay-1000">
+              {/*<div className="relative group hover:delay-1000">
                 <button className="pt-[2px]">
                   <FaTerminal />
                 </button>
                 <div className="absolute bottom-[calc(100%+5px)] left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-[9px] rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity delay-1000 whitespace-nowrap">
                   Terminal Logs
                 </div>
-              </div>
+              </div>*/}
 
               {/* SYSTEM SETTINGS */}
               <div className="relative group hover:delay-1000">
