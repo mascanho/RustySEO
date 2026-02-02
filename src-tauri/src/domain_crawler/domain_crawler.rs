@@ -14,6 +14,7 @@ use tokio::time::{sleep, Duration};
 use url::Url;
 
 use crate::domain_crawler::helpers::domain_checker::url_check;
+use crate::domain_crawler::helpers::favicon;
 use crate::domain_crawler::helpers::robots::{self, get_domain_robots};
 use crate::AppState;
 
@@ -57,28 +58,40 @@ pub async fn crawl_domain(
 
     let app_handle_clone = app_handle.clone();
 
-    // GET THE ROBOTS
-    let robots_blocked = {
-        let urls_blocked_in_robots = robots::get_urls_from_robots(&base_url).await;
-        let blocked = urls_blocked_in_robots.unwrap_or_default();
+    // INITIAL DATA FETCHING (Robots.txt)
+    let robots_data = robots::get_robots_data(&domain).await;
+    let robots_blocked = robots_data.as_ref().map(|d| d.blocked_urls.clone()).unwrap_or_default();
+    
+    // Emit initial blocked info
+    let _ = app_handle.emit("robots_blocked", &robots_blocked);
 
-        if let Err(err) = app_handle.emit("robots_blocked", &blocked) {
-            eprintln!("Failed to emit robots_blocked: {}", err);
+    // BACKGROUND TASKS (UI Updates & Favicon)
+    let app_handle_for_spawn = app_handle.clone();
+    let domain_clone = domain.clone();
+    
+    tokio::spawn(async move {
+        // Run favicon check in parallel with UI updates
+        let favicon_task = favicon::get_favicon(&domain_clone);
+        
+        // Emit robots raw text immediately if we already have it
+        if let Some(data) = robots_data {
+            if let Err(err) = app_handle_for_spawn.emit("robots", (&domain_clone, data.raw_text)) {
+                eprintln!("Failed to emit robots data: {}", err);
+            }
+        } else {
+             let _ = app_handle_for_spawn.emit("robots", (&domain_clone, vec!["No robots.txt found".to_string()]));
         }
 
-        blocked
-    };
-
-    // Spawn a task that checks for the robots files
-    tokio::spawn(async move {
-        let robots_str = get_domain_robots(&domain)
-            .await
-            .unwrap_or_else(|| vec!["No robots.txt found".to_string()]);
-
-        if let Err(err) = app_handle_clone.emit("robots", (&domain, robots_str)) {
-            eprintln!("Failed to emit robots data: {}", err);
-        } else {
-            tracing::info!("Robots emitted for {}", &domain);
+        // Wait for favicon
+        let favicon_result = favicon_task.await;
+        
+        match favicon_result {
+            Ok(favicon_url) => {
+                let _ = app_handle_for_spawn.emit("favicon", (&domain_clone, favicon_url));
+            }
+            Err(_) => {
+                let _ = app_handle_for_spawn.emit("favicon", (&domain_clone, ""));
+            }
         }
     });
 

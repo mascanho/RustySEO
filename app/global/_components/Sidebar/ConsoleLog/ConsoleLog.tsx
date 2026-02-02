@@ -200,7 +200,7 @@ export default function ConsoleLog() {
       {/* App-standard header style */}
       <section className="w-full flex justify-end bg-gradient-to-r from-gray-100 to-white font-bold sticky top-0 py-1 dark:bg-gradient-to-l dark:from-brand-darker dark:to-blue-950/40 shadow dark:text-blue-500 flex-none z-10 px-2 uppercase tracking-tighter">
         <div className="w-full pl-2">System Diagnostic</div>
-        <div className="w-[10.5em] text-right pr-4">Status</div>
+        {/*<div className="w-[10.5em] text-right pr-4">Status</div>*/}
       </section>
 
       <ScrollArea className="flex-1">
@@ -208,7 +208,7 @@ export default function ConsoleLog() {
           {items.map((item) => (
             <div
               key={item.id}
-              className="flex flex-col border-b dark:border-b-brand-dark hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors"
+              className="flex flex-col border-b border-b-gray-100 dark:border-b-brand-dark/40 hover:bg-zinc-50 dark:hover:bg-white/5 transition-colors"
             >
               <div className="flex items-center text-[11px] w-full px-2 py-2 justify-between">
                 <div className="w-2/3 pl-2 flex items-center gap-2">
@@ -254,7 +254,7 @@ export default function ConsoleLog() {
       </ScrollArea>
 
       {/* Standard sidebar footer */}
-      <div className="flex items-center text-[10px] font-mono justify-between px-4 py-1.5 bg-zinc-100 dark:bg-zinc-800/50 border-t dark:border-zinc-700 flex-none">
+      <div className="flex items-center text-[10px] font-mono justify-between px-4 py-1.5 bg-zinc-100 dark:bg-zinc-800/50 border-t dark:border-zinc-700/80 flex-none">
         <UptimeTimer />
         <div className="flex items-center gap-2">
           <div

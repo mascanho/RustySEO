@@ -15,7 +15,8 @@ interface InputZoneProps {
 const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
   const { loaders, showLoader, hideLoader } = useLoaderStore();
   const [url, setUrl] = useState("");
-  const { setCrawlData, domainCrawlLoading, crawlData } = useGlobalCrawlStore();
+  const { setCrawlData, domainCrawlLoading, crawlData, favicon } =
+    useGlobalCrawlStore();
   const [historyUrls, setHistoryUrls] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const historyRef = useRef<HTMLDivElement>(null);
@@ -80,7 +81,19 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
       <section className="flex items-center justify-end mx-auto relative w-full max-w-[40rem] border-r border-l pl-4 dark:border-l-brand-dark dark:border-r-brand-dark h-full pr-4">
         <div className="flex items-center w-full">
           <div className="relative flex items-center ml-2 flex-grow">
-            <CiGlobe className="absolute ml-3 text-gray-400" />
+            {favicon ? (
+              <img
+                src={favicon}
+                alt="Favicon"
+                className="absolute ml-3 w-4 h-4 rounded-sm object-contain z-10"
+                onError={(e) => {
+                  // Fallback if image fails to load
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            ) : (
+              <CiGlobe className="absolute ml-3 text-gray-400" />
+            )}
             <input
               type="url"
               required
@@ -106,7 +119,7 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
                     className="top-0.5 right-4 z-[32423454] w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin cursor-pointer"
                     role="status"
                     aria-label="loading"
-                    // onClick={() => window.location.reload()}
+                  // onClick={() => window.location.reload()}
                   />
                 ) : (
                   "Crawl"

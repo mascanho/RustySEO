@@ -8,6 +8,7 @@ pub mod cross_origin;
 pub mod css_selector;
 pub mod domain_checker;
 pub mod extract_url_pattern;
+pub mod favicon;
 pub mod fetch_with_exponential;
 pub mod flesch_reader;
 pub mod headings_selector;

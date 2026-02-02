@@ -48,6 +48,7 @@ interface CrawlStore {
   outlinks: string[];
   robotsBlocked: string[];
   cookies: string[];
+  favicon: string[];
 
   // Original actions (maintained for backward compatibility)
   setDomainCrawlData: (data: PageDetails[]) => void;
@@ -81,6 +82,7 @@ interface CrawlStore {
   setOutlinks: (links: string[]) => void;
   setRobotsBlocked: (links: string[]) => void;
   setCookies: (cookies: string[]) => void;
+  setFavicon: (favicon: string) => void;
   updateStreamingData: (
     result: PageDetails,
     crawledPages: number,
@@ -110,6 +112,7 @@ interface CrawlStore {
       setOutlinks: (links: string[]) => void;
       setRobotsBlocked: (links: string[]) => void;
       setCookies: (cookies: string[]) => void;
+      setFavicon: (favicon: string) => void;
     };
     ui: {
       setGenericChart: (chart: string) => void;
@@ -135,8 +138,8 @@ interface CrawlStore {
 // Utility function to create setters dynamically
 const createSetter =
   <T>(key: keyof CrawlStore) =>
-    (value: T) =>
-      useGlobalCrawlStore.setState({ [key]: value } as any);
+  (value: T) =>
+    useGlobalCrawlStore.setState({ [key]: value } as any);
 
 // Create the Zustand store
 const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
@@ -179,6 +182,8 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
     setOutlinks: createSetter<string[]>("outlinks"),
     setRobotsBlocked: createSetter<string[]>("robotsBlocked"),
     setCookies: createSetter<string[]>("cookies"),
+    setFavicon: createSetter<string>("favicon"),
+
     updateStreamingData: (
       result: PageDetails,
       crawledPages: number,
@@ -224,6 +229,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
     outlinks: [],
     robotsBlocked: [],
     cookies: [],
+    favicon: "",
 
     // Original actions (for backward compatibility)
     ...setters,
@@ -251,6 +257,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
         setOutlinks: setters.setOutlinks,
         setRobotsBlocked: setters.setRobotsBlocked,
         setCookies: setters.setCookies,
+        setFavicon: setters.setFavicon,
       },
       ui: {
         setGenericChart: setters.setGenericChart,
@@ -272,7 +279,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           set((state) => ({
             crawlData:
               update.result &&
-                !state.crawlData.some((item) => item.url === update.result.url)
+              !state.crawlData.some((item) => item.url === update.result.url)
                 ? [...state.crawlData, update.result]
                 : state.crawlData,
             streamedCrawledPages:
@@ -283,7 +290,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
       },
       robots: {
         setRobotsBlocked: setters.setRobotsBlocked,
-      }
+      },
     },
   };
 });
@@ -321,7 +328,10 @@ export const useIssuesData = () => {
 };
 
 export const useSelectedTableURL = () => {
-  const selector = useCallback((state: CrawlStore) => state.selectedTableURL, []);
+  const selector = useCallback(
+    (state: CrawlStore) => state.selectedTableURL,
+    [],
+  );
   return useGlobalCrawlStore(selector, shallow);
 };
 
@@ -342,6 +352,11 @@ export const useRobotsBlocked = () => {
 
 export const useCookies = () => {
   const selector = useCallback((state: CrawlStore) => state.cookies, []);
+  return useGlobalCrawlStore(selector, shallow);
+};
+
+export const useFavicon = () => {
+  const selector = useCallback((state: CrawlStore) => state.favicon, []);
   return useGlobalCrawlStore(selector, shallow);
 };
 

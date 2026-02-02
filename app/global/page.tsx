@@ -52,6 +52,7 @@ export default function Page() {
     setFinishedDeepCrawl,
     setCrawlSessionTotalArray,
     setRobotsBlocked,
+    setFavicon,
   } = useGlobalCrawlStore();
   const { setIsGlobalCrawling, setIsFinishedDeepCrawl } =
     useGlobalConsoleStore();
@@ -102,6 +103,7 @@ export default function Page() {
       setIssuesData([]);
       clearDomainCrawlData();
       setRobotsBlocked([]);
+      setFavicon("");
       setIsGlobalCrawling(true);
 
       const result = await invoke("domain_crawl_command", { domain: url });
@@ -195,6 +197,16 @@ export default function Page() {
       }
     }).catch((error) => {
       console.error("Failed to setup robots_blocked listener:", error);
+    });
+
+    listen("favicon", (event) => {
+      console.log("🖼 Favicon received:", event.payload);
+      if (Array.isArray(event.payload)) {
+        // @ts-ignore
+        setFavicon(event.payload[1]);
+      }
+    }).catch((error) => {
+      console.error("Failed to setup favicon listener:", error);
     });
 
     console.log("✅ Crawl event listeners registered");
