@@ -5,163 +5,212 @@ import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import useLoaderStore from "@/store/loadersStore";
 import { CiGlobe } from "react-icons/ci";
 import { IoIosClose } from "react-icons/io";
-import React, { useEffect, useRef, useState } from "react";
-import { FiGlobe } from "react-icons/fi";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import { FiGlobe, FiSearch, FiTrash2, FiClock } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface InputZoneProps {
-  handleDomainCrawl: (url: string) => void; // Fixed prop type
+  handleDomainCrawl: (url: string) => void;
 }
 
 const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
-  const { loaders, showLoader, hideLoader } = useLoaderStore();
   const [url, setUrl] = useState("");
-  const { setCrawlData, domainCrawlLoading, crawlData, favicon } =
-    useGlobalCrawlStore();
+  const { domainCrawlLoading, crawlData, favicon } = useGlobalCrawlStore();
   const [historyUrls, setHistoryUrls] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const historyRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(event.target.value.toLowerCase());
   };
 
   const handleKeyPress = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      console.log("Sending to crawl:", url);
-      handleDomainCrawl(url);
+    if (event.key === "Enter" && url.trim() && !domainCrawlLoading) {
+      handleDomainCrawl(url.trim());
       setShowHistory(false);
+      inputRef.current?.blur();
     }
   };
 
   const handleButtonCrawl = () => {
-    handleDomainCrawl(url);
-    setShowHistory(false);
+    if (url.trim() && !domainCrawlLoading) {
+      handleDomainCrawl(url.trim());
+      setShowHistory(false);
+      inputRef.current?.blur();
+    }
   };
 
-  // GET THE HISTORY URLS FROM LOCALSTORAGE
-  function getHistoryUrls() {
+  const getHistoryUrls = useCallback(() => {
     const history = localStorage.getItem("searchHistory");
     if (history) {
-      const parsedHistory = JSON.parse(history);
-      // console.log("History:", parsedHistory);
-      setHistoryUrls(parsedHistory);
+      try {
+        const parsed = JSON.parse(history);
+        setHistoryUrls(Array.isArray(parsed) ? parsed : []);
+      } catch (e) {
+        setHistoryUrls([]);
+      }
     }
-    return [];
-  }
+  }, []);
 
-  const handleDeleteHistory = (urlToDelete: string) => {
-    const updatedHistory = historyUrls.filter((url) => url !== urlToDelete);
+  const handleDeleteHistory = (urlToDelete: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updatedHistory = historyUrls.filter((u) => u !== urlToDelete);
     setHistoryUrls(updatedHistory);
     localStorage.setItem("searchHistory", JSON.stringify(updatedHistory));
   };
 
   useEffect(() => {
     getHistoryUrls();
-  }, [crawlData]);
+  }, [crawlData, getHistoryUrls]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        historyRef.current &&
-        !historyRef.current.contains(event.target as Node)
-      ) {
+      if (historyRef.current && !historyRef.current.contains(event.target as Node)) {
         setShowHistory(false);
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
-    <div className="fixed top-[28px] left-0 right-0 z-[2000] h-11 border-b  bg-white dark:bg-brand-darker flex items-center px-4 dark:border-b-brand-dark">
+    <div className="fixed top-[28px] left-0 right-0 z-[2000] h-11 border-b bg-white/95 dark:bg-brand-darker/98 backdrop-blur-md flex items-center px-4 border-gray-100 dark:border-brand-dark transition-all duration-300 shadow-sm">
       <MenuDrawer />
-      <section className="flex items-center justify-end mx-auto relative w-full max-w-[40rem] border-r border-l pl-4 dark:border-l-brand-dark dark:border-r-brand-dark h-full pr-4">
-        <div className="flex items-center w-full">
-          <div className="relative flex items-center ml-2 flex-grow">
-            {favicon ? (
-              <img
-                src={favicon}
-                alt="Favicon"
-                className="absolute ml-3 w-4 h-4 rounded-sm object-contain z-10"
-                onError={(e) => {
-                  // Fallback if image fails to load
-                  e.currentTarget.style.display = "none";
-                }}
-              />
-            ) : (
-              <CiGlobe className="absolute ml-3 text-gray-400" />
-            )}
-            <input
-              type="url"
-              required
-              placeholder="www.yourwebsite.com"
-              value={url}
-              onClick={() => setShowHistory(!showHistory)}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyPress}
-              className="w-full h-7 text-xs pl-8 rounded-l-md bg-slate-100 dark:bg-blue-900/5 dark:bg-brand-darker dark:border dark:border-white/20 dark:text-white placeholder:text-gray-500 border rounded-r-md lowercase "
-              style={{ outline: "none", boxShadow: "none" }}
-            />
-            <IoIosClose
-              onClick={() => setUrl("")}
-              className={`absolute cursor-pointer right-[5.5rem] z-[10000] bottom-1.5 text-red-500 inline-block ${url ? "block" : "hidden"}`}
-            />
-            <button
-              onClick={handleButtonCrawl}
-              className="rounded w-20 active:scale-95 text-sm relative inline-flex group py-[3px] items-center justify-center ml-3 cursor-pointer border-b-4 border-l-2 active:border-blue-600 active:shadow-none bg-gradient-to-tr from-brand-bright to-blue-500 border-blue-700 text-white"
-            >
-              <span className="relative text-xs">
-                {domainCrawlLoading ? (
-                  <div
-                    className="top-0.5 right-4 z-[32423454] w-4 h-4 border-2 border-t-transparent border-white rounded-full animate-spin cursor-pointer"
-                    role="status"
-                    aria-label="loading"
-                    // onClick={() => window.location.reload()}
+
+      <section className="flex-1 max-w-2xl mx-auto px-4 lg:px-10 transition-all duration-300">
+        <div className="relative group">
+          <div className={cn(
+            "relative flex items-center h-8.5 w-full rounded-xl transition-all duration-500 border overflow-hidden",
+            isFocused
+              ? "border-brand-bright/50 ring-2 ring-brand-bright/10 bg-white dark:bg-brand-dark shadow-lg"
+              : "border-gray-200/50 dark:border-white/5 bg-gray-50/30 dark:bg-zinc-900/40 hover:border-gray-300 dark:hover:border-white/10"
+          )}>
+
+            {/* Favicon or Globe Container */}
+            <div className="flex items-center justify-center w-10 h-full">
+              <AnimatePresence mode="wait">
+                {favicon ? (
+                  <motion.img
+                    key="favicon"
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.5, opacity: 0 }}
+                    src={favicon}
+                    alt=""
+                    className="w-4 h-4 rounded-sm object-contain"
+                    onError={(e) => { e.currentTarget.style.display = "none"; }}
                   />
                 ) : (
-                  "Crawl"
+                  <motion.div
+                    key="globe"
+                    initial={{ scale: 0.5, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.5, opacity: 0 }}
+                  >
+                    <CiGlobe className={cn("w-4 h-4 transition-colors duration-300", isFocused ? "text-brand-bright" : "text-gray-400")} />
+                  </motion.div>
                 )}
-              </span>
-            </button>
-            {showHistory && historyUrls.length > 0 && (
-              <section
-                ref={historyRef}
-                className="absolute dark:bg-brand-darker border dark:border-white/20 top-8 left-0 z-[10000] bg-white dark:bg-gray-900 shadow-lg w-[32.5rem] rounded-lg overflow-hidden"
+              </AnimatePresence>
+            </div>
+
+            <input
+              ref={inputRef}
+              type="url"
+              placeholder="Analyze domain..."
+              value={url}
+              onFocus={() => { setIsFocused(true); setShowHistory(true); }}
+              onBlur={() => setIsFocused(false)}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyPress}
+              className="flex-1 h-full bg-transparent text-[11px] text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-600 outline-none font-medium"
+            />
+
+            {/* Content Actions */}
+            <div className="flex items-center gap-1.5 pr-1">
+              <AnimatePresence>
+                {url && (
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    onClick={() => { setUrl(""); inputRef.current?.focus(); }}
+                    className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 transition-colors"
+                  >
+                    <IoIosClose className="w-4 h-4" />
+                  </motion.button>
+                )}
+              </AnimatePresence>
+
+              <button
+                disabled={domainCrawlLoading || !url.trim()}
+                onClick={handleButtonCrawl}
+                className={cn(
+                  "flex items-center justify-center gap-1.5 h-6.5 px-4 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed",
+                  "bg-brand-bright hover:bg-brand-bright/90 text-white shadow-sm border border-brand-bright/20"
+                )}
               >
-                <div className="max-h-48 overflow-y-auto">
-                  {historyUrls.map((historyUrl, index) => (
-                    <div
-                      key={index}
-                      className="group flex items-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-150 border-b border-gray-200 dark:border-gray-700 last:border-b-0"
+                {domainCrawlLoading ? (
+                  <div className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <FiSearch className="text-[10px] stroke-[3px]" />
+                    <span>Analyze</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Enhanced History Dropdown */}
+          <AnimatePresence>
+            {showHistory && historyUrls.length > 0 && (
+              <motion.div
+                ref={historyRef}
+                initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                animate={{ opacity: 1, y: 12, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                className="absolute left-0 right-0 z-[10000] bg-white dark:bg-brand-dark border border-gray-200 dark:border-brand-dark shadow-2xl rounded-2xl overflow-hidden p-1.5"
+              >
+                <div className="flex items-center justify-between px-3 py-2 mb-1 opacity-50">
+                  <div className="flex items-center gap-2">
+                    <FiClock className="text-[10px]" />
+                    <span className="text-[9px] font-bold uppercase tracking-[0.2em]">Crawl History</span>
+                  </div>
+                </div>
+
+                <div className="max-h-[320px] overflow-y-auto custom-scrollbar space-y-0.5">
+                  {historyUrls.map((hUrl, index) => (
+                    <motion.div
+                      key={hUrl}
+                      initial={{ opacity: 0, x: -5 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.03 }}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => { setUrl(hUrl); handleDomainCrawl(hUrl); setShowHistory(false); }}
+                      className="group flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-all cursor-pointer border border-transparent hover:border-gray-100 dark:hover:border-white/5"
                     >
-                      <span
-                        className="flex-1 text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-4 py-2 cursor-pointer truncate transition-colors duration-150 hover:font-semibold"
-                        onClick={(e) => {
-                          handleDomainCrawl(historyUrl);
-                          setUrl(historyUrl);
-                          setShowHistory(false);
-                        }}
-                      >
-                        <div className="flex items-center">
-                          <FiGlobe className="mr-2" />
-                          {historyUrl}
-                        </div>
-                      </span>
+                      <div className="flex items-center gap-3 overflow-hidden ml-1">
+                        <FiGlobe className="w-4 h-4 text-gray-300 group-hover:text-brand-bright transition-colors flex-none" />
+                        <span className="text-xs text-gray-600 dark:text-zinc-400 truncate font-semibold group-hover:text-black dark:group-hover:text-zinc-100">
+                          {hUrl}
+                        </span>
+                      </div>
                       <button
-                        onClick={() => handleDeleteHistory(historyUrl)}
-                        className="opacity-0 group-hover:opacity-100 text-xs text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 px-3 py-3 transition-all duration-150"
+                        onClick={(e) => handleDeleteHistory(hUrl, e)}
+                        className="p-2 opacity-0 group-hover:opacity-100 hover:bg-rose-500/10 text-gray-300 hover:text-rose-500 rounded-lg transition-all"
                       >
-                        Delete
+                        <FiTrash2 className="w-3.5 h-3.5" />
                       </button>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
-              </section>
+              </motion.div>
             )}
-          </div>
+          </AnimatePresence>
         </div>
       </section>
     </div>
