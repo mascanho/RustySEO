@@ -6,7 +6,13 @@ import useLoaderStore from "@/store/loadersStore";
 import { CiGlobe } from "react-icons/ci";
 import { IoIosClose } from "react-icons/io";
 import React, { useEffect, useRef, useState, useCallback } from "react";
-import { FiGlobe, FiSearch, FiTrash2, FiClock } from "react-icons/fi";
+import {
+  FiGlobe,
+  FiSearch,
+  FiTrash2,
+  FiClock,
+  FiCornerDownLeft,
+} from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -68,7 +74,10 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (historyRef.current && !historyRef.current.contains(event.target as Node)) {
+      if (
+        historyRef.current &&
+        !historyRef.current.contains(event.target as Node)
+      ) {
         setShowHistory(false);
       }
     }
@@ -77,40 +86,52 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
   }, []);
 
   return (
-    <div className="fixed top-[28px] left-0 right-0 z-[2000] h-11 border-b bg-white/95 dark:bg-brand-darker/98 backdrop-blur-md flex items-center px-4 border-gray-100 dark:border-brand-dark transition-all duration-300 shadow-sm">
+    <div className="fixed top-[28px] left-0 right-0 z-[2000] h-11 border-b bg-white/95 dark:bg-brand-darker/98 backdrop-blur-md flex items-center px-4 border-gray-100 dark:border-brand-dark transition-all duration-300 shadow-sm dark:bg-brand-darker">
       <MenuDrawer />
 
-      <section className="flex-1 max-w-2xl mx-auto px-4 lg:px-10 transition-all duration-300">
+      <section className="flex-1 max-w-2xl mx-auto px-4 lg:px-6 transition-all duration-300">
         <div className="relative group">
-          <div className={cn(
-            "relative flex items-center h-8.5 w-full rounded-xl transition-all duration-500 border overflow-hidden",
-            isFocused
-              ? "border-brand-bright/50 ring-2 ring-brand-bright/10 bg-white dark:bg-brand-dark shadow-lg"
-              : "border-gray-200/50 dark:border-white/5 bg-gray-50/30 dark:bg-zinc-900/40 hover:border-gray-300 dark:hover:border-white/10"
-          )}>
-
-            {/* Favicon or Globe Container */}
-            <div className="flex items-center justify-center w-10 h-full border-r border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/5">
+          <div
+            className={cn(
+              "relative flex items-center h-8.5 w-full rounded-xl transition-all duration-500 border overflow-hidden",
+              isFocused
+                ? "border-brand-bright/40 ring-[3px] ring-brand-bright/5 bg-white dark:bg-brand-darker shadow-[0_4px_20px_rgba(0,0,0,0.03)]"
+                : "border-gray-200/60 dark:border-white/5 bg-gray-50/30 dark:bg-black/20 hover:border-gray-300 dark:hover:border-white/10",
+            )}
+          >
+            {/* Favicon Area with Separator */}
+            <div className="flex items-center justify-center w-10 overflow-hidden  h-full border-r border-gray-100 dark:border-white/5 bg-gray-100/10 dark:bg-brand-darker">
               <AnimatePresence mode="wait">
                 {favicon ? (
-                  <motion.img
-                    key="favicon"
-                    initial={{ scale: 0.5, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.5, opacity: 0 }}
-                    src={favicon}
-                    alt=""
-                    className="w-4 h-4 rounded-sm object-contain"
-                    onError={(e) => { e.currentTarget.style.display = "none"; }}
-                  />
+                  <div className="bg-slate-100 h-8 w-full flex justify-center">
+                    <motion.img
+                      key="favicon"
+                      initial={{ scale: 0.6, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.6, opacity: 0 }}
+                      src={favicon}
+                      alt=""
+                      className="w-4  rounded-sm object-contain"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  </div>
                 ) : (
                   <motion.div
                     key="globe"
-                    initial={{ scale: 0.5, opacity: 0 }}
+                    initial={{ scale: 0.6, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.5, opacity: 0 }}
+                    exit={{ scale: 0.6, opacity: 0 }}
                   >
-                    <CiGlobe className={cn("w-4 h-4 transition-colors duration-300", isFocused ? "text-brand-bright" : "text-gray-400")} />
+                    <CiGlobe
+                      className={cn(
+                        "w-4 h-7 transition-colors duration-300",
+                        isFocused
+                          ? "text-brand-bright"
+                          : "text-gray-400 dark:text-gray-500",
+                      )}
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -121,11 +142,14 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
               type="url"
               placeholder="Analyze domain..."
               value={url}
-              onFocus={() => { setIsFocused(true); setShowHistory(true); }}
+              onFocus={() => {
+                setIsFocused(true);
+                setShowHistory(true);
+              }}
               onBlur={() => setIsFocused(false)}
               onChange={handleInputChange}
               onKeyDown={handleKeyPress}
-              className="flex-1 h-full bg-transparent text-[11px] text-gray-900 dark:text-zinc-100 placeholder:text-gray-400 dark:placeholder:text-zinc-600 outline-none font-medium px-3"
+              className="flex-1 h-full bg-transparent text-[11px] text-gray-900 dark:text-brand-normal placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none font-medium px-3"
             />
 
             {/* Content Actions */}
@@ -136,7 +160,10 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.8 }}
-                    onClick={() => { setUrl(""); inputRef.current?.focus(); }}
+                    onClick={() => {
+                      setUrl("");
+                      inputRef.current?.focus();
+                    }}
                     className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-rose-500/10 text-gray-400 hover:text-rose-500 transition-colors"
                   >
                     <IoIosClose className="w-5 h-5" />
@@ -148,68 +175,82 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
                 disabled={domainCrawlLoading || !url.trim()}
                 onClick={handleButtonCrawl}
                 className={cn(
-                  "flex items-center justify-center gap-1.5 h-6 px-4 rounded-[8px] text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 disabled:cursor-not-allowed",
+                  "relative group/btn flex items-center justify-center gap-2 h-6 px-4 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95 disabled:cursor-not-allowed",
                   domainCrawlLoading
-                    ? "bg-white dark:bg-zinc-800 border border-gray-200 dark:border-white/10 shadow-none"
-                    : "bg-brand-bright hover:bg-blue-600 text-white shadow-sm disabled:opacity-30 disabled:grayscale"
+                    ? "bg-white dark:bg-brand-dark px-4 border border-gray-200 dark:border-white/10 shadow-none text-brand-bright w-14"
+                    : "bg-brand-bright hover:bg-blue-600 text-white shadow-sm border border-brand-bright/20 disabled:opacity-30 disabled:grayscale w-14",
                 )}
               >
                 {domainCrawlLoading ? (
-                  <div className="relative w-3.5 h-3.5">
+                  <div className="relative w-4 h-4">
                     <div className="absolute inset-0 border-2 border-brand-bright/10 rounded-full"></div>
                     <div className="absolute inset-0 border-2 border-t-brand-bright rounded-full animate-spin"></div>
                   </div>
                 ) : (
                   <>
-                    <FiSearch className="text-[10px] stroke-[3px]" />
-                    <span>Analyze</span>
+                    <span>CRAWL </span>
                   </>
                 )}
               </button>
             </div>
           </div>
 
-          {/* Enhanced History Dropdown */}
+          {/* Premium History Dropdown */}
           <AnimatePresence>
             {showHistory && historyUrls.length > 0 && (
               <motion.div
                 ref={historyRef}
-                initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                animate={{ opacity: 1, y: 12, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.98 }}
-                className="absolute left-0 right-0 z-[10000] bg-white dark:bg-brand-dark border border-gray-200 dark:border-brand-dark shadow-2xl rounded-2xl overflow-hidden p-1.5"
+                initial={{
+                  opacity: 0,
+                  y: 10,
+                  scale: 0.99,
+                  filter: "blur(4px)",
+                }}
+                animate={{ opacity: 1, y: 12, scale: 1, filter: "blur(0px)" }}
+                exit={{ opacity: 0, y: 10, scale: 0.99, filter: "blur(4px)" }}
+                className="absolute left-0 right-0 z-[10000] bg-white dark:bg-brand-darker border border-gray-200 dark:border-brand-dark shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-2xl overflow-hidden p-1.5"
               >
-                <div className="flex items-center justify-between px-3 py-2 mb-1 opacity-50">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between px-3 py-1.5 mb-1.5 border-b border-gray-100 dark:border-white/5">
+                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                     <FiClock className="text-[10px]" />
-                    <span className="text-[9px] font-bold uppercase tracking-[0.2em]">Crawl History</span>
+                    <span className="text-[9px] font-bold uppercase tracking-[0.2em]">
+                      Recently Crawled
+                    </span>
                   </div>
                 </div>
 
-                <div className="max-h-[320px] overflow-y-auto custom-scrollbar space-y-0.5">
+                <div className="max-h-[300px] overflow-y-auto custom-scrollbar space-y-0.5">
                   {historyUrls.map((hUrl, index) => (
                     <motion.div
                       key={hUrl}
-                      initial={{ opacity: 0, x: -5 }}
+                      initial={{ opacity: 0, x: -4 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.03 }}
+                      transition={{ delay: index * 0.02 }}
                       role="button"
                       tabIndex={0}
-                      onClick={() => { setUrl(hUrl); handleDomainCrawl(hUrl); setShowHistory(false); }}
-                      className="group flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-all cursor-pointer border border-transparent hover:border-gray-100 dark:hover:border-white/5"
+                      onClick={() => {
+                        setUrl(hUrl);
+                        handleDomainCrawl(hUrl);
+                        setShowHistory(false);
+                      }}
+                      className="group flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-all cursor-pointer border border-transparent hover:border-gray-100 dark:hover:border-white/5"
                     >
                       <div className="flex items-center gap-3 overflow-hidden ml-1">
-                        <FiGlobe className="w-4 h-4 text-gray-300 group-hover:text-brand-bright transition-colors flex-none" />
-                        <span className="text-xs text-gray-600 dark:text-zinc-400 truncate font-semibold group-hover:text-black dark:group-hover:text-zinc-100">
+                        <div className="w-5 h-5 rounded-lg bg-gray-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-brand-bright/10 transition-colors">
+                          <FiGlobe className="w-3 h-3 text-gray-400 dark:text-gray-600 group-hover:text-brand-bright transition-colors" />
+                        </div>
+                        <span className="text-[11px] text-gray-600 dark:text-gray-400 truncate font-semibold group-hover:text-black dark:group-hover:text-brand-normal">
                           {hUrl}
                         </span>
                       </div>
-                      <button
-                        onClick={(e) => handleDeleteHistory(hUrl, e)}
-                        className="p-2 opacity-0 group-hover:opacity-100 hover:bg-rose-500/10 text-gray-300 hover:text-rose-500 rounded-lg transition-all"
-                      >
-                        <FiTrash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                        <button
+                          onClick={(e) => handleDeleteHistory(hUrl, e)}
+                          className="p-1.5 hover:bg-rose-500/10 text-gray-300 dark:text-gray-600 hover:text-rose-500 rounded-lg transition-all"
+                        >
+                          <FiTrash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </motion.div>
                   ))}
                 </div>
