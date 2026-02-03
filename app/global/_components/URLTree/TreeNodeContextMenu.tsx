@@ -96,7 +96,8 @@ const TreeNodeContextMenu: React.FC<TreeNodeContextMenuProps> = ({
         const finalUrl = link.replace("${url}", encodeURIComponent(url));
         await openExternalUrl(finalUrl);
       } catch (err) {
-        toast.error("Failed to open external tool");
+        console.error("Failed to open external tool:", err);
+        toast.error(`Failed to open external tool: ${err}`);
       }
     }
   };
@@ -157,7 +158,7 @@ const TreeNodeContextMenu: React.FC<TreeNodeContextMenuProps> = ({
                 <IconBrandGoogle size={14} className="text-red-500" />
               }
               onClick={() =>
-                openExternal(`https://pagespeed.web.dev/analysis?url=${url}`)
+                openExternal('https://pagespeed.web.dev/analysis?url=${url}')
               }
               className="dark:text-gray-200 dark:hover:bg-brand-darker text-xs py-1.5"
             >
@@ -168,7 +169,7 @@ const TreeNodeContextMenu: React.FC<TreeNodeContextMenuProps> = ({
               leftSection={<IconSearch size={14} className="text-blue-400" />}
               onClick={() =>
                 openExternal(
-                  `https://search.google.com/test/rich-results?url=${url}`,
+                  'https://search.google.com/test/rich-results?url=${url}',
                 )
               }
               className="dark:text-gray-200 dark:hover:bg-brand-darker text-xs py-1.5"
@@ -182,7 +183,7 @@ const TreeNodeContextMenu: React.FC<TreeNodeContextMenuProps> = ({
               }
               onClick={() =>
                 openExternal(
-                  `https://securityheaders.com/?q=${url}&followRedirects=on`,
+                  'https://securityheaders.com/?q=${url}&followRedirects=on',
                 )
               }
               className="dark:text-gray-200 dark:hover:bg-brand-darker text-xs py-1.5"
@@ -214,7 +215,7 @@ const TreeNodeContextMenu: React.FC<TreeNodeContextMenuProps> = ({
                   }
                   onClick={() =>
                     openExternal(
-                      `https://developers.facebook.com/tools/debug/?q=${url}`,
+                      'https://developers.facebook.com/tools/debug/?q=${url}',
                     )
                   }
                   className="dark:text-gray-200 dark:hover:bg-brand-darker text-xs"
@@ -226,7 +227,7 @@ const TreeNodeContextMenu: React.FC<TreeNodeContextMenuProps> = ({
                     <IconBrandTwitter size={14} className="text-sky-400" />
                   }
                   onClick={() =>
-                    openExternal(`https://cards-dev.twitter.com/validator`)
+                    openExternal('https://cards-dev.twitter.com/validator')
                   }
                   className="dark:text-gray-200 dark:hover:bg-brand-darker text-xs"
                 >
@@ -238,7 +239,7 @@ const TreeNodeContextMenu: React.FC<TreeNodeContextMenuProps> = ({
                   }
                   onClick={() =>
                     openExternal(
-                      `https://www.linkedin.com/post-inspector/inspect/${url}`,
+                      'https://www.linkedin.com/post-inspector/inspect/${url}',
                     )
                   }
                   className="dark:text-gray-200 dark:hover:bg-brand-darker text-xs"
@@ -271,7 +272,7 @@ const TreeNodeContextMenu: React.FC<TreeNodeContextMenuProps> = ({
                     <IconCode size={14} className="text-amber-500" />
                   }
                   onClick={() =>
-                    openExternal(`https://validator.schema.org/#url=${url}`)
+                    openExternal('https://validator.schema.org/#url=${url}')
                   }
                   className="dark:text-gray-200 dark:hover:bg-brand-darker text-xs"
                 >
@@ -280,7 +281,7 @@ const TreeNodeContextMenu: React.FC<TreeNodeContextMenuProps> = ({
                 <Menu.Item
                   leftSection={<IconCode size={14} className="text-blue-500" />}
                   onClick={() =>
-                    openExternal(`https://validator.w3.org/nu/?doc=${url}`)
+                    openExternal('https://validator.w3.org/nu/?doc=${url}')
                   }
                   className="dark:text-gray-200 dark:hover:bg-brand-darker text-xs"
                 >
@@ -291,7 +292,7 @@ const TreeNodeContextMenu: React.FC<TreeNodeContextMenuProps> = ({
                     <IconArchive size={14} className="text-gray-400" />
                   }
                   onClick={() =>
-                    openExternal(`https://web.archive.org/web/*/${url}`)
+                    openExternal('https://web.archive.org/web/*/${url}')
                   }
                   className="dark:text-gray-200 dark:hover:bg-brand-darker text-xs"
                 >

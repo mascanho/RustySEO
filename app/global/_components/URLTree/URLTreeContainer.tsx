@@ -118,35 +118,24 @@ const URLTreeContainer = () => {
   }
 
   return (
-    <div className="h-full overflow-visible bg-white dark:bg-brand-darker custom-scrollbar ">
-      <div className="sticky top-0 z-10 bg-white dark:bg-brand-darker px-2 pt-2  mb-1 border-b dark:border-brand-dark relative">
-        <div className="flex items-center justify-between mb-1">
-          <h2 className="text-xs font-bold dark:text-white flex items-center gap-1">
-            <IconWorld size={14} className="text-blue-500" />
-            Site Tree
-          </h2>
+    <div className="h-full flex flex-col bg-white dark:bg-brand-darker overflow-hidden">
+      <div className="flex-none p-3 border-b dark:border-brand-dark bg-gray-50/50 dark:bg-brand-dark/20 z-10">
+        <div className="flex items-center justify-between">
+          <div className="flex flex-col">
+            <h2 className="text-sm font-bold dark:text-white flex items-center gap-1.5">
+              <IconWorld size={16} className="text-blue-500" />
+              Site Tree
+            </h2>
+            <span className="text-[10px] text-gray-500 dark:text-gray-400">
+              Visualizing {stats.totalPages} pages in {stats.totalFolders} folders
+            </span>
+          </div>
 
-          <div className="flex items-center gap-2 text-xs">
-            <Tooltip label="Total pages" position="bottom" withArrow>
-              <div className="flex items-center gap-1 cursor-help bg-blue-50 dark:bg-blue-900/20 px-1.5 py-0.5 rounded">
-                <IconFiles size={10} className="text-blue-500" />
-                <span className="font-bold text-blue-600 dark:text-blue-400">
-                  {stats.totalPages}
-                </span>
-              </div>
-            </Tooltip>
-            <Tooltip label="Total folders" position="bottom" withArrow>
-              <div className="flex items-center gap-1 cursor-help bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded">
-                <IconFolders size={10} className="text-amber-500" />
-                <span className="font-bold text-amber-600 dark:text-amber-400">
-                  {stats.totalFolders}
-                </span>
-              </div>
-            </Tooltip>
+          <div className="flex items-center gap-2">
             <Tooltip label="Maximum depth" position="bottom" withArrow>
-              <div className="flex items-center gap-1 cursor-help bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-0.5 rounded">
+              <div className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full border border-emerald-100 dark:border-emerald-500/30">
                 <IconArrowsVertical size={10} className="text-emerald-500" />
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                <span className="font-bold text-[10px] text-emerald-600 dark:text-emerald-400">
                   {stats.maxDepth}
                 </span>
               </div>
@@ -155,7 +144,7 @@ const URLTreeContainer = () => {
         </div>
       </div>
 
-      <div className="px-2">
+      <div className="flex-1 overflow-y-auto px-2 custom-scrollbar py-3">
         <Tree
           data={treeData}
           levelOffset={16}

@@ -46,7 +46,7 @@ const TopContainer = () => {
           <ConsoleLog />
         </Tabs.Panel>
 
-        <Tabs.Panel value="tree" className="flex-1 overflow-auto">
+        <Tabs.Panel value="tree" className="flex-1 overflow-hidden">
           <URLTreeContainer />
         </Tabs.Panel>
       </Tabs>
