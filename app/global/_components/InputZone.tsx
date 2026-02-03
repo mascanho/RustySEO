@@ -89,8 +89,8 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
     <div className="fixed top-[28px] left-0 right-0 z-[2000] h-11 border-b bg-white/95 dark:bg-brand-darker/98 backdrop-blur-md flex items-center px-4 border-gray-100 dark:border-brand-dark transition-all duration-300 shadow-sm dark:bg-brand-darker">
       <MenuDrawer />
 
-      <section className="flex-1 max-w-2xl mx-auto px-4 lg:px-6 transition-all duration-300">
-        <div className="relative group">
+      <section className="flex-1 max-w-2xl mx-auto px-4 lg:px-6 transition-all duration-300 border-l h-full border-r flex items-center dark:border-brand-dark w-full">
+        <div className="relative group w-full">
           <div
             className={cn(
               "relative flex items-center h-8.5 w-full rounded-xl transition-all duration-500 border overflow-hidden",
@@ -196,67 +196,60 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
           </div>
 
           {/* Premium History Dropdown */}
-          <AnimatePresence>
-            {showHistory && historyUrls.length > 0 && (
-              <motion.div
-                ref={historyRef}
-                initial={{
-                  opacity: 0,
-                  y: 10,
-                  scale: 0.99,
-                  filter: "blur(4px)",
-                }}
-                animate={{ opacity: 1, y: 12, scale: 1, filter: "blur(0px)" }}
-                exit={{ opacity: 0, y: 10, scale: 0.99, filter: "blur(4px)" }}
-                className="absolute left-0 right-0 z-[10000] bg-white dark:bg-brand-darker border border-gray-200 dark:border-brand-dark shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-2xl overflow-hidden p-1.5"
-              >
-                <div className="flex items-center justify-between px-3 py-1.5 mb-1.5 border-b border-gray-100 dark:border-white/5">
-                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                    <FiClock className="text-[10px]" />
-                    <span className="text-[9px] font-bold uppercase tracking-[0.2em]">
-                      Recently Crawled
-                    </span>
-                  </div>
+          {showHistory && historyUrls.length > 0 && (
+            <div
+              ref={historyRef}
+              initial={{
+                opacity: 0,
+                y: 10,
+                scale: 0.99,
+                filter: "blur(4px)",
+              }}
+              animate={{ opacity: 1, y: 12, scale: 1, filter: "blur(0px)" }}
+              exit={{ opacity: 0, y: 10, scale: 0.99, filter: "blur(4px)" }}
+              className="absolute left-0 right-0 z-[10000] bg-white dark:bg-brand-darker border border-gray-200 dark:border-brand-dark shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-2xl overflow-hidden p-1.5"
+            >
+              <div className="flex items-center justify-between px-3 py-1.5 mb-1.5 border-b border-gray-100 dark:border-white/5">
+                <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                  <FiClock className="text-[10px]" />
+                  <span className="text-[9px] font-bold uppercase tracking-[0.2em]">
+                    Recently Crawled
+                  </span>
                 </div>
+              </div>
 
-                <div className="max-h-[300px] overflow-y-auto custom-scrollbar space-y-0.5">
-                  {historyUrls.map((hUrl, index) => (
-                    <motion.div
-                      key={hUrl}
-                      initial={{ opacity: 0, x: -4 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.02 }}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => {
-                        setUrl(hUrl);
-                        handleDomainCrawl(hUrl);
-                        setShowHistory(false);
-                      }}
-                      className="group flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-all cursor-pointer border border-transparent hover:border-gray-100 dark:hover:border-white/5"
-                    >
-                      <div className="flex items-center gap-3 overflow-hidden ml-1">
-                        <div className="w-5 h-5 rounded-lg bg-gray-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-brand-bright/10 transition-colors">
-                          <FiGlobe className="w-3 h-3 text-gray-400 dark:text-gray-600 group-hover:text-brand-bright transition-colors" />
-                        </div>
-                        <span className="text-[11px] text-gray-600 dark:text-gray-400 truncate font-semibold group-hover:text-black dark:group-hover:text-brand-normal">
-                          {hUrl}
-                        </span>
+              <div className="max-h-[300px] overflow-y-auto custom-scrollbar space-y-0.5">
+                {historyUrls.map((hUrl, index) => (
+                  <div
+                    key={index}
+                    onClick={() => {
+                      setUrl(hUrl);
+                      handleDomainCrawl(hUrl);
+                      setShowHistory(false);
+                    }}
+                    className="group flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-all cursor-pointer border border-transparent hover:border-gray-100 dark:hover:border-white/5"
+                  >
+                    <div className="flex items-center gap-3 overflow-hidden ml-1">
+                      <div className="w-5 h-5 rounded-lg bg-gray-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-brand-bright/10 transition-colors">
+                        <FiGlobe className="w-3 h-3 text-gray-400 dark:text-gray-600 group-hover:text-brand-bright transition-colors" />
                       </div>
-                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                        <button
-                          onClick={(e) => handleDeleteHistory(hUrl, e)}
-                          className="p-1.5 hover:bg-rose-500/10 text-gray-300 dark:text-gray-600 hover:text-rose-500 rounded-lg transition-all"
-                        >
-                          <FiTrash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                      <span className="text-[11px] text-gray-600 dark:text-gray-400 truncate font-semibold group-hover:text-black dark:group-hover:text-brand-normal">
+                        {hUrl}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                      <button
+                        onClick={(e) => handleDeleteHistory(hUrl, e)}
+                        className="p-1.5 hover:bg-rose-500/10 text-gray-300 dark:text-gray-600 hover:text-rose-500 rounded-lg transition-all"
+                      >
+                        <FiTrash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </section>
     </div>
