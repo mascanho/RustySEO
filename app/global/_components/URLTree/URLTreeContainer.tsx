@@ -119,19 +119,34 @@ const URLTreeContainer = () => {
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-brand-darker overflow-hidden">
-      <div className="flex-none p-3 border-b dark:border-brand-dark bg-gray-50/50 dark:bg-brand-dark/20 z-10">
+      <div className="flex-none px-3 py-2 border-b dark:border-brand-dark bg-gray-50/50 dark:bg-brand-dark/20 z-10">
         <div className="flex items-center justify-between">
           <div className="flex flex-col">
             <h2 className="text-sm font-bold dark:text-white flex items-center gap-1.5">
               <IconWorld size={16} className="text-blue-500" />
               Site Tree
             </h2>
-            <span className="text-[10px] text-gray-500 dark:text-gray-400">
-              Visualizing {stats.totalPages} pages in {stats.totalFolders} folders
-            </span>
           </div>
 
           <div className="flex items-center gap-2">
+            <Tooltip label="Total pages" position="bottom" withArrow>
+              <div className="flex items-center gap-1 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full border border-blue-100 dark:border-blue-500/30">
+                <IconFiles size={10} className="text-blue-500" />
+                <span className="font-bold text-[10px] text-blue-600 dark:text-blue-400">
+                  {stats.totalPages}
+                </span>
+              </div>
+            </Tooltip>
+
+            <Tooltip label="Total folders" position="bottom" withArrow>
+              <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-full border border-amber-100 dark:border-amber-500/30">
+                <IconFolders size={10} className="text-amber-500" />
+                <span className="font-bold text-[10px] text-amber-600 dark:text-amber-400">
+                  {stats.totalFolders}
+                </span>
+              </div>
+            </Tooltip>
+
             <Tooltip label="Maximum depth" position="bottom" withArrow>
               <div className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-full border border-emerald-100 dark:border-emerald-500/30">
                 <IconArrowsVertical size={10} className="text-emerald-500" />
@@ -144,7 +159,7 @@ const URLTreeContainer = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2 custom-scrollbar py-3">
+      <div className="flex-1 overflow-y-auto px-2 custom-scrollbar py-2">
         <Tree
           data={treeData}
           levelOffset={16}

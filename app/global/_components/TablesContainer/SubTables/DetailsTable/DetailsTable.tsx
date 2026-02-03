@@ -58,7 +58,7 @@ const DetailsTable = ({ data, height }) => {
         position: "relative",
         height: "100%",
         width: "100%",
-        overflow: "hidden"
+        overflow: "hidden",
       }}
     >
       <div
@@ -87,7 +87,7 @@ const DetailsTable = ({ data, height }) => {
                   backgroundColor: "#f87171",
                   width: "260px",
                   padding: "4px 8px",
-                  color: "#fff"
+                  color: "#fff",
                 }}
               >
                 Name
@@ -100,7 +100,7 @@ const DetailsTable = ({ data, height }) => {
                   textOverflow: "ellipsis",
                   backgroundColor: "#f87171",
                   padding: "4px 8px",
-                  color: "#fff"
+                  color: "#fff",
                 }}
               >
                 Value
@@ -179,11 +179,7 @@ const DetailsTable = ({ data, height }) => {
                           padding: "4px 8px",
                         }}
                       >
-                        <img
-                          src={favicon}
-                          alt="Favicon"
-                          className="w-4 h-4 rounded-sm object-contain"
-                        />
+                        {favicon ? favicon : ""}
                       </td>
                     </tr>
                   )}
@@ -712,8 +708,9 @@ const DetailsTable = ({ data, height }) => {
                         padding: "2px 0",
                       }}
                     >
-                      {typeof anchorItem?.page_size?.[0]?.length === 'number'
-                        ? anchorItem.page_size[0].length.toLocaleString() + " bytes"
+                      {typeof anchorItem?.page_size?.[0]?.length === "number"
+                        ? anchorItem.page_size[0].length.toLocaleString() +
+                          " bytes"
                         : "N/A"}
                     </td>
                   </tr>
@@ -741,7 +738,7 @@ const DetailsTable = ({ data, height }) => {
                         padding: "2px 0",
                       }}
                     >
-                      {typeof anchorItem?.page_size?.[0]?.kb === 'number'
+                      {typeof anchorItem?.page_size?.[0]?.kb === "number"
                         ? anchorItem.page_size[0].kb.toLocaleString() + " KB"
                         : "N/A"}
                     </td>
@@ -858,35 +855,37 @@ const DetailsTable = ({ data, height }) => {
                       {anchorItem?.language || ""}
                     </td>
                   </tr>
-                  {Object.entries(anchorItem?.opengraph || {}).map(([key, value]) => (
-                    <tr key={key}>
-                      <td
-                        style={{
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          border: "1px solid #ddd",
-                          padding: "2px 0",
-                          width: "260px",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {"OG: " + key}
-                      </td>
-                      <td
-                        style={{
-                          textAlign: "left",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          border: "1px solid #ddd",
-                          padding: "2px 0",
-                        }}
-                      >
-                        {value}
-                      </td>
-                    </tr>
-                  ))}
+                  {Object.entries(anchorItem?.opengraph || {}).map(
+                    ([key, value]) => (
+                      <tr key={key}>
+                        <td
+                          style={{
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            border: "1px solid #ddd",
+                            padding: "2px 0",
+                            width: "260px",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {"OG: " + key}
+                        </td>
+                        <td
+                          style={{
+                            textAlign: "left",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            border: "1px solid #ddd",
+                            padding: "2px 0",
+                          }}
+                        >
+                          {value}
+                        </td>
+                      </tr>
+                    ),
+                  )}
                   <tr>
                     <td
                       style={{
