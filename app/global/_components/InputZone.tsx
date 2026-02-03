@@ -103,7 +103,7 @@ const InputZone = ({ handleDomainCrawl }: InputZoneProps) => {
             <div className="flex items-center justify-center w-10 overflow-hidden  h-full border-r border-gray-100 dark:border-white/5 bg-gray-100/10 dark:bg-brand-darker">
               <AnimatePresence mode="wait">
                 {favicon ? (
-                  <div className="bg-slate-100 h-8 w-full flex justify-center">
+                  <div className="bg-slate-100 dark:bg-brand-dark h-8 w-full flex justify-center">
                     <motion.img
                       key="favicon"
                       initial={{ scale: 0.6, opacity: 0 }}
