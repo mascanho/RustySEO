@@ -113,6 +113,7 @@ interface CrawlStore {
       setRobotsBlocked: (links: string[]) => void;
       setCookies: (cookies: string[]) => void;
       setFavicon: (favicon: string) => void;
+      selectURL: (url: string) => void;
     };
     ui: {
       setGenericChart: (chart: string) => void;
@@ -138,8 +139,8 @@ interface CrawlStore {
 // Utility function to create setters dynamically
 const createSetter =
   <T>(key: keyof CrawlStore) =>
-  (value: T) =>
-    useGlobalCrawlStore.setState({ [key]: value } as any);
+    (value: T) =>
+      useGlobalCrawlStore.setState({ [key]: value } as any);
 
 // Create the Zustand store
 const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
@@ -258,6 +259,51 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
         setRobotsBlocked: setters.setRobotsBlocked,
         setCookies: setters.setCookies,
         setFavicon: setters.setFavicon,
+        selectURL: (url: string) => {
+          const state = get();
+          const rows = state.crawlData;
+          const pageData = rows.find((item) => item.url === url);
+          if (!pageData) return;
+
+          setters.setSelectedTableURL([pageData]);
+
+          const normalizeUrl = (url: string) => {
+            if (!url) return "";
+            try {
+              let u = url.toString().trim().toLowerCase();
+              u = u.replace(/^(?:https?:\/\/)?/i, "");
+              u = u.replace(/^www\./i, "");
+              const queryIdx = u.indexOf("?");
+              if (queryIdx !== -1) u = u.substring(0, queryIdx);
+              const hashIdx = u.indexOf("#");
+              if (hashIdx !== -1) u = u.substring(0, hashIdx);
+              if (u.endsWith("/")) u = u.slice(0, -1);
+              return u;
+            } catch (e) {
+              return "";
+            }
+          };
+
+          const targetUrlNormalized = normalizeUrl(url);
+          const innerLinksMatched = rows.filter((r) => {
+            const internalLinks = r?.inoutlinks_status_codes?.internal || [];
+            return internalLinks.some(
+              (link: any) => normalizeUrl(link?.url) === targetUrlNormalized,
+            );
+          });
+
+          setters.setInlinks([{ url }, innerLinksMatched]);
+
+          const allOutgoingLinks = [];
+          if (pageData.inoutlinks_status_codes?.internal) {
+            allOutgoingLinks.push(...pageData.inoutlinks_status_codes.internal);
+          }
+          if (pageData.inoutlinks_status_codes?.external) {
+            allOutgoingLinks.push(...pageData.inoutlinks_status_codes.external);
+          }
+
+          setters.setOutlinks([{ url }, allOutgoingLinks]);
+        },
       },
       ui: {
         setGenericChart: setters.setGenericChart,
@@ -279,7 +325,7 @@ const useGlobalCrawlStore = create<CrawlStore>((set, get) => {
           set((state) => ({
             crawlData:
               update.result &&
-              !state.crawlData.some((item) => item.url === update.result.url)
+                !state.crawlData.some((item) => item.url === update.result.url)
                 ? [...state.crawlData, update.result]
                 : state.crawlData,
             streamedCrawledPages:

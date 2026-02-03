@@ -5,7 +5,7 @@ export const changelogData = [
     type: "feature",
     changes: [
       "Deep Crawler: Javascript Crawling",
-      "Deep Crawler: Tree view",
+      "Deep Crawler: Tree view with context menu",
       "Deep Crawler: Improved Issues tab",
       "Deep Crawler: Improved Queries tab ",
       "PPC simulator: Improved UI",
