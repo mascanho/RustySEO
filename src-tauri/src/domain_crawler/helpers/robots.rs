@@ -1,33 +1,16 @@
 use reqwest::Client;
 use url::Url;
 
-pub async fn get_domain_robots(base_url: &Url) -> Option<Vec<String>> {
-    let client = Client::new();
-    let robots_url = base_url.join("robots.txt").unwrap();
-
-    let response = client.get(robots_url.clone()).send().await.ok()?;
-
-    if response.status() != 200 {
-        return None;
-    }
-
-    let body = response.text().await.ok()?;
-    if body.is_empty() {
-        return None;
-    } else {
-        let mut vec_robot = vec![];
-        let robots = body;
-        vec_robot.push(robots);
-        Some(vec_robot)
-    }
+pub struct RobotsData {
+    pub raw_text: Vec<String>,
+    pub blocked_urls: Vec<String>,
 }
 
-pub async fn get_urls_from_robots(base_url: &Url) -> Option<Vec<String>> {
+pub async fn get_robots_data(base_url: &Url) -> Option<RobotsData> {
     let client = Client::new();
-    let robots_url = base_url.join("robots.txt").unwrap();
+    let robots_url = base_url.join("robots.txt").ok()?;
 
-    let response = client.get(robots_url.clone()).send().await.ok()?;
-
+    let response = client.get(robots_url).send().await.ok()?;
     if response.status() != 200 {
         return None;
     }
@@ -42,21 +25,26 @@ pub async fn get_urls_from_robots(base_url: &Url) -> Option<Vec<String>> {
 
     for line in lines {
         let line = line.trim();
-
         if line.to_lowercase().starts_with("disallow:") {
-            let path = line["Disallow:".len()..].trim();
+            let path = line["disallow:".len()..].trim();
             if !path.is_empty() {
-                let full_url = base_url.join(path).ok()?;
-                blocked_urls.push(full_url.to_string());
+                if let Ok(full_url) = base_url.join(path) {
+                    blocked_urls.push(full_url.to_string());
+                }
             }
         }
     }
 
-    tracing::warn!("Blocked URLs: {:#?}", &blocked_urls);
+    Some(RobotsData {
+        raw_text: vec![body],
+        blocked_urls,
+    })
+}
 
-    if blocked_urls.is_empty() {
-        None
-    } else {
-        Some(blocked_urls)
-    }
+pub async fn get_domain_robots(base_url: &Url) -> Option<Vec<String>> {
+    get_robots_data(base_url).await.map(|d| d.raw_text)
+}
+
+pub async fn get_urls_from_robots(base_url: &Url) -> Option<Vec<String>> {
+    get_robots_data(base_url).await.map(|d| d.blocked_urls)
 }

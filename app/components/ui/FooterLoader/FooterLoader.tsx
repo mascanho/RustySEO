@@ -120,7 +120,7 @@ const FooterLoader = () => {
         URLs crawled (
         {Math.min(progress.percentageCrawled || 0, 100).toFixed(0)}
         %){crawlCompleted ? "" : ""}
-        <div className="h-5 mx-2  bg-black/50 w-[1px] dark:bg-white/50 " />
+        <div className="h-5 mx-2  bg-black/50 w-[1px] dark:bg-white/20 " />
         <span className="text-white bg-brand-bright dark:bg-brand-bright px-2 text-[10px] rounded-sm">
           {crawlCompleted ? " Complete!" : ""}
         </span>

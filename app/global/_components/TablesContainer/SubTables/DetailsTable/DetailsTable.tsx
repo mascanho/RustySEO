@@ -1,8 +1,10 @@
 // @ts-nocheck
 import React, { useEffect, useRef } from "react";
+import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 
 const DetailsTable = ({ data, height }) => {
   const tableBodyRef = useRef(null);
+  const { favicon } = useGlobalCrawlStore();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -153,6 +155,38 @@ const DetailsTable = ({ data, height }) => {
                       {anchorItem?.url}
                     </td>
                   </tr>
+                  {favicon && (
+                    <tr>
+                      <td
+                        style={{
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          border: "1px solid #ddd",
+                          width: "260px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Favicon
+                      </td>
+                      <td
+                        style={{
+                          textAlign: "left",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          border: "1px solid #ddd",
+                          padding: "4px 8px",
+                        }}
+                      >
+                        <img
+                          src={favicon}
+                          alt="Favicon"
+                          className="w-4 h-4 rounded-sm object-contain"
+                        />
+                      </td>
+                    </tr>
+                  )}
                   <tr>
                     <td
                       style={{

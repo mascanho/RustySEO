@@ -74,6 +74,14 @@ export default function Home() {
     shallow,
   );
 
+  // Sync `activeTab` with `deepCrawlTab` when it changes from outside
+  const { deepCrawlTab: storeDeepCrawlTab } = useGlobalCrawlStore();
+  useEffect(() => {
+    if (storeDeepCrawlTab && storeDeepCrawlTab !== activeTab) {
+      setActiveTab(storeDeepCrawlTab);
+    }
+  }, [storeDeepCrawlTab]);
+
   // Sync `activeTab` with `issuesView` when `issuesView` changes
   useEffect(() => {
     if (issuesView) {

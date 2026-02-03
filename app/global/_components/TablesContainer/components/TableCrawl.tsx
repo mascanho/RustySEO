@@ -239,7 +239,7 @@ const TableRow = memo(
         row?.schema ? "Yes" : "No", // Schema
         row?.url_depth || "", // Depth
         row?.opengraph?.["og:image"] !== "" &&
-        row?.opengraph?.["og: title"] !== ""
+          row?.opengraph?.["og: title"] !== ""
           ? "Yes"
           : "No" || "", // OpenGraph
         Array.isArray(row?.cookies?.Ok)
@@ -301,13 +301,12 @@ const TableRow = memo(
               display: "flex",
               alignItems: "center",
             }}
-            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${
-              isRowClicked
-                ? "bg-blue-600"
-                : index % 2 === 0
-                  ? "bg-white dark:bg-brand-darker"
-                  : "bg-gray-50 dark:bg-brand-dark/30"
-            }`}
+            className={`dark:text-white text-xs dark:border dark:border-brand-dark border ${isRowClicked
+              ? "bg-blue-600"
+              : index % 2 === 0
+                ? "bg-white dark:bg-brand-darker"
+                : "bg-gray-50 dark:bg-brand-dark/30"
+              }`}
           >
             <ContextTableMenu data={item.cell}>
               <TruncatedCell text={item.cell?.toString()} width="100%" />
@@ -385,7 +384,7 @@ const TableCrawl = ({
   const setIsGeneratingExcel = useGlobalCrawlStore(
     (s) => s.setIsGeneratingExcel,
   );
-  const { setInlinks, setOutlinks, setSelectedTableURL } = useDataActions();
+  const { setInlinks, setOutlinks, setSelectedTableURL, selectURL } = useDataActions();
 
   const handleDownload = useCallback(async () => {
     if (!rows.length) {
@@ -447,70 +446,10 @@ const TableCrawl = ({
       });
 
       if (cellIndex === 1) {
-        const urlData = rows.filter((item) => item.url === cellContent);
-        setSelectedTableURL(urlData);
-
-        const normalizeUrl = (url: string) => {
-          if (!url) return "";
-          try {
-            // Use URL object for more robust parsing if possible, but fallback to string manipulation for partials
-            let u = url.toString().trim().toLowerCase();
-
-            // Remove protocol
-            u = u.replace(/^(?:https?:\/\/)?/i, "");
-            // Remove www
-            u = u.replace(/^www\./i, "");
-
-            // Remove query params and hash
-            const queryIdx = u.indexOf("?");
-            if (queryIdx !== -1) u = u.substring(0, queryIdx);
-
-            const hashIdx = u.indexOf("#");
-            if (hashIdx !== -1) u = u.substring(0, hashIdx);
-
-            // Remove trailing slash
-            if (u.endsWith("/")) u = u.slice(0, -1);
-
-            return u;
-          } catch (e) {
-            console.error("Error normalizing URL:", e);
-            return "";
-          }
-        };
-
-        const targetUrlNormalized = normalizeUrl(cellContent);
-
-        const innerLinksMatched = rows.filter((r) => {
-          const internalLinks = r?.inoutlinks_status_codes?.internal || [];
-          return internalLinks.some(
-            (link: any) => normalizeUrl(link?.url) === targetUrlNormalized,
-          );
-        });
-
-        setInlinks([{ url: cellContent }, innerLinksMatched]);
-
-        setInlinks([{ url: cellContent }, innerLinksMatched]);
-
-        // For Outlinks (Links ON this page), we just need the links from the selected row
-        const selectedRow = rows.find((r) => r.url === cellContent);
-        const allOutgoingLinks = [];
-        if (selectedRow) {
-          if (selectedRow.inoutlinks_status_codes?.internal) {
-            allOutgoingLinks.push(
-              ...selectedRow.inoutlinks_status_codes.internal,
-            );
-          }
-          if (selectedRow.inoutlinks_status_codes?.external) {
-            allOutgoingLinks.push(
-              ...selectedRow.inoutlinks_status_codes.external,
-            );
-          }
-        }
-
-        setOutlinks([{ url: cellContent }, allOutgoingLinks]);
+        selectURL(cellContent);
       }
     },
-    [rows, setInlinks, setOutlinks, setSelectedTableURL],
+    [selectURL],
   );
 
   const startXRef = useRef(0);

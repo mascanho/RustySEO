@@ -157,7 +157,7 @@ pub async fn process_url(
     // Log redirects occasionally for debugging (sampled to avoid performance hit)
     if had_redirect && rand::random_range(0..50) == 0 {
         // ~2% sampling rate
-        println!(
+        tracing::info!(
             "Redirect: {} -> {} (status: {}, hops: {})",
             url, final_url, status_code, redirect_count
         );
@@ -238,7 +238,7 @@ pub async fn process_url(
                 cookies_data.dedup();
             }
             Err(e) => {
-                println!(
+                tracing::warn!(
                     "Failed to render JS for {}: {}. Falling back to static content.",
                     final_url, e
                 );
@@ -466,7 +466,7 @@ async fn update_state_and_emit_progress(
         let links = links_for_crawler;
         let links_found = links.len();
         if links_found > 0 && state.crawled_urls % 100 == 0 {
-            println!("Found {} links on {} at depth {}", links_found, url, depth);
+            tracing::info!("Found {} links on {} at depth {}", links_found, url, depth);
         }
         for link in links {
             let link_str = link.as_str();
@@ -500,7 +500,7 @@ async fn update_state_and_emit_progress(
 
             if should_skip_pattern {
                 if state.crawled_urls % 200 == 0 {
-                    println!(
+                    tracing::info!(
                         "Skipping URL due to pattern: {} (pattern: {})",
                         link_str, url_pattern
                     );
@@ -572,7 +572,7 @@ async fn update_state_and_emit_progress(
 
     // Log progress every 50 URLs for better tracking
     if state.crawled_urls % 50 == 0 || (active_pending == 0 && completed_urls > 0) {
-        println!(
+        tracing::info!(
             "Progress: {}/{} URLs completed ({:.1}%), {} succeeded, {} failed, {} pending, {} active",
             completed_urls,
             total_discovered,
@@ -603,17 +603,11 @@ async fn update_state_and_emit_progress(
         eprintln!("Failed to emit crawl result: {}", err);
     }
 
-    print!(
-        "\r{}: {:.2}% {}",
-        "Progress".green().bold(),
-        percentage,
-        "complete".green().bold()
-    );
-    std::io::stdout().flush().unwrap();
+    // progress info already logged above
 
     // Enhanced periodic status logging
     if state.crawled_urls % 50 == 0 {
-        println!(
+        tracing::info!(
             "Status - Crawled: {}, Pending: {}, Queue: {}, Failed: {}, Patterns: {}",
             state.crawled_urls,
             state.pending_urls.len(),

@@ -4,7 +4,7 @@ use crate::domain_crawler::db_deep::db;
 use crate::domain_crawler::domain_commands;
 use crate::loganalyser::database::remove_all_logs_from_serverlog_db;
 use crawler::{
-    CrawlResult, LinkResult, PageSpeedResponse, SEOLighthouseResponse, SeoPageSpeedResponse,
+    CrawlResult, LinkResult, PageSpeedResponse, SeoPageSpeedResponse,
 };
 use directories::ProjectDirs;
 use globals::actions;
@@ -20,7 +20,7 @@ use std::io::Write;
 use std::sync::Arc;
 use std::time::Duration;
 use tauri::State;
-use tauri::{Manager, Window, WindowEvent};
+use tauri::{Emitter, Manager, Window, WindowEvent};
 use tokio::sync::Mutex;
 use tokio::sync::RwLock;
 use toml;
@@ -33,6 +33,7 @@ pub mod settings;
 pub mod uploads;
 pub mod url_checker;
 pub mod users;
+pub mod logging;
 
 pub mod machine_learning;
 
@@ -164,13 +165,9 @@ async fn get_jsonld_command(jsonld: String) -> Result<String, String> {
 #[tokio::main]
 async fn main() {
     // Initialize the logger
-    tracing_subscriber::fmt()
-        .event_format(tracing_subscriber::fmt::format().compact())
-        .without_time()
-        .init();
+    let rx = logging::init();
 
     // Add RustySEO uuid to DB on a seaparate async thread to no block UI
-
     tokio::spawn(async {
         match users::add_user().await {
             Ok(_) => println!("User added successfully"),
@@ -210,6 +207,17 @@ async fn main() {
 
     // Tauri setup
     tauri::Builder::default()
+        .setup(move |app| {
+            let handle = app.handle().clone();
+            std::thread::spawn(move || {
+                while let Ok(log) = rx.recv() {
+                    let _ = handle.emit("tui-log", log);
+                }
+            });
+
+            tracing::info!("🚀 RustySEO Backend logging system initialized. Ready to capture events.");
+            Ok(())
+        })
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
