@@ -49,55 +49,40 @@ const FooterLoader = ({
     return () => clearInterval(interval);
   }, [isActive]);
 
-  // Size configurations
-  const sizeClasses = {
-    md: "h-3 w-3",
-  };
-
-  const textSizes = {
-    sm: "text-xs",
-  };
-
-  const iconSizes = {
-    sm: "h-2.5 w-2.5",
-    md: "h-3 w-3",
-    lg: "h-4 w-4",
-  };
-
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="m-auto mt-[1.5px] flex items-center gap-2 cursor-pointer select-none ">
-            {/* Flashing indicator - maintains your original styling */}
-            <div
-              className={cn(
-                "rounded-full flex items-center m-auto transition-all duration-300  text-xs",
-                sizeClasses[size],
-                className,
-                isActive
-                  ? isFlashing
-                    ? "bg-red-500 ring-4 ring-red-500/30 text-xs"
-                    : "bg-red-500 text-xs"
-                  : "bg-white",
-                isActive && "animate-pulse",
+          <div className="flex items-center space-x-3 px-3 py-1 bg-white/40 dark:bg-white/5 rounded-full border border-gray-200 dark:border-white/10 ml-4 backdrop-blur-sm transition-all hover:bg-white/60 dark:hover:bg-white/10 cursor-help active:scale-95">
+            {/* Status Dot */}
+            <div className="relative flex items-center justify-center">
+              <div
+                className={cn(
+                  "h-2 w-2 rounded-full transition-all duration-500",
+                  isActive
+                    ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"
+                    : "bg-gray-300 dark:bg-gray-600"
+                )}
+              />
+              {isActive && (
+                <div className="absolute h-2 w-2 rounded-full bg-red-400/50 animate-ping" />
               )}
-            />
+            </div>
 
-            {/* Feature name with conditional styling */}
-            {showLabel && (
+            {/* Label */}
+            <div className="flex flex-col -space-y-0.5">
+              <span className="text-[8px] uppercase font-bold text-gray-400 dark:text-white/40 tracking-widest leading-none">
+                Background Engine
+              </span>
               <span
                 className={cn(
-                  "font-medium transition-colors",
-                  textSizes[size],
-                  isActive ? "text-red-600" : "text-gray-400",
+                  "text-[10px] font-bold tracking-tight transition-colors leading-none",
+                  isActive ? "text-red-500 dark:text-red-400" : "text-gray-500 dark:text-gray-500",
                 )}
               >
-                {featureName}
+                HTTP MONITOR
               </span>
-            )}
-
-            {/* Info icon - only show when active */}
+            </div>
           </div>
         </TooltipTrigger>
 
@@ -105,9 +90,9 @@ const FooterLoader = ({
         <TooltipContent
           side="top"
           align="center"
-          className="max-w-xs bg-gray-900 text-white border border-gray-700"
+          className="bg-brand-dark/95 backdrop-blur-md text-white border-brand-dark shadow-2xl p-3"
         >
-          <div className="space-y-2 p-1">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <p className="font-semibold">{featureName}</p>
               <div
@@ -129,7 +114,7 @@ const FooterLoader = ({
           </div>
         </TooltipContent>
       </Tooltip>
-    </TooltipProvider>
+    </TooltipProvider >
   );
 };
 
