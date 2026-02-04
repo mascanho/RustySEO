@@ -2,11 +2,13 @@
 
 use serde::Serialize;
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::sync::Arc;
 use std::time::Instant;
 use url::Url;
 
 use super::constants::{MAX_PENDING_TIME, MAX_URLS_PER_DOMAIN};
 use super::database::{Database, DatabaseResults};
+use super::helpers::links_status_code_checker::SharedLinkChecker;
 use super::models::DomainCrawlResults;
 
 /// Track failed URLs and retries
@@ -49,6 +51,7 @@ pub struct CrawlerState {
     pub last_activity: Instant,        // Track last crawling activity
     pub url_patterns: HashSet<String>, // Track URL patterns to avoid duplicates
     pub active_tasks: usize,           // Track number of currently processing tasks
+    pub link_checker: Option<Arc<SharedLinkChecker>>,
 }
 
 impl CrawlerState {
@@ -64,7 +67,13 @@ impl CrawlerState {
             last_activity: Instant::now(),
             url_patterns: HashSet::new(),
             active_tasks: 0,
+            link_checker: None,
         }
+    }
+
+    pub fn with_link_checker(mut self, link_checker: Arc<SharedLinkChecker>) -> Self {
+        self.link_checker = Some(link_checker);
+        self
     }
 
     /// Clean up stale pending URLs

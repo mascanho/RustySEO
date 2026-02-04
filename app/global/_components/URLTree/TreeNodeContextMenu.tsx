@@ -21,19 +21,17 @@ import { toast } from "sonner";
 import useGlobalCrawlStore from "@/store/GlobalCrawlDataStore";
 import { open as openExternalUrl } from "@tauri-apps/plugin-shell";
 
-interface TreeNodeContextMenuProps {
+interface TreeNodeContextMenuProps extends React.ComponentPropsWithoutRef<"div"> {
   url?: string;
   label: string;
   isPage: boolean;
   children: React.ReactNode;
 }
 
-const TreeNodeContextMenu: React.FC<TreeNodeContextMenuProps> = ({
-  url,
-  label,
-  isPage,
-  children,
-}) => {
+const TreeNodeContextMenu = React.forwardRef<
+  HTMLDivElement,
+  TreeNodeContextMenuProps
+>(({ url, label, isPage, children, ...others }, ref) => {
   const [opened, setOpened] = useState(false);
   const { actions } = useGlobalCrawlStore();
   const { selectURL } = actions.data;
@@ -41,6 +39,7 @@ const TreeNodeContextMenu: React.FC<TreeNodeContextMenuProps> = ({
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setOpened(true);
   };
 
@@ -110,10 +109,18 @@ const TreeNodeContextMenu: React.FC<TreeNodeContextMenuProps> = ({
       opened={opened}
       onChange={setOpened}
       withArrow
+      trigger="hover"
+      openDelay={1000000}
       transitionProps={{ transition: "pop", duration: 150 }}
     >
       <Menu.Target>
-        <div onContextMenu={handleContextMenu}>{children}</div>
+        <div
+          ref={ref}
+          onContextMenu={handleContextMenu}
+          {...others}
+        >
+          {children}
+        </div>
       </Menu.Target>
 
       <Menu.Dropdown className="dark:bg-brand-dark dark:border-brand-dark p-1 z-[300]">
@@ -339,6 +346,6 @@ const TreeNodeContextMenu: React.FC<TreeNodeContextMenuProps> = ({
       </Menu.Dropdown>
     </Menu>
   );
-};
+});
 
 export default TreeNodeContextMenu;

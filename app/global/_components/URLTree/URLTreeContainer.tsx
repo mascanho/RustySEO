@@ -162,7 +162,7 @@ const URLTreeContainer = () => {
       <div className="flex-1 overflow-y-auto px-2 custom-scrollbar py-2">
         <Tree
           data={treeData}
-          levelOffset={16}
+          levelOffset={32}
           renderNode={({ node, expanded, hasChildren, elementProps }) => {
             const customNode = node as any as TreeNode;
             return (
@@ -170,18 +170,32 @@ const URLTreeContainer = () => {
                 url={customNode.url}
                 label={customNode.label || "/"}
                 isPage={customNode.isPage || false}
+                {...elementProps}
+                className="hover:bg-blue-50/50 dark:hover:bg-blue-900/10 rounded cursor-pointer transition-all duration-200 group relative"
+                style={{
+                  ...elementProps.style,
+                  position: "relative",
+                  marginBottom: "1px",
+                }}
               >
+                {/* Hierarchy Guide Line */}
+                {(elementProps as any)["data-level"] > 0 && (
+                  <div
+                    className="absolute left-[-16px] top-0 bottom-0 w-px bg-gray-300/30 dark:bg-brand-dark/40 group-hover:bg-blue-400/50 transition-colors"
+                  />
+                )}
+
                 <Group
-                  gap={6}
-                  {...elementProps}
-                  className="hover:bg-gray-100 dark:hover:bg-brand-dark/50 rounded cursor-pointer py-1 px-1.5 transition-colors duration-200"
+                  gap={8}
+                  wrap="nowrap"
+                  className="py-1 px-1"
                 >
                   {hasChildren && (
-                    <div className="text-gray-400">
+                    <div className="text-gray-400 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">
                       {expanded ? (
-                        <IconChevronDown size={14} />
+                        <IconChevronDown size={14} stroke={2.5} />
                       ) : (
-                        <IconChevronRight size={14} />
+                        <IconChevronRight size={14} stroke={2.5} />
                       )}
                     </div>
                   )}
@@ -190,27 +204,27 @@ const URLTreeContainer = () => {
 
                   {hasChildren ? (
                     <IconFolder
-                      size={16}
-                      className="text-amber-400 fill-amber-400/20"
+                      size={18}
+                      className="text-amber-500 fill-amber-500/10"
                     />
                   ) : (
                     <IconFileText
                       size={16}
-                      className="text-blue-400 fill-blue-400/20"
+                      className="text-blue-400 fill-blue-400/10"
                     />
                   )}
 
                   <div className="flex flex-col min-w-0">
                     <Text
                       size="xs"
-                      className={`dark:text-gray-200 truncate ${customNode.isPage ? "font-medium" : ""}`}
+                      className={`truncate ${!customNode.isPage ? "font-semibold text-gray-800 dark:text-gray-100" : "font-normal text-gray-600 dark:text-gray-400"}`}
                     >
                       {customNode.label || "/"}
                     </Text>
                     {customNode.isPage && customNode.url && (
                       <Text
                         size="9px"
-                        className="text-gray-400 font-mono truncate"
+                        className="text-gray-400/70 font-mono truncate hidden group-hover:block"
                       >
                         {new URL(customNode.url).pathname}
                       </Text>

@@ -19,6 +19,7 @@ use crate::domain_crawler::helpers::robots::{self, get_domain_robots};
 use crate::AppState;
 
 use super::database::{self, Database, DatabaseError};
+use super::helpers::links_status_code_checker::SharedLinkChecker;
 use super::state::{to_database_results, CrawlerState, FailedUrl, ProgressData};
 use super::url_processor::process_url;
 
@@ -134,7 +135,8 @@ pub async fn crawl_domain(
         None
     };
 
-    let state = Arc::new(Mutex::new(CrawlerState::new(None))); // DB is handled separately
+    let link_checker = Arc::new(SharedLinkChecker::new(&settings));
+    let state = Arc::new(Mutex::new(CrawlerState::new(None).with_link_checker(link_checker.clone()))); // DB is handled separately
     {
         let mut state_guard = state.lock().await;
         state_guard.queue.push_back((base_url.clone(), 0)); // Start at depth 0

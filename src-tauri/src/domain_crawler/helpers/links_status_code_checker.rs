@@ -60,6 +60,65 @@ impl LinkCheckConfig {
     }
 }
 
+pub struct SharedLinkChecker {
+    client: Arc<Client>,
+    domain_tracker: Arc<DomainTracker>,
+    semaphore: Arc<Semaphore>,
+    pub config: LinkCheckConfig,
+}
+
+impl SharedLinkChecker {
+    pub fn new(settings: &Settings) -> Self {
+        let config = LinkCheckConfig::from_settings(settings);
+        let client = build_client(&config);
+        SharedLinkChecker {
+            client: Arc::new(client),
+            domain_tracker: Arc::new(DomainTracker::new(&config)),
+            semaphore: Arc::new(Semaphore::new(config.concurrent_requests)),
+            config,
+        }
+    }
+
+    pub async fn check_links(
+        &self,
+        links: Option<InternalExternalLinks>,
+        base_url: &Url,
+        page: String,
+    ) -> LinkCheckResults {
+        let base_url_arc = Arc::new(base_url.clone());
+        let page_arc = Arc::new(page);
+        let seen_urls = Arc::new(Mutex::new(HashSet::with_capacity(
+            self.config.initial_task_capacity,
+        )));
+
+        let mut tasks: Vec<JoinHandle<Option<(LinkStatus, bool)>>> =
+            Vec::with_capacity(self.config.initial_task_capacity);
+
+        if let Some(links_data) = links {
+            for (link, anchor, rel, title, target, is_internal) in prepare_links(links_data) {
+                spawn_link_check_task(
+                    &mut tasks,
+                    self.client.clone(),
+                    self.semaphore.clone(),
+                    base_url_arc.clone(),
+                    page_arc.clone(),
+                    seen_urls.clone(),
+                    self.domain_tracker.clone(),
+                    link,
+                    anchor,
+                    rel,
+                    title,
+                    target,
+                    is_internal,
+                    self.config.clone(),
+                );
+            }
+        }
+
+        process_results(join_all(tasks).await, page_arc, base_url_arc)
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct LinkStatus {
     pub base_url: Url,
@@ -141,7 +200,9 @@ pub async fn get_links_status_code(
     page: String,
     config: LinkCheckConfig,
 ) -> LinkCheckResults {
-    get_links_status_code_with_config(links, base_url, page, config).await
+    let settings = Settings::default(); // Fallback
+    let checker = SharedLinkChecker::new(&settings);
+    checker.check_links(links, base_url, page).await
 }
 
 pub async fn get_links_status_code_from_settings(
@@ -150,52 +211,8 @@ pub async fn get_links_status_code_from_settings(
     page: String,
     settings: &Settings,
 ) -> LinkCheckResults {
-    let config = LinkCheckConfig::from_settings(settings);
-    get_links_status_code_with_config(links, base_url, page, config).await
-}
-
-async fn get_links_status_code_with_config(
-    links: Option<InternalExternalLinks>,
-    base_url: &Url,
-    page: String,
-    config: LinkCheckConfig,
-) -> LinkCheckResults {
-    let client = build_client(&config);
-    let client = Arc::new(client);
-    let domain_tracker = Arc::new(DomainTracker::new(&config));
-
-    let semaphore = Arc::new(Semaphore::new(config.concurrent_requests));
-    let base_url_arc = Arc::new(base_url.clone());
-    let page_arc = Arc::new(page);
-    let seen_urls = Arc::new(Mutex::new(HashSet::with_capacity(
-        config.initial_task_capacity,
-    )));
-
-    let mut tasks: Vec<JoinHandle<Option<(LinkStatus, bool)>>> =
-        Vec::with_capacity(config.initial_task_capacity);
-
-    if let Some(links_data) = links {
-        for (link, anchor, rel, title, target, is_internal) in prepare_links(links_data) {
-            spawn_link_check_task(
-                &mut tasks,
-                client.clone(),
-                semaphore.clone(),
-                base_url_arc.clone(),
-                page_arc.clone(),
-                seen_urls.clone(),
-                domain_tracker.clone(),
-                link,
-                anchor,
-                rel,
-                title,
-                target,
-                is_internal,
-                config.clone(),
-            );
-        }
-    }
-
-    process_results(join_all(tasks).await, page_arc, base_url_arc)
+    let checker = SharedLinkChecker::new(settings);
+    checker.check_links(links, base_url, page).await
 }
 
 fn build_client(config: &LinkCheckConfig) -> Client {
@@ -301,10 +318,25 @@ fn spawn_link_check_task(
             }
         }
 
+        let relative_path = is_internal.then(|| link.clone());
+        let anchor_text = Some(anchor.clone());
+
         // Check if we should throttle this domain
         if domain_tracker.should_throttle(&domain).await {
-            //eprintln!("Throttling requests to domain: {}", domain);
-            return None;
+            return Some((
+                LinkStatus {
+                    base_url: (*base_url).clone(),
+                    url: full_url_str,
+                    relative_path,
+                    status: None,
+                    error: Some("Throttled: Max requests per domain reached".to_string()),
+                    anchor_text,
+                    rel,
+                    title,
+                    target,
+                },
+                is_internal,
+            ));
         }
 
         let relative_path = is_internal.then(|| link);
@@ -352,7 +384,9 @@ async fn fetch_with_retry(
     loop {
         // Get domain-specific delay
         let delay = domain_tracker.get_delay_for(domain).await;
-        sleep(delay).await;
+        if delay.as_millis() > 0 {
+             sleep(delay).await;
+        }
 
         let permit = match Semaphore::acquire_owned(semaphore.clone()).await {
             Ok(p) => p,

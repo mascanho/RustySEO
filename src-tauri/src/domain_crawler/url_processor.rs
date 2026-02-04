@@ -11,6 +11,7 @@ use tokio::sync::{Mutex, Semaphore};
 use tokio::task;
 use tokio::time::{sleep, Duration};
 use url::Url;
+use serde_json::Value;
 
 use crate::domain_crawler::extractors::html::{perform_extraction, update_cache};
 use crate::domain_crawler::helpers::cookies;
@@ -184,7 +185,9 @@ pub async fn process_url(
         || response.headers().contains_key("x-cdn")
         || response.headers().contains_key("x-cache")
     {
-        sleep(Duration::from_secs(2)).await;
+        // Reduced from 2s to 100ms for better speed, 
+        // as the concurrency is already managed by semaphores
+        sleep(Duration::from_millis(100)).await;
     }
 
     let mut body = match response.text().await {
@@ -342,33 +345,58 @@ pub async fn process_url(
         )
     }; // `document` is dropped here
 
+    let link_checker = {
+        let state_guard = state.lock().await;
+        state_guard.link_checker.clone()
+    };
+
     let settings_clone = settings.clone();
-    // Now perform asynchronous checks
-    let check_links_status_code = get_links_status_code_from_settings(
-        internal_external_links.clone(),
-        base_url,
-        final_url.to_string(),
-        &settings_clone,
-    )
-    .await;
+    let internal_external_links_clone = internal_external_links.clone();
+    let base_url_clone = base_url.clone();
+    let final_url_str = final_url.to_string();
+    let image_urls_for_fetch_clone = image_urls_for_fetch.clone();
+    let psi_settings_clone = settings.clone();
 
-    let images_details = images_selector::fetch_image_details(image_urls_for_fetch).await;
+    // Perform asynchronous checks in parallel
+    let (check_links_status_code, images_details, psi_results): (
+        super::helpers::links_status_code_checker::LinkCheckResults,
+        Result<Vec<(String, String, u64, String, u16, bool)>, String>,
+        Result<Vec<Value>, String>,
+    ) = tokio::join!(
+        async {
+            if let Some(checker) = link_checker {
+                checker
+                    .check_links(
+                        internal_external_links_clone,
+                        &base_url_clone,
+                        final_url_str,
+                    )
+                    .await
+            } else {
+                get_links_status_code_from_settings(
+                    internal_external_links_clone,
+                    &base_url_clone,
+                    final_url_str,
+                    &settings_clone,
+                )
+                .await
+            }
+        },
+        images_selector::fetch_image_details(client, image_urls_for_fetch_clone),
+        async {
+            if psi_settings_clone.page_speed_bulk {
+                let url_clone = final_url.clone();
+                match tokio::spawn(async move { fetch_psi_bulk(url_clone, &psi_settings_clone).await }).await
+                {
+                    Ok(res) => res,
+                    Err(e) => Err(e.to_string()),
+                }
+            } else {
+                Ok(Vec::new())
+            }
+        }
+    );
 
-    // Start PSI fetch as a separate task
-    let psi_future = if settings.page_speed_bulk {
-        let url_clone = final_url.clone();
-        Some(tokio::spawn(async move {
-            fetch_psi_bulk(url_clone, &settings_clone).await
-        }))
-    } else {
-        None
-    };
-
-    // Do all other processing while PSI is fetching
-    let psi_results = match psi_future {
-        Some(fut) => fut.await.map_err(|e| e.to_string())?, // Handle task join error
-        None => Ok(Vec::new()),                             // No PSI requested
-    };
 
     // GETS THE SPECIFIC URL DEPTH
     let url_depth = url_depth::calculate_url_depth(&url);
